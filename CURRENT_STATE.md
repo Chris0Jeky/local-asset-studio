@@ -2,6 +2,10 @@
 
 ## Changed
 
+Latest slice: added three **Anime quality** presets and four editable workflows (21–24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). The catalog now has 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
+
+Started a serial background download queue for FLUX.2 dev 32B Q4, its Mistral Q4 encoder and Xinsir Union SDXL (34.4 GiB total). See models/next-downloads.json for pinned provenance. Download completion, checksums and runtime compatibility are separate; inspect the local status receipt before retrying. The old research-only FLUX candidate record below is historical.
+
 Migrated the personal studio into this repository, preserving the original workspace. The local front end provides 21 preset recipes; 20 visual ComfyUI workflows remain available for deeper editing. Model weights and installed tools stay under `C:\AI`. The repository contains scripts, small examples, provenance, guides and selected findings. Local jobs/uploads/logs are ignored.
 
 ## Verified
@@ -16,7 +20,7 @@ HiDream-O1 FP8 was installed in isolation and its 8.8GB weight SHA verified. Its
 
 ## NOT verified
 
-Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B remains a later experiment, with download candidates recorded. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
+Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B inference remains a later experiment; its Q4 weight and companion encoder are now queued for download. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
 
 ## Residual risk
 

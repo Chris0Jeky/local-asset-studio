@@ -54,3 +54,7 @@ python scripts/validate-repo.py
 ```
 
 See [operations](docs/OPERATIONS.md) for troubleshooting, backup, and adding presets. [HUMAN_TODO.md](HUMAN_TODO.md) contains optional creative choices, not setup blockers.
+
+### Anime quality quick start
+
+Open the **Anime quality** category for WAI and Animagine portraits or a 1.5x refinement pass. ComfyUI workflow 24 adds manual masked repair. Read the [parameter and anatomy guide](docs/ANIME-QUALITY.md) before turning up steps or resolution. These new presets were schema-checked; no generation was submitted by the agent for this slice.
