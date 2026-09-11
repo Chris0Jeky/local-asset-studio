@@ -14,7 +14,7 @@ class Assets:
     def __init__(self):
         self.calls = []
     def register(self, job, index, source):
-        self.calls.append((job["id"], index, Path(source).name))
+        self.calls.append((job["id"], index, Path(source).name, job["outputs"][index]["media_type"]))
         return f"asset-{index}"
 
 
@@ -54,6 +54,9 @@ class ArticulatedOperationTests(unittest.TestCase):
 
     def test_run_registers_glb_and_renders_without_comfy_prompt(self):
         def fake_execute(target, options, blender_path):
+            normalized = operation.articulated_prop.normalize_options(options)
+            self.assertEqual(set(options), set(operation.USER_OPTION_FIELDS))
+            self.assertEqual(normalized["fps"], 24)
             target.mkdir(parents=True)
             (target / "views").mkdir()
             for path in [target / "chest.blend", target / "chest.glb", target / "metadata.json",
@@ -66,6 +69,7 @@ class ArticulatedOperationTests(unittest.TestCase):
         self.assertEqual(result["job"]["prompt_ids"], [])
         self.assertEqual(result["job"]["status"], "completed")
         self.assertEqual(len(self.studio.assets.calls), 5)
+        self.assertEqual(self.studio.assets.calls[0][3], "3d")
         project = self.studio.experiments / "projects" / ("a" * 32)
         self.assertTrue((project / "export.zip").is_file())
         self.assertIn("export.zip", [item["path"] for item in result["artifacts"]])

@@ -22,6 +22,7 @@ VERSION = "articulated-operation.v1"
 OPERATION = "native.articulated-prop.v1"
 PROJECT_ID = re.compile(r"[0-9a-f]{32}")
 RENDER_NAMES = ("closed", "open", "front", "side")
+USER_OPTION_FIELDS = ("width", "depth", "body_height", "lid_height", "clearance", "render_size", "samples")
 
 
 class ArticulatedOperationError(ValueError):
@@ -99,7 +100,7 @@ def _validate_plan(studio, plan):
     intent = plan["intent"]
     require(isinstance(intent, dict) and set(intent) == {"name", "kind"} and intent["kind"] == "authored-stylized-chest"
             and isinstance(intent["name"], str) and 1 <= len(intent["name"]) <= 120, "Invalid articulated intent")
-    option_fields = {"width", "depth", "body_height", "lid_height", "clearance", "render_size", "samples"}
+    option_fields = set(USER_OPTION_FIELDS)
     require(isinstance(plan["options"], dict) and set(plan["options"]) == option_fields | {"fps", "open_degrees", "keyframes"},
             "Articulated options changed")
     require(plan["options"] == articulated_prop.normalize_options({key: plan["options"][key] for key in option_fields}),
@@ -147,7 +148,7 @@ def _write_export(directory):
 
 def _native_job(project_id, plan):
     job_id = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{project_id}:{OPERATION}").hex
-    outputs = [{"filename": "chest.glb", "media_type": "mesh", "source": {"operation": OPERATION, "role": "animated-glb"}}]
+    outputs = [{"filename": "chest.glb", "media_type": "3d", "source": {"operation": OPERATION, "role": "animated-glb"}}]
     outputs.extend({"filename": f"{name}.png", "media_type": "image", "source": {"operation": OPERATION, "role": f"inspection-{name}"}}
                    for name in RENDER_NAMES)
     return {"id": job_id, "status": "running", "operation": OPERATION, "prompt_ids": [], "submissions": [],
@@ -177,7 +178,8 @@ def run(studio, project_id, plan):
     job = _native_job(project_id, plan)
     _write_json(receipt_path, job)
     try:
-        result = articulated_prop.execute(target, plan["options"], blender_path=plan["blender"]["path"])
+        user_options = {key: plan["options"][key] for key in USER_OPTION_FIELDS}
+        result = articulated_prop.execute(target, user_options, blender_path=plan["blender"]["path"])
         metadata = result["metadata"]
         require(metadata.get("render", {}).get("device") == "CPU" and metadata["render"].get("threads") == 4,
                 "Articulated operation did not retain the CPU render contract")
