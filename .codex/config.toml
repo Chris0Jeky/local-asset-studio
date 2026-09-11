@@ -1,0 +1,30 @@
+# Project-scoped Codex configuration for Local Asset Studio.
+# Loaded when the repository is a trusted project. Authority is declared in
+# .agent-harness/tier.json, not here.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# The Studio talks to ComfyUI on 127.0.0.1:8188/8192/8194 and serves on 8191.
+network_access = true
+
+[features]
+multi_agent = false
+
+[shell_environment_policy]
+inherit = "all"
+
+# MCP: only what this repo uses. The Docker MCP gateway (MCP_DOCKER) is declared ONCE at user
+# scope in ~/.codex/config.toml; re-declaring it here starts a second gateway per session.
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+startup_timeout_sec = 20
+tool_timeout_sec = 120

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Studio Runtime and Models"
+  short_description: "Backend environments, launchers, model pins, licence terms"
+  default_prompt: "Use $studio-runtime-models for this task and follow its workflow and guardrails."
