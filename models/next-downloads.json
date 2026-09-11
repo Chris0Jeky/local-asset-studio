@@ -1,0 +1,26 @@
+[
+  {
+    "repo": "city96/FLUX.2-dev-gguf",
+    "revision": "ade5d688ddab0d9cf4a5b01bf4321e01c115020d",
+    "filename": "flux2-dev-Q4_K_M.gguf",
+    "target": "diffusion_models/flux2-dev-Q4_K_M.gguf",
+    "bytes": 20082414560,
+    "sha256": "fca680c7b221a713b5cf7db6cf6b33474875320ee61f4c585bc33fe391dab9a6"
+  },
+  {
+    "repo": "unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF",
+    "revision": "b750ec2299225e492f1bd27cab88a0a595fa848f",
+    "filename": "Mistral-Small-3.2-24B-Instruct-2506-Q4_K_M.gguf",
+    "target": "text_encoders/Mistral-Small-3.2-24B-Instruct-2506-Q4_K_M.gguf",
+    "bytes": 14333922848,
+    "sha256": "a3cc56310807ed0d145eaf9f018ccda9ae7ad8edb41ec870aa2454b0d4700b3c"
+  },
+  {
+    "repo": "xinsir/controlnet-union-sdxl-1.0",
+    "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+    "filename": "diffusion_pytorch_model.safetensors",
+    "target": "controlnet/xinsir-union-sdxl-1.0.safetensors",
+    "bytes": 2512030408,
+    "sha256": "a9e13fd61f3193887791c8a0dd07a07202174dc47d5ddaea94ea1344f07c7467"
+  }
+]

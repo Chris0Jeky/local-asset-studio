@@ -896,6 +896,125 @@
         "5",
         "denoise"
       ]
+    },
+    {
+      "id": "anime-wai-quality",
+      "name": "Anime WAI Portrait",
+      "category": "Anime quality",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
+      "graph": "workflows/api/anime-wai-quality-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "anime-animagine-quality",
+      "name": "Anime Animagine Portrait",
+      "category": "Anime quality",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
+      "graph": "workflows/api/anime-animagine-quality-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "anime-refine",
+      "name": "Anime Refine 1.5x",
+      "category": "Anime quality",
+      "description": "Upload your chosen anime image and paste its original prompt. WAI model; change checkpoint in ComfyUI if needed. 1.5x refinement can alter details; does not fix anatomy automatically. Prepared, not rendered.",
+      "graph": "workflows/api/anime-refine-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ]
     }
   ]
 }
