@@ -25,7 +25,7 @@ class BackendManager:
                        'description':'Separate Transformers overlay; the ROCm Torch installation is shared unchanged'},
             'h3':{'id':'h3','name':'H3 loader experiment','root':str(primary),'url':'http://127.0.0.1:8194',
                   'python':str(python),'port':8194,'entry':str(studio.root/'scripts/h3-launch.py'),
-                  'description':'Opt-in encoder loader; uses the main model folders without editing installed ComfyUI code'},
+                  'description':'Opt-in encoder and diffusion loader; uses the main model folders without editing installed ComfyUI code'},
         }
         self.active='primary'
         try:

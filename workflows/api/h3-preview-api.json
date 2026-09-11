@@ -38,15 +38,15 @@
         0
       ],
       "prompt": "A cinematic anime shot of a small brass lantern glowing on a mossy forest path. The camera slowly pushes in. Fireflies drift, leaves sway, warm light shines on the wet stones. Soft wind, gentle bell chime, quiet forest ambience. One continuous shot, no text.",
-      "width": 640,
-      "height": 384,
-      "length": 124
+      "width": 512,
+      "height": 320,
+      "length": 39
     }
   },
   "6": {
     "class_type": "RandomNoise",
     "inputs": {
-      "noise_seed": 2026091103
+      "noise_seed": 2026091143
     }
   },
   "7": {

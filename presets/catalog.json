@@ -1827,7 +1827,7 @@
       "collection": "workflow-lab",
       "graph": "workflows/api/h3-preview-api.json",
       "visual": "workflows/comfyui/36 - MiniMax H3 - Preview.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
       "positive": [
         "5",
@@ -1859,7 +1859,7 @@
       "max_pixels": 1032192,
       "frame_grid": 17,
       "frame_offset": 5,
-      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "description": "Native video and stereo audio. A 39-frame preview completed through the isolated H3 loader in 6m 38s on this Radeon. Start with the tested quick audition; larger shots are experimental.",
       "stages": [
         "Prompt / keyframes",
         "H3 + text encoder",
@@ -1869,7 +1869,16 @@
       ],
       "variants": [
         {
-          "name": "Small preview",
+          "name": "Tested quick audition",
+          "controls": {
+            "width": 512,
+            "height": 320,
+            "frames": 39,
+            "steps": 8
+          }
+        },
+        {
+          "name": "Longer shot - experimental",
           "controls": {
             "width": 640,
             "height": 384,
@@ -1877,7 +1886,7 @@
           }
         },
         {
-          "name": "Native canvas",
+          "name": "Native canvas - experimental",
           "controls": {
             "width": 1344,
             "height": 768,
@@ -1890,7 +1899,8 @@
         }
       ],
       "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
-      "backend_id": "h3"
+      "backend_id": "h3",
+      "execution_notes": "512x320, 39 frames at 24fps, eight steps, seed 2026091143, prompt 49873807-fda1-4fe0-afdd-62b13f5329d8, 398.096 seconds. H264 video and stereo AAC both decoded; exact defaults match the executed graph."
     },
     {
       "id": "h3-quality",

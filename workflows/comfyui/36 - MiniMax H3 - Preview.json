@@ -181,9 +181,9 @@
       },
       "widgets_values": [
         "A cinematic anime shot of a small brass lantern glowing on a mossy forest path. The camera slowly pushes in. Fireflies drift, leaves sway, warm light shines on the wet stones. Soft wind, gentle bell chime, quiet forest ambience. One continuous shot, no text.",
-        640,
-        384,
-        124
+        512,
+        320,
+        39
       ],
       "title": "MiniMax H3 Image to Video"
     },
@@ -215,7 +215,7 @@
         "Node name for S&R": "RandomNoise"
       },
       "widgets_values": [
-        2026091103,
+        2026091143,
         "fixed"
       ],
       "title": null

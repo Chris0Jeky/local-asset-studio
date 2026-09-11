@@ -42,8 +42,11 @@ A read-only encoder attempt also reached the same diffusion-file error, prompt
 `af49ef6a-433e-47eb-95d1-0efe7cb9ef52`. Extending the exact-file read-only loader
 to the FL2VA diffusion file then constructed MiniMaxH3/legacy ModelPatcher in
 5.603 seconds, with 4.30 GiB peak process working set. The subsequent short video
-prompt `49873807-fda1-4fe0-afdd-62b13f5329d8` reached sampling and is being observed.
-No system paging settings have changed. H3 has no completed video at this checkpoint.
+prompt `49873807-fda1-4fe0-afdd-62b13f5329d8` completed in 398.096 seconds:
+39 H.264 frames at 512×320 and 32 kHz stereo AAC, both 1.625 seconds. All frames
+and audio decoded; first/middle/last frames were inspected. The tested defaults
+now match the executed graph. No system paging settings changed. The normal
+native loader remains incompatible; use the [isolated H3 route](docs/H3-WINDOWS.md).
 
 The broader research backlog is still open: Seed Hunter dependencies/execution,
 shot-continuation/control comparisons, interactive Krita diffusion, automatic 3D
@@ -53,7 +56,7 @@ completed native exports are scoped engine checks, not art or gameplay acceptanc
 
 **147 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
 validator and changed JavaScript syntax checks pass. Independent reviews caught
-and resolved recovery/provenance defects. The branch is pushed; this is a scoped
+and resolved recovery/provenance defects. The branch is pushed as PR #39; this is a scoped
 milestone, not completion of every research issue. See the [usable routes, execution
 records and issue-by-issue remainder](docs/PRODUCTION-WORKSPACE.md). The completed
 worker worktree was removed after preserving its ignored runtime receipts.

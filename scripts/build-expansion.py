@@ -98,6 +98,9 @@ def build():
             "13": node("CreateVideo", images=["11", 0], audio=["12", 0], fps=24.0),
             "14": node("SaveVideo", video=["13", 0], filename_prefix="Studio/H3-" + mode, format="auto", codec="auto"),
         }
+        if mode == "preview":
+            graph["5"]["inputs"].update(width=512, height=320, length=39)
+            graph["6"]["inputs"]["noise_seed"] = 2026091143
         if mode != "quality":
             graph["15"] = node("LoraLoaderModelOnly", model=["1", 0], lora_name="minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors", strength_model=1.0)
             graph["9"]["inputs"]["model"] = ["15", 0]
@@ -110,11 +113,11 @@ def build():
             graph["17"] = node("LoadImage", image="lantern-reference.png")
             graph["5"]["inputs"]["last_frame"] = ["17", 0]; refs["last_reference"] = ["17", "image"]
         add("h3-" + mode, "MiniMax H3 - " + mode.title(), graph, positive=["5", "prompt"], width=["5", "width"], height=["5", "height"], frames=["5", "length"], seed=["6", "noise_seed"], steps=["8", "steps"], **refs,
-            modality="video", family="MiniMax H3", category="Video", dimension_multiple=32, max_pixels=1344*768, frame_grid=17, frame_offset=5,
+            modality="video", family="MiniMax H3", category="Video", backend_id="h3", dimension_multiple=32, max_pixels=1344*768, frame_grid=17, frame_offset=5,
             description="Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
             commercial_note="MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
             stages=["Prompt / keyframes", "H3 + text encoder", "8-step turbo" if mode != "quality" else "20-step base", "Video + audio decode", "MP4 at 24fps"],
-            variants=[{"name": "Small preview", "controls": {"width": 640, "height": 384, "frames": 124}}, {"name": "Native canvas", "controls": {"width": 1344, "height": 768, "frames": 124}}, {"name": "3-seed audition", "batch_count": 3}],
+            variants=([{"name": "Quick audition", "controls": {"width": 512, "height": 320, "frames": 39, "steps": 8}}] if mode == "preview" else []) + [{"name": "Longer shot - experimental", "controls": {"width": 640, "height": 384, "frames": 124}}, {"name": "Native canvas - experimental", "controls": {"width": 1344, "height": 768, "frames": 124}}, {"name": "3-seed audition", "batch_count": 3}],
             source="https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native")
 
     for quality in ("draft", "detail"):

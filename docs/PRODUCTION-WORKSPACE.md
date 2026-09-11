@@ -37,6 +37,7 @@ Operational outputs live under the configured `experiments_root`, outside Git.
 | Qwen three references — `386230de-61a7-4d63-9778-0bc76025b7ae` | 512×768 PNG, four steps, 1,334.646 seconds; role-conditioned result needs creative review |
 | HiDream concept — `5ef80a63-9861-43fc-8687-c8229512c43a` | 2048×2048 PNG, eight steps, 184.697 seconds |
 | HiDream restyle — `cb098ca3-0fbc-4d08-8109-3f0e864964e0` | 2048×2048 PNG, eight steps, 76.260 seconds with different loading/cache conditions |
+| H3 preview — `3e03d7d9-aaed-4772-a385-cfaeb29e8873` | 512×320, 39 frames, stereo audio, eight steps, 398.096 seconds through the isolated loader |
 | Anima comparison — project `fbb384c70a5e48b39a9eba6c227374eb` | Two seeds completed; candidate choice remains open |
 | Anime 2× finish — `1754de82-4114-4227-963a-c2a9c0534c16` | Saved setup restored and generated an upscaled PNG with source lineage |
 | Timed Godot export — project `d62777fdd019462b99d28357e61393b8` | Actual 64×64 import/playback, 120/80/120/160 ms, anchor [32,32], 480.000003 ms cycle |
@@ -56,7 +57,7 @@ commercial rights or a finished game asset.
 | #9 / #26 | Existing pinned bundle library; model paths and scoped execution evidence retained | Further provenance/terms intake, Hunyuan-specific applicability; H3 confirmation does not cover another provider |
 | #10 / #22 | Trusted catalog execution, one-axis comparisons, root budgets, durable attempts, branching, source packs | Full accepted character-pack vertical slice; generic arbitrary-stage execution is not enabled |
 | #21 | One/two/three role-reference graphs and UI, reference hashes and preview | Actual one/two-reference renders, controlled pose/identity acceptance |
-| #11 / #18 | Isolated H3 loader and bounded construction probes; exact known prompts retained | Successful video baseline before cache/seed-hunt claims |
+| #11 / #18 | Isolated H3 loader, bounded construction probes and a completed short video/audio preview | Base-quality/anchor variants, caching and seed-hunt comparisons remain; the native loader still needs the wrapper |
 | #12 / #13 | Existing working short Wan image-to-video route and typed controls | Shot continuation/reshoots, LTX/VACE comparisons and measured temporal refinement |
 | #14 / #23 | Matched anime adapters, reference atelier, native KRA save/reopen | Interactive Krita diffusion, layered puppets and in-between studies |
 | #15 / #24 / #25 | Godot sprite/GLB adapter, timed playback, authored articulated Blender baseline | Khronos validation, gameplay collision/rig stress tests, automatic part/rig experiments and cleanup-effort comparisons |
@@ -64,8 +65,8 @@ commercial rights or a finished game asset.
 
 The exact Seed Hunter v1.6 graph remains preserved. Its inspected dependency
 report identifies 24 unresolved node classes, the int8 video VAE, latent upscaler,
-TAE and RIFE weights. Installing those packs would not establish that H3 runs on
-this PC. The current Wan recipe is an available short-motion alternative; it does
+TAE and RIFE weights. The isolated native H3 route now runs, but those extra packs
+have not been installed or validated. The current Wan recipe is an available short-motion alternative; it does
 not implement Seed Hunter continuation, native audio or latent upscaling.
 
 Independent review found and fixed native restart recovery and a Krita snapshot

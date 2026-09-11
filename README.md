@@ -56,9 +56,10 @@ The local graphs do not call hosted moderation services. Local execution, model 
 
 See the [new local execution samples](experiments/curated/workflow-lab/README.md)
 for three image styles, a short video and a geometry GLB with their exact recipes.
-MiniMax H3's files are installed. Its isolated loader experiment bypasses the
-encoder access violation, but full video still encounters a Windows memory
-failure. It remains experimental; see the exact attempts in [current state](CURRENT_STATE.md).
+MiniMax H3 now generates through the isolated loader: the tested quick audition
+produced 1.625 seconds of 512×320 video with stereo audio in 6 minutes 38 seconds.
+See [the working H3 setup](docs/H3-WINDOWS.md). Larger shots and Seed Hunter remain
+experimental.
 
 **HiDream O1 is in the Studio picker:** [both concept and reference-edit recipes](docs/HIDREAM.md)
 produced 2048-square images on the Radeon. Use **Model environment → HiDream O1 →
