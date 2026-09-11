@@ -167,10 +167,13 @@ $('#gallery').onclick=async e=>{
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
     const ref=e.target.closest('.reference-output');if(ref){
-      const blob=await (await fetch('/api/image/'+encodeURIComponent(ref.dataset.job)+'/'+ref.dataset.index)).blob();
+      const source=jobs.find(j=>j.id===ref.dataset.job)?.outputs?.[Number(ref.dataset.index)];
+      if(!source?.asset_id)throw Error('This output has no saved asset identity. Refresh the workspace before attaching it.');
+      const result=await post('/api/assets/reference',{id:source.asset_id});
       if(ref.dataset.preset)selectPreset(ref.dataset.preset);
-      if(!selected.reference)selectPreset(catalog.presets.find(p=>p.id==='gentle-variation')?.id || catalog.presets.find(p=>p.reference&&p.modality==='image').id);
-      uploaded=(await api('/api/upload',{method:'POST',headers:{'Content-Type':blob.type,'X-Filename':'previous-output.png'},body:blob})).file;
+      if(!selected?.reference)selectPreset(catalog.presets.find(p=>p.id==='gentle-variation')?.id || catalog.presets.find(p=>p.reference&&p.modality==='image').id);
+      uploaded=result.file;parentAssets=[source.asset_id];
+      if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
       $('#reference').value='';
       $('#referenceHint').textContent='Using the selected output as the reference. It has been copied into this recipe.';
       message('Reference attached. Adjust the prompt, then generate when ready.');

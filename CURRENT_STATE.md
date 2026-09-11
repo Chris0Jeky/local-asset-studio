@@ -54,9 +54,12 @@ part/rig experiments and the full accepted character-pack vertical slice. The
 completed native exports are scoped engine checks, not art or gameplay acceptance.
 [HUMAN_TODO.md](HUMAN_TODO.md) still holds the optional subjective choices.
 
-**147 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
+**148 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
 validator and changed JavaScript syntax checks pass. Independent reviews caught
-and resolved recovery/provenance defects. The branch is pushed as PR #39; this is a scoped
+and resolved recovery/provenance defects. Gallery handoffs now retain the source
+asset identity and populate Qwen's first reference slot. The browser saved
+`Ember chest → Qwen reference` with the correct parent and hashed input metadata;
+no extra generation was submitted. The branch is pushed as PR #39; this is a scoped
 milestone, not completion of every research issue. See the [usable routes, execution
 records and issue-by-issue remainder](docs/PRODUCTION-WORKSPACE.md). The completed
 worker worktree was removed after preserving its ignored runtime receipts.
