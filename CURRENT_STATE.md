@@ -2,11 +2,13 @@
 
 ## Changed
 
-Latest slice: added three **Anime quality** presets and four editable workflows (21-24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). The catalog now has 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
+Latest addition: five anime finishing presets and visual workflows (25-29), for a total of 29 presets and 29 visual workflows. Installed pinned Impact Pack/Subpack, face/hand detectors and the official Real-ESRGAN anime upscaler. [Detailing guide](docs/ANIME-DETAILING.md). All five graphs passed installed-node schema checks. CPU-only smoke execution loaded the upscaler and both detectors, produced a 128px image from a 32px synthetic input, and produced non-empty face/hand masks on the existing WAI example (15,128 and 3,920 nonzero pixels). No diffusion redraw was submitted. Nine regression tests, the 29-preset validator and pip check passed. After the user queue became empty, the primary backend was restarted and all new nodes loaded. Studio health reports no missing models/nodes, and browser selection enables the combined workflow. The CPU probe was stopped. Independent graph/source review found no CRITICAL/HIGH blocker. Corrected the inherited Animagine provenance note and obsolete overview counts from issue #5.
 
-Started a serial background download queue for FLUX.2 dev 32B Q4, its Mistral Q4 encoder and Xinsir Union SDXL (34.4 GiB total). See models/next-downloads.json for pinned provenance. Download completion, checksums and runtime compatibility are separate; inspect the local status receipt before retrying. The old research-only FLUX candidate record below is historical.
+Latest slice: added three **Anime quality** presets and four editable workflows (21-24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). That slice brought the catalog to 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
 
-Migrated the personal studio into this repository, preserving the original workspace. The local front end provides 21 preset recipes; 20 visual ComfyUI workflows remain available for deeper editing. Model weights and installed tools stay under `C:\AI`. The repository contains scripts, small examples, provenance, guides and selected findings. Local jobs/uploads/logs are ignored.
+Completed the serial download queue for FLUX.2 dev 32B Q4, its Mistral Q4 encoder and Xinsir Union SDXL (34.4 GiB total). All three SHA-256 values matched pinned metadata before installation. Portable entries are in models/installed-manifest.json. Runtime inference remains unverified.
+
+Migrated the personal studio into this repository, preserving the original workspace. The local front end provides 29 preset recipes; 29 visual ComfyUI workflows remain available for deeper editing. Model weights and installed tools stay under `C:\AI`. The repository contains scripts, small examples, provenance, guides and selected findings. Local jobs/uploads/logs are ignored.
 
 ## Verified
 
@@ -20,7 +22,7 @@ HiDream-O1 FP8 was installed in isolation and its 8.8GB weight SHA verified. Its
 
 ## NOT verified
 
-Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B inference remains a later experiment; its Q4 weight and companion encoder are now queued for download. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
+Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B inference remains a later experiment; its Q4 weight and companion encoder are now installed and checksum-verified. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
 
 ## Residual risk
 

@@ -945,7 +945,7 @@
       "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
       "graph": "workflows/api/anime-animagine-quality-api.json",
       "verified": false,
-      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "commercial_note": "Animagine publisher source: cagliostrolab/animagine-xl-4.0. Check the model and reference-image terms before publishing.",
       "positive": [
         "2",
         "text"
@@ -1015,6 +1015,179 @@
         "4",
         "image"
       ]
+    },
+    {
+      "id": "anime-esrgan",
+      "name": "Anime upscale - ESRGAN 2x",
+      "category": "Anime quality",
+      "description": "Upload an image. Learned 4x anime upscaler, resized to final 2x; no diffusion redraw or prompt. May smooth pixel art. Model loading checked, artistic quality not evaluated.",
+      "graph": "workflows/api/anime-esrgan-api.json",
+      "verified": false,
+      "reference": [
+        "1",
+        "image"
+      ],
+      "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms."
+    },
+    {
+      "id": "anime-face",
+      "name": "WAI Auto Face Detail",
+      "category": "Anime quality",
+      "description": "Upload your chosen image and paste its original prompt. Gentle face correction, denoise 0.28. Saves edited image plus detection mask. Detection can miss regions; artistic improvement not verified.",
+      "graph": "workflows/api/anime-face-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ]
+    },
+    {
+      "id": "anime-hand",
+      "name": "WAI Auto Hand Detail",
+      "category": "Anime quality",
+      "description": "Upload your chosen image and paste its original prompt. WAI checkpoint; experimental hand correction, denoise 0.40. Saves edited image plus detection mask. Detection can miss regions; artistic improvement not verified.",
+      "graph": "workflows/api/anime-hand-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ]
+    },
+    {
+      "id": "animagine-face",
+      "name": "Animagine Auto Face Detail",
+      "category": "Anime quality",
+      "description": "Upload your chosen image and paste its original prompt. Gentle face correction, denoise 0.28. Saves edited image plus detection mask. Detection can miss regions; artistic improvement not verified.",
+      "graph": "workflows/api/animagine-face-api.json",
+      "verified": false,
+      "commercial_note": "Animagine publisher source: cagliostrolab/animagine-xl-4.0. Check the model and reference-image terms before publishing.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ]
+    },
+    {
+      "id": "anime-complete",
+      "name": "WAI Portrait Face and ESRGAN",
+      "category": "Anime quality",
+      "description": "Generate a WAI portrait, refine detected faces, then ESRGAN upscale to 2x. Saves base, face pass, final and mask for comparison. Base controls are below; face-pass controls are in ComfyUI. No automatic hand pass.",
+      "graph": "workflows/api/anime-complete-api.json",
+      "verified": false,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "bindings_extra": {
+        "seed": [
+          [
+            "9",
+            "seed"
+          ]
+        ]
+      }
     }
   ]
 }
