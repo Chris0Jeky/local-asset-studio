@@ -15,10 +15,14 @@ class MCPTests(unittest.IsolatedAsyncioTestCase):
     async def test_real_stdio_discovery_and_denial(self):
         with tempfile.TemporaryDirectory() as tmp:
             async with Client(StdioServerParameters(command=sys.executable,args=[str(ROOT/'scripts/studio_av_mcp.py'),'--workspace',tmp])) as client:
-                names={x.name for x in (await client.list_tools()).tools}
+                tools=(await client.list_tools()).tools
+                names={x.name for x in tools}
+                self.assertTrue(all(t.output_schema is not None for t in tools))
                 self.assertIn('plan_preview',names);self.assertNotIn('render_preview',names)
                 answer=await client.call_tool('capabilities',{});self.assertFalse(answer.is_error)
                 self.assertIsNotNone(answer.structured_content)
+                self.assertFalse(answer.structured_content['render_enabled'])
+                self.assertFalse(answer.structured_content['model_inference'])
                 bad=await client.call_tool('validate_project',{'project_path':'../escape.json'})
                 self.assertTrue(bad.is_error)
     async def test_render_is_explicit_opt_in(self):
