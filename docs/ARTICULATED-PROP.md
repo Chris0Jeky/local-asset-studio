@@ -33,3 +33,19 @@ and explicit limits. A failed owned run retains its generated script, config, an
 `blender-log.json`/`failure.json` for diagnosis. `CollisionProxy` is a named
 box only; engine collision, mechanical usability, art acceptance, segmentation,
 automatic rigging, and licensing are outside this authored baseline.
+
+## Production operation
+
+`app/articulated.py` exposes `prepare(studio, payload)` and
+`run(studio, project_id, plan)` for the Studio production coordinator. Configure
+the exact local executable as `config/local.json`'s `blender` path. `prepare`
+accepts only a 1–120 character name and the numeric controls above, verifies the
+configured executable, and returns a JSON-safe plan pinned to the adapter version
+and executable SHA-256. It does not create output or start Blender.
+
+`run` accepts only a 32-lowercase-hex project ID and a hash-valid plan. It runs
+once in `experiments/projects/<id>/articulated`, records a deterministic native
+job with no ComfyUI prompt IDs, retains failure files, registers the animated GLB
+and four render PNGs in `AssetWorkspace`, and writes `export.zip` containing the
+BLEND, GLB, renders, metadata, and recipe. Returned artifact records use the
+production file route and include immutable byte hashes.
