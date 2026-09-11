@@ -69,7 +69,10 @@ class SkillParityTests(unittest.TestCase):
                 self.assertNotIn('\t', text, f'{tree.name}/{name}: tabs are rejected by the Codex loader')
                 fields, body = split_frontmatter(text)
                 self.assertEqual(fields.get('name'), name, f'{tree.name}/{name}: name must equal the directory')
-                self.assertTrue(fields.get('description'), f'{tree.name}/{name}: empty description')
+                description = fields.get('description', '')
+                self.assertTrue(description, f'{tree.name}/{name}: empty description')
+                if ': ' in description:
+                    self.assertRegex(description, r'^"[^"]*"$', f'{tree.name}/{name}: a description containing ": " must be double-quoted or the loader drops the skill')
                 for heading in ('## Use when / Do NOT use when', '## Guardrails', '## Workflow', '## Read first'):
                     self.assertIn(heading, body, f'{tree.name}/{name}: missing {heading}')
 

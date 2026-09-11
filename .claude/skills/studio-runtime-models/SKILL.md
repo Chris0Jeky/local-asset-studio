@@ -1,6 +1,6 @@
 ---
 name: studio-runtime-models
-description: Change how Local Asset Studio reaches its local runtimes and models: backend environments and ports, launchers, runtime patches, checksum-pinned model installs, provenance and licence-territory records. Use for app/backends.py, app/model_library.py, scripts/*-launch.py, runtime-patches/ and models/; not for graphs or generations.
+description: "Change how Local Asset Studio reaches its local runtimes and models: backend environments and ports, launchers, runtime patches, checksum-pinned model installs, provenance and licence-territory records. Use for app/backends.py, app/model_library.py, scripts/*-launch.py, runtime-patches/ and models/; not for graphs or generations."
 ---
 
 # Studio runtime and models

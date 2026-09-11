@@ -1,6 +1,6 @@
 ---
 name: studio-session-closeout
-description: Close a Local Asset Studio session: confirm no queued or partial Studio work, stop only Studio-owned processes, write the dated closeout note, reconcile CURRENT_STATE.md and HUMAN_TODO.md, and hand off with changed/verified/NOT verified/residual risk. Use at the end of any session that ran the Studio or ComfyUI.
+description: "Close a Local Asset Studio session: confirm no queued or partial Studio work, stop only Studio-owned processes, write the dated closeout note, reconcile CURRENT_STATE.md and HUMAN_TODO.md, and hand off with changed/verified/NOT verified/residual risk. Use at the end of any session that ran the Studio or ComfyUI."
 ---
 
 # Studio session closeout
