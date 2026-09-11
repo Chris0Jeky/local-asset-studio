@@ -1,6 +1,6 @@
 """Pure model-specific projections; no graph execution or model inference."""
 import copy
-from .schema import validate, profiles, need, digest, VERSION
+from .schema import validate, profiles, need, digest, VERSION, FACETS
 
 
 def compile_brief(b, profile_id):
@@ -15,9 +15,10 @@ def compile_brief(b, profile_id):
         issue('REFERENCE_COUNT', f"Profile requires {p['min_refs']}..{p['max_refs']} references; none were silently discarded", True)
     if any(r['kind'] not in p['reference_kinds'] for r in refs): issue('REFERENCE_KIND', 'Unsupported reference kind', True)
     for i, r in enumerate(refs): record(f'references[{i}]', 'reference_map')
-    prose = [b['brief']] + [f'{k.capitalize()}: {v}' for k, v in b['facets'].items()]
+    prose = [b['brief']] + [f'{k.capitalize()}: {b["facets"][k]}' for k in FACETS if k in b['facets']]
     record('brief', 'description')
-    for k in b['facets']: record(f'facets.{k}', 'description')
+    for k in FACETS:
+        if k in b['facets']: record(f'facets.{k}', 'description')
     for i, c in enumerate(b['constraints']):
         if c['mechanism'] == 'prompt': prose.append(c['text']); record(f'constraints[{i}]', 'description + acceptance')
         else:
@@ -67,10 +68,10 @@ def compile_brief(b, profile_id):
             if 'description' in x['destination']: x['destination'] = 'input-image preparation / acceptance'
     else: raise ValueError('Unsupported profile dialect')
     consumed_params = {'voice': {'language'}, 'music': {'instrumental', 'duration_seconds', 'bpm', 'key', 'meter'}}.get(dialect, set())
-    for k in b['parameters'].keys() - consumed_params:
+    for k in sorted(b['parameters'].keys() - consumed_params):
         record('parameters.' + k, 'workflow parameter handoff')
         issue('PARAMETER_HANDOFF', f'{k} needs an executor binding; it was not inserted into a text prompt')
-    for k in b['verbatim']:
+    for k in sorted(b['verbatim']):
         if (dialect, k) not in (('voice', 'text'), ('music', 'lyrics')):
             record('verbatim.' + k, 'preserved / unbound'); issue('VERBATIM_UNBOUND', f'No output channel for verbatim.{k}', True)
     if dialect in ('voice', 'music', 'image_input'):
