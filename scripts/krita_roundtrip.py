@@ -128,7 +128,7 @@ def preflight(configured_krita=DEFAULT_KRITA):
     require(path.is_file() and path.suffix.lower() == ".exe", "Configured Krita executable is unavailable")
     return {"path": str(path), "sha256": file_sha(path), "timeout_seconds": TIMEOUT_SECONDS,
             "fixed_argv": ["<input>", "--export", "--export-filename", "<output>"],
-            "offscreen_environment": {"QT_QPA_PLATFORM": "offscreen"}}
+            "execution_mode": "windows-batch-hidden"}
 
 
 def command_for(krita_path, source, output):
@@ -147,11 +147,16 @@ def _write_log(path, command, completed=None, error=None):
 
 def _export(runtime, source, output, log_path):
     command = command_for(runtime["path"], source, output)
-    environment = os.environ.copy(); environment["QT_QPA_PLATFORM"] = "offscreen"
+    environment = os.environ.copy(); environment.pop("QT_QPA_PLATFORM", None)
+    startupinfo = None
+    if os.name == "nt":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0
     try:
         completed = subprocess.run(command, shell=False, cwd=str(Path(output).parent), env=environment,
                                    capture_output=True, text=True, timeout=TIMEOUT_SECONDS,
-                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=False)
+                                   startupinfo=startupinfo, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=False)
     except (OSError, subprocess.TimeoutExpired) as exc:
         _write_log(log_path, command, error=exc)
         raise KritaRoundtripError(f"Krita batch export did not complete: {exc}") from exc

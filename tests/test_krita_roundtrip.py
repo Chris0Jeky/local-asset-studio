@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -42,6 +43,7 @@ class KritaRoundtripTests(unittest.TestCase):
     def test_preflight_and_fixed_export_argv(self):
         info = roundtrip.preflight(self.exe)
         self.assertEqual(info["fixed_argv"], ["<input>", "--export", "--export-filename", "<output>"])
+        self.assertEqual(info["execution_mode"], "windows-batch-hidden")
         self.assertEqual(roundtrip.command_for(self.exe, self.source, self.root / "out.kra")[2:4], ["--export", "--export-filename"])
         with self.assertRaises(roundtrip.KritaRoundtripError):
             roundtrip.preflight(self.root / "missing.exe")
@@ -49,7 +51,10 @@ class KritaRoundtripTests(unittest.TestCase):
     def test_mocked_native_save_reopen_preserves_source_and_inspects_outputs(self):
         def fake_run(command, **kwargs):
             self.assertFalse(kwargs["shell"])
-            self.assertEqual(kwargs["env"]["QT_QPA_PLATFORM"], "offscreen")
+            self.assertNotIn("QT_QPA_PLATFORM", kwargs["env"])
+            if os.name == "nt":
+                self.assertIsNotNone(kwargs["startupinfo"])
+                self.assertEqual(kwargs["startupinfo"].wShowWindow, 0)
             output = Path(command[-1])
             if output.suffix == ".kra": kra(output)
             else: output.write_bytes(png())
