@@ -11,7 +11,10 @@ FILE_CAP = 16 * 1024 * 1024
 
 def inflate(data):
     obj = zlib.decompressobj()
-    out = obj.decompress(data, TEXT_CAP + 1)
+    try:
+        out = obj.decompress(data, TEXT_CAP + 1)
+    except zlib.error as exc:
+        raise ValueError('Invalid compressed metadata') from exc
     need(len(out) <= TEXT_CAP and not obj.unconsumed_tail and obj.eof and not obj.unused_data, 'Invalid/oversize compressed metadata')
     return out
 
