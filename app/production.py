@@ -151,6 +151,7 @@ class Production:
         return self.get(identifier)
 
     def native(self, payload):
+        from native_exports import NativeExports, krita_roundtrip
         if not isinstance(payload,dict):raise ValueError('Export intent must be an object')
         kind=payload.get('kind');ids=payload.get('ids');options=payload.get('options',{})
         if kind not in ('atlas','ora','godot'):raise ValueError('Choose atlas, ORA or Godot')
@@ -162,8 +163,12 @@ class Production:
         verify=payload.get('verify_engine',False)
         if type(verify) is not bool:raise ValueError('Engine verification must be boolean')
         if verify and (kind!='godot' or not Path(self.studio.config.get('godot','')).is_file()):raise ValueError('A configured Godot executable is required for engine verification')
+        verify_krita=payload.get('verify_krita',False);krita_runtime=None
+        if type(verify_krita) is not bool:raise ValueError('Krita roundtrip must be boolean')
+        if verify_krita:
+            if kind!='ora':raise ValueError('Krita roundtrip requires an OpenRaster export')
+            krita_runtime=krita_roundtrip.preflight(self.studio.config.get('krita',krita_roundtrip.DEFAULT_KRITA))
         # Resolve the inputs and options before storing a startable plan, without writing or running tools.
-        from native_exports import NativeExports
         exporter=NativeExports(self.studio.root,self.studio.assets.media,self.studio.config.get('godot'))
         records=self._native_assets(ids)
         images,glb=exporter._asset_records(kind,records)
@@ -173,6 +178,7 @@ class Production:
         identifier=uuid.uuid4().hex
         plan={'version':1,'kind':'native','name':resolved['clip']+' · '+kind,'export_kind':kind,'assets':records,
               'source_assets':ids,'options':resolved,'verify_engine':verify,'godot':self.studio.config.get('godot'),
+              'verify_krita':verify_krita,'krita':krita_runtime,
               'stages':[],'created_at':time.time()}
         plan['sha256']=fingerprint(plan)
         state={'status':'planned','message':'Native export prepared. Start explicitly; no generation is needed.','attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
@@ -234,13 +240,18 @@ class Production:
     def _run_native(self, identifier, plan):
         if self._get(identifier)['state'].get('stop_requested'):
             self._mutate(identifier,status='stopped',message='Export stopped before execution');return
-        from native_exports import NativeExports
+        from native_exports import NativeExports, krita_roundtrip
         exporter=NativeExports(self.studio.root,self.studio.assets.media,plan.get('godot'))
         directory=self.root/identifier;target=directory/'native'
         if target.exists():
             self._mutate(identifier,status='interrupted',message='An earlier export left files. They are preserved; create a new export to retry.');return
         self._attempt(identifier,0,operation='media.'+plan['export_kind']+'.v1',started_at=time.time())
         result=exporter.execute(target,plan['export_kind'],plan['assets'],plan['options'])
+        krita_result=None
+        if plan.get('verify_krita'):
+            current=krita_roundtrip.preflight(plan['krita']['path'])
+            if current['sha256']!=plan['krita']['sha256']:raise ValueError('Krita changed after this export was prepared; prepare a new plan')
+            krita_result=krita_roundtrip.execute(target/'layers.ora',target/'krita',plan['krita']['path'])
         engine=None
         if plan['verify_engine']:
             import godot_asset_adapter as godot
@@ -259,8 +270,8 @@ class Production:
             artifacts.append({'path':relative,'url':f'/api/production/{identifier}/files/{relative}','sha256':self._file_hash(path),'bytes':path.stat().st_size,'role':'native-source'})
         self._attempt(identifier,0,status='completed',finished_at=time.time())
         self._mutate(identifier,status='completed',finished_at=time.time(),artifacts=artifacts,
-                     measurements=result['measurements'],limitations=result['limitations'],engine=engine,
-                     message='Native export complete'+(' with actual Godot import/playback evidence.' if engine else '. Review it in your editor.'))
+                     measurements=result['measurements'],limitations=result['limitations'],engine=engine,krita=krita_result,
+                     message='Native export complete'+(' with actual Godot import/playback evidence.' if engine else ' with a saved and reopened Krita document.' if krita_result else '. Review it in your editor.'))
 
     @staticmethod
     def _file_hash(path):

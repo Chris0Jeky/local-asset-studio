@@ -1,5 +1,10 @@
 # Krita OpenRaster roundtrip
 
+Use **Workspace → select images → Create native export → Layered artwork ·
+ORA / Krita**. Leave **Save and reopen in local Krita** checked, name the layers,
+prepare the plan and explicitly Start it in Experiments. The original images,
+ORA, KRA, reopened PNG and logs are included in the native source pack.
+
 `scripts/krita_roundtrip.py` is a narrow native-file proof adapter. It validates
 a bounded OpenRaster archive, snapshots it into a newly created output directory,
 uses the configured Krita executable twice, and retains the KRA, PNG, command
@@ -31,6 +36,10 @@ native KRA preview dimensions, and the PNG dimensions after reopening the KRA.
 It rejects mismatched dimensions and preserves every owned failure file. It does
 not inspect UI state, editing behavior, color management, masks/groups/blend
 semantics beyond listed metadata, or pixel/art acceptance.
+
+The owned ORA snapshot is hash-checked against the inspected source before any
+Krita command. A source changed during preparation is retained as a failed
+attempt, preventing its old metadata from being attached to different bytes.
 
 ## Evidence in this slice
 

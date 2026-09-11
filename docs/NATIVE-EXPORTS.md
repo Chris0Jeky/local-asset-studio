@@ -1,5 +1,20 @@
 # Native exports
 
+In Studio, select originals in **Workspace → Create native export**. Arrange the
+source order, frame durations or layer names, choose the format, and prepare the
+plan. Start it explicitly from **Experiments**. The resulting source pack includes
+the originals, full recipes, interchange files and execution reports.
+
+**Layered artwork · ORA / Krita** offers **Save and reopen in local Krita**.
+Studio pins the configured executable before Start, exports the flat layer stack
+to KRA, then reopens it to PNG. The result provides a native KRA download and
+preview. Clear that option to produce ORA only. See [the Krita adapter](KRITA-ROUNDTRIP.md)
+for its limits. Godot's separate verification option performs actual local import
+and timing inspection, rather than only packaging a project.
+
+The Studio coordinator adds these optional application steps around the format
+helper described below. No generation is submitted for a native export.
+
 `NativeExports` turns trusted Studio asset records into one exclusive local
 export directory. It accepts no commands, code, workflow graphs, or output paths
 inside `options`; it never submits generation and does not start Godot.

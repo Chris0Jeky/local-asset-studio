@@ -172,9 +172,13 @@ def execute(ora_path, output_root, configured_krita=DEFAULT_KRITA):
     output = Path(output_root).resolve()
     output.mkdir(parents=True, exist_ok=False)
     source = output / "source.ora"
-    source.write_bytes(Path(ora_path).read_bytes())
     kra, png = output / "roundtrip.kra", output / "export.png"
     try:
+        with Path(ora_path).open('rb') as stream:
+            snapshot = stream.read(MAX_ORA_BYTES + 1)
+        require(len(snapshot) <= MAX_ORA_BYTES, "ORA grew beyond the snapshot byte budget")
+        source.write_bytes(snapshot)
+        require(file_sha(source) == source_info['sha256'], "ORA changed while its snapshot was prepared; no Krita command was run")
         _export(runtime, source, kra, output / "ora-to-kra.log.json")
         kra_info = inspect_kra(kra)
         _export(runtime, kra, png, output / "kra-to-png.log.json")

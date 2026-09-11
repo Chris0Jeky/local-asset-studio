@@ -21,6 +21,7 @@ if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 import game_asset_media as media
 import godot_asset_adapter as godot
+import krita_roundtrip
 
 
 MAX_IMAGES = 32

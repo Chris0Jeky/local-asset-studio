@@ -79,6 +79,19 @@ class KritaRoundtripTests(unittest.TestCase):
             with self.assertRaises(roundtrip.KritaRoundtripError): roundtrip.execute(invalid, self.root / "invalid-output", self.exe)
         run.assert_not_called()
 
+    def test_changed_source_never_creates_false_roundtrip_provenance(self):
+        inspect=roundtrip.inspect_ora
+        def change_after_inspection(path):
+            original=inspect(path)
+            Path(path).write_bytes(b'changed source')
+            return original
+        with mock.patch.object(roundtrip,'inspect_ora',side_effect=change_after_inspection), mock.patch.object(roundtrip.subprocess,'run') as run:
+            with self.assertRaisesRegex(roundtrip.KritaRoundtripError,'changed'):
+                roundtrip.execute(self.source,self.root/'changed',self.exe)
+        run.assert_not_called()
+        self.assertTrue((self.root/'changed/failure.json').is_file())
+        self.assertFalse((self.root/'changed/roundtrip.json').exists())
+
 
 if __name__ == "__main__":
     unittest.main()

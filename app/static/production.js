@@ -32,6 +32,7 @@ function renderProduction(){
   for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection" src="'+a.url+'" alt="'+esc(a.path)+'">';
   for(const a of artifacts.filter(a=>a.role==='comparison'||a.path==='native/atlas/atlas.png'))html+='<img class="comparison-sheet" src="'+a.url+'" alt="'+esc(a.role==='comparison'?'Candidate contact sheet':'Sprite atlas')+'">';
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
+  if(p.state.krita)html+='<p class="callout">Krita saved and reopened this document. '+p.state.krita.kra.layers.length+' layer records retained.</p><p><a class="artifact-download" href="/api/production/'+p.id+'/files/native/krita/roundtrip.kra?download" download>Download Krita document</a></p><img class="comparison-sheet" src="/api/production/'+p.id+'/files/native/krita/export.png" alt="Image exported from the reopened Krita document">';
   if(artifacts.length)html+='<details><summary>Files & provenance · '+artifacts.length+'</summary><div class="artifact-files">'+artifacts.map(a=>'<a href="'+a.url+'?download" download>'+esc(a.path)+'</a>').join('')+'</div></details>';
   $('#productionDetail').innerHTML=html;
 }
@@ -74,7 +75,7 @@ function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
 $('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Experiments.';renderNativeAssets();$('#nativeDialog').showModal();};
-$('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';
+$('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){
     const id=input.dataset.nativeDuration||input.dataset.nativeLayer,a=nativeAssets.find(a=>a.id===id);
@@ -87,7 +88,7 @@ $('#nativeForm').onsubmit=async e=>{e.preventDefault();$('#prepareNative').disab
   readNativeInputs();
   const images=nativeAssets.filter(a=>a.media_type==='image'),kind=$('#nativeKind').value,options={clip:$('#nativeClip').value,duration_ms:images.map(a=>a.duration),layer_names:images.map(a=>a.layerName),loop:$('#nativeLoop').checked,filter:$('#nativeFilter').value};
   const x=$('#nativeAnchorX').value,y=$('#nativeAnchorY').value;if(x!==''||y!==''){if(x===''||y==='')throw Error('Set both anchor coordinates, or leave both automatic.');options.anchor=[Number(x),Number(y)];}
-  const p=await post('/api/production-export',{kind,ids:nativeAssets.map(a=>a.id),options,verify_engine:kind==='godot'&&$('#nativeEngine').checked});productionId=p.id;$('#nativeDialog').close();showView('production');await refreshProduction(true);
+  const p=await post('/api/production-export',{kind,ids:nativeAssets.map(a=>a.id),options,verify_engine:kind==='godot'&&$('#nativeEngine').checked,verify_krita:kind==='ora'&&$('#nativeKrita').checked});productionId=p.id;$('#nativeDialog').close();showView('production');await refreshProduction(true);
 }catch(err){$('#nativeStatus').textContent=err.message;}finally{$('#prepareNative').disabled=false;}};
 
 $('#newArticulated').onclick=()=>$('#articulatedDialog').showModal();

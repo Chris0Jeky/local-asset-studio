@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 from urllib.error import URLError
 
-from test_server import server, FakeStudio, GRAPH, PRESET
+from test_server import server, FakeStudio, GRAPH, PRESET, png
 
 
 class ProductionTests(unittest.TestCase):
@@ -50,6 +50,36 @@ class ProductionTests(unittest.TestCase):
             restarted.production.run(project['id'])
         run.assert_not_called();recover.assert_called_once()
         self.assertEqual(restarted.production.get(project['id'])['state']['status'],'completed')
+
+    def test_krita_export_pins_runtime_and_packs_native_document_without_generation(self):
+        import zipfile
+        from native_exports import krita_roundtrip
+        (self.root/'scripts').mkdir()
+        for name in ('game_asset_media.py','godot_asset_adapter.py'):
+            (self.root/'scripts'/name).write_bytes((Path(__file__).parents[1]/'scripts'/name).read_bytes())
+        studio=FakeStudio(self.root,[])
+        asset=studio.import_image('paint.png','image/png',png())['asset']
+        runtime={'path':str(self.root/'krita.exe'),'sha256':'a'*64}
+        def save_native(source,target,configured):
+            self.assertTrue(source.is_file());target.mkdir()
+            (target/'roundtrip.kra').write_bytes(b'native proof fixture')
+            return {'native_kra_save_reopen_proved':True,'kra':{'layers':[{'name':'Paint'}]}}
+        with patch.object(krita_roundtrip,'preflight',return_value=runtime),patch.object(krita_roundtrip,'execute',side_effect=save_native) as execute:
+            project=studio.production.native({'kind':'ora','ids':[asset['id']],'options':{'clip':'paint-study'},'verify_krita':True})
+            self.assertEqual(execute.call_count,0)
+            studio.production.start(project['id']);studio.production.run(project['id'])
+        execute.assert_called_once()
+        state=studio.production.get(project['id'])['state']
+        self.assertTrue(state['krita']['native_kra_save_reopen_proved'])
+        with zipfile.ZipFile(studio.production.root/project['id']/'export.zip') as archive:
+            self.assertIn('krita/roundtrip.kra',archive.namelist());self.assertIn('layers.ora',archive.namelist())
+        self.assertEqual(self.post_count(studio),0)
+        with patch.object(krita_roundtrip,'preflight',return_value=runtime):
+            changed=studio.production.native({'kind':'ora','ids':[asset['id']],'options':{'clip':'changed-krita'},'verify_krita':True})
+        with patch.object(krita_roundtrip,'preflight',return_value=dict(runtime,sha256='b'*64)),patch.object(krita_roundtrip,'execute') as execute:
+            studio.production.start(changed['id'])
+            with self.assertRaisesRegex(ValueError,'Krita changed'):studio.production.run(changed['id'])
+        execute.assert_not_called()
 
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
