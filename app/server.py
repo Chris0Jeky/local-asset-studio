@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import io
 import json
 import math
 import mimetypes
@@ -13,6 +14,7 @@ import sys
 import threading
 import time
 import uuid
+import zipfile
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -24,6 +26,7 @@ from urllib.request import Request, urlopen
 # The portable Python includes ComfyUI's own `app` package in its search path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from model_library import ModelLibrary
+from workspace import AssetWorkspace, WorkspaceError, digest_file
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -63,8 +66,12 @@ class Studio:
         self.comfy_url = str(self.config.get("comfy_url", "http://127.0.0.1:8188")).rstrip("/")
         self.comfy_root = Path(self.config.get("comfy_root", "C:/AI/ComfyUI_windows_portable/ComfyUI")).resolve()
         self.library = ModelLibrary(self.root, self.comfy_root)
+        self.assets = AssetWorkspace(self.experiments)
+        self._schema_lock = threading.Lock()
+        self._schema = None; self._schema_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.Lock()
         self._load_jobs()
+        for job in self.jobs.values(): self.index_outputs(job)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
 
     def catalog(self):
@@ -173,14 +180,18 @@ class Studio:
 
     def create_job(self, payload):
         preset, graph, graph_path, controls, batch = self.prepare(payload)
+        parents = payload.get("parent_assets", [])
+        if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
+        for parent in parents: self.assets.get(parent)
         job_id = str(uuid.uuid4()); directory = self.runs / job_id; directory.mkdir()
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
+        job["parent_assets"] = parents
         self._save(job); self.jobs[job_id] = job; self.queue.put(("generate", job_id))
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -190,7 +201,55 @@ class Studio:
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
-                "outputs": job.get("outputs", [])}
+                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", [])}
+
+    def output_path(self, output, job=None):
+        root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
+        kind = output.get("type", "output")
+        if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
+        return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
+
+    def index_outputs(self, job):
+        for index, output in enumerate(job.get("outputs", [])):
+            try:
+                asset_id = self.assets.register(job, index, self.output_path(output, job))
+                if asset_id: output["asset_id"] = asset_id
+            except (OSError, ValueError) as exc:
+                output["snapshot_error"] = str(exc)[:200]
+
+    def asset_reference(self, asset_id):
+        asset = self.assets.get(asset_id)
+        if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
+        source = self.assets.file(asset_id)
+        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", source.read_bytes())
+        result["parent_asset"] = asset_id
+        return result
+
+    def export_assets(self, payload):
+        ids = payload.get("ids")
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 200: raise StudioError("Select 1–200 assets to export")
+        assets = [self.assets.get(i) for i in dict.fromkeys(ids)]
+        if any(a["trashed_at"] for a in assets): raise StudioError("Restore trashed assets before exporting")
+        total = sum(a["bytes"] for a in assets)
+        if shutil.disk_usage(self.experiments).free - total < 2 * 1024**3: raise StudioError("Export needs more free disk space")
+        directory = self.assets.root / "exports"; directory.mkdir(exist_ok=True)
+        identifier = uuid.uuid4().hex
+        target = directory / (identifier + ".zip")
+        temporary = target.with_suffix(".part")
+        try:
+            with zipfile.ZipFile(temporary, "x", compression=zipfile.ZIP_STORED) as archive:
+                for asset in assets:
+                    source = self.assets.file(asset["id"])
+                    if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
+                    archive.write(source, "assets/" + asset["id"] + source.suffix)
+                    job = self.jobs.get(asset["job_id"])
+                    if job:
+                        archive.writestr("recipes/" + asset["id"] + ".json", json.dumps(self.export_recipe(job), indent=2))
+                archive.writestr("manifest.json", json.dumps({"version": 1, "assets": assets, "created_at": time.time(), "note": "Review states are creative selections, not model-license or engine acceptance."}, indent=2))
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
+        return {"id": identifier, "url": "/api/exports/" + identifier, "count": len(assets)}
 
     def check_recipe(self, recipe):
         if not isinstance(recipe, dict) or not isinstance(recipe.get("workflow"), dict):
@@ -228,10 +287,21 @@ class Studio:
         req = Request(self.comfy_url + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
         with urlopen(req, timeout=timeout) as response: return json.loads(response.read().decode())
 
-    def health(self):
+    def identity(self):
+        return {"app": "local-asset-studio", "workspace": str(self.root), "version": "production-workspace-1"}
+
+    def node_info(self, refresh=False):
+        with self._schema_lock:
+            if refresh or self._schema is None or time.monotonic() - self._schema_at > 120:
+                info = self._request("/object_info", timeout=8)
+                if not isinstance(info, dict): raise StudioError("Invalid ComfyUI node schema")
+                self._schema = info; self._schema_at = time.monotonic()
+            return self._schema
+
+    def health(self, refresh=False):
         try:
             stats = self._request("/system_stats", timeout=3)
-            try: info = self._request("/object_info", timeout=8); info_available = isinstance(info, dict)
+            try: info = self.node_info(refresh); info_available = isinstance(info, dict)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): info, info_available = {}, False
             missing = {}
             for preset in self.catalog()["presets"]:
@@ -295,7 +365,7 @@ class Studio:
                 if len(classes) > 2000: raise StudioError("Workflow exceeds 2000 nodes")
                 filenames(item.get("widgets_values", []) if visual else item.get("inputs", {}))
         if not classes: raise StudioError("No ComfyUI nodes found")
-        try: info = self._request("/object_info", timeout=15); available = True
+        try: info = self.node_info(); available = True
         except (URLError, OSError, ValueError): info = {}; available = False
         ui_only = {"Note", "MarkdownNote", "Reroute", "PrimitiveNode", "PrimitiveBoolean", "PrimitiveFloat", "PrimitiveInt"}
         missing_nodes = sorted(set(classes) - set(info) - aliases - ui_only) if available else []
@@ -389,7 +459,7 @@ class Studio:
                                 descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
                                                   media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
                                 if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
-                submission["status"] = "completed"; self._save(job); return True
+                submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             time.sleep(2)
         job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
         return False
@@ -417,6 +487,16 @@ class Studio:
         mime = content_type.split(";", 1)[0].lower()
         magic = {"image/png": b"\x89PNG\r\n\x1a\n", "image/jpeg": b"\xff\xd8\xff", "image/webp": b"RIFF"}
         if mime not in IMAGE_TYPES or len(body) > 20 * 1024 * 1024 or not body or not body.startswith(magic[mime]): raise StudioError("Upload must be a PNG, JPG, or WebP under 20 MiB")
+        from PIL import Image, UnidentifiedImageError
+        try:
+            with Image.open(io.BytesIO(body)) as decoded:
+                width, height = decoded.size
+                if width * height > 40_000_000 or width < 1 or height < 1: raise StudioError("Reference must be at most 40 megapixels")
+                if Image.MIME.get(decoded.format) != mime: raise StudioError("The image format does not match its content type")
+                decoded.verify()
+            with Image.open(io.BytesIO(body)) as decoded: decoded.load()
+        except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
+            raise StudioError("Reference image is damaged or incomplete; choose a valid PNG, JPG or WebP") from exc
         safe = re.sub(r"[^A-Za-z0-9._-]", "_", Path(filename or "reference").name)[:100]
         if not safe or safe in (".", ".."): raise StudioError("Invalid upload filename")
         # ComfyUI only receives this generated basename; client paths are never used.
@@ -428,7 +508,9 @@ class Studio:
             path.unlink(missing_ok=True)
             raise StudioError("Configured ComfyUI input folder is unavailable")
         shutil.copyfile(path, comfy_input / name)
-        return {"file": name}
+        metadata = {"file": name, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "width": width, "height": height, "original_name": safe}
+        self._write_json_atomic(uploads / (name + ".json"), metadata)
+        return metadata
 
 class Handler(BaseHTTPRequestHandler):
     studio: Studio = None
@@ -473,10 +555,47 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 while chunk := response.read(64 * 1024): self.wfile.write(chunk)
             except (BrokenPipeError, ConnectionResetError): return
+
+    def _local_file(self, file, download=False):
+        size = file.stat().st_size
+        start, end = 0, size - 1
+        requested = self.headers.get("Range")
+        if requested:
+            match = re.fullmatch(r"bytes=(\d*)-(\d*)", requested)
+            if not match or not any(match.groups()): raise StudioError("A single byte range is required")
+            left, right = match.groups()
+            if left: start, end = int(left), min(int(right), end) if right else end
+            else: start = max(0, size - int(right))
+            if start > end or start >= size:
+                self.send_response(416); self.send_header("Content-Range", f"bytes */{size}"); self.send_header("Content-Length", "0"); self.end_headers(); return
+        self.send_response(206 if requested else 200)
+        self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(end - start + 1)); self.send_header("Accept-Ranges", "bytes")
+        if requested: self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        if download: self.send_header("Content-Disposition", f'attachment; filename="{file.name}"')
+        self.end_headers()
+        try:
+            with file.open("rb") as stream:
+                stream.seek(start); remaining = end - start + 1
+                while remaining:
+                    chunk = stream.read(min(65536, remaining))
+                    if not chunk: break
+                    self.wfile.write(chunk); remaining -= len(chunk)
+        except (BrokenPipeError, ConnectionResetError): pass
     def do_GET(self):
         if not self._safe_host(): return self._json(403, {"error":"Loopback Host required"})
         try:
             path = urlparse(self.path).path
+            if path == "/api/identity": return self._json(200, self.studio.identity())
+            if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
+            if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path.startswith("/api/assets/") and path.endswith("/file"):
+                return self._local_file(self.studio.assets.file(path.split("/")[3]), urlparse(self.path).query == "download")
+            if path.startswith("/api/exports/"):
+                identifier = path.rsplit("/", 1)[-1]
+                if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
+                file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
+                return self._local_file(file, True)
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
             if path.startswith("/api/workflows/"):
                 preset = self.studio.preset(path.rsplit("/", 1)[-1]); _, workflow = self.studio.graph_for(preset)
@@ -484,7 +603,7 @@ class Handler(BaseHTTPRequestHandler):
                     workflow = inside(self.studio.root, self.studio.root / preset["visual"])
                 suffix = "visual" if urlparse(self.path).query == "visual" and preset.get("visual") else "api"
                 data = workflow.read_bytes(); self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Disposition", f'attachment; filename="{preset["id"]}-{suffix}.json"'); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
-            if path == "/api/health": return self._json(200, self.studio.health())
+            if path == "/api/health": return self._json(200, self.studio.health(urlparse(self.path).query == "refresh"))
             if path == "/api/library": return self._json(200, self.studio.library.snapshot())
             if path.startswith("/api/inspect/"): return self._json(200, self.studio.inspect_preset(path.rsplit("/", 1)[-1]))
             if path.startswith("/api/examples/"):
@@ -499,6 +618,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/image/"):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); image = job and job.get("outputs", [])[int(index)]
                 if not image: return self._json(404, {"error":"Unknown image"})
+                if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
                 return self._media(image)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
@@ -511,6 +631,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
+            if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
+            if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
+            if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_json().get("id")))
+            if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_json()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
             if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_json().get("id")))
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_json().get("id")))
@@ -521,6 +646,7 @@ class Handler(BaseHTTPRequestHandler):
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             return self._json(404, {"error":"Not found"})
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
+        except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1])); args = parser.parse_args()

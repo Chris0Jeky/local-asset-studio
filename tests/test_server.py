@@ -8,6 +8,10 @@ from pathlib import Path
 from unittest.mock import patch
 from unittest.mock import Mock
 from urllib.error import HTTPError, URLError
+from PIL import Image
+
+def png():
+    stream = io.BytesIO(); Image.new('RGB', (8, 12), 'purple').save(stream, 'PNG'); return stream.getvalue()
 
 SPEC = importlib.util.spec_from_file_location("asset_server", Path(__file__).parents[1] / "app/server.py")
 server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
@@ -44,7 +48,10 @@ class ServerTests(unittest.TestCase):
         with self.assertRaises(server.StudioError): server.inside(self.root, self.root/"../outside")
         s=self.studio()
         with self.assertRaises(server.StudioError): s.upload("../x.png","image/png",b"wrong")
-        self.assertIn("file",s.upload("../x.png","image/png",b"\x89PNG\r\n\x1a\nbody"))
+        with self.assertRaisesRegex(server.StudioError, "damaged|incomplete"):
+            s.upload("broken.png","image/png",b"\x89PNG\r\n\x1a\nbody")
+        result=s.upload("../x.png","image/png",png())
+        self.assertEqual((result['width'],result['height']),(8,12)); self.assertEqual(len(result['sha256']),64)
         uploads=self.root/"experiments/uploads"; uploads.mkdir(parents=True,exist_ok=True); (uploads/"plain.png").write_bytes(b"x")
         with self.assertRaisesRegex(server.StudioError,"Reference upload is invalid"):
             s.prepare({"preset_id":"demo","controls":{"reference":"../plain.png"}})
@@ -102,6 +109,12 @@ class ServerTests(unittest.TestCase):
         live=FakeStudio(self.root,[{},{}]).health()
         self.assertIn("demo",live["missing_models"])
 
+    def test_identity_never_calls_backend_and_schema_discovery_is_cached(self):
+        s=FakeStudio(self.root,[{}, {}, {}, {}])
+        self.assertEqual(s.identity()['app'],'local-asset-studio'); self.assertEqual(s.requests,[])
+        s.health(); s.health(); s.health()
+        self.assertEqual(sum(args[0]=='/object_info' for args,_ in s.requests),1)
+
     def test_video_constraints_and_second_reference(self):
         preset=dict(PRESET, frames=["1","frames"], last_reference=["1","last_reference"], dimension_multiple=32, frame_grid=17, frame_offset=5, max_pixels=1344*768)
         graph=json.loads(json.dumps(GRAPH)); graph['1']['inputs'].update(frames=124,last_reference='default.png')
@@ -112,7 +125,7 @@ class ServerTests(unittest.TestCase):
         with self.assertRaisesRegex(server.StudioError,'multiple of 32'): s.prepare({'preset_id':'demo','controls':{'width':648}})
         with self.assertRaisesRegex(server.StudioError,'pixel budget'): s.prepare({'preset_id':'demo','controls':{'width':1536,'height':768}})
         with self.assertRaisesRegex(server.StudioError,'Reference upload is invalid'): s.prepare({'preset_id':'demo','controls':{'last_reference':'../x.png'}})
-        upload=s.upload('last.png','image/png',b'\x89PNG\r\n\x1a\nbody')['file']
+        upload=s.upload('last.png','image/png',png())['file']
         _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'frames':22,'last_reference':upload}})
         self.assertEqual(bound['1']['inputs']['frames'],22)
         self.assertEqual(bound['1']['inputs']['last_reference'],upload)

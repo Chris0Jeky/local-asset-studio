@@ -1,5 +1,42 @@
 # Current state — 11 September 2026
 
+## Active production-workspace continuation
+
+The user requested an ambitious implementation pass across merged PRs **#20**
+(game-asset planner, reference graphs, atlas/ORA tools) and **#8** (frontier research).
+They are now the branch base `f6e046b`; work continues on
+`codex/creative-production-workspace` with incremental commits and one writer.
+The original Workflow Lab evidence below remains scoped to its recorded runs.
+
+First implemented slice: a persistent Workspace view with collections, search,
+media filters, favorites, tags, review notes, multi-select, recoverable Trash/Restore,
+image-to-workflow handoffs and ZIP exports containing snapshots, recipes and metadata.
+SQLite and immutable hashed media live under the configured shared experiments
+directory, outside Git. Original ComfyUI outputs are preserved. Saved setups now
+live on the server, with browser-local migration. Read [the workspace guide](docs/WORKSPACE.md).
+
+Startup identity is independent of ComfyUI; the launcher reuses an existing Studio
+even when its backend is unavailable. Full node discovery is cached for 120 seconds
+with an explicit refresh. Uploads are decoded/verified, capped at 40 megapixels,
+and retain original dimensions and SHA-256 metadata.
+
+Verified at this slice: 106 tests pass (one existing Windows symlink availability
+skip), catalog validator passes, both JavaScript files parse, and launcher syntax
+parses. Actual browser actions created a collection, assigned an existing Anima
+render, saved tags/notes, moved it to Trash and restored it. The new store indexed
+46 existing outputs; no generation was submitted. Wider browser checks and
+independent review are in progress. Review states remain unreviewed unless the
+user explicitly changes them; the optional choices in [HUMAN_TODO.md](HUMAN_TODO.md)
+remain open.
+
+Outstanding work in the active goal: role-specific Qwen references (#21), bounded
+experiments and trusted stage execution (#10/#22), isolated HiDream integration
+(#2), H3 loader compatibility (#18/#11), shot/control experiments (#12/#13),
+native editing and engine exports (#14–#16/#23–#25), and accurate source/terms
+metadata (#9/#26). Research entries are not automatically executable or accepted.
+The secondary workspace request has an implemented foundation; it is not a claim
+that the broader production goal is complete.
+
 ## Changed
 
 Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and

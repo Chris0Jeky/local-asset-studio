@@ -6,6 +6,15 @@ if (-not (Test-Path -LiteralPath $configPath)) {
     Copy-Item -LiteralPath (Join-Path $repoRoot 'config\example.json') -Destination $configPath
 }
 $studioConfig = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+$studioUrl = 'http://127.0.0.1:8191'
+$existingStudio = $null
+try { $existingStudio = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2 } catch { }
+if ($existingStudio.app -eq 'local-asset-studio') {
+    if ($existingStudio.workspace -ne $repoRoot) { throw "Another Asset Studio workspace is using ${studioUrl}: '$($existingStudio.workspace)'." }
+    Write-Host "Asset Studio ready: $studioUrl"
+    if (-not $NoBrowser) { Start-Process $studioUrl }
+    return
+}
 if (-not (Test-Path -LiteralPath $studioConfig.python)) { throw 'Python not found. Update config/local.json with this computer''s runtime paths.' }
 if (-not (Test-Path -LiteralPath $studioConfig.comfy_root)) { throw 'ComfyUI not found. Update config/local.json.' }
 $inputRoot = Join-Path $studioConfig.comfy_root 'input'
@@ -22,7 +31,7 @@ if (-not $comfyReady) {
 }
 $studioUrl = 'http://127.0.0.1:8191'
 $ready = $false
-try { $health = Invoke-RestMethod ($studioUrl + '/api/health') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
+try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
 if ($ready -and $health.workspace -ne $repoRoot) {
     throw "Another Asset Studio workspace is using $studioUrl. Its workspace is '$($health.workspace)'. Finish its active jobs before restarting with this launcher."
 }
@@ -36,7 +45,7 @@ if (-not $ready) {
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Seconds 1
         if ($process.HasExited) { throw "Asset Studio exited. See $logRoot" }
-        try { $health = Invoke-RestMethod ($studioUrl + '/api/health') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio'; if ($ready) { break } } catch { }
+        try { $health = Invoke-RestMethod ($studioUrl + '/api/identity') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio'; if ($ready) { break } } catch { }
     }
     if (-not $ready) { throw "Asset Studio did not become ready. See $logRoot" }
 }
