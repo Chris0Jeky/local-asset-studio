@@ -19,6 +19,10 @@ for preset in catalog:
         for value in node['inputs'].values():
             if isinstance(value,list):
                 assert len(value)==2 and value[0] in graph and isinstance(value[1],int), (preset['id'],value)
+    for slot in preset.get('reference_slots',[]):
+        node,field=slot['binding']
+        assert field in graph[node]['inputs'], (preset['id'],'reference',slot)
+        assert slot['role'] in {'identity','pose','style','costume','composition','geometry','motion','mask'}
     assert preset.get('modality','image') in {'image','video','3d'}
     if preset.get('visual'):
         visual_path=(root/preset['visual']).resolve()
@@ -43,6 +47,6 @@ for name in filter(None,files):
     path=root/name
     assert path.stat().st_size<=10*1024*1024, 'Tracked file exceeds 10 MiB: '+name
     assert path.suffix.lower() not in {'.safetensors','.gguf','.ckpt','.onnx','.pt','.pth','.bin','.exe','.dll','.zip'}, 'Dependency/weight in Git: '+name
-    assert not name.startswith(('experiments/runs/','experiments/uploads/','.runtime/')), 'Operational output in Git: '+name
+    assert not name.startswith(('experiments/runs/','experiments/uploads/','experiments/workspace/','experiments/projects/','.runtime/')), 'Operational output in Git: '+name
     assert name!='config/local.json' and not path.name.startswith('.env'), 'Local config/secret file in Git'
 print(f'PASS: {len(catalog)} preset graphs/bindings; {len(library["assets"])} pinned assets; {len(list(filter(None,files)))} tracked paths checked.')

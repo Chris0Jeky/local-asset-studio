@@ -4,12 +4,12 @@ const safeUrl = url => { try { const u = new URL(url); return ['http:','https:']
 const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','frames','fps','sampler','scheduler'];
 let catalog, selected, online = false, schemaAvailable = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
-let recipeTemplateHash = null;
+let recipeTemplateHash = null, parentAssets = [], serverSetups = [];
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
-function clearReference() { uploaded = lastUploaded = null; $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced."; }
+function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced."; }
 function renderPresets() {
   if (!catalog) return;
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
@@ -19,7 +19,7 @@ function renderPresets() {
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
-  $('#generate').disabled = submitting || !online || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0;
+  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
   $('#health').textContent = !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && schemaAvailable && !missing.length ? 'ready' : 'offline');
 }
@@ -33,12 +33,14 @@ function renderSelected() {
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '">' + esc(v.name) + '</button>').join('');
   const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
   $('#controls').innerHTML = specs.filter(([k]) => selected[k] || selected.bindings_extra?.[k]).map(([key,label,type,attrs]) => {
+    if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
     if (type === 'select') return '<label>' + label + '<select data-key="' + key + '">' + (selected.choices?.[key] || []).map(v => '<option>' + esc(v) + '</option>').join('') + '</select></label>';
     if (key === 'lora' && typeof selected.defaults?.lora === 'string') { type='text'; attrs=''; label='LoRA filename'; }
     return '<label>' + label + '<input data-key="' + key + '" type="' + type + '" ' + attrs + '>' + (key === 'frames' ? '<small>' + (selected.family==='MiniMax H3'?'24fps · 124 ≈ 5.2s · use 17k+5 frames':'24fps · 81 ≈ 3.4s · use 4k+1 frames') + '</small>' : '') + '</label>';
   }).join('');
   controlKeys.forEach(k => { const input=getControl(k); if (input) input.value=selected.defaults?.[k] ?? ''; });
   $('#referenceWrap').hidden = !selected.reference; $('#lastReferenceWrap').hidden = !selected.last_reference;
+  if(typeof renderReferenceSlots==='function')renderReferenceSlots();
   $('#workflow').href = '/api/workflows/' + encodeURIComponent(selected.id);
   $('#visualWorkflow').hidden = !selected.visual; $('#visualWorkflow').href = $('#workflow').href + '?visual';
   $('#sourceLink').hidden = !selected.source; $('#sourceLink').href = safeUrl(selected.source);
@@ -94,12 +96,12 @@ function renderJobs() {
   const cards=[];
   jobs.forEach(job=>{
     if(job.status!=='completed')cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+(['uncertain','partial'].includes(job.status)&&job.prompt_ids?.length?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation</button>':'')+'</article>');
-    job.outputs?.forEach((o,i)=>cards.push(mediaCard(job,i,o)));
+    job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
   $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>'; renderCompare();
 }
 async function refresh(){try{jobs=await api('/api/jobs');renderJobs();const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
-function showView(next){view=next;['create','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});if(next!=='create')refreshLibrary();}
+function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase();$('#inventory').innerHTML=library.inventory.filter(m=>m.file.toLowerCase().includes(q)).map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';}
 async function refreshLibrary(){
   try{
@@ -117,11 +119,28 @@ async function refreshLibrary(){
   }catch(e){$('#downloadStatus').textContent=e.message;}
 }
 async function install(id){try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & folders.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}}
-function saved(){try{const data=JSON.parse(localStorage.getItem('asset-studio-saved')||'[]');return Array.isArray(data)?data:[];}catch{return [];}}
-function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<button data-load="'+i+'">'+esc(s.name)+'</button>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
+function saved(){return serverSetups.map(s=>({...s.recipe,name:s.name,id:s.id}));}
+async function loadSetups(){
+  serverSetups=await api('/api/setups');
+  const identity=await api('/api/identity'), migrationKey='asset-studio-setups-migrated:'+identity.workspace;
+  if(!localStorage.getItem(migrationKey)){
+    let old=[];try{old=JSON.parse(localStorage.getItem('asset-studio-saved')||'[]');}catch{}
+    if(Array.isArray(old))for(const recipe of old){
+      if(serverSetups.some(s=>s.name===recipe.name&&JSON.stringify(s.recipe)===JSON.stringify(recipe)))continue;
+      const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(recipe)));
+      const id='legacy-'+[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+      await post('/api/setups',{id,name:recipe.name,recipe});
+    }
+    localStorage.setItem(migrationKey,'1');serverSetups=await api('/api/setups');
+  }
+  renderSaved();
+}
+function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
 function applySaved(s){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   selectPreset(s.preset);
+  parentAssets=Array.isArray(s.parent_assets)?s.parent_assets.filter(id=>typeof id==='string'):[];
+  if(selected.reference_slots)restoreReferenceSlots(s.references);
   Object.entries(s.controls||{}).forEach(([k,v])=>{const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
@@ -139,7 +158,7 @@ $('#generate').onclick=async()=>{
   if(submitting||!selected)return;submitting=true;updateReady();
   try{
     uploaded=(await uploadInput('reference'))||uploaded;lastUploaded=(await uploadInput('lastReference'))||lastUploaded;
-    const job=await post('/api/jobs',{preset_id:selected.id,controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash});activeJobId=job.id;message(job.message);await refresh();
+    const job=await post('/api/jobs',{preset_id:selected.id,controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()});activeJobId=job.id;message(job.message);await refresh();
   }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
 };
 $('#gallery').onclick=async e=>{
@@ -148,20 +167,23 @@ $('#gallery').onclick=async e=>{
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
     const ref=e.target.closest('.reference-output');if(ref){
-      const blob=await (await fetch('/api/image/'+encodeURIComponent(ref.dataset.job)+'/'+ref.dataset.index)).blob();
+      const source=jobs.find(j=>j.id===ref.dataset.job)?.outputs?.[Number(ref.dataset.index)];
+      if(!source?.asset_id)throw Error('This output has no saved asset identity. Refresh the workspace before attaching it.');
+      const result=await post('/api/assets/reference',{id:source.asset_id});
       if(ref.dataset.preset)selectPreset(ref.dataset.preset);
-      if(!selected.reference)selectPreset(catalog.presets.find(p=>p.id==='gentle-variation')?.id || catalog.presets.find(p=>p.reference&&p.modality==='image').id);
-      uploaded=(await api('/api/upload',{method:'POST',headers:{'Content-Type':blob.type,'X-Filename':'previous-output.png'},body:blob})).file;
+      if(!selected?.reference)selectPreset(catalog.presets.find(p=>p.id==='gentle-variation')?.id || catalog.presets.find(p=>p.reference&&p.modality==='image').id);
+      uploaded=result.file;parentAssets=[source.asset_id];
+      if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
       $('#reference').value='';
       $('#referenceHint').textContent='Using the selected output as the reference. It has been copied into this recipe.';
       message('Reference attached. Adjust the prompt, then generate when ready.');
     }
   }catch(err){message(err.message,true);}
 };
-$('#save').onclick=()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}const all=saved();all.push({name,preset:selected.id,controls:values(),batch:$('#batch').value});localStorage.setItem('asset-studio-saved',JSON.stringify(all));$('#saveName').value='';renderSaved();message('Setup saved on this browser. Export a result recipe for a portable copy.');};
-$('#savedList').onclick=e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,controls:recipe.controls,batch_count:recipe.batch_count});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
-$('#refreshModels').onclick=refreshLibrary;$('#modelSearch').oninput=renderInventory;
+$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,controls:values(),batch:$('#batch').value,parent_assets:parentAssets,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
+$('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
 document.addEventListener('click',async e=>{
   const copy=e.target.closest('[data-copy]'),folder=e.target.closest('[data-folder]'),button=e.target.closest('[data-install]');
   try{if(copy){await navigator.clipboard.writeText(copy.dataset.copy);copy.textContent='Copied';}if(folder)await post('/api/folders/open',{id:folder.dataset.folder});if(button)await install(button.dataset.install);}catch(err){message(err.message,true);$('#downloadStatus').textContent=err.message;}
@@ -173,7 +195,8 @@ $('#importWorkflow').onchange=async e=>{
   try{
     catalog=await api('/api/catalog');$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
-    selectPreset(catalog.presets.find(p=>p.id==='lineani-portrait')?.id||catalog.presets[0].id);renderSaved();await health();await refresh();await refreshLibrary();
-    setInterval(refresh,4000);setInterval(async()=>{await health();if(view!=='create')await refreshLibrary();},15000);
+    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
+    const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
+    setInterval(async()=>{await refresh();if(view==='production')await refreshProduction();if(view==='assets'||jobs.some(j=>['running','waiting','queued'].includes(j.status)))await refreshAssets();},4000);setInterval(async()=>{await health();if(view==='models')await refreshLibrary();},15000);
   }catch(e){message(e.message,true);}
 })();

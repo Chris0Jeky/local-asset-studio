@@ -14,9 +14,11 @@ workspace occupies port 8191, the launcher reports its path. Finish and reconcil
 its jobs before stopping the owned process and starting the intended workspace.
 
 `runtime_blocks` in local config maps model families to an observed incompatibility
-message. H3 is currently blocked after two Windows ROCm encoder crashes. Do not
-remove that entry merely because all model files are present. First establish a
-compatible encoder/runtime in an isolated test; see the Workflow Lab guide.
+message. The primary H3 loader remains incompatible, while the isolated
+`H3 loader experiment` environment completed a short video using exact-file
+read-only mappings. The local opt-in flag permits H3 only in that selected
+environment. See [H3 on Windows](H3-WINDOWS.md); file presence alone never proved
+runtime compatibility.
 
 The studio submits jobs serially and waits for the ComfyUI queue. Avoid simultaneously pressing Generate in both interfaces. A user can still independently submit work in ComfyUI; the studio is not a global GPU lock.
 

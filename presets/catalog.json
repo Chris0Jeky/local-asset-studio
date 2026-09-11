@@ -1044,15 +1044,16 @@
       "id": "anime-esrgan",
       "name": "Anime upscale - ESRGAN 2x",
       "category": "Anime quality",
-      "description": "Upload an image. Learned 4x anime upscaler, resized to final 2x; no diffusion redraw or prompt. May smooth pixel art. Model loading checked, artistic quality not evaluated.",
+      "description": "Upload an image. Learned 4x anime upscaler, resized to final 2x; no diffusion redraw or prompt. Saved-reference handoff executed locally. May smooth pixel art; artistic quality remains for your review.",
       "graph": "workflows/api/anime-esrgan-api.json",
-      "verified": false,
+      "verified": true,
       "reference": [
         "1",
         "image"
       ],
       "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms.",
-      "modality": "image"
+      "modality": "image",
+      "execution_notes": "Saved Anima-to-ESRGAN handoff completed as prompt 60949ec3-2ec2-471f-88cb-73fa78a5491c on 11 September 2026; source lineage retained. Art quality remains unaccepted."
     },
     {
       "id": "anime-face",
@@ -1826,7 +1827,7 @@
       "collection": "workflow-lab",
       "graph": "workflows/api/h3-preview-api.json",
       "visual": "workflows/comfyui/36 - MiniMax H3 - Preview.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
       "positive": [
         "5",
@@ -1858,7 +1859,7 @@
       "max_pixels": 1032192,
       "frame_grid": 17,
       "frame_offset": 5,
-      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "description": "Native video and stereo audio. A 39-frame preview completed through the isolated H3 loader in 6m 38s on this Radeon. Start with the tested quick audition; larger shots are experimental.",
       "stages": [
         "Prompt / keyframes",
         "H3 + text encoder",
@@ -1868,7 +1869,16 @@
       ],
       "variants": [
         {
-          "name": "Small preview",
+          "name": "Tested quick audition",
+          "controls": {
+            "width": 512,
+            "height": 320,
+            "frames": 39,
+            "steps": 8
+          }
+        },
+        {
+          "name": "Longer shot - experimental",
           "controls": {
             "width": 640,
             "height": 384,
@@ -1876,7 +1886,7 @@
           }
         },
         {
-          "name": "Native canvas",
+          "name": "Native canvas - experimental",
           "controls": {
             "width": 1344,
             "height": 768,
@@ -1888,7 +1898,9 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3",
+      "execution_notes": "512x320, 39 frames at 24fps, eight steps, seed 2026091143, prompt 49873807-fda1-4fe0-afdd-62b13f5329d8, 398.096 seconds. H264 video and stereo AAC both decoded; exact defaults match the executed graph."
     },
     {
       "id": "h3-quality",
@@ -1959,7 +1971,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "h3-image",
@@ -2034,7 +2047,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "h3-first-last",
@@ -2113,7 +2127,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "hunyuan-draft",
@@ -2728,6 +2743,518 @@
         }
       ],
       "execution_note": "PBR export executed with local CPU UV patch; inspect unwanted surfaces and finish the mesh. See experiments/curated/workflow-lab."
+    },
+    {
+      "id": "qwen-1ref",
+      "name": "Qwen Atelier - 1 Reference",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-1ref-api.json",
+      "visual": "workflows/comfyui/50 - Qwen Atelier - 1 Reference.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": false,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "874d0ac33c5d8c1757e6ff30328cddd28f36963bf85289239897bbb0ed303361"
+    },
+    {
+      "id": "qwen-2ref",
+      "name": "Qwen Atelier - 2 References",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-2ref-api.json",
+      "visual": "workflows/comfyui/51 - Qwen Atelier - 2 References.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": false,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        },
+        {
+          "role": "pose",
+          "contribution": "Body position, viewing angle, hand and prop contact",
+          "avoid": "The reference person, costume and rendering style",
+          "binding": [
+            "16",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "1f93bebef70219c2ac084bac997ad0b448196407009cc6d91025317eb5db12f9"
+    },
+    {
+      "id": "qwen-3ref",
+      "name": "Qwen Atelier - 3 References",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-3ref-api.json",
+      "visual": "workflows/comfyui/52 - Qwen Atelier - 3 References.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": true,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        },
+        {
+          "role": "pose",
+          "contribution": "Body position, viewing angle, hand and prop contact",
+          "avoid": "The reference person, costume and rendering style",
+          "binding": [
+            "16",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "Linework, shading, medium and palette",
+          "avoid": "The reference subject and composition",
+          "binding": [
+            "17",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "e95f34078fa8647ec788d16d2ebc4459a331e14296e9f3a8107de4d58e42e4bf",
+      "execution_note": "Three-role manga edit: 512x768, 4 steps, seed 2026091101; 1334.646 seconds on RX 9070 XT Windows ROCm. Prompt c8b752b5-cb25-4438-8c66-f0e5fafcae04. Execution recorded; subjective acceptance remains open."
+    },
+    {
+      "id": "hidream-o1-concept",
+      "name": "HiDream O1 - 2K Anime Concept",
+      "category": "HiDream studio",
+      "collection": "production-workspace",
+      "family": "HiDream O1",
+      "backend_id": "hidream",
+      "modality": "image",
+      "graph": "workflows/api/hidream-o1-concept-api.json",
+      "visual": "workflows/comfyui/53 - HiDream O1 - 2K Anime Concept.json",
+      "positive": [
+        "2",
+        "prompt"
+      ],
+      "negative": [
+        "2",
+        "negative_prompt"
+      ],
+      "seed": [
+        "3",
+        "seed"
+      ],
+      "steps": [
+        "3",
+        "steps"
+      ],
+      "cfg": [
+        "3",
+        "guidance_scale"
+      ],
+      "description": "Native 2K concept synthesis in the isolated environment.",
+      "stages": [
+        "HiDream full FP8",
+        "Unified pixels and text",
+        "SDPA sampling",
+        "PNG"
+      ],
+      "verified": true,
+      "model_files": [
+        "diffusion_models/HiDream-O1-Image-fp8/model.safetensors",
+        "diffusion_models/HiDream-O1-Image-fp8/config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/generation_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/preprocessor_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/chat_template.json",
+        "diffusion_models/HiDream-O1-Image-fp8/merges.txt",
+        "diffusion_models/HiDream-O1-Image-fp8/vocab.json"
+      ],
+      "source": "https://huggingface.co/HiDream-ai/HiDream-O1-Image",
+      "commercial_note": "Upstream model MIT; FP8 conversion by drbaph. Isolated experimental runtime: upstream advises against Torch 2.9.x, which this Radeon build currently uses. Eight steps is a fast study; official full-model guidance is 50.",
+      "variants": [
+        {
+          "name": "8-step study",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "20-step study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "50-step full model",
+          "controls": {
+            "steps": 50
+          }
+        },
+        {
+          "name": "Portrait 1728 \u00d7 2304",
+          "controls": {
+            "width": 1728,
+            "height": 2304
+          }
+        },
+        {
+          "name": "Wide 2560 \u00d7 1440",
+          "controls": {
+            "width": 2560,
+            "height": 1440
+          }
+        }
+      ],
+      "width": [
+        "3",
+        "width"
+      ],
+      "height": [
+        "3",
+        "height"
+      ],
+      "dimension_limits": [
+        1312,
+        3104
+      ],
+      "dimension_multiple": 32,
+      "resolution_choices": [
+        [
+          2048,
+          2048
+        ],
+        [
+          2304,
+          1728
+        ],
+        [
+          1728,
+          2304
+        ],
+        [
+          2560,
+          1440
+        ],
+        [
+          1440,
+          2560
+        ],
+        [
+          2496,
+          1664
+        ],
+        [
+          1664,
+          2496
+        ],
+        [
+          3104,
+          1312
+        ],
+        [
+          1312,
+          3104
+        ],
+        [
+          2304,
+          1792
+        ],
+        [
+          1792,
+          2304
+        ]
+      ],
+      "execution_note": {
+        "prompt_id": "a784ab40-a48a-4013-9a1f-0e594f15b86d",
+        "date": "2026-09-11",
+        "width": 2048,
+        "height": 2048,
+        "steps": 8,
+        "seed": 2026091131,
+        "elapsed_seconds": 184.697,
+        "status": "execution observed; creative acceptance open"
+      }
+    },
+    {
+      "id": "hidream-o1-edit",
+      "name": "HiDream O1 - Reference Restyle",
+      "category": "HiDream studio",
+      "collection": "production-workspace",
+      "family": "HiDream O1",
+      "backend_id": "hidream",
+      "modality": "image",
+      "graph": "workflows/api/hidream-o1-edit-api.json",
+      "visual": "workflows/comfyui/54 - HiDream O1 - Reference Restyle.json",
+      "positive": [
+        "2",
+        "prompt"
+      ],
+      "negative": [
+        "2",
+        "negative_prompt"
+      ],
+      "seed": [
+        "3",
+        "seed"
+      ],
+      "steps": [
+        "3",
+        "steps"
+      ],
+      "cfg": [
+        "3",
+        "guidance_scale"
+      ],
+      "description": "Whole-image reference restyling at the source aspect ratio, capped by the model at 2K. Unrequested details can change.",
+      "stages": [
+        "HiDream full FP8",
+        "Unified pixels and text",
+        "SDPA sampling",
+        "PNG"
+      ],
+      "verified": true,
+      "model_files": [
+        "diffusion_models/HiDream-O1-Image-fp8/model.safetensors",
+        "diffusion_models/HiDream-O1-Image-fp8/config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/generation_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/preprocessor_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/chat_template.json",
+        "diffusion_models/HiDream-O1-Image-fp8/merges.txt",
+        "diffusion_models/HiDream-O1-Image-fp8/vocab.json"
+      ],
+      "source": "https://huggingface.co/HiDream-ai/HiDream-O1-Image",
+      "commercial_note": "Upstream model MIT; FP8 conversion by drbaph. Isolated experimental runtime: upstream advises against Torch 2.9.x, which this Radeon build currently uses. Eight steps is a fast study; official full-model guidance is 50.",
+      "variants": [
+        {
+          "name": "8-step study",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "20-step study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "50-step full model",
+          "controls": {
+            "steps": 50
+          }
+        }
+      ],
+      "reference": [
+        "5",
+        "image"
+      ],
+      "execution_note": {
+        "prompt_id": "c599a918-20fb-4e78-8dce-6ed8fd170362",
+        "date": "2026-09-11",
+        "width": 2048,
+        "height": 2048,
+        "steps": 8,
+        "seed": 2026091132,
+        "elapsed_seconds": 76.26,
+        "status": "execution observed; creative acceptance open"
+      }
     }
   ]
 }

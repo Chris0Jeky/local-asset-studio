@@ -1,0 +1,57 @@
+{
+  "1": {
+    "class_type": "HiDreamO1ModelLoader",
+    "inputs": {
+      "model_name": "HiDream-O1-Image-FP8",
+      "precision": "auto",
+      "attention": "sdpa",
+      "download_if_missing": false
+    }
+  },
+  "2": {
+    "class_type": "HiDreamO1Conditioning",
+    "inputs": {
+      "prompt": "Original anime key visual: an adult silver-haired explorer in a dark travelling coat, holding a brass compass in a rainy Japanese mountain village at blue hour. Clean expressive linework, layered cel shading, teal lantern light, restrained vermilion accents, cinematic composition. No typography.",
+      "negative_prompt": ""
+    }
+  },
+  "3": {
+    "class_type": "HiDreamO1Sampler",
+    "inputs": {
+      "model_type": "full",
+      "width": 2048,
+      "height": 2048,
+      "steps": 8,
+      "seed": 2026091131,
+      "guidance_scale": 5.0,
+      "shift": -1.0,
+      "noise_scale_start": 7.5,
+      "noise_scale_end": 7.5,
+      "noise_clip_std": 2.5,
+      "dev_editing_scheduler": "flow_match",
+      "layout_bboxes": "",
+      "preview_every": 0,
+      "keep_image1_aspect": false,
+      "force_offload": true,
+      "model": [
+        "1",
+        0
+      ],
+      "conditioning": [
+        "2",
+        0
+      ],
+      "image": "0"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "Studio/hidream-o1-concept"
+    }
+  }
+}

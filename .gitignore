@@ -23,6 +23,8 @@ config/local.json
 experiments/runs/
 experiments/imports/
 experiments/uploads/
+experiments/workspace/
+experiments/projects/
 .runtime/
 *.log
 *.blend1

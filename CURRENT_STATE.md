@@ -1,5 +1,142 @@
 # Current state — 11 September 2026
 
+## Creative production milestone
+
+Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen
+references, bounded comparisons, native exports, and explicit model-environment
+switching. Models and operational outputs remain outside Git. HiDream concept
+and reference-restyle recipes both produced 2048-square PNGs through Studio:
+184.697 seconds and 76.260 seconds respectively, at eight steps. Their distinct
+loading/cache conditions are not a model benchmark. See [HiDream](docs/HIDREAM.md).
+
+The comparison `fbb384c70a5e48b39a9eba6c227374eb` completed both Anima seed stages
+and awaits creative review. Imported originals can now join collections and
+native exports without generation. Browser-selected sprite frames produced
+Godot project `d62777fdd019462b99d28357e61393b8`: actual import/playback retained
+120/80/120/160 ms, 64-square canvases and anchor [32,32]. An earlier export
+`df007b4d33d8465695615535e004be4d` exposed a form-serialization bug (100 ms values);
+that bug is fixed and the corrected plan and engine evidence were checked.
+
+The authored chest UI built project `db662bb6e60f42c781e001bd681b9743`, retaining
+BLEND, animated GLB and four CPU inspection renders. The first GLB exposed a
+hidden collision helper as visible geometry; the exporter now excludes it from
+GLB while retaining it in BLEND. Fresh project `44cfa4a0b29a43098d6c7c7609ca6831`
+completed with the four intended parts and named hinge animation; its renders and
+browser preview were inspected. Native jobs persist before Blender. Recovery
+requires a successful exit log and refuses recorded failure evidence, without
+repeating a build; focused fault tests pass.
+
+Krita is now an option in the native-export dialog. Browser project
+`e563585717324f54aa57e6fc9bd9f773` selected two existing 64-square frames, retained
+both requested layer names in KRA, reopened to PNG and produced a complete source
+pack. The isolated offscreen crash and successful hidden Windows batch proofs
+are preserved. This proves flat native layers, not automatic part segmentation.
+
+H3's opt-in stdlib mmap loader constructed all 2,054 encoder tensors and the
+MiniMax encoder model in 6.65 seconds (process peak working set 4.14 GiB). CUDA
+was initialized by the runtime; this was construction, not inference proof. The
+first video attempt with copy-on-write mapping passed encoder loading, then
+failed in UNETLoader with Windows error 1455 (commit/pagefile exhaustion), prompt
+`cce6da2a-0978-4c98-95d7-1c7ba8274a7c`. The machine has a 40 GiB paging file.
+A read-only encoder attempt also reached the same diffusion-file error, prompt
+`af49ef6a-433e-47eb-95d1-0efe7cb9ef52`. Extending the exact-file read-only loader
+to the FL2VA diffusion file then constructed MiniMaxH3/legacy ModelPatcher in
+5.603 seconds, with 4.30 GiB peak process working set. The subsequent short video
+prompt `49873807-fda1-4fe0-afdd-62b13f5329d8` completed in 398.096 seconds:
+39 H.264 frames at 512×320 and 32 kHz stereo AAC, both 1.625 seconds. All frames
+and audio decoded; first/middle/last frames were inspected. The tested defaults
+now match the executed graph. No system paging settings changed. The normal
+native loader remains incompatible; use the [isolated H3 route](docs/H3-WINDOWS.md).
+
+The broader research backlog is still open: Seed Hunter dependencies/execution,
+shot-continuation/control comparisons, interactive Krita diffusion, automatic 3D
+part/rig experiments and the full accepted character-pack vertical slice. The
+completed native exports are scoped engine checks, not art or gameplay acceptance.
+[HUMAN_TODO.md](HUMAN_TODO.md) still holds the optional subjective choices.
+
+**149 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
+validator and changed JavaScript syntax checks pass. Independent reviews caught
+and resolved recovery/provenance defects. Gallery handoffs now retain the source
+asset identity and populate Qwen's first reference slot. The browser saved
+`Ember chest → Qwen reference` with the correct parent and hashed input metadata;
+no extra generation was submitted. Comparison planning also rejects numerically
+equivalent values before reserving runs, so `1`, `1.0` and `1e0` cannot consume
+duplicate candidates. The branch is pushed as PR #39; this is a scoped
+milestone, not completion of every research issue. See the [usable routes, execution
+records and issue-by-issue remainder](docs/PRODUCTION-WORKSPACE.md). The completed
+worker worktree was removed after preserving its ignored runtime receipts.
+
+## Earlier checkpoints during this implementation pass
+
+The user requested an ambitious implementation pass across merged PRs **#20**
+(game-asset planner, reference graphs, atlas/ORA tools) and **#8** (frontier research).
+They are now the branch base `f6e046b`; work continues on
+`codex/creative-production-workspace` with incremental commits and one writer.
+The original Workflow Lab evidence below remains scoped to its recorded runs.
+
+First implemented slice: a persistent Workspace view with collections, search,
+media filters, favorites, tags, review notes, multi-select, recoverable Trash/Restore,
+image-to-workflow handoffs and ZIP exports containing snapshots, recipes and metadata.
+SQLite and immutable hashed media live under the configured shared experiments
+directory, outside Git. Original ComfyUI outputs are preserved. Saved setups now
+live on the server, with browser-local migration. Read [the workspace guide](docs/WORKSPACE.md).
+
+Startup identity is independent of ComfyUI; the launcher reuses an existing Studio
+even when its backend is unavailable. Full node discovery is cached for 120 seconds
+with an explicit refresh. Uploads are decoded/verified, capped at 40 megapixels,
+and retain original dimensions and SHA-256 metadata.
+
+Verified at this slice: 106 tests pass (one existing Windows symlink availability
+skip), catalog validator passes, both JavaScript files parse, and launcher syntax
+parses. Actual browser actions created a collection, assigned an existing Anima
+render, saved tags/notes, moved it to Trash and restored it. The new store indexed
+46 existing outputs; no generation was submitted. Wider browser checks and
+independent review are in progress. Review states remain unreviewed unless the
+user explicitly changes them; the optional choices in [HUMAN_TODO.md](HUMAN_TODO.md)
+remain open.
+
+Outstanding work in the active goal: role-specific Qwen references (#21), bounded
+experiments and trusted stage execution (#10/#22), isolated HiDream integration
+(#2), H3 loader compatibility (#18/#11), shot/control experiments (#12/#13),
+native editing and engine exports (#14–#16/#23–#25), and accurate source/terms
+metadata (#9/#26). Research entries are not automatically executable or accepted.
+The secondary workspace request has an implemented foundation; it is not a claim
+that the broader production goal is complete.
+
+The next increment adds three Qwen Atelier API/visual pairs (52 presets total),
+with one/two/three role-specific references, preserved aspect, byte hashes, a
+resolved-graph preview, and saved-reference recovery. See
+[Reference atelier](docs/REFERENCE-ATELIER.md). All three pass live node/file
+validation without submission. Browser upload and preview succeeded with
+identity, pose and manga-style references; controlled generation
+`c8b752b5-cb25-4438-8c66-f0e5fafcae04` is being observed, not yet accepted.
+The saved Anima-to-ESRGAN handoff survived a fresh page and generated successfully
+as `60949ec3-2ec2-471f-88cb-73fa78a5491c`, retaining its parent asset.
+
+Godot adapter commit `af4ccb5` adds actual headless import/playback. Its fixed
+120/80/120/160 ms QA sequence played in 480.000003 ms with anchor [24,60] and no
+anchor error. The existing Ember GLB loaded with 12 nodes, 9 meshes, 3 materials
+and `Lantern bob rigAction`. This is scoped engine evidence, not rig, collision,
+root-motion or art acceptance. Evidence is retained locally under
+`.runtime/godot-adapter-evidence/qa-480ms-godot-4.7.2/`.
+
+The production runner now prepares pinned one-axis comparisons, uses the existing
+Studio worker, reserves generation budgets across branches, and persists stage
+identities and known prompt IDs. Fault-injection tests cover lost responses,
+restart observation without duplicate submission, shared caps and changed plans.
+Workspace can prepare timed atlas, flat ORA and Godot exports with native source
+ZIPs. Actual engine verification is an explicit export option. Read
+[Experiments](docs/EXPERIMENTS.md) and [Native exports](docs/NATIVE-EXPORTS.md).
+At this increment, 126 tests pass (one existing skip); browser preflight and Start
+created comparison `fbb384c70a5e48b39a9eba6c227374eb`, currently being observed.
+Native export UI round-trip remains pending.
+
+The three-reference Qwen run above completed: **1334.646 seconds**, 512×768,
+four steps. It produced a manga portrait with the requested extended hand and
+compass; design fidelity and subjective acceptance remain open. Only the
+three-reference recipe's execution badge was updated. One- and two-reference
+variants have schema/preview proof, not fresh inference proof.
+
 ## Changed
 
 Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and
