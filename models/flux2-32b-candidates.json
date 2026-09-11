@@ -1,7 +1,7 @@
 {
   "repo": "city96/FLUX.2-dev-gguf",
   "revision": "ade5d688ddab0d9cf4a5b01bf4321e01c115020d",
-  "status": "Q4_K_M selected and download initiated; see next-downloads.json. Runtime inference not verified.",
+  "status": "Q4_K_M and Mistral Q4 companion downloaded and SHA256 verified; runtime inference remains unverified.",
   "candidates": [
     {
       "file": "flux2-dev-Q3_K_M.gguf",

@@ -14,8 +14,8 @@ Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five
 |---|---|
 | `app/` | Local browser interface; Python standard library, no web build toolchain |
 | `presets/` | Human-readable preset names and controls mapped to graph inputs |
-| `workflows/api/` | 21 executable ComfyUI recipes |
-| `workflows/comfyui/` | 20 visual node graphs for learning and deeper changes |
+| `workflows/api/` | 30 API graphs (29 Studio presets) |
+| `workflows/comfyui/` | 29 visual node graphs for learning and deeper changes |
 | `scripts/` | Launcher, batch generation, asset finishing, validation |
 | `examples/lanternkeeper/` | Playable example, editable Blender files, GLBs, sprites, promotional artwork |
 | `examples/gallery/` | Small, curated model samples for comparison |
@@ -58,3 +58,5 @@ See [operations](docs/OPERATIONS.md) for troubleshooting, backup, and adding pre
 ### Anime quality quick start
 
 Open the **Anime quality** category for WAI and Animagine portraits or a 1.5x refinement pass. ComfyUI workflow 24 adds manual masked repair. Read the [parameter and anatomy guide](docs/ANIME-QUALITY.md) before turning up steps or resolution. These new presets were schema-checked; no generation was submitted by the agent for this slice.
+
+The [anime detailing guide](docs/ANIME-DETAILING.md) covers installed ESRGAN, automatic face crops, optional hand crops and the combined finishing workflow.

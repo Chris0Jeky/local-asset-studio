@@ -64,7 +64,7 @@ The repair workflow is ComfyUI-only because the simple Studio does not yet offer
 
 ## What about ADetailer / FaceDetailer?
 
-Automatic detection plus cropped resampling is a real and useful workflow family. ADetailer belongs to the WebUI ecosystem; ComfyUI's Impact Pack provides detailers and related detector/segmentation tools. These can improve small faces by resampling a larger crop, but a detector finding a hand does not mean the model knows the correct fingers. They can also alter identity or miss stylized faces. They were researched but are **not installed or configured in this quick slice**. Manual repair is available now; an automatic detailer would be a separate tested addition.
+Automatic detection plus cropped resampling is a real and useful workflow family. ADetailer belongs to the WebUI ecosystem; ComfyUI's Impact Pack provides detailers and related detector/segmentation tools. These can improve small faces by resampling a larger crop, but a detector finding a hand does not mean the model knows the correct fingers. They can also alter identity or miss stylized faces. They are now installed and configured in workflows 25-29. See [the detailing guide](ANIME-DETAILING.md) for the new presets, masks and verification boundaries.
 
 The Animagine authors explicitly list complex hand poses and finger counting as limitations. A high-quality checkpoint is a starting point, not a guarantee.
 
@@ -76,7 +76,7 @@ Pinned revisions, filenames, expected bytes and SHA-256 values are in `models/ne
 - **Mistral Small 3.2 24B Q4_K_M**: 14.33 GB. The companion text encoder linked by the FLUX GGUF model card, not a second image generator. Installed-node compatibility still needs a focused run.
 - **Xinsir Union SDXL 1.0**: 2.51 GB. Additional multi-condition control for future depth/edge/pose experiments; this download is not wired into the new portrait graphs. Your existing OpenPose workflow already has its separate model.
 
-Total approximately **34.4 GiB**, downloaded serially with checksum verification before installation. Existing FLUX.2 VAE is retained. The queue leaves a 20 GiB free-space reserve per file. These are downloads only: no model switches, generation jobs, package upgrades, or claims that the 32B stack is ready to run. HiDream is already installed; Qwen's slow preset needs testing, not another weight download. No redundant anime checkpoint was added just to increase the model count.
+All three downloads are now complete: approximately **34.4 GiB**, downloaded serially with matching checksums before installation. Existing FLUX.2 VAE is retained. The queue leaves a 20 GiB free-space reserve per file. These are downloads only: no model switches, generation jobs, package upgrades, or claims that the 32B stack is ready to run. HiDream is already installed; Qwen's slow preset needs testing, not another weight download. No redundant anime checkpoint was added just to increase the model count.
 
 Local status and logs are kept outside Git, under the original workspace's `work/remaining-model-status.json` and `work/remaining-downloads.log`. The process can continue after this chat turn; this is not a scheduled monitor. Failed files remain marked failed and are not installed as usable weights.
 
