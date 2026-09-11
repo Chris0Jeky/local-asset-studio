@@ -31,7 +31,9 @@ My first choice is a single Qwen3.5-4B trial plus a no-helper baseline; add the 
 
 ## Runner and hardware constraints
 
-[Ollama structured outputs](https://docs.ollama.com/capabilities/structured-outputs) provide the concrete schema-constrained API used by the included bridge. [Its hardware page](https://docs.ollama.com/gpu) distinguishes platform-specific ROCm support and experimental Vulkan. A working Comfy Torch/HIP runtime is not proof that Ollama's Windows GPU path supports the same card. Read its current exact platform list and measure the selected model. [llama.cpp](https://github.com/ggml-org/llama.cpp) offers another local route, but model, multimodal projector, build/backend and operation support must be checked together.
+[Ollama structured outputs](https://docs.ollama.com/capabilities/structured-outputs) provide the concrete schema-constrained API used by the included bridge. [Its hardware page](https://docs.ollama.com/gpu) distinguishes platform-specific ROCm support and additional Vulkan support. On the final source check, it states that Vulkan is enabled by default when that backend is installed; do not treat older instructions calling it experimental as the current contract. The RX9070XT is listed in its Linux ROCm table, but not in the Windows ROCm table inspected here. This is not a claim that every Windows path is impossible: test a supported Vulkan or CPU path and the exact multimodal bundle separately. A working Comfy Torch/HIP runtime is not proof that another runner's Windows GPU path supports the same card.
+
+[llama.cpp](https://github.com/ggml-org/llama.cpp) offers another local route, but model, multimodal projector, build/backend and operation support must be checked together.
 
 The delivered helper requests 8192 context tokens, 1800 output tokens, non-thinking mode and temperature zero as a **small structured-analysis baseline**, not an author-endorsed optimum. Qwen3.5's default thinking behaviour and native context recommendations differ. Confirm that the chosen runner honors `think:false`; do not rely on a magic `/nothink` phrase. Compare schema completion, semantic fidelity and latency before changing defaults.
 
@@ -42,3 +44,7 @@ The adapter is implemented for Ollama only. It does not install taggers, embeddi
 Use fixed short briefs across image, edit, video, speech and music. Include an unchanged baseline, a concise clarified version and a profile-specific candidate. Measure preserved constraints, invented details, schema errors, useful-output rate, time-to-accepted-asset and cleanup minutes. Store rejections. Equal seeds across unrelated model families do not correspond to the same noise.
 
 [GEPA](https://github.com/gepa-ai/gepa) is a later evaluation-driven optimization lead, not an excuse to optimize against an unreliable single aesthetic score. Start with user preferences and hard acceptance checks, hold out briefs, bound the trials and preserve provenance. A VLM's enthusiastic description of its own prompt is not evidence of improved generations.
+
+## Parser limit clarification
+
+The PNG inspector's 128KiB expanded-text budget applies to the complete set of extracted records, not a fresh allowance per record. It additionally caps individual chunk sizes and rejects decompression overflows. This stricter aggregate limit is enforced by the implementation and supersedes the looser wording in the reconstruction overview.
