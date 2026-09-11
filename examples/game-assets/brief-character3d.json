@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "asset_id": "observatory-keeper",
+  "route": "character-3d",
+  "description": "Create an original stylized observatory keeper with a teal coat and brass telescope accessories, starting from a neutral pose. Produce a reusable character and reviewed idle/walk clips.",
+  "references": [],
+  "target": {
+    "engine": "generic",
+    "outputs": [
+      "native editable scene",
+      "GLB with named skin and clips",
+      "PBR or documented stylized materials",
+      "root-motion and in-place motion contracts",
+      "actual engine import evidence after target selection"
+    ]
+  },
+  "constraints": [
+    "Do not infer unavailable base geometry as measured facts",
+    "Choose target engine before final import acceptance",
+    "Preserve coat attachments through stress poses"
+  ],
+  "budget": {
+    "generation_attempts": 8,
+    "repair_attempts_per_stage": 1,
+    "allow_paid_services": false
+  }
+}

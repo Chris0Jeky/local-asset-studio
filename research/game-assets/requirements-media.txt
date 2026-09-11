@@ -1,0 +1,2 @@
+# Optional asset-finishing environment only. Do not install into ComfyUI's working runtime.
+Pillow==12.3.0

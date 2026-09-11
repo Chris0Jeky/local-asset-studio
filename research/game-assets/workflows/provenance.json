@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "baseline_repository": "Chris0Jeky/local-asset-studio",
+  "baseline_commit": "6bd4e5ba36c3df22011727772754b6e9b3d13c70",
+  "baseline_path": "workflows/api/qwen-api.json",
+  "baseline_git_blob": "4d3d2879582c4328212a8cbecedebb01ec8f0dc6",
+  "canonical_baseline_sha256": "1008e2537ce30ead7c55c1882f23dadb20a15ae1f48c2668ec05c447f825bf03",
+  "variants": [
+    {
+      "file": "qwen-1ref-api.json",
+      "canonical_sha256": "01db53ffbc4556838fa1fb506df585b248e4cd62e98bd8874b7d8d7a2e5ea2f3"
+    },
+    {
+      "file": "qwen-2ref-api.json",
+      "canonical_sha256": "e0dcc0983caad1a5f6f7a8f0d486438f30438c11488125462b31f68f61279c68"
+    },
+    {
+      "file": "qwen-3ref-api.json",
+      "canonical_sha256": "54fa92379f78695d6cf11da1675981d176492482c53a8b58903e7f138cb3fa16"
+    }
+  ],
+  "evidence": "Static topology only; no local schema snapshot, inference or art acceptance in this pass."
+}

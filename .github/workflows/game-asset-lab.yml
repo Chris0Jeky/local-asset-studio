@@ -1,0 +1,30 @@
+name: Game asset lab
+on:
+  pull_request:
+    paths:
+      - 'scripts/game_asset_*.py'
+      - 'tests/test_game_asset_*.py'
+      - 'research/game-assets/**'
+      - '.github/workflows/game-asset-lab.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/game_asset_*.py'
+      - 'tests/test_game_asset_*.py'
+      - 'research/game-assets/**'
+      - '.github/workflows/game-asset-lab.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt
+      - run: python -m unittest discover -s tests -p 'test_game_asset_*.py' -v
+      - run: python scripts/game_asset_demo.py --out '${{ runner.temp }}/game-asset-qa'
+      - run: python scripts/game_asset_pipeline.py next --plan '${{ runner.temp }}/game-asset-qa/plan.json' --workspace '${{ runner.temp }}/game-asset-qa'
