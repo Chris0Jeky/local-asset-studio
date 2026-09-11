@@ -111,7 +111,14 @@ class Production:
         try:
             if any(not Decimal(str(v)).is_finite() for v in values):raise ValueError('Comparison values must be finite numbers')
         except InvalidOperation:raise ValueError('Comparison axes take numeric values, not filenames')
-        if len({str(v) for v in values})!=len(values):raise ValueError('Comparison values must differ')
+        # Browser form controls arrive as strings. Compare their numeric meaning
+        # before preparing graphs so spellings such as 1, 1.0 and 1e0 cannot
+        # reserve and submit duplicate candidates.
+        normalized_values=[]
+        for value in values:
+            normalized=Decimal(str(value))
+            if normalized in normalized_values:raise ValueError('Comparison values must differ after numeric normalization')
+            normalized_values.append(normalized)
         max_seconds=self._integer(payload.get('max_seconds',1800),'Time budget',60,14400)
         stages=[];bundle=None
         for index,value in enumerate(values):

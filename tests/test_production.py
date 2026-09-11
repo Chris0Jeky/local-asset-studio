@@ -90,6 +90,17 @@ class ProductionTests(unittest.TestCase):
         self.assertEqual(lab.get(child['id'])['budget'],{'allowance':2,'reserved':2})
         self.assertEqual(studio.queue.qsize(),1)
 
+    def test_numeric_aliases_cannot_create_duplicate_candidates(self):
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        for values in (['1','1.0'],['0','-0.0'],['1','1e0'],[1,'01']):
+            with self.subTest(values=values),self.assertRaisesRegex(ValueError,'values must differ'):
+                lab.create(self.intent(values=values))
+        self.assertEqual(lab.list(),[])
+        self.assertEqual(studio.queue.qsize(),0)
+        distinct=lab.create(self.intent(values=['1.0','2']))
+        self.assertEqual(len(distinct['stages']),2)
+        self.assertEqual(distinct['budget']['reserved'],0)
+
     def test_lost_submission_response_survives_restart_without_duplicate(self):
         studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},URLError('lost POST response')])
         lab=studio.production;p=lab.create(self.intent(values=[1]));lab.start(p['id']);lab.run(p['id'])

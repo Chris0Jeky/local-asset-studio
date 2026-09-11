@@ -76,6 +76,14 @@ source directories are never erased automatically. The finished worker checkout
 was removed after its commits were integrated and pushed; all its ignored runtime
 receipts were copied into `.runtime/worker-survivors/krita-roundtrip-20260911/`.
 
+The final review pass also fixed gallery provenance: Use-as-reference, Animate and
+Make 3D retain the selected source asset ID, and Qwen Atelier fills its first role
+from the validated snapshot. Comparison planning rejects numerically equivalent
+spellings before reserving work. Remaining lower-priority portability notes are
+tracked in the PR review: launcher readiness is profile-specific, optional Godot
+verification should not make atlas/ORA exports depend on a machine-local path, and
+an incomplete H3 bundle must be treated as unavailable before switching.
+
 [HUMAN_TODO.md](../HUMAN_TODO.md) contains the optional creative choices. None were
 inferred or checked off. No Buzz was spent; the current installation needs no
 additional disk space for the completed work.
