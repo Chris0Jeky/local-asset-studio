@@ -2728,6 +2728,276 @@
         }
       ],
       "execution_note": "PBR export executed with local CPU UV patch; inspect unwanted surfaces and finish the mesh. See experiments/curated/workflow-lab."
+    },
+    {
+      "id": "qwen-1ref",
+      "name": "Qwen Atelier - 1 Reference",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-1ref-api.json",
+      "visual": "workflows/comfyui/50 - Qwen Atelier - 1 Reference.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": false,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "874d0ac33c5d8c1757e6ff30328cddd28f36963bf85289239897bbb0ed303361"
+    },
+    {
+      "id": "qwen-2ref",
+      "name": "Qwen Atelier - 2 References",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-2ref-api.json",
+      "visual": "workflows/comfyui/51 - Qwen Atelier - 2 References.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": false,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        },
+        {
+          "role": "pose",
+          "contribution": "Body position, viewing angle, hand and prop contact",
+          "avoid": "The reference person, costume and rendering style",
+          "binding": [
+            "16",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "1f93bebef70219c2ac084bac997ad0b448196407009cc6d91025317eb5db12f9"
+    },
+    {
+      "id": "qwen-3ref",
+      "name": "Qwen Atelier - 3 References",
+      "category": "Reference atelier",
+      "collection": "production-workspace",
+      "family": "Qwen Image Edit 2511",
+      "modality": "image",
+      "graph": "workflows/api/qwen-3ref-api.json",
+      "visual": "workflows/comfyui/52 - Qwen Atelier - 3 References.json",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "verified": false,
+      "description": "Assign identity, pose and style separately. Images retain their aspect ratio; role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "Face, hair, proportions, distinctive costume and accessories",
+          "avoid": "Unrequested changes to identity or costume",
+          "binding": [
+            "4",
+            "image"
+          ]
+        },
+        {
+          "role": "pose",
+          "contribution": "Body position, viewing angle, hand and prop contact",
+          "avoid": "The reference person, costume and rendering style",
+          "binding": [
+            "16",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "Linework, shading, medium and palette",
+          "avoid": "The reference subject and composition",
+          "binding": [
+            "17",
+            "image"
+          ]
+        }
+      ],
+      "reference_policy": {
+        "primary": "fit-width-preserve-aspect",
+        "secondary": "native Qwen encoder preprocessing",
+        "vae": "center-crop to multiple of 8"
+      },
+      "max_reference_pixels": 1048576,
+      "stages": [
+        "Role-assigned references",
+        "Aspect-preserving resize",
+        "Qwen edit + matching Lightning",
+        "4-step sampling",
+        "Tiled decode"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "commercial_note": "Review exact Qwen model and adapter terms. Creative selection is recorded separately.",
+      "variants": [
+        {
+          "name": "Quick reference study",
+          "controls": {
+            "width": 384
+          }
+        },
+        {
+          "name": "Detailed reference study",
+          "controls": {
+            "width": 768
+          }
+        }
+      ],
+      "source_graph_sha256": "e95f34078fa8647ec788d16d2ebc4459a331e14296e9f3a8107de4d58e42e4bf"
     }
   ]
 }

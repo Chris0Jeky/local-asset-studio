@@ -37,6 +37,23 @@ metadata (#9/#26). Research entries are not automatically executable or accepted
 The secondary workspace request has an implemented foundation; it is not a claim
 that the broader production goal is complete.
 
+The next increment adds three Qwen Atelier API/visual pairs (52 presets total),
+with one/two/three role-specific references, preserved aspect, byte hashes, a
+resolved-graph preview, and saved-reference recovery. See
+[Reference atelier](docs/REFERENCE-ATELIER.md). All three pass live node/file
+validation without submission. Browser upload and preview succeeded with
+identity, pose and manga-style references; controlled generation
+`c8b752b5-cb25-4438-8c66-f0e5fafcae04` is being observed, not yet accepted.
+The saved Anima-to-ESRGAN handoff survived a fresh page and generated successfully
+as `60949ec3-2ec2-471f-88cb-73fa78a5491c`, retaining its parent asset.
+
+Godot adapter commit `af4ccb5` adds actual headless import/playback. Its fixed
+120/80/120/160 ms QA sequence played in 480.000003 ms with anchor [24,60] and no
+anchor error. The existing Ember GLB loaded with 12 nodes, 9 meshes, 3 materials
+and `Lantern bob rigAction`. This is scoped engine evidence, not rig, collision,
+root-motion or art acceptance. Evidence is retained locally under
+`.runtime/godot-adapter-evidence/qa-480ms-godot-4.7.2/`.
+
 ## Changed
 
 Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and

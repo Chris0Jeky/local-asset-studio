@@ -27,6 +27,7 @@ from urllib.request import Request, urlopen
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from model_library import ModelLibrary
 from workspace import AssetWorkspace, WorkspaceError, digest_file
+from references import compile_references, image_record
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -175,6 +176,10 @@ class Studio:
         if preset.get("max_pixels"):
             actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
+        if preset.get("reference_slots"):
+            preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads")
+        elif payload.get("references"):
+            raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         return preset, graph, graph_path, controls, batch
 
@@ -187,11 +192,13 @@ class Studio:
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["parent_assets"] = parents
+        job["references"] = preset.get("_prepared_references", [])
+        job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         self._save(job); self.jobs[job_id] = job; self.queue.put(("generate", job_id))
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -201,7 +208,7 @@ class Studio:
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
-                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", [])}
+                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", [])}
 
     def output_path(self, output, job=None):
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
@@ -259,6 +266,22 @@ class Studio:
             raise StudioError("The exported workflow differs from the current preset. Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
         return {"matches": True, "template_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
+    def preview(self, payload):
+        preset, graph, graph_path, controls, batch = self.prepare(payload)
+        return {"preset_id":preset["id"], "workflow":graph, "references":preset.get("_prepared_references", []),
+                "batch_count":batch, "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
+                "submitted":False}
+
+    def reference_status(self, payload):
+        names=payload.get("files", [])
+        if not isinstance(names,list) or len(names)>8: raise StudioError("Use up to eight reference files")
+        records=[]
+        for name in names:
+            if not isinstance(name,str) or name!=Path(name).name: raise StudioError("Invalid reference filename")
+            try: records.append(dict(image_record(self.experiments/'uploads',name), available=True))
+            except (ValueError,OSError): records.append({"file":name,"available":False})
+        return records
+
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
@@ -267,6 +290,7 @@ class Studio:
     def _save(self, job):
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
+        recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -589,6 +613,11 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path.startswith("/api/uploads/"):
+                from urllib.parse import unquote
+                name=unquote(path.rsplit("/",1)[-1])
+                if not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)",name): raise StudioError("Invalid upload")
+                return self._local_file(inside(self.studio.experiments/'uploads',self.studio.experiments/'uploads'/name))
             if path.startswith("/api/assets/") and path.endswith("/file"):
                 return self._local_file(self.studio.assets.file(path.split("/")[3]), urlparse(self.path).query == "download")
             if path.startswith("/api/exports/"):
@@ -631,6 +660,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
+            if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
             if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
