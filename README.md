@@ -1,10 +1,12 @@
 # Local Asset Studio
 
-Your personal workshop for game art, pixel concepts, product imagery, website backgrounds, reference edits, and Blender-to-sprite experiments.
+Your personal workshop for anime and manga, images, video, textured 3D, reference editing, and reproducible creative experiments.
 
 **On the configured PC: double-click the `Asset Studio` desktop shortcut.** Pick a preset, change the description, and press **Generate**. The launcher starts ComfyUI and opens the simpler studio interface. You do not need to learn nodes first.
 
 ![Three Lanternkeeper skins](examples/lanternkeeper/contact-sheet.png)
+
+Explore the [Workflow Lab guide](docs/WORKFLOW-LAB.md) for the new models, folder map, variants, and image-to-video/3D paths.
 
 Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five guided experiments](docs/EXPERIMENTS.md). The [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
 
@@ -12,10 +14,10 @@ Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five
 
 | Folder | Purpose |
 |---|---|
-| `app/` | Local browser interface; Python standard library, no web build toolchain |
+| `app/` | Local browser interface; Python standard library server; local model-viewer bundle; no build toolchain |
 | `presets/` | Human-readable preset names and controls mapped to graph inputs |
-| `workflows/api/` | 30 API graphs (29 Studio presets) |
-| `workflows/comfyui/` | 29 visual node graphs for learning and deeper changes |
+| `workflows/api/` | 50 API graphs (49 Studio presets) |
+| `workflows/comfyui/` | 49 visual node graphs for learning and deeper changes |
 | `scripts/` | Launcher, batch generation, asset finishing, validation |
 | `examples/lanternkeeper/` | Playable example, editable Blender files, GLBs, sprites, promotional artwork |
 | `examples/gallery/` | Small, curated model samples for comparison |
@@ -33,12 +35,20 @@ Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five
 | Realistic promotional art | RealVisXL | FLUX Klein, Z-Image Turbo |
 | Abstract website art | SDXL abstract preset | Change composition and colour vocabulary |
 | Stylized characters | WAI / Animagine | Pony; pose-control variants |
+| Manga and anime studies | LineAni / Anima Aesthetic | Screentone, cinematic lighting, free Krea retro anime |
+| Animate a finished image | Wan 2.2 Animate Image | Short motion study, then longer shots |
+| Generate a 3D draft | Hunyuan3D geometry | Experimental TRELLIS textured draft |
 | Small reference changes | FLUX Klein edit | SDXL gentle variation, Qwen edit |
 | Exact repeated views and motion | Blender example | Render, reduce palette, pack atlas |
 
 NoobAI is retained for hobby experiments; its author terms exclude commercial generated products. WAI came from a Hugging Face mirror; matching hashes do not authenticate the creator or establish commercial rights. See [model notes](models/README.md).
 
 The local graphs do not call hosted moderation services. Local execution, model capability, and usage rights are separate questions.
+
+See the [new local execution samples](experiments/curated/workflow-lab/README.md)
+for three image styles, a short video and a geometry GLB with their exact recipes.
+MiniMax H3's files are installed, but its encoder crashes on this Windows ROCm
+runtime; Studio displays that incompatibility and retains the visual workflows.
 
 **New experiment:** [HiDream-O1 FP8 ran successfully in an isolated environment](docs/HIDREAM.md), producing a 2048px image on the Radeon. Its advanced API workflow is included; it is not yet part of the simplified preset picker.
 

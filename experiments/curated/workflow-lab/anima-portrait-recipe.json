@@ -1,0 +1,235 @@
+{
+  "version": 2,
+  "preset_id": "anima-portrait",
+  "controls": {
+    "positive": "masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face",
+    "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+    "seed": "2026091103",
+    "steps": "24",
+    "cfg": "4",
+    "width": "512",
+    "height": "768"
+  },
+  "batch_count": 1,
+  "created_at": 1789141134.4420671,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "anima-aesthetic-v1.1.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_06b_base.safetensors",
+        "type": "stable_diffusion",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face"
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark"
+      }
+    },
+    "6": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 512,
+        "height": 768,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026091103,
+        "steps": 24,
+        "cfg": 4.0,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/anima-portrait"
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "6d136e16-132f-4964-a07b-988a2a34b5ac",
+      "seed": 2026091103,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-aesthetic-v1.1.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors",
+            "type": "stable_diffusion",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face"
+          }
+        },
+        "5": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark"
+          }
+        },
+        "6": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026091103,
+            "steps": 24,
+            "cfg": 4.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/anima-portrait"
+          }
+        }
+      },
+      "status": "completed"
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "anima-portrait_00001_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026091103,
+      "prompt_id": "6d136e16-132f-4964-a07b-988a2a34b5ac",
+      "media_type": "image"
+    }
+  ]
+}

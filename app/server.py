@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import math
 import mimetypes
 import re
 import shutil
+import sys
 import threading
 import time
 import uuid
+from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Queue
@@ -18,9 +21,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
+# The portable Python includes ComfyUI's own `app` package in its search path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from model_library import ModelLibrary
+
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler")
 
 class StudioError(ValueError): pass
 
@@ -37,23 +44,25 @@ def inside(root: Path, candidate: Path) -> Path:
 
 def number(value, name, lo, hi, integer=False):
     if isinstance(value, bool): raise StudioError(f"{name} must be a number")
-    try: raw = float(value)
-    except (ValueError, TypeError): raise StudioError(f"{name} must be a number")
-    if not math.isfinite(raw) or (integer and not raw.is_integer()): raise StudioError(f"{name} must be a finite {'integer' if integer else 'number'}")
+    try: raw = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError): raise StudioError(f"{name} must be a number")
+    if not raw.is_finite() or (integer and raw != raw.to_integral_value()): raise StudioError(f"{name} must be a finite {'integer' if integer else 'number'}")
     # int(1.9) silently truncates, and float accepts nan/inf.  Neither makes a
     # safe workflow value.
-    result = int(raw) if integer else raw
-    if result < lo or result > hi: raise StudioError(f"{name} must be between {lo} and {hi}")
+    if raw < lo or raw > hi: raise StudioError(f"{name} must be between {lo} and {hi}")
+    result = int(raw) if integer else float(raw)
     return result
 
 class Studio:
     def __init__(self, repo_root: Path):
         self.root = repo_root.resolve()
         self.catalog_path = inside(self.root, self.root / "presets/catalog.json")
-        self.runs = self.root / "experiments/runs"; self.runs.mkdir(parents=True, exist_ok=True)
         self.config = read_json(self.root / "config/local.json", {}) or {}
+        self.experiments = Path(self.config.get("experiments_root", self.root / "experiments")).resolve()
+        self.runs = self.experiments / "runs"; self.runs.mkdir(parents=True, exist_ok=True)
         self.comfy_url = str(self.config.get("comfy_url", "http://127.0.0.1:8188")).rstrip("/")
         self.comfy_root = Path(self.config.get("comfy_root", "C:/AI/ComfyUI_windows_portable/ComfyUI")).resolve()
+        self.library = ModelLibrary(self.root, self.comfy_root)
         self.jobs = {}; self.queue = Queue(); self.lock = threading.Lock()
         self._load_jobs()
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
@@ -65,6 +74,7 @@ class Studio:
         # the catalog compact while never inventing a prompt in the browser.
         result = copy.deepcopy(data)
         for preset in result["presets"]:
+            preset["runtime_block"] = self.config.get("runtime_blocks", {}).get(preset.get("family"))
             try:
                 graph, _ = self.graph_for(preset); defaults = {}
                 for key in CONTROL_KEYS:
@@ -106,6 +116,10 @@ class Studio:
     def prepare(self, payload):
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
+        if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
+        expected = payload.get("expected_template_sha256")
+        if expected and expected != hashlib.sha256(graph_path.read_bytes()).hexdigest():
+            raise StudioError("The preset changed since this recipe was imported. Re-import it or deliberately select the current preset.")
         controls = payload.get("controls", {})
         if not isinstance(controls, dict): raise StudioError("controls must be an object")
         supported = {k for k in CONTROL_KEYS if preset.get(k) or (preset.get("bindings_extra") or {}).get(k)}
@@ -124,19 +138,36 @@ class Studio:
             self._bind_control(graph, preset, "lora", value)
         for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
+        for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
+            if key in controls:
+                value = number(controls[key], key, lo, hi, True)
+                grid = preset.get("frame_grid", 1)
+                offset = preset.get("frame_offset", 0)
+                if key == "frames" and (value - offset) % grid:
+                    raise StudioError(f"frames must follow {grid}k + {offset}; use the suggested durations")
+                self._bind_control(graph, preset, key, value)
+        for key in ("sampler", "scheduler"):
+            if key in controls:
+                if controls[key] not in preset.get("choices", {}).get(key, []): raise StudioError(f"Unsupported {key}")
+                self._bind_control(graph, preset, key, controls[key])
         dims = {}
         for key in ("width", "height"):
             if key in controls:
                 dims[key] = number(controls[key], key, 64, 1536, True)
-                if dims[key] % 8: raise StudioError(f"{key} must be a multiple of 8")
+                multiple = preset.get("dimension_multiple", 8)
+                if dims[key] % multiple: raise StudioError(f"{key} must be a multiple of {multiple}")
                 self._bind_control(graph, preset, key, dims[key])
-        if "reference" in controls:
-            name = controls["reference"]
+        for key in ("reference", "last_reference"):
+            if key not in controls: continue
+            name = controls[key]
             if not isinstance(name, str) or name != Path(name).name or not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)", name): raise StudioError("Reference upload is invalid")
-            uploads = self.root / "experiments/uploads"
+            uploads = self.experiments / "uploads"
             upload = inside(uploads.resolve(), uploads / name)
             if not upload.is_file(): raise StudioError("Reference upload is unavailable")
-            self._bind_control(graph, preset, "reference", upload.name)
+            self._bind_control(graph, preset, key, upload.name)
+        if preset.get("max_pixels"):
+            actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
+            if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         return preset, graph, graph_path, controls, batch
 
@@ -144,12 +175,30 @@ class Studio:
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         job_id = str(uuid.uuid4()); directory = self.runs / job_id; directory.mkdir()
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
+        job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         self._save(job); self.jobs[job_id] = job; self.queue.put(("generate", job_id))
         return self.public(job)
 
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message")
-        return {k: job.get(k) for k in allowed}
+        result = {k: job.get(k) for k in allowed}
+        # Polling the gallery should not transfer every full graph every four seconds.
+        result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
+        return result
+
+    def export_recipe(self, job):
+        return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
+                "batch_count": job["batch_count"], "created_at": job["created_at"],
+                "workflow": job["graph"], "submissions": job.get("submissions", []),
+                "outputs": job.get("outputs", [])}
+
+    def check_recipe(self, recipe):
+        if not isinstance(recipe, dict) or not isinstance(recipe.get("workflow"), dict):
+            raise StudioError("This older recipe has no embedded workflow. Load its settings as a saved setup, or open its original workflow in ComfyUI.")
+        _, graph, path, _, _ = self.prepare(recipe)
+        if graph != recipe["workflow"]:
+            raise StudioError("The exported workflow differs from the current preset. Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
+        return {"matches": True, "template_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
@@ -169,7 +218,7 @@ class Studio:
             graph = read_json(state_path.parent / "workflow.json")
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph
-                if data.get("status") in ("queued", "submitting", "running"):
+                if data.get("status") in ("queued", "waiting", "submitting", "running"):
                     data["status"] = "uncertain"; data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
                     self._save(data)
                 self.jobs[data["id"]] = data
@@ -181,7 +230,7 @@ class Studio:
 
     def health(self):
         try:
-            self._request("/system_stats", timeout=3)
+            stats = self._request("/system_stats", timeout=3)
             try: info = self._request("/object_info", timeout=8); info_available = isinstance(info, dict)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): info, info_available = {}, False
             missing = {}
@@ -196,11 +245,65 @@ class Studio:
                         options = (class_info.get("input", {}).get("required", {}) | class_info.get("input", {}).get("optional", {}))
                         for field, value in node.get("inputs", {}).items():
                             choice = options.get(field)
-                            if field.endswith("_name") and isinstance(value, str) and isinstance(choice, list) and choice and isinstance(choice[0], list) and value not in choice[0]:
+                            enum = choice[0] if isinstance(choice, list) and choice and isinstance(choice[0], list) else choice[1].get("options") if isinstance(choice, list) and len(choice) > 1 and isinstance(choice[1], dict) and choice[0] == "COMBO" else None
+                            if field.endswith("_name") and isinstance(value, str) and isinstance(enum, list) and value not in enum:
                                 missing.setdefault(preset.get("id"), []).append(value)
                 except (StudioError, AttributeError, TypeError): pass
-            return {"app": "local-asset-studio", "online": True, "missing_models": missing}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "online": False, "missing_models": {}}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}}
+
+    def inspect_preset(self, preset_id):
+        preset = self.preset(preset_id); graph, _ = self.graph_for(preset)
+        known = {Path(a["file"]).name: a for a in self.library.manifest().get("assets", [])}
+        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision"}
+        requirements = []
+        for node in graph.values():
+            for field, value in node.get("inputs", {}).items():
+                if not isinstance(value, str) or Path(value).suffix.lower() not in (".safetensors", ".gguf", ".pth", ".pt", ".onnx"): continue
+                asset = known.get(Path(value).name, {})
+                folder = folders.get(field, "upscale_models" if node.get("class_type") == "UpscaleModelLoader" else "ultralytics" if node.get("class_type") == "UltralyticsDetectorProvider" else "models")
+                relative = asset.get("file", folder + "/" + value)
+                path = self.library.models / relative
+                if relative not in [r["file"] for r in requirements]: requirements.append({"file": relative, "path": str(path), "present": path.is_file(), "asset_id": asset.get("id"), "source": asset.get("source"), "folder": folder})
+        return {"id": preset_id, "requirements": requirements, "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
+
+    def inspect_workflow(self, payload):
+        data = payload.get("workflow") if isinstance(payload, dict) else None
+        if not isinstance(data, dict): raise StudioError("A ComfyUI JSON object is required")
+        classes, models, aliases = [], set(), set()
+        visual = isinstance(data.get("nodes"), list)
+        groups = [data]
+        if visual:
+            groups += data.get("definitions", {}).get("subgraphs", [])
+            aliases = {g.get("id") for g in groups if isinstance(g, dict)}
+        def filenames(value, depth=0):
+            if depth > 25: raise StudioError("Workflow nesting is too deep")
+            if isinstance(value, str) and value.lower().endswith((".safetensors", ".gguf", ".pt", ".pth", ".onnx")):
+                models.add(value.replace("\\", "/"))
+            elif isinstance(value, list):
+                for item in value: filenames(item, depth + 1)
+            elif isinstance(value, dict):
+                for item in value.values(): filenames(item, depth + 1)
+        for group in groups:
+            if not isinstance(group, dict): raise StudioError("Invalid workflow subgraph")
+            nodes = group.get("nodes", []) if visual else group.values()
+            for item in nodes:
+                if not isinstance(item, dict): continue
+                kind = item.get("type") if visual else item.get("class_type")
+                if not isinstance(kind, str): continue
+                classes.append(kind)
+                if len(classes) > 2000: raise StudioError("Workflow exceeds 2000 nodes")
+                filenames(item.get("widgets_values", []) if visual else item.get("inputs", {}))
+        if not classes: raise StudioError("No ComfyUI nodes found")
+        try: info = self._request("/object_info", timeout=15); available = True
+        except (URLError, OSError, ValueError): info = {}; available = False
+        ui_only = {"Note", "MarkdownNote", "Reroute", "PrimitiveNode", "PrimitiveBoolean", "PrimitiveFloat", "PrimitiveInt"}
+        missing_nodes = sorted(set(classes) - set(info) - aliases - ui_only) if available else []
+        inventory = self.library.snapshot()["inventory"]
+        names = {m["file"].split("/", 1)[-1] for m in inventory} | {Path(m["file"]).name for m in inventory}
+        return {"format": "Visual workflow" if visual else "API graph", "node_count": len(classes), "missing_nodes": missing_nodes,
+                "models": sorted(models), "missing_models": sorted(m for m in models if m not in names), "schema_available": available,
+                "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
     def _wait_for_queue(self):
         while True:
@@ -219,14 +322,18 @@ class Studio:
                 job["status"] = "failed"; job["message"] = f"Generation failed: {str(exc)[:300]}"; self._save(job)
 
     def _batch_graph(self, job, index):
-        graph = copy.deepcopy(job["graph"]); preset = self.preset(job["preset_id"])
-        binding = preset.get("seed") or ((preset.get("bindings_extra") or {}).get("seed") or [None])[0]
+        graph = copy.deepcopy(job["graph"])
+        bindings = job.get("seed_bindings")
+        if bindings is None:
+            preset = self.preset(job["preset_id"])
+            bindings = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
+        binding = bindings[0] if bindings else None
         if not binding: return graph, None
         try: base = graph[str(binding[0])]["inputs"][str(binding[1])]
         except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid seed binding")
         seed = number(base, "seed", 0, 2**63 - 1, True) + index
         if seed > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range")
-        self._bind_control(graph, preset, "seed", seed)
+        for bound in bindings: self._bind(graph, bound, seed)
         return graph, seed
 
     def _run(self, job):
@@ -234,14 +341,26 @@ class Studio:
         self._wait_for_queue()
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
-            job["status"] = "submitting"; job["message"] = f"Submitting image {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30)
-            except (URLError, HTTPError, TimeoutError, OSError) as exc:
+            except HTTPError as exc:
+                if exc.code == 400:
+                    try: details = json.loads(exc.read(65536))
+                    except (ValueError, OSError): details = {}
+                    job.pop("pending_submission", None)
+                    job["status"] = "failed"
+                    job["validation_errors"] = details.get("node_errors", {})
+                    error = details.get("error", {})
+                    detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
+                    job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
+                    self._save(job); return
+                job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
+            except (URLError, TimeoutError, OSError) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             prompt_id = response.get("prompt_id")
             if not isinstance(prompt_id, str): raise StudioError("ComfyUI did not return a prompt id")
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
-            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating image {i + 1} of {job['batch_count']}"; self._save(job)
+            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"; self._save(job)
 
@@ -253,12 +372,23 @@ class Studio:
                 job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job); return False
             if history:
                 status = history.get("status", {})
-                if status.get("status_str") == "error": raise StudioError("ComfyUI reported an execution error")
+                if status.get("status_str") == "error":
+                    errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
+                    detail = errors[-1] if errors else {}
+                    submission["status"] = "failed"
+                    detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
+                    raise StudioError("ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else ""))
                 outputs = history.get("outputs", {})
                 for node in outputs.values():
-                    for image in node.get("images", []):
-                        descriptor = {k: image.get(k) for k in ("filename", "subfolder", "type")}
-                        if descriptor["filename"]: descriptor["seed"] = submission.get("seed"); descriptor["prompt_id"] = prompt_id; job["outputs"].append(descriptor)
+                    for collection in ("images", "gifs", "videos", "audio", "3d"):
+                        for output in node.get(collection, []):
+                            if not isinstance(output, dict): continue
+                            descriptor = {k: output.get(k) for k in ("filename", "subfolder", "type")}
+                            if descriptor["filename"]:
+                                ext = Path(descriptor["filename"]).suffix.lower()
+                                descriptor.update(seed=submission.get("seed"), prompt_id=prompt_id,
+                                                  media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
+                                if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
                 submission["status"] = "completed"; self._save(job); return True
             time.sleep(2)
         job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
@@ -290,7 +420,7 @@ class Studio:
         safe = re.sub(r"[^A-Za-z0-9._-]", "_", Path(filename or "reference").name)[:100]
         if not safe or safe in (".", ".."): raise StudioError("Invalid upload filename")
         # ComfyUI only receives this generated basename; client paths are never used.
-        uploads = self.root / "experiments/uploads"; uploads.mkdir(parents=True, exist_ok=True)
+        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
         name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
         path = uploads / name; path.write_bytes(body)
         comfy_input = self.comfy_root / "input"
@@ -320,6 +450,29 @@ class Handler(BaseHTTPRequestHandler):
     def _body_json(self):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
         return json.loads(self.rfile.read(self._content_length(1024 * 1024)).decode())
+    def _media(self, descriptor):
+        query = urlencode({k:descriptor[k] for k in ("filename", "subfolder", "type") if descriptor.get(k) is not None})
+        headers = {}
+        requested_range = self.headers.get("Range")
+        if requested_range:
+            if not re.fullmatch(r"bytes=(?:\d+-\d*|-\d+)", requested_range):
+                raise StudioError("A single valid byte range is required")
+            headers["Range"] = requested_range
+        request = Request(self.studio.comfy_url + "/view?" + query, headers=headers)
+        try: response = urlopen(request, timeout=30)
+        except HTTPError as exc:
+            if exc.code != 416: raise
+            self.send_response(416)
+            if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
+            self.send_header("Content-Length", "0"); self.end_headers(); return
+        with response:
+            self.send_response(response.status)
+            for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):
+                if response.headers.get(key): self.send_header(key, response.headers[key])
+            self.end_headers()
+            try:
+                while chunk := response.read(64 * 1024): self.wfile.write(chunk)
+            except (BrokenPipeError, ConnectionResetError): return
     def do_GET(self):
         if not self._safe_host(): return self._json(403, {"error":"Loopback Host required"})
         try:
@@ -327,20 +480,26 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
             if path.startswith("/api/workflows/"):
                 preset = self.studio.preset(path.rsplit("/", 1)[-1]); _, workflow = self.studio.graph_for(preset)
-                data = workflow.read_bytes(); self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Disposition", f'attachment; filename="{preset["id"]}-api.json"'); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+                if urlparse(self.path).query == "visual" and preset.get("visual"):
+                    workflow = inside(self.studio.root, self.studio.root / preset["visual"])
+                suffix = "visual" if urlparse(self.path).query == "visual" and preset.get("visual") else "api"
+                data = workflow.read_bytes(); self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Disposition", f'attachment; filename="{preset["id"]}-{suffix}.json"'); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/health": return self._json(200, self.studio.health())
+            if path == "/api/library": return self._json(200, self.studio.library.snapshot())
+            if path.startswith("/api/inspect/"): return self._json(200, self.studio.inspect_preset(path.rsplit("/", 1)[-1]))
+            if path.startswith("/api/examples/"):
+                file = inside(self.studio.root / "examples", self.studio.root / "examples" / path[len("/api/examples/"):])
+                if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
+                data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs": return self._json(200, [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)])
             if path.startswith("/api/jobs/") and path.endswith("/recipe"):
-                job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, read_json(self.studio.runs / job["id"] / "recipe.json")) if job else self._json(404, {"error":"Unknown job"})
+                job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, self.studio.export_recipe(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/jobs/"):
                 job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/image/"):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); image = job and job.get("outputs", [])[int(index)]
                 if not image: return self._json(404, {"error":"Unknown image"})
-                query = urlencode({k:v for k,v in image.items() if v is not None})
-                with urlopen(self.studio.comfy_url + "/view?" + query, timeout=20) as resp:
-                    data = resp.read(); self.send_response(200); self.send_header("Content-Type", resp.headers.get_content_type()); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-                return
+                return self._media(image)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
@@ -352,6 +511,10 @@ class Handler(BaseHTTPRequestHandler):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
+            if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_json().get("id")))
+            if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_json().get("id")))
+            if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
                 self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
             if self.path == "/api/upload":

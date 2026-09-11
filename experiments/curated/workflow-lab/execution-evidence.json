@@ -1,0 +1,157 @@
+{
+  "date": "2026-09-11",
+  "runtime": "ComfyUI 0.35.0; Windows ROCm 7.2.1; RX 9070 XT 16GB",
+  "observations": [
+    {
+      "preset_id": "lineani-portrait",
+      "job_id": "d8415f1a-70d2-417f-9fa8-417984f2da36",
+      "prompt_ids": [
+        "6e37e90d-ef45-4e07-af31-045b4938fe53"
+      ],
+      "status": "completed",
+      "seconds": 34.15,
+      "controls": {
+        "positive": "LineAniAF, black and white manga linework, precise ink contours, adult wandering swordswoman in a rain-soaked futuristic street, composed expression, layered travel clothing, original character, detailed setting",
+        "negative": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, malformed pupils, text, watermark",
+        "seed": "2026091103",
+        "steps": "20",
+        "cfg": "5",
+        "width": "512",
+        "height": "768",
+        "lora": "0.8",
+        "sampler": "euler_ancestral",
+        "scheduler": "normal"
+      },
+      "artifact": "examples/workflow-lab/lineani.png",
+      "sha256": "2ba9fe6412e6fc27048cccd9d93fcbc93e4be0c39bad98e9fa4ba95bf4c5ef31",
+      "bytes": 730445,
+      "recipe": "lineani-portrait-recipe.json"
+    },
+    {
+      "preset_id": "anima-portrait",
+      "job_id": "bf72296f-282d-4ec8-aea9-1aee06a05f98",
+      "prompt_ids": [
+        "6d136e16-132f-4964-a07b-988a2a34b5ac"
+      ],
+      "status": "completed",
+      "seconds": 20.01,
+      "controls": {
+        "positive": "masterpiece, best quality, detailed anime illustration, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face",
+        "negative": "worst quality, low quality, blurry, bad anatomy, bad hands, text, watermark",
+        "seed": "2026091103",
+        "steps": "24",
+        "cfg": "4",
+        "width": "512",
+        "height": "768"
+      },
+      "artifact": "examples/workflow-lab/anima.png",
+      "sha256": "00db8258bf3f1f48af89da1a0299c0539c174ea79342e2b98637725957edb94b",
+      "bytes": 564395,
+      "recipe": "anima-portrait-recipe.json"
+    },
+    {
+      "preset_id": "krea-portrait",
+      "job_id": "962baf44-3b10-4d47-bb85-f1820ed0f2b7",
+      "prompt_ids": [
+        "144048d4-d6ea-4142-87f5-bdf11d87031c"
+      ],
+      "status": "completed",
+      "seconds": 188.67,
+      "controls": {
+        "positive": "purple retro anime style, adult silver-haired swordswoman in a dark travelling coat, standing under an umbrella on a rainy neon-lit street, teal and crimson lighting, original character, expressive face",
+        "seed": "2026091103",
+        "steps": "8",
+        "cfg": "1",
+        "width": "512",
+        "height": "768",
+        "lora": "1"
+      },
+      "artifact": "examples/workflow-lab/krea.png",
+      "sha256": "00d7d09fe24d5bf39a6ae7a5ecb935909018a4765ab8e5aeea4b4988b2dd567b",
+      "bytes": 549217,
+      "recipe": "krea-portrait-recipe.json"
+    },
+    {
+      "preset_id": "hunyuan-draft",
+      "job_id": "d3f22031-5ba0-4813-930c-448514ff77ba",
+      "prompt_ids": [
+        "ba5ce9da-f6e5-4322-8f73-d56980ef61d6"
+      ],
+      "status": "completed",
+      "seconds": 36.88,
+      "controls": {
+        "seed": "2026091103",
+        "steps": "20",
+        "cfg": "5"
+      },
+      "artifact": "examples/workflow-lab/hunyuan-lantern.glb",
+      "sha256": "391211e6ba674f063a04a023300a53a2dbf430162bf44325467b04c2f7180c49",
+      "bytes": 1453916,
+      "recipe": "hunyuan-draft-recipe.json"
+    },
+    {
+      "preset_id": "wan22-i2v",
+      "job_id": "e33116f1-7253-451a-8d41-f20a99aca808",
+      "prompt_ids": [
+        "460ed2dd-1a6b-45e1-9374-ac130595517c"
+      ],
+      "status": "completed",
+      "seconds": 141.77,
+      "controls": {
+        "positive": "An adult silver-haired swordswoman stands under an umbrella on a neon-lit rainy street. Rain falls steadily; her hair and coat move gently in a light breeze. A subtle slow camera push-in. Stable face, hands and sword. Cinematic anime shot.",
+        "negative": "static scene, camera shake, flicker, text, subtitles, watermark, extra limbs, distorted face, blurry details",
+        "seed": "2026091103",
+        "steps": "20",
+        "cfg": "5",
+        "width": "512",
+        "height": "768",
+        "frames": "33",
+        "reference": "9d1cfaf79b8c4988ab510fe1721f1fc7_previous-output.png.png"
+      },
+      "artifact": "examples/workflow-lab/wan-retro-anime.mp4",
+      "sha256": "c7c9f63ccfc91e838bf8ce6b2f40699998cc8adfd6574e00869e17b0bdfd547c",
+      "bytes": 166309,
+      "recipe": "wan22-i2v-recipe.json"
+    },
+    {
+      "preset_id": "trellis-auto-cutout",
+      "job_id": "e048a200-3028-4cf2-b89f-4e27e99e024e",
+      "prompt_ids": [
+        "5f53db1c-574b-4754-94d5-51d5428729a3"
+      ],
+      "status": "completed",
+      "seconds": 74.89,
+      "controls": {
+        "seed": "2026091103"
+      },
+      "artifact_root": "ComfyUI/output",
+      "artifact": "Studio/Trellis2-auto-cutout_00001_.glb",
+      "sha256": "51b84b1188e373b7e147c14e162c16271f49b7550d1162c2431687ac8be0f945",
+      "bytes": 24388556,
+      "triangles": 866377,
+      "images": 2,
+      "recipe": "trellis-auto-cutout-recipe.json",
+      "limitation": "Completed PBR export contains an unwanted ground plane; original preserved. CPU UV patch required on this host."
+    },
+    {
+      "preset_id": "trellis-rgba",
+      "job_id": "ea2b71ab-026e-49ab-909c-1e294fb0a0da",
+      "prompt_ids": [
+        "79e4362c-8bcb-4695-9222-e48eb6eecee3"
+      ],
+      "status": "completed",
+      "seconds": 83.48,
+      "controls": {
+        "seed": "2026091104"
+      },
+      "artifact_root": "ComfyUI/output",
+      "artifact": "Studio/Trellis2-rgba_00001_.glb",
+      "sha256": "6a6982659ea8a0b77e3516fde17432fa06545bcc90cbcfb58c6d79ca4ee3f1ef",
+      "bytes": 26120668,
+      "triangles": 939565,
+      "images": 2,
+      "recipe": "trellis-rgba-recipe.json",
+      "limitation": "Completed PBR export contains an unwanted ground plane; original preserved. CPU UV patch required on this host."
+    }
+  ]
+}

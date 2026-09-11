@@ -1,0 +1,240 @@
+{
+  "version": 2,
+  "preset_id": "lineani-portrait",
+  "controls": {
+    "positive": "LineAniAF, black and white manga linework, precise ink contours, adult wandering swordswoman in a rain-soaked futuristic street, composed expression, layered travel clothing, original character, detailed setting",
+    "negative": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, malformed pupils, text, watermark",
+    "seed": "2026091103",
+    "steps": "20",
+    "cfg": "5",
+    "width": "512",
+    "height": "768",
+    "lora": "0.8",
+    "sampler": "euler_ancestral",
+    "scheduler": "normal"
+  },
+  "batch_count": 1,
+  "created_at": 1789139653.394656,
+  "workflow": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "8",
+          1
+        ],
+        "text": "LineAniAF, black and white manga linework, precise ink contours, adult wandering swordswoman in a rain-soaked futuristic street, composed expression, layered travel clothing, original character, detailed setting"
+      }
+    },
+    "3": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "8",
+          1
+        ],
+        "text": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, malformed pupils, text, watermark"
+      }
+    },
+    "4": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 512,
+        "height": 768,
+        "batch_size": 1
+      }
+    },
+    "5": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "8",
+          0
+        ],
+        "seed": 2026091103,
+        "steps": 20,
+        "cfg": 5.0,
+        "sampler_name": "euler_ancestral",
+        "scheduler": "normal",
+        "positive": [
+          "2",
+          0
+        ],
+        "negative": [
+          "3",
+          0
+        ],
+        "latent_image": [
+          "4",
+          0
+        ],
+        "denoise": 1.0
+      }
+    },
+    "6": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "5",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "7": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "6",
+          0
+        ],
+        "filename_prefix": "Studio/lineani-portrait"
+      }
+    },
+    "8": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "clip": [
+          "1",
+          1
+        ],
+        "lora_name": "LineAniRedmondV2-Lineart-LineAniAF.safetensors",
+        "strength_model": 0.8,
+        "strength_clip": 0.8
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "6e37e90d-ef45-4e07-af31-045b4938fe53",
+      "seed": 2026091103,
+      "graph": {
+        "1": {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "sd_xl_base_1.0.safetensors"
+          }
+        },
+        "2": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "8",
+              1
+            ],
+            "text": "LineAniAF, black and white manga linework, precise ink contours, adult wandering swordswoman in a rain-soaked futuristic street, composed expression, layered travel clothing, original character, detailed setting"
+          }
+        },
+        "3": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "8",
+              1
+            ],
+            "text": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, malformed pupils, text, watermark"
+          }
+        },
+        "4": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 512,
+            "height": 768,
+            "batch_size": 1
+          }
+        },
+        "5": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "8",
+              0
+            ],
+            "seed": 2026091103,
+            "steps": 20,
+            "cfg": 5.0,
+            "sampler_name": "euler_ancestral",
+            "scheduler": "normal",
+            "positive": [
+              "2",
+              0
+            ],
+            "negative": [
+              "3",
+              0
+            ],
+            "latent_image": [
+              "4",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "6": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "5",
+              0
+            ],
+            "vae": [
+              "1",
+              2
+            ]
+          }
+        },
+        "7": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "6",
+              0
+            ],
+            "filename_prefix": "Studio/lineani-portrait"
+          }
+        },
+        "8": {
+          "class_type": "LoraLoader",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "clip": [
+              "1",
+              1
+            ],
+            "lora_name": "LineAniRedmondV2-Lineart-LineAniAF.safetensors",
+            "strength_model": 0.8,
+            "strength_clip": 0.8
+          }
+        }
+      },
+      "status": "completed"
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "lineani-portrait_00001_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026091103,
+      "prompt_id": "6e37e90d-ef45-4e07-af31-045b4938fe53",
+      "media_type": "image"
+    }
+  ]
+}

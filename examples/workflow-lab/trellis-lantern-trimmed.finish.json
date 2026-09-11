@@ -1,0 +1,17 @@
+{
+  "source": "Trellis2-rgba_00001_.glb",
+  "source_sha256": "6a6982659ea8a0b77e3516fde17432fa06545bcc90cbcfb58c6d79ca4ee3f1ef",
+  "blender": "4.5.13 LTS",
+  "target_faces": 80000,
+  "trim_bottom_fraction": 0.035,
+  "meshes": [
+    {
+      "name": "Mesh_0",
+      "original_faces": 939564,
+      "after_trim": 381609,
+      "final_faces": 80335
+    }
+  ],
+  "output_sha256": "48a8c0c17f57a404f8b037dad0c045805566701c28fa16d4b5f721321e8c45d8",
+  "output_bytes": 9944176
+}

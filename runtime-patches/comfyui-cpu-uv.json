@@ -1,0 +1,8 @@
+{
+  "comfy_commit": "40c4fcdf513a4523e39d54a9d391908af8df8171",
+  "file": "comfy_extras/nodes_mesh_postprocess.py",
+  "original_sha256": "49767c93f9e5a677d43f40bb3f9caadf9146851e8a9b9c39d657f184ab2ba10c",
+  "patched_sha256": "f59f45b301e9c0da969a55b4946c2414e1386699f2a2f3aa3ead83cbea619d27",
+  "scope": "Use existing CPU NumPy LSCM for small UV charts; preserve GPU segmentation and PBR bake",
+  "runtime": "Windows ROCm 7.2.1 / Torch 2.9.1 / RX 9070 XT"
+}

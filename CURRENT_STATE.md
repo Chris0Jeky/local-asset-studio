@@ -2,38 +2,148 @@
 
 ## Changed
 
-Latest addition: five anime finishing presets and visual workflows (25-29), for a total of 29 presets and 29 visual workflows. Installed pinned Impact Pack/Subpack, face/hand detectors and the official Real-ESRGAN anime upscaler. [Detailing guide](docs/ANIME-DETAILING.md). All five graphs passed installed-node schema checks. CPU-only smoke execution loaded the upscaler and both detectors, produced a 128px image from a 32px synthetic input, and produced non-empty face/hand masks on the existing WAI example (15,128 and 3,920 nonzero pixels). No diffusion redraw was submitted. Nine regression tests, the 29-preset validator and pip check passed. After the user queue became empty, the primary backend was restarted and all new nodes loaded. Studio health reports no missing models/nodes, and browser selection enables the combined workflow. The CPU probe was stopped. Independent graph/source review found no CRITICAL/HIGH blocker. Corrected the inherited Animagine provenance note and obsolete overview counts from issue #5.
+Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and
+50 API graphs**. The 20 additions cover manga line art, screentone, cinematic
+lighting, Anima Aesthetic 1.1, free Krea 2 retro anime, MiniMax H3, Wan 2.2,
+Hunyuan3D 2.1 and TRELLIS.2. Portrait/environment, preview/quality,
+reference-image and seed-audition variants expose the relevant controls.
 
-Latest slice: added three **Anime quality** presets and four editable workflows (21-24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). That slice brought the catalog to 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
+The three UI views are Create, Models & folders, and Workflow lab. Model paths,
+dependency inspection, pinned downloads, named setups, exact recipe import,
+image comparison, image-to-video/3D handoff, MP4 playback and an interactive GLB
+viewer are available. Selection, import and page load never submit a generation.
+A separate Generate action queues work serially.
 
-Completed the serial download queue for FLUX.2 dev 32B Q4, its Mistral Q4 encoder and Xinsir Union SDXL (34.4 GiB total). All three SHA-256 values matched pinned metadata before installation. Portable entries are in models/installed-manifest.json. Runtime inference remains unverified.
+All **22 curated expansion assets** finished installation with matching SHA-256
+receipts. The 20 new native graphs pass the running ComfyUI node schemas with no
+missing file selections. Weights remain outside Git. The existing H3 diffusion
+download is hard-linked into `models/diffusion_models`, avoiding a second 20 GB copy.
+Its companion encoder, video/audio VAEs and Turbo LoRA are installed as well.
 
-Migrated the personal studio into this repository, preserving the original workspace. The local front end provides 29 preset recipes; 29 visual ComfyUI workflows remain available for deeper editing. Model weights and installed tools stay under `C:\AI`. The repository contains scripts, small examples, provenance, guides and selected findings. Local jobs/uploads/logs are ignored.
+The desktop shortcut now launches this checkout. Local config points at the
+original `C:/Users/jekyt/source/local-asset-studio/experiments` so its 18 existing
+jobs and uploads remain available. Source files in that checkout were preserved.
+The launcher detects another Studio workspace on its port before reusing it.
+Services remain loopback-only: Studio 8191, ComfyUI 8188.
+
+The user chose **free alternatives** to the 1,000-Buzz NIJISIS LoRA; no Buzz was
+spent. Krea Turbo FP8 plus the official retro-anime adapter is a different recipe
+from the linked Krea Raw INT8 / NIJISIS example. The user confirmed eligible
+territory use for H3. Subjective choices remain open in [HUMAN_TODO.md](HUMAN_TODO.md).
 
 ## Verified
 
-Before this migration, 12 expansion configurations and the original SDXL/FLUX workflows rendered successfully. During migration, four more previously prepared presets rendered: photo-banner 26.595s, stylized-prop 15.126s, gentle-variation 5.942s, WAI-pose 21.649s. These are single server observations, not speed rankings or subjective approvals.
+Runtime: RX 9070 XT 16 GB, 32 GB system RAM, Windows ROCm 7.2.1 / Torch 2.9.1,
+ComfyUI 0.35.0 at `40c4fcdf513a4523e39d54a9d391908af8df8171`.
+These are single observations at the listed controls, including different amounts
+of model loading and caching; they are not comparative speed rankings.
 
-The earlier Lanternkeeper example includes 96 rendered frames, three animated GLBs, a packed atlas and a playable browser sample. Source copies are preserved here. Earlier validations are described in its README; they are not silently reclassified as new migration tests.
+| New route | Observed execution | ComfyUI prompt ID |
+|---|---|---|
+| Manga Line Art portrait | PNG, 512×768, 20 steps, CFG 5, adapter 0.8; 34.15s | `6e37e90d-ef45-4e07-af31-045b4938fe53` |
+| Anima Aesthetic portrait | PNG, 512×768, 24 steps, CFG 4; 20.01s | `6d136e16-132f-4964-a07b-988a2a34b5ac` |
+| Free Krea retro-anime portrait | PNG, 512×768, 8 steps, CFG 1; 188.67s | `144048d4-d6ea-4142-87f5-bdf11d87031c` |
+| Hunyuan3D Draft | GLB, octree 128, 20 steps; 36.88s | `ba5ce9da-f6e5-4322-8f73-d56980ef61d6` |
+| Wan Animate Image | MP4, 512×768, 33 frames at 24fps, 20 steps; 141.77s | `460ed2dd-1a6b-45e1-9374-ac130595517c` |
+| TRELLIS automatic cutout | GLB with UVs, base color and metallic/roughness textures; 74.89s | `5f53db1c-574b-4754-94d5-51d5428729a3` |
+| TRELLIS transparent reference | Same PBR stages, actual alpha matte, padding 1.1; 83.48s | `79e4362c-8bcb-4695-9222-e48eb6eecee3` |
 
-The desktop launcher started the studio and a repeat launch reused it. Nine regression tests and the 21-graph catalog validator passed. Independent code review found no remaining CRITICAL/HIGH blocker; root also corrected a stale completion label during browser testing. Actual browser interactions saved/restored a setup, imported a recipe, generated a two-image compass batch with distinct seeds and four output files, and pinned results for comparison. A reference image was uploaded through the file chooser and the gentle-edit job completed. All five returned images loaded in the browser with their expected dimensions; no browser error logs were observed. The full job recipe survives reload. Small selected samples are in `experiments/curated/compass-first-batch/`.
+The seed was 2026091103, except the transparent-reference trial used 2026091104.
+The three images were visually inspected. The Hunyuan
+GLB has one mesh, 80,924 triangles and no textures; it rendered in the embedded
+viewer. Wan's MP4 decodes to 33 frames, reports 1.375s in the browser, and its
+media endpoint returned the requested 1,024-byte range with HTTP 206. ComfyUI
+automatically fell back to tiled VAE decoding after ordinary decoding ran out of
+VRAM. A sampled video frame was inspected; long-shot consistency is not established.
 
-HiDream-O1 FP8 was installed in isolation and its 8.8GB weight SHA verified. Its corrected text-only graph completed an eight-step **2048×2048** render in 32.839s after model loading. The model snapped the requested 512px dimensions to 2048px. The initial loader/sampler attempt took 276.95s and failed on a missing dynamic selector; that graph error was corrected. See [HiDream findings](docs/HIDREAM.md).
+TRELLIS first failed in the native GPU FP64 UV solver. A local two-line
+[CPU UV compatibility patch](runtime-patches/README.md) selects ComfyUI's existing
+NumPy solve for small charts while retaining GPU segmentation and PBR baking.
+The original runtime source is backed up; patch reversal passes `git apply -R --check`.
+Both subsequent PBR trials completed, but both invented a large ground plane.
+A separate mask/crop probe confirmed correct foreground isolation. The real
+transparent starter is now `examples/references/studio-lantern-cutout.png`;
+the old RGBA PNG had an opaque alpha channel and is not used as the matte example.
+
+The explicit Blender finishing script trimmed 3.5% from the bottom of the second
+mesh and reduced it from 939,564 to **80,335 triangles**. The resulting 9,944,176-byte
+GLB retains UVs and both PBR textures and was inspected in the Workflow Lab viewer.
+The cut can leave an open base; this is a useful draft, not game-engine acceptance.
+Original 24+ MB generated GLBs remain in ComfyUI output. Exact source/output hashes
+and finishing settings accompany the small curated export.
+
+Small selected outputs and exact recipes are in
+[the curated execution record](experiments/curated/workflow-lab/README.md).
+Only the individual new presets that completed have the Executed badge.
+
+Browser interactions inspected an H3 visual workflow (15 nodes, five weights,
+no missing dependencies), imported an exact manga recipe, saved/restored a
+three-seed setup, attached a generated image through Animate, and submitted the
+known video/3D jobs. Reload and inspection did not create extra jobs. Create and
+Models views fit a 390px viewport without horizontal overflow. Final browser checks
+played the Wan clip through to its end, exercised keyboard orbit on the trimmed
+3D preview, and reported no browser warnings or errors.
+
+Twenty-two regression tests and the catalog/payload validator passed before final
+closeout. Twenty native expansion graphs passed live node/link/enum validation.
+Independent adversarial review found recipe-import drift and unbounded media
+buffering; both were fixed and the follow-up review found no remaining blocker.
+Recipe imports verify the embedded graph and guard against a changed template
+before submission. Media streams in bounded chunks and preserves Range responses.
+
+Earlier evidence remains valid at its original scope: the original 20 simple
+presets were exercised, the Lanternkeeper example includes 96 frames and three
+animated GLBs, and isolated HiDream O1 FP8 produced 2048×2048 in an eight-step run.
+The five anime finishing graphs were schema-checked and CPU detector/upscaler
+probes passed; this expansion does not turn them into new art acceptance.
 
 ## NOT verified
 
-Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B inference remains a later experiment; its Q4 weight and companion encoder are now installed and checksum-verified. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
+Hunyuan Detail, new environment variants, screentone/cinematic adapters,
+Wan text-to-video and longer shots have not received
+separate execution or quality comparisons. Presence and schema validation alone
+do not prove GPU compatibility.
+
+MiniMax H3 produced **no video**. Two accepted tiny trials crashed the ComfyUI
+process with Windows access violation `0xC0000005` in text-encoder loading:
+`c36094f8-04bd-4673-8020-07e3940e4df6` and
+`239417ce-136a-49d7-aa44-98950646df85`. The second used a fresh process with
+`--disable-mmap`; it still failed. A CPU safetensors-header/tensor-access probe
+completed but does not prove full inference compatibility. The flag was reverted,
+the failures were reconciled from logs, and neither uncertain job was repeated.
+Local `runtime_blocks` disables H3 submission while retaining its visual graphs.
+The compatibility follow-up is tracked in
+[issue 18](https://github.com/Chris0Jeky/local-asset-studio/issues/18).
+Logs: `C:/AI/logs/20260911-154507-error.log` and
+`C:/AI/logs/20260911-162226-error.log`.
+
+The exact Seed Hunter 1.6 JSON was recovered through Civitai's public no-credit
+endpoint and its SHA-256 matched official metadata. It is saved in
+`workflows/community` and ComfyUI's `Studio Workflow Lab/Community` folder.
+Static inspection found 154 nodes, 24 missing node classes and three additional
+missing weights. Its custom-node code was not installed and the graph was not
+executed. Native H3 variants do not establish its continuation, latent-upscale or
+interpolation behavior. Provenance and the full dependency report are beside it.
+
+Qwen's 40-step preset, FLUX.2 dev 32B Q4 inference, higher-step/reference-edit
+HiDream comparisons, character-LoRA training, faithful animation in-betweens,
+Krita integration and game-engine imports remain outside this completed expansion.
+The FLUX.2 weights and Mistral encoder are already installed and checksum-verified.
+Fresh-machine setup and broad browser coverage are not claimed.
 
 ## Residual risk
 
-One earlier Qwen-to-SDXL model switch crashed ComfyUI with a Windows access violation; the primary process also exited during the isolated HiDream transition. Root cause is unresolved. The isolated server was stopped and the primary successfully restarted before the browser tests. Heavy model runs can pressure RAM. Source-faithful animation and production-ready transparent pixel assets still require finishing and art review. NoobAI is hobby-only under author terms; WAI mirror provenance does not establish creator authentication or original commercial terms.
+Heavy model switches can exhaust RAM/VRAM or crash Windows ROCm. H3 is blocked
+locally after direct failures; untested settings remain experiments. The curated
+installer preserves 20 GiB headroom, verifies before exposing the final filename,
+and leaves interrupted partial downloads for an explicit resume.
 
-## Next work
+Successful outputs are drafts: image anatomy, identity consistency, mesh topology,
+UVs, materials, rigging and commercial suitability still need review. Anima weight
+terms are non-commercial; Krea/H3 and third-party adapters have their own terms.
+NoobAI remains hobby-only, and WAI mirror provenance is not creator authentication.
 
-1. Use the simple studio for a real brief and curate a controlled comparison.
-2. Integrate the now-executed isolated HiDream model as an optional preset with safe backend switching, then compare higher steps and a reference edit.
-3. Test the slow Qwen quality variant as an explicit long batch, compare with Lightning at the same brief, and assess benefit against time.
-4. Add a focused character-consistency and animation study using approved key poses and fixed pivots.
-5. Evaluate FLUX.2 dev 32B later with a separate encoder/offload plan and enough free disk/RAM.
-
-[HUMAN_TODO.md](HUMAN_TODO.md) contains optional subjective choices. No complete commercial character pack is claimed.
+[Workflow Lab guide](docs/WORKFLOW-LAB.md) explains folder placement, the free
+alternative, pipeline controls, sources and recovery. The implementation branch is
+`codex/studio-workflow-lab`, based on `6bd4e5b`; final Git/CI status is reported with
+the handoff. [HUMAN_TODO.md](HUMAN_TODO.md) contains the optional creative choices.
