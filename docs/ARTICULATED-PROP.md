@@ -49,3 +49,15 @@ job with no ComfyUI prompt IDs, retains failure files, registers the animated GL
 and four render PNGs in `AssetWorkspace`, and writes `export.zip` containing the
 BLEND, GLB, renders, metadata, and recipe. Returned artifact records use the
 production file route and include immutable byte hashes.
+
+Studio persists the deterministic job and attempt before Blender starts. After a
+restart, Resume inspects the retained receipt, pinned recipe, successful Blender
+exit log and outputs; it does not execute Blender again. Failed or unproven
+attempts remain unresolved even if partial files look complete.
+
+The visible GLB excludes the render-hidden `CollisionProxy`; that helper remains
+in the editable BLEND. A fresh Studio build on 11 September 2026,
+`44cfa4a0b29a43098d6c7c7609ca6831`, produced all four inspection views and a GLB
+containing body, lid and two hinge pins plus `ChestLidOpenHoldClose`. Its browser
+preview was inspected. This is an authored blockout with an animated hinge,
+not a hollow mechanical chest, automatic part segmentation or an accepted game asset.

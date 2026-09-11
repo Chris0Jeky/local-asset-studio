@@ -1,6 +1,6 @@
 """Opt-in loader experiment for H3's Windows safetensors access violation.
 
-No site-package edits. Only an explicitly selected local encoder is intercepted.
+No site-package edits. Only explicitly selected local H3 model files are intercepted.
 The normal loader remains in use for every other file and every GPU load.
 """
 import json
@@ -62,7 +62,7 @@ def install(target, read_only=False):
         if Path(ckpt).resolve()!=target or (device is not None and torch.device(device).type!='cpu'):
             return original(ckpt,safe_load=safe_load,device=device,return_metadata=return_metadata)
         state,metadata=load_cpu(target,torch,comfy.utils._TYPES,read_only)
-        print('H3 loader experiment: stdlib '+('read-only' if read_only else 'copy-on-write')+' mmap, '+str(len(state))+' CPU tensor views',flush=True)
+        print('H3 loader experiment: '+target.name+', stdlib '+('read-only' if read_only else 'copy-on-write')+' mmap, '+str(len(state))+' CPU tensor views',flush=True)
         return (state,metadata) if return_metadata else state
     comfy.utils.load_torch_file=selected_loader
     return original

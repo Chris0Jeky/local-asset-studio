@@ -1,5 +1,11 @@
 # Your asset workspace
 
+**Import images** adds your existing PNG/JPEG/WebP originals without generation.
+Select images and use **Create native export** to arrange their order, layer
+names or frame timings, then prepare and explicitly Start the plan in
+Experiments. [Native exports](NATIVE-EXPORTS.md) include ORA/Krita documents,
+sprite atlases and actual Godot import/playback checks.
+
 Open **Workspace** in the Studio to browse images, video, audio and 3D outputs.
 Search matches titles, recipe names, tags and notes. Media and date filters help
 find a study among repeated experiments.
