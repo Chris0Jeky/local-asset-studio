@@ -246,5 +246,10 @@ class AssetWorkspace:
             raw = json.dumps(recipe)
             if len(raw) > 128 * 1024:
                 raise WorkspaceError("Saved setup is too large")
-            db.execute("INSERT OR REPLACE INTO setups VALUES (?,?,?,?)", (identifier, name, raw, time.time()))
+            existing = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
+            if existing:
+                if existing["name"] != name or json.loads(existing["recipe"]) != recipe:
+                    raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
+            else:
+                db.execute("INSERT INTO setups VALUES (?,?,?,?)", (identifier, name, raw, time.time()))
         return {"id": identifier, "name": name}

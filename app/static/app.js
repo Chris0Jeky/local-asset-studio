@@ -118,11 +118,26 @@ async function refreshLibrary(){
 }
 async function install(id){try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & folders.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}}
 function saved(){return serverSetups.map(s=>({...s.recipe,name:s.name,id:s.id}));}
-async function loadSetups(){serverSetups=await api('/api/setups');if(!localStorage.getItem('asset-studio-setups-migrated')){let old=[];try{old=JSON.parse(localStorage.getItem('asset-studio-saved')||'[]');}catch{}if(Array.isArray(old)){for(let i=0;i<old.length;i++)await post('/api/setups',{id:'legacy-'+i,name:old[i].name,recipe:old[i]});}localStorage.setItem('asset-studio-setups-migrated','1');serverSetups=await api('/api/setups');}renderSaved();}
+async function loadSetups(){
+  serverSetups=await api('/api/setups');
+  const identity=await api('/api/identity'), migrationKey='asset-studio-setups-migrated:'+identity.workspace;
+  if(!localStorage.getItem(migrationKey)){
+    let old=[];try{old=JSON.parse(localStorage.getItem('asset-studio-saved')||'[]');}catch{}
+    if(Array.isArray(old))for(const recipe of old){
+      if(serverSetups.some(s=>s.name===recipe.name&&JSON.stringify(s.recipe)===JSON.stringify(recipe)))continue;
+      const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(recipe)));
+      const id='legacy-'+[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+      await post('/api/setups',{id,name:recipe.name,recipe});
+    }
+    localStorage.setItem(migrationKey,'1');serverSetups=await api('/api/setups');
+  }
+  renderSaved();
+}
 function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
 function applySaved(s){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   selectPreset(s.preset);
+  parentAssets=Array.isArray(s.parent_assets)?s.parent_assets.filter(id=>typeof id==='string'):[];
   Object.entries(s.controls||{}).forEach(([k,v])=>{const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
@@ -161,7 +176,7 @@ $('#gallery').onclick=async e=>{
 };
 $('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,controls:values(),batch:$('#batch').value,parent_assets:parentAssets}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,controls:recipe.controls,batch_count:recipe.batch_count});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
 document.addEventListener('click',async e=>{
   const copy=e.target.closest('[data-copy]'),folder=e.target.closest('[data-folder]'),button=e.target.closest('[data-install]');

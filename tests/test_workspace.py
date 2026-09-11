@@ -55,3 +55,13 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(workspace.AssetWorkspace(self.root).setups()[0]['recipe'],recipe)
         self.store.save_setup({'id':saved['id'],'action':'delete'})
         self.assertEqual(self.store.setups(),[])
+
+    def test_repeated_migration_is_idempotent_but_never_replaces_another_setup(self):
+        recipe={'preset':'test','parent_assets':[self.asset]}
+        payload={'id':'legacy-0','name':'Browser A','recipe':recipe}
+        self.store.save_setup(payload); self.store.save_setup(payload)
+        with self.assertRaisesRegex(workspace.WorkspaceError,'original was preserved'):
+            self.store.save_setup({'id':'legacy-0','name':'Browser B','recipe':{'preset':'another'}})
+        self.assertEqual(len(self.store.setups()),1)
+        self.assertEqual(self.store.setups()[0]['name'],'Browser A')
+        self.assertEqual(self.store.setups()[0]['recipe']['parent_assets'],[self.asset])
