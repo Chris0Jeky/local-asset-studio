@@ -2,7 +2,7 @@
 
 ## Changed
 
-Latest slice: added three **Anime quality** presets and four editable workflows (21–24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). The catalog now has 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
+Latest slice: added three **Anime quality** presets and four editable workflows (21-24): WAI portrait, Animagine portrait, 1.5x refinement and ComfyUI-only masked repair. [Guide](docs/ANIME-QUALITY.md). The catalog now has 24 presets and 24 visual workflows. New graph schemas, enum/checkpoint names and links passed live-node validation; nine regression tests passed. Browser selection loads the new presets. The agent submitted no generation jobs; user experiments may already appear in the gallery and are not art acceptance.
 
 Started a serial background download queue for FLUX.2 dev 32B Q4, its Mistral Q4 encoder and Xinsir Union SDXL (34.4 GiB total). See models/next-downloads.json for pinned provenance. Download completion, checksums and runtime compatibility are separate; inspect the local status receipt before retrying. The old research-only FLUX candidate record below is historical.
 
