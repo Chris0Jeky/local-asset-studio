@@ -1,5 +1,19 @@
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false;
+$('#importAssets').onchange=async e=>{
+  const files=[...e.target.files];if(!files.length)return;
+  if(files.length>32){assetMessage('Import up to 32 images at a time.',true);return;}
+  const ids=[];
+  try{
+    for(let i=0;i<files.length;i++){
+      const file=files[i];assetMessage('Importing '+(i+1)+' of '+files.length+'…');
+      if(file.size>20*1024*1024)throw Error(file.name+' exceeds 20 MiB');
+      const result=await api('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});ids.push(result.asset.id);
+    }
+    assetScope='all';$('#assetSearch').value='';await refreshAssets(true);assetSelection=new Set(ids);renderAssets();assetMessage('Imported '+ids.length+' originals. They are selected for organization or native export.');
+  }catch(err){await refreshAssets(true);assetMessage(err.message+' '+ids.length+' earlier imports are preserved.',true);}
+  finally{e.target.value='';}
+};
 function assetMessage(text, error=false) { const el=$('#assetMessage'); el.textContent=text; el.classList.toggle('error',error); }
 async function refreshAssets(force=false) {
   if(assetRefreshing)return;

@@ -19,7 +19,7 @@ class ProductionTests(unittest.TestCase):
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(GRAPH))
         self.patches=[patch.object(threading.Thread,'start',lambda *_:None),
-            patch.object(server.Studio,'production_preflight',lambda *a:{'test_bundle':True}),
+            patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
         for p in self.patches:p.start()
@@ -29,6 +29,27 @@ class ProductionTests(unittest.TestCase):
     def intent(self,**extra):
         return dict({'name':'Seed comparison','recipe':{'preset_id':'demo','controls':{}},'axis':'seed','values':[1,2],'max_generations':2},**extra)
     def post_count(self,studio):return sum(1 for args,_ in studio.requests if args[0]=='/prompt')
+
+    def test_native_job_is_persisted_before_blender_and_resume_never_repeats(self):
+        import articulated
+        studio=FakeStudio(self.root,[])
+        operation={'operation':articulated.OPERATION,'intent':{'name':'Chest'},'options':{},'sha256':'pinned'}
+        with patch.object(articulated,'prepare',return_value=operation):project=studio.production.articulated({})
+        def lost_parent(s,identifier,plan):
+            attempt=s.production.get(identifier)['state']['attempts']['0']
+            self.assertTrue((s.runs/attempt['job_id']/'state.json').is_file())
+            (s.production.root/identifier/'articulated-job.json').write_text('{}')
+            raise KeyboardInterrupt('Simulated parent loss')
+        studio.production.start(project['id'])
+        with patch.object(articulated,'run',side_effect=lost_parent):
+            with self.assertRaises(KeyboardInterrupt):studio.production.run(project['id'])
+        restarted=FakeStudio(self.root,[]);restarted.production.resume(project['id'])
+        recovered={'job':articulated._native_job(project['id'],operation),'artifacts':[],'measurements':{},'limitations':[]}
+        recovered['job'].update(status='completed',outputs=[])
+        with patch.object(articulated,'run') as run,patch.object(articulated,'recover',return_value=recovered) as recover:
+            restarted.production.run(project['id'])
+        run.assert_not_called();recover.assert_called_once()
+        self.assertEqual(restarted.production.get(project['id'])['state']['status'],'completed')
 
     def test_branch_budget_and_start_are_atomic_and_not_reset(self):
         studio=FakeStudio(self.root,[]);lab=studio.production

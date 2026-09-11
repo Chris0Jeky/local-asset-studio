@@ -219,6 +219,26 @@ def receipt_for(plan, receipts, workspace, task_id, paths, reviewer, note):
     return result
 
 
+def expanded_input_contract(contract, live_inputs):
+    """Resolve V3 dynamic-combo branches using ComfyUI's dotted input names."""
+    fields, required = {}, set()
+    def visit(inputs, prefix='', depth=0):
+        require(depth <= 8, 'Dynamic input nesting exceeds eight levels')
+        for group in ('required', 'optional'):
+            for name, spec in inputs.get(group, {}).items():
+                key = prefix + name
+                fields[key] = spec
+                if group == 'required': required.add(key)
+                if spec[0] == 'COMFY_DYNAMICCOMBO_V3':
+                    options = spec[1].get('options', [])
+                    selected = next((o for o in options if o['key'] == live_inputs.get(key)), None)
+                    require(selected is not None, 'Unknown dynamic input option: '+key)
+                    fields[key] = ['COMBO', dict(spec[1], options=[o['key'] for o in options])]
+                    visit(selected['inputs'], key+'.', depth+1)
+    visit(contract.get('input', {}))
+    return fields, required
+
+
 def graph_check(graph, info=None):
     require(isinstance(graph, dict) and 0 < len(graph) <= 512, 'Expected bounded API graph')
     edges = {}
@@ -231,8 +251,8 @@ def graph_check(graph, info=None):
         if info is not None:
             require(node['class_type'] in info, f"Missing node class: {node['class_type']}")
             contract = info[node['class_type']]
-            fields = {**contract.get('input', {}).get('required', {}), **contract.get('input', {}).get('optional', {})}
-            require(set(contract.get('input', {}).get('required', {})) <= set(node['inputs']), 'Missing required input')
+            fields, required = expanded_input_contract(contract, node['inputs'])
+            require(required <= set(node['inputs']), 'Missing required input')
             require(set(node['inputs']) <= set(fields), 'Unknown input (snapshot may be stale)')
         for name, value in node['inputs'].items():
             descriptor = fields[name] if info is not None else None

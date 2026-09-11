@@ -1888,7 +1888,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "h3-quality",
@@ -1959,7 +1960,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "h3-image",
@@ -2034,7 +2036,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "h3-first-last",
@@ -2113,7 +2116,8 @@
           "batch_count": 3
         }
       ],
-      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native",
+      "backend_id": "h3"
     },
     {
       "id": "hunyuan-draft",
@@ -2999,6 +3003,247 @@
       ],
       "source_graph_sha256": "e95f34078fa8647ec788d16d2ebc4459a331e14296e9f3a8107de4d58e42e4bf",
       "execution_note": "Three-role manga edit: 512x768, 4 steps, seed 2026091101; 1334.646 seconds on RX 9070 XT Windows ROCm. Prompt c8b752b5-cb25-4438-8c66-f0e5fafcae04. Execution recorded; subjective acceptance remains open."
+    },
+    {
+      "id": "hidream-o1-concept",
+      "name": "HiDream O1 - 2K Anime Concept",
+      "category": "HiDream studio",
+      "collection": "production-workspace",
+      "family": "HiDream O1",
+      "backend_id": "hidream",
+      "modality": "image",
+      "graph": "workflows/api/hidream-o1-concept-api.json",
+      "visual": "workflows/comfyui/53 - HiDream O1 - 2K Anime Concept.json",
+      "positive": [
+        "2",
+        "prompt"
+      ],
+      "negative": [
+        "2",
+        "negative_prompt"
+      ],
+      "seed": [
+        "3",
+        "seed"
+      ],
+      "steps": [
+        "3",
+        "steps"
+      ],
+      "cfg": [
+        "3",
+        "guidance_scale"
+      ],
+      "description": "Native 2K concept synthesis in the isolated environment.",
+      "stages": [
+        "HiDream full FP8",
+        "Unified pixels and text",
+        "SDPA sampling",
+        "PNG"
+      ],
+      "verified": true,
+      "model_files": [
+        "diffusion_models/HiDream-O1-Image-fp8/model.safetensors",
+        "diffusion_models/HiDream-O1-Image-fp8/config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/generation_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/preprocessor_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/chat_template.json",
+        "diffusion_models/HiDream-O1-Image-fp8/merges.txt",
+        "diffusion_models/HiDream-O1-Image-fp8/vocab.json"
+      ],
+      "source": "https://huggingface.co/HiDream-ai/HiDream-O1-Image",
+      "commercial_note": "Upstream model MIT; FP8 conversion by drbaph. Isolated experimental runtime: upstream advises against Torch 2.9.x, which this Radeon build currently uses. Eight steps is a fast study; official full-model guidance is 50.",
+      "variants": [
+        {
+          "name": "8-step study",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "20-step study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "50-step full model",
+          "controls": {
+            "steps": 50
+          }
+        },
+        {
+          "name": "Portrait 1728 \u00d7 2304",
+          "controls": {
+            "width": 1728,
+            "height": 2304
+          }
+        },
+        {
+          "name": "Wide 2560 \u00d7 1440",
+          "controls": {
+            "width": 2560,
+            "height": 1440
+          }
+        }
+      ],
+      "width": [
+        "3",
+        "width"
+      ],
+      "height": [
+        "3",
+        "height"
+      ],
+      "dimension_limits": [
+        1312,
+        3104
+      ],
+      "dimension_multiple": 32,
+      "resolution_choices": [
+        [
+          2048,
+          2048
+        ],
+        [
+          2304,
+          1728
+        ],
+        [
+          1728,
+          2304
+        ],
+        [
+          2560,
+          1440
+        ],
+        [
+          1440,
+          2560
+        ],
+        [
+          2496,
+          1664
+        ],
+        [
+          1664,
+          2496
+        ],
+        [
+          3104,
+          1312
+        ],
+        [
+          1312,
+          3104
+        ],
+        [
+          2304,
+          1792
+        ],
+        [
+          1792,
+          2304
+        ]
+      ],
+      "execution_note": {
+        "prompt_id": "a784ab40-a48a-4013-9a1f-0e594f15b86d",
+        "date": "2026-09-11",
+        "width": 2048,
+        "height": 2048,
+        "steps": 8,
+        "seed": 2026091131,
+        "elapsed_seconds": 184.697,
+        "status": "execution observed; creative acceptance open"
+      }
+    },
+    {
+      "id": "hidream-o1-edit",
+      "name": "HiDream O1 - Reference Restyle",
+      "category": "HiDream studio",
+      "collection": "production-workspace",
+      "family": "HiDream O1",
+      "backend_id": "hidream",
+      "modality": "image",
+      "graph": "workflows/api/hidream-o1-edit-api.json",
+      "visual": "workflows/comfyui/54 - HiDream O1 - Reference Restyle.json",
+      "positive": [
+        "2",
+        "prompt"
+      ],
+      "negative": [
+        "2",
+        "negative_prompt"
+      ],
+      "seed": [
+        "3",
+        "seed"
+      ],
+      "steps": [
+        "3",
+        "steps"
+      ],
+      "cfg": [
+        "3",
+        "guidance_scale"
+      ],
+      "description": "Whole-image reference restyling at the source aspect ratio, capped by the model at 2K. Unrequested details can change.",
+      "stages": [
+        "HiDream full FP8",
+        "Unified pixels and text",
+        "SDPA sampling",
+        "PNG"
+      ],
+      "verified": true,
+      "model_files": [
+        "diffusion_models/HiDream-O1-Image-fp8/model.safetensors",
+        "diffusion_models/HiDream-O1-Image-fp8/config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/generation_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/preprocessor_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer.json",
+        "diffusion_models/HiDream-O1-Image-fp8/tokenizer_config.json",
+        "diffusion_models/HiDream-O1-Image-fp8/chat_template.json",
+        "diffusion_models/HiDream-O1-Image-fp8/merges.txt",
+        "diffusion_models/HiDream-O1-Image-fp8/vocab.json"
+      ],
+      "source": "https://huggingface.co/HiDream-ai/HiDream-O1-Image",
+      "commercial_note": "Upstream model MIT; FP8 conversion by drbaph. Isolated experimental runtime: upstream advises against Torch 2.9.x, which this Radeon build currently uses. Eight steps is a fast study; official full-model guidance is 50.",
+      "variants": [
+        {
+          "name": "8-step study",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "20-step study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "50-step full model",
+          "controls": {
+            "steps": 50
+          }
+        }
+      ],
+      "reference": [
+        "5",
+        "image"
+      ],
+      "execution_note": {
+        "prompt_id": "c599a918-20fb-4e78-8dce-6ed8fd170362",
+        "date": "2026-09-11",
+        "width": 2048,
+        "height": 2048,
+        "steps": 8,
+        "seed": 2026091132,
+        "elapsed_seconds": 76.26,
+        "status": "execution observed; creative acceptance open"
+      }
     }
   ]
 }

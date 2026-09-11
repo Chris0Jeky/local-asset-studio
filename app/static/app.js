@@ -19,7 +19,7 @@ function renderPresets() {
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
-  $('#generate').disabled = submitting || !online || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
+  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
   $('#health').textContent = !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && schemaAvailable && !missing.length ? 'ready' : 'offline');
 }
@@ -33,6 +33,7 @@ function renderSelected() {
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '">' + esc(v.name) + '</button>').join('');
   const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
   $('#controls').innerHTML = specs.filter(([k]) => selected[k] || selected.bindings_extra?.[k]).map(([key,label,type,attrs]) => {
+    if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
     if (type === 'select') return '<label>' + label + '<select data-key="' + key + '">' + (selected.choices?.[key] || []).map(v => '<option>' + esc(v) + '</option>').join('') + '</select></label>';
     if (key === 'lora' && typeof selected.defaults?.lora === 'string') { type='text'; attrs=''; label='LoRA filename'; }
     return '<label>' + label + '<input data-key="' + key + '" type="' + type + '" ' + attrs + '>' + (key === 'frames' ? '<small>' + (selected.family==='MiniMax H3'?'24fps · 124 ≈ 5.2s · use 17k+5 frames':'24fps · 81 ≈ 3.4s · use 4k+1 frames') + '</small>' : '') + '</label>';

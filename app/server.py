@@ -29,6 +29,7 @@ from model_library import ModelLibrary
 from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
+from backends import BackendManager
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -71,11 +72,13 @@ class Studio:
         self.assets = AssetWorkspace(self.experiments)
         self._schema_lock = threading.Lock()
         self._schema = None; self._schema_at = 0
-        self.jobs = {}; self.queue = Queue(); self.lock = threading.Lock()
+        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock()
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values(): self.index_outputs(job)
         self.production = Production(self)
+        self.backends = BackendManager(self)
+        self.backends.activate(self.backends.active)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
 
     def catalog(self):
@@ -86,6 +89,10 @@ class Studio:
         result = copy.deepcopy(data)
         for preset in result["presets"]:
             preset["runtime_block"] = self.config.get("runtime_blocks", {}).get(preset.get("family"))
+            if preset.get('family')=='MiniMax H3' and self.config.get('enable_h3_loader_experiment') and getattr(getattr(self,'backends',None),'active',None)=='h3':preset['runtime_block']=None
+            backend = preset.get('backend_id', 'primary')
+            if hasattr(self, 'backends') and backend != self.backends.active:
+                preset['runtime_block'] = 'Switch to ' + self.backends.profiles[backend]['name'] + ' to use this recipe.'
             try:
                 graph, _ = self.graph_for(preset); defaults = {}
                 for key in CONTROL_KEYS:
@@ -125,6 +132,7 @@ class Studio:
         for binding in extras: self._bind(graph, binding, value)
 
     def prepare(self, payload):
+        if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
         if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
@@ -164,7 +172,8 @@ class Studio:
         dims = {}
         for key in ("width", "height"):
             if key in controls:
-                dims[key] = number(controls[key], key, 64, 1536, True)
+                limits = preset.get('dimension_limits', [64, 1536])
+                dims[key] = number(controls[key], key, limits[0], limits[1], True)
                 multiple = preset.get("dimension_multiple", 8)
                 if dims[key] % multiple: raise StudioError(f"{key} must be a multiple of {multiple}")
                 self._bind_control(graph, preset, key, dims[key])
@@ -179,14 +188,34 @@ class Studio:
         if preset.get("max_pixels"):
             actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
+        if preset.get('resolution_choices'):
+            actual = [graph[str(preset[k][0])]['inputs'][str(preset[k][1])] for k in ('width', 'height')]
+            if actual not in preset['resolution_choices']: raise StudioError('Choose an authored resolution pair from this recipe')
         if preset.get("reference_slots"):
             preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads")
         elif payload.get("references"):
             raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
+        self.ensure_reference_inputs(graph)
         return preset, graph, graph_path, controls, batch
 
+    def ensure_reference_inputs(self, graph):
+        for node in graph.values():
+            if node.get('class_type') != 'LoadImage': continue
+            name = node['inputs'].get('image')
+            if not isinstance(name, str) or Path(name).name != name: continue
+            target = self.comfy_root/'input'/name
+            if target.is_file(): continue
+            for source in (self.experiments/'uploads'/name, self.root/'examples/references'/name):
+                if source.is_file():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, target); break
+
     def create_job(self, payload, enqueue=True, job_id=None):
+        with self.lock:
+            return self._create_job(payload, enqueue, job_id)
+
+    def _create_job(self, payload, enqueue=True, job_id=None):
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -214,9 +243,16 @@ class Studio:
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
-                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", [])}
+                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe')}
 
     def output_path(self, output, job=None):
+        if (job or {}).get('operation')=='native.articulated-prop.v1':
+            identifier=job.get('project_id','')
+            if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
+            base=(self.experiments/'projects'/identifier).resolve()
+            return inside(base,base/output['native_path'])
+        if (job or {}).get('operation')=='asset.import':
+            return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
         kind = output.get("type", "output")
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
@@ -237,6 +273,17 @@ class Studio:
         result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", source.read_bytes())
         result["parent_asset"] = asset_id
         return result
+
+    def import_image(self, filename, content_type, body):
+        uploaded=self.upload(filename,content_type,body)
+        identifier=str(uuid.uuid4());(self.runs/identifier).mkdir()
+        job={'id':identifier,'operation':'asset.import','status':'completed','created_at':time.time(),
+             'preset_id':'imported-image','preset_name':uploaded['original_name'],'controls':{},'batch_count':1,
+             'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
+             'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
+             'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
+        self.index_outputs(job);self._save(job);self.jobs[identifier]=job
+        return {'asset':self.assets.get(job['outputs'][0]['asset_id']),'job':self.public(job)}
 
     def export_assets(self, payload):
         ids = payload.get("ids")
@@ -367,14 +414,16 @@ class Studio:
             graph = read_json(state_path.parent / "workflow.json")
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph
+                data.setdefault('comfy_root', str(self.comfy_root))
+                data.setdefault('comfy_url', self.comfy_url)
                 if data.get("status") in ("queued", "waiting", "submitting", "running"):
                     data["status"] = "uncertain"; data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
                     self._save(data)
                 self.jobs[data["id"]] = data
 
-    def _request(self, path, method="GET", data=None, timeout=15):
+    def _request(self, path, method="GET", data=None, timeout=15, base_url=None):
         body = json.dumps(data).encode() if data is not None else None
-        req = Request(self.comfy_url + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
+        req = Request((base_url or self.comfy_url) + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
         with urlopen(req, timeout=timeout) as response: return json.loads(response.read().decode())
 
     def identity(self):
@@ -426,6 +475,15 @@ class Studio:
                 relative = asset.get("file", folder + "/" + value)
                 path = self.library.models / relative
                 if relative not in [r["file"] for r in requirements]: requirements.append({"file": relative, "path": str(path), "present": path.is_file(), "asset_id": asset.get("id"), "source": asset.get("source"), "folder": folder})
+        model_root = self.library.models
+        if hasattr(self, 'backends'):
+            model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root'])/'models'
+        for relative in preset.get('model_files', []):
+            path = inside(model_root.resolve(), model_root/relative)
+            if relative not in [r['file'] for r in requirements]: requirements.append({'file': relative, 'path': str(path), 'present': path.is_file(), 'folder': relative.split('/')[0]})
+        for requirement in requirements:
+            path = inside(model_root.resolve(), model_root/requirement['file'])
+            requirement.update(path=str(path), present=path.is_file())
         return {"id": preset_id, "requirements": requirements, "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
 
     def inspect_workflow(self, payload):
@@ -466,9 +524,9 @@ class Studio:
                 "models": sorted(models), "missing_models": sorted(m for m in models if m not in names), "schema_available": available,
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
-    def _wait_for_queue(self):
+    def _wait_for_queue(self, base_url=None):
         while True:
-            data = self._request("/queue", timeout=10)
+            data = self._request("/queue", timeout=10, base_url=base_url)
             if not data.get("queue_running") and not data.get("queue_pending"): return
             time.sleep(2)
 
@@ -504,11 +562,11 @@ class Studio:
     def _run(self, job):
         job['started_at']=time.time()
         job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
-        self._wait_for_queue()
+        self._wait_for_queue(job.get('comfy_url'))
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
-            try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30)
+            try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
                 if exc.code == 400:
                     try: details = json.loads(exc.read(65536))
@@ -535,7 +593,7 @@ class Studio:
     def _wait_history(self, job, submission):
         prompt_id = submission["prompt_id"]
         for _ in range(720):
-            try: history = self._request("/history/" + prompt_id, timeout=15).get(prompt_id)
+            try: history = self._request("/history/" + prompt_id, timeout=15, base_url=job.get('comfy_url')).get(prompt_id)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError):
                 job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job); return False
             if history:
@@ -563,6 +621,11 @@ class Studio:
         return False
 
     def resume_job(self, job_id):
+        with self.lock:
+            if self.backends.busy: raise StudioError('Wait for the backend switch to finish')
+            return self._queue_observation(job_id)
+
+    def _queue_observation(self, job_id):
         job = self.jobs.get(job_id)
         if not job: raise StudioError("Unknown job")
         pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
@@ -630,7 +693,7 @@ class Handler(BaseHTTPRequestHandler):
     def _body_json(self):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
         return json.loads(self.rfile.read(self._content_length(1024 * 1024)).decode())
-    def _media(self, descriptor):
+    def _media(self, descriptor, job=None):
         query = urlencode({k:descriptor[k] for k in ("filename", "subfolder", "type") if descriptor.get(k) is not None})
         headers = {}
         requested_range = self.headers.get("Range")
@@ -638,7 +701,7 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r"bytes=(?:\d+-\d*|-\d+)", requested_range):
                 raise StudioError("A single valid byte range is required")
             headers["Range"] = requested_range
-        request = Request(self.studio.comfy_url + "/view?" + query, headers=headers)
+        request = Request((job or {}).get('comfy_url', self.studio.comfy_url) + "/view?" + query, headers=headers)
         try: response = urlopen(request, timeout=30)
         except HTTPError as exc:
             if exc.code != 416: raise
@@ -685,6 +748,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urlparse(self.path).path
             if path == "/api/identity": return self._json(200, self.studio.identity())
+            if path == '/api/backends': return self._json(200, self.studio.backends.snapshot())
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
@@ -728,7 +792,7 @@ class Handler(BaseHTTPRequestHandler):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); image = job and job.get("outputs", [])[int(index)]
                 if not image: return self._json(404, {"error":"Unknown image"})
                 if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
-                return self._media(image)
+                return self._media(image, job)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
@@ -740,6 +804,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
+            if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
+            if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
+            if self.path == '/api/assets/import':
+                size=self._content_length(20*1024*1024)
+                return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
             if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))

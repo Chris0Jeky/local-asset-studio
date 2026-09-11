@@ -8,6 +8,7 @@ from urllib.request import urlopen
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "app"))
 from server import CONTROL_KEYS
+from game_asset_pipeline import expanded_input_contract
 
 
 def node(kind, **inputs):
@@ -21,7 +22,7 @@ def visual(graph, title, info):
     for index, (key, item) in enumerate(graph.items()):
         schema = info[item["class_type"]]
         sockets, widgets = [], []
-        specs = schema.get("input", {}).get("required", {}) | schema.get("input", {}).get("optional", {})
+        specs, _ = expanded_input_contract(schema, item['inputs'])
         for field, spec in specs.items():
             if field not in item["inputs"]: continue
             value = item["inputs"][field]

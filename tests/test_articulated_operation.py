@@ -75,6 +75,14 @@ class ArticulatedOperationTests(unittest.TestCase):
         self.assertIn("export.zip", [item["path"] for item in result["artifacts"]])
         with self.assertRaises(operation.ArticulatedOperationError):
             operation.run(self.studio, "a" * 32, self.plan())
+        # A completed native receipt can be reconciled after its Studio job was lost.
+        metadata={'render':{'device':'CPU','threads':4},'limitations':[]}
+        with mock.patch.object(operation.articulated_prop,'execute') as execute, mock.patch.object(operation.articulated_prop,'_check_output',return_value=metadata):
+            recovered=operation.recover(self.studio,'a'*32,self.plan())
+        execute.assert_not_called()
+        self.assertEqual(recovered['job']['id'],result['job']['id'])
+        self.assertEqual(recovered['job']['status'],'completed')
+        self.assertTrue(recovered['artifacts'])
 
     def test_invalid_project_or_plan_never_starts_adapter(self):
         with mock.patch.object(operation.articulated_prop, "execute") as execute:
@@ -98,6 +106,10 @@ class ArticulatedOperationTests(unittest.TestCase):
         self.assertEqual(result["job"]["status"], "failed")
         self.assertTrue(receipt["failure_files"])
         self.assertEqual((project / "articulated" / "failure.txt").read_text(encoding="utf-8"), "kept for diagnosis")
+        with mock.patch.object(operation.articulated_prop,'execute') as execute:
+            recovered=operation.recover(self.studio,'c'*32,self.plan())
+        execute.assert_not_called()
+        self.assertEqual(recovered['job']['status'],'uncertain')
 
 
 if __name__ == "__main__":

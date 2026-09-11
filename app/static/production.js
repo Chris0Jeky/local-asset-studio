@@ -25,9 +25,11 @@ function renderProduction(){
     }
     html+='</div>';
     if(['awaiting_review','reviewed'].includes(p.state.status))html+='<label>Review notes<textarea id="productionNotes" rows="3" placeholder="Identity, pose, silhouette, linework… What should the next pass address?">'+esc(p.state.review?.notes||'')+'</textarea></label><button data-project-action="needs_work">Needs another pass</button><p class="muted">Your choice records creative preference. Model terms and engine acceptance are separate.</p>';
-  }else if(p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
+  }else if(p.kind==='native'&&p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
   const artifacts=p.state.artifacts||[],pack=artifacts.find(a=>a.path==='export.zip');
   if(pack)html+='<p><a class="primary artifact-download" href="'+pack.url+'?download" download>Download native source pack</a></p>';
+  for(const a of artifacts.filter(a=>a.role==='animated-glb'))html+='<model-viewer class="native-model" camera-controls autoplay animation-name="ChestLidOpenHoldClose" src="'+a.url+'" alt="Articulated chest animation"></model-viewer>';
+  for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection" src="'+a.url+'" alt="'+esc(a.path)+'">';
   for(const a of artifacts.filter(a=>a.role==='comparison'||a.path==='native/atlas/atlas.png'))html+='<img class="comparison-sheet" src="'+a.url+'" alt="'+esc(a.role==='comparison'?'Candidate contact sheet':'Sprite atlas')+'">';
   if(p.state.engine)html+='<p class="callout">Godot import and timed playback verified for this export.</p>';
   if(artifacts.length)html+='<details><summary>Files & provenance · '+artifacts.length+'</summary><div class="artifact-files">'+artifacts.map(a=>'<a href="'+a.url+'?download" download>'+esc(a.path)+'</a>').join('')+'</div></details>';
@@ -73,10 +75,24 @@ function renderNativeAssets(){
 }
 $('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Experiments.';renderNativeAssets();$('#nativeDialog').showModal();};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';
-$('#nativeAssetList').onchange=e=>{const id=e.target.dataset.nativeDuration||e.target.dataset.nativeLayer,a=nativeAssets.find(a=>a.id===id);if(a)a[e.target.dataset.nativeDuration?'duration':'layerName']=e.target.dataset.nativeDuration?Number(e.target.value):e.target.value;};
+function readNativeInputs(){
+  for(const input of $('#nativeAssetList').querySelectorAll('input')){
+    const id=input.dataset.nativeDuration||input.dataset.nativeLayer,a=nativeAssets.find(a=>a.id===id);
+    if(a)a[input.dataset.nativeDuration?'duration':'layerName']=input.dataset.nativeDuration?Number(input.value):input.value;
+  }
+}
+$('#nativeAssetList').oninput=readNativeInputs;
 $('#nativeAssetList').onclick=e=>{const up=e.target.closest('[data-native-up]'),down=e.target.closest('[data-native-down]');if(!up&&!down)return;const i=Number((up||down).dataset[up?'nativeUp':'nativeDown']),j=i+(up?-1:1);[nativeAssets[i],nativeAssets[j]]=[nativeAssets[j],nativeAssets[i]];renderNativeAssets();};
 $('#nativeForm').onsubmit=async e=>{e.preventDefault();$('#prepareNative').disabled=true;try{
+  readNativeInputs();
   const images=nativeAssets.filter(a=>a.media_type==='image'),kind=$('#nativeKind').value,options={clip:$('#nativeClip').value,duration_ms:images.map(a=>a.duration),layer_names:images.map(a=>a.layerName),loop:$('#nativeLoop').checked,filter:$('#nativeFilter').value};
   const x=$('#nativeAnchorX').value,y=$('#nativeAnchorY').value;if(x!==''||y!==''){if(x===''||y==='')throw Error('Set both anchor coordinates, or leave both automatic.');options.anchor=[Number(x),Number(y)];}
   const p=await post('/api/production-export',{kind,ids:nativeAssets.map(a=>a.id),options,verify_engine:kind==='godot'&&$('#nativeEngine').checked});productionId=p.id;$('#nativeDialog').close();showView('production');await refreshProduction(true);
 }catch(err){$('#nativeStatus').textContent=err.message;}finally{$('#prepareNative').disabled=false;}};
+
+$('#newArticulated').onclick=()=>$('#articulatedDialog').showModal();
+$('#cancelArticulated').onclick=()=>$('#articulatedDialog').close();
+$('#articulatedForm').onsubmit=async e=>{e.preventDefault();$('#prepareArticulated').disabled=true;try{
+  const p=await post('/api/articulated',{name:$('#articulatedName').value,options:{width:Number($('#propWidth').value),depth:Number($('#propDepth').value),body_height:Number($('#propBody').value),lid_height:Number($('#propLid').value)}});
+  productionId=p.id;$('#articulatedDialog').close();showView('production');await refreshProduction(true);
+}catch(err){$('#articulatedStatus').textContent=err.message;}finally{$('#prepareArticulated').disabled=false;}};

@@ -1,5 +1,44 @@
 # Current state — 11 September 2026
 
+## Latest implementation checkpoint
+
+Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen
+references, bounded comparisons, native exports, and explicit model-environment
+switching. Models and operational outputs remain outside Git. HiDream concept
+and reference-restyle recipes both produced 2048-square PNGs through Studio:
+184.697 seconds and 76.260 seconds respectively, at eight steps. Their distinct
+loading/cache conditions are not a model benchmark. See [HiDream](docs/HIDREAM.md).
+
+The comparison `fbb384c70a5e48b39a9eba6c227374eb` completed both Anima seed stages
+and awaits creative review. Imported originals can now join collections and
+native exports without generation. Browser-selected sprite frames produced
+Godot project `d62777fdd019462b99d28357e61393b8`: actual import/playback retained
+120/80/120/160 ms, 64-square canvases and anchor [32,32]. An earlier export
+`df007b4d33d8465695615535e004be4d` exposed a form-serialization bug (100 ms values);
+that bug is fixed and the corrected plan and engine evidence were checked.
+
+The authored chest UI built project `db662bb6e60f42c781e001bd681b9743`, retaining
+BLEND, animated GLB and four CPU inspection renders. The first GLB exposed a
+hidden collision helper as visible geometry; the exporter now excludes it from
+GLB while retaining it in BLEND. A fresh rendering of that fix remains pending
+at this checkpoint. Native jobs now persist before Blender and reconcile retained
+receipts after restart without repeating a build; focused fault tests pass.
+
+H3's opt-in stdlib mmap loader constructed all 2,054 encoder tensors and the
+MiniMax encoder model in 6.65 seconds (process peak working set 4.14 GiB). CUDA
+was initialized by the runtime; this was construction, not inference proof. The
+first video attempt with copy-on-write mapping passed encoder loading, then
+failed in UNETLoader with Windows error 1455 (commit/pagefile exhaustion), prompt
+`cce6da2a-0978-4c98-95d7-1c7ba8274a7c`. The machine has a 40 GiB paging file.
+A read-only encoder mapping is the next isolated discriminator; no system paging
+settings have changed. H3 remains experimental and has no successful video.
+
+The broader research backlog is still open: Seed Hunter dependencies/execution,
+shot-continuation/control comparisons, actual Krita round trips, automatic 3D
+part/rig experiments and the full accepted character-pack vertical slice. The
+completed native exports are scoped engine checks, not art or gameplay acceptance.
+[HUMAN_TODO.md](HUMAN_TODO.md) still holds the optional subjective choices.
+
 ## Active production-workspace continuation
 
 The user requested an ambitious implementation pass across merged PRs **#20**

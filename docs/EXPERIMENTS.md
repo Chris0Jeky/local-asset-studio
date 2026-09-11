@@ -1,5 +1,13 @@
 # Experiments and native finishing
 
+**Import images** in Workspace brings existing PNG/JPEG/WebP originals into the
+same collection, lineage and source-export system. Importing does not generate.
+**Build an articulated prop** in Experiments prepares a bounded authored chest:
+separate body/lid, a rear hinge, open/hold/close keys, CPU inspection renders,
+an editable BLEND and animated GLB. Start runs the fixed local Blender adapter.
+The viewer plays its animation and the source pack retains the full recipe.
+This is authored geometry, not automatic part segmentation or character rigging.
+
 Open a recipe in **Create**, then choose **Plan comparison**. Compare one numeric
 setting across up to four values. Preparing the plan checks current ComfyUI
 nodes, selected model files and input images. It records the actual graph,

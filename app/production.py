@@ -92,6 +92,10 @@ class Production:
         return value
 
     def create(self, payload):
+        with self.studio.lock:
+            return self._create(payload)
+
+    def _create(self, payload):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
         name=payload.get('name','')
@@ -189,6 +193,44 @@ class Production:
                            'metadata':asset,'recipe':self.studio.export_recipe(job) if job else None})
         return result
 
+    def articulated(self, payload):
+        from articulated import prepare
+        operation=prepare(self.studio,payload);identifier=uuid.uuid4().hex
+        plan={'version':1,'kind':'articulated','name':operation['intent']['name'],'operation_plan':operation,'stages':[],'created_at':time.time()}
+        plan['sha256']=fingerprint(plan)
+        state={'status':'planned','message':'Authored chest prepared. Start builds a hinged BLEND, animated GLB and four inspection views on the CPU.','attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
+        with self.connect() as db:
+            db.execute('INSERT INTO budgets(id,allowance) VALUES (?,0)',(identifier,))
+            db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,identifier,json.dumps(plan),json.dumps(state),time.time()))
+        directory=self.root/identifier;directory.mkdir();self.studio._write_json_atomic(directory/'plan.json',plan)
+        return self.get(identifier)
+
+    def _run_articulated(self, identifier, plan):
+        if self._get(identifier)['state'].get('stop_requested'):
+            self._mutate(identifier,status='stopped',message='Stopped before Blender execution');return
+        from articulated import run, recover, _native_job
+        directory=self.root/identifier
+        if (directory/'articulated-job.json').exists() or (directory/'articulated').exists():
+            result=recover(self.studio,identifier,plan['operation_plan'])
+        else:
+            pending=_native_job(identifier,plan['operation_plan'])
+            pending.update(graph={},graph_path='',controls=plan['operation_plan']['options'],batch_count=0,references=[],native_recipe=plan['operation_plan'])
+            pending['outputs']=[]
+            (self.studio.runs/pending['id']).mkdir(exist_ok=True);self.studio.jobs[pending['id']]=pending;self.studio._save(pending)
+            self._attempt(identifier,0,job_id=pending['id'],operation=pending['operation'],status='running')
+            result=run(self.studio,identifier,plan['operation_plan'])
+        job=result['job']
+        job.update(graph={},graph_path='',controls=plan['operation_plan']['options'],batch_count=0,references=[],native_recipe=plan['operation_plan'])
+        for output in job['outputs']:
+            output['native_path']='articulated/'+('views/' if output['media_type']=='image' else '')+output['filename']
+        (self.studio.runs/job['id']).mkdir(exist_ok=True);self.studio.jobs[job['id']]=job;self.studio._save(job)
+        self._attempt(identifier,0,job_id=job['id'],operation=job['operation'],status=job['status'])
+        artifacts=result['artifacts'];receipt=self.root/identifier/'articulated-job.json'
+        if receipt.is_file():artifacts.append({'path':receipt.name,'url':f'/api/production/{identifier}/files/{receipt.name}','role':'execution-receipt'})
+        for relative in ('articulated/failure.json','articulated/blender-log.json'):
+            if (directory/relative).is_file():artifacts.append({'path':relative,'url':f'/api/production/{identifier}/files/{relative}','role':'execution-diagnostic'})
+        self._mutate(identifier,status=job['status'],message=job['message'],artifacts=artifacts,measurements=result['measurements'],limitations=result['limitations'],finished_at=time.time())
+
     def _run_native(self, identifier, plan):
         if self._get(identifier)['state'].get('stop_requested'):
             self._mutate(identifier,status='stopped',message='Export stopped before execution');return
@@ -228,6 +270,14 @@ class Production:
         return digest.hexdigest()
 
     def start(self, identifier):
+        with self.studio.lock:
+            if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
+            project = self._get(identifier)
+            if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
+                raise ValueError('Switch to this experiment\'s backend before starting it')
+            return self._start(identifier)
+
+    def _start(self, identifier):
         with self.lock,self.connect() as db:
             db.execute('BEGIN IMMEDIATE');project=self._get(identifier,db)
             state=project['state'];plan=project['plan']
@@ -247,8 +297,11 @@ class Production:
         return self.get(identifier)
 
     def resume(self, identifier):
-        with self.lock:
+        with self.studio.lock, self.lock:
+            if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project=self._get(identifier)
+            if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
+                raise ValueError('Switch to this experiment\'s backend before resuming it')
             if project['state']['status'] not in ('interrupted','uncertain','stopped'):raise ValueError('Only interrupted experiments can resume')
             self._mutate(identifier,status='queued',stop_requested=False,message='Queued to reconcile known jobs and continue never-started stages')
             self.studio.queue.put(('production',identifier))
@@ -265,6 +318,7 @@ class Production:
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='native':return self._run_native(identifier,plan)
+        if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
         self.studio.check_production_bundle(plan['bundle'])
         for index,stage in enumerate(plan['stages']):
             project=self._get(identifier);state=project['state']

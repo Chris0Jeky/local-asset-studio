@@ -57,6 +57,7 @@ class ReferenceTests(unittest.TestCase):
         studio=Studio.__new__(Studio)
         studio.root=ROOT;studio.catalog_path=ROOT/'presets/catalog.json';studio.config={}
         studio.experiments=self.root
+        studio.comfy_root=self.root/'comfy'
         uploads=self.root/'uploads';uploads.mkdir()
         Image.new('RGB',(400,600),'teal').save(uploads/'identity.png')
         for count in (1,2,3):

@@ -58,6 +58,14 @@ class ServerTests(unittest.TestCase):
         with self.assertRaisesRegex(server.StudioError,"Reference upload is invalid"):
             s.prepare({"preset_id":"demo","controls":{"reference":"plain.png"}})
 
+    def test_imported_image_survives_restart_without_generation(self):
+        s=self.studio();result=s.import_image('frame.png','image/png',png())
+        self.assertEqual(s.queue.qsize(),0)
+        self.assertEqual(s.assets.file(result['asset']['id']).read_bytes(),png())
+        restored=self.studio()
+        self.assertEqual(restored.assets.get(result['asset']['id'])['sha256'],result['asset']['sha256'])
+        self.assertFalse(restored.jobs[result['job']['id']]['prompt_ids'])
+
     def test_loopback_host_and_origin_are_required_for_mutation(self):
         handler=server.Handler.__new__(server.Handler)
         handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191"}

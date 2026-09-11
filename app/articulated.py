@@ -201,3 +201,33 @@ def run(studio, project_id, plan):
         _write_json(receipt_path, job)
         return {"job": _json_safe(job, "job receipt"), "artifacts": [], "measurements": {},
                 "limitations": ["The failed owned attempt directory is retained; create a new project to retry."]}
+
+
+def recover(studio, project_id, plan):
+    """Inspect a retained attempt without invoking Blender or repeating the build."""
+    _validate_project_id(project_id)
+    directory=_project_directory(studio,project_id);receipt_path=directory/'articulated-job.json'
+    job=_native_job(project_id,plan)
+    try:
+        receipt=json.loads(receipt_path.read_text(encoding='utf-8'))
+        if receipt.get('id')!=job['id']:raise ValueError('Native receipt identity differs')
+        job.update(created_at=receipt['created_at'])
+        recipe=json.loads((directory/'recipe.json').read_text(encoding='utf-8'))
+        if recipe.get('plan_sha256')!=plan['sha256']:raise ValueError('Native receipt plan differs')
+        metadata=articulated_prop._check_output(directory/'articulated')
+        sources=[directory/'articulated/chest.glb',*(directory/'articulated/views'/f'{name}.png' for name in RENDER_NAMES)]
+        ids=[_register(studio,job,path,index) for index,path in enumerate(sources)]
+        export=directory/'export.zip'
+        if not export.exists():export=_write_export(directory)
+        with zipfile.ZipFile(export) as archive:
+            if archive.testzip() is not None:raise ValueError('Native source pack is incomplete')
+        job.update(status='completed',finished_at=receipt.get('finished_at',time.time()),metadata=metadata,asset_ids=ids,
+                   message='Recovered completed native artifacts. Blender was not run again.')
+        _write_json(receipt_path,job)
+        artifacts=[_public_record(project_id,directory,export,'native-export')]
+        artifacts.extend(_public_record(project_id,directory,path,'animated-glb' if i==0 else 'inspection-render',ids[i]) for i,path in enumerate(sources))
+        artifacts.extend([_public_record(project_id,directory,directory/'articulated/metadata.json','native-metadata'),_public_record(project_id,directory,directory/'recipe.json','native-recipe')])
+        return {'job':job,'artifacts':artifacts,'measurements':metadata.get('render',{}),'limitations':metadata.get('limitations',[])}
+    except (OSError,ValueError,KeyError,zipfile.BadZipFile) as exc:
+        job.update(status='uncertain',message='Retained native attempt is not complete: '+str(exc)[:350])
+        return {'job':job,'artifacts':[],'measurements':{},'limitations':['Inspect retained files or explicitly prepare a new build. No Blender command was repeated.']}

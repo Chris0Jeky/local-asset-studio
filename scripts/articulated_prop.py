@@ -231,7 +231,7 @@ scene.frame_set(config["keyframes"]["closed"])
 bpy.ops.wm.save_as_mainfile(filepath=str(output / "chest.blend"))
 bpy.ops.export_scene.gltf(filepath=str(output / "chest.glb"), export_format="GLB", export_materials="EXPORT",
                           export_cameras=False, export_lights=False, export_animations=True,
-                          export_frame_range=True, export_force_sampling=True)
+                          export_frame_range=True, export_force_sampling=True, use_renderable=True)
 parts = [mesh_record(item) for item in bpy.context.scene.objects if item.type == "MESH"]
 action_name = action.name
 render_record = {"engine": scene.render.engine, "device": scene.cycles.device, "threads": scene.render.threads,
@@ -258,7 +258,7 @@ metadata = {
     "glb_reimport": {"mesh_names": reimported_meshes, "actions": reimported_actions,
                      "lid_present": "ChestLid" in reimported_meshes},
     "limitations": ["Authored baseline only; no automatic segmentation or rigging.",
-                    "Collision proxy is a simple named box and needs engine validation.",
+                    "Collision proxy remains in BLEND only; GLB excludes this hidden helper. Engine collision needs authoring and validation.",
                     "Rendered views inspect this baseline; they do not accept art, mechanics, or licensing."],
 }
 (output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
@@ -284,6 +284,7 @@ def _check_output(output_root):
     require(metadata.get("hinge", {}).get("axis") == "X" and metadata["hinge"].get("open_limit_degrees") == 70,
             "Metadata lacks the required rear X-axis 0-70 degree hinge")
     require(metadata.get("clip", {}).get("name") == "ChestLidOpenHoldClose", "Animation clip missing")
+    require('CollisionProxy' not in metadata.get('glb_reimport', {}).get('mesh_names', []), 'Hidden collision helper leaked into visible GLB')
     require(metadata.get("render", {}).get("device") == "CPU", "Render did not report CPU device")
     require(metadata.get("render", {}).get("threads") == 4, "Render did not report the fixed CPU thread cap")
     require(metadata.get("render", {}).get("views") == [f"views/{name}.png" for name in VIEW_NAMES],
