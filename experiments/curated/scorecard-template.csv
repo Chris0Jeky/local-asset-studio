@@ -1,0 +1,2 @@
+experiment_id,use_case,model,revision_sha,workflow_file,input_image_sha256,prompt,negative_prompt,seed,width,height,steps,cfg,sampler,scheduler,quantization,lora_name,lora_model_strength,lora_clip_strength,cold_load_seconds,warm_seconds,available_ram_min_gib,available_vram_min_gib,brief_adherence_0_to_5,structure_0_to_5,visual_quality_0_to_5,consistency_0_to_5,delivery_readiness_0_to_5,accepted,cleanup_minutes,failure_type,notes
+trial-001,pixel-prop,,,,,,,1101,1024,1024,30,6,dpmpp_2m,karras,,,,,,,,,,,,,,,,,

@@ -1,0 +1,8 @@
+{
+  "comfy_url": "http://127.0.0.1:8188",
+  "comfy_root": "C:/AI/ComfyUI_windows_portable/ComfyUI",
+  "python": "C:/AI/ComfyUI_windows_portable/python_embeded/python.exe",
+  "comfy_launcher": "C:/AI/Start-ComfyUI.ps1",
+  "blender": "C:/AI/blender-4.5.13-windows-x64/blender.exe",
+  "asset_python": "C:/AI/asset-tools/venv/Scripts/python.exe"
+}

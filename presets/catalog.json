@@ -1,0 +1,901 @@
+{
+  "presets": [
+    {
+      "id": "pixel-lora",
+      "name": "Pixel art \u2022 128px prop",
+      "category": "Pixel art",
+      "description": "Start here. Generates a detailed concept plus a nearest-neighbour 128px export. Background and pixel cleanup may be needed.",
+      "graph": "workflows/api/pixel-lora-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "pixel-concept",
+      "name": "Pixel art \u2022 baseline",
+      "category": "Pixel art",
+      "description": "Same chest prompt and seed as the LoRA preset; compare with LoRA to see its effect.",
+      "graph": "workflows/api/pixel-concept-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "realvis",
+      "name": "Product \u2022 studio photograph",
+      "category": "Products & websites",
+      "description": "Realistic fictional product photography. Use actual product references for identity-critical work.",
+      "graph": "workflows/api/realvis-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "photo-banner",
+      "name": "Website \u2022 wide photograph",
+      "category": "Products & websites",
+      "description": "Wide realistic promotional artwork. Place typography in your design tool.",
+      "graph": "workflows/api/photo-banner-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "abstract",
+      "name": "Website \u2022 abstract ribbons",
+      "category": "Products & websites",
+      "description": "Teal and gold abstract background; composition may need cropping for text.",
+      "graph": "workflows/api/abstract-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "stylized-prop",
+      "name": "Game \u2022 inventory prop",
+      "category": "Stylized art",
+      "description": "Painted concept art for an isolated game item.",
+      "graph": "workflows/api/stylized-prop-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "flux",
+      "name": "FLUX Klein \u2022 quick concept",
+      "category": "General generation",
+      "description": "Fast four-step generation with plain-language prompts; first load takes longer.",
+      "graph": "workflows/api/flux-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "flux-edit",
+      "name": "FLUX Klein \u2022 reference edit",
+      "category": "Image editing",
+      "description": "Describe what changes and what stays. Whole-image editing can change unrequested details.",
+      "graph": "workflows/api/flux-edit-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "reference": [
+        "14",
+        "image"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "gentle-variation",
+      "name": "SDXL \u2022 gentle reference variation",
+      "category": "Image editing",
+      "description": "A small denoise value keeps more of the supplied image. Not exact preservation.",
+      "graph": "workflows/api/gentle-variation-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "sdxl-variation",
+      "name": "SDXL \u2022 stronger variation",
+      "category": "Image editing",
+      "description": "Reinterpret a reference with a different prompt. More denoise means more change.",
+      "graph": "workflows/api/sdxl-variation-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "qwen",
+      "name": "Qwen \u2022 instructed image edit",
+      "category": "Image editing",
+      "description": "Heavy 20B Q4 edit. Earlier 768px run took about 12 minutes. Group these jobs together.",
+      "graph": "workflows/api/qwen-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "denoise": [
+        "11",
+        "denoise"
+      ]
+    },
+    {
+      "id": "qwen-quality",
+      "name": "Qwen \u2022 40-step experiment",
+      "category": "Experimental",
+      "description": "Unverified full 40-step edit without Lightning. Potentially very slow; quality improvement is not established.",
+      "graph": "workflows/api/qwen-quality-api.json",
+      "verified": false,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "denoise": [
+        "11",
+        "denoise"
+      ]
+    },
+    {
+      "id": "qwen-character",
+      "name": "Qwen \u2022 character-pose study",
+      "category": "Experimental",
+      "description": "Earlier run changed style and failed the intended passing pose. Supply your own reference to experiment.",
+      "graph": "workflows/api/qwen-character-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "6",
+        "prompt"
+      ],
+      "negative": [
+        "7",
+        "prompt"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "steps": [
+        "11",
+        "steps"
+      ],
+      "cfg": [
+        "11",
+        "cfg"
+      ],
+      "denoise": [
+        "11",
+        "denoise"
+      ]
+    },
+    {
+      "id": "wai",
+      "name": "WAI v17 \u2022 illustration",
+      "category": "Characters",
+      "description": "Illustrious-family character illustration. HF mirror provenance recorded; original terms need confirmation.",
+      "graph": "workflows/api/wai-api.json",
+      "verified": true,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "wai-pose",
+      "name": "WAI \u2022 pose guide",
+      "category": "Characters",
+      "description": "Uses a coloured OpenPose skeleton image, not a normal photo, to influence body position.",
+      "graph": "workflows/api/wai-pose-api.json",
+      "verified": true,
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "9",
+        "image"
+      ]
+    },
+    {
+      "id": "anime",
+      "name": "Animagine \u2022 anime character",
+      "category": "Characters",
+      "description": "Tag-oriented illustration model. First-generation sample is not character-consistency proof.",
+      "graph": "workflows/api/anime-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "pose",
+      "name": "Animagine \u2022 pose guide",
+      "category": "Characters",
+      "description": "Uses a coloured OpenPose skeleton reference. Identity is not locked by pose control.",
+      "graph": "workflows/api/pose-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "reference": [
+        "9",
+        "image"
+      ]
+    },
+    {
+      "id": "pony",
+      "name": "Pony V6 \u2022 stylized character",
+      "category": "Characters",
+      "description": "Keep the score tags in the default prompt while changing subject and style.",
+      "graph": "workflows/api/pony-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "noob",
+      "name": "NoobAI \u2022 hobby illustration",
+      "category": "Experimental",
+      "description": "Hobby/research only under the author terms; do not use generated products commercially.",
+      "graph": "workflows/api/noob-api.json",
+      "verified": true,
+      "commercial_note": "Author terms prohibit commercialization including generated products.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    },
+    {
+      "id": "zimage",
+      "name": "Z-Image Turbo \u2022 realism",
+      "category": "General generation",
+      "description": "Eight-step BF16 generation. Earlier run took about 4.6 minutes and pressured system RAM.",
+      "graph": "workflows/api/zimage-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "7",
+        "width"
+      ],
+      "height": [
+        "7",
+        "height"
+      ],
+      "seed": [
+        "8",
+        "seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "cfg": [
+        "8",
+        "cfg"
+      ],
+      "denoise": [
+        "8",
+        "denoise"
+      ]
+    },
+    {
+      "id": "sdxl",
+      "name": "SDXL \u2022 general baseline",
+      "category": "General generation",
+      "description": "Flexible baseline and a good place to learn steps, CFG, seeds, and prompt phrasing.",
+      "graph": "workflows/api/sdxl-api.json",
+      "verified": true,
+      "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ]
+    }
+  ]
+}

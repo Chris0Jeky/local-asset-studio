@@ -1,0 +1,114 @@
+[
+  {
+    "preset": "abstract",
+    "execution": "success",
+    "seconds": 18.69,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "anime",
+    "execution": "success",
+    "seconds": 24.109,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "gentle-variation",
+    "execution": "success",
+    "seconds": 5.942,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "noob",
+    "execution": "success",
+    "seconds": 16.835,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "photo-banner",
+    "execution": "success",
+    "seconds": 26.595,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "pixel-concept",
+    "execution": "success",
+    "seconds": 14.057,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "pixel-lora",
+    "execution": "success",
+    "seconds": 20.173,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "pony",
+    "execution": "success",
+    "seconds": 17.802,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "pose",
+    "execution": "success",
+    "seconds": 19.031,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "qwen-character",
+    "execution": "success",
+    "seconds": 567.223,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "qwen",
+    "execution": "success",
+    "seconds": 725.993,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "realvis",
+    "execution": "success",
+    "seconds": 23.914,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "stylized-prop",
+    "execution": "success",
+    "seconds": 15.126,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "wai-pose",
+    "execution": "success",
+    "seconds": 21.649,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "wai",
+    "execution": "success",
+    "seconds": 18.014,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  },
+  {
+    "preset": "zimage",
+    "execution": "success",
+    "seconds": 275.405,
+    "date": "2026-09-11",
+    "interpretation": "Single observed execution, not a benchmark or art acceptance."
+  }
+]

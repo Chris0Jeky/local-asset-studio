@@ -1,0 +1,116 @@
+{
+  "note": "Core and new expansion weights only; Krita support weights have a separate manifest. SHA-256 values were verified when installed; current presence and sizes checked again.",
+  "models": [
+    {
+      "file": "diffusion_models/flux-2-klein-4b-fp8.safetensors",
+      "sha256": "97ed34fe0567e436200f2faee3939b88f2b5d99f8af2a4dc16532c4245c0ccb6",
+      "bytes": 4070624520
+    },
+    {
+      "file": "vae/flux2-vae.safetensors",
+      "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3",
+      "bytes": 336211292
+    },
+    {
+      "file": "checkpoints/sd_xl_base_1.0.safetensors",
+      "sha256": "31e35c80fc4829d14f90153f4c74cd59c90b779f6afe05a74cd6120b893f7e5b",
+      "bytes": 6938078334
+    },
+    {
+      "file": "text_encoders/qwen_3_4b.safetensors",
+      "sha256": "6c671498573ac2f7a5501502ccce8d2b08ea6ca2f661c458e708f36b36edfc5a",
+      "bytes": 8044982048
+    },
+    {
+      "repo": "Comfy-Org/z_image_turbo",
+      "revision": "08d04455279082882deaabc8d0d09fc914c071e1",
+      "file": "diffusion_models/z_image_turbo_bf16.safetensors",
+      "sha256": "2407613050b809ffdff18a4ac99af83ea6b95443ecebdf80e064a79c825574a6",
+      "bytes": 12309866400
+    },
+    {
+      "repo": "Comfy-Org/z_image_turbo",
+      "revision": "08d04455279082882deaabc8d0d09fc914c071e1",
+      "file": "vae/ae.safetensors",
+      "sha256": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+      "bytes": 335304388
+    },
+    {
+      "repo": "unsloth/Qwen-Image-Edit-2511-GGUF",
+      "revision": "0d33d9692b4b26212297240d87b0d4719aa4fd06",
+      "file": "diffusion_models/qwen-image-edit-2511-Q4_K_M.gguf",
+      "sha256": "8677bac90627adbbc11efab87b1870e701c4eb3689ee865a3de8ab81b705a723",
+      "bytes": 13244758624
+    },
+    {
+      "repo": "Comfy-Org/Qwen-Image_ComfyUI",
+      "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f",
+      "file": "text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4",
+      "bytes": 9384670680
+    },
+    {
+      "repo": "Comfy-Org/Qwen-Image_ComfyUI",
+      "revision": "7beb7b647f04469fbe64ba8adc2bb0d7e5e9f73f",
+      "file": "vae/qwen_image_vae.safetensors",
+      "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f",
+      "bytes": 253806246
+    },
+    {
+      "repo": "lightx2v/Qwen-Image-Edit-2511-Lightning",
+      "revision": "d74eba145674fd7e31b949324e148e21e7118abd",
+      "file": "loras/Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "sha256": "22226e8d05d354bb356627d428809f5afd7819399b077238a2b70a82883a904f",
+      "bytes": 849608296
+    },
+    {
+      "repo": "cagliostrolab/animagine-xl-4.0",
+      "revision": "2b7c1b397761bf5bd3cc42e5b39ec99314a75a96",
+      "file": "checkpoints/animagine-xl-4.0-opt.safetensors",
+      "sha256": "6327eca98bfb6538dd7a4edce22484a1bbc57a8cff6b11d075d40da1afb847ac",
+      "bytes": 6938350040
+    },
+    {
+      "repo": "xinsir/controlnet-openpose-sdxl-1.0",
+      "revision": "23f966cd5cfdd3f7729c903e243d87152162d2b7",
+      "file": "controlnet/xinsir-openpose-sdxl.safetensors",
+      "sha256": "b8524e557a7df60d081f5d4a0eb109967d107df217943bf88c2d99b9ebcc06c5",
+      "bytes": 2502139104
+    },
+    {
+      "repo": "Laxhar/noobai-XL-1.1",
+      "revision": "814a274af2b8097c0828819d561ec74c7d0c6cea",
+      "file": "checkpoints/NoobAI-XL-v1.1.safetensors",
+      "sha256": "6681e8e4b134c81f16533acedb0d406d7e5e366e1624b4105178c64d00b05d51",
+      "bytes": 7105349958
+    },
+    {
+      "repo": "AstraliteHeart/pony-diffusion-v6",
+      "revision": "5ec9c05863255568f1b59753e3838107befaa712",
+      "file": "checkpoints/pony-diffusion-v6.safetensors",
+      "sha256": "67ab2fd8ec439a89b3fedb15cc65f54336af163c7eb5e4f2acc98f090a29b0b3",
+      "bytes": 6938041050
+    },
+    {
+      "repo": "nerijs/pixel-art-xl",
+      "revision": "8bf4a4d9ea283e00a51fafda8e0539f8248ea037",
+      "file": "loras/pixel-art-xl.safetensors",
+      "sha256": "4234637cb80c998f41e348e6a6cb6bc20d8d038b2b0f256b6129b3b5e353eef7",
+      "bytes": 170543052
+    },
+    {
+      "repo": "SG161222/RealVisXL_V5.0",
+      "revision": "ac93e0dda1f6d448cae19bbfab8c5e720a5e48bc",
+      "file": "checkpoints/RealVisXL_V5.0_fp16.safetensors",
+      "sha256": "6a35a7855770ae9820a3c931d4964c3817b6d9e3c6f9c4dabb5b3a94e5643b80",
+      "bytes": 6938065488
+    },
+    {
+      "repo": "frankjoshua/waiIllustriousSDXL_v170",
+      "revision": "9303ce49345822823717889e3677b6ffd43fc6a9",
+      "file": "checkpoints/waiIllustriousSDXL_v170.safetensors",
+      "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
+      "bytes": 6938040682
+    }
+  ]
+}

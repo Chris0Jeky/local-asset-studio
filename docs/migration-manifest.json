@@ -1,0 +1,1350 @@
+{
+  "mode": "copy; originals preserved",
+  "files": [
+    {
+      "source": "outputs\\ComfyUI-Workflows\\01 - SDXL Starter.json",
+      "target": "workflows/comfyui/01 - SDXL Starter.json",
+      "sha256": "b010d713ea6efb19d05b93e4fbee1c0d1344cbdf145a9a9633204e91a4b12649"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\02 - FLUX Klein Starter.json",
+      "target": "workflows/comfyui/02 - FLUX Klein Starter.json",
+      "sha256": "e0f60ad41f5baa8411904850cf3053dfe8573494d5a1f9781b421de6b0b1c602"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\03 - FLUX Image Edit.json",
+      "target": "workflows/comfyui/03 - FLUX Image Edit.json",
+      "sha256": "c75158be5f0e6f725e1ba1d51b08c872c7d2dfab903c847a6cc9d69b60381ccb"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\04 - SDXL Image Variation.json",
+      "target": "workflows/comfyui/04 - SDXL Image Variation.json",
+      "sha256": "fc425365b0678dbe9d09762c58efbc12b5a4b46bb79bb0774585e4d07607e36b"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\05 - Z-Image Turbo.json",
+      "target": "workflows/comfyui/05 - Z-Image Turbo.json",
+      "sha256": "fe016059a5173b338ae8eba198dbb5c2eb83253166edba677a51f44759f5b343"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\06 - Qwen Edit 20B Q4.json",
+      "target": "workflows/comfyui/06 - Qwen Edit 20B Q4.json",
+      "sha256": "7b96084d35331d74ec46a6b84b4b43bd620619b9736c13745d3268c007314b88"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\07 - Animagine XL Anime.json",
+      "target": "workflows/comfyui/07 - Animagine XL Anime.json",
+      "sha256": "99695d6080667187ce87fc66b26d7db7d819549ca869e9bc7f89fd66ece76e39"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\08 - Animagine Pose Control.json",
+      "target": "workflows/comfyui/08 - Animagine Pose Control.json",
+      "sha256": "a5e513b194eddc7ceeee7db448a7666c790c54f1908fc1ba95b09ea80d074fbc"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\09 - RealVis Product Photography.json",
+      "target": "workflows/comfyui/09 - RealVis Product Photography.json",
+      "sha256": "931e4c62001049605e63d4942b5e06a744bd009d9e50829574c0df06e33d8e31"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\10 - RealVis Website Banner.json",
+      "target": "workflows/comfyui/10 - RealVis Website Banner.json",
+      "sha256": "dde7cdd66107a713c3eabdce999e32612d0406f426a326c6c906b66a52f8a33c"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\11 - SDXL Abstract Website Art.json",
+      "target": "workflows/comfyui/11 - SDXL Abstract Website Art.json",
+      "sha256": "dc26c42f8d007a1a5f677ab3a7ccfdf6eaa6c43fa30e803a3be1ffc79a4a242a"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\12 - SDXL Pixel Prop Concept.json",
+      "target": "workflows/comfyui/12 - SDXL Pixel Prop Concept.json",
+      "sha256": "7ee87723c141ebe05f5c7003b71417dc481e315a961357006bf2c5d64aa06011"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\13 - SDXL Stylized Inventory Prop.json",
+      "target": "workflows/comfyui/13 - SDXL Stylized Inventory Prop.json",
+      "sha256": "5c7fa1ee28537ac14d397cd25848b79e1067c6822abb4bb1085ffa5c7205fc65"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\14 - NoobAI Hobby Illustration.json",
+      "target": "workflows/comfyui/14 - NoobAI Hobby Illustration.json",
+      "sha256": "47714b022c39c983b73a1e87d1c3a63fef95191cc46afc20def0b64891384ac6"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\15 - Pony Stylized Characters.json",
+      "target": "workflows/comfyui/15 - Pony Stylized Characters.json",
+      "sha256": "164a01191cf0e97f065e3231d6548b20f569d9bdce3a98ca9124d83bc9f6b86a"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\16 - Qwen Slow Quality Edit.json",
+      "target": "workflows/comfyui/16 - Qwen Slow Quality Edit.json",
+      "sha256": "0298d8db1a29946c2086dbea57792d6da89a3f9114f7f1c0935cc671f60a3678"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\17 - SDXL Gentle Reference Variation.json",
+      "target": "workflows/comfyui/17 - SDXL Gentle Reference Variation.json",
+      "sha256": "32f9274c3789408fa449471e64454b672760275a16ae01133655d027bf7d7e89"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\18 - WAI v17 Illustration.json",
+      "target": "workflows/comfyui/18 - WAI v17 Illustration.json",
+      "sha256": "dba058a3a5e01ac890c39e6b9654a23608d8f58f0f0f47da2c1c7fde46490a9c"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\19 - WAI v17 Pose Control.json",
+      "target": "workflows/comfyui/19 - WAI v17 Pose Control.json",
+      "sha256": "9159a274d2855883e1d5ada9634902d1534e41a982281e14c9a69e08ff839dab"
+    },
+    {
+      "source": "outputs\\ComfyUI-Workflows\\20 - SDXL Pixel Art LoRA and 128px Export.json",
+      "target": "workflows/comfyui/20 - SDXL Pixel Art LoRA and 128px Export.json",
+      "sha256": "e08c9d638f2b0d1ad5316d31101652cc5e731000d4d9f153aa85c15a42aca3e3"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\abstract-api.json",
+      "target": "workflows/api/abstract-api.json",
+      "sha256": "1407302431ceec9e2fa57d0016ad639de53f86794e923ce87efeb90f3599de8c"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\anime-api.json",
+      "target": "workflows/api/anime-api.json",
+      "sha256": "071278337005e9d9a0d5c3faa13c0a1573a967471d09f8931bb4144748af2d4b"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\gentle-variation-api.json",
+      "target": "workflows/api/gentle-variation-api.json",
+      "sha256": "4deec2c452e6c6a81ea6fe5dac6fc4ba4e539529c16530b684d65d7e4fe01d30"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\noob-api.json",
+      "target": "workflows/api/noob-api.json",
+      "sha256": "7c33a9249e4dcc1056c6443f736372d3e9d1ee5a1573944c48636029dc206db9"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\photo-banner-api.json",
+      "target": "workflows/api/photo-banner-api.json",
+      "sha256": "5abc993bf38be8827f7ad2d652517ad9ddb2297e791650ef6e0680a29ee55874"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pixel-concept-api.json",
+      "target": "workflows/api/pixel-concept-api.json",
+      "sha256": "065f9686b1f268df034bbc05e60e26f73ffde7fcf84a06803c01d4abbba322a7"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pixel-lora-api.json",
+      "target": "workflows/api/pixel-lora-api.json",
+      "sha256": "564581735e7e52534bd93dc01b74d3a23cba7db5203cb5338f540157083f5ebb"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pony-api.json",
+      "target": "workflows/api/pony-api.json",
+      "sha256": "3683c0683bf82d2946da4eeca9d8136ca9c54b5933fa90604a6b1acb2b686d77"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pose-api.json",
+      "target": "workflows/api/pose-api.json",
+      "sha256": "0220d01ff9361d56776a5da5988f954af493b7c24f34a10923e745ce51b2ab97"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\qwen-api.json",
+      "target": "workflows/api/qwen-api.json",
+      "sha256": "c90c5d97bd816ca30897ddd78ae5be9889b88fbf683ddcdb019bdfa5de4a3bb8"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\qwen-character-api.json",
+      "target": "workflows/api/qwen-character-api.json",
+      "sha256": "7374268c75c31dd17437a8bb7d4e22406e16593322d80ba05c3a797a2ebeb368"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\qwen-quality-api.json",
+      "target": "workflows/api/qwen-quality-api.json",
+      "sha256": "85d6bf2d5607d14e6a7ed0cb65db3f0b4c2ae99fa24fa51286bd1f884b0f4fa3"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\realvis-api.json",
+      "target": "workflows/api/realvis-api.json",
+      "sha256": "a127678352d47db4bfce52a1d26a57751643dc91bc39debf3b5c3cbc25ebb755"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\stylized-prop-api.json",
+      "target": "workflows/api/stylized-prop-api.json",
+      "sha256": "bf38ddb7f94016c50f0e1229d9134f8048b9d71725ed702ac09f20846f708182"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\wai-api.json",
+      "target": "workflows/api/wai-api.json",
+      "sha256": "9eafc3618e4245a18a3da337fbb4506dfc2a534cc32cfd3ab851d2cc5ed1a9a0"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\wai-pose-api.json",
+      "target": "workflows/api/wai-pose-api.json",
+      "sha256": "9e0ef9b4cc2e62b70eae71b42c56ad39fd7f6e50192d0f542eb26f3d8181a7d6"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\zimage-api.json",
+      "target": "workflows/api/zimage-api.json",
+      "sha256": "7ce7949df6c7a5c972e26fe733ceb4515a3d4be5256bf9b71038dcafaedbfd5a"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\run-batch.py",
+      "target": "scripts/run-batch.py",
+      "sha256": "dab73a92c0d6d53ae097cb334837dd405a364d0c97162b0ff6d9448b0936ead0"
+    },
+    {
+      "source": "assets.py",
+      "target": "scripts/assets.py",
+      "sha256": "97122e8718b9073a02f1a0a2245b88d13b9b82003f1229ebd7864b8d83fe2d76"
+    },
+    {
+      "source": "outputs\\Experiment-Scorecard.csv",
+      "target": "experiments/curated/scorecard-template.csv",
+      "sha256": "2f01eab328c347e2fd939a8c13fd081fa933070bce7a0ddab614951efe23877c"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\realvis.png",
+      "target": "examples/gallery/realvis.png",
+      "sha256": "8264a7355d2dd32186bed8a540a7b8a6f5b09259ef278b84f3ded0bd65660d59"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\abstract.png",
+      "target": "examples/gallery/abstract.png",
+      "sha256": "0aac53dc93264a8b0933478dcfd57c2c67e263206eb37ee737252a807fb6b5b8"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pixel-concept.png",
+      "target": "examples/gallery/pixel-concept.png",
+      "sha256": "b7482a44e87f7137522b4fdfadaa9ebf3bb41b2cf03decc332953fbce98463a0"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pixel-lora.png",
+      "target": "examples/gallery/pixel-lora.png",
+      "sha256": "88b8356e84997d7408d4cbdf40728b56370d52b1caa0240b704836759f2270c1"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pixel-lora-128.png",
+      "target": "examples/gallery/pixel-lora-128.png",
+      "sha256": "27f235a0fb427bd88bdc6191f5444a702005324fc0907009ac6c907de7b55ac3"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\zimage.png",
+      "target": "examples/gallery/zimage.png",
+      "sha256": "9fa48954728d608b39f2e7b9d24fd925ff21aca374725116671614ea1de87988"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\pony.png",
+      "target": "examples/gallery/pony.png",
+      "sha256": "26b24772f8f6349cbef31b0e3f0326111b8d5b42e303c252c7b55d39d5aecabd"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\wai.png",
+      "target": "examples/gallery/wai.png",
+      "sha256": "66b36d7cffed535ba6effe741e934b3be88034066d94d1eb3eb7f105b8b8c7ff"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\noob.png",
+      "target": "examples/gallery/noob.png",
+      "sha256": "3555e1d4029a804cf470db256748e1848d1d59ddca4ef96bdd18547f20925900"
+    },
+    {
+      "source": "outputs\\Expanded-Workflows\\qwen.png",
+      "target": "examples/gallery/qwen.png",
+      "sha256": "77da3235c1f129258c014087c70c372a2f18ad80b596401b2efa61670aef424e"
+    },
+    {
+      "source": "lantern-reference.png",
+      "target": "examples/references/lantern-reference.png",
+      "sha256": "d8cbae28cba950da320702eccd12666af152a55d47ccf29fda327e4493578431"
+    },
+    {
+      "source": "passing-pose-guide.png",
+      "target": "examples/references/passing-pose-guide.png",
+      "sha256": "b37eb2614e351dd101c49e4186dced175221f1d191eaf0b33af32409cbd473c1"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\amethyst.glb",
+      "target": "examples/lanternkeeper/amethyst.glb",
+      "sha256": "8c09e46c771169d1bc2a1b8db669e21257ed0b78b5014a6b41b26ba51f0e85cc"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\contact-sheet.png",
+      "target": "examples/lanternkeeper/contact-sheet.png",
+      "sha256": "7532ac86ed53144f94a95f9e4c51c6fde0cfbe9f126f7ee7fd2b9305ef12d18c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\edit-comparison.png",
+      "target": "examples/lanternkeeper/edit-comparison.png",
+      "sha256": "8bf7278c1e8f36a42fdf0239f979a5ff9004d5cd1b63691a8c5d6eed5e068ed0"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\edit-mask.png",
+      "target": "examples/lanternkeeper/edit-mask.png",
+      "sha256": "96b32e45ffad91fda6f2ad5f6f17c081c698066240518527aa0d53805b849d57"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\edit-original.png",
+      "target": "examples/lanternkeeper/edit-original.png",
+      "sha256": "cea32b5241822c22b47ab3d89f350e0ff64248e1cbb96631d5250ff377130689"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\edit-protected-result.png",
+      "target": "examples/lanternkeeper/edit-protected-result.png",
+      "sha256": "f68d24bb47b227c05c4a74c05fd850707a066b5aee9f346a9683ffc2a8ac360d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\ember.glb",
+      "target": "examples/lanternkeeper/ember.glb",
+      "sha256": "aeed7557dab0699bd5d72d5fadb373471291f26fe5f3cafc4dddeea283588937"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\forest-hero.png",
+      "target": "examples/lanternkeeper/forest-hero.png",
+      "sha256": "c96dc2b2ee69a184ad8310b6e4d5ed991d0e575626244550f23306f39647bdae"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\forest-hero.webp",
+      "target": "examples/lanternkeeper/forest-hero.webp",
+      "sha256": "398d8ac591a7e065958018f55bc4e82a87d48aef0136df1e9e73bb604ed825e3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\hero-1200.webp",
+      "target": "examples/lanternkeeper/hero-1200.webp",
+      "sha256": "d6c0db314d4dff236744f0e977f2d384968a11a9c14118ded1c36a09a046c4d4"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\hero-workflow-api.json",
+      "target": "examples/lanternkeeper/hero-workflow-api.json",
+      "sha256": "0451108842344d5ebae962e29cb30169099c17736f943fd30bd615cf0c3ac057"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\index.html",
+      "target": "examples/lanternkeeper/index.html",
+      "sha256": "60f90605367d146683ed7528dc10af24e88281c9d23f5613bf93b3784def59a8"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\lanternkeeper-blender.py",
+      "target": "examples/lanternkeeper/lanternkeeper-blender.py",
+      "sha256": "5811e3a6db2f0dd4dc8f9ed8dd0eeda8aecca1630976f6522228a70221d2da25"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\lanternkeeper-hero.py",
+      "target": "examples/lanternkeeper/lanternkeeper-hero.py",
+      "sha256": "8f1b78470b007a2b3789d7edda30b2b85e0ca1ae6cc3c3f368c103ca6092cead"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\lanternkeeper.blend",
+      "target": "examples/lanternkeeper/lanternkeeper.blend",
+      "sha256": "de72a66a4f3ccd94914e6a9e98fa975ad7738c4310ea6aa030f2d01caf466256"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\moss.glb",
+      "target": "examples/lanternkeeper/moss.glb",
+      "sha256": "73f9037605593e46e7e14f2dfd9a86a0668685b848937fd5bcd042056e521e50"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\pack-sprites.py",
+      "target": "examples/lanternkeeper/pack-sprites.py",
+      "sha256": "779eabcd8c59853db7072bbb3a1d3dc4160d83202efac2da58ca164f413d18f3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\README.md",
+      "target": "examples/lanternkeeper/README.md",
+      "sha256": "8b77dd8bb1c5fd826e6ef1d9493ccf105438be9a3dbf2dfca71cc856f548da54"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\social-card.png",
+      "target": "examples/lanternkeeper/social-card.png",
+      "sha256": "d2532a8c7751759bba1ae40a2fdb35daf1556fa25fb19c1c917d090ccfbde75b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\source-lantern.blend",
+      "target": "examples/lanternkeeper/source-lantern.blend",
+      "sha256": "8e08011eac465121450294a8431ec3444cec2181f0d13339a37e354a5c45dd8e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites.json",
+      "target": "examples/lanternkeeper/sprites.json",
+      "sha256": "05ee5e0bdc733a11a33f8167dfa1eb15543df388c1ec56190b08cd03a9e3482b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites.png",
+      "target": "examples/lanternkeeper/sprites.png",
+      "sha256": "22df2c950a18ced425083b864d13ff0f35068bdebf0509e4918dd81531a95e2a"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\turntable.gif",
+      "target": "examples/lanternkeeper/turntable.gif",
+      "sha256": "edf2ed3555965f49226d2f5bda0888b83ffc665f22e036aa7af0ab8b124c8054"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-0-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-0-0.png",
+      "sha256": "4fcbcda13d6a5cf9ce38bb4fb036d331c91474b07bc3af6186d3fb5ce546f3e9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-0-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-0-1.png",
+      "sha256": "3ca026415e545955b45f13ad1f68c11227eb4fe12e36dca2ad0f13e405558b21"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-0-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-0-2.png",
+      "sha256": "e3cec4eda2d15b9018fc6d9a1209072cea542e066c87c10f2c671d875d07f044"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-0-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-0-3.png",
+      "sha256": "c20fdbc8febf69f9de60ab3e282dfd805d6d91a4af43013873a3317aeb896680"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-1-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-1-0.png",
+      "sha256": "3d46307b41cec1b7027441f4a9824c8893f793b451c33c4fb15c76afd913cd06"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-1-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-1-1.png",
+      "sha256": "4beedcece804684697da076e2cd8442ddab28f6f0481383524ae797c60160f60"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-1-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-1-2.png",
+      "sha256": "88b57ce54bfdb401aeb32c65748e156bc19c2fa153ada34b6c4fee2575e587f9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-1-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-1-3.png",
+      "sha256": "5cdd14dffec4299376af4b6345e4e76578e936b5ca20daa908f4c599e87a6a0d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-2-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-2-0.png",
+      "sha256": "1d2bc3880c9abe4380ed7830e5e6e676ab1df6a802f03dba22059bd71a8b5a82"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-2-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-2-1.png",
+      "sha256": "ee56c7dee7d903e41b454f15bf961aacc91d54d529ad65cdcd11e8b391f8082d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-2-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-2-2.png",
+      "sha256": "b253a7b96b5443777ef84c7e89cc32abed79e313f8660e03f7b062bc7a5c6ede"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-2-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-2-3.png",
+      "sha256": "82db455d9b12b3dc398e572f33ecc38b3e84a9fdf772a6a2159eb34132544580"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-3-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-3-0.png",
+      "sha256": "a7330d920f927879cb73fced701fbc95957474424a10a07b016f915421338817"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-3-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-3-1.png",
+      "sha256": "32f28905ed03462a028f2ae252659baa4c63aed4273ae5e043d342effa6cdd0b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-3-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-3-2.png",
+      "sha256": "2012ec6233bdb96472773faa953cfe5ac2ed30cd767fee5b2769163c181da7b0"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-3-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-3-3.png",
+      "sha256": "fc8742d7f43e9c0fa4e470b0bf730d511de70ea8a62949212213b1adc571cfab"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-4-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-4-0.png",
+      "sha256": "788c73e2535a754745b263c3919692fc70a85bed4f706b610893a07f4039a731"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-4-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-4-1.png",
+      "sha256": "ac3876a8867be938765b9309b94f0400c3f92f60dbeeb8cf8159e2bc16645895"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-4-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-4-2.png",
+      "sha256": "19141eb8cbb62ce31eb832dd2fd863643caa585c6fa3d31c4945ceb463694f53"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-4-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-4-3.png",
+      "sha256": "471a635823e8e3e1ca3ca8a9b60c3268e424848b815d566d5a3776c5a4a05988"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-5-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-5-0.png",
+      "sha256": "a03f5d090171f55018223f90be04e0befcf710a0eae396702ee00d8a7d387078"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-5-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-5-1.png",
+      "sha256": "6b21e5ab9645418bdc14e435c6f79696b66aa4601b51fe4c158f46ad8211fe0c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-5-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-5-2.png",
+      "sha256": "eca3d236f1768631f682530d4b3a8e5a38f56052f770c62e2db657fb042c4576"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-5-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-5-3.png",
+      "sha256": "2714381a79fc68661b78b0b724a355dfd903042e1bc96cf8a278f7bcf9a5703e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-6-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-6-0.png",
+      "sha256": "6bd8edc56d636056b2be745a3350d601af5dd8f017f9cb26877c79e662a7e6a9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-6-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-6-1.png",
+      "sha256": "c3891978b81f8abf137bc9d14075fff151556b0b0c989490967cee21651507c0"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-6-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-6-2.png",
+      "sha256": "3471ea2b26fd7d1daae9c17ec6d92e0cb7ea10abe304265841d850b304236ecb"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-6-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-6-3.png",
+      "sha256": "7b8170acbd4cbfa4e098f0d665f223ea95fe657aa8ddbeebb3c59a3728164da9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-7-0.png",
+      "target": "examples/lanternkeeper/renders/amethyst-7-0.png",
+      "sha256": "a949a0e425862243ed8a4ca2d17ee7bce49ffa0f20c8a511d33acab6abba627e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-7-1.png",
+      "target": "examples/lanternkeeper/renders/amethyst-7-1.png",
+      "sha256": "2d889dfc004604db7ffa3f65d3930ae447471ff1bd044fd034e4054b1ee3e72e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-7-2.png",
+      "target": "examples/lanternkeeper/renders/amethyst-7-2.png",
+      "sha256": "0d3f399c5ff8f207fe18a80b6ddfd599b06b28b27fbdc57d4d5143a8974434bf"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\amethyst-7-3.png",
+      "target": "examples/lanternkeeper/renders/amethyst-7-3.png",
+      "sha256": "5a2c55da73b4798ba6af249d907eb66fcb835208da02aa585e17332bdc9b7cf6"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-0-0.png",
+      "target": "examples/lanternkeeper/renders/ember-0-0.png",
+      "sha256": "8d66895a665470f31db28081dadbb86acec709798fbc1cb663b1676587e3a012"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-0-1.png",
+      "target": "examples/lanternkeeper/renders/ember-0-1.png",
+      "sha256": "e342e70fa5494f94437982ca42177d47cebd2157129a40af3ac511d8c6e0a548"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-0-2.png",
+      "target": "examples/lanternkeeper/renders/ember-0-2.png",
+      "sha256": "4bc77354e06f4a3674ed3ae9ee4e72ef9e5729d0056a9a89aec808bf82122fce"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-0-3.png",
+      "target": "examples/lanternkeeper/renders/ember-0-3.png",
+      "sha256": "5b9041e06daf0fc5bba7f46064d879c8edbd8d08d4616fb6f2ed9328a9e29165"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-1-0.png",
+      "target": "examples/lanternkeeper/renders/ember-1-0.png",
+      "sha256": "cc0c9e3482043a144b6a99776038b6f0d34821a6fe3ff5261390c6d33422f6d5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-1-1.png",
+      "target": "examples/lanternkeeper/renders/ember-1-1.png",
+      "sha256": "b1f385324524d834cd9c563a1f839f8a10e864735d0570777ebebc6afd5fb9ff"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-1-2.png",
+      "target": "examples/lanternkeeper/renders/ember-1-2.png",
+      "sha256": "f13ff85aaabfa858294c1364f617136983a7e4b99531ac139d3bed8175760eff"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-1-3.png",
+      "target": "examples/lanternkeeper/renders/ember-1-3.png",
+      "sha256": "a58df7df0c4766e3e89630ad0eb6064fe1dfaecbc3388513687d658de67c4570"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-2-0.png",
+      "target": "examples/lanternkeeper/renders/ember-2-0.png",
+      "sha256": "e7120d0399d20ca96832a7c9fe558622908b5f0c64a59c7a17378fd1475c1e44"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-2-1.png",
+      "target": "examples/lanternkeeper/renders/ember-2-1.png",
+      "sha256": "59316170231859a565d16f87d4341828e138ff7ca58827a9ec217947e722b14a"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-2-2.png",
+      "target": "examples/lanternkeeper/renders/ember-2-2.png",
+      "sha256": "b9bf8ab1fb24cefdb3d7e9e806e6406228fd9777b9e57d7d2827b41ea6df774d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-2-3.png",
+      "target": "examples/lanternkeeper/renders/ember-2-3.png",
+      "sha256": "c93684ab50557eee3e9bb2346173c198e73bc1ee0b3dc8c89c3345c418b2be13"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-3-0.png",
+      "target": "examples/lanternkeeper/renders/ember-3-0.png",
+      "sha256": "8b94d66d61f55c84b848eb0ddf1f36a0dc7d8f7e629cc244a63af204f77c5d5d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-3-1.png",
+      "target": "examples/lanternkeeper/renders/ember-3-1.png",
+      "sha256": "3e5579df913c119007a900073b18981f65e8068c141e55b65496fcb305f7ea68"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-3-2.png",
+      "target": "examples/lanternkeeper/renders/ember-3-2.png",
+      "sha256": "9d5cd62e24cf4cfd5881a29f6ed3aa33236aaff665556ba9694def73fc2ed006"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-3-3.png",
+      "target": "examples/lanternkeeper/renders/ember-3-3.png",
+      "sha256": "7f8f1c515a386a0b8ac8ebaa05d768f97bb80c56c8d4e56bc17d1ecbfd3e28aa"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-4-0.png",
+      "target": "examples/lanternkeeper/renders/ember-4-0.png",
+      "sha256": "1dc6fd0e342d19f3f7602dc556c636b99a61afbddb3bafc4e27b11006fd52399"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-4-1.png",
+      "target": "examples/lanternkeeper/renders/ember-4-1.png",
+      "sha256": "85c2fb5205505705273c1be8a528db9f4b036ee680d7975b235a653f32351aae"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-4-2.png",
+      "target": "examples/lanternkeeper/renders/ember-4-2.png",
+      "sha256": "823a4fc124c973658c92deb523319ea8d435ac41c7d3466ad1ddf54b76621965"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-4-3.png",
+      "target": "examples/lanternkeeper/renders/ember-4-3.png",
+      "sha256": "4bf7f33bfe9ced6855fbb7304f6d96ab9a7042f343cb65486b43bdc9f651c3dd"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-5-0.png",
+      "target": "examples/lanternkeeper/renders/ember-5-0.png",
+      "sha256": "2f54ac4a59e0342562a998be4e636bb462240644f22ba958a3c0760782ec2627"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-5-1.png",
+      "target": "examples/lanternkeeper/renders/ember-5-1.png",
+      "sha256": "47e3ba5b8961a0067a91ae0fc66ca2178992813850af8d700402f87aefad2fe0"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-5-2.png",
+      "target": "examples/lanternkeeper/renders/ember-5-2.png",
+      "sha256": "e1b53c5a77124ad17eab54fb9dfed1465bf087f469395493f2ff920509b38a50"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-5-3.png",
+      "target": "examples/lanternkeeper/renders/ember-5-3.png",
+      "sha256": "e60705575df19937ba5489781fdde66c0ca953c271f7f52fd63c17736d916276"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-6-0.png",
+      "target": "examples/lanternkeeper/renders/ember-6-0.png",
+      "sha256": "5f40ae34ad2118ed98aee8648e1aac570eafa914c0a5682c251a980ee1505c89"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-6-1.png",
+      "target": "examples/lanternkeeper/renders/ember-6-1.png",
+      "sha256": "d9c7b67d80b466c177b38705e9b46b36e3a08e572e6673900066a31a93e4a3a5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-6-2.png",
+      "target": "examples/lanternkeeper/renders/ember-6-2.png",
+      "sha256": "80b4975a9532a5067822f0fbfa574d1ef7cab8387f0d7a17c94b476a38a4e1d5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-6-3.png",
+      "target": "examples/lanternkeeper/renders/ember-6-3.png",
+      "sha256": "5aba9791ee9afc8deec8515425bb08157aac6ecbb94e62d46c535a23ebafce96"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-7-0.png",
+      "target": "examples/lanternkeeper/renders/ember-7-0.png",
+      "sha256": "665ab890bf7ee1ef70340fdc8fd49acc124bab5e6f6f21b331cc228e89ef597d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-7-1.png",
+      "target": "examples/lanternkeeper/renders/ember-7-1.png",
+      "sha256": "fe28e518627bf32981a7d91fa8f7369a1ddc87391e4484c7d5075bb7030fbbca"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-7-2.png",
+      "target": "examples/lanternkeeper/renders/ember-7-2.png",
+      "sha256": "561e39fe8c3d47cbfa384ff69a4702057aa6af06a744a1ef71a186d698dc13f2"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\ember-7-3.png",
+      "target": "examples/lanternkeeper/renders/ember-7-3.png",
+      "sha256": "72b85f5cc0ec301f13d716202a04cf49a2c34e3bdf4ce6df7c7fade8d9428fca"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-0-0.png",
+      "target": "examples/lanternkeeper/renders/moss-0-0.png",
+      "sha256": "498513006e1e5fee91b15e192f0c4e6b7d2d5d4d8c4bf11a314780cd184a18fb"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-0-1.png",
+      "target": "examples/lanternkeeper/renders/moss-0-1.png",
+      "sha256": "3f9923cef2815bc7469b6c715c6731d7deefa06b5754a7cce0dd5ca8bda20a48"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-0-2.png",
+      "target": "examples/lanternkeeper/renders/moss-0-2.png",
+      "sha256": "ee3f193828a102a40efc7fd0a78fe444f16932f64ef08183382ab8554a57ffc7"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-0-3.png",
+      "target": "examples/lanternkeeper/renders/moss-0-3.png",
+      "sha256": "b09018d25a64888576bc0af6da97f44d84c2fcf95fac04dd9e0db3dc9b7f2cff"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-1-0.png",
+      "target": "examples/lanternkeeper/renders/moss-1-0.png",
+      "sha256": "2cea36efaf2c204dd85f7afd1ccc1c785deefaed34f11326e89fcd7f877ab325"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-1-1.png",
+      "target": "examples/lanternkeeper/renders/moss-1-1.png",
+      "sha256": "93dbaea18d3b00ca0ca63533e8ab5c6d0c35887d413e222a8551f4b84a7ac70a"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-1-2.png",
+      "target": "examples/lanternkeeper/renders/moss-1-2.png",
+      "sha256": "8457ca08ac348c25890fce17ac9f124df05182d2450e32861f267b2727571b25"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-1-3.png",
+      "target": "examples/lanternkeeper/renders/moss-1-3.png",
+      "sha256": "4a31606a4f77f20cc4c16cbe11a997a4f7c01d53d63d2471171770b24b890882"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-2-0.png",
+      "target": "examples/lanternkeeper/renders/moss-2-0.png",
+      "sha256": "0d0d11130451fdcaea9e202f8275c89d7b40b78c19d02fddb045a85c1c2d0080"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-2-1.png",
+      "target": "examples/lanternkeeper/renders/moss-2-1.png",
+      "sha256": "90eb373e171747f08620c294b78850c6db6de0e9cd84cd06fc3fde76c0beab60"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-2-2.png",
+      "target": "examples/lanternkeeper/renders/moss-2-2.png",
+      "sha256": "2b6675916b6031b8aa01a1990515a79a693b60c636cff9166987313ead7c9ead"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-2-3.png",
+      "target": "examples/lanternkeeper/renders/moss-2-3.png",
+      "sha256": "917df9d380200d52fceac23ff6f2d9a2523565c9329290c9a3edacc592ac5792"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-3-0.png",
+      "target": "examples/lanternkeeper/renders/moss-3-0.png",
+      "sha256": "299e96978946463cb514d4a7579d9f5ef956679cd7d152bace4045692c134fa4"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-3-1.png",
+      "target": "examples/lanternkeeper/renders/moss-3-1.png",
+      "sha256": "f4b84aa43266bc6bcb96f0c28f17b36ae257ead1d58cb9ccd2c8bc49f1aa8e9f"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-3-2.png",
+      "target": "examples/lanternkeeper/renders/moss-3-2.png",
+      "sha256": "ada9473f45fa19976a5caa408933025cfad2ff9f1a3d31d01ea5b720dc931248"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-3-3.png",
+      "target": "examples/lanternkeeper/renders/moss-3-3.png",
+      "sha256": "937fb417d973960e0118e8c0f7059be7b2a7e4078e206cdabed9922eafa14073"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-4-0.png",
+      "target": "examples/lanternkeeper/renders/moss-4-0.png",
+      "sha256": "afd59a8a2527973c45d0e25c48c27853c3d05dc2d57b6a38ca73b7d683c12ec7"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-4-1.png",
+      "target": "examples/lanternkeeper/renders/moss-4-1.png",
+      "sha256": "7ae0083ce8c1f6110ffb0667c78371aacc7503c7ef8fdf329820b71840443322"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-4-2.png",
+      "target": "examples/lanternkeeper/renders/moss-4-2.png",
+      "sha256": "d9b12050c2850fc918a97789ed97a7e678587038e8968bceabe4e5300138f2a9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-4-3.png",
+      "target": "examples/lanternkeeper/renders/moss-4-3.png",
+      "sha256": "a5aff738fb0a70a969616caf31d71cdb61a1c4761244c6523cf9f2b843326525"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-5-0.png",
+      "target": "examples/lanternkeeper/renders/moss-5-0.png",
+      "sha256": "2381141350951f27f75100de5e3f29947e946b515ac9313ec7e66caec914b154"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-5-1.png",
+      "target": "examples/lanternkeeper/renders/moss-5-1.png",
+      "sha256": "0a5ae118682466997559b3b72202f7b6d05cb5f8951a0060b8794543d1ce17e3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-5-2.png",
+      "target": "examples/lanternkeeper/renders/moss-5-2.png",
+      "sha256": "fd268cd70689d75b051014412d837e638573e6e6b933d4f3742ccd752aa1dbda"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-5-3.png",
+      "target": "examples/lanternkeeper/renders/moss-5-3.png",
+      "sha256": "803f9d30b6cd7172ae18166da4071ab5172d6dd04d61e80976834be78ab40616"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-6-0.png",
+      "target": "examples/lanternkeeper/renders/moss-6-0.png",
+      "sha256": "67715e932b33cbb2560e65f149cce40fdc5a6072126f3d943cc1043b918a722b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-6-1.png",
+      "target": "examples/lanternkeeper/renders/moss-6-1.png",
+      "sha256": "b51f38d309551c6323593ae3bd25df27f77aa43f0e43c4a6b071ff038c06fad2"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-6-2.png",
+      "target": "examples/lanternkeeper/renders/moss-6-2.png",
+      "sha256": "763fe6f21311242836032e4e5b3bc89714e01022b31db184dfd5dd98ae44bbc4"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-6-3.png",
+      "target": "examples/lanternkeeper/renders/moss-6-3.png",
+      "sha256": "d2022d9112ca286c42ba4715529d6c0b98542fb719544dd5ee785706c359dfa3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-7-0.png",
+      "target": "examples/lanternkeeper/renders/moss-7-0.png",
+      "sha256": "79c068f9953dc2bd16554cd0792666fde25f19f99146ed27e2970b34ef5a9da5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-7-1.png",
+      "target": "examples/lanternkeeper/renders/moss-7-1.png",
+      "sha256": "89ca91d7d34ef1bff6398d1e872ae2e6e88c1a8450f9391bed0e03e9d5348928"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-7-2.png",
+      "target": "examples/lanternkeeper/renders/moss-7-2.png",
+      "sha256": "013131972ed0c57c8982de1fc7ab88b583fc03e5524ea145a44f5672a6ddcf0b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\renders\\moss-7-3.png",
+      "target": "examples/lanternkeeper/renders/moss-7-3.png",
+      "sha256": "d7bc7011dd55907c0fa5ee0fc0c82da2732da725329ef8fc0ad3ff51dceb4718"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-0-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-0-0.png",
+      "sha256": "de7f5ffcc5884379305f684a1b0da3bc64564f988154cbe7785291ac1b722ee9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-0-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-0-1.png",
+      "sha256": "21b8322b8378f0010f0fc7d59f8fabb627bbcb635de7cdc028462835ea11d658"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-0-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-0-2.png",
+      "sha256": "de7f5ffcc5884379305f684a1b0da3bc64564f988154cbe7785291ac1b722ee9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-0-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-0-3.png",
+      "sha256": "71e8c29de66cc35182ceb10c1f7b4c7c91ced0b0e3ae57b3f0c9fde40aa586b1"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-1-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-1-0.png",
+      "sha256": "47fe37227512b5d47d5458cb1feddc758f1fb84118b7b46df96efb80dbf85d09"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-1-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-1-1.png",
+      "sha256": "b0405a3a6aa340915592d25f6f8a58f3bb9b081dedcd265e70e1cc7d0c7a8c05"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-1-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-1-2.png",
+      "sha256": "47fe37227512b5d47d5458cb1feddc758f1fb84118b7b46df96efb80dbf85d09"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-1-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-1-3.png",
+      "sha256": "7367ca7bbad86f4b0499ff5663c317e1b3ef71ebb91fa5ad17d80eb28a28999f"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-2-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-2-0.png",
+      "sha256": "abc3f9f876b90aab8d67dd960a4b11a8639f48a05d82c5d2df52b699ee926d5b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-2-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-2-1.png",
+      "sha256": "de6da3b5d3635aaed7f08cbced18808b14f188fd431b83f6f20a23ec2ca47b73"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-2-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-2-2.png",
+      "sha256": "abc3f9f876b90aab8d67dd960a4b11a8639f48a05d82c5d2df52b699ee926d5b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-2-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-2-3.png",
+      "sha256": "1caef5f24d1f249f165da963652fdee0e92aee923eefe3b492b741327ac1a6a8"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-3-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-3-0.png",
+      "sha256": "a8659a48ce20b92180f90363aaabb12edae7dd48a96e11b0ad819f9d114eb20b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-3-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-3-1.png",
+      "sha256": "37b20f864de3b79f12aad014758da29679d326303e92e9525720a033bbf8f62a"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-3-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-3-2.png",
+      "sha256": "a8659a48ce20b92180f90363aaabb12edae7dd48a96e11b0ad819f9d114eb20b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-3-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-3-3.png",
+      "sha256": "b7dd3c56044513257be3fef2fa45ecdbd6e972397df20f2dc70cf6debbe98d7f"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-4-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-4-0.png",
+      "sha256": "1f9447235be054d5322471bb016bcd34220d29593ff66b8aa70d61bcd9ee85d3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-4-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-4-1.png",
+      "sha256": "fac01e080a55b4ca975d41edfbcbba6782d2d87a99041f063cb0528b24477f1a"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-4-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-4-2.png",
+      "sha256": "1f9447235be054d5322471bb016bcd34220d29593ff66b8aa70d61bcd9ee85d3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-4-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-4-3.png",
+      "sha256": "c19f7e643f4f827f8b86f2fb1a93c10872f0901bd6fdbc4fc63758273f06e2fc"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-5-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-5-0.png",
+      "sha256": "0423bac9ca1cc427ea813135cb034f934f93760fefbbf21a15b00d97222a1ff3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-5-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-5-1.png",
+      "sha256": "56736ac1116d2944792cacb8545b2c3fa97390797c0ec49e890d3de96cf03d7e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-5-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-5-2.png",
+      "sha256": "0423bac9ca1cc427ea813135cb034f934f93760fefbbf21a15b00d97222a1ff3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-5-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-5-3.png",
+      "sha256": "def9d393df788919ccfa3ddba955620d3b13fa62b2f8e4dcff15067ee7045259"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-6-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-6-0.png",
+      "sha256": "8ac3a19f0e6848f3b625364a242c1aacdcac228dcfe06209e659b75f98ebfd27"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-6-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-6-1.png",
+      "sha256": "bd335e5b5fcc16290fcaab09c056629fa638047ae6a64bd45caf7dc5f5e49a57"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-6-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-6-2.png",
+      "sha256": "8ac3a19f0e6848f3b625364a242c1aacdcac228dcfe06209e659b75f98ebfd27"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-6-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-6-3.png",
+      "sha256": "241f97b68afc54d31ad950ff9dc437306ff9f8a99ac57954814b4ac764557a1d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-7-0.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-7-0.png",
+      "sha256": "f0a38755c41dc9ab5cbbde8fe245019396c78c7eabf35b070f61acb5a894f92d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-7-1.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-7-1.png",
+      "sha256": "f2fa9a0d83d85bcfd0541b2d01002bf6c432a719486d7e178aa7a16787b1ebd5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-7-2.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-7-2.png",
+      "sha256": "f0a38755c41dc9ab5cbbde8fe245019396c78c7eabf35b070f61acb5a894f92d"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\amethyst-7-3.png",
+      "target": "examples/lanternkeeper/sprites/amethyst-7-3.png",
+      "sha256": "502598be59ee558f0783a675e6ba6fe45ed2e7d87a46effe28d59488a47b4990"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-0-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-0-0.png",
+      "sha256": "691b5a9f608e335641c89782f7a58dbcc2cf4ebfd355771c6a4b1c6ea66443e7"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-0-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-0-1.png",
+      "sha256": "da20e54031b684ea790f05a0b659e575eb32fe78e5b122fefb4ab2ec339c26e1"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-0-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-0-2.png",
+      "sha256": "691b5a9f608e335641c89782f7a58dbcc2cf4ebfd355771c6a4b1c6ea66443e7"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-0-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-0-3.png",
+      "sha256": "c48d1989fecc6d2f06ceb9e78c3f75a26316a9e3cc7e971c16b9a7f57c6ed1d2"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-1-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-1-0.png",
+      "sha256": "ed24eca415da328f494f3af39a330e114e4b3dfe1a39ff72634072322647e874"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-1-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-1-1.png",
+      "sha256": "0b99dfbae7aac93800e8fd5317b63fec8e46173d9a30d82cc1e90f876720f9aa"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-1-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-1-2.png",
+      "sha256": "ed24eca415da328f494f3af39a330e114e4b3dfe1a39ff72634072322647e874"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-1-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-1-3.png",
+      "sha256": "3ba40253c99246827f72801375393438eedf58ccda41556719d782e3eb15d328"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-2-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-2-0.png",
+      "sha256": "620e0c6efd4a1b5a2472127a3a80f897ddf451ab63168e1b31317483bef427d6"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-2-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-2-1.png",
+      "sha256": "e08e790f46cf3b03ba9667fd0d2cb9d8ffcb4dac3d2b4eeb5b8ff19727a3b857"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-2-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-2-2.png",
+      "sha256": "620e0c6efd4a1b5a2472127a3a80f897ddf451ab63168e1b31317483bef427d6"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-2-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-2-3.png",
+      "sha256": "72630ec70e16fc58ad69c158e1e17939b42fe315bcac9b609b443343383cf87b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-3-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-3-0.png",
+      "sha256": "6acf124a98c89957b2a5818a8d9847527019fc3e9553270e49aa4ab7d0a479fd"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-3-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-3-1.png",
+      "sha256": "9f52621dc0e4c2774f5508056c85330ff5ac3e77e4b9ec41b055101aad1422a5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-3-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-3-2.png",
+      "sha256": "6acf124a98c89957b2a5818a8d9847527019fc3e9553270e49aa4ab7d0a479fd"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-3-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-3-3.png",
+      "sha256": "d58b69ab75f1b398adad7b6dd00593bebce771a001562960ad54f4e931c29434"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-4-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-4-0.png",
+      "sha256": "6f73ba9f3549392d3dc28bdcc4ae5b597e13e2ec870359367cc7b1193adb2fdb"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-4-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-4-1.png",
+      "sha256": "2e063d3a042d9f6944ab8c21f1ad3d243f80ff24eaaf70a92d24d03807c9a8f9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-4-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-4-2.png",
+      "sha256": "6f73ba9f3549392d3dc28bdcc4ae5b597e13e2ec870359367cc7b1193adb2fdb"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-4-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-4-3.png",
+      "sha256": "9c97ccba9b6ddf1c47a9d53b8fef05e2e4e8da5ec51502c4694a0b58f4013025"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-5-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-5-0.png",
+      "sha256": "2416dca2b05373af36a55712f3d68af98255dd4366377394a0c967e100cf009c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-5-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-5-1.png",
+      "sha256": "41d9ff0b81ee7f0d8ca6212b55e6cacd5af3bd718e859f15689e3a458481601e"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-5-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-5-2.png",
+      "sha256": "2416dca2b05373af36a55712f3d68af98255dd4366377394a0c967e100cf009c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-5-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-5-3.png",
+      "sha256": "834a2c2c0a203a1d1aec2ffe3bf3355bf111d05e9edf001add915c795c132f24"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-6-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-6-0.png",
+      "sha256": "ed86469869c79fd78583c1a6e98d7f2173b864382f96bce7aa793be25c127aa5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-6-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-6-1.png",
+      "sha256": "9d18ca71e66c572ac5c0408434f5b208a093c5bfd1b7af5271437d26af88cb00"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-6-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-6-2.png",
+      "sha256": "ed86469869c79fd78583c1a6e98d7f2173b864382f96bce7aa793be25c127aa5"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-6-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-6-3.png",
+      "sha256": "bf91c9b673b26adfa6c36081e5998d200295119804d905b528fd172a2dadad34"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-7-0.png",
+      "target": "examples/lanternkeeper/sprites/ember-7-0.png",
+      "sha256": "a245de61de8c5444ac19b336aeb2475837458c988e21197b40fed4a5f7ac0dd9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-7-1.png",
+      "target": "examples/lanternkeeper/sprites/ember-7-1.png",
+      "sha256": "a96c8805825502894b1db6b48fb6aecae9cddaea969e2cfaf8a4bcce3182ea83"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-7-2.png",
+      "target": "examples/lanternkeeper/sprites/ember-7-2.png",
+      "sha256": "a245de61de8c5444ac19b336aeb2475837458c988e21197b40fed4a5f7ac0dd9"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\ember-7-3.png",
+      "target": "examples/lanternkeeper/sprites/ember-7-3.png",
+      "sha256": "99d36fe056949efa5da3397c671f3fb160610a91846d5ac15ba49d453c284f59"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-0-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-0-0.png",
+      "sha256": "907d27a99132512ef84ed3d4c4cfe776286152980dfc2db3814e0d7c372bea40"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-0-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-0-1.png",
+      "sha256": "0f8a3379ed5ca54ea1b589cb274d56fe7658f8323d2eb246539a0a8cfb274dc3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-0-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-0-2.png",
+      "sha256": "907d27a99132512ef84ed3d4c4cfe776286152980dfc2db3814e0d7c372bea40"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-0-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-0-3.png",
+      "sha256": "557464f917c9891e807df8373f80b832ef7ea89127487de5cf29e40c5a9a464b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-1-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-1-0.png",
+      "sha256": "41de0c51defca62b938cd64b67e1f21f9dcb669d1ad3576606650244cbfece79"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-1-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-1-1.png",
+      "sha256": "60e3109d8a13bea09cf6869113dc9b873407b6634fa24d005a707f29db92eee2"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-1-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-1-2.png",
+      "sha256": "41de0c51defca62b938cd64b67e1f21f9dcb669d1ad3576606650244cbfece79"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-1-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-1-3.png",
+      "sha256": "5b4885ef39f4a515a6b7bdfba3916ad372767badbb7be442a815b04eb0aec458"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-2-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-2-0.png",
+      "sha256": "1a1261bc4754429df2119b8f11ae83b0cf9ae0a050b8adae348acf49f591262b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-2-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-2-1.png",
+      "sha256": "ec5e8851d3d00d1fe4895e5c6bb6c9fcd04ec78db0cecf0401961cde10be4065"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-2-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-2-2.png",
+      "sha256": "1a1261bc4754429df2119b8f11ae83b0cf9ae0a050b8adae348acf49f591262b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-2-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-2-3.png",
+      "sha256": "113f311bd04e99a0200b8b69fb47e0171d4b997037ace8d81b0c1bb80c658e78"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-3-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-3-0.png",
+      "sha256": "2a210ddb3ad9863d44a36af8c1db9d7442d20dc7850dc5520689d16c2cb2f0a8"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-3-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-3-1.png",
+      "sha256": "ffa53f2580404d9252b22abbcfc5dbf52d1f13b699ba74a006264b3a5d7d8e30"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-3-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-3-2.png",
+      "sha256": "2a210ddb3ad9863d44a36af8c1db9d7442d20dc7850dc5520689d16c2cb2f0a8"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-3-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-3-3.png",
+      "sha256": "eb2631369161861393b3b77d4d8d672a9f5c69bb69504c8316225ac616381d53"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-4-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-4-0.png",
+      "sha256": "ea7e8a8f8ed047e53dfecc06f86f707c6514d46c2450fdcc0f09ec79589bacdf"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-4-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-4-1.png",
+      "sha256": "0870db3f45750748e156b447e1ff0f0386c6f6891815ec4b7ed7de95c437361b"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-4-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-4-2.png",
+      "sha256": "ea7e8a8f8ed047e53dfecc06f86f707c6514d46c2450fdcc0f09ec79589bacdf"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-4-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-4-3.png",
+      "sha256": "aadb52a053b457a8c41660b47e38b8a9d00a1591bae6693b017ae2151a823b98"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-5-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-5-0.png",
+      "sha256": "9c2314d5d9e203154bd36ba2a5d8711953bcae311a1237941f263ea2d3ca1a9c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-5-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-5-1.png",
+      "sha256": "f51bc759699724acd98dbd4873faf51a83a660dd064c1ab391c50bf927bb34d3"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-5-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-5-2.png",
+      "sha256": "9c2314d5d9e203154bd36ba2a5d8711953bcae311a1237941f263ea2d3ca1a9c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-5-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-5-3.png",
+      "sha256": "d2fd2d10fedab940cb19d11f4df3ac1cf05f0f627b729a2b3cec04de2fade191"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-6-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-6-0.png",
+      "sha256": "bad1f73c2fe36e6cca7001eaa56d424de58d1482aa8cdcd95b3f6eb3b7637965"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-6-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-6-1.png",
+      "sha256": "09f8939006205a0138ee366b05e479c99b18e4a114d48bfad7f07bd3d23f6ed0"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-6-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-6-2.png",
+      "sha256": "bad1f73c2fe36e6cca7001eaa56d424de58d1482aa8cdcd95b3f6eb3b7637965"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-6-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-6-3.png",
+      "sha256": "2f274e94ac477d2f10d70f47b7b27851fe6e9022b6ddc2d4ce6ab7d28263ae1f"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-7-0.png",
+      "target": "examples/lanternkeeper/sprites/moss-7-0.png",
+      "sha256": "f22e99488d1c4a6c51156e942c261f32c9acd00328892b674e967cf77974de98"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-7-1.png",
+      "target": "examples/lanternkeeper/sprites/moss-7-1.png",
+      "sha256": "53eec998943c5107a3c81cc948aa771b1f20203a224ac2fbe2e5eabbe015cc7c"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-7-2.png",
+      "target": "examples/lanternkeeper/sprites/moss-7-2.png",
+      "sha256": "f22e99488d1c4a6c51156e942c261f32c9acd00328892b674e967cf77974de98"
+    },
+    {
+      "source": "outputs\\Lanternkeeper\\sprites\\moss-7-3.png",
+      "target": "examples/lanternkeeper/sprites/moss-7-3.png",
+      "sha256": "960f14471db5181d11d6f1d7db2896238112f20e44eeac8a787977cdd616e2af"
+    },
+    {
+      "source": "outputs\\FLUX2-32B-Future-Candidates.json",
+      "target": "models/flux2-32b-candidates.json",
+      "sha256": "7aa26e67f0c50829b9a0a9522945a2ae447de51941d37413c5ee234be75a5650"
+    },
+    {
+      "source": "outputs\\WAI-Mirror-Provenance.json",
+      "target": "models/wai-provenance.json",
+      "sha256": "830e37108136b0a9e51f2a6c52d484bf6fae232bca7b1d6eb312a5b0164a68b9"
+    }
+  ]
+}

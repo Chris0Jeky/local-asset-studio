@@ -1,0 +1,17 @@
+{
+  "preset_id": "pixel-lora",
+  "controls": {
+    "positive": "pixel art, one brass compass with teal enamel, three quarter view, clear silhouette, white background, game inventory icon",
+    "negative": "blurry, low quality, distorted, watermark, text, duplicated objects, cropped",
+    "seed": "2026091103",
+    "steps": "30",
+    "cfg": "6",
+    "width": "1024",
+    "height": "1024",
+    "denoise": "1",
+    "lora": "1"
+  },
+  "batch_count": 2,
+  "graph_path": "workflows\\api\\pixel-lora-api.json",
+  "created_at": 1789101163.7385726
+}

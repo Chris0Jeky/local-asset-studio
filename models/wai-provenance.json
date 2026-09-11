@@ -1,0 +1,17 @@
+{
+  "sources": [
+    {
+      "repo": "frankjoshua/waiIllustriousSDXL_v170",
+      "revision": "9303ce49345822823717889e3677b6ffd43fc6a9",
+      "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
+      "bytes": 6938040682
+    },
+    {
+      "repo": "yufusoft/WAI-illustrious-SDXL",
+      "revision": "921c723bf2d4e7350f80a362c9de8a23c1377fc9",
+      "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
+      "bytes": 6938040682
+    }
+  ],
+  "limitation": "Matching mirror hashes confirm agreement between copies, not independent authentication by the original creator. Official Civitai source unavailable (HTTP 451). Mirror license labels do not establish original model terms."
+}

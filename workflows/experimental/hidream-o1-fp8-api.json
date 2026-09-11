@@ -1,0 +1,57 @@
+{
+  "1": {
+    "class_type": "HiDreamO1ModelLoader",
+    "inputs": {
+      "model_name": "HiDream-O1-Image-FP8",
+      "precision": "auto",
+      "attention": "sdpa",
+      "download_if_missing": false
+    }
+  },
+  "2": {
+    "class_type": "HiDreamO1Conditioning",
+    "inputs": {
+      "prompt": "One teal enamel camping lantern with a brass frame and warm amber light, on a plain dark green studio background, detailed product photograph.",
+      "negative_prompt": ""
+    }
+  },
+  "3": {
+    "class_type": "HiDreamO1Sampler",
+    "inputs": {
+      "model_type": "full",
+      "width": 512,
+      "height": 512,
+      "steps": 8,
+      "seed": 20260911,
+      "guidance_scale": 5.0,
+      "shift": -1.0,
+      "noise_scale_start": 7.5,
+      "noise_scale_end": 7.5,
+      "noise_clip_std": 2.5,
+      "dev_editing_scheduler": "flow_match",
+      "layout_bboxes": "",
+      "preview_every": 0,
+      "keep_image1_aspect": false,
+      "force_offload": true,
+      "model": [
+        "1",
+        0
+      ],
+      "conditioning": [
+        "2",
+        0
+      ],
+      "image": "0"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "HiDream/feasibility"
+    }
+  }
+}

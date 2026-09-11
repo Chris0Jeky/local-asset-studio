@@ -1,0 +1,33 @@
+# Current state — 11 September 2026
+
+## Changed
+
+Migrated the personal studio into this repository, preserving the original workspace. The local front end provides 21 preset recipes; 20 visual ComfyUI workflows remain available for deeper editing. Model weights and installed tools stay under `C:\AI`. The repository contains scripts, small examples, provenance, guides and selected findings. Local jobs/uploads/logs are ignored.
+
+## Verified
+
+Before this migration, 12 expansion configurations and the original SDXL/FLUX workflows rendered successfully. During migration, four more previously prepared presets rendered: photo-banner 26.595s, stylized-prop 15.126s, gentle-variation 5.942s, WAI-pose 21.649s. These are single server observations, not speed rankings or subjective approvals.
+
+The earlier Lanternkeeper example includes 96 rendered frames, three animated GLBs, a packed atlas and a playable browser sample. Source copies are preserved here. Earlier validations are described in its README; they are not silently reclassified as new migration tests.
+
+The desktop launcher started the studio and a repeat launch reused it. Nine regression tests and the 21-graph catalog validator passed. Independent code review found no remaining CRITICAL/HIGH blocker; root also corrected a stale completion label during browser testing. Actual browser interactions saved/restored a setup, imported a recipe, generated a two-image compass batch with distinct seeds and four output files, and pinned results for comparison. A reference image was uploaded through the file chooser and the gentle-edit job completed. All five returned images loaded in the browser with their expected dimensions; no browser error logs were observed. The full job recipe survives reload. Small selected samples are in `experiments/curated/compass-first-batch/`.
+
+HiDream-O1 FP8 was installed in isolation and its 8.8GB weight SHA verified. Its corrected text-only graph completed an eight-step **2048×2048** render in 32.839s after model loading. The model snapped the requested 512px dimensions to 2048px. The initial loader/sampler attempt took 276.95s and failed on a missing dynamic selector; that graph error was corrected. See [HiDream findings](docs/HIDREAM.md).
+
+## NOT verified
+
+Qwen's 40-step preset remains prepared but not run. HiDream is not yet integrated into the simple studio and has not received higher-step or reference-edit quality comparisons. FLUX.2 dev 32B remains a later experiment, with download candidates recorded. Separate game-engine imports, faithful character in-betweens, character-LoRA training and interactive Krita generation are still outstanding. Full mobile/browser coverage and a fresh-machine installer are not claimed.
+
+## Residual risk
+
+One earlier Qwen-to-SDXL model switch crashed ComfyUI with a Windows access violation; the primary process also exited during the isolated HiDream transition. Root cause is unresolved. The isolated server was stopped and the primary successfully restarted before the browser tests. Heavy model runs can pressure RAM. Source-faithful animation and production-ready transparent pixel assets still require finishing and art review. NoobAI is hobby-only under author terms; WAI mirror provenance does not establish creator authentication or original commercial terms.
+
+## Next work
+
+1. Use the simple studio for a real brief and curate a controlled comparison.
+2. Integrate the now-executed isolated HiDream model as an optional preset with safe backend switching, then compare higher steps and a reference edit.
+3. Test the slow Qwen quality variant as an explicit long batch, compare with Lightning at the same brief, and assess benefit against time.
+4. Add a focused character-consistency and animation study using approved key poses and fixed pivots.
+5. Evaluate FLUX.2 dev 32B later with a separate encoder/offload plan and enough free disk/RAM.
+
+[HUMAN_TODO.md](HUMAN_TODO.md) contains optional subjective choices. No complete commercial character pack is claimed.

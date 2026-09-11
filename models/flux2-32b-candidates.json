@@ -1,0 +1,27 @@
+{
+  "repo": "city96/FLUX.2-dev-gguf",
+  "revision": "ade5d688ddab0d9cf4a5b01bf4321e01c115020d",
+  "status": "research only; no weights downloaded",
+  "candidates": [
+    {
+      "file": "flux2-dev-Q3_K_M.gguf",
+      "bytes": 15960134624,
+      "sha256": "3b89f770a43ab091e6c2a33186d87b4a059d8f74d00db239834ecc27ed368fb8"
+    },
+    {
+      "file": "flux2-dev-Q3_K_S.gguf",
+      "bytes": 15779648480,
+      "sha256": "ecc594314cb0a27d97c3163a5d2555c2814446e92a82604d735050f8e4d5c37c"
+    },
+    {
+      "file": "flux2-dev-Q4_K_M.gguf",
+      "bytes": 20082414560,
+      "sha256": "fca680c7b221a713b5cf7db6cf6b33474875320ee61f4c585bc33fe391dab9a6"
+    },
+    {
+      "file": "flux2-dev-Q4_K_S.gguf",
+      "bytes": 19299128288,
+      "sha256": "b9c1c8295ed044f54c3a9894a800e003b4ecc94bfb0f63192b68bafc232c2b27"
+    }
+  ]
+}
