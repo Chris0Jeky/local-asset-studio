@@ -214,6 +214,11 @@ def recover(studio, project_id, plan):
         job.update(created_at=receipt['created_at'])
         recipe=json.loads((directory/'recipe.json').read_text(encoding='utf-8'))
         if recipe.get('plan_sha256')!=plan['sha256']:raise ValueError('Native receipt plan differs')
+        if receipt.get('status')=='failed' or receipt.get('failure_files') or (directory/'articulated/failure.json').exists():
+            raise ValueError('The retained attempt records a failure; its outputs are not successful execution evidence')
+        execution=json.loads((directory/'articulated/blender-log.json').read_text(encoding='utf-8'))
+        if type(execution.get('returncode')) is not int or execution['returncode']!=0:
+            raise ValueError('A successful Blender exit is not recorded')
         metadata=articulated_prop._check_output(directory/'articulated')
         sources=[directory/'articulated/chest.glb',*(directory/'articulated/views'/f'{name}.png' for name in RENDER_NAMES)]
         ids=[_register(studio,job,path,index) for index,path in enumerate(sources)]

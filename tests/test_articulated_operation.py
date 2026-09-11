@@ -62,6 +62,7 @@ class ArticulatedOperationTests(unittest.TestCase):
             for path in [target / "chest.blend", target / "chest.glb", target / "metadata.json",
                          *(target / "views" / f"{name}.png" for name in operation.RENDER_NAMES)]:
                 path.write_bytes(path.name.encode())
+            (target / 'blender-log.json').write_text(json.dumps({'returncode': 0}), encoding='utf-8')
             return {"metadata": {"render": {"device": "CPU", "threads": 4}, "limitations": ["authored only"]}}
         with mock.patch.object(operation.articulated_prop, "execute", side_effect=fake_execute) as execute:
             result = operation.run(self.studio, "a" * 32, self.plan())
@@ -110,6 +111,26 @@ class ArticulatedOperationTests(unittest.TestCase):
             recovered=operation.recover(self.studio,'c'*32,self.plan())
         execute.assert_not_called()
         self.assertEqual(recovered['job']['status'],'uncertain')
+
+    def test_recovery_never_promotes_failed_or_unproven_execution(self):
+        plan=self.plan(); project_id='d'*32
+        directory=self.studio.experiments/'projects'/project_id
+        target=directory/'articulated'; target.mkdir(parents=True)
+        (directory/'recipe.json').write_text(json.dumps({'plan_sha256':plan['sha256']}),encoding='utf-8')
+        for status, failure_files, code in [('failed',False,0),('running',True,0),('running',False,1),('running',False,None)]:
+            with self.subTest(status=status,failure_files=failure_files,code=code):
+                receipt=operation._native_job(project_id,plan)
+                receipt.update(status=status,failure_files=failure_files)
+                (directory/'articulated-job.json').write_text(json.dumps(receipt),encoding='utf-8')
+                log=target/'blender-log.json'
+                if code is None:log.unlink(missing_ok=True)
+                else:log.write_text(json.dumps({'returncode':code}),encoding='utf-8')
+                with mock.patch.object(operation.articulated_prop,'execute') as execute, mock.patch.object(operation.articulated_prop,'_check_output') as inspect:
+                    result=operation.recover(self.studio,project_id,plan)
+                execute.assert_not_called(); inspect.assert_not_called()
+                self.assertEqual(result['job']['status'],'uncertain')
+                self.assertFalse(result['artifacts'])
+                self.assertEqual(json.loads((directory/'articulated-job.json').read_text())['status'],status)
 
 
 if __name__ == "__main__":

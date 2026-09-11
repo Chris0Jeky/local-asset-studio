@@ -4,7 +4,7 @@ async function refreshBackends() {
     const state=await api('/api/backends');backendSwitching=state.busy;
     const select=$('#backendChoice'), keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
-    select.value=state.busy?state.operation.target:(keep||state.active);
+    select.value=state.busy?state.operation.target:(backendActive===null?state.active:(keep||state.active));
     select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
     $('#backendStatus').textContent=state.operation?.message||'One model environment at a time. Switching never starts a generation.';
     if(backendActive!==null&&backendActive!==state.active){

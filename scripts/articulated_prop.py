@@ -309,7 +309,7 @@ def execute(output_root, options=None, blender_path=DEFAULT_BLENDER, timeout=180
         config_path.write_text(json.dumps({**settings, "output_root": str(target)}, indent=2) + "\n", encoding="utf-8", newline="\n")
         command = command_for(runtime["path"], script_path, config_path)
         completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                                   timeout=timeout, check=False)
+                                   timeout=timeout, check=False, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         (target / "blender-log.json").write_text(json.dumps({"argv": command[1:], "returncode": completed.returncode,
             "stdout": completed.stdout, "stderr": completed.stderr}, indent=2) + "\n", encoding="utf-8", newline="\n")
         require(completed.returncode == 0, "Blender articulated prop render failed")
