@@ -55,3 +55,7 @@ All asset paths inside manifests are portable workspace-relative paths with hash
 Budgets are **declared**, not enforced against an external agent's arbitrary actions. Receipts are integrity-checked attestations, not authenticated reviewer signatures. They verify nonempty files and exact bytes, not whether those bytes depict a good character or constitute a real engine import. The agent must actually do the work and attach meaningful evidence. The code intentionally does not pretend a `.json` report proves a runtime test.
 
 Atlas PNGs use agreed untagged sRGB RGBA interchange. ICC-tagged inputs, non-PNG and non-RGBA inputs require explicit conversion first. Frames are never silently resized, trimmed, quantized or recolored. ORA supports flat, normal source-over layers; masks, groups, animation and rigs must remain in native project files. A partially written atlas retains `.incomplete`; consume only a completed manifest without that marker.
+
+## Latest local-agent work
+
+**Before implementing, read [the PR #19 reconciliation](LOCAL-RECONCILIATION.md).** The local agent published new Workflow Lab capabilities and actual Radeon/Wan/TRELLIS evidence while this package was being prepared. Reuse that work, retain the H3 runtime block and inspect the now-recovered Seed Hunter graph. Hunyuan3D 2.1's applicable licence remains a separate gate from its successful execution.
