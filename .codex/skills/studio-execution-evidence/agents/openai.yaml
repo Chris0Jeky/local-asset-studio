@@ -1,0 +1,4 @@
+interface:
+  display_name: "Studio Execution Evidence"
+  short_description: "Run one generation and record it honestly"
+  default_prompt: "Use $studio-execution-evidence for this task and follow its workflow and guardrails."
