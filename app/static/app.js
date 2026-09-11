@@ -100,7 +100,7 @@ function renderJobs() {
   $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>'; renderCompare();
 }
 async function refresh(){try{jobs=await api('/api/jobs');renderJobs();const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
-function showView(next){view=next;['create','assets','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();location.hash=next;}
+function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase();$('#inventory').innerHTML=library.inventory.filter(m=>m.file.toLowerCase().includes(q)).map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';}
 async function refreshLibrary(){
   try{
@@ -192,7 +192,7 @@ $('#importWorkflow').onchange=async e=>{
     catalog=await api('/api/catalog');$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
     selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
-    const initial=location.hash.slice(1);if(['create','assets','models','learn'].includes(initial))showView(initial);
-    setInterval(async()=>{await refresh();if(view==='assets'||jobs.some(j=>['running','waiting','queued'].includes(j.status)))await refreshAssets();},4000);setInterval(async()=>{await health();if(view==='models')await refreshLibrary();},15000);
+    const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
+    setInterval(async()=>{await refresh();if(view==='production')await refreshProduction();if(view==='assets'||jobs.some(j=>['running','waiting','queued'].includes(j.status)))await refreshAssets();},4000);setInterval(async()=>{await health();if(view==='models')await refreshLibrary();},15000);
   }catch(e){message(e.message,true);}
 })();

@@ -312,6 +312,7 @@ class NativeExports:
             self._pack(target)
             return {"kind": kind, "artifacts": self._artifacts(target), "source_provenance": snapshots,
                     "measurements": metadata["measurements"], "limitations": limitations}
-        except Exception:
-            shutil.rmtree(target)
+        except Exception as exc:
+            # Keep the exclusive attempt directory for diagnosis; never erase partial native sources.
+            _write_json(target/'failure.json',{'status':'failed','message':str(exc)[:1000]})
             raise

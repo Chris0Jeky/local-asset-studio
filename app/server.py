@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from model_library import ModelLibrary
 from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
+from production import Production, fingerprint
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -71,8 +72,10 @@ class Studio:
         self._schema_lock = threading.Lock()
         self._schema = None; self._schema_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.Lock()
+        self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values(): self.index_outputs(job)
+        self.production = Production(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
 
     def catalog(self):
@@ -183,22 +186,25 @@ class Studio:
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         return preset, graph, graph_path, controls, batch
 
-    def create_job(self, payload):
+    def create_job(self, payload, enqueue=True, job_id=None):
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
         for parent in parents: self.assets.get(parent)
-        job_id = str(uuid.uuid4()); directory = self.runs / job_id; directory.mkdir()
+        job_id = job_id or str(uuid.uuid4())
+        if job_id in self.jobs: raise StudioError('A job with this identity already exists; inspect it instead of resubmitting')
+        directory = self.runs / job_id; directory.mkdir(exist_ok=not enqueue)
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["parent_assets"] = parents
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
-        self._save(job); self.jobs[job_id] = job; self.queue.put(("generate", job_id))
+        self._save(job); self.jobs[job_id] = job
+        if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -282,6 +288,66 @@ class Studio:
             except (ValueError,OSError): records.append({"file":name,"available":False})
         return records
 
+    def validate_graph(self, graph):
+        scripts=str(Path(__file__).parents[1]/'scripts')
+        if scripts not in sys.path: sys.path.append(scripts)
+        from game_asset_pipeline import graph_check
+        return graph_check(graph,self.node_info())
+
+    def production_preflight(self, preset, graph):
+        self.node_info(refresh=True)
+        self.validate_graph(graph)
+        if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
+        inspection=self.inspect_preset(preset['id'],graph)
+        cache_path=self.root/'.runtime/model-fingerprints.json';models=[]
+        with self._fingerprint_lock:
+            cache=read_json(cache_path,{}) or {}
+            for requirement in inspection['requirements']:
+                path=Path(requirement['path']).resolve()
+                if not path.is_relative_to(self.library.models) or not path.is_file():raise StudioError('Required model is unavailable: '+requirement['file'])
+                stat=path.stat();key=str(path);record=cache.get(key,{})
+                if record.get('bytes')!=stat.st_size or record.get('mtime_ns')!=stat.st_mtime_ns:
+                    record={'path':key,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'sha256':digest_file(path)};cache[key]=record
+                models.append(dict(record,file=requirement['file']))
+            cache_path.parent.mkdir(exist_ok=True);self._write_json_atomic(cache_path,cache)
+        inputs=[]
+        for node in graph.values():
+            if node['class_type']=='LoadImage':
+                name=node['inputs']['image']
+                path=inside((self.comfy_root/'input').resolve(),self.comfy_root/'input'/name)
+                if not path.is_file():raise StudioError('Reference input is unavailable: '+name)
+                inputs.append({'path':str(path),'sha256':digest_file(path),'bytes':path.stat().st_size})
+        stats=self._request('/system_stats')
+        classes=sorted({node['class_type'] for node in graph.values()})
+        schema=self.node_contract(classes)
+        return {'comfy_root':str(self.comfy_root),'comfy_url':self.comfy_url,'models':models,'inputs':inputs,
+                'schema_sha256':fingerprint(schema),'node_classes':classes,'system':stats.get('system',{}),
+                'devices':stats.get('devices',[]),'measured_at':time.time(),'terms_note':preset.get('commercial_note'),
+                'verification':'Model content hashes cached only while size and modification time match; inputs rehashed before each stage. Schema hash excludes changing file-choice inventories.'}
+
+    def node_contract(self, classes):
+        schema={name:copy.deepcopy(self.node_info().get(name)) for name in classes}
+        for node in schema.values():
+            if not node:continue
+            for group in ('required','optional'):
+                for descriptor in node.get('input',{}).get(group,{}).values():
+                    if not isinstance(descriptor,list) or not descriptor:continue
+                    if isinstance(descriptor[0],list):descriptor[0]=['<runtime choices>']
+                    elif descriptor[0]=='COMBO' and len(descriptor)>1 and isinstance(descriptor[1],dict):descriptor[1]['options']=['<runtime choices>']
+        return schema
+
+    def check_production_bundle(self, bundle):
+        if bundle['comfy_url']!=self.comfy_url or bundle['comfy_root']!=str(self.comfy_root):raise StudioError('The active backend changed; switch back before resuming this experiment')
+        schema=self.node_contract(bundle['node_classes'])
+        if fingerprint(schema)!=bundle['schema_sha256']:raise StudioError('The runtime node schema changed; create a new experiment branch')
+        for record in bundle['models']:
+            path=Path(record['path'])
+            if not path.is_file() or path.stat().st_size!=record['bytes'] or path.stat().st_mtime_ns!=record['mtime_ns']:
+                raise StudioError('A pinned model changed; prepare a new branch before executing')
+        for record in bundle['inputs']:
+            path=Path(record['path'])
+            if not path.is_file() or digest_file(path)!=record['sha256']:raise StudioError('A pinned input changed; original plan preserved')
+
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
@@ -346,8 +412,9 @@ class Studio:
             return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url}
         except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}}
 
-    def inspect_preset(self, preset_id):
-        preset = self.preset(preset_id); graph, _ = self.graph_for(preset)
+    def inspect_preset(self, preset_id, graph=None):
+        preset = self.preset(preset_id)
+        if graph is None: graph, _ = self.graph_for(preset)
         known = {Path(a["file"]).name: a for a in self.library.manifest().get("assets", [])}
         folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision"}
         requirements = []
@@ -408,6 +475,10 @@ class Studio:
     def _work(self):
         while True:
             action, job_id = self.queue.get()
+            if action == 'production':
+                try:self.production.run(job_id)
+                except Exception as exc:self.production._mutate(job_id,status='failed',message=str(exc)[:500])
+                continue
             job = self.jobs.get(job_id)
             if not job: continue
             try:
@@ -431,6 +502,7 @@ class Studio:
         return graph, seed
 
     def _run(self, job):
+        job['started_at']=time.time()
         job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
         self._wait_for_queue()
         for i in range(job["batch_count"]):
@@ -452,11 +524,13 @@ class Studio:
             except (URLError, TimeoutError, OSError) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             prompt_id = response.get("prompt_id")
-            if not isinstance(prompt_id, str): raise StudioError("ComfyUI did not return a prompt id")
+            if not isinstance(prompt_id, str):
+                job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return
-        job["status"] = "completed"; job["message"] = "Complete"; self._save(job)
+        job["status"] = "completed"; job["message"] = "Complete"
+        job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
 
     def _wait_history(self, job, submission):
         prompt_id = submission["prompt_id"]
@@ -613,6 +687,12 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
+            if path == '/api/production': return self._json(200,self.studio.production.list())
+            if path.startswith('/api/production/'):
+                from urllib.parse import unquote
+                parts=path.split('/')
+                if len(parts)>=6 and parts[4]=='files':return self._local_file(self.studio.production.file(parts[3],unquote('/'.join(parts[5:]))),urlparse(self.path).query=='download')
+                return self._json(200,self.studio.production.get(parts[3],True))
             if path.startswith("/api/uploads/"):
                 from urllib.parse import unquote
                 name=unquote(path.rsplit("/",1)[-1])
@@ -661,6 +741,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
+            if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
+            if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))
+            if self.path.startswith('/api/production/'):
+                parts=self.path.split('/');payload=self._body_json();identifier=parts[3]
+                if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))
+                if parts[-1]=='stop':return self._json(200,self.studio.production.stop(identifier))
+                if parts[-1]=='resume':return self._json(202,self.studio.production.resume(identifier))
+                if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
             if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))

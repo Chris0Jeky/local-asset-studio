@@ -1,41 +1,47 @@
-# Five useful first experiments
+# Experiments and native finishing
 
-## 1. Learn a LoRA with a controlled comparison
+Open a recipe in **Create**, then choose **Plan comparison**. Compare one numeric
+setting across up to four values. Preparing the plan checks current ComfyUI
+nodes, selected model files and input images. It records the actual graph,
+reference roles, model hashes, runtime information and a plan hash. It submits
+nothing until **Start comparison** is pressed.
 
-Open **Pixel art • baseline**, keep its prompt and seed, and generate. Then open **Pixel art • 128px prop**, preserve that same prompt/seed, and generate. Compare silhouette, pixel clusters, background cleanup, and readability at actual game size.
+Studio uses its existing serial worker. Manual ComfyUI jobs finish first. Each
+stage gets a durable identity before its job is created, and submission intent is
+written before a POST. A lost response stays uncertain. Resume observes known
+prompt IDs and may continue stages that never started; it does not guess that an
+unknown submission failed or blindly send it again. There are no automatic
+generation repairs. Failed stages remain explicit.
 
-Next vary only LoRA strength: 0.5, 0.8, 1.0. Keep the other settings constant. Select the result you would actually use, not the most detailed full-size image. Record cleanup minutes. The earlier LoRA sample looked more suitable than the baseline but still needed background/palette work.
+The original generation allowance is shared across branches. A start reserves its
+graph runs atomically, and uncertain or stopped attempts retain those reservations.
+The allowance counts graph executions, not individual sampler nodes or output
+files. Time budgets and Stop apply between stages; a running remote job can finish
+after the deadline. Timings include queue wait/loading where those occur and are
+observations, not equal-compute model benchmarks.
 
-## 2. Explore a product art direction
+Comparisons show neutral candidate letters and can hide settings. Every original
+remains in Workspace. The contact sheet is only a thumbnail comparison; inspect
+full outputs before choosing. **Choose** and **Needs another pass** record a
+locally identified creative review. They do not authenticate a reviewer or decide
+model rights, mesh quality or engine acceptance. A branch preserves its parent
+plan and shares its budget while allowing a changed brief or reference.
 
-Use **Product • studio photograph** with an invented product such as a teal lantern. Keep the subject constant across three seeds. Then change lighting only: soft daylight, dark studio rim light, warm tabletop. Save a named recipe for the chosen direction.
+Select images in **Workspace**, then **Create native export** for a sprite atlas,
+OpenRaster image or Godot sprite project. Reorder sources, set per-frame durations
+or layer names, and choose a common anchor. Images must share a canvas; Studio
+does not resize or independently trim them. Exports include source snapshots,
+recipes, conversion metadata, native files and a ZIP pack. Godot exports may
+include one GLB and an actual headless import/playback check when a local Godot
+executable is configured. ORA supports flat normal layers; it does not invent
+layer masks, hidden anatomy, a rig or a timeline.
 
-For real product promotion, compare shape, controls, labels, materials, and dimensions to the actual product. A plausible invented object is not a faithful product photograph.
+State is kept in `<experiments_root>/projects/projects.sqlite3` with per-plan
+directories beside it. Plans and attempts survive server restarts. Failed native
+directories are preserved for diagnosis. Existing directories are never reused
+as a new export target. The API serves only recorded artifacts from these roots.
 
-## 3. Design a background that leaves room for text
-
-Try **Website • abstract ribbons**. Ask for a quiet left third and activity on the right. Compare two seeds at the same aspect ratio. Place the real heading over each result in your website or design tool; reject attractive images that interfere with legibility.
-
-Avoid asking the model to deliver the entire finished layout. Keep final typography, button geometry, and responsive cropping deterministic.
-
-## 4. Compare edit fidelity
-
-Use the same lantern reference in **FLUX Klein edit**, **SDXL gentle variation**, and **Qwen instructed edit**. Request one colour change. Score whether the change happened, whether protected details drifted, and how much cleanup is needed. Keep Qwen jobs together because switching from Qwen to SDXL previously crashed the backend once.
-
-For a guarantee that pixels outside a mask stay unchanged, use `scripts/assets.py composite` after generation. See `examples/lanternkeeper/edit-*` for original, mask, and composite. A generative prompt alone cannot provide that guarantee.
-
-## 5. Build a usable animation pack
-
-Open `examples/lanternkeeper/lanternkeeper.blend` in Blender. The example already includes three skins, eight directions and four bob phases. Preview the game through `scripts/Open-Lanternkeeper.ps1`. Change one material, render a new set, then run the packer in a copied experiment directory.
-
-For character walk cycles, create and approve key poses first; align pivot/baseline/canvas before adding in-betweens. The earlier character sheet extractions and Qwen pose attempt did not produce a complete faithful walk. Blender rigs or hand-authored pixel animation remain useful for stable motion.
-
-## Keep a useful record
-
-Each selected experiment should have a short `README.md`, exported recipe, two to four small images, model/LoRA names and revisions, what changed, timing, and your judgement. Use `experiments/curated/scorecard-template.csv` as a starting point. Put it in a new folder, for example `experiments/curated/2026-09-compass-pixel/`.
-
-Separate three kinds of evidence: **the graph ran**, **the picture met the brief**, and **the exported asset worked in the product**. A workflow can pass the first and fail the other two.
-
-For a fair model comparison use the same brief and evaluation questions, but allow each model its documented prompt/sampler defaults. Run several seeds before ranking a model. For parameter comparisons within a model, change one factor at a time.
-
-For the longer strategy, see [the evaluation research guide](research/Experimenting-and-Evaluating-Models.md).
+Current adapters are prepared catalog generation, comparison contact sheets,
+atlas/ORA packaging, and Godot project import/playback. The larger research plans
+remain design inputs: their arbitrary task names and embedded instructions are
+not executable API commands.

@@ -54,6 +54,23 @@ and `Lantern bob rigAction`. This is scoped engine evidence, not rig, collision,
 root-motion or art acceptance. Evidence is retained locally under
 `.runtime/godot-adapter-evidence/qa-480ms-godot-4.7.2/`.
 
+The production runner now prepares pinned one-axis comparisons, uses the existing
+Studio worker, reserves generation budgets across branches, and persists stage
+identities and known prompt IDs. Fault-injection tests cover lost responses,
+restart observation without duplicate submission, shared caps and changed plans.
+Workspace can prepare timed atlas, flat ORA and Godot exports with native source
+ZIPs. Actual engine verification is an explicit export option. Read
+[Experiments](docs/EXPERIMENTS.md) and [Native exports](docs/NATIVE-EXPORTS.md).
+At this increment, 126 tests pass (one existing skip); browser preflight and Start
+created comparison `fbb384c70a5e48b39a9eba6c227374eb`, currently being observed.
+Native export UI round-trip remains pending.
+
+The three-reference Qwen run above completed: **1334.646 seconds**, 512×768,
+four steps. It produced a manga portrait with the requested extended hand and
+compass; design fidelity and subjective acceptance remain open. Only the
+three-reference recipe's execution badge was updated. One- and two-reference
+variants have schema/preview proof, not fresh inference proof.
+
 ## Changed
 
 Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and
