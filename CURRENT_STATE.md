@@ -1,6 +1,6 @@
 # Current state — 11 September 2026
 
-## Latest implementation checkpoint
+## Creative production milestone
 
 Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen
 references, bounded comparisons, native exports, and explicit model-environment
@@ -20,9 +20,17 @@ that bug is fixed and the corrected plan and engine evidence were checked.
 The authored chest UI built project `db662bb6e60f42c781e001bd681b9743`, retaining
 BLEND, animated GLB and four CPU inspection renders. The first GLB exposed a
 hidden collision helper as visible geometry; the exporter now excludes it from
-GLB while retaining it in BLEND. A fresh rendering of that fix remains pending
-at this checkpoint. Native jobs now persist before Blender and reconcile retained
-receipts after restart without repeating a build; focused fault tests pass.
+GLB while retaining it in BLEND. Fresh project `44cfa4a0b29a43098d6c7c7609ca6831`
+completed with the four intended parts and named hinge animation; its renders and
+browser preview were inspected. Native jobs persist before Blender. Recovery
+requires a successful exit log and refuses recorded failure evidence, without
+repeating a build; focused fault tests pass.
+
+Krita is now an option in the native-export dialog. Browser project
+`e563585717324f54aa57e6fc9bd9f773` selected two existing 64-square frames, retained
+both requested layer names in KRA, reopened to PNG and produced a complete source
+pack. The isolated offscreen crash and successful hidden Windows batch proofs
+are preserved. This proves flat native layers, not automatic part segmentation.
 
 H3's opt-in stdlib mmap loader constructed all 2,054 encoder tensors and the
 MiniMax encoder model in 6.65 seconds (process peak working set 4.14 GiB). CUDA
@@ -30,16 +38,27 @@ was initialized by the runtime; this was construction, not inference proof. The
 first video attempt with copy-on-write mapping passed encoder loading, then
 failed in UNETLoader with Windows error 1455 (commit/pagefile exhaustion), prompt
 `cce6da2a-0978-4c98-95d7-1c7ba8274a7c`. The machine has a 40 GiB paging file.
-A read-only encoder mapping is the next isolated discriminator; no system paging
-settings have changed. H3 remains experimental and has no successful video.
+A read-only encoder attempt also reached the same diffusion-file error, prompt
+`af49ef6a-433e-47eb-95d1-0efe7cb9ef52`. Extending the exact-file read-only loader
+to the FL2VA diffusion file then constructed MiniMaxH3/legacy ModelPatcher in
+5.603 seconds, with 4.30 GiB peak process working set. The subsequent short video
+prompt `49873807-fda1-4fe0-afdd-62b13f5329d8` reached sampling and is being observed.
+No system paging settings have changed. H3 has no completed video at this checkpoint.
 
 The broader research backlog is still open: Seed Hunter dependencies/execution,
-shot-continuation/control comparisons, actual Krita round trips, automatic 3D
+shot-continuation/control comparisons, interactive Krita diffusion, automatic 3D
 part/rig experiments and the full accepted character-pack vertical slice. The
 completed native exports are scoped engine checks, not art or gameplay acceptance.
 [HUMAN_TODO.md](HUMAN_TODO.md) still holds the optional subjective choices.
 
-## Active production-workspace continuation
+**147 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
+validator and changed JavaScript syntax checks pass. Independent reviews caught
+and resolved recovery/provenance defects. The branch is pushed; this is a scoped
+milestone, not completion of every research issue. See the [usable routes, execution
+records and issue-by-issue remainder](docs/PRODUCTION-WORKSPACE.md). The completed
+worker worktree was removed after preserving its ignored runtime receipts.
+
+## Earlier checkpoints during this implementation pass
 
 The user requested an ambitious implementation pass across merged PRs **#20**
 (game-asset planner, reference graphs, atlas/ORA tools) and **#8** (frontier research).

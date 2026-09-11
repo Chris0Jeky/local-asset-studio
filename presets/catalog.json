@@ -1044,15 +1044,16 @@
       "id": "anime-esrgan",
       "name": "Anime upscale - ESRGAN 2x",
       "category": "Anime quality",
-      "description": "Upload an image. Learned 4x anime upscaler, resized to final 2x; no diffusion redraw or prompt. May smooth pixel art. Model loading checked, artistic quality not evaluated.",
+      "description": "Upload an image. Learned 4x anime upscaler, resized to final 2x; no diffusion redraw or prompt. Saved-reference handoff executed locally. May smooth pixel art; artistic quality remains for your review.",
       "graph": "workflows/api/anime-esrgan-api.json",
-      "verified": false,
+      "verified": true,
       "reference": [
         "1",
         "image"
       ],
       "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms.",
-      "modality": "image"
+      "modality": "image",
+      "execution_notes": "Saved Anima-to-ESRGAN handoff completed as prompt 60949ec3-2ec2-471f-88cb-73fa78a5491c on 11 September 2026; source lineage retained. Art quality remains unaccepted."
     },
     {
       "id": "anime-face",
