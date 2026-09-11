@@ -1,0 +1,49 @@
+"""Opt-in routes on the existing Studio handler; no second port, queue or model worker."""
+import base64
+import hashlib
+from urllib.parse import urlparse
+from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
+from .metadata import inspect_png
+
+
+def dispatch(path, value, studio=None):
+    if path == '/api/prompt/compile':
+        fields(value, ('intent','profile_id')); return compile_brief(value['intent'],value['profile_id'])
+    if path == '/api/prompt/apply':
+        fields(value, ('intent','proposal','accepted_fields')); return apply_proposal(value['intent'],value['proposal'],value['accepted_fields'])
+    if path == '/api/prompt/metadata':
+        fields(value, ('png_base64',)); need(isinstance(value['png_base64'],str) and len(value['png_base64'])<=3000000,'PNG payload too large')
+        return inspect_png(base64.b64decode(value['png_base64'],validate=True))
+    if path == '/api/prompt/bind':
+        fields(value, ('compiled','binding')); need(studio is not None,'Studio binding context unavailable')
+        binding=value['binding']; preset=studio.preset(binding['preset_id']); graph,path=studio.graph_for(preset)
+        for key,target in binding['bindings'].items():
+            need(preset.get(key)==target and not preset.get('bindings_extra',{}).get(key),'Binding differs from registered preset or has unhandled companions')
+        raw=path.read_bytes(); need(decode(raw)==graph,'Template changed during binding')
+        result=bind_graph(value['compiled'],graph,binding)
+        result['expected_template_sha256']=hashlib.sha256(raw).hexdigest()
+        result['batch_count']=1
+        result['submission_payload']={k:result[k] for k in ('preset_id','controls','expected_template_sha256','batch_count')}
+        return result
+    raise ValueError('Unknown prompt operation')
+
+
+def extend_handler(base):
+    class PromptHandler(base):
+        def do_GET(self):
+            if urlparse(self.path).path != '/api/prompt/profiles': return super().do_GET()
+            if not self._safe_host(): return self._json(403,{'error':'Loopback Host required'})
+            return self._json(200,{'profiles':list(profiles().values()),'generation_submitted':False})
+
+        def do_POST(self):
+            if not urlparse(self.path).path.startswith('/api/prompt/'): return super().do_POST()
+            if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
+            try:
+                need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
+                # Strict decoder and tighter cap; PNG metadata endpoint accepts small images only.
+                body=self.rfile.read(self._content_length(1024*1024))
+                result=dispatch(self.path,decode(body),self.studio)
+                return self._json(200,result)
+            except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
+                return self._json(400,{'error':str(exc),'generation_submitted':False})
+    return PromptHandler
