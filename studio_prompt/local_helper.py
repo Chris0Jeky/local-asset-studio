@@ -97,10 +97,10 @@ def _run_local(b, model, port=11434, root=None, include_images=False, idle_confi
     content=answer.get('message',{}).get('content'); need(isinstance(content,str),'Missing structured helper content')
     value=decode(content.encode('utf-8'))
     need(isinstance(value,dict) and set(value)=={'changes','observations','unknowns'},'Unexpected helper result fields')
+    result=proposal(b,value['changes'],value['observations'],value['unknowns'])
     if not include_images:
         need(not value['observations'],'Pixel observations returned without images')
         need(all(c.get('source')=='brief' for c in value['changes']),'Reference-sourced change returned without reference images')
-    result=proposal(b,value['changes'],value['observations'],value['unknowns'])
     envelope = {'proposal':result,'helper_evidence':{'provider':'ollama-loopback','model':model,'model_digest':matches[0]['digest'],
         'request_sha256':digest(payload),'elapsed_seconds':elapsed,'image_count':len(payload['messages'][1].get('images',[])),
         'cache_hit':False,'schema_constrained':True,'semantic_correctness':'requires review','generation_submitted':False},
