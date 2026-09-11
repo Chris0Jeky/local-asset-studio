@@ -31,6 +31,11 @@ class PipelineTests(unittest.TestCase):
     def test_changed_brief_hash(self):
         a=self.plan();self.brief['description']='A different character.'
         self.assertNotEqual(a['plan_sha256'],self.plan()['plan_sha256'])
+    def test_plan_detaches_embedded_brief_from_caller(self):
+        plan=self.plan();self.brief['description']='Caller mutation';self.brief['budget']['generation_attempts']=99
+        p.check_plan(plan)
+        self.assertEqual(plan['brief']['description'],'An original fantasy character portrait.')
+        self.assertEqual(plan['brief']['budget']['generation_attempts'],4)
     def test_bad_reference_role(self):
         self.brief['references']=[{'id':'ref-a','role':'anything','kind':'image'}]
         with self.assertRaises(ValueError):self.plan()
@@ -130,6 +135,12 @@ class PipelineTests(unittest.TestCase):
         g={'1':{'class_type':'A','inputs':{'x':'bad'}}}
         with self.assertRaises(ValueError):p.graph_check(g,{})
         with self.assertRaises(ValueError):p.graph_check(g,{'A':{'input':{'required':{'x':[['good']]}}}})
+    def test_schema_v3_combo_options_and_invalid_enums(self):
+        g={'1':{'class_type':'A','inputs':{'choice':'good'}}}
+        info={'A':{'input':{'required':{'choice':['COMBO',{'options':['good','better']}] }},'output':[]}}
+        self.assertTrue(p.graph_check(g,info)['node_snapshot_checked'])
+        for descriptor in (['COMBO'],['COMBO',{}],['COMBO',{'options':[]}],['COMBO',{'options':['good',{}]}]):
+            with self.assertRaises(ValueError):p.graph_check(g,{'A':{'input':{'required':{'choice':descriptor}},'output':[]}})
     def test_shipped_qwen_variants(self):
         folder=ROOT/'research/game-assets/workflows'
         for count in (1,2,3):

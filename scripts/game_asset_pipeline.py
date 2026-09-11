@@ -134,15 +134,16 @@ def reference_prompt(brief):
 
 def make_plan(brief, routes):
     validate_brief(brief, routes)
-    route = routes['routes'][brief['route']]
+    plan_brief = copy.deepcopy(brief)
+    route = routes['routes'][plan_brief['route']]
     tasks = []
     for stage in route['stages']:
         tasks.append({**copy.deepcopy(stage), 'state': 'pending',
-                      'budget': copy.deepcopy(brief['budget']),
-                      'target': copy.deepcopy(brief['target'])})
+                      'budget': copy.deepcopy(plan_brief['budget']),
+                      'target': copy.deepcopy(plan_brief['target'])})
     result = {'schema_version': 1, 'kind': 'agent_asset_plan', 'submits_generation': False,
-              'brief': brief, 'brief_sha256': sha(brief), 'routes_sha256': sha(routes),
-              'reference_instructions': reference_prompt(brief), 'tasks': tasks,
+              'brief': plan_brief, 'brief_sha256': sha(plan_brief), 'routes_sha256': sha(routes),
+              'reference_instructions': reference_prompt(plan_brief), 'tasks': tasks,
               'contract': 'External agent performs tasks. Receipts are hashed attestations, not art judgment.'}
     result['plan_sha256'] = sha(result)
     return result
@@ -234,6 +235,23 @@ def graph_check(graph, info=None):
             require(set(contract.get('input', {}).get('required', {})) <= set(node['inputs']), 'Missing required input')
             require(set(node['inputs']) <= set(fields), 'Unknown input (snapshot may be stale)')
         for name, value in node['inputs'].items():
+            descriptor = fields[name] if info is not None else None
+            expected = descriptor[0] if descriptor else None
+            enum = None
+            if info is not None:
+                require(isinstance(descriptor, list) and descriptor, f'Invalid input descriptor: {name}')
+                require(isinstance(expected, (str, list)), f'Invalid input descriptor: {name}')
+                if isinstance(expected, list):
+                    enum = expected
+                elif expected == 'COMBO':
+                    require(len(descriptor) > 1 and isinstance(descriptor[1], dict),
+                            f'Invalid COMBO enum: {name}')
+                    enum = descriptor[1].get('options')
+                if enum is not None:
+                    require(isinstance(enum, list) and enum and all(
+                        type(option) in {str, int, float, bool}
+                        and (type(option) is not float or math.isfinite(option)) for option in enum),
+                        f'Invalid COMBO enum: {name}')
             if isinstance(value, list):
                 require(len(value) == 2 and isinstance(value[0], str) and type(value[1]) is int
                         and value[1] >= 0 and value[0] in graph, 'Invalid graph link')
@@ -242,15 +260,13 @@ def graph_check(graph, info=None):
                     source = info.get(graph[value[0]]['class_type'], {})
                     outputs = source.get('output', [])
                     require(value[1] < len(outputs), 'Output index out of range')
-                    expected = fields[name][0]
                     require(isinstance(expected, str) and (expected == outputs[value[1]] or expected == '*'),
                             'Linked input type mismatch')
             else:
                 require(type(value) in {str, int, float, bool}, 'Unsupported literal')
                 require(not isinstance(value, float) or math.isfinite(value), 'Non-finite graph literal')
                 if info is not None:
-                    expected = fields[name][0]
-                    if isinstance(expected, list): require(value in expected, f'Unavailable enum: {name}')
+                    if enum is not None: require(value in enum, f'Unavailable enum: {name}')
                     elif expected in {'INT', 'FLOAT', 'STRING', 'BOOLEAN'}:
                         valid = {'INT': type(value) is int, 'FLOAT': type(value) in {int, float},
                                  'STRING': isinstance(value, str), 'BOOLEAN': type(value) is bool}
