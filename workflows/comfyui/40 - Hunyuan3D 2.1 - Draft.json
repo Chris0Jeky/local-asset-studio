@@ -1,0 +1,529 @@
+{
+  "last_node_id": 10,
+  "last_link_id": 12,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "ImageOnlyCheckpointLoader",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "CLIP_VISION",
+          "type": "CLIP_VISION",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageOnlyCheckpointLoader"
+      },
+      "widgets_values": [
+        "hunyuan_3d_v2.1.safetensors"
+      ],
+      "title": "Load Checkpoint Image Only (img2vid model)"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        390,
+        0
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "lantern-reference.png"
+      ],
+      "title": "Load Image"
+    },
+    {
+      "id": 3,
+      "type": "CLIPVisionEncode",
+      "pos": [
+        780,
+        0
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip_vision",
+          "type": "CLIP_VISION",
+          "link": 1
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CLIP_VISION_OUTPUT",
+          "type": "CLIP_VISION_OUTPUT",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPVisionEncode"
+      },
+      "widgets_values": [
+        "center"
+      ],
+      "title": "CLIP Vision Encode"
+    },
+    {
+      "id": 4,
+      "type": "Hunyuan3Dv2Conditioning",
+      "pos": [
+        1170,
+        0
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip_vision_output",
+          "type": "CLIP_VISION_OUTPUT",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hunyuan3Dv2Conditioning"
+      },
+      "widgets_values": [],
+      "title": null
+    },
+    {
+      "id": 5,
+      "type": "EmptyLatentHunyuan3Dv2",
+      "pos": [
+        0,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            8
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentHunyuan3Dv2"
+      },
+      "widgets_values": [
+        4096,
+        1
+      ],
+      "title": null
+    },
+    {
+      "id": 6,
+      "type": "ModelSamplingAuraFlow",
+      "pos": [
+        390,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ModelSamplingAuraFlow"
+      },
+      "widgets_values": [
+        1.0
+      ],
+      "title": "ModelSamplingAuraFlow"
+    },
+    {
+      "id": 7,
+      "type": "KSampler",
+      "pos": [
+        780,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 5
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 6
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 7
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        2026091103,
+        "fixed",
+        20,
+        5.0,
+        "euler",
+        "normal",
+        1.0
+      ],
+      "title": "KSampler"
+    },
+    {
+      "id": 8,
+      "type": "VAEDecodeHunyuan3D",
+      "pos": [
+        1170,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 9
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VOXEL",
+          "type": "VOXEL",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecodeHunyuan3D"
+      },
+      "widgets_values": [
+        8000,
+        128
+      ],
+      "title": null
+    },
+    {
+      "id": 9,
+      "type": "VoxelToMesh",
+      "pos": [
+        0,
+        680
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "voxel",
+          "type": "VOXEL",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MESH",
+          "type": "MESH",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VoxelToMesh"
+      },
+      "widgets_values": [
+        "surface net",
+        0.6
+      ],
+      "title": "Voxel to Mesh"
+    },
+    {
+      "id": 10,
+      "type": "SaveGLB",
+      "pos": [
+        390,
+        680
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 12
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveGLB"
+      },
+      "widgets_values": [
+        "Studio/Hunyuan3D-draft"
+      ],
+      "title": "Save 3D Model"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      1,
+      3,
+      0,
+      "CLIP_VISION"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      1,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "CLIP_VISION_OUTPUT"
+    ],
+    [
+      4,
+      1,
+      0,
+      6,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      6,
+      0,
+      7,
+      0,
+      "MODEL"
+    ],
+    [
+      6,
+      4,
+      0,
+      7,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      7,
+      4,
+      1,
+      7,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      8,
+      5,
+      0,
+      7,
+      3,
+      "LATENT"
+    ],
+    [
+      9,
+      7,
+      0,
+      8,
+      0,
+      "LATENT"
+    ],
+    [
+      10,
+      1,
+      2,
+      8,
+      1,
+      "VAE"
+    ],
+    [
+      11,
+      8,
+      0,
+      9,
+      0,
+      "VOXEL"
+    ],
+    [
+      12,
+      9,
+      0,
+      10,
+      0,
+      "MESH"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7,
+      "offset": [
+        40,
+        40
+      ]
+    },
+    "studio_title": "Hunyuan3D 2.1 - Draft"
+  },
+  "version": 0.4
+}

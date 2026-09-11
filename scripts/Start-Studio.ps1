@@ -23,6 +23,9 @@ if (-not $comfyReady) {
 $studioUrl = 'http://127.0.0.1:8191'
 $ready = $false
 try { $health = Invoke-RestMethod ($studioUrl + '/api/health') -TimeoutSec 2; $ready = $health.app -eq 'local-asset-studio' } catch { }
+if ($ready -and $health.workspace -ne $repoRoot) {
+    throw "Another Asset Studio workspace is using $studioUrl. Its workspace is '$($health.workspace)'. Finish its active jobs before restarting with this launcher."
+}
 if (-not $ready) {
     $logRoot = Join-Path $repoRoot '.runtime'
     New-Item -ItemType Directory -Path $logRoot -Force | Out-Null

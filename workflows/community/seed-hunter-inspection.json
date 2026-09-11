@@ -1,0 +1,45 @@
+{
+  "format": "Visual workflow",
+  "node_count": 154,
+  "missing_nodes": [
+    "Any Switch (rgthree)",
+    "Anything Everywhere",
+    "Fast Groups Bypasser (rgthree)",
+    "GetImageRangeFromBatch",
+    "GetImageSizeAndCount",
+    "H3PromptIDE",
+    "H3PromptReferenceInputs",
+    "INTConstant",
+    "ImageBatchMulti",
+    "ImageResizeKJv2",
+    "Label (rgthree)",
+    "LoadAudioUI",
+    "LoadImageCrop",
+    "LoadVideoUI",
+    "MiniMaxChunkFeedForward",
+    "MiniMaxLowVRAMAttention",
+    "MinimaxH3LatentUpscaler3D",
+    "ModelPreviewOverrideKJ",
+    "Power Lora Loader (rgthree)",
+    "PreviewAnimation",
+    "RIFEInterpolation",
+    "SimpleCalculatorKJ",
+    "VHS_VideoCombine",
+    "easy seed"
+  ],
+  "models": [
+    "minimax_h3_audio_vae_fp32.safetensors",
+    "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+    "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+    "minimax_h3_video_vae_int8_convrot.safetensors",
+    "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+    "taeh3.safetensors"
+  ],
+  "missing_models": [
+    "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+    "minimax_h3_video_vae_int8_convrot.safetensors",
+    "taeh3.safetensors"
+  ],
+  "schema_available": true,
+  "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent."
+}

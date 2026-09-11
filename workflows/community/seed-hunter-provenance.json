@@ -1,0 +1,13 @@
+{
+  "creator": "foxydits",
+  "version": "v1.6",
+  "model_id": 2881362,
+  "model_version_id": 3293757,
+  "file_id": 3193862,
+  "source": "https://civitai.red/models/2881362/minimax-seed-hunter-workflow-latent-upscaler-seamless-video-continuation-speedups",
+  "download": "https://civitai.com/api/download/models/3293757?fileId=3193862",
+  "bytes": 290301,
+  "sha256": "89428a30a497a83fc5d851fb45cb6493da7c96d8e2ffa7dfb41cdfe7778ab85d",
+  "access": "Public no-credit workflow endpoint; no authentication or Buzz used",
+  "inspection": "Static dependency inspection only; no community custom nodes installed and no graph execution"
+}

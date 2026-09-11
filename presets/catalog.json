@@ -51,7 +51,8 @@
             "strength_clip"
           ]
         ]
-      }
+      },
+      "modality": "image"
     },
     {
       "id": "pixel-concept",
@@ -92,7 +93,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "realvis",
@@ -133,7 +135,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "photo-banner",
@@ -174,7 +177,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "abstract",
@@ -215,7 +219,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "stylized-prop",
@@ -256,7 +261,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "flux",
@@ -303,7 +309,8 @@
             "height"
           ]
         ]
-      }
+      },
+      "modality": "image"
     },
     {
       "id": "flux-edit",
@@ -354,7 +361,8 @@
             "height"
           ]
         ]
-      }
+      },
+      "modality": "image"
     },
     {
       "id": "gentle-variation",
@@ -391,7 +399,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "sdxl-variation",
@@ -428,7 +437,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "qwen",
@@ -473,7 +483,8 @@
       "denoise": [
         "11",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "qwen-quality",
@@ -518,7 +529,8 @@
       "denoise": [
         "11",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "qwen-character",
@@ -563,7 +575,8 @@
       "denoise": [
         "11",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "wai",
@@ -604,7 +617,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "wai-pose",
@@ -649,7 +663,8 @@
       "reference": [
         "9",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime",
@@ -690,7 +705,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "pose",
@@ -735,7 +751,8 @@
       "reference": [
         "9",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "pony",
@@ -776,7 +793,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "noob",
@@ -817,7 +835,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "zimage",
@@ -854,7 +873,8 @@
       "denoise": [
         "8",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "sdxl",
@@ -895,7 +915,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-wai-quality",
@@ -936,7 +957,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-animagine-quality",
@@ -977,7 +999,8 @@
       "denoise": [
         "5",
         "denoise"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-refine",
@@ -1014,7 +1037,8 @@
       "reference": [
         "4",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-esrgan",
@@ -1027,7 +1051,8 @@
         "1",
         "image"
       ],
-      "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms."
+      "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms.",
+      "modality": "image"
     },
     {
       "id": "anime-face",
@@ -1064,7 +1089,8 @@
       "reference": [
         "4",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-hand",
@@ -1101,7 +1127,8 @@
       "reference": [
         "4",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "animagine-face",
@@ -1138,7 +1165,8 @@
       "reference": [
         "4",
         "image"
-      ]
+      ],
+      "modality": "image"
     },
     {
       "id": "anime-complete",
@@ -1187,7 +1215,1519 @@
             "seed"
           ]
         ]
-      }
+      },
+      "modality": "image"
+    },
+    {
+      "id": "lineani-portrait",
+      "name": "Manga Line Art - Portrait",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/lineani-portrait-api.json",
+      "visual": "workflows/comfyui/30 - Manga Line Art - Portrait.json",
+      "verified": true,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/artificialguybr/LineAniRedmond-LinearMangaSDXL-V2",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+    },
+    {
+      "id": "lineani-environment",
+      "name": "Manga Line Art - Environment",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/lineani-environment-api.json",
+      "visual": "workflows/comfyui/31 - Manga Line Art - Environment.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/artificialguybr/LineAniRedmond-LinearMangaSDXL-V2",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "screentone-portrait",
+      "name": "Manga Ink and Screentone - Portrait",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/screentone-portrait-api.json",
+      "visual": "workflows/comfyui/32 - Manga Ink and Screentone - Portrait.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/strkyyy/manga-ink-screentone",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "screentone-environment",
+      "name": "Manga Ink and Screentone - Environment",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/screentone-environment-api.json",
+      "visual": "workflows/comfyui/33 - Manga Ink and Screentone - Environment.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/strkyyy/manga-ink-screentone",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "cinematic-lighting-portrait",
+      "name": "Cinematic Anime Lighting - Portrait",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/cinematic-lighting-portrait-api.json",
+      "visual": "workflows/comfyui/34 - Cinematic Anime Lighting - Portrait.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "cinematic-lighting-environment",
+      "name": "Cinematic Anime Lighting - Environment",
+      "category": "Manga & style",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/cinematic-lighting-environment-api.json",
+      "visual": "workflows/comfyui/35 - Cinematic Anime Lighting - Environment.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "lms",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "SDXL 1.0",
+      "description": "A family-matched style adapter with an editable seed, sampler and strength. Compare three seeds, then refine your favorite.",
+      "stages": [
+        "SDXL base",
+        "Style LoRA",
+        "Prompt + seed",
+        "25-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 16
+          }
+        },
+        {
+          "name": "Quality study",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "h3-preview",
+      "name": "MiniMax H3 - Preview",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/h3-preview-api.json",
+      "visual": "workflows/comfyui/36 - MiniMax H3 - Preview.json",
+      "verified": false,
+      "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
+      "positive": [
+        "5",
+        "prompt"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "frames": [
+        "5",
+        "length"
+      ],
+      "seed": [
+        "6",
+        "noise_seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "modality": "video",
+      "family": "MiniMax H3",
+      "dimension_multiple": 32,
+      "max_pixels": 1032192,
+      "frame_grid": 17,
+      "frame_offset": 5,
+      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "stages": [
+        "Prompt / keyframes",
+        "H3 + text encoder",
+        "8-step turbo",
+        "Video + audio decode",
+        "MP4 at 24fps"
+      ],
+      "variants": [
+        {
+          "name": "Small preview",
+          "controls": {
+            "width": 640,
+            "height": 384,
+            "frames": 124
+          }
+        },
+        {
+          "name": "Native canvas",
+          "controls": {
+            "width": 1344,
+            "height": 768,
+            "frames": 124
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+    },
+    {
+      "id": "h3-quality",
+      "name": "MiniMax H3 - Quality",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/h3-quality-api.json",
+      "visual": "workflows/comfyui/37 - MiniMax H3 - Quality.json",
+      "verified": false,
+      "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
+      "positive": [
+        "5",
+        "prompt"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "frames": [
+        "5",
+        "length"
+      ],
+      "seed": [
+        "6",
+        "noise_seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "modality": "video",
+      "family": "MiniMax H3",
+      "dimension_multiple": 32,
+      "max_pixels": 1032192,
+      "frame_grid": 17,
+      "frame_offset": 5,
+      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "stages": [
+        "Prompt / keyframes",
+        "H3 + text encoder",
+        "20-step base",
+        "Video + audio decode",
+        "MP4 at 24fps"
+      ],
+      "variants": [
+        {
+          "name": "Small preview",
+          "controls": {
+            "width": 640,
+            "height": 384,
+            "frames": 124
+          }
+        },
+        {
+          "name": "Native canvas",
+          "controls": {
+            "width": 1344,
+            "height": 768,
+            "frames": 124
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+    },
+    {
+      "id": "h3-image",
+      "name": "MiniMax H3 - Image",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/h3-image-api.json",
+      "visual": "workflows/comfyui/38 - MiniMax H3 - Image.json",
+      "verified": false,
+      "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
+      "positive": [
+        "5",
+        "prompt"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "frames": [
+        "5",
+        "length"
+      ],
+      "seed": [
+        "6",
+        "noise_seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "reference": [
+        "16",
+        "image"
+      ],
+      "modality": "video",
+      "family": "MiniMax H3",
+      "dimension_multiple": 32,
+      "max_pixels": 1032192,
+      "frame_grid": 17,
+      "frame_offset": 5,
+      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "stages": [
+        "Prompt / keyframes",
+        "H3 + text encoder",
+        "8-step turbo",
+        "Video + audio decode",
+        "MP4 at 24fps"
+      ],
+      "variants": [
+        {
+          "name": "Small preview",
+          "controls": {
+            "width": 640,
+            "height": 384,
+            "frames": 124
+          }
+        },
+        {
+          "name": "Native canvas",
+          "controls": {
+            "width": 1344,
+            "height": 768,
+            "frames": 124
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+    },
+    {
+      "id": "h3-first-last",
+      "name": "MiniMax H3 - First-Last",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/h3-first-last-api.json",
+      "visual": "workflows/comfyui/39 - MiniMax H3 - First-Last.json",
+      "verified": false,
+      "commercial_note": "MiniMax H3 Community license; territorial and commercial conditions apply. Eligible-territory use confirmed by owner for this session.",
+      "positive": [
+        "5",
+        "prompt"
+      ],
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "frames": [
+        "5",
+        "length"
+      ],
+      "seed": [
+        "6",
+        "noise_seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "reference": [
+        "16",
+        "image"
+      ],
+      "last_reference": [
+        "17",
+        "image"
+      ],
+      "modality": "video",
+      "family": "MiniMax H3",
+      "dimension_multiple": 32,
+      "max_pixels": 1032192,
+      "frame_grid": 17,
+      "frame_offset": 5,
+      "description": "Native video + stereo audio. Preview uses the 8-step adapter; quality uses the base model. First/last mode anchors two images. Windows ROCm inference is experimental until measured.",
+      "stages": [
+        "Prompt / keyframes",
+        "H3 + text encoder",
+        "8-step turbo",
+        "Video + audio decode",
+        "MP4 at 24fps"
+      ],
+      "variants": [
+        {
+          "name": "Small preview",
+          "controls": {
+            "width": 640,
+            "height": 384,
+            "frames": 124
+          }
+        },
+        {
+          "name": "Native canvas",
+          "controls": {
+            "width": 1344,
+            "height": 768,
+            "frames": 124
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/minimax/minimax-h3-native"
+    },
+    {
+      "id": "hunyuan-draft",
+      "name": "Hunyuan3D 2.1 - Draft",
+      "category": "3D",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/hunyuan-draft-api.json",
+      "visual": "workflows/comfyui/40 - Hunyuan3D 2.1 - Draft.json",
+      "verified": true,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "reference": [
+        "2",
+        "image"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "modality": "3d",
+      "family": "Hunyuan3D 2.1",
+      "description": "Turn an isolated reference into a downloadable GLB mesh. Draft decodes at 128; detail at 256. Geometry only: UVs, materials, cleanup and rigging are finishing work.",
+      "stages": [
+        "Reference image",
+        "Shape conditioning",
+        "Geometry diffusion",
+        "Surface extraction",
+        "GLB mesh"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/hunyuan3D_2.1_repackaged",
+      "variants": [
+        {
+          "name": "3-seed shape study",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+    },
+    {
+      "id": "hunyuan-detail",
+      "name": "Hunyuan3D 2.1 - Detail",
+      "category": "3D",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/hunyuan-detail-api.json",
+      "visual": "workflows/comfyui/41 - Hunyuan3D 2.1 - Detail.json",
+      "verified": false,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "reference": [
+        "2",
+        "image"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "modality": "3d",
+      "family": "Hunyuan3D 2.1",
+      "description": "Turn an isolated reference into a downloadable GLB mesh. Draft decodes at 128; detail at 256. Geometry only: UVs, materials, cleanup and rigging are finishing work.",
+      "stages": [
+        "Reference image",
+        "Shape conditioning",
+        "Geometry diffusion",
+        "Surface extraction",
+        "GLB mesh"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/hunyuan3D_2.1_repackaged",
+      "variants": [
+        {
+          "name": "3-seed shape study",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "krea-portrait",
+      "name": "Krea 2 Retro Anime - Portrait",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-portrait-api.json",
+      "visual": "workflows/comfyui/42 - Krea 2 Retro Anime - Portrait.json",
+      "verified": true,
+      "commercial_note": "Krea 2 Community terms apply; free weights do not mean unrestricted use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "description": "Free official retro-anime adapter on Krea Turbo FP8. A separate interpretation of your reference, with literal prompts and no hidden prompt enhancement.",
+      "stages": [
+        "Prompt",
+        "Krea Turbo + retro LoRA",
+        "8-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Without style adapter",
+          "controls": {
+            "lora": 0
+          }
+        },
+        {
+          "name": "Retro anime",
+          "controls": {
+            "lora": 1
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+    },
+    {
+      "id": "krea-environment",
+      "name": "Krea 2 Retro Anime - Environment",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-environment-api.json",
+      "visual": "workflows/comfyui/43 - Krea 2 Retro Anime - Environment.json",
+      "verified": false,
+      "commercial_note": "Krea 2 Community terms apply; free weights do not mean unrestricted use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "description": "Free official retro-anime adapter on Krea Turbo FP8. A separate interpretation of your reference, with literal prompts and no hidden prompt enhancement.",
+      "stages": [
+        "Prompt",
+        "Krea Turbo + retro LoRA",
+        "8-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Without style adapter",
+          "controls": {
+            "lora": 0
+          }
+        },
+        {
+          "name": "Retro anime",
+          "controls": {
+            "lora": 1
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "anima-portrait",
+      "name": "Anima Aesthetic 1.1 - Portrait",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anima-portrait-api.json",
+      "visual": "workflows/comfyui/44 - Anima Aesthetic 1.1 - Portrait.json",
+      "verified": true,
+      "commercial_note": "CircleStone Labs Non-Commercial model weights; generated outputs have separate terms in the model card.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "modality": "image",
+      "family": "Anima",
+      "dimension_multiple": 16,
+      "description": "A modern anime foundation with a compact Qwen prompt encoder. Mix descriptive prose with character and quality tags; compare seeds before refinement.",
+      "stages": [
+        "Prompt",
+        "Anima Aesthetic",
+        "30-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "Fine study",
+          "controls": {
+            "steps": 36
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+    },
+    {
+      "id": "anima-environment",
+      "name": "Anima Aesthetic 1.1 - Environment",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anima-environment-api.json",
+      "visual": "workflows/comfyui/45 - Anima Aesthetic 1.1 - Environment.json",
+      "verified": false,
+      "commercial_note": "CircleStone Labs Non-Commercial model weights; generated outputs have separate terms in the model card.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "modality": "image",
+      "family": "Anima",
+      "dimension_multiple": 16,
+      "description": "A modern anime foundation with a compact Qwen prompt encoder. Mix descriptive prose with character and quality tags; compare seeds before refinement.",
+      "stages": [
+        "Prompt",
+        "Anima Aesthetic",
+        "30-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "variants": [
+        {
+          "name": "Quick study",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "Fine study",
+          "controls": {
+            "steps": 36
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "wan22-t2v",
+      "name": "Wan 2.2 - Text to Video",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/wan22-t2v-api.json",
+      "visual": "workflows/comfyui/46 - Wan 2.2 - Text to Video.json",
+      "verified": false,
+      "commercial_note": "Apache-2.0 model package; check rights to supplied reference images.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "frames": [
+        "6",
+        "length"
+      ],
+      "seed": [
+        "8",
+        "seed"
+      ],
+      "steps": [
+        "8",
+        "steps"
+      ],
+      "cfg": [
+        "8",
+        "cfg"
+      ],
+      "modality": "video",
+      "family": "Wan 2.2 5B",
+      "dimension_multiple": 32,
+      "max_pixels": 983040,
+      "frame_grid": 4,
+      "frame_offset": 1,
+      "description": "Compact native video pipeline. Start with a short motion study, then expand the winning seed. Silent video at 24fps; no separate vision encoder or custom nodes.",
+      "stages": [
+        "Motion prompt",
+        "Wan 2.2 5B",
+        "20-step sampling",
+        "Video VAE",
+        "MP4 at 24fps"
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/wan/wan2_2",
+      "variants": [
+        {
+          "name": "Short motion study",
+          "controls": {
+            "frames": 33
+          }
+        },
+        {
+          "name": "3.4-second shot",
+          "controls": {
+            "frames": 81
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
+      "id": "wan22-i2v",
+      "name": "Wan 2.2 - Animate Image",
+      "category": "Video",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/wan22-i2v-api.json",
+      "visual": "workflows/comfyui/47 - Wan 2.2 - Animate Image.json",
+      "verified": true,
+      "commercial_note": "Apache-2.0 model package; check rights to supplied reference images.",
+      "positive": [
+        "5",
+        "text"
+      ],
+      "negative": [
+        "6",
+        "text"
+      ],
+      "width": [
+        "7",
+        "width"
+      ],
+      "height": [
+        "7",
+        "height"
+      ],
+      "frames": [
+        "7",
+        "length"
+      ],
+      "seed": [
+        "9",
+        "seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "9",
+        "cfg"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "modality": "video",
+      "family": "Wan 2.2 5B",
+      "dimension_multiple": 32,
+      "max_pixels": 983040,
+      "frame_grid": 4,
+      "frame_offset": 1,
+      "description": "Compact native video pipeline. Start with a short motion study, then expand the winning seed. Silent video at 24fps; no separate vision encoder or custom nodes.",
+      "stages": [
+        "Image + motion prompt",
+        "Wan 2.2 5B",
+        "20-step sampling",
+        "Video VAE",
+        "MP4 at 24fps"
+      ],
+      "source": "https://docs.comfy.org/tutorials/video/wan/wan2_2",
+      "variants": [
+        {
+          "name": "Short motion study",
+          "controls": {
+            "frames": 33
+          }
+        },
+        {
+          "name": "3.4-second shot",
+          "controls": {
+            "frames": 81
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+    },
+    {
+      "id": "trellis-rgba",
+      "name": "TRELLIS.2 - Transparent Reference",
+      "category": "3D",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/trellis-rgba-api.json",
+      "visual": "workflows/comfyui/48 - TRELLIS.2 - Transparent Reference.json",
+      "verified": true,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "reference": [
+        "1",
+        "image"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "bindings_extra": {
+        "seed": [
+          [
+            "17",
+            "seed"
+          ],
+          [
+            "20",
+            "seed"
+          ]
+        ]
+      },
+      "modality": "3d",
+      "family": "TRELLIS.2",
+      "description": "512 shape draft with 1024 PBR textures and an interactive GLB preview. Supply an RGBA image with a transparent background. Native Torch route; Radeon compatibility is experimental.",
+      "stages": [
+        "Transparent foreground",
+        "Sparse structure",
+        "512 shape",
+        "Texture diffusion",
+        "UV + PBR bake",
+        "Textured GLB"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/TRELLIS.2",
+      "variants": [
+        {
+          "name": "3-seed shape study",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "PBR export executed with local CPU UV patch; inspect unwanted surfaces and finish the mesh. See experiments/curated/workflow-lab."
+    },
+    {
+      "id": "trellis-auto-cutout",
+      "name": "TRELLIS.2 - Automatic Cutout",
+      "category": "3D",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/trellis-auto-cutout-api.json",
+      "visual": "workflows/comfyui/49 - TRELLIS.2 - Automatic Cutout.json",
+      "verified": true,
+      "commercial_note": "Review the linked model terms for your intended use.",
+      "reference": [
+        "1",
+        "image"
+      ],
+      "seed": [
+        "11",
+        "seed"
+      ],
+      "bindings_extra": {
+        "seed": [
+          [
+            "17",
+            "seed"
+          ],
+          [
+            "20",
+            "seed"
+          ]
+        ]
+      },
+      "modality": "3d",
+      "family": "TRELLIS.2",
+      "description": "512 shape draft with 1024 PBR textures and an interactive GLB preview. BiRefNet isolates the subject before shape and texture generation. Native Torch route; Radeon compatibility is experimental.",
+      "stages": [
+        "BiRefNet cutout",
+        "Sparse structure",
+        "512 shape",
+        "Texture diffusion",
+        "UV + PBR bake",
+        "Textured GLB"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/TRELLIS.2",
+      "variants": [
+        {
+          "name": "3-seed shape study",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "PBR export executed with local CPU UV patch; inspect unwanted surfaces and finish the mesh. See experiments/curated/workflow-lab."
     }
   ]
 }
