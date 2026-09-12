@@ -14,6 +14,24 @@ nodes, selected model files and input images. It records the actual graph,
 reference roles, model hashes, runtime information and a plan hash. It submits
 nothing until **Start comparison** is pressed.
 
+Two buttons in that dialog plan several documented settings at once, through
+`POST /api/experiments/plan`. **Plan from settings library** reads the family
+entry for this recipe in `presets/settings-kb.json` and offers a grid of the
+axes the recipe can actually change — steps, sampler, scheduler, LoRA strengths
+— with the first axis varying slowest and at most eight candidates. **Remix
+LoRA weights** re-weights only the adapter slots that are already on: one
+variant per slot at the top of the family ladder while the others support at
+its bottom, plus one blend at the middle step. Slots that are off stay off.
+
+Each variant carries the rationale and the source URLs of the setting it
+changes, and the plan records the SHA-256 of the knowledge base it was planned
+against. Planning reserves nothing and submits nothing; the variants land in
+the same dialog and **Prepare plan** validates every one of them exactly as it
+validates a single-axis comparison. Remove a variant with ✕ to fit the
+generation budget. Two variants that resolve to the same graph are refused:
+different labels are not different work. Candidate cards show the variant label
+instead of an axis value, and still hide it while comparing blind.
+
 Studio uses its existing serial worker. Manual ComfyUI jobs finish first. Each
 stage gets a durable identity before its job is created, and submission intent is
 written before a POST. A lost response stays uncertain. Resume observes known
