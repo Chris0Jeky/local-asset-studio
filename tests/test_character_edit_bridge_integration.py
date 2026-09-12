@@ -63,7 +63,7 @@ class Preparation(unittest.TestCase):
     def test_actual_native_handoff_prepares_no_network(self):
         with patch.object(bridge.StudioHTTP,'request',side_effect=AssertionError('Unexpected HTTP')):
             value=self.prepare()
-        self.assertEqual('qwen-2ref',value['preset_id']);self.assertEqual([88,96],value['size'])
+        self.assertEqual('qwen-2ref',value['preset_id']);self.assertEqual([96,96],value['size'])
         self.assertEqual(['composition','identity'],[r['role'] for r in value['references']])
         self.assertFalse(value['submits_generation']);bridge.validate_handoff(self.root,value)
     def test_model_context_preserves_crop_and_explicit_black_padding(self):
@@ -135,7 +135,7 @@ class NativeHTTP(unittest.TestCase):
         def synthesize(job):
             # Substitute ONLY the neural execution boundary; real job/provenance/export follows.
             self.inference_calls.append(job['id']);name=job['id']+'.png'
-            Image.new('RGB',(88,96),(236,123,58)).save(self.studio.comfy_root/'output'/name)
+            Image.new('RGB',(96,96),(236,123,58)).save(self.studio.comfy_root/'output'/name)
             job.update(status='completed',message='Inert integration fixture, no neural inference',prompt_ids=['synthetic-no-model'],
                        submissions=[{'prompt_id':'synthetic-no-model','graph':copy.deepcopy(job['graph']),'status':'completed','index':0}],
                        outputs=[{'filename':name,'subfolder':'','type':'output','media_type':'image'}])

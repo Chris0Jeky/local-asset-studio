@@ -21,7 +21,7 @@ For one actor and the supported anatomy/costume/local-repaint operations, use `s
 
 `prepare` (local, no HTTP) -> inspect handoff -> `stage` (uploads/preview/Production plan, no generation) -> inspect native bundle -> explicit `start` -> `status` -> `collect --index N` -> `compose --current-document document.json --out NEW_REVISION`.
 
-The approved canon and identity reference must genuinely match; do not turn the demo's synthetic metadata into an owner decision. Image 1 is composition/current crop. Identity and an optional costume/style/pose reference keep their actual roles in Qwen's existing two/three-reference presets. Unsupported multi-actor, transparent-crop, profile, extra-reference or dimension cases fail rather than silently substitute another route.
+The approved canon and identity reference must genuinely match; do not turn the demo's synthetic metadata into an owner decision. Picture 1 is composition/current crop. Identity and an optional costume/style/pose reference keep their actual roles in Qwen's existing two/three-reference presets. Unsupported multi-actor, transparent-crop, profile, extra-reference or dimension cases fail rather than silently substitute another route.
 
 One to four primary seeds share the existing Production allowance, including reserved repair capacity. The client does not execute repairs/warmups or enforce a campaign root across independently recompiled edits; that server integration remains #65. Preserve `.edit-bridge-<plan-sha256>` and its known project ID. Never delete receipts or recompile solely to gain another allowance.
 

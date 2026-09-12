@@ -65,17 +65,17 @@ class EditPixels(unittest.TestCase):
         Image.new('RGBA',(88,88)).save(self.root/'small.png')
         with self.assertRaises(ValueError): self.patch('small.png')
     def test_candidate_mode(self):
-        Image.new('L',(88,96)).save(self.root/'gray.png')
+        Image.new('L',(96,96)).save(self.root/'gray.png')
         with self.assertRaises(ValueError): self.patch('gray.png')
     def test_profile_mismatch(self):
-        Image.new('RGBA',(88,96)).save(self.root/'profile.png',icc_profile=b'fixture-profile')
+        Image.new('RGBA',(96,96)).save(self.root/'profile.png',icc_profile=b'fixture-profile')
         with self.assertRaises(ValueError): self.patch('profile.png')
     def test_matching_profile_preserved(self):
         with Image.open(self.root/'source.png') as im: im.save(self.root/'profile-source.png',icc_profile=b'fixture-profile')
         self.plan['document']['source']=self.ref('profile-source.png')
         self.plan['intent']['document_sha256']=sha(self.plan['document']); self.rebuild()
         px.prepare(self.root,self.plan,'profile-bundle')
-        Image.new('RGBA',(88,96),(10,20,30,255)).save(self.root/'profile.png',icc_profile=b'fixture-profile')
+        Image.new('RGBA',(96,96),(10,20,30,255)).save(self.root/'profile.png',icc_profile=b'fixture-profile')
         px.apply(self.root,self.plan,'profile-bundle',self.ref('profile.png'),'profile-result')
         with Image.open(self.root/'profile-result/result.png') as result: self.assertEqual(b'fixture-profile',result.info['icc_profile'])
     def test_noop_remains_unreviewed(self):
@@ -101,7 +101,7 @@ class EditPixels(unittest.TestCase):
         (self.root/'prepared/context.png').write_bytes(b'wrong')
         with self.assertRaises(ValueError): self.patch()
     def test_rehashed_bundle_pixel_forgery(self):
-        path=self.root/'prepared/context.png'; Image.new('RGBA',(88,96),(1,1,1,255)).save(path)
+        path=self.root/'prepared/context.png'; Image.new('RGBA',(96,96),(1,1,1,255)).save(path)
         b=read_json(self.root/'prepared/bundle.json'); b['files']['context.png']['sha256']=file_sha(path)
         b['bundle_sha256']=sha({k:v for k,v in b.items() if k!='bundle_sha256'})
         (self.root/'prepared/bundle.json').unlink(); write_json(self.root/'prepared/bundle.json',b)
@@ -115,7 +115,7 @@ class EditPixels(unittest.TestCase):
         self.plan['intent']['id']='changed-intent'; self.rebuild()
         with self.assertRaises(ValueError): self.patch()
     def test_padding_not_written_to_canvas(self):
-        r=self.patch(); self.assertEqual([0,0,1,3],r['transform']['padding_ltrb'])
+        r=self.patch(); self.assertEqual([0,0,9,3],r['transform']['padding_ltrb'])
         with Image.open(self.root/'source.png') as src, Image.open(self.root/'result-new/result.png') as dst:
             self.assertEqual(src.getpixel((137,189)),dst.getpixel((137,189)))
     def test_hidden_rgb_changes_detected(self):
@@ -136,10 +136,10 @@ class EditPixels(unittest.TestCase):
         self.assertEqual(0,result['outside_mask_changed_pixels'])
     def test_exif_requires_explicit_normalization(self):
         exif=Image.Exif(); exif[274]=6
-        Image.new('RGBA',(88,96)).save(self.root/'rotated.png',exif=exif)
+        Image.new('RGBA',(96,96)).save(self.root/'rotated.png',exif=exif)
         with self.assertRaisesRegex(ValueError,'EXIF'): self.patch('rotated.png')
     def test_apng_rejected(self):
-        a=Image.new('RGBA',(88,96),(1,2,3,255)); b=Image.new('RGBA',(88,96),(3,2,1,255))
+        a=Image.new('RGBA',(96,96),(1,2,3,255)); b=Image.new('RGBA',(96,96),(3,2,1,255))
         a.save(self.root/'animated.png',save_all=True,append_images=[b],duration=100,loop=0)
         with self.assertRaises(ValueError): self.patch('animated.png')
     def test_cli_prepare_and_apply(self):

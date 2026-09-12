@@ -147,7 +147,7 @@ class Bridge:
                 returned = self.client.request('GET','/api/uploads/'+upload['file'],binary=True)
                 require(digest(returned) == ref['image']['sha256'], 'Stored Studio upload differs from the source')
             recipe = {'preset_id':self.handoff['preset_id'], 'batch_count':1,
-                'controls':{'positive':self.handoff['positive'],'width':self.handoff['size'][0]},
+                'controls':{'positive':self.handoff['positive'],'width':self.handoff['size'][0],'height':self.handoff['size'][1]},
                 'references':[dict(file=u['file'],sha256=r['image']['sha256'],role=r['role'],contribution=r['contribution'],avoid=r['avoid'])
                               for u,r in zip(state['uploads'],self.handoff['references'])],
                 'expected_template_sha256':self.handoff['template_sha256']}
@@ -161,7 +161,14 @@ class Bridge:
                 require(len(records)==len(recipe['references']), 'Preview lost a reference')
                 for actual, supplied in zip(records,recipe['references']):
                     require(all(actual.get(k)==supplied[k] for k in ('file','sha256','role','contribution','avoid')), 'Preview changed a reference role or contribution')
-                require(records[0]['transform']['vae_size']==self.handoff['size'], 'Native preprocessing changes candidate dimensions')
+                # The canvas is an explicit latent now, not a VAE encode of the composition reference, so
+                # candidate dimensions come from the bound width/height and the crop must reach Studio intact.
+                # A missing key here is untrusted remote/catalog shape, not a bug: refuse, never raise KeyError.
+                require((records[0].get('transform') or {}).get('source_size')==self.handoff['size'], 'Native preprocessing changes candidate dimensions')
+                bindings=[self.handoff['native_preset'].get(key) for key in ('width','height')]
+                require(all(isinstance(b,list) and len(b)==2 for b in bindings), 'Pinned canvas binding is unavailable')
+                canvas=[((preview['workflow'].get(str(node)) or {}).get('inputs') or {}).get(str(field)) for node,field in bindings]
+                require(canvas==self.handoff['size'], 'Native preprocessing changes candidate dimensions')
                 expected=projected_graph(template_graph,self.handoff['native_preset'],request)
                 require(canonical(preview['workflow'])==canonical(expected), 'Native preview differs from the pinned catalog projection')
                 previews.append(preview)
