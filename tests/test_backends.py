@@ -112,6 +112,33 @@ class BackendTests(unittest.TestCase):
         with patch('psutil.process_iter',return_value=[candidate]):
             with self.assertRaisesRegex(ValueError,'identity could not be read'):manager.configured_processes(manager.profiles['primary'])
 
+    def test_blank_psutil_name_uses_windows_name_fallback_to_exclude_known_nonpython(self):
+        manager=self.studio.backends;candidate=MagicMock();candidate.pid=284;candidate.name.return_value='';candidate.exe.side_effect=AssertionError('non-Python must not need identity inspection')
+        with patch('psutil.process_iter',return_value=[candidate]),patch.object(manager,'windows_process_name',return_value='Secure System') as fallback:
+            self.assertEqual(manager.configured_processes(manager.profiles['primary']),[])
+        fallback.assert_called_once_with(284);candidate.exe.assert_not_called()
+
+    def test_blank_psutil_name_fallback_python_still_blocks_protected_identity(self):
+        import psutil
+        manager=self.studio.backends;candidate=MagicMock();candidate.pid=20;candidate.name.return_value='';candidate.exe.side_effect=psutil.AccessDenied(pid=20)
+        with patch('psutil.process_iter',return_value=[candidate]),patch.object(manager,'windows_process_name',return_value='python'):
+            with self.assertRaisesRegex(ValueError,'candidate configured Python'):manager.configured_processes(manager.profiles['primary'])
+
+    def test_blank_psutil_name_without_windows_fallback_remains_ambiguous(self):
+        manager=self.studio.backends;candidate=MagicMock();candidate.pid=21;candidate.name.return_value=''
+        with patch('psutil.process_iter',return_value=[candidate]),patch.object(manager,'windows_process_name',return_value=None):
+            with self.assertRaisesRegex(ValueError,'process name could not be read'):manager.configured_processes(manager.profiles['primary'])
+
+    def test_windows_name_fallback_is_hidden_bounded_and_uses_only_observed_pid(self):
+        result=MagicMock(returncode=0,stdout='Secure System\n')
+        with patch('backends.os.name','nt'),patch('backends.subprocess.run',return_value=result) as run:
+            self.assertEqual(BackendManager.windows_process_name(284),'Secure System')
+        command=run.call_args.args[0]
+        self.assertEqual(command[:4],['powershell.exe','-NoProfile','-NonInteractive','-Command'])
+        self.assertIn('GetProcessById(284)',command[4])
+        self.assertEqual(run.call_args.kwargs['timeout'],2)
+        self.assertEqual(run.call_args.kwargs['creationflags'],getattr(__import__('subprocess'),'CREATE_NO_WINDOW',0))
+
     def test_vanished_process_does_not_block_prelisten_scan(self):
         import psutil
         manager=self.studio.backends;candidate=MagicMock();candidate.name.side_effect=psutil.NoSuchProcess(pid=19)
