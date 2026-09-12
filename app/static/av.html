@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local Asset Studio · Scene editor</title><link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/av.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local Asset Studio · Scene editor</title><link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/av.css"><link rel="stylesheet" href="/static/studio.css"></head>
 <body class="av-page">
 <header class="topbar"><a class="brand" href="/"><span class="brand-mark">a✦</span><span>ASSET STUDIO<small>YOUR LOCAL CREATIVE WORKSPACE</small></span></a><nav aria-label="Studio views"><a href="/">Create</a><a href="/#assets">Workspace</a><a href="/#production">Experiments</a><a class="active" href="/av.html" aria-current="page">Scene editor</a></nav><a class="pill" href="/">Back to Studio</a></header>
 <main class="av-shell">
@@ -12,4 +12,4 @@
 </main>
 <dialog id="sceneDialog" class="av-dialog"><form id="sceneForm"><span class="eyebrow">REGISTERED WORKSPACE SOURCES</span><h2>New scene</h2><label>Name<input id="sceneName" maxlength="120" required placeholder="Chapter one · opening"></label><p class="muted">PNG, MP4 and 48 kHz PCM WAV only. Source files are snapshotted into the scene; paths and uploads are not accepted.</p><div id="sceneAssets" class="av-source-picker"></div><p id="sceneCreateStatus" class="status" role="status"></p><div class="actions"><button type="button" id="cancelScene">Cancel</button><button id="createScene" class="primary">Create scene</button></div></form></dialog>
 <script src="/static/av.js"></script>
-</body></html>
+<script src="/static/studio-core.js"></script><script src="/static/studio-shell.js"></script></body></html>
