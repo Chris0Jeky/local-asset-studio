@@ -4,11 +4,28 @@
 
 ## 1. Recover recorded recipe claims first
 
-A generated PNG can contain a prompt, workflow or parameter text in PNG textual chunks. The supplied inspector reads tEXt, zTXt and iTXt under file/chunk/decompressed-text limits, checks CRCs and preserves duplicate records. It extracts selected scalar text/model/sampler claims from a known Comfy JSON shape. It never imports nodes, runs code or posts the graph.
+The existing inspector now handles bounded PNG textual chunks, JPEG/WebP metadata
+and an explicitly supplied schema-v1 JSON sidecar. It retains independent and
+conflicting records, source hashes, encoding decisions and unsupported fields.
+It never imports nodes, executes a graph or asks a vision model to interpret pixels.
 
-A checksum-valid metadata record is still an **embedded claim**, not authenticated provenance. It can be edited after generation, refer to missing files or describe an earlier stage. The extractor does not classify conditioning as positive/negative through full graph reachability. For faithful reproduction, reconcile the original graph, source images, masks, model hashes, node/runtime versions and latent initialization; a prompt alone is insufficient.
+Known Comfy API output nodes are traced to separate sampler stages and their
+positive/negative conditioning inputs. Unused text stays separate. Unknown
+operators, output ambiguity, dynamic text and cycles remain visible rather than
+being resolved by guesswork. Zeroed conditioning is not presented as an effective
+negative prompt; filenames are not model pins. A user-selected output node is
+not proof that it created the supplied pixels.
 
-The CLI accepts bounded PNGs up to16MiB and up to128KiB expanded text per record. The browser intentionally accepts smaller images to fit the1MiB request cap. JPEG/WebP metadata and arbitrary sidecar formats are not implemented. The parser does not decode or validate pixel data; it is not a complete PNG conformance or malicious-media scanner. See the [PNG specification](https://www.w3.org/TR/png-3/).
+A checksum-valid or hash-matched record is still an editable **claim**, not
+authenticated provenance. For faithful reproduction, reconcile the original
+graph, source images, masks, model hashes, node/runtime versions and latent
+initialization. The inspector does not establish that execution contract.
+
+See [Output-aware recipe inspection](RECIPE-INSPECTION.md) for the CLI, HTTP and
+sidecar schemas, supported node/format subsets, budgets and synthetic demo. The
+CLI accepts media up to 16 MiB; the browser uses a smaller limit within the
+existing 1 MiB HTTP request cap. No pixel decode, arbitrary sidecar discovery,
+XML interpretation or automatic workflow import is performed.
 
 ## 2. Reconstruct visible design intent when no trustworthy recipe exists
 

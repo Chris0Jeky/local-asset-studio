@@ -14,7 +14,22 @@ $('export-brief').addEventListener('click',()=>{collect();download(intent,'creat
 $('brief-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a brief smaller than 64 KiB');const data=JSON.parse(await file.text());const compatible=registry.find(p=>p.tasks.includes(data.task));if(!compatible)throw Error('Unsupported task');await api('/api/prompt/compile',{intent:data,profile_id:compatible.id});intent=data;$('profile').value=compatible.id;show();invalidate();$('status').textContent='Imported the full brief. Nothing generated.';}catch(err){$('status').textContent=err.message;}});
 $('proposal-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a small proposal JSON');const data=JSON.parse(await file.text());proposed=data.proposal||data;collect();await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields:[]});$('proposal-list').replaceChildren();for(const c of proposed.changes){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=c.field;input.disabled=intent.locked.some(x=>c.field===x||c.field.startsWith(x+'.'));label.append(input,document.createTextNode(c.field+': '+JSON.stringify(c.value)+' â€” '+c.reason));$('proposal-list').append(label);}$('accept').disabled=false;$('status').textContent='Suggestions loaded; none applied.';}catch(err){$('accept').disabled=true;$('status').textContent=err.message;}});
 $('accept').addEventListener('click',async()=>{try{collect();const ticket=draftVersion;const accepted_fields=Array.from($('proposal-list').querySelectorAll('input:checked')).map(x=>x.value);const revision=await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields});if(ticket!==draftVersion){$('status').textContent='Draft changed while applying. Stale result discarded.';return;}intent=revision.intent;show();invalidate();$('accept').disabled=true;$('status').textContent='Selected suggestions applied to a new draft. Original proposal remains separate.';}catch(e){$('status').textContent=e.message;}});
-$('png-file').addEventListener('change',async e=>{try{const f=e.target.files[0];if(!f||f.size>650000)throw Error('Metadata inspector accepts PNGs up to 650 KB in this UI; use the CLI for larger files.');const bytes=new Uint8Array(await f.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=4096)binary+=String.fromCharCode(...bytes.subarray(i,i+4096));const data=await api('/api/prompt/metadata',{png_base64:btoa(binary)});$('metadata').textContent=JSON.stringify(data,null,2);}catch(err){$('metadata').textContent=err.message;}});
+let metadataRequest=0;
+$('png-file').addEventListener('change',async e=>{
+  const request=++metadataRequest;
+  try{
+    const file=e.target.files[0];
+    if(!file||file.size>650000)throw Error('Metadata inspector accepts PNG/JPEG/WebP/recipe-sidecar JSON up to 650 KB; use the CLI for larger media or an attached sidecar.');
+    $('metadata').textContent='Inspecting '+file.name+'… No workflow will run.';
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    let binary='';
+    for(let i=0;i<bytes.length;i+=4096)binary+=String.fromCharCode(...bytes.subarray(i,i+4096));
+    const data=await api('/api/prompt/metadata',{media_base64:btoa(binary)});
+    if(request===metadataRequest)$('metadata').textContent=JSON.stringify(data,null,2);
+  }catch(err){
+    if(request===metadataRequest)$('metadata').textContent=err.message;
+  }
+});
 fetch('/api/prompt/profiles').then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||'Prompt Lab is unavailable');return data;}).then(data=>{registry=data.profiles;for(const p of registry){const o=node('option',p.name);o.value=p.id;$('profile').append(o);}}).catch(e=>{$('status').textContent='Start Asset Studio normally, then reopen this page: '+e.message;});
 
 function words(){const show=['voice','music'].includes(intent.task);$('words-section').hidden=!show;if(show){const key=intent.task==='voice'?'text':'lyrics';$('words-label').textContent=intent.task==='voice'?'Exact words to speak (never rewritten)':'Exact lyrics (never rewritten)';$('words').value=intent.verbatim[key]||'';}}
