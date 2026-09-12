@@ -1126,7 +1126,7 @@
       "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
       "license": "",
       "family": "Illustrious XL",
-      "terms": "No licence is declared in the frankjoshua/waiIllustriousSDXL_v170 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for waiIllustriousSDXL_v170.safetensors at revision 9303ce493458 (checked 2026-09-12); a hash match proves the bytes, not the creator. A community mirror with no licence declared in its repository metadata. A matching SHA-256 proves the bytes came from this mirror; it does not authenticate the original creator or grant any commercial right. See models/wai-provenance.json.",
+      "terms": "The Civitai image metadata for 134076830 names Civitai model 827184/version 2883731; its primary file hash matches this installed Hugging Face mirror. Civitai model metadata read 2026-09-12 says allowCommercialUse Image, RentCivit; derivatives allowed; different licence allowed. The mirror card itself declares no licence. Hash agreement proves the bytes, not creator identity or rights; read the original listing before commercial use. See models/wai-provenance.json.",
       "trigger": ""
     },
     {
@@ -1716,6 +1716,58 @@
       "license": "",
       "family": "Latent previews",
       "terms": "provenance not recorded; pinned from the installed file on 2026-09-12",
+      "trigger": ""
+    },
+    {
+      "id": "noirpopwave-v1",
+      "name": "Noirpopwave / v1.0",
+      "file": "loras/noirpopwave.safetensors",
+      "source": "https://civitai.com/models/2398033?modelVersionId=2696276",
+      "url": "https://civitai.com/api/download/models/2696276",
+      "bytes": 228454636,
+      "sha256": "7c9e15de134f38d4deeb96148cb2e562291622ccc0f786ed85485b9de3c4f044",
+      "license": "",
+      "family": "Illustrious",
+      "terms": "Civitai model 2398033/version 2696276, read 2026-09-12: allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed. Base model Illustrious. The downloaded file SHA-256 matches the listing. Read the model page before commercial use.",
+      "trigger": "noirpopwave"
+    },
+    {
+      "id": "sky02-light-anima-v1",
+      "name": "sky02 Light and shadow Style [Anima] / v1.0",
+      "file": "loras/sky02Light.safetensors",
+      "source": "https://civitai.com/models/2652568?modelVersionId=2978471",
+      "url": "https://civitai.com/api/download/models/2978471",
+      "bytes": 91860448,
+      "sha256": "bdb6d406d864f58db1de9fe8c11f8a2f05be347639c6ba7f68ad2ce897e21b9a",
+      "license": "",
+      "family": "Anima",
+      "terms": "Civitai model 2652568/version 2978471, read 2026-09-12: allowCommercialUse RentCivit; derivatives NOT allowed; different licence NOT allowed. Base model Anima. The downloaded file SHA-256 matches the listing. Read the model page before commercial use.",
+      "trigger": ""
+    },
+    {
+      "id": "failleaf-anima-base",
+      "name": "Failleaf Style for Anima / Anima Base",
+      "file": "loras/Failleaf_Anima_Base_lora.safetensors",
+      "source": "https://civitai.com/models/2648711?modelVersionId=2974201",
+      "url": "https://civitai.com/api/download/models/2974201",
+      "bytes": 68958912,
+      "sha256": "d74e2709313c1c84015091be2bba7c503dbe0abdf5be093896c289ae1c07ff2b",
+      "license": "",
+      "family": "Anima",
+      "terms": "Civitai model 2648711/version 2974201, read 2026-09-12: allowCommercialUse RentCivit, Rent, Image; derivatives allowed; different licence allowed. Base model Anima. The downloaded file SHA-256 matches the listing. Read the model page before commercial use.",
+      "trigger": "@failleaf"
+    },
+    {
+      "id": "bunny-slop-anima-v1",
+      "name": "BunnySlop AI Style [Anima] / Anima v1",
+      "file": "loras/BunnySlop_Anima.safetensors",
+      "source": "https://civitai.com/models/2613391?modelVersionId=2978487",
+      "url": "https://civitai.com/api/download/models/2978487",
+      "bytes": 138663695,
+      "sha256": "e34c56d780dc86d232e06228ecf34699a634713969fa5fa15fe0dda9eac4e988",
+      "license": "",
+      "family": "Anima",
+      "terms": "Civitai model 2613391/version 2978487, read 2026-09-12: NSFW listing; allowCommercialUse RentCivit, Rent, Image; derivatives allowed; different licence allowed. Base model Anima. The downloaded file SHA-256 matches the listing. This metadata does not approve any output. Read the model page before commercial use.",
       "trigger": ""
     }
   ],
