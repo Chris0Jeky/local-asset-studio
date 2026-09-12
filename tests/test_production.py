@@ -154,6 +154,40 @@ class ProductionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'numeric'):studio.production.create(self.intent(axis='lora',values=['another.safetensors']))
         self.assertEqual(len(studio.jobs),0);self.assertEqual(studio.queue.qsize(),0)
 
+    def test_tracking_stop_during_stage_dispatch_cannot_resubmit_retained_prompt(self):
+        for boundary in ('bundle', 'attempt'):
+            with self.subTest(boundary=boundary):
+                studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'retained-'+boundary},URLError('observation lost')])
+                lab=studio.production;project=lab.create(self.intent(max_generations=4));lab.start(project['id']);lab.run(project['id'])
+                job=studio.jobs[lab.get(project['id'])['state']['attempts']['0']['job_id']]
+                prompt_ids=copy.deepcopy(job['prompt_ids']);submissions=copy.deepcopy(job['submissions']);budget=lab.get(project['id'])['budget']
+                lab.resume(project['id'])
+                fired=[]
+                def stop_and_resume(*args, **kwargs):
+                    if not fired:
+                        fired.append(True);studio.stop_tracking(job['id'],'Stop arrived during dispatch');studio.resume_job(job['id'])
+                original=lab._attempt
+                def attempt(*args, **kwargs):
+                    stop_and_resume();return original(*args, **kwargs)
+                studio.replies=iter([{prompt_ids[0]:{'status':{'status_str':'success'},'outputs':{}}}])
+                target=patch.object(studio,'check_production_bundle',side_effect=stop_and_resume) if boundary=='bundle' else patch.object(lab,'_attempt',side_effect=attempt)
+                with target,patch.object(studio,'_run') as generate:
+                    lab.run(project['id'])
+                self.assertTrue(fired);generate.assert_not_called()
+                self.assertEqual(self.post_count(studio),1);self.assertEqual(job['prompt_ids'],prompt_ids)
+                self.assertEqual(len(job['submissions']),len(submissions));self.assertEqual(job['submissions'][0]['graph'],submissions[0]['graph'])
+                self.assertEqual(lab.get(project['id'])['state']['status'],'uncertain');self.assertEqual(lab.get(project['id'])['budget'],budget)
+                self.assertEqual(len(lab.get(project['id'])['state']['attempts']),1)
+
+    def test_queued_gallery_observation_reconciles_without_resubmitting_its_stage(self):
+        studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'retained'},URLError('observation lost')])
+        lab=studio.production;project=lab.create(self.intent(values=[1]));lab.start(project['id']);lab.run(project['id'])
+        job=next(iter(studio.jobs.values()));lab.resume(project['id']);studio.resume_job(job['id'])
+        studio.replies=iter([{'retained':{'status':{'status_str':'success'},'outputs':{}}}])
+        with patch.object(studio,'_run') as generate:lab.run(project['id'])
+        generate.assert_not_called();self.assertEqual(self.post_count(studio),1)
+        self.assertEqual(job['prompt_ids'],['retained']);self.assertEqual(lab.get(project['id'])['state']['status'],'awaiting_review')
+
     def test_changed_plan_and_stop_before_first_stage_never_generate(self):
         studio=FakeStudio(self.root,[]);lab=studio.production;p=lab.create(self.intent())
         lab.start(p['id']);lab.stop(p['id']);lab.run(p['id'])

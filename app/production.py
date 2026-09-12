@@ -522,15 +522,21 @@ class Production:
         from voice_baseline import artifacts
         return artifacts(self,identifier)
 
+    def _tracking_continuation_allowed(self, identifier):
+        # Match resume's lock order; never retain these locks during backend I/O.
+        with self.studio.lock, self.lock:
+            state=self._get(identifier)['state'];authorized=set(state.get('tracking_stop_authorizations',[]))
+            for attempt in state.get('attempts',{}).values():
+                job=self.studio.jobs.get(attempt.get('job_id'))
+                if job and set(self.studio.tracking_stop_tokens(job))-authorized:
+                    self._mutate(identifier,status='uncertain',message='A retained stop-tracking event has not authorized Production continuation. No later stage was submitted.');return False
+            return True
+
     def run(self, identifier):
         project=self._get(identifier);plan=project['plan']
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
         if plan['kind']=='voice' and project['state']['status'] in ('completed','failed','cancelled','stopped'):return
-        authorized=set(project['state'].get('tracking_stop_authorizations',[]))
-        for attempt in project['state'].get('attempts',{}).values():
-            job=self.studio.jobs.get(attempt.get('job_id'))
-            if job and set(self.studio.tracking_stop_tokens(job))-authorized:
-                self._mutate(identifier,status='uncertain',message='A retained stop-tracking event has not authorized Production continuation. No later stage was submitted.');return
+        if not self._tracking_continuation_allowed(identifier):return
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='av':return self.av.run(identifier)
         if plan['kind']=='voice':
@@ -540,6 +546,7 @@ class Production:
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
         self.studio.check_production_bundle(plan['bundle'])
         for index,stage in enumerate(plan['stages']):
+            if not self._tracking_continuation_allowed(identifier):return
             project=self._get(identifier);state=project['state']
             if state.get('stop_requested') or time.time()-state['started_at']>=plan['max_seconds']:
                 self._mutate(identifier,status='stopped',message='Stopped between stages; existing outputs and reservations are retained.');return
@@ -547,7 +554,7 @@ class Production:
             self._attempt(identifier,index,job_id=job_id,operation=stage['operation'])
             job=self.studio.jobs.get(job_id)
             if job:
-                if job['status']=='uncertain':
+                if job['status']=='uncertain' or (job['status']=='queued' and (job.get('prompt_ids') or job.get('submissions') or job.get('pending_submission'))):
                     if job.get('pending_submission') or not job.get('prompt_ids'):
                         self._mutate(identifier,status='uncertain',message='A submission outcome is unknown. No duplicate or later stage was submitted.');return
                     self.studio._resume(job)
@@ -560,6 +567,7 @@ class Production:
                 self.studio.check_production_bundle(plan['bundle'])
                 prepared=self.studio.prepare(stage['request'])
                 if fingerprint(prepared[1])!=stage['graph_sha256']:raise ValueError('The resolved recipe changed; create an explicit branch')
+                if not self._tracking_continuation_allowed(identifier):return
                 self.studio.create_job(stage['request'],enqueue=False,job_id=job_id)
                 job=self.studio.jobs[job_id]
                 job['project_id']=identifier;self.studio._save(job)
@@ -569,6 +577,7 @@ class Production:
                 except Exception as exc:
                     job.update(status='failed',message=str(exc)[:400]);self.studio._save(job)
             self._attempt(identifier,index,finished_at=time.time(),status=job['status'],prompt_ids=job.get('prompt_ids',[]))
+            if not self._tracking_continuation_allowed(identifier):return
             if job['status']!='completed':
                 self._mutate(identifier,status='uncertain' if job['status']=='uncertain' else 'failed',message=job['message']);return
         artifacts=self.contact_sheet(identifier)
