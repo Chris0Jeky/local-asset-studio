@@ -15,10 +15,15 @@ No new image model inference, model installation, user-PC browser test, live que
 After integration with main `fcd3e7504b4676580e32bdae40202f104d402630`, the full local suite ran 589 tests:
 579 passed and 10 skipped; repository validation passed. The character subset ran 68 tests, with
 67 passing and one symlink-creation skip. Both real-repository contract tests passed locally.
-The planning CLI produced the expected 12-case draft and preflight reported the unapproved canon and
-three missing original references while retaining `submission_authorized: false`.
+The planning CLI produced the expected 12-case draft. With restored original references, preflight
+reported only the unapproved canon while retaining `submission_authorized: false`.
 
-The original ZIP was not found in Downloads. The available field guide embeds JPEG previews, so it
-cannot establish restoration of the locked original PNGs. No archive restoration, original-source
-pixel comparison, neural inference or approval is claimed for this Windows follow-up. Raw logs and
-reports are preserved under `.runtime/session-2026-09-12/character-review/`.
+The owner supplied the original ZIP path. The importer verified all 71 members and 27,336,577 expanded
+bytes against the lock and restored them under `C:/AI/character-lab/windows-proof-20260912/original/`.
+All 33 newly extracted crops were compared against decoded source rectangles and matched exactly.
+All three source sheets are opaque. The standard card composed twice with identical bytes under
+Pillow 12.3.0 on Windows (SHA-256 `14d4ba19337a616693042a865fd54314ce9da17531837ee10ce4fa19666c2054`).
+Its bytes differ from the earlier runtime's card; cross-platform byte identity is not promised.
+Visual inspection found retained crop fragments, as in the original review artifact; it is not a
+cleaned sprite sheet. No neural inference, archived-code execution or approval occurred. Raw logs and
+reports are preserved under `.runtime/session-2026-09-12/character-review/` and the external proof root.

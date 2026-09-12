@@ -6,13 +6,16 @@ The character study, archive and media commands now have local Windows integrati
 The full suite ran 589 tests: 579 passed and 10 skipped; repository validation passed. The character
 subset ran 68 tests: 67 passed, with symlink creation unavailable for one test. Both checks against the
 real game-asset brief validator and native preset templates passed. The actual planning CLI produced
-the expected 12-case draft; preflight retained `submission_authorized: false` and reported the draft
-canon plus three missing original references. No model job or reference upload was submitted.
+the expected 12-case draft; restored-reference preflight retained `submission_authorized: false` with
+only the draft canon approval blocker. No model job or reference upload was submitted.
 
-The downloaded field guide contains JPEG previews. The original locked ZIP/PNG sources were not
-found in Downloads, so a full archive restore and original-source pixel proof have not been repeated
-on this PC. Prior CPU evidence remains attributed to its original session. Raw Windows logs and draft
-reports are retained under `.runtime/session-2026-09-12/character-review/`. The live pilot, shared
+The owner's original ZIP was verified and restored outside Git to
+`C:/AI/character-lab/windows-proof-20260912/original/`: all 71 members and 27,336,577 expanded bytes
+matched their pinned hashes. All 33 newly extracted crops matched their original source rectangles
+pixel-for-pixel. All three source sheets are opaque. The standard review card was composed twice with
+identical bytes in this Windows runtime and inspected; crop fragments remain, and it is not a cleaned
+sprite sheet. Prior CPU evidence remains attributed to its original session. Raw Windows logs and
+draft reports are retained under `.runtime/session-2026-09-12/character-review/`. The live pilot, shared
 execution and review/repair work remain in #64/#65/#66; `HUMAN_TODO.md` and canon acceptance remain open.
 
 ## Voice runtime consistency and recovery - 12 September 2026
