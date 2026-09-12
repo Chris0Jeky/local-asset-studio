@@ -184,6 +184,10 @@ Measured on this PC (ComfyUI 0.35.0, ROCm 7.2.1, RX 9070 XT 16 GB, 32 GB RAM):
 | Run | Time | Evidence |
 |---|---|---|
 | Krea 2 Turbo, 768×1152, 15 steps, NIJISIS @1.0 | **986.6 s** | ComfyUI prompt `09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 12 Sep 2026 |
+| Krea 2 Turbo, 768×1152, 15 steps, TextFusion @1.0 + Niji Sweet Spot @1.0 | **941.2 s** | prompt `412b3c9f-162b-434b-a2a6-e57635f82da1` |
+| same stack + 4-step distill LoRA @0.85, 4 steps | **270.9 s** | prompt `d7bd3104-f348-46e6-811e-3b1d918c75c3`; quality on par with 15 steps |
+| `krea-anime-atelier` "4-step audition" through a Studio job | **197.0 s** | job `db02f6b1-8346-4361-a432-7734fc72d2c2` |
+| `wai` / `noob` / `anime` / `pony` fantasy portraits, 832×1216, 28–30 steps (Studio jobs) | **26–30 s** each | see `experiments/curated/anime-fantasy-atelier/` |
 | Krea 2 retro-anime, 512×768, 8 steps | **188.7 s** | prompt `144048d4-d6ea-4142-87f5-bdf11d87031c` |
 | Manga Line Art (SDXL), 512×768, 20 steps | **34.2 s** | prompt `6e37e90d-ef45-4e07-af31-045b4938fe53` |
 | Anima Aesthetic (SDXL), 512×768, 24 steps | **20.0 s** | prompt `6d136e16-132f-4964-a07b-988a2a34b5ac` |

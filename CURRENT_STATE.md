@@ -1,16 +1,32 @@
 # Current state — 11 September 2026
 
-## Plan — anime & fantasy atelier (12 September 2026)
+## Anime & fantasy atelier — executed (12 September 2026)
 
-Planned, not executed: four LoRA slots per preset with zero-strength pruning, an installed-LoRA and
-sampler options endpoint, a sourced settings knowledge base with a grid/remix planner, named recipes,
-prompt wildcards, two new Krea 2 Turbo presets, corrected SDXL anime grammars, download/intake scripts
-and the [atelier guide](docs/ANIME-FANTASY-ATELIER.md). No agent submitted a generation for any of it;
-every new or restructured preset ships `verified: false`, and the only local measurement behind the
-plan is a direct ComfyUI API probe of Krea 2 Turbo with NIJISIS at 768×1152 and 15 steps — prompt
-`09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 986.6 seconds, submitted before these presets existed, so it
-proves the model and adapter combination and nothing about the bindings. Results, when they exist,
-belong in the executed sections below, not here.
+The Studio now has four LoRA slots per preset (a slot at strength 0 is pruned from the submitted graph),
+an installed-LoRA and sampler options endpoint, a sourced settings knowledge base with a grid/remix planner,
+named recipes, prompt wildcards, two new Krea 2 Turbo presets (`krea-anime-atelier`, `krea-style-lab`),
+corrected SDXL anime grammars with clip-skip for Pony, download/intake scripts and the
+[atelier guide](docs/ANIME-FANTASY-ATELIER.md). 31 Krea 2 adapters were installed from Hugging Face
+with SHA-256 receipts (official Comfy-Org styles, 21 fal styles, the 4-step distill LoRA, TextFusion
+refusal-reduction and Niji Sweet Spot mirrors) and pinned in `models/library.json`.
+
+Executed and inspected, all on 12 September (details, hashes and recipes in
+[experiments/curated/anime-fantasy-atelier](experiments/curated/anime-fantasy-atelier/README.md)):
+Krea 2 Turbo + NIJISIS at the reference image's settings (768×1152, 15 steps, euler_ancestral/simple,
+prompt `09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 986.6 s); the reference's TextFusion + Niji Sweet Spot
+stack (`412b3c9f-162b-434b-a2a6-e57635f82da1`, 941.2 s) and the same stack with the 4-step distill LoRA
+(`d7bd3104-f348-46e6-811e-3b1d918c75c3`, 270.9 s, comparable quality); `krea-anime-atelier` through a
+Studio job (`db02f6b1-8346-4361-a432-7734fc72d2c2`, prompt `150cde70-459e-4beb-b2a3-cb6f6631eb17`, 197 s
+at 4 steps, NIJISIS slot pruned); and the `wai`, `noob`, `anime` and `pony` fantasy-portrait variants
+through Studio jobs (26–30 s each at 832×1216, both LoRA slots pruned). Those five presets are
+`verified: true` for exactly those graphs. One probe (`af39c7de-8bad-47d5-a9ba-8e3333ef8573`) failed with
+a HIP out-of-memory at 768×1152 after several Krea runs in one ComfyUI process, and the secondary
+exception killed ComfyUI's prompt worker; ComfyUI was restarted and the failure is recorded, not repeated.
+
+Not executed: the koukouya LoRA from the reference image (civitai login required; HUMAN_TODO q-1),
+`krea-style-lab`, the recipes marked `unverified`, the planner-driven comparisons (the plan route was
+exercised without reserving budget), the Krea 2 Q5 GGUF speed comparison (download in progress), and any
+art acceptance — [HUMAN_TODO.md](HUMAN_TODO.md) keeps the creative choices open.
 
 ## Creative production milestone
 

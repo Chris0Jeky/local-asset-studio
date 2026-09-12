@@ -1559,7 +1559,7 @@
       "default": 1.0,
       "role": "style",
       "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
-      "sha256": "unpinned",
+      "sha256": "a1aecdad421a5075a8da15c34c2e3bc3cb7d9a242f4fc2abb090c2ad43f1eab2",
       "licence": "krea-2-community-license (repository label)",
       "notes": [
         "present in the ComfyUI loras folder on 2026-09-12 but with no entry in .runtime/downloads/receipts.json, so the bytes are unverified here"
@@ -1578,7 +1578,7 @@
       "role": "style",
       "installed": false,
       "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
-      "sha256": "unpinned",
+      "sha256": "4194343715db34ff37cb5c6454ee7180bb9a7eab50781ddfed6101a12f6b4f31",
       "licence": "krea-2-community-license (repository label)",
       "notes": [
         "NOT installed: only a partial download (fal-krea2-azure-sunlit-storybook.safetensors.part) exists in the ComfyUI loras folder as of 2026-09-12",
@@ -1618,7 +1618,7 @@
       "role": "style",
       "installed": false,
       "source": "https://civitai.com/models/2844656",
-      "sha256": "unpinned",
+      "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
       "licence": "civitai listing; terms not read",
       "notes": [
         "the third adapter in the owner's target image, still missing: civitai downloads need a personal API key",

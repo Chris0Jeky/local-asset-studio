@@ -882,6 +882,25 @@
         1.0,
         1.25
       ]
+    },
+    {
+      "id": "fal-krea2-azure-sunlit-storybook",
+      "name": "Krea 2 / fal azure sunlit storybook",
+      "file": "loras/fal-krea2-azure-sunlit-storybook.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/azure-sunlit-storybook.safetensors",
+      "bytes": 469287984,
+      "sha256": "4194343715db34ff37cb5c6454ee7180bb9a7eab50781ddfed6101a12f6b4f31",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "azure sunlit storybook style",
+      "strength": [
+        1.0,
+        1.25
+      ]
     }
   ],
   "collections": [
