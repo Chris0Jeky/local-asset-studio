@@ -236,7 +236,8 @@ Two presets answer that, both driven by a reference image (upload one, or the au
   the `face_yolov8s` detector, then with `hand_yolov8n`, repainting only the detected crops with WAI v17 at
   denoise 0.4 (faces) / 0.45 (hands). Nothing outside the boxes changes. It is model-agnostic on the input
   side, so a Krea, Anima or SDXL image all go through the same pass; the repaint style is WAI's, which suits
-  anime faces and hands. Start at "Gentle", move to "Strong" for a hand that needs redrawing.
+  anime faces and hands. One denoise control drives both passes: start at "Gentle" (0.3) when only hands need
+  work, use "Strong" (0.55) for a hand that must be redrawn and accept that the face is repainted harder too.
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.

@@ -614,11 +614,7 @@
           "this family does take a negative prompt (node 5 in the authored graphs)",
           "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
           "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776",
-          "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
-          "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776",
-          "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
-          "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\"",
-          "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776"
+          "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\""
         ]
       },
       "defaults": {
@@ -1775,7 +1771,7 @@
       "installed": true,
       "source": "https://civitai.com/models/2844656",
       "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
-      "licence": "civitai listing; terms not read",
+      "licence": "civitai listing for model 2844656 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "the third adapter in the owner's target image 142028671, installed 2026-09-12 with the owner's civitai API key",
         "author settings: 1280x1856 or 1536x1536, weight 1.0, er_sde with simple, 8-10 steps"
@@ -1800,7 +1796,7 @@
       "source": "https://civitai.com/models/2683021?modelVersionId=3012652",
       "sha256": "4b809d9e96aaadefe49748806a07174e17b9d7e44fd02ad84ad751b8538bfb04",
       "bytes": 91872048,
-      "licence": "civitai listing for model 2683021 version 3012652: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2683021 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.7 inside a six-adapter stack",
         "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
@@ -1821,7 +1817,7 @@
       "source": "https://civitai.com/models/2696189?modelVersionId=3027537",
       "sha256": "550dc39728e7ad2e55a3904b62c0bfec5308b2956e09a94a5319ce54ca31e80d",
       "bytes": 91851152,
-      "licence": "civitai listing for model 2696189 version 3027537: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2696189 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.3; Anima base also knows the plain @koukouya artist tag without any adapter",
         "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
@@ -1842,7 +1838,7 @@
       "source": "https://civitai.com/models/2753686?modelVersionId=3098204",
       "sha256": "34ec97ee29a3efa76bc89174f7ebdd05a2b3130c80152007a5ca53d8cf6bc79b",
       "bytes": 91851152,
-      "licence": "civitai listing for model 2753686 version 3098204: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2753686 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.6",
         "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
@@ -1883,7 +1879,7 @@
       "source": "https://civitai.com/models/2830377?modelVersionId=3193726",
       "sha256": "390a59ededd9df62a8c6e9f7dc92d867206649dcc25d2618fe9103d12dbdc6da",
       "bytes": 138663776,
-      "licence": "civitai listing for model 2830377 version 3193726: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2830377 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 1.0 (listed there as V1-390a); civitai file name was an opaque id, renamed on intake",
         "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
@@ -1904,7 +1900,7 @@
       "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
       "sha256": "52107d036a03158f1722942f1a6ea56def7699d4d00c63c629cf91774a7ba21b",
       "bytes": 109091912,
-      "licence": "civitai listing for model 2852885 version 3221815: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2852885 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit, Rent; derivatives NOT allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "reference image 139608451 used it at 0.7",
         "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
@@ -1925,7 +1921,7 @@
       "source": "https://civitai.com/models/2012383?modelVersionId=2972811",
       "sha256": "682af9283b6378b2c4f2b748948b860827247732eb12036227b1e04f15d9be97",
       "bytes": 46006024,
-      "licence": "civitai listing for model 2012383 version 2972811: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "licence": "civitai listing for model 2012383 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
       "notes": [
         "a LoCon (LyCORIS) file; ComfyUI's LoraLoaderModelOnly loads LoCon/LoHa/LoKr natively, no extra node",
         "reference image 139608451 used it at 0.5",

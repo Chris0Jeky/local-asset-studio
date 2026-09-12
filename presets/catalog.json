@@ -1684,6 +1684,12 @@
             "13",
             "scheduler"
           ]
+        ],
+        "denoise": [
+          [
+            "13",
+            "denoise"
+          ]
         ]
       },
       "modality": "image",
@@ -1706,7 +1712,7 @@
       },
       "backend_id": "primary",
       "source": "https://github.com/ltdrdata/ComfyUI-Impact-Pack",
-      "description": "The correction pass for finished anime images from any family: two Impact Pack FaceDetailer stages find faces (face_yolov8s) and then hands (hand_yolov8n) with YOLO, and repaint only those crops with WAI v17 at a low denoise, so the rest of the picture is untouched. The positive text steers the face pass; the hand pass has its own authored text. Denoise 0.4 keeps identity; go to 0.55 only for a broken hand.",
+      "description": "The correction pass for finished anime images from any family: two Impact Pack FaceDetailer stages find faces (face_yolov8s) and then hands (hand_yolov8n) with YOLO, and repaint only those crops with WAI v17 at a low denoise, so the rest of the picture is untouched. The positive text steers the face pass; the hand pass has its own authored text. One denoise control drives both passes (authored 0.4): 0.3 keeps identity, 0.55 redraws a broken hand but also shifts the face.",
       "stages": [
         "Reference image",
         "YOLO face boxes",
@@ -3445,7 +3451,11 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran twice as direct ComfyUI probes (.runtime/probes/anima-stack-aesthetic11-{4,6}adapters.json, 35 s and 25 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0; the second probe carried all six adapters including the kieed LyCORIS file with no key warnings. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look is not."
+      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran twice as direct ComfyUI probes (.runtime/probes/anima-stack-aesthetic11-{4,6}adapters.json, 35 s and 25 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0; the second probe carried all six adapters including the kieed LyCORIS file with no key warnings. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look is not.",
+      "dimension_limits": [
+        64,
+        1856
+      ]
     },
     {
       "id": "wan22-t2v",
