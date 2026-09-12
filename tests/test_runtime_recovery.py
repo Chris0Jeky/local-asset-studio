@@ -66,8 +66,11 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(self.recovery.snapshot()["status"], "startup")
 
     def test_refusal_probe_waits_for_the_windows_refusal_deadline(self):
+        def windows_request(profile, route, timeout):
+            if timeout < 2: raise URLError(TimeoutError('Windows has not returned refusal yet'))
+            raise URLError(OSError(errno.ECONNREFUSED, 'refused'))
+        self.studio.backends.request = windows_request
         self.recovery.tick()
-        self.assertEqual(self.studio.backends.timeouts,[REFUSAL_PROBE_TIMEOUT])
         self.assertEqual(self.studio.backends.launches,1)
 
     def test_non_refused_timeout_never_authorizes_a_launch(self):
