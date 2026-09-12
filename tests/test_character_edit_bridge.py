@@ -15,17 +15,26 @@ def png(size=(88,96), colour=(80,100,120,255)):
     stream=io.BytesIO();Image.new('RGBA',size,colour).save(stream,format='PNG');return stream.getvalue()
 
 
+def fixture_preset():
+    return {'id':'qwen-2ref','graph':'workflows/api/qwen-2ref-api.json',
+            'positive':['1','text'],'seed':['1','seed'],'width':['1','width'],
+            'reference_slots':[{'role':'identity','binding':['4','image']},
+                               {'role':'pose','binding':['16','image']}]}
+
+
 def handoff(root):
     # This is a protocol fixture, not a canon approval or a production plan.
     for name,raw in [('source.png',png()),('context.png',png()),('identity.png',png((64,64))),('plan.json',b'{}')]:
         (root/name).write_bytes(raw)
-    template=b'{"fixture":"Qwen protocol boundary; no model"}'
+    template=b.canonical({'1':{'class_type':'TestOnly','inputs':{'text':'base','width':88,'seed':1}},
+                          '4':{'class_type':'LoadImage','inputs':{'image':'base.png'}},
+                          '16':{'class_type':'LoadImage','inputs':{'image':'base.png'}}})
     value={'schema_version':1,'kind':'character_edit_studio_handoff','plan':b.artifact(root,'plan.json'),
         'edit_plan_sha256':'1'*64,'document_sha256':'2'*64,'bundle':'prepared','bundle_sha256':'3'*64,
         'originals':[b.artifact(root,'source.png'),b.artifact(root,'plan.json')],
         'references':[{'image':b.artifact(root,'context.png'),'role':'composition','contribution':'Current crop','avoid':'Unrequested edits'},
                       {'image':b.artifact(root,'identity.png'),'role':'identity','contribution':'Identity','avoid':'Pose'}],
-        'size':[88,96],'seeds':[11,22],'preset_id':'qwen-2ref','template_sha256':b.digest(template),'positive':'Repair the hand.',
+        'size':[88,96],'seeds':[11,22],'preset_id':'qwen-2ref','template_sha256':b.digest(template),'native_preset':fixture_preset(),'preset_sha256':b.hashed(fixture_preset()),'positive':'Repair the hand.',
         'max_candidates':3,'reserved_repairs':1,'max_seconds':1800,'budget_owner':'test-only',
         'policy':{'eligible_by_preference':True},'scope':'fixture','context_conversion':'fixture','submits_generation':False}
     value['sha256']=b.hashed(value); (root/'handoff.json').write_bytes(b.canonical(value));return value,template
@@ -34,10 +43,19 @@ def handoff(root):
 class InertStudio:
     def __init__(self, template):
         self.template=template;self.calls=[];self.uploads={};self.projects={};self.assets=[];self.files={};self.recipes={}
+        self.preset=fixture_preset()
         self.identity={'app':'local-asset-studio','workspace':'fixture-workspace','version':'fixture'}
         self.lost_create=False;self.lost_start=False;self.create_commits=True;self.preview_hook=lambda p:p
     def graph(self, request):
-        return {'1':{'class_type':'TestOnly','inputs':copy.deepcopy(request)}}
+        # Independent tiny compiler fixture. The real repo compiler is exercised by NativeHTTP.
+        graph=json.loads(self.template)
+        for control,value in request['controls'].items():
+            node,field=self.preset[control];graph[node]['inputs'][field]=value
+        for slot,ref in zip(self.preset['reference_slots'],request['references']):
+            node,field=slot['binding'];graph[node]['inputs'][field]=ref['file']
+        lines=[f"Image {i+1} — {r['role']}: use {r['contribution'].strip() or 'the assigned visual role'}. Avoid transferring: {r['avoid'].strip() or 'unrequested details'}." for i,r in enumerate(request['references'])]
+        node,field=self.preset['positive'];graph[node]['inputs'][field]='\n'.join(lines)+'\n\nRequested result:\n'+request['controls']['positive']
+        return graph
     def preview(self, request):
         refs=copy.deepcopy(request['references'])
         refs[0]['transform']={'vae_size':[request['controls']['width'],96]}
@@ -46,6 +64,7 @@ class InertStudio:
     def request(self, method,path,body=None,**options):
         self.calls.append((method,path,copy.deepcopy(body),options))
         if path=='/api/identity':return copy.deepcopy(self.identity)
+        if path=='/api/catalog':return {'presets':[copy.deepcopy(self.preset)]}
         if path.startswith('/api/workflows/'):return self.template
         if path=='/api/upload':
             name=uuid.uuid4().hex+'_'+options['filename']+'.png';self.uploads[name]=body
@@ -100,6 +119,32 @@ class BridgeProtocol(unittest.TestCase):
     def staged(self):return self.bridge.stage()['project']['id']
     def complete(self):
         pid=self.staged();self.bridge.start();aid=self.http.finish(pid);return pid,aid
+    def test_catalog_only_reference_swap_blocks_before_upload(self):
+        slots=self.http.preset['reference_slots'];slots[0]['binding'],slots[1]['binding']=slots[1]['binding'],slots[0]['binding']
+        with self.assertRaisesRegex(ValueError,'catalog bindings'):self.bridge.stage()
+        self.assertEqual(0,self.http.count('POST','/api/upload'))
+        self.assertEqual(0,self.http.count('POST','/api/production'))
+    def test_catalog_drift_after_staging_blocks_start(self):
+        pid=self.staged();self.http.preset['seed']=['1','width']
+        with self.assertRaisesRegex(ValueError,'catalog bindings'):self.bridge.start()
+        self.assertEqual(0,self.http.count('POST','/api/production/'+pid+'/start'))
+    def test_reference_swap_race_during_preview_is_not_a_new_baseline(self):
+        original=self.http.request;swapped=False
+        def drift(method,path,*args,**kw):
+            nonlocal swapped
+            if path=='/api/preview' and not swapped:
+                slots=self.http.preset['reference_slots'];slots[0]['binding'],slots[1]['binding']=slots[1]['binding'],slots[0]['binding'];swapped=True
+            return original(method,path,*args,**kw)
+        with patch.object(self.http,'request',side_effect=drift):
+            with self.assertRaisesRegex(ValueError,'pinned catalog projection'):self.bridge.stage()
+        self.assertEqual(0,self.http.count('POST','/api/production'))
+    def test_ui_derived_catalog_fields_do_not_invalidate_bindings(self):
+        self.http.preset.update(defaults={'seed':99},missing_loras=[],runtime_block=None)
+        self.staged()
+    def test_runtime_block_rejected_before_upload(self):
+        self.http.preset['runtime_block']='Switch backend first'
+        with self.assertRaisesRegex(ValueError,'runtime is blocked'):self.bridge.stage()
+        self.assertEqual(0,self.http.count('POST','/api/upload'))
     def test_stage_binds_roles_without_starting(self):
         pid=self.staged();self.assertEqual('staged',self.bridge.state()['phase'])
         self.assertEqual(0,self.http.projects[pid]['budget']['reserved'])
@@ -179,7 +224,7 @@ class BridgeProtocol(unittest.TestCase):
         pid=self.staged();self.http.projects[pid]['plan']['bundle']['inputs'][0]['sha256']='f'*64
         with self.assertRaisesRegex(ValueError,'exact uploaded'):self.bridge.start()
     def test_remote_graph_drift_rejected_even_if_rehashed(self):
-        pid=self.staged();p=self.http.projects[pid]['plan'];p['stages'][0]['graph']['1']['inputs']['controls']['positive']='changed'
+        pid=self.staged();p=self.http.projects[pid]['plan'];p['stages'][0]['graph']['1']['inputs']['text']='changed'
         p['stages'][0]['graph_sha256']=b.digest(json.dumps(p['stages'][0]['graph'],sort_keys=True,separators=(',',':')).encode())
         p['sha256']=b.digest(json.dumps({k:v for k,v in p.items() if k!='sha256'},sort_keys=True,separators=(',',':')).encode())
         with self.assertRaisesRegex(ValueError,'graph changed'):self.bridge.start()
@@ -255,6 +300,8 @@ class Validation(unittest.TestCase):
     def test_repairs_counted_in_same_allowance(self):self.check('max_candidates',2)
     def test_false_policy(self):self.check('policy',{'eligible_by_preference':False})
     def test_unsupported_profile(self):self.check('preset_id','some-random-model')
+    def test_positive_prompt_matches_server_limit(self):self.check('positive','x'*8001)
+    def test_native_preset_digest_rejected(self):self.check('preset_sha256','0'*64)
     def test_wrong_model_context_size(self):self.check('size',[64,64])
     def test_duplicate_json_keys(self):
         with self.assertRaises(ValueError):b.decode(b'{"x":1,"x":2}')

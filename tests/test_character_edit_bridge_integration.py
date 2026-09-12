@@ -47,6 +47,19 @@ class Preparation(unittest.TestCase):
         self.plan['intent']['document_sha256']=sha(self.plan['document'])
         self.plan=edit.make_plan(self.plan['document'],self.plan['intent'],self.plan['catalog'])
         (self.root/'bridge-plan.json').write_text(json.dumps(self.plan),encoding='utf-8')
+    def test_oversized_native_prompt_rejected_before_output_creation(self):
+        self.plan['intent']['changes'][0]['instruction']='x'*8000;self.rewrite()
+        with self.assertRaisesRegex(ValueError,'8000'):self.prepare()
+        self.assertFalse((self.root/'handoff').exists())
+    def test_exact_native_prompt_limit_is_retained(self):
+        suffix=bridge.compile_instruction([{'instruction':''}])
+        self.plan['intent']['changes'][0]['instruction']='x'*(8000-len(suffix));self.rewrite()
+        value=self.prepare();self.assertEqual(8000,len(value['positive']))
+    def test_handoff_pins_real_catalog_and_raw_template(self):
+        value=self.prepare();catalog=read_json(ROOT/'presets/catalog.json')
+        preset=next(p for p in catalog['presets'] if p['id']==value['preset_id'])
+        self.assertEqual(bridge.preset_contract(preset),value['native_preset'])
+        self.assertEqual(bridge.hashed(value['native_preset']),value['preset_sha256'])
     def test_actual_native_handoff_prepares_no_network(self):
         with patch.object(bridge.StudioHTTP,'request',side_effect=AssertionError('Unexpected HTTP')):
             value=self.prepare()
@@ -143,6 +156,14 @@ class NativeHTTP(unittest.TestCase):
         self.client=bridge.StudioHTTP(self.http.server_port,timeout=10);self.bridge=bridge.Bridge(self.art,'handoff/handoff.json',self.client)
     def shutdown(self):
         self.http.shutdown();self.http.server_close();self.worker.join(timeout=5)
+    def test_real_catalog_binding_swap_is_blocked_without_generation(self):
+        path=self.repo/'presets/catalog.json';catalog=read_json(path)
+        preset=next(p for p in catalog['presets'] if p['id']=='qwen-2ref')
+        slots=preset['reference_slots'];slots[0]['binding'],slots[1]['binding']=slots[1]['binding'],slots[0]['binding']
+        path.write_text(json.dumps(catalog))
+        with self.assertRaisesRegex(ValueError,'catalog bindings'):self.bridge.stage()
+        self.assertEqual([],self.studio.production.list());self.assertTrue(self.studio.queue.empty())
+        self.assertEqual([],self.inference_calls)
     def test_real_http_queue_capture_and_protected_composition(self):
         source_sha=file_sha(self.art/'source.png')
         pid=self.bridge.stage()['project']['id'];self.assertEqual([],self.inference_calls);self.assertTrue(self.studio.queue.empty())

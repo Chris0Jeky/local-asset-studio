@@ -1,6 +1,6 @@
 # Controlled edits through the existing Studio
 
-This is the runtime follow-up to [the offline editing bridge](EDITING.md), scoped to #71/#65. `scripts/character_edit_bridge.py` is a local-agent **client**, not another server, model runner or GPU queue. It can prepare an edit, upload its references, create an ordinary Production comparison, explicitly start it, retrieve a completed candidate and compose that candidate through the original mask.
+This is the runtime follow-up to [the offline editing bridge](EDITING.md), scoped to #71/#65. `scripts/character_edit_bridge.py` is a local-agent **client**, not another server, model runner or GPU queue. It can prepare an edit, upload its references, create an ordinary Production comparison, explicitly start it, retrieve a completed candidate and compose that candidate through the original mask. Transport/artifact IO and pure preparation contracts live in the companion `character_edit_bridge_io.py` and `character_edit_bridge_plan.py` modules.
 
 The same project is visible in the existing Studio Production/Review interface. The client does not make an artistic acceptance decision or import a result into a live Krita layer. Native document synchronization and multi-actor generation remain later #71 work.
 
@@ -26,6 +26,8 @@ python scripts/character_edit_bridge.py prepare --workspace C:/AI/character-lab/
 
 This checks the real canon schema/attestation, reference hashes, mask scope and the current local route evidence. It emits the exact context bundle, model-facing context, role map, compiled instruction, local native-template hash and all source dependencies. The identity image must be an identity reference of the approved canon. It is not sufficient to point an actor at some other image while retaining the same canon file.
 
+The compiled positive instruction must fit Studio's 8,000-character input limit, including the bridge's visible instruction suffix. Overlength input is rejected before an output directory or upload is created; text is never silently truncated.
+
 Read `handoff-v1/handoff.json`, including the scope and policy warnings. An approval record is a local attestation, not cryptographic reviewer authentication. No tool here can infer the owner's creative choices.
 
 ### 2. Stage through Studio; uploads and preflight only
@@ -36,7 +38,7 @@ Start Studio normally. Then:
 python scripts/character_edit_bridge.py stage --workspace C:/AI/character-lab/my-edit --handoff handoff-v1/handoff.json
 ```
 
-The client verifies the Studio workspace identity and live raw template; uploads and reads back exact PNG bytes; previews each seed through the real Studio reference compiler; checks role order, dimensions and single-image semantics; then creates one ordinary Production comparison. It verifies the resulting graph and the exact Comfy input hashes pinned by Production. Stage never calls `/api/jobs`, `/prompt`, a model loader or a generation start endpoint.
+The client verifies the Studio workspace identity, live raw template and the pinned authored catalogue entry (excluding only derived UI defaults, runtime-block text and missing-LoRA display fields); uploads and reads back exact PNG bytes; previews each seed through the real Studio reference compiler; checks role order, dimensions and single-image semantics; then creates one ordinary Production comparison. It independently projects the prepared control/reference bindings into the pinned template and requires each native preview to match. A slot swap between the catalogue read and Preview cannot become a new self-consistent baseline. It then verifies the resulting graph and the exact Comfy input hashes pinned by Production. Stage never calls `/api/jobs`, `/prompt`, a model loader or a generation start endpoint.
 
 The returned project contains the actual Production bundle and identifier. Inspect it and the normal Studio comparison before starting. Model/node preflight still belongs to Studio and can fail if its configured runtime is incomplete. Installation state is not inferred from a source-reviewed preset.
 
@@ -47,7 +49,7 @@ python scripts/character_edit_bridge.py start --workspace C:/AI/character-lab/my
 python scripts/character_edit_bridge.py status --workspace C:/AI/character-lab/my-edit --handoff handoff-v1/handoff.json
 ```
 
-Start rechecks original source bytes, workspace identity, template and pinned Production plan. Its intent is persisted **before** the HTTP request. Studio reserves the existing root allowance and owns execution, prompt IDs, stopping and any uncertain-job reconciliation. The client does not poll in a background loop, repeat Start, start ComfyUI or interrupt another job. Use the existing Studio Stop control for a running comparison.
+Start rechecks original source bytes, workspace identity, template, authored catalogue bindings and pinned Production plan. A runtime-blocked preset is rejected separately from catalogue identity. Its intent is persisted **before** the HTTP request. Studio reserves the existing root allowance and owns execution, prompt IDs, stopping and any uncertain-job reconciliation. The client does not poll in a background loop, repeat Start, start ComfyUI or interrupt another job. Use the existing Studio Stop control for a running comparison.
 
 One receipt directory, `.edit-bridge-<edit-plan-sha256>/`, is used per immutable edit plan in the local workspace. Repeating the command or supplying another seed list/output folder does not create another comparison allowance. A matching server-side project name also blocks accidental duplicate creation. This is a cooperative local-client rule, **not a global authorization boundary against arbitrary clients or copied/rehashed plans**. Linking independent edit revisions and future repair plans to a shared campaign root remains #65/#71.
 
@@ -88,6 +90,8 @@ python scripts/character_edit_bridge.py reconcile --workspace C:/AI/character-la
 ```
 
 State replacement is atomic in the local filesystem, with fsynced file contents and retained intent phases. It is not a distributed transaction, an exactly-once guarantee or a power-loss guarantee for every filesystem. The Production database-commit/plan-file recovery gap remains owned by #65; this client leaves such an uncertain result visible instead of creating a replacement.
+
+Pre-review handoffs without the authored-catalogue pin are rejected. Preserve their receipt directories and any existing Production project. Do not delete a journal or blindly recompile to gain another allowance. Inspect the old project in Studio first; a started/uncertain project must be reconciled and its actual outputs retained before planning any new generation. An explicitly abandoned, never-started plan can be replaced by a reviewed new edit revision; this is not automatic migration or cross-revision budget enforcement.
 
 ## Artistic-control policy
 
