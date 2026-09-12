@@ -20,6 +20,8 @@ the client, not authentication or a creative approval.
 While a command or manual reload is pending, clip fields and document actions are disabled, including
 export, cancel, scene switching and new-scene creation. Polling cannot overwrite a newer command
 response. Render completion updates the global status and artifact links show their filenames.
+An earlier polling error currently stays in the global status until a manual action; the render panel
+still updates after successful polling. This display issue remains tracked in #30.
 
 ## CLI and MCP
 
