@@ -1,5 +1,29 @@
 # Current state — 11 September 2026
 
+## Runtime safeguards and local native-engine proof — 12 September 2026
+
+Runtime/install safeguards PR #41 merged as `e279509` after current-base CI and a fresh independent
+review with no blocking defects. The Windows dependency-equipped suite discovered 328 tests: 325
+passed, three directory-symlink privilege skips. Read-only runtime checks identified the actual primary
+listener and idle queue, and found all required primary/HiDream/H3 files. No backend switch or model
+download was performed for that verification. Redirect transport policy remains tracked in issue #48.
+Receipts: `.runtime/session-2026-09-12/runtime-safety/`.
+
+The native-engine adapter ran **all five opt-in tests on this PC's configured Godot 4.7.2**, Node
+24.19.0 and locked Khronos glTF validator 2.0.0-dev.3.10, with no skips. Actual loops and one-shot
+completion retained the four ordered frames and completed at 479.1667 ms of simulation time against
+480 ms authored timing. Animated GLB pose/material checks, skin inventory and tamper rejection passed;
+an invalid accessor was rejected by Khronos before Godot startup. Headless tests do not establish
+rendering performance, visual quality, collision/root-motion correctness or gameplay acceptance.
+The GLB tamper test deliberately leaves its packaged copy modified; that fixture is not an approved
+export. Local reports, logs, runtime executable hash and source fixtures are preserved under
+`.runtime/session-2026-09-12/native-evidence/`. Primary runtime configuration is a separate setup step.
+
+Repair actions and the Gentle trial landed in PR #47 (`fb0d38d`). Its code/CI checks passed, but the
+merge happened 160 seconds after the final push, **20 seconds short of the required 180-second age**.
+That waiting gate was unmet and is recorded on the PR; subsequent merges check a persisted push time.
+No human creative choice or rights clearance is implied by these changes; see `HUMAN_TODO.md`.
+
 ## Review desk and direct correction handoffs — 12 September 2026
 
 PR #43 is merged as `4b6b94e`: completed image comparisons can open a revisioned Review desk with
