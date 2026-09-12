@@ -6,13 +6,26 @@ const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
-let recipeTemplateHash = null, parentAssets = [], serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
+let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
-function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
+function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
+// Lineage is attributed per attachment point. A slot-less input records its source in parentByInput;
+// a role slot records it on the reference record itself (parent_asset, supplied by
+// /api/assets/reference). A parent survives while any attachment point still claims it, and a parent
+// with no attribution anywhere - a job-exported recipe, a production branch - is never dropped by an
+// edit: only the point that changed may release what that point claimed.
+function parentClaimed(id) { const attached=typeof attachedReferencePayload==='function'?attachedReferencePayload():[]; return Object.values(parentByInput).includes(id)||attached.some(r=>r.file&&!r.missing&&r.parent_asset===id); }
+function releaseParentAsset(id) { if(id&&!parentClaimed(id))parentAssets=parentAssets.filter(p=>p!==id); }
+function releaseInputParent(input) { if(!(input in parentByInput))return; const id=parentByInput[input]; delete parentByInput[input]; releaseParentAsset(id); }
+function claimInputParent(input, id) { releaseInputParent(input); if(!id)return; if(!selected?.reference_slots?.length)parentByInput[input]=id; if(!parentAssets.includes(id))parentAssets=[...parentAssets,id]; }
+// Pulling a saved source into one attachment point replaces whatever that point held before.
+function replaceParentAsset(input, previous, id) { releaseParentAsset(previous); claimInputParent(input, id); }
+// A handoff declares the whole lineage: this run descends from one source, on one input.
+function setHandoffParent(input, id) { parentAssets=[]; parentByInput={}; claimInputParent(input, id); }
 function renderPresets() {
   if (!catalog) return;
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
@@ -208,6 +221,10 @@ function applySaved(s){
   Object.entries(s.controls||{}).forEach(([k,v])=>{const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
+  // A saved setup round-trips each role record's parent_asset, but a job-exported recipe carries only the
+  // flat list. Attribute it when there is exactly one parent and exactly one filled input; anything more
+  // ambiguous stays unattributed, and an unattributed parent is never dropped by a later edit.
+  if(!selected.reference_slots?.length){const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};}
   $('#batch').value=s.batch_count||s.batch||1;message('Recipe loaded. Review the settings before generating.');
 }
 async function exportRecipe(id){const data=await api('/api/jobs/'+encodeURIComponent(id)+'/recipe'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='asset-studio-recipe.json';a.click();URL.revokeObjectURL(a.href);}
@@ -219,7 +236,7 @@ $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.v
 $('#loraSlots').onchange=updateLoraHints;
 $('#recipeSelect').onchange=e=>{if(e.target.value==='')return;try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
 $('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);};
-$('#reference').onchange=()=>uploaded=null;$('#lastReference').onchange=()=>lastUploaded=null;
+$('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;submitting=true;updateReady();
   try{
@@ -238,7 +255,7 @@ $('#gallery').onclick=async e=>{
       const result=await post('/api/assets/reference',{id:source.asset_id});
       if(ref.dataset.preset)selectPreset(ref.dataset.preset);
       if(!selected?.reference)selectPreset(catalog.presets.find(p=>p.id==='gentle-variation')?.id || catalog.presets.find(p=>p.reference&&p.modality==='image').id);
-      uploaded=result.file;parentAssets=[source.asset_id];
+      uploaded=result.file;setHandoffParent('reference',source.asset_id);
       if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
       $('#reference').value='';
       $('#referenceHint').textContent='Using the selected output as the reference. It has been copied into this recipe.';

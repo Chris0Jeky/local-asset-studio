@@ -78,4 +78,7 @@ async function metadataResponses() {
   assert.deepEqual(requests.map(r => r.url), ['/api/prompt/profiles', ...Array(3).fill('/api/prompt/metadata')]);
   assert.equal(pending.length, 3, 'Oversize selection must not upload');
 }
-startup(true).then(() => startup(false)).then(metadataResponses).catch(error => { console.error(error); process.exitCode = 1; });
+// Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
+startup(true).then(() => startup(false)).then(metadataResponses)
+  .then(() => console.log('Prompt Lab frontend contracts passed: profile startup, HTTP failure reporting and metadata selection.'))
+  .catch(error => { console.error(error); process.exitCode = 1; });
