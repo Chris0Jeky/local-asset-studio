@@ -18,7 +18,7 @@ async function uploadRoleFile(index,file){
   try{
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
-    if(epoch===referenceEpoch){Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});pruneParentAssets();}
+    if(epoch===referenceEpoch){const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);}
   }catch(e){message(e.message,true);$('#referenceSummary').textContent=e.message;}
   finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
 }
@@ -36,13 +36,15 @@ async function restoreReferenceSlots(records){
 }
 function attachedReferencePayload(){return selected?.reference_slots?.length?referenceRecords.map(r=>({...r})):[];}
 $('#referenceMode').onchange=e=>{
-  const previous=referenceRecords.map(r=>({...r})),parents=[...parentAssets],controls=values();
-  selectPreset('qwen-'+e.target.value+'ref');parentAssets=parents;
+  const previous=referenceRecords.map(r=>({...r})),parents=[...parentAssets],inputs={...parentByInput},controls=values();
+  selectPreset('qwen-'+e.target.value+'ref');parentAssets=parents;parentByInput=inputs;
   for(const [key,value] of Object.entries(controls)){
     if(key==='positive'||key==='negative')$('#'+key).value=value;
     else{const input=getControl(key);if(input)input.value=value;}
   }
-  referenceRecords=referenceRecords.map((r,i)=>previous[i]||r);pruneParentAssets();renderReferenceSlots();
+  referenceRecords=referenceRecords.map((r,i)=>previous[i]||r);
+  for(const dropped of previous.slice(referenceRecords.length))releaseParentAsset(dropped.parent_asset);
+  renderReferenceSlots();
 };
 $('#referenceCards').addEventListener('change',e=>{
   const d=e.target.dataset;
@@ -54,7 +56,7 @@ $('#referenceCards').onclick=e=>{
   const up=e.target.closest('[data-ref-up]'),down=e.target.closest('[data-ref-down]'),clear=e.target.closest('[data-ref-clear]');
   if(!up&&!down&&!clear)return;
   referenceEpoch++;referencePending=0;
-  if(clear){const i=Number(clear.dataset.refClear);referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};pruneParentAssets();}
+  if(clear){const i=Number(clear.dataset.refClear),previous=referenceRecords[i].parent_asset;referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};releaseParentAsset(previous);}
   else{const i=Number((up||down).dataset[up?'refUp':'refDown']),j=i+(up?-1:1);[referenceRecords[i],referenceRecords[j]]=[referenceRecords[j],referenceRecords[i]];}
   renderReferenceSlots();
 };
