@@ -112,6 +112,7 @@ class Production:
 
     def create(self, payload):
         with self.studio.lock:
+            if isinstance(payload,dict) and 'character_handoff' in payload:return self._character_handoff(payload)
             return self._create(payload)
 
     def plan(self, payload):
@@ -161,7 +162,36 @@ class Production:
             result.append({'label':label,'controls':copy.deepcopy(controls),'rationale':rationale,'sources':sources[:12]})
         return result
 
-    def _create(self, payload):
+    def _verify_character_reference_inputs(self, graph, bundle, character_source):
+        """Pin the bytes a prepared graph will load, including pre-existing Comfy inputs."""
+        approved={item['file']: item['sha256'] for item in character_source['uploads']}
+        if len(approved)!=len(character_source['uploads']):raise ValueError('Character handoff has duplicate reference inputs')
+        graph_names=[]
+        for node in graph.values():
+            if node.get('class_type')!='LoadImage':continue
+            name=(node.get('inputs') or {}).get('image')
+            if not isinstance(name,str) or Path(name).name!=name or name not in approved:
+                raise ValueError('Prepared graph has a reference input outside the approved handoff')
+            graph_names.append(name)
+        if sorted(graph_names)!=sorted(approved):raise ValueError('Prepared graph does not bind every approved character reference')
+        inputs=bundle.get('inputs') if isinstance(bundle,dict) else None
+        if not isinstance(inputs,list):raise ValueError('Production preflight did not pin character reference inputs')
+        actual={}
+        for item in inputs:
+            if not isinstance(item,dict) or not isinstance(item.get('path'),str) or not isinstance(item.get('sha256'),str):
+                raise ValueError('Production preflight returned an invalid character reference input')
+            name=Path(item['path']).name
+            if name not in approved or name in actual or item['sha256']!=approved[name]:
+                raise ValueError('Production preflight reference bytes differ from the approved handoff')
+            actual[name]=item['sha256']
+        if actual!=approved:raise ValueError('Production preflight did not pin every approved character reference')
+        input_root=(self.studio.comfy_root/'input').resolve()
+        for name,digest in approved.items():
+            path=(input_root/name).resolve()
+            if not path.is_relative_to(input_root) or not path.is_file() or self._file_hash(path)!=digest:
+                raise ValueError('Prepared Comfy reference bytes differ from the approved handoff')
+
+    def _create(self, payload, *, character_source=None, root_override=None, allowance_override=None, identifier_override=None):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
         name=payload.get('name','')
@@ -205,6 +235,7 @@ class Production:
                 for node,field in ([preset[key]] if preset.get(key) else [])+(preset.get('bindings_extra') or {}).get(key,[]):
                     if prompting.has_wildcards(graph.get(str(node),{}).get('inputs',{}).get(str(field))):raise ValueError('Resolve prompt wildcards ({a|b}, __name__) before planning a comparison; they would re-roll per stage')
             stage_bundle=self.studio.production_preflight(preset,graph)
+            if character_source is not None:self._verify_character_reference_inputs(graph,stage_bundle,character_source)
             if bundle is None:bundle=stage_bundle
             else:
                 # Pruned LoRA slots make stage graphs heterogeneous: pin every model any stage loads.
@@ -220,12 +251,17 @@ class Production:
         # Different labels are not different work: two planned variants that resolve
         # to the same graph would spend two reservations on one image.
         if variants is not None and len({s['graph_sha256'] for s in stages})!=len(stages):raise ValueError('Planned variants must resolve to different graphs')
-        identifier=uuid.uuid4().hex
+        identifier=identifier_override or uuid.uuid4().hex
         parent=payload.get('parent_project')
         with self.lock,self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             if parent:
                 previous=self._get(parent,db);root_id=previous['root_id']
+            elif root_override:
+                root_id=root_override;allowance=allowance_override
+                existing=db.execute('SELECT allowance FROM budgets WHERE id=?',(root_id,)).fetchone()
+                if existing is None:db.execute('INSERT INTO budgets(id,allowance) VALUES (?,?)',(root_id,allowance))
+                elif existing['allowance']!=allowance:raise ValueError('Study budget identity has a different allowance')
             else:
                 root_id=identifier
                 allowance=self._integer(payload.get('max_generations',len(stages)),'Generation budget',1,16)
@@ -234,7 +270,7 @@ class Production:
             plan={'version':1,'kind':'comparison','name':name.strip(),'recipe':recipe,'axis':axis,'values':values,
                   'variants':variants,'knowledge_sha256':settings_planner.load_kb(self.studio.root)[1] if variants is not None else None,
                   'parent_project':parent,'max_seconds':max_seconds,'stages':stages,'bundle':bundle,
-                  'repair_allowance':0,'review':'unreviewed','created_at':time.time()}
+                   'repair_allowance':0,'review':'unreviewed','created_at':time.time(),'character_source':character_source}
             plan['sha256']=fingerprint(plan)
             state={'status':'planned','message':'Ready for explicit Start. No generation submitted.','attempts':{},'artifacts':[],
                    'stop_requested':False,'review':{'status':'unreviewed','notes':''}}
@@ -242,6 +278,30 @@ class Production:
         directory=self.root/identifier;directory.mkdir()
         self.studio._write_json_atomic(directory/'plan.json',plan)
         return self.get(identifier)
+
+    def _character_handoff(self, payload):
+        from scripts import character_study
+        allowed={'character_plan','character_handoff','uploads','name','max_seconds'}
+        if set(payload)!=allowed:raise ValueError('Character handoff import accepts only plan, handoff, uploads, name and max_seconds')
+        plan=copy.deepcopy(payload['character_plan']);handoff=copy.deepcopy(payload['character_handoff'])
+        case,preset=character_study.check_handoff(plan,handoff,self.studio.root)
+        uploads=payload['uploads'];requirements=handoff['upload_requirements']
+        if not isinstance(uploads,list) or len(uploads)!=len(requirements):raise ValueError('Upload every approved reference in handoff order')
+        bound=[]
+        for item,requirement in zip(uploads,requirements):
+            if not isinstance(item,dict) or set(item)!={'reference_id','file'} or item['reference_id']!=requirement['id']:raise ValueError('Uploads must retain the approved reference IDs and order')
+            filename=item['file'];upload=self.studio.experiments/'uploads'/str(filename)
+            if not isinstance(filename,str) or filename!=Path(filename).name or not upload.is_file() or character_study.file_sha(upload)!=requirement['sha256']:raise ValueError('Uploaded reference bytes differ from the approved handoff')
+            bound.append({'file':filename,'sha256':requirement['sha256'],'role':requirement['role']})
+        controls=copy.deepcopy(handoff['proposed_controls'])
+        if preset.get('reference_slots'):references=bound
+        else:controls['reference']=bound[0]['file'];references=[]
+        identity=hashlib.sha256(('character-primary:'+plan['plan_sha256']+':'+case['id']).encode()).hexdigest()[:32]
+        source={'kind':'character_primary_import','study_plan':plan,'handoff':handoff,'uploads':bound,'case_id':case['id'],'attempt_kind':'primary','parent_attempt_id':None}
+        intent={'name':payload['name'],'recipe':{'preset_id':handoff['preset_id'],'controls':controls,'references':references,'expected_template_sha256':handoff['template_sha256']},
+                'axis':'seed','values':[case['seed']],'max_seconds':payload['max_seconds'],'max_generations':plan['request']['budget']['max_generation_attempts']}
+        try:return self._create(intent,character_source=source,root_override='character-study:'+plan['plan_sha256'],allowance_override=plan['request']['budget']['max_generation_attempts'],identifier_override=identity)
+        except sqlite3.IntegrityError as exc:raise ValueError('This primary case is already imported; inspect its existing project') from exc
 
     def native(self, payload):
         from native_exports import NativeExports, krita_roundtrip
