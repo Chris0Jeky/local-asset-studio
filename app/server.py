@@ -33,6 +33,7 @@ from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
+import host_memory
 import prompting
 from studio_prompt.http_extension import extend_handler
 
@@ -40,6 +41,7 @@ HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError): pass
@@ -91,6 +93,7 @@ class Studio:
         self._schema_lock = threading.Lock()
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
+        self._host_commit = None; self._host_commit_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock()
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
@@ -311,7 +314,40 @@ class Studio:
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         self.prune_disabled_loras(graph)
         self.ensure_reference_inputs(graph)
+        self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
+
+    def host_commit_reading(self, refresh=False):
+        if refresh or self._host_commit is None or time.monotonic() - self._host_commit_at > 3:
+            self._host_commit = host_memory.read(); self._host_commit_at = time.monotonic()
+        return dict(self._host_commit)
+
+    @staticmethod
+    def host_commit_required(preset, graph):
+        explicit = preset.get('host_commit_heavy') is True
+        model_bound = False; megapixels = 0.0
+        for node in graph.values():
+            inputs = node.get('inputs', {})
+            for field in ('unet_name', 'model_name', 'diffusion_model', 'checkpoint_name'):
+                value = inputs.get(field)
+                if isinstance(value, str):
+                    value = value.lower()
+                    if 'qwen-image-edit-2511' in value or 'flux-2' in value or 'flux2-' in value: model_bound = True
+            width,height=inputs.get('width'),inputs.get('height')
+            if isinstance(width,(int,float)) and not isinstance(width,bool) and isinstance(height,(int,float)) and not isinstance(height,bool): megapixels=max(megapixels,float(width)*float(height)/(1024**2))
+            scaled=inputs.get('megapixels')
+            if node.get('class_type')=='ImageScaleToTotalPixels' and isinstance(scaled,(int,float)) and not isinstance(scaled,bool): megapixels=max(megapixels,float(scaled))
+        return (explicit or model_bound) and megapixels >= 1.0
+
+    def host_commit_preflight(self, preset, graph, refresh=False):
+        if not self.config.get('enforce_host_commit_headroom') or not self.host_commit_required(preset, graph): return None
+        reading=self.host_commit_reading(refresh)
+        reason=reading.get('unknown_reason');available=reading.get('available_bytes')
+        if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
+        if not isinstance(available,int) or available < HOST_COMMIT_MINIMUM:
+            actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
+            raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
+        return reading
 
     def prune_disabled_loras(self, graph):
         """Drop LoRA loaders left at strength 0 and rewire whatever consumed them.
@@ -367,6 +403,8 @@ class Studio:
         job["parent_assets"] = parents
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
+        reading=self.host_commit_preflight(preset, graph)
+        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time())]
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -483,6 +521,7 @@ class Studio:
         return graph_check(graph,self.node_info())
 
     def production_preflight(self, preset, graph):
+        self.host_commit_preflight(preset, graph, refresh=True)
         self.node_info(refresh=True)
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
@@ -683,7 +722,7 @@ class Studio:
                             if field.endswith("_name") and isinstance(value, str) and isinstance(enum, list) and value not in enum:
                                 missing.setdefault(preset.get("id"), []).append(value)
                 except (StudioError, AttributeError, TypeError): pass
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "host_commit": self.host_commit_reading()}
         except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}}
 
     def inspect_preset(self, preset_id, graph=None):
@@ -828,6 +867,14 @@ class Studio:
         self._wait_for_queue(job.get('comfy_url'))
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
+            try:
+                try:preset=self.preset(job['preset_id'])
+                except StudioError:preset={}
+                reading=self.host_commit_preflight(preset, graph, refresh=True)
+            except StudioError as exc:
+                job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
+            if reading:
+                job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
