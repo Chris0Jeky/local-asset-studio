@@ -1,5 +1,17 @@
 # Current state — 11 September 2026
 
+## Plan — anime & fantasy atelier (12 September 2026)
+
+Planned, not executed: four LoRA slots per preset with zero-strength pruning, an installed-LoRA and
+sampler options endpoint, a sourced settings knowledge base with a grid/remix planner, named recipes,
+prompt wildcards, two new Krea 2 Turbo presets, corrected SDXL anime grammars, download/intake scripts
+and the [atelier guide](docs/ANIME-FANTASY-ATELIER.md). No agent submitted a generation for any of it;
+every new or restructured preset ships `verified: false`, and the only local measurement behind the
+plan is a direct ComfyUI API probe of Krea 2 Turbo with NIJISIS at 768×1152 and 15 steps — prompt
+`09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 986.6 seconds, submitted before these presets existed, so it
+proves the model and adapter combination and nothing about the bindings. Results, when they exist,
+belong in the executed sections below, not here.
+
 ## Creative production milestone
 
 Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen

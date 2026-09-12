@@ -8,6 +8,12 @@ Your personal workshop for anime and manga, images, video, textured 3D, referenc
 
 Explore the [Workflow Lab guide](docs/WORKFLOW-LAB.md) for the new models, folder map, variants, and image-to-video/3D paths.
 
+For anime and fantasy work, the [anime & fantasy atelier guide](docs/ANIME-FANTASY-ATELIER.md) is the
+one page to read: which recipe produces which look, every installed LoRA with its trigger and terms,
+the settings each model family wants, prompt wildcards, the settings planner, and honest timings
+(Krea 2 at 768×1152 and 15 steps measured 986 s; the same family at 512×768 and 8 steps, 189 s;
+SDXL anime portraits at 512×768, 20–35 s).
+
 Use **Workspace** to collect, tag, favorite, compare and restore your outputs.
 **Experiments** keeps bounded comparisons and native finishing plans together.
 You can assign identity/pose/style references, switch to the isolated HiDream
@@ -22,9 +28,9 @@ Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five
 | Folder | Purpose |
 |---|---|
 | `app/` | Local browser interface; Python standard library server; local model-viewer bundle; no build toolchain |
-| `presets/` | Human-readable preset names and controls mapped to graph inputs |
-| `workflows/api/` | 55 API graphs (54 Studio presets) |
-| `workflows/comfyui/` | 54 visual node graphs for learning and deeper changes |
+| `presets/` | Preset names and controls mapped to graph inputs; `recipes.json`, `settings-kb.json` and `wildcards/` |
+| `workflows/api/` | API graphs, one per Studio preset plus a helper graph |
+| `workflows/comfyui/` | Matching visual node graphs for learning and deeper changes |
 | `scripts/` | Launcher, batch generation, asset finishing, validation |
 | `examples/lanternkeeper/` | Playable example, editable Blender files, GLBs, sprites, promotional artwork |
 | `examples/gallery/` | Small, curated model samples for comparison |
@@ -41,8 +47,8 @@ Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five
 | Pixel item concepts | SDXL + Pixel Art XL LoRA | Compare LoRA strength with the same seed |
 | Realistic promotional art | RealVisXL | FLUX Klein, Z-Image Turbo |
 | Abstract website art | SDXL abstract preset | Change composition and colour vocabulary |
-| Stylized characters | WAI / Animagine | Pony; pose-control variants |
-| Manga and anime studies | LineAni / Anima Aesthetic | Screentone, cinematic lighting, free Krea retro anime |
+| Stylized characters | WAI / Animagine | Pony; pose-control variants; [atelier guide](docs/ANIME-FANTASY-ATELIER.md) |
+| Manga and anime studies | LineAni / Anima Aesthetic | Screentone, cinematic lighting, Krea 2 style lab |
 | Animate a finished image | Wan 2.2 Animate Image | Short motion study, then longer shots |
 | Generate a 3D draft | TRELLIS textured draft | Authored Blender parts, pivot and motion |
 | Small reference changes | FLUX Klein edit | SDXL gentle variation, Qwen edit |
@@ -83,3 +89,14 @@ See [operations](docs/OPERATIONS.md) for troubleshooting, backup, and adding pre
 Open the **Anime quality** category for WAI and Animagine portraits or a 1.5x refinement pass. ComfyUI workflow 24 adds manual masked repair. Read the [parameter and anatomy guide](docs/ANIME-QUALITY.md) before turning up steps or resolution. These new presets were schema-checked; no generation was submitted by the agent for this slice.
 
 The [anime detailing guide](docs/ANIME-DETAILING.md) covers installed ESRGAN, automatic face crops, optional hand crops and the combined finishing workflow.
+
+### Anime & fantasy atelier
+
+The **Anime flagship** category now carries Krea 2 Turbo presets with four LoRA slots each. A slot set
+to strength 0 is removed from the submitted graph, so the same preset covers a plain render, a single
+style adapter, or a stacked look. **Recipes** in the create view apply a complete named starting point
+(preset, prompt, settings and LoRA stack) in one click; prompts accept `{a|b|c}` and `__wildcard__`
+expansions; **Experiments** can plan a settings grid or a LoRA-weight remix from a sourced knowledge
+base instead of a single numeric axis. Read [the atelier guide](docs/ANIME-FANTASY-ATELIER.md) first —
+Krea 2 is minutes per image on this machine, not seconds. These presets are schema-checked and marked
+unverified; no generation was submitted by the agent for this slice.
