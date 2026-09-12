@@ -11,6 +11,7 @@ from scripts.character_edit_bridge_io import (
     artifact, save_new, image_info, require,
 )
 ROOT = Path(__file__).resolve().parents[1]
+OPTIONAL_REFERENCE_ROLES = ('costume', 'style', 'pose')
 
 
 def preset_contract(preset):
@@ -76,6 +77,8 @@ def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800)
     actor = plan['document']['actors'][0]; refs = actor['references']
     require(1 <= len(refs) <= 2 and sum(r['role'] == 'identity' for r in refs) == 1,
             'Use exactly one identity and at most one other reference; this bridge never truncates references')
+    require(all(r['role'] == 'identity' or r['role'] in OPTIONAL_REFERENCE_ROLES for r in refs),
+            'The optional reference must be costume, style or pose; composition is reserved for the source crop')
     canon = validate_canon(read(verify_artifact(root, actor['canon'])))
     require(canon['approval']['state'] == 'approved', 'An approved canon attestation is required; no owner decision is inferred')
     identity = next(r for r in refs if r['role'] == 'identity')
@@ -151,9 +154,12 @@ def validate_handoff(root, value):
     require(value['preset_id'] in ('qwen-2ref', 'qwen-3ref') and HEX.fullmatch(value['template_sha256']), 'Unsupported native profile')
     require(canonical(preset_contract(value['native_preset']))==canonical(value['native_preset'])
             and value['native_preset']['id']==value['preset_id'] and hashed(value['native_preset'])==value['preset_sha256'], 'Native preset contract hash mismatch')
-    refs = value['references']; require(len(refs) == int(value['preset_id'][5]) and refs[0]['role'] == 'composition', 'Wrong reference projection')
-    require(sum(r['role'] == 'identity' for r in refs) == 1, 'Exactly one identity binding required')
-    require(all(r['role'] in ('composition', 'identity', 'costume', 'style', 'pose') for r in refs), 'Invalid reference role')
+    refs = value['references']
+    require(isinstance(refs, list) and len(refs) == int(value['preset_id'][5])
+            and all(isinstance(r, dict) for r in refs) and refs[0].get('role') == 'composition', 'Wrong reference projection')
+    require(refs[1].get('role') == 'identity', 'The second binding must be the identity reference')
+    require(len(refs) == 2 or refs[2].get('role') in OPTIONAL_REFERENCE_ROLES,
+            'The optional reference must be costume, style or pose; composition is reserved for the source crop')
     seeds = value['seeds']
     require(isinstance(seeds, list) and 1 <= len(seeds) <= 4 and all(type(s) is int and 0 <= s <= 2**63-1 for s in seeds)
             and len(set(seeds)) == len(seeds), 'Invalid seed budget')

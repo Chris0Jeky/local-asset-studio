@@ -83,6 +83,8 @@ class EditContracts(unittest.TestCase):
     def set_layout(self):
         self.intent['layout']={'actors':[{'id':a['id'],'bounds':a['bounds'][:],'pose_reference':None} for a in self.doc['actors']],
             'occlusion_order':['amber','violet'],'contact_regions':[{'actors':['amber','violet'],'bounds':[135,100,220,170],'instruction':'Review the meeting hands'}]}
+        # Scene-only tests propose no contact; interactions declare their pair explicitly.
+        if self.intent['operation']=='scenario': self.intent['layout']['contact_regions']=[]
     def test_interaction_requires_contact(self):
         self.intent['operation']='interaction'; self.intent['changes']=[{'actor':a,'facet':'pose','instruction':'Shake hands'} for a in ['amber','violet']]
         with self.assertRaises(ValueError): self.plan()

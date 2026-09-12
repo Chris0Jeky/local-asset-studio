@@ -123,7 +123,8 @@ def resume_eligibility(production, project):
     if state.get('attempts'):return {'eligible':False,'message':'A durable voice attempt exists; Studio will not retry it.'}
     if state.get('artifacts'):return {'eligible':False,'message':'Retained voice artifacts exist; Studio will not retry the take.'}
     job_id=uuid.uuid5(uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex
-    recorded_job=(job_id in production.studio.jobs or (production.studio.runs/job_id).exists() or any(job.get('project_id')==identifier and job.get('operation')==OPERATION for job in production.studio.jobs.values()))
+    with production.studio.lock:jobs=dict(production.studio.jobs)
+    recorded_job=job_id in jobs or any(job.get('project_id')==identifier and job.get('operation')==OPERATION for job in jobs.values()) or (production.studio.runs/job_id).exists()
     if recorded_job:return {'eligible':False,'message':'A durable owned voice job exists; Studio will not retry it.'}
     if (directory/'request.json').exists():return {'eligible':False,'message':'A durable voice request exists; Studio will not retry it.'}
     if (directory/'voice').exists():return {'eligible':False,'message':'Retained voice output files exist; Studio will not retry the take.'}

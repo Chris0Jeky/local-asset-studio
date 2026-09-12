@@ -1,5 +1,17 @@
 # Current state — 11 September 2026
 
+## Character-edit recovery on Windows — 12 September 2026
+
+PR #83 integration `d9cd223` includes main `04903e9`. Interrupted collection retains
+partial staging and recovers the same completed asset without another generation or
+reservation; exact native reference roles and connected actor-contact coverage are
+validated. The full configured Windows suite ran 854 tests: 840 passed and 14 skipped;
+repository validation passed. A fresh independent review found no defects and its
+28-test recovery run passed with one Windows symlink-privilege skip. The real local
+HTTP/subprocess-death test passed with inert neural execution. See
+`docs/character-consistency/EDIT-RECOVERY-VERIFICATION.md` for the evidence and limits.
+No live neural repair or art acceptance is claimed; PR #71 remains open.
+
 ## Recipe inspection on the configured Windows host — 12 September 2026
 
 The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
@@ -176,6 +188,21 @@ while preserving identifiers and evidence, and submits nothing. Full integrated 
 real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes, hidden unsafe recovery,
 one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
 warnings or errors. This does not claim human listening or voice acceptance.
+
+## Voice resume polling snapshot follow-up - 12 September 2026
+
+The interrupted Voice resume eligibility check now snapshots `Studio.jobs` while holding the
+Studio lock, then uses that same snapshot for deterministic and metadata job checks after releasing
+the lock. The causal regression inserted an unrelated job from an unrelated job's metadata callback:
+the baseline raised `RuntimeError: dictionary changed size during iteration` from `production.list()`;
+the fixed `production.list()` and `production.get()` remain eligible and the queue stays empty. A
+small lock probe also verified snapshot acquisition under lock and metadata scanning after release;
+matching voice jobs under nonstandard IDs remain a resume refusal. Focused Voice and Production
+discover suites passed: 15 and 13 tests. The configured full suite passed 826 tests (813 passed,
+13 skipped), and repository validation passed. Raw command logs, including the baseline failure, are
+retained under `.runtime/voice-polling/`; the direct `unittest tests.test_voice_baseline` form failed
+at import because this repository's test module imports its sibling without the tests directory on
+the module path, while the discover form is the valid proving command.
 
 ## Scene editor interaction checks - 12 September 2026
 

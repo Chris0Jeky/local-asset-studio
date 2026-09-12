@@ -61,7 +61,7 @@ python scripts/character_edit_bridge.py collect --workspace C:/AI/character-lab/
 
 The index is zero-based in the seed list. The client checks the deterministic Production stage/job relationship, one completed image, the recorded job recipe and prompt ID, Workspace ownership and the downloaded byte hash. It refuses silent resizing or substituting an unrelated asset. A successfully completed early stage can still be collected if a later stage failed. Failed/rejected candidates and the original sources remain intact.
 
-The candidate and a source-bound execution receipt are stored together. No review endpoint is called; the receipt remains `unreviewed`. Re-running collection never overwrites these files.
+The candidate and a source-bound execution receipt are staged, verified and published together under the existing command lock. An interrupted staging directory is retained, while a fresh explicit Collect can retrieve the same completed job without another generation. No review endpoint is called; the receipt remains `unreviewed`. Re-running collection never overwrites published files. See [the recovery and role contracts](EDIT-RECOVERY.md) for process-death handling and the retained legacy-partial boundary.
 
 ### 5. Compose into a new local revision
 
