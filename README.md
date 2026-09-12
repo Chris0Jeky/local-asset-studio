@@ -98,5 +98,14 @@ style adapter, or a stacked look. **Recipes** in the create view apply a complet
 (preset, prompt, settings and LoRA stack) in one click; prompts accept `{a|b|c}` and `__wildcard__`
 expansions; **Experiments** can plan a settings grid or a LoRA-weight remix from a sourced knowledge
 base instead of a single numeric axis. Read [the atelier guide](docs/ANIME-FANTASY-ATELIER.md) first —
-Krea 2 is minutes per image on this machine, not seconds. These presets are schema-checked and marked
-unverified; no generation was submitted by the agent for this slice.
+Krea 2 is minutes per image on this machine, not seconds.
+
+**Correction (12 September 2026).** This section previously said the presets were "marked unverified; no
+generation was submitted by the agent for this slice". That is wrong for the two Krea atelier presets:
+`krea-anime-atelier` and `krea-style-lab` are `verified: true` in `presets/catalog.json` against recorded
+Studio jobs — `db02f6b1` (197.0 s, 4-step audition), `7d589f47` (827.6 s, full target stack with koukouya)
+and `f373ba3b` (207.1 s, `krea-style-lab` 4-step audition). Prompt IDs, submitted LoRA chains, output
+SHA-256s and the reviewer's own inspection notes are in
+[experiments/curated/anime-fantasy-atelier/execution-evidence.json](experiments/curated/anime-fantasy-atelier/execution-evidence.json).
+`krea-environment` and the recipes marked `unverified` remain unverified. A completed job is generation
+only: it is neither art acceptance nor licence clearance, and each stacked LoRA keeps its own terms.
