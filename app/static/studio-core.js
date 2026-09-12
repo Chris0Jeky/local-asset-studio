@@ -26,8 +26,12 @@
     if(!Array.isArray(refs)||refs.length>8||refs.some(r=>!r||typeof r!=='object'||Array.isArray(r)))return null;
     for(const r of refs){if(['__proto__','constructor','prototype'].some(k=>Object.hasOwn(r,k)))return null;if(r.file!=null&&(typeof r.file!=='string'||r.file.length>255))return null;if(r.sha256!=null&&(typeof r.sha256!=='string'||!/^[a-f0-9]{64}$/i.test(r.sha256)))return null;for(const k of ['width','height','bytes'])if(r[k]!=null&&(!Number.isSafeInteger(r[k])||r[k]<0))return null;for(const k of ['role','contribution','avoid'])if(r[k]!=null&&(typeof r[k]!=='string'||r[k].length>1500))return null;if(r.missing!=null&&typeof r.missing!=='boolean')return null;}
     if(!Array.isArray(pending)||pending.some(x=>!['reference','lastReference'].includes(x)))return null;
+    // Per-input lineage attribution (#108): a known input mapped to an asset this draft already declares.
+    const mapped=value.recipe.parent_by_input??{};if(!mapped||typeof mapped!=='object'||Array.isArray(mapped))return null;
+    const attribution=Object.entries(mapped);
+    if(attribution.length>8||attribution.some(([k,v])=>!['reference','lastReference'].includes(k)||typeof v!=='string'||!ids.includes(v)))return null;
     const batch=Number(value.recipe.batch??1);if(!Number.isInteger(batch)||batch<1||batch>4)return null;
-    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,parent_assets:[...ids],references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
+    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,parent_assets:[...ids],parent_by_input:Object.fromEntries(attribution),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}

@@ -57,6 +57,14 @@ test('draft normalizes primitives and preserves lineage', () => {
 test('draft rejects unsupported versions, batches and identities', () => {
   for(const mutate of [d=>d.version=2,d=>d.updatedAt='now',d=>d.recipe.preset='',d=>d.recipe.batch=5,d=>d.recipe.batch=1.5,d=>d.recipe.controls=null,d=>d.recipe.parent_assets=[42]]) {const d=draft();mutate(d);assert.equal(U.normalizeDraft(d),null);}
 });
+test('draft carries per-input lineage attribution and rejects unbacked claims', () => {
+  const d=draft();d.recipe.parent_by_input={reference:'source'};
+  assert.deepEqual(U.normalizeDraft(d).recipe.parent_by_input,{reference:'source'});
+  assert.deepEqual(U.normalizeDraft(draft()).recipe.parent_by_input,{},'A draft without the field normalizes to no attribution');
+  for(const mapping of [{reference:'not-a-declared-parent'},{unknownInput:'source'},{reference:42},['source'],'source']) {
+    const bad=draft();bad.recipe.parent_by_input=mapping;assert.equal(U.normalizeDraft(bad),null);
+  }
+});
 test('draft rejects prototype keys and non-primitive control payloads', () => {
   for(const input of ['{"__proto__":"bad"}','{"constructor":"bad"}','{"positive":{"html":"bad"}}','{"positive":[]}']) {const d=draft();d.recipe.controls=JSON.parse(input);assert.equal(U.normalizeDraft(d),null);}
 });
