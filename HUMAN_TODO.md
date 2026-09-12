@@ -32,7 +32,7 @@ not cleared.
 system-managed or larger is a system setting for the owner (do not tick).** Measured 12 September
 2026: `SizeStoredInPagingFiles` 41,943,040 KiB, commit limit 77,014,286,336 B; #77's failure was at
 97 % committed, and a Qwen job at `--reserve-vram 0.6` still failed on a host allocation at 87 %
-committed, so the VRAM reserve is measurably not the lever. The ≥20 GiB commit gate is documented as
+committed, so the VRAM reserve is measurably not the lever. The ≥32 GiB commit gate (raised from 20 GiB after the run above started at 29 GB headroom and still failed) is documented as
 an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
 `app/` samples commit headroom before submitting. Agents must not change paging: #77 says not to
 treat it as a default fix. This item records the option, not a decision.
