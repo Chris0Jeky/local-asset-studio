@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import re
 import shutil
+import subprocess
+import tempfile
 import time
 import uuid
 import wave
@@ -11,6 +13,44 @@ from studio_av.project import file_hash,need,fields,number,safe_path
 from studio_av.render import _run_owned,RenderCancelled,inspect_wav
 
 OPERATION='native.voice-baseline.v1'
+
+
+def observed_versions(studio, python, expected):
+    """Read only distribution metadata in the configured isolated interpreter."""
+    need(isinstance(expected,dict) and 1<=len(expected)<=32,'Record one to 32 runtime package versions')
+    names=[]
+    for name,version in expected.items():
+        need(isinstance(name,str) and re.fullmatch(r'[A-Za-z0-9_.-]{1,128}',name),'Invalid runtime distribution name')
+        need(isinstance(version,str) and 1<=len(version)<=128,'Invalid pinned runtime version')
+        names.append(name)
+    probe=studio.root/'scripts/voice_runtime_probe.py';need(probe.is_file(),'Voice runtime metadata probe is unavailable')
+    try:
+        with tempfile.TemporaryFile(mode='w+b') as stdout:
+            process=subprocess.Popen([str(python),str(probe),*sorted(names)],cwd=str(studio.root),stdout=stdout,stderr=subprocess.DEVNULL)
+            try:
+                deadline=time.monotonic()+10
+                while process.poll() is None:
+                    if time.monotonic()>=deadline:raise subprocess.TimeoutExpired(process.args,10)
+                    time.sleep(.05)
+                if process.returncode:raise subprocess.CalledProcessError(process.returncode,process.args)
+            finally:
+                if process.poll() is None:
+                    process.terminate()
+                    try:process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:process.kill();process.wait(timeout=5)
+            stdout.seek(0);raw=stdout.read(64*1024+1)
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise ValueError('Voice runtime metadata probe failed') from exc
+    need(len(raw)<=64*1024,'Voice runtime metadata probe returned oversized output')
+    try:observed=json.loads(raw.decode('utf-8'))
+    except (UnicodeDecodeError,json.JSONDecodeError) as exc:raise ValueError('Voice runtime metadata probe returned invalid JSON') from exc
+    need(isinstance(observed,dict) and set(observed)==set(names) and all(isinstance(value,str) for value in observed.values()),'Voice runtime metadata probe did not report every package')
+    return observed
+
+
+def _require_versions(expected, observed, prior=None):
+    need(observed==expected,'Voice runtime package versions changed from the bundle manifest')
+    if prior is not None:need(observed==prior,'Voice runtime package versions changed since Prepare')
 
 
 def bundle(studio):
@@ -50,12 +90,13 @@ def prepare(production,payload):
         need(isinstance(line['text'],str) and line['text'].strip() and len(line['text'])<=600 and '\0' not in line['text'],'Line text must contain 1 to 600 characters')
         ids.add(line['id']);total+=len(line['text'])
     need(total<=2000,'Voice text budget is 2000 characters')
-    pinned=bundle(production.studio);ffmpeg=production.studio.config.get('ffmpeg','');need(Path(ffmpeg).is_absolute() and Path(ffmpeg).is_file(),'Configure FFmpeg for scene interchange')
+    pinned=bundle(production.studio);observed=observed_versions(production.studio,pinned['python'],pinned['versions']);_require_versions(pinned['versions'],observed)
+    ffmpeg=production.studio.config.get('ffmpeg','');need(Path(ffmpeg).is_absolute() and Path(ffmpeg).is_file(),'Configure FFmpeg for scene interchange')
     runner=production.studio.root/'scripts/kokoro_baseline.py';need(runner.is_file(),'Voice runner unavailable')
     identifier=uuid.uuid4().hex;directory=production.root/identifier
     need(shutil.disk_usage(production.root).free>=2*1024**3,'Voice take needs 2 GiB free')
     from production import fingerprint
-    plan={'version':1,'kind':'voice','name':payload['name'],'speaker_id':payload['speaker_id'],'lines':lines,'bundle':pinned,
+    plan={'version':1,'kind':'voice','name':payload['name'],'speaker_id':payload['speaker_id'],'lines':lines,'bundle':pinned,'observed_versions':observed,
           'runner_sha256':file_hash(runner),'ffmpeg':str(ffmpeg),'ffmpeg_sha256':file_hash(ffmpeg),'stages':[],'created_at':time.time()}
     plan['sha256']=fingerprint(plan);state={'status':'planned','message':'Voice take prepared. Generate explicitly; no voice identity or performance is accepted.',
         'attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
@@ -74,21 +115,38 @@ def artifacts(production,identifier):
     return result
 
 
+def resume(production, identifier):
+    with production.studio.lock,production.lock:
+        project=production._get(identifier);state=project['state'];directory=production.root/identifier
+        need(state.get('status') in ('interrupted','queued'),'Only an unstarted interrupted voice take can resume')
+        attempts=state.get('attempts',{})
+        job_id=uuid.uuid5(uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex
+        recorded_job=job_id in production.studio.jobs or any(job.get('project_id')==identifier and job.get('operation')==OPERATION for job in production.studio.jobs.values())
+        need(not (directory/'request.json').exists() and not attempts and not recorded_job and not (directory/'voice').exists(),
+             'Voice inference may have started; inspect retained files and prepare a new take')
+        if state['status']=='queued':return production.get(identifier)
+        production._mutate(identifier,status='queued',stop_requested=False,message='Explicitly resumed an unstarted voice plan; no inference was repeated.')
+        production.studio.queue.put(('production',identifier));return production.get(identifier)
+
+
 def run(production,identifier,plan):
     studio=production.studio;directory=production.root/identifier;out=directory/'voice';job_id=uuid.uuid5(uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex
     if (directory/'request.json').exists():
         production._mutate(identifier,status='interrupted',message='A prior voice attempt exists. Inspect retained files; prepare a new take to retry.');return
     def cancelled():return bool(production._get(identifier)['state'].get('stop_requested'))
+    attempt_started=False;job=None
     try:
+        production._attempt(identifier,0,operation=OPERATION,job_id=job_id,status='running',started_at=time.time());attempt_started=True
         if cancelled():raise RenderCancelled('Voice take cancelled before execution')
         need(bundle(studio)==plan['bundle'],'Voice runtime bundle changed since Prepare')
+        observed=observed_versions(studio,plan['bundle']['python'],plan['bundle']['versions'])
+        _require_versions(plan['bundle']['versions'],observed,plan.get('observed_versions'))
         runner=studio.root/'scripts/kokoro_baseline.py';need(file_hash(runner)==plan['runner_sha256'] and file_hash(plan['ffmpeg'])==plan['ffmpeg_sha256'],'Voice tools changed since Prepare')
         need(shutil.disk_usage(directory).free>=2*1024**3,'Voice take needs 2 GiB free')
         request={k:plan[k] for k in ('speaker_id','lines','bundle')};studio._write_json_atomic(directory/'request.json',request)
-        production._attempt(identifier,0,operation=OPERATION,job_id=job_id,status='running')
         job={'id':job_id,'operation':OPERATION,'project_id':identifier,'status':'running','created_at':time.time(),'preset_id':'voice-baseline','preset_name':plan['name'],
-             'controls':{},'batch_count':0,'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[],'graph':{},'graph_path':'','outputs':[],
-             'native_recipe':request,'message':'Generating a CPU baseline take; no accepted custom identity.'}
+              'controls':{},'batch_count':0,'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[],'graph':{},'graph_path':'','outputs':[],
+              'native_recipe':request,'publication_status':'publishing','message':'Generating a CPU baseline take; no accepted custom identity.'}
         (studio.runs/job_id).mkdir(exist_ok=True);studio._save(job);studio.jobs[job_id]=job
         _run_owned([plan['bundle']['python'],str(runner),'--request',str(directory/'request.json'),'--output',str(out)],directory/'voice.log',180,cancelled)
         receipt=json.loads((out/'receipt.json').read_text(encoding='utf-8'));need([r['id'] for r in receipt['lines']]==[r['id'] for r in plan['lines']],'Voice receipt line IDs differ')
@@ -106,13 +164,26 @@ def run(production,identifier,plan):
             need(qc[line['id']]['samples']==line['samples']*2,'Voice interchange sample count differs')
             for name in (line['id']+'.wav',line['id']+'-scene.wav'):
                 job['outputs'].append({'filename':name,'native_path':'voice/'+name,'type':'output','media_type':'audio'})
-        job.update(status='completed',message='Dry and scene-ready baseline takes completed; listening review remains open.')
-        job['native_recipe'].update(receipt=receipt,qc=qc);studio.index_outputs(job)
-        need(all(o.get('asset_id') and not o.get('snapshot_error') for o in job['outputs']),'Voice output registration failed; inspect retained files')
+        if cancelled():raise RenderCancelled('Voice take cancelled before Workspace publication')
+        job['native_recipe'].update(receipt=receipt,qc=qc)
         studio._save(job);studio.jobs[job_id]=job
+        studio.index_outputs(job)
+        published=all(output.get('asset_id') and not output.get('snapshot_error') for output in job['outputs'])
+        if cancelled() and published:
+            job.update(status='completed',publication_status='published',cancellation_too_late=True,message='Stop arrived after Workspace publication completed; published voice outputs are retained for inspection.')
+            studio._save(job);studio.jobs[job_id]=job
+            production._attempt(identifier,0,status='completed',finished_at=time.time(),message=job['message'])
+            production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time(),cancellation_too_late=True)
+            return
+        job.update(status='completed',message='Dry and scene-ready baseline takes completed; listening review remains open.')
+        need(published,'Voice output registration failed; inspect retained files')
+        job['publication_status']='published'
+        studio._save(job);studio.jobs[job_id]=job
+        production._attempt(identifier,0,status='completed',finished_at=time.time())
         production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time())
     except Exception as exc:
         status='cancelled' if isinstance(exc,RenderCancelled) else 'failed'
-        if job_id in studio.jobs:
-            studio.jobs[job_id].update(status=status,message=str(exc)[:500]);studio._save(studio.jobs[job_id])
+        if job is not None:
+            job.update(status=status,publication_status=status,message=str(exc)[:500]);studio.jobs[job_id]=job;studio._save(job)
+        if attempt_started:production._attempt(identifier,0,status=status,finished_at=time.time(),message=str(exc)[:500])
         production._mutate(identifier,status=status,message=str(exc)[:500],artifacts=artifacts(production,identifier),finished_at=time.time())
