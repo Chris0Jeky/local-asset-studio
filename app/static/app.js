@@ -228,10 +228,18 @@ function applySaved(s){
   Object.entries(s.controls||{}).forEach(([k,v])=>{const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
-  // A saved setup round-trips each role record's parent_asset, but a job-exported recipe carries only the
-  // flat list. Attribute it when there is exactly one parent and exactly one filled input; anything more
-  // ambiguous stays unattributed, and an unattributed parent is never dropped by a later edit.
-  if(!selected.reference_slots?.length){const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};}
+  // A saved setup round-trips each role record's parent_asset and, since #108, the slot-less mapping
+  // itself. Restore the recorded mapping rather than re-deriving it; only a legacy record that carries
+  // no mapping falls back to the unambiguous single-parent, single-input guess. A job-exported recipe
+  // has neither, and an unattributed parent is never dropped by a later edit.
+  if(!selected.reference_slots?.length){
+    const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
+    // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
+    // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
+    const saved=s.parent_by_input,mapped=saved&&typeof saved==='object'&&!Array.isArray(saved)&&Object.keys(saved).length?saved:null;
+    if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
+    else if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
+  }
   $('#batch').value=s.batch_count||s.batch||1;message('Recipe loaded. Review the settings before generating.');
 }
 async function exportRecipe(id){const data=await api('/api/jobs/'+encodeURIComponent(id)+'/recipe'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='asset-studio-recipe.json';a.click();URL.revokeObjectURL(a.href);}
@@ -271,7 +279,7 @@ $('#gallery').onclick=async e=>{
     }
   }catch(err){message(err.message,true);}
 };
-$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,controls:values(),batch:$('#batch').value,parent_assets:parentAssets,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
+$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,controls:values(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
