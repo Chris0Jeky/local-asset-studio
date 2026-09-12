@@ -2,9 +2,11 @@ const $ = s => document.querySelector(s);
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const safeUrl = url => { try { const u = new URL(url); return ['http:','https:'].includes(u.protocol) ? u.href : '#'; } catch { return '#'; } };
 const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
-const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','frames','fps','sampler','scheduler'];
+const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
+const loraNameKey = key => key + '_name';
+const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
 let catalog, selected, online = false, schemaAvailable = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
-let recipeTemplateHash = null, parentAssets = [], serverSetups = [];
+let recipeTemplateHash = null, parentAssets = [], serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
@@ -23,6 +25,64 @@ function updateReady() {
   $('#health').textContent = !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && schemaAvailable && !missing.length ? 'ready' : 'offline');
 }
+const activeLoraSlots = () => loraSlotKeys.filter(k => selected && (selected[loraNameKey(k)] || selected.bindings_extra?.[loraNameKey(k)]));
+const loraEntry = name => (name && knowledge?.loras?.[name]) || null;
+function renderLoraSlots() {
+  const slots = activeLoraSlots(), box = $('#loraSlots');
+  box.hidden = !slots.length;
+  if (!slots.length) { box.innerHTML = ''; return; }
+  const missing = selected.missing_loras || [];
+  box.innerHTML = '<div class="section-title"><h3>Adapter stack</h3><small>Strength 0 turns a slot off and removes it from the submitted graph</small></div>'
+    + (missing.length ? '<p class="lora-missing">Authored adapters not installed: ' + esc(missing.join(', ')) + '</p>' : '')
+    + slots.map((key,index) => {
+      const nameKey = loraNameKey(key), authored = selected.defaults?.[nameKey] || '';
+      const options = selected.choices?.[nameKey]?.length ? selected.choices[nameKey] : installedLoras;
+      const list = !options.length ? (authored ? [authored] : []) : authored && !options.includes(authored) ? [authored, ...options] : options;
+      return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option' + (v === authored ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label>'
+        + '<label class="lora-strength"><span>Strength</span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
+        + '<small class="lora-hint" data-hint="' + esc(key) + '"></small></div>';
+    }).join('');
+}
+function updateLoraHints() {
+  activeLoraSlots().forEach(key => {
+    const hint = document.querySelector('[data-hint="' + key + '"]'); if (!hint) return;
+    const entry = loraEntry(getControl(loraNameKey(key))?.value);
+    hint.textContent = !entry ? '' : entry.trigger ? 'Trigger: ' + entry.trigger + (entry.trigger_position && entry.trigger_position !== 'none' ? ' · place it at the ' + entry.trigger_position + ' of the prompt' : '') : (entry.label || 'No trigger word');
+  });
+}
+function familyRecipes() { return atelierRecipes.filter(r => r.preset_id === selected?.id || (selected?.family && r.family === selected.family)); }
+function renderRecipeChoices() {
+  const list = familyRecipes();
+  $('#recipeWrap').hidden = !list.length;
+  $('#recipeSelect').innerHTML = '<option value="">Recipe defaults</option>' + list.map((r,i) => '<option value="' + i + '">' + esc(r.name) + (r.available === false ? ' · missing adapters' : '') + '</option>').join('');
+  $('#recipeNotes').innerHTML = '';
+}
+function describeRecipe(recipe) {
+  return '<p><b>' + esc(recipe.name) + '</b> · ' + (recipe.status === 'executed' ? 'Executed locally' : 'Settings recorded, not executed here') + '</p>'
+    + (recipe.notes ? '<p>' + esc(recipe.notes) + '</p>' : '')
+    + (recipe.missing?.length ? '<p class="lora-missing">Not installed: ' + esc(recipe.missing.join(', ')) + '</p>' : '')
+    + (recipe.evidence?.prompt_id ? '<small>ComfyUI prompt ' + esc(recipe.evidence.prompt_id) + (recipe.evidence.seconds ? ' · ' + esc(recipe.evidence.seconds) + ' s' : '') + '</small>' : '')
+    + (recipe.sources || []).map(u => ' <small><a href="' + esc(safeUrl(u)) + '" target="_blank" rel="noreferrer">Source ↗</a></small>').join('');
+}
+function applyRecipe(recipe) {
+  if (!recipe) return;
+  if (recipe.preset_id !== selected?.id) {
+    if (!catalog.presets.some(p => p.id === recipe.preset_id)) throw Error('This recipe needs a preset that is not in the library');
+    selectPreset(recipe.preset_id);
+  }
+  Object.entries(recipe.controls || {}).forEach(([k,v]) => { const el = k === 'positive' ? $('#positive') : k === 'negative' ? $('#negative') : getControl(k); if (el) el.value = v; });
+  $('#batch').value = recipe.batch_count || 1; updateLoraHints();
+  const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
+  $('#recipeNotes').innerHTML = describeRecipe(recipe);
+  message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
+}
+async function loadAtelier() {
+  // /api/options also warms the server's node schema, so the catalog's own
+  // per-preset choices fill in on the next poll; until then this is the list.
+  try { installedLoras = (await api('/api/options')).loras || []; } catch (e) { installedLoras = []; }
+  try { knowledge = await api('/api/knowledge'); } catch (e) { knowledge = null; }
+  try { atelierRecipes = (await api('/api/recipes')).recipes || []; } catch (e) { atelierRecipes = []; }
+}
 function renderSelected() {
   if (!selected) return;
   $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Execution recorded' : 'Experimental · not quality-approved') + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.description) + '</p><small>' + esc(selected.commercial_note) + '</small>';
@@ -31,14 +91,17 @@ function renderSelected() {
   $('#pipeline').innerHTML = (selected.stages || ['Load model','Conditioning','Sample','Decode','Save output']).map(s => '<span>' + esc(s) + '</span>').join('');
   const variants = selected.variants || [{name:'3-seed audition',batch_count:3}];
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '">' + esc(v.name) + '</button>').join('');
-  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="1536" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
-  $('#controls').innerHTML = specs.filter(([k]) => selected[k] || selected.bindings_extra?.[k]).map(([key,label,type,attrs]) => {
+  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
+  const inStack = new Set(activeLoraSlots().flatMap(k => [k, loraNameKey(k)]));
+  $('#controls').innerHTML = specs.filter(([k]) => (selected[k] || selected.bindings_extra?.[k]) && !inStack.has(k)).map(([key,label,type,attrs]) => {
     if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
     if (type === 'select') return '<label>' + label + '<select data-key="' + key + '">' + (selected.choices?.[key] || []).map(v => '<option>' + esc(v) + '</option>').join('') + '</select></label>';
     if (key === 'lora' && typeof selected.defaults?.lora === 'string') { type='text'; attrs=''; label='LoRA filename'; }
     return '<label>' + label + '<input data-key="' + key + '" type="' + type + '" ' + attrs + '>' + (key === 'frames' ? '<small>' + (selected.family==='MiniMax H3'?'24fps · 124 ≈ 5.2s · use 17k+5 frames':'24fps · 81 ≈ 3.4s · use 4k+1 frames') + '</small>' : '') + '</label>';
   }).join('');
+  renderLoraSlots();
   controlKeys.forEach(k => { const input=getControl(k); if (input) input.value=selected.defaults?.[k] ?? ''; });
+  updateLoraHints(); renderRecipeChoices();
   $('#referenceWrap').hidden = !selected.reference; $('#lastReferenceWrap').hidden = !selected.last_reference;
   if(typeof renderReferenceSlots==='function')renderReferenceSlots();
   $('#workflow').href = '/api/workflows/' + encodeURIComponent(selected.id);
@@ -151,7 +214,9 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)selectPreset(id);};
-$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];Object.entries(v.controls||{}).forEach(([k,val])=>{const input=getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;message(v.name+' loaded. Press Generate to run.');};
+$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];Object.entries(v.controls||{}).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();message(v.name+' loaded. Press Generate to run.');};
+$('#loraSlots').onchange=updateLoraHints;
+$('#recipeSelect').onchange=e=>{if(e.target.value==='')return;try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
 $('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);};
 $('#reference').onchange=()=>uploaded=null;$('#lastReference').onchange=()=>lastUploaded=null;
 $('#generate').onclick=async()=>{
@@ -193,7 +258,7 @@ $('#importWorkflow').onchange=async e=>{
 };
 (async()=>{
   try{
-    catalog=await api('/api/catalog');$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
+    catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
     selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
     const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);

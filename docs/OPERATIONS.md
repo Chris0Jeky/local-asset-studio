@@ -69,3 +69,57 @@ python scripts/run-batch.py --graph workflows/api/realvis-api.json --out experim
 The second command resumes/skips completed work; changing inputs requires a new output directory. This CLI records ComfyUI output descriptors but does not populate the studio gallery. It currently targets port 8188. Keep CLI and studio batches separate.
 
 Asset finishing uses the existing Pillow/rembg environment, configured as `asset_python`. Run `scripts/assets.py --help` with that interpreter for slicing, atlas, GIF, WebP, compositing and background removal. Those operations are not all exposed in the first studio UI.
+
+## Installing another model
+
+Three standard-library scripts put a weight into the configured ComfyUI folders. None of them starts ComfyUI
+or the studio, none downloads anything you did not name, and none overwrites an existing destination: a failed
+transfer stays as a `.part` file for inspection. Each prints a receipt (appended to
+`.runtime/downloads/receipts.json`) and a `models/library.json` entry stub to paste in and complete by hand.
+
+```console
+python scripts/fetch-hf.py --repo Comfy-Org/Krea-2 --path loras/krea2_darkbrush.safetensors --dry-run
+python scripts/fetch-hf.py --repo ilkerzgi/fal-Krea-2-Style-LoRAs --path comfy/dark-fantasy-film.safetensors --name fal-krea2-dark-fantasy-film.safetensors
+python scripts/civitai-fetch.py --version-id 3211621 --dry-run
+python scripts/intake-downloads.py --dry-run
+```
+
+- **`fetch-hf.py`** asks the repository tree API for the file's LFS oid and byte count first, then streams the
+  download while hashing it. A mismatch preserves the `.part` file and installs nothing. If the tree advertises
+  no oid the script says so before downloading; that copy is unverified against its source.
+- **`civitai-fetch.py`** resolves the filename and SHA-256 from `https://civitai.com/api/v1/model-versions/<id>`.
+  The metadata is public, so `--dry-run` works with no credentials; the download endpoint is not. The API token
+  is read **only** from the `CIVITAI_API_TOKEN` environment variable — never from the command line, never from
+  `config/local.json`, never printed, and never forwarded when civitai redirects the download to its CDN host.
+  A 401, a 403 (including region blocks) and a 429 each produce a specific message; nothing is installed.
+- **`intake-downloads.py`** sorts `.safetensors` files already sitting in `~/Downloads` (or `--from <dir>`) by
+  reading their safetensors header: LoRA key shapes and training metadata win over everything else, then the
+  SDXL checkpoint triad, VAE encoder/decoder pairs and text-encoder key names; anything else goes to
+  `diffusion_models`. `--dest-folder` skips the classification when you already know. A browser download has no
+  source checksum, so its receipt records `verified: false` — record the provenance yourself.
+
+After an install, restart ComfyUI (or refresh its model lists) so the new file appears in the node dropdowns,
+then add the pinned entry to `models/library.json` and run `python scripts/validate-repo.py`. The entry needs a
+lowercase-kebab id, the relative `.safetensors` path, byte count, 64-hex SHA-256 and a huggingface or civitai
+URL. Licence and territory facts belong in `models/README.md` next to the pin: record them, never infer them.
+
+## ComfyUI Manager and the Civitai node pack (installed 12 September 2026)
+
+- **Manager.** ComfyUI 0.35 ships the Manager as the `comfyui_manager` pip package (`manager_requirements.txt`
+  pins 4.2.2) and only loads it with `--enable-manager`. The owner's launcher `C:/AI/Start-ComfyUI.ps1` now
+  passes that flag; the package was installed into the embedded Python with the additions listed in
+  [runtime-patches/README.md](../runtime-patches/README.md). Proof it is alive: `GET /v2/manager/version`
+  on port 8188 answers `V4.2.2`; the Manager button appears in the ComfyUI sidebar.
+- **Civitai node pack.** `custom_nodes/civitai-comfy-nodes` is a plain `git clone` of
+  github.com/civitai/civitai-comfy-nodes (its `requirements.txt` needs `requests` and `python-socketio[client]`).
+  It reads the API key from the `CIVITAI_API_TOKEN` environment variable first (then `~/.civitai/...`, then a
+  browser sign-in), so no key is typed into the panel. The Studio never touches these nodes; they exist for
+  the owner's own browsing, cloud generation and model downloads inside ComfyUI.
+- **The token lives in the user environment.** `CIVITAI_API_TOKEN` is set at Windows user scope
+  (`setx`), so every new process started from Explorer or a fresh shell inherits it, including
+  `Start Studio.cmd` and the ComfyUI launcher. `scripts/civitai-fetch.py` reads the same variable. A shell
+  that was open before the value was set does not see it until reopened. Rotate it at
+  `civitai.com/user/account`; never write it into `config/local.json`, the repository, or a command line.
+- **Undo.** Remove `--enable-manager` from the launcher and delete the `custom_nodes/civitai-comfy-nodes`
+  folder; the added pip packages are inert without them.
+

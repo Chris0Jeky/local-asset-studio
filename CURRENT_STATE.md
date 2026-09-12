@@ -1,5 +1,72 @@
 # Current state — 11 September 2026
 
+## Civitai access, Anima baselines and the correction pass — executed (12 September 2026, second pass)
+
+**Runtime (outside Git, recorded here and in `runtime-patches/README.md`).** The owner's civitai API key is stored as
+the user-scope environment variable `CIVITAI_API_TOKEN` (never in the repo). ComfyUI now starts with
+`--enable-manager` (`comfyui_manager` 4.2.2 installed into the embedded Python, only new packages added;
+`GET /v2/manager/version` → `V4.2.2`) and loads `custom_nodes/civitai-comfy-nodes` (223 Civitai nodes; the pack reads
+the same environment variable, so no key is typed into its panel). ComfyUI PID in `C:/AI/comfyui.pid`.
+
+**Installed with SHA-256 receipts** (`.runtime/downloads/receipts.json`, pinned in `models/library.json`): the Krea 2
+koukouya adapter (HUMAN_TODO q-1 closed), Anima adapters xilmo, huashijw, koukouya, NEWANIMASTYLE, and the official
+Anima turbo LoRA. ke-ta, kieed (LyCORIS) and, after a 105-minute throttled Hugging Face download, the 4 GB `anima-base-v1.0` checkpoint all
+landed with verified receipts (the checkpoint's hash matches the civitai listing), so every file the Anima presets name is installed.
+Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `anima-base-retry-2026-09-12.log`.
+
+**Executed and inspected** (`experiments/curated/anime-fantasy-atelier/`, JPEG copies in `examples/anime-fantasy-atelier/`):
+
+| Run | Result |
+|---|---|
+| `krea-anime-atelier`, full target stack TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832×1248 (job `7d589f47`) | 827.6 s; the closest match yet to the owner's target image; koukouya's brushwork dominates |
+| `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
+| `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
+| `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
+| `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
+
+**Contract change.** `CONTROL_KEYS` and `LORA_SLOTS` now run to six slots (`lora5`, `lora6` and their `_name` twins) in
+the server, planner, validator and UI; the six-slot rows were confirmed in the running UI's DOM (Slot 1–6).
+
+**New presets.** `anima-artist-stack` (Anima base v1.0, six `LoraLoaderModelOnly` slots at the reference strengths,
+variants for the 1328×1776 reference, the adapter-free artist-tag look, the turbo audition), `anime-detail-fix`
+(Impact Pack FaceDetailer face pass then hand pass with the installed `face_yolov8s` / `hand_yolov8n` detectors, WAI v17
+repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
+the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
+
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the `krea-dark-scifi-comic-warrior` recipe; the
+detail-fix/refine variants beyond the authored defaults; the Civitai panel sign-in and downloads; the Manager UI beyond its
+version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
+
+**Owner's creative review** of the first atelier pass is recorded in `HUMAN_TODO.md` (q-2 closed) and the guide.
+
+## Anime & fantasy atelier — executed (12 September 2026)
+
+The Studio now has four LoRA slots per preset (a slot at strength 0 is pruned from the submitted graph),
+an installed-LoRA and sampler options endpoint, a sourced settings knowledge base with a grid/remix planner,
+named recipes, prompt wildcards, two new Krea 2 Turbo presets (`krea-anime-atelier`, `krea-style-lab`),
+corrected SDXL anime grammars with clip-skip for Pony, download/intake scripts and the
+[atelier guide](docs/ANIME-FANTASY-ATELIER.md). 31 Krea 2 adapters were installed from Hugging Face
+with SHA-256 receipts (official Comfy-Org styles, 21 fal styles, the 4-step distill LoRA, TextFusion
+refusal-reduction and Niji Sweet Spot mirrors) and pinned in `models/library.json`.
+
+Executed and inspected, all on 12 September (details, hashes and recipes in
+[experiments/curated/anime-fantasy-atelier](experiments/curated/anime-fantasy-atelier/README.md)):
+Krea 2 Turbo + NIJISIS at the reference image's settings (768×1152, 15 steps, euler_ancestral/simple,
+prompt `09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 986.6 s); the reference's TextFusion + Niji Sweet Spot
+stack (`412b3c9f-162b-434b-a2a6-e57635f82da1`, 941.2 s) and the same stack with the 4-step distill LoRA
+(`d7bd3104-f348-46e6-811e-3b1d918c75c3`, 270.9 s, comparable quality); `krea-anime-atelier` through a
+Studio job (`db02f6b1-8346-4361-a432-7734fc72d2c2`, prompt `150cde70-459e-4beb-b2a3-cb6f6631eb17`, 197 s
+at 4 steps, NIJISIS slot pruned); and the `wai`, `noob`, `anime` and `pony` fantasy-portrait variants
+through Studio jobs (26–30 s each at 832×1216, both LoRA slots pruned). Those five presets are
+`verified: true` for exactly those graphs. One probe (`af39c7de-8bad-47d5-a9ba-8e3333ef8573`) failed with
+a HIP out-of-memory at 768×1152 after several Krea runs in one ComfyUI process, and the secondary
+exception killed ComfyUI's prompt worker; ComfyUI was restarted and the failure is recorded, not repeated.
+
+Not executed: the koukouya LoRA from the reference image (civitai login required; HUMAN_TODO q-1),
+`krea-style-lab`, the recipes marked `unverified`, the planner-driven comparisons (the plan route was
+exercised without reserving budget), the Krea 2 Q5 GGUF speed comparison (download in progress), and any
+art acceptance — [HUMAN_TODO.md](HUMAN_TODO.md) keeps the creative choices open.
+
 ## Creative production milestone
 
 Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen

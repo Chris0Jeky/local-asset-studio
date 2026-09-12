@@ -8,6 +8,7 @@ import io
 import json
 import math
 import mimetypes
+import random
 import re
 import shutil
 import sys
@@ -30,12 +31,26 @@ from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
+import prompting
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError): pass
+
+def combo_options(descriptor):
+    """Both ComfyUI combo encodings: legacy [[...], {}] and V3 ['COMBO', {options}]."""
+    if not isinstance(descriptor, list) or not descriptor: return []
+    if isinstance(descriptor[0], list): return [v for v in descriptor[0] if isinstance(v, str)]
+    if descriptor[0] == "COMBO" and len(descriptor) > 1 and isinstance(descriptor[1], dict):
+        return [v for v in (descriptor[1].get("options") or []) if isinstance(v, str)]
+    return []
+
+def is_off(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and float(value) == 0
 
 def read_json(path: Path, fallback=None):
     try:
@@ -72,6 +87,7 @@ class Studio:
         self.assets = AssetWorkspace(self.experiments)
         self._schema_lock = threading.Lock()
         self._schema = None; self._schema_at = 0
+        self._options = None; self._options_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock()
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
@@ -87,6 +103,7 @@ class Studio:
         # Expose the workflow's authored values as editable defaults.  This keeps
         # the catalog compact while never inventing a prompt in the browser.
         result = copy.deepcopy(data)
+        loras = self.options().get("loras") or []
         for preset in result["presets"]:
             preset["runtime_block"] = self.config.get("runtime_blocks", {}).get(preset.get("family"))
             if preset.get('family')=='MiniMax H3' and self.config.get('enable_h3_loader_experiment') and getattr(getattr(self,'backends',None),'active',None)=='h3':preset['runtime_block']=None
@@ -99,9 +116,63 @@ class Studio:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
                 preset["defaults"] = defaults
-            except (StudioError, KeyError, TypeError, IndexError):
-                preset["defaults"] = {}
+                authored = {v for node in graph.values() for field, v in (node.get("inputs") or {}).items() if field == "lora_name" and isinstance(v, str)}
+            except (StudioError, KeyError, TypeError, IndexError, AttributeError):
+                preset["defaults"] = {}; authored = set()
+            # The installed inventory is the allow-list the browser gets; when
+            # ComfyUI is offline it is unknown, never "everything is missing".
+            preset["missing_loras"] = sorted(name for name in authored if name not in loras) if loras else []
+            for key in LORA_NAME_KEYS:
+                if preset.get(key) or (preset.get("bindings_extra") or {}).get(key): preset.setdefault("choices", {})[key] = list(loras)
         return result
+
+    def options(self, refresh=False, discover=False):
+        """Installed LoRA files and sampler/scheduler names from the node schema.
+
+        Only the endpoint discovers; every internal caller reads the schema
+        already cached by health polling, so binding a control never adds a
+        ComfyUI round trip.  Unknown inventory is empty, never "all missing".
+        """
+        cached = getattr(self, "_options", None)
+        if not refresh and cached is not None and time.monotonic() - getattr(self, "_options_at", 0) < 120: return copy.deepcopy(cached)
+        info = None
+        if discover:
+            try: info = self.node_info(refresh)
+            except (URLError, TimeoutError, OSError, ValueError): info = None
+        else: info = getattr(self, "_schema", None)
+        def field(class_type, name):
+            node = info.get(class_type) if isinstance(info, dict) else None
+            if not isinstance(node, dict): return []
+            groups = (node.get("input", {}).get("required", {}) or {}) | (node.get("input", {}).get("optional", {}) or {})
+            return combo_options(groups.get(name))
+        result = {"loras": field("LoraLoaderModelOnly", "lora_name") or field("LoraLoader", "lora_name"),
+                  "samplers": field("KSampler", "sampler_name"), "schedulers": field("KSampler", "scheduler"),
+                  "source": "comfyui" if isinstance(info, dict) else "unavailable"}
+        # Never memoise "unknown": a later schema discovery must fill it in.
+        if isinstance(info, dict): self._options = result; self._options_at = time.monotonic()
+        return copy.deepcopy(result)
+
+    def knowledge(self):
+        """The settings knowledge base, verbatim.  Absent file is not an error."""
+        path = self.root / "presets/settings-kb.json"
+        if not path.is_file(): return {"available": False, "version": 0, "families": {}, "loras": {}, "sha256": None}
+        data = read_json(path)
+        if not isinstance(data, dict): raise StudioError("Invalid presets/settings-kb.json")
+        return dict(data, available=True, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+
+    def recipes(self):
+        """Authored recipes annotated against the installed LoRA inventory."""
+        path = self.root / "presets/recipes.json"
+        data = read_json(path) if path.is_file() else None
+        if path.is_file() and (not isinstance(data, dict) or not isinstance(data.get("recipes"), list)): raise StudioError("Invalid presets/recipes.json")
+        inventory = self.options(); installed = inventory.get("loras") or []
+        entries = []
+        for recipe in (data or {}).get("recipes", []):
+            if not isinstance(recipe, dict): continue
+            names = [v for key, v in (recipe.get("controls") or {}).items() if key in LORA_NAME_KEYS and isinstance(v, str)]
+            missing = sorted({name for name in names if name not in installed}) if installed else []
+            entries.append(dict(recipe, available=(not missing) if installed else None, missing=missing))
+        return {"version": (data or {}).get("version", 1), "available": path.is_file(), "source": inventory.get("source"), "recipes": entries}
 
     def preset(self, preset_id):
         for p in self.catalog()["presets"]:
@@ -148,13 +219,25 @@ class Studio:
             if key in controls:
                 if not isinstance(controls[key], str) or len(controls[key]) > 8000: raise StudioError(f"{key} must be text up to 8000 characters")
                 self._bind_control(graph, preset, key, controls[key])
-        if "lora" in controls:
-            binding = preset.get("lora") or ((preset.get("bindings_extra") or {}).get("lora") or [None])[0]
+        for key in LORA_SLOTS:
+            if key not in controls: continue
+            binding = preset.get(key) or ((preset.get("bindings_extra") or {}).get(key) or [None])[0]
             try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
-            value = number(controls["lora"], "lora", 0, 2) if isinstance(existing, (int, float)) else controls["lora"]
-            if not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError("lora must be a number or short text")
-            self._bind_control(graph, preset, "lora", value)
+            # `lora` stays polymorphic: older presets bind it to a filename input.
+            value = number(controls[key], key, 0, 2) if isinstance(existing, (int, float)) and not isinstance(existing, bool) else controls[key]
+            if not isinstance(value, (int, float, str)) or (isinstance(value, str) and len(value) > 8000): raise StudioError(f"{key} must be a number or short text")
+            self._bind_control(graph, preset, key, value)
+        installed = self.options().get("loras") if any(key in controls for key in LORA_NAME_KEYS) else None
+        for key in LORA_NAME_KEYS:
+            if key not in controls: continue
+            name = controls[key]
+            if not isinstance(name, str) or not name or len(name) > 200 or name != Path(name).name or "/" in name or "\\" in name or ".." in name or not name.endswith(".safetensors"):
+                raise StudioError(f"{key} must be an installed .safetensors filename")
+            # ComfyUI rejects an uninstalled combo value with HTTP 400 even at
+            # strength 0, so refuse it here while the inventory is known.
+            if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
+            self._bind_control(graph, preset, key, name)
         for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
@@ -196,8 +279,33 @@ class Studio:
         elif payload.get("references"):
             raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
+        self.prune_disabled_loras(graph)
         self.ensure_reference_inputs(graph)
         return preset, graph, graph_path, controls, batch
+
+    def prune_disabled_loras(self, graph):
+        """Drop LoRA loaders left at strength 0 and rewire whatever consumed them.
+
+        A zero-strength loader is a no-op for the sampler but still forces
+        ComfyUI to validate (and reject) its filename, so an off slot must leave
+        the graph entirely.  Output slot 0 is MODEL, slot 1 is CLIP.
+        """
+        for _ in range(len(graph) + 1):
+            victim = None
+            for key, node in graph.items():
+                kind = node.get("class_type"); inputs = node.get("inputs") or {}
+                if kind == "LoraLoaderModelOnly" and is_off(inputs.get("strength_model")): victim = key; break
+                if kind == "LoraLoader" and is_off(inputs.get("strength_model")) and is_off(inputs.get("strength_clip")): victim = key; break
+            if victim is None: return graph
+            sources = {0: (graph[victim].get("inputs") or {}).get("model"), 1: (graph[victim].get("inputs") or {}).get("clip")}
+            del graph[victim]
+            for node in graph.values():
+                for field, value in list((node.get("inputs") or {}).items()):
+                    if not (isinstance(value, list) and len(value) == 2 and str(value[0]) == str(victim)): continue
+                    replacement = sources.get(value[1])
+                    if replacement is None: raise StudioError("A disabled LoRA slot cannot be bypassed in this workflow; keep its strength above zero")
+                    node["inputs"][field] = replacement
+        raise StudioError("Workflow LoRA chain could not be resolved")
 
     def ensure_reference_inputs(self, graph):
         for node in graph.values():
@@ -225,6 +333,7 @@ class Studio:
         directory = self.runs / job_id; directory.mkdir(exist_ok=not enqueue)
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
+        job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
@@ -551,13 +660,34 @@ class Studio:
             preset = self.preset(job["preset_id"])
             bindings = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         binding = bindings[0] if bindings else None
-        if not binding: return graph, None
-        try: base = graph[str(binding[0])]["inputs"][str(binding[1])]
-        except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid seed binding")
-        seed = number(base, "seed", 0, 2**63 - 1, True) + index
-        if seed > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range")
-        for bound in bindings: self._bind(graph, bound, seed)
+        seed = None
+        if binding:
+            try: base = graph[str(binding[0])]["inputs"][str(binding[1])]
+            except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid seed binding")
+            seed = number(base, "seed", 0, 2**63 - 1, True) + index
+            if seed > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range")
+            for bound in bindings: self._bind(graph, bound, seed)
+        self._expand_prompts(job, graph, seed, index)
         return graph, seed
+
+    def _expand_prompts(self, job, graph, seed, index):
+        """Resolve prompt wildcards per batch member; controls keep the template."""
+        bindings = job.get("prompt_bindings")
+        if bindings is None:
+            try: preset = self.preset(job["preset_id"])
+            except StudioError: return
+            bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
+        rng = random.Random(f"{seed}:{index}")
+        try: self._expand_bound_prompts(graph, bindings, rng)
+        except ValueError as exc: raise StudioError(str(exc))
+
+    def _expand_bound_prompts(self, graph, bindings, rng):
+        for key in ("positive", "negative"):
+            for binding in bindings.get(key) or []:
+                try: node, field = str(binding[0]), str(binding[1]); text = graph[node]["inputs"][field]
+                except (KeyError, TypeError, IndexError): continue
+                if not prompting.has_wildcards(text): continue
+                graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
 
     def _run(self, job):
         job['started_at']=time.time()
@@ -770,6 +900,9 @@ class Handler(BaseHTTPRequestHandler):
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
+            if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))
+            if path == "/api/knowledge": return self._json(200, self.studio.knowledge())
+            if path == "/api/recipes": return self._json(200, self.studio.recipes())
             if path.startswith("/api/workflows/"):
                 preset = self.studio.preset(path.rsplit("/", 1)[-1]); _, workflow = self.studio.graph_for(preset)
                 if urlparse(self.path).query == "visual" and preset.get("visual"):
@@ -812,6 +945,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
             if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))
+            if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
             if self.path.startswith('/api/production/'):
                 parts=self.path.split('/');payload=self._body_json();identifier=parts[3]
                 if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))

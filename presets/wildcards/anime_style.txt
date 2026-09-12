@@ -1,0 +1,13 @@
+# Anime style register. SDXL families read these as tags; Krea reads them as a style block.
+modern anime illustration
+90s cel animation look
+shoujo illustration with delicate linework
+seinen illustration with heavy shadows
+chibi proportions
+storybook anime illustration
+painterly anime key visual
+manga panel inking
+soft watercolor anime
+flat colour anime with crisp outlines
+retro anime poster art
+detailed anime character sheet

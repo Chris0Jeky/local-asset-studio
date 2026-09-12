@@ -18,6 +18,28 @@ The default prompts are starting examples, not hidden rules. You can rewrite the
 
 **CFG** controls how strongly guidance affects sampling. High values can damage images. Begin with the preset's value. **Denoise**, on image variations, controls how much freedom the model gets to change the original.
 
+## Anime and fantasy in one click
+
+Open the **Recipes** select in the create view. A recipe is a complete named starting point: preset,
+prompt, size, sampler, seed and the whole LoRA stack. Pick one, press **Generate**, change nothing the
+first time. The list shows each recipe's notes and sources, and warns when a recipe needs an adapter
+file you do not have installed.
+
+Three things worth knowing before you spend a long render:
+
+- **LoRA slots.** The Krea presets have four adapter slots. Strength `0` means off, and the adapter is
+  removed from the graph entirely. Turn one on by giving it a strength (usually `1.0`) — and use its
+  trigger word, because most style adapters do nothing without it.
+- **Wildcards.** In any prompt, `{misty|stormy|golden}` picks one option and `__lighting__` picks a
+  line from `presets/wildcards/lighting.txt`. The choice is derived from the seed, so the same recipe
+  and seed reproduce the same prompt.
+- **Krea 2 is slow here.** A 768×1152 image at 15 steps took 986 seconds on this PC; the same family
+  at 512×768 and 8 steps took 189 seconds; SDXL anime portraits at 512×768 take 20–35 seconds.
+  Audition small, then render large.
+
+The full map — which recipe for which look, every LoRA with its trigger and terms, per-family settings
+and the settings planner — is the [anime & fantasy atelier guide](ANIME-FANTASY-ATELIER.md).
+
 ## Edit an existing image
 
 Choose **FLUX Klein • reference edit**. Upload an image, then describe a single change: “Change the teal enamel to purple; keep the brass frame, amber light, viewpoint and background.” Generate one image and compare it with the original.

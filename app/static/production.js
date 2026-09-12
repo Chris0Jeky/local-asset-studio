@@ -1,5 +1,6 @@
 let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false;
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
+let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
 async function refreshProduction(force=false){
   if(productionRefreshing)return;productionRefreshing=true;
@@ -17,7 +18,8 @@ function renderProduction(){
     if(['awaiting_review','reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
     html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
-      html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(p.axis)+' '+esc(p.values[p.stages.indexOf(s)])+'</small>')+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>';
+      const index=p.stages.indexOf(s),variant=(p.variants||[])[index];
+      html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>';
       for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
       }
@@ -42,12 +44,54 @@ async function openComparison(parent=null){
   uploaded=(await uploadInput('reference'))||uploaded;lastUploaded=(await uploadInput('lastReference'))||lastUploaded;
   comparisonRecipe={preset_id:selected.id,controls:values(),references:attachedReferencePayload(),parent_assets:[...parentAssets],expected_template_sha256:recipeTemplateHash};
   const axes=[['seed','Seed'],['lora','LoRA strength'],['cfg','Guidance'],['steps','Steps'],['denoise','Denoise']].filter(([key])=>selected[key]&&!(key==='lora'&&typeof selected.defaults?.lora==='string'));
-  if(!axes.length){message('This recipe has no numeric comparison controls. Use its Generate action or choose another recipe.',true);return;}
   $('#experimentRecipe').textContent=selected.name;$('#experimentName').value=parent?'Branch · '+parent.name:selected.name+' · comparison';
-  $('#experimentAxis').innerHTML=axes.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('');
+  $('#experimentAxis').innerHTML=axes.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('')||'<option value="">No single numeric setting on this recipe</option>';
+  $('#experimentAxis').disabled=!axes.length;
   $('#experimentBudget').disabled=!!parent;$('#experimentBudget').value=parent?.budget.allowance||4;
   $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
-  suggestComparisonValues();$('#experimentDialog').showModal();
+  plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerBlock();renderPlanner();
+  if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
+  if(!axes.length)productionMessage('This recipe has no single numeric axis; plan its documented settings instead.');
+  $('#experimentDialog').showModal();
+}
+// The settings library plans several documented settings at once. It reserves
+// nothing: the variants it offers still go through the same Prepare plan step.
+function plannerBlock(){
+  let block=$('#plannerBlock');
+  if(!block){
+    block=document.createElement('div');block.id='plannerBlock';block.className='planner';
+    block.innerHTML='<div class="production-actions"><button type="button" id="planFromKnowledge">Plan from settings library</button><button type="button" id="planRemix">Remix LoRA weights</button><button type="button" id="clearPlanned" hidden>Clear planned variants</button></div><div id="plannerAxes" class="planner-axes"></div><div id="plannedVariants" class="variants"></div>';
+    $('#experimentStatus').before(block);
+    $('#planFromKnowledge').onclick=()=>requestPlan('grid');
+    $('#planRemix').onclick=()=>requestPlan('remix');
+    $('#clearPlanned').onclick=()=>{plannedVariants=null;renderPlanner();};
+    $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
+    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
+  }
+  return block;
+}
+function renderPlanner(){
+  const planned=plannedVariants||[];
+  $('#plannerAxes').innerHTML=plannerAxes.length?'<small>Settings to vary</small>'+plannerAxes.map(a=>'<label class="planner-axis"><input type="checkbox" value="'+esc(a.id)+'" '+(plannerAxisIds.includes(a.id)?'checked':'')+'> '+esc(a.id)+' · '+esc(a.values.join(', '))+'</label>').join(''):'';
+  $('#plannedVariants').innerHTML=planned.map((v,i)=>'<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button><small>'+esc(v.description||Object.entries(v.controls||{}).filter(([k])=>k!=='positive'&&k!=='negative').map(([k,val])=>k+'='+val).join(', '))+'</small>'+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>').join('');
+  $('#clearPlanned').hidden=!planned.length;
+  $('#experimentValues').required=!planned.length;$('#experimentValues').disabled=!!planned.length;
+  $('#experimentAxis').disabled=!!planned.length||!$('#experimentAxis').value;
+  if(planned.length&&!comparisonParent)$('#experimentBudget').value=Math.max(Number($('#experimentBudget').value)||0,planned.length);
+  $('#prepareExperiment').disabled=!planned.length&&!$('#experimentAxis').value;
+}
+async function requestPlan(mode){
+  if(!comparisonRecipe)return;
+  $('#experimentStatus').textContent='Reading the documented settings for this family…';
+  try{
+    const body={preset_id:comparisonRecipe.preset_id,controls:comparisonRecipe.controls,mode};
+    if(mode==='grid'&&plannerAxisIds.length)body.axes=plannerAxisIds;
+    const offer=await post('/api/experiments/plan',body);
+    plannerAxes=offer.axes_available||[];plannedVariants=offer.variants||[];
+    if(mode==='grid'&&!plannerAxisIds.length)plannerAxisIds=[...new Set(plannedVariants.flatMap(v=>Object.keys(v.controls||{})))].filter(k=>plannerAxes.some(a=>a.control===k)).map(k=>plannerAxes.find(a=>a.control===k).id);
+    renderPlanner();
+    $('#experimentStatus').textContent=plannedVariants.length+' documented variants planned. Nothing is reserved until you prepare the plan.';
+  }catch(err){plannedVariants=null;renderPlanner();$('#experimentStatus').textContent=err.message;}
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}
 $('#experimentAxis').onchange=suggestComparisonValues;$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
@@ -55,7 +99,10 @@ $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.me
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));
 $('#refreshProduction').onclick=()=>refreshProduction(true);
 $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment').disabled=true;$('#experimentStatus').textContent='Checking the recipe and local model fingerprints…';try{
-  const p=await post('/api/production',{name:$('#experimentName').value,recipe:comparisonRecipe,axis:$('#experimentAxis').value,values:$('#experimentValues').value.split(',').map(v=>v.trim()).filter(Boolean),max_generations:Number($('#experimentBudget').value),max_seconds:Number($('#experimentMinutes').value)*60,parent_project:comparisonParent?.id});
+  const intent={name:$('#experimentName').value,recipe:comparisonRecipe,max_generations:Number($('#experimentBudget').value),max_seconds:Number($('#experimentMinutes').value)*60,parent_project:comparisonParent?.id};
+  if(plannedVariants&&plannedVariants.length)intent.variants=plannedVariants.map(v=>({label:v.label,controls:v.controls,rationale:v.rationale||'',sources:v.sources||[]}));
+  else{intent.axis=$('#experimentAxis').value;intent.values=$('#experimentValues').value.split(',').map(v=>v.trim()).filter(Boolean);}
+  const p=await post('/api/production',intent);
   productionId=p.id;$('#experimentDialog').close();showView('production');await refreshProduction(true);
 }catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
 $('#productionList').onclick=e=>{const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
