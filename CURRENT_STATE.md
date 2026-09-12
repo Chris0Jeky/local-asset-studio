@@ -31,6 +31,14 @@ fix verification found no remaining Critical/High defect. This is the first impo
 repairs, warmups, review promotion, dependency invalidation and live import execution remain unverified.
 The existing database-commit-before-plan-file-write recovery gap is tracked separately in #65.
 
+After the idle Studio reload to `4cb514c`, the actual loopback HTTP importer prepared project
+`01fc7329c0406172b3fd512653648d0f` from a separate one-case smoke study using the approved pilot canon
+and existing pinned front upload. It remains planned with allowance 1, reserved 0 and no attempts.
+The identical import returned HTTP 400 as already imported. All 77 job IDs and Comfy history IDs stayed
+unchanged, with an empty queue. No Start or Resume was sent. The live smoke did not repeat a restart;
+restart persistence remains covered by the integration checks above. The receipt is retained beside
+the pilot ledger and raw proof under `C:/AI/character-lab/pilot-20260912/production-import-smoke-20260912/`.
+
 ## Character-consistency offline foundation - 12 September 2026
 
 The character study, archive and media commands now have local Windows integration evidence.
@@ -47,7 +55,21 @@ pixel-for-pixel. All three source sheets are opaque. The standard review card wa
 identical bytes in this Windows runtime and inspected; crop fragments remain, and it is not a cleaned
 sprite sheet. Prior CPU evidence remains attributed to its original session. Raw Windows logs and
 draft reports are retained under `.runtime/session-2026-09-12/character-review/`. The live pilot, shared
-execution and review/repair work remain in #64/#65/#66; `HUMAN_TODO.md` and canon acceptance remain open.
+execution and review/repair work remain in #64/#65/#66. The owner selected the supplied standard costume,
+including its shown back view, as the private study canon; this is recorded in `HUMAN_TODO.md` and does not
+accept art, clear rights or authorize production use.
+
+The completed twelve-case pilot is curated at `experiments/curated/character-reference-pilot/`; raw
+histories, receipts and original PNGs remain outside Git at `C:/AI/character-lab/pilot-20260912/`. It reserved
+and recorded twelve primary attempts: eleven completed images and one Qwen `VAEDecodeTiled` CPU-allocation
+failure. The failed profile's already-reserved second slot was consumed once by ordinary Studio job
+`03903f6a-8e84-43b2-b953-00678167acfb`, which has no `project_id`; the collector's
+`c8c05b34c6f7439ebb89aca3978433dc` grouping identifies the reservation source only. It was neither a retry
+nor a new credit. Ten completed images are agent-rejected, one requires review, and there are zero agent
+selections or human acceptances. The standard back was review canon while one-reference full-figure baselines
+conditioned only on the front. Unequal canvas/resolution, cold/warm state and memory conditions make this
+unsuitable as an equal-compute benchmark. Current routes are stopped from production promotion; preserve the
+evidence and pursue any runtime/fidelity follow-up separately, without additional pilot generation.
 
 ## Voice runtime consistency and recovery - 12 September 2026
 

@@ -1,0 +1,683 @@
+{
+  "schema_version": 1,
+  "kind": "character_reference_pilot_curation",
+  "raw_evidence_root": "C:\\AI\\character-lab\\pilot-20260912",
+  "plan_sha256": "2e987c08f624fb432f23125cb17a3ec7da68ef1a6ad7d1d91675ca7c3798d5e3",
+  "raw_source_sha256": {
+    "records-latest.json": "2ff16883ffcd47c19cf159f497bd71f06a9a2891647cf4ec463d48c8508646d1",
+    "outcomes-latest.json": "75aaa90b27ae3e5fb6303d2f47fa0ac041026d5eff7a1d4689655dffc5acb2f0",
+    "summary-latest.json": "dfe21fe3743c8cb89a6303c200e886092712278d3face8e7c9752ead326584fd",
+    "manual-reserved-cases.json": "899653eec832d32e9e291beacfcc929f93e10e9a639b5738a03742ddd405fd89",
+    "plan.json": "514d4f673cb96f73ecc195c75fb9cabd6be01736e9fe4280522144cc79401ddc",
+    "approved-canon.json": "ae969b8d2811431fe951409b6fe46a043d3fab768ab3bae751777fa33b32a5ed",
+    "owner-decision.json": "259ca3b78291e44e88df542e87d733dd165daea2deeca0990a044325d4c1a745"
+  },
+  "copied_recipe_count": 12,
+  "original_pngs": "External only; neither copied nor edited by this curation.",
+  "execution_accounting": {
+    "planned_cases": 12,
+    "reserved_attempts": 12,
+    "attempts_recorded": 12,
+    "completed_images": 11,
+    "execution_failures": 1,
+    "retries": 0,
+    "new_credits": 0,
+    "agent_selections": 0,
+    "human_acceptances": 0
+  },
+  "comparability_limits": [
+    "Qwen and Klein use unequal native resolutions/canvases.",
+    "Cold/warm state and observed memory conditions differ.",
+    "Observed timings include loading/waiting and are not an equal-compute ranking.",
+    "The supplied standard back is review canon; full-figure baselines conditioned only on the front reference."
+  ],
+  "promotion_decision": "Stop current routes from production promotion. Measured failures inform separate follow-ups; no additional generation is authorized by this curation.",
+  "manual_reservation_reconciliation": {
+    "case_id": "case-2bc1f2a78e67b8c87752",
+    "collector_source_grouping_project_id": "c8c05b34c6f7439ebb89aca3978433dc",
+    "actual_job_id": "03903f6a-8e84-43b2-b953-00678167acfb",
+    "actual_job_project_id": null,
+    "reservation_source_project": "c8c05b34c6f7439ebb89aca3978433dc",
+    "reservation_source_stage": 1,
+    "raw_receipts": {
+      "manual-reserved-cases.json": "C:\\AI\\character-lab\\pilot-20260912\\manual-reserved-cases.json",
+      "reserved-case-2bc1f2a78e67b8c87752/submit-intent.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\submit-intent.json",
+      "reserved-case-2bc1f2a78e67b8c87752/submit-reply.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\submit-reply.json",
+      "reserved-case-2bc1f2a78e67b8c87752/terminal-observed.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\terminal-observed.json",
+      "reserved-case-2bc1f2a78e67b8c87752/events.jsonl": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\events.jsonl"
+    },
+    "finding": "The ordinary Studio job has no project_id. It consumed the already-reserved second slot after the failed Production group stage; it was neither a retry nor a new credit."
+  },
+  "cases": [
+    {
+      "case_id": "case-3ebc7c70c112644202c5",
+      "attempt_id": "attempt-3ebc7c70c112644202c5",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "qwen-1ref",
+      "task_id": "back",
+      "seed": 12001,
+      "job_id": "cbe47a4d-38bd-5501-aee8-162e82fa1711",
+      "project_id_recorded_by_collector": "796a1fe8d3aa4c02abce3f6754a86e82",
+      "prompt_ids": [
+        "b3d3e952-3182-4586-9fe7-117855f00dea"
+      ],
+      "elapsed_seconds": 163.39305448532104,
+      "recipe": {
+        "tracked_path": "recipes/case-3ebc7c70c112644202c5.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-3ebc7c70c112644202c5\\recipe.json",
+        "sha256": "73a7c74fcb44f616be673e67ae4e87c04bd081ed60fe12a45f22192b11cd2c4b"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-3ebc7c70c112644202c5\\evidence.json",
+        "sha256": "fc7fe547b45861a478337a509e8d0fde418baaaf0bbf1ea6df5f989502bc4ee3"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-3ebc7c70c112644202c5/Qwen-1ref_00001_.png",
+          "sha256": "bcfd786b4073be54b06529b38d3862771f9c5abb572ce613c8486ae4bde5bd72",
+          "dimensions": [
+            512,
+            1128
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Qwen-1ref_00001_.png",
+          "asset_id": "fa198966cf5b595a9d85b4195ec2d5b7"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "fail",
+          "camera": "pass",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Compared full output with supplied front and shown back. The central continuous long hair curtain becomes a neck-length cap with separated outer tails. Boots have flat gold bands instead of the visible canonical V trim. Rear camera, complete framing, grounded stance and clean cel rendering are plausible. The face is not visible and was not inferred. Newly exposed back bodice construction is unverified. No human acceptance.",
+        "output_sha256": "bcfd786b4073be54b06529b38d3862771f9c5abb572ce613c8486ae4bde5bd72"
+      }
+    },
+    {
+      "case_id": "case-8e176fab210bef5b6251",
+      "attempt_id": "attempt-8e176fab210bef5b6251",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "qwen-1ref",
+      "task_id": "back",
+      "seed": 12002,
+      "job_id": "840402d6-2b95-5563-90f9-89bf487e3b02",
+      "project_id_recorded_by_collector": "796a1fe8d3aa4c02abce3f6754a86e82",
+      "prompt_ids": [
+        "799a6256-379c-4479-b7cf-8aa04b0d9d5f"
+      ],
+      "elapsed_seconds": 287.37982201576233,
+      "recipe": {
+        "tracked_path": "recipes/case-8e176fab210bef5b6251.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-8e176fab210bef5b6251\\recipe.json",
+        "sha256": "b9fb74d5e573a5cb1959b930134421df769009356d941de48ffb1c5572102262"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-8e176fab210bef5b6251\\evidence.json",
+        "sha256": "4b4384997924bada66ec4aa5122ac0d00dbf86e86661fcfccba212bbb9d7854a"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-8e176fab210bef5b6251/Qwen-1ref_00002_.png",
+          "sha256": "a9b39694af51e0ebe1c50604f61868f24e807f1a42edb7f3fe3cc45fd66d12be",
+          "dimensions": [
+            512,
+            1128
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Qwen-1ref_00002_.png",
+          "asset_id": "19447e99159b59faa8bd9afe52a3c499"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "uncertain",
+          "camera": "pass",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Compared full output with supplied front and shown back. Required long hair is replaced by a neck-length bob and small side tufts. Visible lower-costume elements and V boot trim are close, but exposed back bodice and green rear collar detail are unverified because canonical hair covers them. Rear camera, grounded stance and clean cel rendering are plausible. Face and eyes are not visible and were not inferred. No human acceptance.",
+        "output_sha256": "a9b39694af51e0ebe1c50604f61868f24e807f1a42edb7f3fe3cc45fd66d12be"
+      }
+    },
+    {
+      "case_id": "case-1331061a87abc65406e9",
+      "attempt_id": "attempt-1331061a87abc65406e9",
+      "kind": "primary",
+      "state": "failed",
+      "preset_id": "qwen-1ref",
+      "task_id": "profile",
+      "seed": 12001,
+      "job_id": "967ad7a3-c7ef-59c1-95e0-64ff4163faba",
+      "project_id_recorded_by_collector": "c8c05b34c6f7439ebb89aca3978433dc",
+      "prompt_ids": [
+        "da5c1789-7a92-4b8a-b19c-404f8d0ea81f"
+      ],
+      "elapsed_seconds": null,
+      "recipe": {
+        "tracked_path": "recipes/case-1331061a87abc65406e9.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-1331061a87abc65406e9\\recipe.json",
+        "sha256": "c9f2c70e4d205c92172ae737c376d011bf038e4fe15395bd53199ca16a311af5"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-1331061a87abc65406e9\\evidence.json",
+        "sha256": "cd6b6e33423937189305e47295dac4693ec69ef2ab393e2423c365c309eed8f4"
+      },
+      "status": "failed",
+      "outputs": [],
+      "agent_review": null
+    },
+    {
+      "case_id": "case-2bc1f2a78e67b8c87752",
+      "attempt_id": "attempt-2bc1f2a78e67b8c87752",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "qwen-1ref",
+      "task_id": "profile",
+      "seed": 12002,
+      "job_id": "03903f6a-8e84-43b2-b953-00678167acfb",
+      "project_id_recorded_by_collector": "c8c05b34c6f7439ebb89aca3978433dc",
+      "prompt_ids": [
+        "7e66ebd0-b4d9-4c0d-9f61-ee158b6464c2"
+      ],
+      "elapsed_seconds": 435.7359941005707,
+      "recipe": {
+        "tracked_path": "recipes/case-2bc1f2a78e67b8c87752.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-2bc1f2a78e67b8c87752\\recipe.json",
+        "sha256": "8ea61da60ffb4cf7812bcebde39a2cc1a5575ee6bbcde8aef3701b706fabfaf9"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-2bc1f2a78e67b8c87752\\evidence.json",
+        "sha256": "0650d62034d8b935112206750e2d6f6f9278e1da53d8092453791b3bff7bd23a"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-2bc1f2a78e67b8c87752/Qwen-1ref_00003_.png",
+          "sha256": "1bf7e634cdb1139aa9ec84fc7ceca452078e7ccd1a610f577a1616da6734eba4",
+          "dimensions": [
+            512,
+            1128
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Qwen-1ref_00003_.png",
+          "asset_id": "05bee267815e58e880350a02d84df770"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Independent Sol visual assessment, final synthesis via coordinator",
+        "reviewer_kind": "agent",
+        "decision": "needs_review",
+        "checks": {
+          "identity": "uncertain",
+          "costume": "pass",
+          "camera": "pass",
+          "contact": "uncertain",
+          "style": "pass"
+        },
+        "note": "Independent visual assessment: no true side-view canon establishes exact profile geometry, so identity remains uncertain. All visible standard costume details are retained. The image is a strict image-left side full figure with complete boots; right-profile direction is undefined by the supplied canon and is not failed. The far arm is fully occluded, so contact is uncertain. No agent selection or human acceptance.",
+        "output_sha256": "1bf7e634cdb1139aa9ec84fc7ceca452078e7ccd1a610f577a1616da6734eba4"
+      }
+    },
+    {
+      "case_id": "case-8078968005d89f9f4297",
+      "attempt_id": "attempt-8078968005d89f9f4297",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "qwen-1ref",
+      "task_id": "wink",
+      "seed": 12001,
+      "job_id": "379e65cc-be2e-5798-ab8e-59b782033400",
+      "project_id_recorded_by_collector": "ac4254fd6a1e43f3b4dee7545137e0fc",
+      "prompt_ids": [
+        "a82be38b-ea7d-4bda-a090-30c8321cffe1"
+      ],
+      "elapsed_seconds": 423.5441827774048,
+      "recipe": {
+        "tracked_path": "recipes/case-8078968005d89f9f4297.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-8078968005d89f9f4297\\recipe.json",
+        "sha256": "03de8cd6a4435046bf206b7e295fecee06ae88e786bd97878233696f664cdc7a"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-8078968005d89f9f4297\\evidence.json",
+        "sha256": "07a7729e09df105cecc90ae0734238d3385857b2f9ae195744537cec162f91d2"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-8078968005d89f9f4297/Qwen-1ref_00004_.png",
+          "sha256": "9bd4ec791dd2aa6298dd07d7a291853eafd1179b560e5b67ab1ec4eb65ac0a00",
+          "dimensions": [
+            512,
+            608
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Qwen-1ref_00004_.png",
+          "asset_id": "5f3feecd54635f8aa6e16525fc75894f"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Independent Sol visual assessment, final synthesis via coordinator",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "fail",
+          "camera": "fail",
+          "contact": "not_applicable",
+          "style": "pass"
+        },
+        "note": "Independent visual assessment: oversized chibi head departs from the approved full-figure canon. Sleeves, bodice, skirt and boot construction are redesigned, and the full-body chibi framing does not preserve the required portrait. Style alone does not satisfy the case. No human acceptance.",
+        "output_sha256": "9bd4ec791dd2aa6298dd07d7a291853eafd1179b560e5b67ab1ec4eb65ac0a00"
+      }
+    },
+    {
+      "case_id": "case-c8366771018438015c0e",
+      "attempt_id": "attempt-c8366771018438015c0e",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "qwen-1ref",
+      "task_id": "wink",
+      "seed": 12002,
+      "job_id": "ae331df7-d4dc-5c06-a59c-651a31cfd370",
+      "project_id_recorded_by_collector": "ac4254fd6a1e43f3b4dee7545137e0fc",
+      "prompt_ids": [
+        "dfbd367f-e29d-4d30-9c13-4ad07823c65a"
+      ],
+      "elapsed_seconds": 213.07048106193542,
+      "recipe": {
+        "tracked_path": "recipes/case-c8366771018438015c0e.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-c8366771018438015c0e\\recipe.json",
+        "sha256": "e0218286a7cc6cdda5b0e8d8261393a8412baddb26eae0a8bb31651c3c3cf22e"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-c8366771018438015c0e\\evidence.json",
+        "sha256": "b310c5611b03f51ba62b40a9cd173dba9725d6646ab434f89c0aa8d1c9362fae"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-c8366771018438015c0e/Qwen-1ref_00005_.png",
+          "sha256": "8eea738ff8d13a5013c0953288e7493ccfdfba76a8fd787317dd29b820e942bd",
+          "dimensions": [
+            512,
+            608
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Qwen-1ref_00005_.png",
+          "asset_id": "82cfacc4313953cab5d1e8c015ad5143"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Independent Sol visual assessment, final synthesis via coordinator",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "fail",
+          "camera": "fail",
+          "contact": "not_applicable",
+          "style": "pass"
+        },
+        "note": "Independent visual assessment: oversized chibi head departs from the approved full-figure canon. Sleeves, bodice, skirt and boot construction are redesigned, and the full-body chibi framing does not preserve the required portrait. Style alone does not satisfy the case. No human acceptance.",
+        "output_sha256": "8eea738ff8d13a5013c0953288e7493ccfdfba76a8fd787317dd29b820e942bd"
+      }
+    },
+    {
+      "case_id": "case-606882fbb0d076f9942d",
+      "attempt_id": "attempt-606882fbb0d076f9942d",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "back",
+      "seed": 12001,
+      "job_id": "c3aae5c1-2c90-5e72-90fc-01af730b2c01",
+      "project_id_recorded_by_collector": "9c0de29c6ffa47798621d004f9e6cd9f",
+      "prompt_ids": [
+        "896aade4-57f8-4398-a28e-47570316cf26"
+      ],
+      "elapsed_seconds": 44.2247416973114,
+      "recipe": {
+        "tracked_path": "recipes/case-606882fbb0d076f9942d.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-606882fbb0d076f9942d\\recipe.json",
+        "sha256": "b161de2adfae2f63282152b99ea7b71064becbe2b61246b06d1f50411971f95a"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-606882fbb0d076f9942d\\evidence.json",
+        "sha256": "653f7083739c91cfa4dc9096425bde79a23517592c49966b3533f2158aa3f7a7"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-606882fbb0d076f9942d/FLUX-Edit_00002_.png",
+          "sha256": "022bb608146288bff092eb9168d9af56cac816ea94152f16bb0967282356c507",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00002_.png",
+          "asset_id": "454250e0f3db57ff848ad1d25ef3404f"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "uncertain",
+          "costume": "fail",
+          "camera": "pass",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Full rear view and plausible stance. Hair and ornament remain recognizable, but exact rear hair/ornament construction is uncertain. The lilac underskirt is missing and canonical gold V boot tops become horizontal bands. The hidden back bodice remains a proposal. Face/eyes are not visible and were not inferred.",
+        "output_sha256": "022bb608146288bff092eb9168d9af56cac816ea94152f16bb0967282356c507"
+      }
+    },
+    {
+      "case_id": "case-115f230aacbddc806ec2",
+      "attempt_id": "attempt-115f230aacbddc806ec2",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "back",
+      "seed": 12002,
+      "job_id": "34068f55-3c0a-59ae-aa19-33ac51d9695c",
+      "project_id_recorded_by_collector": "9c0de29c6ffa47798621d004f9e6cd9f",
+      "prompt_ids": [
+        "03258c75-8318-4d93-8d9c-d81d9256f700"
+      ],
+      "elapsed_seconds": 22.15510106086731,
+      "recipe": {
+        "tracked_path": "recipes/case-115f230aacbddc806ec2.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-115f230aacbddc806ec2\\recipe.json",
+        "sha256": "b84a776787409fb2217c8bc8ea98ab22b8be0bf94ec7bfe0f8e5c23a305222ce"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-115f230aacbddc806ec2\\evidence.json",
+        "sha256": "7bf2557686d327e4c4bede0baaa81427a86189ceadc7cf6c01f11f10a85b94e9"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-115f230aacbddc806ec2/FLUX-Edit_00003_.png",
+          "sha256": "18e4762b7fd0d2808082b97a19d8a4f699d8cb770362dc272d111b0e453469c2",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00003_.png",
+          "asset_id": "bfc4fb5367ff57ecb5eb26cc5024be1c"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "fail",
+          "camera": "pass",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Neutral full rear camera, plausible grounded stance and clean cel rendering. The central rear hair ends near the neck, unlike the continuous long canonical curtain; the ornament changes to a ringed construction. The lilac underskirt is lost and gold V boot trim becomes flat bands. Exposed back construction is unverified.",
+        "output_sha256": "18e4762b7fd0d2808082b97a19d8a4f699d8cb770362dc272d111b0e453469c2"
+      }
+    },
+    {
+      "case_id": "case-a009a1285dc1410cd733",
+      "attempt_id": "attempt-a009a1285dc1410cd733",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "profile",
+      "seed": 12001,
+      "job_id": "fc85c3ea-4213-512e-99e6-b9e6fa2faa08",
+      "project_id_recorded_by_collector": "2da90c438c914c35a1e4d5267b88dc20",
+      "prompt_ids": [
+        "b88114fb-947a-46df-bba0-ba7c033efac0"
+      ],
+      "elapsed_seconds": 16.12520670890808,
+      "recipe": {
+        "tracked_path": "recipes/case-a009a1285dc1410cd733.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-a009a1285dc1410cd733\\recipe.json",
+        "sha256": "3506f099aca10be98e47175c17700880da728fb0992c311fa07dee815996b30d"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-a009a1285dc1410cd733\\evidence.json",
+        "sha256": "526f60420cae2347957200c39a3f81285664197402f74d192a340cd5ad290899"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-a009a1285dc1410cd733/FLUX-Edit_00004_.png",
+          "sha256": "b87fe47f60290ecdd101a7fc9bc7b8bc205608777e8fcf5177bfcc1b2e1bc632",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00004_.png",
+          "asset_id": "b8a9f883e21553d4839fd6c53c48781e"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "pass",
+          "costume": "pass",
+          "camera": "fail",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Face, blue eyes, long hair, loop, ornaments and visible standard costume are recognizably retained, with plausible arms and grounded boots. The required strict right profile is not performed: the output is frontal. Design preservation does not compensate for a failed camera requirement.",
+        "output_sha256": "b87fe47f60290ecdd101a7fc9bc7b8bc205608777e8fcf5177bfcc1b2e1bc632"
+      }
+    },
+    {
+      "case_id": "case-bc42ff856e1d1a1f960d",
+      "attempt_id": "attempt-bc42ff856e1d1a1f960d",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "profile",
+      "seed": 12002,
+      "job_id": "974d09bb-b907-5c78-92a9-6e085174c8e2",
+      "project_id_recorded_by_collector": "2da90c438c914c35a1e4d5267b88dc20",
+      "prompt_ids": [
+        "daf7b30b-bca2-42ab-9403-6866cd5c93ff"
+      ],
+      "elapsed_seconds": 18.07969880104065,
+      "recipe": {
+        "tracked_path": "recipes/case-bc42ff856e1d1a1f960d.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-bc42ff856e1d1a1f960d\\recipe.json",
+        "sha256": "cdf43776092222e8412248d2487f291ac86808948a0781cbad700a3bc4a22c92"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-bc42ff856e1d1a1f960d\\evidence.json",
+        "sha256": "fac4666be960f861478ae200db968efbf4c0b36659b2b8a06126a644190b90e5"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-bc42ff856e1d1a1f960d/FLUX-Edit_00005_.png",
+          "sha256": "6341b8ac7309fefec67f4619914557cb1a5818db1d84f692a04fd97d483d532d",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00005_.png",
+          "asset_id": "d32810b2116e5725b1d5df856c5e1b5e"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "pass",
+          "costume": "pass",
+          "camera": "fail",
+          "contact": "pass",
+          "style": "pass"
+        },
+        "note": "Visible identity and standard costume remain close, with plausible anatomy and clean cel rendering. The output is a shallow three-quarter/front view instead of the required strict right profile. It is not selected despite preserved design traits.",
+        "output_sha256": "6341b8ac7309fefec67f4619914557cb1a5818db1d84f692a04fd97d483d532d"
+      }
+    },
+    {
+      "case_id": "case-4734a02035da24a6ee1b",
+      "attempt_id": "attempt-4734a02035da24a6ee1b",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "wink",
+      "seed": 12001,
+      "job_id": "4ae6ff7b-e7f8-5c09-826f-bc4e37348331",
+      "project_id_recorded_by_collector": "a434fa3225ac4fc8972a663245365cdb",
+      "prompt_ids": [
+        "e357ef5a-d674-4549-a146-c0091d7b6645"
+      ],
+      "elapsed_seconds": 18.206260681152344,
+      "recipe": {
+        "tracked_path": "recipes/case-4734a02035da24a6ee1b.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-4734a02035da24a6ee1b\\recipe.json",
+        "sha256": "b580fa5c51efe18784363a8e709c09f4dbebcee299345caf0c5013d213730473"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-4734a02035da24a6ee1b\\evidence.json",
+        "sha256": "cf993d0e66666a8f1bc00efaf50204429c8fffe64abc9e9eaffbaeb5c29ff823"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-4734a02035da24a6ee1b/FLUX-Edit_00006_.png",
+          "sha256": "2ed1aaec858b9bb3c62f41c06a5e38b0bf69d51bdc9e3e78a7576f651ab0eb31",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00006_.png",
+          "asset_id": "05247bc21a1f54248c79492e423d5698"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "uncertain",
+          "costume": "fail",
+          "camera": "fail",
+          "style": "pass"
+        },
+        "note": "A wink and smile are readable, but the face becomes rounder/younger and exact face geometry is uncertain. Pale bodice trim and the lilac skirt layer are removed or reshaped. Full-body framing replaces the required preserved head-and-shoulders portrait. Clean cel rendering is retained.",
+        "output_sha256": "2ed1aaec858b9bb3c62f41c06a5e38b0bf69d51bdc9e3e78a7576f651ab0eb31"
+      }
+    },
+    {
+      "case_id": "case-b79f0115e2af559c61a4",
+      "attempt_id": "attempt-b79f0115e2af559c61a4",
+      "kind": "primary",
+      "state": "completed",
+      "preset_id": "flux-edit",
+      "task_id": "wink",
+      "seed": 12002,
+      "job_id": "fe60fe2e-e4ef-547f-9cb9-7f428e137fab",
+      "project_id_recorded_by_collector": "a434fa3225ac4fc8972a663245365cdb",
+      "prompt_ids": [
+        "1a0c7a98-a4da-4a06-bf31-88fefa093a49"
+      ],
+      "elapsed_seconds": 18.163336992263794,
+      "recipe": {
+        "tracked_path": "recipes/case-b79f0115e2af559c61a4.json",
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-b79f0115e2af559c61a4\\recipe.json",
+        "sha256": "c84000780f24dded7a96c7b6f831a920cd65a3155801debd2795686c67590764"
+      },
+      "execution_evidence": {
+        "raw_path": "C:\\AI\\character-lab\\pilot-20260912\\cases\\case-b79f0115e2af559c61a4\\evidence.json",
+        "sha256": "63322c37f990da732871fca3838ce64dd85ffe48b68e16f658646bfb6c3894b8"
+      },
+      "status": "completed",
+      "outputs": [
+        {
+          "path": "cases/case-b79f0115e2af559c61a4/FLUX-Edit_00007_.png",
+          "sha256": "5d9bf53728930e663343292c52526aa63062b6a91127eeb90e685574f171f05e",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "alpha_extrema": [
+            255,
+            255
+          ],
+          "original_path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Verified\\FLUX-Edit_00007_.png",
+          "asset_id": "6059bd3c187953e7b1c0406ab217f8bb"
+        }
+      ],
+      "agent_review": {
+        "reviewer": "Codex root and independent Sol visual assessment",
+        "reviewer_kind": "agent",
+        "decision": "rejected",
+        "checks": {
+          "identity": "fail",
+          "costume": "fail",
+          "camera": "fail",
+          "style": "pass"
+        },
+        "note": "Wink and smile are clear, but face/body proportions change to a more childlike design. Sleeves gain layered/puffed pieces, the bodice gains a button placket, skirt construction changes and V boot tops disappear. Full-body framing replaces the original portrait crop. Clean cel rendering alone does not satisfy the case.",
+        "output_sha256": "5d9bf53728930e663343292c52526aa63062b6a91127eeb90e685574f171f05e"
+      }
+    }
+  ]
+}

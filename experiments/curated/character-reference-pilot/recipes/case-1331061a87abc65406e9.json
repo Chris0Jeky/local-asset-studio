@@ -1,0 +1,423 @@
+{
+  "version": 2,
+  "preset_id": "qwen-1ref",
+  "controls": {
+    "positive": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout..",
+    "seed": 12001
+  },
+  "batch_count": 1,
+  "created_at": 1789229670.6792247,
+  "workflow": {
+    "1": {
+      "class_type": "UnetLoaderGGUF",
+      "inputs": {
+        "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+        "type": "qwen_image",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "9f69791003d84c7281ae4e5e849f196a_character-pilot-front.png.png"
+      }
+    },
+    "5": {
+      "class_type": "ImageScale",
+      "inputs": {
+        "image": [
+          "4",
+          0
+        ],
+        "upscale_method": "lanczos",
+        "width": 512,
+        "height": 0,
+        "crop": "disabled"
+      }
+    },
+    "6": {
+      "class_type": "TextEncodeQwenImageEditPlus",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ],
+        "image1": [
+          "5",
+          0
+        ],
+        "prompt": "Image 1 — identity: use Only the accepted identity design traits from this crop.. Avoid transferring: Other costume sets, crop shadows and unrequested layout..\n\nRequested result:\nOne strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout.."
+      }
+    },
+    "7": {
+      "class_type": "TextEncodeQwenImageEditPlus",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ],
+        "image1": [
+          "5",
+          0
+        ],
+        "prompt": ""
+      }
+    },
+    "8": {
+      "class_type": "LoraLoaderModelOnly",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+        "strength_model": 1.0
+      }
+    },
+    "9": {
+      "class_type": "ModelSamplingAuraFlow",
+      "inputs": {
+        "model": [
+          "8",
+          0
+        ],
+        "shift": 3.1
+      }
+    },
+    "10": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "5",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "11": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "9",
+          0
+        ],
+        "seed": 12001,
+        "steps": 4,
+        "cfg": 1.0,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "positive": [
+          "14",
+          0
+        ],
+        "negative": [
+          "15",
+          0
+        ],
+        "latent_image": [
+          "10",
+          0
+        ],
+        "denoise": 1.0
+      }
+    },
+    "12": {
+      "class_type": "VAEDecodeTiled",
+      "inputs": {
+        "samples": [
+          "11",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ],
+        "tile_size": 256,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+      }
+    },
+    "13": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "12",
+          0
+        ],
+        "filename_prefix": "Studio/Qwen-1ref"
+      }
+    },
+    "14": {
+      "class_type": "FluxKontextMultiReferenceLatentMethod",
+      "inputs": {
+        "conditioning": [
+          "6",
+          0
+        ],
+        "reference_latents_method": "index_timestep_zero"
+      }
+    },
+    "15": {
+      "class_type": "FluxKontextMultiReferenceLatentMethod",
+      "inputs": {
+        "conditioning": [
+          "7",
+          0
+        ],
+        "reference_latents_method": "index_timestep_zero"
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "da5c1789-7a92-4b8a-b19c-404f8d0ea81f",
+      "seed": 12001,
+      "graph": {
+        "1": {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "9f69791003d84c7281ae4e5e849f196a_character-pilot-front.png.png"
+          }
+        },
+        "5": {
+          "class_type": "ImageScale",
+          "inputs": {
+            "image": [
+              "4",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "width": 512,
+            "height": 0,
+            "crop": "disabled"
+          }
+        },
+        "6": {
+          "class_type": "TextEncodeQwenImageEditPlus",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "image1": [
+              "5",
+              0
+            ],
+            "prompt": "Image 1 — identity: use Only the accepted identity design traits from this crop.. Avoid transferring: Other costume sets, crop shadows and unrequested layout..\n\nRequested result:\nOne strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout.."
+          }
+        },
+        "7": {
+          "class_type": "TextEncodeQwenImageEditPlus",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "image1": [
+              "5",
+              0
+            ],
+            "prompt": ""
+          }
+        },
+        "8": {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+            "strength_model": 1.0
+          }
+        },
+        "9": {
+          "class_type": "ModelSamplingAuraFlow",
+          "inputs": {
+            "model": [
+              "8",
+              0
+            ],
+            "shift": 3.1
+          }
+        },
+        "10": {
+          "class_type": "VAEEncode",
+          "inputs": {
+            "pixels": [
+              "5",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "11": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "9",
+              0
+            ],
+            "seed": 12001,
+            "steps": 4,
+            "cfg": 1.0,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "positive": [
+              "14",
+              0
+            ],
+            "negative": [
+              "15",
+              0
+            ],
+            "latent_image": [
+              "10",
+              0
+            ],
+            "denoise": 1.0
+          }
+        },
+        "12": {
+          "class_type": "VAEDecodeTiled",
+          "inputs": {
+            "samples": [
+              "11",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "tile_size": 256,
+            "overlap": 64,
+            "temporal_size": 64,
+            "temporal_overlap": 8
+          }
+        },
+        "13": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "12",
+              0
+            ],
+            "filename_prefix": "Studio/Qwen-1ref"
+          }
+        },
+        "14": {
+          "class_type": "FluxKontextMultiReferenceLatentMethod",
+          "inputs": {
+            "conditioning": [
+              "6",
+              0
+            ],
+            "reference_latents_method": "index_timestep_zero"
+          }
+        },
+        "15": {
+          "class_type": "FluxKontextMultiReferenceLatentMethod",
+          "inputs": {
+            "conditioning": [
+              "7",
+              0
+            ],
+            "reference_latents_method": "index_timestep_zero"
+          }
+        }
+      },
+      "status": "failed"
+    }
+  ],
+  "outputs": [],
+  "parent_assets": [],
+  "references": [
+    {
+      "file": "9f69791003d84c7281ae4e5e849f196a_character-pilot-front.png.png",
+      "sha256": "1a6bcaa9a1faf3dcf1aebe199b7d272604beead0a8017104f0057a439d934415",
+      "bytes": 361901,
+      "width": 333,
+      "height": 734,
+      "contribution": "Only the accepted identity design traits from this crop.",
+      "avoid": "Other costume sets, crop shadows and unrequested layout.",
+      "role": "identity",
+      "slot": 1,
+      "transform": {
+        "policy": "fit-width-preserve-aspect",
+        "source_size": [
+          333,
+          734
+        ],
+        "resized_size": [
+          512,
+          1129
+        ],
+        "vae_size": [
+          512,
+          1128
+        ],
+        "vae_center_crop": [
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "native_recipe": null
+}

@@ -1,0 +1,419 @@
+{
+  "version": 2,
+  "preset_id": "flux-edit",
+  "controls": {
+    "positive": "Preserve this portrait framing and design; change only to one readable wink and a smile.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout..",
+    "seed": 12002,
+    "reference": "affd106cc9ac4897a95d9a4801cd03b7_character-pilot-portrait-calm.png.png"
+  },
+  "batch_count": 1,
+  "created_at": 1789230434.8727849,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "flux-2-klein-4b-fp8.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "flux2",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "flux2-vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "Preserve this portrait framing and design; change only to one readable wink and a smile.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout..",
+        "clip": [
+          "2",
+          0
+        ]
+      }
+    },
+    "5": {
+      "class_type": "ConditioningZeroOut",
+      "inputs": {
+        "conditioning": [
+          "4",
+          0
+        ]
+      }
+    },
+    "6": {
+      "class_type": "CFGGuider",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "17",
+          0
+        ],
+        "negative": [
+          "18",
+          0
+        ],
+        "cfg": 1.0
+      }
+    },
+    "7": {
+      "class_type": "RandomNoise",
+      "inputs": {
+        "noise_seed": 12002
+      }
+    },
+    "8": {
+      "class_type": "KSamplerSelect",
+      "inputs": {
+        "sampler_name": "euler"
+      }
+    },
+    "9": {
+      "class_type": "Flux2Scheduler",
+      "inputs": {
+        "steps": 4,
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "10": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    "11": {
+      "class_type": "SamplerCustomAdvanced",
+      "inputs": {
+        "noise": [
+          "7",
+          0
+        ],
+        "guider": [
+          "6",
+          0
+        ],
+        "sampler": [
+          "8",
+          0
+        ],
+        "sigmas": [
+          "9",
+          0
+        ],
+        "latent_image": [
+          "10",
+          0
+        ]
+      }
+    },
+    "12": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "11",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "13": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "Verified/FLUX-Edit",
+        "images": [
+          "12",
+          0
+        ]
+      }
+    },
+    "14": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "affd106cc9ac4897a95d9a4801cd03b7_character-pilot-portrait-calm.png.png"
+      }
+    },
+    "15": {
+      "class_type": "ImageScaleToTotalPixels",
+      "inputs": {
+        "image": [
+          "14",
+          0
+        ],
+        "upscale_method": "lanczos",
+        "megapixels": 1.0,
+        "resolution_steps": 1
+      }
+    },
+    "16": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "15",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "17": {
+      "class_type": "ReferenceLatent",
+      "inputs": {
+        "conditioning": [
+          "4",
+          0
+        ],
+        "latent": [
+          "16",
+          0
+        ]
+      }
+    },
+    "18": {
+      "class_type": "ReferenceLatent",
+      "inputs": {
+        "conditioning": [
+          "5",
+          0
+        ],
+        "latent": [
+          "16",
+          0
+        ]
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "1a0c7a98-a4da-4a06-bf31-88fefa093a49",
+      "seed": 12002,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "flux-2-klein-4b-fp8.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors",
+            "type": "flux2",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "text": "Preserve this portrait framing and design; change only to one readable wink and a smile.\nIdentity: Private study of the supplied standard-outfit character, not a cleared original production character.\nLight-blue long hair with a high looped top section\nBlue eyes\nDark-blue spherical hair ornament with gold accents\nRetain the accepted face geometry, not merely hair and eye colour\nCostume: Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.\nNavy fitted sleeveless bodice, pale trim and green throat bow\nDetached white sleeves with navy cuffs and gold upper-arm bands\nPleated navy skirt with gold hem trim\nWhite upper-leg stockings and navy boots with gold top trim\nRepresentation: Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.\nPreserve accepted full-figure proportions; no chibi body-ratio checks.\nStyle: Clean anime contours and cel-like shading.\nRetain line weight and restrained cel shading; plain neutral review background.\nImage 1 [identity]: take Only the accepted identity design traits from this crop.. Ignore Other costume sets, crop shadows and unrequested layout..",
+            "clip": [
+              "2",
+              0
+            ]
+          }
+        },
+        "5": {
+          "class_type": "ConditioningZeroOut",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ]
+          }
+        },
+        "6": {
+          "class_type": "CFGGuider",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "17",
+              0
+            ],
+            "negative": [
+              "18",
+              0
+            ],
+            "cfg": 1.0
+          }
+        },
+        "7": {
+          "class_type": "RandomNoise",
+          "inputs": {
+            "noise_seed": 12002
+          }
+        },
+        "8": {
+          "class_type": "KSamplerSelect",
+          "inputs": {
+            "sampler_name": "euler"
+          }
+        },
+        "9": {
+          "class_type": "Flux2Scheduler",
+          "inputs": {
+            "steps": 4,
+            "width": 1024,
+            "height": 1024
+          }
+        },
+        "10": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1
+          }
+        },
+        "11": {
+          "class_type": "SamplerCustomAdvanced",
+          "inputs": {
+            "noise": [
+              "7",
+              0
+            ],
+            "guider": [
+              "6",
+              0
+            ],
+            "sampler": [
+              "8",
+              0
+            ],
+            "sigmas": [
+              "9",
+              0
+            ],
+            "latent_image": [
+              "10",
+              0
+            ]
+          }
+        },
+        "12": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "11",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "13": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "filename_prefix": "Verified/FLUX-Edit",
+            "images": [
+              "12",
+              0
+            ]
+          }
+        },
+        "14": {
+          "class_type": "LoadImage",
+          "inputs": {
+            "image": "affd106cc9ac4897a95d9a4801cd03b7_character-pilot-portrait-calm.png.png"
+          }
+        },
+        "15": {
+          "class_type": "ImageScaleToTotalPixels",
+          "inputs": {
+            "image": [
+              "14",
+              0
+            ],
+            "upscale_method": "lanczos",
+            "megapixels": 1.0,
+            "resolution_steps": 1
+          }
+        },
+        "16": {
+          "class_type": "VAEEncode",
+          "inputs": {
+            "pixels": [
+              "15",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "17": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "4",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        },
+        "18": {
+          "class_type": "ReferenceLatent",
+          "inputs": {
+            "conditioning": [
+              "5",
+              0
+            ],
+            "latent": [
+              "16",
+              0
+            ]
+          }
+        }
+      },
+      "status": "completed"
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "FLUX-Edit_00007_.png",
+      "subfolder": "Verified",
+      "type": "output",
+      "seed": 12002,
+      "prompt_id": "1a0c7a98-a4da-4a06-bf31-88fefa093a49",
+      "media_type": "image",
+      "asset_id": "6059bd3c187953e7b1c0406ab217f8bb"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "native_recipe": null
+}

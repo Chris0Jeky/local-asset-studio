@@ -1,0 +1,9 @@
+{
+  "case-2bc1f2a78e67b8c87752": {
+    "job_id": "03903f6a-8e84-43b2-b953-00678167acfb",
+    "source_project": "c8c05b34c6f7439ebb89aca3978433dc",
+    "source_stage": 1,
+    "intent": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\submit-intent.json",
+    "execution_owner": "Studio job with external runner reservation ledger"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "kind": "supplemental_pilot_reconciliation",
+  "case_id": "case-2bc1f2a78e67b8c87752",
+  "collector_source_grouping_project_id": "c8c05b34c6f7439ebb89aca3978433dc",
+  "actual_job_id": "03903f6a-8e84-43b2-b953-00678167acfb",
+  "actual_job_project_id": null,
+  "reservation_source_project": "c8c05b34c6f7439ebb89aca3978433dc",
+  "reservation_source_stage": 1,
+  "raw_receipts": {
+    "manual-reserved-cases.json": "C:\\AI\\character-lab\\pilot-20260912\\manual-reserved-cases.json",
+    "reserved-case-2bc1f2a78e67b8c87752/submit-intent.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\submit-intent.json",
+    "reserved-case-2bc1f2a78e67b8c87752/submit-reply.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\submit-reply.json",
+    "reserved-case-2bc1f2a78e67b8c87752/terminal-observed.json": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\terminal-observed.json",
+    "reserved-case-2bc1f2a78e67b8c87752/events.jsonl": "C:\\AI\\character-lab\\pilot-20260912\\reserved-case-2bc1f2a78e67b8c87752\\events.jsonl"
+  },
+  "finding": "The ordinary Studio job has no project_id. It consumed the already-reserved second slot after the failed Production group stage; it was neither a retry nor a new credit."
+}

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "project_id": "01fc7329c0406172b3fd512653648d0f",
+  "root_id": "character-study:53dcec05a9f0d25d48e5331e5d8f423d660e9839eee851d335ff98a02bc2ce5e",
+  "jobs_before": 77,
+  "jobs_after": 77,
+  "new_prompts": 0,
+  "reserved": 0,
+  "duplicate_status": 400,
+  "restart_persistence": "not exercised by this live smoke; covered by integration tests",
+  "head": "4cb514ce95b455dc0ff6277a27718fe8d40c2ce1"
+}

@@ -1,0 +1,388 @@
+{
+  "schema_version": 1,
+  "kind": "character_study_plan",
+  "submits_generation": false,
+  "canon": {
+    "schema_version": 1,
+    "kind": "character_canon",
+    "asset_id": "blue-water-mage-study",
+    "revision": 1,
+    "identity": {
+      "id": "blue-water-mage",
+      "description": "Private study of the supplied standard-outfit character, not a cleared original production character.",
+      "invariants": [
+        "Light-blue long hair with a high looped top section",
+        "Blue eyes",
+        "Dark-blue spherical hair ornament with gold accents",
+        "Retain the accepted face geometry, not merely hair and eye colour"
+      ]
+    },
+    "costume": {
+      "id": "standard-navy",
+      "description": "Only the standard costume. Ornate and summer references are excluded. Hidden back construction must be decided before approval.",
+      "invariants": [
+        "Navy fitted sleeveless bodice, pale trim and green throat bow",
+        "Detached white sleeves with navy cuffs and gold upper-arm bands",
+        "Pleated navy skirt with gold hem trim",
+        "White upper-leg stockings and navy boots with gold top trim"
+      ]
+    },
+    "representation": {
+      "id": "full-figure",
+      "description": "Full-figure illustration and same-design portrait crops; chibi is a later, separately approved representation.",
+      "invariants": [
+        "Preserve accepted full-figure proportions; no chibi body-ratio checks."
+      ]
+    },
+    "style": {
+      "id": "clean-cel",
+      "description": "Clean anime contours and cel-like shading.",
+      "invariants": [
+        "Retain line weight and restrained cel shading; plain neutral review background."
+      ]
+    },
+    "references": [
+      {
+        "id": "front",
+        "path": "examples/standard-extracted/front.png",
+        "sha256": "1a6bcaa9a1faf3dcf1aebe199b7d272604beead0a8017104f0057a439d934415",
+        "role": "identity",
+        "take": [
+          "Only the accepted identity design traits from this crop."
+        ],
+        "ignore": [
+          "Other costume sets, crop shadows and unrequested layout."
+        ]
+      },
+      {
+        "id": "back",
+        "path": "examples/standard-extracted/back.png",
+        "sha256": "92418200f3954d3f60fa3277dd66da6f9bf6487ad58ead0d7c76c85fcd376a3e",
+        "role": "costume",
+        "take": [
+          "Only the accepted costume design traits from this crop."
+        ],
+        "ignore": [
+          "Other costume sets, crop shadows and unrequested layout."
+        ]
+      },
+      {
+        "id": "portrait-calm",
+        "path": "examples/standard-extracted/portrait-calm.png",
+        "sha256": "41d41e38318134af2df34da30961dc24abdb6da8c7f085e5d8c77b964244b1ca",
+        "role": "identity",
+        "take": [
+          "Only the accepted identity design traits from this crop."
+        ],
+        "ignore": [
+          "Other costume sets, crop shadows and unrequested layout."
+        ]
+      }
+    ],
+    "checks": {
+      "identity": "Face construction, hair masses and distinctive ornaments match the accepted canon.",
+      "costume": "Standard costume construction matches; hidden/unresolved details are not silently approved.",
+      "camera": "Requested view, scale, crop and expression are satisfied; complete figure visible for body tasks.",
+      "contact": "Visible anatomy and hand/prop contact are plausible; uncertainty is not a hard pass.",
+      "style": "Line, shading and palette remain in the accepted rendering family."
+    },
+    "approval": {
+      "state": "approved",
+      "reviewer": "jekyt",
+      "reviewer_kind": "human",
+      "note": "Use the supplied standard costume, including its shown back view",
+      "subject_sha256": "956ac4ae963bb62c9f6641c1c44d94c48001abbc582f17291f954185362c2ab2"
+    }
+  },
+  "request": {
+    "schema_version": 1,
+    "kind": "character_study_request",
+    "study_id": "reference-preservation-pilot",
+    "routes": [
+      {
+        "id": "qwen-current",
+        "preset_id": "qwen-1ref",
+        "notes": "Current Qwen 2511 Q4/Lightning single-reference template; resolve and pin actual local bundle before running."
+      },
+      {
+        "id": "klein-current",
+        "preset_id": "flux-edit",
+        "notes": "Existing FLUX Klein reference-edit preset; preserve family-native settings and record actual preprocessing."
+      }
+    ],
+    "tasks": [
+      {
+        "id": "back",
+        "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+        "reference_ids": [
+          "front"
+        ],
+        "required_checks": [
+          "identity",
+          "costume",
+          "camera",
+          "contact",
+          "style"
+        ]
+      },
+      {
+        "id": "profile",
+        "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+        "reference_ids": [
+          "front"
+        ],
+        "required_checks": [
+          "identity",
+          "costume",
+          "camera",
+          "contact",
+          "style"
+        ]
+      },
+      {
+        "id": "wink",
+        "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+        "reference_ids": [
+          "portrait-calm"
+        ],
+        "required_checks": [
+          "identity",
+          "costume",
+          "camera",
+          "style"
+        ]
+      }
+    ],
+    "seeds": [
+      12001,
+      12002
+    ],
+    "budget": {
+      "max_generation_attempts": 12,
+      "max_repairs_per_case": 0,
+      "allow_paid_services": false
+    },
+    "hypotheses": [
+      "H01: one of the installed reference routes preserves the accepted design sufficiently for a larger static-pack trial.",
+      "This 12-case pilot does NOT test separate panels against whole-sheet generation, LoRA value or animation. Those require their own preregistered comparisons."
+    ]
+  },
+  "canon_sha256": "1c01e381fd20d86bb4a33d0ccb55f13ccfc6de51ba8113b947a1c5c92e9fc5c5",
+  "request_sha256": "ccba2449e80a0031e2f0754f42f7de1da8833564533d6e49982d45d1fb5e5eca",
+  "cases": [
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "back",
+      "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-3ebc7c70c112644202c5"
+    },
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "back",
+      "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-8e176fab210bef5b6251"
+    },
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "profile",
+      "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-1331061a87abc65406e9"
+    },
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "profile",
+      "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-2bc1f2a78e67b8c87752"
+    },
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "wink",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": [
+        "portrait-calm"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-8078968005d89f9f4297"
+    },
+    {
+      "route_id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "task_id": "wink",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": [
+        "portrait-calm"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-c8366771018438015c0e"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "back",
+      "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-606882fbb0d076f9942d"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "back",
+      "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-115f230aacbddc806ec2"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "profile",
+      "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-a009a1285dc1410cd733"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "profile",
+      "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+      "reference_ids": [
+        "front"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "contact",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-bc42ff856e1d1a1f960d"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "wink",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": [
+        "portrait-calm"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "style"
+      ],
+      "seed": 12001,
+      "id": "case-4734a02035da24a6ee1b"
+    },
+    {
+      "route_id": "klein-current",
+      "preset_id": "flux-edit",
+      "task_id": "wink",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": [
+        "portrait-calm"
+      ],
+      "required_checks": [
+        "identity",
+        "costume",
+        "camera",
+        "style"
+      ],
+      "seed": 12002,
+      "id": "case-b79f0115e2af559c61a4"
+    }
+  ],
+  "evidence_state": "not_run",
+  "plan_sha256": "2e987c08f624fb432f23125cb17a3ec7da68ef1a6ad7d1d91675ca7c3798d5e3"
+}
