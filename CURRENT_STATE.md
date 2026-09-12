@@ -1,5 +1,9 @@
 # Current state — 11 September 2026
 
+## Protected pre-listen launcher ambiguity — 13 September 2026
+
+Recovery now inspects the cheap process name before reading full command identity. A protected process named as the configured Python launcher, or one whose name cannot be read, is ambiguous and blocks recovery rather than risking a duplicate pre-listen ComfyUI process. A known unrelated executable is excluded without reading protected command details, and a process that vanishes during the scan remains absent. Offline tests cover all three cases; no live process was inspected, stopped or started.
+
 ## Windows refusal classification — 12 September 2026
 
 The recovery monitor gives its read-only `/system_stats` probe three seconds to receive a Windows connection refusal. A one-second urllib probe timed out at 1.011 seconds on this host and was conservatively classified as unreachable; three and five seconds received `ConnectionRefusedError` (errno/winerror 10061) at about 2.04 seconds. The monitor still starts only after that exact refusal and all existing process/work interlocks; ordinary timeouts remain unreachable and do not authorize launch. This records a host fault-injection observation, not a live recovery success or GPU execution.

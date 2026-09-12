@@ -138,11 +138,20 @@ class BackendManager:
         matches=[]
         for process in psutil.process_iter():
             try:
-                if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
+                name=process.name()
             except psutil.NoSuchProcess:continue
             except psutil.AccessDenied:
-                # An inaccessible process is not evidence that it is ours. It is never killed.
-                continue
+                # Without even a name, this process could be the configured launcher.
+                raise ValueError('A process identity could not be read while checking the configured backend; no recovery launch was authorized')
+            if not isinstance(name,str) or not name:
+                raise ValueError('A process name could not be read while checking the configured backend; no recovery launch was authorized')
+            if Path(name).name.casefold()!=Path(profile['python']).name.casefold():continue
+            try:
+                if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
+            except psutil.NoSuchProcess:continue
+            except psutil.AccessDenied as exc:
+                # A protected Python process can be our launcher before it has bound its port.
+                raise ValueError('A candidate configured Python process could not be verified; no recovery launch was authorized') from exc
         return matches
 
     def launch_recovery(self, profile):

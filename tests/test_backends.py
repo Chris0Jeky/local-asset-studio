@@ -1,11 +1,14 @@
+import errno
 import json
 import tempfile
 import threading
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from urllib.error import URLError
 from test_server import server, FakeStudio, GRAPH, PRESET
 from backends import PRIMARY_RESERVE_VRAM, BackendManager
+from runtime_recovery import RuntimeRecovery
 
 
 class BackendTests(unittest.TestCase):
@@ -83,3 +86,34 @@ class BackendTests(unittest.TestCase):
         manager=BackendManager(self.studio)
         self.assertEqual(manager.active,'hidream');self.assertEqual(manager.operation['status'],'interrupted')
         self.assertFalse(manager.busy)
+
+    def test_prelisten_protected_python_candidate_blocks_recovery_launch(self):
+        import psutil
+        manager=self.studio.backends;profile=manager.profiles['primary'];candidate=MagicMock()
+        candidate.name.return_value=Path(profile['python']).name
+        candidate.exe.side_effect=psutil.AccessDenied(pid=17)
+        recovery=RuntimeRecovery(self.studio);launch=MagicMock()
+        with patch('psutil.process_iter',return_value=[candidate]),patch.object(manager,'request',side_effect=URLError(OSError(errno.ECONNREFUSED,'refused'))), \
+             patch.object(manager,'process',return_value=None),patch.object(manager,'launch_recovery',launch):
+            result=recovery.tick()
+        self.assertEqual(result['status'],'foreign-or-ambiguous-listener')
+        launch.assert_not_called()
+
+    def test_unrelated_protected_process_is_not_a_configured_launcher_candidate(self):
+        import psutil
+        manager=self.studio.backends;candidate=MagicMock();candidate.name.return_value='node.exe';candidate.exe.side_effect=psutil.AccessDenied(pid=18)
+        with patch('psutil.process_iter',return_value=[candidate]):
+            self.assertEqual(manager.configured_processes(manager.profiles['primary']),[])
+        candidate.exe.assert_not_called()
+
+    def test_process_without_a_readable_name_remains_ambiguous(self):
+        import psutil
+        manager=self.studio.backends;candidate=MagicMock();candidate.name.side_effect=psutil.AccessDenied(pid=18)
+        with patch('psutil.process_iter',return_value=[candidate]):
+            with self.assertRaisesRegex(ValueError,'identity could not be read'):manager.configured_processes(manager.profiles['primary'])
+
+    def test_vanished_process_does_not_block_prelisten_scan(self):
+        import psutil
+        manager=self.studio.backends;candidate=MagicMock();candidate.name.side_effect=psutil.NoSuchProcess(pid=19)
+        with patch('psutil.process_iter',return_value=[candidate]):
+            self.assertEqual(manager.configured_processes(manager.profiles['primary']),[])
