@@ -30,6 +30,12 @@ not cleared.
 
 ## Recorded owner decisions
 
+**Character-consistency pilot canon, 12 September 2026:** In response to the choice of reference canon
+for the twelve-case pilot, the owner answered: "Use the supplied standard costume, including its shown
+back view". This selects the standard supplied design for the private reference-preservation study;
+it does not approve generated outputs, other costume sets, model terms or commercial use. The exact
+decision and revision-bound canon attestation are retained in `C:/AI/character-lab/pilot-20260912/`.
+
 Recorded owner decisions, 11 September 2026: use free alternatives to NIJISIS
 instead of spending Buzz; MiniMax H3 is being used from an eligible territory.
 These decisions do not approve the generated art. The Workflow Lab expansion
@@ -50,4 +56,3 @@ Probes: `witch-target-ersde-4step` very good; `witch-target-plus-baroque-oil-4st
 `witch-target-stack` very good; `witch-target-stack-4step` very good; `witch-nijisis-baseline` potential
 but imperfect; `witch-nijisis-4step` very good; `witch-airy-watercolor-short-4step` good with a lot of
 potential. Almost all carry some imperfection the owner would like a correction workflow for.
-
