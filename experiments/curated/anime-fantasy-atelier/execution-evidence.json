@@ -238,6 +238,49 @@
    },
    "artifact": "examples/anime-fantasy-atelier/pony-fantasy-portrait.jpg",
    "recipe": "pony-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-anime-atelier",
+   "variant": "4-step audition",
+   "job_id": "db02f6b1-8346-4361-a432-7734fc72d2c2",
+   "prompt_ids": [
+    "150cde70-459e-4beb-b2a3-cb6f6631eb17"
+   ],
+   "status": "completed",
+   "seconds": 196.96079897880554,
+   "controls": {
+    "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "lora4": 0.85,
+    "steps": 4
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "pruned": [
+    "NIJISIS slot at strength 0 removed before submission"
+   ],
+   "original": {
+    "path": "Studio/krea-anime-atelier_00001_.png",
+    "sha256": "218d72be3921216082b4db6abe284d1003e46c62b0dea8629c00a83e84d70951",
+    "bytes": 1419425,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-anime-atelier-4step.jpg",
+   "recipe": "krea-anime-atelier-4step-recipe.json",
+   "inspection": "Witch with a wide ornate hat reading among floating books on a mossy wall at dusk; crisp line work, painterly cloth, coherent hands and gloves, legible book pages; a small signature-like squiggle bottom-right (typical of the Niji Sweet Spot training data)."
   }
  ]
 }

@@ -3919,7 +3919,7 @@
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-anime-atelier-api.json",
       "visual": "workflows/comfyui/53 - Krea 2 Anime Atelier.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -4068,7 +4068,8 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job db02f6b1-8346-4361-a432-7734fc72d2c2 (variant '4-step audition': TextFusion 1.0 + Niji Sweet Spot 1.0 + 4-step LoRA 0.85, NIJISIS slot pruned at 0; 197 s at 768x1152); image inspected. The 15-step target settings were proven by direct ComfyUI probes (941 s), not through this preset. Not an art approval."
     },
     {
       "id": "krea-style-lab",
