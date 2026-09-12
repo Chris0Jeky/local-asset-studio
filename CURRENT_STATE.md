@@ -101,6 +101,12 @@ handoff and resolved recipe evidence. Separate cases share the study allowance; 
 Import queues nothing, and duplicate primary imports are refused. Canon approval is a local attestation,
 not reviewer authentication or generated-art acceptance.
 
+The opt-in v2 prompt-scope planner can prepare a matched two-case portrait-edit study using the same
+approved canon, reference, FLUX edit route, seed and checks. Its selected-canon case carries only
+the requested identity, bodice and style canon text in its positive control while its handoff retains
+the full approved canon plus a hash-checked audit of the selected text. This is offline planning
+coverage only: no new project, queue item, reservation, prompt ID, generation or art approval is claimed.
+
 Inert direct integration checks proved zero-work import, shared budget, concurrent Start reservations,
 restart persistence, duplicate refusal and preflight rollback. Rehashed prompt/binding drift, non-image
 routes and changed Comfy input bytes were rejected before project/budget writes. The full suite ran 598

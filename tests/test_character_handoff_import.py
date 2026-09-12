@@ -34,6 +34,16 @@ class CharacterHandoffImportTests(unittest.TestCase):
                 {'id': 'back', 'instruction': 'One neutral back view.', 'reference_ids': ['front'], 'required_checks': ['identity']},
                 {'id': 'profile', 'instruction': 'One strict profile.', 'reference_ids': ['portrait-calm'], 'required_checks': ['identity']},
             ], 'seeds': [7], 'budget': {'max_generation_attempts': 2, 'max_repairs_per_case': 0, 'allow_paid_services': False}, 'hypotheses': ['fixture']})
+        self.v2_plan = character.make_plan(self.plan['canon'], {
+            'schema_version': 2, 'kind': 'character_study_request', 'study_id': 'fixture-scope-study',
+            'routes': [{'id': 'qwen-current', 'preset_id': 'qwen-1ref', 'notes': 'fixture'}],
+            'tasks': [{'id': 'portrait', 'instruction': 'Preserve this portrait framing and design; change only to one readable wink and a smile.',
+                       'reference_ids': ['portrait-calm'], 'required_checks': ['identity', 'costume', 'camera', 'style'],
+                       'prompt_scope': {'identity': {'description': False, 'invariant_indexes': [0, 1, 2, 3]},
+                                        'costume': {'description': False, 'invariant_indexes': [0]},
+                                        'style': {'description': True, 'invariant_indexes': [0]}}}],
+            'seeds': [7], 'budget': {'max_generation_attempts': 1, 'max_repairs_per_case': 0, 'allow_paid_services': False},
+            'hypotheses': ['fixture scope']})
         self.studio = FakeStudio(self.root, [])
         self.studio.production_preflight = self.character_preflight
 
@@ -45,11 +55,12 @@ class CharacterHandoffImportTests(unittest.TestCase):
             inputs.append({'path': str(path), 'sha256': character.file_sha(path), 'bytes': path.stat().st_size})
         return {'comfy_url': self.studio.comfy_url, 'models': [], 'inputs': inputs}
 
-    def payload(self, case):
-        handoff = character.prepare_handoff(self.plan, case['id'], self.workspace, self.root)
+    def payload(self, case, plan=None):
+        plan = plan or self.plan
+        handoff = character.prepare_handoff(plan, case['id'], self.workspace, self.root)
         requirement = handoff['upload_requirements'][0]
         uploaded = self.studio.upload(requirement['id']+'.png', 'image/png', PNG)
-        return {'character_plan': copy.deepcopy(self.plan), 'character_handoff': handoff,
+        return {'character_plan': copy.deepcopy(plan), 'character_handoff': handoff,
                 'uploads': [{'reference_id': requirement['id'], 'file': uploaded['file']}],
                 'name': 'Fixture '+case['id'], 'max_seconds': 120}
 
@@ -71,6 +82,16 @@ class CharacterHandoffImportTests(unittest.TestCase):
         self.assertEqual(errors, []); self.assertEqual(self.studio.production.get(a['id'])['budget']['reserved'], 2)
         restarted = FakeStudio(self.root, [])
         restored = restarted.production.get(a['id'], True); self.assertEqual(restored['state']['status'], 'interrupted'); self.assertEqual(restored['plan']['character_source']['handoff']['handoff_sha256'], full['plan']['character_source']['handoff']['handoff_sha256'])
+
+    def test_imports_scoped_v2_handoff_without_jobs_queue_or_reservation(self):
+        case = self.v2_plan['cases'][0]; imported = self.studio.production.create(self.payload(case, self.v2_plan))
+        self.assertEqual(self.studio.jobs, {}); self.assertTrue(self.studio.queue.empty())
+        self.assertEqual(imported['budget'], {'allowance': 1, 'reserved': 0})
+        source = self.studio.production.get(imported['id'], True)['plan']['character_source']
+        self.assertEqual(source['handoff']['schema_version'], 2)
+        self.assertEqual(source['handoff']['prompt_context']['mode'], 'selected-canon')
+        self.assertNotIn('navy boots', source['handoff']['proposed_controls']['positive'])
+        self.assertEqual(source['handoff']['prompt_context']['sections']['identity']['description'], None)
 
     def test_failed_preflight_rolls_back_before_project_or_budget_write(self):
         case = self.plan['cases'][0]; before = self.studio.production.list()
