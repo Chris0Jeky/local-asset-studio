@@ -44,6 +44,10 @@ class Client:
                 need(isinstance(result, dict), 'Studio returned a non-object response')
                 return result
         except HTTPError as exc:
+            # Preserve the public Client exception contract for pre-existing routes.
+            prefix = '/api/workflow-studio/documents'
+            if path != prefix and not path.startswith(prefix + '/'):
+                raise
             with exc:
                 raw = exc.read(1048576 + 1)
             try:
