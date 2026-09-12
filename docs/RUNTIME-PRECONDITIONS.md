@@ -24,8 +24,9 @@ Source root for every line number: `C:/AI/ComfyUI_windows_portable/ComfyUI`.
 877      return (1024 * 1024 * 1024) * 0.8 + extra_reserved_memory()
 ```
 
-So ComfyUI's own default on this 16 GB Windows card is **700 MB** reserved, and `--reserve-vram`
-replaces that number outright rather than adding to it.
+So ComfyUI's own default on this 16,304 MB Windows card is **700 MiB** reserved, and `--reserve-vram`
+replaces that number outright rather than adding to it. `--reserve-vram 0.6` is 614 MiB, i.e. about
+86 MiB *below* the default — close to it, not equal to it.
 
 `load_models_gpu` then computes the budget (`comfy/model_management.py`):
 
@@ -135,7 +136,9 @@ What #77 measured (`C:/AI/character-lab/pilot-20260912/cache-release-{before,aft
 `{"unload_models": true, "free_memory": true}` only sets two queue flags (`server.py:1192-1201`)
 that the queue acts on between prompts; it never interrupts a running job. Caveat recorded in #77
 and preserved here: the ComfyUI process also exited around that release, so the two are confounded
-and the causal link is unproven.
+and the causal link is unproven. **`/free` is not reliable on its own** — after the 21:05 failure in
+§7 it moved commit 87 % → 87 %, and only a process restart returned it. Prefer a restart when the
+backend's idle commit is already large.
 
 Why a partial load makes commit worse rather than better: ComfyUI-GGUF is reported to round-trip
 each offloaded module in a way that breaks its file-backed mmap and turns it into private committed
@@ -209,14 +212,55 @@ Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
 Reverting the launcher alone leaves `app/backends.py` at 0.6; revert both or neither. The change is
 also logged in [`runtime-patches/README.md`](../runtime-patches/README.md).
 
-## 7. Exit test, not yet run
+The two argument lists are **not** otherwise identical, and this predates the reserve change: the
+launcher (and its backup) end with `--enable-manager`, while `BackendManager.primary_argv` does not
+pass it. A Studio-started primary backend therefore runs without ComfyUI-Manager; a launcher-started
+one runs with it. Reconciling that is a separate decision, not part of this change.
 
-Nothing here proves the reserve change works. The exit test is one line in the next Qwen job's log:
+## 7. What the reserve change did and did not do
+
+The narrow exit test is one line in a Qwen job's log:
 
 ```
 Requested to load QwenImage
 loaded completely; <usable> MB usable, 12738.98 MB loaded, full load: True
 ```
 
-at 832×1216 or larger with two bound references. Until that line exists, the fit table in §2 is a
-prediction from the formula, and this document says so.
+at 832×1216 or larger with two bound references. **That line has not been observed.** Until it is,
+the reserve-0.6 row of the fit table in §2 is a prediction from the formula.
+
+One Qwen job has run since the change, and it failed before reaching that line
+(`C:/AI/logs/20260912-205922-error.log`, ComfyUI PID 4916 started 20:59:22 through the launcher with
+`--reserve-vram 0.6`; Studio job `f29937b7-478f-4598-b756-661305d18ed9`, preset `qwen-2ref`,
+512-wide, two canon references, prompt `0603c5be-0321-4325-ae5f-9a268b94d605`):
+
+- The flag was demonstrably in effect. The loader reported `13870.19 MB usable` for the VAE and
+  `14250.91 MB usable` for the text encoder (lines 100 and 105) against `12,436 / 12,817 MB` at
+  reserve 2 in the earlier logs. Those figures are unreachable at reserve 2.
+- `Requested to load QwenImage` (line 111) was followed immediately by
+  `DefaultCPUAllocator: not enough memory: you tried to allocate 4377600 bytes`. **No
+  `loaded completely` or `loaded partially` line for QwenImage was printed at all.** The traceback
+  runs `load_models_gpu` → `free_memory` → `model_unload` → `detach` → `unpatch_model` →
+  `self.model.to(device_to)` — the same device→host move as §5, failing on a *host* allocation of
+  4.2 MB rather than on VRAM. `Prompt executed in 44.93 seconds`.
+- The prompt worker thread then died with `TypeError: 'NoneType' object is not callable` in
+  `cleanup_models_gc` → `LoadedModel.is_dead` (`model_management.py:844`, lines 196-212), and
+  ComfyUI was cycled (next log `20260912-210954`).
+
+**The measured conclusion: the reserve does not move the host-commit ceiling.** Host commit went
+from 60 % (≈29 GB headroom) before submission to 87 % (≈9.2 GB headroom, 5.3 GB physical free) at
+failure and stayed at 87 % with an empty queue. `POST /free` did **not** release it this time
+(87 % → 87 %); a ComfyUI restart did, to ≈67 %. That is the opposite of the pilot's earlier
+release in §3 — where the ComfyUI process also exited — and it is why §3's caveat matters.
+
+Per-process attribution at that 87 %, recorded in #77's newest comments: idle ComfyUI PID 4916 held
+**16.8 GB** of commit *after* `/free` (torch CPU allocations and the GGUF loader's staged buffers
+survive an unload; only a restart returns them), 158 `node.exe` MCP processes held **10.7 GB**, all
+process private commit summed to 47.4 GB, and roughly **15 GB** was non-process (kernel, GPU driver,
+pinned host registrations). A Qwen 2511 edit adds ≈20 GB on top of a 45–50 GB desktop-plus-agents
+baseline, against the ~73 GB limit of §3.
+
+So the three levers that actually move this, in order: the page file (owner decision, `HUMAN_TODO.md`
+q-4), fewer resident agent sessions and MCP stacks during Qwen or FLUX.2 work, and a ComfyUI restart
+— not `/free` — before a heavy job whose backend already holds more than ~6 GB of idle commit.
+Runtime flags do not move the ceiling; §4's verdicts stand, but none of them is a remedy for #77.

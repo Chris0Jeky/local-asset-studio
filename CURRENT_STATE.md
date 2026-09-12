@@ -28,9 +28,20 @@ v1.1 and WAI v17 carry no v-pred key; ComfyUI logged `model_type EPS` for every 
 a mis-sampled v-pred NoobAI is **not** the six-finger cause. The owner's launcher
 `C:/AI/Start-ComfyUI.ps1` (outside Git) went from `--reserve-vram 2` to `0.6` at ~20:55 local —
 SHA-256 `526fcda5…c604c` before, `0c3fbc95…969e` after, backup `…ps1.bak-20260912-reserve2` — and
-`app/backends.py` now matches. **NOT verified:** the exit test. No Qwen job has run since, so no log
-yet shows `Requested to load QwenImage` then `loaded completely; … full load: True` at 832×1216 with
-two references. Derivation, fit table and the ≥20 GiB commit gate: `docs/RUNTIME-PRECONDITIONS.md`.
+`app/backends.py` now matches. One Qwen job ran after the change and failed before the load line:
+job `f29937b7-478f-4598-b756-661305d18ed9` (`qwen-2ref`, 512-wide, two refs, prompt
+`0603c5be-0321-4325-ae5f-9a268b94d605`) on PID 4916 started 20:59:22 with `--reserve-vram 0.6`
+(`C:/AI/logs/20260912-205922-error.log`: `13,870 / 14,250 MB usable`, unreachable at reserve 2 where
+the same logs read `12,436 / 12,817`). After `Requested to load QwenImage` it raised
+`DefaultCPUAllocator: not enough memory (4,377,600 bytes)` in a device→host unload at 44.93 s, with
+**no** `loaded completely`/`loaded partially` line for QwenImage; the prompt worker then died with a
+`TypeError` in `cleanup_models_gc` and ComfyUI was cycled (`20260912-210954`). Commit went 60 % → 87 %
+(29 → 9.2 GB headroom) and `POST /free` did **not** release it (87 % → 87 %); a restart did (→ 67 %).
+Per-process attribution is in #77's newest comments (idle ComfyUI 16.8 GB after `/free`, 158
+`node.exe` 10.7 GB, ~15 GB non-process). **Measured:** the reserve does not move the host-commit
+ceiling. **NOT verified:** the narrow exit test — no log yet shows `Requested to load QwenImage` then
+`loaded completely; … full load: True` at 832×1216 with two references. Derivation, fit table and the
+≥20 GiB commit gate: `docs/RUNTIME-PRECONDITIONS.md`.
 
 ## Integrated Studio workflow UI verification — 12 September 2026
 

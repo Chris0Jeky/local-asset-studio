@@ -79,5 +79,15 @@ Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
 `app/backends.py` carries the same value for the Studio-launched primary backend
 (`PRIMARY_RESERVE_VRAM`). Revert both or neither: a change to one produces two different runtimes on
 port 8188. `scripts/h3-launch.py` (8194) and `scripts/hidream-launch.py` (8192) are unchanged at 2.
-The effect of this change is not yet proven; the exit test is a `full load: True` line on the next
-Qwen job.
+Pre-existing and unrelated to this change: both launcher files also end with `--enable-manager`,
+which `BackendManager.primary_argv` does not pass.
+
+Outcome so far. The flag takes effect — the loader reported `13,870 / 14,250 MB usable` on PID 4916
+(started 20:59:22) against `12,436 / 12,817 MB` at reserve 2. But the one Qwen job run since
+(`f29937b7-478f-4598-b756-661305d18ed9`, prompt `0603c5be-0321-4325-ae5f-9a268b94d605`) failed at
+44.93 s right after `Requested to load QwenImage` with `DefaultCPUAllocator: not enough memory
+(4,377,600 bytes)` and printed no load line at all (`C:/AI/logs/20260912-205922-error.log`), while
+host commit went 60 % → 87 % and `POST /free` did not release it. **Measured: the reserve does not
+move the host-commit ceiling** (#77). The narrow exit test — `full load: True` for QwenImage at
+832×1216 with two references — is still unobserved. Detail in
+[`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md) §7.
