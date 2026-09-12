@@ -50,6 +50,7 @@ class LiveEngineTests(unittest.TestCase):
         result=self.run_fixture(glb=True)
         self.assertEqual(result['gltf_validation']['state'],'validated')
         glb=result['report']['glb']
+        self.assertEqual(glb['import_profile']['animation_fps'],100)
         clips={c['name']:c for c in glb['animation_samples']}
         self.assertIn('HingeAction',clips)
         samples=clips['HingeAction']['samples']

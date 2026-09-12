@@ -16,7 +16,9 @@ GLB verification additionally requires the pinned Khronos tool and an explicit
 Node executable. Install the tool deliberately, outside the ComfyUI environment:
 
 ```console
-npm ci --prefix tools/gltf-validation --ignore-scripts --no-audit --no-fund
+cd tools/gltf-validation
+npm ci --ignore-scripts --no-audit --no-fund
+cd ../..
 ```
 
 Set `node` to the absolute Node executable path in `config/local.json`, beside

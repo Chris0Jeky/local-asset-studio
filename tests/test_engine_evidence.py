@@ -32,7 +32,7 @@ class EngineEvidenceTests(unittest.TestCase):
                           'frames':frames,'total_duration_ms':480},
                 'playback':{'completed':True,'signal':'animation_looped','timebase':'process-delta','fixed_fps':240,
                             'speed_scale':1,'elapsed_ms':480,'frame_events':events},
-                'glb':{'loaded':True,'meshes':[{'name':'Panel'}],'animation_samples':[]}}
+                'glb':{'loaded':True,'meshes':[{'name':'Panel'}],'import_profile':{'animation_fps':100},'animation_samples':[]}}
     def test_glb_container_reports_roles_without_claiming_validation(self):
         result=evidence.inspect_glb(self.root/'fixture.glb')
         self.assertEqual(result['animations'][0]['name'],'HingeAction')
@@ -145,6 +145,9 @@ class EngineEvidenceTests(unittest.TestCase):
     def test_glb_loaded_flag_alone_is_insufficient(self):
         report=self.report();report['glb']['meshes']=[]
         with self.assertRaisesRegex(evidence.EvidenceError,'GLB mesh'):adapter._verify_report(report,self.manifest,True)
+    def test_import_profile_is_applied_not_assumed(self):
+        report=self.report();report['glb']['import_profile']['animation_fps']=30
+        with self.assertRaisesRegex(evidence.EvidenceError,'import profile'):adapter._verify_report(report,self.manifest,True)
     def test_reports_must_be_unique(self):
         for stdout in ('nothing','GODOT_ADAPTER_REPORT={}\nGODOT_ADAPTER_REPORT={}','GODOT_ADAPTER_REPORT=[]'):
             with self.assertRaises(evidence.EvidenceError):adapter._engine_report_from_stdout(stdout)

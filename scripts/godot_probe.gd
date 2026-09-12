@@ -57,6 +57,9 @@ func inventory_glb() -> Dictionary:
 	if GLB_PATH.is_empty():
 		inventory["not_requested"] = true
 		return inventory
+	var import_settings: ConfigFile = ConfigFile.new()
+	if import_settings.load(GLB_PATH + ".import") == OK:
+		inventory["import_profile"] = {"animation_fps": import_settings.get_value("params", "animation/fps", null)}
 	var packed: Resource = load(GLB_PATH)
 	if not (packed is PackedScene):
 		inventory["load_error"] = "Godot did not load GLB as PackedScene"

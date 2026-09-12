@@ -39,8 +39,8 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install -r research/game-assets/requirements-media.txt
-      - run: npm install --prefix tools/gltf-validation --ignore-scripts --no-audit --no-fund
-      - run: python -c "from pathlib import Path; print(Path('tools/gltf-validation/package-lock.json').read_text())"
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: tools/gltf-validation
       - run: python tests/install_engine_test_runtime.py
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
       - run: python -m unittest discover -s tests -p test_engine_live.py -v

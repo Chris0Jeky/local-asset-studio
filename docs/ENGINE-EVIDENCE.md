@@ -77,6 +77,26 @@ claim to solve that separate diagnostics-UI backlog. Recovery is explicit: inspe
 the retained attempt, correct the cause and choose a fresh output directory.
 Neither a missing report nor a crash authorizes a blind rerun in the same folder.
 
+## Observed import-fidelity defect
+
+The initial real Linux run passed sprite loop/one-shot/blank-frame checks,
+skin inventory and the invalid-accessor gate, but rejected the expected midpoint
+pose: the imported quaternion's Z component was 0.681998 instead of 0.707107.
+The retained effective `.import` settings showed Godot's 30 FPS animation bake.
+Interpolating its samples around the authored 240 ms apex rounded a 90-degree
+hinge pose to approximately 86 degrees. The strict pose assertion was not relaxed.
+
+The verification project now declares a 100 FPS scene-import profile, reads the
+effective FPS back from Godot's `.import` file, preserves immutable tracks and
+turns off automatic LOD/shadow meshes and name-suffix type conversions. This is
+an explicit verification configuration, not a lossless guarantee for every
+possible source key time. Source and imported poses still need task-specific
+comparisons. The original failed evidence remains in the first CI artifact.
+
+The initial Windows npm invocation also resolved the wrong working directory.
+The native lane now uses an explicit tool working-directory and `npm ci` with
+the exact registry integrity lock observed in the successful Linux installation.
+
 ## Limits and threat model
 
 The GLB intake supports JSON plus an optional BIN chunk, embedded buffers/images
@@ -114,7 +134,9 @@ python -m unittest discover -s tests -p test_godot_asset_adapter.py -v
 Install the format tool explicitly:
 
 ```console
-npm ci --prefix tools/gltf-validation --ignore-scripts --no-audit --no-fund
+cd tools/gltf-validation
+npm ci --ignore-scripts --no-audit --no-fund
+cd ../..
 ```
 
 For actual local native tests, set absolute paths in `STUDIO_TEST_GODOT` and
