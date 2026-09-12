@@ -25,6 +25,8 @@ for preset in catalog:
         assert field in graph[node]['inputs'], (preset['id'],'reference',slot)
         assert slot['role'] in {'identity','pose','style','costume','composition','geometry','motion','mask'}
     assert preset.get('modality','image') in {'image','video','3d'}
+    # The RGBA-mask guard in app/server.py refuses a queue without that upload, so the flag needs the slot.
+    if preset.get('requires_rgba_mask'): assert preset.get('reference'), (preset['id'],'requires_rgba_mask without a reference binding')
     if preset.get('visual'):
         visual_path=(root/preset['visual']).resolve()
         assert visual_path.is_relative_to(root/'workflows/comfyui')
