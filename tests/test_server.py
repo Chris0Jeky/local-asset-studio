@@ -13,10 +13,10 @@ from PIL import Image
 def png():
     stream = io.BytesIO(); Image.new('RGB', (8, 12), 'purple').save(stream, 'PNG'); return stream.getvalue()
 
-def rgba_png():
+def rgba_png(width=8, height=8, transparent=True):
     stream = io.BytesIO()
-    image = Image.new('RGBA', (8, 12), (40, 80, 120, 255))
-    image.putpixel((3, 4), (40, 80, 120, 0))
+    image = Image.new('RGBA', (width, height), (40, 80, 120, 255))
+    if transparent: image.putpixel((3, 4), (40, 80, 120, 0))
     image.save(stream, 'PNG')
     return stream.getvalue()
 
@@ -65,9 +65,9 @@ class ServerTests(unittest.TestCase):
         with self.assertRaisesRegex(server.StudioError,"Reference upload is invalid"):
             s.prepare({"preset_id":"demo","controls":{"reference":"plain.png"}})
 
-    def test_rgba_upload_is_preserved_and_bound_to_masked_loader(self):
+    def test_anime_masked_repair_preserves_valid_rgba_bytes_and_rejects_invalid_masks(self):
         graph={"4":{"class_type":"LoadImage","inputs":{"image":"authored-mask.png"}}}
-        preset={"id":"masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"]}
+        preset={"id":"anime-masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"]}
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
         (self.root/'workflows/api/masked-repair-api.json').write_text(json.dumps(graph))
         s=self.studio(); source=rgba_png(); upload=s.upload('hand-mask.png','image/png',source)
@@ -76,8 +76,20 @@ class ServerTests(unittest.TestCase):
             with Image.open(path) as decoded:
                 self.assertEqual(decoded.mode,'RGBA')
                 self.assertEqual(decoded.getpixel((3,4)),(40,80,120,0))
-        _,bound,_,_,_=s.prepare({'preset_id':'masked-repair','controls':{'reference':upload['file']}})
+        _,bound,_,_,_=s.prepare({'preset_id':'anime-masked-repair','controls':{'reference':upload['file']}})
         self.assertEqual(bound['4']['inputs']['image'],upload['file'])
+        opaque=s.upload('opaque.png','image/png',rgba_png(transparent=False))['file']
+        rgb=s.upload('rgb.png','image/png',png())['file']
+        unaligned=s.upload('unaligned.png','image/png',rgba_png(height=12))['file']
+        jpeg=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(jpeg,'JPEG')
+        jpg=s.upload('masked.jpg','image/jpeg',jpeg.getvalue())['file']
+        webp=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(webp,'WEBP')
+        webp_file=s.upload('masked.webp','image/webp',webp.getvalue())['file']
+        for file, message in ((None,'RGBA PNG upload'),(opaque,'transparent repair region'),(rgb,'RGBA PNG'),(unaligned,'divisible by 8'),(jpg,'RGBA PNG'),(webp_file,'RGBA PNG')):
+            with self.subTest(file=file), self.assertRaisesRegex(server.StudioError,message):
+                s.create_job({'preset_id':'anime-masked-repair','controls':{} if file is None else {'reference':file}})
+        self.assertEqual(s.jobs,{})
+        self.assertTrue(s.queue.empty())
 
     def test_imported_image_survives_restart_without_generation(self):
         s=self.studio();result=s.import_image('frame.png','image/png',png())
