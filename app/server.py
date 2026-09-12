@@ -34,6 +34,7 @@ from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
 import host_memory
+from runtime_recovery import RuntimeRecovery
 import prompting
 from studio_prompt.http_extension import extend_handler
 
@@ -108,6 +109,7 @@ class Studio:
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
+        self.runtime_recovery = RuntimeRecovery(self)
 
     def catalog(self):
         data = read_json(self.catalog_path)
@@ -234,6 +236,9 @@ class Studio:
 
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
+        # A real started worker that has exited cannot service a new queue safely.
+        if getattr(self, 'worker', None) is not None and self.worker.ident is not None and not self.worker.is_alive():
+            raise StudioError('Studio worker is unavailable. Restart Studio; no generation was queued.')
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
         if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
@@ -702,6 +707,7 @@ class Studio:
             return self._schema
 
     def health(self, refresh=False):
+        worker_alive = self.worker.ident is None or self.worker.is_alive()
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
@@ -722,8 +728,8 @@ class Studio:
                             if field.endswith("_name") and isinstance(value, str) and isinstance(enum, list) and value not in enum:
                                 missing.setdefault(preset.get("id"), []).append(value)
                 except (StudioError, AttributeError, TypeError): pass
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "host_commit": self.host_commit_reading()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -1068,7 +1074,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urlparse(self.path).path
             if path == "/api/identity": return self._json(200, self.studio.identity())
-            if path == '/api/backends': return self._json(200, self.studio.backends.snapshot())
+            if path == '/api/backends':
+                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
@@ -1137,6 +1144,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
+            if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 size=self._content_length(20*1024*1024)

@@ -7,6 +7,9 @@ async function refreshBackends() {
     select.value=state.busy?state.operation.target:(backendActive===null?state.active:(keep||state.active));
     select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
     $('#backendStatus').textContent=state.operation?.message||'One model environment at a time. Switching never starts a generation.';
+    const recovery=state.recovery||{};
+    $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
+    $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
     if(backendActive!==null&&backendActive!==state.active){
       const id=selected?.id, controls=selected?values():{};
       catalog=await api('/api/catalog');selected=catalog.presets.find(p=>p.id===id)||catalog.presets[0];
@@ -23,4 +26,5 @@ $('#switchBackend').onclick=async()=>{
   try{await post('/api/backends/switch',{id:$('#backendChoice').value});await refreshBackends();}
   catch(e){backendSwitching=false;$('#switchBackend').disabled=false;$('#backendStatus').textContent=e.message;updateReady();}
 };
+$('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
 refreshBackends();setInterval(()=>{if(backendSwitching)refreshBackends();},3000);
