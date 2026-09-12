@@ -26,7 +26,7 @@ async function voicePage() {
   assert.ok(requests.includes('/api/production/'+project.id+'/resume'), 'Voice resume uses the explicit coordinator route');
 }
 
-function productionPage() {
+async function productionPage() {
   const elements = new Map(), routes = [];
   const $ = selector => { if (!elements.has(selector)) elements.set(selector, element()); return elements.get(selector); };
   const project = {id: 'b'.repeat(32), name: 'Interrupted fixture', kind: 'voice', stages: [], state: {status: 'interrupted', message: 'Restarted'}, voice_resume: {eligible: true}};
@@ -37,7 +37,13 @@ function productionPage() {
   assert.match($('#productionDetail').innerHTML, /Resume unstarted take/, 'Production page exposes backend-approved voice recovery');
   vm.runInContext(`productionPlans=[${JSON.stringify({...project, voice_resume: {eligible: false}})}];renderProduction();`, context);
   assert.doesNotMatch($('#productionDetail').innerHTML, /Resume unstarted take/, 'Production page does not optimistically expose unsafe voice recovery');
+  vm.runInContext(`productionPlans=[${JSON.stringify(project)}];renderProduction();`, context);
+  const resume = {dataset: {projectAction: 'resume'}, disabled: false};
+  const event = {target: {closest: selector => selector === '[data-project-action]' ? resume : null}};
+  const first = $('#productionDetail').onclick(event), second = $('#productionDetail').onclick(event);
+  await Promise.all([first, second]);
+  assert.deepEqual(routes, ['/api/production/'+project.id+'/resume'], 'Production blocks rapid duplicate coordinator actions');
 }
 
-(async () => { await voicePage(); productionPage(); console.log('Voice recovery controls require backend eligibility and an explicit route.'); })()
+(async () => { await voicePage(); await productionPage(); console.log('Voice recovery controls require backend eligibility and an explicit route.'); })()
   .catch(error => { console.error(error); process.exitCode = 1; });

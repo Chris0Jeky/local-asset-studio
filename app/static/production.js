@@ -1,4 +1,4 @@
-let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false;
+let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false, productionActionPending=false;
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
@@ -111,9 +111,11 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
 }catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
 $('#productionList').onclick=e=>{const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
-$('#productionDetail').onclick=async e=>{try{
+$('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume'].includes(action);
+  if(coordinatorAction&&productionActionPending)return;
+  if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
+  try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
-  const action=e.target.closest('[data-project-action]')?.dataset.projectAction;
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
@@ -122,7 +124,7 @@ $('#productionDetail').onclick=async e=>{try{
   if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
   else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
   if(action||choice)await refreshProduction(true);
-}catch(err){productionMessage(err.message,true);}};
+}catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
