@@ -10,8 +10,12 @@ async function refreshProduction(force=false){
   }catch(e){productionMessage(e.message,true);}finally{productionRefreshing=false;}
 }
 function renderProduction(){
-  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'"><b>'+esc(p.name)+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':'native export')+'</small></button>').join('')||'<p class="muted">Your next study starts with a question. Open a recipe and plan a comparison.</p>';
+  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'"><b>'+esc(p.name)+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':p.kind==='av'?'scene':'native export')+'</small></button>').join('')||'<p class="muted">Your next study starts with a question. Open a recipe and plan a comparison.</p>';
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
+  if(p.kind==='av'){
+    $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
+    return;
+  }
   const active=['queued','running','observing'].includes(p.state.status),resumable=['interrupted','uncertain','stopped'].includes(p.state.status);
   let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+(resumable?'<button data-project-action="resume">Reconcile and resume</button>':'')+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){

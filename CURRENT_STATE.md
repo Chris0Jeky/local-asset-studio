@@ -1,5 +1,27 @@
 # Current state — 11 September 2026
 
+## Shared Scene editor - 12 September 2026
+
+The Studio header and selected Workspace assets now lead to a saved Scene editor. UI, CLI and optional
+MCP use one HTTP command service over the Production database, with transactional revision checks,
+source snapshots/lineage, append-only history and explicit restore. Existing cut/dissolve/overlay and
+audio controls are joined by timeline order/split. Render attempts use the existing owned worker queue,
+pinned revisions, configured FFmpeg paths, progress/cancellation and retained incomplete evidence.
+
+A real Windows Chromium 151 fixture exercised a shared UI/CLI/MCP edit sequence, stale rejection with
+retained fields, explicit reload, queued rendering, decoded playback, source ZIP download and mobile
+layout. It completed a six-second 144-frame/288000-sample procedural preview with zero ComfyUI calls,
+external browser requests or JS errors. The disposable-port fixture adapts only Host/Origin to its
+ephemeral port; separate HTTP tests exercise the unchanged product 8191 guards. Full source and runtime
+evidence will be preserved at `.runtime/session-2026-09-12/shared-scenes/`.
+
+Independent review found no critical/high product defects. Nonblocking #30 follow-ups are explicit:
+document actions use saved revisions even with unsaved visible fields; cancellation can lose during
+Workspace publication; concurrent same-revision exports can leave an unregistered loser ZIP. Cached
+waveforms/thumbnails and proxy renders remain future work. See `docs/SCENE-EDITOR.md` for limits and
+recovery. No neural audio, native editor parity, licensing or creative acceptance is claimed;
+`HUMAN_TODO.md` remains unchanged.
+
 ## Model download redirect policy - 12 September 2026
 
 Curated automatic installs now check the original HTTPS source and every redirect before opening

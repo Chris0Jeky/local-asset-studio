@@ -12,3 +12,11 @@ class GalleryHandoffTests(unittest.TestCase):
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_scene_editor_renders_contract_controls(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('av_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
