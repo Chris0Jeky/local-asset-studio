@@ -183,6 +183,62 @@ class SceneTests(unittest.TestCase):
         self.assertEqual(state['status'],'failed');self.assertEqual(state['publication_status'],'failed')
         self.assertEqual(state['native_recipe']['source_assets'][0]['asset_id'],self.asset['id'])
 
+    def _restart_with_register_spy(self):
+        from test_server import server
+        calls=[];original=server.AssetWorkspace.register
+        def register(workspace,job,index,source):
+            if job.get('operation') == 'native.av-preview.v1':calls.append((job['id'],index))
+            return original(workspace,job,index,source)
+        with patch.object(server.AssetWorkspace,'register',register),patch.object(threading.Thread,'start',lambda *_:None):
+            restarted=FakeStudio(self.root,[])
+        return restarted,calls
+
+    def test_restart_does_not_republish_failed_av_attempt_after_first_save_failure(self):
+        doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
+        before={a['id'] for a in self.studio.assets.snapshot()['assets']}
+        with patch('av_projects.render',side_effect=self.fixture_render),patch.object(self.studio,'_save',side_effect=OSError('first durable save failed')):
+            self.studio.production.run(doc['id'])
+        state_path=self.studio.runs/attempt/'state.json';before_state=json.loads(state_path.read_text())
+        restarted,calls=self._restart_with_register_spy()
+        self.assertEqual(calls,[])
+        self.assertEqual({a['id'] for a in restarted.assets.snapshot()['assets']},before)
+        self.assertEqual(json.loads(state_path.read_text()),before_state)
+
+    def test_restart_does_not_republish_partial_failed_av_attempt(self):
+        doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
+        original_register=self.studio.assets.register
+        def register(job,index,source):
+            if index==1:raise OSError('second output register failed')
+            return original_register(job,index,source)
+        original_save=self.studio._save;save_calls=[]
+        def save(job):
+            save_calls.append(job['status'])
+            if len(save_calls)==2:raise OSError('later durable save failed')
+            return original_save(job)
+        with patch('av_projects.render',side_effect=self.fixture_render),patch.object(self.studio.assets,'register',side_effect=register),patch.object(self.studio,'_save',side_effect=save):
+            self.studio.production.run(doc['id'])
+        state_path=self.studio.runs/attempt/'state.json';before_state=json.loads(state_path.read_text())
+        before={a['id'] for a in self.studio.assets.snapshot()['assets']}
+        restarted,calls=self._restart_with_register_spy()
+        self.assertEqual(calls,[])
+        self.assertEqual({a['id'] for a in restarted.assets.snapshot()['assets']},before)
+        self.assertEqual(json.loads(state_path.read_text()),before_state)
+
+    def test_restart_indexes_completed_and_legacy_av_attempts(self):
+        doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
+        with patch('av_projects.render',side_effect=self.fixture_render):self.studio.production.run(doc['id'])
+        legacy_id='a'*32;out=self.studio.experiments/'projects'/legacy_id/'renders/legacy';out.mkdir(parents=True)
+        (out/'preview.mp4').write_bytes(b'inert preview');(out/'mix.wav').write_bytes(b'inert audio')
+        legacy={'id':'legacy-av','operation':'native.av-preview.v1','project_id':legacy_id,'status':'completed','created_at':time.time(),
+                'preset_id':'av-preview','preset_name':'Legacy preview','controls':{},'batch_count':1,'prompt_ids':[],'submissions':[],
+                'parent_assets':[],'references':[],'graph_path':'','graph':{},'native_recipe':{},
+                'outputs':[{'filename':'preview.mp4','native_path':'renders/legacy/preview.mp4','type':'output','media_type':'video'},
+                           {'filename':'mix.wav','native_path':'renders/legacy/mix.wav','type':'output','media_type':'audio'}]}
+        self.studio.jobs[legacy['id']]=legacy;(self.studio.runs/legacy['id']).mkdir();self.studio._save(legacy)
+        restarted,calls=self._restart_with_register_spy()
+        self.assertCountEqual([job_id for job_id,index in calls], [attempt,attempt,legacy['id'],legacy['id']])
+        self.assertTrue(all(restarted.jobs[job_id]['outputs'][index].get('asset_id') for job_id,index in calls))
+
     def test_publication_register_and_later_save_failure_retains_recipe_and_partial_assets(self):
         doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
         original_register=self.studio.assets.register
