@@ -56,4 +56,6 @@ def extend_handler(base):
                 return self._json(200,result)
             except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
-    return PromptHandler
+    # Compose at the existing extension seam; no second server or worker.
+    from studio_workflow.http_extension import extend_handler as workflow_handler
+    return workflow_handler(PromptHandler)
