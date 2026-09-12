@@ -712,6 +712,21 @@ class Studio:
                 if not prompting.has_wildcards(text): continue
                 graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
 
+    @staticmethod
+    def _finite_number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+    def _record_history_failure(self, job, submission, message):
+        submission["status"] = "failed"; job["status"] = "failed"; job["message"] = message
+        started = job.get("started_at")
+        finished = job.get("finished_at")
+        if not self._finite_number(finished):
+            finished = time.time()
+            if self._finite_number(finished): job["finished_at"] = finished
+        if self._finite_number(started) and self._finite_number(finished) and finished >= started and not self._finite_number(job.get("elapsed_seconds")):
+            job["elapsed_seconds"] = finished - started
+        self._save(job)
+
     def _run(self, job):
         job['started_at']=time.time()
         job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
@@ -756,7 +771,9 @@ class Studio:
                     detail = errors[-1] if errors else {}
                     submission["status"] = "failed"
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
-                    raise StudioError("ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else ""))
+                    message = "ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else "")
+                    self._record_history_failure(job, submission, message)
+                    raise StudioError(message)
                 outputs = history.get("outputs", {})
                 for node in outputs.values():
                     for collection in ("images", "gifs", "videos", "audio", "3d"):

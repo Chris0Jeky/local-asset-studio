@@ -150,6 +150,20 @@ class ServerTests(unittest.TestCase):
         replies=[{"queue_running":[],"queue_pending":[]},URLError("timeout")]
         s=FakeStudio(self.root,replies); job=s.create_job({"preset_id":"demo","controls":{}}); s._run(s.jobs[job["id"]]); self.assertEqual(s.jobs[job["id"]]["status"],"uncertain")
 
+    def test_confirmed_history_failure_records_studio_interval(self):
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"failed-one"},
+                 {"failed-one":{"status":{"status_str":"error","messages":[
+                     ["execution_start",{"timestamp":135000}],
+                     ["execution_error",{"timestamp":160000,"node_type":"KSampler","exception_message":"boom"}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{},"batch_count":2}); job=s.jobs[created["id"]]
+        with patch.object(server.time,"time",side_effect=[100.0,135.0,160.0]), self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job["status"],"failed"); self.assertEqual(job["submissions"][0]["status"],"failed")
+        self.assertEqual(job["started_at"],100.0); self.assertEqual(job["finished_at"],160.0); self.assertEqual(job["elapsed_seconds"],60.0)
+        self.assertEqual(job["prompt_ids"],["failed-one"]); self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
+        self.assertEqual(s.public(job)["elapsed_seconds"],60.0)
+        saved=json.loads((s.runs/job["id"]/'state.json').read_text())
+        self.assertEqual(saved["finished_at"],160.0); self.assertEqual(saved["elapsed_seconds"],60.0)
+
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"seed":40},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)
