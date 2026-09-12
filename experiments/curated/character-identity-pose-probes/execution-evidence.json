@@ -69,7 +69,7 @@
   },
   "source": "C:/AI/character-lab/pilot-20260912/examples/standard-extracted (the approved pilot canon; hashes 1a6bcaa9, 92418200, 41d41e38)"
  },
- "boundary": "Probes A and B were direct ComfyUI /prompt submissions, not Studio jobs and not Production attempts; they prove the SDXL identity-plus-pose graph runs and what the base IP-Adapter carries, not art acceptance or licence clearance. WAI v17 knows the Danbooru tag aqua (konosuba), which the supplied canon matches item for item, so probe A carries a familiar-character prior; probe B (no tag) is the generalisable measurement. The four C/D probes never executed (ComfyUI died first).",
+ "boundary": "Probes A and B were direct ComfyUI /prompt submissions, not Studio jobs and not Production attempts; they prove the SDXL identity-plus-pose graph runs and what the base IP-Adapter carries, not art acceptance or licence clearance. WAI v17 knows the Danbooru tag aqua (konosuba), which the supplied canon matches item for item, so probe A carries a familiar-character prior; probe B (no tag) is the generalisable measurement. Of the four C/D probes, C never executed (crash at checkpoint reload), C2 and C3 completed sampling and died in VAEDecode without writing an image, and D was never submitted; each entry names its execution path and carries its graph.",
  "downloads_with_receipts": [
   {
    "name": "hand_yolov9c",
@@ -263,23 +263,29 @@
    "prompt_id": "68355544-288e-44f1-a2bc-28aede0984c4",
    "status": "failed_not_executed",
    "seconds": null,
-   "failure": "ComfyUI PID 40412 died with the same 0xC0000005 in torch/storage.py __getitem__ <- load_torch_file <- CheckpointLoaderSimple on the prompt after B (log C:/AI/logs/20260912-201600-error.log). Second reproduction of the reload crash; no output on disk. Not resubmitted under the same runtime flags."
+   "failure": "ComfyUI PID 40412 died with the same 0xC0000005 in torch/storage.py __getitem__ <- load_torch_file <- CheckpointLoaderSimple on the prompt after B (log C:/AI/logs/20260912-201600-error.log). Second reproduction of the reload crash; no output on disk. Not resubmitted under the same runtime flags.",
+   "execution_path": "ComfyUI died at the checkpoint mmap reload before any node of this prompt ran",
+   "graph": "C-notag-pad-graph.json"
   },
   {
    "kind": "comfyui-probe",
    "name": "C2-notag-pad-w0.6",
    "prompt_id": "4fc41047-263c-4e18-8c17-e3f5e7308f2c",
-   "status": "failed_not_executed",
+   "status": "executed_failed_no_output",
    "seconds": null,
-   "failure": "ComfyUI PID 41108 (--disable-mmap) died with 0xC0000005 in torch module.to()/convert <- model_patcher.partially_unload <- free_memory <- load_models_gpu during VAEDecode (log C:/AI/logs/20260912-202719-error.log). Sampling had completed 30 steps at ~1.3 it/s. No output on disk."
+   "failure": "ComfyUI PID 41108 (--disable-mmap) died with 0xC0000005 in torch module.to()/convert <- model_patcher.partially_unload <- free_memory <- load_models_gpu during VAEDecode (log C:/AI/logs/20260912-202719-error.log). Sampling had completed 30 steps at ~1.3 it/s. No output on disk.",
+   "execution_path": "All 30 sampling steps completed (~1.3 it/s); ComfyUI died in partially_unload during VAEDecode, so no image was written",
+   "graph": "C2-notag-pad-w0.6-graph.json"
   },
   {
    "kind": "comfyui-probe",
    "name": "C3-notag-pad-w0.6-classic",
    "prompt_id": "c773fffd-626b-49c0-aef7-5909846a40fc",
-   "status": "failed_not_executed",
+   "status": "executed_failed_no_output",
    "seconds": null,
-   "failure": "ComfyUI PID 9020 (--cache-classic) died with 0xC0000005 on the first prompt after start (log C:/AI/logs/20260912-203031-error.log). No output on disk. Runtime investigation parked after three different flag sets (default, --disable-mmap, --cache-classic)."
+   "failure": "ComfyUI PID 9020 (--cache-classic) died with 0xC0000005 on the first prompt after start (log C:/AI/logs/20260912-203031-error.log). No output on disk. Runtime investigation parked after three different flag sets (default, --disable-mmap, --cache-classic).",
+   "execution_path": "Sampling ran; ComfyUI died in partially_unload during VAEDecode (same stack as C2); no image written",
+   "graph": "C3-notag-pad-w0.6-classic-graph.json"
   },
   {
    "kind": "comfyui-probe",
@@ -356,7 +362,9 @@
    "width": 512,
    "runtime": null,
    "note": "ComfyUI died with 0xC0000005 while loading QwenImage (GGUF) for this prompt at --reserve-vram 2, commit 60 %, 29 GB headroom. Prompt ID retained by the Studio job; NOT resubmitted. Sixth crash tonight (#89).",
-   "log": "C:/AI/logs/20260912-203908-error.log"
+   "log": "C:/AI/logs/20260912-203908-error.log",
+   "recipe": "studio-job-a2908800-recipe.json",
+   "recipe_source": "C:\\Users\\jekyt\\source\\local-asset-studio\\experiments\\runs\\a2908800-7214-4caa-ad23-3844527cdf5d\\recipe.json"
   },
   {
    "kind": "studio-job",
@@ -374,7 +382,9 @@
    "width": 512,
    "runtime": "PID 4916, launcher flags with --reserve-vram 0.6 (verified in argv)",
    "note": "KSampler raised DefaultCPUAllocator: not enough memory (4,377,600 bytes) 46 s after start; host commit rose from 60 % (29 GB headroom) before submission to 87 % (9.2 GB headroom, 5.3 GB physical free) at failure. Same failure class as #77; ComfyUI did not crash. Not resubmitted.",
-   "log": "C:/AI/logs/20260912-205922-error.log"
+   "log": "C:/AI/logs/20260912-205922-error.log",
+   "recipe": "studio-job-f29937b7-recipe.json",
+   "recipe_source": "C:\\Users\\jekyt\\source\\local-asset-studio\\experiments\\runs\\f29937b7-478f-4598-b756-661305d18ed9\\recipe.json"
   }
  ]
 }

@@ -13,7 +13,9 @@ Exact prompt IDs, hashes, graphs, uploads and the download receipts are in
 |---|---|---|---|
 | A — with the `aqua (konosuba)` character tag | [probe-A-tag](../../../examples/character-identity-pose-probes/probe-A-tag.jpg), completed | 111.1 s including cold loads | Continuous hair curtain, hair loop and ornament, gold upper-arm bands, navy pleated skirt with gold trim and lilac frill, white thigh-highs, V-topped navy boots; pose follows the skeleton. |
 | B — same graph, no character tag | [probe-B-notag](../../../examples/character-identity-pose-probes/probe-B-notag.jpg), completed | 82.1 s | The design drifted (twin hair loops with yellow beads, a large back bow, corset lacing, yellow knee boots). |
-| C, C2, C3, D — padded identity image, two IP-Adapter weights | never executed | — | ComfyUI died before or during each (issue #89). |
+| C — padded identity image | never executed | — | ComfyUI died at the checkpoint reload before any node ran (issue #89). |
+| C2, C3 — padded identity image, weight 0.6 | executed, no output | 30 steps sampled | ComfyUI died in `partially_unload` during `VAEDecode`; no image was written (issue #89). Graphs retained. |
+| D — weight 1.0 | never submitted | — | The sequential runner stopped after the crash. |
 
 **Read A and B together, honestly.** WAI v17 knows the Danbooru tag `aqua (konosuba)`, and the supplied canon
 matches that character item for item, so probe A carries a familiar-character prior; probe B is the

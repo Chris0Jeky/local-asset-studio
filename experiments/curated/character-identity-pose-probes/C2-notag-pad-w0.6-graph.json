@@ -1,0 +1,183 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+  }
+ },
+ "2": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "1",
+    1
+   ],
+   "text": "solo, 1girl, full body, standing, from behind, back view, facing away, arms at sides, light blue hair, very long hair, hair loop, blue hair ornament, detached sleeves, white sleeves, gold armband, blue sleeveless dress, navy bodice, pleated skirt, gold trim, purple frilled underskirt, white thighhighs, blue thigh boots, gold boot trim, grey background, simple background, flat color, clean lineart, cel shading, character sheet, masterpiece, best quality, amazing quality"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "1",
+    1
+   ],
+   "text": "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, worst quality, low quality, signature, watermark, username, blurry, multiple views, multiple girls, chibi, face, looking at viewer, looking back"
+  }
+ },
+ "4": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": 704,
+   "height": 1536,
+   "batch_size": 1
+  }
+ },
+ "5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "14",
+    0
+   ],
+   "seed": 20260912,
+   "steps": 30,
+   "cfg": 5.0,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "positive": [
+    "10",
+    0
+   ],
+   "negative": [
+    "10",
+    1
+   ],
+   "latent_image": [
+    "4",
+    0
+   ],
+   "denoise": 1.0
+  }
+ },
+ "6": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "5",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  }
+ },
+ "7": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": "Studio/probe-sdxl-sheet-C2-notag-pad-w0.6"
+  }
+ },
+ "8": {
+  "class_type": "ControlNetLoader",
+  "inputs": {
+   "control_net_name": "xinsir-openpose-sdxl.safetensors"
+  }
+ },
+ "9": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "d1d1ec5eaa7f4a00bc5e51bce7cf4f37_pose-back-704x1536.png.png"
+  }
+ },
+ "10": {
+  "class_type": "ControlNetApplyAdvanced",
+  "inputs": {
+   "positive": [
+    "2",
+    0
+   ],
+   "negative": [
+    "3",
+    0
+   ],
+   "control_net": [
+    "8",
+    0
+   ],
+   "image": [
+    "9",
+    0
+   ],
+   "strength": 0.8,
+   "start_percent": 0.0,
+   "end_percent": 0.8,
+   "vae": [
+    "1",
+    2
+   ]
+  }
+ },
+ "11": {
+  "class_type": "IPAdapterModelLoader",
+  "inputs": {
+   "ipadapter_file": "ip-adapter_sdxl_vit-h.safetensors"
+  }
+ },
+ "12": {
+  "class_type": "CLIPVisionLoader",
+  "inputs": {
+   "clip_name": "clip-vision_vit-h.safetensors"
+  }
+ },
+ "13": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "85a5138352904bf89b627084c43fb34f_canon-front-padded-704x1536.png.png"
+  }
+ },
+ "14": {
+  "class_type": "IPAdapterAdvanced",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "ipadapter": [
+    "11",
+    0
+   ],
+   "image": [
+    "18",
+    0
+   ],
+   "weight": 0.6,
+   "weight_type": "linear",
+   "combine_embeds": "concat",
+   "start_at": 0.0,
+   "end_at": 0.9,
+   "embeds_scaling": "V only",
+   "clip_vision": [
+    "12",
+    0
+   ]
+  }
+ },
+ "18": {
+  "class_type": "PrepImageForClipVision",
+  "inputs": {
+   "image": [
+    "13",
+    0
+   ],
+   "interpolation": "LANCZOS",
+   "crop_position": "pad",
+   "sharpening": 0.0
+  }
+ }
+}

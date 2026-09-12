@@ -18,8 +18,8 @@ Two direct ComfyUI probes of an SDXL identity-plus-pose route (WAI v17 + `ip-ada
 front + `xinsir-openpose-sdxl` on a skeleton extracted from the canon back, 704×1536, 30 steps) completed:
 probe A with the `aqua (konosuba)` tag (prompt `550346d1…`, 111.1 s) reproduced the back-view costume closely;
 probe B without the tag (prompt `932c3093…`, 82.1 s) drifted, so the tag did the work and the base adapter at
-weight 0.6 on a centre-cropped torso does not carry an original design. Four follow-up probes never executed:
-ComfyUI died six times this evening with `0xC0000005` inside host-side tensor moves (checkpoint mmap reload,
+weight 0.6 on a centre-cropped torso does not carry an original design. Of four follow-up probes, one never executed, two sampled all 30 steps and died in `VAEDecode` without
+writing an image, and one was never submitted: ComfyUI died six times this evening with `0xC0000005` inside host-side tensor moves (checkpoint mmap reload,
 `partially_unload`, GGUF `.to()`), once on a FLUX.2 job the other agent submitted; three launch-flag sets
 (`--disable-mmap`, `--cache-classic`, defaults) made no difference and the investigation is parked in #89.
 Two Studio `qwen-2ref` jobs with front+back canon bound (`a2908800` uncertain, `f29937b7` failed on a host
