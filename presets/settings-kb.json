@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "updated": "2026-09-12",
+  "note": "Settings knowledge base. Every rationale says where the number comes from; sources are URLs that document it. 'observed' lists local ComfyUI prompt IDs and is present only where this machine actually ran the setting. Narrative: docs/SETTINGS-KNOWLEDGE.md.",
+  "family_aliases": {
+    "Krea 2": "Krea 2 Turbo",
+    "Anima": "Anima Aesthetic 1.1",
+    "SDXL 1.0": "SDXL",
+    "Qwen Image Edit 2511": "Qwen Image Edit"
+  },
+  "families": {
+    "Krea 2 Turbo": {
+      "prompt": {
+        "style": "natural-language paragraph, block order camera/framing, lighting, subject, environment, expression, pose, style; 30-150 words",
+        "prefix": "",
+        "suffix": "",
+        "negative": null,
+        "notes": [
+          "Turbo has no usable negative prompt: the Studio graphs feed the positive conditioning through ConditioningZeroOut, so negative text is ignored",
+          "danbooru quality soup does not help except where a LoRA was trained on tags (Niji Sweet Spot)",
+          "trigger position follows the LoRA card: Niji Sweet Spot and NIJISIS at the start, fal style triggers at the end of a short prompt",
+          "no ModelSampling* node belongs in these graphs; the Krea 2 loader already applies shift 1.15",
+          "FreeU, PAG and RescaleCFG do nothing useful at cfg 1"
+        ]
+      },
+      "defaults": {"sampler": "euler", "scheduler": "simple", "steps": 8, "cfg": 1.0, "width": 1024, "height": 1024},
+      "resolutions": [[768, 1152], [832, 1248], [1024, 1536], [1024, 1024], [1152, 768], [1280, 1856]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [8, 12, 15],
+         "rationale": "Turbo is distilled for 8 steps and most Krea 2 LoRA cards quote 8; the BArtstyle card quotes 12 and the owner's target image used 15. Cost scales hard: a local 15-step 768x1152 probe took 986.6 s against 188.7 s for an 8-step 512x768 run, so auditions belong at 4-8 steps.",
+         "sources": ["https://docs.comfy.org/tutorials/image/krea/krea-2", "https://huggingface.co/Comfy-Org/Krea-2", "https://civitai.com/models/2554999"],
+         "observed": ["09dadd6e-3e60-4c37-80d1-9244bb8e848d"]},
+        {"id": "sampler", "control": "sampler", "values": ["euler", "euler_ancestral", "er_sde"],
+         "rationale": "euler is the ComfyUI tutorial default; euler_ancestral is what the Niji Sweet Spot card and the owner's target image use; er_sde is the setting quoted on the koukouya and Fantasy Impressions cards.",
+         "sources": ["https://docs.comfy.org/tutorials/image/krea/krea-2", "https://civitai.com/models/2554999", "https://civitai.com/models/2844656"],
+         "observed": ["09dadd6e-3e60-4c37-80d1-9244bb8e848d"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["simple", "beta"],
+         "rationale": "simple is the tutorial default for the flow-matching loader; beta is the alternative quoted on the Masterpiece and Fantasy Impressions cards. karras, exponential and kl_optimal are eps-family schedulers and are not offered for Krea.",
+         "sources": ["https://docs.comfy.org/tutorials/image/krea/krea-2", "https://civitai.com/models/2554999"]},
+        {"id": "style_strength", "control": "lora2", "values": [0.6, 0.8, 1.0, 1.2],
+         "rationale": "fal style cards recommend scale 1.0-1.25 and the Niji Sweet Spot card 0.8-1.5; drop toward 0.6-0.8 as soon as a second style adapter is active, because two style LoRAs at 1.0 usually flatten the subject.",
+         "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "https://civitai.com/models/2554999"]},
+        {"id": "second_style", "control": "lora3", "values": [0.0, 0.6, 1.0],
+         "rationale": "the third slot is the style-pair slot: 0 proves the first adapter alone, 0.6 blends, 1.0 lets the second adapter lead. Unmeasured locally; the values come from the same fal scale range.",
+         "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs"]},
+        {"id": "aspect", "control": "height", "values": [1152, 1248, 1536],
+         "rationale": "portrait heights against a 768-832 width are the shapes the Krea 2 LoRA cards illustrate; 1280x1856 is the koukouya card's own resolution. Every value is a multiple of 16 as the presets require.",
+         "sources": ["https://civitai.com/models/2844656", "https://docs.comfy.org/tutorials/image/krea/krea-2"]}
+      ],
+      "lora_rules": {"max_active": 3, "warn_total_strength": 2.5, "ladder": [1.0, 0.8, 0.6],
+        "notes": [
+          "order does not matter for plain LoRAs chained through LoraLoaderModelOnly",
+          "TextFusion and NIJISIS both edit txtfusion tensors; the stacked effect is unmeasured here",
+          "a slot at strength 0 is pruned from the submitted graph, so an off slot costs nothing",
+          "the accelerator LoRA (4-step distill) is not a style adapter: it replaces the step count, so do not stack it with a style at full strength while auditioning"
+        ]},
+      "sources": [
+        "https://docs.comfy.org/tutorials/image/krea/krea-2",
+        "https://huggingface.co/Comfy-Org/Krea-2",
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+        "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA"
+      ]
+    },
+    "WAI v17 (Illustrious)": {
+      "prompt": {
+        "style": "danbooru tag list: subject count and character, appearance, clothing, action or pose, setting, lighting and composition tags, quality tail last",
+        "prefix": "",
+        "suffix": "masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor",
+        "notes": [
+          "the quality tail goes at the END for this family, unlike NoobAI's prefix",
+          "keep the negative short; long negatives fight the Illustrious tag space",
+          "a 1.5x hires pass at denoise 0.35-0.5 is the documented fix for broken limbs, not more steps",
+          "below 1024 on the short side the model loses anatomy"
+        ]
+      },
+      "defaults": {"sampler": "euler_ancestral", "scheduler": "normal", "steps": 26, "cfg": 6.0, "width": 832, "height": 1216},
+      "resolutions": [[832, 1216], [1024, 1344], [1024, 1024], [1216, 832], [1344, 1024]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [15, 22, 30],
+         "rationale": "the WAI listing quotes 15-30 steps; 15 is an audition, 30 is the authored value in workflows/api/wai-api.json.",
+         "sources": ["https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170", "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"]},
+        {"id": "cfg", "control": "cfg", "values": [5.0, 6.0, 7.0],
+         "rationale": "cfg 5-7 is the quoted band; above 7 Illustrious checkpoints burn colour, below 5 they lose the tag prompt.",
+         "sources": ["https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"]},
+        {"id": "sampler", "control": "sampler", "values": ["euler_ancestral", "dpmpp_2m", "dpmpp_2m_sde"],
+         "rationale": "euler_ancestral is the family default; the dpmpp_2m pair is the usual deterministic comparison for SDXL-derived checkpoints.",
+         "sources": ["https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["normal", "karras"],
+         "rationale": "eps-prediction SDXL checkpoints accept the karras schedule; normal is what the authored graph uses.",
+         "sources": ["https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"]}
+      ],
+      "lora_rules": {"max_active": 2, "warn_total_strength": 1.6, "ladder": [0.8, 0.6, 0.4],
+        "notes": ["Illustrious LoRAs are not interchangeable with Pony or SDXL-base LoRAs", "style sliders such as cinematic lighting work at 0.4-0.8; above 1.0 they dominate"]},
+      "sources": [
+        "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+        "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
+      ],
+      "licence_note": "Installed from a Hugging Face mirror; two mirrors advertise the same SHA-256. Mirror agreement is not creator authentication and the original commercial terms are unresolved. The civitai listing returned HTTP 451 from this machine (docs/research/Workflow-Library-and-Strategy.md)."
+    },
+    "NoobAI XL 1.1": {
+      "prompt": {
+        "style": "danbooru tag list after the quality prefix: subject, appearance, clothing, pose, setting, lighting and composition tags",
+        "prefix": "masterpiece, best quality, newest, absurdres, highres, safe, ",
+        "suffix": "",
+        "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+        "notes": [
+          "the quality words are a PREFIX here; the year tag (newest) and the rating tag (safe) are part of it",
+          "the installed file is the epsilon-prediction release, so ordinary CFG and eps schedulers apply; the separate V-pred release needs different sampling",
+          "the furry/feral negatives are in the author's own recommended negative"
+        ]
+      },
+      "defaults": {"sampler": "euler_ancestral", "scheduler": "normal", "steps": 28, "cfg": 5.5, "width": 832, "height": 1216},
+      "resolutions": [[832, 1216], [1024, 1024], [1216, 832], [1024, 1344]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [22, 28, 32],
+         "rationale": "the author's card recommends 28 steps (25-30 band); 28 is the authored value in workflows/api/noob-api.json.",
+         "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"]},
+        {"id": "cfg", "control": "cfg", "values": [5.0, 5.5, 7.0],
+         "rationale": "the card quotes cfg 5-7; 5.5 is the authored value.",
+         "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"]},
+        {"id": "sampler", "control": "sampler", "values": ["euler_ancestral", "dpmpp_2m"],
+         "rationale": "euler_ancestral is the author's recommendation; dpmpp_2m is the deterministic control for seed comparisons.",
+         "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["normal", "karras"],
+         "rationale": "eps-prediction checkpoint, so karras is available; normal matches the authored graph.",
+         "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"]}
+      ],
+      "lora_rules": {"max_active": 2, "warn_total_strength": 1.6, "ladder": [0.8, 0.6, 0.4],
+        "notes": ["NoobAI shares the Illustrious tag space, but LoRA transfer is not guaranteed"]},
+      "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"],
+      "licence_note": "Fair-AI Public License 1.0-SD: the author's terms prohibit commercialization including the generated products. Hobby and research only."
+    },
+    "Animagine XL 4.0": {
+      "prompt": {
+        "style": "ordered tag list: 1girl/1boy, <character>, <series>, <rating: safe>, <everything else>, then the quality tail",
+        "prefix": "",
+        "suffix": "masterpiece, high score, great score, absurdres",
+        "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+        "notes": [
+          "the tag ORDER is load-bearing for this family: subject count first, character and series next, rating, then everything else, quality last",
+          "for original characters keep the character/series slots empty rather than inventing a franchise",
+          "the author's card quotes 25-28 steps at cfg 5-6"
+        ]
+      },
+      "defaults": {"sampler": "euler_ancestral", "scheduler": "normal", "steps": 28, "cfg": 5.0, "width": 832, "height": 1216},
+      "resolutions": [[832, 1216], [1024, 1024], [1216, 832]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [25, 28],
+         "rationale": "the author's instructions quote roughly 28 Euler-ancestral steps; 25 is the low end of the same band.",
+         "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"]},
+        {"id": "cfg", "control": "cfg", "values": [5.0, 6.0],
+         "rationale": "the card recommends CFG 5-6; the authored graph uses 5.",
+         "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"]},
+        {"id": "sampler", "control": "sampler", "values": ["euler_ancestral", "dpmpp_2m"],
+         "rationale": "euler_ancestral is the author's recommendation; dpmpp_2m is the deterministic comparison.",
+         "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["normal", "karras"],
+         "rationale": "SDXL eps checkpoint; both schedules are valid, normal matches the authored graph.",
+         "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"]}
+      ],
+      "lora_rules": {"max_active": 2, "warn_total_strength": 1.6, "ladder": [0.8, 0.6, 0.4],
+        "notes": ["SDXL-base style LoRAs often transfer here, but the card warns about hand quality; verify per adapter"]},
+      "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"],
+      "licence_note": "Open RAIL++ style terms per the publisher card; a render is not licence clearance."
+    },
+    "Pony V6": {
+      "prompt": {
+        "style": "score prefix, then a danbooru tag list: subject, appearance, clothing, pose, setting, lighting tags",
+        "prefix": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, ",
+        "suffix": "",
+        "negative": "score_6, score_5, score_4, worst quality, low quality, text, watermark, signature, bad anatomy, bad hands",
+        "notes": [
+          "the score prefix and source_anime are how this checkpoint was conditioned; dropping them changes the model, not just the style",
+          "clip skip 2 (CLIPSetLastLayer -2) is part of the recommended setup",
+          "keep the negative short: long negatives hurt this family",
+          "Pony LoRAs are a separate ecosystem from Illustrious and SDXL base"
+        ]
+      },
+      "defaults": {"sampler": "euler_ancestral", "scheduler": "normal", "steps": 30, "cfg": 6.0, "width": 1024, "height": 1024},
+      "resolutions": [[1024, 1024], [832, 1216], [1216, 832]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [25, 30],
+         "rationale": "25-30 is the usual band for this checkpoint; 30 is the authored value in workflows/api/pony-api.json.",
+         "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"]},
+        {"id": "cfg", "control": "cfg", "values": [6.0, 7.0],
+         "rationale": "6-7 with the score prefix; higher values over-saturate.",
+         "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"]},
+        {"id": "sampler", "control": "sampler", "values": ["euler_ancestral", "dpmpp_2m_sde"],
+         "rationale": "euler_ancestral is the authored default; dpmpp_2m_sde is the common alternative on this family.",
+         "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["normal", "karras"],
+         "rationale": "eps checkpoint; karras is the usual alternative schedule.",
+         "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"]}
+      ],
+      "lora_rules": {"max_active": 2, "warn_total_strength": 1.6, "ladder": [0.8, 0.6, 0.4],
+        "notes": ["only Pony-trained LoRAs behave predictably here"]},
+      "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"]
+    },
+    "Anima Aesthetic 1.1": {
+      "prompt": {
+        "style": "descriptive prose mixed with character and quality tags; the compact Qwen encoder reads sentences, so write one or two of them and then tag the details",
+        "prefix": "",
+        "suffix": "",
+        "negative": "lowres, blurry, bad anatomy, bad hands, text, watermark, signature",
+        "notes": [
+          "this family does take a negative prompt (node 5 in the authored graphs)",
+          "the authored graph runs euler/simple at cfg 4.0 and 30 steps; compare seeds before adding steps"
+        ]
+      },
+      "defaults": {"sampler": "euler", "scheduler": "simple", "steps": 30, "cfg": 4.0, "width": 768, "height": 1152},
+      "resolutions": [[768, 1152], [1024, 1024], [1152, 768]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [20, 30, 36],
+         "rationale": "the preset's own Quick study / Fine study variants use 20 and 36 around the authored 30.",
+         "sources": ["https://huggingface.co/circlestone-labs/Anima"]},
+        {"id": "cfg", "control": "cfg", "values": [3.5, 4.0, 5.0],
+         "rationale": "the authored value is 4.0; this family drifts to plastic shading above 5.",
+         "sources": ["https://huggingface.co/circlestone-labs/Anima"]}
+      ],
+      "lora_rules": {"max_active": 0, "warn_total_strength": 0.0, "ladder": [],
+        "notes": ["no Anima-compatible LoRA is installed; the Studio presets bind no LoRA slot for this family"]},
+      "sources": ["https://huggingface.co/circlestone-labs/Anima"],
+      "licence_note": "CircleStone Labs Non-Commercial weights; the model card states separate terms for generated outputs."
+    },
+    "SDXL": {
+      "prompt": {
+        "style": "natural language phrase plus style words; SDXL base is not tag-conditioned like the anime checkpoints",
+        "prefix": "",
+        "suffix": "",
+        "negative": "lowres, blurry, jpeg artifacts, text, watermark, signature, extra limbs",
+        "notes": [
+          "this entry covers the plain SDXL 1.0 presets and the SDXL style-LoRA presets (LineAni, screentone, cinematic lighting, pixel art)",
+          "trigger words for the installed SDXL adapters are in the loras section of this file"
+        ]
+      },
+      "defaults": {"sampler": "dpmpp_2m", "scheduler": "karras", "steps": 25, "cfg": 7.0, "width": 1024, "height": 1024},
+      "resolutions": [[1024, 1024], [832, 1216], [1216, 832], [1152, 896]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [20, 25, 30],
+         "rationale": "25 is the authored value in workflows/api/sdxl-api.json; 20 auditions and 30 is the usual ceiling before diminishing returns.",
+         "sources": ["https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"]},
+        {"id": "cfg", "control": "cfg", "values": [5.0, 7.0, 8.0],
+         "rationale": "7 is the authored value and the card's usual band is 5-8.",
+         "sources": ["https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"]},
+        {"id": "sampler", "control": "sampler", "values": ["dpmpp_2m", "euler", "dpmpp_2m_sde"],
+         "rationale": "dpmpp_2m/karras is the authored pair; euler is the plain control and dpmpp_2m_sde the textured alternative.",
+         "sources": ["https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"]},
+        {"id": "scheduler", "control": "scheduler", "values": ["karras", "normal"],
+         "rationale": "eps family: karras and normal are both valid; karras is authored.",
+         "sources": ["https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"]},
+        {"id": "style_strength", "control": "lora", "values": [0.4, 0.6, 0.8],
+         "rationale": "the installed SDXL adapters are style sliders and linework adapters; they read best below 1.0 and the ntc-ai slider saturates above 0.8.",
+         "sources": ["https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting", "https://huggingface.co/artificialguybr/LineAniRedmond-LinearMangaSDXL-V2"]}
+      ],
+      "lora_rules": {"max_active": 2, "warn_total_strength": 1.6, "ladder": [0.8, 0.6, 0.4], "notes": ["SDXL-base LoRAs are not Pony or Illustrious LoRAs"]},
+      "sources": ["https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"]
+    },
+    "Z-Image Turbo": {
+      "prompt": {
+        "style": "short natural-language description; this is a distilled turbo model, so long prompts add little",
+        "prefix": "",
+        "suffix": "",
+        "negative": null,
+        "notes": ["distilled: cfg 1 and 8 steps in the authored graph", "flow family, so only simple/beta/sgm_uniform/normal/linear_quadratic schedulers are offered"]
+      },
+      "defaults": {"sampler": "res_multistep", "scheduler": "simple", "steps": 8, "cfg": 1.0, "width": 1024, "height": 1024},
+      "resolutions": [[1024, 1024], [832, 1216], [1216, 832]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [6, 8, 12],
+         "rationale": "the authored graph uses 8; the publisher describes an 8-step turbo target and 6/12 bracket it.",
+         "sources": ["https://huggingface.co/Tongyi-MAI/Z-Image-Turbo", "https://docs.comfy.org/tutorials/image/z-image/z-image-turbo"]},
+        {"id": "sampler", "control": "sampler", "values": ["res_multistep", "euler"],
+         "rationale": "res_multistep is the authored and tutorial sampler; euler is the plain control.",
+         "sources": ["https://docs.comfy.org/tutorials/image/z-image/z-image-turbo"]}
+      ],
+      "lora_rules": {"max_active": 0, "warn_total_strength": 0.0, "ladder": [], "notes": ["no Z-Image adapter is installed"]},
+      "sources": ["https://huggingface.co/Tongyi-MAI/Z-Image-Turbo", "https://docs.comfy.org/tutorials/image/z-image/z-image-turbo"],
+      "licence_note": "Apache-2.0 per the publisher card."
+    },
+    "FLUX.2 Klein": {
+      "prompt": {
+        "style": "natural-language description, one paragraph; Klein follows instructions rather than tags",
+        "prefix": "",
+        "suffix": "",
+        "negative": null,
+        "notes": [
+          "the installed Klein graph samples through SamplerCustomAdvanced, not KSampler, so sampler/scheduler are not exposed as Studio controls for this family",
+          "the 4B variant is the installed one; the 9B variant is gated and non-commercial"
+        ]
+      },
+      "defaults": {"sampler": "euler", "scheduler": "simple", "steps": 20, "cfg": 1.0, "width": 1024, "height": 1024},
+      "resolutions": [[1024, 1024], [832, 1216], [1216, 832]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [16, 20, 28],
+         "rationale": "bracket around the authored scheduler step count for the Klein 4B graph; unmeasured locally.",
+         "sources": ["https://huggingface.co/black-forest-labs/FLUX.2-klein-4B"]}
+      ],
+      "lora_rules": {"max_active": 1, "warn_total_strength": 1.0, "ladder": [1.0, 0.8],
+        "notes": ["the only installed Klein adapter is the official outpaint LoRA, which is a task adapter, not a style"]},
+      "sources": ["https://huggingface.co/black-forest-labs/FLUX.2-klein-4B"],
+      "licence_note": "Check the FLUX.2 Klein licence before any commercial use; model terms and output terms differ."
+    },
+    "Qwen Image Edit": {
+      "prompt": {
+        "style": "instruction sentence describing the edit, naming each reference by role (identity, pose, style)",
+        "prefix": "",
+        "suffix": "",
+        "negative": "",
+        "notes": ["the installed lane runs the 4-step Lightning adapter at cfg 1", "reference roles and provenance are recorded by the Studio, not inferred from the prompt"]
+      },
+      "defaults": {"sampler": "euler", "scheduler": "simple", "steps": 4, "cfg": 1.0, "width": 1024, "height": 1024},
+      "resolutions": [[1024, 1024], [832, 1216], [1216, 832]],
+      "axes": [
+        {"id": "steps", "control": "steps", "values": [4, 8],
+         "rationale": "the authored graph uses the 4-step Lightning adapter; 8 is the only sensible bracket while that adapter is loaded.",
+         "sources": ["https://huggingface.co/Qwen/Qwen-Image-Edit-2511"]},
+        {"id": "denoise", "control": "denoise", "values": [0.6, 0.8, 1.0],
+         "rationale": "edit strength is the interesting axis for this family: below 0.6 the edit barely lands, at 1.0 the reference identity drifts.",
+         "sources": ["https://huggingface.co/Qwen/Qwen-Image-Edit-2511"]}
+      ],
+      "lora_rules": {"max_active": 1, "warn_total_strength": 1.0, "ladder": [1.0, 0.8],
+        "notes": ["the Lightning 4-step adapter is an accelerator baked into the authored graph, not a style slot"]},
+      "sources": ["https://huggingface.co/Qwen/Qwen-Image-Edit-2511"]
+    }
+  },
+  "loras": {
+    "Krea2_TextFusion_Refusal_Reduction.safetensors": {"family": "Krea 2 Turbo", "label": "TextFusion refusal reduction", "trigger": "", "trigger_position": "none", "strength": [1.0, 1.0], "default": 1.0, "role": "adherence", "source": "https://civitai.com/models/2775340", "sha256": "84ec722ddab93f6489c5315bca25de5dd1a7b7ec5045a3c4ce2f97f62e54e8e6", "bytes": 27665664, "licence": "krea-2-community-license (civitai listing; licence PDF not read)", "notes": ["26 MB adapter that edits the txtfusion tensors, so it changes prompt adherence, not style", "the listing quotes a single strength of 1.0", "do not combine with Krea 2 conditioning-enhancer nodes"]},
+    "Niji_Sweet_Spot_Krea2_v2A.safetensors": {"family": "Krea 2 Turbo", "label": "Niji Sweet Spot v2A", "trigger": "@NJSW33T", "trigger_position": "start", "strength": [0.8, 1.5], "default": 1.0, "role": "style", "source": "https://civitai.com/models/2554999", "sha256": "1aa1e5a2bd6222759ab59b77318a4e2a93b78ab12d795c82e4d237a2037c2c32", "bytes": 228588904, "licence": "krea-2-community-license (civitai listing; licence PDF not read)", "notes": ["the only Krea 2 adapter here that was trained with danbooru-ish tag prompts, so tags are allowed alongside the paragraph", "card quotes euler_ancestral with beta at strength up to 1.5 on Turbo", "the owner's target image used this at 1.0 with TextFusion and koukouya"]},
+    "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors": {"family": "Krea 2 Turbo", "label": "NIJISIS (NijiJourney V7 look)", "trigger": "@NIJISIS", "trigger_position": "start", "strength": [0.8, 1.2], "default": 1.0, "role": "style", "source": "https://civitai.com/models/2863875?modelVersionId=3302337", "sha256": "7266ba9f6be571054d61ed04bb9414a1396366a6af19df0c84e12b86ec266a7e", "bytes": 457113176, "licence": "civitai listing allows Image, RentCivit, Rent commercial use; weights remain under the Krea 2 Community License", "notes": ["dim 64 / alpha 32", "downloaded by the owner on 2026-09-12 (Buzz spent by the owner)", "the local probe ran it at 1.0 WITHOUT the trigger word and still produced the painterly look; the trigger is untested here"], "observed": ["09dadd6e-3e60-4c37-80d1-9244bb8e848d"]},
+    "krea2_retroanime.safetensors": {"family": "Krea 2 Turbo", "label": "Official retro anime", "trigger": "purple retro anime style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "ca42107783d9e517c5d62cb9a9db9ab2ba4887d90e9dad97a9d1a7fe6ff14c56", "bytes": 469291992, "licence": "Krea 2 Community", "notes": ["the adapter behind the krea-portrait and krea-environment presets", "trigger phrase from the Comfy-Org README trigger table"]},
+    "krea2_darkbrush.safetensors": {"family": "Krea 2 Turbo", "label": "Official dark brush", "trigger": "monochrome ink wash style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "f47c4316dd93af66e0518c93b582f459571d4925b519133770c73a52cd5db7c6", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": ["monochrome: expect it to overrule colour instructions"]},
+    "krea2_dotmatrix.safetensors": {"family": "Krea 2 Turbo", "label": "Official dot matrix", "trigger": "monochrome stippling style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "805aa30d863347222485b9d3ce81642dbc70a73cebc95ab57219d98b878fceec", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "krea2_kidsdrawing.safetensors": {"family": "Krea 2 Turbo", "label": "Official kids drawing", "trigger": "naive expressive sketch style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "8c1d45d204aeb4e34a7d9e16a7d473917592ba0048b03f4e03e037e3578ca500", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "krea2_neondrip.safetensors": {"family": "Krea 2 Turbo", "label": "Official neon drip", "trigger": "textured abstract style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "a779c14435949eabae9ce0bface4320cad6672ef3547e8489107e3498d65e871", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": ["abstract: weakest choice for a readable character"]},
+    "krea2_rainywindow.safetensors": {"family": "Krea 2 Turbo", "label": "Official rainy window", "trigger": "rainy window style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "7063a6f15ec6112ad3c06d79097b2a30a3ea7d9072821cb36021010d55989fe5", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": ["adds a foreground glass plane; good for mood, bad for a clean character sheet"]},
+    "krea2_softwatercolor.safetensors": {"family": "Krea 2 Turbo", "label": "Official soft watercolor", "trigger": "art deco watercolor style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "3805e8655f19fbcac116542685e3f78f3a642e8fbfb857b5352bb32a4b3d445a", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": ["pairs with the fal airy anime watercolor adapter; drop both to 0.6-0.8 when stacked"]},
+    "krea2_sunsetblur.safetensors": {"family": "Krea 2 Turbo", "label": "Official sunset blur", "trigger": "ethereal motion blur style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "194abdd531ca190d32799f26ab5bab634aa5ba3f07b7a60ffb282657db8bf3a0", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "krea2_vintagetarot.safetensors": {"family": "Krea 2 Turbo", "label": "Official vintage tarot", "trigger": "vintage tarot style", "trigger_position": "anywhere", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/Comfy-Org/Krea-2", "sha256": "8cca96c56658fb3ac5269f9ef2245bd07cbf1b7a189f517c8763470bb1385f9f", "bytes": 469291992, "licence": "krea-2-community-license (download receipt label)", "notes": ["adds card borders and symmetry; strong framing effect"]},
+    "krea2_turbo_4step_rank_64_lora_comfyui.safetensors": {"family": "Krea 2 Turbo", "label": "Turbo 4-step distill", "trigger": "", "trigger_position": "none", "strength": [0.75, 1.0], "default": 0.85, "role": "accelerator", "source": "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA", "sha256": "7590b2d2772f45d7b1252124c63918b1b807e93fbf9eab20546fa7233b4dc482", "bytes": 438140968, "licence": "krea-2-community-license (download receipt label)", "notes": ["set steps to 4 and cfg to 1 when this slot is on", "this is the cheap audition path on a 16 GB card; quality is lower than a 15-step run"]},
+    "fal-krea2-airy-anime-watercolor.safetensors": {"family": "Krea 2 Turbo", "label": "fal airy anime watercolor", "trigger": "airy anime watercolor style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "070d1dcaac9ccac17435c157a844fff1a4d51be1c754ff4b183023113e02dd2b", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": ["fal cards want SHORT prompts with the trigger at the very end"]},
+    "fal-krea2-amber-dusk-anime.safetensors": {"family": "Krea 2 Turbo", "label": "fal amber dusk anime", "trigger": "amber dusk anime style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "5cbfba8452ac92ebca290cacc55895a090d6170eb995144dd3a6ad4206332f05", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-azure-cel-shaded.safetensors": {"family": "Krea 2 Turbo", "label": "fal azure cel shaded", "trigger": "azure cel shaded style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "d317d794185887b4ceaf0225fe39738daa30b39f888637de4061d41838a47369", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-azure-manga-bloom.safetensors": {"family": "Krea 2 Turbo", "label": "fal azure manga bloom", "trigger": "azure manga bloom style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "2bc712e6d4a0d584ffde64440aa25ff9d798c25c558e525ff5608a32c46aee6a", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-cel-shaded-daytime-anime.safetensors": {"family": "Krea 2 Turbo", "label": "fal cel shaded daytime anime", "trigger": "cel shaded daytime anime style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "9d7ecc9a07a070327c8069275fc41065baa7fb25a7a14e0316065ef141d8ee9c", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-cobalt-sky-anime.safetensors": {"family": "Krea 2 Turbo", "label": "fal cobalt sky anime", "trigger": "cobalt sky anime style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "e5e1ddc71d45a940649eaabbb17e625a55f145e608fee79d114e3259c1ea3ab3", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-chibi-watercolor-pastel-anime.safetensors": {"family": "Krea 2 Turbo", "label": "fal chibi watercolor pastel anime", "trigger": "chibi watercolor pastel anime style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "1bd31c6d8aaa57fcedb5cc6109fb22047555dfae3f3ba912283c850e027b497d", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": ["changes proportions as well as paint; not a face-consistent style"]},
+    "fal-krea2-baroque-dreamscape-oil.safetensors": {"family": "Krea 2 Turbo", "label": "fal baroque dreamscape oil", "trigger": "baroque dreamscape oil style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "678f1505d1b2a384bb0b08e6749b2d170827f3769f5678936c1108a7f3f59327", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": ["the oil-fantasy slot in the krea-anime-atelier preset"]},
+    "fal-krea2-dark-fantasy-film.safetensors": {"family": "Krea 2 Turbo", "label": "fal dark fantasy film", "trigger": "dark fantasy film style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "d93da9e2206567e0cee75cddcece9e9a8c1d3fa3fa9fda00bcfd9a51e1391cda", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": ["lowers key lighting hard; combine with a light-source phrase or the face goes black"]},
+    "fal-krea2-crimson-blue-inkline-fantasy.safetensors": {"family": "Krea 2 Turbo", "label": "fal crimson blue inkline fantasy", "trigger": "crimson blue inkline fantasy style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "64e6e82d1c6324e2c8a64b7cb951359b69cdec52240a9020797231e331398813", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-emerald-fantasy-paperback.safetensors": {"family": "Krea 2 Turbo", "label": "fal emerald fantasy paperback", "trigger": "emerald fantasy paperback style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "b7e3b650de59f1bd0ec1919db13d84c9d4dde6471612663ba0a8d65f6218b712", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": ["book-cover framing; good for fantasy key art"]},
+    "fal-krea2-bold-impasto-sunlit.safetensors": {"family": "Krea 2 Turbo", "label": "fal bold impasto sunlit", "trigger": "bold impasto sunlit style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "933eb65a04189f3e0450b90f241037ccb45ed5ae39176d4e5c98d1417de12f90", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": ["thick visible strokes; loses small detail such as hands and jewellery"]},
+    "fal-krea2-dark-chiaroscuro-oil.safetensors": {"family": "Krea 2 Turbo", "label": "fal dark chiaroscuro oil", "trigger": "dark chiaroscuro oil style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "bb8babb7e26e04deaff7ac5efe1efa7fe44d3dc9b043da5744b234d6fa0e6486", "bytes": 234676792, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-cozy-storybook-gouache.safetensors": {"family": "Krea 2 Turbo", "label": "fal cozy storybook gouache", "trigger": "cozy storybook gouache style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "408bb66bef2bc7ee8cb1464316f21f0c57601031387be45dcad88e61286a0bfa", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-detailed-manga-inkwork.safetensors": {"family": "Krea 2 Turbo", "label": "fal detailed manga inkwork", "trigger": "detailed manga inkwork style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "3b0c5fef5a26a4589b3b10e26703ee7b987be01b45493c1a0f59eb3a707baee5", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": ["the Krea-side answer to the SDXL screentone adapter"]},
+    "fal-krea2-aged-tempera-fable.safetensors": {"family": "Krea 2 Turbo", "label": "fal aged tempera fable", "trigger": "aged tempera fable style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "e83e32efa2137a787386993f4ff7fe4ba03bfc3ada420e1095c7e0e6ee4bce68", "bytes": 469287984, "licence": "krea-2-community-license (download receipt label)", "notes": []},
+    "fal-krea2-emerald-lamplight-oil.safetensors": {"family": "Krea 2 Turbo", "label": "fal emerald lamplight oil", "trigger": "emerald lamplight oil style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "unpinned", "licence": "krea-2-community-license (repository label)", "notes": ["present in the ComfyUI loras folder on 2026-09-12 but with no entry in .runtime/downloads/receipts.json, so the bytes are unverified here"]},
+    "fal-krea2-azure-sunlit-storybook.safetensors": {"family": "Krea 2 Turbo", "label": "fal azure sunlit storybook", "trigger": "azure sunlit storybook style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "installed": false, "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "unpinned", "licence": "krea-2-community-license (repository label)", "notes": ["NOT installed: only a partial download (fal-krea2-azure-sunlit-storybook.safetensors.part) exists in the ComfyUI loras folder as of 2026-09-12", "ComfyUI rejects a graph naming a missing LoRA file with HTTP 400 even at strength 0, so no preset or recipe may name it"]},
+    "fal-krea2-amber-lit-fantasy-filmset.safetensors": {"family": "Krea 2 Turbo", "label": "fal amber lit fantasy filmset", "trigger": "amber lit fantasy filmset style", "trigger_position": "end", "strength": [1.0, 1.25], "default": 1.0, "role": "style", "installed": false, "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "sha256": "unpinned", "licence": "krea-2-community-license (repository label)", "notes": ["NOT installed: absent from the ComfyUI loras folder as of 2026-09-12 and absent from .runtime/downloads/receipts.json", "no preset or recipe may name it until it is downloaded"]},
+    "krea2_koukouya_sytle_c1-st3000.safetensors": {"family": "Krea 2 Turbo", "label": "koukouya style (not installed)", "trigger": "", "trigger_position": "none", "strength": [1.0, 1.0], "default": 1.0, "role": "style", "installed": false, "source": "https://civitai.com/models/2844656", "sha256": "unpinned", "licence": "civitai listing; terms not read", "notes": ["the third adapter in the owner's target image, still missing: civitai downloads need a personal API key", "author settings: 1280x1856 or 1536x1536, weight 1.0, er_sde with simple, 8-10 steps", "tracked in HUMAN_TODO.md"]},
+    "pixel-art-xl.safetensors": {"family": "SDXL", "label": "Pixel Art XL", "trigger": "pixel art", "trigger_position": "start", "strength": [0.8, 1.0], "default": 1.0, "role": "style", "source": "https://huggingface.co/nerijs/pixel-art-xl", "sha256": "unpinned", "licence": "see the model card", "notes": ["pre-existing install with no download receipt in this repo", "the pixel-lora preset's authored prompt starts with 'pixel art', which is how it is used locally"]},
+    "LineAniRedmondV2-Lineart-LineAniAF.safetensors": {"family": "SDXL", "label": "LineAni Redmond V2 linework", "trigger": "LineAniAF", "trigger_position": "anywhere", "strength": [0.6, 1.0], "default": 0.8, "role": "linework", "source": "https://huggingface.co/artificialguybr/LineAniRedmond-LinearMangaSDXL-V2", "sha256": "1692a2c7d285f6c94b7910bc8f8ec2758163ba2710214bd35bb20cc94d2488c8", "bytes": 170540028, "licence": "CreativeML OpenRAIL-M", "notes": ["sha256 from models/library.json, not from a download receipt"]},
+    "manga-ink-screentone.safetensors": {"family": "SDXL", "label": "Manga ink / screentone", "trigger": "m4ng41nk", "trigger_position": "anywhere", "strength": [0.6, 1.0], "default": 0.8, "role": "style", "source": "https://huggingface.co/strkyyy/manga-ink-screentone", "sha256": "e9fa7b9c4eb781d6cdf8329c6d056133e08c6cc72e730738575497d4ab3da6c9", "bytes": 93065304, "licence": "OpenRAIL++", "notes": ["sha256 from models/library.json", "monochrome screentone: it overrides colour instructions"]},
+    "cinematic lighting.safetensors": {"family": "SDXL", "label": "Cinematic lighting slider", "trigger": "cinematic lighting", "trigger_position": "anywhere", "strength": [0.2, 0.8], "default": 0.5, "role": "lighting", "source": "https://huggingface.co/ntc-ai/SDXL-LoRA-slider.cinematic-lighting", "sha256": "529daf6ffd2d73bf54a1a923cac66b6c2a3e4e80998d05498d48208266bfda6c", "bytes": 8789076, "licence": "MIT", "notes": ["a slider, so it is meant to be used well below 1.0", "the filename contains a space; keep it verbatim in graphs and recipes"]},
+    "Hyper-SDXL-8steps-CFG-lora.safetensors": {"family": "SDXL", "label": "Hyper-SDXL 8-step CFG", "trigger": "", "trigger_position": "none", "strength": [0.8, 1.0], "default": 1.0, "role": "accelerator", "source": "https://huggingface.co/ByteDance/Hyper-SD", "sha256": "unpinned", "licence": "see the model card", "notes": ["pre-existing install with no download receipt in this repo", "set steps to 8 when this slot is on; it is an accelerator, not a style"]}
+  }
+}
