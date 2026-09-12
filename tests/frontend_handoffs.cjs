@@ -165,6 +165,62 @@ async function firstLastFramesAttributeSeparately() {
   assert.deepEqual(parents(), [], 'Changing the first frame releases exactly the source it held');
 }
 
+// #108: two inputs filled from two different saved assets is exactly the shape the single-parent
+// heuristic cannot reconstruct, so the mapping travels with the setup. Saving, reloading in a fresh
+// page and swapping the first frame must release that frame's source and keep the other one.
+async function savedSetupCarriesPerInputAttribution() {
+  const first = {file: 'from-asset-a.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'asset-a'};
+  const local = {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768};
+  const saving = sandbox(first, local);
+  saving.run(`selectPreset('h3-first-last');
+    uploaded='from-asset-a.png';claimInputParent('reference','asset-a');
+    lastUploaded='from-asset-b.png';claimInputParent('lastReference','asset-b');`);
+  assert.deepEqual(saving.parents(), ['asset-a', 'asset-b'], 'Both frames declare their own source');
+  saving.element('#saveName').value = 'Two frames, two sources';
+  await saving.element('#save').onclick();
+  const recipe = saving.requests.find(r => r.url === '/api/setups').data.recipe;
+  assert.deepEqual(recipe.parent_by_input, {reference: 'asset-a', lastReference: 'asset-b'}, 'The setup records which input each source is on');
+
+  const {element, requests, run, parents} = sandbox(first, local); // A fresh page: nothing carries over.
+  run(`applySaved(${JSON.stringify(recipe)});`); // Exactly what saved() hands applySaved on a reload.
+  assert.deepEqual(parents(), ['asset-a', 'asset-b'], 'The reload keeps the declared lineage');
+  element('#reference').files = [localFile('replacement-first.png')];
+  element('#reference').onchange();
+  assert.deepEqual(parents(), ['asset-b'], 'Swapping the first frame after a reload releases only its source');
+  await element('#generate').onclick();
+  const submitted = requests.find(r => r.url === '/api/jobs').data;
+  assert.deepEqual(submitted.parent_assets, ['asset-b']);
+  assert.equal(submitted.controls.reference, local.file);
+  assert.equal(submitted.controls.last_reference, 'from-asset-b.png');
+}
+
+// A setup saved before #108 has no mapping. It must restore exactly as it did then: the unambiguous
+// single-parent, single-input case is attributed, and anything ambiguous stays untouched.
+async function legacySetupWithoutAttributionIsUnchanged() {
+  const first = {file: 'from-asset-a.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'asset-a'};
+  const local = {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768};
+  const legacy = (controls, parent_assets) => ({preset: 'h3-first-last', controls, batch_count: 1, parent_assets, references: []});
+
+  const ambiguous = sandbox(first, local);
+  ambiguous.run(`applySaved(${JSON.stringify(legacy({reference: 'from-asset-a.png', last_reference: 'from-asset-b.png'}, ['asset-a', 'asset-b']))});`);
+  assert.deepEqual(JSON.parse(ambiguous.run('JSON.stringify(parentByInput)')), {}, 'A legacy two-source setup stays unattributed');
+  ambiguous.element('#reference').files = [localFile('replacement-first.png')];
+  ambiguous.element('#reference').onchange();
+  assert.deepEqual(ambiguous.parents(), ['asset-a', 'asset-b'], 'An unattributed parent is still never dropped');
+
+  for (const [label, record] of [['no field at all', legacy({reference: 'from-asset-a.png'}, ['asset-a'])],
+    // A draft written before #112 normalizes with an empty mapping; that is absence, not "nothing was
+    // attributed", so the fallback must still run or the reload regresses a case that works on main.
+    ['an empty mapping', {...legacy({reference: 'from-asset-a.png'}, ['asset-a']), parent_by_input: {}}]]) {
+    const single = sandbox(first, local);
+    single.run(`applySaved(${JSON.stringify(record)});`);
+    assert.deepEqual(JSON.parse(single.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The unambiguous legacy case is still attributed with ' + label);
+    single.element('#reference').files = [localFile('replacement-first.png')];
+    single.element('#reference').onchange();
+    assert.deepEqual(single.parents(), [], 'and a swap still releases it with ' + label);
+  }
+}
+
 // A job-exported recipe is rebuilt server-side by compile_references, so its records never carry a
 // parent_asset - now or later. An unattributed parent must survive an edit to any slot.
 async function importedRecipeKeepsUnattributedParents() {
@@ -217,6 +273,8 @@ async function pullingIntoASlotReplacesItsSource() {
   for (const target of ['anime-detail-fix', 'krea-refine']) await swapDropsHandoffLineage(target);
   await slotSwapKeepsTheOtherSlots();
   await firstLastFramesAttributeSeparately();
+  await savedSetupCarriesPerInputAttribution();
+  await legacySetupWithoutAttributionIsUnchanged();
   await importedRecipeKeepsUnattributedParents();
   await pullingIntoASlotReplacesItsSource();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');

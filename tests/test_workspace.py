@@ -50,7 +50,10 @@ class WorkspaceTests(unittest.TestCase):
             self.store.update({'ids':[self.asset],'action':'edit','review':'commercially_approved'})
 
     def test_saved_setups_roundtrip_and_delete(self):
-        recipe={'preset':'test','controls':{'seed':'9223372036854775806'}}
+        # The recipe is stored verbatim, not whitelisted: the browser's per-input lineage attribution
+        # (parent_by_input, issue #108) survives a save/reload without a server-side schema change.
+        recipe={'preset':'test','controls':{'seed':'9223372036854775806'},
+                'parent_assets':[self.asset],'parent_by_input':{'reference':self.asset}}
         saved=self.store.save_setup({'name':'My setup','recipe':recipe})
         self.assertEqual(workspace.AssetWorkspace(self.root).setups()[0]['recipe'],recipe)
         self.store.save_setup({'id':saved['id'],'action':'delete'})
