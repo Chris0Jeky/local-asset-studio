@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from urllib.error import URLError
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "app"))
-from runtime_recovery import RuntimeRecovery
+from runtime_recovery import REFUSAL_PROBE_TIMEOUT, RuntimeRecovery
 
 
 PROFILE = {"id": "primary", "name": "Main", "url": "http://127.0.0.1:8188"}
@@ -19,10 +19,11 @@ PROFILE = {"id": "primary", "name": "Main", "url": "http://127.0.0.1:8188"}
 class Manager:
     def __init__(self):
         self.active = "primary"; self.profiles = {"primary": PROFILE}; self.busy = False
-        self.online = False; self.matching = []; self.listener = None; self.launches = 0; self.routes = []
+        self.online = False; self.error = None; self.matching = []; self.listener = None; self.launches = 0; self.routes = []; self.timeouts = []
     def request(self, profile, route, timeout):
-        self.routes.append(route)
+        self.routes.append(route); self.timeouts.append(timeout)
         if self.online: return {"system": {"comfyui_version": "test", "device": "test"}}
+        if self.error: raise self.error
         raise URLError(OSError(errno.ECONNREFUSED, "refused"))
     def process(self, profile):
         if isinstance(self.listener, Exception): raise self.listener
@@ -63,6 +64,21 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(self.studio.backends.launches, 1)
         self.assertEqual(set(self.studio.backends.routes), {"/system_stats"})
         self.assertEqual(self.recovery.snapshot()["status"], "startup")
+
+    def test_refusal_probe_waits_for_the_windows_refusal_deadline(self):
+        def windows_request(profile, route, timeout):
+            if timeout < 2: raise URLError(TimeoutError('Windows has not returned refusal yet'))
+            raise URLError(OSError(errno.ECONNREFUSED, 'refused'))
+        self.studio.backends.request = windows_request
+        self.recovery.tick()
+        self.assertEqual(self.studio.backends.launches,1)
+
+    def test_non_refused_timeout_never_authorizes_a_launch(self):
+        self.studio.backends.error=URLError(TimeoutError('read timed out'))
+        self.recovery.tick()
+        self.assertEqual(self.studio.backends.timeouts,[REFUSAL_PROBE_TIMEOUT])
+        self.assertEqual(self.studio.backends.launches,0)
+        self.assertEqual(self.recovery.snapshot()['status'],'unreachable')
 
     def test_foreign_listener_and_fresh_work_are_preserved(self):
         self.studio.backends.listener = ValueError("Port is owned by another command")
