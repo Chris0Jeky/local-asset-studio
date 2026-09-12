@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review desk · Local Asset Studio</title>
+  <link rel="stylesheet" href="/review.css"><script defer src="/review.js"></script>
+</head>
+<body>
+<a class="skip" href="#assessment">Skip to assessment</a>
+<header><a href="/" class="back">← Studio</a><div><span class="eyebrow">LOCAL ASSET STUDIO / COMPARE</span><h1>Review desk</h1></div><span id="phase" class="badge">Not opened</span></header>
+<main>
+  <p class="intro">Compare the result before the recipe. Keep the failures, record the cleanup, and leave a decision you can revisit.</p>
+  <div class="notice" id="message" role="status" aria-live="polite">Loading the saved review. No generation is performed here.</div>
+  <section id="start" class="panel"><h2>Prepare a blind review</h2><p>This explicitly snapshots the retained images and creates metadata-stripped previews. Candidate order stays fixed when you return. No models are loaded.</p><p class="muted">A settings-hidden review reduces accidental bias; it is not a security boundary. Settings remain accessible elsewhere in your local Studio.</p><button id="open" class="primary" type="button">Prepare review</button></section>
+  <div class="toolbar"><button id="reload" type="button">Reload saved review</button><span id="revision" class="muted"></span><button id="saveDraft" type="button" hidden>Download unsaved notes</button></div>
+  <div id="desk" hidden>
+    <section class="panel comparison" aria-labelledby="compareTitle">
+      <div class="section-heading"><div><span class="eyebrow">01 / LOOK CLOSELY</span><h2 id="compareTitle">Same region. Both candidates.</h2></div><span id="viewStatus" class="muted">Saved crop</span></div>
+      <div class="selectors"><label>Left candidate<select id="left"></select></label><label>Right candidate<select id="right"></select></label><label>View<select id="mode"><option value="pair">Side by side</option><option value="left">Left only</option><option value="right">Right only</option></select></label><button id="swap" type="button">Swap sides</button></div>
+      <div id="canvases" class="canvases"><figure id="leftFigure"><canvas id="leftCanvas" width="768" height="768" role="img" aria-label="Left candidate preview"></canvas><figcaption id="leftCaption"></figcaption></figure><figure id="rightFigure"><canvas id="rightCanvas" width="768" height="768" role="img" aria-label="Right candidate preview"></canvas><figcaption id="rightCaption"></figcaption></figure></div>
+      <form id="cropForm"><fieldset><legend>Shared crop · percent of each oriented source</legend><div class="crop-controls"><label>Left %<input id="cropLeft" type="number" min="0" max="99.99" step="0.01" value="0" required></label><label>Top %<input id="cropTop" type="number" min="0" max="99.99" step="0.01" value="0" required></label><label>Right %<input id="cropRight" type="number" min="0.01" max="100" step="0.01" value="100" required></label><label>Bottom %<input id="cropBottom" type="number" min="0.01" max="100" step="0.01" value="100" required></label><label>Alpha background<select id="background"><option value="dark">Dark</option><option value="light">Light</option></select></label></div><div class="button-row"><button type="button" data-crop="whole">Whole image</button><button type="button" data-crop="centre">Centre detail</button><button type="button" data-crop="upper">Upper half</button><button id="saveCrop" type="submit">Save crop</button></div></fieldset></form>
+      <p class="muted">Previews are capped at 1536 px. Exported crops use the original snapshot resolution. Equal coordinates do not align anatomy or imply equal compute. No automatic sharpening or colour correction is applied.</p>
+    </section>
+    <div class="review-columns">
+      <section class="panel" id="assessment" aria-labelledby="assessmentTitle"><span class="eyebrow">02 / RECORD WHAT YOU FOUND</span><h2 id="assessmentTitle">Candidate assessment</h2>
+        <form id="assessmentForm"><label>Candidate<select id="candidate"></select></label><div id="candidateSource" class="source-note" hidden></div>
+          <label>Verdict<select id="verdict"><option value="unreviewed">Not reviewed</option><option value="keep">Keep for consideration</option><option value="needs_work">Needs work</option><option value="reject">Reject</option></select></label>
+          <fieldset><legend>Observed checks</legend><div id="observations" class="observations"></div></fieldset>
+          <div class="two-fields"><label>Preference · 1–5, optional<input id="preference" type="number" min="1" max="5" step="1" placeholder="Not scored"></label><label>Cleanup · measured seconds<input id="cleanup" type="number" min="0" max="86400" step="1" placeholder="Not measured"></label></div>
+          <label>Notes<textarea id="notes" rows="5" maxlength="4000" placeholder="What held up? Which defect would the next pass need to fix?"></textarea></label>
+          <div class="button-row"><button id="saveAssessment" type="submit" class="primary">Save assessment</button><span id="assessmentStatus" class="muted">Saved</span></div>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="decisionTitle"><span class="eyebrow">03 / MAKE THE CALL</span><h2 id="decisionTitle">Decision & evidence</h2><div id="progress"></div>
+        <button id="reveal" type="button">Reveal settings & provenance</button>
+        <div id="decision" hidden><form id="decisionForm"><label>Selected result<select id="selected"></select></label><label>Decision notes<textarea id="summary" maxlength="8000" rows="4" placeholder="Explain the selection, or why none should progress."></textarea></label><button id="finalize" class="primary" type="submit">Record decision</button></form><p class="muted">A selected result must be kept, have a completed execution, and have its constraints marked as passing. This records your assessment, not licence or engine clearance.</p></div>
+        <div class="export-area"><button id="export" type="button" disabled>Export review evidence</button><div id="downloads"></div><p class="muted">The pack includes every candidate, source bytes, recipes, failures, review history, matched crops and checksums. It is not an approved commercial asset pack.</p></div>
+        <details><summary>Assessment history & restore</summary><ol id="history"></ol><label>Earlier candidate assessment<select id="restoreRevision"></select></label><button id="restore" type="button">Restore assessment as a new revision</button><p class="muted">Restoring preserves the history and clears the final decision. Revealed settings cannot be made unseen.</p></details>
+      </section>
+    </div>
+    <section id="provenance" class="panel" hidden><h2>Recorded execution evidence</h2><p class="muted">Missing measurements remain null. These are retained records, not a new benchmark. Local reviewer identity is a declaration, not authentication.</p><pre id="evidence"></pre></section>
+  </div>
+</main>
+<footer>Local files. Explicit actions. No generation from this page.</footer>
+</body>
+</html>

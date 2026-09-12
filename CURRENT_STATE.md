@@ -1,5 +1,73 @@
 # Current state — 11 September 2026
 
+## Review desk and direct correction handoffs — 12 September 2026
+
+PR #43 is merged as `4b6b94e`: completed image comparisons can open a revisioned Review desk with
+stable blind aliases, matched crops, reversible assessments and checksummed evidence packs retaining
+rejected candidates. The integration against `23f08718` passed 269 discovered tests (267 passed, two
+Windows directory-symlink privilege skips), catalog validation and hosted Ubuntu/Windows checks.
+An independent review found no blocking defects. Actual Windows Chromium 151 exercised direct localhost
+fixture transport, stale-edit rejection, draft/download preservation, ZIP hashes, restore, keyboard and
+390 px layout; no generation occurred. Six separate real-Handler HTTP tests passed. This is review
+infrastructure proof, not art acceptance. Evidence is retained under `.runtime/session-2026-09-12/review-desk/`.
+
+Gallery images and Workspace image details now expose **Fix hands & face** (`anime-detail-fix`) and
+**Refine image** (`krea-refine`). Both use the existing reference-copy/lineage path and await an explicit
+Generate action. Node behavior checks exercised both entries through save/submission and kept repair
+actions off video assets. Windows browser checks used the running Studio APIs with the exact changed
+static files: all four handoffs retained source identity and reference filenames through saved-setup
+readback; the temporary QA setups were removed. Desktop and 390 px mobile views were captured, mobile
+inspected, with no JavaScript errors or generation calls. Receipts: `.runtime/session-2026-09-12/repair-actions/`.
+
+The browser driver needed two corrections (its route callback signature and waiting for the exact
+reference-copy response); the corrected run passed. These were QA-driver failures, not Studio failures.
+The separate **Gentle (denoise 0.3)** trial then completed on the authored 832×1216 NoobAI example
+in 42.280 s: job `e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt
+`a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`. Both passes ran at 0.3 with seed 2026091201.
+The inspected result sharpened the face but retained an extra digit: completed execution, failed
+hand-repair objective, no human art approval. Exact recipe, hashes and the unaltered PNG are linked
+from `experiments/curated/anime-fantasy-atelier/README.md`. The catalog defaults are unchanged.
+The optional creative choices, including the Anima look selection q-3, remain in `HUMAN_TODO.md`.
+
+## Civitai access, Anima baselines and the correction pass — executed (12 September 2026, second pass)
+
+**Runtime (outside Git, recorded here and in `runtime-patches/README.md`).** The owner's civitai API key is stored as
+the user-scope environment variable `CIVITAI_API_TOKEN` (never in the repo). ComfyUI now starts with
+`--enable-manager` (`comfyui_manager` 4.2.2 installed into the embedded Python, only new packages added;
+`GET /v2/manager/version` → `V4.2.2`) and loads `custom_nodes/civitai-comfy-nodes` (223 Civitai nodes; the pack reads
+the same environment variable, so no key is typed into its panel). ComfyUI PID in `C:/AI/comfyui.pid`.
+
+**Installed with SHA-256 receipts** (`.runtime/downloads/receipts.json`, pinned in `models/library.json`): the Krea 2
+koukouya adapter (HUMAN_TODO q-1 closed), Anima adapters xilmo, huashijw, koukouya, NEWANIMASTYLE, and the official
+Anima turbo LoRA. ke-ta, kieed (LyCORIS) and, after a 105-minute throttled Hugging Face download, the 4 GB `anima-base-v1.0` checkpoint all
+landed with verified receipts (the checkpoint's hash matches the civitai listing), so every file the Anima presets name is installed.
+Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `anima-base-retry-2026-09-12.log`.
+
+**Executed and inspected** (`experiments/curated/anime-fantasy-atelier/`, JPEG copies in `examples/anime-fantasy-atelier/`):
+
+| Run | Result |
+|---|---|
+| `krea-anime-atelier`, full target stack TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832×1248 (job `7d589f47`) | 827.6 s; the closest match yet to the owner's target image; koukouya's brushwork dominates |
+| `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
+| `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
+| `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
+| `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
+
+**Contract change.** `CONTROL_KEYS` and `LORA_SLOTS` now run to six slots (`lora5`, `lora6` and their `_name` twins) in
+the server, planner, validator and UI; the six-slot rows were confirmed in the running UI's DOM (Slot 1–6).
+
+**New presets.** `anima-artist-stack` (Anima base v1.0, six `LoraLoaderModelOnly` slots at the reference strengths,
+variants for the 1328×1776 reference, the adapter-free artist-tag look, the turbo audition), `anime-detail-fix`
+(Impact Pack FaceDetailer face pass then hand pass with the installed `face_yolov8s` / `hand_yolov8n` detectors, WAI v17
+repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
+the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
+
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the `krea-dark-scifi-comic-warrior` recipe; the
+detail-fix/refine variants beyond the authored defaults; the Civitai panel sign-in and downloads; the Manager UI beyond its
+version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
+
+**Owner's creative review** of the first atelier pass is recorded in `HUMAN_TODO.md` (q-2 closed) and the guide.
+
 ## Anime & fantasy atelier — executed (12 September 2026)
 
 The Studio now has four LoRA slots per preset (a slot at strength 0 is pruned from the submitted graph),

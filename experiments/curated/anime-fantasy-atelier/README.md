@@ -19,6 +19,14 @@ quality-88 JPEG copies for viewing. Every run here was inspected by eye; none is
 | `noob` "Fantasy portrait" (Studio job) | [noob](../../../examples/anime-fantasy-atelier/noob-fantasy-portrait.jpg) | 832x1216, 28 steps, cfg 5.5 | 28.2 s |
 | `anime` (Animagine 4) "Fantasy portrait" (Studio job) | [animagine](../../../examples/anime-fantasy-atelier/anime-fantasy-portrait.jpg) | 832x1216, 28 steps, cfg 5 | 30.2 s |
 | `pony` "Fantasy portrait" with CLIPSetLastLayer -2 (Studio job) | [pony](../../../examples/anime-fantasy-atelier/pony-fantasy-portrait.jpg) | 832x1216, 30 steps, cfg 6 | 30.2 s |
+| `krea-anime-atelier` with the FULL target stack: TextFusion @1.0 + Niji Sweet Spot @1.0 + koukouya @1.0 (Studio job, first run with koukouya installed) | [krea-target-stack-koukouya](../../../examples/anime-fantasy-atelier/krea-target-stack-koukouya.jpg) | 832x1248, 15 steps, euler_ancestral/simple, cfg 1, seed 20260912 | 827.6 s |
+| `anime-detail-fix` on the NoobAI fantasy portrait the owner flagged for six fingers (Studio job; Impact Pack FaceDetailer face pass then hand pass, WAI v17 repaint) | [anime-detail-fix-noob-hands](../../../examples/anime-fantasy-atelier/anime-detail-fix-noob-hands.jpg) | 832x1216 input, 24 steps, dpmpp_2m/karras, cfg 5, denoise 0.4 face / 0.45 hand, seed 2026091201 | 36.2 s |
+| `krea-refine` on the krea-style-lab fox shrine the owner said lost detail and had morphed fox faces (Studio job; Qwen-VAE encode, 4-step distill LoRA, TextFusion + Niji Sweet Spot) | [krea-refine-style-lab-foxes](../../../examples/anime-fantasy-atelier/krea-refine-style-lab-foxes.jpg) | 1024x1024 input, 4 steps, euler/simple, cfg 1, denoise 0.35, seed authored | 233.2 s |
+| `anima-artist-stack` graph as a direct ComfyUI probe with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0 and the ke-ta/kieed slots removed (xilmo 0.7, huashijw 0.6, koukouya 0.3, NEWANIMASTYLE 1.0) | [anima-stack-aesthetic11-4adapters](../../../examples/anime-fantasy-atelier/anima-stack-aesthetic11-4adapters.jpg) | 832x1216, 30 steps, euler_ancestral/simple, cfg 4, seed 975436216244440 | 35.0 s |
+| `anima-artist-stack` graph as a direct ComfyUI probe with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0, ALL SIX adapters at the authored strengths (kieed is LyCORIS) | [anima-stack-aesthetic11-6adapters](../../../examples/anime-fantasy-atelier/anima-stack-aesthetic11-6adapters.jpg) | 832x1216, 30 steps, euler_ancestral/simple, cfg 4, seed 975436216244440 | 25.0 s |
+| `anima-artist-stack` as authored on Anima base v1.0: six adapters (xilmo 0.7, huashijw 0.6, koukouya 0.3, ke-ta 0.7, NEWANIMASTYLE 1.0, kieed 0.5) (Studio job) | [anima-artist-stack-authored](../../../examples/anime-fantasy-atelier/anima-artist-stack-authored.jpg) | 832x1216, 30 steps, euler_ancestral/simple, cfg 4, seed 975436216244440 | 24.3 s |
+| `anima-artist-stack` variant "Artist tags, no adapters": every slot pruned, @synswt/@koukouya/@kyano tags, cfg 3, dpmpp_2m_sde_gpu (Studio job) | [anima-artist-tags-no-adapters](../../../examples/anime-fantasy-atelier/anima-artist-tags-no-adapters.jpg) | 832x1216, 30 steps, cfg 3, seed 975436216244440 | 20.1 s |
+| `anima-artist-stack` variant "Reference stack 1328x1776": the six-adapter reference at the reference size and seed (Studio job) | [anima-reference-stack-1328x1776](../../../examples/anime-fantasy-atelier/anima-reference-stack-1328x1776.jpg) | 1328x1776, 30 steps, euler_ancestral/simple, cfg 4, seed 975436216244440 | 66.4 s |
 
 The Krea target-stack probes reproduce the owner's reference image settings (civitai image 142028671:
 15 steps, Euler a, simple, cfg 1) with two of its three LoRAs; the third (koukouya style) is not
@@ -33,3 +41,18 @@ Studio jobs prove the catalog bindings and the strength-0 slot pruning: the subm
 `*-recipe.json` files contain no zero-strength LoRA loader, and Pony's clip-skip node was rewired to
 the checkpoint. SDXL timings are at 832x1216 with warm model caches; Krea timings include LoRA
 patching. Timings are not benchmarks.
+
+
+## Gentle correction follow-up — 12 September 2026
+
+`anime-detail-fix`, **Gentle (denoise 0.3)** in both detailer passes, completed as Studio job
+`e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt `a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`,
+in **42.280 s**. The authored 832×1216 NoobAI example, seed 2026091201, 24 steps, CFG 5 and
+dpmpp_2m/karras were retained. [Exact recipe](anime-detail-fix-gentle-noob-hands-recipe.json),
+[run and input/output hashes](anime-detail-fix-gentle-evidence.json),
+[unaltered output](../../../examples/anime-fantasy-atelier/anime-detail-fix-gentle-noob-hands.png).
+
+Assistant inspection: the face/eye is sharper, but the raised hand still carries an extra digit.
+This completed run **did not meet the hand-repair objective**; it is retained as a failed candidate
+for that objective, not a runtime failure or accepted artwork. The earlier authored pass used 0.4
+face / 0.45 hand; no new default, broad quality claim or licence clearance follows from this trial.

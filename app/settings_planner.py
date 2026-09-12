@@ -14,7 +14,7 @@ from pathlib import Path
 
 KB_PATH='presets/settings-kb.json'
 CHOICE_CONTROLS=('sampler','scheduler')
-LORA_SLOTS=('lora','lora2','lora3','lora4')
+LORA_SLOTS=('lora','lora2','lora3','lora4','lora5','lora6')
 SETTING_KEYS=set(LORA_SLOTS)|{s+'_name' for s in LORA_SLOTS}|{'steps','cfg','denoise','width','height','seed','frames','fps','sampler','scheduler'}
 DEFAULT_LADDER=[1.0,0.8,0.6]
 EMPTY={'version':0,'families':{},'loras':{}}

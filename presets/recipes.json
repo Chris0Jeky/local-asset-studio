@@ -8,57 +8,110 @@
       "name": "Krea 2 - painterly witch (NIJISIS)",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["anime", "fantasy", "painterly", "evidence"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "painterly",
+        "evidence"
+      ],
       "controls": {
         "positive": "The painting style is highly textured, with thick, brush-like strokes and a rough, gritty quality. oil painting (medium). Nestled in a dense, magical meadow overflowing with vibrant flora, a young witch sits peacefully surrounded by playful cats. She wears a fashionable frilly black witch outfit and a real big witch hat. Her wavy, indigo gradient hair cascades around her shoulders, and her eyes are gently closed in a serene, restful expression with a light smile on her face. In her lap, she holds a small, sleek black cat that leans up against her hands. Nearby, a curious tabby cat sits on a cluster of yellow flowers. The garden is rendered with rich, painterly texture, bursting with electric shades of emerald green leaves, glowing orange blossoms, vivid purple petals, and tiny yellow stars scattered like fireflies through the dark undergrowth.",
-        "steps": 15, "cfg": 1, "sampler": "euler_ancestral", "scheduler": "simple",
-        "width": 768, "height": 1152, "seed": 281715418,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 0,
-        "lora2_name": "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors", "lora2": 1.0,
-        "lora3": 0, "lora4": 0
+        "steps": 15,
+        "cfg": 1,
+        "sampler": "euler_ancestral",
+        "scheduler": "simple",
+        "width": 768,
+        "height": 1152,
+        "seed": 281715418,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 0,
+        "lora2_name": "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+        "lora2": 1.0,
+        "lora3": 0,
+        "lora4": 0
       },
       "batch_count": 1,
       "notes": "The one Krea 2 setting on this machine backed by a real render. NIJISIS alone at 1.0, no trigger word in the prompt, no TextFusion. Slow: 986.6 s for a single 768x1152 image, so treat 15-step Krea runs as a commitment, not a sweep.",
-      "sources": ["https://civitai.com/models/2863875?modelVersionId=3302337", "https://docs.comfy.org/tutorials/image/krea/krea-2"],
+      "sources": [
+        "https://civitai.com/models/2863875?modelVersionId=3302337",
+        "https://docs.comfy.org/tutorials/image/krea/krea-2"
+      ],
       "status": "executed",
-      "evidence": {"prompt_id": "09dadd6e-3e60-4c37-80d1-9244bb8e848d", "seconds": 986.6, "note": "probe submitted through the ComfyUI API before the preset existed; recorded in .runtime/probes/witch-nijisis-baseline-09dadd6e.json (untracked evidence)"}
+      "evidence": {
+        "prompt_id": "09dadd6e-3e60-4c37-80d1-9244bb8e848d",
+        "seconds": 986.6,
+        "note": "probe submitted through the ComfyUI API before the preset existed; recorded in .runtime/probes/witch-nijisis-baseline-09dadd6e.json (untracked evidence)"
+      }
     },
     {
       "id": "krea-atelier-target-stack",
-      "name": "Krea 2 - target stack (Niji Sweet Spot + TextFusion)",
+      "name": "Krea 2 - target stack (TextFusion + Niji Sweet Spot + koukouya)",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["anime", "fantasy", "target"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "target"
+      ],
       "controls": {
         "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
-        "steps": 15, "cfg": 1, "sampler": "euler_ancestral", "scheduler": "simple",
-        "width": 832, "height": 1248, "seed": 20260912,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 1.0,
-        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors", "lora2": 1.0,
-        "lora3": 0, "lora4": 0
+        "steps": 15,
+        "cfg": 1,
+        "sampler": "euler_ancestral",
+        "scheduler": "simple",
+        "width": 832,
+        "height": 1248,
+        "seed": 20260912,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+        "lora2": 1.0,
+        "lora3": 1.0,
+        "lora4": 0,
+        "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
       },
       "batch_count": 1,
-      "notes": "The owner's target look, minus the koukouya adapter which is not installed (civitai downloads need a personal API key). Niji Sweet Spot wants its @NJSW33T trigger at the START and tolerates danbooru-style tags mixed into the paragraph. Expect roughly a thousand seconds per image at these controls.",
-      "sources": ["https://civitai.com/models/2554999", "https://civitai.com/models/2775340", "https://civitai.com/models/2844656"],
-      "status": "unverified"
+      "notes": "The owner's full target stack from civitai image 142028671, all three adapters installed on 2026-09-12. Niji Sweet Spot wants its @NJSW33T trigger at the START; koukouya has no trigger. 15 steps at 832x1248 costs roughly 18 minutes on the RX 9070 XT; audition with krea-4step-audition first.",
+      "sources": [
+        "https://civitai.com/models/2554999",
+        "https://civitai.com/models/2775340",
+        "https://civitai.com/models/2844656"
+      ],
+      "status": "executed",
+      "evidence": "Studio job 7d589f47-7172-44fb-9541-4ab0602eafce, prompt a63ca7e1-c87a-4288-bcd9-959ff93d1827, 827.6 s at 832x1248 on 2026-09-12; experiments/curated/anime-fantasy-atelier/krea-target-stack-koukouya-recipe.json"
     },
     {
       "id": "krea-oil-fantasy",
       "name": "Krea 2 - oil fantasy (baroque dreamscape)",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["fantasy", "painterly", "oil"],
+      "tags": [
+        "fantasy",
+        "painterly",
+        "oil"
+      ],
       "controls": {
         "positive": "A lone scholar crossing a moss-covered stone bridge at dusk, lantern light on wet stone, rolling fog below the arches, deep crimson and ink black palette, baroque dreamscape oil style",
-        "steps": 12, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 832, "height": 1248, "seed": 20260913,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 1.0,
-        "lora2": 0, "lora3": 0,
-        "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors", "lora4": 1.0
+        "steps": 12,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 832,
+        "height": 1248,
+        "seed": 20260913,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+        "lora4": 1.0
       },
       "batch_count": 1,
       "notes": "fal style adapters want a SHORT prompt with the trigger phrase at the very end; the long paragraph grammar is for the un-styled model. 12 steps is the BArtstyle-card middle ground between the distilled 8 and the owner's 15.",
-      "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "https://docs.comfy.org/tutorials/image/krea/krea-2"],
+      "sources": [
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+        "https://docs.comfy.org/tutorials/image/krea/krea-2"
+      ],
       "status": "unverified"
     },
     {
@@ -66,18 +119,32 @@
       "name": "Krea 2 - airy watercolour anime",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["anime", "watercolour", "light"],
+      "tags": [
+        "anime",
+        "watercolour",
+        "light"
+      ],
       "controls": {
         "positive": "A herbalist in a greenhouse of impossible plants, morning mist and soft diffused light, pale sand and sea green palette, upper body, airy anime watercolor style",
-        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 768, "height": 1152, "seed": 20260914,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 1.0,
-        "lora2": 0, "lora3": 0,
-        "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors", "lora4": 1.0
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 768,
+        "height": 1152,
+        "seed": 20260914,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+        "lora4": 1.0
       },
       "batch_count": 1,
       "notes": "The cheapest look in the atelier: 8 steps at 768x1152. Good first audition for a new subject before committing to a 15-step painterly run.",
-      "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs"],
+      "sources": [
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs"
+      ],
       "status": "unverified"
     },
     {
@@ -85,19 +152,32 @@
       "name": "Krea 2 - 4-step audition",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["audition", "fast"],
+      "tags": [
+        "audition",
+        "fast"
+      ],
       "controls": {
         "positive": "@NJSW33T, a young cartographer at a cliffside village above the sea, blue hour light, sea spray in the air, upper body, storm grey and pale blue palette, anime illustration",
-        "steps": 4, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 512, "height": 768, "seed": 20260915,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 1.0,
-        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors", "lora2": 1.0,
+        "steps": 4,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 512,
+        "height": 768,
+        "seed": 20260915,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+        "lora2": 1.0,
         "lora3": 0,
-        "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors", "lora4": 0.85
+        "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+        "lora4": 0.85
       },
       "batch_count": 3,
       "notes": "Composition and seed hunting, not final quality. The 4-step distill LoRA replaces the step count; keep cfg 1 and stay at 512x768 so three seeds cost less than one 15-step image.",
-      "sources": ["https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA"],
+      "sources": [
+        "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA"
+      ],
       "status": "unverified"
     },
     {
@@ -105,18 +185,32 @@
       "name": "Krea 2 - wildcard scene study",
       "preset_id": "krea-anime-atelier",
       "family": "Krea 2 Turbo",
-      "tags": ["wildcards", "fantasy", "audition"],
+      "tags": [
+        "wildcards",
+        "fantasy",
+        "audition"
+      ],
       "controls": {
         "positive": "@NJSW33T, {wide shot|cowboy shot}, a travelling storyteller in __fantasy_setting__, __lighting__ at __time_of_day__, __fantasy_creature__ keeping close, __palette__, __medium__, anime illustration",
-        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 768, "height": 1152, "seed": 20260916,
-        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors", "lora": 1.0,
-        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors", "lora2": 1.0,
-        "lora3": 0, "lora4": 0
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 768,
+        "height": 1152,
+        "seed": 20260916,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+        "lora2": 1.0,
+        "lora3": 0,
+        "lora4": 0
       },
       "batch_count": 4,
       "notes": "Shows the wildcard grammar: {a|b} picks one, __name__ reads presets/wildcards/<name>.txt. Expansion is deterministic per batch member seed, and the submitted graph carries the expanded text while the job keeps this template.",
-      "sources": ["https://huggingface.co/Comfy-Org/Krea-2"],
+      "sources": [
+        "https://huggingface.co/Comfy-Org/Krea-2"
+      ],
       "status": "unverified"
     },
     {
@@ -124,18 +218,31 @@
       "name": "Style lab - airy watercolour + soft watercolour",
       "preset_id": "krea-style-lab",
       "family": "Krea 2 Turbo",
-      "tags": ["style-pair", "watercolour"],
+      "tags": [
+        "style-pair",
+        "watercolour"
+      ],
       "controls": {
         "positive": "A quiet apothecary crowded with jars, dappled sunlight, soft rose and cream, art deco watercolor style, airy anime watercolor style",
-        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 1024, "height": 1024, "seed": 20260921,
-        "lora_name": "fal-krea2-airy-anime-watercolor.safetensors", "lora": 1.0,
-        "lora2_name": "krea2_softwatercolor.safetensors", "lora2": 0.7,
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 1024,
+        "height": 1024,
+        "seed": 20260921,
+        "lora_name": "fal-krea2-airy-anime-watercolor.safetensors",
+        "lora": 1.0,
+        "lora2_name": "krea2_softwatercolor.safetensors",
+        "lora2": 0.7,
         "lora3": 0
       },
       "batch_count": 1,
       "notes": "Two watercolour adapters that agree: the fal one carries the anime drawing, the official one the paper and wash. Second slot deliberately below 1.0 - two style LoRAs at full strength usually flatten the subject.",
-      "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "https://huggingface.co/Comfy-Org/Krea-2"],
+      "sources": [
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+        "https://huggingface.co/Comfy-Org/Krea-2"
+      ],
       "status": "unverified"
     },
     {
@@ -143,18 +250,32 @@
       "name": "Style lab - manga inkwork + dark brush",
       "preset_id": "krea-style-lab",
       "family": "Krea 2 Turbo",
-      "tags": ["style-pair", "monochrome", "manga"],
+      "tags": [
+        "style-pair",
+        "monochrome",
+        "manga"
+      ],
       "controls": {
         "positive": "A ruined chapel reclaimed by ivy, light rays through a broken roof, monochrome ink, monochrome ink wash style, detailed manga inkwork style",
-        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 1024, "height": 1024, "seed": 20260922,
-        "lora_name": "fal-krea2-detailed-manga-inkwork.safetensors", "lora": 1.0,
-        "lora2_name": "krea2_darkbrush.safetensors", "lora2": 0.6,
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 1024,
+        "height": 1024,
+        "seed": 20260922,
+        "lora_name": "fal-krea2-detailed-manga-inkwork.safetensors",
+        "lora": 1.0,
+        "lora2_name": "krea2_darkbrush.safetensors",
+        "lora2": 0.6,
         "lora3": 0
       },
       "batch_count": 1,
       "notes": "Monochrome pair. Both adapters suppress colour, so do not fight them with a colour palette phrase; the dark brush slot stays at 0.6 or the linework disappears into wash.",
-      "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "https://huggingface.co/Comfy-Org/Krea-2"],
+      "sources": [
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+        "https://huggingface.co/Comfy-Org/Krea-2"
+      ],
       "status": "unverified"
     },
     {
@@ -162,18 +283,32 @@
       "name": "Style lab - emerald paperback + vintage tarot",
       "preset_id": "krea-style-lab",
       "family": "Krea 2 Turbo",
-      "tags": ["style-pair", "fantasy", "key-art"],
+      "tags": [
+        "style-pair",
+        "fantasy",
+        "key-art"
+      ],
       "controls": {
         "positive": "A knight-errant and a white fox with two tails before an ancient forest with roots like archways, volumetric lighting, emerald and gold palette, vintage tarot style, emerald fantasy paperback style",
-        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
-        "width": 1024, "height": 1024, "seed": 20260923,
-        "lora_name": "fal-krea2-emerald-fantasy-paperback.safetensors", "lora": 1.0,
-        "lora2_name": "krea2_vintagetarot.safetensors", "lora2": 0.6,
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 1024,
+        "height": 1024,
+        "seed": 20260923,
+        "lora_name": "fal-krea2-emerald-fantasy-paperback.safetensors",
+        "lora": 1.0,
+        "lora2_name": "krea2_vintagetarot.safetensors",
+        "lora2": 0.6,
         "lora3": 0
       },
       "batch_count": 1,
       "notes": "Fantasy key art. The tarot adapter adds a border and strong symmetry, so keep it low unless a card frame is actually wanted.",
-      "sources": ["https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs", "https://huggingface.co/Comfy-Org/Krea-2"],
+      "sources": [
+        "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+        "https://huggingface.co/Comfy-Org/Krea-2"
+      ],
       "status": "unverified"
     },
     {
@@ -181,16 +316,29 @@
       "name": "WAI v17 - fantasy portrait",
       "preset_id": "wai",
       "family": "WAI v17 (Illustrious)",
-      "tags": ["anime", "fantasy", "portrait"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "portrait"
+      ],
       "controls": {
         "positive": "1girl, solo, original character, long silver hair, braided crown, green eyes, travelling cloak, leather bracers, holding a lantern, standing in an ancient forest, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
         "negative": "bad quality, worst quality, worst detail, sketch, censor",
-        "steps": 26, "cfg": 6, "sampler": "euler_ancestral", "scheduler": "normal",
-        "width": 832, "height": 1216, "seed": 20260931, "denoise": 1.0
+        "steps": 26,
+        "cfg": 6,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal",
+        "width": 832,
+        "height": 1216,
+        "seed": 20260931,
+        "denoise": 1.0
       },
       "batch_count": 1,
       "notes": "WAI puts its quality words at the END, unlike NoobAI. Short negative on purpose. If limbs break, the documented fix is a 1.5x hires pass at denoise 0.35-0.5, not more steps.",
-      "sources": ["https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170", "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"],
+      "sources": [
+        "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+        "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
+      ],
       "status": "unverified"
     },
     {
@@ -198,16 +346,28 @@
       "name": "NoobAI XL - fantasy scene",
       "preset_id": "noob",
       "family": "NoobAI XL 1.1",
-      "tags": ["anime", "fantasy", "scenery"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "scenery"
+      ],
       "controls": {
         "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, original character, short black hair, round glasses, scholar robes, sitting on a stone step, reading a book, glowing mushroom grove, bioluminescent glow, volumetric lighting, floating particles, scenery, wide shot, fantasy",
         "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
-        "steps": 28, "cfg": 5.5, "sampler": "euler_ancestral", "scheduler": "normal",
-        "width": 832, "height": 1216, "seed": 20260932, "denoise": 1.0
+        "steps": 28,
+        "cfg": 5.5,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal",
+        "width": 832,
+        "height": 1216,
+        "seed": 20260932,
+        "denoise": 1.0
       },
       "batch_count": 1,
       "notes": "The quality words are a PREFIX for this family and include the year tag and the rating tag. Hobby and research only: the author's Fair-AI Public License 1.0-SD forbids commercialising the generated products.",
-      "sources": ["https://huggingface.co/Laxhar/noobai-XL-1.1"],
+      "sources": [
+        "https://huggingface.co/Laxhar/noobai-XL-1.1"
+      ],
       "status": "unverified"
     },
     {
@@ -215,16 +375,28 @@
       "name": "Animagine XL 4.0 - fantasy portrait",
       "preset_id": "anime",
       "family": "Animagine XL 4.0",
-      "tags": ["anime", "fantasy", "portrait"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "portrait"
+      ],
       "controls": {
         "positive": "1girl, original character, safe, white fox mask pushed to one side, dark red hair, embroidered haori, holding a paper lantern, lantern-lit night market, rim lighting, dutch angle, upper body, fantasy, masterpiece, high score, great score, absurdres",
         "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
-        "steps": 28, "cfg": 5, "sampler": "euler_ancestral", "scheduler": "normal",
-        "width": 832, "height": 1216, "seed": 20260933, "denoise": 1.0
+        "steps": 28,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal",
+        "width": 832,
+        "height": 1216,
+        "seed": 20260933,
+        "denoise": 1.0
       },
       "batch_count": 1,
       "notes": "Tag ORDER is the whole trick here: subject count, character, series, rating, everything else, quality tail. Original character, so the character and series slots stay empty rather than borrowing a franchise.",
-      "sources": ["https://huggingface.co/cagliostrolab/animagine-xl-4.0"],
+      "sources": [
+        "https://huggingface.co/cagliostrolab/animagine-xl-4.0"
+      ],
       "status": "unverified"
     },
     {
@@ -232,16 +404,28 @@
       "name": "Pony V6 - fantasy portrait",
       "preset_id": "pony",
       "family": "Pony V6",
-      "tags": ["anime", "fantasy", "portrait"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "portrait"
+      ],
       "controls": {
         "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, original character, curly brown hair, freckles, apprentice smith's apron, soot-marked gloves, standing at a forge, firelight, chiaroscuro, upper body, fantasy",
         "negative": "score_6, score_5, score_4, worst quality, low quality, text, watermark, signature, bad anatomy, bad hands",
-        "steps": 30, "cfg": 6, "sampler": "euler_ancestral", "scheduler": "normal",
-        "width": 832, "height": 1216, "seed": 20260934, "denoise": 1.0
+        "steps": 30,
+        "cfg": 6,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal",
+        "width": 832,
+        "height": 1216,
+        "seed": 20260934,
+        "denoise": 1.0
       },
       "batch_count": 1,
       "notes": "The score prefix and source_anime are how this checkpoint was conditioned; dropping them changes the model, not the style. Clip skip 2 belongs in the graph, not the prompt.",
-      "sources": ["https://huggingface.co/AstraliteHeart/pony-diffusion-v6"],
+      "sources": [
+        "https://huggingface.co/AstraliteHeart/pony-diffusion-v6"
+      ],
       "status": "unverified"
     },
     {
@@ -249,16 +433,132 @@
       "name": "Anima 1.1 - fantasy portrait",
       "preset_id": "anima-portrait",
       "family": "Anima",
-      "tags": ["anime", "fantasy", "portrait"],
+      "tags": [
+        "anime",
+        "fantasy",
+        "portrait"
+      ],
       "controls": {
         "positive": "A young sky-ferry pilot resting against the rail of a floating island with waterfalls falling into cloud, late afternoon sun, goggles pushed up into short teal hair, patched flight jacket, quiet confident expression, bronze and moss green palette, modern anime illustration, detailed background",
         "negative": "lowres, blurry, bad anatomy, bad hands, text, watermark, signature",
-        "steps": 30, "cfg": 4, "width": 768, "height": 1152, "seed": 20260941
+        "steps": 30,
+        "cfg": 4,
+        "width": 768,
+        "height": 1152,
+        "seed": 20260941
       },
       "batch_count": 1,
       "notes": "Anima reads sentences through its compact Qwen encoder, so prose first and tags after. This preset binds no sampler or scheduler control; the graph runs euler with the simple schedule.",
-      "sources": ["https://huggingface.co/circlestone-labs/Anima"],
+      "sources": [
+        "https://huggingface.co/circlestone-labs/Anima"
+      ],
       "status": "unverified"
+    },
+    {
+      "id": "anima-reference-six-adapter-stack",
+      "name": "Anima - six-adapter reference stack",
+      "preset_id": "anima-artist-stack",
+      "family": "Anima",
+      "tags": [
+        "anime",
+        "painterly",
+        "reference"
+      ],
+      "controls": {
+        "positive": "1girl, solo, @40u40uya, @hu45h11w, @k144d, a young witch with long silver hair and amber eyes, wide-brimmed hat, deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower at dusk, hanging lanterns, drifting motes of light, wind lifting her hair and cloak, looking at viewer, calm half-smile, painterly, textured brushwork, high contrast, vivid, film grain, depth of field, detailed background, detailed foreground",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia",
+        "steps": 30,
+        "cfg": 4,
+        "sampler": "euler_ancestral",
+        "scheduler": "simple",
+        "width": 1328,
+        "height": 1776,
+        "seed": 975436216244440,
+        "lora": 0.7,
+        "lora2": 0.6,
+        "lora3": 0.3,
+        "lora4": 0.7,
+        "lora5": 1.0,
+        "lora6": 0.5
+      },
+      "batch_count": 1,
+      "status": "executed",
+      "evidence": "Studio job 6ae066d8-2faa-4856-b1ed-c9e169c22c40 (Reference stack 1328x1776 variant, identical controls), 66.4 s on 2026-09-12; experiments/curated/anime-fantasy-atelier/anima-reference-stack-1328x1776-recipe.json",
+      "notes": "Civitai image 139608451 carried no text prompt, only the six adapter tags at these strengths (xilmo 0.7, huashijw 0.6, koukouya 0.3, ke-ta 0.7, NEWANIMASTYLE 1.0, kieed 0.5) with Anima base v1.0, Euler a, simple, 30 steps, cfg 4, seed 975436216244440. The subject here is an original character; the triggers @40u40uya, @hu45h11w and @k144d are the adapters' own.",
+      "sources": [
+        "https://civitai.com/images/139608451"
+      ]
+    },
+    {
+      "id": "anima-painterly-artist-tags",
+      "name": "Anima - painterly artist tags, no adapters",
+      "preset_id": "anima-artist-stack",
+      "family": "Anima",
+      "tags": [
+        "anime",
+        "painterly",
+        "artist-tags"
+      ],
+      "controls": {
+        "lora": 0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0,
+        "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+        "cfg": 3,
+        "sampler": "dpmpp_2m_sde_gpu",
+        "scheduler": "simple",
+        "steps": 30,
+        "width": 832,
+        "height": 1216,
+        "seed": 975436216244440
+      },
+      "batch_count": 1,
+      "status": "executed",
+      "evidence": "Studio job 8eb5bc19-782c-42d0-87d1-2f7cedd73187 (Artist tags, no adapters variant, identical controls), 20.1 s on 2026-09-12; experiments/curated/anime-fantasy-atelier/anima-artist-tags-no-adapters-recipe.json",
+      "notes": "The look of civitai images 131843207 / 131843332 / 131843377 / 131843406 (deitychaser): Anima base v1.0 alone, artist tags @synswt, @koukouya, @kyano \\(kyanora3141\\) at the start, cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps, 832x1216, negative with score_1-3 and \"pink theme\". Every adapter slot is at 0 and pruned. Subject rewritten as an original character.",
+      "sources": [
+        "https://civitai.com/images/131843406",
+        "https://civitai.com/images/131843377",
+        "https://civitai.com/images/131843332",
+        "https://civitai.com/images/131843207"
+      ]
+    },
+    {
+      "id": "krea-dark-scifi-comic-warrior",
+      "name": "Krea 2 - dark sci-fi comic warrior (no adapters)",
+      "preset_id": "krea-anime-atelier",
+      "family": "Krea 2 Turbo",
+      "tags": [
+        "fantasy",
+        "sci-fi",
+        "comic",
+        "reference"
+      ],
+      "controls": {
+        "positive": "A powerful futuristic armored warrior standing in the middle of a chaotic battlefield, depicted in a highly stylized dark sci-fi comic-book aesthetic. The character dominates the vertical composition and is shown from a slightly low, close-up perspective, creating an imposing and monumental presence. He wears extremely bulky, heavy black power armor with massive shoulder plates, thick armored limbs, reinforced chest plating, mechanical joints, and numerous layered components. The armor has a worn, battle-scarred appearance with scratches, chipped surfaces, small dents, and subtle metallic highlights.\nThe warrior's helmet is large and heavily reinforced, with an angular mechanical design. His face is completely concealed behind the helmet. One prominent glowing emerald-green lens/visor is visible, creating a sharp focal point against the predominantly black armor. The helmet contains yellow-orange mechanical details, vents, cables, and small illuminated elements.\nThe character carries a huge futuristic ballistic weapon over his left shoulder. The weapon is extremely oversized and industrial-looking, with a thick cylindrical barrel, heavy housing, angular armor plates, mechanical components, and dark metallic surfaces. It should feel massive and heavy enough to emphasize the warrior's extraordinary strength.\nAcross the warrior's chest and torso are heavy metal chains, hanging loosely and crossing the armor diagonally. Additional chains and mechanical details are attached to his equipment. A large angular emblem or insignia is visible on the chest, featuring a bold yellow-orange geometric shape that strongly contrasts with the black armor.\n\nHis waist and legs are covered with additional layered armor, hanging armored cloth, straps, pouches, and decorative metal components. A rectangular worn plaque or relic hangs from the front of his armor, containing an aged monochrome illustration or skull-like symbol. The armor on the knees and thighs is massive, angular, and heavily segmented.\nIn the background is a burning, devastated battlefield. Intense yellow and orange flames rise behind and around the character, while dark silhouettes of ruined structures, debris, machinery, and fallen battlefield elements are visible near the bottom of the frame. The upper background is dominated by a dark reddish-brown atmosphere, smoke, and shadow, with scattered glowing sparks, embers, and fragments flying through the air.\nThe battlefield should feel chaotic without becoming visually cluttered. The bright flames create a strong backlight around the silhouette of the warrior, while the foreground character remains predominantly black and dark violet. Small areas of pale blue-gray highlights are used on the armor edges and mechanical surfaces.\nComposition: vertical poster format, full-body character extending beyond the lower edge of the frame, centered dominant figure, slightly low camera angle, dramatic foreshortening, large weapon rising diagonally toward the upper-left corner, strong triangular composition, powerful silhouette, tight framing, character occupying most of the image, background flames framing the figure.\nLighting: dramatic high-contrast lighting, intense warm backlighting from fire, deep black shadows across the armor, sharp pale-blue rim highlights, glowing green visor, bright yellow-orange reflections on metallic surfaces, minimal soft lighting, predominantly hard-edged illumination.\nColor palette: near-black armor, deep charcoal, dark violet, muted steel blue, pale gray-blue highlights, dark burgundy and reddish-brown background, with vivid yellow, orange, and cream-colored flames. Small emerald-green glow from the helmet lens.",
+        "steps": 9,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 992,
+        "height": 1488,
+        "seed": 1971763834,
+        "lora": 0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0
+      },
+      "batch_count": 1,
+      "status": "unverified",
+      "evidence": "",
+      "notes": "Civitai image 141897933: Krea 2 Turbo alone, the full prose prompt verbatim, 9 steps, euler, simple, cfg 1, seed 1971763834 at 1000x1496 (rounded here to the 16-pixel grid). No adapter. Expect roughly 15 minutes at this size on the RX 9070 XT; for a 3-minute audition set lora4_name to the 4-step distill LoRA at 0.85 with steps 4.",
+      "sources": [
+        "https://civitai.com/images/141897933"
+      ]
     }
   ]
 }

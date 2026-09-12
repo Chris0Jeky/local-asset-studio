@@ -73,10 +73,10 @@ phrases at the END of a short prompt, the official Comfy-Org style phrases anywh
 | `krea2_turbo_4step_rank_64_lora_comfyui.safetensors` | none | 0.75-1.0 | accelerator: set steps 4, cfg 1 |
 | `fal-krea2-<style>.safetensors` (19 installed) | `<style words> style` (end) | 1.0-1.25 | fal style pack, short prompts |
 
-Two names from the fal pack are **not** usable: `fal-krea2-azure-sunlit-storybook` exists only as a partial
-`.part` download and `fal-krea2-amber-lit-fantasy-filmset` is absent entirely (checked on disk 2026-09-12).
-`krea2_koukouya_sytle_c1-st3000` - the third adapter in the owner's target image - is also missing and needs a
-civitai API key; it is tracked in `HUMAN_TODO.md`. No preset or recipe may name any of the three.
+All nineteen fal names are installed (the two that were partial on the morning of 2026-09-12 were re-fetched
+and pinned the same day). `krea2_koukouya_style_c1-st3000` - the third adapter in the owner's target image - was
+installed on 2026-09-12 with the owner's civitai key (`CIVITAI_API_TOKEN`), so the `krea-atelier-target-stack`
+recipe now names all three adapters. A preset or recipe may only name a file that `models/library.json` pins.
 
 ## WAI v17 (Illustrious)
 

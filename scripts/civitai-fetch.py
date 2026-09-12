@@ -71,6 +71,9 @@ def pick_file(version,file_id=None):
 def terms_note(version):
  """Repeat the listing's own permission flags; never soften or infer them."""
  model=version.get('model') or {}
+ if 'allowCommercialUse' not in model:
+  return (f'civitai version {version.get("id")} of model {version.get("modelId")}: the version payload carries no permission flags; '
+          f'read https://civitai.com/models/{version.get("modelId")} (or /api/v1/models/{version.get("modelId")}) before any commercial use. Base model {version.get("baseModel")!r}.')
  allowed=model.get('allowCommercialUse') or []
  return (f'civitai listing for model {version.get("modelId")} version {version.get("id")}: allowCommercialUse '
          f'{", ".join(allowed) if allowed else "none listed"}; derivatives '
