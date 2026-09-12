@@ -78,10 +78,19 @@ class ModelLibrary:
             raise ValueError("Automatic installation supports safetensors weights only")
         return target
 
-    def install_block(self, asset):
-        """Why automatic installation is unavailable for this pin, or None when it is."""
-        try:self.destination(asset)
+    def install_block(self, asset, present=None):
+        """Why automatic installation is unavailable for this pin, or None when it is.
+
+        A missing file with no curated URL can only fail deep inside _download, after a
+        queued receipt exists; refuse it here instead. An already-installed copy still
+        verifies, which is the whole point of pinning a file of unrecorded provenance.
+        """
+        try:target=self.destination(asset)
         except ValueError as exc:return str(exc)
+        if present is None:present=target.is_file()
+        if not present:
+            try:download_source_provider(asset.get('url') or '')
+            except ValueError:return 'No curated source is pinned; copy this file in by hand'
         return None
 
     def _check_path(self, path):
@@ -129,8 +138,8 @@ class ModelLibrary:
         for asset in manifest.get("assets", []):
             item = dict(asset)
             path = self.locate(asset)
-            blocked = self.install_block(asset)
             present = path.is_file()
+            blocked = self.install_block(asset, present)
             checked_id(asset['id'])
             receipt = load(self.state / (asset["id"] + ".json"), {})
             if not isinstance(receipt,dict):receipt={}
@@ -158,6 +167,8 @@ class ModelLibrary:
 
     def _validated_asset(self, asset_id):
         asset=self.asset(asset_id);self.destination(asset)
+        blocked=self.install_block(asset)
+        if blocked:raise ValueError(blocked)
         validate_pins(asset)
         return asset
 

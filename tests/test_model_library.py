@@ -86,9 +86,13 @@ class PinOnlyFolderTests(unittest.TestCase):
         self.adapter={'id':'adapter','name':'identity adapter','file':'ipadapter/plus.safetensors','bytes':len(self.body),
                       'sha256':hashlib.sha256(self.body).hexdigest(),'url':'https://huggingface.co/example/a/plus.safetensors',
                       'source':'https://huggingface.co/example/a','license':'apache-2.0','family':'IP-Adapter SDXL','trigger':''}
-        (self.root/'models/library.json').write_text(json.dumps({'assets':[self.detector,self.adapter]}))
+        self.unsourced={'id':'unsourced','name':'latent previewer','file':'vae_approx/taesd_decoder.safetensors',
+                        'bytes':len(self.body),'sha256':hashlib.sha256(self.body).hexdigest(),'url':'','source':'',
+                        'license':'','family':'Latent previews','trigger':'','terms':'provenance not recorded'}
+        (self.root/'models/library.json').write_text(json.dumps({'assets':[self.detector,self.adapter,self.unsourced]}))
         self.lib=models.ModelLibrary(self.root,self.root/'comfy')
-    def tearDown(self):self.temp.cleanup()
+        self.home=patch.object(Path,'home',return_value=self.root/'home');self.home.start()
+    def tearDown(self):self.home.stop();self.temp.cleanup()
     def test_new_folders_are_supported_and_stay_inside_the_model_root(self):
         for key in ('ipadapter','ultralytics','inpaint','vae_approx'):
             with self.subTest(folder=key):
@@ -116,6 +120,26 @@ class PinOnlyFolderTests(unittest.TestCase):
         item=self.lib.snapshot()['assets'][1]
         self.assertEqual((item['installable'],item['install_note']),(True,None))
         self.assertEqual(self.lib.destination(self.adapter),self.lib.locate(self.adapter))
+    def test_missing_unsourced_pin_is_refused_before_any_download_state(self):
+        item=self.lib.snapshot()['assets'][2]
+        self.assertEqual((item['installable'],item['present']),(False,False))
+        self.assertIn('curated source',item['install_note'])
+        with patch.object(models,'urlopen') as request:
+            for start in (self.lib.start_install,self.lib.install):
+                with self.assertRaisesRegex(ValueError,'copy this file in by hand'):start('unsourced')
+            request.assert_not_called()
+        self.assertFalse((self.lib.state/'install.lock').exists())
+        self.assertFalse((self.lib.state/'unsourced.json').exists())
+        self.assertFalse(self.lib.locate(self.unsourced).parent.exists())
+    def test_installed_unsourced_pin_still_verifies_without_a_url(self):
+        """Pinning an unrecorded file is worth nothing if its hash can never be re-checked."""
+        path=self.lib.locate(self.unsourced);path.parent.mkdir(parents=True);path.write_bytes(self.body)
+        item=self.lib.snapshot()['assets'][2]
+        self.assertEqual((item['installable'],item['install_note']),(True,None))
+        with patch.object(models,'urlopen') as request:
+            self.assertEqual(self.lib.install('unsourced')['status'],'installed')
+            request.assert_not_called()
+        self.assertTrue(self.lib.snapshot()['assets'][2]['verified'])
     def test_pinned_library_never_breaks_the_models_view(self):
         """Every shipped pin must resolve; one bad folder would make the whole snapshot raise."""
         library=json.loads((Path(__file__).parents[1]/'models/library.json').read_text(encoding='utf-8'))
