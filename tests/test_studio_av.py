@@ -31,6 +31,19 @@ class AVTests(unittest.TestCase):
     def test_valid_layout(self):
         result=p.validate(self.doc,self.root);self.assertEqual(result['frames'],144);self.assertEqual(result['samples'],288000)
         self.assertEqual([s['start_frame'] for s in result['shots']],[0,48,96])
+    def test_fractional_rate_uses_exact_ties_to_even_samples(self):
+        self.doc['fps']=[512,10];self.doc['shots']=self.doc['shots'][:1];self.doc['shots'][0].update(frames=3,transition_frames=0)
+        self.doc['audio']=[];self.doc['overlays']=[]
+        self.assertEqual(p.validate(self.doc)['samples'],2812)
+
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
+    def test_one_frame_past_video_end_is_rejected_before_render(self):
+        self.add_mp4_fixture('end-boundary.mp4');self.doc['shots']=self.doc['shots'][:1]
+        self.doc['shots'][0].update(asset='clip',frames=72,transition_frames=0)
+        self.doc['audio']=[];self.doc['overlays']=[]
+        validate_media(self.doc,self.root)
+        self.doc['shots'][0]['frames']=73
+        with self.assertRaisesRegex(ValueError,'Video source too short'):validate_media(self.doc,self.root)
     def test_unknown_fields(self):
         self.doc['shell']='bad'
         with self.assertRaises(ValueError):p.validate(self.doc)

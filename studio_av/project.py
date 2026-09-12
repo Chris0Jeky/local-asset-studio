@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import math
+from fractions import Fraction
 from pathlib import Path, PurePosixPath
 import re
 
@@ -114,7 +115,7 @@ def validate(p, root=None):
         for k,lo,hi in [('start',0,length-1),('frames',1,length),('x',0,p['size'][0]-1),('y',0,p['size'][1]-1),('width',1,p['size'][0]),('height',1,p['size'][1])]: number(o[k],lo,hi,k,True)
         need(o['start']+o['frames']<=length and o['x']+o['width']<=p['size'][0] and o['y']+o['height']<=p['size'][1],'Overlay exceeds canvas/time')
         number(o['opacity'],0,1,'opacity')
-    samples=round(length/fps*48000)
+    samples=round(Fraction(length*p['fps'][1]*48000,p['fps'][0]))
     need(isinstance(p['audio'],list) and len(p['audio'])<=32,'Audio clip cap exceeded')
     for c in p['audio']:
         fields(c,['id','asset','bus','start_sample','source_sample','samples','gain_db','fade_in','fade_out','mute']);unique(c['id']);asset(c['asset'],('audio',))

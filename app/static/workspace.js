@@ -61,6 +61,7 @@ function renderAssets() {
 function renderAssetSelection() {
   $('#assetBulk').hidden=!assetSelection.size;
   $('#assetSelectionCount').textContent=assetSelection.size+' selected';
+  $('#createScene').href='/av.html?asset_ids='+encodeURIComponent([...assetSelection].join(','));
   document.querySelectorAll('[data-bulk="restore"]').forEach(b=>b.hidden=assetScope!=='trash');
   document.querySelectorAll('[data-bulk="trash"]').forEach(b=>b.hidden=assetScope==='trash');
 }

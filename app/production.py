@@ -44,6 +44,8 @@ class Production:
 
         from review_desk import ReviewDesk
         self.reviews=ReviewDesk(self)
+        from av_projects import AVProjects
+        self.av=AVProjects(self)
 
     @contextmanager
     def connect(self):
@@ -362,6 +364,7 @@ class Production:
         return digest.hexdigest()
 
     def start(self, identifier):
+        if self._get(identifier)['plan']['kind']=='av':raise ValueError('Render a specific scene revision from the Scene editor')
         with self.studio.lock:
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project = self._get(identifier)
@@ -384,11 +387,13 @@ class Production:
 
     def stop(self, identifier):
         project=self._get(identifier)
+        if project['plan']['kind']=='av':return self.av.cancel(identifier)
         if project['state']['status'] not in ('queued','running','observing'):raise ValueError('This experiment is not active')
         self._mutate(identifier,stop_requested=True,message='Stop requested. The current owned job may finish; later stages will not start.')
         return self.get(identifier)
 
     def resume(self, identifier):
+        if self._get(identifier)['plan']['kind']=='av':raise ValueError('Inspect the previous scene attempt and explicitly request a new render')
         with self.studio.lock, self.lock:
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project=self._get(identifier)
@@ -409,6 +414,7 @@ class Production:
         project=self._get(identifier);plan=project['plan']
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
+        if plan['kind']=='av':return self.av.run(identifier)
         if plan['kind']=='native':return self._run_native(identifier,plan)
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
         self.studio.check_production_bundle(plan['bundle'])
@@ -488,6 +494,7 @@ class Production:
     def file(self, identifier, relative):
         if relative.startswith('reviews/'):return self.reviews.file(identifier,relative)
         project=self._get(identifier)
+        if project['plan']['kind']=='av':return self.av.file(identifier,relative)
         base=(self.root/project['id']).resolve();path=(base/relative).resolve()
         if not path.is_relative_to(base) or not path.is_file():raise ValueError('Artifact unavailable')
         allowed={a['path'] for a in project['state'].get('artifacts',[])}|{'plan.json','comparison.json'}

@@ -357,7 +357,7 @@ class Studio:
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe')}
 
     def output_path(self, output, job=None):
-        if (job or {}).get('operation')=='native.articulated-prop.v1':
+        if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1'):
             identifier=job.get('project_id','')
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
@@ -884,6 +884,12 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
+            if path=='/api/av':return self._json(200,self.studio.production.av.list())
+            if path.startswith('/api/av/'):
+                parts=path.split('/')
+                if len(parts)==6 and parts[4]=='sources':return self._local_file(self.studio.production.av.source(parts[3],parts[5]))
+                if len(parts)==4:return self._json(200,self.studio.production.av.inspect(parts[3]))
+                raise StudioError('Unknown scene route')
             if path.startswith('/api/production/'):
                 from urllib.parse import unquote
                 parts=path.split('/')
@@ -945,6 +951,11 @@ class Handler(BaseHTTPRequestHandler):
                 size=self._content_length(20*1024*1024)
                 return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
+            if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
+            if self.path.startswith('/api/av/'):
+                parts=self.path.split('/')
+                if len(parts)!=4:raise StudioError('Unknown scene command route')
+                return self._json(200,self.studio.production.av.command(parts[3],self._body_json()))
             if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
             if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))
             if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
