@@ -1,0 +1,243 @@
+{
+ "version": 2,
+ "preset_id": "anima-artist-stack",
+ "controls": {
+  "lora": 0,
+  "lora2": 0,
+  "lora3": 0,
+  "lora4": 0,
+  "lora5": 0,
+  "lora6": 0,
+  "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+  "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+  "cfg": 3,
+  "sampler": "dpmpp_2m_sde_gpu",
+  "scheduler": "simple"
+ },
+ "batch_count": 1,
+ "created_at": 1789191626.8675525,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "anima-base-v1.0.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_06b_base.safetensors",
+    "type": "stable_diffusion",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny"
+   }
+  },
+  "5": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame"
+   }
+  },
+  "6": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+   }
+  },
+  "7": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "5",
+     0
+    ],
+    "latent_image": [
+     "6",
+     0
+    ],
+    "seed": 975436216244440,
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler_name": "dpmpp_2m_sde_gpu",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "8": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "7",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "9": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "8",
+     0
+    ],
+    "filename_prefix": "Studio/anima-artist-stack"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "26f7ee38-67a0-49ba-bb03-fafa4913ddb9",
+   "seed": 975436216244440,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "anima-base-v1.0.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_06b_base.safetensors",
+      "type": "stable_diffusion",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny"
+     }
+    },
+    "5": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame"
+     }
+    },
+    "6": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+     }
+    },
+    "7": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "6",
+       0
+      ],
+      "seed": 975436216244440,
+      "steps": 30,
+      "cfg": 3.0,
+      "sampler_name": "dpmpp_2m_sde_gpu",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "8": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "7",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "9": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "8",
+       0
+      ],
+      "filename_prefix": "Studio/anima-artist-stack"
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "anima-artist-stack_00002_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 975436216244440,
+   "prompt_id": "26f7ee38-67a0-49ba-bb03-fafa4913ddb9",
+   "media_type": "image",
+   "asset_id": "ddac9d0afb7e561cb3bd15379d9641fa"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "native_recipe": null
+}

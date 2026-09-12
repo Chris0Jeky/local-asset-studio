@@ -10,9 +10,8 @@ the same environment variable, so no key is typed into its panel). ComfyUI PID i
 
 **Installed with SHA-256 receipts** (`.runtime/downloads/receipts.json`, pinned in `models/library.json`): the Krea 2
 koukouya adapter (HUMAN_TODO q-1 closed), Anima adapters xilmo, huashijw, koukouya, NEWANIMASTYLE, and the official
-Anima turbo LoRA. ke-ta and kieed (LyCORIS) landed later in the pass with verified receipts. **Still downloading at closeout** (civitai and
-Hugging Face both throttled to well under 1 MB/s from this network): the 4 GB `anima-base-v1.0` checkpoint, pinned from
-the civitai listing with a `status` note; the Studio reports it as missing until the file lands.
+Anima turbo LoRA. ke-ta, kieed (LyCORIS) and, after a 105-minute throttled Hugging Face download, the 4 GB `anima-base-v1.0` checkpoint all
+landed with verified receipts (the checkpoint's hash matches the civitai listing), so every file the Anima presets name is installed.
 Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `anima-base-retry-2026-09-12.log`.
 
 **Executed and inspected** (`experiments/curated/anime-fantasy-atelier/`, JPEG copies in `examples/anime-fantasy-atelier/`):
@@ -23,6 +22,7 @@ Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `a
 | `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
 | `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
 | `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
+| `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
 
 **Contract change.** `CONTROL_KEYS` and `LORA_SLOTS` now run to six slots (`lora5`, `lora6` and their `_name` twins) in
 the server, planner, validator and UI; the six-slot rows were confirmed in the running UI's DOM (Slot 1–6).
@@ -33,10 +33,9 @@ variants for the 1328×1776 reference, the adapter-free artist-tag look, the tur
 repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
 the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
 
-**NOT verified.** `anima-artist-stack` as authored (base v1.0); the 1328×1776
-reference variant; the three new recipes; the `anime-detail-fix` and `krea-refine` variants other than the authored
-defaults; the Civitai node pack's own sign-in and downloads (only import and node registration were checked); the
-Manager UI beyond its version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the `krea-dark-scifi-comic-warrior` recipe; the
+detail-fix/refine variants beyond the authored defaults; the Civitai panel sign-in and downloads; the Manager UI beyond its
+version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
 
 **Owner's creative review** of the first atelier pass is recorded in `HUMAN_TODO.md` (q-2 closed) and the guide.
 

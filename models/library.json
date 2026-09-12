@@ -1009,7 +1009,7 @@
       "name": "Anima / base-v1.0",
       "file": "diffusion_models/anima-base-v1.0.safetensors",
       "source": "https://civitai.com/models/2458426?modelVersionId=2945208",
-      "url": "https://civitai.com/api/download/models/2945208",
+      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/main/split_files/diffusion_models/anima-base-v1.0.safetensors",
       "bytes": 4182218328,
       "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
       "family": "Anima",
@@ -1020,7 +1020,7 @@
         1.0,
         1.0
       ],
-      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+      "repo": "circlestone-labs/Anima"
     },
     {
       "id": "anima-newanimastyle-v1",

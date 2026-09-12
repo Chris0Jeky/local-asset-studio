@@ -101,9 +101,7 @@ not legal advice and the linked model page governs.
 | `krea2_koukouya_style_c1-st3000.safetensors` | none | 1.0 | [model 2844656](https://civitai.com/models/2844656?modelVersionId=3211621) | Image, RentCivit, Rent, Sell; derivatives allowed |
 
 NIJISIS was downloaded by the owner on 12 September 2026 (the owner spent the Buzz); its SHA-256 was verified
-against the installed file. **koukouya is not installed**: its size and SHA-256 come from the civitai version
-metadata, not from a local file, so Studio's **Models & folders** will show it missing until someone fetches
-it with an API key or the browser. That is a `HUMAN_TODO.md` item, not an agent decision.
+against the installed file. **koukouya was installed on 12 September 2026** with the owner's civitai key (`CIVITAI_API_TOKEN`), receipt hash matching the listing; the `krea-atelier-target-stack` recipe names all three adapters.
 
 ### Acquisition scripts
 
