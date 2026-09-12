@@ -2,6 +2,8 @@ import http.client
 import importlib.util
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -17,6 +19,11 @@ class FakeStudio:
 
 
 class PromptStartupTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_browser_script_loads_profiles_and_reports_http_failure(self):
+        result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('prompt_lab_frontend.cjs'))], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.http = server.create_server(self.temporary.name, port=0, studio_factory=FakeStudio)
