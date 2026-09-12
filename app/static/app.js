@@ -13,6 +13,9 @@ const getControl = key => document.querySelector('[data-key="' + key + '"]');
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
+// Lineage is only as true as the references still attached: a saved source survives in parentAssets
+// exactly while some attached reference still records it as its parent_asset (/api/assets/reference).
+function pruneParentAssets() { const attached=typeof attachedReferencePayload==='function'?attachedReferencePayload():[]; parentAssets=parentAssets.filter(id=>attached.some(r=>r.file&&!r.missing&&r.parent_asset===id)); }
 function renderPresets() {
   if (!catalog) return;
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
@@ -219,7 +222,7 @@ $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.v
 $('#loraSlots').onchange=updateLoraHints;
 $('#recipeSelect').onchange=e=>{if(e.target.value==='')return;try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
 $('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);};
-$('#reference').onchange=()=>uploaded=null;$('#lastReference').onchange=()=>lastUploaded=null;
+$('#reference').onchange=()=>{uploaded=null;pruneParentAssets();};$('#lastReference').onchange=()=>{lastUploaded=null;pruneParentAssets();};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;submitting=true;updateReady();
   try{

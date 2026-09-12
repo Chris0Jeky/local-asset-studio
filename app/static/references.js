@@ -18,7 +18,7 @@ async function uploadRoleFile(index,file){
   try{
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
-    if(epoch===referenceEpoch)Object.assign(referenceRecords[index],result,{missing:false});
+    if(epoch===referenceEpoch){Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});pruneParentAssets();}
   }catch(e){message(e.message,true);$('#referenceSummary').textContent=e.message;}
   finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
 }
@@ -42,7 +42,7 @@ $('#referenceMode').onchange=e=>{
     if(key==='positive'||key==='negative')$('#'+key).value=value;
     else{const input=getControl(key);if(input)input.value=value;}
   }
-  referenceRecords=referenceRecords.map((r,i)=>previous[i]||r);renderReferenceSlots();
+  referenceRecords=referenceRecords.map((r,i)=>previous[i]||r);pruneParentAssets();renderReferenceSlots();
 };
 $('#referenceCards').addEventListener('change',e=>{
   const d=e.target.dataset;
@@ -54,7 +54,7 @@ $('#referenceCards').onclick=e=>{
   const up=e.target.closest('[data-ref-up]'),down=e.target.closest('[data-ref-down]'),clear=e.target.closest('[data-ref-clear]');
   if(!up&&!down&&!clear)return;
   referenceEpoch++;referencePending=0;
-  if(clear){const i=Number(clear.dataset.refClear);referenceRecords[i]={...referenceRecords[i],file:null,missing:false};}
+  if(clear){const i=Number(clear.dataset.refClear);referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};pruneParentAssets();}
   else{const i=Number((up||down).dataset[up?'refUp':'refDown']),j=i+(up?-1:1);[referenceRecords[i],referenceRecords[j]]=[referenceRecords[j],referenceRecords[i]];}
   renderReferenceSlots();
 };
