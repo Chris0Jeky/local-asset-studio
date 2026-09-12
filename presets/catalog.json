@@ -1742,6 +1742,81 @@
       "execution_note": "Executed 2026-09-12 through Studio job 14caa4fb-5999-497f-8b73-0bb2562229df (prompt 3eeba334-6161-4f84-bd36-de0c888c0d74) on the authored example image in 36.2 s; both detector passes fired and the output was inspected (evidence in experiments/curated/anime-fantasy-atelier). Not an art approval."
     },
     {
+      "id": "anime-masked-repair",
+      "name": "Anime Masked Repair (manual alpha)",
+      "category": "Anime quality",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anime-masked-repair-api.json",
+      "visual": "workflows/comfyui/24 - Anime Masked Repair.json",
+      "verified": false,
+      "commercial_note": "Repaints a manually selected region with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "choices": {
+        "sampler": [
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "euler_ancestral",
+          "euler",
+          "dpmpp_3m_sde"
+        ],
+        "scheduler": [
+          "karras",
+          "simple",
+          "normal",
+          "sgm_uniform",
+          "beta"
+        ]
+      },
+      "backend_id": "primary",
+      "description": "Localized manual repair for a finished image. Upload a same-size RGBA PNG with the picture retained in RGB: keep every protected area opaque and make only the hand or other repair region transparent. The existing core mask graph resamples that transparent region at the authored 0.4 denoise and composites it over the original; it does not detect hands or paint masks for you.",
+      "stages": [
+        "RGBA source with manual transparent repair region",
+        "VAE encode",
+        "Latent alpha mask",
+        "WAI resample at authored 0.4 denoise",
+        "Composite over source",
+        "PNG"
+      ],
+      "execution_note": "Catalog and upload/binding contract only. This preset has not been submitted to ComfyUI, visually inspected, or accepted as a correction."
+    },
+    {
       "id": "anime-esrgan",
       "name": "Anime upscale - ESRGAN 2x",
       "category": "Anime quality",

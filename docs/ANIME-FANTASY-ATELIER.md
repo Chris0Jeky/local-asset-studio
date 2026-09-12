@@ -235,7 +235,7 @@ image carries a small imperfection the owner would like corrected by a follow-up
 
 ## The correction pass
 
-Two presets answer that, both driven by a reference image (upload one, or the authored example runs):
+Three presets answer that, all driven by a reference image (upload one, or the authored example runs):
 
 From a gallery image or its Workspace details, choose **Fix hands & face** to open `anime-detail-fix`,
 or **Refine image** to open `krea-refine`. The Studio attaches that image and retains its source asset
@@ -251,6 +251,13 @@ press **Generate** explicitly. Opening either action does not start a render or 
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
+- **`anime-masked-repair`** — a manual local option when a detector crop is the wrong shape. Select it from
+  **Anime quality**, then upload a same-size **RGBA PNG**: retain the image in RGB, leave every protected area
+  opaque, and make only the broken hand or other repair area transparent. The existing core `LoadImage` alpha
+  output drives the latent noise mask and final composite, so the workflow re-samples that manual region with
+  WAI v17 at its authored 0.4 denoise and composites it over the supplied source. Studio preserves the uploaded
+  RGBA bytes when staging the input, but it has no mask painter or automatic hand-anatomy guarantee. This preset
+  is unverified until one deliberately submitted Krea-source repair is inspected and recorded.
 
 The recorded 12 September **Gentle (0.3)** trial sharpened the NoobAI portrait's face but retained its
 extra digit. That run is preserved as an unsuccessful hand-repair candidate; lowering denoise alone
