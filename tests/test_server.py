@@ -118,6 +118,77 @@ class ServerTests(unittest.TestCase):
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
 
+    def uncertain_known_job(self, studio=None):
+        studio=studio or self.studio()
+        job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}})['id']]
+        job.update(status='uncertain',message='Known prompt observation was interrupted.',prompt_ids=['known-prompt'],
+                   submissions=[{'index':0,'prompt_id':'known-prompt','seed':1,'graph':GRAPH,'status':'observing'}],
+                   started_at=10.0,outputs=[{'filename':'retained.png','subfolder':'Studio','type':'output','prompt_id':'known-prompt'}])
+        studio._save(job)
+        return studio,job
+
+    def test_stop_tracking_persists_only_disposition_and_is_idempotent(self):
+        studio,job=self.uncertain_known_job();directory=studio.runs/job['id']
+        recipe=(directory/'recipe.json').read_bytes();workflow=(directory/'workflow.json').read_bytes();before=dict(job)
+        queued=studio.queue.qsize()
+        with patch.object(server.time,'time',return_value=123.5):public=studio.stop_tracking(job['id'],'  VAE load ended unexpectedly  ')
+        self.assertEqual({k:public['tracking_disposition'][k] for k in ('status','reason','recorded_at')},{'status':'stopped','reason':'VAE load ended unexpectedly','recorded_at':123.5})
+        self.assertRegex(public['tracking_disposition']['event_id'],r'^[0-9a-f]{32}$')
+        self.assertFalse(public['can_stop_tracking']);self.assertEqual(job['status'],'uncertain');self.assertEqual(job['message'],before['message'])
+        self.assertEqual(job['prompt_ids'],before['prompt_ids']);self.assertEqual(job['submissions'],before['submissions']);self.assertEqual(job['outputs'],before['outputs'])
+        self.assertEqual((directory/'recipe.json').read_bytes(),recipe);self.assertEqual((directory/'workflow.json').read_bytes(),workflow)
+        self.assertEqual(studio.queue.qsize(),queued);self.assertEqual(getattr(studio,'requests',[]),[])
+        repeated=studio.stop_tracking(job['id'],'VAE load ended unexpectedly')
+        self.assertEqual(repeated['tracking_disposition']['recorded_at'],123.5)
+        with self.assertRaisesRegex(server.StudioError,'different reason'):studio.stop_tracking(job['id'],'Try again')
+        restored=self.studio().jobs[job['id']]
+        self.assertEqual(restored['status'],'uncertain');self.assertEqual(restored['tracking_disposition'],public['tracking_disposition'])
+        self.assertEqual(restored['prompt_ids'],before['prompt_ids']);self.assertEqual(restored['submissions'],before['submissions'])
+
+    def test_stop_tracking_rejects_invalid_or_unresolved_submission_state_without_mutating_memory(self):
+        matrices=[
+            ('blank',''),('oversize','x'*1001),('not text',True),
+            ('not uncertain',None),('pending',None),('missing prompt',None),('mismatched prompt',None),('completed prompt',None),
+        ]
+        for name,reason in matrices:
+            with self.subTest(name=name):
+                studio,job=self.uncertain_known_job();before=json.dumps(job,sort_keys=True);state=(studio.runs/job['id']/'state.json').read_bytes()
+                if name=='not uncertain':job['status']='completed'
+                if name=='pending':job['pending_submission']={'index':0}
+                if name=='missing prompt':job['prompt_ids']=[]
+                if name=='mismatched prompt':job['submissions'][0]['prompt_id']='other'
+                if name=='completed prompt':job['submissions'][0]['status']='completed'
+                if name in ('not uncertain','pending','missing prompt','mismatched prompt','completed prompt'):before=json.dumps(job,sort_keys=True);studio._save(job);state=(studio.runs/job['id']/'state.json').read_bytes()
+                with self.assertRaises(server.StudioError):studio.stop_tracking(job['id'],reason if reason is not None else 'Retain this uncertainty')
+                self.assertEqual(json.dumps(job,sort_keys=True),before);self.assertEqual((studio.runs/job['id']/'state.json').read_bytes(),state)
+        studio,job=self.uncertain_known_job()
+        with patch.object(studio,'_write_json_atomic',side_effect=OSError('disk full')):
+            with self.assertRaisesRegex(OSError,'disk full'):studio.stop_tracking(job['id'],'No durable write')
+        self.assertNotIn('tracking_disposition',job)
+
+    def test_stopped_tracking_requires_explicit_observation_resume_and_retains_stop_history(self):
+        studio,job=self.uncertain_known_job(FakeStudio(self.root,[]));studio.stop_tracking(job['id'],'Operator retained the uncertain prompt')
+        studio._resume(job);self.assertEqual(getattr(studio,'requests',[]),[]);self.assertEqual(job['status'],'uncertain')
+        queued=studio.resume_job(job['id']);self.assertEqual(queued['status'],'queued');self.assertEqual(queued['tracking_disposition']['status'],'resumed')
+        self.assertEqual([event['status'] for event in queued['tracking_disposition']['history']],['stopped','resumed'])
+        studio.replies=iter([{'known-prompt':{'status':{'status_str':'success'},'outputs':{}}}]);studio._resume(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(sum(args[0]=='/prompt' for args,_ in studio.requests),0)
+        repeated,again=self.uncertain_known_job();repeated.stop_tracking(again['id'],'First stop')
+        repeated.resume_job(again['id']);again['status']='uncertain';repeated._save(again)
+        repeated.stop_tracking(again['id'],'Second stop')
+        self.assertEqual([event['status'] for event in again['tracking_disposition']['history']],['stopped','resumed','stopped'])
+        repeated.resume_job(again['id']);self.assertEqual([event['status'] for event in again['tracking_disposition']['history']],['stopped','resumed','stopped','resumed'])
+        second,observed=self.uncertain_known_job();entered=threading.Event();release=threading.Event()
+        def interrupted(*args,**kwargs):entered.set();release.wait(2);raise URLError('lost history')
+        observed_thread=threading.Thread(target=lambda:second._wait_history(observed,observed['submissions'][0]))
+        with patch.object(second,'_request',side_effect=interrupted):
+            self.start.stop()
+            try:
+                observed_thread.start();self.assertTrue(entered.wait(2));second.stop_tracking(observed['id'],'Observation was abandoned');release.set();observed_thread.join(2)
+            finally:self.start.start()
+        self.assertFalse(observed_thread.is_alive());self.assertEqual(observed['status'],'uncertain')
+        self.assertEqual(observed['tracking_disposition']['reason'],'Observation was abandoned')
+
     def test_voice_publication_marker_preserves_exact_prior_assets_on_restart(self):
         s=self.studio()
         def voice_job(identifier, marker):
