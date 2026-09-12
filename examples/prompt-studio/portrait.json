@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "creative-brief",
+  "task": "image",
+  "brief": "An original observatory keeper examining a brass compass in a quiet library.",
+  "facets": {
+    "subject": "Teal coat, brass clasp, left-side satchel",
+    "style": "Clean linework and restrained watercolor shading",
+    "composition": "Waist-up view with room for a caption below"
+  },
+  "tags": [],
+  "avoid": [],
+  "constraints": [
+    {
+      "id": "clasp",
+      "text": "Keep the brass clasp and left-side satchel",
+      "mechanism": "prompt",
+      "priority": "hard"
+    }
+  ],
+  "references": [],
+  "verbatim": {},
+  "parameters": {},
+  "locked": [
+    "verbatim",
+    "facets.subject"
+  ]
+}

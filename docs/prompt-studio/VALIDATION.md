@@ -1,0 +1,11 @@
+# Validation scope
+
+11 September 2026. Local partial checkout: Python3.13.5 with optional Pillow available. **68 tests passed**, including pure compilation, profile coverage, preserved verbatim content, locks/revisions, reference-role boundaries, exact graph text changes, unchanged sampler settings, PNG textual chunks/decompression bounds, hash validation, cache invalidation, simulated helper responses, actual loopback HTTP requests and same-origin handler behavior. Test log is included under `research/prompt-studio/validation/`.
+
+The opt-in extension was tested against a contract-compatible HTTP base handler. The complete existing Studio was read through the GitHub connector but not launched in this partial local checkout. The dedicated PR workflow supplies Ubuntu/Windows Python3.12 test runs and the repository's ordinary checks remain authoritative for full-tree regressions. Remote CI results must be recorded after observation, not inferred from local tests.
+
+Chromium exercised nine profiles, compilation, unsupported negative warnings, exact speech, export download, imported proposal acceptance, reference-role controls, PNG inspection and390px layout. No JavaScript errors or external requests were observed. Browser administrative policy prevented direct localhost navigation, so the harness used `set_content`, a Python dispatch bridge and crypto test shims outside a secure context. HTTP contracts were tested separately with real loopback clients. This is not a claim that the actual user's running Studio or native browser-to-server/WebCrypto integration was exercised.
+
+A small local compiler probe of500 calls took a sub-millisecond median on this environment. This is not a cross-machine performance guarantee or a neural-model benchmark; the compiler is deterministic and does no inference. No token count is claimed without an actual tokenizer.
+
+No helper model was installed or run; real vision/caption quality, prompt effectiveness, accepted image/audio/video outputs, GPU scheduling, live Comfy binding and user-host MCP integration remain unverified. The helper tests use simulated responses; network tests verify transport behavior, not a real Ollama inference. Source links establish capabilities worth testing, not proof that each runtime works on the user's Radeon.

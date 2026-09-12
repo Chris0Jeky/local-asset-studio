@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "creative-brief",
+  "task": "music",
+  "brief": "Quiet chamber music with piano, cello and a restrained sense of wonder.",
+  "facets": {},
+  "tags": [],
+  "avoid": [],
+  "constraints": [],
+  "references": [],
+  "verbatim": {},
+  "parameters": {
+    "instrumental": true,
+    "bpm": 80,
+    "meter": "3/4",
+    "key": "D Minor",
+    "duration_seconds": 45
+  },
+  "locked": [
+    "verbatim"
+  ]
+}

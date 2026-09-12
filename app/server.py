@@ -26,12 +26,14 @@ from urllib.request import Request, urlopen
 
 # The portable Python includes ComfyUI's own `app` package in its search path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from model_library import ModelLibrary
 from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
 import prompting
+from studio_prompt.http_extension import extend_handler
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
@@ -970,7 +972,18 @@ class Handler(BaseHTTPRequestHandler):
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 
+def create_server(repo_root, host=HOST, port=PORT, http_server=ThreadingHTTPServer, studio_factory=Studio):
+    """Bind the loopback port before creating a Studio worker or queue."""
+    handler = extend_handler(Handler)
+    http = http_server((host, port), handler)
+    try: handler.studio = studio_factory(Path(repo_root))
+    except Exception:
+        http.server_close(); raise
+    return http
+
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1])); args = parser.parse_args()
-    Handler.studio = Studio(Path(args.repo_root)); ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
+    with create_server(args.repo_root) as http:
+        print(f"Asset Studio ready: http://{HOST}:{PORT}/ (Prompt Lab: /prompt-lab.html)", flush=True)
+        http.serve_forever()
 if __name__ == "__main__": main()
