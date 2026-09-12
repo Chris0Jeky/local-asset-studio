@@ -582,9 +582,9 @@
       "id": "wai",
       "name": "WAI v17 \u2022 illustration",
       "category": "Characters",
-      "description": "Illustrious-family character illustration. HF mirror provenance recorded; original terms need confirmation.",
       "graph": "workflows/api/wai-api.json",
-      "verified": true,
+      "visual": "workflows/comfyui/18 - WAI v17 Illustration.json",
+      "verified": false,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
         "2",
@@ -618,7 +618,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Illustrious-family character illustration using the card's quality tail and restrained negative, with sampler control and two optional SDXL LoRA slots (off at strength 0).",
+      "stages": [
+        "WAI v17 checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "30-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "wai-pose",
@@ -670,9 +765,9 @@
       "id": "anime",
       "name": "Animagine \u2022 anime character",
       "category": "Characters",
-      "description": "Tag-oriented illustration model. First-generation sample is not character-consistency proof.",
       "graph": "workflows/api/anime-api.json",
-      "verified": true,
+      "visual": "workflows/comfyui/07 - Animagine XL Anime.json",
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -706,7 +801,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Animagine XL 4.0",
+      "description": "Tag-oriented illustration model in the author's documented tag order (subject, character, series, rating, detail, quality tail), with sampler control and two optional SDXL LoRA slots.",
+      "stages": [
+        "Animagine 4.0 Opt checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, original, safe, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "pose",
@@ -758,9 +948,9 @@
       "id": "pony",
       "name": "Pony V6 \u2022 stylized character",
       "category": "Characters",
-      "description": "Keep the score tags in the default prompt while changing subject and style.",
       "graph": "workflows/api/pony-api.json",
-      "verified": true,
+      "visual": "workflows/comfyui/15 - Pony Stylized Characters.json",
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -794,15 +984,110 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Pony V6",
+      "description": "Pony V6 with the full score-tag prefix, source/rating tags and the clip-skip-2 the model card requires. Keep the prefix while changing subject and style.",
+      "stages": [
+        "Pony V6 checkpoint",
+        "2 optional style LoRA slots",
+        "Clip skip 2",
+        "Prompt + seed",
+        "30-step render"
+      ],
+      "source": "https://huggingface.co/AstraliteHeart/pony-diffusion-v6",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy",
+            "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field",
+            "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "noob",
       "name": "NoobAI \u2022 hobby illustration",
       "category": "Experimental",
-      "description": "Hobby/research only under the author terms; do not use generated products commercially.",
       "graph": "workflows/api/noob-api.json",
-      "verified": true,
+      "visual": "workflows/comfyui/14 - NoobAI Hobby Illustration.json",
+      "verified": false,
       "commercial_note": "Author terms prohibit commercialization including generated products.",
       "positive": [
         "2",
@@ -836,7 +1121,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "NoobAI XL 1.1",
+      "description": "Hobby/research only under the author terms. Uses the card's quality prefix and full negative, with sampler control and two optional SDXL LoRA slots.",
+      "stages": [
+        "NoobAI XL 1.1 checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Laxhar/noobai-XL-1.1",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy",
+            "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "masterpiece, best quality, newest, absurdres, highres, safe, no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field",
+            "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "zimage",
@@ -922,8 +1302,8 @@
       "id": "anime-wai-quality",
       "name": "Anime WAI Portrait",
       "category": "Anime quality",
-      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
       "graph": "workflows/api/anime-wai-quality-api.json",
+      "visual": "workflows/comfyui/21 - Anime WAI Portrait.json",
       "verified": false,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
@@ -958,14 +1338,109 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait at 832 x 1216, Euler ancestral, CFG 5, WAI quality tail and two optional LoRA slots. See docs/ANIME-QUALITY.md.",
+      "stages": [
+        "WAI v17 checkpoint",
+        "2 optional style LoRA slots",
+        "Portrait prompt",
+        "30-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "anime-animagine-quality",
       "name": "Anime Animagine Portrait",
       "category": "Anime quality",
-      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
       "graph": "workflows/api/anime-animagine-quality-api.json",
+      "visual": "workflows/comfyui/22 - Anime Animagine Portrait.json",
       "verified": false,
       "commercial_note": "Animagine publisher source: cagliostrolab/animagine-xl-4.0. Check the model and reference-image terms before publishing.",
       "positive": [
@@ -1000,7 +1475,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Animagine XL 4.0",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait at 832 x 1216, Euler ancestral, CFG 5, the author's tag order and two optional LoRA slots. See docs/ANIME-QUALITY.md.",
+      "stages": [
+        "Animagine 4.0 Opt checkpoint",
+        "2 optional style LoRA slots",
+        "Portrait prompt",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, original, safe, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "anime-refine",
