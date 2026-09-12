@@ -1,6 +1,18 @@
 # Modular illustration baselines
 
-This catalog is a bounded set of five comparable, non-sexual illustration starting points. It gives an adult, fully clothed original-character control prompt to three SDXL checkpoints and two Anima-family diffusion-model routes. Each graph is prepared and schema-checked only: `verified: false` remains until one inspected generation is recorded with its prompt ID. It does not state that any new checkpoint or adapter is installed, compatible at runtime, licensed for a use, or creatively accepted.
+This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: false` remains until an inspected generation is recorded. A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
+
+## Where resources belong
+
+The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations.
+
+| Folder | Resources | Why |
+| --- | --- | --- |
+| `checkpoints/` | CSTati version3160406; YumeFlux3135837; AniFox3081757 | Full Illustrious/SDXL checkpoints, loaded with their encoder and VAE through `CheckpointLoaderSimple`. |
+| `diffusion_models/` | JANIMA2967640, file2847103 | Split Anima diffusion weights, loaded through `UNETLoader`; it uses the existing separate text encoder and VAE. |
+| `loras/` | Style adapters3225971(Anima) and3184370(Illustrious); aesthetic boost2855073; Rapscallion3056000; BunnySlop3174127; BunnyMid3197565 | Architecture-specific adapters. The similarly named Anima and Illustrious files are not interchangeable. |
+
+Source listing URLs are retained beside every pin. Current API responses do not provide creator licence/commercial-use permission fields for these additions, so those remain unverified. Files and download receipts stay outside Git's source artifacts; installing them does not upgrade ComfyUI or Python.
 
 ## Control held constant
 
@@ -32,12 +44,22 @@ Use one layer at a time:
 
 1. Generate an unmodified base recipe.
 2. Change only one style adapter or its strength at the fixed seed.
-3. Move pose or reference work into an existing compatible SDXL pose/reference preset; this catalog does not claim a new universal reference adapter.
-4. Use the existing masked-repair preset for a local correction.
-5. Use an existing upscaler/refine preset only after selecting a candidate.
+3. For SDXL pose guidance, start with **WAI — pose guide** (`wai-pose`). Its current checkpoint is WAI. Replacing that loader with another Illustrious checkpoint is an editable experiment, not a recorded run. Anima needs its own compatible conditioning route; never connect an SDXL ControlNet directly to it.
+4. For a local image correction, **Anime Masked Repair (manual alpha)** (`anime-masked-repair`) or **WAI — Fooocus inpaint repair** (`sdxl-inpaint-fix`) provides an existing SDXL route. Follow that preset's reference/mask instructions. Passing an Anima result as an image to a correction stage does not turn the SDXL model into Anima: inspect the repaired region for style drift and preserve the original.
+5. For enlargement, **Anime upscale — ESRGAN 2x** (`anime-esrgan`) works at the image stage. **Anime Refine 1.5x** (`anime-refine`) adds a diffusion refinement stage and can change details, so treat it as a separate result. Select a candidate before spending that extra computation.
+
+```mermaid
+flowchart LR
+  Base[Choose one model family] --> Style[Optional compatible styles]
+  Style --> Sample[Prompt, seed and sampling]
+  Sample --> Image[Preserved original image]
+  Image --> Repair[Optional masked correction]
+  Image --> Scale[Optional image upscale]
+  Repair --> Scale
+```
 
 This is a comparison plan, not a modular Step implementation. In the current PR #126 Workflow Studio path, open **Guided workflows → Workflow builder**, choose **Start from a recipe**, import the registered API graph, select outputs and **Check connections**, then use **Export checked API graph**. It is a checked API export, not a ComfyUI visual workflow file and not permission to execute a changed graph. Arbitrary edited graphs are export-only pending #122; shared document commands and reusable Step modules remain unimplemented work in #120. Do not add a second editor, raw `/prompt` executor or another queue to bridge those gaps.
 
 ## What remains before execution
 
-The model-library owner must record each new file's actual source URL, byte size, SHA-256, terms and installed path. A live schema check can then show whether the named loaders and adapters are available. One deliberate generation may establish only that exact graph/control combination; it still does not establish cross-family quality, commercial rights or art acceptance.
+Exact source pins are recorded; downloads are being verified individually. Wait until the selected model files are complete, then inspect the preset against the live node schema. A successful generation establishes only that exact graph/control combination. A useful reliability study next holds the graph and prompt fixed across several seeds and logs completion, runtime failures and visual defects separately. The two earlier lanternkeeper demonstrations remain experiments at the owner's request.
