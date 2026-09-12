@@ -222,7 +222,7 @@ def make_plan(canon: dict, request: dict) -> dict:
 def check_plan(plan: dict) -> dict:
     require(isinstance(plan, dict) and plan.get('kind') == 'character_study_plan', 'Not a character study plan')
     expected = make_plan(plan.get('canon'), plan.get('request'))
-    require(plan == expected, 'Plan changed; author a new branch plan instead')
+    require(canonical(plan) == canonical(expected), 'Plan changed; author a new branch plan instead')
     return plan
 
 
