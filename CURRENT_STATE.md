@@ -1,5 +1,15 @@
 # Current state — 11 September 2026
 
+## Live reconciliation and creative baseline — 13 September 2026
+
+The two earlier handoffs were reconciled against merged GitHub heads, checks and local receipts. The original screenshot resources are installed and pinned; PR #127 supplies separate WAI/Noirpopwave and Anima/Failleaf/sky02/BunnySlop recipes. Both produced inspected 832×1216 images, in 38.26 and 34.22 seconds respectively. Their exact job/prompt IDs and limitations are in [the reconciliation report](docs/STUDIO-REVIEW-2026-09-12.md). The owner chose **experiment only** for both; neither enters the promising shortlist. They are not a controlled cross-family comparison or proof of source-image likeness.
+
+Live recovery initially failed because Windows refusal took about two seconds but the monitor timed out after one. PR #128 fixed that deadline. The controlled idle-stop test then observed exactly one automatic ComfyUI replacement, a healthy loopback endpoint, an idle queue and unchanged uncertain jobs. Pinned memory is disabled in the managed launcher. Two real inference runs and an idle cache release succeeded; native crash prevention remains unproven. The late protected-process ambiguity fix is being reviewed separately from this successful recovery test.
+
+PR #126 Guided Workflow Studio and PR #129 host-commit admission are deployed. Local memory enforcement is enabled and a non-submitting check rejected a qualifying large graph below 32 GiB without creating a job. The page file is configured at64GiB but still effectively40GiB until the owner restarts Windows. No automatic reboot is authorized. See [HUMAN_TODO](HUMAN_TODO.md) for the supplied creative choices, verified curation membership and remaining owner execution step; those choices are no longer undecided.
+
+The new modular baseline catalog and larger resource downloads are in progress. Download source pins, local hash verification, executed generation and art acceptance are tracked separately. [The production brief](docs/FANTASY-CHARACTER-BRIEF.md) records the owner's non-sexual creative scope and preserves the separate character-study canon.
+
 ## Windows refusal classification — 12 September 2026
 
 The recovery monitor gives its read-only `/system_stats` probe three seconds to receive a Windows connection refusal. A one-second urllib probe timed out at 1.011 seconds on this host and was conservatively classified as unreachable; three and five seconds received `ConnectionRefusedError` (errno/winerror 10061) at about 2.04 seconds. The monitor still starts only after that exact refusal and all existing process/work interlocks; ordinary timeouts remain unreachable and do not authorize launch. This records a host fault-injection observation, not a live recovery success or GPU execution.
