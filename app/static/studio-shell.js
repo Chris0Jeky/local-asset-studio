@@ -3,7 +3,7 @@
   'use strict';
   const $=s=>document.querySelector(s),main=$('main'),isMain=!!$('#createView');
   if(!main)return;
-  const links=[['home','Overview','Attention, recent work and next steps','/#home','01','Workspace'],['create','Create','Recipes, references and generation','/#create','02','Workspace'],['assets','Asset library','Import, organize and reuse outputs','/#assets','03','Workspace'],['production','Runs & review','Comparisons, budgets and exports','/#production','04','Workspace'],['prompt','Prompt Lab','Shape a brief for a model','/prompt-lab.html','✧','Creative tools'],['scene','Scene editor','Assemble images, video and audio','/av.html','▤','Creative tools'],['voice','Voice takes','Prepare local spoken lines','/voice.html','≋','Creative tools'],['models','Models & setup','Environments, readiness and storage','/#models','◇','Studio'],['learn','Workflow guide','Understand recipes and native tools','/#learn','?','Studio']];
+  const links=[['home','Overview','Attention, recent work and next steps','/#home','01','Workspace'],['workflows','Guided workflows','Walkthroughs, node builder and headless recipes','/workflow-studio.html','◎','Workspace'],['create','Create','Recipes, references and generation','/#create','02','Workspace'],['assets','Asset library','Import, organize and reuse outputs','/#assets','03','Workspace'],['production','Runs & review','Comparisons, budgets and exports','/#production','04','Workspace'],['prompt','Prompt Lab','Shape a brief for a model','/prompt-lab.html','✧','Creative tools'],['scene','Scene editor','Assemble images, video and audio','/av.html','▤','Creative tools'],['voice','Voice takes','Prepare local spoken lines','/voice.html','≋','Creative tools'],['models','Models & setup','Environments, readiness and storage','/#models','◇','Studio'],['learn','Workflow guide','Understand recipes and native tools','/#learn','?','Studio']];
   document.body.classList.add('studio-shell',isMain?'studio-main':'studio-tool');
   if(!main.id)main.id='studioMain';main.tabIndex=-1;
   const sidebar=document.createElement('aside');sidebar.id='studioSidebar';sidebar.className='studio-sidebar';
@@ -27,6 +27,10 @@
   $('#studioNavToggle').onclick=()=>{const open=document.body.classList.toggle('studio-nav-open');$('#studioNavToggle').setAttribute('aria-expanded',String(open));};
   document.addEventListener('click',e=>{if(!sidebar.contains(e.target)&&!e.target.closest('#studioNavToggle'))closeNav();const a=e.target.closest('a');if(!a||e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||a.target||a.hasAttribute('download'))return;if(isMain){const url=new URL(a.href,location.href);if(url.origin===location.origin&&url.pathname==='/'&&url.hash&&StudioUX.VIEWS.includes(url.hash.slice(1))){e.preventDefault();document.dispatchEvent(new CustomEvent('studio:navigate',{detail:url.hash.slice(1)}));}}});
   document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&!document.querySelector('dialog[open]')){e.preventDefault();openCommands();}if(e.key==='Escape'&&document.body.classList.contains('studio-nav-open')){closeNav();$('#studioNavToggle').focus();}});
-  const route=location.pathname.includes('av.html')?'scene':location.pathname.includes('voice.html')?'voice':location.pathname.includes('prompt-lab.html')?'prompt':location.pathname.includes('review.html')?'review':'home';
+  const route=location.pathname.includes('workflow-studio.html')?'workflows':location.pathname.includes('av.html')?'scene':location.pathname.includes('voice.html')?'voice':location.pathname.includes('prompt-lab.html')?'prompt':location.pathname.includes('review.html')?'review':'home';
   setView(isMain?StudioUX.normalizeView(location.hash):route);window.StudioShell={setView,openCommands};
+  if(new URLSearchParams(location.search).has('guide')){
+    const css=document.createElement('link');css.rel='stylesheet';css.href='/static/studio-guide.css';document.head.append(css);
+    const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);
+  }
 })();
