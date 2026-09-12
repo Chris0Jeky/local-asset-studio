@@ -22,6 +22,12 @@ class AVTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):cls.tmp.cleanup()
     def setUp(self):self.doc=copy.deepcopy(self.base)
+    def add_mp4_fixture(self,name='clip.mp4'):
+        path=self.root/'media'/name
+        subprocess.run([shutil.which('ffmpeg'),'-hide_banner','-loglevel','error','-loop','1','-framerate','24',
+            '-i',str(self.root/'media/shot-0.png'),'-t','3','-c:v','libx264','-pix_fmt','yuv420p',str(path)],check=True)
+        self.doc['assets']['clip']={'path':f'media/{name}','kind':'video','sha256':p.file_hash(path)}
+        return path
     def test_valid_layout(self):
         result=p.validate(self.doc,self.root);self.assertEqual(result['frames'],144);self.assertEqual(result['samples'],288000)
         self.assertEqual([s['start_frame'] for s in result['shots']],[0,48,96])
@@ -90,6 +96,8 @@ class AVTests(unittest.TestCase):
     def test_compile_no_execution(self):
         r=compile_project(self.doc,self.root);self.assertIn('xfade=transition=fade',r['filter_complex'])
         self.assertIn('normalize=0',r['filter_complex']);self.assertFalse(r['gpu_required'])
+        self.assertIn('-f',r['input_args']);self.assertIn('image2',r['input_args']);self.assertIn('wav',r['input_args'])
+        self.assertIn('-pattern_type',r['input_args']);self.assertIn('none',r['input_args'])
     def test_audio_qc(self):
         report=inspect_wav(self.root/'media/music.wav');self.assertEqual(report['samples'],288000);self.assertFalse(report['near_or_at_clipping'])
     def test_clipping_detection(self):
@@ -102,11 +110,28 @@ class AVTests(unittest.TestCase):
         self.assertEqual(inspect_wav(path)['sample_peak_dbfs'],[None])
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
     def test_real_render(self):
+        self.add_mp4_fixture();self.doc['shots'][0]['asset']='clip'
+        plan=compile_project(self.doc,self.root);self.assertIn('mov',plan['input_args'])
+        self.assertIn('-enable_drefs',plan['input_args']);self.assertIn('-use_absolute_path',plan['input_args'])
         result=render(self.doc,self.root,self.root/'render-dissolves')
         self.assertEqual(result['audio_qc']['samples'],288000);self.assertFalse(result['generation_performed'])
         # Decode frame count, not only a container duration.
         data=subprocess.run(['ffprobe','-v','error','-count_frames','-select_streams','v:0','-show_entries','stream=nb_read_frames','-of','csv=p=0',str(self.root/'render-dissolves/preview.mp4')],capture_output=True,text=True,check=True)
         self.assertEqual(int(data.stdout.strip()),144)
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
+    def test_renamed_hls_is_rejected_without_rendering(self):
+        clip=self.add_mp4_fixture('playlist-source.mp4');segment=self.root/'media'/'unregistered.ts'
+        subprocess.run([shutil.which('ffmpeg'),'-hide_banner','-loglevel','error','-i',str(clip),'-c','copy','-f','mpegts',str(segment)],check=True)
+        playlist=self.root/'media'/'playlist.mp4'
+        playlist.write_text('#EXTM3U\n#EXT-X-TARGETDURATION:3\n#EXTINF:3.0,\nunregistered.ts\n#EXT-X-ENDLIST\n')
+        # An unrestricted playlist demuxer follows the unregistered MPEG-TS
+        # segment. The renderer must never select that demuxer for a video asset.
+        unrestricted=subprocess.run([shutil.which('ffprobe'),'-v','error','-protocol_whitelist','file','-f','hls','-show_entries','format=duration','-of','json',str(playlist)],capture_output=True,text=True)
+        self.assertEqual(unrestricted.returncode,0,unrestricted.stderr);self.assertIn('duration',unrestricted.stdout)
+        self.doc['assets']['clip']={'path':'media/playlist.mp4','kind':'video','sha256':p.file_hash(playlist)}
+        self.doc['shots'][0]['asset']='clip';out=self.root/'must-not-render'
+        with self.assertRaisesRegex(ValueError,'Invalid constrained video input'):render(self.doc,self.root,out)
+        self.assertFalse(out.exists())
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
     def test_real_cut_silent(self):
         self.doc['shots']=self.doc['shots'][:2]

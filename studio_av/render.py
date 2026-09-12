@@ -14,17 +14,37 @@ from .project import validate, safe_path, file_hash, write_new, need
 def tool(name):
     found=shutil.which(name); need(found is not None,f'{name} is not installed/on PATH');return found
 
-def probe(path):
-    # Only called after local-path validation by the public methods.
-    result=subprocess.run([tool('ffprobe'),'-v','error','-protocol_whitelist','file','-show_entries',
-        'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate','-of','json',str(path)],
-        capture_output=True,timeout=20,check=True)
+def input_options(kind, fps=None):
+    """Return the single-file demuxer contract for a declared asset kind."""
+    formats={'image':'image2','video':'mov','audio':'wav'}
+    if kind not in formats: raise ValueError('Unknown media kind')
+    options=['-protocol_whitelist','file','-format_whitelist',formats[kind]]
+    if kind=='image':
+        # image2 otherwise expands '%' patterns into neighbouring files.
+        options+=['-f','image2','-pattern_type','none']
+        if fps is not None: options+=['-loop','1','-framerate',fps]
+    elif kind=='video':
+        # MOV/MP4 data references can name media outside the declared input.
+        options+=['-f','mov','-enable_drefs','0','-use_absolute_path','0']
+    elif kind=='audio':
+        options+=['-f','wav']
+    return options
+
+def probe(path,kind):
+    # The caller has validated path/hash.  The explicit demuxer prevents probe
+    # auto-detection from treating a renamed asset as a playlist or script.
+    try:
+        result=subprocess.run([tool('ffprobe'),'-v','error',*input_options(kind),'-show_entries',
+            'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate','-of','json',str(path)],
+            capture_output=True,timeout=20,check=True)
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f'Invalid constrained {kind} input') from exc
     need(len(result.stdout)<1024*1024,'Probe result too large');return json.loads(result.stdout)
 
 def validate_media(p,root):
     result=validate(p,root); metadata={}
     for key,a in p['assets'].items():
-        path=safe_path(root,a['path']);info=probe(path);metadata[key]=info
+        path=safe_path(root,a['path']);info=probe(path,a['kind']);metadata[key]=info
         kinds=[s for s in info['streams'] if s['codec_type']==('audio' if a['kind']=='audio' else 'video')]
         need(len(kinds)==1,'Expected a single primary media stream')
         stream=kinds[0]
@@ -49,8 +69,7 @@ def compile_project(p,root):
     args=[];filters=[];index=0
     def source(asset):
         nonlocal index
-        a=p['assets'][asset];opts=['-protocol_whitelist','file']
-        if a['kind']=='image':opts+=['-loop','1','-framerate',fps]
+        a=p['assets'][asset];opts=input_options(a['kind'],fps)
         opts+=['-i',str(safe_path(root,a['path']))];args.extend(opts);index+=1;return index-1
     def sec(frames):return f'{frames/rate:.9f}'
     cumulative=0;last=''
@@ -121,7 +140,7 @@ def render(p,root,out,timeout=180):
     with (out/'ffmpeg.log').open('wb') as log:subprocess.run(command,stdout=log,stderr=log,check=True,timeout=timeout)
     with (out/'mux.log').open('wb') as log:
         subprocess.run(common+['-i',str(out/'picture.mp4'),'-i',str(out/'mix.wav'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(out/'preview.mp4')],stdout=log,stderr=log,check=True,timeout=timeout)
-    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4')
+    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4','video')
     need(qc['samples']==info['samples'],'Output audio duration mismatch')
     duration=float(metadata['format']['duration']);need(abs(duration-info['duration_seconds'])<=max(.05,p['fps'][1]/p['fps'][0]),'Output AV duration mismatch')
     receipt={'schema_version':1,'source_revision':info['project_sha256'],'frames_expected':info['frames'],'audio_qc':qc,'probe':metadata,
