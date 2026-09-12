@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from unittest.mock import Mock
+from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from PIL import Image
 
@@ -45,6 +46,69 @@ class ServerTests(unittest.TestCase):
         self.start=patch.object(threading.Thread,"start",lambda *_:None); self.start.start()
     def tearDown(self): self.start.stop(); self.tmp.cleanup()
     def studio(self): return server.Studio(self.root)
+
+    @staticmethod
+    def _http_response(body=None, error=None):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+            def read(self):
+                if error: raise error
+                return body
+        return Response()
+
+    def _run_real_prompt_reply(self, reply, batch_count=1):
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{},'batch_count':batch_count}, enqueue=False)['id']]
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),reply]
+        with patch.object(server,'urlopen',side_effect=replies) as request: s._run(job)
+        return s, job, request
+
+    def test_malformed_prompt_responses_are_uncertain_and_retain_intent(self):
+        cases=(
+            ('malformed-json',self._http_response(b'{')),
+            ('invalid-utf8',self._http_response(b'\xff')),
+            ('truncated-http',self._http_response(error=IncompleteRead(b'{"prompt_id":"partial'))),
+            ('wrong-shape',self._http_response(json.dumps([]).encode())),
+            ('missing-id',self._http_response(json.dumps({'status':'queued'}).encode())),
+            ('nonstring-id',self._http_response(json.dumps({'prompt_id':17}).encode())),
+            ('blank-id',self._http_response(json.dumps({'prompt_id':'   '}).encode())),
+        )
+        for label, reply in cases:
+            with self.subTest(label=label):
+                s,job,request=self._run_real_prompt_reply(reply)
+                self.assertEqual(job['status'],'uncertain')
+                self.assertTrue(job['pending_submission'])
+                self.assertEqual(job['prompt_ids'],[])
+                self.assertEqual(job['submissions'],[])
+                self.assertEqual(request.call_count,2)
+                restored=self.studio().jobs[job['id']]
+                self.assertEqual(restored['status'],'uncertain')
+                self.assertTrue(restored['pending_submission'])
+
+    def test_valid_prompt_response_preserves_prompt_id_and_completes(self):
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}}, enqueue=False)['id']]
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
+                 self._http_response(json.dumps({'prompt_id':'  prompt-1  '}).encode()),
+                 self._http_response(json.dumps({'  prompt-1  ':{'status':{'status_str':'success'},'outputs':{}}}).encode())]
+        with patch.object(server,'urlopen',side_effect=replies): s._run(job)
+        self.assertEqual(job['status'],'completed')
+        self.assertEqual(job['prompt_ids'],['  prompt-1  '])
+        self.assertEqual(job['submissions'][0]['prompt_id'],'  prompt-1  ')
+        self.assertNotIn('pending_submission',job)
+
+    def test_later_batch_member_uncertain_keeps_earlier_evidence_and_stops(self):
+        s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2}, enqueue=False)['id']]
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),
+                 self._http_response(json.dumps({'prompt_id':'first'}).encode()),
+                 self._http_response(json.dumps({'first':{'status':{'status_str':'success'},'outputs':{}}}).encode()),
+                 self._http_response(json.dumps({'prompt_id':None}).encode())]
+        with patch.object(server,'urlopen',side_effect=replies) as request: s._run(job)
+        self.assertEqual(job['status'],'uncertain')
+        self.assertEqual(job['prompt_ids'],['first'])
+        self.assertEqual([submission['prompt_id'] for submission in job['submissions']],['first'])
+        self.assertEqual(job['pending_submission']['index'],1)
+        self.assertEqual(job['pending_submission']['seed'],41)
+        self.assertEqual(request.call_count,4)
     def test_validation_and_companion_bindings(self):
         s=self.studio(); _, graph, _, _, _=s.prepare({"preset_id":"demo","controls":{"width":640,"height":768,"lora":"0.5"}})
         self.assertEqual(graph["1"]["inputs"]["width"],640); self.assertEqual(graph["2"]["inputs"]["width"],640)

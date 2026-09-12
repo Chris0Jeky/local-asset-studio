@@ -107,12 +107,14 @@ class ProductionTests(unittest.TestCase):
         lab=studio.production;p=lab.create(self.intent(values=[1]));lab.start(p['id']);lab.run(p['id'])
         self.assertEqual(self.post_count(studio),1)
         self.assertEqual(lab.get(p['id'])['state']['status'],'uncertain')
+        self.assertEqual(lab.get(p['id'])['budget']['reserved'],1)
         self.assertTrue(next(iter(studio.jobs.values()))['pending_submission'])
         restarted=FakeStudio(self.root,[])
         restarted.production.resume(p['id']);restarted.production.run(p['id'])
         self.assertEqual(self.post_count(restarted),0)
         self.assertEqual(len(restarted.jobs),1)
         self.assertEqual(restarted.production.get(p['id'])['state']['status'],'uncertain')
+        self.assertEqual(restarted.production.get(p['id'])['budget']['reserved'],1)
 
     def test_known_prompt_is_observed_then_only_unstarted_stage_runs(self):
         studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'known-a'},URLError('observation lost')])
