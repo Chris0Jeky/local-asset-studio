@@ -107,6 +107,28 @@ existing 20 GiB headroom. Complete partials can be verified/published without
 network access; empty partials can resume. Failure receipts retain the measured
 partial byte count, or `null` when a path cannot be safely inspected.
 
+Every model transfer now owns its redirect handler. The initial URL must be an
+HTTPS/443 URL without user-info on `huggingface.co`, `civitai.com` or
+`civitai.red`; every redirect is checked before its target is opened, stays in
+the same provider family and the chain stops after five hops. Each accepted host
+must resolve only to globally routable addresses. A cross-host hop retains only
+`User-Agent`, identity encoding and `Range`, so credentials, cookies, custom Host
+values and future caller-specific headers cannot travel to a storage host.
+
+The allow-list is deliberately concrete. Hugging Face hosts are the exact Hub,
+LFS, transfer and regional CDN names published in
+`https://huggingface.co/.well-known/meta.json` on 12 September 2026. Civitai
+supports its two source domains, `b2.civitai.com`, its named
+`civitai-modelfiles-b2` Backblaze endpoints, and delivery-worker buckets in its
+fixed Cloudflare R2 account. Arbitrary `*.hf.co`, `*.backblazeb2.com` and
+`*.cloudflarestorage.com` names are not trusted. Provider endpoint changes need
+an explicit code and test update rather than silently broadening transfer reach.
+Address validation precedes the standard HTTPS open, but the OS resolver runs
+again during connection setup; this reduces accidental/redirect SSRF reach and
+is not DNS pinning against a resolver that changes answers between those steps.
+Policy refusal preserves existing `.part` bytes and records their measured count
+through the existing failed-install receipt path.
+
 SHA-256 verification compares file metadata before and after hashing. Publication
 uses a same-filesystem hard link followed by removal of the staging name: an
 existing destination causes an atomic failure rather than replacement. There is
@@ -163,12 +185,22 @@ must be read from the PR; declaring a workflow is not evidence that it passed.
 The chat checkout was partial, so the full repository suite and catalog validator
 were not claimed locally.
 
+The redirect-policy pass on 12 September 2026 ran 42 focused model-library,
+transfer-safety and redirect tests: 41 passed and the Windows directory-symlink
+privilege case skipped. The dependency-equipped full suite then ran 482 tests:
+473 passed and nine native/symlink cases skipped. Repository validation passed
+59 graphs/bindings, 62 pinned assets and 693 tracked paths. Redirect fixtures use
+a real ephemeral loopback HTTP server reached through a test-only logical-HTTPS
+transport; production policy still refuses loopback addresses. No external model
+bytes, credentials or generation jobs were used.
+
 | Fault group | Assertions |
 |---|---|
 | Queue and HTTP | Missing lists, busy queues, refusal vs timeout, body cap, redirects, no worker launch on unknown state |
 | Process safety | Foreign/ambiguous/inaccessible listeners, executed script, changed PID birth time, late manual work, failed startup, retained child and exact readiness ownership |
 | Files and receipts | Racing destination, unsupported publication, root changes, same-size/mtime replacement, shared browser mutation, stable hashing, no page-load rehash |
 | Transfer and recovery | Exact range, truncated/excess bytes, empty/complete partial, low space, cross-volume copy, two-instance reservation, thread/receipt failure, owner-token preservation |
+| Redirect transport | Allowed Hugging Face/Civitai CDN hops, cross-host header stripping, downgrade/credentials/ports/host/address refusal before contact, loops and five-hop bound, partial/receipt preservation |
 
 ## Workstation acceptance and remaining work
 

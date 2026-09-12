@@ -1,5 +1,21 @@
 # Current state — 11 September 2026
 
+## Model download redirect policy - 12 September 2026
+
+Curated automatic installs now check the original HTTPS source and every redirect before opening
+the next URL: provider-specific delivery hosts, port 443, no URL credentials, public DNS answers and
+a five-hop limit. Cross-host requests retain only transfer headers; pinned sizes/hashes, exact Range
+resume, complete offline partial validation and no-clobber publication remain in place. DNS is
+checked before connection, not pinned to the connected peer. The current production opener has no
+cookie processor; this is not a guarantee about arbitrary future urllib handlers.
+
+Independent review found no confirmed critical/high blockers. Inert transport fixtures exercise
+allowed delivery hops, rejected targets before contact, loops, header stripping, resume and retained
+failure receipts. A read-only live HEAD followed a Hugging Face file to `us.aws.cdn.hf.co` with 200;
+Civitai returned 403 before redirect, so its current delivery path is not live-verified. No model
+bytes, authenticated transfer or model quality were tested by this change. `HUMAN_TODO.md` remains
+the source for optional creative choices.
+
 ## AV renderer, local utilities and live Prompt Lab - 12 September 2026
 
 The AV workbench slice now runs with a checksum-verified portable FFmpeg 9.0.1 installation outside
