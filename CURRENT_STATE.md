@@ -1,5 +1,24 @@
 # Current state — 11 September 2026
 
+## Matched portrait prompt scope — 12 September 2026
+
+Opt-in request/plan/handoff v2 can select existing canon descriptions and invariants
+for each task; v1 plan, brief and handoff golden hashes remain identical. Full canon,
+approval and required checks stay in the retained plan, with a verified selected-text
+audit in each v2 handoff. Integration `77ac0af` includes main `06d2750` through PR #83.
+The configured Windows full suite ran 860 tests: 846 passed and 14 skipped, in 69.301
+seconds; validator passed (60 graphs/bindings, 62 pinned assets, 796 tracked paths).
+The original-head independent review found no defects and ran 257 character tests:
+253 passed and four skipped. Publication and final base-delta review remain on the PR.
+
+The exact approved standard canon and portrait bytes were copied into
+`C:/AI/character-lab/portrait-prompt-scope-20260912/`. The actual offline CLI compiled
+plan `7208de8012ecf62fbe8587d740818ae23f08c8151ebe316f786c063e7e767656` and two
+validated handoffs: identical FLUX route, reference, seed 12001, checks and bindings;
+positive text is 1,217 versus 627 characters. Canon/reference preflight passed. This
+is a new two-attempt, zero-repair study; the exhausted twelve-case pilot is unchanged.
+No new Production project, generation or artistic acceptance is claimed here.
+
 ## Character-edit recovery on Windows — 12 September 2026
 
 PR #83 integration `d9cd223` includes main `04903e9`. Interrupted collection retains
@@ -112,6 +131,12 @@ bytes, checks approved reference roles and both Studio/Comfy input copies, and s
 handoff and resolved recipe evidence. Separate cases share the study allowance; each remains batch one.
 Import queues nothing, and duplicate primary imports are refused. Canon approval is a local attestation,
 not reviewer authentication or generated-art acceptance.
+
+The opt-in v2 prompt-scope planner can prepare a matched two-case portrait-edit study using the same
+approved canon, reference, FLUX edit route, seed and checks. Its selected-canon case carries only
+the requested identity, bodice and style canon text in its positive control while its handoff retains
+  the plan's full approved canon identity plus a hash-checked audit of the selected text. This is offline planning
+coverage only: no new project, queue item, reservation, prompt ID, generation or art approval is claimed.
 
 Inert direct integration checks proved zero-work import, shared budget, concurrent Start reservations,
 restart persistence, duplicate refusal and preflight rollback. Rehashed prompt/binding drift, non-image

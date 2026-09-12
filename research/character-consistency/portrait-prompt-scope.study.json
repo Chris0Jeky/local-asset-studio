@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "kind": "character_study_request",
+  "study_id": "portrait-prompt-scope",
+  "routes": [
+    {
+      "id": "klein-current",
+      "preset_id": "flux-edit",
+      "notes": "Existing FLUX Klein reference-edit preset; preserve family-native settings and record actual preprocessing."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "wink-full-context",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": ["portrait-calm"],
+      "required_checks": ["identity", "costume", "camera", "style"]
+    },
+    {
+      "id": "wink-portrait-context",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": ["portrait-calm"],
+      "required_checks": ["identity", "costume", "camera", "style"],
+      "prompt_scope": {
+        "identity": {
+          "description": false,
+          "invariant_indexes": [0, 1, 2, 3]
+        },
+        "costume": {
+          "description": false,
+          "invariant_indexes": [0]
+        },
+        "style": {
+          "description": true,
+          "invariant_indexes": [0]
+        }
+      }
+    }
+  ],
+  "seeds": [12001],
+  "budget": {
+    "max_generation_attempts": 2,
+    "max_repairs_per_case": 0,
+    "allow_paid_services": false
+  },
+  "hypotheses": [
+    "H02: Prompt scope only: selected approved canon may keep this portrait edit focused without establishing a neural cause, an execution result or art approval."
+  ]
+}

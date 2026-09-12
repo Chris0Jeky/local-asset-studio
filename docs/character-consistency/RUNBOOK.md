@@ -68,6 +68,16 @@ python scripts/character_study.py handoff --plan experiments/runs/character-pilo
 
 The brief conforms to the existing game-assets v1 route. The handoff pins the **current** real catalog entry and raw graph and lists reference uploads/roles in order. It supplies positive text and seed proposals only. It deliberately supplies no armed Studio submission payload. Complete actual upload, live nodes/models, resize/crop, batch-size-one and shared-budget preflight before normal Studio Prepare/Generate. Do not POST this handoff as a graph.
 
+### Optional v2 portrait prompt scope
+
+The v1 pilot and every retained v1 plan, brief and handoff remain byte-for-byte legacy artifacts. A new request with `schema_version: 2` may give a task a `prompt_scope` object. Each selected section is one of `identity`, `costume`, `representation` or `style`, with exactly a boolean `description` and an `invariant_indexes` list. A selected section must include its description or at least one zero-based invariant index. Unknown sections and fields, boolean indexes, duplicate indexes, out-of-range indexes and empty selections are rejected.
+
+The compiler always renders section and invariant text in the canon's original order, regardless of the request object's key or index order. Omit `prompt_scope` from a v2 task to render the full legacy canon text. A scoped task changes its case and plan identity. It never supplies replacement text or new canon facts, and its generic game-asset brief remains schema v1.
+
+`handoff` for a v2 plan is schema v2 and includes `prompt_context`: `all-canon` or `selected-canon`, plus the exact selected description (or `null`) and original index/text pairs. This is an audit record only; omitted canon text is never appended to the positive control. The prepared handoff still pins the full approved canon, references, catalog and graph, and still contains no submission payload.
+
+The checked-in `research/character-consistency/portrait-prompt-scope.study.json` is a two-case, one-route, two-attempt planning example. It pairs the same `portrait-calm` reference, instruction, checks and seed for an all-canon wink edit and a selected-canon wink edit. It is a prompt-scope hypothesis only; it records no generation, neural cause or art approval.
+
 The first primary-case import POSTs an object to `/api/production` with `character_plan`,
 `character_handoff`, ordered uploaded `{reference_id,file}` entries, `name` and `max_seconds`.
 It verifies the self-hash, canon approval attestation (not identity authentication), raw catalog/template
