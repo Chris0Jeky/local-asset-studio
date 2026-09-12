@@ -1,0 +1,25 @@
+; Authored verification profile; never an imported project or plugin.
+[application]
+config/name="Studio Godot Asset Verification"
+run/main_scene="res://main.tscn"
+[rendering]
+renderer/rendering_method="gl_compatibility"
+[debug]
+file_logging/enable_file_logging=false
+[importer_defaults]
+scene={
+"animation/fps": 100.0,
+"animation/remove_immutable_tracks": false,
+"meshes/generate_lods": false,
+"meshes/create_shadow_meshes": false,
+"nodes/use_name_suffixes": false,
+"nodes/use_node_type_suffixes": false,
+"_subresources": {
+"nodes": {
+"PATH:AnimationPlayer": {
+"optimizer/enabled": false,
+"compression/enabled": false
+}
+}
+}
+}

@@ -1,414 +1,363 @@
-"""Build and verify a bounded Godot asset project from Studio atlas/GLB inputs.
+"""Package Studio atlases/GLBs and verify them with an explicitly selected Godot.
 
-This adapter only starts a caller-selected Godot executable with fixed argument
-arrays.  It never evaluates manifest text as code or runs a command supplied by
-asset metadata.  Inputs are confined to ``input_root`` and each invocation owns
-a previously nonexistent ``output_root``.
+Packaging performs no engine execution. Verification observes actual sprite
+signals at a fixed simulation timestep, and validates optional GLBs with Khronos
+before importing them. It is not artistic, collision or licence acceptance.
 """
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
+import math
 from pathlib import Path
+import re
 import shutil
-import subprocess
 import sys
+import tempfile
+import time
 from typing import Any
 
-from game_asset_pipeline import file_sha, read_json
+from engine_validation import (EvidenceError, atlas_evidence, file_sha, inspect_glb, read_json,
+                               require, run_command, validate_glb, write_json)
+
+GodotAdapterError = EvidenceError
+MAX_MANIFEST_BYTES = 4 * 1024**2
+FILTERS = {'nearest': 1, 'linear': 2}
+FIXED_FPS = 240
+MAX_CYCLE_MS = 30_000
 
 
-MAX_MANIFEST_BYTES = 4 * 1024 * 1024
-FILTERS = {"nearest": 1, "linear": 2}
+def _require(condition, message):
+    require(condition, message)
 
 
-class GodotAdapterError(ValueError):
-    """A bad adapter request or an engine result that misses the contract."""
-
-
-def _require(condition: bool, message: str) -> None:
-    if not condition:
-        raise GodotAdapterError(message)
-
-
-def _absolute_directory(value: str | Path, label: str, exists: bool = True) -> Path:
+def _absolute_directory(value, label, exists=True):
     path = Path(value).expanduser()
-    _require(path.is_absolute(), f"{label} must be an absolute path")
+    require(path.is_absolute(), label + ' must be an absolute path')
+    require(not path.is_symlink(), label + ' must not be a symlink')
     path = path.resolve()
     if exists:
-        _require(path.is_dir(), f"{label} is not a directory: {path}")
+        require(path.is_dir(), label + ' is not a directory')
     return path
 
 
-def _input_file(input_root: Path, value: str, label: str) -> Path:
-    candidate = Path(value)
-    _require(not candidate.is_absolute(), f"{label} must be relative to input_root")
-    resolved = (input_root / candidate).resolve()
-    _require(resolved.is_relative_to(input_root), f"{label} escapes input_root")
-    _require(resolved.is_file(), f"{label} is missing: {value}")
+def _input_file(root, value, label):
+    require(isinstance(value, str) and value and '\\' not in value, label + ' must be a portable relative path')
+    path = Path(value)
+    require(not path.is_absolute() and '..' not in path.parts and ':' not in value, label + ' escapes input_root')
+    resolved = (root / path).resolve()
+    require(resolved.is_relative_to(root) and resolved.is_file(), label + ' is missing or escapes input_root')
     return resolved
 
 
-def _finite_number(value: Any, label: str) -> float:
-    _require(type(value) in (int, float), f"{label} must be a number")
-    result = float(value)
-    _require(result == result and abs(result) != float("inf"), f"{label} must be finite")
-    return result
+def _finite_number(value, label):
+    require(type(value) in (float, int) and math.isfinite(value), label + ' must be a finite number')
+    return float(value)
 
 
-def _read_atlas_manifest(path: Path) -> dict[str, Any]:
-    _require(path.stat().st_size <= MAX_MANIFEST_BYTES, "Atlas manifest exceeds 4 MiB")
+def _read_atlas_manifest(path):
     manifest = read_json(path)
-    _require(isinstance(manifest, dict), "Atlas manifest must be an object")
-    _require(manifest.get("schema_version") == 1 and manifest.get("kind") == "sprite_atlas",
-             "Expected Studio sprite_atlas manifest schema 1")
-    _require(isinstance(manifest.get("clip"), str) and manifest["clip"], "Atlas clip is required")
-    _require(type(manifest.get("loop")) is bool, "Atlas loop must be boolean")
-    canvas = manifest.get("logical_canvas")
-    anchor = manifest.get("anchor")
-    _require(isinstance(canvas, list) and len(canvas) == 2 and all(type(x) is int and 1 <= x <= 8192 for x in canvas),
-             "logical_canvas must be [width,height] integers")
-    _require(isinstance(anchor, list) and len(anchor) == 2 and all(type(x) is int for x in anchor),
-             "anchor must be [x,y] integers")
-    _require(0 <= anchor[0] <= canvas[0] and 0 <= anchor[1] <= canvas[1], "anchor lies outside logical_canvas")
-    _require(manifest.get("filter", "nearest") in FILTERS, "filter must be nearest or linear")
-    _require(isinstance(manifest.get("atlas"), str) and manifest["atlas"], "Atlas PNG path is required")
-    _require(isinstance(manifest.get("atlas_sha256"), str) and len(manifest["atlas_sha256"]) == 64,
-             "Atlas SHA-256 is required")
-    frames = manifest.get("frames")
-    _require(isinstance(frames, list) and 1 <= len(frames) <= 512, "Expected 1..512 atlas frames")
-    identifiers: set[str] = set()
-    for index, frame in enumerate(frames):
-        _require(isinstance(frame, dict), f"Frame {index} must be an object")
-        frame_id = frame.get("id")
-        _require(isinstance(frame_id, str) and frame_id and frame_id not in identifiers,
-                 f"Frame {index} has a missing or duplicate ID")
-        identifiers.add(frame_id)
-        region = frame.get("region")
-        _require(isinstance(region, list) and len(region) == 4 and all(type(x) is int and x >= 0 for x in region),
-                 f"Frame {frame_id} region must be [x,y,width,height]")
-        _require(region[2] == canvas[0] and region[3] == canvas[1],
-                 f"Frame {frame_id} differs from common logical canvas")
-        _require(type(frame.get("duration_ms")) is int and 1 <= frame["duration_ms"] <= 60000,
-                 f"Frame {frame_id} has invalid duration_ms")
+    require(isinstance(manifest, dict) and type(manifest.get('schema_version')) is int
+            and manifest['schema_version'] == 1 and manifest.get('kind') == 'sprite_atlas',
+            'Expected Studio sprite_atlas manifest schema 1')
+    clip = manifest.get('clip')
+    require(isinstance(clip, str) and 1 <= len(clip) <= 120 and all(ord(c) >= 32 for c in clip),
+            'Atlas clip must be 1..120 printable characters')
+    require(type(manifest.get('loop')) is bool, 'Atlas loop must be boolean')
+    canvas, anchor = manifest.get('logical_canvas'), manifest.get('anchor')
+    require(isinstance(canvas, list) and len(canvas) == 2 and all(type(v) is int and 1 <= v <= 8192 for v in canvas),
+            'logical_canvas must be two positive integers up to 8192')
+    require(isinstance(anchor, list) and len(anchor) == 2 and all(type(v) is int for v in anchor)
+            and all(0 <= anchor[i] <= canvas[i] for i in range(2)), 'anchor lies outside logical_canvas')
+    require(manifest.get('filter', 'nearest') in FILTERS, 'filter must be nearest or linear')
+    require(isinstance(manifest.get('atlas'), str) and manifest['atlas'], 'Atlas PNG path is required')
+    require(isinstance(manifest.get('atlas_sha256'), str) and re.fullmatch('[0-9a-f]{64}', manifest['atlas_sha256']),
+            'Atlas SHA-256 is required')
+    frames = manifest.get('frames')
+    require(isinstance(frames, list) and 1 <= len(frames) <= 512, 'Expected 1..512 atlas frames')
+    seen = set()
+    for frame in frames:
+        require(isinstance(frame, dict), 'Frame must be an object')
+        identifier = frame.get('id')
+        require(isinstance(identifier, str) and 1 <= len(identifier) <= 200 and identifier not in seen,
+                'Frame has a missing or duplicate ID')
+        seen.add(identifier)
+        region = frame.get('region')
+        require(isinstance(region, list) and len(region) == 4 and all(type(v) is int and v >= 0 for v in region)
+                and region[2:] == canvas, 'Frame must retain the common logical canvas')
+        require(type(frame.get('duration_ms')) is int and 1 <= frame['duration_ms'] <= 60_000,
+                'Frame has invalid duration_ms')
     return manifest
 
 
-def describe() -> dict[str, Any]:
-    return {
-        "adapter": "godot-asset-adapter", "schema_version": 1,
-        "operations": ["preflight", "execute", "inspect", "export", "cancel_owned"],
-        "input_contract": "Studio sprite_atlas manifest and optional GLB under an explicit input root",
-        "output_contract": "new Godot project plus actual headless engine report",
-        "unsupported": ["rig retargeting", "root motion acceptance", "collision acceptance", "art acceptance"],
-    }
+def describe():
+    return {'adapter': 'godot-asset-adapter', 'schema_version': 2,
+            'operations': ['preflight', 'package', 'execute', 'inspect', 'export'],
+            'input_contract': 'Studio sprite_atlas and optional self-contained GLB under explicit input_root',
+            'output_contract': 'exclusive Godot project, signal timing, source checksums and independent format/import reports',
+            'unsupported': ['live asynchronous cancellation', 'rig retargeting', 'collision acceptance',
+                            'root motion acceptance', 'art acceptance', 'licence clearance']}
 
 
-def preflight(godot_path: str | Path, timeout: float = 30) -> dict[str, Any]:
-    executable = Path(godot_path).expanduser().resolve()
-    _require(executable.is_file(), f"Godot executable is missing: {executable}")
-    result = subprocess.run([str(executable), "--headless", "--version"], capture_output=True,
-                            text=True, encoding="utf-8", errors="replace", timeout=timeout, check=False)
-    version = result.stdout.strip()
-    _require(result.returncode == 0 and version.startswith("4."), "Godot 4 headless preflight failed")
-    return {"operation_id": "godot-preflight", "state": "ready", "runtime": {
-        "path": str(executable), "sha256": file_sha(executable), "version": version,
-    }, "resolved_inputs": [], "output_paths": [], "warnings": [],
-            "measurement_method": "Godot --headless --version"}
+def preflight(godot_path, timeout=30, evidence_dir=None):
+    executable = Path(godot_path).expanduser()
+    require(executable.is_absolute() and executable.is_file(), 'Godot executable must be an existing absolute path')
+    executable = executable.resolve()
+    if evidence_dir is None:
+        with tempfile.TemporaryDirectory(prefix='studio-godot-preflight-') as directory:
+            return preflight(executable, timeout, Path(directory))
+    result = run_command([str(executable), '--headless', '--version'], evidence_dir, 'godot-version', timeout)
+    version = result['stdout'].strip()
+    require(re.fullmatch(r'4\.\d+[^\r\n]*', version), 'Godot 4 headless preflight failed')
+    return {'operation_id': 'godot-preflight', 'state': 'ready', 'runtime': {
+        'path': str(executable), 'sha256': file_sha(executable), 'version': version},
+        'measurement_method': 'Godot --headless --version'}
 
 
-def _quote(value: str) -> str:
+def _quote(value):
     return json.dumps(value, ensure_ascii=False)
 
 
-def _project_tscn(manifest: dict[str, Any]) -> str:
-    canvas = manifest["logical_canvas"]
-    anchor = manifest["anchor"]
-    atlas_textures: list[str] = []
-    frames: list[str] = []
-    for index, frame in enumerate(manifest["frames"]):
-        sub_id = f"AtlasTexture_{index}"
-        x, y, width, height = frame["region"]
-        atlas_textures.extend([
-            f'[sub_resource type="AtlasTexture" id="{sub_id}"]',
-            'atlas = ExtResource("1_atlas")',
-            f"region = Rect2({x}, {y}, {width}, {height})",
-            "filter_clip = true",
-            "",
-        ])
-        relative_duration = (frame["duration_ms"] / 1000.0) * 60.0
-        frames.append("{\n\"duration\": %.12g,\n\"texture\": SubResource(\"%s\")\n}" %
-                      (relative_duration, sub_id))
-    loop_value = "true" if manifest["loop"] else "false"
-    offset_x = canvas[0] / 2.0 - anchor[0]
-    offset_y = canvas[1] / 2.0 - anchor[1]
-    return "\n".join([
-        f"[gd_scene load_steps={len(manifest['frames']) + 3} format=3]", "",
+def _project_tscn(manifest):
+    canvas, anchor = manifest['logical_canvas'], manifest['anchor']
+    textures, frames = [], []
+    for index, frame in enumerate(manifest['frames']):
+        name = f'AtlasTexture_{index}'
+        textures += [f'[sub_resource type="AtlasTexture" id="{name}"]', 'atlas = ExtResource("1_atlas")',
+                     'region = Rect2(%s)' % ', '.join(map(str, frame['region'])), 'filter_clip = true', '']
+        frames.append('{\n"duration": %.12g,\n"texture": SubResource("%s")\n}' % (frame['duration_ms'] * 60 / 1000, name))
+    return '\n'.join([
+        f'[gd_scene load_steps={len(frames) + 4} format=3]', '',
         '[ext_resource type="Texture2D" path="res://assets/atlas.png" id="1_atlas"]',
-        '[ext_resource type="Script" path="res://verify.gd" id="2_verify"]', "",
-        *atlas_textures,
+        '[ext_resource type="Script" path="res://verify.gd" id="2_verify"]', '', *textures,
         '[sub_resource type="SpriteFrames" id="SpriteFrames_adapter"]',
-        "animations = [{",
-        '"frames": [' + ",\n".join(frames) + "],",
-        f'"loop": {loop_value},',
-        f'"name": &"{manifest["clip"]}",',
-        '"speed": 60.0',
-        "}]", "",
-        '[node name="Verification" type="Node"]',
-        'script = ExtResource("2_verify")',
-        f'metadata/asset_anchor = Vector2({anchor[0]}, {anchor[1]})',
+        'animations = [{', '"frames": [' + ',\n'.join(frames) + '],',
+        '"loop": ' + str(manifest['loop']).lower() + ',', '"name": &' + _quote(manifest['clip']) + ',',
+        '"speed": 60.0', '}]', '', '[node name="Verification" type="Node"]',
+        'script = ExtResource("2_verify")', f'metadata/asset_anchor = Vector2({anchor[0]}, {anchor[1]})',
         f'metadata/logical_canvas = Vector2({canvas[0]}, {canvas[1]})',
-        f'metadata/atlas_filter = &"{manifest.get("filter", "nearest")}"',
-        "",
+        'metadata/atlas_filter = &' + _quote(manifest.get('filter', 'nearest')), '',
         '[node name="SpritePlayback" type="AnimatedSprite2D" parent="."]',
-        'sprite_frames = SubResource("SpriteFrames_adapter")',
-        f'animation = &"{manifest["clip"]}"',
-        f'autoplay = &"{manifest["clip"]}"',
-        "centered = true",
-        f"offset = Vector2({offset_x:.12g}, {offset_y:.12g})",
-        f"texture_filter = {FILTERS[manifest.get('filter', 'nearest')]}",
-        "",
-    ])
+        'sprite_frames = SubResource("SpriteFrames_adapter")', 'animation = &' + _quote(manifest['clip']),
+        'centered = true', 'offset = Vector2(%.12g, %.12g)' % (canvas[0] / 2 - anchor[0], canvas[1] / 2 - anchor[1]),
+        f'texture_filter = {FILTERS[manifest.get("filter", "nearest")]}', ''])
 
 
-VERIFY_GD = r'''extends Node
-
-const GLB_PATH := "__GLB_PATH__"
-
-func alpha_region(image: Image, region: Rect2i) -> Dictionary:
-	var min_x := region.size.x
-	var min_y := region.size.y
-	var max_x := -1
-	var max_y := -1
-	var alpha_pixels := 0
-	for y in range(region.size.y):
-		for x in range(region.size.x):
-			if image.get_pixel(region.position.x + x, region.position.y + y).a > 0.0:
-				alpha_pixels += 1
-				min_x = min(min_x, x)
-				min_y = min(min_y, y)
-				max_x = max(max_x, x)
-				max_y = max(max_y, y)
-	if max_x < 0:
-		return {"alpha_pixels": 0, "bounds": []}
-	return {"alpha_pixels": alpha_pixels, "bounds": [min_x, min_y, max_x + 1, max_y + 1]}
-
-func inventory_glb() -> Dictionary:
-	var inventory := {"requested": GLB_PATH, "loaded": false, "node_count": 0, "meshes": [], "materials": [], "animations": []}
-	if GLB_PATH.is_empty():
-		inventory["not_requested"] = true
-		return inventory
-	var packed := load(GLB_PATH)
-	if not (packed is PackedScene):
-		inventory["load_error"] = "Godot did not load GLB as PackedScene"
-		return inventory
-	var root := (packed as PackedScene).instantiate()
-	inventory["loaded"] = true
-	var stack := [root]
-	var material_seen := {}
-	while not stack.is_empty():
-		var item = stack.pop_back() as Node
-		inventory["node_count"] += 1
-		if item is MeshInstance3D:
-			var mesh_item := item as MeshInstance3D
-			var surfaces := 0
-			if mesh_item.mesh:
-				surfaces = mesh_item.mesh.get_surface_count()
-				for index in range(surfaces):
-					var material := mesh_item.get_active_material(index)
-					if material:
-						var label := "%s:%s" % [material.get_class(), material.resource_name]
-						material_seen[label] = true
-			inventory["meshes"].append({"name": item.name, "surfaces": surfaces})
-		if item is AnimationPlayer:
-			for animation_name in (item as AnimationPlayer).get_animation_list():
-				inventory["animations"].append(str(animation_name))
-		for child in item.get_children():
-			if child is Node:
-				stack.append(child)
-	for label in material_seen.keys():
-		inventory["materials"].append(label)
-	root.queue_free()
-	return inventory
-
-func _ready() -> void:
-	var sprite := $SpritePlayback as AnimatedSprite2D
-	var frames := sprite.sprite_frames
-	var animation := sprite.animation
-	var speed := frames.get_animation_speed(animation)
-	var texture := load("res://assets/atlas.png") as Texture2D
-	var image := texture.get_image()
-	var report := {"report_kind": "godot_headless_import_playback", "engine": Engine.get_version_info(), "sprite": {
-		"animation": str(animation), "frame_count": frames.get_frame_count(animation), "loop": frames.get_animation_loop(animation),
-		"speed_fps": speed, "anchor": [get_meta("asset_anchor").x, get_meta("asset_anchor").y],
-		"logical_canvas": [get_meta("logical_canvas").x, get_meta("logical_canvas").y],
-		"filter": get_meta("atlas_filter"), "texture_filter": sprite.texture_filter,
-		"anchor_world_error": [sprite.offset.x + get_meta("asset_anchor").x - get_meta("logical_canvas").x / 2.0, sprite.offset.y + get_meta("asset_anchor").y - get_meta("logical_canvas").y / 2.0],
-		"frames": [], "total_duration_ms": 0.0}, "glb": inventory_glb()}
-	for index in range(frames.get_frame_count(animation)):
-		var atlas_texture := frames.get_frame_texture(animation, index) as AtlasTexture
-		var region := Rect2i(atlas_texture.region.position, atlas_texture.region.size)
-		var relative_duration := frames.get_frame_duration(animation, index)
-		var duration_ms := relative_duration / speed * 1000.0
-		report["sprite"]["total_duration_ms"] += duration_ms
-		report["sprite"]["frames"].append({"index": index, "region": [region.position.x, region.position.y, region.size.x, region.size.y], "relative_duration": relative_duration, "duration_ms": duration_ms, "alpha": alpha_region(image, region)})
-	var serialized := JSON.stringify(report)
-	var output := FileAccess.open("user://engine-report.json", FileAccess.WRITE)
-	output.store_string(serialized + "\n")
-	output.close()
-	print("GODOT_ADAPTER_REPORT=" + serialized)
-	get_tree().quit(0)
-'''
-
-
-def package_project(input_root: str | Path, atlas_manifest: str, output_root: str | Path,
-                    glb_path: str | None = None) -> dict[str, Any]:
-    """Create an exclusive portable Godot project without starting the engine."""
-    source_root = _absolute_directory(input_root, "input_root")
-    target_root = _absolute_directory(output_root, "output_root", exists=False)
-    _require(not target_root.exists(), f"output_root already exists: {target_root}")
-    manifest_path = _input_file(source_root, atlas_manifest, "atlas_manifest")
+def package_project(input_root, atlas_manifest, output_root, glb_path=None):
+    source_root = _absolute_directory(input_root, 'input_root')
+    target = _absolute_directory(output_root, 'output_root', exists=False)
+    require(not target.exists(), 'output_root already exists; retained attempts are never rerun')
+    manifest_path = _input_file(source_root, atlas_manifest, 'atlas_manifest')
+    manifest_sha = file_sha(manifest_path)
     manifest = _read_atlas_manifest(manifest_path)
-    atlas_path = _input_file(manifest_path.parent.resolve(), manifest["atlas"], "atlas PNG")
-    _require(file_sha(atlas_path) == manifest["atlas_sha256"], "Atlas PNG SHA-256 mismatch")
-    glb_source = _input_file(source_root, glb_path, "glb_path") if glb_path else None
-    if glb_source:
-        _require(glb_source.suffix.lower() == ".glb", "glb_path must name a .glb file")
-    target_root.parent.mkdir(parents=True, exist_ok=True)
-    target_root.mkdir()
-    assets = target_root / "assets"
-    assets.mkdir()
-    shutil.copy2(atlas_path, assets / "atlas.png")
-    if glb_source:
-        shutil.copy2(glb_source, assets / "ember.glb")
-    (target_root / "project.godot").write_text("; Generated by godot_asset_adapter.py\n[application]\nconfig/name=\"Studio Godot Asset Verification\"\nrun/main_scene=\"res://main.tscn\"\n[rendering]\nrenderer/rendering_method=\"gl_compatibility\"\n", encoding="utf-8", newline="\n")
-    (target_root / "main.tscn").write_text(_project_tscn(manifest), encoding="utf-8", newline="\n")
-    verifier = VERIFY_GD.replace("__GLB_PATH__", "res://assets/ember.glb" if glb_source else "")
-    (target_root / "verify.gd").write_text(verifier, encoding="utf-8", newline="\n")
-    return {"operation_id": "godot-package", "state": "packaged", "project_root": str(target_root),
-            "manifest_sha256": file_sha(manifest_path), "atlas_sha256": file_sha(atlas_path),
-            "glb_sha256": file_sha(glb_source) if glb_source else None,
-            "frame_count": len(manifest["frames"]), "anchor": manifest["anchor"],
-            "filter": manifest.get("filter", "nearest"), "clip": manifest["clip"]}
+    require(file_sha(manifest_path) == manifest_sha, 'Atlas manifest changed while reading')
+    image = _input_file(manifest_path.parent, manifest['atlas'], 'atlas PNG')
+    glb = _input_file(source_root, glb_path, 'glb_path') if glb_path else None
+    require(glb is None or glb.suffix.lower() == '.glb', 'glb_path must name a .glb file')
+    require(image.stat().st_size <= 128 * 1024**2 and (glb is None or glb.stat().st_size <= 128 * 1024**2),
+            'Native source exceeds the 128 MiB byte budget')
+    require(file_sha(image) == manifest['atlas_sha256'], 'Atlas PNG SHA-256 mismatch')
+    glb_sha = file_sha(glb) if glb else None
+    target.parent.mkdir(parents=True, exist_ok=True); target.mkdir()
+    (target / 'assets').mkdir()
+    shutil.copyfile(image, target / 'assets/atlas.png')
+    require(file_sha(target / 'assets/atlas.png') == manifest['atlas_sha256'], 'Atlas changed while snapshotting')
+    if glb:
+        shutil.copyfile(glb, target / 'assets/ember.glb')
+        require(file_sha(target / 'assets/ember.glb') == glb_sha, 'GLB changed while snapshotting')
+    template = Path(__file__).with_name('godot_project.godot')
+    (target / 'project.godot').write_bytes(template.read_bytes())
+    (target / 'main.tscn').write_text(_project_tscn(manifest), encoding='utf-8', newline='\n')
+    script = Path(__file__).with_name('godot_probe.gd').read_text(encoding='utf-8')
+    (target / 'verify.gd').write_text(script.replace('__GLB_PATH__', 'res://assets/ember.glb' if glb else ''), encoding='utf-8', newline='\n')
+    write_json(target / 'atlas-manifest.json', manifest)
+    package = {'operation_id': 'godot-package', 'state': 'packaged', 'project_root': str(target),
+               'manifest_sha256': manifest_sha, 'atlas_sha256': manifest['atlas_sha256'], 'glb_sha256': glb_sha,
+               'frame_count': len(manifest['frames']), 'anchor': manifest['anchor'],
+               'filter': manifest.get('filter', 'nearest'), 'clip': manifest['clip']}
+    write_json(target / 'package.json', package)
+    return package
 
 
-def _engine_report_from_stdout(stdout: str) -> dict[str, Any]:
-    for line in stdout.splitlines():
-        if line.startswith("GODOT_ADAPTER_REPORT="):
-            value = json.loads(line.removeprefix("GODOT_ADAPTER_REPORT="))
-            _require(isinstance(value, dict), "Godot report was not an object")
-            return value
-    raise GodotAdapterError("Godot finished without its engine report")
+def _engine_report_from_stdout(stdout):
+    lines = [line.removeprefix('GODOT_ADAPTER_REPORT=') for line in stdout.splitlines()
+             if line.startswith('GODOT_ADAPTER_REPORT=')]
+    require(len(lines) == 1, 'Godot must return exactly one engine report')
+    from engine_validation import parse_json
+    value = parse_json(lines[0])
+    require(isinstance(value, dict), 'Godot report was not an object')
+    return value
 
 
-def _verify_report(report: dict[str, Any], manifest: dict[str, Any], wants_glb: bool) -> None:
-    sprite = report.get("sprite")
-    _require(isinstance(sprite, dict), "Engine report has no sprite section")
-    _require(sprite.get("frame_count") == len(manifest["frames"]), "Godot frame count differs from manifest")
-    _require(sprite.get("anchor") == manifest["anchor"], "Godot anchor differs from manifest")
-    _require(sprite.get("loop") == manifest["loop"], "Godot loop differs from manifest")
-    _require(sprite.get("filter") == manifest.get("filter", "nearest"), "Godot filter differs from manifest")
-    _require(all(abs(_finite_number(value, "anchor_world_error")) < 0.0001 for value in sprite.get("anchor_world_error", [])),
-             "Godot anchor is not placed at node origin")
-    frames = sprite.get("frames")
-    _require(isinstance(frames, list) and len(frames) == len(manifest["frames"]), "Godot did not report every frame")
-    for actual, expected in zip(frames, manifest["frames"]):
-        expected_relative = expected["duration_ms"] / 1000.0 * 60.0
-        _require(abs(_finite_number(actual.get("relative_duration"), "relative_duration") - expected_relative) < 0.00001,
-                 "Godot relative duration differs from duration_ms / 1000 * fps")
-        _require(abs(_finite_number(actual.get("duration_ms"), "duration_ms") - expected["duration_ms"]) < 0.001,
-                 "Godot playback duration differs from manifest")
-        _require(isinstance(actual.get("alpha"), dict) and actual["alpha"].get("alpha_pixels", 0) > 0,
-                 "Godot alpha inspection found an empty frame")
-    expected_total = sum(frame["duration_ms"] for frame in manifest["frames"])
-    _require(abs(_finite_number(sprite.get("total_duration_ms"), "total_duration_ms") - expected_total) < 0.001,
-             "Godot cycle duration differs from manifest")
+def _verify_report(report, manifest, wants_glb, atlas=None):
+    sprite = report.get('sprite')
+    require(isinstance(sprite, dict), 'Engine report has no sprite section')
+    for key, expected in (('frame_count', len(manifest['frames'])), ('anchor', manifest['anchor']),
+                          ('logical_canvas', manifest['logical_canvas']), ('loop', manifest['loop']),
+                          ('animation', manifest['clip']), ('filter', manifest.get('filter', 'nearest')),
+                          ('texture_filter', FILTERS[manifest.get('filter', 'nearest')])):
+        require(sprite.get(key) == expected, 'Godot ' + key + ' differs from manifest')
+    error = sprite.get('anchor_world_error')
+    require(isinstance(error, list) and len(error) == 2 and all(abs(_finite_number(v, 'anchor error')) < 1e-5 for v in error),
+            'Godot anchor is not placed at node origin')
+    frames = sprite.get('frames')
+    require(isinstance(frames, list) and len(frames) == len(manifest['frames']), 'Godot did not report every frame')
+    for i, (actual, expected) in enumerate(zip(frames, manifest['frames'])):
+        require(isinstance(actual, dict) and actual.get('region') == expected['region'], 'Godot atlas region mismatch')
+        require(abs(_finite_number(actual.get('relative_duration'), 'relative_duration') - expected['duration_ms'] * .06) < 1e-5,
+                'Godot relative duration differs from duration_ms / 1000 * fps')
+        require(abs(_finite_number(actual.get('duration_ms'), 'duration_ms') - expected['duration_ms']) < .001,
+                'Godot configured duration differs from manifest')
+        require(isinstance(actual.get('alpha'), dict), 'Godot alpha inspection is missing')
+        if atlas:
+            require(actual['alpha'] == atlas['frames'][i], 'Godot alpha pixels/bounds differ from original, including blank frames')
+    expected_total = sum(f['duration_ms'] for f in manifest['frames'])
+    require(abs(_finite_number(sprite.get('total_duration_ms'), 'total_duration_ms') - expected_total) < .001,
+            'Godot configured cycle differs from manifest')
+    playback = report.get('playback')
+    require(isinstance(playback, dict) and playback.get('completed') is True, 'No observed playback completion')
+    require(playback.get('signal') == ('animation_looped' if manifest['loop'] else 'animation_finished'), 'Wrong completion signal')
+    require(playback.get('timebase') == 'process-delta' and playback.get('fixed_fps') == FIXED_FPS,
+            'Playback must disclose the fixed simulation timebase')
+    require(abs(_finite_number(playback.get('speed_scale'), 'speed_scale') - 1) < 1e-9, 'Playback speed must be one')
+    tolerance = 2 * 1000 / FIXED_FPS + .01
+    require(abs(_finite_number(playback.get('elapsed_ms'), 'elapsed_ms') - expected_total) <= tolerance,
+            'Observed cycle duration differs from manifest')
+    events = playback.get('frame_events')
+    require(isinstance(events, list) and all(isinstance(e, dict) for e in events) and [e.get('frame') for e in events] == list(range(len(frames))),
+            'Observed frame sequence differs from manifest')
+    boundary = 0
+    for event, frame in zip(events, manifest['frames']):
+        require(abs(_finite_number(event.get('elapsed_ms'), 'frame boundary') - boundary) <= tolerance,
+                'Observed frame boundary differs from manifest')
+        boundary += frame['duration_ms']
     if wants_glb:
-        glb = report.get("glb")
-        _require(isinstance(glb, dict) and glb.get("loaded") is True, "Godot did not import the requested GLB")
+        glb = report.get('glb')
+        require(isinstance(glb, dict) and glb.get('loaded') is True and glb.get('meshes'), 'Godot did not import the requested GLB mesh')
+        require(glb.get('import_profile', {}).get('animation_fps') == 100, 'Godot did not apply the declared animation import profile')
+        require(isinstance(glb.get('animation_samples'), list), 'GLB animation sampling evidence is missing')
+        if glb['animation_samples']:
+            players = glb.get('import_profile', {}).get('players')
+            require(isinstance(players, list) and players and all(isinstance(p, dict)
+                    and p.get('optimizer_enabled') is False and p.get('compression_enabled') is False for p in players),
+                    'Godot animation import settings do not disable lossy optimization for every sampled player')
+        for clip in glb['animation_samples']:
+            require(isinstance(clip, dict) and len(clip.get('samples', [])) == 3, 'Incomplete GLB clip sampling')
 
 
-def execute(input_root: str | Path, atlas_manifest: str, output_root: str | Path, godot_path: str | Path,
-            glb_path: str | None = None, timeout: float = 120) -> dict[str, Any]:
-    """Package inputs, import them in Godot, and retain the engine-authored report."""
-    runtime = preflight(godot_path)
+def execute(input_root, atlas_manifest, output_root, godot_path, glb_path=None, timeout=120, *, node_path=None):
+    require(type(timeout) in (int, float) and math.isfinite(timeout) and 1 <= timeout <= 600, 'Timeout must be 1..600 seconds')
+    started = time.monotonic()
     package = package_project(input_root, atlas_manifest, output_root, glb_path)
-    project_root = Path(package["project_root"])
-    manifest_path = _input_file(_absolute_directory(input_root, "input_root"), atlas_manifest, "atlas_manifest")
-    manifest = _read_atlas_manifest(manifest_path)
-    user_data = project_root / "user-data"
-    commands = [
-        [runtime["runtime"]["path"], "--headless", "--path", str(project_root), "--editor", "--quit"],
-        [runtime["runtime"]["path"], "--headless", "--path", str(project_root), "--user-data-dir", str(user_data)],
-    ]
-    logs: list[dict[str, Any]] = []
-    for command in commands:
-        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                                   timeout=timeout, check=False)
-        logs.append({"argv": command[1:], "returncode": completed.returncode, "stdout": completed.stdout,
-                     "stderr": completed.stderr})
-        _require(completed.returncode == 0, "Godot headless command failed")
-    report = _engine_report_from_stdout(logs[-1]["stdout"])
-    _verify_report(report, manifest, glb_path is not None)
-    (project_root / "engine-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
-    (project_root / "engine-log.json").write_text(json.dumps(logs, indent=2) + "\n", encoding="utf-8", newline="\n")
-    return {"operation_id": "godot-execute", "state": "verified", "runtime": runtime["runtime"],
-            "resolved_inputs": {"atlas_manifest": str(manifest_path), "glb": glb_path},
-            "output_paths": {"project": str(project_root), "report": str(project_root / "engine-report.json"),
-                             "log": str(project_root / "engine-log.json")}, "report": report,
-            "warnings": ["Engine import proves this package only; art, rig, collision, root motion and licence acceptance remain outside this adapter."],
-            "measurement_method": "Godot headless editor import followed by Godot headless AnimatedSprite2D playback inspection"}
+    target = Path(package['project_root'])
+    write_json(target / 'execution-intent.json', {'schema_version': 2, 'state': 'prepared', 'package': package,
+                                                'timeout_seconds': timeout, 'fixed_fps': FIXED_FPS})
+    def remaining():
+        seconds = timeout - (time.monotonic() - started)
+        require(seconds > 0, 'Execution time budget exhausted; no later command started')
+        return seconds
+    try:
+        manifest = _read_atlas_manifest(target / 'atlas-manifest.json')
+        require(sum(f['duration_ms'] for f in manifest['frames']) <= MAX_CYCLE_MS, 'Verification cycle exceeds the 30-second simulation budget')
+        original = atlas_evidence(target / 'assets/atlas.png', manifest)
+        write_json(target / 'atlas-source-report.json', original)
+        gltf = None
+        if glb_path:
+            if node_path is None:
+                config = Path(__file__).resolve().parents[1] / 'config/local.json'
+                if config.is_file():
+                    node_path = read_json(config).get('node')
+            gltf = validate_glb(target / 'assets/ember.glb', node_path, target, min(60, remaining()))
+            write_json(target / 'gltf-validation.json', gltf)
+        runtime = preflight(godot_path, min(30, remaining()), target)
+        commands = [[runtime['runtime']['path'], '--headless', '--path', str(target), '--import'],
+                    [runtime['runtime']['path'], '--headless', '--path', str(target), '--fixed-fps', str(FIXED_FPS)]]
+        logs = [run_command(command, target, label, remaining()) for command, label in zip(commands, ('godot-import', 'godot-playback'))]
+        report = _engine_report_from_stdout(logs[-1]['stdout'])
+        write_json(target / 'engine-report.json', report)
+        _verify_report(report, manifest, glb_path is not None, original)
+        for relative, expected in (('assets/atlas.png', package['atlas_sha256']), ('assets/ember.glb', package['glb_sha256'])):
+            if expected:
+                require(file_sha(target / relative) == expected, 'Packaged source changed during engine verification')
+        if gltf:
+            # Source animation indices need not survive engine name sanitization,
+            # but every non-RESET imported clip must have real engine samples.
+            samples = report['glb']['animation_samples']
+            require(len(samples) == len(gltf['source']['animations']), 'Godot did not sample every source animation')
+        write_json(target / 'engine-log.json', logs)
+        result = {'operation_id': 'godot-execute', 'state': 'verified', 'runtime': runtime['runtime'],
+                  'resolved_inputs': {'atlas_manifest': atlas_manifest, 'glb': glb_path}, 'source_hashes': package,
+                  'output_paths': {'project': str(target), 'report': str(target / 'engine-report.json'), 'log': str(target / 'engine-log.json')},
+                  'report': report, 'gltf_validation': {'state': 'validated', 'validator_version': gltf['validator_version']} if gltf else {'state': 'not_requested'},
+                  'warnings': ['Fixed-fps signal timing measures simulation time, not wall-clock rendering performance.',
+                               'GLB poses are engine-evaluated samples, not full animation or gameplay acceptance.',
+                               'Art, rig quality, collision, root motion and rights require separate acceptance.'],
+                  'measurement_method': 'Godot import, actual AnimatedSprite2D completion/frame signals, and optional AnimationPlayer pose sampling',
+                  'evidence_hashes': {p.name: file_sha(p) for p in target.iterdir() if p.is_file()},
+                  'wall_seconds': time.monotonic() - started}
+        write_json(target / 'execution.json', result)
+        return result
+    except Exception as exc:
+        try:
+            write_json(target / 'failure.json', {'state': 'failed', 'error': str(exc)[:2000], 'wall_seconds': time.monotonic() - started,
+                                                'recovery': 'Retained attempt is never rerun. Inspect reports/logs, then choose a new output directory.'})
+        except OSError as reporting_error:
+            exc.add_note('Could not write failure receipt: ' + str(reporting_error))
+        raise
 
 
-def inspect(project_root: str | Path) -> dict[str, Any]:
-    root = _absolute_directory(project_root, "project_root")
-    return read_json(root / "engine-report.json")
+def inspect(project_root):
+    root = _absolute_directory(project_root, 'project_root')
+    require(not (root / 'failure.json').exists(), 'Recorded engine failure; not a verified export')
+    result = read_json(root / 'execution.json')
+    require(isinstance(result, dict) and result.get('state') == 'verified', 'No verified execution receipt')
+    hashes = result.get('evidence_hashes')
+    require(isinstance(hashes, dict) and {'engine-report.json', 'verify.gd', 'main.tscn', 'atlas-manifest.json'} <= hashes.keys(),
+            'Execution receipt is missing mandatory evidence hashes')
+    for name, digest in hashes.items():
+        require(file_sha(_input_file(root, name, 'evidence')) == digest, 'Engine evidence changed: ' + name)
+    for name, digest in (('assets/atlas.png', result['source_hashes']['atlas_sha256']), ('assets/ember.glb', result['source_hashes']['glb_sha256'])):
+        if digest:
+            require(file_sha(_input_file(root, name, 'source')) == digest, 'Verified source changed')
+    return result['report']
 
 
-def export(project_root: str | Path) -> dict[str, Any]:
-    root = _absolute_directory(project_root, "project_root")
-    _require((root / "engine-report.json").is_file(), "Project has no verified engine report")
-    return {"operation_id": "godot-export", "state": "portable_project", "project_root": str(root),
-            "files": [str(root / name) for name in ("project.godot", "main.tscn", "engine-report.json")]}
+def export(project_root):
+    root = _absolute_directory(project_root, 'project_root')
+    inspect(root)
+    return {'operation_id': 'godot-export', 'state': 'portable_project', 'project_root': str(root),
+            'files': [str(root / name) for name in ('project.godot', 'main.tscn', 'engine-report.json', 'execution.json')]}
 
 
-def cancel_owned(_operation_id: str) -> dict[str, Any]:
-    return {"operation_id": _operation_id, "state": "not_running", "warning": "The adapter starts only blocking child processes and owns no background work."}
+def cancel_owned(operation_id):
+    return {'operation_id': operation_id, 'state': 'unsupported',
+            'warning': 'This synchronous adapter exposes no live cancellation handle; its timeout stops only its owned child.'}
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("describe")
-    preflight_parser = sub.add_parser("preflight")
-    preflight_parser.add_argument("--godot", required=True)
-    package_parser = sub.add_parser("package")
-    run_parser = sub.add_parser("run")
-    for child in (package_parser, run_parser):
-        child.add_argument("--input-root", required=True)
-        child.add_argument("--atlas-manifest", required=True, help="Path relative to input-root")
-        child.add_argument("--output-root", required=True, help="New absolute project path")
-        child.add_argument("--glb", help="Optional .glb path relative to input-root")
-    run_parser.add_argument("--godot", required=True)
-    inspect_parser = sub.add_parser("inspect")
-    inspect_parser.add_argument("--project-root", required=True)
-    export_parser = sub.add_parser("export")
-    export_parser.add_argument("--project-root", required=True)
+    sub = parser.add_subparsers(dest='command', required=True)
+    sub.add_parser('describe')
+    pre = sub.add_parser('preflight'); pre.add_argument('--godot', required=True)
+    package = sub.add_parser('package'); run = sub.add_parser('run')
+    for child in (package, run):
+        child.add_argument('--input-root', required=True); child.add_argument('--atlas-manifest', required=True)
+        child.add_argument('--output-root', required=True); child.add_argument('--glb')
+    run.add_argument('--godot', required=True); run.add_argument('--node'); run.add_argument('--timeout', type=float, default=120)
+    for name in ('inspect', 'export'):
+        sub.add_parser(name).add_argument('--project-root', required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "describe": result = describe()
-        elif args.command == "preflight": result = preflight(args.godot)
-        elif args.command == "package": result = package_project(args.input_root, args.atlas_manifest, args.output_root, args.glb)
-        elif args.command == "run": result = execute(args.input_root, args.atlas_manifest, args.output_root, args.godot, args.glb)
-        elif args.command == "inspect": result = inspect(args.project_root)
+        if args.command == 'describe': result = describe()
+        elif args.command == 'preflight': result = preflight(args.godot)
+        elif args.command == 'package': result = package_project(args.input_root, args.atlas_manifest, args.output_root, args.glb)
+        elif args.command == 'run': result = execute(args.input_root, args.atlas_manifest, args.output_root, args.godot, args.glb, args.timeout, node_path=args.node)
+        elif args.command == 'inspect': result = inspect(args.project_root)
         else: result = export(args.project_root)
-        print(json.dumps(result, indent=2))
-        return 0
-    except (GodotAdapterError, OSError, ValueError, TypeError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
-        print(json.dumps({"error": str(exc)}), file=sys.stderr)
-        return 2
+        print(json.dumps(result, indent=2)); return 0
+    except (EvidenceError, OSError, TypeError, KeyError) as exc:
+        print(json.dumps({'error': str(exc)}), file=sys.stderr); return 2
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())
