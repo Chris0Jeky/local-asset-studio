@@ -210,6 +210,116 @@ class ServerTests(unittest.TestCase):
         handler.send_header.assert_any_call('Content-Range','bytes 1-150000/200000')
         self.assertEqual(len(handler.wfile.getvalue()),150000)
 
+    def lora_stack(self, loader='LoraLoaderModelOnly'):
+        """Two stacked LoRA loaders feeding a sampler, plus a text encoder on CLIP."""
+        graph={'1':{'class_type':'UNETLoader','inputs':{'unet_name':'krea.safetensors'}},
+               '2':{'class_type':'CLIPLoader','inputs':{'clip_name':'qwen.safetensors'}},
+               '10':{'class_type':loader,'inputs':{'model':['1',0],'lora_name':'first.safetensors','strength_model':1.0}},
+               '11':{'class_type':loader,'inputs':{'model':['10',0],'lora_name':'second.safetensors','strength_model':1.0}},
+               '4':{'class_type':'CLIPTextEncode','inputs':{'text':'authored prompt','clip':['2',0]}},
+               '7':{'class_type':'KSampler','inputs':{'model':['11',0],'positive':['4',0],'seed':5,'steps':15}}}
+        if loader=='LoraLoader':
+            graph['10']['inputs'].update(clip=['2',0],strength_clip=1.0); graph['11']['inputs'].update(clip=['10',1],strength_clip=1.0)
+            graph['4']['inputs']['clip']=['11',1]
+        preset={'id':'demo','name':'Demo','category':'Test','graph':'workflows/api/demo-api.json','family':'Krea 2 Turbo',
+                'positive':['4','text'],'seed':['7','seed'],'steps':['7','steps'],
+                'lora':['10','strength_model'],'lora_name':['10','lora_name'],
+                'lora2':['11','strength_model'],'lora2_name':['11','lora_name']}
+        if loader=='LoraLoader': preset['bindings_extra']={'lora':[['10','strength_clip']],'lora2':[['11','strength_clip']]}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        return preset,graph
+
+    def test_lora_slots_bind_strength_and_filename(self):
+        self.lora_stack(); s=self.studio()
+        _,graph,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'0.6','lora2':1,'lora2_name':'other.safetensors'}})
+        self.assertEqual(graph['10']['inputs']['strength_model'],0.6)
+        self.assertEqual(graph['11']['inputs']['lora_name'],'other.safetensors')
+        self.assertEqual(s.catalog()['presets'][0]['defaults']['lora2_name'],'second.safetensors')
+        for bad in ('../escape.safetensors','folder/style.safetensors','style.ckpt','',7):
+            with self.assertRaises(server.StudioError): s.prepare({'preset_id':'demo','controls':{'lora_name':bad}})
+
+    def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
+        self.lora_stack(); s=self.studio()
+        _,one,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora2':0}})
+        self.assertNotIn('11',one); self.assertEqual(one['7']['inputs']['model'],['10',0])
+        _,both,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':0,'lora2':0}})
+        self.assertNotIn('10',both); self.assertNotIn('11',both)
+        self.assertEqual(both['7']['inputs']['model'],['1',0])
+        self.assertEqual(sorted(both),['1','2','4','7'])
+
+    def test_disabled_lora_loader_rewires_both_model_and_clip(self):
+        self.lora_stack('LoraLoader'); s=self.studio()
+        _,graph,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':0,'lora2':0}})
+        self.assertEqual(graph['7']['inputs']['model'],['1',0]); self.assertEqual(graph['4']['inputs']['clip'],['2',0])
+        _,kept,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':0}})
+        self.assertNotIn('10',kept); self.assertEqual(kept['11']['inputs']['model'],['1',0]); self.assertEqual(kept['11']['inputs']['clip'],['2',0])
+        self.assertEqual(kept['4']['inputs']['clip'],['11',1])
+
+    def test_unknown_lora_is_rejected_only_while_the_inventory_is_known(self):
+        self.lora_stack()
+        schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['first.safetensors','second.safetensors'],{}]}}}}
+        offline=self.studio()
+        _,graph,_,_,_=offline.prepare({'preset_id':'demo','controls':{'lora_name':'unlisted.safetensors'}})
+        self.assertEqual(graph['10']['inputs']['lora_name'],'unlisted.safetensors')
+        live=FakeStudio(self.root,[schema]); live.node_info()
+        with self.assertRaisesRegex(server.StudioError,'Unknown LoRA file: unlisted.safetensors'):
+            live.prepare({'preset_id':'demo','controls':{'lora_name':'unlisted.safetensors'}})
+        _,allowed,_,_,_=live.prepare({'preset_id':'demo','controls':{'lora_name':'second.safetensors'}})
+        self.assertEqual(allowed['10']['inputs']['lora_name'],'second.safetensors')
+
+    def test_catalog_publishes_installed_choices_and_missing_authored_loras(self):
+        self.lora_stack()
+        schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['first.safetensors'],{}]}}}}
+        s=FakeStudio(self.root,[schema]); s.node_info(); preset=s.catalog()['presets'][0]
+        self.assertEqual(preset['choices']['lora_name'],['first.safetensors'])
+        self.assertEqual(preset['missing_loras'],['second.safetensors'])
+        self.assertEqual(self.studio().catalog()['presets'][0]['missing_loras'],[])
+
+    def test_options_parses_both_combo_encodings(self):
+        schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['a.safetensors','b.safetensors'],{'tooltip':'x'}]}}},
+                'KSampler':{'input':{'required':{'sampler_name':['COMBO',{'options':['euler','er_sde']}],
+                                                 'scheduler':[['simple','beta'],{}]}}}}
+        s=FakeStudio(self.root,[schema]); live=s.options(discover=True)
+        self.assertEqual(live,{'loras':['a.safetensors','b.safetensors'],'samplers':['euler','er_sde'],'schedulers':['simple','beta'],'source':'comfyui'})
+        offline=FakeStudio(self.root,[URLError('offline')]).options(discover=True)
+        self.assertEqual(offline,{'loras':[],'samplers':[],'schedulers':[],'source':'unavailable'})
+
+    def test_wildcards_expand_per_batch_member_and_controls_keep_the_template(self):
+        cards=self.root/'presets/wildcards';cards.mkdir(parents=True)
+        (cards/'lighting.txt').write_text('backlighting\nrim lighting\ndappled sunlight\n')
+        template='a witch, __lighting__, {cool|warm} palette'
+        s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{'positive':template,'seed':7}})['id']]
+        self.assertEqual(job['controls']['positive'],template)
+        self.assertEqual(job['graph']['1']['inputs']['text'],template)
+        first,_=s._batch_graph(job,0);repeat,_=s._batch_graph(job,0);second,_=s._batch_graph(job,1)
+        self.assertEqual(first['1']['inputs']['text'],repeat['1']['inputs']['text'])
+        self.assertNotIn('__',first['1']['inputs']['text']);self.assertNotIn('{',first['1']['inputs']['text'])
+        self.assertEqual({len(x['1']['inputs']['text'].split(', ')) for x in (first,second)},{3})
+
+    def test_knowledge_and_recipes_tolerate_missing_files(self):
+        s=self.studio()
+        self.assertEqual(s.knowledge()['available'],False);self.assertEqual(s.recipes()['recipes'],[])
+        (self.root/'presets/settings-kb.json').write_text(json.dumps({'version':1,'families':{},'loras':{}}))
+        (self.root/'presets/recipes.json').write_text(json.dumps({'version':1,'recipes':[{'id':'r','preset_id':'demo','controls':{'lora_name':'first.safetensors'}}]}))
+        knowledge=s.knowledge();self.assertTrue(knowledge['available']);self.assertEqual(len(knowledge['sha256']),64)
+        self.assertIsNone(s.recipes()['recipes'][0]['available'])
+        schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['other.safetensors'],{}]}}}}
+        live=FakeStudio(self.root,[schema]);live.node_info()
+        annotated=live.recipes()['recipes'][0]
+        self.assertFalse(annotated['available']);self.assertEqual(annotated['missing'],['first.safetensors'])
+
+    def test_new_read_routes_dispatch_and_stay_loopback_only(self):
+        handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,[URLError('offline')])
+        handler.headers={'Host':'127.0.0.1:8191'};sent=[]
+        handler._json=lambda status,obj:sent.append((status,obj))
+        for path in ('/api/options','/api/knowledge','/api/recipes'):
+            handler.path=path;handler.do_GET()
+        self.assertEqual([s for s,_ in sent],[200,200,200])
+        self.assertEqual(sent[0][1]['source'],'unavailable');self.assertFalse(sent[1][1]['available']);self.assertEqual(sent[2][1]['recipes'],[])
+        handler.headers={'Host':'evil.example:8191'};sent.clear();handler.path='/api/knowledge';handler.do_GET()
+        self.assertEqual(sent[0][0],403)
+
     def test_local_runtime_block_does_not_queue(self):
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[dict(PRESET,family='test-family')]}))
         s=self.studio();s.config['runtime_blocks']={'test-family':'Observed incompatible runtime'}
