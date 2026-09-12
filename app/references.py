@@ -1,8 +1,22 @@
 """Reference-role compilation and byte-level provenance, independent of inference."""
 import hashlib
+import math
 from pathlib import Path
 
 ROLES={'identity','pose','style','costume','composition','geometry','motion','mask'}
+
+
+def scale_node(graph, node):
+    """The ImageScaleToTotalPixels node this slot's loader feeds, or None."""
+    for item in graph.values():
+        if item.get('class_type')=='ImageScaleToTotalPixels' and (item.get('inputs') or {}).get('image')==[node,0]: return item
+    return None
+
+
+def scaled_size(width, height, megapixels, steps=1):
+    """ComfyUI's own arithmetic: comfy_extras/nodes_post_processing.ImageScaleToTotalPixels."""
+    factor=math.sqrt(megapixels*1024*1024/(width*height))
+    return [int(round(width*factor/steps)*steps), int(round(height*factor/steps)*steps)]
 
 
 def image_record(root, name):
@@ -37,18 +51,25 @@ def compile_references(preset, graph, supplied, uploads):
         record.update(role=reference['role'],slot=index+1)
         node,field=slot['binding']; graph[node]['inputs'][field]=name
         record['transform']={'policy':'native Qwen encoder preprocessing'}
-        if index==0:
-            width=graph['5']['inputs']['width']
-            height=max(1,round(record['height']*width/record['width']))
-            if width*height>preset.get('max_reference_pixels',1024*1024):
-                raise ValueError('The reference aspect ratio exceeds this recipe’s pixel budget. Reduce reference width or crop deliberately.')
-            record['transform']={'policy':'fit-width-preserve-aspect','source_size':[record['width'],record['height']],
-                'resized_size':[width,height],'vae_size':[width-width%8,height-height%8],
-                'vae_center_crop':[width%8//2,height%8//2]}
-            if min(record['transform']['vae_size'])<8: raise ValueError('Reference is too narrow for the VAE')
+        scaler=scale_node(graph,node)
+        if scaler is not None:
+            inputs=scaler.get('inputs') or {}; megapixels=inputs.get('megapixels'); steps=inputs.get('resolution_steps',1)
+            budget=preset.get('max_reference_pixels',1024*1024)
+            if isinstance(megapixels,bool) or not isinstance(megapixels,(int,float)) or not 0<megapixels*1024*1024<=budget:
+                raise ValueError('This recipe scales every reference past its own pixel budget. Fix the workflow megapixels or the recipe budget.')
+            if isinstance(steps,bool) or not isinstance(steps,int) or steps<1: raise ValueError('Reference resize step must be a whole number of pixels')
+            resized=scaled_size(record['width'],record['height'],megapixels,steps)
+            # The encoder derives its own reference latent from the already scaled image, on the eight-pixel grid.
+            vae=scaled_size(resized[0],resized[1],1.0,8)
+            if min(resized+vae)<16:
+                raise ValueError('The reference aspect ratio is too extreme for this recipe’s pixel budget. Crop it deliberately before attaching.')
+            record['transform']={'policy':'scale-to-total-pixels','megapixels':megapixels,
+                'upscale_method':inputs.get('upscale_method'),'source_size':[record['width'],record['height']],
+                'resized_size':resized,'vae_size':vae}
         records.append(record)
     prompt_node,prompt_field=preset['positive']
     brief=graph[prompt_node]['inputs'][prompt_field]
-    guidance='\n'.join(f"Image {r['slot']} — {r['role']}: use {r['contribution'] or 'the assigned visual role'}. Avoid transferring: {r['avoid'] or 'unrequested details'}." for r in records)
+    # TextEncodeQwenImageEditPlus injects "Picture {i+1}:" tokens, so the guidance names the same slots.
+    guidance='\n'.join(f"Picture {r['slot']} — {r['role']}: use {r['contribution'] or 'the assigned visual role'}. Avoid transferring: {r['avoid'] or 'unrequested details'}." for r in records)
     graph[prompt_node]['inputs'][prompt_field]=guidance+'\n\nRequested result:\n'+brief
     return records

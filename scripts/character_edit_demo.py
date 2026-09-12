@@ -39,7 +39,9 @@ def create(root: Path) -> dict:
     request={'schema_version':1,'kind':'character_edit_intent','id':'amber-costume','document_sha256':sha(doc),
              'operation':'costume-change','changes':[{'actor':'amber','facet':'costume','instruction':'Change only the selected jacket area to orange.'}],
              'scene_change':None,'context_box':[50,96,137,189],'edit_mask':ref('edit-mask.png'),
-             'protect_mask':ref('protect-mask.png'),'patch_alignment':8,'layout':None,
+             # 16 keeps the padded patch on the native Qwen recipes' dimension grid, so the
+             # bridge can bind it straight to the explicit canvas without resampling.
+             'protect_mask':ref('protect-mask.png'),'patch_alignment':16,'layout':None,
              'budget':{'owner':'editing-pilot','max_candidates':3,'max_repairs':1},
              'policy_preference':{'local_only':True,'exclude_known_filters':True,
                  'exclude_documented_weight_restrictions':True,'unknown_policy':'allow_with_warning'}}
