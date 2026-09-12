@@ -1,5 +1,13 @@
 # Native engine evidence: sprite playback and GLB gates
 
+**Local Windows proof, 12 September 2026:** all five native integration tests passed using the
+configured Godot **4.7.2.stable.official.ed1daf0bf**, Node **24.19.0** and the pinned Khronos validator.
+This extends the earlier hosted Godot 4.5 evidence below. Actual sprite loop/finish signals,
+animated GLB midpoint/materials, skin bindings and invalid-accessor rejection ran on this PC.
+The observed four-frame cycle was 479.1667 ms of fixed-step simulation time for a 480 ms target;
+this is not a wall-clock performance benchmark or gameplay/visual acceptance.
+Reports and runtime identity are retained in `.runtime/session-2026-09-12/native-evidence/`.
+
 Implementation slice for **#15 / #24**. It extends the existing Godot adapter used
 by Studio native exports and the offline CLI. No additional executor, server,
 GPU coordinator or game engine is introduced. #3/#22 can use it for their later
