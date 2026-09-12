@@ -165,14 +165,14 @@ class Studio:
         path = self.root / "presets/recipes.json"
         data = read_json(path) if path.is_file() else None
         if path.is_file() and (not isinstance(data, dict) or not isinstance(data.get("recipes"), list)): raise StudioError("Invalid presets/recipes.json")
-        installed = self.options().get("loras") or []
+        inventory = self.options(); installed = inventory.get("loras") or []
         entries = []
         for recipe in (data or {}).get("recipes", []):
             if not isinstance(recipe, dict): continue
             names = [v for key, v in (recipe.get("controls") or {}).items() if key in LORA_NAME_KEYS and isinstance(v, str)]
             missing = sorted({name for name in names if name not in installed}) if installed else []
             entries.append(dict(recipe, available=(not missing) if installed else None, missing=missing))
-        return {"version": (data or {}).get("version", 1), "available": path.is_file(), "source": "comfyui" if installed else "unavailable", "recipes": entries}
+        return {"version": (data or {}).get("version", 1), "available": path.is_file(), "source": inventory.get("source"), "recipes": entries}
 
     def preset(self, preset_id):
         for p in self.catalog()["presets"]:
