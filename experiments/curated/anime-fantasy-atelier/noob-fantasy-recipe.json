@@ -1,0 +1,206 @@
+{
+ "version": 2,
+ "preset_id": "noob",
+ "controls": {
+  "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy",
+  "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+  "width": 832,
+  "height": 1216
+ },
+ "batch_count": 1,
+ "created_at": 1789176145.2085428,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "NoobAI-XL-v1.1.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral"
+   }
+  },
+  "4": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "seed": 2026091103,
+    "steps": 28,
+    "cfg": 5.5,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "latent_image": [
+     "4",
+     0
+    ],
+    "denoise": 1.0
+   }
+  },
+  "6": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "6",
+     0
+    ],
+    "filename_prefix": "Studio/noob"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "2e5227fe-96be-4edb-9c51-976bfbc1f7a8",
+   "seed": 2026091103,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "NoobAI-XL-v1.1.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral"
+     }
+    },
+    "4": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+     }
+    },
+    "5": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "seed": 2026091103,
+      "steps": 28,
+      "cfg": 5.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "latent_image": [
+       "4",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "6": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "5",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "7": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "6",
+       0
+      ],
+      "filename_prefix": "Studio/noob"
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "noob_00004_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026091103,
+   "prompt_id": "2e5227fe-96be-4edb-9c51-976bfbc1f7a8",
+   "media_type": "image",
+   "asset_id": "c742c3d3c149583a8f3513a2e7aefdb6"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "native_recipe": null
+}

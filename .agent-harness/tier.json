@@ -1,0 +1,21 @@
+{
+  "tier": 2,
+  "name": "daily-driver",
+  "authority": {
+    "push": "free",
+    "merge": "free"
+  },
+  "flags": {
+    "sensitive_data": false,
+    "wave_mode": false,
+    "dormant_production": false,
+    "relaxed_work_loss_guards": false
+  },
+  "floor_wiring": "none",
+  "budgets": {
+    "standing_context_tokens": 3000
+  },
+  "human_todo": "HUMAN_TODO.md",
+  "notes": "Seeded 2026-09-12 by harness.py at T2 (AGENTS.md had proposed T1). Promotion triggers met: dozens of return sessions, 149 offline tests, hosted CI, HUMAN_TODO.md, and repo-local skills requested. Sole stakeholder, private remote, no deploy, no other consumers: T3 is not warranted. floor_wiring none follows the owner's 2026-09-07 floorless decision for claude-config and agent-harness; this repo has no .codex/hooks.json and the machine wires no global PreToolUse hook. Dual runtime: Codex sessions are real (PR #19, PR #39 from codex/* branches), so .codex/ is a thin adapter over the canonical .claude/skills tree, with tests/test_agent_harness.py as the parity gate. Not sensitive data: models and outputs live outside Git; generated art and model licences are separate human decisions, never approvals.",
+  "last_reviewed": "2026-09-12"
+}

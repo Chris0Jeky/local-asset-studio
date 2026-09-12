@@ -1,0 +1,299 @@
+{
+ "version": 2,
+ "preset_id": "krea-anime-atelier",
+ "controls": {
+  "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+  "lora4": 0.85,
+  "steps": 4
+ },
+ "batch_count": 1,
+ "created_at": 1789176331.8001482,
+ "workflow": {
+  "1": {
+   "class_type": "UNETLoader",
+   "inputs": {
+    "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+    "weight_dtype": "default"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+    "type": "krea2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "qwen_image_vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "2",
+     0
+    ],
+    "text": "@NJSW33T, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work"
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 768,
+    "height": 1152,
+    "batch_size": 1
+   }
+  },
+  "7": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "13",
+     0
+    ],
+    "positive": [
+     "4",
+     0
+    ],
+    "negative": [
+     "5",
+     0
+    ],
+    "latent_image": [
+     "6",
+     0
+    ],
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "simple",
+    "denoise": 1.0
+   }
+  },
+  "8": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "7",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "9": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "8",
+     0
+    ],
+    "filename_prefix": "Studio/krea-anime-atelier"
+   }
+  },
+  "10": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "strength_model": 1.0
+   }
+  },
+  "11": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "10",
+     0
+    ],
+    "lora_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "strength_model": 1.0
+   }
+  },
+  "13": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "model": [
+     "11",
+     0
+    ],
+    "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "strength_model": 0.85
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "150cde70-459e-4beb-b2a3-cb6f6631eb17",
+   "seed": 281715418,
+   "graph": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+      "type": "krea2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "@NJSW33T, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 768,
+      "height": 1152,
+      "batch_size": 1
+     }
+    },
+    "7": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "13",
+       0
+      ],
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "6",
+       0
+      ],
+      "seed": 281715418,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "simple",
+      "denoise": 1.0
+     }
+    },
+    "8": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "7",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "9": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "8",
+       0
+      ],
+      "filename_prefix": "Studio/krea-anime-atelier"
+     }
+    },
+    "10": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+      "strength_model": 1.0
+     }
+    },
+    "11": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "10",
+       0
+      ],
+      "lora_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+      "strength_model": 1.0
+     }
+    },
+    "13": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "model": [
+       "11",
+       0
+      ],
+      "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+      "strength_model": 0.85
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "krea-anime-atelier_00001_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 281715418,
+   "prompt_id": "150cde70-459e-4beb-b2a3-cb6f6631eb17",
+   "media_type": "image",
+   "asset_id": "27683427b1925d53a9c4f5b9102ab1dd"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "native_recipe": null
+}

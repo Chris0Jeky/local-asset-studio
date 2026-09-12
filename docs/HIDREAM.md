@@ -16,20 +16,41 @@ The picture is recognizable and broadly follows the brief, with soft/painterly t
 
 The everyday ComfyUI process also exited with a native access violation during the transition. Its root cause remains unresolved. The isolated server was stopped after the test and the primary studio restarted. Do not run both model families on the GPU simultaneously.
 
-## Run the experiment again
+## Use it in Studio
 
-HiDream is **not in the 21-preset simplified interface yet**; it uses its separate advanced ComfyUI endpoint. Its API graph is at `workflows/experimental/hidream-o1-fp8-api.json`.
+Choose **HiDream O1 · isolated** in the environment selector and press **Switch
+environment**. Studio checks local and remote queues before stopping the exact
+configured idle service and starting HiDream. It refuses to stop another command
+on the port or switch while a submission is unresolved. Return to **Main library**
+for the other model families. Node imports can take about a minute.
 
-1. Finish existing jobs. Stop the primary ComfyUI using its existing Stop shortcut/control under `C:\AI`.
-2. Start the isolated server from the repository:
+The recipes are **HiDream O1 - 2K Anime Concept** and **Reference Restyle**, with
+API and native ComfyUI graphs. Concept sizes use actual supported resolution
+pairs. The reference recipe follows Image 1's aspect through native preprocessing
+and uses ComfyUI V3's dotted `image.image_1` input. Controls expose 8, 20 and
+50-step studies; 50 is the full model's published recommendation. Eight steps is
+an experimental speed/quality choice.
 
-```powershell
-& C:\AI\ComfyUI_windows_portable\python_embeded\python.exe scripts/hidream-launch.py
-```
+On 11 September 2026 both ran through Studio: the 2048-square anime concept took
+**184.697 seconds** including loading, prompt
+`a784ab40-a48a-4013-9a1f-0e594f15b86d`; the lantern reference restyle took
+**76.260 seconds**, prompt `c599a918-20fb-4e78-8dce-6ed8fd170362`. Both used eight
+steps and retained final PNGs, temporary previews, seeds and runtime paths in
+Workspace. These are distinct workloads and cache conditions, not a benchmark.
+The graphs pass the running node/input contracts. Higher-step variants have not
+been rendered in this pass. Art acceptance remains open.
 
-3. Open `http://127.0.0.1:8192`. The nodes load from the isolated copy. For programmatic reproduction, submit the saved API graph to that endpoint's `/prompt` API. It is API JSON, not a drag-and-drop visual graph.
-4. After jobs finish, stop this foreground server with Ctrl+C, then double-click **Asset Studio** to return to the normal presets.
+The upstream Torch 2.9.x warning still applies to this ROCm installation. The
+isolated dependency overlay is preserved. Switching adopts only the configured
+service matching its Python executable, entry script, root and loopback port;
+it can stop an idle instance launched with the same known launcher. Its queue
+is rechecked immediately before stopping. Direct submissions through another
+ComfyUI browser cannot be made atomic with a switch; finish those first.
 
-The model warning about Torch 2.9.x still applies; one success does not eliminate it. The next bounded experiment is a higher-step comparison at the same brief and seed, followed by a reference edit. FLUX.2 dev 32B remains a separate later-stage plan.
+Every job retains its backend URL/root, so switching does not redirect old
+observation or media. An interrupted switch is recorded and never resumes on
+page load. Use **Switch environment** to start a selected offline backend.
+Switching never installs packages or submits generation. **Generate** remains
+a separate action.
 
 Sources: [custom node](https://github.com/Saganaki22/HiDream_O1-ComfyUI), [converted FP8 model](https://huggingface.co/drbaph/HiDream-O1-Image-FP8), [official model](https://huggingface.co/HiDream-ai/HiDream-O1-Image).

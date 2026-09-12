@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import xml.etree.ElementTree as ET
 import zipfile
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
@@ -70,6 +71,12 @@ class MediaTests(unittest.TestCase):
             self.assertEqual(z.read('mimetype'),b'image/openraster')
             self.assertIn('mergedimage.png',z.namelist());self.assertIn('Thumbnails/thumbnail.png',z.namelist())
             doc=ET.fromstring(z.read('stack.xml'));self.assertEqual(doc.find('stack/layer').get('name'),'A layer')
+    def test_ora_bytes_are_reproducible_across_zip_timestamps(self):
+        timestamps=[(2026,1,1,0,0,0)] * 5 + [(2026,1,1,0,0,2)] * 5
+        with mock.patch('zipfile.time.localtime', side_effect=lambda *_: timestamps.pop(0)):
+            m.ora(self.lm,self.root,self.root/'first.ora')
+            m.ora(self.lm,self.root,self.root/'second.ora')
+        self.assertEqual(p.file_sha(self.root/'first.ora'),p.file_sha(self.root/'second.ora'))
     def test_ora_topmost_and_hidden(self):
         top=Image.new('RGBA',(4,6),(255,0,0,255));top.save(self.root/'top.png')
         self.lm['layers'].insert(0,dict(id='top-layer',name='Top',path='top.png',sha256=p.file_sha(self.root/'top.png')))

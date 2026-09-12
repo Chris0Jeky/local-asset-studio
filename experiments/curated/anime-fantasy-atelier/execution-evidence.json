@@ -1,0 +1,822 @@
+{
+ "date": "2026-09-12",
+ "runtime": "ComfyUI 0.35.0 (restarted once after a HIP OOM wedged its prompt worker); Windows ROCm 7.2.1; RX 9070 XT 16GB; Studio at the atelier integration branch",
+ "observations": [
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-4step",
+   "prompt_id": "af39c7de-8bad-47d5-a9ba-8e3333ef8573",
+   "status": "failed",
+   "seconds": null,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NIJISIS, The painting style is highly textured, with thick,",
+   "failure": "HIP out of memory in Krea2 rms_norm (12.61 GiB allocated, 1.90 GiB free) at 768x1152; ComfyUI's prompt_worker thread then died on a secondary ModuleNotFoundError (torch._subclasses.schema_check_mode) while formatting the error, leaving the queue wedged. ComfyUI restarted afterwards; this prompt produced no output."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-baseline",
+   "prompt_id": "09dadd6e-3e60-4c37-80d1-9244bb8e848d",
+   "status": "success",
+   "seconds": 986.58,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ]
+   ],
+   "positive_prefix": "The painting style is highly textured, with thick, brush-lik",
+   "original": {
+    "path": "Studio/probes/witch-nijisis-baseline_00001_.png",
+    "sha256": "c51fd1c0a7d3e4dd45163433613a8bd9784b121f66bc88c593cd0d422ccc1083",
+    "bytes": 1731777,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-nijisis-baseline.jpg"
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-stack",
+   "prompt_id": "412b3c9f-162b-434b-a2a6-e57635f82da1",
+   "status": "success",
+   "seconds": 941.15,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-stack_00001_.png",
+    "sha256": "5c255dc16b4b6b2fa978a879a0800b599340ad41a5ccc43f41f6f7c3e6b56566",
+    "bytes": 1699829,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-stack.jpg"
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-stack-4step",
+   "prompt_id": "d7bd3104-f348-46e6-811e-3b1d918c75c3",
+   "status": "success",
+   "seconds": 270.94,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-stack-4step_00001_.png",
+    "sha256": "0c7185a87f155ff386b7543632fd3953ba923a2a5b710953fb7dd0ae754c491d",
+    "bytes": 1757402,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-stack-4step.jpg"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "wai",
+   "variant": "Fantasy portrait",
+   "job_id": "b69ec018-c789-44f3-94d8-971854c0226e",
+   "prompt_ids": [
+    "30c916fd-7202-4dc6-a7eb-a9585e709a14"
+   ],
+   "status": "completed",
+   "seconds": 26.191957473754883,
+   "controls": {
+    "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/WAI-Illustration_00012_.png",
+    "sha256": "76ca9f7d1ce6836edf13a0c84de545c6dd30edd74adc4b6c41e6457c4a063049",
+    "bytes": 1455612,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/wai-fantasy-portrait.jpg",
+   "recipe": "wai-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "noob",
+   "variant": "Fantasy portrait",
+   "job_id": "c24fd256-4c28-441d-ac2d-344ba9bc47c5",
+   "prompt_ids": [
+    "2e5227fe-96be-4edb-9c51-976bfbc1f7a8"
+   ],
+   "status": "completed",
+   "seconds": 28.165553331375122,
+   "controls": {
+    "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy",
+    "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/noob_00004_.png",
+    "sha256": "5b859bcd5b7a88fcecaaaca5d7320b964334d8b23306e5256b4eb1cbac281f9c",
+    "bytes": 1163746,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/noob-fantasy-portrait.jpg",
+   "recipe": "noob-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anime",
+   "variant": "Fantasy portrait",
+   "job_id": "d14cb0b0-87b0-4c92-9795-74c61a7f8f13",
+   "prompt_ids": [
+    "69f4a967-bffa-40ac-b276-1b4d9d80d16e"
+   ],
+   "status": "completed",
+   "seconds": 30.195152044296265,
+   "controls": {
+    "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+    "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Expansion/Animagine_00004_.png",
+    "sha256": "e169667015b8114cc3270cacd3f0d7becedb963e68d0a2b40ef63b39e2b20c5c",
+    "bytes": 1584970,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anime-fantasy-portrait.jpg",
+   "recipe": "anime-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "pony",
+   "variant": "Fantasy portrait",
+   "job_id": "3103565f-5bfa-4ed7-a2ab-dcf28097a994",
+   "prompt_ids": [
+    "187c77f9-5f91-439f-b196-2b24c6d7c917"
+   ],
+   "status": "completed",
+   "seconds": 30.173527479171753,
+   "controls": {
+    "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy",
+    "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/pony_00002_.png",
+    "sha256": "470dc97282968c707d9a80dc40819d765a80b4f85e13963ecad7f3f8f75f39bb",
+    "bytes": 1807293,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/pony-fantasy-portrait.jpg",
+   "recipe": "pony-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-anime-atelier",
+   "variant": "4-step audition",
+   "job_id": "db02f6b1-8346-4361-a432-7734fc72d2c2",
+   "prompt_ids": [
+    "150cde70-459e-4beb-b2a3-cb6f6631eb17"
+   ],
+   "status": "completed",
+   "seconds": 196.96079897880554,
+   "controls": {
+    "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "lora4": 0.85,
+    "steps": 4
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "pruned": [
+    "NIJISIS slot at strength 0 removed before submission"
+   ],
+   "original": {
+    "path": "Studio/krea-anime-atelier_00001_.png",
+    "sha256": "218d72be3921216082b4db6abe284d1003e46c62b0dea8629c00a83e84d70951",
+    "bytes": 1419425,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-anime-atelier-4step.jpg",
+   "recipe": "krea-anime-atelier-4step-recipe.json",
+   "inspection": "Witch with a wide ornate hat reading among floating books on a mossy wall at dusk; crisp line work, painterly cloth, coherent hands and gloves, legible book pages; a small signature-like squiggle bottom-right (typical of the Niji Sweet Spot training data)."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-airy-watercolor-short-4step",
+   "prompt_id": "9d0e794d-7e12-4f61-ab47-d00c813c5143",
+   "status": "success",
+   "seconds": 170.43,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "fal-krea2-airy-anime-watercolor.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "A young witch with wavy indigo hair and a big black hat sits",
+   "original": {
+    "path": "Studio/probes/witch-airy-watercolor-short-4step_00001_.png",
+    "sha256": "cbb2cb0b52a461f899a58188ee52b3401cf6ad90ff9fb9ebe08ac33dca4ae226",
+    "bytes": 1272169,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-airy-watercolor-short-4step.jpg",
+   "inspection": "fal airy-anime-watercolor alone with a short prompt (trigger at the end): clean watercolor illustration on white paper, soft blue hair, orange and lavender flowers; a completely different register from the same seed."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-4step",
+   "prompt_id": "d70e45a2-edff-419b-92d2-dae02e31eaf2",
+   "status": "success",
+   "seconds": 200.54,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NIJISIS, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-nijisis-4step_00001_.png",
+    "sha256": "219e360eff905f09df68d6483d03d411d49b7acd3e5935667972505fcd86ee4b",
+    "bytes": 1786846,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-nijisis-4step.jpg",
+   "inspection": "@NIJISIS trigger + NIJISIS @1.0 + 4-step LoRA: impasto meadow, vivid palette, black cat in lap and tabby beside; very close to the 15-step NIJISIS baseline at a fifth of the time."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-ersde-4step",
+   "prompt_id": "af080638-403f-41d4-87c2-4d821f299fe0",
+   "status": "success",
+   "seconds": 180.4,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "er_sde",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-ersde-4step_00001_.png",
+    "sha256": "5eaac0f9086b10150ab08ac266d109fdb941e32301e2c19fbc19bca2ce3a63b5",
+    "bytes": 1728468,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-ersde-4step.jpg",
+   "inspection": "Target stack with er_sde instead of euler_ancestral: same composition, slightly more pointillist flower field and glitter; both samplers are usable at 4 steps."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-plus-baroque-oil-4step",
+   "prompt_id": "b993c08c-66c4-4d21-ac22-1d3a412ebf4a",
+   "status": "success",
+   "seconds": 190.32,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "fal-krea2-baroque-dreamscape-oil.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-plus-baroque-oil-4step_00001_.png",
+    "sha256": "3f629a98335646c6c398ebfe324be332f477fba5da574cfbfa0aa2b1ddc13abf",
+    "bytes": 1735423,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-plus-baroque-oil-4step.jpg",
+   "inspection": "Target stack + fal baroque-dreamscape-oil @1.0 (trigger at the end): heavier oil-paint look, ruffled dress, dramatic garden light; the third style LoRA did not burn at four stacked adapters."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-style-lab",
+   "variant": "4-step audition",
+   "job_id": "f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e",
+   "prompt_ids": [
+    "cc0ede07-97b9-4549-ba46-6b02e6ec18bb"
+   ],
+   "status": "completed",
+   "seconds": 207.11908078193665,
+   "controls": {
+    "lora3_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "lora3": 0.85,
+    "steps": 4
+   },
+   "submitted_lora_chain": [
+    [
+     "fal-krea2-airy-anime-watercolor.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-style-lab_00001_.png",
+    "sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7",
+    "bytes": 1536856,
+    "width": 1024,
+    "height": 1024
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-style-lab-4step.jpg",
+   "recipe": "krea-style-lab-4step-recipe.json",
+   "inspection": "Watercolor fox shrine under a cherry tree at sunset with paper lanterns and drifting petals; clean paper-white ground, legible lantern and shrine structure, three foxes; the airy-anime-watercolor style reads clearly at four steps."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-anime-atelier",
+   "variant": null,
+   "job_id": "7d589f47-7172-44fb-9541-4ab0602eafce",
+   "prompt_ids": [
+    "a63ca7e1-c87a-4288-bcd9-959ff93d1827"
+   ],
+   "status": "completed",
+   "seconds": 827.6,
+   "controls": {
+    "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
+    "steps": 15,
+    "cfg": 1,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "width": 832,
+    "height": 1248,
+    "seed": 20260912,
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "lora": 1.0,
+    "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "lora2": 1.0,
+    "lora3": 1.0,
+    "lora4": 0,
+    "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_koukouya_style_c1-st3000.safetensors",
+     1.0
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-anime-atelier_00002_.png",
+    "sha256": "6d37a921b1e884ca9b4cc8901e30d73a43217fbce3eeb937e6f16657d3b105e6",
+    "bytes": 1368620,
+    "width": 832,
+    "height": 1248
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-target-stack-koukouya.jpg",
+   "recipe": "krea-target-stack-koukouya-recipe.json",
+   "inspection": "Meadow witch at golden hour with a black cat and a wooden staff: the koukouya adapter is unmistakable (loose painterly brush, patched cloak, loose strokes in the grass and flowers), face and hands clean, the cat reads well; this is the closest match yet to the owner's target image 142028671."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anime-detail-fix",
+   "variant": null,
+   "job_id": "14caa4fb-5999-497f-8b73-0bb2562229df",
+   "prompt_ids": [
+    "3eeba334-6161-4f84-bd36-de0c888c0d74"
+   ],
+   "status": "completed",
+   "seconds": 36.2,
+   "controls": {},
+   "submitted_lora_chain": [],
+   "original": {
+    "path": "Studio/anime-detail-fix_00001_.png",
+    "sha256": "13124c379a1fb2b4c8cfdc09caa2226adf2341b3346ebf2f156f3dc9525c943f",
+    "bytes": 908142,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anime-detail-fix-noob-hands.jpg",
+   "recipe": "anime-detail-fix-noob-hands-recipe.json",
+   "inspection": "Only the two detected crops changed. The raised hand is now a clean five-digit hand with readable joints and a proper thumb; the face pass opened and sharpened the eye (teal iris, cleaner lashes) while keeping the profile and hair - at denoise 0.4 the expression shifts slightly, so use the Gentle variant when only hands need work."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-refine",
+   "variant": null,
+   "job_id": "21e4a629-9b7c-4cd2-a87e-dae80a2082f4",
+   "prompt_ids": [
+    "2e0583fa-46da-45ff-a4ca-490ed29f5716"
+   ],
+   "status": "completed",
+   "seconds": 233.2,
+   "controls": {
+    "positive": "two red foxes with fluffy tails sitting together on a snowy hill under a starry night sky, soft moonlight, detailed fur, expressive fox faces, painterly anime illustration"
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-refine_00001_.png",
+    "sha256": "f5a64954945c8b13ac67c322fc1a8eade628f47bc97c0f7354283d31cf9eee80",
+    "bytes": 1447544,
+    "width": 1024,
+    "height": 1024
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-refine-style-lab-foxes.jpg",
+   "recipe": "krea-refine-style-lab-foxes-recipe.json",
+   "inspection": "Composition, shrine, lanterns, cherry tree and petal fall preserved; the foxes now have proper fox faces with distinct snouts, ears and eyes and layered fur, but the third fox merged into the pair, so denoise 0.35 already redraws grouped subjects - use Light touch (0.25) to keep every subject."
+  },
+  {
+   "kind": "comfyui-probe",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": null,
+   "prompt_ids": [
+    "8c4152b9-2e5f-4c0a-be9e-91a19f1c3a98"
+   ],
+   "status": "completed",
+   "seconds": 35.0,
+   "controls": {
+    "unet_name": "anima-aesthetic-v1.1.safetensors (substituted; base v1.0 still downloading)",
+    "removed_slots": [
+     "anima-ke-ta_style_v1",
+     "anima-kieed_v9_step6000"
+    ]
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ]
+   ],
+   "original": {
+    "path": "Studio/probes/anima-stack-aesthetic11-4adapters_00001_.png",
+    "sha256": "77324f3838b7ac68f76434c590312e03b399674f86a3cfcb10e3ec5dc126a73a",
+    "bytes": 1380074,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-4adapters.jpg",
+   "recipe": "anima-stack-aesthetic11-4adapters-recipe.json",
+   "inspection": "Silver-haired witch on a stone balcony at dusk with hanging lanterns and a tower: clean face and eyes, correct hands hidden by sleeves, loose sketch-like linework and painterly cloth from the xilmo/huashijw/koukouya/NEWANIMASTYLE mix; no artefacts at 30 steps. Proves the six-slot Anima chain and loader path, not the base v1.0 look."
+  },
+  {
+   "kind": "comfyui-probe",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": null,
+   "prompt_ids": [
+    "422a4cf3-b10b-40a2-a60f-9b72ff0dcb87"
+   ],
+   "status": "completed",
+   "seconds": 25.0,
+   "controls": {
+    "unet_name": "anima-aesthetic-v1.1.safetensors (substituted; base v1.0 still downloading)"
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/probes/anima-stack-aesthetic11-6adapters_00001_.png",
+    "sha256": "5edafcb85ecc5de86761a27288f97b3c7f18a910ad13f19e127d2416874df755",
+    "bytes": 1431327,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-6adapters.jpg",
+   "recipe": "anima-stack-aesthetic11-6adapters-recipe.json",
+   "inspection": "All six adapters including the kieed LyCORIS file loaded without key warnings in the ComfyUI log. Crisper, more illustrative linework than the four-adapter probe: clean face and orange eyes, layered cloak trim, lanterns and tower intact, sky lanterns; no anatomy errors. Base v1.0 look still unproven."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": "8a593206-22b5-4951-bb63-80cc0538885b",
+   "prompt_ids": [
+    "9b2f2fff-b486-430c-ae19-3e75993759b8"
+   ],
+   "status": "completed",
+   "seconds": 24.3,
+   "controls": {},
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/anima-artist-stack_00001_.png",
+    "sha256": "e146b83d0002e8de1f03cf69f7aca7353763e827f2ad4d13f8fdb8aab13fb419",
+    "bytes": 1423357,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-artist-stack-authored.jpg",
+   "recipe": "anima-artist-stack-authored-recipe.json",
+   "inspection": "Silver-haired witch under drifting sky lanterns on a stone balcony at dusk: clean face and orange eyes, crisp layered cloak with gold trim, lanterns and tower legible, no anatomy errors; the six-adapter mix reads as polished illustrative anime with sketch-like edges. First execution of the preset exactly as authored."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": "Artist tags, no adapters",
+   "job_id": "8eb5bc19-782c-42d0-87d1-2f7cedd73187",
+   "prompt_ids": [
+    "26f7ee38-67a0-49ba-bb03-fafa4913ddb9"
+   ],
+   "status": "completed",
+   "seconds": 20.1,
+   "controls": {
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+    "cfg": 3,
+    "sampler": "dpmpp_2m_sde_gpu",
+    "scheduler": "simple"
+   },
+   "submitted_lora_chain": [],
+   "original": {
+    "path": "Studio/anima-artist-stack_00002_.png",
+    "sha256": "972e23fae129102ad608a3fb57eca9e1e9cd1fea9ca78e079290c0c3e863d447",
+    "bytes": 1395526,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-artist-tags-no-adapters.jpg",
+   "recipe": "anima-artist-tags-no-adapters-recipe.json",
+   "inspection": "A girl in a straw hat holding it against the wind in tall sunlit grass under a blue sky with birds, one tree: the painterly, film-grain deitychaser look arrives from the base model alone with no adapter; hands and face clean; a small hallucinated signature glyph sits in the bottom-right corner, typical of artist-tag prompts."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": "Reference stack 1328x1776",
+   "job_id": "6ae066d8-2faa-4856-b1ed-c9e169c22c40",
+   "prompt_ids": [
+    "efdabf38-d27a-4e01-89ab-1e8fead5a7b1"
+   ],
+   "status": "completed",
+   "seconds": 66.4,
+   "controls": {
+    "width": 1328,
+    "height": 1776,
+    "seed": 975436216244440
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/anima-artist-stack_00003_.png",
+    "sha256": "fa430a21912070074b7a689d0054733050f05a6cdaf7a86c9d6c1b1119bade89",
+    "bytes": 3043269,
+    "width": 1328,
+    "height": 1776
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-reference-stack-1328x1776.jpg",
+   "recipe": "anima-reference-stack-1328x1776-recipe.json",
+   "inspection": "The strongest Anima result: witch on a lantern-lit balcony with a purple dusk, sky lanterns, detailed cloak lacing and gold trim, expressive eyes, wind in the hair; no anatomy errors at the full reference size; a faint hallucinated signature mark in the bottom-right corner, as in the artist-tag run. 66 s, so this size is cheap on Anima."
+  }
+ ]
+}

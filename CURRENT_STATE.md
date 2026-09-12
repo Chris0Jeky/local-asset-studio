@@ -1,5 +1,238 @@
 # Current state — 11 September 2026
 
+## Review desk and direct correction handoffs — 12 September 2026
+
+PR #43 is merged as `4b6b94e`: completed image comparisons can open a revisioned Review desk with
+stable blind aliases, matched crops, reversible assessments and checksummed evidence packs retaining
+rejected candidates. The integration against `23f08718` passed 269 discovered tests (267 passed, two
+Windows directory-symlink privilege skips), catalog validation and hosted Ubuntu/Windows checks.
+An independent review found no blocking defects. Actual Windows Chromium 151 exercised direct localhost
+fixture transport, stale-edit rejection, draft/download preservation, ZIP hashes, restore, keyboard and
+390 px layout; no generation occurred. Six separate real-Handler HTTP tests passed. This is review
+infrastructure proof, not art acceptance. Evidence is retained under `.runtime/session-2026-09-12/review-desk/`.
+
+Gallery images and Workspace image details now expose **Fix hands & face** (`anime-detail-fix`) and
+**Refine image** (`krea-refine`). Both use the existing reference-copy/lineage path and await an explicit
+Generate action. Node behavior checks exercised both entries through save/submission and kept repair
+actions off video assets. Windows browser checks used the running Studio APIs with the exact changed
+static files: all four handoffs retained source identity and reference filenames through saved-setup
+readback; the temporary QA setups were removed. Desktop and 390 px mobile views were captured, mobile
+inspected, with no JavaScript errors or generation calls. Receipts: `.runtime/session-2026-09-12/repair-actions/`.
+
+The browser driver needed two corrections (its route callback signature and waiting for the exact
+reference-copy response); the corrected run passed. These were QA-driver failures, not Studio failures.
+The separate **Gentle (denoise 0.3)** trial then completed on the authored 832×1216 NoobAI example
+in 42.280 s: job `e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt
+`a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`. Both passes ran at 0.3 with seed 2026091201.
+The inspected result sharpened the face but retained an extra digit: completed execution, failed
+hand-repair objective, no human art approval. Exact recipe, hashes and the unaltered PNG are linked
+from `experiments/curated/anime-fantasy-atelier/README.md`. The catalog defaults are unchanged.
+The optional creative choices, including the Anima look selection q-3, remain in `HUMAN_TODO.md`.
+
+## Civitai access, Anima baselines and the correction pass — executed (12 September 2026, second pass)
+
+**Runtime (outside Git, recorded here and in `runtime-patches/README.md`).** The owner's civitai API key is stored as
+the user-scope environment variable `CIVITAI_API_TOKEN` (never in the repo). ComfyUI now starts with
+`--enable-manager` (`comfyui_manager` 4.2.2 installed into the embedded Python, only new packages added;
+`GET /v2/manager/version` → `V4.2.2`) and loads `custom_nodes/civitai-comfy-nodes` (223 Civitai nodes; the pack reads
+the same environment variable, so no key is typed into its panel). ComfyUI PID in `C:/AI/comfyui.pid`.
+
+**Installed with SHA-256 receipts** (`.runtime/downloads/receipts.json`, pinned in `models/library.json`): the Krea 2
+koukouya adapter (HUMAN_TODO q-1 closed), Anima adapters xilmo, huashijw, koukouya, NEWANIMASTYLE, and the official
+Anima turbo LoRA. ke-ta, kieed (LyCORIS) and, after a 105-minute throttled Hugging Face download, the 4 GB `anima-base-v1.0` checkpoint all
+landed with verified receipts (the checkpoint's hash matches the civitai listing), so every file the Anima presets name is installed.
+Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `anima-base-retry-2026-09-12.log`.
+
+**Executed and inspected** (`experiments/curated/anime-fantasy-atelier/`, JPEG copies in `examples/anime-fantasy-atelier/`):
+
+| Run | Result |
+|---|---|
+| `krea-anime-atelier`, full target stack TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832×1248 (job `7d589f47`) | 827.6 s; the closest match yet to the owner's target image; koukouya's brushwork dominates |
+| `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
+| `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
+| `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
+| `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
+
+**Contract change.** `CONTROL_KEYS` and `LORA_SLOTS` now run to six slots (`lora5`, `lora6` and their `_name` twins) in
+the server, planner, validator and UI; the six-slot rows were confirmed in the running UI's DOM (Slot 1–6).
+
+**New presets.** `anima-artist-stack` (Anima base v1.0, six `LoraLoaderModelOnly` slots at the reference strengths,
+variants for the 1328×1776 reference, the adapter-free artist-tag look, the turbo audition), `anime-detail-fix`
+(Impact Pack FaceDetailer face pass then hand pass with the installed `face_yolov8s` / `hand_yolov8n` detectors, WAI v17
+repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
+the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
+
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the `krea-dark-scifi-comic-warrior` recipe; the
+detail-fix/refine variants beyond the authored defaults; the Civitai panel sign-in and downloads; the Manager UI beyond its
+version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
+
+**Owner's creative review** of the first atelier pass is recorded in `HUMAN_TODO.md` (q-2 closed) and the guide.
+
+## Anime & fantasy atelier — executed (12 September 2026)
+
+The Studio now has four LoRA slots per preset (a slot at strength 0 is pruned from the submitted graph),
+an installed-LoRA and sampler options endpoint, a sourced settings knowledge base with a grid/remix planner,
+named recipes, prompt wildcards, two new Krea 2 Turbo presets (`krea-anime-atelier`, `krea-style-lab`),
+corrected SDXL anime grammars with clip-skip for Pony, download/intake scripts and the
+[atelier guide](docs/ANIME-FANTASY-ATELIER.md). 31 Krea 2 adapters were installed from Hugging Face
+with SHA-256 receipts (official Comfy-Org styles, 21 fal styles, the 4-step distill LoRA, TextFusion
+refusal-reduction and Niji Sweet Spot mirrors) and pinned in `models/library.json`.
+
+Executed and inspected, all on 12 September (details, hashes and recipes in
+[experiments/curated/anime-fantasy-atelier](experiments/curated/anime-fantasy-atelier/README.md)):
+Krea 2 Turbo + NIJISIS at the reference image's settings (768×1152, 15 steps, euler_ancestral/simple,
+prompt `09dadd6e-3e60-4c37-80d1-9244bb8e848d`, 986.6 s); the reference's TextFusion + Niji Sweet Spot
+stack (`412b3c9f-162b-434b-a2a6-e57635f82da1`, 941.2 s) and the same stack with the 4-step distill LoRA
+(`d7bd3104-f348-46e6-811e-3b1d918c75c3`, 270.9 s, comparable quality); `krea-anime-atelier` through a
+Studio job (`db02f6b1-8346-4361-a432-7734fc72d2c2`, prompt `150cde70-459e-4beb-b2a3-cb6f6631eb17`, 197 s
+at 4 steps, NIJISIS slot pruned); and the `wai`, `noob`, `anime` and `pony` fantasy-portrait variants
+through Studio jobs (26–30 s each at 832×1216, both LoRA slots pruned). Those five presets are
+`verified: true` for exactly those graphs. One probe (`af39c7de-8bad-47d5-a9ba-8e3333ef8573`) failed with
+a HIP out-of-memory at 768×1152 after several Krea runs in one ComfyUI process, and the secondary
+exception killed ComfyUI's prompt worker; ComfyUI was restarted and the failure is recorded, not repeated.
+
+Not executed: the koukouya LoRA from the reference image (civitai login required; HUMAN_TODO q-1),
+`krea-style-lab`, the recipes marked `unverified`, the planner-driven comparisons (the plan route was
+exercised without reserving budget), the Krea 2 Q5 GGUF speed comparison (download in progress), and any
+art acceptance — [HUMAN_TODO.md](HUMAN_TODO.md) keeps the creative choices open.
+
+## Creative production milestone
+
+Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen
+references, bounded comparisons, native exports, and explicit model-environment
+switching. Models and operational outputs remain outside Git. HiDream concept
+and reference-restyle recipes both produced 2048-square PNGs through Studio:
+184.697 seconds and 76.260 seconds respectively, at eight steps. Their distinct
+loading/cache conditions are not a model benchmark. See [HiDream](docs/HIDREAM.md).
+
+The comparison `fbb384c70a5e48b39a9eba6c227374eb` completed both Anima seed stages
+and awaits creative review. Imported originals can now join collections and
+native exports without generation. Browser-selected sprite frames produced
+Godot project `d62777fdd019462b99d28357e61393b8`: actual import/playback retained
+120/80/120/160 ms, 64-square canvases and anchor [32,32]. An earlier export
+`df007b4d33d8465695615535e004be4d` exposed a form-serialization bug (100 ms values);
+that bug is fixed and the corrected plan and engine evidence were checked.
+
+The authored chest UI built project `db662bb6e60f42c781e001bd681b9743`, retaining
+BLEND, animated GLB and four CPU inspection renders. The first GLB exposed a
+hidden collision helper as visible geometry; the exporter now excludes it from
+GLB while retaining it in BLEND. Fresh project `44cfa4a0b29a43098d6c7c7609ca6831`
+completed with the four intended parts and named hinge animation; its renders and
+browser preview were inspected. Native jobs persist before Blender. Recovery
+requires a successful exit log and refuses recorded failure evidence, without
+repeating a build; focused fault tests pass.
+
+Krita is now an option in the native-export dialog. Browser project
+`e563585717324f54aa57e6fc9bd9f773` selected two existing 64-square frames, retained
+both requested layer names in KRA, reopened to PNG and produced a complete source
+pack. The isolated offscreen crash and successful hidden Windows batch proofs
+are preserved. This proves flat native layers, not automatic part segmentation.
+
+H3's opt-in stdlib mmap loader constructed all 2,054 encoder tensors and the
+MiniMax encoder model in 6.65 seconds (process peak working set 4.14 GiB). CUDA
+was initialized by the runtime; this was construction, not inference proof. The
+first video attempt with copy-on-write mapping passed encoder loading, then
+failed in UNETLoader with Windows error 1455 (commit/pagefile exhaustion), prompt
+`cce6da2a-0978-4c98-95d7-1c7ba8274a7c`. The machine has a 40 GiB paging file.
+A read-only encoder attempt also reached the same diffusion-file error, prompt
+`af49ef6a-433e-47eb-95d1-0efe7cb9ef52`. Extending the exact-file read-only loader
+to the FL2VA diffusion file then constructed MiniMaxH3/legacy ModelPatcher in
+5.603 seconds, with 4.30 GiB peak process working set. The subsequent short video
+prompt `49873807-fda1-4fe0-afdd-62b13f5329d8` completed in 398.096 seconds:
+39 H.264 frames at 512×320 and 32 kHz stereo AAC, both 1.625 seconds. All frames
+and audio decoded; first/middle/last frames were inspected. The tested defaults
+now match the executed graph. No system paging settings changed. The normal
+native loader remains incompatible; use the [isolated H3 route](docs/H3-WINDOWS.md).
+
+The broader research backlog is still open: Seed Hunter dependencies/execution,
+shot-continuation/control comparisons, interactive Krita diffusion, automatic 3D
+part/rig experiments and the full accepted character-pack vertical slice. The
+completed native exports are scoped engine checks, not art or gameplay acceptance.
+[HUMAN_TODO.md](HUMAN_TODO.md) still holds the optional subjective choices.
+
+**149 tests pass**, with one existing Windows symlink skip; the 54-preset catalog
+validator and changed JavaScript syntax checks pass. Independent reviews caught
+and resolved recovery/provenance defects. Gallery handoffs now retain the source
+asset identity and populate Qwen's first reference slot. The browser saved
+`Ember chest → Qwen reference` with the correct parent and hashed input metadata;
+no extra generation was submitted. Comparison planning also rejects numerically
+equivalent values before reserving runs, so `1`, `1.0` and `1e0` cannot consume
+duplicate candidates. The branch is pushed as PR #39; this is a scoped
+milestone, not completion of every research issue. See the [usable routes, execution
+records and issue-by-issue remainder](docs/PRODUCTION-WORKSPACE.md). The completed
+worker worktree was removed after preserving its ignored runtime receipts.
+
+## Earlier checkpoints during this implementation pass
+
+The user requested an ambitious implementation pass across merged PRs **#20**
+(game-asset planner, reference graphs, atlas/ORA tools) and **#8** (frontier research).
+They are now the branch base `f6e046b`; work continues on
+`codex/creative-production-workspace` with incremental commits and one writer.
+The original Workflow Lab evidence below remains scoped to its recorded runs.
+
+First implemented slice: a persistent Workspace view with collections, search,
+media filters, favorites, tags, review notes, multi-select, recoverable Trash/Restore,
+image-to-workflow handoffs and ZIP exports containing snapshots, recipes and metadata.
+SQLite and immutable hashed media live under the configured shared experiments
+directory, outside Git. Original ComfyUI outputs are preserved. Saved setups now
+live on the server, with browser-local migration. Read [the workspace guide](docs/WORKSPACE.md).
+
+Startup identity is independent of ComfyUI; the launcher reuses an existing Studio
+even when its backend is unavailable. Full node discovery is cached for 120 seconds
+with an explicit refresh. Uploads are decoded/verified, capped at 40 megapixels,
+and retain original dimensions and SHA-256 metadata.
+
+Verified at this slice: 106 tests pass (one existing Windows symlink availability
+skip), catalog validator passes, both JavaScript files parse, and launcher syntax
+parses. Actual browser actions created a collection, assigned an existing Anima
+render, saved tags/notes, moved it to Trash and restored it. The new store indexed
+46 existing outputs; no generation was submitted. Wider browser checks and
+independent review are in progress. Review states remain unreviewed unless the
+user explicitly changes them; the optional choices in [HUMAN_TODO.md](HUMAN_TODO.md)
+remain open.
+
+Outstanding work in the active goal: role-specific Qwen references (#21), bounded
+experiments and trusted stage execution (#10/#22), isolated HiDream integration
+(#2), H3 loader compatibility (#18/#11), shot/control experiments (#12/#13),
+native editing and engine exports (#14–#16/#23–#25), and accurate source/terms
+metadata (#9/#26). Research entries are not automatically executable or accepted.
+The secondary workspace request has an implemented foundation; it is not a claim
+that the broader production goal is complete.
+
+The next increment adds three Qwen Atelier API/visual pairs (52 presets total),
+with one/two/three role-specific references, preserved aspect, byte hashes, a
+resolved-graph preview, and saved-reference recovery. See
+[Reference atelier](docs/REFERENCE-ATELIER.md). All three pass live node/file
+validation without submission. Browser upload and preview succeeded with
+identity, pose and manga-style references; controlled generation
+`c8b752b5-cb25-4438-8c66-f0e5fafcae04` is being observed, not yet accepted.
+The saved Anima-to-ESRGAN handoff survived a fresh page and generated successfully
+as `60949ec3-2ec2-471f-88cb-73fa78a5491c`, retaining its parent asset.
+
+Godot adapter commit `af4ccb5` adds actual headless import/playback. Its fixed
+120/80/120/160 ms QA sequence played in 480.000003 ms with anchor [24,60] and no
+anchor error. The existing Ember GLB loaded with 12 nodes, 9 meshes, 3 materials
+and `Lantern bob rigAction`. This is scoped engine evidence, not rig, collision,
+root-motion or art acceptance. Evidence is retained locally under
+`.runtime/godot-adapter-evidence/qa-480ms-godot-4.7.2/`.
+
+The production runner now prepares pinned one-axis comparisons, uses the existing
+Studio worker, reserves generation budgets across branches, and persists stage
+identities and known prompt IDs. Fault-injection tests cover lost responses,
+restart observation without duplicate submission, shared caps and changed plans.
+Workspace can prepare timed atlas, flat ORA and Godot exports with native source
+ZIPs. Actual engine verification is an explicit export option. Read
+[Experiments](docs/EXPERIMENTS.md) and [Native exports](docs/NATIVE-EXPORTS.md).
+At this increment, 126 tests pass (one existing skip); browser preflight and Start
+created comparison `fbb384c70a5e48b39a9eba6c227374eb`, currently being observed.
+Native export UI round-trip remains pending.
+
+The three-reference Qwen run above completed: **1334.646 seconds**, 512×768,
+four steps. It produced a manga portrait with the requested extended hand and
+compass; design fidelity and subjective acceptance remain open. Only the
+three-reference recipe's execution badge was updated. One- and two-reference
+variants have schema/preview proof, not fresh inference proof.
+
 ## Changed
 
 Workflow Lab expands the Studio to **49 presets, 49 visual ComfyUI workflows and

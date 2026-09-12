@@ -1,0 +1,15 @@
+# Mood. Feeling words the models actually respond to.
+serene
+melancholic
+wistful
+triumphant
+uneasy
+playful
+solemn
+curious
+weary but determined
+quietly joyful
+guarded
+hopeful
+dreamlike
+reverent

@@ -1,0 +1,226 @@
+{
+ "version": 2,
+ "preset_id": "pony",
+ "controls": {
+  "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy",
+  "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+  "width": 832,
+  "height": 1216
+ },
+ "batch_count": 1,
+ "created_at": 1789176145.2455444,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "pony-diffusion-v6.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "10",
+     0
+    ],
+    "text": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy"
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "10",
+     0
+    ],
+    "text": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark"
+   }
+  },
+  "4": {
+   "class_type": "EmptyLatentImage",
+   "inputs": {
+    "width": 832,
+    "height": 1216,
+    "batch_size": 1
+   }
+  },
+  "5": {
+   "class_type": "KSampler",
+   "inputs": {
+    "model": [
+     "1",
+     0
+    ],
+    "seed": 2026091103,
+    "steps": 30,
+    "cfg": 6.0,
+    "sampler_name": "euler_ancestral",
+    "scheduler": "normal",
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "latent_image": [
+     "4",
+     0
+    ],
+    "denoise": 1.0
+   }
+  },
+  "6": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "5",
+     0
+    ],
+    "vae": [
+     "1",
+     2
+    ]
+   }
+  },
+  "7": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "6",
+     0
+    ],
+    "filename_prefix": "Studio/pony"
+   }
+  },
+  "10": {
+   "class_type": "CLIPSetLastLayer",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "stop_at_clip_layer": -2
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "187c77f9-5f91-439f-b196-2b24c6d7c917",
+   "seed": 2026091103,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "pony-diffusion-v6.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "10",
+       0
+      ],
+      "text": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy"
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "10",
+       0
+      ],
+      "text": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark"
+     }
+    },
+    "4": {
+     "class_type": "EmptyLatentImage",
+     "inputs": {
+      "width": 832,
+      "height": 1216,
+      "batch_size": 1
+     }
+    },
+    "5": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "seed": 2026091103,
+      "steps": 30,
+      "cfg": 6.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "latent_image": [
+       "4",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "6": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "5",
+       0
+      ],
+      "vae": [
+       "1",
+       2
+      ]
+     }
+    },
+    "7": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "6",
+       0
+      ],
+      "filename_prefix": "Studio/pony"
+     }
+    },
+    "10": {
+     "class_type": "CLIPSetLastLayer",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "stop_at_clip_layer": -2
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "pony_00002_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026091103,
+   "prompt_id": "187c77f9-5f91-439f-b196-2b24c6d7c917",
+   "media_type": "image",
+   "asset_id": "d1503e02028c523783dc2085eca4c90d"
+  }
+ ],
+ "parent_assets": [],
+ "references": [],
+ "native_recipe": null
+}

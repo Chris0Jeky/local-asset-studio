@@ -1,0 +1,38 @@
+name: Windows review desk
+on:
+  pull_request:
+    paths:
+      - 'app/production.py'
+      - 'app/review*.py'
+      - 'app/server.py'
+      - 'app/static/review.*'
+      - 'app/static/production.js'
+      - 'tests/*review*'
+      - '.github/workflows/review-desk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/production.py'
+      - 'app/review*.py'
+      - 'app/server.py'
+      - 'app/static/review.*'
+      - 'app/static/production.js'
+      - 'tests/*review*'
+      - '.github/workflows/review-desk.yml'
+permissions:
+  contents: read
+concurrency:
+  group: review-desk-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  review-contracts:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt
+      - run: node --version
+      - run: python -m unittest discover -s tests -p "test_review_*.py" -v

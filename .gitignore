@@ -23,7 +23,14 @@ config/local.json
 experiments/runs/
 experiments/imports/
 experiments/uploads/
+experiments/workspace/
+experiments/projects/
 .runtime/
+.runtime-codex/
+.claude/settings.local.json
+.claude/worktrees/
+.claude/scratch/
+.codex/scratch/
 *.log
 *.blend1
 .DS_Store

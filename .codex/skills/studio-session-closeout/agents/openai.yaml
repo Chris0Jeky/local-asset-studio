@@ -1,0 +1,4 @@
+interface:
+  display_name: "Studio Session Closeout"
+  short_description: "Stop owned runtimes, write closeout, hand off"
+  default_prompt: "Use $studio-session-closeout for this task and follow its workflow and guardrails."
