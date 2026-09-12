@@ -603,7 +603,9 @@ class Studio:
         preset = self.preset(preset_id)
         if graph is None: graph, _ = self.graph_for(preset)
         known = {Path(a["file"]).name: a for a in self.library.manifest().get("assets", [])}
-        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision"}
+        # `head` is the Fooocus inpaint loader's field; without it the .pth falls to the "models" default
+        # and the panel reports an installed file as missing at a path it never lived at.
+        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision", "head": "inpaint"}
         requirements = []
         for node in graph.values():
             for field, value in node.get("inputs", {}).items():

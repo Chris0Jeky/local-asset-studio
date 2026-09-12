@@ -4804,6 +4804,10 @@
         ]
       },
       "backend_id": "primary",
+      "model_files": [
+        "inpaint/fooocus_inpaint_head.pth",
+        "inpaint/inpaint_v26.fooocus.patch"
+      ],
       "source": "https://github.com/Acly/comfyui-inpaint-nodes",
       "description": "The stronger correction pass for a finished SDXL-family anime image, at zero download: the Fooocus inpaint patch (already installed) is applied to WAI v17 so the repaint is conditioned on the surrounding picture instead of guessing from noise, which is what lets a fairly high denoise redraw a broken hand without inventing a new subject. Upload a same-size RGBA PNG with the picture retained in RGB, every protected area opaque and only the repair region transparent; ComfyUI's LoadImage MASK output is already 1 - alpha, so the transparent region is the repaint region with no inversion node. The mask is grown 8 px and the same grown mask drives the encode and the final composite. The encode is the pack's own INPAINT_VAEEncodeInpaintConditioning, not the core VAEEncodeForInpaint: the core node erases every masked pixel to 0.5 grey before encoding, so its README requires denoise 1.0, while this node keeps the existing content in the sampled latent and puts the erased copy in the conditioning, which is what makes a denoise below 1.0 legitimate. Its latent_inpaint output feeds Apply Fooocus Inpaint and its latent_samples output feeds the sampler. There is no FeatherMask node on purpose: ComfyUI's FeatherMask fades the mask tensor's own borders, not the edge of a region inside it, so it would do nothing here. For a hard-edged alpha the composited area and the regenerated area are the same region; a feathered edge is composited but only partly regenerated, because the sampler's noise mask keeps the fractional values while the composite blends them. SDXL only - the Fooocus patch does not work on distilled merges (Krea 2 Turbo, Anima Turbo, z_image_turbo); those need DifferentialDiffusion instead. Authored at denoise 0.7, the value in the pack's own refine example.",
       "stages": [

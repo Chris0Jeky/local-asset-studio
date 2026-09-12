@@ -117,6 +117,28 @@ class ServerTests(unittest.TestCase):
         _,plain,_,_,_=s.prepare({'preset_id':'demo','controls':{'reference':rgb}})
         self.assertEqual(plain['1']['inputs']['reference'],rgb)
 
+    def test_inpaint_head_and_patch_are_declared_requirements_that_block_readiness(self):
+        """The Fooocus files are not `_name` inputs, so `model_files` is what makes them visible."""
+        graph={"5":{"class_type":"INPAINT_LoadFooocusInpaint","inputs":{"head":"fooocus_inpaint_head.pth","patch":"inpaint_v26.fooocus.patch"}}}
+        preset={"id":"sdxl-inpaint-fix","name":"WAI Fooocus inpaint repair","category":"Anime quality","graph":"workflows/api/inpaint-fix-api.json",
+                "model_files":["inpaint/fooocus_inpaint_head.pth","inpaint/inpaint_v26.fooocus.patch"]}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/inpaint-fix-api.json').write_text(json.dumps(graph))
+        installed=self.root/'fake-comfy/models/inpaint'; installed.mkdir(parents=True)
+        (installed/'fooocus_inpaint_head.pth').write_bytes(b'head')
+        s=self.studio(); found={r['file']:r for r in s.inspect_preset('sdxl-inpaint-fix')['requirements']}
+        # The .pth is reported under inpaint/, never under the "models" default it never lived at.
+        self.assertNotIn('models/fooocus_inpaint_head.pth',found)
+        self.assertEqual(sorted(found),['inpaint/fooocus_inpaint_head.pth','inpaint/inpaint_v26.fooocus.patch'])
+        self.assertTrue(found['inpaint/fooocus_inpaint_head.pth']['present'])
+        self.assertFalse(found['inpaint/inpaint_v26.fooocus.patch']['present'])
+        with patch.object(server.Studio,'node_info',lambda *a,**k:{}), patch.object(server.Studio,'validate_graph',lambda *a:None):
+            with self.assertRaisesRegex(server.StudioError,r'Required model is unavailable: inpaint/inpaint_v26\.fooocus\.patch'):
+                s.production_preflight(preset,graph)
+        (installed/'inpaint_v26.fooocus.patch').write_bytes(b'patch')
+        restored={r['file']:r['present'] for r in s.inspect_preset('sdxl-inpaint-fix')['requirements']}
+        self.assertEqual(restored,{'inpaint/fooocus_inpaint_head.pth':True,'inpaint/inpaint_v26.fooocus.patch':True})
+
     def test_imported_image_survives_restart_without_generation(self):
         s=self.studio();result=s.import_image('frame.png','image/png',png())
         self.assertEqual(s.queue.qsize(),0)
