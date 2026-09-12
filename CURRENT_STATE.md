@@ -1,5 +1,20 @@
 # Current state — 11 September 2026
 
+## Character-consistency offline foundation - 12 September 2026
+
+The character study, archive and media commands now have local Windows integration evidence.
+The full suite ran 589 tests: 579 passed and 10 skipped; repository validation passed. The character
+subset ran 68 tests: 67 passed, with symlink creation unavailable for one test. Both checks against the
+real game-asset brief validator and native preset templates passed. The actual planning CLI produced
+the expected 12-case draft; preflight retained `submission_authorized: false` and reported the draft
+canon plus three missing original references. No model job or reference upload was submitted.
+
+The downloaded field guide contains JPEG previews. The original locked ZIP/PNG sources were not
+found in Downloads, so a full archive restore and original-source pixel proof have not been repeated
+on this PC. Prior CPU evidence remains attributed to its original session. Raw Windows logs and draft
+reports are retained under `.runtime/session-2026-09-12/character-review/`. The live pilot, shared
+execution and review/repair work remain in #64/#65/#66; `HUMAN_TODO.md` and canon acceptance remain open.
+
 ## Voice runtime consistency and recovery - 12 September 2026
 
 Prepare and Start now use the configured isolated Python to observe declared distribution versions through
