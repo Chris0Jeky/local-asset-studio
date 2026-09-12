@@ -1,5 +1,34 @@
 # Current state — 11 September 2026
 
+## Review desk and direct correction handoffs — 12 September 2026
+
+PR #43 is merged as `4b6b94e`: completed image comparisons can open a revisioned Review desk with
+stable blind aliases, matched crops, reversible assessments and checksummed evidence packs retaining
+rejected candidates. The integration against `23f08718` passed 269 discovered tests (267 passed, two
+Windows directory-symlink privilege skips), catalog validation and hosted Ubuntu/Windows checks.
+An independent review found no blocking defects. Actual Windows Chromium 151 exercised direct localhost
+fixture transport, stale-edit rejection, draft/download preservation, ZIP hashes, restore, keyboard and
+390 px layout; no generation occurred. Six separate real-Handler HTTP tests passed. This is review
+infrastructure proof, not art acceptance. Evidence is retained under `.runtime/session-2026-09-12/review-desk/`.
+
+Gallery images and Workspace image details now expose **Fix hands & face** (`anime-detail-fix`) and
+**Refine image** (`krea-refine`). Both use the existing reference-copy/lineage path and await an explicit
+Generate action. Node behavior checks exercised both entries through save/submission and kept repair
+actions off video assets. Windows browser checks used the running Studio APIs with the exact changed
+static files: all four handoffs retained source identity and reference filenames through saved-setup
+readback; the temporary QA setups were removed. Desktop and 390 px mobile views were captured, mobile
+inspected, with no JavaScript errors or generation calls. Receipts: `.runtime/session-2026-09-12/repair-actions/`.
+
+The browser driver needed two corrections (its route callback signature and waiting for the exact
+reference-copy response); the corrected run passed. These were QA-driver failures, not Studio failures.
+The separate **Gentle (denoise 0.3)** trial then completed on the authored 832×1216 NoobAI example
+in 42.280 s: job `e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt
+`a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`. Both passes ran at 0.3 with seed 2026091201.
+The inspected result sharpened the face but retained an extra digit: completed execution, failed
+hand-repair objective, no human art approval. Exact recipe, hashes and the unaltered PNG are linked
+from `experiments/curated/anime-fantasy-atelier/README.md`. The catalog defaults are unchanged.
+The optional creative choices, including the Anima look selection q-3, remain in `HUMAN_TODO.md`.
+
 ## Civitai access, Anima baselines and the correction pass — executed (12 September 2026, second pass)
 
 **Runtime (outside Git, recorded here and in `runtime-patches/README.md`).** The owner's civitai API key is stored as
