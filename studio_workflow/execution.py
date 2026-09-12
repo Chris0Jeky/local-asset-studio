@@ -46,6 +46,7 @@ def _pins(studio, recipe):
     return {'template_sha256': template_sha, 'preset_sha256': digest(preset),
             'graph_sha256': digest(graph), 'backend_id': studio.backends.active,
             'backend_url': studio.comfy_url, 'workspace': str(studio.root),
+            'experiments_root': str(studio.experiments.resolve()), 'runs_root': str(studio.runs.resolve()),
             'load_image_files': sorted(references, key=lambda x: x['name']),
             'reference_bindings_sha256': digest(preset.get('_prepared_references', []))}
 
@@ -76,6 +77,12 @@ def run_ticket(studio, ticket, approved=False):
     identity = digest(ticket)
     job_id = str(uuid.uuid5(NAMESPACE, request_id))
     with studio.lock:
+        # Resolve the actual evidence location before looking up or creating receipts.
+        # Repository identity alone does not identify an experiments workspace.
+        need(isinstance(ticket['pins'], dict)
+             and ticket['pins'].get('experiments_root') == str(studio.experiments.resolve())
+             and ticket['pins'].get('runs_root') == str(studio.runs.resolve()),
+             'Run workspace changed or ticket lacks workspace pins; inspect the original workspace before any new attempt')
         root = studio.runs.resolve()
         directory = root / 'workflow-requests'
         directory.mkdir(exist_ok=True)
