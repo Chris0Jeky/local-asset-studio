@@ -162,6 +162,35 @@ class Production:
             result.append({'label':label,'controls':copy.deepcopy(controls),'rationale':rationale,'sources':sources[:12]})
         return result
 
+    def _verify_character_reference_inputs(self, graph, bundle, character_source):
+        """Pin the bytes a prepared graph will load, including pre-existing Comfy inputs."""
+        approved={item['file']: item['sha256'] for item in character_source['uploads']}
+        if len(approved)!=len(character_source['uploads']):raise ValueError('Character handoff has duplicate reference inputs')
+        graph_names=[]
+        for node in graph.values():
+            if node.get('class_type')!='LoadImage':continue
+            name=(node.get('inputs') or {}).get('image')
+            if not isinstance(name,str) or Path(name).name!=name or name not in approved:
+                raise ValueError('Prepared graph has a reference input outside the approved handoff')
+            graph_names.append(name)
+        if sorted(graph_names)!=sorted(approved):raise ValueError('Prepared graph does not bind every approved character reference')
+        inputs=bundle.get('inputs') if isinstance(bundle,dict) else None
+        if not isinstance(inputs,list):raise ValueError('Production preflight did not pin character reference inputs')
+        actual={}
+        for item in inputs:
+            if not isinstance(item,dict) or not isinstance(item.get('path'),str) or not isinstance(item.get('sha256'),str):
+                raise ValueError('Production preflight returned an invalid character reference input')
+            name=Path(item['path']).name
+            if name not in approved or name in actual or item['sha256']!=approved[name]:
+                raise ValueError('Production preflight reference bytes differ from the approved handoff')
+            actual[name]=item['sha256']
+        if actual!=approved:raise ValueError('Production preflight did not pin every approved character reference')
+        input_root=(self.studio.comfy_root/'input').resolve()
+        for name,digest in approved.items():
+            path=(input_root/name).resolve()
+            if not path.is_relative_to(input_root) or not path.is_file() or self._file_hash(path)!=digest:
+                raise ValueError('Prepared Comfy reference bytes differ from the approved handoff')
+
     def _create(self, payload, *, character_source=None, root_override=None, allowance_override=None, identifier_override=None):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
@@ -206,6 +235,7 @@ class Production:
                 for node,field in ([preset[key]] if preset.get(key) else [])+(preset.get('bindings_extra') or {}).get(key,[]):
                     if prompting.has_wildcards(graph.get(str(node),{}).get('inputs',{}).get(str(field))):raise ValueError('Resolve prompt wildcards ({a|b}, __name__) before planning a comparison; they would re-roll per stage')
             stage_bundle=self.studio.production_preflight(preset,graph)
+            if character_source is not None:self._verify_character_reference_inputs(graph,stage_bundle,character_source)
             if bundle is None:bundle=stage_bundle
             else:
                 # Pruned LoRA slots make stage graphs heterogeneous: pin every model any stage loads.

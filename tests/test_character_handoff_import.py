@@ -35,6 +35,15 @@ class CharacterHandoffImportTests(unittest.TestCase):
                 {'id': 'profile', 'instruction': 'One strict profile.', 'reference_ids': ['portrait-calm'], 'required_checks': ['identity']},
             ], 'seeds': [7], 'budget': {'max_generation_attempts': 2, 'max_repairs_per_case': 0, 'allow_paid_services': False}, 'hypotheses': ['fixture']})
         self.studio = FakeStudio(self.root, [])
+        self.studio.production_preflight = self.character_preflight
+
+    def character_preflight(self, preset, graph):
+        inputs=[]
+        for node in graph.values():
+            if node.get('class_type') != 'LoadImage': continue
+            path=self.studio.comfy_root/'input'/node['inputs']['image']
+            inputs.append({'path': str(path), 'sha256': character.file_sha(path), 'bytes': path.stat().st_size})
+        return {'comfy_url': self.studio.comfy_url, 'models': [], 'inputs': inputs}
 
     def payload(self, case):
         handoff = character.prepare_handoff(self.plan, case['id'], self.workspace, self.root)
@@ -68,6 +77,27 @@ class CharacterHandoffImportTests(unittest.TestCase):
         with patch.object(self.studio, 'production_preflight', side_effect=ValueError('fixture preflight failure')):
             with self.assertRaisesRegex(ValueError, 'fixture preflight failure'): self.studio.production.create(self.payload(case))
         self.assertEqual(self.studio.production.list(), before); self.assertTrue(self.studio.queue.empty()); self.assertEqual(self.studio.jobs, {})
+
+    def test_rehashed_handoff_cannot_change_controls_bindings_or_current_preset_kind(self):
+        handoff=character.prepare_handoff(self.plan, self.plan['cases'][0]['id'], self.workspace, self.root)
+        for mutate in (
+                lambda value: value['proposed_controls'].__setitem__('positive', 'Contradict the approved case.'),
+                lambda value: value['control_bindings'].__setitem__('positive', [['not-a-node', 'text']])):
+            changed=copy.deepcopy(handoff); mutate(changed); changed['handoff_sha256']=character.sha({k:v for k,v in changed.items() if k != 'handoff_sha256'})
+            with self.assertRaisesRegex(ValueError, 'Handoff differs'): character.check_handoff(self.plan, changed, self.root)
+        catalog=character.read_json(self.root/'presets/catalog.json'); catalog['presets'][0]['modality']='video'
+        (self.root/'presets/catalog.json').write_text(json.dumps(catalog), encoding='utf-8')
+        changed=copy.deepcopy(handoff); changed['catalog_entry_sha256']=character.sha(catalog['presets'][0]); changed['handoff_sha256']=character.sha({k:v for k,v in changed.items() if k != 'handoff_sha256'})
+        with self.assertRaisesRegex(ValueError, 'image preset'): character.check_handoff(self.plan, changed, self.root)
+
+    def test_existing_comfy_input_with_changed_bytes_rejects_before_project_budget_or_job(self):
+        case=self.plan['cases'][0]; payload=self.payload(case); filename=payload['uploads'][0]['file']
+        target=self.studio.comfy_root/'input'/filename; target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(b'changed-but-pre-existing')
+        before=self.studio.production.list()
+        with self.assertRaisesRegex(ValueError, 'reference bytes differ'):
+            self.studio.production.create(payload)
+        self.assertEqual(self.studio.production.list(), before); self.assertTrue(self.studio.queue.empty()); self.assertEqual(self.studio.jobs, {})
+        with self.studio.production.connect() as db:self.assertIsNone(db.execute('SELECT id FROM budgets').fetchone())
 
 
 if __name__ == '__main__': unittest.main()
