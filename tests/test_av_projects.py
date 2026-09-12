@@ -36,6 +36,13 @@ class SceneTests(unittest.TestCase):
     def change(self,doc,action='edit',**kw):
         return self.scenes.command(doc['id'],dict(action=action,expected_revision=doc['revision'],actor='agent',**kw))
 
+    @staticmethod
+    def fixture_render(project,directory,out,**kwargs):
+        out.mkdir(parents=True,exist_ok=True)
+        (out/'preview.mp4').write_bytes(b'inert preview')
+        (out/'mix.wav').write_bytes(b'inert audio')
+        return {'fixture':True}
+
     def test_create_is_snapshot_and_never_queues_or_generates(self):
         doc=self.create();self.assertEqual(doc['revision'],0)
         self.assertEqual(self.studio.queue.qsize(),0);self.assertEqual(self.studio.requests,[])
@@ -161,6 +168,43 @@ class SceneTests(unittest.TestCase):
         queued=self.change(changed,'render');self.scenes.cancel(doc['id'],queued['render']['id'])
         self.studio.production.run(doc['id']);last=self.scenes.inspect(doc['id'])
         self.assertEqual(last['render']['preview_url'],result['render']['preview_url'])
+
+    def test_publication_first_save_failure_does_not_index_assets(self):
+        doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id'];before={a['id'] for a in self.studio.assets.snapshot()['assets']}
+        original_save=self.studio._save;calls=[]
+        def save(job):
+            calls.append(job['status'])
+            if len(calls)==1:raise OSError('first durable save failed')
+            return original_save(job)
+        with patch('av_projects.render',side_effect=self.fixture_render),patch.object(self.studio,'_save',side_effect=save):
+            self.studio.production.run(doc['id'])
+        self.assertEqual({a['id'] for a in self.studio.assets.snapshot()['assets']},before)
+        state=json.loads((self.studio.runs/attempt/'state.json').read_text())
+        self.assertEqual(state['status'],'failed');self.assertEqual(state['publication_status'],'failed')
+        self.assertEqual(state['native_recipe']['source_assets'][0]['asset_id'],self.asset['id'])
+
+    def test_publication_register_and_later_save_failure_retains_recipe_and_partial_assets(self):
+        doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
+        original_register=self.studio.assets.register
+        def register(job,index,source):
+            if index==1:raise OSError('second output register failed')
+            return original_register(job,index,source)
+        original_save=self.studio._save;calls=[]
+        def save(job):
+            calls.append(job['status'])
+            if len(calls)==2:raise OSError('later durable save failed')
+            return original_save(job)
+        with patch('av_projects.render',side_effect=self.fixture_render),patch.object(self.studio.assets,'register',side_effect=register),patch.object(self.studio,'_save',side_effect=save):
+            self.studio.production.run(doc['id'])
+        state=json.loads((self.studio.runs/attempt/'state.json').read_text())
+        self.assertEqual(state['status'],'failed');self.assertEqual(state['publication_status'],'failed')
+        self.assertEqual(state['native_recipe']['source_assets'][0]['asset_id'],self.asset['id'])
+        self.assertEqual(state['outputs'][0]['asset_id'],self.studio.jobs[attempt]['outputs'][0]['asset_id'])
+        self.assertIn('publication_error',state['diagnostics'])
+        self.assertEqual(self.studio.assets.get(state['outputs'][0]['asset_id'])['lineage'],[self.asset['id']])
+        restarted=FakeStudio(self.root,[])
+        self.assertEqual(restarted.jobs[attempt]['native_recipe']['source_assets'][0]['asset_id'],self.asset['id'])
+        self.assertEqual(restarted.jobs[attempt]['outputs'][0]['asset_id'],state['outputs'][0]['asset_id'])
 
     def test_audio_source_range_is_checked_before_revision_commit(self):
         # Register a synthetic output through the same Workspace path as runtime audio.

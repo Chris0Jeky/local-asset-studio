@@ -277,6 +277,28 @@ class AVProjects:
                            'role':'preview' if filename=='preview.mp4' else 'audio' if filename=='mix.wav' else 'evidence'})
         return result
 
+    def _save_job(self, job):
+        with self.studio.lock:self.studio._save(job)
+
+    def _retain_publication_failure(self, job, error):
+        job['status']='failed';job['publication_status']='failed'
+        job['message']='Scene preview publication failed; rendered files and Workspace assets are retained for inspection.'
+        diagnostics=job.setdefault('diagnostics',{})
+        diagnostics.update(publication_error=str(error)[:500],partial_asset_ids=[o['asset_id'] for o in job.get('outputs',[]) if o.get('asset_id')])
+        try:self._save_job(job)
+        except Exception as save_error:
+            diagnostics['durable_save_error']=str(save_error)[:500]
+            try:
+                directory=self.studio.runs/job['id'];directory.mkdir(exist_ok=True)
+                recipe={'version':1,'operation':job['operation'],'project_id':job['project_id'],'preset_id':job['preset_id'],
+                        'controls':job['controls'],'batch_count':job['batch_count'],'graph_path':job['graph_path'],'created_at':job['created_at'],
+                        'references':job.get('references',[]),'parent_assets':job.get('parent_assets',[]),'native_recipe':job.get('native_recipe'),
+                        'outputs':job.get('outputs',[]),'status':job['status'],'diagnostics':diagnostics}
+                self.studio._write_json_atomic(directory/'recipe.json',recipe)
+                self.studio._write_json_atomic(directory/'workflow.json',job.get('graph',{}))
+                self.studio._write_json_atomic(directory/'state.json',{k:v for k,v in job.items() if k!='graph'})
+            except Exception as fallback_error:diagnostics['fallback_save_error']=str(fallback_error)[:500]
+
     def run(self, identifier):
         with self.production.connect() as db:row=db.execute("SELECT * FROM av_renders WHERE project_id=? AND status='queued' ORDER BY created LIMIT 1",(identifier,)).fetchone()
         av.need(row is not None,'No queued scene render; inspect previous attempts before requesting another')
@@ -287,25 +309,29 @@ class AVProjects:
         def progress(message):
             percent={'Inspecting pinned sources':5,'Rendering picture and PCM mix':30,'Muxing preview':80,'Verifying output':95}.get(message,0)
             self._render_state(attempt,'running',message=message,progress=percent)
+        job=None
         try:
             if cancelled():raise RenderCancelled('Render cancelled before execution')
             self._render_state(attempt,'running',message='Starting pinned scene render',progress=1)
             receipt=render(document['project'],directory,out,executables=self.executables(),cancel=cancelled,progress=progress)
             if cancelled():raise RenderCancelled('Render cancelled before publication')
-            job={'id':attempt,'operation':'native.av-preview.v1','project_id':identifier,'status':'completed','created_at':row['created'],
+            job={'id':attempt,'operation':'native.av-preview.v1','project_id':identifier,'status':'running','publication_status':'publishing','created_at':row['created'],
                  'preset_id':'av-preview','preset_name':document['project']['name'],'controls':{},'batch_count':1,'prompt_ids':[],'submissions':[],
                  'parent_assets':[s['asset_id'] for s in document['sources']],'references':[],'graph_path':'','graph':{},
                  'native_recipe':{'scene_id':identifier,'revision':row['revision'],'project':document['project'],'source_assets':document['sources'],'receipt':receipt},
                  'message':f'CPU scene preview from revision {row["revision"]}; not creative acceptance',
                  'outputs':[{'filename':name,'native_path':f'renders/{attempt}/{name}','type':'output','media_type':kind} for name,kind in (('preview.mp4','video'),('mix.wav','audio'))]}
+            (self.studio.runs/attempt).mkdir(exist_ok=True);self.studio.jobs[attempt]=job;self._save_job(job)
             self.studio.index_outputs(job)
             av.need(all(o.get('asset_id') and not o.get('snapshot_error') for o in job['outputs']),'Preview rendered but Workspace publication failed; inspect retained output')
-            (self.studio.runs/attempt).mkdir(exist_ok=True)
-            with self.studio.lock:self.studio._save(job);self.studio.jobs[attempt]=job
+            job.update(status='completed',publication_status='published')
+            self._save_job(job)
             self._render_state(attempt,'completed',message=f'Preview completed for revision {row["revision"]}',progress=100,
                                artifacts=self._artifacts(identifier,attempt),receipt=receipt,job_id=attempt)
         except RenderCancelled as exc:self._render_state(attempt,'cancelled',message=str(exc),artifacts=self._artifacts(identifier,attempt))
-        except Exception as exc:self._render_state(attempt,'failed',message=str(exc)[:500],artifacts=self._artifacts(identifier,attempt))
+        except Exception as exc:
+            if job is not None:self._retain_publication_failure(job,exc)
+            self._render_state(attempt,'failed',message=str(exc)[:500],artifacts=self._artifacts(identifier,attempt))
 
     def source(self, identifier, key):
         directory=self.directory(identifier)

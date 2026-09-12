@@ -55,7 +55,9 @@ No synthesis, ComfyUI restart, new GPU worker, codec download or transcoding hap
 immutable render requests and published export records. Render requests enter the existing Studio
 worker queue. Each attempt owns its new `renders/ATTEMPT_ID` directory with source snapshots, plan,
 logs, output and receipt. Completed video/PCM output enters Workspace with source lineage and the
-full scene recipe. Previous previews remain available and are labelled stale after later edits.
+full scene recipe. Before Workspace indexing, the full native request and receipt are durably recorded
+as a publishing attempt; publication failures retain the recipe, diagnostics and any registered assets.
+Previous previews remain available and are labelled stale after later edits.
 
 Cancel targets a named active attempt. Owned FFmpeg children are terminated and joined; files and logs
 remain. Cancellation during the final publication interval can lose to completion (tracked in #30).
