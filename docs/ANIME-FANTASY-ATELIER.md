@@ -235,7 +235,7 @@ image carries a small imperfection the owner would like corrected by a follow-up
 
 ## The correction pass
 
-Three presets answer that. `anime-detail-fix` and `krea-refine` accept a reference upload or their authored example; `anime-masked-repair` requires its own real RGBA PNG with a transparent repair region.
+Four presets answer that. `anime-detail-fix` and `krea-refine` accept a reference upload or their authored example; `anime-masked-repair` and `sdxl-inpaint-fix` require their own real RGBA PNG with a transparent repair region.
 
 From a gallery image or its Workspace details, choose **Fix hands & face** to open `anime-detail-fix`,
 or **Refine image** to open `krea-refine`. The Studio attaches that image and retains its source asset
@@ -265,12 +265,56 @@ press **Generate** explicitly. Opening either action does not start a render or 
   WAI v17 at its authored 0.4 denoise and composites it over the supplied source. Studio preserves the uploaded
   RGBA bytes when staging the input, but it has no mask painter or automatic hand-anatomy guarantee. This preset
   is unverified until one deliberately submitted Krea-source repair is inspected and recorded.
+- **`sdxl-inpaint-fix`** (**WAI • Fooocus inpaint repair**) — the same manual RGBA upload as
+  `anime-masked-repair`, but the repaint runs through the **Fooocus inpaint patch** that is already installed,
+  so the model is conditioned on the surrounding picture instead of re-imagining the hole from noise. That is
+  what makes a fairly high denoise usable: a plain masked resample that high tends to invent a new subject,
+  while the patched model redraws the region and keeps it attached to the art around it. The alpha mask is
+  grown 8 px and the same grown mask drives both the encode and the final composite. For a hard-edged alpha
+  the composited area and the regenerated area are the same region; a feathered edge is composited but only
+  partly regenerated, because the sampler's noise mask keeps the fractional values while the composite blends
+  them. Authored at **denoise 0.7**, with **Gentle (0.5)** as the first try and **Redraw (1.0)** when the
+  region has to be rebuilt from nothing.
+
+  One wiring detail is load-bearing and easy to get wrong. ComfyUI's core *VAE Encode (for Inpainting)*
+  erases every masked pixel to 0.5 grey before encoding, so the pack's README states plainly that with it
+  "denoise strength must be 1.0" — anything lower starts the sampler from a partly grey latent. The
+  documented route for sub-1.0 denoise is the pack's own **VAE Encode & Inpaint Conditioning**
+  (`INPAINT_VAEEncodeInpaintConditioning`): it keeps the real image in the sampled latent and puts the erased
+  copy in the conditioning, exposing `latent_inpaint` for *Apply Fooocus Inpaint* and `latent_samples` for the
+  sampler. This preset uses that node, which is what makes 0.5 and 0.7 legitimate here.
+
+### Which correction to reach for
+
+| Situation | Preset | Why |
+| --- | --- | --- |
+| A face or hand a YOLO detector can find, anywhere in the picture | `anime-detail-fix` | Fully automatic: it crops, repaints and pastes back. No mask to prepare. An undetected hand is an unfixable hand. |
+| Detector fires but the crop is the wrong shape, and the fix is small | `anime-masked-repair` | Manual region, low denoise (0.4), the least invasive of the three. |
+| The region has to be genuinely redrawn — a mangled hand, a missing prop, a hole the detector crop cannot contain | `sdxl-inpaint-fix` | The Fooocus patch is what survives a high denoise without inventing a new subject. |
+| The source is a Krea 2 Turbo, Anima Turbo or z_image_turbo render | none of these | The Fooocus patch does not work on distilled merges; see the note below. |
+| The whole Krea 2 image is soft rather than locally broken | `krea-refine` | Global img2img polish; no mask. |
+
+**`sdxl-inpaint-fix` is SDXL-only.** The Fooocus inpaint patch works on SDXL checkpoints — WAI v17, NoobAI,
+Animagine, Pony, RealVisXL — and does **not** work on distilled merges: Krea 2 Turbo, Anima Turbo and
+z_image_turbo are not supported by it. For those families the equivalent route is the native
+`DifferentialDiffusion` node with a blurred mask; that is a mention here, not a preset in this repo yet.
+
+**`sdxl-inpaint-fix` is unverified.** Nothing has been submitted through it: no prompt ID, no timing, no
+inspected output. It stays `verified: false` until one deliberately submitted repair is run, inspected and
+recorded in `experiments/curated/anime-fantasy-atelier/`. Its node classes, links and both patch filenames
+(`fooocus_inpaint_head.pth`, `inpaint_v26.fooocus.patch`) were checked against ComfyUI's `/object_info`
+schema, which is a read and proves nothing about the picture that comes out. The three denoise values are
+read from the installed pack, not measured here: 0.7 is its refine example workflow, 1.0 is what its other
+four example workflows use, and 0.5 is an interpolation inside the 1–100% range its README documents for the
+refine workflow. Licence facts stay recorded and
+uncleared: WAI's terms are unresolved, the Fooocus patch mirror carries no licence tag, and upstream Fooocus
+is AGPL-3.0.
 
 The recorded 12 September **Gentle (0.3)** trial sharpened the NoobAI portrait's face but retained its
 extra digit. That run is preserved as an unsuccessful hand-repair candidate; lowering denoise alone
 is not a verified cure for an extra finger. See the [exact trial evidence](../experiments/curated/anime-fantasy-atelier/anime-detail-fix-gentle-evidence.json).
 
-Neither is a hires-fix; upscaling stays with the existing ESRGAN handoff. Execution results, when a pass has
+None of them is a hires-fix; upscaling stays with the existing ESRGAN handoff. Execution results, when a pass has
 been run, are in `experiments/curated/anime-fantasy-atelier/`.
 
 ## Timing reality

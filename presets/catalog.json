@@ -1751,6 +1751,7 @@
       "graph": "workflows/api/anime-masked-repair-api.json",
       "visual": "workflows/comfyui/24 - Anime Masked Repair.json",
       "verified": false,
+      "requires_rgba_mask": true,
       "commercial_note": "Repaints a manually selected region with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
       "positive": [
         "2",
@@ -4739,6 +4740,102 @@
         }
       ],
       "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval."
+    },
+    {
+      "id": "sdxl-inpaint-fix",
+      "name": "WAI \u2022 Fooocus inpaint repair",
+      "category": "Anime quality",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/sdxl-inpaint-fix-api.json",
+      "visual": "workflows/comfyui/57 - WAI Fooocus Inpaint Repair.json",
+      "verified": false,
+      "requires_rgba_mask": true,
+      "commercial_note": "Repaints a manually masked region with WAI v17 (Illustrious) through the Fooocus inpaint patch. WAI is held from a mirror and its hashes do not authenticate its creator; its commercial terms are unresolved. The two patch files (inpaint_v26.fooocus.patch, fooocus_inpaint_head.pth) are byte-identical to lllyasviel/fooocus_inpaint, which carries no licence tag on Hugging Face, and the upstream Fooocus project is AGPL-3.0. Recorded, not cleared. The source image keeps its own terms.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "9",
+        "seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "9",
+        "cfg"
+      ],
+      "denoise": [
+        "9",
+        "denoise"
+      ],
+      "sampler": [
+        "9",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "9",
+        "scheduler"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_3m_sde"
+        ],
+        "scheduler": [
+          "karras",
+          "simple",
+          "normal",
+          "sgm_uniform",
+          "beta"
+        ]
+      },
+      "backend_id": "primary",
+      "model_files": [
+        "inpaint/fooocus_inpaint_head.pth",
+        "inpaint/inpaint_v26.fooocus.patch"
+      ],
+      "source": "https://github.com/Acly/comfyui-inpaint-nodes",
+      "description": "The stronger correction pass for a finished SDXL-family anime image, at zero download: the Fooocus inpaint patch (already installed) is applied to WAI v17 so the repaint is conditioned on the surrounding picture instead of guessing from noise, which is what lets a fairly high denoise redraw a broken hand without inventing a new subject. Upload a same-size RGBA PNG with the picture retained in RGB, every protected area opaque and only the repair region transparent; ComfyUI's LoadImage MASK output is already 1 - alpha, so the transparent region is the repaint region with no inversion node. The mask is grown 8 px and the same grown mask drives the encode and the final composite. The encode is the pack's own INPAINT_VAEEncodeInpaintConditioning, not the core VAEEncodeForInpaint: the core node erases every masked pixel to 0.5 grey before encoding, so its README requires denoise 1.0, while this node keeps the existing content in the sampled latent and puts the erased copy in the conditioning, which is what makes a denoise below 1.0 legitimate. Its latent_inpaint output feeds Apply Fooocus Inpaint and its latent_samples output feeds the sampler. There is no FeatherMask node on purpose: ComfyUI's FeatherMask fades the mask tensor's own borders, not the edge of a region inside it, so it would do nothing here. For a hard-edged alpha the composited area and the regenerated area are the same region; a feathered edge is composited but only partly regenerated, because the sampler's noise mask keeps the fractional values while the composite blends them. SDXL only - the Fooocus patch does not work on distilled merges (Krea 2 Turbo, Anima Turbo, z_image_turbo); those need DifferentialDiffusion instead. Authored at denoise 0.7, the value in the pack's own refine example.",
+      "stages": [
+        "RGBA source with manual transparent repair region",
+        "LoadImage alpha mask grown 8 px",
+        "VAE encode & inpaint conditioning (existing content kept)",
+        "Fooocus inpaint patch applied to WAI v17",
+        "24-step repaint at authored 0.7 denoise",
+        "Composite over the source",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Gentle (denoise 0.5)",
+          "controls": {
+            "denoise": 0.5
+          }
+        },
+        {
+          "name": "Redraw (denoise 1.0)",
+          "controls": {
+            "denoise": 1.0
+          }
+        }
+      ],
+      "execution_note": "Catalog, graph and upload contract only. This preset has not been submitted to ComfyUI, visually inspected, or accepted as a correction. Node classes, links and the two inpaint filenames were confirmed against the running ComfyUI's /object_info by scripts/validate-live.py, which is a schema read and never queues work. The denoise values are read from the installed pack, not measured here: 0.7 is its refine example workflow, 1.0 is the value its other four example workflows use and the only value the core VAEEncodeForInpaint route ever permitted, and 0.5 is an interpolation inside the 1-100% range its README documents for the refine workflow."
     }
   ]
 }
