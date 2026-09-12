@@ -7,11 +7,16 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import time
 import wave
 from .project import validate, safe_path, file_hash, write_new, need
 
 
-def tool(name):
+def tool(name, executables=None):
+    if executables is not None:
+        path=Path(executables.get(name,''))
+        need(path.is_absolute() and path.is_file(),f'Configure an absolute {name} executable')
+        return str(path)
     found=shutil.which(name); need(found is not None,f'{name} is not installed/on PATH');return found
 
 def input_options(kind, fps=None):
@@ -30,21 +35,22 @@ def input_options(kind, fps=None):
         options+=['-f','wav']
     return options
 
-def probe(path,kind):
+def probe(path,kind,executables=None):
     # The caller has validated path/hash.  The explicit demuxer prevents probe
     # auto-detection from treating a renamed asset as a playlist or script.
     try:
-        result=subprocess.run([tool('ffprobe'),'-v','error',*input_options(kind),'-show_entries',
+        result=subprocess.run([tool('ffprobe',executables),'-v','error',*input_options(kind),'-show_entries',
             'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate','-of','json',str(path)],
             capture_output=True,timeout=20,check=True)
     except subprocess.CalledProcessError as exc:
         raise ValueError(f'Invalid constrained {kind} input') from exc
     need(len(result.stdout)<1024*1024,'Probe result too large');return json.loads(result.stdout)
 
-def validate_media(p,root):
+def validate_media(p,root,executables=None,cancel=None):
     result=validate(p,root); metadata={}
     for key,a in p['assets'].items():
-        path=safe_path(root,a['path']);info=probe(path,a['kind']);metadata[key]=info
+        if cancel and cancel():raise RenderCancelled('Render cancelled during media inspection')
+        path=safe_path(root,a['path']);info=probe(path,a['kind'],executables);metadata[key]=info
         kinds=[s for s in info['streams'] if s['codec_type']==('audio' if a['kind']=='audio' else 'video')]
         need(len(kinds)==1,'Expected a single primary media stream')
         stream=kinds[0]
@@ -59,7 +65,9 @@ def validate_media(p,root):
     for s in p['shots']:
         if p['assets'][s['asset']]['kind']=='video':
             duration=float(metadata[s['asset']].get('format',{}).get('duration',0))
-            need(math.isfinite(duration) and (s['source_in']+s['frames'])/fps<=duration+1/fps,'Video source too short')
+            # A whole extra frame masks invalid trims behind the output tpad.
+            # Allow only a single audio-sample timestamp rounding tolerance.
+            need(math.isfinite(duration) and (s['source_in']+s['frames'])/fps<=duration+1/48000,'Video source too short')
     for c in p['audio']:
         need(c['source_sample']+c['samples']<=metadata[c['asset']]['sample_count'],'Audio source too short')
     return result,metadata
@@ -121,9 +129,41 @@ def inspect_wav(path):
         'dc_offset':[v/count/32768 for v in sums],'full_scale_sample_count':full,
         'near_or_at_clipping':any(full),'method':'16-bit decoded sample statistics; not LUFS, true peak, intelligibility or perceptual review'}
 
-def render(p,root,out,timeout=180):
+class RenderCancelled(ValueError): pass
+
+
+def _run_owned(command,log_path,timeout,cancel):
+    """Only the process created here can be cancelled; preserve its log/output."""
+    started=time.monotonic()
+    with log_path.open('xb') as log:
+        process=subprocess.Popen(command,stdout=log,stderr=log)
+        try:
+            while process.poll() is None:
+                if cancel and cancel():raise RenderCancelled('Render cancelled; incomplete output retained')
+                if time.monotonic()-started>timeout:raise subprocess.TimeoutExpired(command,timeout)
+                if log_path.stat().st_size>8*1024**2:raise ValueError('Render log exceeds 8 MiB')
+                if sum(p.stat().st_size for p in log_path.parent.iterdir() if p.is_file())>1024**3:raise ValueError('Render output exceeds 1 GiB')
+                time.sleep(.1)
+            if process.returncode:raise subprocess.CalledProcessError(process.returncode,command)
+            need(log_path.stat().st_size<=8*1024**2,'Render log exceeds 8 MiB')
+            need(sum(p.stat().st_size for p in log_path.parent.iterdir() if p.is_file())<=1024**3,'Render output exceeds 1 GiB')
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:process.wait(timeout=5)
+                except subprocess.TimeoutExpired:process.kill();process.wait(timeout=5)
+
+
+def render(p,root,out,timeout=180,*,executables=None,cancel=None,progress=None):
     need(type(timeout) is int and 1<=timeout<=600,'Timeout outside1..600')
-    info,_=validate_media(p,root);out=Path(out).resolve();out.mkdir(parents=True,exist_ok=False)
+    report=progress or (lambda stage:None)
+    if cancel and cancel():raise RenderCancelled('Render cancelled before media inspection')
+    report('Inspecting pinned sources')
+    info,_=validate_media(p,root,executables,cancel);out=Path(out).resolve()
+    source_bytes=sum(safe_path(root,a['path']).stat().st_size for a in p['assets'].values())
+    need(shutil.disk_usage(Path(root)).free>=source_bytes+2*1024**3,'Render needs source snapshot space plus 2 GiB free')
+    if cancel and cancel():raise RenderCancelled('Render cancelled before snapshot')
+    out.mkdir(parents=True,exist_ok=False)
     (out/'.incomplete').write_text('Incomplete render; do not treat as accepted\n')
     snapshot=out/'inputs';snapshot.mkdir()
     import copy
@@ -134,16 +174,18 @@ def render(p,root,out,timeout=180):
         need(file_hash(dest)==a['sha256'],'Source changed during snapshot')
         q['assets'][key]['path']=dest.relative_to(out).as_posix()
     plan=compile_project(q,out);write_new(out/'project-source.json',p);write_new(out/'project-snapshot.json',q)
-    common=[tool('ffmpeg'),'-hide_banner','-nostdin','-loglevel','error','-n','-filter_complex_threads','1']
+    common=[tool('ffmpeg',executables),'-hide_banner','-nostdin','-loglevel','error','-n','-filter_complex_threads','1']
     command=common+plan['input_args']+['-filter_complex',plan['filter_complex'],'-map','[vout]','-an','-frames:v',str(info['frames']),'-c:v','libx264','-threads','2','-pix_fmt','yuv420p',str(out/'picture.mp4'),'-map','[aout]','-vn','-ar','48000','-ac','2','-c:a','pcm_s16le',str(out/'mix.wav')]
     write_new(out/'render-plan.json',{'source_revision':info['project_sha256'],'snapshot_plan':plan,'argv':command})
-    with (out/'ffmpeg.log').open('wb') as log:subprocess.run(command,stdout=log,stderr=log,check=True,timeout=timeout)
-    with (out/'mux.log').open('wb') as log:
-        subprocess.run(common+['-i',str(out/'picture.mp4'),'-i',str(out/'mix.wav'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(out/'preview.mp4')],stdout=log,stderr=log,check=True,timeout=timeout)
-    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4','video')
+    report('Rendering picture and PCM mix');_run_owned(command,out/'ffmpeg.log',timeout,cancel)
+    report('Muxing preview')
+    _run_owned(common+['-i',str(out/'picture.mp4'),'-i',str(out/'mix.wav'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(out/'preview.mp4')],out/'mux.log',timeout,cancel)
+    if cancel and cancel():raise RenderCancelled('Render cancelled before output verification')
+    report('Verifying output')
+    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4','video',executables)
     need(qc['samples']==info['samples'],'Output audio duration mismatch')
     duration=float(metadata['format']['duration']);need(abs(duration-info['duration_seconds'])<=max(.05,p['fps'][1]/p['fps'][0]),'Output AV duration mismatch')
     receipt={'schema_version':1,'source_revision':info['project_sha256'],'frames_expected':info['frames'],'audio_qc':qc,'probe':metadata,
         'outputs':{n:file_hash(out/n) for n in ('picture.mp4','mix.wav','preview.mp4')},'generation_performed':False,'creative_acceptance':'not_reviewed',
-        'audio_model_benchmark':False,'ffmpeg_version':subprocess.run([tool('ffmpeg'),'-version'],capture_output=True,text=True,check=True).stdout.splitlines()[0]}
+        'audio_model_benchmark':False,'ffmpeg_version':subprocess.run([tool('ffmpeg',executables),'-version'],capture_output=True,text=True,check=True,timeout=10).stdout.splitlines()[0]}
     write_new(out/'receipt.json',receipt);(out/'.incomplete').unlink();return receipt
