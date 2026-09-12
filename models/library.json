@@ -863,6 +863,25 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "fal-krea2-amber-lit-fantasy-filmset",
+      "name": "Krea 2 / fal amber lit fantasy filmset",
+      "file": "loras/fal-krea2-amber-lit-fantasy-filmset.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/amber-lit-fantasy-filmset.safetensors",
+      "bytes": 234676792,
+      "sha256": "18af0a8e30173061e3a5d6c6793c834bd965b99591e3225d46f2b6ea649f673b",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "amber lit fantasy filmset style",
+      "strength": [
+        1.0,
+        1.25
+      ]
     }
   ],
   "collections": [
