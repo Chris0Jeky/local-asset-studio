@@ -678,6 +678,10 @@ class Studio:
             except StudioError: return
             bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
         rng = random.Random(f"{seed}:{index}")
+        try: self._expand_bound_prompts(graph, bindings, rng)
+        except ValueError as exc: raise StudioError(str(exc))
+
+    def _expand_bound_prompts(self, graph, bindings, rng):
         for key in ("positive", "negative"):
             for binding in bindings.get(key) or []:
                 try: node, field = str(binding[0]), str(binding[1]); text = graph[node]["inputs"][field]

@@ -3918,7 +3918,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-anime-atelier-api.json",
-      "visual": "workflows/comfyui/53 - Krea 2 Anime Atelier.json",
+      "visual": "workflows/comfyui/55 - Krea 2 Anime Atelier.json",
       "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
@@ -4004,7 +4004,7 @@
         ]
       },
       "backend_id": "primary",
-      "description": "The owner's anime stack on Krea Turbo: four hot-swappable LoRA slots feeding one sampler. A slot left at strength 0 is pruned before submission, so an unused slot costs nothing. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
+      "description": "The owner's anime stack on Krea Turbo: four hot-swappable LoRA slots feeding one sampler. A slot left at strength 0 is pruned before submission, so an unused slot adds no compute; every authored slot must still name an installed file. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
       "stages": [
         "Prompt",
         "Krea Turbo + 4 LoRA slots",
@@ -4030,7 +4030,8 @@
           "name": "NIJISIS painterly",
           "controls": {
             "lora2": 0,
-            "lora3": 1.0
+            "lora3": 1.0,
+            "positive": "@NIJISIS, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work"
           }
         },
         {
@@ -4077,8 +4078,8 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-style-lab-api.json",
-      "visual": "workflows/comfyui/54 - Krea 2 Style Lab.json",
-      "verified": false,
+      "visual": "workflows/comfyui/56 - Krea 2 Style Lab.json",
+      "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -4223,7 +4224,8 @@
             "steps": 4
           }
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e (variant '4-step audition', 207 s at 1024x1024); image inspected. Other style pairs are not yet run. Not an art approval."
     }
   ]
 }

@@ -95,6 +95,11 @@ class RemixTests(unittest.TestCase):
         self.assertEqual(variants[1]['sources'],['https://example.invalid/b','https://example.invalid/b-mirror'])
         self.assertIn('leads at 1.0',variants[0]['rationale'])
 
+    def test_a_fourth_slot_is_remixed_too(self):
+        preset=dict(PRESET,lora4=['13','strength_model'])
+        variants=planner.plan_remix(preset,KB,{'lora':1.0,'lora4':0.9})
+        self.assertTrue(any(v['controls'].get('lora4')==1.0 and v['controls'].get('lora')<1.0 for v in variants),[v['controls'] for v in variants])
+
     def test_off_slots_stay_off_and_preset_defaults_supply_the_base(self):
         variants=planner.plan_remix(PRESET,KB,{})
         self.assertEqual([v['label'] for v in variants],['TextFusion lead'])

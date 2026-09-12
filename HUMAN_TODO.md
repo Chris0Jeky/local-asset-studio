@@ -32,13 +32,14 @@ reported as unavailable rather than failing at submission. Its author documents 
 1536×1536, weight 1.0, `er_sde`/`simple`, 8–10 steps.
 
 **q-2 — creative review of the atelier results (human-only; subjective).**
-The new Krea 2 and SDXL anime presets, recipes and LoRA stacks are schema-checked and marked
-`verified: false`. No agent submitted a generation for them. Decide, after looking at actual outputs:
+The new Krea 2 and SDXL anime presets were each executed once on 12 September 2026 (six presets are now
+`verified: true`; images and prompt IDs in `experiments/curated/anime-fantasy-atelier/`). Execution is not art
+approval. Decide, after looking at the actual outputs:
 
 - which of the LoRA stacks (Niji Sweet Spot + TextFusion, NIJISIS painterly, the oil/watercolour fal
   styles) matches the look you want, and at which strengths;
-- whether the 15-step target recipe is worth roughly sixteen minutes per image, or whether 8 steps is
-  close enough for everyday work;
+- whether the 15-step target recipe is worth roughly sixteen minutes per image (measured 941 s), or whether
+  the 4-step distill LoRA (271 s, comparable quality in the probes) is the everyday path;
 - which recipes deserve to be curated into `experiments/curated/`, and which presets may have
   `verified` flipped to `true` on the strength of a run you inspected.
 

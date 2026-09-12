@@ -79,13 +79,11 @@ name in words followed by ` style`, placed at the end of a short prompt; the ind
 | `fal-krea2-emerald-fantasy-paperback.safetensors` | `emerald fantasy paperback style` | 1.0-1.25 |
 | `fal-krea2-emerald-lamplight-oil.safetensors` | `emerald lamplight oil style` | 1.0-1.25 |
 
-Sixteen of the seventeen have a download receipt in `.runtime/downloads/receipts.json`. The exception is
-`fal-krea2-emerald-lamplight-oil`: its receipt is missing, so its size and SHA-256 were computed from the
-installed file on 12 September 2026 and are recorded as such in the entry's `terms`. Two further styles named
-in the session plan, `amber-lit-fantasy-filmset` and `azure-sunlit-storybook`, are **not** pinned: the first
-was never fetched and the second was still a `.part` file. Fetch them with
-`python scripts/fetch-hf.py --repo ilkerzgi/fal-Krea-2-Style-LoRAs --path comfy/<name>.safetensors --name fal-krea2-<name>.safetensors`
-and paste the printed stub here.
+All nineteen fal styles are installed and pinned. Eighteen have a download receipt in
+`.runtime/downloads/receipts.json`; `fal-krea2-emerald-lamplight-oil` has none, so its size and SHA-256 were
+computed from the installed file on 12 September 2026 and its `terms` entry says so. `amber-lit-fantasy-filmset`
+and `azure-sunlit-storybook` needed retried downloads the same day and were pinned once their hashes matched
+the Hugging Face LFS metadata.
 
 ### civitai adapters (4)
 

@@ -100,6 +100,7 @@ def plan_grid(preset,kb,base_controls,axis_ids,limit=8):
     if not isinstance(axis_ids,(list,tuple)) or not axis_ids:raise ValueError('Choose at least one documented axis')
     chosen=[]
     for identifier in axis_ids:
+        if not isinstance(identifier,str):raise ValueError('Unknown or unbound axis: '+repr(identifier)[:60])
         axis=available.get(identifier)
         if not axis:raise ValueError('Unknown or unbound axis: '+str(identifier)[:60])
         if axis not in chosen:chosen.append(axis)
@@ -124,7 +125,7 @@ def _slot_entry(slot,base,defaults,kb):
     return entry
 
 
-def plan_remix(preset,kb,base_controls,slots=('lora','lora2','lora3'),ladder=None,limit=8):
+def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
     """One variant per active LoRA slot at the top of the ladder, plus one blend.
 
     Only slots the preset binds and whose base strength is above zero take part:

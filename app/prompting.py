@@ -37,7 +37,8 @@ def expand(text, rng, root=None, depth=DEPTH):
     if not isinstance(text, str): return text
     for _ in range(max(1, int(depth))):
         grown = _once(text, rng, root)
-        if grown == text or len(grown) > LIMIT: return text
+        if len(grown) > LIMIT: raise ValueError(f"Prompt wildcards expand past {LIMIT} characters")
+        if grown == text: return text
         text = grown
     return text
 

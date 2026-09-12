@@ -1581,13 +1581,12 @@
       ],
       "default": 1.0,
       "role": "style",
-      "installed": false,
+      "installed": true,
       "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
       "sha256": "4194343715db34ff37cb5c6454ee7180bb9a7eab50781ddfed6101a12f6b4f31",
       "licence": "krea-2-community-license (repository label)",
       "notes": [
-        "NOT installed: only a partial download (fal-krea2-azure-sunlit-storybook.safetensors.part) exists in the ComfyUI loras folder as of 2026-09-12",
-        "ComfyUI rejects a graph naming a missing LoRA file with HTTP 400 even at strength 0, so no preset or recipe may name it"
+        "Installed and pinned 2026-09-12 after a retried download."
       ]
     },
     "fal-krea2-amber-lit-fantasy-filmset.safetensors": {
@@ -1601,13 +1600,12 @@
       ],
       "default": 1.0,
       "role": "style",
-      "installed": false,
+      "installed": true,
       "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
       "sha256": "18af0a8e30173061e3a5d6c6793c834bd965b99591e3225d46f2b6ea649f673b",
       "licence": "krea-2-community-license (repository label)",
       "notes": [
-        "NOT installed: absent from the ComfyUI loras folder as of 2026-09-12 and absent from .runtime/downloads/receipts.json",
-        "no preset or recipe may name it until it is downloaded"
+        "Installed and pinned 2026-09-12 after a retried download."
       ]
     },
     "krea2_koukouya_sytle_c1-st3000.safetensors": {

@@ -74,7 +74,8 @@ The nineteen fal styles are `airy-anime-watercolor`, `amber-dusk-anime`, `azure-
 
 ## LoRA slots and pruning
 
-Each Krea/SDXL anime preset now exposes four adapter slots. Every slot is a pair of controls: a
+`krea-anime-atelier` exposes four adapter slots, `krea-style-lab` three, the SDXL anime presets two and the
+retro-anime pair one. Every slot is a pair of controls: a
 strength (`lora`, `lora2`, `lora3`, `lora4`) and a filename (`lora_name`, `lora2_name`, …). The
 filename select lists the LoRAs ComfyUI actually reports as installed.
 
@@ -167,7 +168,7 @@ knowledge base (`presets/settings-kb.json`, served at `GET /api/knowledge`) inst
 - **Plan from settings library** builds a grid over the KB axes that your preset actually binds
   (steps, sampler, scheduler, style strength…). Values for sampler and scheduler are intersected with
   the preset's own `choices`, so you cannot plan an impossible run. The first axis varies slowest, and
-  the product is truncated to eight variants unless you raise the limit.
+  the product is truncated to eight variants; remove variants with ✕ to fit your generation budget.
 - **Remix LoRA weights** varies the strengths of the slots that are currently on, over the family's
   documented ladder, one slot per variant plus one "everything at the second rung" variant.
 

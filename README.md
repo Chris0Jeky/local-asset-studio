@@ -92,7 +92,7 @@ The [anime detailing guide](docs/ANIME-DETAILING.md) covers installed ESRGAN, au
 
 ### Anime & fantasy atelier
 
-The **Anime flagship** category now carries Krea 2 Turbo presets with four LoRA slots each. A slot set
+The **Anime flagship** category now carries Krea 2 Turbo presets with LoRA slots (four on `krea-anime-atelier`, three on `krea-style-lab`, one on the retro-anime pair; the SDXL anime presets carry two). A slot set
 to strength 0 is removed from the submitted graph, so the same preset covers a plain render, a single
 style adapter, or a stacked look. **Recipes** in the create view apply a complete named starting point
 (preset, prompt, settings and LoRA stack) in one click; prompts accept `{a|b|c}` and `__wildcard__`

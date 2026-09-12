@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[1]
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
 fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name']
-bound={}
+bound={};named_loras=[]
 for preset in catalog:
     path=(root/preset['graph']).resolve()
     assert path.is_relative_to(root/'workflows/api'), 'Graph outside workflow directory'
@@ -35,10 +35,15 @@ for preset in catalog:
     bound[preset['id']]={k for k in fields if preset.get(k) or preset.get('bindings_extra',{}).get(k)}
     for variant in preset.get('variants',[]):
         assert set(variant.get('controls',{})) <= bound[preset['id']], (preset['id'],variant)
+        for key in ('sampler','scheduler'):
+            if key in variant.get('controls',{}):assert variant['controls'][key] in preset.get('choices',{}).get(key,[]), (preset['id'],variant['name'],key)
+        for key,value in variant.get('controls',{}).items():
+            if key.endswith('_name'):named_loras.append((preset['id']+' variant '+variant['name'],value))
     for key in ('lora_name','lora2_name','lora3_name','lora4_name'):
         for node,field in ([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[]):
             authored=graph[node]['inputs'][field]
             assert isinstance(authored,str) and authored.endswith('.safetensors') and authored==Path(authored).name, (preset['id'],key,authored)
+            named_loras.append((preset['id']+' authored '+key,authored))
 kb_path=root/'presets/settings-kb.json'
 if kb_path.is_file():
     kb=json.loads(kb_path.read_text(encoding='utf-8'))
@@ -63,6 +68,11 @@ if recipe_path.is_file():
         assert re.fullmatch('[a-z0-9]+(-[a-z0-9]+)*',recipe['id']), recipe['id']
         assert recipe['preset_id'] in bound, (recipe['id'],recipe['preset_id'])
         assert set(recipe.get('controls',{})) <= bound[recipe['preset_id']], (recipe['id'],sorted(set(recipe.get('controls',{}))-bound[recipe['preset_id']]))
+        recipe_preset=next(p for p in catalog if p['id']==recipe['preset_id'])
+        for key in ('sampler','scheduler'):
+            if key in recipe.get('controls',{}):assert recipe['controls'][key] in recipe_preset.get('choices',{}).get(key,[]), (recipe['id'],key)
+        for key,value in recipe.get('controls',{}).items():
+            if key.endswith('_name'):named_loras.append(('recipe '+recipe['id'],value))
         assert recipe.get('status') in {'executed','unverified'}, (recipe['id'],recipe.get('status'))
         assert isinstance(recipe.get('sources',[]),list), recipe['id']
 library=json.loads((root/'models/library.json').read_text(encoding='utf-8'))
@@ -82,3 +92,11 @@ for name in filter(None,files):
     assert not name.startswith(('experiments/runs/','experiments/uploads/','experiments/workspace/','experiments/projects/','.runtime/')), 'Operational output in Git: '+name
     assert name!='config/local.json' and not path.name.startswith('.env'), 'Local config/secret file in Git'
 print(f'PASS: {len(catalog)} preset graphs/bindings; {len(library["assets"])} pinned assets; {len(list(filter(None,files)))} tracked paths checked.')
+# Every LoRA a preset, variant or recipe names must be a known, installed adapter (KB entry not marked uninstalled, or a pinned library file).
+known={a['file'].split('/')[-1] for a in library['assets']}
+kb_loras=(json.loads(kb_path.read_text(encoding='utf-8'))['loras'] if kb_path.is_file() else {})
+for where,name in named_loras:
+    entry=kb_loras.get(name)
+    assert name in known or entry is not None, (where,name)
+    assert not (entry and entry.get('installed') is False), (where,name,'marked uninstalled in settings-kb.json')
+print('LoRA names checked:',len(named_loras))

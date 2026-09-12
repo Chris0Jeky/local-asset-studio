@@ -9,12 +9,19 @@ Three rules kept the file honest:
 
 - **`sources` are URLs that document the setting.** A model card, a LoRA card, a ComfyUI tutorial. Not a forum
   memory, not a recollection.
-- **`observed` is local evidence only.** It lists ComfyUI prompt IDs from runs on this PC. Exactly one setting
-  in this knowledge base has one today.
+- **`observed` is local evidence only.** It lists ComfyUI prompt IDs from runs on this PC. As of 12 September 2026 the
+  Krea 2 Turbo `steps`, `sampler` and `style_strength` axes carry them; everything else is card-sourced.
 - **A recommendation is not a measurement.** Every number below that is not marked observed is a card's claim
   about somebody else's hardware and taste.
 
-## The one measured Krea 2 run
+## Locally measured Krea 2 runs
+
+Twelve September 2026, RX 9070 XT, all at 768×1152 with seed 281715418 (full records in
+`experiments/curated/anime-fantasy-atelier/execution-evidence.json`): NIJISIS @1.0 at 15 steps, 986.6 s;
+TextFusion @1.0 + Niji Sweet Spot @1.0 at 15 steps, 941.2 s; the same stack with the 4-step distill LoRA @0.85
+at 4 steps, 270.9 s, comparable quality; four further 4-step probes (NIJISIS with its trigger, a fal oil style
+stacked on the target pair, a fal watercolor style alone, and `er_sde` in place of `euler_ancestral`) at
+170–200 s each. The first of those runs is described below.
 
 | Field | Value |
 | --- | --- |
@@ -64,7 +71,7 @@ phrases at the END of a short prompt, the official Comfy-Org style phrases anywh
 | `NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors` | `@NIJISIS` (start) | 0.8-1.2 | style, NijiJourney V7 look |
 | `krea2_retroanime` / `darkbrush` / `dotmatrix` / `kidsdrawing` / `neondrip` / `rainywindow` / `softwatercolor` / `sunsetblur` / `vintagetarot` | the card's style phrase | 1.0 | official Comfy-Org styles |
 | `krea2_turbo_4step_rank_64_lora_comfyui.safetensors` | none | 0.75-1.0 | accelerator: set steps 4, cfg 1 |
-| `fal-krea2-<style>.safetensors` (16 installed) | `<style words> style` (end) | 1.0-1.25 | fal style pack, short prompts |
+| `fal-krea2-<style>.safetensors` (19 installed) | `<style words> style` (end) | 1.0-1.25 | fal style pack, short prompts |
 
 Two names from the fal pack are **not** usable: `fal-krea2-azure-sunlit-storybook` exists only as a partial
 `.part` download and `fal-krea2-amber-lit-fantasy-filmset` is absent entirely (checked on disk 2026-09-12).

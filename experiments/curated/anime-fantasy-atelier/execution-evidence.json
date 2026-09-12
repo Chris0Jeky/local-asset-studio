@@ -437,6 +437,42 @@
    },
    "artifact": "examples/anime-fantasy-atelier/witch-target-plus-baroque-oil-4step.jpg",
    "inspection": "Target stack + fal baroque-dreamscape-oil @1.0 (trigger at the end): heavier oil-paint look, ruffled dress, dramatic garden light; the third style LoRA did not burn at four stacked adapters."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-style-lab",
+   "variant": "4-step audition",
+   "job_id": "f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e",
+   "prompt_ids": [
+    "cc0ede07-97b9-4549-ba46-6b02e6ec18bb"
+   ],
+   "status": "completed",
+   "seconds": 207.11908078193665,
+   "controls": {
+    "lora3_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "lora3": 0.85,
+    "steps": 4
+   },
+   "submitted_lora_chain": [
+    [
+     "fal-krea2-airy-anime-watercolor.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-style-lab_00001_.png",
+    "sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7",
+    "bytes": 1536856,
+    "width": 1024,
+    "height": 1024
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-style-lab-4step.jpg",
+   "recipe": "krea-style-lab-4step-recipe.json",
+   "inspection": "Watercolor fox shrine under a cherry tree at sunset with paper lanterns and drifting petals; clean paper-white ground, legible lantern and shrine structure, three foxes; the airy-anime-watercolor style reads clearly at four steps."
   }
  ]
 }

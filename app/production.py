@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
 
 import settings_planner
+import prompting
 
 
 def fingerprint(value):
@@ -185,7 +186,16 @@ class Production:
             if variants is None and axis=='lora' and isinstance(preset.get('defaults',{}).get('lora'),str):raise ValueError('This recipe binds a LoRA filename; choose a numeric comparison axis')
             if preset.get('family')=='Hunyuan3D 2.1' and not self.studio.config.get('terms_decisions',{}).get('Hunyuan3D 2.1'):
                 raise ValueError('Hunyuan3D needs its own recorded terms decision before automated experiments; use TRELLIS or authored geometry meanwhile')
-            if bundle is None:bundle=self.studio.production_preflight(preset,graph)
+            for key in ('positive','negative'):
+                for node,field in ([preset[key]] if preset.get(key) else [])+(preset.get('bindings_extra') or {}).get(key,[]):
+                    if prompting.has_wildcards(graph.get(str(node),{}).get('inputs',{}).get(str(field))):raise ValueError('Resolve prompt wildcards ({a|b}, __name__) before planning a comparison; they would re-roll per stage')
+            stage_bundle=self.studio.production_preflight(preset,graph)
+            if bundle is None:bundle=stage_bundle
+            else:
+                # Pruned LoRA slots make stage graphs heterogeneous: pin every model any stage loads.
+                for key in ('models','inputs'):
+                    seen={json.dumps(e,sort_keys=True) for e in bundle.get(key,[])}
+                    bundle[key]=bundle.get(key,[])+[e for e in stage_bundle.get(key,[]) if json.dumps(e,sort_keys=True) not in seen]
             # Validate every graph against the same live node schema, including changed enum/control values.
             self.studio.validate_graph(graph)
             request['references']=preset.get('_prepared_references',[])
