@@ -252,6 +252,10 @@ press **Generate** explicitly. Opening either action does not start a render or 
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
 
+The recorded 12 September **Gentle (0.3)** trial sharpened the NoobAI portrait's face but retained its
+extra digit. That run is preserved as an unsuccessful hand-repair candidate; lowering denoise alone
+is not a verified cure for an extra finger. See the [exact trial evidence](../experiments/curated/anime-fantasy-atelier/anime-detail-fix-gentle-evidence.json).
+
 Neither is a hires-fix; upscaling stays with the existing ESRGAN handoff. Execution results, when a pass has
 been run, are in `experiments/curated/anime-fantasy-atelier/`.
 

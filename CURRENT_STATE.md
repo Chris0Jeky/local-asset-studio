@@ -21,7 +21,12 @@ inspected, with no JavaScript errors or generation calls. Receipts: `.runtime/se
 
 The browser driver needed two corrections (its route callback signature and waiting for the exact
 reference-copy response); the corrected run passed. These were QA-driver failures, not Studio failures.
-Model execution of a new correction variant and subjective approval are not established by these UI checks.
+The separate **Gentle (denoise 0.3)** trial then completed on the authored 832×1216 NoobAI example
+in 42.280 s: job `e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt
+`a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`. Both passes ran at 0.3 with seed 2026091201.
+The inspected result sharpened the face but retained an extra digit: completed execution, failed
+hand-repair objective, no human art approval. Exact recipe, hashes and the unaltered PNG are linked
+from `experiments/curated/anime-fantasy-atelier/README.md`. The catalog defaults are unchanged.
 The optional creative choices, including the Anima look selection q-3, remain in `HUMAN_TODO.md`.
 
 ## Civitai access, Anima baselines and the correction pass — executed (12 September 2026, second pass)
