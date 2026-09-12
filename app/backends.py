@@ -15,6 +15,11 @@ class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):return None
 
 
+# ComfyUI's own Windows default is 600 MB (comfy/model_management.py:865, +100 MB on 16 GB+ cards).
+# 2 GB left the Qwen Q4_K_M unet on the full/partial load boundary; see docs/RUNTIME-PRECONDITIONS.md.
+PRIMARY_RESERVE_VRAM='0.6'
+
+
 class BackendManager:
     def __init__(self, studio):
         self.studio=studio;self.busy=False;self.operation=None
@@ -83,6 +88,10 @@ class BackendManager:
 
     def _local_work(self):
         return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
+
+    @staticmethod
+    def primary_argv(target):
+        return [target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',PRIMARY_RESERVE_VRAM]
 
     @staticmethod
     def matches_configured_process(profile, executable, argv, cwd):
@@ -200,7 +209,7 @@ class BackendManager:
                 self.operation['message']='Starting '+target['name'];self._save()
                 stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                 if identifier=='primary':
-                    argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram','2']
+                    argv=self.primary_argv(target)
                 elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                 else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
                 with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:

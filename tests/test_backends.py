@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 from test_server import server, FakeStudio, GRAPH, PRESET
-from backends import BackendManager
+from backends import PRIMARY_RESERVE_VRAM, BackendManager
 
 
 class BackendTests(unittest.TestCase):
@@ -26,6 +26,14 @@ class BackendTests(unittest.TestCase):
         for bad in ([profile['python'],'another.py',*argv[2:]], [*argv[:-1],'8199'], [*argv[:3],'0.0.0.0',*argv[4:]]):
             self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
         self.assertFalse(BackendManager.matches_configured_process(profile,str(self.root/'foreign.exe'),argv,profile['root']))
+
+    def test_primary_launch_reserves_the_measured_vram_amount(self):
+        # 0.6 GB is ComfyUI's own Windows default; 2 GB put Qwen Q4_K_M on the partial-load boundary (#77).
+        profile=self.studio.backends.profiles['primary'];argv=BackendManager.primary_argv(profile)
+        self.assertEqual(argv.count('--reserve-vram'),1)
+        self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+        self.assertEqual(PRIMARY_RESERVE_VRAM,'0.6')
+        self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
 
     def test_local_uncertain_and_external_queue_each_prevent_switch(self):
         manager=self.studio.backends
