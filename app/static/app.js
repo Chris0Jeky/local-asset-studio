@@ -5,7 +5,7 @@ const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
-let catalog, selected, online = null, schemaAvailable = false, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
+let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
@@ -35,8 +35,8 @@ function renderPresets() {
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
-  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
-  $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
+  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
+  $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
 }
 const activeLoraSlots = () => loraSlotKeys.filter(k => selected && (selected[loraNameKey(k)] || selected.bindings_extra?.[loraNameKey(k)]));
@@ -143,7 +143,7 @@ function selectPreset(id, reset=true) {
 }
 async function health() {
   try {
-    const h=await api('/api/health'); online=h.online; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
+    const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
