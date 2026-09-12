@@ -35,6 +35,7 @@ test('active, attention and planned work stay distinct', () => {
   const s=U.summarize([],['planned','awaiting_review','uncertain','running'].map(status=>({state:{status}})),[{status:'partial'},{status:'running'}]);
   for(const key of ['prepared','reviewPlans','attentionPlans','activePlans','attentionJobs','activeJobs']) assert.equal(s[key].length,1,key);
 });
+test('submitting jobs remain active on the overview', () => assert.equal(U.summarize([],[],[{status:'submitting'}]).activeJobs.length,1));
 test('pending or unavailable health is not mislabeled offline',()=>{const r=ready({online:null});assert.equal(r.ready,false);assert.match(r.blockers.join(' '),/not yet confirmed/);assert.doesNotMatch(r.blockers.join(' '),/offline/);});
 test('ready recipe has no invented blockers', () => assert.deepEqual(ready(),{ready:true,blockers:[]}));
 for (const [name,overrides] of Object.entries({offline:{online:false},unknown_schema:{schemaAvailable:false},no_recipe:{preset:null},missing_files:{missing:['model']},missing_references:{referencesReady:false},backend_mismatch:{backend:'other'},switching:{switching:true},pending_transfer:{busy:true},blocked_runtime:{preset:{runtime_block:'Requires measured setup'}}})) {

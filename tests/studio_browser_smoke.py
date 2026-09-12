@@ -10,6 +10,7 @@ import shutil
 import json
 import mimetypes
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -17,6 +18,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 POSTS = []
 FAIL_WORKSPACE = False
+WORKSPACE_DELAY = 0
 ONLINE = True
 CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text())
 for preset in CATALOG['presets']:
@@ -52,8 +54,9 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         if path=='/static/vendor/model-viewer/model-viewer.min.js':
             self.send_response(200);self.send_header('Content-Type','text/javascript');self.end_headers();self.wfile.write(b'/* 3D renderer excluded from no-GPU UX fixture. */');return
-        if path=='/api/workspace' and FAIL_WORKSPACE:
-            return self.json({'error':'Fixture workspace unavailable'},503)
+        if path=='/api/workspace':
+            if WORKSPACE_DELAY:time.sleep(WORKSPACE_DELAY)
+            if FAIL_WORKSPACE:return self.json({'error':'Fixture workspace unavailable'},503)
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/jobs':JOBS,
@@ -86,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run(screenshots):
-    global FAIL_WORKSPACE, ONLINE
+    global FAIL_WORKSPACE, ONLINE, WORKSPACE_DELAY
     from playwright.sync_api import sync_playwright
     server=ThreadingHTTPServer(('127.0.0.1',int(os.environ.get('STUDIO_UX_TEST_PORT','0'))),Handler); threading.Thread(target=server.serve_forever,daemon=True).start()
     origin=f'http://127.0.0.1:{server.server_port}'
@@ -114,6 +117,12 @@ def run(screenshots):
             page.reload();page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(300);page.evaluate("selectPreset('qwen-1ref')");page.wait_for_selector('#uxRestoreDraft:not([hidden])');check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:qwen-1ref")).recipe.controls.positive')=='A saved workflow draft','boot does not overwrite saved draft');page.click('#uxRestoreDraft');page.wait_for_function('document.querySelector("#positive").value === "A saved workflow draft"');check(page.evaluate('parentAssets[0]')=='asset-0','restore retains source lineage')
             page.evaluate("openAsset('asset-1');jobs[0].outputs[0].asset_id=undefined;document.querySelector('#assetDialog').close()");before_posts=len(POSTS);before_parents=page.evaluate('JSON.stringify(parentAssets)');page.click('#gallery .reference-output');check(not page.locator('#uxHandoff').is_visible(),'missing gallery identity refuses handoff');check(len(POSTS)==before_posts and page.evaluate('JSON.stringify(parentAssets)')==before_parents,'missing gallery identity makes no reference or lineage write')
             page.evaluate("jobs[0].outputs[0].asset_id='asset-0'");page.click('#gallery .reference-output');check('Lantern' in page.locator('#uxHandoffSource').inner_text(),'gallery handoff uses its output identity over active asset');page.click('[data-ux-close="uxHandoff"]');page.evaluate("openAsset('asset-1')");page.click('[data-ux-handoff="asset-1"]');check('Forest' in page.locator('#uxHandoffSource').inner_text(),'asset-detail handoff retains its active asset identity');page.click('[data-ux-close="uxHandoff"]');page.evaluate("document.querySelector('#assetDialog').close()")
+            page.evaluate("openAsset('asset-1');document.querySelector('#assetDialog').close();const button=document.createElement('button');button.dataset.handoff='reference';document.body.append(button)");page.click('[data-handoff="reference"]');check('Forest' in page.locator('#uxHandoffSource').inner_text(),'legacy handoff treats its value as a destination, not an asset identity');page.click('[data-ux-close="uxHandoff"]')
+            ASSETS.append(dict(ASSETS[0],id='asset-late',title='Late gallery output'));page.evaluate("jobs[0].outputs[0].asset_id='asset-late'");page.click('#gallery .reference-output');page.wait_for_function("document.querySelector('#uxHandoff').open");check('Late gallery output' in page.locator('#uxHandoffSource').inner_text(),'late gallery output refreshes its exact asset identity');page.click('[data-ux-close="uxHandoff"]')
+            page.evaluate("jobs[0].outputs[0].asset_id='asset-missing'");before_posts=len(POSTS);page.click('#gallery .reference-output');page.wait_for_timeout(100);check(not page.locator('#uxHandoff').is_visible() and len(POSTS)==before_posts,'missing refreshed gallery asset stays rejected without a write')
+            ASSETS.append(dict(ASSETS[0],id='asset-trashed',title='Trashed gallery output',trashed_at=1));page.evaluate("jobs[0].outputs[0].asset_id='asset-trashed'");page.click('#gallery .reference-output');page.wait_for_timeout(100);check(not page.locator('#uxHandoff').is_visible(),'trashed refreshed gallery asset stays rejected')
+            FAIL_WORKSPACE=True;page.evaluate("jobs[0].outputs[0].asset_id='asset-fetch-failure'");page.click('#gallery .reference-output');page.wait_for_timeout(100);check(not page.locator('#uxHandoff').is_visible(),'failed gallery refresh cannot open a handoff');FAIL_WORKSPACE=False
+            WORKSPACE_DELAY=.3;page.evaluate("jobs[0].outputs[0].asset_id='asset-stale'");page.click('#gallery .reference-output');page.evaluate("jobs[0].outputs[0].asset_id='asset-0'");page.click('#gallery .reference-output');page.wait_for_function("document.querySelector('#uxHandoff').open");page.wait_for_timeout(450);check('Lantern' in page.locator('#uxHandoffSource').inner_text(),'stale gallery refresh cannot replace a newer handoff');page.click('[data-ux-close="uxHandoff"]');WORKSPACE_DELAY=0
             page.evaluate("showView('assets')");page.wait_for_selector('[data-asset-open="asset-0"]');page.locator('[data-asset-open="asset-0"]').first.click();page.fill('#assetNotes','Do not lose this edit');page.click('[data-ux-handoff="asset-0"]');check(not page.locator('#uxHandoff').is_visible(),'unsaved asset edits block handoff');check(page.locator('#assetNotes').input_value()=='Do not lose this edit','handoff preserves unsaved details');page.fill('#assetNotes','');page.click('[data-ux-handoff="asset-0"]');check(page.locator('#uxHandoff').is_visible(),'asset opens reviewed handoff');page.click('[data-ux-destination="animate"]');check('wan22-i2v' in page.locator('#uxDestination').inner_html(),'handoff filters to image-input video recipes');check('wan22-t2v' not in page.locator('#uxDestination').inner_html(),'text-only destination excluded for image handoff')
             if screenshots:page.screenshot(path=str(screenshots/'handoff-desktop.png'))
             page.click('#uxPrepareHandoff');page.wait_for_function('selected.id === "wan22-i2v"');check(page.evaluate('parentAssets[0]')=='asset-0','handoff preserves source in new recipe');check(all(x['path']!='/api/jobs' for x in POSTS),'handoff has zero generation mutations')

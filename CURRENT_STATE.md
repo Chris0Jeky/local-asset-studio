@@ -1,5 +1,14 @@
 # Current state — 11 September 2026
 
+## UI handoff follow-ups — 12 September 2026
+
+Gallery Continue now refreshes the exact output identity when it arrived after the current Workspace
+snapshot. Missing, trashed and failed-refresh identities remain rejected, and an older refresh response
+cannot replace a newer handoff. The dormant legacy handoff adapter keeps the active asset as its source
+and uses its `data-handoff` value only as the destination. Overview activity now includes the server's
+`submitting` state. Synthetic browser coverage exercises these paths with no model, Studio, project,
+queue or generation activity; the policy check covers the submitting display classification.
+
 ## Integrated Studio workflow UI verification — 12 September 2026
 
 The shared workspace navigation, guided creation, saved drafts and reusable image
