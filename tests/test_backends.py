@@ -36,6 +36,12 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(PRIMARY_RESERVE_VRAM,'0.6')
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
 
+    def test_primary_pinned_memory_flag_is_explicit_and_default_off(self):
+        profile=self.studio.backends.profiles['primary']
+        self.assertNotIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
+        profile['disable_pinned_memory']=True
+        self.assertIn('--disable-pinned-memory',BackendManager.primary_argv(profile))
+
     def test_switch_actually_launches_primary_with_the_reserve_flag(self):
         # primary_argv alone would stay green if the call site were reverted; assert what Popen receives.
         manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')

@@ -31,6 +31,7 @@ class BackendManager:
         self.profiles={
             'primary':{'id':'primary','name':'Main library','root':str(primary),'url':config.get('comfy_url','http://127.0.0.1:8188'),
                        'python':str(python),'port':8188,'entry':str(primary/'main.py'),
+                       'disable_pinned_memory':config.get('primary_disable_pinned_memory') is True,
                        'pidfile':str(primary.parent.parent/'comfyui.pid'),'description':'Everyday image, video and 3D workflows'},
             'hidream':{'id':'hidream','name':'HiDream O1 · isolated','root':str(isolated),'url':'http://127.0.0.1:8192',
                        'python':str(python),'port':8192,'entry':str(studio.root/'scripts/hidream-launch.py'),
@@ -92,7 +93,9 @@ class BackendManager:
 
     @staticmethod
     def primary_argv(target):
-        return [target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',PRIMARY_RESERVE_VRAM]
+        argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram',PRIMARY_RESERVE_VRAM]
+        if target.get('disable_pinned_memory') is True:argv.append('--disable-pinned-memory')
+        return argv
 
     @staticmethod
     def matches_configured_process(profile, executable, argv, cwd):
@@ -128,6 +131,30 @@ class BackendManager:
         except (psutil.NoSuchProcess,psutil.AccessDenied) as exc:
             raise ValueError('Backend process ownership could not be verified; retry after inspecting the runtime') from exc
         return None
+
+    def configured_processes(self, profile):
+        """Find exact configured launch commands even before they bind their fixed port."""
+        import psutil
+        matches=[]
+        for process in psutil.process_iter():
+            try:
+                if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
+            except psutil.NoSuchProcess:continue
+            except psutil.AccessDenied:
+                # An inaccessible process is not evidence that it is ours. It is never killed.
+                continue
+        return matches
+
+    def launch_recovery(self, profile):
+        """Launch exactly one selected profile without switching or stopping any process."""
+        identifier=profile['id'];stamp=time.strftime('%Y%m%d-%H%M%S')+'-recovery';logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
+        if identifier=='primary':argv=self.primary_argv(profile)
+        elif identifier=='hidream':argv=[profile['python'],'-s',profile['entry'],'--install-root',str(Path(profile['root']).parent)]
+        else:argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
+        with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
+            launched=subprocess.Popen(argv,cwd=profile['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        if identifier=='primary':Path(profile['pidfile']).write_text(str(launched.pid))
+        return launched.pid
 
     def _idle(self, profile, allow_offline=False):
         try:queue=self.request(profile,'/queue')
