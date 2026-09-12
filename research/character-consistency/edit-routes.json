@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "kind": "character_edit_routes",
+  "as_of": "2026-09-12",
+  "routes": [
+    {
+      "id": "pixel-tools",
+      "title": "Local deterministic crop/mask/composite",
+      "operations": [
+        "mask",
+        "composite",
+        "inspect"
+      ],
+      "execution": "local",
+      "status": "implemented_offline",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "none_in_adapter",
+        "output_filter": "none_in_adapter",
+        "learned_restrictions": "not_applicable",
+        "upstream_filters": "not_applicable",
+        "evidence_scope": "this_adapter_code",
+        "note": "These two new CLI modules contain no content classifier, refusal model, network call or prompt rewriting. File, size, scope and revision validation remain enabled."
+      },
+      "capabilities": [
+        "Exact outside-mask RGBA preservation",
+        "Explicit crop/padding coordinate transform",
+        "Hash-bound source and candidate"
+      ],
+      "sources": [
+        "scripts/character_edit.py",
+        "scripts/character_edit_pixels.py"
+      ],
+      "limitations": [
+        "Does not synthesize anatomy or judge the edit",
+        "Pillow encoded-space blending, not colour-managed linear-light compositing"
+      ]
+    },
+    {
+      "id": "qwen-edit-local",
+      "title": "Qwen Image Edit 2511 through existing Studio",
+      "operations": [
+        "anatomy-repair",
+        "costume-change",
+        "scenario",
+        "interaction",
+        "local-repaint"
+      ],
+      "execution": "local",
+      "status": "existing_studio_candidate",
+      "preset_ids": [
+        "qwen-1ref",
+        "qwen-2ref",
+        "qwen-3ref"
+      ],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Exact local wrapper and weights require a scoped audit; silence is not evidence of no filtering."
+      },
+      "capabilities": [
+        "Reference editing",
+        "Multi-reference input in matching graph",
+        "Author-reported character and multi-person consistency"
+      ],
+      "sources": [
+        "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+        "docs/REFERENCE-ATELIER.md"
+      ],
+      "limitations": [
+        "This metadata is not a live audit or authorization",
+        "Semantic references do not guarantee pose or per-actor binding",
+        "Do not silently map costume roles into pose slots; native projection still needs validation"
+      ]
+    },
+    {
+      "id": "klein-edit-local",
+      "title": "FLUX.2 Klein 4B through existing Studio",
+      "operations": [
+        "anatomy-repair",
+        "costume-change",
+        "scenario",
+        "interaction",
+        "local-repaint"
+      ],
+      "execution": "local",
+      "status": "existing_studio_candidate",
+      "preset_ids": [
+        "flux-edit"
+      ],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "documented",
+        "upstream_filters": "documented",
+        "evidence_scope": "author_documentation",
+        "note": "Klein author reports safety fine-tuning and upstream input/output filters. Activation in this Studio graph is unverified. The 4B model is Apache-2.0; do not transfer the separate 9B licence rule."
+      },
+      "capabilities": [
+        "Reference edit baseline",
+        "Compact generative candidate"
+      ],
+      "sources": [
+        "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B",
+        "workflows/api/flux-edit-api.json"
+      ],
+      "limitations": [
+        "Open weights do not mean no learned restrictions",
+        "Upstream filter availability does not establish enabled local filters",
+        "Hardware claims in the author card are not a Radeon measurement"
+      ]
+    },
+    {
+      "id": "sdxl-anime-local",
+      "title": "Existing anime checkpoint plus matching local repair/control",
+      "operations": [
+        "anatomy-repair",
+        "costume-change",
+        "local-repaint"
+      ],
+      "execution": "local",
+      "status": "existing_studio_candidate",
+      "preset_ids": [
+        "anime-detail-fix"
+      ],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Exact local wrapper and weights require a scoped audit; silence is not evidence of no filtering."
+      },
+      "capabilities": [
+        "Face/hand crop repair candidate",
+        "Matched pose/appearance control research route"
+      ],
+      "sources": [
+        "docs/ANIME-DETAILING.md",
+        "https://github.com/tencent-ailab/IP-Adapter"
+      ],
+      "limitations": [
+        "Exact derivative, adapters, runtime filters and terms need separate inspection",
+        "Detector success does not prove correct anatomy",
+        "A cropped control-map adapter still needs native graph validation"
+      ]
+    },
+    {
+      "id": "krita-diffusion-local",
+      "title": "Krita AI Diffusion with a local Comfy backend",
+      "operations": [
+        "anatomy-repair",
+        "costume-change",
+        "scenario",
+        "interaction",
+        "local-repaint"
+      ],
+      "execution": "local",
+      "status": "researched",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Policy follows the selected checkpoint, node graph and backend; do not infer it from the editor name. Cloud service is a separate route."
+      },
+      "capabilities": [
+        "Selections and non-destructive result layers",
+        "Region-specific reference/control layers",
+        "Native painting and generative editing in one canvas"
+      ],
+      "sources": [
+        "https://github.com/Acly/krita-ai-diffusion",
+        "https://docs.interstice.cloud/regions/",
+        "https://docs.interstice.cloud/edit-models"
+      ],
+      "limitations": [
+        "Do not create a second model queue beside Studio",
+        "Region prompts constrain text areas, not geometry",
+        "Edit-model control-mode labels may not change model conditioning; verify actual support"
+      ]
+    },
+    {
+      "id": "krita-selection-local",
+      "title": "Krita Vision Tools local selection",
+      "operations": [
+        "mask"
+      ],
+      "execution": "local",
+      "status": "researched",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Exact local wrapper and weights require a scoped audit; silence is not evidence of no filtering."
+      },
+      "capabilities": [
+        "Object selection by point or box",
+        "Candidate mask for human or agent review"
+      ],
+      "sources": [
+        "https://github.com/Acly/krita-vision-tools"
+      ],
+      "limitations": [
+        "Segmentation is not a high-quality hair/translucency matte",
+        "Installed model/runtime and content behaviour unverified",
+        "A selection does not establish garment topology or correct fingers"
+      ]
+    },
+    {
+      "id": "qwen-layered-local",
+      "title": "Qwen Image Layered decomposition candidate",
+      "operations": [
+        "mask",
+        "inspect"
+      ],
+      "execution": "local",
+      "status": "researched",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Exact local wrapper and weights require a scoped audit; silence is not evidence of no filtering."
+      },
+      "capabilities": [
+        "RGBA layer decomposition candidate",
+        "Editable component extraction experiment"
+      ],
+      "sources": [
+        "https://huggingface.co/Qwen/Qwen-Image-Layered"
+      ],
+      "limitations": [
+        "Generated layers require recomposition and hidden-overlap review",
+        "No rig, joints or accepted actor masks are implied"
+      ]
+    },
+    {
+      "id": "local-vision-agent",
+      "title": "Optional local vision-language planner/critic",
+      "operations": [
+        "agent",
+        "inspect"
+      ],
+      "execution": "local",
+      "status": "researched",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "unknown",
+        "output_filter": "unknown",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "unknown",
+        "evidence_scope": "unverified_runtime",
+        "note": "Exact local wrapper and weights require a scoped audit; silence is not evidence of no filtering."
+      },
+      "capabilities": [
+        "Draft explicit edit intent and masks/controls proposals",
+        "Return rubric observations and abstentions"
+      ],
+      "sources": [
+        "docs/prompt-studio/README.md",
+        "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct"
+      ],
+      "limitations": [
+        "Local assistant may have its own learned refusals; separate from image-model policy",
+        "No arbitrary shell/eval or automatic downloads in the bridge",
+        "Do not confuse proposal generation with successful visual repair"
+      ]
+    },
+    {
+      "id": "gpt-image-hosted",
+      "title": "Optional hosted GPT Image comparison, not a default route",
+      "operations": [
+        "anatomy-repair",
+        "costume-change",
+        "scenario",
+        "interaction",
+        "local-repaint"
+      ],
+      "execution": "hosted",
+      "status": "researched",
+      "preset_ids": [],
+      "content_policy": {
+        "input_filter": "present",
+        "output_filter": "present",
+        "learned_restrictions": "unknown",
+        "upstream_filters": "documented",
+        "evidence_scope": "author_documentation",
+        "note": "OpenAI documents filtering of input/output; moderation=low is less restrictive, not off. No hosted call or paid service is configured by this catalog."
+      },
+      "capabilities": [
+        "Hosted reference-edit comparison candidate"
+      ],
+      "sources": [
+        "https://developers.openai.com/api/docs/guides/image-generation"
+      ],
+      "limitations": [
+        "Excluded by the local-only default",
+        "No hidden cloud fallback",
+        "API identifiers, access, quotas and fees require explicit current preflight"
+      ]
+    }
+  ]
+}

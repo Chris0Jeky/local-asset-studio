@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "kind": "character_edit_benchmark_design",
+  "status": "not_run",
+  "as_of": "2026-09-12",
+  "purpose": "Feasibility of controlled anatomy, costume and multi-actor edits; no measured success claim.",
+  "hypotheses": [
+    "E1 scoped repair yield",
+    "E2 separated costume design",
+    "E3 actor-bound scene binding",
+    "E4 specialist preparation effort (later ablation)"
+  ],
+  "design": {
+    "original_identities": 2,
+    "tasks_per_identity": [
+      "anatomy-repair",
+      "costume-change",
+      "scenario",
+      "interaction"
+    ],
+    "strategies": [
+      "whole-image-instruction",
+      "scoped-joint-candidate"
+    ],
+    "seeds_per_task_strategy": 2,
+    "primary_attempts": 32,
+    "repair_attempts_reserved_per_strategy": 4,
+    "total_image_candidate_cap": 40,
+    "single_candidate_per_primary": true,
+    "note": "Sequential per-actor generation is a separate stage-counted experiment. Both trial strategies produce exactly one candidate per primary attempt."
+  },
+  "proposed_targets": {
+    "scoped_primary_critical_passes": 12,
+    "scoped_primary_denominator": 16,
+    "scoped_accepted_distinct_tasks": 7,
+    "distinct_task_denominator": 8,
+    "scoped_total_candidate_cap": 20,
+    "outside_write_mask_pixel_differences": 0,
+    "protected_pixel_differences": 0
+  },
+  "measured": {
+    "primary_attempts": null,
+    "accepted_edits": null,
+    "accepted_distinct_tasks": null,
+    "neural_seconds": null,
+    "review_seconds": null,
+    "cleanup_seconds": null,
+    "peak_memory_bytes": null
+  },
+  "execution": "Not an executable graph, frozen study plan or permission to spend; bind real sources, controls and runtime through existing coordinator.",
+  "protocol": "docs/character-consistency/EDIT-BENCHMARK.md"
+}
