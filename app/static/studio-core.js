@@ -2,7 +2,7 @@
 (function(root,factory){const core=factory();if(typeof module==='object'&&module.exports)module.exports=core;else root.StudioUX=core;})(globalThis,function(){
   'use strict';
   const VIEWS=['home','create','assets','production','models','learn'];
-  const ACTIVE=['queued','running','waiting','observing','rendering'];
+  const ACTIVE=['queued','submitting','running','waiting','observing','rendering'];
   const ATTENTION=['failed','partial','uncertain','interrupted','stopped'];
   const INTENTS=[
     {id:'create',name:'Start with an idea',verb:'Create',hint:'Words → image',description:'Find a look. Audition a small batch.',prefer:['anima-portrait','krea-anime-atelier'],accept:p=>!p.reference&&(p.modality||'image')==='image'},
