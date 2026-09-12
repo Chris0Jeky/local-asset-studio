@@ -51,12 +51,17 @@ class WorkflowDocuments:
             JOIN workflow_revisions_v1 r ON d.id=r.document_id AND r.revision=COALESCE(?,d.head)
             WHERE d.id=?''', (revision, key)).fetchone()
         if row is None: raise DocumentError('not_found', 'Workflow or revision not found', 404)
-        doc = document(decode(row['document']))
-        need(digest(doc) == row['sha256'], 'Stored workflow integrity check failed')
+        try:
+            doc = document(decode(row['document']))
+            need(digest(doc) == row['sha256'], 'Stored workflow integrity check failed')
+            origin = decode(row['origin']); need(isinstance(origin, dict), 'Invalid stored workflow origin')
+        except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
+            raise DocumentError('storage_unavailable', 'Stored workflow integrity check failed', 503,
+                                recovery='Retain the same request and inspect the stored evidence.') from exc
         return {'id': key, 'revision': row['revision'], 'head_revision': row['head'],
                 'document': doc, 'document_sha256': row['sha256'],
                 'execution_inputs_sha256': execution_inputs_sha256(doc),
-                'origin': json.loads(row['origin']), 'generation_submitted': False}
+                'origin': origin, 'generation_submitted': False}
 
     @staticmethod
     def _revision(value):
@@ -83,7 +88,7 @@ class WorkflowDocuments:
                 ON q.document_id=r.document_id AND q.revision=r.revision
                 WHERE r.document_id=? ORDER BY r.revision DESC''', (key,)).fetchall()
         return {'id': key, 'head_revision': current['head_revision'], 'generation_submitted': False,
-                'revisions': [{**dict(r), 'summary': json.loads(r['summary'])} for r in rows]}
+                'revisions': [{**dict(r), 'summary': history_summary(r['summary'])} for r in rows]}
 
     def _replay(self, db, request_id, sha):
         previous = db.execute('SELECT * FROM workflow_requests_v1 WHERE request_id=?', (request_id,)).fetchone()
@@ -171,3 +176,33 @@ class WorkflowDocuments:
         return {'id': key, 'expected_revision': current['revision'], 'document': doc,
                 'document_sha256': digest(doc), 'changes': changes(current['document'], doc),
                 'committed': False, 'generation_submitted': False}
+
+
+def history_summary(raw):
+    """Bound all 1,024 history summaries below the client's 16 MiB limit.
+
+    Only the preview lists are shortened. Full revision documents and stored
+    summaries remain intact; counts and truncation are explicit in each response.
+    """
+    try:
+        summary = decode(raw)
+        need(isinstance(summary, dict), 'Invalid stored summary')
+        allowed = {'added_nodes', 'removed_nodes', 'changed_nodes', 'changed_fields',
+                   'execution_inputs_changed', 'restored_revision'}
+        need(set(summary) <= allowed, 'Unknown stored summary fields')
+        result = dict(summary)
+        for key in ('added_nodes', 'removed_nodes', 'changed_nodes', 'changed_fields'):
+            if key not in result: continue
+            values = result[key]
+            need(isinstance(values, list) and len(values) <= 256, 'Invalid stored change list')
+            for value in values: identifier(value)
+            result[key + '_count'] = len(values)
+            result[key] = values[:16]
+        if 'execution_inputs_changed' in summary:
+            need(type(summary['execution_inputs_changed']) is bool, 'Invalid stored change flag')
+        if 'restored_revision' in summary: WorkflowDocuments._revision(summary['restored_revision'])
+        result['truncated'] = any(len(summary.get(key, [])) > 16 for key in ('added_nodes', 'removed_nodes', 'changed_nodes', 'changed_fields'))
+        return result
+    except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
+        raise DocumentError('storage_unavailable', 'Stored workflow history integrity check failed', 503,
+                            recovery='Retain the same request and inspect the stored evidence.') from exc
