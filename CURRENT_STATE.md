@@ -31,6 +31,14 @@ fix verification found no remaining Critical/High defect. This is the first impo
 repairs, warmups, review promotion, dependency invalidation and live import execution remain unverified.
 The existing database-commit-before-plan-file-write recovery gap is tracked separately in #65.
 
+After the idle Studio reload to `4cb514c`, the actual loopback HTTP importer prepared project
+`01fc7329c0406172b3fd512653648d0f` from a separate one-case smoke study using the approved pilot canon
+and existing pinned front upload. It remains planned with allowance 1, reserved 0 and no attempts.
+The identical import returned HTTP 400 as already imported. All 77 job IDs and Comfy history IDs stayed
+unchanged, with an empty queue. No Start or Resume was sent. The live smoke did not repeat a restart;
+restart persistence remains covered by the integration checks above. The receipt is retained beside
+the pilot ledger and raw proof under `C:/AI/character-lab/pilot-20260912/production-import-smoke-20260912/`.
+
 ## Character-consistency offline foundation - 12 September 2026
 
 The character study, archive and media commands now have local Windows integration evidence.
