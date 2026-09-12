@@ -101,6 +101,15 @@ class ModelRedirectTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,message):self.open('https://huggingface.co'+path,resolver=resolver)
                 self.assertEqual([hit[0] for hit in self.server.hits],[path])
 
+    def test_multicast_addresses_are_rejected_before_transport(self):
+        for address in ('224.0.0.1','239.255.255.250','ff02::1'):
+            with self.subTest(address=address):
+                def resolver(host,port,**kwargs):return [(10,1,6,'',(address,port))]
+                self.server.routes={'/start':(200,{},b'unexpected transport')};self.server.hits=[]
+                with self.assertRaisesRegex(ValueError,'multicast'):
+                    self.open('https://huggingface.co/start',resolver=resolver)
+                self.assertEqual(self.server.hits,[])
+
     def test_cross_provider_redirect_and_unscoped_storage_hosts_are_refused(self):
         for target in (
             'https://civitai.com/api/download/models/1',
