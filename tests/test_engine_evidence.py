@@ -187,7 +187,8 @@ class EngineEvidenceTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):evidence.write_json(path,{'two':2})
         self.assertEqual(evidence.read_json(path),{'one':1})
     def test_glb_verification_without_node_leaves_explicit_failure(self):
-        with patch.object(adapter,'preflight') as engine:
+        # Hermetic: the adapter must not pick up a node path from this checkout's gitignored config/local.json.
+        with patch.object(adapter,'LOCAL_CONFIG',self.root/'absent-local.json'), patch.object(adapter,'preflight') as engine:
             with self.assertRaisesRegex(evidence.EvidenceError,'explicit Node'):
                 adapter.execute(self.root,'manifest.json',self.root/'glb-failed',self.root/'godot','fixture.glb')
         engine.assert_not_called();self.assertTrue((self.root/'glb-failed/failure.json').is_file())
