@@ -10,6 +10,37 @@ the asset-detail action retained its active-asset behavior. The 58-check fixture
 browser exceptions and no execution/setup mutations. This is a local UI boundary proof only: no
 live Studio, ComfyUI, model, project, queue or generated output was touched.
 
+## Matched portrait prompt scope — 12 September 2026
+
+Opt-in request/plan/handoff v2 can select existing canon descriptions and invariants
+for each task; v1 plan, brief and handoff golden hashes remain identical. Full canon,
+approval and required checks stay in the retained plan, with a verified selected-text
+audit in each v2 handoff. Integration `77ac0af` includes main `06d2750` through PR #83.
+The configured Windows full suite ran 860 tests: 846 passed and 14 skipped, in 69.301
+seconds; validator passed (60 graphs/bindings, 62 pinned assets, 796 tracked paths).
+The original-head independent review found no defects and ran 257 character tests:
+253 passed and four skipped. Publication and final base-delta review remain on the PR.
+
+The exact approved standard canon and portrait bytes were copied into
+`C:/AI/character-lab/portrait-prompt-scope-20260912/`. The actual offline CLI compiled
+plan `7208de8012ecf62fbe8587d740818ae23f08c8151ebe316f786c063e7e767656` and two
+validated handoffs: identical FLUX route, reference, seed 12001, checks and bindings;
+positive text is 1,217 versus 627 characters. Canon/reference preflight passed. This
+is a new two-attempt, zero-repair study; the exhausted twelve-case pilot is unchanged.
+No new Production project, generation or artistic acceptance is claimed here.
+
+## Character-edit recovery on Windows — 12 September 2026
+
+PR #83 integration `d9cd223` includes main `04903e9`. Interrupted collection retains
+partial staging and recovers the same completed asset without another generation or
+reservation; exact native reference roles and connected actor-contact coverage are
+validated. The full configured Windows suite ran 854 tests: 840 passed and 14 skipped;
+repository validation passed. A fresh independent review found no defects and its
+28-test recovery run passed with one Windows symlink-privilege skip. The real local
+HTTP/subprocess-death test passed with inert neural execution. See
+`docs/character-consistency/EDIT-RECOVERY-VERIFICATION.md` for the evidence and limits.
+No live neural repair or art acceptance is claimed; PR #71 remains open.
+
 ## Recipe inspection on the configured Windows host — 12 September 2026
 
 The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
@@ -111,6 +142,12 @@ handoff and resolved recipe evidence. Separate cases share the study allowance; 
 Import queues nothing, and duplicate primary imports are refused. Canon approval is a local attestation,
 not reviewer authentication or generated-art acceptance.
 
+The opt-in v2 prompt-scope planner can prepare a matched two-case portrait-edit study using the same
+approved canon, reference, FLUX edit route, seed and checks. Its selected-canon case carries only
+the requested identity, bodice and style canon text in its positive control while its handoff retains
+  the plan's full approved canon identity plus a hash-checked audit of the selected text. This is offline planning
+coverage only: no new project, queue item, reservation, prompt ID, generation or art approval is claimed.
+
 Inert direct integration checks proved zero-work import, shared budget, concurrent Start reservations,
 restart persistence, duplicate refusal and preflight rollback. Rehashed prompt/binding drift, non-image
 routes and changed Comfy input bytes were rejected before project/budget writes. The full suite ran 598
@@ -180,6 +217,21 @@ while preserving identifiers and evidence, and submits nothing. Full integrated 
 real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes, hidden unsafe recovery,
 one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
 warnings or errors. This does not claim human listening or voice acceptance.
+
+## Voice resume polling snapshot follow-up - 12 September 2026
+
+The interrupted Voice resume eligibility check now snapshots `Studio.jobs` while holding the
+Studio lock, then uses that same snapshot for deterministic and metadata job checks after releasing
+the lock. The causal regression inserted an unrelated job from an unrelated job's metadata callback:
+the baseline raised `RuntimeError: dictionary changed size during iteration` from `production.list()`;
+the fixed `production.list()` and `production.get()` remain eligible and the queue stays empty. A
+small lock probe also verified snapshot acquisition under lock and metadata scanning after release;
+matching voice jobs under nonstandard IDs remain a resume refusal. Focused Voice and Production
+discover suites passed: 15 and 13 tests. The configured full suite passed 826 tests (813 passed,
+13 skipped), and repository validation passed. Raw command logs, including the baseline failure, are
+retained under `.runtime/voice-polling/`; the direct `unittest tests.test_voice_baseline` form failed
+at import because this repository's test module imports its sibling without the tests directory on
+the module path, while the discover form is the valid proving command.
 
 ## Scene editor interaction checks - 12 September 2026
 

@@ -25,6 +25,12 @@ class RepositoryContractTests(unittest.TestCase):
             with self.subTest(case=case['id']):
                 existing.validate_brief(c.case_brief(self.plan, case['id']), existing.catalog())
 
+    def test_v2_scoped_cases_still_match_the_existing_game_asset_brief(self):
+        plan = c.make_plan(self.plan['canon'], c.read_json(ROOT / 'research/character-consistency/portrait-prompt-scope.study.json'))
+        for case in plan['cases']:
+            with self.subTest(case=case['id']):
+                existing.validate_brief(c.case_brief(plan, case['id']), existing.catalog())
+
     def test_existing_native_templates_can_be_pinned_without_submission(self):
         seen = set()
         for case in self.plan['cases']:

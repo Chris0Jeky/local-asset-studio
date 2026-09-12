@@ -184,6 +184,96 @@ class StudyTests(unittest.TestCase):
         self.assertEqual(brief['references'][0]['kind'], 'image')
         self.assertIn(self.plan['plan_sha256'], brief['constraints'][-1])
 
+    def scoped_plan(self):
+        return c.make_plan(self.canon, c.read_json(DATA / 'portrait-prompt-scope.study.json'))
+
+    def test_v2_scoped_prompt_selects_canon_without_replacing_or_weakening_it(self):
+        plan = self.scoped_plan()
+        full = next(case for case in plan['cases'] if case['task_id'] == 'wink-full-context')
+        scoped = next(case for case in plan['cases'] if case['task_id'] == 'wink-portrait-context')
+        full_brief = c.case_brief(plan, full['id']); brief = c.case_brief(plan, scoped['id'])
+        self.assertEqual(plan['schema_version'], 2); self.assertEqual(brief['schema_version'], 1)
+        self.assertEqual(plan['canon'], self.canon)
+        self.assertIn('White upper-leg stockings and navy boots with gold top trim', full_brief['description'])
+        self.assertIn('Full-figure illustration', full_brief['description'])
+        self.assertIn('Retain the accepted face geometry', brief['description'])
+        self.assertIn('Navy fitted sleeveless bodice, pale trim and green throat bow', brief['description'])
+        self.assertIn('Clean anime contours and cel-like shading.', brief['description'])
+        self.assertNotIn('navy boots', brief['description'])
+        self.assertNotIn('Full-figure illustration', brief['description'])
+        self.assertEqual(brief['constraints'], [self.canon['checks'][key] for key in scoped['required_checks']] + [
+            'One panel only; no lettering. Return to the approved canon, not an unreviewed derivative.',
+            'Budget belongs to study ' + plan['plan_sha256'] + '; do not multiply it by the number of case briefs.'])
+
+    def test_v2_unscoped_prompt_text_matches_v1_and_scope_order_is_canonical(self):
+        request = copy.deepcopy(self.request); request['schema_version'] = 2
+        v2 = c.make_plan(self.canon, request)
+        v1_case = next(case for case in self.plan['cases'] if case['route_id'] == 'klein-current' and case['task_id'] == 'wink' and case['seed'] == 12001)
+        v2_case = next(case for case in v2['cases'] if case['route_id'] == 'klein-current' and case['task_id'] == 'wink' and case['seed'] == 12001)
+        self.assertEqual(c.case_brief(self.plan, v1_case['id'])['description'], c.case_brief(v2, v2_case['id'])['description'])
+        request['tasks'][0]['prompt_scope'] = {
+            'style': {'description': True, 'invariant_indexes': [0]},
+            'costume': {'description': False, 'invariant_indexes': [3, 1, 0]},
+            'identity': {'description': False, 'invariant_indexes': [3, 1, 0, 2]}}
+        scoped = c.make_plan(self.canon, request); brief = c.case_brief(scoped, scoped['cases'][0]['id'])
+        for earlier, later in [('Light-blue long hair', 'Blue eyes'), ('Blue eyes', 'Dark-blue spherical'),
+                               ('Dark-blue spherical', 'Retain the accepted face'),
+                               ('Retain the accepted face', 'Navy fitted sleeveless')]:
+            self.assertLess(brief['description'].index(earlier), brief['description'].index(later))
+
+    def test_v2_scope_rejects_malformed_selection_and_does_not_alias_inputs(self):
+        request = c.read_json(DATA / 'portrait-prompt-scope.study.json')
+        bad_scopes = [
+            {'unknown': {'description': True, 'invariant_indexes': []}},
+            {'identity': {'description': True, 'invariant_indexes': [], 'extra': True}},
+            {'identity': {'description': True, 'invariant_indexes': [True]}},
+            {'identity': {'description': False, 'invariant_indexes': [0, 0]}},
+            {'identity': {'description': False, 'invariant_indexes': [4]}},
+            {'identity': {'description': False, 'invariant_indexes': '0'}},
+            {'identity': {'description': 1, 'invariant_indexes': [0]}},
+            {'identity': {'description': False, 'invariant_indexes': []}},
+        ]
+        for scope in bad_scopes:
+            altered = copy.deepcopy(request); altered['tasks'][1]['prompt_scope'] = scope
+            with self.subTest(scope=scope), self.assertRaises(ValueError): c.make_plan(self.canon, altered)
+        v1 = copy.deepcopy(self.request); v1['tasks'][0]['prompt_scope'] = request['tasks'][1]['prompt_scope']
+        with self.assertRaises(ValueError): c.make_plan(self.canon, v1)
+        for version in (True, 1.0, 3):
+            altered = copy.deepcopy(request); altered['schema_version'] = version
+            with self.subTest(version=version), self.assertRaises(ValueError): c.make_plan(self.canon, altered)
+        plan = c.make_plan(self.canon, request)
+        request['tasks'][1]['prompt_scope']['identity']['invariant_indexes'].append(0)
+        self.assertEqual(plan['cases'][1]['prompt_scope']['identity']['invariant_indexes'], [0, 1, 2, 3])
+        c.check_plan(plan)
+
+    def test_v2_scope_and_rehashed_audit_forgery_are_rejected(self):
+        plan = self.scoped_plan(); case = next(item for item in plan['cases'] if item['task_id'] == 'wink-portrait-context')
+        changed_request = c.read_json(DATA / 'portrait-prompt-scope.study.json')
+        changed_request['tasks'][1]['prompt_scope']['costume']['invariant_indexes'] = [1]
+        changed_scope_plan = c.make_plan(self.canon, changed_request)
+        self.assertNotEqual(plan['plan_sha256'], changed_scope_plan['plan_sha256'])
+        self.assertNotEqual(case['id'], changed_scope_plan['cases'][1]['id'])
+        changed = copy.deepcopy(plan); changed['cases'][1]['prompt_scope']['style']['description'] = False
+        changed['plan_sha256'] = c.sha({key: value for key, value in changed.items() if key != 'plan_sha256'})
+        with self.assertRaises(ValueError): c.check_plan(changed)
+        (self.root / 'presets').mkdir(exist_ok=True); (self.root / 'workflows/api').mkdir(parents=True, exist_ok=True)
+        c.write_json(self.root / 'workflows/api/test.json', {'1': {'class_type': 'Fixture', 'inputs': {'text': '', 'seed': 1, 'image': ''}}})
+        c.write_json(self.root / 'presets/catalog.json', {'presets': [{'id': case['preset_id'], 'graph': 'workflows/api/test.json',
+                     'positive': ['1', 'text'], 'seed': ['1', 'seed'], 'reference': ['1', 'image']}]})
+        handoff = c.prepare_handoff(plan, case['id'], self.root, self.root)
+        self.assertEqual(handoff['prompt_context']['mode'], 'selected-canon')
+        self.assertIsNone(handoff['prompt_context']['sections']['identity']['description'])
+        self.assertEqual(handoff['prompt_context']['sections']['costume']['invariants'], [{
+            'index': 0, 'text': self.canon['costume']['invariants'][0]}])
+        self.assertNotIn('representation', handoff['prompt_context']['sections'])
+        full_case = next(item for item in plan['cases'] if item['task_id'] == 'wink-full-context')
+        full_handoff = c.prepare_handoff(plan, full_case['id'], self.root, self.root)
+        self.assertEqual(full_handoff['prompt_context']['mode'], 'all-canon')
+        self.assertEqual(full_handoff['prompt_context']['sections']['representation']['description'], self.canon['representation']['description'])
+        forged = copy.deepcopy(handoff); forged['prompt_context']['sections']['costume']['invariants'][0]['text'] = 'forged'
+        forged['handoff_sha256'] = c.sha({key: value for key, value in forged.items() if key != 'handoff_sha256'})
+        with self.assertRaisesRegex(ValueError, 'Handoff differs'): c.check_handoff(plan, forged, self.root)
+
     def fake_repo(self):
         (self.root / 'presets').mkdir(exist_ok=True)
         (self.root / 'workflows/api').mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,48 @@
+name: Character edit recovery on Windows
+on:
+  pull_request:
+    paths:
+      - 'scripts/character_*.py'
+      - 'tests/test_character*.py'
+      - 'app/server.py'
+      - 'app/production.py'
+      - 'app/references.py'
+      - 'app/workspace.py'
+      - 'presets/catalog.json'
+      - 'workflows/api/qwen*'
+      - 'research/character-consistency/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/character-edit-contracts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/character_*.py'
+      - 'tests/test_character*.py'
+      - 'app/server.py'
+      - 'app/production.py'
+      - 'app/references.py'
+      - 'app/workspace.py'
+      - 'presets/catalog.json'
+      - 'workflows/api/qwen*'
+      - 'research/character-consistency/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/character-edit-contracts.yml'
+permissions:
+  contents: read
+concurrency:
+  group: character-edit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  fault-contracts:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      # Real local HTTP/filesystem/process-death tests; no ComfyUI, GPU or native editor.
+      - run: python -m unittest discover -s tests -p "test_character_edit*.py" -v

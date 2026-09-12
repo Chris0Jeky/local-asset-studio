@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MAX_JSON = 4 * 1024 * 1024
 OBSERVATIONS = {'pass', 'fail', 'not_visible', 'uncertain'}
 ROLES = {'identity', 'costume', 'pose', 'style', 'composition'}
+CANON_SECTIONS = ('identity', 'costume', 'representation', 'style')
 SHA = re.compile(r'[0-9a-f]{64}\Z')
 ID = re.compile(r'[a-z][a-z0-9-]{1,63}\Z')
 
@@ -168,10 +169,27 @@ def attest_canon(canon: dict, reviewer: str, reviewer_kind: str, note: str) -> d
     return validate_canon(result)
 
 
+def _validate_prompt_scope(scope: Any, canon: dict) -> None:
+    """Validate an opt-in v2 selection without permitting replacement canon text."""
+    require(isinstance(scope, dict) and 1 <= len(scope) <= len(CANON_SECTIONS),
+            'Expected 1..4 prompt scope sections')
+    require(set(scope) <= set(CANON_SECTIONS), 'Unknown prompt scope section')
+    for field, selected in scope.items():
+        keys(selected, {'description', 'invariant_indexes'})
+        require(type(selected['description']) is bool, 'Prompt scope description must be boolean')
+        indexes = selected['invariant_indexes']
+        require(isinstance(indexes, list), 'Prompt scope invariant indexes must be a list')
+        require(all(type(index) is int for index in indexes), 'Prompt scope invariant index must be an integer')
+        require(len(indexes) == len(set(indexes)), 'Duplicate prompt scope invariant index')
+        require(all(0 <= index < len(canon[field]['invariants']) for index in indexes),
+                'Prompt scope invariant index is out of range')
+        require(selected['description'] or indexes, 'Prompt scope section selects no canon text')
+
+
 def validate_request(request: dict, canon: dict) -> None:
     keys(request, {'schema_version', 'kind', 'study_id', 'routes', 'tasks', 'seeds', 'budget', 'hypotheses'})
-    require(type(request['schema_version']) is int and request['schema_version'] == 1
-            and request['kind'] == 'character_study_request', 'Expected character study request v1')
+    require(type(request['schema_version']) is int and request['schema_version'] in {1, 2}
+            and request['kind'] == 'character_study_request', 'Expected character study request v1 or v2')
     identifier(request['study_id']); strings(request['hypotheses'], 'hypotheses', 1, 16)
     require(isinstance(request['routes'], list) and 1 <= len(request['routes']) <= 8, 'Expected 1..8 routes')
     seen = set()
@@ -182,12 +200,14 @@ def validate_request(request: dict, canon: dict) -> None:
     require(isinstance(request['tasks'], list) and 1 <= len(request['tasks']) <= 16, 'Expected 1..16 tasks')
     ref_ids = {r['id'] for r in canon['references']}; seen = set()
     for task in request['tasks']:
-        keys(task, {'id', 'instruction', 'reference_ids', 'required_checks'})
+        keys(task, {'id', 'instruction', 'reference_ids', 'required_checks'},
+             {'prompt_scope'} if request['schema_version'] == 2 else frozenset())
         identifier(task['id']); text(task['instruction'], 'task instruction')
         require(task['id'] not in seen, 'Duplicate task'); seen.add(task['id'])
         for field, allowed in [('reference_ids', ref_ids), ('required_checks', set(canon['checks']))]:
             strings(task[field], field, 1, 12 if field == 'reference_ids' else 32)
             require(len(task[field]) == len(set(task[field])) and set(task[field]) <= allowed, 'Duplicate or unknown ' + field)
+        if 'prompt_scope' in task: _validate_prompt_scope(task['prompt_scope'], canon)
     seeds = request['seeds']
     require(isinstance(seeds, list) and 1 <= len(seeds) <= 16, 'Expected 1..16 seeds')
     for seed in seeds: integer(seed, 0, 2**53 - 1, 'seed')
@@ -209,9 +229,10 @@ def make_plan(canon: dict, request: dict) -> dict:
                 case = {'route_id': route['id'], 'preset_id': route['preset_id'], 'task_id': task['id'],
                         'instruction': task['instruction'], 'reference_ids': task['reference_ids'],
                         'required_checks': task['required_checks'], 'seed': seed}
+                if 'prompt_scope' in task: case['prompt_scope'] = copy.deepcopy(task['prompt_scope'])
                 case['id'] = 'case-' + sha({'canon': sha(canon), 'request': sha(request), 'case': case})[:20]
                 cases.append(copy.deepcopy(case))
-    result = {'schema_version': 1, 'kind': 'character_study_plan', 'submits_generation': False,
+    result = {'schema_version': request['schema_version'], 'kind': 'character_study_plan', 'submits_generation': False,
               'canon': copy.deepcopy(canon), 'request': copy.deepcopy(request),
               'canon_sha256': sha(canon), 'request_sha256': sha(request), 'cases': cases,
               'evidence_state': 'not_run'}
@@ -246,14 +267,30 @@ def preflight(plan: dict, workspace: Path) -> dict:
                                  'Model and input terms for this use', 'Explicit Generate through the existing Studio']}
 
 
+def compile_prompt_context(canon: dict, prompt_scope: dict | None) -> tuple[list[str], dict]:
+    """Compile only canonical text, always in canon section and invariant order."""
+    all_canon = prompt_scope is None
+    lines = []
+    sections = {}
+    for field in CANON_SECTIONS:
+        if not all_canon and field not in prompt_scope: continue
+        selected = {'description': True, 'invariant_indexes': list(range(len(canon[field]['invariants'])))} if all_canon else prompt_scope[field]
+        description = canon[field]['description'] if selected['description'] else None
+        invariants = [{'index': index, 'text': invariant} for index, invariant in enumerate(canon[field]['invariants'])
+                      if all_canon or index in selected['invariant_indexes']]
+        lines.append(field.title() + (': ' + description if description is not None else ':'))
+        lines.extend(item['text'] for item in invariants)
+        sections[field] = {'description': description, 'invariants': invariants}
+    return lines, {'mode': 'all-canon' if all_canon else 'selected-canon', 'sections': sections}
+
+
 def case_brief(plan: dict, case_id: str) -> dict:
     """Produce the existing game-assets v1 brief; its copied budget is NOT new credit."""
     case = get_case(plan, case_id); canon = plan['canon']
     references = {r['id']: r for r in canon['references']}
     lines = [case['instruction']]
-    for field in ('identity', 'costume', 'representation', 'style'):
-        lines.append(field.title() + ': ' + canon[field]['description'])
-        lines.extend(canon[field]['invariants'])
+    prompt_lines, _ = compile_prompt_context(canon, case.get('prompt_scope'))
+    lines.extend(prompt_lines)
     budget = plan['request']['budget']
     return {'schema_version': 1, 'asset_id': case['id'], 'route': 'reference-image',
             'description': '\n'.join(lines),
@@ -306,7 +343,7 @@ def _handoff_template(plan: dict, case_id: str, repo_root: Path) -> dict:
         ref = refs[rid]
         instructions.append(f"Image {index + 1} [{ref['role']}]: take {'; '.join(ref['take'])}. Ignore {'; '.join(ref['ignore']) or 'unrequested changes'}.")
         uploads.append(dict(copy.deepcopy(ref), slot_index=index, binding=reference_bindings[index]))
-    result = {'schema_version': 1, 'kind': 'character_study_handoff', 'plan_sha256': plan['plan_sha256'],
+    result = {'schema_version': plan['schema_version'], 'kind': 'character_study_handoff', 'plan_sha256': plan['plan_sha256'],
               'case_id': case_id, 'preset_id': preset['id'], 'catalog_entry_sha256': sha(preset),
               'template_path': preset['graph'], 'template_sha256': file_sha(graph_path),
               'proposed_controls': {'positive': '\n'.join(instructions), 'seed': case['seed']},
@@ -317,6 +354,8 @@ def _handoff_template(plan: dict, case_id: str, repo_root: Path) -> dict:
                              'Check actual resize/crop, batch size, model/encoder/VAE/adapter and live node/runtime pins.',
                              'Reserve all image-producing attempts in the shared Production coordinator.',
                              'Recheck template/catalog/reference hashes; use normal Studio Prepare and explicit Generate.']}
+    if plan['schema_version'] == 2:
+        _, result['prompt_context'] = compile_prompt_context(plan['canon'], case.get('prompt_scope'))
     result['handoff_sha256'] = sha(result)
     return result
 
@@ -335,11 +374,14 @@ def prepare_handoff(plan: dict, case_id: str, workspace: Path, repo_root: Path) 
 def check_handoff(plan: dict, handoff: dict, repo_root: Path) -> tuple[dict, dict]:
     """Require the complete canonical handoff, rather than trusting a caller hash."""
     check_plan(plan)
-    keys(handoff, {'schema_version', 'kind', 'plan_sha256', 'case_id', 'preset_id', 'catalog_entry_sha256',
-                   'template_path', 'template_sha256', 'proposed_controls', 'control_bindings',
-                   'upload_requirements', 'reference_policy', 'submits_generation', 'submission_payload',
-                   'unresolved', 'handoff_sha256'})
-    require(handoff['schema_version'] == 1 and handoff['kind'] == 'character_study_handoff', 'Not a character study handoff')
+    handoff_keys = {'schema_version', 'kind', 'plan_sha256', 'case_id', 'preset_id', 'catalog_entry_sha256',
+                    'template_path', 'template_sha256', 'proposed_controls', 'control_bindings',
+                    'upload_requirements', 'reference_policy', 'submits_generation', 'submission_payload',
+                    'unresolved', 'handoff_sha256'}
+    if plan['schema_version'] == 2: handoff_keys.add('prompt_context')
+    keys(handoff, handoff_keys)
+    require(type(handoff['schema_version']) is int and handoff['schema_version'] == plan['schema_version']
+            and handoff['kind'] == 'character_study_handoff', 'Not a character study handoff')
     require(handoff['handoff_sha256'] == sha({k: v for k, v in handoff.items() if k != 'handoff_sha256'}), 'Handoff changed')
     require(plan['canon']['approval']['state'] == 'approved', 'Canon approval attestation is required; it is not authentication')
     expected = _handoff_template(plan, handoff['case_id'], repo_root)
