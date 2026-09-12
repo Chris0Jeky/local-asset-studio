@@ -128,6 +128,14 @@ before it. The number is a measured lower bound plus margin, not a derivation: t
 87 % reading was taken after the run, so the peak was not captured. Treat 29 GB as the floor the
 failure proved insufficient; the earlier 20 GiB figure was below it and is withdrawn.
 
+Set `enforce_host_commit_headroom` to `true` in the local configuration to enforce this rule on a
+Windows host. The Studio reads `GetPerformanceInfo` commit counters rather than physical RAM,
+rechecks after waiting for the queue and immediately before each `/prompt`, and records each pass
+in the run state. It fails closed when that Windows reading is unavailable for a qualifying graph.
+The gate performs no restart, `/free`, paging change, or other automatic memory action. Qwen Plus
+reference scalers at 1 MP qualify even where the output canvas is smaller; a Qwen text encoder by
+itself does not.
+
 What #77 measured (`C:/AI/character-lab/pilot-20260912/cache-release-{before,after}.json`):
 
 | | committed | of limit | physical available |
