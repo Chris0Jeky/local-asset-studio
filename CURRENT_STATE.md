@@ -25,8 +25,13 @@ known online, schema-ready response with the selected recipe's models present; p
 refreshes retain the last known result until their response arrives. The focused VM check covers
 pending, online, known-offline, request-failure, recovery, missing-schema and missing-model states
 without posting a job. The full configured Windows suite ran 782 tests: 769 passed and 13 skipped;
-repository validation passed (60 preset graphs/bindings, 62 pinned assets and 782 tracked paths).
-Runtime logs are retained under `.runtime/readiness-status/`.
+repository validation passed (60 preset graphs/bindings, 62 pinned assets and 783 tracked paths).
+The real Create page was also checked in a browser against an inert loopback fixture serving the
+changed static files: pending and unavailable responses disabled Generate, known online enabled it,
+a healthy poll recovered from the request failure without a reload, and known offline stayed explicit
+and disabled. Every write was rejected by the fixture and its request log recorded zero POSTs.
+Test logs are retained under `.runtime/readiness-status/`; browser evidence is under
+`primary/.runtime/session-2026-09-12/readiness-browser/`.
 
 ## Controlled edits through Studio - 12 September 2026
 
