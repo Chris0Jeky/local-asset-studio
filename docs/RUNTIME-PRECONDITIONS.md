@@ -1,0 +1,222 @@
+# Runtime preconditions
+
+What has to be true on the configured PC before a large Qwen or FLUX.2 job is submitted, and why.
+Everything below was read from the installed ComfyUI source or measured from `C:/AI/logs` on
+12 September 2026; the two places that rest on someone else's reading are labelled.
+
+Installed runtime: ComfyUI 0.35.0, PyTorch 2.9.1+rocm7.2.1, ROCm `(7, 2)`, AMD arch `gfx1201`,
+`Total VRAM 16304 MB, total RAM 32487 MB` (`C:/AI/logs/20260912-173147-error.log`).
+Source root for every line number: `C:/AI/ComfyUI_windows_portable/ComfyUI`.
+
+## 1. How much VRAM a model is allowed to occupy
+
+`comfy/model_management.py`:
+
+```
+863  EXTRA_RESERVED_VRAM = 400 * 1024 * 1024
+864  if WINDOWS:
+865      EXTRA_RESERVED_VRAM = 600 * 1024 * 1024 #Windows is higher because of the shared vram issue
+866      if total_vram > (15 * 1024):  # more extra reserved vram on 16GB+ cards
+867          EXTRA_RESERVED_VRAM += 100 * 1024 * 1024
+869  if args.reserve_vram is not None:
+870      EXTRA_RESERVED_VRAM = args.reserve_vram * 1024 * 1024 * 1024
+876  def minimum_inference_memory():
+877      return (1024 * 1024 * 1024) * 0.8 + extra_reserved_memory()
+```
+
+So ComfyUI's own default on this 16 GB Windows card is **700 MB** reserved, and `--reserve-vram`
+replaces that number outright rather than adding to it.
+
+`load_models_gpu` then computes the budget (`comfy/model_management.py`):
+
+```
+929      inference_memory = minimum_inference_memory()
+930      extra_mem = max(inference_memory, memory_required + extra_reserved_memory())
+932          minimum_memory_required = extra_mem
+1009         current_free_mem = get_free_memory(torch_dev) + loaded_memory
+1011         lowvram_model_memory = max(0, (current_free_mem - minimum_memory_required), min(current_free_mem * MIN_WEIGHT_MEMORY_RATIO, current_free_mem - minimum_inference_memory()))
+1012         lowvram_model_memory = lowvram_model_memory - loaded_memory
+```
+
+With nothing already loaded on the device that reduces to
+
+```
+usable = free_vram - reserve - max(0.8 GiB, memory_required)
+```
+
+where `memory_required` is the sampler's working set for this canvas and reference count.
+`MIN_WEIGHT_MEMORY_RATIO` is `0.4` on AMD (`model_management.py:458`), so the third branch only
+matters when the first two are smaller than 40 % of free VRAM.
+
+`usable` is the `lowvram_model_memory` figure that `ModelPatcher.load` spends module by module
+(`comfy/model_patcher.py`):
+
+```
+1001                 lowvram_fits = mem_counter + module_mem + potential_offload < lowvram_model_memory
+1093                 logging.info("loaded partially; {} {:.2f} MB loaded, {:.2f} MB offloaded, ...")
+1096                 logging.info("loaded completely; {} {:.2f} MB loaded, full load: {}")
+```
+
+The first module that does not fit flips the whole load to partial. `partially_load` sets
+`full_load = True` only when `model_loaded_weight_memory + extra_memory > model_size()`
+(`model_patcher.py:1273-1274`). **The exit test for any reserve change is therefore the log line**:
+`Requested to load QwenImage` followed by `loaded completely; … full load: True`.
+
+## 2. Fit table — `qwen-image-edit-2511-Q4_K_M`
+
+`models/diffusion_models/qwen-image-edit-2511-Q4_K_M.gguf`, 13,244,758,624 B on disk.
+Measured resident size, identical in every log that loads it: **12,738.98 MB** — read either from a
+full load or by adding a partial load's two halves (`20260911-171055-error.log:282` =
+11,353.72 loaded + 1,385.26 offloaded; `20260912-043327-error.log:246` = 12,556.31 + 182.67).
+
+| `usable` reported in the log | outcome | log |
+| --- | --- | --- |
+| 11,379.72 MB | `loaded partially`, 1,385.26 MB offloaded | `20260911-171055-error.log:282` |
+| 12,584.27 MB | `loaded partially`, 182.67 MB offloaded | `20260912-043327-error.log:246` |
+| 12,633.22 MB | `loaded partially`, 131.93 MB offloaded | `20260912-043327-error.log:274` |
+| 12,751.49 MB | `loaded completely`, full load: True | `20260911-053144-error.log:311` |
+| 12,888.02 / 12,899.61 MB | `loaded completely`, full load: True | `20260912-173147-error.log:109,127` |
+
+The threshold sits between 12,633 and 12,751 MB of usable, i.e. the 12,738.98 MB of weights plus a
+small offload buffer (25.35 MB in the partial-load lines above).
+
+Applying the §1 formula with the measured `free_vram` range 15,630–16,137 MiB and the strategy's
+`memory_required` of 1,749 MiB for 832×1216 with two references:
+
+| `--reserve-vram` | usable @832×1216, 2 refs | Q4_K_M (needs ~12,764 MiB) |
+| --- | --- | --- |
+| 2 (previous) | 11,833–12,340 MiB | **partial load** |
+| 0.6 (current) | 13,267–13,774 MiB | **full load**, ~0.5–1.0 GiB margin |
+
+Two caveats, both measured:
+
+- Reserve 2 was not a *guaranteed* partial. At 17:31 on 12 September, with an otherwise quiet
+  desktop and a one-reference 512×1128 canvas, the same model fully loaded at 12,888 MB usable and
+  then had 32.78 MB and 250.98 MB *unloaded* again to make room for the VAE
+  (`20260912-173147-error.log:130,137`). Reserve 2 put this box on the boundary; whether a given job
+  crossed it depended on how much VRAM the desktop happened to be holding.
+- The 13,019 MiB requirement quoted in the 12 September research strategy is that same 12,738.98 MB
+  plus a 280 MiB buffer allowance. The buffer actually reserved in the logs is 25.35 MB, so 13,019
+  MiB is a conservative figure, **derived from the strategy's reading**, not measured here.
+
+Out of scope: `scripts/h3-launch.py` and `scripts/hidream-launch.py` still pass `--reserve-vram 2`.
+They are isolated backends on ports 8194 and 8192 with different residency profiles and no Qwen
+route; changing them needs its own measurement.
+
+## 3. The host-commit gate
+
+VRAM is not the constraint that killed #77 and #89 — Windows commit is.
+
+Measured on this box (`Get-CimInstance Win32_OperatingSystem`, 12 September 2026):
+
+```powershell
+Get-CimInstance Win32_OperatingSystem |
+  Select-Object TotalVisibleMemorySize, FreePhysicalMemory, TotalVirtualMemorySize, FreeVirtualMemory, SizeStoredInPagingFiles
+```
+
+All values are in KiB. `SizeStoredInPagingFiles` read 41,943,040 (the fixed 40 GiB page file),
+`TotalVirtualMemorySize` 75,209,264 — that is the **commit limit**, 77,014,286,336 B / 71.7 GiB, the
+same number recorded in #77. `TotalVirtualMemorySize - FreeVirtualMemory` is committed bytes;
+`FreeVirtualMemory` is the headroom. Per-process detail comes from the same counters ComfyUI does
+not read: ComfyUI's caches key on physical RAM only.
+
+**Rule: require at least 20 GiB of commit headroom before submitting any Qwen or FLUX.2 job at
+1 MP or above, and record the reading in the run's evidence.** Sample it during the run, not only
+before it.
+
+What #77 measured (`C:/AI/character-lab/pilot-20260912/cache-release-{before,after}.json`):
+
+| | committed | of limit | physical available |
+| --- | --- | --- | --- |
+| before `/free` | 74,920,812,544 B | **97 %** | 4,427 MB |
+| after `/free` | 39,821,107,200 B | 51 % | 15,480 MB |
+
+`/free` released 35,099,705,344 B — about 32.7 GiB — of host commit. `POST /free` with
+`{"unload_models": true, "free_memory": true}` only sets two queue flags (`server.py:1192-1201`)
+that the queue acts on between prompts; it never interrupts a running job. Caveat recorded in #77
+and preserved here: the ComfyUI process also exited around that release, so the two are confounded
+and the causal link is unproven.
+
+Why a partial load makes commit worse rather than better: ComfyUI-GGUF is reported to round-trip
+each offloaded module in a way that breaks its file-backed mmap and turns it into private committed
+host RAM. That chain is **reported by the 12 September strategy, not re-verified here** — but the
+observable consequence (partial loads precede the commit spikes) is in the logs.
+
+Raising the fixed 40 GiB page file would raise the limit directly. That is a system setting, it is
+an owner decision (`HUMAN_TODO.md` q-4), and #77 explicitly says not to treat paging as a default
+fix.
+
+## 4. Flags
+
+Verified against the installed source or this box's own logs:
+
+| Flag / env | Verdict | Evidence |
+| --- | --- | --- |
+| `--use-pytorch-cross-attention` | **no-op** — already on | `model_management.py:531-537` enables it for `gfx1200/gfx1201` at ROCm ≥ 7.0 once `aotriton_supported()` passes; 23 of 23 startups in `C:/AI/logs` log `Using pytorch attention` |
+| `--use-split-cross-attention`, `--use-quad-cross-attention` | **harmful** | both are the guard on that same `if` at `model_management.py:531`, so either one *disables* the AOTriton path |
+| `--use-sage-attention`, `--use-flash-attention`, `torch.compile` | **unreachable** | 23 of 23 startups log `Found comfy_kitchen backend triton: {'available': False, … "ImportError: No module named 'triton'"}` |
+| `--disable-smart-memory` | **wrong direction** | its own help text is "Force ComfyUI to agressively offload to regular ram" (`comfy/cli_args.py:191`) — that is more host commit, not less |
+| `--vram-headroom`, DynamicVRAM | **inert** | `main.py:264-270` `dynamic_vram_supported()` needs `rocm_version >= (7, 14)` on AMD; this box logs `ROCm version: (7, 2)`, and `--vram-headroom` is only consumed inside that gated block |
+| `--fast-disk` | **inert, and the surviving half is unhelpful** | DynamicVRAM is off (above); its one remaining effect makes `ensure_pin_budget` compare against the pinned cap instead of available RAM (`model_management.py:730-736`), i.e. pins *more* under low RAM |
+| `COMFYUI_ENABLE_MIOPEN=1` | untested here, but the gate is real | `model_management.py:483-486` disables cuDNN unless the env var is `'1'`; every log line reads `Set: torch.backends.cudnn.enabled = False for better AMD performance.` |
+
+Reported by the 12 September strategy, **unverified here**: `--fast cublas_ops` is dead
+(NVIDIA-only package absent); bare `--fast` enables `autotune` at a ~135 s first-run cost;
+`--cache-ram 2 6` loosens rather than tightens; `--disable-pinned-memory` cannot be #77's root cause
+because `MAX_PINNED_MEMORY` is a cap and `hipHostRegister` does not raise commit;
+`PYTORCH_TUNABLEOP_ENABLED=1` (~60 % claimed, no it/s published);
+`TORCH_ROCM_FA_PREFER_CK=1` (AMD's +20 % figure is Linux, and CK SDPA is not supported on RDNA).
+
+## 5. The crash class, and what to do about it
+
+Issue #89 recorded four ComfyUI deaths on 12 September, all `0xC0000005` native access violations
+during a **host-side tensor move**, in two shapes:
+
+- mmap page-in on reload after the RAM-pressure cache evicted a checkpoint
+  (`torch/storage.py:470 __getitem__` ← `comfy/utils.py:172 load_torch_file`), logs
+  `20260912-173147-error.log` and `20260912-201600-error.log`;
+- device→host `.to()` while partially unloading SDXL to make room for the VAE
+  (`model_patcher.py:1216 partially_unload` ← `model_management.free_memory`), logs
+  `20260912-202719-error.log` and `20260912-203031-error.log`.
+
+Both shapes need a *partial* load or unload to exist in the first place, which is the same lever as
+§1. `--disable-mmap` and `--cache-classic` were each tried once and each crashed.
+
+**Rules.** Restore ComfyUI with `C:/AI/Start-ComfyUI.ps1` — never by hand-assembling flags, and
+never by leaving an experimental flag in place. Never resubmit a job whose outcome is uncertain:
+keep the prompt ID and the exact submitted graph, and record the crash. A lost prompt ID is evidence
+lost, not a reason to run again.
+
+## 6. The launcher is outside Git
+
+`C:/AI/Start-ComfyUI.ps1` is the owner's file; the repository cannot version it. On 12 September
+2026 its `--reserve-vram` token was changed from `2` to `0.6` to match `app/backends.py`, because a
+change to only one of the two produces two different runtimes on the same port.
+
+| file | SHA-256 |
+| --- | --- |
+| `C:/AI/Start-ComfyUI.ps1` (reserve 0.6, current) | `0c3fbc95bcb27444797eeffe08bb4047029a55f1ad352a9f979ed26bf8ea969e` |
+| `C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2` (reserve 2, original) | `526fcda531f6d7aded268e9f69ad3fa1bc643d05f7e74e65f5b32f902ddc604c` |
+
+To revert, with the ComfyUI queue empty and its process stopped, copy the backup back over the
+launcher and re-check the hash:
+
+```powershell
+Copy-Item "C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2" "C:/AI/Start-ComfyUI.ps1" -Force
+Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
+```
+
+Reverting the launcher alone leaves `app/backends.py` at 0.6; revert both or neither. The change is
+also logged in [`runtime-patches/README.md`](../runtime-patches/README.md).
+
+## 7. Exit test, not yet run
+
+Nothing here proves the reserve change works. The exit test is one line in the next Qwen job's log:
+
+```
+Requested to load QwenImage
+loaded completely; <usable> MB usable, 12738.98 MB loaded, full load: True
+```
+
+at 832×1216 or larger with two bound references. Until that line exists, the fit table in §2 is a
+prediction from the formula, and this document says so.
