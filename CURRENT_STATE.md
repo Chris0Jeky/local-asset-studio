@@ -6,12 +6,27 @@ The #77 follow-up now records a confirmed ComfyUI history error as a failed Stud
 propagating the existing exception. It persists the observed finish time and computes the Studio
 wall interval only from a finite, non-boolean start that is not in the future; legacy or invalid
 starts keep elapsed time unknown, and repeated observation preserves the first terminal timestamp.
-The full Windows suite ran 781 tests: 768 passed and 13 skipped, using the configured Studio test
-interpreter. Repository validation and a fresh independent review passed. The causal test records
+PR #79 merged as `451a681`. The actual idle reload was verified at 18:10 UTC: Studio PID 1236
+reloaded from 31288 while retaining the same 77 terminal jobs, raw state-file hashes and timestamps,
+17 projects, ComfyUI PID 10984 and history, with an empty queue. The raw receipt is
+`primary/.runtime/session-2026-09-12/timing-reload/after.json`. The full Windows suite ran 781 tests:
+768 passed and 13 skipped, using the configured Studio test interpreter. Repository validation and a
+fresh independent review passed. The causal test records
 60 seconds from Studio start to failure observation, distinct from the fixture's 25-second Comfy
 event interval; it fails on the original history-error method and passes on the fix. Transport-loss
 and uncertain submissions retain unknown completion times. No historical jobs were backfilled and
-no live generation was used for this proof; the running Studio still needs the merged app reload.
+no neural failure run was used for this proof.
+
+## Readiness state wording — 12 September 2026
+
+The Create view now keeps ComfyUI readiness neutral while its first health request is pending and
+labels failed health requests as unavailable rather than offline. Generate remains disabled until a
+known online, schema-ready response with the selected recipe's models present; periodic health
+refreshes retain the last known result until their response arrives. The focused VM check covers
+pending, online, known-offline, request-failure, recovery, missing-schema and missing-model states
+without posting a job. The full configured Windows suite ran 782 tests: 769 passed and 13 skipped;
+repository validation passed (60 preset graphs/bindings, 62 pinned assets and 782 tracked paths).
+Runtime logs are retained under `.runtime/readiness-status/`.
 
 ## Controlled edits through Studio - 12 September 2026
 
