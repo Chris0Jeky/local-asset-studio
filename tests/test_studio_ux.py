@@ -13,6 +13,7 @@ class StudioUXTests(unittest.TestCase):
         result = subprocess.run([shutil.which('node'), str(ROOT / 'tests/studio_ux.cjs')],
                                 capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Studio UX policy checks passed', result.stdout, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for JS syntax checks')
     def test_enhancement_scripts_parse(self):
