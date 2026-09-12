@@ -21,7 +21,7 @@ They resolve to Noirpopwave v1.0, WAI v17.0, Anima base v1.0, Failleaf Anima Bas
 
 ## Resolved resource manifest
 
-All paths are relative to the configured ComfyUI `models` directory. The four new LoRAs were downloaded by `scripts/civitai-fetch.py`; its ignored receipt records the matching listing hash.
+On this PC the model root is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. All paths below are relative to it. The four new LoRAs were downloaded by `scripts/civitai-fetch.py`; its ignored receipt records the matching listing hash. WAI's full checkpoint belongs in `checkpoints/`; Anima's split diffusion weights belong in `diffusion_models/` alongside its separate encoder in `text_encoders/` and decoder in `vae/`. The style adapters belong in `loras/`, not in the checkpoint folder. Nothing in this install upgrades ComfyUI or its Python packages.
 
 | Resource | Version and source | File | SHA-256 | Status |
 | --- | --- | --- | --- | --- |
@@ -36,11 +36,17 @@ The source image resolves the previously truncated label as **Failleaf**, with t
 
 ## First render
 
-Open **Workflow Lab**, select the recipe, and keep the supplied seed and `832 x 1216` size for the first one-image run. This is a modest portrait canvas and deliberately avoids upscale, detailer, multi-seed or multi-model work. Nothing submits until **Generate** is pressed.
+Open **Create**, select **WAI v17** (preset `wai`) or **Anima artist stack** (preset `anima-artist-stack`), then choose the corresponding **Screenshot baseline** entry in the recipe dropdown. Keep the supplied seed and `832 x 1216` size for the first one-image run. Nothing submits until **Generate** is pressed.
+
+Start with WAI + Noirpopwave: the source page labels its base model Illustrious, making this the best-supported first candidate. Anima is a separately testable interpretation of the attached resources. The smaller canvas preserves the source image's exact aspect ratio; the source dimensions are 2.25 times larger in each direction. This arithmetic does not prove an upscale was used. Starting small reduces the first trial's memory and time cost.
 
 For the WAI lane, use 24 steps, CFG 6, Euler ancestral and the normal scheduler. The Noirpopwave trigger is already in the positive prompt and its LoRA slot is 1.0.
 
 For the Anima lane, use 30 steps, CFG 4, Euler ancestral and the simple scheduler. Failleaf, sky02 and BunnySlop occupy the first three slots at 0.5, 0.3 and 0.9. The remaining three slots are zero and are pruned before submission.
+
+The workflow is: load the matching model, apply its compatible style adapters, encode the positive and negative prompts, create a latent canvas, sample with the fixed seed, decode through the VAE, then save the image. The recipes reuse the tested Studio graph families; the sampler values are authored starting choices, not settings recovered from the source image. The source API did not publish those settings. A zero-strength adapter is removed from the submitted graph, reducing unnecessary loading.
+
+After the run, export the job's recipe from Gallery to retain the exact controls and submitted graph. The preset's **Download API graph** link supplies its authored graph defaults; it is not a substitute for the recipe-expanded graph that actually ran. Originals and full job receipts remain available for correction and comparison.
 
 ## Learn by changing one control
 
