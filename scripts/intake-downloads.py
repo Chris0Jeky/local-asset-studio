@@ -3,11 +3,15 @@
 Offline: it inspects the safetensors header (metadata plus tensor key shapes), never the network. Files are
 moved, never overwritten; each move prints a receipt and a `models/library.json` entry stub. Standard library only.
 """
-import argparse,hashlib,json,re,shutil,time
+import argparse,hashlib,json,re,shutil,sys,time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('checkpoints','diffusion_models','text_encoders','vae','loras','controlnet','clip_vision','upscale_models','embeddings')
+sys.path.insert(0,str(ROOT/'app'))
+# One folder allow-list for the whole repo: drifting copies let a script write where the
+# Models view cannot read, and three copies had already diverged (9, 9 and 11 entries).
+from model_library import FOLDERS as _FOLDERS
+FOLDERS=tuple(_FOLDERS)
 LORA_MARKERS=('.lora_a.','.lora_b.','.lora_down.','.lora_up.','.lora.down.','.lora.up.','.lora_magnitude','.hada_w','.lokr_','.oft_','.diff_b')
 LORA_PREFIXES=('lora_unet_','lora_te_','lora_te1_','lora_te2_','lora_transformer_')
 VAE_PARTS={'decoder','encoder','conv1','conv2','quant_conv','post_quant_conv','quantize','loss'}

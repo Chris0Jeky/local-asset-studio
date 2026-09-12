@@ -11,13 +11,13 @@ from PIL import Image
 from scripts import character_edit_bridge as b
 
 
-def png(size=(88,96), colour=(80,100,120,255)):
+def png(size=(96,96), colour=(80,100,120,255)):
     stream=io.BytesIO();Image.new('RGBA',size,colour).save(stream,format='PNG');return stream.getvalue()
 
 
 def fixture_preset():
     return {'id':'qwen-2ref','graph':'workflows/api/qwen-2ref-api.json',
-            'positive':['1','text'],'seed':['1','seed'],'width':['1','width'],
+            'positive':['1','text'],'seed':['1','seed'],'width':['1','width'],'height':['1','height'],
             'reference_slots':[{'role':'identity','binding':['4','image']},
                                {'role':'pose','binding':['16','image']}]}
 
@@ -26,7 +26,7 @@ def handoff(root):
     # This is a protocol fixture, not a canon approval or a production plan.
     for name,raw in [('source.png',png()),('context.png',png()),('identity.png',png((64,64))),('plan.json',b'{}')]:
         (root/name).write_bytes(raw)
-    template=b.canonical({'1':{'class_type':'TestOnly','inputs':{'text':'base','width':88,'seed':1}},
+    template=b.canonical({'1':{'class_type':'TestOnly','inputs':{'text':'base','width':96,'height':96,'seed':1}},
                           '4':{'class_type':'LoadImage','inputs':{'image':'base.png'}},
                           '16':{'class_type':'LoadImage','inputs':{'image':'base.png'}}})
     value={'schema_version':1,'kind':'character_edit_studio_handoff','plan':b.artifact(root,'plan.json'),
@@ -34,7 +34,7 @@ def handoff(root):
         'originals':[b.artifact(root,'source.png'),b.artifact(root,'plan.json')],
         'references':[{'image':b.artifact(root,'context.png'),'role':'composition','contribution':'Current crop','avoid':'Unrequested edits'},
                       {'image':b.artifact(root,'identity.png'),'role':'identity','contribution':'Identity','avoid':'Pose'}],
-        'size':[88,96],'seeds':[11,22],'preset_id':'qwen-2ref','template_sha256':b.digest(template),'native_preset':fixture_preset(),'preset_sha256':b.hashed(fixture_preset()),'positive':'Repair the hand.',
+        'size':[96,96],'seeds':[11,22],'preset_id':'qwen-2ref','template_sha256':b.digest(template),'native_preset':fixture_preset(),'preset_sha256':b.hashed(fixture_preset()),'positive':'Repair the hand.',
         'max_candidates':3,'reserved_repairs':1,'max_seconds':1800,'budget_owner':'test-only',
         'policy':{'eligible_by_preference':True},'scope':'fixture','context_conversion':'fixture','submits_generation':False}
     value['sha256']=b.hashed(value); (root/'handoff.json').write_bytes(b.canonical(value));return value,template
@@ -53,12 +53,12 @@ class InertStudio:
             node,field=self.preset[control];graph[node]['inputs'][field]=value
         for slot,ref in zip(self.preset['reference_slots'],request['references']):
             node,field=slot['binding'];graph[node]['inputs'][field]=ref['file']
-        lines=[f"Image {i+1} — {r['role']}: use {r['contribution'].strip() or 'the assigned visual role'}. Avoid transferring: {r['avoid'].strip() or 'unrequested details'}." for i,r in enumerate(request['references'])]
+        lines=[f"Picture {i+1} — {r['role']}: use {r['contribution'].strip() or 'the assigned visual role'}. Avoid transferring: {r['avoid'].strip() or 'unrequested details'}." for i,r in enumerate(request['references'])]
         node,field=self.preset['positive'];graph[node]['inputs'][field]='\n'.join(lines)+'\n\nRequested result:\n'+request['controls']['positive']
         return graph
     def preview(self, request):
         refs=copy.deepcopy(request['references'])
-        refs[0]['transform']={'vae_size':[request['controls']['width'],96]}
+        refs[0]['transform']={'policy':'scale-to-total-pixels','source_size':[request['controls']['width'],request['controls']['height']]}
         return self.preview_hook({'workflow':self.graph(request),'references':refs,'batch_count':1,
                                  'template_sha256':request['expected_template_sha256'],'submitted':False})
     def request(self, method,path,body=None,**options):
@@ -213,7 +213,21 @@ class BridgeProtocol(unittest.TestCase):
         self.http.preview_hook=drift
         with self.assertRaisesRegex(ValueError,'lost a reference'):self.bridge.stage()
     def test_preview_dimension_drift_rejected(self):
-        def drift(p):p['references'][0]['transform']['vae_size']=[64,64];return p
+        def drift(p):p['references'][0]['transform']['source_size']=[64,64];return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+    def test_preview_canvas_drift_rejected(self):
+        # The explicit latent, not the reference, decides the candidate size now.
+        def drift(p):p['workflow']['1']['inputs']['height']=64;return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+        self.assertEqual(0,self.http.count('POST','/api/production'))
+    def test_missing_transform_record_is_refused_not_raised(self):
+        def drift(p):p['references'][0]['transform']={};return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+    def test_missing_canvas_node_is_refused_not_raised(self):
+        def drift(p):p['workflow']['1']={};return p
         self.http.preview_hook=drift
         with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
     def test_batch_boolean_alias_rejected(self):

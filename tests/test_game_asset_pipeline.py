@@ -63,7 +63,7 @@ class PipelineTests(unittest.TestCase):
     def test_prompt_image_role_order(self):
         self.brief['references']=[dict(id='id-a',role='identity',kind='image',path='a.png',sha256='a'*64,take=['face'],ignore=['pose']),dict(id='rig-a',role='geometry',kind='rig',path='r.blend',sha256='b'*64,take=['scale'],ignore=[]),dict(id='id-b',role='pose',kind='image',path='b.png',sha256='c'*64,take=['pose'],ignore=['face'])]
         prompt=self.plan()['reference_instructions']
-        self.assertIn('Image 2 [pose]',prompt);self.assertNotIn('Image 3',prompt)
+        self.assertIn('Picture 2 [pose]',prompt);self.assertNotIn('Picture 3',prompt);self.assertNotIn('Image ',prompt)
     def test_duplicate_references(self):
         ref=dict(id='ref-a',role='identity',kind='image',path='a.png',sha256='a'*64,take=[],ignore=[])
         self.brief['references']=[ref,ref]

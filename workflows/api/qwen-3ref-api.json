@@ -26,16 +26,15 @@
     }
   },
   "5": {
-    "class_type": "ImageScale",
+    "class_type": "ImageScaleToTotalPixels",
     "inputs": {
       "image": [
         "4",
         0
       ],
       "upscale_method": "lanczos",
-      "width": 512,
-      "height": 0,
-      "crop": "disabled"
+      "megapixels": 1.0,
+      "resolution_steps": 1
     }
   },
   "6": {
@@ -53,13 +52,13 @@
         "5",
         0
       ],
-      "prompt": "Use the character identity and costume from Image 1. Use only the pose from Image 2, not its identity or clothes. Use only the rendering style and palette from Image 3. Create a non-explicit fantasy portrait. Preserve the approved character design.",
+      "prompt": "Use the character identity and costume from Picture 1. Use only the pose from Picture 2, not its identity or clothes. Use only the rendering style and palette from Picture 3. Create a non-explicit fantasy portrait. Preserve the approved character design.",
       "image2": [
-        "16",
+        "18",
         0
       ],
       "image3": [
-        "17",
+        "19",
         0
       ]
     }
@@ -81,11 +80,11 @@
       ],
       "prompt": "",
       "image2": [
-        "16",
+        "18",
         0
       ],
       "image3": [
-        "17",
+        "19",
         0
       ]
     }
@@ -111,19 +110,6 @@
       "shift": 3.1
     }
   },
-  "10": {
-    "class_type": "VAEEncode",
-    "inputs": {
-      "pixels": [
-        "5",
-        0
-      ],
-      "vae": [
-        "3",
-        0
-      ]
-    }
-  },
   "11": {
     "class_type": "KSampler",
     "inputs": {
@@ -145,7 +131,7 @@
         0
       ],
       "latent_image": [
-        "10",
+        "20",
         0
       ],
       "denoise": 1.0
@@ -201,13 +187,45 @@
   "16": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "studio-lantern-cutout.png"
+      "image": "passing-pose-guide.png"
     }
   },
   "17": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "studio-lantern-cutout.png"
+      "image": "atelier-style-lab-foxes.jpg"
+    }
+  },
+  "18": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "16",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+    }
+  },
+  "19": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "17",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+    }
+  },
+  "20": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 832,
+      "height": 1248,
+      "batch_size": 1
     }
   }
 }

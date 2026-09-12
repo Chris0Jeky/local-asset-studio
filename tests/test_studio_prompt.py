@@ -74,7 +74,7 @@ class CompilerTests(unittest.TestCase):
     def test_mesh_has_no_invented_prompt(self):
         self.b['task']='mesh';self.b['references']=[ref()];a=c.compile_brief(self.b,'trellis2-image-v1');self.assertEqual(a['fields'],{'image_reference_id':'image-a'});self.assertIn('NO_TEXT_CONDITIONING',[n['code'] for n in a['diagnostics']])
     def test_qwen_reference_order(self):
-        self.b['task']='edit';self.b['references']=[ref(),ref('pose','image-b'),ref('style','image-c')];a=c.compile_brief(self.b,'qwen-edit2511-three-v1');self.assertIn('Image 2 (pose)',a['fields']['positive']);self.assertEqual([x['slot'] for x in a['reference_map']],[1,2,3])
+        self.b['task']='edit';self.b['references']=[ref(),ref('pose','image-b'),ref('style','image-c')];a=c.compile_brief(self.b,'qwen-edit2511-three-v1');self.assertIn('Picture 2 (pose)',a['fields']['positive']);self.assertNotIn('Image 2',a['fields']['positive']);self.assertEqual([x['slot'] for x in a['reference_map']],[1,2,3])
     def test_no_dropped_extra_references(self):
         self.b['task']='edit';self.b['references']=[ref('style','r'+str(i)) for i in range(4)];a=c.compile_brief(self.b,'qwen-edit2511-three-v1');self.assertEqual(len(a['reference_map']),4);self.assertTrue(a['errors'])
     def test_hard_mask_routes_to_stage(self):

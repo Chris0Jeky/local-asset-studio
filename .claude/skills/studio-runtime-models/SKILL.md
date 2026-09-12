@@ -19,9 +19,11 @@ Use for `app/backends.py`, `app/model_library.py`, `scripts/Start-Studio.ps1`, `
 - Backend switches are explicit, one at a time, and recorded in `.runtime/backend-state.json`;
   `psutil` stops only processes the Studio owns. Ports are fixed: 8188 primary, 8191 Studio, 8192
   HiDream, 8194 H3 loader.
-- A model enters `models/library.json` only with sha256, byte count, relative `.safetensors` path and a
-  huggingface/civitai URL; weights never enter Git. Provenance is not authentication: matching hashes
-  do not prove the creator or grant commercial rights.
+- A model enters `models/library.json` only with sha256, byte count and a relative path in a supported
+  folder; weights never enter Git. `.safetensors` with a huggingface/civitai URL installs automatically;
+  `.gguf`, `.pth`, `.pt` and `.onnx` are pin-only (presence and size reported, installer refuses), and a
+  pin with no curated origin leaves `url` empty and says why in `terms`. Provenance is not authentication:
+  matching hashes do not prove the creator or grant commercial rights.
 - Licence and territory terms are recorded as facts with a dated source link. Known gates: Hunyuan3D
   2.1 and HY-Motion 1.0 exclude UK use; NoobAI excludes commercial products; H3 needs an eligible
   territory. Do not infer one provider's confirmation covers another.

@@ -3,14 +3,18 @@
 Prints a `.runtime/downloads/receipts.json` receipt and a `models/library.json` entry stub. Standard
 library only; nothing is installed unless the SHA-256 matches what the repository tree advertises.
 """
-import argparse,hashlib,json,re,time
+import argparse,hashlib,json,re,sys,time
 from pathlib import Path,PurePosixPath
 from urllib.error import HTTPError,URLError
 from urllib.parse import quote
 from urllib.request import Request,urlopen
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('checkpoints','diffusion_models','text_encoders','vae','loras','controlnet','clip_vision','upscale_models','embeddings','latent_upscale_models','background_removal')
+sys.path.insert(0,str(ROOT/'app'))
+# One folder allow-list for the whole repo: drifting copies let a script write where the
+# Models view cannot read, and three copies had already diverged (9, 9 and 11 entries).
+from model_library import FOLDERS as _FOLDERS
+FOLDERS=tuple(_FOLDERS)
 AGENT={'User-Agent':'LocalAssetStudio/1'}
 
 def load_config(root=ROOT):

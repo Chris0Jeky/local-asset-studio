@@ -22,7 +22,7 @@ def preset_contract(preset):
 
 def compile_instruction(changes):
     instruction = '\n'.join(c['instruction'] for c in changes)
-    prompt = (instruction + '\nReturn one edited image of the current source crop (Image 1), at the same framing and scale. '
+    prompt = (instruction + '\nReturn one edited image of the current source crop (Picture 1), at the same framing and scale. '
               'Keep identity from the identity reference; do not copy its pose or background. '
               'Preserve details not requested to change. Do not add text or panels.')
     require(0 < len(prompt) <= 8000, 'Combined brief exceeds the Studio limit of 8000 characters; nothing is truncated')
@@ -43,14 +43,14 @@ def projected_graph(template, preset, request):
         require(node in graph and field in graph[node].get('inputs',{}), 'Pinned binding absent from template')
         graph[node]['inputs'][field]=copy.deepcopy(value)
     for name,value in request['controls'].items():
-        require(name in ('positive','seed','width'), 'Unsupported projected control')
+        require(name in ('positive','seed','width','height'), 'Unsupported projected control')
         bindings=([preset[name]] if preset.get(name) else [])+preset.get('bindings_extra',{}).get(name,[])
         require(bool(bindings),'Pinned control is unavailable')
         for binding in bindings: bind(binding,value)
     slots=preset.get('reference_slots',[]); refs=request['references']
     require(len(slots)==len(refs), 'Pinned reference count differs')
     for slot,ref in zip(slots,refs): bind(slot['binding'],ref['file'])
-    guidance='\n'.join(f"Image {i+1} — {r['role']}: use {r['contribution'].strip() or 'the assigned visual role'}. Avoid transferring: {r['avoid'].strip() or 'unrequested details'}." for i,r in enumerate(refs))
+    guidance='\n'.join(f"Picture {i+1} — {r['role']}: use {r['contribution'].strip() or 'the assigned visual role'}. Avoid transferring: {r['avoid'].strip() or 'unrequested details'}." for i,r in enumerate(refs))
     bind(preset['positive'],guidance+'\n\nRequested result:\n'+request['controls']['positive'])
     return graph
 
@@ -110,8 +110,12 @@ def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800)
     prepared_name = output + '/prepared'; bundle = pixels.prepare(root, plan, prepared_name)
     context = pixels.png(target/'prepared/context.png').convert('RGBA')
     w, h = context.size
-    require(64 <= w <= 1536 and 64 <= h <= 1536 and w % 8 == 0 and h % 8 == 0
-            and w*h <= preset.get('max_reference_pixels', 1024*1024), 'Crop does not fit native Qwen dimensions; no silent resampling')
+    # The canvas is now an explicit latent bound to width/height, so the padded crop must land on the
+    # recipe's own dimension grid. Fail here rather than resampling the candidate afterwards.
+    low, high = preset.get('dimension_limits', [64, 1536]); grid = preset.get('dimension_multiple', 8)
+    require(low <= w <= high and low <= h <= high and w % grid == 0 and h % grid == 0
+            and w*h <= preset.get('max_pixels', 1024*1024),
+            f'Crop does not fit native Qwen dimensions ({low}-{high}, multiples of {grid}); no silent resampling')
     # Only alignment padding can be transparent here. Its explicit model matte is black.
     rgb = Image.new('RGB', context.size, (0, 0, 0)); rgb.paste(context, mask=context.getchannel('A'))
     with (target/'model-context.png').open('xb') as stream: rgb.save(stream, format='PNG')

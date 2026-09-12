@@ -18,9 +18,12 @@ FOLDERS = {
     "loras": "Style and capability adapters", "controlnet": "Pose and structure controls",
     "clip_vision": "Reference image encoders", "upscale_models": "Image upscalers",
     "embeddings": "Learned prompt tokens", "latent_upscale_models": "Latent video upscalers",
-    "background_removal": "Foreground isolation models",
+    "background_removal": "Foreground isolation models", "ipadapter": "Reference identity adapters",
+    "ultralytics": "Face, hand and person detectors", "inpaint": "Inpaint heads and patches",
+    "vae_approx": "Fast latent previewers",
 }
 SUFFIXES = {".safetensors", ".gguf", ".pth", ".pt", ".onnx"}
+INSTALL_SUFFIX = ".safetensors"
 RESERVE_BYTES = 20 * 1024**3
 
 
@@ -59,15 +62,36 @@ class ModelLibrary:
                 return dict(asset)
         raise ValueError("Unknown curated model")
 
-    def destination(self, asset):
+    def locate(self, asset):
+        """Where a pinned file lives, whether or not the installer may write it."""
         relative = relative_model_path(asset["file"])
         self._check_path(self.models / relative)
         target = (self.models / relative).resolve()
         if relative.is_absolute() or not target.is_relative_to(self.models) or relative.parts[0] not in FOLDERS:
             raise ValueError("Model destination is outside a supported model folder")
-        if target.suffix != ".safetensors":
+        return target
+
+    def destination(self, asset):
+        """The install target. Pin-only kinds (.pt/.pth/.gguf/.onnx) are refused here."""
+        target = self.locate(asset)
+        if target.suffix != INSTALL_SUFFIX:
             raise ValueError("Automatic installation supports safetensors weights only")
         return target
+
+    def install_block(self, asset, present=None):
+        """Why automatic installation is unavailable for this pin, or None when it is.
+
+        A missing file with no curated URL can only fail deep inside _download, after a
+        queued receipt exists; refuse it here instead. An already-installed copy still
+        verifies, which is the whole point of pinning a file of unrecorded provenance.
+        """
+        try:target=self.destination(asset)
+        except ValueError as exc:return str(exc)
+        if present is None:present=target.is_file()
+        if not present:
+            try:download_source_provider(asset.get('url') or '')
+            except ValueError:return 'No curated source is pinned; copy this file in by hand'
+        return None
 
     def _check_path(self, path):
         if not path.is_relative_to(self.models):raise ValueError('Model path escapes the library')
@@ -113,8 +137,9 @@ class ModelLibrary:
         assets = []
         for asset in manifest.get("assets", []):
             item = dict(asset)
-            path = self.destination(asset)
+            path = self.locate(asset)
             present = path.is_file()
+            blocked = self.install_block(asset, present)
             checked_id(asset['id'])
             receipt = load(self.state / (asset["id"] + ".json"), {})
             if not isinstance(receipt,dict):receipt={}
@@ -123,9 +148,10 @@ class ModelLibrary:
             verified = bool(matches and receipt.get('version')==2 and receipt.get("status")=="installed"
                             and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
                             and receipt.get('file_identity')==identity)
-            reason = 'stat-fresh-sha256-receipt' if verified else ('missing' if not present else 'explicit-reverification-required')
+            reason = ('stat-fresh-sha256-receipt' if verified else 'missing' if not present
+                      else 'pin-only-manual-verification' if blocked else 'explicit-reverification-required')
             item.update(path=str(path), present=present, size_matches=matches, verified=verified,
-                        verification=reason, download=receipt)
+                        verification=reason, installable=blocked is None, install_note=blocked, download=receipt)
             assets.append(item)
         folders = [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in FOLDERS.items()]
         folders += [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in [("input", "Reference inputs"), ("output", "Generated outputs"), ("workflows", "Editable workflows"), ("downloads", "Browser downloads")]]
@@ -141,6 +167,8 @@ class ModelLibrary:
 
     def _validated_asset(self, asset_id):
         asset=self.asset(asset_id);self.destination(asset)
+        blocked=self.install_block(asset)
+        if blocked:raise ValueError(blocked)
         validate_pins(asset)
         return asset
 

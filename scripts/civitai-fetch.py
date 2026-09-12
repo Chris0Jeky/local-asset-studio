@@ -4,14 +4,18 @@ The API token is read ONLY from the environment variable CIVITAI_API_TOKEN: neve
 config, never printed, and never forwarded to a redirect target on another host. Prints a receipt and a
 `models/library.json` entry stub. Standard library only.
 """
-import argparse,hashlib,json,os,re,time
+import argparse,hashlib,json,os,re,sys,time
 from pathlib import Path
 from urllib.error import HTTPError,URLError
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler,Request,build_opener,urlopen
 
 ROOT=Path(__file__).resolve().parents[1]
-FOLDERS=('checkpoints','diffusion_models','text_encoders','vae','loras','controlnet','clip_vision','upscale_models','embeddings')
+sys.path.insert(0,str(ROOT/'app'))
+# One folder allow-list for the whole repo: drifting copies let a script write where the
+# Models view cannot read, and three copies had already diverged (9, 9 and 11 entries).
+from model_library import FOLDERS as _FOLDERS
+FOLDERS=tuple(_FOLDERS)
 AGENT={'User-Agent':'LocalAssetStudio/1'}
 TOKEN_ENV='CIVITAI_API_TOKEN'
 VERSION_API='https://civitai.com/api/v1/model-versions/'

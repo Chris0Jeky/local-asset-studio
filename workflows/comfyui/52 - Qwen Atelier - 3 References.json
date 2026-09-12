@@ -1,5 +1,5 @@
 {
-  "last_node_id": 17,
+  "last_node_id": 19,
   "last_link_id": 24,
   "nodes": [
     {
@@ -91,8 +91,7 @@
           "links": [
             3,
             8,
-            15,
-            21
+            19
           ]
         }
       ],
@@ -143,7 +142,7 @@
     },
     {
       "id": 5,
-      "type": "ImageScale",
+      "type": "ImageScaleToTotalPixels",
       "pos": [
         0,
         340
@@ -168,21 +167,19 @@
           "type": "IMAGE",
           "links": [
             4,
-            9,
-            14
+            9
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ImageScale"
+        "Node name for S&R": "ImageScaleToTotalPixels"
       },
       "widgets_values": [
         "lanczos",
-        512,
-        0,
-        "disabled"
+        1.0,
+        1
       ],
-      "title": "Upscale Image"
+      "title": "Scale Image to Total Pixels"
     },
     {
       "id": 6,
@@ -230,7 +227,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            23
+            21
           ]
         }
       ],
@@ -238,7 +235,7 @@
         "Node name for S&R": "TextEncodeQwenImageEditPlus"
       },
       "widgets_values": [
-        "Use the character identity and costume from Image 1. Use only the pose from Image 2, not its identity or clothes. Use only the rendering style and palette from Image 3. Create a non-explicit fantasy portrait. Preserve the approved character design."
+        "Use the character identity and costume from Picture 1. Use only the pose from Picture 2, not its identity or clothes. Use only the rendering style and palette from Picture 3. Create a non-explicit fantasy portrait. Preserve the approved character design."
       ],
       "title": null
     },
@@ -288,7 +285,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            24
+            22
           ]
         }
       ],
@@ -365,7 +362,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            16
+            14
           ]
         }
       ],
@@ -379,7 +376,7 @@
     },
     {
       "id": 10,
-      "type": "VAEEncode",
+      "type": "KSampler",
       "pos": [
         390,
         680
@@ -393,65 +390,24 @@
       "mode": 0,
       "inputs": [
         {
-          "name": "pixels",
-          "type": "IMAGE",
-          "link": 14
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 15
-        }
-      ],
-      "outputs": [
-        {
-          "name": "LATENT",
-          "type": "LATENT",
-          "links": [
-            19
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAEEncode"
-      },
-      "widgets_values": [],
-      "title": "VAE Encode"
-    },
-    {
-      "id": 11,
-      "type": "KSampler",
-      "pos": [
-        780,
-        680
-      ],
-      "size": [
-        340,
-        260
-      ],
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        {
           "name": "model",
           "type": "MODEL",
-          "link": 16
+          "link": 14
         },
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 17
+          "link": 15
         },
         {
           "name": "negative",
           "type": "CONDITIONING",
-          "link": 18
+          "link": 16
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 19
+          "link": 17
         }
       ],
       "outputs": [
@@ -459,7 +415,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            20
+            18
           ]
         }
       ],
@@ -478,10 +434,10 @@
       "title": "KSampler"
     },
     {
-      "id": 12,
+      "id": 11,
       "type": "VAEDecodeTiled",
       "pos": [
-        1170,
+        780,
         680
       ],
       "size": [
@@ -489,18 +445,18 @@
         260
       ],
       "flags": {},
-      "order": 11,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 20
+          "link": 18
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 21
+          "link": 19
         }
       ],
       "outputs": [
@@ -508,7 +464,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            22
+            20
           ]
         }
       ],
@@ -524,24 +480,24 @@
       "title": "VAE Decode (Tiled)"
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "SaveImage",
       "pos": [
-        0,
-        1020
+        1170,
+        680
       ],
       "size": [
         340,
         260
       ],
       "flags": {},
-      "order": 12,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 22
+          "link": 20
         }
       ],
       "outputs": [
@@ -558,6 +514,44 @@
         "Studio/Qwen-3ref"
       ],
       "title": "Save Image"
+    },
+    {
+      "id": 13,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "pos": [
+        0,
+        1020
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "title": "Edit Model Reference Method"
     },
     {
       "id": 14,
@@ -577,7 +571,7 @@
         {
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 23
+          "link": 22
         }
       ],
       "outputs": [
@@ -585,7 +579,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            17
+            16
           ]
         }
       ],
@@ -599,7 +593,7 @@
     },
     {
       "id": 15,
-      "type": "FluxKontextMultiReferenceLatentMethod",
+      "type": "LoadImage",
       "pos": [
         780,
         1020
@@ -611,29 +605,28 @@
       "flags": {},
       "order": 14,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "conditioning",
-          "type": "CONDITIONING",
-          "link": 24
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
+          "name": "IMAGE",
+          "type": "IMAGE",
           "links": [
-            18
+            23
           ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": []
         }
       ],
       "properties": {
-        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+        "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "index_timestep_zero"
+        "passing-pose-guide.png"
       ],
-      "title": "Edit Model Reference Method"
+      "title": "Load Image"
     },
     {
       "id": 16,
@@ -655,8 +648,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            5,
-            10
+            24
           ]
         },
         {
@@ -669,13 +661,13 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "studio-lantern-cutout.png"
+        "atelier-style-lab-foxes.jpg"
       ],
       "title": "Load Image"
     },
     {
       "id": 17,
-      "type": "LoadImage",
+      "type": "ImageScaleToTotalPixels",
       "pos": [
         0,
         1360
@@ -687,7 +679,54 @@
       "flags": {},
       "order": 16,
       "mode": 0,
-      "inputs": [],
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5,
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScaleToTotalPixels"
+      },
+      "widgets_values": [
+        "lanczos",
+        1.0,
+        1
+      ],
+      "title": "Scale Image to Total Pixels"
+    },
+    {
+      "id": 18,
+      "type": "ImageScaleToTotalPixels",
+      "pos": [
+        390,
+        1360
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 24
+        }
+      ],
       "outputs": [
         {
           "name": "IMAGE",
@@ -696,20 +735,51 @@
             6,
             11
           ]
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": []
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "ImageScaleToTotalPixels"
       },
       "widgets_values": [
-        "studio-lantern-cutout.png"
+        "lanczos",
+        1.0,
+        1
       ],
-      "title": "Load Image"
+      "title": "Scale Image to Total Pixels"
+    },
+    {
+      "id": 19,
+      "type": "EmptySD3LatentImage",
+      "pos": [
+        780,
+        1360
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptySD3LatentImage"
+      },
+      "widgets_values": [
+        832,
+        1248,
+        1
+      ],
+      "title": null
     }
   ],
   "links": [
@@ -747,7 +817,7 @@
     ],
     [
       5,
-      16,
+      17,
       0,
       6,
       3,
@@ -755,7 +825,7 @@
     ],
     [
       6,
-      17,
+      18,
       0,
       6,
       4,
@@ -787,7 +857,7 @@
     ],
     [
       10,
-      16,
+      17,
       0,
       7,
       3,
@@ -795,7 +865,7 @@
     ],
     [
       11,
-      17,
+      18,
       0,
       7,
       4,
@@ -819,51 +889,51 @@
     ],
     [
       14,
-      5,
-      0,
-      10,
-      0,
-      "IMAGE"
-    ],
-    [
-      15,
-      3,
-      0,
-      10,
-      1,
-      "VAE"
-    ],
-    [
-      16,
       9,
       0,
-      11,
+      10,
       0,
       "MODEL"
     ],
     [
-      17,
-      14,
+      15,
+      13,
       0,
-      11,
+      10,
       1,
       "CONDITIONING"
     ],
     [
-      18,
-      15,
+      16,
+      14,
       0,
-      11,
+      10,
       2,
       "CONDITIONING"
     ],
     [
+      17,
       19,
+      0,
+      10,
+      3,
+      "LATENT"
+    ],
+    [
+      18,
       10,
       0,
       11,
-      3,
+      0,
       "LATENT"
+    ],
+    [
+      19,
+      3,
+      0,
+      11,
+      1,
+      "VAE"
     ],
     [
       20,
@@ -871,39 +941,39 @@
       0,
       12,
       0,
-      "LATENT"
-    ],
-    [
-      21,
-      3,
-      0,
-      12,
-      1,
-      "VAE"
-    ],
-    [
-      22,
-      12,
-      0,
-      13,
-      0,
       "IMAGE"
     ],
     [
-      23,
+      21,
       6,
+      0,
+      13,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      22,
+      7,
       0,
       14,
       0,
       "CONDITIONING"
     ],
     [
-      24,
-      7,
-      0,
+      23,
       15,
       0,
-      "CONDITIONING"
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      24,
+      16,
+      0,
+      18,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [],

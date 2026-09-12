@@ -35,7 +35,7 @@ Non-target actor bounds are conservative additional protection. A write mask tou
 
 `context_box` is `[x0,y0,x1,y1]` in source pixels, with the last coordinates exclusive. The working crop is padded only at right/bottom to the requested alignment (1/8/16/32); there is no resampling. The recorded `unpadded_size`, `model_size`, `padding_ltrb`, crop coordinates and exact context/mask hashes are in `prepared/bundle.json`.
 
-The small demo's 87x93 context becomes 88x96 at alignment 8. That demonstrates coordinate accounting, **not** an appropriate model resolution. For real inference choose a supported native crop size; explicit scale-transform support is future work. A backend that resizes or normalizes unexpectedly must be handled by a tested adapter, not an unrecorded inverse resize.
+The small demo's 87x93 context becomes 96x96 at alignment 16, which is the grid the native Qwen recipes bind their canvas to. That demonstrates coordinate accounting, **not** an appropriate model resolution. For real inference choose a supported native crop size; explicit scale-transform support is future work. A backend that resizes or normalizes unexpectedly must be handled by a tested adapter, not an unrecorded inverse resize.
 
 A Comfy node that reads mask from inverse alpha needs an explicit conversion step in the future adapter. Passing this grayscale mask as an arbitrary RGBA reference is not equivalent. Existing #62 owns the native nonempty-alpha guard.
 

@@ -341,7 +341,8 @@ def _handoff_template(plan: dict, case_id: str, repo_root: Path) -> dict:
     uploads = []
     for index, rid in enumerate(case['reference_ids']):
         ref = refs[rid]
-        instructions.append(f"Image {index + 1} [{ref['role']}]: take {'; '.join(ref['take'])}. Ignore {'; '.join(ref['ignore']) or 'unrequested changes'}.")
+        # "Picture N" matches the tokens TextEncodeQwenImageEditPlus injects for each bound image.
+        instructions.append(f"Picture {index + 1} [{ref['role']}]: take {'; '.join(ref['take'])}. Ignore {'; '.join(ref['ignore']) or 'unrequested changes'}.")
         uploads.append(dict(copy.deepcopy(ref), slot_index=index, binding=reference_bindings[index]))
     result = {'schema_version': plan['schema_version'], 'kind': 'character_study_handoff', 'plan_sha256': plan['plan_sha256'],
               'case_id': case_id, 'preset_id': preset['id'], 'catalog_entry_sha256': sha(preset),

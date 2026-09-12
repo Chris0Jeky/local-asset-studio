@@ -115,6 +115,15 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(graph["1"]["inputs"]["strength_clip"],0.5)
         with self.assertRaisesRegex(server.StudioError,"multiple of 8"): s.prepare({"preset_id":"demo","controls":{"width":641}})
         with self.assertRaisesRegex(server.StudioError,"Unsupported"): s.prepare({"preset_id":"demo","controls":{"negative":"no"}})
+    def test_fixed_canvas_presets_enforce_their_grid_and_pixel_ceiling(self):
+        # The Qwen atelier recipes now drive an EmptySD3LatentImage, so both dimensions are bound and
+        # the /16 grid plus the ~1 MP ceiling are the only guards between the browser and a bad canvas.
+        (self.root/"presets/catalog.json").write_text(json.dumps({"presets":[dict(PRESET,dimension_multiple=16,dimension_limits=[64,1536],max_pixels=1024*1024)]}))
+        s=self.studio(); _, graph, _, _, _=s.prepare({"preset_id":"demo","controls":{"width":832,"height":1248}})
+        self.assertEqual((832,1248),(graph["1"]["inputs"]["width"],graph["1"]["inputs"]["height"]))
+        self.assertEqual((832,1248),(graph["2"]["inputs"]["width"],graph["2"]["inputs"]["height"]))
+        with self.assertRaisesRegex(server.StudioError,"multiple of 16"): s.prepare({"preset_id":"demo","controls":{"width":840,"height":1248}})
+        with self.assertRaisesRegex(server.StudioError,"pixel budget"): s.prepare({"preset_id":"demo","controls":{"width":1536,"height":1536}})
     def test_path_traversal_and_upload_magic(self):
         with self.assertRaises(server.StudioError): server.inside(self.root, self.root/"../outside")
         s=self.studio()

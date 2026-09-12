@@ -19,7 +19,7 @@ A reference slot consists of file hash, media kind, role, things to copy and thi
 
 Prompt example:
 
-> Use Image 1 for the character's face, hair, proportions and approved costume. Use only the pose and hand placement from Image 2. Use the linework and restrained watercolor shading of Image 3, not its subject. Create a waist-up portrait with the character holding a compass in the left hand. Preserve the brass clasp, teal coat and left-side satchel. Keep the background simple; do not add lettering.
+> Use Picture 1 for the character's face, hair, proportions and approved costume. Use only the pose and hand placement from Picture 2. Use the linework and restrained watercolor shading of Picture 3, not its subject. Create a waist-up portrait with the character holding a compass in the left hand. Preserve the brass clasp, teal coat and left-side satchel. Keep the background simple; do not add lettering.
 
 Role wording helps an instruction-following model but is not a mathematical disentanglement guarantee. For pose-critical anatomy, test a structure-conditioned graph. For exact protected pixels, composite the approved source outside the edit mask rather than trusting a “change only” sentence.
 
@@ -29,9 +29,16 @@ Files are in `research/game-assets/workflows/`:
 
 | File | Reference configuration |
 |---|---|
-| `qwen-1ref-api.json` | Image 1: identity/costume, plus user instruction |
-| `qwen-2ref-api.json` | Image 1: identity/costume; Image 2: pose |
-| `qwen-3ref-api.json` | Image 1: identity/costume; Image 2: pose; Image 3: rendering style |
+| `qwen-1ref-api.json` | Picture 1: identity/costume, plus user instruction |
+| `qwen-2ref-api.json` | Picture 1: identity/costume; Picture 2: pose |
+| `qwen-3ref-api.json` | Picture 1: identity/costume; Picture 2: pose; Picture 3: rendering style |
+
+`TextEncodeQwenImageEditPlus` literally injects `Picture {i+1}:` before the brief, so a prompt that
+says "Image 2" names nothing the model was given. Every producer that writes into that encoder follows
+the same rule: the factory prompt and reference labels in `scripts/game_asset_pipeline.py`, the study
+handoff in `scripts/character_study.py`, the `edit` dialect in `studio_prompt/compiler.py` and the
+Studio compiler in `app/references.py`. Curated pilot evidence under `experiments/curated/` keeps its
+original wording; it is a record of what was run, not an instruction.
 
 These are actual API graph JSON files derived from the repository's existing `workflows/api/qwen-api.json` at commit `6bd4e5ba36c3df22011727772754b6e9b3d13c70`, not text-only blueprints. `provenance.json` records the original Git blob and canonical JSON hash. The factory verifies the expected baseline node identities and rejects collisions or an already multi-reference baseline. It deep-copies the source rather than mutating it.
 
@@ -46,11 +53,31 @@ Node 11.seed      = explicit experiment seed
 Node 13.filename_prefix = controlled output prefix
 ```
 
+The shipped Studio graphs keep those loader and prompt/seed nodes and add:
+
+```text
+Node 5.megapixels  = 1.0   ImageScaleToTotalPixels for node 4    [all variants]
+Node 18.megapixels = 1.0   ImageScaleToTotalPixels for node 16   [2/3-reference variants]
+Node 19.megapixels = 1.0   ImageScaleToTotalPixels for node 17   [3-reference variant]
+Node 20.width/height = 832/1248  EmptySD3LatentImage; the sampler latent
+```
+
+Node 10 (`VAEEncode` of the shrunken primary reference) is gone from the shipped graphs.
+
 Paths above are Comfy input filenames, not arbitrary user-PC paths. The local agent should upload/copy authorized reference bytes into Comfy's input area, retain the returned safe name and bind that name. Do not send a local path to a hosted service by accident.
 
 The inherited bundle is Qwen-Image-Edit-2511 Q4_K_M, the Qwen2.5-VL encoder, Qwen VAE and the matching four-step Lightning adapter. The factory deliberately retains the original model, encoder, VAE, scheduler and sampling settings: four steps, CFG 1, Euler/simple and shift 3.1. This is preservation of an existing repo recipe, **not a newly optimized recommendation**. Use the separately prepared quality path for a controlled comparison; do not simply increase Lightning steps and label it a full-quality model.
 
-The original primary image still passes through its 768×768 `ImageScale` with cropping disabled. Pre-crop or pad a nonsquare primary reference deliberately, or revise the graph with an aspect-aware path and retest. Do not unknowingly stretch a character and then blame identity conditioning. Extra references follow the native encoder's own preprocessing. Record all crop/scale transforms if pose or mask coordinates must agree.
+The research variants in this folder still pass the primary image through a 768×768 `ImageScale` with
+cropping disabled, and still VAE-encode it as the sampler latent. That is the historical factory output
+pinned by `provenance.json`; **it is no longer what the Studio ships.** The shipped presets
+(`workflows/api/qwen-{1,2,3}ref-api.json`, produced by `scripts/build-reference-recipes.py`) give every
+slot its own `ImageScaleToTotalPixels` at 1.0 MP and drive the sampler from an explicit
+`EmptySD3LatentImage`, because the 768-square resize destroyed reference detail and the VAE-encoded
+latent made the canvas follow the reference aspect (issue #21, pilot causes D3 and D4). Pre-crop or pad
+a nonsquare reference deliberately if you use the research variants directly. Do not unknowingly stretch
+a character and then blame identity conditioning. Record all crop/scale transforms if pose or mask
+coordinates must agree.
 
 Validation in this pass covers static topology and regression properties. No saved live `/object_info` snapshot or new inference was available. The supplied checker can inspect a locally saved snapshot, but dynamic custom schemas still need Comfy's native validation. The graphs are not added to the production preset picker and visual-node counterparts remain a follow-up.
 

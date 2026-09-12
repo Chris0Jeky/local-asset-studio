@@ -67,7 +67,7 @@ family, compatible recipe, environment, and whether additional references are st
 **Prepare in Create** calls the existing asset-reference endpoint, keeps the original asset unchanged,
 retains its ID in recipe lineage and attaches its local copy. It does not call Jobs, switch a model,
 start a comparison or approve the art. Text-to-video-only recipes are not offered when handing off an
-image. A multi-reference destination fills Image 1 and leaves remaining requirements explicit.
+image. A multi-reference destination fills Picture 1 and leaves remaining requirements explicit.
 Unsaved asset notes, title, tags or review changes block handoff and scene/recipe navigation until saved.
 
 ### Bring something in without losing context
