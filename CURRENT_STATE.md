@@ -1,5 +1,17 @@
 # Current state — 11 September 2026
 
+## Stop tracking uncertain prompts — 12 September 2026
+
+The local Gallery can record an explicit reason for stopping observation of an
+uncertain known prompt without changing its prompt IDs, submissions, recipes,
+graphs, outputs, timing, lineage, or Production reservation. The retained
+state records immutable stop/resume history. An explicit Gallery Resume only
+queues observation of those retained prompt IDs; it never resubmits a graph or
+continues Production. A prior stop event blocks stale Production work until a
+later explicit Production Resume authorizes continuation after a terminal
+observation record. This is local synthetic coverage only: no Studio project,
+queue, ComfyUI request, generation, refund, or artistic acceptance occurred.
+
 ## UI handoff follow-ups — 12 September 2026
 
 Gallery Continue now refreshes the exact output identity when it arrived after the current Workspace

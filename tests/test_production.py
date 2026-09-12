@@ -126,6 +126,28 @@ class ProductionTests(unittest.TestCase):
         self.assertEqual(restarted.production.get(p['id'])['state']['status'],'awaiting_review')
         self.assertEqual(restarted.production.get(p['id'])['budget']['reserved'],2)
 
+    def test_stopped_tracking_blocks_production_resume_and_later_stages_without_changing_reservation(self):
+        studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'known-a'},URLError('observation lost')])
+        project=studio.production.create(self.intent());studio.production.start(project['id']);studio.production.run(project['id'])
+        state=studio.production.get(project['id'])['state'];job=next(iter(studio.jobs.values()))
+        plan=(studio.production.root/project['id']/'plan.json').read_bytes();budget=studio.production.get(project['id'])['budget'];queued=studio.queue.qsize()
+        studio.stop_tracking(job['id'],'Native runtime stopped before history could be read')
+        with self.assertRaisesRegex(ValueError,'Resume observation'):studio.production.resume(project['id'])
+        self.assertEqual(studio.queue.qsize(),queued);self.assertEqual(self.post_count(studio),1)
+        studio.resume_job(job['id']);studio.replies=iter([{'known-a':{'status':{'status_str':'success'},'outputs':{}}}]);studio._resume(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(self.post_count(studio),1)
+        studio.production.run(project['id'])
+        after=studio.production.get(project['id'])
+        self.assertEqual(after['state']['status'],'uncertain');self.assertEqual(after['state']['started_at'],state['started_at'])
+        self.assertEqual(after['budget'],budget);self.assertEqual((studio.production.root/project['id']/'plan.json').read_bytes(),plan)
+        self.assertEqual(len(studio.jobs),1);self.assertEqual(self.post_count(studio),1)
+        studio.production.resume(project['id']);self.assertEqual(studio.production.get(project['id'])['state']['tracking_stop_authorizations'],studio.tracking_stop_tokens(job))
+        restarted=FakeStudio(self.root,[])
+        restored=next(iter(restarted.jobs.values()))
+        self.assertEqual(restored['tracking_disposition']['reason'],'Native runtime stopped before history could be read')
+        self.assertEqual(restarted.production.get(project['id'])['state']['tracking_stop_authorizations'],restarted.tracking_stop_tokens(restored))
+        self.assertEqual(restarted.requests,[]);self.assertEqual(restarted.production.get(project['id'])['budget'],budget)
+
     def test_blueprints_and_filename_axes_cannot_be_submitted(self):
         studio=FakeStudio(self.root,[])
         with self.assertRaisesRegex(ValueError,'blueprints'):studio.production.create(self.intent(workflow=GRAPH))

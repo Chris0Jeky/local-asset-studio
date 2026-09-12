@@ -85,6 +85,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path=='/api/references/check':return self.json([{'file':f,'available':f!='missing.png','sha256':'a'*64} for f in data['files']])
         if self.path=='/api/prompt/compile':
             return self.json({'state':'review_required','fields':{'positive':'A lantern in a quiet forest','negative':'blur'},'profile':{'id':data['profile_id']},'intent':data['intent'],'errors':[],'diagnostics':[],'coverage':[],'profile_sha256':'a'*64})
+        if self.path.startswith('/api/jobs/') and self.path.endswith('/stop-tracking'):
+            return self.json({'id':self.path.split('/')[3],'tracking_disposition':{'status':'stopped','reason':data.get('reason'),'recorded_at':123.0}})
         return self.json({'error':'Unexpected mutation blocked in fixture: '+self.path},400)
 
 
@@ -107,6 +109,20 @@ def run(screenshots):
             check(page.locator('#homeView').is_visible(),'overview is default')
             check(not POSTS,'startup has zero POST mutations')
             check(not errors,'no browser boot exceptions: '+str(errors))
+            page.evaluate("showView('create')")
+            page.evaluate("""jobs.push({id:'trackable-job',preset_name:'Interrupted fixture',status:'uncertain',message:'Original uncertain outcome is retained.',controls:{},prompt_ids:['known-fixture'],submissions:[{prompt_id:'known-fixture',status:'observing'}],outputs:[],can_stop_tracking:true});renderJobs()""")
+            check(page.locator('[data-stop-tracking-reason="trackable-job"]').count()==1,'uncertain known prompt exposes an explicit stop reason')
+            before_posts=len(POSTS);page.click('.stopTracking');check(len(POSTS)==before_posts,'blank stop reason does not mutate')
+            page.fill('[data-stop-tracking-reason="trackable-job"]','Operator retained <img src=x> uncertainty');page.click('.stopTracking');page.wait_for_timeout(100)
+            check(len(POSTS)==before_posts+1 and POSTS[-1]['path']=='/api/jobs/trackable-job/stop-tracking','stop tracking sends exactly one explicit disposition request')
+            page.evaluate("""jobs=jobs.filter(j=>j.id!=='trackable-job');jobs.push({id:'stopped-job',preset_name:'Stopped fixture',status:'uncertain',message:'Original uncertain outcome is retained.',controls:{},prompt_ids:['known-fixture'],submissions:[{prompt_id:'known-fixture',status:'observing'}],outputs:[],tracking_disposition:{status:'stopped',reason:'Operator retained <img src=x> uncertainty',recorded_at:123},can_stop_tracking:false,can_resume_tracking:true});renderJobs()""")
+            stopped=page.locator('#gallery .jobStatus').last
+            check('uncertain' in stopped.inner_text() and 'Original uncertain outcome is retained.' in stopped.inner_text(),'stopped tracking keeps the original uncertain status and message')
+            check('Tracking stopped' in stopped.inner_text() and stopped.locator('img').count()==0,'stopped reason is escaped rather than rendered as markup')
+            check('Resume observation of retained prompt' in stopped.locator('.resume').inner_text() and stopped.locator('.recipe').count()==1,'stopped gallery record retains Recipe and offers observation-only recovery')
+            page.evaluate("""productionPlans.push({id:'tracking-project',name:'Retained stopped stage',kind:'comparison',state:{status:'uncertain',message:'Original project uncertainty retained.'},stages:[{label:'A',operation:'generate',attempt:{job_id:'stopped-job'},job:jobs.find(j=>j.id==='stopped-job')}],budget:{allowance:2,reserved:2},axis:'seed',values:[]});productionId='tracking-project';renderProduction()""")
+            check(page.locator('[data-project-action="resume"]').is_disabled() and 'Resume is unavailable' in page.locator('#productionDetail').inner_text(),'production view disables direct resume for a stopped retained stage')
+            page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-desktop.png'),full_page=True)
             page.keyboard.press('Control+k');check(page.locator('#studioCommandDialog').is_visible(),'Ctrl+K opens finder');page.fill('#studioCommandSearch','voice');check(page.locator('#studioCommandResults a').count()==1,'finder filters tools');page.keyboard.press('Escape');check(not page.locator('#studioCommandDialog').is_visible(),'Escape closes finder')
             page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.locator('#uxRecipeLabel').inner_text().startswith('Qwen'),'intent chooses compatible recipe');check(page.locator('#generate').is_disabled(),'empty required slots block generation')
@@ -148,7 +164,7 @@ def run(screenshots):
             page.fill('#positive','Keep this tab draft');page.wait_for_timeout(400)
             other=context.new_page();other.goto(origin);other.wait_for_function('!!selected');other.evaluate("localStorage.setItem('studio-draft-v1:ux-test-workspace:gentle-variation',JSON.stringify({version:1,updatedAt:Date.now()+1,recipe:{preset:'gentle-variation',controls:{positive:'Other tab draft'},batch:1}}))")
             page.wait_for_function('document.querySelector("#uxDraftStatus").textContent.includes("Another tab")');page.fill('#positive','Do not overwrite the other tab');page.wait_for_timeout(400);check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Other tab draft','cross-tab conflict pauses autosave');other.close();page.click('#uxKeepDraft');check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Do not overwrite the other tab','explicit keep-this-tab resolves draft conflict')
-            check(set(x['path'] for x in POSTS) <= {'/api/assets/reference','/api/references/check','/api/prompt/compile'},'all tested navigation and handoffs avoid execution and setup mutations')
+            check(set(x['path'] for x in POSTS) <= {'/api/assets/reference','/api/references/check','/api/prompt/compile','/api/jobs/trackable-job/stop-tracking'},'all tested navigation and handoffs avoid execution and setup mutations')
             check(not errors,'no browser exceptions through all journeys: '+str(errors))
             blocked=browser.new_context(viewport={'width':1280,'height':900});blocked.add_init_script("Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage disabled','SecurityError')}})")
             b=blocked.new_page();b.goto(origin+'/#create');b.wait_for_function('!!selected && schemaAvailable');check(b.locator('#createView').is_visible(),'blocked localStorage does not break startup');blocked.close();browser.close()
