@@ -11,6 +11,19 @@ skipped. Repository validation passed (61 graphs/bindings, 62 pinned assets, 808
 paths). This is inert mocked HTTP proof only; no live backend, generation, GPU or art-quality
 evidence was produced.
 
+## Retained observation dispatch race (#113) — 12 September 2026
+
+Late review of #105 exposed a duplicate-generation dispatch when Gallery Resume changed a retained
+known-prompt job to queued after Production's entry check. Production now rechecks fresh tracking
+authorization around stage dispatch and reconciliation, and queued jobs with submission evidence
+take the observation path. Locks are released before backend I/O. Three offline causal assertions
+failed on the original code; all 16 Production tests pass with the fix. Prompt IDs, graph receipts,
+budgets and explicit continuation consent remain intact. No live prompt or runtime was touched;
+GPU execution, creative quality and licensing acceptance were not assessed. The configured full
+suite passes 875 tests run / 861 passed / 14 skipped in 85.169 seconds; repository validation passes
+61 graphs/bindings, 62 pins, 808 tracked paths and 65 LoRA names. A scoped independent check confirms
+the baseline's extra synthetic POST and finds no remaining duplicate path in the changed dispatch.
+
 ## Stop tracking uncertain prompts — 12 September 2026
 
 The local Gallery can record an explicit reason for stopping observation of an
@@ -22,6 +35,23 @@ continues Production. A prior stop event blocks stale Production work until a
 later explicit Production Resume authorizes continuation after a terminal
 observation record. This is local synthetic coverage only: no Studio project,
 queue, ComfyUI request, generation, refund, or artistic acceptance occurred.
+
+## Identity-plus-pose probes and runtime instability — 12 September 2026 (evening)
+
+Two direct ComfyUI probes of an SDXL identity-plus-pose route (WAI v17 + `ip-adapter_sdxl_vit-h` on the canon
+front + `xinsir-openpose-sdxl` on a skeleton extracted from the canon back, 704×1536, 30 steps) completed:
+probe A with the `aqua (konosuba)` tag (prompt `550346d1…`, 111.1 s) reproduced the back-view costume closely;
+probe B without the tag (prompt `932c3093…`, 82.1 s) drifted, so the tag did the work and the base adapter at
+weight 0.6 on a centre-cropped torso does not carry an original design. Of four follow-up probes, one never executed, two sampled all 30 steps and died in `VAEDecode` without
+writing an image, and one was never submitted: ComfyUI died six times this evening with `0xC0000005` inside host-side tensor moves (checkpoint mmap reload,
+`partially_unload`, GGUF `.to()`), once on a FLUX.2 job the other agent submitted; three launch-flag sets
+(`--disable-mmap`, `--cache-classic`, defaults) made no difference and the investigation is parked in #89.
+Two Studio `qwen-2ref` jobs with front+back canon bound (`a2908800` uncertain, `f29937b7` failed on a host
+allocation at 87 % commit under `--reserve-vram 0.6`) confirm #77's host-commit ceiling; per-process
+attribution is on that issue. Seven files were downloaded with SHA-256 receipts (yolov9c hand/face detectors,
+person segmenter, the fal Qwen multiple-angles LoRA, the CCIP identity model, IP-Adapter plus and plus-face).
+Curated record: `experiments/curated/character-identity-pose-probes/`; nothing in it is art acceptance, and
+no HUMAN_TODO item changed.
 
 ## UI handoff follow-ups — 12 September 2026
 

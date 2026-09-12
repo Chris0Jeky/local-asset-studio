@@ -1,0 +1,58 @@
+{
+ "preset_id": "qwen-2ref",
+ "controls": {
+  "positive": "One neutral full-body BACK view of this character, seen directly from behind, standing straight with relaxed arms at the sides, feet grounded, complete figure including boots. Same design, same proportions and same clean cel-shaded anime rendering as the references. Plain neutral grey review background, no lettering, single figure.",
+  "negative": "",
+  "seed": 12001,
+  "width": 512,
+  "steps": 4,
+  "cfg": 1
+ },
+ "references": [
+  {
+   "file": "7aaa730055b94624bd4ad7e42d7aa364_front.png.png",
+   "sha256": "1a6bcaa9a1faf3dcf1aebe199b7d272604beead0a8017104f0057a439d934415",
+   "bytes": 361901,
+   "width": 333,
+   "height": 734,
+   "contribution": "face geometry, light-blue very long hair with the high looped top section, blue eyes, dark-blue spherical hair ornament with gold accents, and the standard costume: navy fitted sleeveless bodice with pale trim and green throat bow, detached white sleeves with navy cuffs and gold upper-arm bands, pleated navy skirt with gold hem trim and lilac frilled underskirt, white thigh-high stockings, navy thigh boots with gold V-shaped top trim",
+   "avoid": "the front-facing pose, crop shadows, other costume sets, any layout or lettering",
+   "role": "identity",
+   "slot": 1,
+   "transform": {
+    "policy": "fit-width-preserve-aspect",
+    "source_size": [
+     333,
+     734
+    ],
+    "resized_size": [
+     512,
+     1129
+    ],
+    "vae_size": [
+     512,
+     1128
+    ],
+    "vae_center_crop": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "file": "77d1ce63144845b581cae0eea9d21ddb_back.png.png",
+   "sha256": "92418200f3954d3f60fa3277dd66da6f9bf6487ad58ead0d7c76c85fcd376a3e",
+   "bytes": 286831,
+   "width": 279,
+   "height": 734,
+   "contribution": "the exact rear construction shown: continuous long hair curtain covering the back, hair loop and ornament seen from behind, rear of the bodice and skirt, V-shaped gold boot tops",
+   "avoid": "nothing else; this is the same character seen from behind",
+   "role": "costume",
+   "slot": 2,
+   "transform": {
+    "policy": "native Qwen encoder preprocessing"
+   }
+  }
+ ],
+ "created_at": 1789243019.5581906
+}
