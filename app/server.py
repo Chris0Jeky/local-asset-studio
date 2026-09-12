@@ -148,7 +148,8 @@ class Studio:
         result = {"loras": field("LoraLoaderModelOnly", "lora_name") or field("LoraLoader", "lora_name"),
                   "samplers": field("KSampler", "sampler_name"), "schedulers": field("KSampler", "scheduler"),
                   "source": "comfyui" if isinstance(info, dict) else "unavailable"}
-        if discover or isinstance(info, dict): self._options = result; self._options_at = time.monotonic()
+        # Never memoise "unknown": a later schema discovery must fill it in.
+        if isinstance(info, dict): self._options = result; self._options_at = time.monotonic()
         return copy.deepcopy(result)
 
     def knowledge(self):
@@ -332,6 +333,7 @@ class Studio:
         directory = self.runs / job_id; directory.mkdir(exist_ok=not enqueue)
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
+        job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
@@ -670,12 +672,14 @@ class Studio:
 
     def _expand_prompts(self, job, graph, seed, index):
         """Resolve prompt wildcards per batch member; controls keep the template."""
-        try: preset = self.preset(job["preset_id"])
-        except StudioError: return
+        bindings = job.get("prompt_bindings")
+        if bindings is None:
+            try: preset = self.preset(job["preset_id"])
+            except StudioError: return
+            bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
         rng = random.Random(f"{seed}:{index}")
         for key in ("positive", "negative"):
-            bindings = ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, [])
-            for binding in bindings:
+            for binding in bindings.get(key) or []:
                 try: node, field = str(binding[0]), str(binding[1]); text = graph[node]["inputs"][field]
                 except (KeyError, TypeError, IndexError): continue
                 if not prompting.has_wildcards(text): continue
