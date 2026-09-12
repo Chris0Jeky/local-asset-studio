@@ -5,7 +5,7 @@
 No weights are stored in Git. They remain in the configured ComfyUI `models` directory. This registry does not install a fresh machine automatically.
 
 `library.json` now pins **every file with a pinned suffix** (`.safetensors`, `.gguf`, `.pth`, `.pt`,
-`.onnx`) installed under the ComfyUI `models` tree: the 22 Workflow Lab assets, the 30 anime/fantasy
+`.onnx`) installed under the ComfyUI `models` tree: the 22 Workflow Lab assets, the 34 anime/fantasy
 adapters below, and the 45 previously unpinned files listed in
 [Everything else installed](#everything-else-installed-45), each with its exact filename, destination
 folder, source URL, size, SHA-256, model family and terms. Weights with any other suffix are outside
