@@ -1,5 +1,25 @@
 # Current state — 11 September 2026
 
+## Recipe inspection on the configured Windows host — 12 September 2026
+
+The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
+fixes). The configured Windows suite ran 825 tests: 812 passed and 13 skipped; repository validation
+passed (60 graphs/bindings, 62 pinned assets, 791 tracked paths). A fresh independent review found
+no defects and ran 47 provenance/HTTP tests plus the real frontend behavior and syntax checks.
+The procedural demo and CLI ran locally: explicit output `final` remained selected, the deliberately
+conflicting sidecar retained both graph claims, and matching the image hash did not authenticate
+either claim. No model or generation service was used. Reports are retained under the primary
+checkout's `.runtime/session-2026-09-12/recipe-inspection-demo/`, with test logs in the review
+worktree's `.runtime/recipe-inspection-review/`. Windows browser file-selection behavior was not
+separately exercised; the author's Linux browser evidence and its fixture boundary remain recorded
+in `docs/prompt-studio/INSPECTION-VERIFICATION.md`.
+
+PR #81 merged as `db066ec`. The running Studio served the updated static JavaScript, and its Create
+page reached ComfyUI connected with Generate enabled for the ready Anima recipe in the local
+browser. The temporary verification tab was closed without submitting anything. Its 12 raw
+evidence files were archived with verified hashes under
+`primary/.runtime/session-2026-09-12/readiness-status/raw/` before plain worktree removal.
+
 ## Confirmed Comfy error timing — 12 September 2026
 
 The #77 follow-up now records a confirmed ComfyUI history error as a failed Studio job before

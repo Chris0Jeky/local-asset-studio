@@ -50,6 +50,27 @@ transport and Host/Origin behaviour were exercised separately by the six server
 tests, not asserted from the browser fixture. No installed Windows browser/native
 application or real Comfy inference was exercised.
 
+## Configured Windows integration
+
+The integration head `2402763ae98990567b3ce0fcb8111f3cca6762c2` incorporates main
+`db066ecd4da147430e6cc011704f800f76f3e3e6`, including PRs #79 and #81. On the
+configured Studio Python 3.14 environment with Node and FFmpeg available:
+
+- Full suite: 825 tests ran, 812 passed and 13 skipped, in 72.156 seconds.
+- Repository validator: 60 graphs/bindings, 62 pinned assets and 791 tracked paths.
+- Fresh independent review: no findings; 47 provenance/HTTP tests and actual
+  frontend behavior/syntax checks passed.
+- The procedural demo and both documented `inspect-media` selections ran. The
+  explicit `final` output remained selected; the hash-matched conflicting sidecar
+  retained two graphs and `conflicting_claims`, with no workflow execution or
+  claim of authenticated image provenance.
+
+Local evidence is under the primary checkout's
+`.runtime/session-2026-09-12/recipe-inspection-demo/` and the review worktree's
+`.runtime/recipe-inspection-review/`. This Windows pass did not repeat the browser
+file-selection interaction or exercise an installed Comfy workflow. The full
+suite emitted expected fault-fixture diagnostics; this is not a warning-free claim.
+
 ## Reproduce
 
 ```sh
