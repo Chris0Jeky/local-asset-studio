@@ -29,12 +29,13 @@
     safeNumbers(next);
     if (record && doc) { undo.push(clone(doc)); while (undo.length > 30 || JSON.stringify(undo).length > 4 * 1024 * 1024) undo.shift(); redo = []; }
     next.revision = (doc?.revision ?? next.revision ?? 0) + 1;
+    if (checked) status('Draft changed. Check connections again before exporting.');
     doc = next; epoch++; checked = null;
     if (!doc.nodes[selected]) selected = Object.keys(doc.nodes)[0] || null;
     persist(); render();
   }
   function edit(action) { const next = clone(doc); action(next); changed(next); }
-  function replace(next) { safeNumbers(next); undo = []; redo = []; doc = null; selected = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
+  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
   function discard() { return !doc || window.confirm('Replace the current draft? Save a document file first to keep it.'); }
   function download(name, value) { const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + '\n'], {type: 'application/json'})); const a = el('a', '', {href: url, download: name}); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function defaultValue(spec) {
@@ -136,12 +137,12 @@
         select.onchange = () => edit(next => { next.bypass[id] ||= {}; if (select.value) next.bypass[id][String(output.index)] = select.value; else delete next.bypass[id][String(output.index)]; }); label.append(select); bypass.append(label);
       } host.append(bypass);
     }
-    host.append(button('Remove node', () => { if (!confirm('Remove this node? Connections to it will remain visible as errors until repaired.')) return; edit(next => { delete next.nodes[id]; delete next.positions[id]; delete next.bypass[id]; next.disabled = next.disabled.filter(x => x !== id); next.outputs = next.outputs.filter(x => x !== id); }); }));
+    host.append(button('Remove node', () => { if (!confirm('Remove this node? Connections to it will remain visible as errors until repaired.')) return; edit(next => { for (const step of next.steps || []) { step.nodes = step.nodes.filter(x => x !== id); step.controls = step.controls.filter(c => c.node !== id); } delete next.nodes[id]; delete next.positions[id]; delete next.bypass[id]; next.disabled = next.disabled.filter(x => x !== id); next.outputs = next.outputs.filter(x => x !== id); }); }));
   }
   function fieldEditor(host, id, node, spec) {
     const field = el('div', null, {class: 'wf-field'}), present = Object.hasOwn(node.inputs, spec.name), value = node.inputs[spec.name];
     field.append(el('strong', spec.name + (spec.required ? ' *' : '')), el('code', spec.type));
-    if (!spec.required) field.append(checkbox('Use optional input', present, checkedValue => edit(next => { if (checkedValue) { const d = defaultValue(spec); next.nodes[id].inputs[spec.name] = d === undefined ? null : d; } else delete next.nodes[id].inputs[spec.name]; })));
+    if (!spec.required) field.append(checkbox('Use optional input', present, checkedValue => edit(next => { if (checkedValue) { const d = defaultValue(spec); next.nodes[id].inputs[spec.name] = d === undefined ? null : d; } else { delete next.nodes[id].inputs[spec.name]; for (const [port, input] of Object.entries(next.bypass[id] || {})) if (input === spec.name) delete next.bypass[id][port]; } })));
     if (!present && !spec.required) { host.append(field); return; }
     if (spec.widget === 'unsupported') { field.append(el('small', spec.reason + '. Data retained, not simplified.'), el('pre', present ? JSON.stringify(value, null, 2) : 'Not set')); host.append(field); return; }
     const mode = el('select', null, {'aria-label': spec.name + ' input mode'});
@@ -155,7 +156,7 @@
         const select = el('select', null, {'aria-label': spec.name + ' source'}); select.append(el('option', 'Choose a compatible output', {value: ''}));
         for (const [otherId, other] of Object.entries(doc.nodes)) if (otherId !== id) for (const output of schema.nodes[other.class_type]?.outputs || []) if (match(output.type, spec.type)) select.append(el('option', `${otherId} · ${other.class_type} → ${output.name} (${output.type})`, {value: JSON.stringify([otherId, output.index])}));
         select.value = isLink(value) ? JSON.stringify(value) : '';
-        select.onchange = () => { if (select.value) setValue(JSON.parse(select.value)); else edit(next => { delete next.nodes[id].inputs[spec.name]; }); }; control.append(select);
+        select.onchange = () => { if (select.value) setValue(JSON.parse(select.value)); else edit(next => { delete next.nodes[id].inputs[spec.name]; for (const [port, input] of Object.entries(next.bypass[id] || {})) if (input === spec.name) delete next.bypass[id][port]; }); }; control.append(select);
         if (isLink(value) && !select.value) control.append(el('small', 'Current connection is unavailable or incompatible; it remains in the draft until you replace it.'));
       } else {
         let input;
@@ -194,6 +195,7 @@
     $('#documentStats').textContent = doc ? `${Object.keys(doc.nodes).length} nodes · revision ${doc.revision}` : 'No draft';
     if (!checked) $('#workflowDiagnostics').replaceChildren();
     diagram(); renderNodeList(); renderInspector();
+    document.dispatchEvent(new Event('workflow:render'));
   }
   async function goals() {
     const data = await api('/guides'), host = $('#goalCards'); host.replaceChildren();
@@ -222,10 +224,20 @@
     if (token !== epoch || catalogToken !== schemaEpoch) return status('Check result ignored: the draft or schema changed while checking. Check again.');
     checked = result; $('#exportGraph').disabled = !result.valid;
     const host = $('#workflowDiagnostics'); host.replaceChildren();
-    for (const item of [...result.errors, ...result.warnings]) { const row = el('div', null, {class: 'wf-diagnostic'}); if (item.node) row.append(button(`Node ${item.node}${item.field ? '.' + item.field : ''}`, () => { selected = item.node; renderInspector(); renderNodeList(); $('#nodeInspector').scrollIntoView({block: 'start'}); })); row.append(document.createTextNode(item.message)); host.append(row); }
+    for (const item of [...result.errors, ...result.warnings]) { const row = el('div', null, {class: 'wf-diagnostic'}); if (item.node) row.append(button(`Node ${item.node}${item.field ? '.' + item.field : ''}`, () => { document.dispatchEvent(new Event('workflow:inspect')); selected = item.node; renderInspector(); renderNodeList(); $('#nodeInspector').scrollIntoView({block: 'start'}); })); row.append(document.createTextNode(item.message)); host.append(row); }
     status(result.valid ? 'Connections checked. Export is available. This is not a runtime or resource check, and nothing was queued.' : `${result.errors.length} issue(s) to resolve before API export. Your draft is preserved.`);
   });
   $('#exportGraph').onclick = () => { if (checked?.valid) download('workflow-api.json', checked.graph); };
+  window.WorkflowStudio = Object.freeze({
+    snapshot: () => doc && clone(doc), schema: () => schema && clone(schema), epoch: () => epoch,
+    load: replace, change: changed, validate: safeNumbers, status,
+    inspect: id => { selected = id; render(); $('#nodeInspector').scrollIntoView({block: 'start'}); },
+    field: (host, id, input) => {
+      const node = doc?.nodes[id], spec = node && schema?.nodes[node.class_type]?.inputs.find(x => x.name === input && !x.hidden);
+      if (!spec) return host.append(el('p', 'This input is unavailable in the loaded schema; its data is retained.'));
+      fieldEditor(host, id, node, spec);
+    }
+  });
   goals().catch(error => { $('#goalCards').textContent = 'Guides unavailable: ' + error.message; });
   fetch('/api/catalog').then(r => { if (!r.ok) throw Error('Recipe catalog unavailable'); return r.json(); }).then(data => { for (const preset of data.presets || []) $('#presetChoice').append(el('option', preset.name || preset.id, {value: preset.id})); }).catch(error => status(error.message));
 })();

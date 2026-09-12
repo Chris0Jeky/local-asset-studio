@@ -13,7 +13,7 @@ def capabilities():
     return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True,
             'registered_recipe_tickets': True, 'arbitrary_graph_execution': False,
             'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
-            'shared_document_commands': True, 'agent_sdk': True, 'mcp': False,
+            'shared_document_commands': True, 'named_steps': True, 'agent_sdk': True, 'mcp': False,
             'custom_frontend_widgets': False, 'shared_worker': True,
             'limits': {'document_bytes': 1048576, 'nodes': 256, 'graph_invocations_per_ticket': 1},
             'generation_submitted': False}
