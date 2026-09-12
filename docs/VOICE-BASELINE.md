@@ -56,3 +56,10 @@ port; product loopback guards have separate HTTP tests. Raw proof is retained in
 `.runtime/session-2026-09-12/voice-baseline/`; installation proof remains under `C:/AI/voice-lab-kokoro/`.
 Playback was exercised, but no human listening acceptance or independent transcription is recorded.
 Optional creative choices remain in `HUMAN_TODO.md`.
+
+A separate isolated faster-whisper base.en CPU check transcribed the six installation takes offline
+without regenerating them. It matched 63 of 64 normalized words: the name `Mira` became `Mayra` in
+the raw ASR transcript (one substitution, zero insertions/deletions). This is transcription agreement,
+not proof of correct pronunciation or acting. Its pinned bundle and full comparison receipt live under
+`C:/AI/voice-lab-asr/`; the built-in Studio take runner does not yet invoke ASR. The browser fixture's
+different 2.85-second line has no independent transcription in that receipt.
