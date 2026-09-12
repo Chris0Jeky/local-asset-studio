@@ -1,6 +1,6 @@
 {
   "last_node_id": 15,
-  "last_link_id": 20,
+  "last_link_id": 18,
   "nodes": [
     {
       "id": 1,
@@ -91,8 +91,7 @@
           "links": [
             3,
             6,
-            11,
-            17
+            15
           ]
         }
       ],
@@ -143,7 +142,7 @@
     },
     {
       "id": 5,
-      "type": "ImageScale",
+      "type": "ImageScaleToTotalPixels",
       "pos": [
         0,
         340
@@ -168,21 +167,19 @@
           "type": "IMAGE",
           "links": [
             4,
-            7,
-            10
+            7
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "ImageScale"
+        "Node name for S&R": "ImageScaleToTotalPixels"
       },
       "widgets_values": [
         "lanczos",
-        512,
-        0,
-        "disabled"
+        1.0,
+        1
       ],
-      "title": "Upscale Image"
+      "title": "Scale Image to Total Pixels"
     },
     {
       "id": 6,
@@ -220,7 +217,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            19
+            17
           ]
         }
       ],
@@ -228,7 +225,7 @@
         "Node name for S&R": "TextEncodeQwenImageEditPlus"
       },
       "widgets_values": [
-        "Use the character identity and costume from Image 1. Create a non-explicit fantasy portrait. Preserve the approved character design."
+        "Use the character identity and costume from Picture 1. Create a non-explicit fantasy portrait. Preserve the approved character design."
       ],
       "title": null
     },
@@ -268,7 +265,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            20
+            18
           ]
         }
       ],
@@ -345,7 +342,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            12
+            10
           ]
         }
       ],
@@ -359,7 +356,7 @@
     },
     {
       "id": 10,
-      "type": "VAEEncode",
+      "type": "KSampler",
       "pos": [
         390,
         680
@@ -373,65 +370,24 @@
       "mode": 0,
       "inputs": [
         {
-          "name": "pixels",
-          "type": "IMAGE",
-          "link": 10
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 11
-        }
-      ],
-      "outputs": [
-        {
-          "name": "LATENT",
-          "type": "LATENT",
-          "links": [
-            15
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "VAEEncode"
-      },
-      "widgets_values": [],
-      "title": "VAE Encode"
-    },
-    {
-      "id": 11,
-      "type": "KSampler",
-      "pos": [
-        780,
-        680
-      ],
-      "size": [
-        340,
-        260
-      ],
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        {
           "name": "model",
           "type": "MODEL",
-          "link": 12
+          "link": 10
         },
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 13
+          "link": 11
         },
         {
           "name": "negative",
           "type": "CONDITIONING",
-          "link": 14
+          "link": 12
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 15
+          "link": 13
         }
       ],
       "outputs": [
@@ -439,7 +395,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            16
+            14
           ]
         }
       ],
@@ -458,10 +414,10 @@
       "title": "KSampler"
     },
     {
-      "id": 12,
+      "id": 11,
       "type": "VAEDecodeTiled",
       "pos": [
-        1170,
+        780,
         680
       ],
       "size": [
@@ -469,18 +425,18 @@
         260
       ],
       "flags": {},
-      "order": 11,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 16
+          "link": 14
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 17
+          "link": 15
         }
       ],
       "outputs": [
@@ -488,7 +444,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            18
+            16
           ]
         }
       ],
@@ -504,24 +460,24 @@
       "title": "VAE Decode (Tiled)"
     },
     {
-      "id": 13,
+      "id": 12,
       "type": "SaveImage",
       "pos": [
-        0,
-        1020
+        1170,
+        680
       ],
       "size": [
         340,
         260
       ],
       "flags": {},
-      "order": 12,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 18
+          "link": 16
         }
       ],
       "outputs": [
@@ -538,6 +494,44 @@
         "Studio/Qwen-1ref"
       ],
       "title": "Save Image"
+    },
+    {
+      "id": 13,
+      "type": "FluxKontextMultiReferenceLatentMethod",
+      "pos": [
+        0,
+        1020
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+      },
+      "widgets_values": [
+        "index_timestep_zero"
+      ],
+      "title": "Edit Model Reference Method"
     },
     {
       "id": 14,
@@ -557,7 +551,7 @@
         {
           "name": "conditioning",
           "type": "CONDITIONING",
-          "link": 19
+          "link": 18
         }
       ],
       "outputs": [
@@ -565,7 +559,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            13
+            12
           ]
         }
       ],
@@ -579,7 +573,7 @@
     },
     {
       "id": 15,
-      "type": "FluxKontextMultiReferenceLatentMethod",
+      "type": "EmptySD3LatentImage",
       "pos": [
         780,
         1020
@@ -591,29 +585,25 @@
       "flags": {},
       "order": 14,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "conditioning",
-          "type": "CONDITIONING",
-          "link": 20
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
+          "name": "LATENT",
+          "type": "LATENT",
           "links": [
-            14
+            13
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "FluxKontextMultiReferenceLatentMethod"
+        "Node name for S&R": "EmptySD3LatentImage"
       },
       "widgets_values": [
-        "index_timestep_zero"
+        832,
+        1248,
+        1
       ],
-      "title": "Edit Model Reference Method"
+      "title": null
     }
   ],
   "links": [
@@ -691,51 +681,51 @@
     ],
     [
       10,
-      5,
-      0,
-      10,
-      0,
-      "IMAGE"
-    ],
-    [
-      11,
-      3,
-      0,
-      10,
-      1,
-      "VAE"
-    ],
-    [
-      12,
       9,
       0,
-      11,
+      10,
       0,
       "MODEL"
     ],
     [
-      13,
-      14,
-      0,
       11,
+      13,
+      0,
+      10,
       1,
       "CONDITIONING"
     ],
     [
+      12,
       14,
-      15,
       0,
-      11,
+      10,
       2,
       "CONDITIONING"
     ],
     [
+      13,
       15,
+      0,
+      10,
+      3,
+      "LATENT"
+    ],
+    [
+      14,
       10,
       0,
       11,
-      3,
+      0,
       "LATENT"
+    ],
+    [
+      15,
+      3,
+      0,
+      11,
+      1,
+      "VAE"
     ],
     [
       16,
@@ -743,37 +733,21 @@
       0,
       12,
       0,
-      "LATENT"
-    ],
-    [
-      17,
-      3,
-      0,
-      12,
-      1,
-      "VAE"
-    ],
-    [
-      18,
-      12,
-      0,
-      13,
-      0,
       "IMAGE"
     ],
     [
-      19,
+      17,
       6,
       0,
-      14,
+      13,
       0,
       "CONDITIONING"
     ],
     [
-      20,
+      18,
       7,
       0,
-      15,
+      14,
       0,
       "CONDITIONING"
     ]
