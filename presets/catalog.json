@@ -3445,7 +3445,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran as a direct ComfyUI probe (prompt in .runtime/probes/anima-stack-aesthetic11-4adapters.json, 35 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0 and the ke-ta/kieed slots removed. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look and the LyCORIS file are not."
+      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran twice as direct ComfyUI probes (.runtime/probes/anima-stack-aesthetic11-{4,6}adapters.json, 35 s and 25 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0; the second probe carried all six adapters including the kieed LyCORIS file with no key warnings. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look is not."
     },
     {
       "id": "wan22-t2v",

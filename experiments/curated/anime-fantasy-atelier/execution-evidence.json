@@ -632,6 +632,56 @@
    "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-4adapters.jpg",
    "recipe": "anima-stack-aesthetic11-4adapters-recipe.json",
    "inspection": "Silver-haired witch on a stone balcony at dusk with hanging lanterns and a tower: clean face and eyes, correct hands hidden by sleeves, loose sketch-like linework and painterly cloth from the xilmo/huashijw/koukouya/NEWANIMASTYLE mix; no artefacts at 30 steps. Proves the six-slot Anima chain and loader path, not the base v1.0 look."
+  },
+  {
+   "kind": "comfyui-probe",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": null,
+   "prompt_ids": [
+    "422a4cf3-b10b-40a2-a60f-9b72ff0dcb87"
+   ],
+   "status": "completed",
+   "seconds": 25.0,
+   "controls": {
+    "unet_name": "anima-aesthetic-v1.1.safetensors (substituted; base v1.0 still downloading)"
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/probes/anima-stack-aesthetic11-6adapters_00001_.png",
+    "sha256": "5edafcb85ecc5de86761a27288f97b3c7f18a910ad13f19e127d2416874df755",
+    "bytes": 1431327,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-6adapters.jpg",
+   "recipe": "anima-stack-aesthetic11-6adapters-recipe.json",
+   "inspection": "All six adapters including the kieed LyCORIS file loaded without key warnings in the ComfyUI log. Crisper, more illustrative linework than the four-adapter probe: clean face and orange eyes, layered cloak trim, lanterns and tower intact, sky lanterns; no anatomy errors. Base v1.0 look still unproven."
   }
  ]
 }
