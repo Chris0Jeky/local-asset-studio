@@ -120,6 +120,8 @@ def validate_download_url(url,provider=None,resolver=socket.getaddrinfo):
         try:addresses.add(ipaddress.ip_address(str(answer[4][0]).split('%',1)[0]))
         except (IndexError,TypeError,ValueError) as exc:raise ValueError('Model download host returned an invalid address') from exc
     if not addresses:raise ValueError('Model download host returned no addresses')
+    if any(address.is_multicast for address in addresses):
+        raise ValueError('Model download host resolves to a multicast address')
     if any(not address.is_global for address in addresses):
         raise ValueError('Model download host resolves to a loopback, private, local or reserved address')
     return provider
