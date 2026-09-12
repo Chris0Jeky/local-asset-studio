@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "source_revision": "df1033f78615974e2ca2daef30779be502f110e5b2ebc2587b13147c36f900c2",
+  "frames_expected": 144,
+  "audio_qc": {
+    "samples": 288000,
+    "sample_rate": 48000,
+    "channels": 2,
+    "duration_seconds": 6.0,
+    "sample_peak_dbfs": [-16.67693872457699,-16.67693872457699],
+    "rms_dbfs": [-32.61749980703375,-32.61749980703375],
+    "dc_offset": [0.000015605396694607204,0.000015605396694607204],
+    "full_scale_sample_count": [0,0],
+    "near_or_at_clipping": false,
+    "method": "16-bit decoded sample statistics; not LUFS, true peak, intelligibility or perceptual review"
+  },
+  "probe": {
+    "programs": [], "stream_groups": [],
+    "streams": [
+      {"codec_name":"h264","codec_type":"video","width":640,"height":360,"r_frame_rate":"24/1"},
+      {"codec_name":"aac","codec_type":"audio","sample_rate":"48000","channels":2,"r_frame_rate":"0/0"}
+    ],
+    "format": {"duration":"6.000000"}
+  },
+  "outputs": {
+    "picture.mp4": "0791c94e8590d07c1043b4e1b22f5ef5e3cb4b1fd30c4493960267ad25a1e056",
+    "mix.wav": "e0e64c2ba8604cd9d77174c06e23bf02ec36dee36eddf4792ccf34e55a1f84c7",
+    "preview.mp4": "522e172610fb737ff482c9331c8050d43a8db1e26bb055d89b9c54704a20ff51"
+  },
+  "generation_performed": false,
+  "creative_acceptance": "not_reviewed",
+  "audio_model_benchmark": false,
+  "ffmpeg_version": "ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers"
+}

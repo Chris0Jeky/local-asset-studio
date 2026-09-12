@@ -1,0 +1,11 @@
+{
+  "browser": "Chromium",
+  "edits": true,
+  "undo": true,
+  "json_download": true,
+  "audio_context_schedule": true,
+  "mobile_no_overflow": true,
+  "javascript_errors": [],
+  "external_requests": [],
+  "listening_test": false
+}

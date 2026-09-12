@@ -1,5 +1,39 @@
 # Current state — 11 September 2026
 
+## AV renderer, local utilities and live Prompt Lab - 12 September 2026
+
+The AV workbench slice now runs with a checksum-verified portable FFmpeg 9.0.1 installation outside
+Git. A real 640x360/24 FPS procedural preview contains 144 frames and a six-second, 288000-sample
+stereo PCM mix. Measured sample peaks are -16.68 dBFS; no full-scale samples were counted. These are
+codec/timing checks, not neural voice/music, perceptual loudness or creative acceptance.
+
+Chromium 151 decoded the preview and exercised keyboard gain changes, mute/apply, stale-preview
+indication, actual project export, CLI media validation of that export, Web Audio decode/start/stop,
+undo and 390 px layout. Source hashes stayed unchanged; no JS errors, external requests or model jobs.
+Raw render plans, source snapshots, outputs, browser exports and receipts are preserved under
+`.runtime/session-2026-09-12/av-workbench/`. FFmpeg archive/hash/license records are in the adjacent
+`ffmpeg-install/` folder; explicit ffmpeg/ffprobe paths are recorded in local config, without global PATH
+or ComfyUI package changes. CLI sessions still need that portable bin directory on their own PATH.
+
+Input demuxers are constrained to declared PNG/MP4/WAV formats, with image patterns and MOV external
+references disabled. The initial review HIGH was withdrawn: FFmpeg 9.0.1 rejected the proposed HLS
+filename mismatch. An inert ffconcat probe did read an undeclared relative segment; the constrained
+MOV probe rejected it, but render exfiltration was not demonstrated. This is input-contract hardening,
+not a claim of proving the original HIGH. Three nonblocking workbench limitations remain tracked in
+#30: source-range edits need media validation, embedded audio needs an aggregate cap, and Python/JS
+half-sample rounding differs at some fractional rates.
+
+Against main `4796a87`, the full dependency-equipped suite discovered 473 tests: 464 passed and nine
+skipped (five native opt-ins and four Windows directory-symlink cases). FFmpeg and actual MCP SDK tests
+ran. The first full run exposed an inherited HTTP redirect test fixture closing with an unread POST
+body; draining it and declaring a zero-length response fixed the Windows reset. The rerun and validator
+passed. No production helper behavior changed for that fixture correction.
+
+PR #33 is merged as `4796a87`. The primary Studio was reloaded through the supported launcher after
+verifying terminal jobs, idle production and an empty ComfyUI queue. Live Chromium navigated from the
+main header, loaded all nine profiles and compiled a brief with unchanged job IDs. ComfyUI PID 2600
+was preserved. No art or rights choices were inferred; `HUMAN_TODO.md` remains the creative backlog.
+
 ## Prompt Lab normal startup and browser proof - 12 September 2026
 
 Prompt Lab now uses the normal Studio launcher and its existing port. Startup binds before

@@ -1,0 +1,10 @@
+Local validation on 11 September 2026
+Python 3.13.5, Pillow 12.3.0, FFmpeg 7.1.5, Linux
+Command: python -m unittest discover -s tests -p 'test_studio_av*.py' -v
+
+Ran 31 tests in 3.571s
+OK (skipped=2)
+
+29 core/media/Blender-contract tests passed, including actual cut/dissolve/overlay/mix renders, 144 decoded output frames and 288000 PCM audio samples for the six-second fixture.
+The two official MCP SDK tests skipped locally because the optional SDK is not installed. Local pip installation failed because DNS access is unavailable. Dedicated GitHub CI installs the pinned SDK and runs real protocol tests; its result is not assumed here.
+No Blender execution or neural audio/voice model inference was performed. The fixture consists of procedural still graphics and sine/noise audio, not generated voices or model-quality evidence.

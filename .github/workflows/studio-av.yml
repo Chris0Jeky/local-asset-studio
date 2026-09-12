@@ -1,0 +1,23 @@
+name: Studio AV
+on:
+  pull_request:
+    paths: ['studio_av/**','scripts/studio_av*','tests/test_studio_av*','research/av-studio/**','integrations/blender/av_job.py','.github/workflows/studio-av.yml']
+  push:
+    branches: [main]
+    paths: ['studio_av/**','scripts/studio_av*','tests/test_studio_av*','research/av-studio/**','integrations/blender/av_job.py','.github/workflows/studio-av.yml']
+permissions:
+  contents: read
+jobs:
+  offline-and-mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - run: python -m pip install Pillow==12.3.0 -r research/av-studio/requirements-mcp.txt
+      - run: python -m unittest discover -s tests -p 'test_studio_av*.py' -v
+      - run: python scripts/studio_av_demo.py --out '${{ runner.temp }}/av-demo' --render
+      - run: python scripts/studio_av_workbench.py '${{ runner.temp }}/av-demo/project.json' --workspace '${{ runner.temp }}/av-demo' --preview '${{ runner.temp }}/av-demo/render/preview.mp4' --out '${{ runner.temp }}/av-workbench.html'

@@ -1,0 +1,2 @@
+# Isolated optional MCP environment. Do not alter the ComfyUI runtime.
+mcp==2.2.0
