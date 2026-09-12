@@ -43,7 +43,9 @@ distribution versions must match both the bundle manifest and the versions obser
 Cancellation checks run before publication and again after Workspace registration. If a stop arrives
 after publication starts and one or more outputs are registered, the take records that cancellation was
 too late and preserves the published outputs; it does not falsely report a cancelled no-output take.
-Every started voice attempt records a terminal completed, failed or cancelled status.
+Controlled success, failure and cancellation paths finalize the nested attempt. An abrupt process death
+can still leave its last durable attempt state as `running`; recovery treats that as unproven and never
+repeats inference.
 
 Dry output is 24 kHz mono PCM16. The scene copy is resampled to 48 kHz mono PCM16 with no loudness
 normalization or other mix processing. Receipts retain exact text, graphemes, phonemes, file hashes,

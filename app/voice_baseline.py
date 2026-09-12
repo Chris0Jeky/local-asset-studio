@@ -168,21 +168,22 @@ def run(production,identifier,plan):
         job['native_recipe'].update(receipt=receipt,qc=qc)
         studio._save(job);studio.jobs[job_id]=job
         studio.index_outputs(job)
-        published=any(output.get('asset_id') for output in job['outputs'])
+        published=all(output.get('asset_id') and not output.get('snapshot_error') for output in job['outputs'])
         if cancelled() and published:
-            job.update(status='completed',publication_status='published-after-stop',message='Stop arrived after Workspace publication began; published voice outputs are retained for inspection.')
+            job.update(status='completed',publication_status='published',cancellation_too_late=True,message='Stop arrived after Workspace publication completed; published voice outputs are retained for inspection.')
             studio._save(job);studio.jobs[job_id]=job
             production._attempt(identifier,0,status='completed',finished_at=time.time(),message=job['message'])
             production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time(),cancellation_too_late=True)
             return
         job.update(status='completed',message='Dry and scene-ready baseline takes completed; listening review remains open.')
-        need(all(o.get('asset_id') and not o.get('snapshot_error') for o in job['outputs']),'Voice output registration failed; inspect retained files')
+        need(published,'Voice output registration failed; inspect retained files')
+        job['publication_status']='published'
         studio._save(job);studio.jobs[job_id]=job
         production._attempt(identifier,0,status='completed',finished_at=time.time())
         production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time())
     except Exception as exc:
         status='cancelled' if isinstance(exc,RenderCancelled) else 'failed'
         if job is not None:
-            job.update(status=status,publication_status='cancelled' if status=='cancelled' else job.get('publication_status','failed'),message=str(exc)[:500]);studio.jobs[job_id]=job;studio._save(job)
+            job.update(status=status,publication_status=status,message=str(exc)[:500]);studio.jobs[job_id]=job;studio._save(job)
         if attempt_started:production._attempt(identifier,0,status=status,finished_at=time.time(),message=str(exc)[:500])
         production._mutate(identifier,status=status,message=str(exc)[:500],artifacts=artifacts(production,identifier),finished_at=time.time())

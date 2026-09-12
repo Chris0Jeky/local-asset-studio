@@ -117,6 +117,30 @@ class ServerTests(unittest.TestCase):
         s=self.studio(); job=s.create_job({"preset_id":"demo","controls":{}}); live=s.jobs[job["id"]]; live["status"]="running"; s._save(live)
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
+
+    def test_voice_publication_marker_preserves_exact_prior_assets_on_restart(self):
+        s=self.studio()
+        def voice_job(identifier, marker):
+            directory=self.root/'experiments/projects'/identifier/'voice';directory.mkdir(parents=True)
+            for name in ('first.wav','second.wav'):(directory/name).write_bytes(name.encode())
+            job={'id':identifier,'operation':'native.voice-baseline.v1','project_id':identifier,'status':marker,'publication_status':marker,
+                 'created_at':1,'preset_id':'voice-baseline','preset_name':'Fixture','controls':{},'batch_count':0,'prompt_ids':[],
+                 'submissions':[],'parent_assets':[],'references':[],'graph':{},'graph_path':'','outputs':[
+                     {'filename':'first.wav','native_path':'voice/first.wav','type':'output','media_type':'audio'}]}
+            (s.runs/identifier).mkdir();s.index_outputs(job);prior=job['outputs'][0]['asset_id']
+            job['outputs'].append({'filename':'second.wav','native_path':'voice/second.wav','type':'output','media_type':'audio'})
+            s._save(job);s.jobs[identifier]=job;return prior
+        prior={marker:voice_job(f'{index:032x}',marker) for index,marker in enumerate(('publishing','failed','cancelled'),1)}
+        restored=self.studio()
+        for index,marker in enumerate(('publishing','failed','cancelled'),1):
+            job=restored.jobs[f'{index:032x}']
+            self.assertEqual(job['outputs'][0]['asset_id'],prior[marker]);self.assertNotIn('asset_id',job['outputs'][1])
+        legacy='f'*32;directory=self.root/'experiments/projects'/legacy/'voice';directory.mkdir(parents=True);(directory/'legacy.wav').write_bytes(b'legacy')
+        job={'id':legacy,'operation':'native.voice-baseline.v1','project_id':legacy,'status':'completed','created_at':1,'preset_id':'voice-baseline',
+             'preset_name':'Legacy','controls':{},'batch_count':0,'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[],
+             'graph':{},'graph_path':'','outputs':[{'filename':'legacy.wav','native_path':'voice/legacy.wav','type':'output','media_type':'audio'}]}
+        (s.runs/legacy).mkdir();s._save(job);s.jobs[legacy]=job
+        self.assertTrue(self.studio().jobs[legacy]['outputs'][0].get('asset_id'))
     def test_mock_comfy_success_failure_and_uncertain_post(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p1"},{"p1":{"status":{"status_str":"success"},"outputs":{"9":{"images":[{"filename":"ok.png","subfolder":"","type":"output"}]}}}}]
         s=FakeStudio(self.root,replies); job=s.create_job({"preset_id":"demo","controls":{}}); s._run(s.jobs[job["id"]]); self.assertEqual(s.jobs[job["id"]]["status"],"completed")

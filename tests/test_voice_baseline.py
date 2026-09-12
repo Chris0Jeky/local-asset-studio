@@ -114,4 +114,4 @@ class VoiceTests(unittest.TestCase):
         project=self.production.get(prepared['id']);job=next(iter(self.studio.jobs.values()))
         self.assertEqual(project['state']['status'],'completed');self.assertTrue(project['state']['cancellation_too_late'])
         self.assertEqual(project['state']['attempts']['0']['status'],'completed')
-        self.assertEqual(job['publication_status'],'published-after-stop');self.assertTrue(all(output.get('asset_id') for output in job['outputs']))
+        self.assertEqual(job['publication_status'],'published');self.assertTrue(job['cancellation_too_late']);self.assertTrue(all(output.get('asset_id') for output in job['outputs']))

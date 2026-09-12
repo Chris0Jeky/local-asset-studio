@@ -94,11 +94,11 @@ class Studio:
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
-            # Failed or still-publishing AV attempts retain their recipe and
-            # assets for inspection; only completed publication may be indexed
-            # on restart.  Legacy AV jobs have no publication marker and still
-            # use the historical recovery path.
-            if job.get("operation") == "native.av-preview.v1" and "publication_status" in job and job["publication_status"] != "published": continue
+            # Failed or still-publishing native AV/voice attempts retain their
+            # recipe and exact prior asset set for inspection; only completed
+            # publication may be indexed on restart. Legacy jobs without a
+            # publication marker keep the historical recovery path.
+            if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
             self.index_outputs(job)
         self.production = Production(self)
         self.backends = BackendManager(self)
