@@ -4,19 +4,19 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-async function check(presetId, targetPreset, slots) {
+async function check(presetId, targetPreset, slots, workspace = false) {
   const elements = new Map(), requests = [];
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      addEventListener() {}, scrollIntoView() {},
+      addEventListener() {}, scrollIntoView() {}, close() {}, showModal() {},
     });
     return elements.get(selector);
   };
   const upload = {file: 'retained.png', sha256: 'a'.repeat(64), width: 512, height: 768};
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener() {}},
-    URL, Blob, setInterval() {},
+    URL, Blob, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
       if (options.method === 'POST') requests.push({url, data: options.headers?.['Content-Type'] === 'application/json' ? JSON.parse(options.body) : null});
@@ -27,10 +27,10 @@ async function check(presetId, targetPreset, slots) {
       return {ok: true, json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
     },
   });
-  for (const name of ['app.js', 'references.js']) {
+  for (const name of ['app.js', 'references.js', 'workspace.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8'), context);
   }
-  const presets = ['plain', 'gentle-variation', 'qwen-1ref', 'qwen-3ref', 'wan22-i2v', 'trellis-auto-cutout'].map(id => ({
+  const presets = ['plain', 'gentle-variation', 'qwen-1ref', 'qwen-3ref', 'wan22-i2v', 'trellis-auto-cutout', 'anime-detail-fix', 'krea-refine'].map(id => ({
     id, name: id, modality: id === 'wan22-i2v' ? 'video' : id === 'trellis-auto-cutout' ? '3d' : 'image',
     reference: id === 'plain' ? undefined : ['4', 'image'],
     reference_slots: id.startsWith('qwen') ? Array.from({length: id === 'qwen-1ref' ? 1 : 3}, () => ({role: 'identity', contribution: 'Keep the character', avoid: 'Background'})) : undefined,
@@ -40,7 +40,22 @@ async function check(presetId, targetPreset, slots) {
     refresh=async()=>{}; loadSetups=async()=>{};
     selectPreset(${JSON.stringify(presetId)});`, context);
   const button = {dataset: {job: 'source-job', index: '0', ...(targetPreset ? {preset: targetPreset} : {})}};
-  await element('#gallery').onclick({target: {closest: selector => selector === '.reference-output' ? button : null}});
+  if (workspace) {
+    vm.runInContext(`assetState.assets=[{id:'source-asset',title:'Original',media_type:'image',tags:[],source:{},lineage:[],bytes:1024}];openAsset('source-asset');`, context);
+    assert.ok(element('#assetHandoffs').innerHTML.includes('data-handoff="'+targetPreset+'"'), 'Workspace exposes the repair action');
+    await vm.runInContext(`handoffAsset('source-asset',${JSON.stringify(targetPreset)})`, context);
+    assert.equal(context.location.hash, 'create');
+    vm.runInContext(`assetState.assets[0].media_type='video';openAsset('source-asset');`, context);
+    assert.equal(element('#assetHandoffs').innerHTML, '', 'Image repair actions are absent on video assets');
+  } else {
+    if (['anime-detail-fix', 'krea-refine'].includes(targetPreset)) {
+      const card = vm.runInContext(`mediaCard({id:'source-job',controls:{}},0,{media_type:'image'})`, context);
+      assert.ok(card.includes('data-preset="'+targetPreset+'"'), 'Gallery exposes the repair action');
+      const video = vm.runInContext(`mediaCard({id:'source-job',controls:{}},0,{media_type:'video'})`, context);
+      assert.ok(!video.includes('data-preset="'+targetPreset+'"'), 'Image repair actions are absent on video outputs');
+    }
+    await element('#gallery').onclick({target: {closest: selector => selector === '.reference-output' ? button : null}});
+  }
   assert.equal(requests.some(r => r.url === '/api/jobs'), false, 'Attaching must never submit generation');
   const state = JSON.parse(vm.runInContext('JSON.stringify({preset:selected.id,parents:parentAssets,references:attachedReferencePayload(),ready:referencesReady()})', context));
   assert.deepEqual(state.parents, ['source-asset'], 'Gallery handoff must retain the selected source identity');
@@ -73,5 +88,9 @@ async function check(presetId, targetPreset, slots) {
   await check('plain', null, 0);
   await check('plain', 'wan22-i2v', 0);
   await check('plain', 'trellis-auto-cutout', 0);
+  for (const target of ['anime-detail-fix', 'krea-refine']) {
+    await check('plain', target, 0);
+    await check('qwen-3ref', target, 0, true);
+  }
   console.log('Gallery handoffs retain lineage and role metadata through save and submission.');
 })().catch(error => {console.error(error); process.exitCode = 1;});

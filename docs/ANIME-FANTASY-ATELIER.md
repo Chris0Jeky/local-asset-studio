@@ -237,6 +237,11 @@ image carries a small imperfection the owner would like corrected by a follow-up
 
 Two presets answer that, both driven by a reference image (upload one, or the authored example runs):
 
+From a gallery image or its Workspace details, choose **Fix hands & face** to open `anime-detail-fix`,
+or **Refine image** to open `krea-refine`. The Studio attaches that image and retains its source asset
+identity in saved setups and generated recipes. Review the prompt, denoise and other settings, then
+press **Generate** explicitly. Opening either action does not start a render or approve its output.
+
 - **`anime-detail-fix`** — the ADetailer pattern in ComfyUI: Impact Pack `FaceDetailer` twice, first with
   the `face_yolov8s` detector, then with `hand_yolov8n`, repainting only the detected crops with WAI v17 at
   denoise 0.4 (faces) / 0.45 (hands). Nothing outside the boxes changes. It is model-agnostic on the input
