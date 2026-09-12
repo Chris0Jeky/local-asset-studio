@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "kind": "character_study_summary",
+  "plan_sha256": "2e987c08f624fb432f23125cb17a3ec7da68ef1a6ad7d1d91675ca7c3798d5e3",
+  "attempts_used": 12,
+  "attempts_remaining": 0,
+  "planned_cases": 12,
+  "primary_cases_attempted": 12,
+  "completed_attempts": 11,
+  "selected_cases": 0,
+  "human_accepted_cases": 0,
+  "selected_case_ids": [],
+  "unresolved_submission_case_ids": [],
+  "first_pass_selection_rate": 0.0,
+  "planned_case_coverage": 0.0,
+  "total_elapsed_seconds": null,
+  "total_cleanup_seconds": 0,
+  "seconds_per_selected_case": null,
+  "records_sha256": "9fa478777a2dce8246aa6d658ae13022d10556209f50afb57c5d28683216a9a0",
+  "generation_submitted": false,
+  "limits": [
+    "Records are local attestations, not authenticated execution or reviews.",
+    "One record declares one image-producing attempt; the trusted coordinator must enforce actual work.",
+    "Empty/missing measurements stay null; no significance or automatic winner is claimed.",
+    "Image selection does not certify rights, transparency, animation or target-engine acceptance."
+  ]
+}
