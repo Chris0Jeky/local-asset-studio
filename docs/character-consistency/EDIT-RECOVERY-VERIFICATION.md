@@ -87,5 +87,29 @@ test cases is introduced.
 No workstation neural repair, native Krita synchronization, universal filesystem
 power-loss guarantee, cross-revision budget enforcement or automatic legacy-partial
 migration is claimed. The definitive Production creation-rejection recovery
-protocol remains separately tracked on #71. The local review was performed by the
-implementing assistant, not an independent reviewer. `HUMAN_TODO.md` is unchanged.
+protocol remains separately tracked on #71. The original Linux review was performed
+by the implementing assistant. The subsequent independent Windows review is recorded
+below. `HUMAN_TODO.md` is unchanged.
+
+## Configured Windows integration and independent review
+
+Integration `d9cd223c4c3e55e632b501a347ad5f923937a76c` includes current main
+`04903e98dcf9a7915eba38b171fee98c2324d6c9` (through PR #84). On the configured
+Windows host, using the Studio test interpreter with Node and FFmpeg available:
+
+- Full repository suite: **854 tests run, 840 passed, 14 skipped**, 87.488 seconds.
+- Repository validator: **PASS**, 60 graphs/bindings, 62 pinned assets, 795 tracked
+  paths and 65 LoRA-name checks.
+- A fresh independent read-only review found no defects. Its focused recovery
+  run executed **28 tests, 27 passed, one skipped**, 11.363 seconds; the symlink
+  case lacked Windows privilege 1314. The actual subprocess-death/HTTP recovery
+  test passed, retaining partial evidence and recovering the same job without
+  another POST or reservation.
+
+Root full-suite and validator logs are retained in the owned review worktree at
+`.runtime/character-recovery-review/`; after removal they are archived with verified
+hashes under the primary checkout's
+`.runtime/session-2026-09-12/character-recovery-review/raw/`. Publication, current
+hosted checks and merge status are recorded on PR #83. These tests use inert model
+execution and do not establish live neural repair, native editor behavior or art
+acceptance.

@@ -1,5 +1,17 @@
 # Current state — 11 September 2026
 
+## Character-edit recovery on Windows — 12 September 2026
+
+PR #83 integration `d9cd223` includes main `04903e9`. Interrupted collection retains
+partial staging and recovers the same completed asset without another generation or
+reservation; exact native reference roles and connected actor-contact coverage are
+validated. The full configured Windows suite ran 854 tests: 840 passed and 14 skipped;
+repository validation passed. A fresh independent review found no defects and its
+28-test recovery run passed with one Windows symlink-privilege skip. The real local
+HTTP/subprocess-death test passed with inert neural execution. See
+`docs/character-consistency/EDIT-RECOVERY-VERIFICATION.md` for the evidence and limits.
+No live neural repair or art acceptance is claimed; PR #71 remains open.
+
 ## Recipe inspection on the configured Windows host — 12 September 2026
 
 The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
