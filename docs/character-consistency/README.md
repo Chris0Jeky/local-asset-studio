@@ -33,3 +33,9 @@ The archived material is a historical snapshot from `0ffec70b109396aaacb590f2136
 Current-session CPU proofs and tests are recorded in `research/character-consistency/OFFLINE-EVIDENCE.json`. Neural inference, workstation installation, reference upload, live queue integration, actual art acceptance and engine playback are not claimed by this slice. The original guide's visual examples derive from the user's supplied images, not new local model generations.
 
 `HUMAN_TODO.md` remains authoritative and unchanged: optional pixel look, product brief, curation and Anima q-3 creative choices remain open. No permission, model installation or creative acceptance is inferred by importing the bundle.
+
+## Controlled-edit extension
+
+For anatomy corrections, costume variants and multi-character scenarios, start with [controlled editing](EDITING.md), the [working patch runbook](EDIT-RUNBOOK.md), [model/tool policy evidence](TOOL-POLICIES.md) and the [edit-yield benchmark](EDIT-BENCHMARK.md). The new `character_edit.py`, `character_edit_pixels.py` and `character_edit_demo.py` commands provide actor-bound plans and a source-preserving file-based bridge a local agent can use. The supplied `agent-skills/character-editing/SKILL.md` documents the operating contract.
+
+The deterministic synthetic proof is executable now; native Krita/Studio/agent integration is #71 and actual neural edit-yield measurement is #72, extending #23/#65/#66. The extension adds no content classifier or hidden cloud fallback and does not certify unknown model behaviour as unrestricted.
