@@ -558,22 +558,26 @@
       "notes": "A new original, clothed adult fantasy character; not a reconstruction of an unseen artwork. This is the complete verified WAI/Illustrious lane from the screenshot transcription: WAI v17 plus Noirpopwave at 1.0. It must not load Anima or Anima LoRAs.",
       "sources": [
         "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-        "https://civitai.com/models/2398033?modelVersionId=2696276"
+        "https://civitai.com/models/827184?modelVersionId=2883731",
+        "https://civitai.com/models/2398033?modelVersionId=2696276",
+        "https://civitai.red/images/134076830"
       ]
     },
     {
-      "id": "anima-screenshot-stack-partial",
-      "name": "Screenshot baseline - Anima partial stack",
+      "id": "anima-screenshot-stack",
+      "name": "Screenshot baseline - Anima full stack",
       "preset_id": "anima-artist-stack",
       "family": "Anima",
       "tags": [
         "fantasy",
         "screenshot-stack",
         "adult-character",
-        "partial"
+        "failleaf",
+        "sky02",
+        "bunnyslop"
       ],
       "controls": {
-        "positive": "masterpiece, best quality, safe, adult woman, solo, original fantasy cartographer and lanternkeeper, fully clothed navy travel coat with brass clasps, teal scarf, high collar, leather gloves, ankle boots, holding a brass compass and a warm lantern, weathered map case, misty ruined observatory at dusk, warm rim lighting, teal and amber palette, painterly illustration, detailed background",
+        "positive": "@failleaf, masterpiece, best quality, safe, adult woman, solo, original fantasy cartographer and lanternkeeper, fully clothed navy travel coat with brass clasps, teal scarf, high collar, leather gloves, ankle boots, holding a brass compass and a warm lantern, weathered map case, misty ruined observatory at dusk, warm rim lighting, teal and amber palette, painterly illustration, detailed background",
         "negative": "worst quality, low quality, score_1, score_2, score_3, artist name, blurry, jpeg artifacts, chromatic aberration, child, childlike, young-looking",
         "steps": 30,
         "cfg": 4,
@@ -582,22 +586,25 @@
         "width": 832,
         "height": 1216,
         "seed": 2026091201,
-        "lora_name": "sky02Light.safetensors",
-        "lora": 0.3,
-        "lora2_name": "BunnySlop_Anima.safetensors",
-        "lora2": 0.9,
-        "lora3": 0,
+        "lora_name": "Failleaf_Anima_Base_lora.safetensors",
+        "lora": 0.5,
+        "lora2_name": "sky02Light.safetensors",
+        "lora2": 0.3,
+        "lora3_name": "BunnySlop_Anima.safetensors",
+        "lora3": 0.9,
         "lora4": 0,
         "lora5": 0,
         "lora6": 0
       },
       "batch_count": 1,
       "status": "unverified",
-      "notes": "This is deliberately a partial Anima baseline, not a claim to match the screenshot: sky02 v1.0 is at 0.3 and BunnySlop Anima v1 is at 0.9. The reported Fallleaf/Falleaf Anima adapter at 0.5 has no resolved public listing, file, hash or trigger, so it is absent rather than substituted. It must not load WAI or Noirpopwave.",
+      "notes": "A complete Anima lane with the resource weights from Civitai image 134076830: Failleaf Anima Base 0.5, sky02 v1.0 0.3 and BunnySlop Anima v1 0.9. It is a new clothed adult-character baseline, not a reproduction of the source image. The image API lists both Anima and WAI version IDs but does not publish the generation metadata, so it must not load WAI or Noirpopwave.",
       "sources": [
         "https://civitai.com/models/2458426?modelVersionId=2945208",
+        "https://civitai.com/models/2648711?modelVersionId=2974201",
         "https://civitai.com/models/2652568?modelVersionId=2978471",
-        "https://civitai.com/models/2613391?modelVersionId=2978487"
+        "https://civitai.com/models/2613391?modelVersionId=2978487",
+        "https://civitai.red/images/134076830"
       ]
     },
     {

@@ -1126,7 +1126,7 @@
       "sha256": "f116b0c78ff441467b0cdc8f1936e1ed18ea31e9997c7b132b1b8db533f0bd04",
       "license": "",
       "family": "Illustrious XL",
-      "terms": "No licence is declared in the frankjoshua/waiIllustriousSDXL_v170 repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for waiIllustriousSDXL_v170.safetensors at revision 9303ce493458 (checked 2026-09-12); a hash match proves the bytes, not the creator. A community mirror with no licence declared in its repository metadata. A matching SHA-256 proves the bytes came from this mirror; it does not authenticate the original creator or grant any commercial right. See models/wai-provenance.json.",
+      "terms": "The Civitai image metadata for 134076830 names Civitai model 827184/version 2883731; its primary file hash matches this installed Hugging Face mirror. Civitai model metadata read 2026-09-12 says allowCommercialUse Image, RentCivit; derivatives allowed; different licence allowed. The mirror card itself declares no licence. Hash agreement proves the bytes, not creator identity or rights; read the original listing before commercial use. See models/wai-provenance.json.",
       "trigger": ""
     },
     {
@@ -1743,6 +1743,19 @@
       "family": "Anima",
       "terms": "Civitai model 2652568/version 2978471, read 2026-09-12: allowCommercialUse RentCivit; derivatives NOT allowed; different licence NOT allowed. Base model Anima. The downloaded file SHA-256 matches the listing. Read the model page before commercial use.",
       "trigger": ""
+    },
+    {
+      "id": "failleaf-anima-base",
+      "name": "Failleaf Style for Anima / Anima Base",
+      "file": "loras/Failleaf_Anima_Base_lora.safetensors",
+      "source": "https://civitai.com/models/2648711?modelVersionId=2974201",
+      "url": "https://civitai.com/api/download/models/2974201",
+      "bytes": 68958912,
+      "sha256": "d74e2709313c1c84015091be2bba7c503dbe0abdf5be093896c289ae1c07ff2b",
+      "license": "",
+      "family": "Anima",
+      "terms": "Civitai model 2648711/version 2974201, read 2026-09-12: allowCommercialUse RentCivit, Rent, Image; derivatives allowed; different licence allowed. Base model Anima. The downloaded file SHA-256 matches the listing. Read the model page before commercial use.",
+      "trigger": "@failleaf"
     },
     {
       "id": "bunny-slop-anima-v1",
