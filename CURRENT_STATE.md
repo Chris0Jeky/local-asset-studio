@@ -638,6 +638,18 @@ identity, pose and manga-style references; controlled generation
 The saved Anima-to-ESRGAN handoff survived a fresh page and generated successfully
 as `60949ec3-2ec2-471f-88cb-73fa78a5491c`, retaining its parent asset.
 
+**Correction to the three Qwen Atelier pairs (2026-09-12, issue #21).** Those graphs
+shipped with node 5 as `ImageScale(width=512, height=0)` and node 10 as a `VAEEncode`
+of that shrunken primary reference used as the sampler latent, and only slot 1 was
+scaled at all. Reference detail was therefore discarded before encoding, and the
+canvas followed each reference's aspect instead of being chosen. The graphs now give
+every slot its own `ImageScaleToTotalPixels` at 1.0 MP and take the latent from an
+explicit `EmptySD3LatentImage(832x1248)`; prompts say "Picture N" because
+`TextEncodeQwenImageEditPlus` injects exactly those tokens. All three presets are back
+to `verified: false`. Prompt `c8b752b5-cb25-4438-8c66-f0e5fafcae04` stays recorded, but
+it is evidence for the superseded geometry only and now lives in the preset's `history`
+field. **No generation has been run against the new graphs.**
+
 Godot adapter commit `af4ccb5` adds actual headless import/playback. Its fixed
 120/80/120/160 ms QA sequence played in 480.000003 ms with anchor [24,60] and no
 anchor error. The existing Ember GLB loaded with 12 nodes, 9 meshes, 3 materials
