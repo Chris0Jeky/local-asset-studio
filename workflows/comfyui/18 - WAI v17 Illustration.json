@@ -1,6 +1,6 @@
 {
-  "last_node_id": 7,
-  "last_link_id": 9,
+  "last_node_id": 9,
+  "last_link_id": 13,
   "nodes": [
     {
       "id": 1,
@@ -22,15 +22,14 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            3
+            10
           ]
         },
         {
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            1,
-            2
+            11
           ]
         },
         {
@@ -82,7 +81,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "masterpiece, best quality, 1girl, solo, adult woman, fantasy ranger, green cloak, leather boots, holding lantern, full body, standing, simple white background, game character concept"
+        "1girl, solo, adult woman, fantasy ranger, green hooded cloak, leather boots, holding lantern, full body, standing, simple background, white background, game character concept, masterpiece, best quality, amazing quality"
       ]
     },
     {
@@ -119,7 +118,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "low quality, blurry, bad anatomy, text, watermark, cropped"
+        "bad quality, worst quality, worst detail, sketch, censor"
       ]
     },
     {
@@ -150,8 +149,8 @@
         "Node name for S&R": "EmptyLatentImage"
       },
       "widgets_values": [
-        1024,
-        1024,
+        832,
+        1216,
         1
       ]
     },
@@ -207,7 +206,7 @@
         2026091103,
         "fixed",
         30,
-        5,
+        5.0,
         "euler_ancestral",
         "normal",
         1.0
@@ -287,12 +286,117 @@
       "widgets_values": [
         "Studio/WAI-Illustration"
       ]
+    },
+    {
+      "id": 8,
+      "type": "LoraLoader",
+      "pos": [
+        1080,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 10
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoader"
+      },
+      "widgets_values": [
+        "cinematic lighting.safetensors",
+        0,
+        0
+      ],
+      "title": "Style LoRA slot 1 (off at strength 0)"
+    },
+    {
+      "id": 9,
+      "type": "LoraLoader",
+      "pos": [
+        1440,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 12
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1,
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoader"
+      },
+      "widgets_values": [
+        "manga-ink-screentone.safetensors",
+        0,
+        0
+      ],
+      "title": "Style LoRA slot 2 (off at strength 0)"
     }
   ],
   "links": [
     [
       1,
-      1,
+      9,
       1,
       2,
       0,
@@ -300,7 +404,7 @@
     ],
     [
       2,
-      1,
+      9,
       1,
       3,
       0,
@@ -308,7 +412,7 @@
     ],
     [
       3,
-      1,
+      9,
       0,
       5,
       0,
@@ -361,6 +465,38 @@
       7,
       0,
       "IMAGE"
+    ],
+    [
+      10,
+      1,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      11,
+      1,
+      1,
+      8,
+      1,
+      "CLIP"
+    ],
+    [
+      12,
+      8,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      13,
+      8,
+      1,
+      9,
+      1,
+      "CLIP"
     ]
   ],
   "groups": [],

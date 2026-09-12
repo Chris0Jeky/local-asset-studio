@@ -9,20 +9,20 @@
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": [
-        "1",
-        1
+        "10",
+        0
       ],
-      "text": "score_9, score_8_up, score_7_up, source_cartoon, solo, adult fox adventurer, full body, standing, green travelling cloak, brown boots, holding a lantern, simple white background, expressive face, clean silhouette"
+      "text": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult fox adventurer, anthro, full body, standing, green travelling cloak, brown boots, holding a lantern, simple background, white background, expressive face, clean silhouette"
     }
   },
   "3": {
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": [
-        "1",
-        1
+        "10",
+        0
       ],
-      "text": "blurry, low quality, distorted, watermark, text, duplicated objects, cropped"
+      "text": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark"
     }
   },
   "4": {
@@ -37,12 +37,12 @@
     "class_type": "KSampler",
     "inputs": {
       "model": [
-        "1",
+        "9",
         0
       ],
       "seed": 2026091103,
       "steps": 30,
-      "cfg": 6,
+      "cfg": 6.0,
       "sampler_name": "euler_ancestral",
       "scheduler": "normal",
       "positive": [
@@ -81,6 +81,48 @@
         0
       ],
       "filename_prefix": "Studio/pony"
+    }
+  },
+  "8": {
+    "class_type": "LoraLoader",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ],
+      "lora_name": "cinematic lighting.safetensors",
+      "strength_model": 0,
+      "strength_clip": 0
+    }
+  },
+  "9": {
+    "class_type": "LoraLoader",
+    "inputs": {
+      "model": [
+        "8",
+        0
+      ],
+      "clip": [
+        "8",
+        1
+      ],
+      "lora_name": "manga-ink-screentone.safetensors",
+      "strength_model": 0,
+      "strength_clip": 0
+    }
+  },
+  "10": {
+    "class_type": "CLIPSetLastLayer",
+    "inputs": {
+      "clip": [
+        "9",
+        1
+      ],
+      "stop_at_clip_layer": -2
     }
   }
 }

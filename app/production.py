@@ -18,6 +18,9 @@ import zipfile
 from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation
 
+import settings_planner
+import prompting
+
 
 def fingerprint(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
@@ -76,7 +79,8 @@ class Production:
         result={k:project[k] for k in ('id','root_id','created_at')}
         result.update(name=plan['name'],kind=plan['kind'],parent_project=plan.get('parent_project'),
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
-                      recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'))
+                      recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
+                      variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
         if full:result['plan']=plan
         return result
 
@@ -95,6 +99,53 @@ class Production:
         with self.studio.lock:
             return self._create(payload)
 
+    def plan(self, payload):
+        """Offer documented sweep variants.  Reserves nothing and submits nothing.
+
+        Route hook (server.do_POST): /api/experiments/plan -> production.plan(payload).
+        """
+        if not isinstance(payload,dict):raise ValueError('Plan intent must be an object')
+        preset=self.studio.preset(payload.get('preset_id'))
+        controls=payload.get('controls') or {}
+        if not isinstance(controls,dict):raise ValueError('controls must be an object')
+        mode=payload.get('mode','grid')
+        if mode not in ('grid','remix'):raise ValueError('Choose the settings grid or a LoRA remix')
+        kb,digest=settings_planner.load_kb(self.studio.root)
+        available=settings_planner.axes_for(preset,kb)
+        limit=payload.get('limit')
+        extra={} if limit is None else {'limit':limit}
+        if mode=='grid':
+            if not available:raise ValueError('The settings library documents no axis this recipe can change')
+            identifiers=payload.get('axes') or [axis['id'] for axis in available[:2]]
+            if not isinstance(identifiers,list):raise ValueError('axes must be a list of documented axis identifiers')
+            variants=settings_planner.plan_grid(preset,kb,controls,identifiers,**extra)
+        else:
+            variants=settings_planner.plan_remix(preset,kb,controls,**extra)
+        return {'mode':mode,'variants':[dict(v,description=settings_planner.describe(v)) for v in variants],
+                'axes_available':available,'knowledge_sha256':digest}
+
+    @staticmethod
+    def _variants(variants):
+        """Accept a planned sweep: labelled control overrides, one per candidate."""
+        if not isinstance(variants,list) or not 1<=len(variants)<=8:raise ValueError('Use one to eight planned variants')
+        result=[];labels=set()
+        for entry in variants:
+            if not isinstance(entry,dict):raise ValueError('Each variant must be an object with a label and controls')
+            label=entry.get('label')
+            if not isinstance(label,str) or not 1<=len(label.strip())<=120:raise ValueError('Every variant needs a label (1–120 characters)')
+            label=label.strip()
+            if label in labels:raise ValueError('Variant labels must differ')
+            labels.add(label)
+            controls=entry.get('controls')
+            if not isinstance(controls,dict) or not controls:raise ValueError('Every variant must set at least one control')
+            if any(isinstance(v,(dict,list)) or v is None for v in controls.values()):raise ValueError('Variant controls take numbers, text or documented choices')
+            rationale=entry.get('rationale','')
+            if not isinstance(rationale,str) or len(rationale)>2000:raise ValueError('Variant rationale must be text up to 2000 characters')
+            sources=entry.get('sources',[])
+            if not isinstance(sources,list) or any(not isinstance(s,str) for s in sources):raise ValueError('Variant sources must be a list of URLs')
+            result.append({'label':label,'controls':copy.deepcopy(controls),'rationale':rationale,'sources':sources[:12]})
+        return result
+
     def _create(self, payload):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
@@ -103,38 +154,57 @@ class Production:
         recipe=copy.deepcopy(payload.get('recipe'))
         if not isinstance(recipe,dict):raise ValueError('Choose a Studio recipe')
         recipe['batch_count']=1
-        axis=payload.get('axis','seed')
-        if axis not in ('seed','lora','cfg','steps','denoise'):raise ValueError('Choose seed, LoRA strength, guidance, steps or denoise')
-        values=payload.get('values')
-        if not isinstance(values,list) or not 1<=len(values)<=4:raise ValueError('Use one to four comparison values')
-        if any(isinstance(v,(dict,list,bool)) or v is None for v in values):raise ValueError('Comparison values must be numbers')
-        try:
-            if any(not Decimal(str(v)).is_finite() for v in values):raise ValueError('Comparison values must be finite numbers')
-        except InvalidOperation:raise ValueError('Comparison axes take numeric values, not filenames')
-        # Browser form controls arrive as strings. Compare their numeric meaning
-        # before preparing graphs so spellings such as 1, 1.0 and 1e0 cannot
-        # reserve and submit duplicate candidates.
-        normalized_values=[]
-        for value in values:
-            normalized=Decimal(str(value))
-            if normalized in normalized_values:raise ValueError('Comparison values must differ after numeric normalization')
-            normalized_values.append(normalized)
+        variants=self._variants(payload['variants']) if payload.get('variants') is not None else None
+        if variants is not None:
+            # A planned sweep changes several documented settings at once; the
+            # labels carry the meaning the single-axis values used to carry.
+            axis='variants';values=[v['label'] for v in variants];overrides=[v['controls'] for v in variants]
+        else:
+            axis=payload.get('axis','seed')
+            if axis not in ('seed','lora','cfg','steps','denoise'):raise ValueError('Choose seed, LoRA strength, guidance, steps or denoise')
+            values=payload.get('values')
+            if not isinstance(values,list) or not 1<=len(values)<=4:raise ValueError('Use one to four comparison values')
+            if any(isinstance(v,(dict,list,bool)) or v is None for v in values):raise ValueError('Comparison values must be numbers')
+            try:
+                if any(not Decimal(str(v)).is_finite() for v in values):raise ValueError('Comparison values must be finite numbers')
+            except InvalidOperation:raise ValueError('Comparison axes take numeric values, not filenames')
+            # Browser form controls arrive as strings. Compare their numeric meaning
+            # before preparing graphs so spellings such as 1, 1.0 and 1e0 cannot
+            # reserve and submit duplicate candidates.
+            normalized_values=[]
+            for value in values:
+                normalized=Decimal(str(value))
+                if normalized in normalized_values:raise ValueError('Comparison values must differ after numeric normalization')
+                normalized_values.append(normalized)
+            overrides=[{axis:value} for value in values]
         max_seconds=self._integer(payload.get('max_seconds',1800),'Time budget',60,14400)
         stages=[];bundle=None
-        for index,value in enumerate(values):
-            request=copy.deepcopy(recipe);request.setdefault('controls',{})[axis]=value
+        for index,override in enumerate(overrides):
+            request=copy.deepcopy(recipe);request.setdefault('controls',{}).update(override)
             preset,graph,path,controls,_=self.studio.prepare(request)
-            if not preset.get(axis):raise ValueError('The selected recipe does not support this comparison axis')
-            if axis=='lora' and isinstance(preset.get('defaults',{}).get('lora'),str):raise ValueError('This recipe binds a LoRA filename; choose a numeric comparison axis')
+            if variants is None and not preset.get(axis):raise ValueError('The selected recipe does not support this comparison axis')
+            if variants is None and axis=='lora' and isinstance(preset.get('defaults',{}).get('lora'),str):raise ValueError('This recipe binds a LoRA filename; choose a numeric comparison axis')
             if preset.get('family')=='Hunyuan3D 2.1' and not self.studio.config.get('terms_decisions',{}).get('Hunyuan3D 2.1'):
                 raise ValueError('Hunyuan3D needs its own recorded terms decision before automated experiments; use TRELLIS or authored geometry meanwhile')
-            if bundle is None:bundle=self.studio.production_preflight(preset,graph)
+            for key in ('positive','negative'):
+                for node,field in ([preset[key]] if preset.get(key) else [])+(preset.get('bindings_extra') or {}).get(key,[]):
+                    if prompting.has_wildcards(graph.get(str(node),{}).get('inputs',{}).get(str(field))):raise ValueError('Resolve prompt wildcards ({a|b}, __name__) before planning a comparison; they would re-roll per stage')
+            stage_bundle=self.studio.production_preflight(preset,graph)
+            if bundle is None:bundle=stage_bundle
+            else:
+                # Pruned LoRA slots make stage graphs heterogeneous: pin every model any stage loads.
+                for key in ('models','inputs'):
+                    seen={json.dumps(e,sort_keys=True) for e in bundle.get(key,[])}
+                    bundle[key]=bundle.get(key,[])+[e for e in stage_bundle.get(key,[]) if json.dumps(e,sort_keys=True) not in seen]
             # Validate every graph against the same live node schema, including changed enum/control values.
             self.studio.validate_graph(graph)
             request['references']=preset.get('_prepared_references',[])
             request['expected_template_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
             graph_hash=fingerprint(graph)
             stages.append({'operation':'comfy.generate.v1','label':chr(65+index),'request':request,'graph':graph,'graph_sha256':graph_hash})
+        # Different labels are not different work: two planned variants that resolve
+        # to the same graph would spend two reservations on one image.
+        if variants is not None and len({s['graph_sha256'] for s in stages})!=len(stages):raise ValueError('Planned variants must resolve to different graphs')
         identifier=uuid.uuid4().hex
         parent=payload.get('parent_project')
         with self.lock,self.connect() as db:
@@ -147,6 +217,7 @@ class Production:
                 if len(stages)>allowance:raise ValueError('Comparison exceeds the generation budget')
                 db.execute('INSERT INTO budgets(id,allowance) VALUES (?,?)',(root_id,allowance))
             plan={'version':1,'kind':'comparison','name':name.strip(),'recipe':recipe,'axis':axis,'values':values,
+                  'variants':variants,'knowledge_sha256':settings_planner.load_kb(self.studio.root)[1] if variants is not None else None,
                   'parent_project':parent,'max_seconds':max_seconds,'stages':stages,'bundle':bundle,
                   'repair_allowance':0,'review':'unreviewed','created_at':time.time()}
             plan['sha256']=fingerprint(plan)

@@ -301,6 +301,606 @@
       "family": "Wan 2.2 5B",
       "license": "Apache-2.0",
       "trigger": ""
+    },
+    {
+      "id": "krea2-darkbrush",
+      "name": "Krea 2 / official dark brush",
+      "file": "loras/krea2_darkbrush.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_darkbrush.safetensors",
+      "bytes": 469291992,
+      "sha256": "f47c4316dd93af66e0518c93b582f459571d4925b519133770c73a52cd5db7c6",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "monochrome ink wash style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-dotmatrix",
+      "name": "Krea 2 / official dot matrix",
+      "file": "loras/krea2_dotmatrix.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_dotmatrix.safetensors",
+      "bytes": 469291992,
+      "sha256": "805aa30d863347222485b9d3ce81642dbc70a73cebc95ab57219d98b878fceec",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "monochrome stippling style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-kidsdrawing",
+      "name": "Krea 2 / official kids drawing",
+      "file": "loras/krea2_kidsdrawing.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_kidsdrawing.safetensors",
+      "bytes": 469291992,
+      "sha256": "8c1d45d204aeb4e34a7d9e16a7d473917592ba0048b03f4e03e037e3578ca500",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "naive expressive sketch style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-neondrip",
+      "name": "Krea 2 / official neon drip",
+      "file": "loras/krea2_neondrip.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_neondrip.safetensors",
+      "bytes": 469291992,
+      "sha256": "a779c14435949eabae9ce0bface4320cad6672ef3547e8489107e3498d65e871",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "textured abstract style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-rainywindow",
+      "name": "Krea 2 / official rainy window",
+      "file": "loras/krea2_rainywindow.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_rainywindow.safetensors",
+      "bytes": 469291992,
+      "sha256": "7063a6f15ec6112ad3c06d79097b2a30a3ea7d9072821cb36021010d55989fe5",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "rainy window style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-softwatercolor",
+      "name": "Krea 2 / official soft watercolour",
+      "file": "loras/krea2_softwatercolor.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_softwatercolor.safetensors",
+      "bytes": 469291992,
+      "sha256": "3805e8655f19fbcac116542685e3f78f3a642e8fbfb857b5352bb32a4b3d445a",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "art deco watercolor style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-sunsetblur",
+      "name": "Krea 2 / official sunset blur",
+      "file": "loras/krea2_sunsetblur.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_sunsetblur.safetensors",
+      "bytes": 469291992,
+      "sha256": "194abdd531ca190d32799f26ab5bab634aa5ba3f07b7a60ffb282657db8bf3a0",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "ethereal motion blur style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-vintagetarot",
+      "name": "Krea 2 / official vintage tarot",
+      "file": "loras/krea2_vintagetarot.safetensors",
+      "repo": "Comfy-Org/Krea-2",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "url": "https://huggingface.co/Comfy-Org/Krea-2/resolve/main/loras/krea2_vintagetarot.safetensors",
+      "bytes": 469291992,
+      "sha256": "8cca96c56658fb3ac5269f9ef2245bd07cbf1b7a189f517c8763470bb1385f9f",
+      "license": "Krea 2 Community",
+      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "family": "Krea 2",
+      "trigger": "vintage tarot style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-turbo-4step",
+      "name": "Krea 2 Turbo / 4-step distill adapter",
+      "file": "loras/krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+      "repo": "lvladikov/Krea2-Turbo-Distill-4step-LoRA",
+      "revision": "main",
+      "source": "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA",
+      "url": "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA/resolve/main/krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+      "bytes": 438140968,
+      "sha256": "7590b2d2772f45d7b1252124c63918b1b807e93fbf9eab20546fa7233b4dc482",
+      "license": "Krea 2 Community",
+      "terms": "Community redistribution of the Krea 2 Turbo distill under krea-2-community-license (repo card; PDF not read). Downloaded and SHA-256 verified 2026-09-12. Use with steps 4, cfg 1.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        0.75,
+        1.0
+      ]
+    },
+    {
+      "id": "fal-krea2-aged-tempera-fable",
+      "name": "Krea 2 / fal aged tempera fable",
+      "file": "loras/fal-krea2-aged-tempera-fable.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/aged-tempera-fable.safetensors",
+      "bytes": 469287984,
+      "sha256": "e83e32efa2137a787386993f4ff7fe4ba03bfc3ada420e1095c7e0e6ee4bce68",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "aged tempera fable style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-airy-anime-watercolor",
+      "name": "Krea 2 / fal airy anime watercolor",
+      "file": "loras/fal-krea2-airy-anime-watercolor.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/airy-anime-watercolor.safetensors",
+      "bytes": 234676792,
+      "sha256": "070d1dcaac9ccac17435c157a844fff1a4d51be1c754ff4b183023113e02dd2b",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "airy anime watercolor style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-amber-dusk-anime",
+      "name": "Krea 2 / fal amber dusk anime",
+      "file": "loras/fal-krea2-amber-dusk-anime.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/amber-dusk-anime.safetensors",
+      "bytes": 469287984,
+      "sha256": "5cbfba8452ac92ebca290cacc55895a090d6170eb995144dd3a6ad4206332f05",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "amber dusk anime style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-azure-cel-shaded",
+      "name": "Krea 2 / fal azure cel shaded",
+      "file": "loras/fal-krea2-azure-cel-shaded.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/azure-cel-shaded.safetensors",
+      "bytes": 469287984,
+      "sha256": "d317d794185887b4ceaf0225fe39738daa30b39f888637de4061d41838a47369",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "azure cel shaded style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-azure-manga-bloom",
+      "name": "Krea 2 / fal azure manga bloom",
+      "file": "loras/fal-krea2-azure-manga-bloom.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/azure-manga-bloom.safetensors",
+      "bytes": 469287984,
+      "sha256": "2bc712e6d4a0d584ffde64440aa25ff9d798c25c558e525ff5608a32c46aee6a",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "azure manga bloom style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-baroque-dreamscape-oil",
+      "name": "Krea 2 / fal baroque dreamscape oil",
+      "file": "loras/fal-krea2-baroque-dreamscape-oil.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/baroque-dreamscape-oil.safetensors",
+      "bytes": 469287984,
+      "sha256": "678f1505d1b2a384bb0b08e6749b2d170827f3769f5678936c1108a7f3f59327",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "baroque dreamscape oil style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-bold-impasto-sunlit",
+      "name": "Krea 2 / fal bold impasto sunlit",
+      "file": "loras/fal-krea2-bold-impasto-sunlit.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/bold-impasto-sunlit.safetensors",
+      "bytes": 234676792,
+      "sha256": "933eb65a04189f3e0450b90f241037ccb45ed5ae39176d4e5c98d1417de12f90",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "bold impasto sunlit style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-cel-shaded-daytime-anime",
+      "name": "Krea 2 / fal cel shaded daytime anime",
+      "file": "loras/fal-krea2-cel-shaded-daytime-anime.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/cel-shaded-daytime-anime.safetensors",
+      "bytes": 234676792,
+      "sha256": "9d7ecc9a07a070327c8069275fc41065baa7fb25a7a14e0316065ef141d8ee9c",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "cel shaded daytime anime style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-chibi-watercolor-pastel-anime",
+      "name": "Krea 2 / fal chibi watercolor pastel anime",
+      "file": "loras/fal-krea2-chibi-watercolor-pastel-anime.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/chibi-watercolor-pastel-anime.safetensors",
+      "bytes": 234676792,
+      "sha256": "1bd31c6d8aaa57fcedb5cc6109fb22047555dfae3f3ba912283c850e027b497d",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "chibi watercolor pastel anime style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-cobalt-sky-anime",
+      "name": "Krea 2 / fal cobalt sky anime",
+      "file": "loras/fal-krea2-cobalt-sky-anime.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/cobalt-sky-anime.safetensors",
+      "bytes": 234676792,
+      "sha256": "e5e1ddc71d45a940649eaabbb17e625a55f145e608fee79d114e3259c1ea3ab3",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "cobalt sky anime style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-cozy-storybook-gouache",
+      "name": "Krea 2 / fal cozy storybook gouache",
+      "file": "loras/fal-krea2-cozy-storybook-gouache.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/cozy-storybook-gouache.safetensors",
+      "bytes": 469287984,
+      "sha256": "408bb66bef2bc7ee8cb1464316f21f0c57601031387be45dcad88e61286a0bfa",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "cozy storybook gouache style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-crimson-blue-inkline-fantasy",
+      "name": "Krea 2 / fal crimson blue inkline fantasy",
+      "file": "loras/fal-krea2-crimson-blue-inkline-fantasy.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/crimson-blue-inkline-fantasy.safetensors",
+      "bytes": 234676792,
+      "sha256": "64e6e82d1c6324e2c8a64b7cb951359b69cdec52240a9020797231e331398813",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "crimson blue inkline fantasy style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-dark-chiaroscuro-oil",
+      "name": "Krea 2 / fal dark chiaroscuro oil",
+      "file": "loras/fal-krea2-dark-chiaroscuro-oil.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/dark-chiaroscuro-oil.safetensors",
+      "bytes": 234676792,
+      "sha256": "bb8babb7e26e04deaff7ac5efe1efa7fe44d3dc9b043da5744b234d6fa0e6486",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "dark chiaroscuro oil style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-dark-fantasy-film",
+      "name": "Krea 2 / fal dark fantasy film",
+      "file": "loras/fal-krea2-dark-fantasy-film.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/dark-fantasy-film.safetensors",
+      "bytes": 234676792,
+      "sha256": "d93da9e2206567e0cee75cddcece9e9a8c1d3fa3fa9fda00bcfd9a51e1391cda",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "dark fantasy film style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-detailed-manga-inkwork",
+      "name": "Krea 2 / fal detailed manga inkwork",
+      "file": "loras/fal-krea2-detailed-manga-inkwork.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/detailed-manga-inkwork.safetensors",
+      "bytes": 469287984,
+      "sha256": "3b0c5fef5a26a4589b3b10e26703ee7b987be01b45493c1a0f59eb3a707baee5",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "detailed manga inkwork style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-emerald-fantasy-paperback",
+      "name": "Krea 2 / fal emerald fantasy paperback",
+      "file": "loras/fal-krea2-emerald-fantasy-paperback.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/emerald-fantasy-paperback.safetensors",
+      "bytes": 469287984,
+      "sha256": "b7e3b650de59f1bd0ec1919db13d84c9d4dde6471612663ba0a8d65f6218b712",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "emerald fantasy paperback style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-emerald-lamplight-oil",
+      "name": "Krea 2 / fal emerald lamplight oil",
+      "file": "loras/fal-krea2-emerald-lamplight-oil.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/emerald-lamplight-oil.safetensors",
+      "bytes": 469287984,
+      "sha256": "a1aecdad421a5075a8da15c34c2e3bc3cb7d9a242f4fc2abb090c2ad43f1eab2",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12. No download receipt exists for this file; the SHA-256 and byte count were computed from the installed copy on 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "emerald lamplight oil style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "krea2-textfusion",
+      "name": "Krea 2 / TextFusion refusal reduction",
+      "file": "loras/Krea2_TextFusion_Refusal_Reduction.safetensors",
+      "source": "https://civitai.com/models/2775340?modelVersionId=3125118",
+      "url": "https://civitai.com/api/download/models/3125118",
+      "bytes": 27665664,
+      "sha256": "84ec722ddab93f6489c5315bca25de5dd1a7b7ec5045a3c4ce2f97f62e54e8e6",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence not allowed; listed as krea-2-community-license. Owner downloaded 2026-09-12; SHA-256 verified. Edits the txtfusion blocks: stacking with other txtfusion LoRAs is unmeasured.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-niji-sweet-spot",
+      "name": "Krea 2 / Niji Sweet Spot v2A",
+      "file": "loras/Niji_Sweet_Spot_Krea2_v2A.safetensors",
+      "source": "https://civitai.com/models/2554999?modelVersionId=3210573",
+      "url": "https://civitai.com/api/download/models/3210573",
+      "bytes": 228588904,
+      "sha256": "1aa1e5a2bd6222759ab59b77318a4e2a93b78ab12d795c82e4d237a2037c2c32",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent (no Sell); derivatives NOT allowed. Owner downloaded 2026-09-12; SHA-256 verified. Trigger goes at the start of the prompt.",
+      "family": "Krea 2",
+      "trigger": "@NJSW33T",
+      "strength": [
+        0.8,
+        1.5
+      ]
+    },
+    {
+      "id": "krea2-nijisis",
+      "name": "Krea 2 / NIJISIS NijiJourney-V7 look",
+      "file": "loras/NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+      "source": "https://civitai.com/models/2863875?modelVersionId=3302337",
+      "url": "https://civitai.com/api/download/models/3302337",
+      "bytes": 457113176,
+      "sha256": "7266ba9f6be571054d61ed04bb9414a1396366a6af19df0c84e12b86ec266a7e",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent (no Sell); derivatives allowed. Owner downloaded 2026-09-12 (Buzz spent by the owner); SHA-256 verified against the installed file. dim 64 / alpha 32; trigger goes at the start of the prompt.",
+      "family": "Krea 2",
+      "trigger": "@NIJISIS",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "krea2-koukouya",
+      "name": "Krea 2 / koukouya style (not installed)",
+      "file": "loras/krea2_koukouya_sytle_c1-st3000.safetensors",
+      "source": "https://civitai.com/models/2844656?modelVersionId=3211621",
+      "url": "https://civitai.com/api/download/models/3211621",
+      "bytes": 234680576,
+      "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
+      "license": "Krea 2 Community (civitai listing)",
+      "terms": "civitai listing: allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed. NOT installed here: the civitai download endpoint needs a personal API key (HUMAN_TODO). Size and SHA-256 come from the civitai version metadata read 2026-09-12, not from a local file. Author: 1280x1856 or 1536x1536, weight 1.0, er_sde/simple, 8-10 steps.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "fal-krea2-amber-lit-fantasy-filmset",
+      "name": "Krea 2 / fal amber lit fantasy filmset",
+      "file": "loras/fal-krea2-amber-lit-fantasy-filmset.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/amber-lit-fantasy-filmset.safetensors",
+      "bytes": 234676792,
+      "sha256": "18af0a8e30173061e3a5d6c6793c834bd965b99591e3225d46f2b6ea649f673b",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "amber lit fantasy filmset style",
+      "strength": [
+        1.0,
+        1.25
+      ]
+    },
+    {
+      "id": "fal-krea2-azure-sunlit-storybook",
+      "name": "Krea 2 / fal azure sunlit storybook",
+      "file": "loras/fal-krea2-azure-sunlit-storybook.safetensors",
+      "repo": "ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "revision": "main",
+      "source": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
+      "url": "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs/resolve/main/comfy/azure-sunlit-storybook.safetensors",
+      "bytes": 469287984,
+      "sha256": "4194343715db34ff37cb5c6454ee7180bb9a7eab50781ddfed6101a12f6b4f31",
+      "license": "Krea 2 Community",
+      "terms": "fal/ilkerzgi style LoRA index, licensed krea-2-community-license in the repo card (PDF not read). Downloaded and SHA-256 verified 2026-09-12.",
+      "family": "Krea 2",
+      "trigger": "azure sunlit storybook style",
+      "strength": [
+        1.0,
+        1.25
+      ]
     }
   ],
   "collections": [

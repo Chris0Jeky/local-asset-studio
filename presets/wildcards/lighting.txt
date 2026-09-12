@@ -1,0 +1,21 @@
+# Lighting. Danbooru-valid tags that also read as phrases in a Krea 2 paragraph.
+backlighting
+rim lighting
+volumetric lighting
+light rays
+dappled sunlight
+chiaroscuro
+soft diffused light
+lantern light
+candlelight
+firelight
+moonlight
+bioluminescent glow
+glowing runes
+sunbeam through a window
+overcast flat light
+low key lighting
+high key lighting
+golden hour sunlight
+underlighting from below
+caustic light on wet stone
