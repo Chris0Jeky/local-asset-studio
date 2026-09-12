@@ -246,12 +246,14 @@ press **Generate** explicitly. Opening either action does not start a render or 
   the `face_yolov8s` detector, then with `hand_yolov8n`, repainting only the detected crops with WAI v17 at
   denoise 0.4 (faces) / 0.45 (hands). Nothing outside the boxes changes. It is model-agnostic on the input
   side, so a Krea, Anima or SDXL image all go through the same pass; the repaint style is WAI's, which suits
-  anime faces and hands. One denoise control drives both passes, and only two settings have actually been
-  measured on this machine: **start at the authored 0.4 face / 0.45 hand** — that is the pair that repaired
-  the six-fingered NoobAI hand (job `14caa4fb`, 36.2 s), at the cost of a slight expression shift in the face
-  crop. "Gentle" (0.3) is the measured-insufficient option: it sharpened the face but left the extra digit in
-  place (job `e4e49006`, 42.3 s, `target_defect_fixed: false`), so reach for it only when the face is what you
-  want touched and the hand is already acceptable. "Strong" (0.55) is unmeasured; it should redraw a hand more
+  anime faces and hands. Only two settings have actually been measured on this machine. The repair that fixed
+  the six-fingered NoobAI hand (job `14caa4fb`, 36.2 s, at the cost of a slight expression shift in the face
+  crop) ran the **authored graph values, 0.4 face / 0.45 hand** — its recipe carries no `denoise` control. The
+  Create UI exposes one Denoise control that drives both passes (the catalog fans it to the hand node), so
+  that exact pair is not selectable there; the nearest UI setting is **0.45 for both**, which is unmeasured.
+  "Gentle" (0.3 for both) is the measured-insufficient option: it sharpened the face but left the extra digit
+  in place (job `e4e49006`, 42.3 s, `target_defect_fixed: false`), so reach for it only when the face is what
+  you want touched and the hand is already acceptable. "Strong" (0.55) is unmeasured; it should redraw a hand more
   aggressively and will repaint the face harder too.
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
