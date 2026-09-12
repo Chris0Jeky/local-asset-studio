@@ -1611,6 +1611,130 @@
       "modality": "image"
     },
     {
+      "id": "anime-detail-fix",
+      "name": "Anime Detail Fix (faces, then hands)",
+      "category": "Anime quality",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anime-detail-fix-api.json",
+      "verified": false,
+      "commercial_note": "Repaints crops with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "12",
+        "seed"
+      ],
+      "steps": [
+        "12",
+        "steps"
+      ],
+      "cfg": [
+        "12",
+        "cfg"
+      ],
+      "denoise": [
+        "12",
+        "denoise"
+      ],
+      "sampler": [
+        "12",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "12",
+        "scheduler"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "bindings_extra": {
+        "seed": [
+          [
+            "13",
+            "seed"
+          ]
+        ],
+        "steps": [
+          [
+            "13",
+            "steps"
+          ]
+        ],
+        "cfg": [
+          [
+            "13",
+            "cfg"
+          ]
+        ],
+        "sampler": [
+          [
+            "13",
+            "sampler_name"
+          ]
+        ],
+        "scheduler": [
+          [
+            "13",
+            "scheduler"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "choices": {
+        "sampler": [
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "euler_ancestral",
+          "euler",
+          "dpmpp_3m_sde"
+        ],
+        "scheduler": [
+          "karras",
+          "simple",
+          "normal",
+          "sgm_uniform",
+          "beta"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://github.com/ltdrdata/ComfyUI-Impact-Pack",
+      "description": "The correction pass for finished anime images from any family: two Impact Pack FaceDetailer stages find faces (face_yolov8s) and then hands (hand_yolov8n) with YOLO, and repaint only those crops with WAI v17 at a low denoise, so the rest of the picture is untouched. The positive text steers the face pass; the hand pass has its own authored text. Denoise 0.4 keeps identity; go to 0.55 only for a broken hand.",
+      "stages": [
+        "Reference image",
+        "YOLO face boxes",
+        "WAI repaint at low denoise",
+        "YOLO hand boxes",
+        "WAI hand repaint",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Gentle (denoise 0.3)",
+          "controls": {
+            "denoise": 0.3
+          }
+        },
+        {
+          "name": "Strong (denoise 0.55)",
+          "controls": {
+            "denoise": 0.55
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
       "id": "anime-esrgan",
       "name": "Anime upscale - ESRGAN 2x",
       "category": "Anime quality",
@@ -3148,6 +3272,180 @@
       ]
     },
     {
+      "id": "anima-artist-stack",
+      "name": "Anima Artist Stack",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anima-artist-stack-api.json",
+      "verified": false,
+      "commercial_note": "CircleStone Labs Non-Commercial model weights; each stacked artist-style LoRA carries its own civitai terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "lora5": [
+        "14",
+        "strength_model"
+      ],
+      "lora5_name": [
+        "14",
+        "lora_name"
+      ],
+      "lora6": [
+        "15",
+        "strength_model"
+      ],
+      "lora6_name": [
+        "15",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Anima",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "dpmpp_2m_sde_gpu",
+          "dpmpp_2m",
+          "res_multistep"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "normal",
+          "sgm_uniform"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://civitai.com/models/2458426?modelVersionId=2945208",
+      "description": "Anima base v1.0 with six artist-style adapter slots, authored at the strengths of the owner's reference image (xilmo 0.7, huashijw 0.6, koukouya 0.3, ke-ta 0.7, NEWANIMASTYLE 1.0, kieed 0.5). Anima also knows artist tags natively (@koukouya, @synswt, @kyano), so the 'Artist tags, no adapters' variant prunes every slot and leans on the base model alone. Strength 0 removes a slot from the submitted graph.",
+      "stages": [
+        "Prompt",
+        "Anima base v1.0",
+        "Six LoraLoaderModelOnly slots",
+        "30-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Reference stack 1328x1776",
+          "controls": {
+            "width": 1328,
+            "height": 1776,
+            "seed": 975436216244440
+          }
+        },
+        {
+          "name": "Artist tags, no adapters",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "lora3": 0,
+            "lora4": 0,
+            "lora5": 0,
+            "lora6": 0,
+            "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+            "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+            "cfg": 3,
+            "sampler": "dpmpp_2m_sde_gpu",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Turbo 8-step audition (slot 6 = turbo LoRA)",
+          "controls": {
+            "lora6_name": "anima-turbo-lora-v0.2.safetensors",
+            "lora6": 1.0,
+            "steps": 8,
+            "cfg": 1,
+            "sampler": "euler",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Half-strength stack",
+          "controls": {
+            "lora": 0.35,
+            "lora2": 0.3,
+            "lora3": 0.15,
+            "lora4": 0.35,
+            "lora5": 0.5,
+            "lora6": 0.25
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ]
+    },
+    {
       "id": "wan22-t2v",
       "name": "Wan 2.2 - Text to Video",
       "category": "Video",
@@ -4226,6 +4524,131 @@
         }
       ],
       "execution_note": "Executed 2026-09-12 through Studio job f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e (variant '4-step audition', 207 s at 1024x1024); image inspected. Other style pairs are not yet run. Not an art approval."
+    },
+    {
+      "id": "krea-refine",
+      "name": "Krea 2 Refine Pass (img2img polish)",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-refine-api.json",
+      "verified": false,
+      "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "denoise": [
+        "7",
+        "denoise"
+      ],
+      "reference": [
+        "6",
+        "image"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.35 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
+      "stages": [
+        "Reference image",
+        "Qwen VAE encode",
+        "Krea 2 Turbo + adapters",
+        "4-step re-sample at low denoise",
+        "Qwen VAE decode",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Light touch (denoise 0.25)",
+          "controls": {
+            "denoise": 0.25
+          }
+        },
+        {
+          "name": "Redraw (denoise 0.5, 6 steps)",
+          "controls": {
+            "denoise": 0.5,
+            "steps": 6
+          }
+        },
+        {
+          "name": "Full 8-step without the distill LoRA",
+          "controls": {
+            "lora3": 0,
+            "steps": 8,
+            "denoise": 0.4
+          }
+        }
+      ]
     }
   ]
 }
