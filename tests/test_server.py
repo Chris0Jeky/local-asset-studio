@@ -309,6 +309,17 @@ class ServerTests(unittest.TestCase):
         annotated=live.recipes()['recipes'][0]
         self.assertFalse(annotated['available']);self.assertEqual(annotated['missing'],['first.safetensors'])
 
+    def test_new_read_routes_dispatch_and_stay_loopback_only(self):
+        handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,[URLError('offline')])
+        handler.headers={'Host':'127.0.0.1:8191'};sent=[]
+        handler._json=lambda status,obj:sent.append((status,obj))
+        for path in ('/api/options','/api/knowledge','/api/recipes'):
+            handler.path=path;handler.do_GET()
+        self.assertEqual([s for s,_ in sent],[200,200,200])
+        self.assertEqual(sent[0][1]['source'],'unavailable');self.assertFalse(sent[1][1]['available']);self.assertEqual(sent[2][1]['recipes'],[])
+        handler.headers={'Host':'evil.example:8191'};sent.clear();handler.path='/api/knowledge';handler.do_GET()
+        self.assertEqual(sent[0][0],403)
+
     def test_local_runtime_block_does_not_queue(self):
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[dict(PRESET,family='test-family')]}))
         s=self.studio();s.config['runtime_blocks']={'test-family':'Observed incompatible runtime'}
