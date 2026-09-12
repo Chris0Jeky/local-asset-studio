@@ -941,6 +941,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
             if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))
+            if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
             if self.path.startswith('/api/production/'):
                 parts=self.path.split('/');payload=self._body_json();identifier=parts[3]
                 if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))

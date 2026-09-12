@@ -115,7 +115,7 @@ style. Keep the negative short. Defaults euler_ancestral / normal, 30 steps, cfg
 25/30, cfg 6/7, sampler euler_ancestral or dpmpp_2m_sde, scheduler normal or karras. Pony LoRAs are their own
 ecosystem: Illustrious and SDXL-base adapters do not transfer reliably.
 
-## Anima Aesthetic 1.1
+## Anima (Anima Aesthetic 1.1)
 
 Prose first, tags after: the compact Qwen encoder reads sentences. This family *does* take a negative prompt
 (node 5 in the authored graphs). The authored graph is euler / simple, 30 steps, cfg 4.0 at 768x1152, and the
@@ -137,10 +137,7 @@ not because they are the anime lane.
 
 ## Family names and aliases
 
-The knowledge base keys families by their full names (`Anima Aesthetic 1.1`, `SDXL`, `Qwen Image Edit`) while
-some catalog entries use shorter strings (`Anima`, `SDXL 1.0`, `Qwen Image Edit 2511`). `family_aliases` at the
-top of `presets/settings-kb.json` maps catalog spelling to knowledge-base key; resolve a preset's family
-through it before looking up axes.
+The knowledge base keys families by the exact `family` strings used in `presets/catalog.json` (`Anima`, `SDXL 1.0`, `Qwen Image Edit 2511`, `Krea 2 Turbo`, ...), so `settings_planner.axes_for()` finds a preset's family without aliasing; `family_aliases` only maps the registry spelling `Krea 2` to `Krea 2 Turbo`.
 
 ## Recipes and wildcards
 

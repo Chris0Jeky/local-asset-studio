@@ -4038,7 +4038,8 @@
           "controls": {
             "lora3": 0,
             "lora4": 1.0,
-            "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors"
+            "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+            "positive": "@NJSW33T, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work baroque dreamscape oil style"
           }
         },
         {
