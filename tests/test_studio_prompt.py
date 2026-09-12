@@ -239,7 +239,12 @@ class HelperTests(unittest.TestCase):
             def log_message(self,*args):pass
             def do_GET(self):
                 self.send_response(200);self.end_headers();self.wfile.write(b'{"models":[]}')
-            def do_POST(self):self.send_response(302);self.send_header('Location','https://example.invalid');self.end_headers()
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get('Content-Length','0')))
+                self.send_response(302)
+                self.send_header('Location','https://example.invalid')
+                self.send_header('Content-Length','0')
+                self.end_headers()
         server=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever);thread.start()
         try:
             self.assertEqual(h.http_json(server.server_port,'GET','/api/tags'),{'models':[]})
