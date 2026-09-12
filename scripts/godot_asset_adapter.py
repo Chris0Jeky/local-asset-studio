@@ -22,6 +22,7 @@ from engine_validation import (EvidenceError, atlas_evidence, file_sha, inspect_
 
 GodotAdapterError = EvidenceError
 MAX_MANIFEST_BYTES = 4 * 1024**2
+LOCAL_CONFIG = Path(__file__).resolve().parents[1] / 'config/local.json'
 FILTERS = {'nearest': 1, 'linear': 2}
 FIXED_FPS = 240
 MAX_CYCLE_MS = 30_000
@@ -263,10 +264,8 @@ def execute(input_root, atlas_manifest, output_root, godot_path, glb_path=None, 
         write_json(target / 'atlas-source-report.json', original)
         gltf = None
         if glb_path:
-            if node_path is None:
-                config = Path(__file__).resolve().parents[1] / 'config/local.json'
-                if config.is_file():
-                    node_path = read_json(config).get('node')
+            if node_path is None and LOCAL_CONFIG.is_file():
+                node_path = read_json(LOCAL_CONFIG).get('node')
             gltf = validate_glb(target / 'assets/ember.glb', node_path, target, min(60, remaining()))
             write_json(target / 'gltf-validation.json', gltf)
         runtime = preflight(godot_path, min(30, remaining()), target)
