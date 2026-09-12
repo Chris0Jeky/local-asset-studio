@@ -62,6 +62,15 @@ the final filename becomes visible to ComfyUI. They preserve 20 GiB of working h
 | `background_removal` | BiRefNet foreground extraction |
 | `upscale_models` | Learned image upscalers such as ESRGAN |
 | `latent_upscale_models` | Optional latent video upscalers used by community workflows |
+| `ipadapter` | IP-Adapter reference-identity weights, paired with a `clip_vision` encoder |
+| `ultralytics` | Ultralytics face, hand and person detectors under `bbox/` and `segm/` |
+| `inpaint` | Inpaint heads and models such as the Fooocus head and MAT Places512 |
+| `vae_approx` | The small TAESD/TAEF1 decoders ComfyUI uses for live latent previews |
+
+`ipadapter`, `ultralytics`, `inpaint` and `vae_approx` hold weights that are not `.safetensors`
+(detector `.pt`, head `.pth`, quantised `.gguf`). Those are **pin only**: `library.json` records the
+size, SHA-256 and terms so **Models & folders** can report presence, but the installer refuses to
+write them and the card offers no install button. Copy them in by hand from the pinned source.
 
 Your downloaded `minimax_h3_fl2va_pruned_int8_convrot.safetensors` belongs in
 `models\diffusion_models`. The configured PC uses an NTFS hard link to the
