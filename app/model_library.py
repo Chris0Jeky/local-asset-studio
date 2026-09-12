@@ -5,13 +5,13 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import shutil
 import threading
 import time
 import uuid
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+from download_contracts import InstallLease, asset_id as checked_id, file_identity, publish_verified, relative_model_path, validate_pins, validate_response
 
 FOLDERS = {
     "checkpoints": "Complete image models", "diffusion_models": "Diffusion / video / 3D models",
@@ -53,19 +53,29 @@ class ModelLibrary:
         return load(self.root / "models/library.json", {"assets": [], "collections": []})
 
     def asset(self, asset_id):
+        checked_id(asset_id)
         for asset in self.manifest().get("assets", []):
             if asset.get("id") == asset_id:
-                return asset
+                validate_pins(asset)
+                return dict(asset)
         raise ValueError("Unknown curated model")
 
     def destination(self, asset):
-        relative = Path(asset["file"])
+        relative = relative_model_path(asset["file"])
+        self._check_path(self.models / relative)
         target = (self.models / relative).resolve()
         if relative.is_absolute() or not target.is_relative_to(self.models) or relative.parts[0] not in FOLDERS:
             raise ValueError("Model destination is outside a supported model folder")
         if target.suffix != ".safetensors":
             raise ValueError("Automatic installation supports safetensors weights only")
         return target
+
+    def _check_path(self, path):
+        if not path.is_relative_to(self.models):raise ValueError('Model path escapes the library')
+        for candidate in (path,*path.parents):
+            if candidate==self.models:break
+            if candidate.is_symlink() or (hasattr(candidate,'is_junction') and candidate.is_junction()):
+                raise ValueError('Model or partial path is a link; original preserved')
 
     def folder(self, key):
         if key in FOLDERS:
@@ -88,11 +98,15 @@ class ModelLibrary:
         return {"path": str(path)}
 
     def _record(self, asset_id, **state):
+        checked_id(asset_id)
         path = self.state / (asset_id + ".json")
         state.update(id=asset_id, updated_at=time.time())
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
-        temp.write_text(json.dumps(state, indent=2), encoding="utf-8")
-        temp.replace(path)
+        try:
+            with temp.open('x',encoding='utf-8') as stream:
+                json.dump(state,stream,indent=2);stream.flush();os.fsync(stream.fileno())
+            temp.replace(path)
+        finally:temp.unlink(missing_ok=True)
         return state
 
     def snapshot(self):
@@ -102,10 +116,17 @@ class ModelLibrary:
             item = dict(asset)
             path = self.destination(asset)
             present = path.is_file()
+            checked_id(asset['id'])
             receipt = load(self.state / (asset["id"] + ".json"), {})
-            matches = present and path.stat().st_size == asset["bytes"]
-            verified = matches and receipt.get("status") == "installed" and receipt.get("sha256") == asset["sha256"] and receipt.get("mtime_ns") == path.stat().st_mtime_ns
-            item.update(path=str(path), present=present, size_matches=matches, verified=verified, download=receipt)
+            if not isinstance(receipt,dict):receipt={}
+            identity = file_identity(path) if present else None
+            matches = present and identity['size'] == asset["bytes"]
+            verified = bool(matches and receipt.get('version')==2 and receipt.get("status")=="installed"
+                            and receipt.get("sha256")==asset["sha256"] and receipt.get('path')==str(path)
+                            and receipt.get('file_identity')==identity)
+            reason = 'stat-fresh-sha256-receipt' if verified else ('missing' if not present else 'explicit-reverification-required')
+            item.update(path=str(path), present=present, size_matches=matches, verified=verified,
+                        verification=reason, download=receipt)
             assets.append(item)
         folders = [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in FOLDERS.items()]
         folders += [{"id": key, "label": label, "path": str(self.folder(key))} for key, label in [("input", "Reference inputs"), ("output", "Generated outputs"), ("workflows", "Editable workflows"), ("downloads", "Browser downloads")]]
@@ -119,79 +140,108 @@ class ModelLibrary:
                 "inventory": inventory, "storage": {"free_bytes": disk.free, "total_bytes": disk.total, "reserve_bytes": RESERVE_BYTES},
                 "model_root": str(self.models)}
 
+    def _validated_asset(self, asset_id):
+        asset=self.asset(asset_id);self.destination(asset)
+        validate_pins(asset)
+        return asset
+
     def start_install(self, asset_id):
-        asset = self.asset(asset_id)
-        self.destination(asset)
-        if (self.state / "install.lock").exists():
-            raise ValueError("Another installer is active. Check download progress before starting another.")
-        if not self.lock.acquire(blocking=False):
-            raise ValueError("Another model is installing. Wait for it to finish before starting the next.")
-        state = self._record(asset_id, status="queued", bytes_done=0, bytes_total=asset["bytes"], message="Waiting for download worker")
-        def work():
+        asset=self._validated_asset(asset_id)
+        if not self.lock.acquire(blocking=False):raise ValueError('Another model is installing; inspect its progress first')
+        lease=None
+        try:
+            # Reserve across CLI/server processes before publishing queued state.
+            lease=InstallLease(self.state/'install.lock',asset_id)
+            state=self._record(asset_id,status='queued',bytes_done=0,bytes_total=asset['bytes'],message='Waiting for download worker')
+            def work():
+                try:self._install(asset)
+                except Exception as exc:self._failed(asset,exc)
+                finally:
+                    try:lease.release()
+                    finally:self.lock.release()
+            threading.Thread(target=work,daemon=True,name='studio-model-download').start()
+            return state
+        except Exception as exc:
             try:
-                self.install(asset_id)
-            except Exception as exc:
-                self._record(asset_id, status="failed", message=str(exc)[:300])
-            finally:
-                self.lock.release()
-        threading.Thread(target=work, daemon=True, name="studio-model-download").start()
-        return state
+                if lease:
+                    try:self._failed(asset,exc)
+                    finally:lease.release()
+            finally:self.lock.release()
+            raise
 
     def install(self, asset_id):
-        asset = self.asset(asset_id)
-        target = self.destination(asset)
-        expected_size, expected_hash = asset["bytes"], asset["sha256"]
-        if not isinstance(expected_size, int) or expected_size <= 0 or not re.fullmatch(r"[0-9a-f]{64}", expected_hash):
-            raise ValueError("This asset needs pinned size and SHA-256 metadata before installation")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        # The lock also covers separate CLI/server processes; an interrupted lock is
-        # intentionally explicit, never interpreted as permission to overwrite work.
-        lock_path = self.state / "install.lock"
+        asset=self._validated_asset(asset_id)
+        lease=InstallLease(self.state/'install.lock',asset_id)
+        try:return self._install(asset)
+        except Exception as exc:
+            self._failed(asset,exc)
+            raise
+        finally:lease.release()
+
+    def _failed(self, asset, exc):
+        # Reporting a disk/path failure must not mask it or strand the worker gate.
+        done=None;partial=None
         try:
-            lock_file = lock_path.open("x", encoding="utf-8")
-        except FileExistsError:
-            raise ValueError("An installer lock exists. Check the active downloader before removing .runtime/downloads/install.lock")
-        try:
-            lock_file.write(str(os.getpid())); lock_file.close()
-            if target.exists():
-                self._record(asset_id, status="verifying", message="Checking existing model SHA-256")
-                if target.stat().st_size != expected_size or sha256(target) != expected_hash:
-                    raise ValueError("Existing destination differs from the pinned asset. It has been preserved.")
-            else:
-                # Reuse the exact downloaded file without duplicating tens of GB.
-                name = asset.get("download_filename", target.name)
-                if Path(name).name != name:
-                    raise ValueError("Invalid download basename")
-                local = Path.home() / "Downloads" / name
-                if local.is_file() and local.stat().st_size == expected_size:
-                    self._record(asset_id, status="verifying", message="Checking your existing browser download")
-                    if sha256(local) != expected_hash:
-                        raise ValueError("Browser download checksum differs from the source. Original preserved.")
-                    try:
-                        os.link(local, target)
-                    except OSError:
-                        if target.exists():
-                            raise ValueError("Destination appeared during installation; original preserved")
-                        if shutil.disk_usage(target.parent).free < expected_size + RESERVE_BYTES:
-                            raise ValueError("More disk space is needed to preserve 20 GiB of working headroom")
-                        part = self.partial_path(target)
-                        with part.open("xb") as output, local.open("rb") as source:
-                            shutil.copyfileobj(source, output, length=8 * 1024**2)
-                        if sha256(part) != expected_hash:
-                            raise ValueError("Copied file checksum failed; destination not installed")
-                        if target.exists():
-                            raise ValueError("Destination appeared during copy; both files preserved")
-                        part.rename(target)
+            part=self.partial_path(self.destination(asset));partial=str(part)
+            done=part.stat().st_size if part.is_file() else 0
+        except (OSError,ValueError):pass
+        try:self._record(asset['id'],status='failed',bytes_done=done,bytes_total=asset['bytes'],
+                         sha256=asset['sha256'],partial_path=partial,message=str(exc)[:300])
+        except OSError as reporting_error:
+            exc.add_note('Failure receipt could not be written: '+str(reporting_error))
+
+    @staticmethod
+    def _verify(path, asset):
+        before=file_identity(path)
+        if before['size']!=asset['bytes'] or sha256(path)!=asset['sha256']:
+            raise ValueError('File size or checksum differs from the pinned asset. Original and partial files preserved.')
+        if before!=file_identity(path):raise ValueError('File changed while hashing; original preserved, not verified')
+        return before
+
+    def _install(self, asset):
+        asset_id=asset['id'];target=self.destination(asset)
+        expected_size,expected_hash=asset['bytes'],asset['sha256']
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if target.exists():
+            self._record(asset_id,status='verifying',message='Checking existing model SHA-256')
+            identity=self._verify(target,asset)
+        else:
+            # Reuse a trusted hash without duplicating tens of GB. Shared inode
+            # changes invalidate the receipt; this is not an immutable source copy.
+            name=asset.get('download_filename',target.name)
+            if not isinstance(name,str) or relative_model_path(name).name!=name:raise ValueError('Invalid download basename')
+            local=Path.home()/'Downloads'/name
+            if local.is_file() and local.stat().st_size==expected_size:
+                self._record(asset_id,status='verifying',message='Checking your existing browser download')
+                verified=self._verify(local,asset)
+                self._check_path(target)
+                try:os.link(local,target)
+                except OSError:
+                    if target.exists() or target.is_symlink():raise ValueError('Destination appeared during installation; original preserved')
+                    if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
+                    part=self.partial_path(target)
+                    with part.open('xb') as output,local.open('rb') as source:
+                        while chunk:=source.read(4*1024**2):
+                            if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')
+                            if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:raise ValueError('Insufficient disk space during copy; partial preserved')
+                            output.write(chunk)
+                        output.flush();os.fsync(output.fileno())
+                    identity=publish_verified(part,target,self._verify(part,asset))
                 else:
-                    self._download(asset, target)
-            return self._record(asset_id, status="installed", bytes_done=expected_size, bytes_total=expected_size,
-                                sha256=expected_hash, mtime_ns=target.stat().st_mtime_ns,
-                                message="Installed and SHA-256 verified. Reload ComfyUI's model lists.")
-        finally:
-            lock_path.unlink(missing_ok=True)
+                    identity=file_identity(target)
+                    if any(identity[k]!=verified[k] for k in ('device','inode','size','mtime_ns')):
+                        raise ValueError('Browser file changed during linking; files preserved, not verified')
+            else:identity=self._download(asset,target)
+        # Metadata freshness prevents a receipt migrating between roots or replacement files.
+        if file_identity(target)!=identity:raise ValueError('Installed file changed before receipt; reverify explicitly')
+        return self._record(asset_id,version=2,status='installed',path=str(target),file_identity=identity,
+                            bytes_done=expected_size,bytes_total=expected_size,sha256=expected_hash,
+                            mtime_ns=identity['mtime_ns'],message="Installed and SHA-256 verified. Reload ComfyUI's model lists.")
 
     def partial_path(self, target):
         part = target.with_suffix(target.suffix + ".part")
+        self._check_path(part)
+        if part.exists() and (not part.is_file() or part.stat().st_nlink!=1):raise ValueError('Partial download must be an unshared regular file; original preserved')
         if part.is_symlink() or not part.resolve().is_relative_to(self.models):
             raise ValueError("Partial download points outside the model library")
         return part
@@ -209,25 +259,26 @@ class ModelLibrary:
         if shutil.disk_usage(target.parent).free < size - offset + RESERVE_BYTES:
             raise ValueError("More disk space is needed to preserve 20 GiB of working headroom")
         if offset < size:
-            req = Request(url, headers={"User-Agent": "LocalAssetStudio/1", **({"Range": f"bytes={offset}-"} if offset else {})})
+            req = Request(url, headers={"User-Agent": "LocalAssetStudio/1", "Accept-Encoding": "identity", **({"Range": f"bytes={offset}-"} if offset else {})})
             with urlopen(req, timeout=60) as response:
-                if offset and (response.status != 206 or not response.headers.get("Content-Range", "").startswith(f"bytes {offset}-")):
-                    raise ValueError("Source did not honor resume. Partial download preserved.")
+                validate_response(response,offset,size)
                 start = time.time(); last = 0; original = offset
-                with part.open("ab") as stream:
+                self.partial_path(target)
+                with part.open("ab" if part.exists() else "xb") as stream:
+                    if stream.tell()!=offset:raise ValueError('Partial file changed before append; original preserved')
                     while chunk := response.read(4 * 1024**2):
                         if offset + len(chunk) > size:
                             raise ValueError("Download exceeds pinned size; destination not installed")
+                        if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:
+                            raise ValueError('Insufficient disk space during transfer; partial download preserved')
                         stream.write(chunk); offset += len(chunk)
                         now = time.time()
                         if now - last > 2:
                             self._record(asset["id"], status="downloading", bytes_done=offset, bytes_total=size,
                                          bytes_per_second=(offset-original)/max(now-start, .01), message="Downloading verified-source weights")
                             last = now
+                    stream.flush();os.fsync(stream.fileno())
         self._record(asset["id"], status="verifying", bytes_done=offset, bytes_total=size, message="Checking SHA-256 before installation")
-        if part.stat().st_size != size or sha256(part) != asset["sha256"]:
-            raise ValueError("Download is incomplete or checksum failed. Partial file preserved; nothing installed.")
-        # Never overwrite a destination created while the transfer was running.
-        if target.exists():
-            raise ValueError("Destination appeared during download; both files preserved")
-        part.rename(target)
+        identity=self._verify(part,asset)
+        self._check_path(target)
+        return publish_verified(part,target,identity)

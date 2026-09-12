@@ -1,0 +1,35 @@
+name: Windows runtime safety
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'tests/test_backend*.py'
+      - 'tests/test_model*.py'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/runtime-safety.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'tests/test_backend*.py'
+      - 'tests/test_model*.py'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/runtime-safety.yml'
+permissions:
+  contents: read
+concurrency:
+  group: runtime-safety-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  fault-contracts:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p test_backend_safety.py -v
+      - run: python -m unittest discover -s tests -p test_model_install_safety.py -v
+      - run: python -m unittest discover -s tests -p test_model_library.py -v

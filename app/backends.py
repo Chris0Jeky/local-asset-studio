@@ -1,12 +1,18 @@
 """Explicit switches between known local ComfyUI environments, never package upgrades."""
 from __future__ import annotations
+import copy
 import json
 from pathlib import Path
 import subprocess
 import threading
 import time
 import uuid
-from urllib.request import urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
+from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):return None
 
 
 class BackendManager:
@@ -27,30 +33,43 @@ class BackendManager:
                   'python':str(python),'port':8194,'entry':str(studio.root/'scripts/h3-launch.py'),
                   'description':'Opt-in encoder and diffusion loader; uses the main model folders without editing installed ComfyUI code'},
         }
+        ports=[]
+        for profile in self.profiles.values():
+            profile['port']=loopback_port(profile['url']);profile['url']=profile['url'].rstrip('/')
+            ports.append(profile['port'])
+        if len(set(ports))!=len(ports):raise ValueError('Managed backends must use distinct loopback ports')
         self.active='primary'
         try:
             saved=json.loads(self.state_path.read_text(encoding='utf-8'))
+            if not isinstance(saved,dict):raise ValueError('Invalid backend state')
             if saved.get('active') in self.profiles:self.active=saved['active']
-            self.operation=saved.get('operation')
+            self.operation=saved.get('operation') if isinstance(saved.get('operation'),dict) else None
             if self.operation and self.operation.get('status')=='running':self.operation.update(status='interrupted',message='Studio restarted during a switch. Inspect the runtime before trying again.')
         except (OSError,ValueError):pass
 
     @staticmethod
     def request(profile, route, timeout=2):
-        with urlopen(profile['url']+route,timeout=timeout) as response:return json.load(response)
+        loopback_port(profile['url'])
+        # Never send a local control request through environment proxies or redirects.
+        with build_opener(ProxyHandler({}),_NoRedirect()).open(profile['url']+route,timeout=timeout) as response:
+            payload=response.read(1024*1024+1)
+            if len(payload)>1024*1024:raise ValueError('Backend response exceeds the observation limit')
+            return json.loads(payload)
+
+    def readiness(self, profile):
+        return readiness(profile,self.studio.root)
 
     def available(self, profile):
-        extra=profile['id']=='primary' or (profile['id']=='hidream' and Path(profile['root'],'python_packages/transformers').is_dir()) or (profile['id']=='h3' and Path(profile['root'],'models/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors').is_file())
-        return Path(profile['python']).is_file() and Path(profile['root'],'main.py').is_file() and extra
+        return self.readiness(profile)['ready']
 
     def snapshot(self):
         profiles=[]
         for profile in self.profiles.values():
-            record={k:profile[k] for k in ('id','name','url','root','description')};record['installed']=self.available(profile)
-            try:record['online']=bool(self.request(profile,'/system_stats',0.8).get('system'))
+            record={k:profile[k] for k in ('id','name','url','root','description')};record['readiness']=self.readiness(profile);record['installed']=record['readiness']['ready']
+            try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        return {'active':self.active,'busy':self.busy,'operation':self.operation,'profiles':profiles}
+        return {'active':self.active,'busy':self.busy,'operation':copy.deepcopy(self.operation),'profiles':profiles}
 
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
@@ -68,65 +87,118 @@ class BackendManager:
     @staticmethod
     def matches_configured_process(profile, executable, argv, cwd):
         if Path(executable).resolve()!=Path(profile['python']).resolve():return False
-        files=[]
-        for arg in argv[1:]:
-            if isinstance(arg,str) and arg.lower().endswith('.py'):
-                files.append((Path(cwd)/arg).resolve())
-        if Path(profile['entry']).resolve() not in files:return False
+        # The entry must be the executed script, not a later .py argument to another command.
+        args=list(argv[1:])
+        while args and args[0] in ('-s','-u','-B','-E','-I','-O','-OO'):args.pop(0)
+        if not args or not isinstance(args[0],str) or args[0].startswith('-'):return False
+        if (Path(cwd)/args.pop(0)).resolve()!=Path(profile['entry']).resolve():return False
+        argv=args
         if profile['id']=='primary':
-            try:return argv[argv.index('--listen')+1]=='127.0.0.1' and argv[argv.index('--port')+1]==str(profile['port'])
+            try:return argv.count('--listen')==1 and argv.count('--port')==1 and argv[argv.index('--listen')+1]=='127.0.0.1' and argv[argv.index('--port')+1]==str(profile['port'])
             except (ValueError,IndexError):return False
         flag='--install-root' if profile['id']=='hidream' else '--comfy-root'
         expected=Path(profile['root']).parent if profile['id']=='hidream' else Path(profile['root'])
-        try:return Path(argv[argv.index(flag)+1]).resolve()==expected.resolve()
+        try:return argv.count(flag)==1 and (Path(cwd)/argv[argv.index(flag)+1]).resolve()==expected.resolve()
         except (ValueError,IndexError):return False
 
     def process(self, profile):
         import psutil
-        candidates=[]
-        for connection in psutil.net_connections(kind='tcp'):
-            if connection.status=='LISTEN' and connection.laddr.port==profile['port'] and connection.laddr.ip=='127.0.0.1' and connection.pid:candidates.append(connection.pid)
-        for pid in set(candidates):
-            try:
+        candidates=set()
+        try:
+            for connection in psutil.net_connections(kind='tcp'):
+                if connection.status!='LISTEN' or connection.laddr.port!=profile['port']:continue
+                if connection.laddr.ip!='127.0.0.1' or not connection.pid:
+                    raise ValueError(f"Port {profile['port']} has an unverified listener. Studio will not stop it.")
+                candidates.add(connection.pid)
+            if len(candidates)>1:raise ValueError('Backend process ownership is ambiguous; all processes preserved')
+            for pid in candidates:
                 process=psutil.Process(pid)
                 if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):return process
                 raise ValueError(f"Port {profile['port']} is owned by another command. Studio will not stop it.")
-            except (psutil.NoSuchProcess,psutil.AccessDenied):continue
+        except (psutil.NoSuchProcess,psutil.AccessDenied) as exc:
+            raise ValueError('Backend process ownership could not be verified; retry after inspecting the runtime') from exc
         return None
+
+    def _idle(self, profile, allow_offline=False):
+        try:queue=self.request(profile,'/queue')
+        except OSError as exc:
+            # Timeouts, HTTP errors and inaccessible listeners are not evidence of absence.
+            if allow_offline and connection_refused(exc) and self.process(profile) is None:return False
+            raise ValueError('ComfyUI queue state is unknown for '+profile['name']+'; existing processes were preserved') from exc
+        queue_is_idle(queue)
+        return True
+
+    def _check_retained_startup(self):
+        """A previously launched process can still be loading before it binds its port."""
+        operation=self.operation or {}
+        if operation.get('status') not in ('failed','interrupted'):return
+        pid=operation.get('preserved_pid',operation.get('pid'));profile=self.profiles.get(operation.get('target'))
+        if not isinstance(pid,int) or not profile:return
+        import psutil
+        try:
+            process=psutil.Process(pid)
+            if not self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):return
+            listener=self.process(profile)
+            if listener is None or listener.pid!=pid:
+                raise ValueError('A retained startup process is still alive without a verified listener. Inspect it before switching again.')
+            self._idle(profile)
+        except psutil.NoSuchProcess:return
+        except psutil.AccessDenied as exc:raise ValueError('Cannot inspect the retained startup process; no new backend will be launched') from exc
 
     def switch(self, identifier):
         if identifier not in self.profiles:raise ValueError('Unknown backend')
-        if not self.available(self.profiles[identifier]):raise ValueError('This isolated environment is not installed')
+        if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
         with self.studio.lock:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')
             if self._local_work():raise ValueError('Finish or reconcile active Studio work before switching backends')
-            # Check every configured endpoint, including work submitted directly through ComfyUI.
-            for profile in self.profiles.values():
-                try:queue=self.request(profile,'/queue')
-                except OSError:continue
-                if queue.get('queue_running') or queue.get('queue_pending'):raise ValueError('ComfyUI has active or queued work. Its queue was preserved.')
-            self.busy=True;self.operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),'message':'Checking owned local runtimes'};self._save()
-        threading.Thread(target=self._switch,args=(identifier,),daemon=True,name='studio-backend-switch').start()
+            self._check_retained_startup()
+            # Check every endpoint, including work submitted directly through ComfyUI.
+            for profile in self.profiles.values():self._idle(profile,allow_offline=True)
+            previous=self.operation
+            self.busy=True;self.operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),'message':'Checking owned local runtimes'}
+            try:self._save()
+            except Exception:
+                self.busy=False;self.operation=previous
+                raise
+        try:threading.Thread(target=self._switch,args=(identifier,),daemon=True,name='studio-backend-switch').start()
+        except Exception as exc:
+            with self.studio.lock:
+                self.busy=False;self.operation.update(status='failed',finished_at=time.time(),message='Switch worker did not start: '+str(exc)[:300]);self._save()
+            raise
         return self.snapshot()
 
     def _switch(self, identifier):
         launched=None
         try:
             target=self.profiles[identifier]
+            if not self.available(target):raise ValueError(self.readiness(target)['message'])
+            with self.studio.lock:
+                if self._local_work():raise ValueError('New Studio work arrived; reconcile it before switching')
+            # Preflight every process before any destructive action. A foreign target
+            # must not be discovered only after stopping the healthy current backend.
+            observed={}
+            for key,profile in self.profiles.items():
+                self._idle(profile,allow_offline=True)
+                process=self.process(profile)
+                observed[key]=(process.pid,process.create_time()) if process else None
             for key,profile in self.profiles.items():
                 if key==identifier:continue
                 process=self.process(profile)
-                if not process:continue
+                if not process:
+                    if observed[key] is not None:raise ValueError('Backend process changed during preflight; retry explicitly')
+                    continue
+                if observed[key]!=(process.pid,process.create_time()):raise ValueError('Backend process changed during preflight; all remaining processes preserved')
                 # Recheck just before termination; only this verified, idle local process is stopped.
-                queue=self.request(profile,'/queue')
-                if queue.get('queue_running') or queue.get('queue_pending'):raise ValueError('New ComfyUI work arrived; switch stopped and its queue was preserved')
+                self._idle(profile)
                 self.operation.setdefault('stopped_processes', []).append({'profile':key,'pid':process.pid,'created_at':process.create_time(),'matched_entry':profile['entry']})
                 self.operation['message']='Stopping idle '+profile['name'];self._save()
                 process.terminate();process.wait(timeout=15)
             owned=self.process(target)
+            if owned and observed[identifier]!=(owned.pid,owned.create_time()):raise ValueError('Target process changed during preflight; retry explicitly')
             if not owned:
+                if observed[identifier] is not None:raise ValueError('Target process disappeared during preflight; retry explicitly')
                 self.operation['message']='Starting '+target['name'];self._save()
-                stamp=time.strftime('%Y%m%d-%H%M%S');logs=self.studio.root/'.runtime/backends';logs.mkdir(exist_ok=True)
+                stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                 if identifier=='primary':
                     argv=[target['python'],'-s',target['entry'],'--windows-standalone-build','--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1','--port',str(target['port']),'--reserve-vram','2']
                 elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
@@ -138,16 +210,23 @@ class BackendManager:
                 for _ in range(120):
                     if launched.poll() is not None:raise ValueError('The selected runtime exited during startup; inspect its saved log')
                     try:
-                        if self.request(target,'/system_stats').get('system'):break
+                        if endpoint_ready(self.request(target,'/system_stats')):break
                     except (OSError,ValueError):pass
                     time.sleep(1)
                 else:raise ValueError('Runtime startup timed out; no generation was submitted')
+            # Reusing an existing listener also requires a healthy, idle endpoint.
+            if not endpoint_ready(self.request(target,'/system_stats')):raise ValueError('Target endpoint is not ready')
+            self._idle(target)
+            if launched:
+                listener=self.process(target)
+                if listener is None or listener.pid!=launched.pid:raise ValueError('Ready endpoint does not belong to the launched process; inspect retained runtime')
             self.activate(identifier)
-            self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' is ready. No generation submitted.');self._save()
+            self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save()
         except Exception as exc:
+            # A timed-out launcher may already be accepting direct ComfyUI jobs.
+            # Never terminate it blindly during cleanup or silently restart the old family.
             if launched and launched.poll() is None:
-                launched.terminate()
-                try:launched.wait(timeout=10)
-                except subprocess.TimeoutExpired:pass
+                self.operation.update(preserved_pid=launched.pid,recovery='Inspect the retained runtime and queue, then switch explicitly. No automatic retry.')
             self.operation.update(status='failed',finished_at=time.time(),message=str(exc)[:500]);self._save()
-        finally:self.busy=False
+        finally:
+            with self.studio.lock:self.busy=False
