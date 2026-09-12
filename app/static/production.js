@@ -1,4 +1,4 @@
-let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false;
+let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false, productionActionPending=false;
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
@@ -16,8 +16,8 @@ function renderProduction(){
     $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
     return;
   }
-  const active=['queued','running','observing'].includes(p.state.status),resumable=p.kind!=='voice'&&['interrupted','uncertain','stopped'].includes(p.state.status);
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+(resumable?'<button data-project-action="resume">Reconcile and resume</button>':'')+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  const active=['queued','running','observing'].includes(p.state.status),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+(resumable?'<button data-project-action="resume">'+(p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'')+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){
     if(['awaiting_review','reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
     html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
@@ -111,9 +111,11 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
 }catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
 $('#productionList').onclick=e=>{const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
-$('#productionDetail').onclick=async e=>{try{
+$('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume'].includes(action);
+  if(coordinatorAction&&productionActionPending)return;
+  if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
+  try{
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
-  const action=e.target.closest('[data-project-action]')?.dataset.projectAction;
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
@@ -122,7 +124,7 @@ $('#productionDetail').onclick=async e=>{try{
   if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
   else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
   if(action||choice)await refreshProduction(true);
-}catch(err){productionMessage(err.message,true);}};
+}catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }

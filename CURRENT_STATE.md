@@ -24,17 +24,21 @@ Prepare and Start now use the configured isolated Python to observe declared dis
 metadata only; the plan retains those observed versions and Start rejects either a bundle-manifest or
 Prepare-time drift. This is not a complete-environment hash and imports neither Torch nor a model. Controlled
 voice success, failure and cancellation terminalize attempt 0. The Production API can explicitly resume only
-a demonstrably unstarted interrupted plan; a queued plan remains idempotently queued, and any request,
-attempt, job or voice directory blocks a retry.
+a demonstrably unstarted interrupted plan. Both Voice and Production pages expose Resume only when
+the backend reports eligibility. Queued plans and any durable request, attempt, job, artifact or voice
+directory block resume; no browser action automatically retries inference.
 
 Voice Workspace publication is now marked `published` only after every output is registered. Failed,
 cancelled and still-publishing marked voice jobs retain their exact existing asset descriptors on Studio
 restart and are not newly indexed; legacy unmarked voice jobs keep the historical indexing path. A stop that
 arrives after complete publication is recorded as too late while retaining the published outputs. Inert
-version-drift, terminal-state, resume, publication and restart regressions passed. Remaining #56 work is
-the UI resume treatment, the atomic late-cancellation check-to-commit boundary, and abrupt-process nested
-attempt reconciliation; an abrupt death can still leave the last durable nested attempt state `running` and
-never authorizes inference repetition.
+version-drift, terminal-state, resume, publication and restart regressions passed. Stop and the final
+completion decision now share a lock. Startup reconciles active nested voice attempts to `interrupted`
+while preserving identifiers and evidence, and submits nothing. Full integrated suite: 593 run,
+583 passed and 10 skipped. Voice recovery UI, late-stop and abrupt-attempt follow-ups are implemented;
+real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes, hidden unsafe recovery,
+one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
+warnings or errors. This does not claim human listening or voice acceptance.
 
 ## Scene editor interaction checks - 12 September 2026
 
