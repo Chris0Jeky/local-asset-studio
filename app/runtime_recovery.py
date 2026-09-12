@@ -154,7 +154,7 @@ class RuntimeRecovery:
 
             # Recheck every launch predicate while holding Studio's existing interlock.
             with self.studio.lock:
-                if manager.busy or self._fresh_work() or manager.process(profile) or manager.configured_processes(profile):
+                if manager.active != profile['id'] or manager.busy or self._fresh_work() or manager.process(profile) or manager.configured_processes(profile):
                     self._record("reconnecting", "Recovery launch conditions changed; no process was started.")
                     return self.snapshot()
                 pid = manager.launch_recovery(profile)

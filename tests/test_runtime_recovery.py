@@ -79,6 +79,20 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(self.studio.backends.launches, 3)
         self.assertEqual(self.recovery.snapshot()["status"], "breaker-open")
 
+    def test_active_profile_change_during_scan_cannot_launch_stale_profile(self):
+        manager=self.studio.backends; manager.profiles['hidream']={"id":"hidream","name":"HiDream","url":"http://127.0.0.1:8192"}
+        scans=[]
+        def scan(profile):
+            scans.append(profile['id'])
+            if len(scans)==1: manager.active='hidream'
+            return []
+        manager.configured_processes=scan
+        self.recovery.tick()
+        self.assertEqual(manager.active,'hidream')
+        self.assertEqual(manager.launches,0)
+        self.assertEqual(scans,['primary'])
+        self.assertEqual(self.recovery.snapshot()['status'],'reconnecting')
+
     def test_startup_is_retained_and_healthy_reconnect_resets_attempts_and_schema(self):
         self.recovery.tick()
         self.studio.backends.matching = [SimpleNamespace(pid=9001)]
