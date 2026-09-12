@@ -26,6 +26,7 @@ class PromptStartupTests(unittest.TestCase):
     def test_browser_script_loads_profiles_and_reports_http_failure(self):
         result = subprocess.run([shutil.which('node'), str(Path(__file__).with_name('prompt_lab_frontend.cjs'))], capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Prompt Lab frontend contracts passed', result.stdout, result.stdout + result.stderr)
 
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

@@ -121,9 +121,12 @@ same number recorded in #77. `TotalVirtualMemorySize - FreeVirtualMemory` is com
 `FreeVirtualMemory` is the headroom. Per-process detail comes from the same counters ComfyUI does
 not read: ComfyUI's caches key on physical RAM only.
 
-**Rule: require at least 20 GiB of commit headroom before submitting any Qwen or FLUX.2 job at
+**Rule: require at least 32 GiB of commit headroom before submitting any Qwen or FLUX.2 job at
 1 MP or above, and record the reading in the run's evidence.** Sample it during the run, not only
-before it.
+before it. The number is a measured lower bound plus margin, not a derivation: the 12 September
+`qwen-2ref` job (§7) started with 29 GB of headroom and still failed on a host allocation, and its
+87 % reading was taken after the run, so the peak was not captured. Treat 29 GB as the floor the
+failure proved insufficient; the earlier 20 GiB figure was below it and is withdrawn.
 
 What #77 measured (`C:/AI/character-lab/pilot-20260912/cache-release-{before,after}.json`):
 
