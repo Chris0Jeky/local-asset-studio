@@ -235,7 +235,7 @@ image carries a small imperfection the owner would like corrected by a follow-up
 
 ## The correction pass
 
-Three presets answer that, all driven by a reference image (upload one, or the authored example runs):
+Three presets answer that. `anime-detail-fix` and `krea-refine` accept a reference upload or their authored example; `anime-masked-repair` requires its own real RGBA PNG with a transparent repair region.
 
 From a gallery image or its Workspace details, choose **Fix hands & face** to open `anime-detail-fix`,
 or **Refine image** to open `krea-refine`. The Studio attaches that image and retains its source asset
@@ -252,8 +252,8 @@ press **Generate** explicitly. Opening either action does not start a render or 
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
 - **`anime-masked-repair`** — a manual local option when a detector crop is the wrong shape. Select it from
-  **Anime quality**, then upload a same-size **RGBA PNG**: retain the image in RGB, leave every protected area
-  opaque, and make only the broken hand or other repair area transparent. The existing core `LoadImage` alpha
+  **Anime quality**, then upload a real **RGBA PNG** with both dimensions divisible by 8: retain the image in RGB, leave every protected area
+  opaque, and make only the broken hand or other repair area transparent. Prepare refuses JPG, WebP, RGB-only and fully opaque uploads before queueing; it does not pad or crop an unaligned source. The existing core `LoadImage` alpha
   output drives the latent noise mask and final composite, so the workflow re-samples that manual region with
   WAI v17 at its authored 0.4 denoise and composites it over the supplied source. Studio preserves the uploaded
   RGBA bytes when staging the input, but it has no mask painter or automatic hand-anatomy guarantee. This preset
