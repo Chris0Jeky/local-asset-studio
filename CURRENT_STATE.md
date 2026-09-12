@@ -1,5 +1,19 @@
 # Current state — 11 September 2026
 
+## Controlled character edits: Windows proof - 12 September 2026
+
+The actor-scoped offline planner and pixel bridge were integrated with main `44fc561` and exercised
+on this Windows checkout. The full suite ran 693 tests: 681 passed and 12 skipped; repository validation
+passed. An independent review found no remaining Critical/High defect. The known three-actor contact
+relationship mismatch is a nonblocking proposal-validation gap tracked in #71.
+
+The real CPU demo prepared and applied a supplied candidate at
+`C:/AI/character-lab/actor-windows-proof-20260912/`: 4,032 permitted pixels changed, all 94,272 pixels
+outside the mask remained exact in decoded RGBA, and no protected pixel changed. The resulting
+384x256 image was inspected. This proves the offline pixel boundary with a synthetic fixture; it does
+not prove neural edit quality or a native-app connection. Original context-transparency regressions
+are included in the full gate. Native execution remains #71 and measured artistic yield remains #72.
+
 ## Character primary-case import - 12 September 2026
 
 An explicit character plan/handoff/upload request can now prepare one primary case through the existing
