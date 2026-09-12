@@ -1,0 +1,157 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, clean lineart, same character, same colours, seamless with the surrounding art"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "1",
+        1
+      ],
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, deformed hands, blurry, text, watermark"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "lantern-reference.png"
+    }
+  },
+  "5": {
+    "class_type": "INPAINT_LoadFooocusInpaint",
+    "inputs": {
+      "head": "fooocus_inpaint_head.pth",
+      "patch": "inpaint_v26.fooocus.patch"
+    }
+  },
+  "6": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "4",
+        1
+      ],
+      "expand": 8,
+      "tapered_corners": true
+    }
+  },
+  "7": {
+    "class_type": "VAEEncodeForInpaint",
+    "inputs": {
+      "pixels": [
+        "4",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ],
+      "mask": [
+        "6",
+        0
+      ],
+      "grow_mask_by": 6
+    }
+  },
+  "8": {
+    "class_type": "INPAINT_ApplyFooocusInpaint",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "patch": [
+        "5",
+        0
+      ],
+      "latent": [
+        "7",
+        0
+      ]
+    }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "8",
+        0
+      ],
+      "seed": 2026091201,
+      "steps": 24,
+      "cfg": 5.5,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "karras",
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "3",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ],
+      "denoise": 0.85
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    }
+  },
+  "11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "4",
+        0
+      ],
+      "source": [
+        "10",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "6",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "11",
+        0
+      ],
+      "filename_prefix": "Studio/SDXL-Inpaint-Fix"
+    }
+  }
+}
