@@ -393,12 +393,17 @@ class Production:
         project=self._get(identifier)
         if project['plan']['kind']=='av':return self.av.cancel(identifier)
         if project['state']['status'] not in ('queued','running','observing'):raise ValueError('This experiment is not active')
-        self._mutate(identifier,stop_requested=True,message='Stop requested. The current owned job may finish; later stages will not start.')
+        message='Stop requested. The current owned job may finish; later stages will not start.'
+        if project['plan']['kind']=='voice':message='Stop requested. The current voice job may already be publishing retained Workspace outputs.'
+        self._mutate(identifier,stop_requested=True,message=message)
         return self.get(identifier)
 
     def resume(self, identifier):
-        if self._get(identifier)['plan']['kind']=='voice':raise ValueError('Inspect retained voice files and prepare a new take; voice inference is never automatically repeated')
-        if self._get(identifier)['plan']['kind']=='av':raise ValueError('Inspect the previous scene attempt and explicitly request a new render')
+        project=self._get(identifier)
+        if project['plan']['kind']=='voice':
+            from voice_baseline import resume
+            return resume(self,identifier)
+        if project['plan']['kind']=='av':raise ValueError('Inspect the previous scene attempt and explicitly request a new render')
         with self.studio.lock, self.lock:
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project=self._get(identifier)
@@ -418,6 +423,7 @@ class Production:
     def run(self, identifier):
         project=self._get(identifier);plan=project['plan']
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
+        if plan['kind']=='voice' and project['state']['status'] in ('completed','failed','cancelled','stopped'):return
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='av':return self.av.run(identifier)
         if plan['kind']=='voice':
