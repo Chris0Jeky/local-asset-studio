@@ -13,6 +13,13 @@ from PIL import Image
 def png():
     stream = io.BytesIO(); Image.new('RGB', (8, 12), 'purple').save(stream, 'PNG'); return stream.getvalue()
 
+def rgba_png():
+    stream = io.BytesIO()
+    image = Image.new('RGBA', (8, 12), (40, 80, 120, 255))
+    image.putpixel((3, 4), (40, 80, 120, 0))
+    image.save(stream, 'PNG')
+    return stream.getvalue()
+
 SPEC = importlib.util.spec_from_file_location("asset_server", Path(__file__).parents[1] / "app/server.py")
 server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
 
@@ -57,6 +64,20 @@ class ServerTests(unittest.TestCase):
             s.prepare({"preset_id":"demo","controls":{"reference":"../plain.png"}})
         with self.assertRaisesRegex(server.StudioError,"Reference upload is invalid"):
             s.prepare({"preset_id":"demo","controls":{"reference":"plain.png"}})
+
+    def test_rgba_upload_is_preserved_and_bound_to_masked_loader(self):
+        graph={"4":{"class_type":"LoadImage","inputs":{"image":"authored-mask.png"}}}
+        preset={"id":"masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"]}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/masked-repair-api.json').write_text(json.dumps(graph))
+        s=self.studio(); source=rgba_png(); upload=s.upload('hand-mask.png','image/png',source)
+        for path in (self.root/'experiments/uploads'/upload['file'], self.root/'fake-comfy/input'/upload['file']):
+            self.assertEqual(path.read_bytes(),source)
+            with Image.open(path) as decoded:
+                self.assertEqual(decoded.mode,'RGBA')
+                self.assertEqual(decoded.getpixel((3,4)),(40,80,120,0))
+        _,bound,_,_,_=s.prepare({'preset_id':'masked-repair','controls':{'reference':upload['file']}})
+        self.assertEqual(bound['4']['inputs']['image'],upload['file'])
 
     def test_imported_image_survives_restart_without_generation(self):
         s=self.studio();result=s.import_image('frame.png','image/png',png())

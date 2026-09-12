@@ -1,0 +1,184 @@
+{
+  "version": 2,
+  "preset_id": "av-preview",
+  "controls": {},
+  "batch_count": 1,
+  "created_at": 1789224748.8030038,
+  "workflow": {},
+  "submissions": [],
+  "outputs": [
+    {
+      "filename": "preview.mp4",
+      "native_path": "renders/513bd06980514be5930a9aa981caf8cd/preview.mp4",
+      "type": "output",
+      "media_type": "video",
+      "asset_id": "bc254e40da785a09a06fd8d9f0d1cec3"
+    },
+    {
+      "filename": "mix.wav",
+      "native_path": "renders/513bd06980514be5930a9aa981caf8cd/mix.wav",
+      "type": "output",
+      "media_type": "audio",
+      "asset_id": "3df34536dcd95a529787c63ccfb1e0bf"
+    }
+  ],
+  "parent_assets": [
+    "27683427b1925d53a9c4f5b9102ab1dd",
+    "f21ec0d7b8015b88a5c5864d985eb046",
+    "fbcca83f6f0a5c45b5e741798e19a2ac"
+  ],
+  "references": [],
+  "native_recipe": {
+    "scene_id": "f14b08eba5e84375a2c604fd4e3db686",
+    "revision": 2,
+    "project": {
+      "schema_version": 1,
+      "name": "Atelier / follow the light",
+      "fps": [
+        24,
+        1
+      ],
+      "size": [
+        720,
+        1080
+      ],
+      "sample_rate": 48000,
+      "assets": {
+        "source0": {
+          "path": "inputs/source0.png",
+          "kind": "image",
+          "sha256": "218d72be3921216082b4db6abe284d1003e46c62b0dea8629c00a83e84d70951"
+        },
+        "source1": {
+          "path": "inputs/source1.png",
+          "kind": "image",
+          "sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7"
+        },
+        "source2": {
+          "path": "inputs/source2.wav",
+          "kind": "audio",
+          "sha256": "6a014c744b965b4a8a3eb3bc2662b2322aee78eb104d996030303e42fc3fe73b"
+        }
+      },
+      "shots": [
+        {
+          "id": "shot0",
+          "asset": "source0",
+          "source_in": 0,
+          "frames": 84,
+          "transition_frames": 0
+        },
+        {
+          "id": "shot1",
+          "asset": "source1",
+          "source_in": 0,
+          "frames": 84,
+          "transition_frames": 12
+        }
+      ],
+      "overlays": [],
+      "audio": [
+        {
+          "id": "audio0",
+          "asset": "source2",
+          "bus": "dialogue",
+          "start_sample": 24000,
+          "source_sample": 0,
+          "samples": 134400,
+          "gain_db": 0,
+          "fade_in": 0,
+          "fade_out": 0,
+          "mute": false
+        }
+      ],
+      "master_gain_db": 0
+    },
+    "source_assets": [
+      {
+        "key": "source0",
+        "asset_id": "27683427b1925d53a9c4f5b9102ab1dd",
+        "filename": "krea-anime-atelier_00001_.png",
+        "kind": "image",
+        "sha256": "218d72be3921216082b4db6abe284d1003e46c62b0dea8629c00a83e84d70951",
+        "bytes": 1419425
+      },
+      {
+        "key": "source1",
+        "asset_id": "f21ec0d7b8015b88a5c5864d985eb046",
+        "filename": "krea-style-lab_00001_.png",
+        "kind": "image",
+        "sha256": "f66874e65012b864351648be3c3ac514e1aff7637932ec8072e0c36dfb4e3dc7",
+        "bytes": 1536856
+      },
+      {
+        "key": "source2",
+        "asset_id": "fbcca83f6f0a5c45b5e741798e19a2ac",
+        "filename": "lantern-opening-scene.wav",
+        "kind": "audio",
+        "sha256": "6a014c744b965b4a8a3eb3bc2662b2322aee78eb104d996030303e42fc3fe73b",
+        "bytes": 268878
+      }
+    ],
+    "receipt": {
+      "schema_version": 1,
+      "source_revision": "45b4f3b461e7183b22780ad6efe860e5ccac1034f7b91c6cc6f30e90e39e7701",
+      "frames_expected": 156,
+      "audio_qc": {
+        "samples": 312000,
+        "sample_rate": 48000,
+        "channels": 2,
+        "duration_seconds": 6.5,
+        "sample_peak_dbfs": [
+          -10.662669305353054,
+          -10.662669305353054
+        ],
+        "rms_dbfs": [
+          -33.17514886062938,
+          -33.17514886062938
+        ],
+        "dc_offset": [
+          -3.3916571201422274e-06,
+          -3.3916571201422274e-06
+        ],
+        "full_scale_sample_count": [
+          0,
+          0
+        ],
+        "near_or_at_clipping": false,
+        "method": "16-bit decoded sample statistics; not LUFS, true peak, intelligibility or perceptual review"
+      },
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 720,
+            "height": 1080,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "sample_rate": "48000",
+            "channels": 2,
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "6.500000"
+        }
+      },
+      "outputs": {
+        "picture.mp4": "f661087cf5dfd9e6c557d8470a5fcca8611e6bce78864366545c08ee4008515a",
+        "mix.wav": "4e6239ce0a2efce76405ec081e4419cf1085b1afef42c2417a006b7dfdaee160",
+        "preview.mp4": "6dd42e1eb9297f068d7854f9ec54c0f4c4af53969c15e097045198fe33a0beea"
+      },
+      "generation_performed": false,
+      "creative_acceptance": "not_reviewed",
+      "audio_model_benchmark": false,
+      "ffmpeg_version": "ffmpeg version 9.0.1-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+    }
+  }
+}

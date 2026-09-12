@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-12T14:54:19.386267+00:00",
+  "kind": "offline_cpu_asr_transcription_check",
+  "asr_bundle": {
+    "schema_version": 1,
+    "model_id": "Systran/faster-whisper-base.en",
+    "revision": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+    "python": "C:\\AI\\voice-lab-asr\\venv\\Scripts\\python.exe",
+    "device": "cpu",
+    "compute_type": "int8",
+    "files": {
+      ".gitattributes": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\.gitattributes",
+        "bytes": 1477,
+        "sha256": "db7c0371f46f0840b8f25794c1e3321c9b5820a8cb6ba9694a46fc64b8fae5a6"
+      },
+      "config.json": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\config.json",
+        "bytes": 2227,
+        "sha256": "f3bc3821e9fc76a27bae538e11ae5b677dcdd352b4600429ce7951d398569aeb"
+      },
+      "model.bin": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\model.bin",
+        "bytes": 145216508,
+        "sha256": "2a166925539a16005f14ff328359f9b9adb9dc4fb631bb3b227526862e93e2ef"
+      },
+      "README.md": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\README.md",
+        "bytes": 1323,
+        "sha256": "0360e1518671daf4064d44121ad1c4bbb0446dd5b0f8c724c8d3132fd33a1540"
+      },
+      "tokenizer.json": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\tokenizer.json",
+        "bytes": 2128466,
+        "sha256": "929c5252409436dce1b38a75d1abbcb5e132d170d8e324e4e04ed915fa2d22df"
+      },
+      "vocabulary.txt": {
+        "path": "C:\\AI\\voice-lab-asr\\models\\vocabulary.txt",
+        "bytes": 422309,
+        "sha256": "ff77588746d3a2595d32ab5b69ffd7b95ce2441ac57533cb66fc3eb575a115cf"
+      }
+    },
+    "versions": {
+      "faster_whisper": "1.2.1",
+      "ctranslate2": "4.8.2",
+      "av": "18.1.0",
+      "huggingface_hub": "1.31.0"
+    },
+    "license": {
+      "id": "MIT",
+      "source": "https://huggingface.co/Systran/faster-whisper-base.en"
+    }
+  },
+  "input": {
+    "path": "C:\\Users\\jekyt\\source\\local-asset-studio\\experiments\\projects\\0a0753e11fb44c649106fb97199ed2b5\\voice\\lantern-opening.wav",
+    "sha256": "7bac17e89872fb465dcd6e199a2aaa9d2cb940a0ac7e849565551fc4e67cd098",
+    "bytes": 134444
+  },
+  "expected_raw": "The lantern is ready. Follow the light.",
+  "transcript_raw": "The lantern is ready, follow the light.",
+  "expected_normalized_words": [
+    "the",
+    "lantern",
+    "is",
+    "ready",
+    "follow",
+    "the",
+    "light"
+  ],
+  "transcript_normalized_words": [
+    "the",
+    "lantern",
+    "is",
+    "ready",
+    "follow",
+    "the",
+    "light"
+  ],
+  "word_errors": {
+    "substitutions": 0,
+    "insertions": 0,
+    "deletions": 0,
+    "errors": 0,
+    "expected_words": 7,
+    "actual_words": 7,
+    "wer": 0.0
+  },
+  "language": "en",
+  "language_probability": 1,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.4,
+      "text": " The lantern is ready, follow the light."
+    }
+  ],
+  "network": {
+    "hf_hub_offline": true,
+    "transformers_offline": true,
+    "socket_connect_blocked": true
+  },
+  "runtime": {
+    "device": "cpu",
+    "compute_type": "int8",
+    "cpu_threads": 4,
+    "num_workers": 1,
+    "beam_size": 5,
+    "vad_filter": false
+  },
+  "elapsed_seconds": 0.6796572000021115,
+  "limitations": [
+    "ASR agreement is a transcription check, not listening acceptance, voice similarity, expressive-performance quality, or character acceptance."
+  ]
+}
