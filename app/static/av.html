@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local Asset Studio · Scene editor</title><link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/av.css"></head>
+<body class="av-page">
+<header class="topbar"><a class="brand" href="/"><span class="brand-mark">a✦</span><span>ASSET STUDIO<small>YOUR LOCAL CREATIVE WORKSPACE</small></span></a><nav aria-label="Studio views"><a href="/">Create</a><a href="/#assets">Workspace</a><a href="/#production">Experiments</a><a class="active" href="/av.html" aria-current="page">Scene editor</a></nav><a class="pill" href="/">Back to Studio</a></header>
+<main class="av-shell">
+  <section class="av-heading"><div><span class="eyebrow">LOCAL SCENE EDITOR</span><h1>Assemble a scene from your saved work.</h1><p>Sources stay in your Workspace. Edits save together as one revision; rendering only starts when you choose Render.</p></div><div class="av-heading-actions"><button id="newScene" class="primary">New scene</button><button id="reloadScene">Reload</button></div></section>
+  <p id="avStatus" class="status" role="status">Loading saved scenes…</p>
+  <section class="av-layout">
+    <aside class="panel av-projects"><div class="section-title"><h2>Scenes</h2><button id="refreshScenes">Refresh</button></div><div id="avProjectList"></div><p id="avCapabilities" class="muted"></p></aside>
+    <section class="av-editor" aria-live="polite"><div id="avEmpty" class="panel"><h2>Choose a scene</h2><p>Create a scene from registered PNG, MP4 and 48 kHz PCM WAV assets in your Workspace.</p></div><div id="avContent" hidden></div></section>
+  </section>
+</main>
+<dialog id="sceneDialog" class="av-dialog"><form id="sceneForm"><span class="eyebrow">REGISTERED WORKSPACE SOURCES</span><h2>New scene</h2><label>Name<input id="sceneName" maxlength="120" required placeholder="Chapter one · opening"></label><p class="muted">PNG, MP4 and 48 kHz PCM WAV only. Source files are snapshotted into the scene; paths and uploads are not accepted.</p><div id="sceneAssets" class="av-source-picker"></div><p id="sceneCreateStatus" class="status" role="status"></p><div class="actions"><button type="button" id="cancelScene">Cancel</button><button id="createScene" class="primary">Create scene</button></div></form></dialog>
+<script src="/static/av.js"></script>
+</body></html>
