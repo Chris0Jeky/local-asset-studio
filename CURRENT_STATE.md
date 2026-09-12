@@ -1,5 +1,18 @@
 # Current state — 11 September 2026
 
+## Scene editor interaction checks - 12 September 2026
+
+Unsaved clip notices and disabled document actions now update on input without replacing the focused
+field or preview video. Commands and manual reloads are serialized; stale polls cannot overwrite a
+newer command response. Completion updates the global render status, and artifact links show filenames.
+An earlier polling error can still remain in the global message until a manual action (#30).
+Chromium 151 with synthetic sources and real FFmpeg verified typing focus, continuing playback,
+persisted edits, a held export blocking conflicting actions, download completion and a 390 px layout.
+The browser recorded no JavaScript errors, external requests or ComfyUI calls. Full suite: 516 run,
+507 passed and 9 skipped; repository validation passed. Raw proof is retained under
+`.runtime/session-2026-09-12/scene-interactions/`. The remaining Scene work stays tracked in #30;
+`HUMAN_TODO.md` retains optional creative choices, and this proof makes no art acceptance claim.
+
 ## Spoken atelier scene and manual repair option - 12 September 2026
 
 The primary Studio explicitly generated “The lantern is ready. Follow the light.” with the isolated
@@ -14,7 +27,8 @@ Exact recipes and observations are in `experiments/curated/atelier-voice/`; raw 
 
 The existing manual `anime-masked-repair` graph is now catalogued with RGBA-alpha instructions and
 `verified: false`. Upload preservation, binding and live node/file schema checks passed; no masked
-repair generation was submitted. Nonempty-alpha enforcement is a separate #62 follow-up. This does
+repair generation was submitted. PR #67 now enforces a supplied nonempty RGBA alpha mask with dimensions
+divisible by eight before any job is created; valid PNG bytes remain unchanged. This does
 not imply a successful Krea hand repair: the earlier unsuccessful Gentle digit trial used the NoobAI
 portrait. `HUMAN_TODO.md` retains the owner's optional creative choices and model-use decisions.
 
