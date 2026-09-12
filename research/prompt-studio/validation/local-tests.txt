@@ -1,0 +1,11 @@
+11 September 2026 / local validation summary
+Python 3.13.5; optional Pillow installed.
+Command: python -m unittest discover -s tests -p 'test_studio_prompt*.py' -v
+
+Ran 68 tests in 1.078s
+OK
+
+Includes pure compiler/review tests, preserved speech and music fields, unchanged sampler bindings, stale revisions/profiles, PNG text/decompression limits, helper proposal/cache/lock tests, real loopback HTTP and same-origin/delegation contracts. Neural helper replies are simulated. No actual local Ollama/model inference or media generation occurred.
+
+Node syntax check passed for app/static/prompt-lab.js.
+Browser scope and limitations are recorded separately in browser.json and docs/prompt-studio/VALIDATION.md.

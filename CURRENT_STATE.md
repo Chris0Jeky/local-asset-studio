@@ -1,5 +1,28 @@
 # Current state — 11 September 2026
 
+## Prompt Lab normal startup and browser proof - 12 September 2026
+
+Prompt Lab now uses the normal Studio launcher and its existing port. Startup binds before
+constructing a Studio worker, and the compatibility script delegates to that same entry point.
+The header links to Prompt Lab. A broken profile-response callback was also repaired; its real-script
+regression fails on the old page and passes on the fixed page.
+
+On current main `83b77ac`, the dependency-equipped Windows suite discovered 441 tests: 433 passed,
+eight skipped (five explicit native opt-ins and three directory-symlink privilege cases). The repository
+validator passed. Independent Terra review found no remaining HIGH/CRITICAL defect after the callback
+fix. The LOW proposal-separator encoding defect is tracked for later polish, not a generation blocker.
+
+Chromium 151 loaded all nine profiles and exercised custom brief compilation, actual compilation and
+brief downloads, stale-export invalidation/recompile, keyboard edits and 390 px layout with no JavaScript
+errors, external requests or generation submissions. The fixture used the actual server factory and
+HTTP handler with an inert Studio; only the accepted loopback port was adjusted for an ephemeral test
+port. Separate HTTP tests verify the unchanged production Host/Origin guards. Raw evidence is preserved
+under `.runtime/session-2026-09-12/prompt-lab/`. Live primary launch is checked separately after merge.
+
+PR #44 is merged as `83b77ac`. The primary local config now names the bundled Node executable and
+has the locked Khronos npm dependency installed. The native evidence worktree was removed after its
+receipts were preserved. Art, model licensing and q-3 creative choices in `HUMAN_TODO.md` remain open.
+
 ## Runtime safeguards and local native-engine proof — 12 September 2026
 
 Runtime/install safeguards PR #41 merged as `e279509` after current-base CI and a fresh independent

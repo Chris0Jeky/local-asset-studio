@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "creative-brief",
+  "task": "voice",
+  "brief": "A calm original narrator, speaking softly with clear enunciation.",
+  "facets": {},
+  "tags": [],
+  "avoid": [],
+  "constraints": [],
+  "references": [],
+  "verbatim": {
+    "text": "The stars were here long before the castle.\nPerhaps they remember."
+  },
+  "parameters": {
+    "language": "English"
+  },
+  "locked": [
+    "verbatim"
+  ]
+}

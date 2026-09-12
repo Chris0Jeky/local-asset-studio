@@ -1,0 +1,14 @@
+{
+  "profile_count": 9,
+  "compile": true,
+  "negative_warning": true,
+  "verbatim_speech": true,
+  "download": true,
+  "proposal_apply": true,
+  "reference_hashing_and_roles": true,
+  "metadata_inspection": true,
+  "mobile_no_overflow": true,
+  "javascript_errors": [],
+  "external_requests": [],
+  "harness": "Browser set_content plus a Python core-dispatch bridge; HTTP routes separately tested with real loopback clients. Administrative browser policy prevents localhost navigation. Crypto test shims used when secure-context APIs absent. No user GPU/Studio queue."
+}

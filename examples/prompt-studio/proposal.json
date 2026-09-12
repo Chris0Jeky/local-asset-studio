@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "intent_proposal",
+  "base_sha256": "8b17c476f7c15ea196c9963f7cbccf29c767d861090f383700e17fd676878d83",
+  "changes": [
+    {
+      "field": "facets.lighting",
+      "value": "Warm desk lamp illuminating the compass",
+      "reason": "A possible lighting treatment, not a requirement",
+      "source": "brief"
+    }
+  ],
+  "observations": [],
+  "unknowns": [
+    "Exact caption placement is a later layout step"
+  ],
+  "authority": "untrusted_suggestion",
+  "proposal_sha256": "02a52b6b9700a60a8594e0fa6a5cc0f8b14c08a1ab1d2d3d0cc40231cf985b17"
+}
