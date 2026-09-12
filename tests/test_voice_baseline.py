@@ -84,7 +84,7 @@ class VoiceTests(unittest.TestCase):
         self.assertTrue((self.production.root/prepared['id']/'request.json').is_file())
         with patch('voice_baseline._run_owned') as run:self.production.run(prepared['id'])
         run.assert_not_called();self.assertEqual(self.production.get(prepared['id'])['state']['status'],'failed')
-        with self.assertRaisesRegex(ValueError,'unstarted interrupted'):self.production.resume(prepared['id'])
+        with self.assertRaisesRegex(ValueError,'Only an interrupted'):self.production.resume(prepared['id'])
         self.assertTrue(next(iter(self.studio.jobs.values()))['native_recipe']['bundle'])
     def test_cancel_before_execution_does_not_start_child(self):
         prepared=self.prepare();self.production.start(prepared['id']);self.production.stop(prepared['id'])
@@ -97,13 +97,37 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(self.studio.queue.get_nowait(),('production',prepared['id']))
         unsafe=self.prepare();self.production._attempt(unsafe['id'],0,operation=voice_baseline.OPERATION,job_id='a'*32,status='running')
         self.production._mutate(unsafe['id'],status='interrupted')
-        with self.assertRaisesRegex(ValueError,'may have started'):self.production.resume(unsafe['id'])
+        with self.assertRaisesRegex(ValueError,'durable voice attempt'):self.production.resume(unsafe['id'])
         self.assertTrue(self.studio.queue.empty())
 
-    def test_queued_unstarted_voice_resume_does_not_duplicate_the_owned_queue_item(self):
+    def test_queued_voice_resume_does_not_duplicate_the_owned_queue_item(self):
         prepared=self.prepare();self.production.start(prepared['id'])
-        resumed=self.production.resume(prepared['id'])
-        self.assertEqual(resumed['state']['status'],'queued');self.assertEqual(self.studio.queue.qsize(),1)
+        with self.assertRaisesRegex(ValueError,'Only an interrupted'):self.production.resume(prepared['id'])
+        self.assertEqual(self.studio.queue.qsize(),1)
+
+    def test_voice_resume_eligibility_refuses_every_durable_execution_marker(self):
+        prepared=self.prepare();self.production._mutate(prepared['id'],status='interrupted')
+        self.assertTrue(self.production.get(prepared['id'])['voice_resume']['eligible'])
+        cases=(
+            ('request',lambda identifier:(self.production.root/identifier/'request.json').write_text('{}')),
+            ('attempt',lambda identifier:self.production._attempt(identifier,0,status='interrupted')),
+            ('job',lambda identifier:(self.studio.runs/voice_baseline.uuid.uuid5(voice_baseline.uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex).mkdir()),
+            ('output',lambda identifier:(self.production.root/identifier/'voice').mkdir()),
+        )
+        for marker,write in cases:
+            take=self.prepare();self.production._mutate(take['id'],status='interrupted');write(take['id'])
+            eligibility=self.production.get(take['id'])['voice_resume']
+            self.assertFalse(eligibility['eligible'],marker)
+            with self.assertRaisesRegex(ValueError,'will not retry|durable voice attempt'):self.production.resume(take['id'])
+
+    def test_restart_marks_nested_running_voice_attempt_interrupted_without_queueing(self):
+        prepared=self.prepare();self.production.start(prepared['id'])
+        self.production._attempt(prepared['id'],0,operation=voice_baseline.OPERATION,job_id='a'*32,status='running',started_at=1)
+        recovered=FakeStudio(self.root,[]).production.get(prepared['id'])
+        self.assertEqual(recovered['state']['status'],'interrupted')
+        self.assertEqual(recovered['state']['attempts']['0']['status'],'interrupted')
+        self.assertIn('no inference was resumed',recovered['state']['message'])
+        self.assertTrue(FakeStudio(self.root,[]).queue.empty())
 
     def test_stop_during_workspace_publication_preserves_registered_outputs(self):
         prepared=self.prepare();self.production.start(prepared['id']);original=self.studio.index_outputs
@@ -115,3 +139,15 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(project['state']['status'],'completed');self.assertTrue(project['state']['cancellation_too_late'])
         self.assertEqual(project['state']['attempts']['0']['status'],'completed')
         self.assertEqual(job['publication_status'],'published');self.assertTrue(job['cancellation_too_late']);self.assertTrue(all(output.get('asset_id') for output in job['outputs']))
+
+    def test_partial_workspace_publication_never_claims_stop_was_too_late(self):
+        prepared=self.prepare();self.production.start(prepared['id'])
+        def partial_index(job):
+            job['outputs'][0]['asset_id']='retained-first-output';self.production.stop(prepared['id'])
+        with patch.object(self.studio,'index_outputs',side_effect=partial_index),patch('voice_baseline._run_owned',side_effect=self.fake_execute):
+            self.production.run(prepared['id'])
+        project=self.production.get(prepared['id']);job=next(iter(self.studio.jobs.values()))
+        self.assertEqual(project['state']['status'],'failed')
+        self.assertNotIn('cancellation_too_late',project['state'])
+        self.assertEqual(job['publication_status'],'failed')
+        self.assertEqual(job['outputs'][0]['asset_id'],'retained-first-output')
