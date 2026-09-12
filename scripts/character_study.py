@@ -327,6 +327,35 @@ def prepare_handoff(plan: dict, case_id: str, workspace: Path, repo_root: Path) 
     return result
 
 
+def check_handoff(plan: dict, handoff: dict, repo_root: Path) -> tuple[dict, dict]:
+    """Validate an offline handoff against the current raw Studio inputs; no upload or submission."""
+    check_plan(plan)
+    keys(handoff, {'schema_version', 'kind', 'plan_sha256', 'case_id', 'preset_id', 'catalog_entry_sha256',
+                   'template_path', 'template_sha256', 'proposed_controls', 'control_bindings',
+                   'upload_requirements', 'reference_policy', 'submits_generation', 'submission_payload',
+                   'unresolved', 'handoff_sha256'})
+    require(handoff['schema_version'] == 1 and handoff['kind'] == 'character_study_handoff', 'Not a character study handoff')
+    require(handoff['handoff_sha256'] == sha({k: v for k, v in handoff.items() if k != 'handoff_sha256'}), 'Handoff changed')
+    require(handoff['plan_sha256'] == plan['plan_sha256'], 'Handoff belongs to another study plan')
+    require(plan['canon']['approval']['state'] == 'approved', 'Canon approval attestation is required; it is not authentication')
+    case = get_case(plan, handoff['case_id']); require(handoff['preset_id'] == case['preset_id'], 'Handoff preset differs from the approved case')
+    catalog = read_json(inside(repo_root, 'presets/catalog.json')); matched = [p for p in catalog.get('presets', []) if p.get('id') == handoff['preset_id']]
+    require(len(matched) == 1 and handoff['catalog_entry_sha256'] == sha(matched[0]), 'Current catalog entry differs from the handoff')
+    preset = matched[0]; require(handoff['template_path'] == preset.get('graph'), 'Handoff template path differs from the current preset')
+    graph_path = inside(repo_root, handoff['template_path']); require(handoff['template_sha256'] == file_sha(graph_path), 'Current template differs from the handoff')
+    require(handoff['submits_generation'] is False and handoff['submission_payload'] is None, 'Handoff must not carry a submission payload')
+    controls = handoff['proposed_controls']; require(isinstance(controls, dict) and set(controls) == {'positive', 'seed'}, 'Handoff controls must be exactly positive text and seed')
+    require(controls['seed'] == case['seed'] and isinstance(controls['positive'], str) and case['instruction'] in controls['positive'], 'Handoff controls differ from the approved case')
+    refs = {ref['id']: ref for ref in plan['canon']['references']}; requirements = handoff['upload_requirements']
+    require(isinstance(requirements, list) and [item.get('id') for item in requirements] == case['reference_ids'], 'Handoff reference order differs from the approved case')
+    slots = preset.get('reference_slots') or []
+    require((len(slots) == len(requirements)) if slots else len(requirements) == 1 and bool(preset.get('reference')), 'Current preset cannot bind every approved reference')
+    for index, item in enumerate(requirements):
+        ref = refs[item['id']]; require(item.get('sha256') == ref['sha256'] and item.get('role') == ref['role'] and item.get('slot_index') == index, 'Handoff reference evidence differs from the approved canon')
+        if slots: require(item.get('binding') == slots[index].get('binding') and slots[index].get('role') == ref['role'], 'Reference role does not match the current slot')
+    return case, preset
+
+
 def _measurement(value: Any, label: str) -> None:
     require(value is None or (type(value) in {int, float} and math.isfinite(value) and value >= 0), 'Invalid measurement: ' + label)
 
