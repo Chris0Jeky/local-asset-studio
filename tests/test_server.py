@@ -209,6 +209,35 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(bound['1']['inputs']['frames'],22)
         self.assertEqual(bound['1']['inputs']['last_reference'],upload)
 
+    def test_flux_presets_declare_the_latent_node_floor_of_16(self):
+        """EmptyFlux2LatentImage computes width//16, so the server default of 8 would accept a width
+        the node silently floors: 1032 would render as 1024 while the recipe recorded 1032. Driven
+        against the shipped catalog entries, not a synthetic preset, because the defect was the
+        missing declaration. EmptySD3LatentImage (zimage) computes //8, so it must stay off this list."""
+        repo=Path(__file__).parents[1]
+        shipped={preset['id']:preset for preset in json.loads((repo/'presets/catalog.json').read_text(encoding='utf-8'))['presets']}
+        for preset_id in ('flux','flux-edit'):
+            preset=shipped[preset_id]
+            self.assertEqual(preset.get('dimension_multiple'),16,preset_id)
+            graph=json.loads((repo/preset['graph']).read_text(encoding='utf-8'))
+            for key in ('width','height'):
+                node,_=preset[key]
+                self.assertEqual(graph[node]['class_type'],'EmptyFlux2LatentImage',(preset_id,key))
+        self.assertNotEqual(shipped['zimage'].get('dimension_multiple'),16)
+        zimage=json.loads((repo/shipped['zimage']['graph']).read_text(encoding='utf-8'))
+        self.assertEqual(zimage[shipped['zimage']['width'][0]]['class_type'],'EmptySD3LatentImage')
+        preset=shipped['flux']; graph=json.loads((repo/preset['graph']).read_text(encoding='utf-8'))
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[dict(preset,graph='workflows/api/flux-api.json')]}))
+        (self.root/'workflows/api/flux-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,'multiple of 16'): s.prepare({'preset_id':'flux','controls':{'width':1032}})
+        with self.assertRaisesRegex(server.StudioError,'multiple of 16'): s.prepare({'preset_id':'flux','controls':{'height':1032}})
+        _,bound,_,_,_=s.prepare({'preset_id':'flux','controls':{'width':1024,'height':1024}})
+        node,_=preset['width']
+        self.assertEqual(bound[node]['inputs']['width'],1024)
+        for extra,_ in preset['bindings_extra']['width']:
+            self.assertEqual(bound[extra]['inputs']['width'],1024)
+
     def test_rejected_submission_is_not_uncertain_or_retried(self):
         error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps({'error':{'message':'Required input missing'},'node_errors':{'7':{'errors':[]}}}).encode()))
         s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},error])

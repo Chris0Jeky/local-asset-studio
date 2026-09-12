@@ -310,6 +310,7 @@
           ]
         ]
       },
+      "dimension_multiple": 16,
       "modality": "image"
     },
     {
@@ -362,6 +363,7 @@
           ]
         ]
       },
+      "dimension_multiple": 16,
       "modality": "image"
     },
     {
