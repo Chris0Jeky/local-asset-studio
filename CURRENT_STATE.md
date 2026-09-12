@@ -1,5 +1,21 @@
 # Current state — 11 September 2026
 
+## Offline CPU voice baseline - 12 September 2026
+
+The Voice baseline page now prepares pinned original-text takes and explicitly queues Kokoro CPU
+inference through the existing Production worker. Each take retains its request, model/tool pins,
+text/phonemes, logs, partial files and 24 kHz dry/48 kHz scene WAVs with Workspace recipes. Cancellation
+owns its processes; interrupted inference is never resumed automatically. The isolated Python3.12.10
+environment and model bundle are outside Git and separate from ComfyUI.
+
+A real browser/inference fixture generated and played a 2.85-second original line: 68,400 dry samples,
+136,800 scene samples, zero full-scale samples and no JS errors/external browser or ComfyUI calls.
+Page load and Prepare did not generate. Six additional dry lines have an offline installation receipt.
+This verifies CPU inference and the user flow, not listening quality, acting, voice design, cloning,
+alignment or independent transcription. See `docs/VOICE-BASELINE.md`; raw evidence is retained under
+`.runtime/session-2026-09-12/voice-baseline/` and `C:/AI/voice-lab-kokoro/metadata/`.
+`HUMAN_TODO.md` retains the owner's optional creative choices.
+
 ## Shared Scene editor - 12 September 2026
 
 The Studio header and selected Workspace assets now lead to a saved Scene editor. UI, CLI and optional

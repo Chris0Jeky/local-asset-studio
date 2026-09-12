@@ -363,7 +363,7 @@ class Studio:
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe')}
 
     def output_path(self, output, job=None):
-        if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1'):
+        if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1','native.voice-baseline.v1'):
             identifier=job.get('project_id','')
             if not re.fullmatch('[0-9a-f]{32}',identifier):raise StudioError('Invalid native project identity')
             base=(self.experiments/'projects'/identifier).resolve()
@@ -890,6 +890,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
+            if path == '/api/voice-baseline':
+                from voice_baseline import capabilities
+                return self._json(200,{'capabilities':capabilities(self.studio),'projects':[p for p in self.studio.production.list() if p['kind']=='voice']})
             if path=='/api/av':return self._json(200,self.studio.production.av.list())
             if path.startswith('/api/av/'):
                 parts=path.split('/')
@@ -958,6 +961,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
+            if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))
             if self.path.startswith('/api/av/'):
                 parts=self.path.split('/')
                 if len(parts)!=4:raise StudioError('Unknown scene command route')
