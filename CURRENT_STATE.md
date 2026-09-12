@@ -1,5 +1,22 @@
 # Current state — 11 September 2026
 
+## Character primary-case import - 12 September 2026
+
+An explicit character plan/handoff/upload request can now prepare one primary case through the existing
+Production service. Import reconstructs the canonical handoff against current raw catalog/template
+bytes, checks approved reference roles and both Studio/Comfy input copies, and stores the case, canon,
+handoff and resolved recipe evidence. Separate cases share the study allowance; each remains batch one.
+Import queues nothing, and duplicate primary imports are refused. Canon approval is a local attestation,
+not reviewer authentication or generated-art acceptance.
+
+Inert direct integration checks proved zero-work import, shared budget, concurrent Start reservations,
+restart persistence, duplicate refusal and preflight rollback. Rehashed prompt/binding drift, non-image
+routes and changed Comfy input bytes were rejected before project/budget writes. The full suite ran 598
+tests: 588 passed and 10 skipped; repository validation passed. One independent review plus its scoped
+fix verification found no remaining Critical/High defect. This is the first import seam in #65;
+repairs, warmups, review promotion, dependency invalidation and live import execution remain unverified.
+The existing database-commit-before-plan-file-write recovery gap is tracked separately in #65.
+
 ## Character-consistency offline foundation - 12 September 2026
 
 The character study, archive and media commands now have local Windows integration evidence.
