@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "kind": "character_study_request",
+  "study_id": "reference-preservation-pilot",
+  "routes": [
+    {
+      "id": "qwen-current",
+      "preset_id": "qwen-1ref",
+      "notes": "Current Qwen 2511 Q4/Lightning single-reference template; resolve and pin actual local bundle before running."
+    },
+    {
+      "id": "klein-current",
+      "preset_id": "flux-edit",
+      "notes": "Existing FLUX Klein reference-edit preset; preserve family-native settings and record actual preprocessing."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "back",
+      "instruction": "One neutral full-body back view. Preserve accepted standard costume construction and hair. Unresolved hidden design is a proposal, not a pass.",
+      "reference_ids": ["front"],
+      "required_checks": ["identity", "costume", "camera", "contact", "style"]
+    },
+    {
+      "id": "profile",
+      "instruction": "One strict right-profile full-body view with relaxed arms, complete boots and unchanged character/costume.",
+      "reference_ids": ["front"],
+      "required_checks": ["identity", "costume", "camera", "contact", "style"]
+    },
+    {
+      "id": "wink",
+      "instruction": "Preserve this portrait framing and design; change only to one readable wink and a smile.",
+      "reference_ids": ["portrait-calm"],
+      "required_checks": ["identity", "costume", "camera", "style"]
+    }
+  ],
+  "seeds": [12001, 12002],
+  "budget": {
+    "max_generation_attempts": 12,
+    "max_repairs_per_case": 0,
+    "allow_paid_services": false
+  },
+  "hypotheses": [
+    "H01: one of the installed reference routes preserves the accepted design sufficiently for a larger static-pack trial.",
+    "This 12-case pilot does NOT test separate panels against whole-sheet generation, LoRA value or animation. Those require their own preregistered comparisons."
+  ]
+}
