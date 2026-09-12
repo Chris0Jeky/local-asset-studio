@@ -1,8 +1,10 @@
 """Validate portable catalog contracts and the Git payload without running a GPU job."""
-import json, re, subprocess
+import json, re, subprocess, sys
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(root/'app'))
+from model_library import FOLDERS, SUFFIXES
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
 fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name','lora5','lora5_name','lora6','lora6_name']
@@ -91,9 +93,17 @@ for asset in library['assets']:
     assert re.fullmatch('[a-z0-9-]+',asset['id'])
     assert re.fullmatch('[a-f0-9]{64}',asset['sha256'])
     assert isinstance(asset['bytes'],int) and asset['bytes']>0
-    assert not Path(asset['file']).is_absolute() and '..' not in Path(asset['file']).parts
-    assert asset['file'].endswith('.safetensors')
-    assert asset['url'].startswith(('https://huggingface.co/','https://civitai.com/','https://civitai.red/'))
+    relative=Path(asset['file'])
+    assert not relative.is_absolute() and '..' not in relative.parts
+    # Every pin must be a weight kind the Models view knows, in a folder ModelLibrary.locate accepts:
+    # an entry outside FOLDERS makes the whole snapshot raise instead of listing the library.
+    assert relative.suffix.lower() in SUFFIXES, (asset['id'],relative.suffix)
+    assert relative.parts[0] in FOLDERS, (asset['id'],relative.parts[0])
+    # A pin records where the bytes came from; only safetensors are ever fetched from it. A pin with no
+    # curated origin at all (a GitHub release, an unrecorded copy) must say so in terms rather than guess.
+    curated=asset['url'].startswith(('https://huggingface.co/','https://civitai.com/','https://civitai.red/'))
+    assert curated or asset['url']=='', (asset['id'],'url must be a curated source or empty')
+    assert curated or asset.get('terms'), (asset['id'],'an unsourced pin must say so in terms')
 files=subprocess.check_output(['git','ls-files','-z'],cwd=root).decode().split('\0')
 for name in filter(None,files):
     path=root/name

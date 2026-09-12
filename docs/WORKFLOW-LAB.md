@@ -62,6 +62,22 @@ the final filename becomes visible to ComfyUI. They preserve 20 GiB of working h
 | `background_removal` | BiRefNet foreground extraction |
 | `upscale_models` | Learned image upscalers such as ESRGAN |
 | `latent_upscale_models` | Optional latent video upscalers used by community workflows |
+| `ipadapter` | IP-Adapter reference-identity weights, paired with a `clip_vision` encoder |
+| `ultralytics` | Ultralytics face, hand and person detectors under `bbox/` and `segm/` |
+| `inpaint` | Inpaint heads and models such as the Fooocus head and MAT Places512 |
+| `vae_approx` | The small TAESD/TAEF1 decoders ComfyUI uses for live latent previews |
+
+Whether a pinned file installs automatically depends on its **suffix, not its folder**. Only
+`.safetensors` is fetched and published by the installer; `.gguf`, `.pth`, `.pt` and `.onnx` pins are
+**pin only**. `library.json` records their size, SHA-256 and terms so **Models & folders** reports
+presence, but the installer refuses them and the card shows a disabled *Copy in by hand* button.
+Today that is the detectors in `ultralytics`, the Fooocus head in `inpaint`, the two upscaler `.pth`
+files, and the three GGUF backbones — which live in `diffusion_models` and `text_encoders`, not in the
+four folders above. `ipadapter` and `vae_approx` currently hold only `.safetensors`. A pin with no
+curated source URL is refused the same way while its file is missing, and verifies once it is there.
+
+A weight whose suffix is outside that set is not pinned at all and appears nowhere in the Models view.
+`inpaint/inpaint_v26.fooocus.patch` is the live example: installed, 1.3 GB, and deliberately unpinned.
 
 Your downloaded `minimax_h3_fl2va_pruned_int8_convrot.safetensors` belongs in
 `models\diffusion_models`. The configured PC uses an NTFS hard link to the

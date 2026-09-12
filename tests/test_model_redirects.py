@@ -187,7 +187,11 @@ class RedirectInstallIntegrationTests(unittest.TestCase):
     def test_complete_partial_still_requires_a_curated_source_without_dns_or_http(self):
         self.part.write_bytes(self.body);self.asset['url']='https://example.com/model';(self.root/'models/library.json').write_text(json.dumps({'assets':[self.asset]}))
         with patch.object(contracts.socket,'getaddrinfo') as resolver,patch.object(models,'urlopen') as request:
-            with self.assertRaisesRegex(ValueError,'curated HTTPS model source'):self.lib.install('demo')
+            # Outer gate: a missing file with no curated URL is refused before a lease or receipt exists.
+            with self.assertRaisesRegex(ValueError,'copy this file in by hand'):self.lib.install('demo')
+            self.assertFalse((self.lib.state/'install.lock').exists());self.assertFalse((self.lib.state/'demo.json').exists())
+            # Inner gate, unchanged: the transfer itself still refuses the origin, with no DNS and no HTTP.
+            with self.assertRaisesRegex(ValueError,'curated HTTPS model source'):self.lib._download(self.asset,self.target)
         resolver.assert_not_called();request.assert_not_called();self.assertEqual(self.part.read_bytes(),self.body);self.assertFalse(self.target.exists())
 
 
