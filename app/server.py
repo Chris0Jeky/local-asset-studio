@@ -210,17 +210,23 @@ class Studio:
         if not isinstance(extras, list): raise StudioError("Preset has invalid companion bindings")
         for binding in extras: self._bind(graph, binding, value)
 
-    def _validate_masked_repair_reference(self, upload):
-        """Require the alpha source that the manual repair graph actually uses."""
+    def _validate_rgba_mask_reference(self, preset, upload):
+        """Require the alpha source that a `requires_rgba_mask` graph actually uses.
+
+        Every such preset drives its noise mask and final composite from the core
+        `LoadImage` MASK output, which is 1 - alpha: a fully opaque upload is an
+        empty mask and would repaint nothing, and nothing here pads or crops.
+        """
         from PIL import Image, UnidentifiedImageError
+        who = preset.get("name") or preset.get("id") or "This recipe"
         try:
             with Image.open(upload) as decoded:
-                if decoded.format != "PNG" or decoded.mode != "RGBA": raise StudioError("Anime Masked Repair requires a real RGBA PNG upload")
+                if decoded.format != "PNG" or decoded.mode != "RGBA": raise StudioError(who + " requires a real RGBA PNG upload")
                 width, height = decoded.size
-                if width % 8 or height % 8: raise StudioError("Anime Masked Repair requires width and height divisible by 8; no padding or cropping is applied")
-                if decoded.getchannel("A").getextrema()[0] == 255: raise StudioError("Anime Masked Repair requires a transparent repair region in the alpha channel")
+                if width % 8 or height % 8: raise StudioError(who + " requires width and height divisible by 8; no padding or cropping is applied")
+                if decoded.getchannel("A").getextrema()[0] == 255: raise StudioError(who + " requires a transparent repair region in the alpha channel")
         except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
-            raise StudioError("Anime Masked Repair requires a valid RGBA PNG upload") from exc
+            raise StudioError(who + " requires a valid RGBA PNG upload") from exc
 
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
@@ -287,10 +293,10 @@ class Studio:
             uploads = self.experiments / "uploads"
             upload = inside(uploads.resolve(), uploads / name)
             if not upload.is_file(): raise StudioError("Reference upload is unavailable")
-            if preset["id"] == "anime-masked-repair" and key == "reference": self._validate_masked_repair_reference(upload)
+            if preset.get("requires_rgba_mask") and key == "reference": self._validate_rgba_mask_reference(preset, upload)
             self._bind_control(graph, preset, key, upload.name)
-        if preset["id"] == "anime-masked-repair" and "reference" not in controls:
-            raise StudioError("Anime Masked Repair requires a real RGBA PNG upload; the authored example cannot be queued")
+        if preset.get("requires_rgba_mask") and "reference" not in controls:
+            raise StudioError((preset.get("name") or preset.get("id") or "This recipe") + " requires a real RGBA PNG upload; the authored example cannot be queued")
         if preset.get("max_pixels"):
             actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")
@@ -683,7 +689,9 @@ class Studio:
         preset = self.preset(preset_id)
         if graph is None: graph, _ = self.graph_for(preset)
         known = {Path(a["file"]).name: a for a in self.library.manifest().get("assets", [])}
-        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision"}
+        # `head` is the Fooocus inpaint loader's field; without it the .pth falls to the "models" default
+        # and the panel reports an installed file as missing at a path it never lived at.
+        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision", "head": "inpaint"}
         requirements = []
         for node in graph.values():
             for field, value in node.get("inputs", {}).items():

@@ -11,7 +11,7 @@ async function api(path, options={}) { const r = await fetch(path, options); con
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
-const referenceHint = () => selected?.id === 'anime-masked-repair' ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
+const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
 function renderPresets() {
   if (!catalog) return;

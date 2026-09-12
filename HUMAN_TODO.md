@@ -28,6 +28,15 @@ reference stack (civitai image 139608451) or the adapter-free painterly artist t
 images 131843207–131843406). Execution is not art approval, and the six adapters' civitai terms are recorded,
 not cleared.
 
+**q-4 — page file: fixed 40 GB gives the ~73–77 GB commit limit that #77 and #89 hit; moving to
+system-managed or larger is a system setting for the owner (do not tick).** Measured 12 September
+2026: `SizeStoredInPagingFiles` 41,943,040 KiB, commit limit 77,014,286,336 B; #77's failure was at
+97 % committed, and a Qwen job at `--reserve-vram 0.6` still failed on a host allocation at 87 %
+committed, so the VRAM reserve is measurably not the lever. The ≥20 GiB commit gate is documented as
+an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
+`app/` samples commit headroom before submitting. Agents must not change paging: #77 says not to
+treat it as a default fix. This item records the option, not a decision.
+
 ## Recorded owner decisions
 
 **Character-consistency pilot canon, 12 September 2026:** In response to the choice of reference canon

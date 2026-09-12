@@ -67,7 +67,7 @@ class ServerTests(unittest.TestCase):
 
     def test_anime_masked_repair_preserves_valid_rgba_bytes_and_rejects_invalid_masks(self):
         graph={"4":{"class_type":"LoadImage","inputs":{"image":"authored-mask.png"}}}
-        preset={"id":"anime-masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"]}
+        preset={"id":"anime-masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"],"requires_rgba_mask":True}
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
         (self.root/'workflows/api/masked-repair-api.json').write_text(json.dumps(graph))
         s=self.studio(); source=rgba_png(); upload=s.upload('hand-mask.png','image/png',source)
@@ -90,6 +90,54 @@ class ServerTests(unittest.TestCase):
                 s.create_job({'preset_id':'anime-masked-repair','controls':{} if file is None else {'reference':file}})
         self.assertEqual(s.jobs,{})
         self.assertTrue(s.queue.empty())
+
+    def test_rgba_mask_guard_follows_the_preset_flag_not_a_hardcoded_id(self):
+        """`sdxl-inpaint-fix` inherits the masked-repair refusals through `requires_rgba_mask`."""
+        graph={"4":{"class_type":"LoadImage","inputs":{"image":"lantern-reference.png"}}}
+        preset={"id":"sdxl-inpaint-fix","name":"WAI Fooocus inpaint repair","category":"Anime quality","graph":"workflows/api/inpaint-fix-api.json","reference":["4","image"],"requires_rgba_mask":True}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset,PRESET]}))
+        (self.root/'workflows/api/inpaint-fix-api.json').write_text(json.dumps(graph))
+        s=self.studio(); masked=s.upload('hand-mask.png','image/png',rgba_png())['file']
+        _,bound,_,_,_=s.prepare({'preset_id':'sdxl-inpaint-fix','controls':{'reference':masked}})
+        self.assertEqual(bound['4']['inputs']['image'],masked)
+        opaque=s.upload('opaque.png','image/png',rgba_png(transparent=False))['file']
+        rgb=s.upload('rgb.png','image/png',png())['file']
+        unaligned=s.upload('unaligned.png','image/png',rgba_png(height=12))['file']
+        jpeg=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(jpeg,'JPEG')
+        jpg=s.upload('flat.jpg','image/jpeg',jpeg.getvalue())['file']
+        webp=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(webp,'WEBP')
+        webp_file=s.upload('flat.webp','image/webp',webp.getvalue())['file']
+        cases=((None,'WAI Fooocus inpaint repair requires a real RGBA PNG upload; the authored example cannot be queued'),
+               (opaque,'transparent repair region'),(rgb,'RGBA PNG'),(unaligned,'divisible by 8'),(jpg,'RGBA PNG'),(webp_file,'RGBA PNG'))
+        for file, message in cases:
+            with self.subTest(file=file), self.assertRaisesRegex(server.StudioError,message):
+                s.create_job({'preset_id':'sdxl-inpaint-fix','controls':{} if file is None else {'reference':file}})
+        self.assertEqual(s.jobs,{}); self.assertTrue(s.queue.empty())
+        # A preset without the flag keeps the ordinary upload contract: opaque RGB is fine.
+        _,plain,_,_,_=s.prepare({'preset_id':'demo','controls':{'reference':rgb}})
+        self.assertEqual(plain['1']['inputs']['reference'],rgb)
+
+    def test_inpaint_head_and_patch_are_declared_requirements_that_block_readiness(self):
+        """The Fooocus files are not `_name` inputs, so `model_files` is what makes them visible."""
+        graph={"5":{"class_type":"INPAINT_LoadFooocusInpaint","inputs":{"head":"fooocus_inpaint_head.pth","patch":"inpaint_v26.fooocus.patch"}}}
+        preset={"id":"sdxl-inpaint-fix","name":"WAI Fooocus inpaint repair","category":"Anime quality","graph":"workflows/api/inpaint-fix-api.json",
+                "model_files":["inpaint/fooocus_inpaint_head.pth","inpaint/inpaint_v26.fooocus.patch"]}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/inpaint-fix-api.json').write_text(json.dumps(graph))
+        installed=self.root/'fake-comfy/models/inpaint'; installed.mkdir(parents=True)
+        (installed/'fooocus_inpaint_head.pth').write_bytes(b'head')
+        s=self.studio(); found={r['file']:r for r in s.inspect_preset('sdxl-inpaint-fix')['requirements']}
+        # The .pth is reported under inpaint/, never under the "models" default it never lived at.
+        self.assertNotIn('models/fooocus_inpaint_head.pth',found)
+        self.assertEqual(sorted(found),['inpaint/fooocus_inpaint_head.pth','inpaint/inpaint_v26.fooocus.patch'])
+        self.assertTrue(found['inpaint/fooocus_inpaint_head.pth']['present'])
+        self.assertFalse(found['inpaint/inpaint_v26.fooocus.patch']['present'])
+        with patch.object(server.Studio,'node_info',lambda *a,**k:{}), patch.object(server.Studio,'validate_graph',lambda *a:None):
+            with self.assertRaisesRegex(server.StudioError,r'Required model is unavailable: inpaint/inpaint_v26\.fooocus\.patch'):
+                s.production_preflight(preset,graph)
+        (installed/'inpaint_v26.fooocus.patch').write_bytes(b'patch')
+        restored={r['file']:r['present'] for r in s.inspect_preset('sdxl-inpaint-fix')['requirements']}
+        self.assertEqual(restored,{'inpaint/fooocus_inpaint_head.pth':True,'inpaint/inpaint_v26.fooocus.patch':True})
 
     def test_imported_image_survives_restart_without_generation(self):
         s=self.studio();result=s.import_image('frame.png','image/png',png())
