@@ -9,6 +9,29 @@ and uses its `data-handoff` value only as the destination. Overview activity now
 `submitting` state. Synthetic browser coverage exercises these paths with no model, Studio, project,
 queue or generation activity; the policy check covers the submitting display classification.
 
+## Runtime preconditions — 12 September 2026
+
+Measured, not inferred. `qwen-image-edit-2511-Q4_K_M` is 12,738.98 MB resident in every log that
+loads it; it loaded **partially** at 11,379.72 / 12,584.27 / 12,633.22 MB usable
+(`C:/AI/logs/20260911-171055-error.log:282`, `20260912-043327-error.log:246,274`) and **completely**
+at 12,751.49 MB and above (`20260911-053144-error.log:311`). At `--reserve-vram 2` the 17:31 pilot
+did fully load at 12,888.02 / 12,899.61 MB usable and was then partially *unloaded* twice for the
+VAE (`20260912-173147-error.log:109,127,130,137`): reserve 2 sat on the boundary rather than always
+forcing a partial load. `Get-CimInstance Win32_OperatingSystem` reads a fixed 40 GiB page file
+(`SizeStoredInPagingFiles` 41,943,040 KiB) and a 77,014,286,336 B commit limit; #77 failed at 97 %
+committed and `/free` released 35,099,705,344 B
+(`C:/AI/character-lab/pilot-20260912/cache-release-{before,after}.json`; the process also exited, so
+the two are confounded). #89's four deaths were `0xC0000005` access violations during host-side
+tensor moves after a partial load or unload. All four installed SDXL checkpoints are
+epsilon-prediction (Animagine 4.0 and Pony v6 declare `modelspec.prediction_type = epsilon`; NoobAI
+v1.1 and WAI v17 carry no v-pred key; ComfyUI logged `model_type EPS` for every SDXL load today), so
+a mis-sampled v-pred NoobAI is **not** the six-finger cause. The owner's launcher
+`C:/AI/Start-ComfyUI.ps1` (outside Git) went from `--reserve-vram 2` to `0.6` at ~20:55 local —
+SHA-256 `526fcda5…c604c` before, `0c3fbc95…969e` after, backup `…ps1.bak-20260912-reserve2` — and
+`app/backends.py` now matches. **NOT verified:** the exit test. No Qwen job has run since, so no log
+yet shows `Requested to load QwenImage` then `loaded completely; … full load: True` at 832×1216 with
+two references. Derivation, fit table and the ≥20 GiB commit gate: `docs/RUNTIME-PRECONDITIONS.md`.
+
 ## Integrated Studio workflow UI verification — 12 September 2026
 
 The shared workspace navigation, guided creation, saved drafts and reusable image

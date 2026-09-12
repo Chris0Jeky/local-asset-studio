@@ -48,3 +48,36 @@ websocket-client 1.9.2, wsproto 1.3.2.
 before `873287a534d2ccaf`, after `526fcda531f6d7ad`; the untouched copy is `.runtime/Start-ComfyUI.ps1.before-manager`.
 `custom_nodes/civitai-comfy-nodes` is a git clone at upstream commit `1bcb195` (7 September 2026).
 
+
+## Launcher reserve-vram flag, 12 September 2026 (no ComfyUI source edited, no package changed)
+
+`C:/AI/Start-ComfyUI.ps1` had exactly one token changed: `'--reserve-vram', '2'` became
+`'--reserve-vram', '0.6'`. Nothing else in the argument list moved, and no file inside
+`C:/AI/ComfyUI_windows_portable` was touched.
+
+Why: `--reserve-vram` replaces ComfyUI's own default outright rather than adding to it, and that
+default on this 16 GB Windows card is 600 MB + 100 MB (`comfy/model_management.py:863-867`). At 2 GB
+the `qwen-image-edit-2511-Q4_K_M` unet (12,738.98 MB resident, measured) sat on the full/partial
+load boundary: it loaded partially at 11,379.72 / 12,584.27 / 12,633.22 MB usable
+(`C:/AI/logs/20260911-171055-error.log:282`, `20260912-043327-error.log:246,274`) and completely at
+12,751.49 MB and above. A partial load is the head of the host-commit chain in #77 and of the
+`0xC0000005` partial-unload crashes in #89. The derivation, the fit table and the commit gate are in
+[`docs/RUNTIME-PRECONDITIONS.md`](../docs/RUNTIME-PRECONDITIONS.md).
+
+SHA-256 before `526fcda531f6d7aded268e9f69ad3fa1bc643d05f7e74e65f5b32f902ddc604c`, after
+`0c3fbc95bcb27444797eeffe08bb4047029a55f1ad352a9f979ed26bf8ea969e`. The untouched copy is
+`C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2` (its hash is the "before" value above, and it is the
+same file recorded as the "after" state of the `--enable-manager` entry).
+
+To revert, with the ComfyUI queue empty and its owned process stopped:
+
+```powershell
+Copy-Item "C:/AI/Start-ComfyUI.ps1.bak-20260912-reserve2" "C:/AI/Start-ComfyUI.ps1" -Force
+Get-FileHash "C:/AI/Start-ComfyUI.ps1" -Algorithm SHA256
+```
+
+`app/backends.py` carries the same value for the Studio-launched primary backend
+(`PRIMARY_RESERVE_VRAM`). Revert both or neither: a change to one produces two different runtimes on
+port 8188. `scripts/h3-launch.py` (8194) and `scripts/hidream-launch.py` (8192) are unchanged at 2.
+The effect of this change is not yet proven; the exit test is a `full load: True` line on the next
+Qwen job.
