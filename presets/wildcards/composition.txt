@@ -1,0 +1,19 @@
+# Framing and camera. Danbooru composition tags first, then plain phrases.
+cowboy shot
+upper body
+full body
+close-up
+wide shot
+scenery
+from below
+from above
+dutch angle
+profile view
+three quarter view
+over the shoulder
+centred symmetrical composition
+rule of thirds framing
+depth of field
+foreground foliage framing the subject
+low horizon with a tall sky
+tight portrait crop

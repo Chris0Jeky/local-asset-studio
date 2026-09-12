@@ -582,8 +582,8 @@
       "id": "wai",
       "name": "WAI v17 \u2022 illustration",
       "category": "Characters",
-      "description": "Illustrious-family character illustration. HF mirror provenance recorded; original terms need confirmation.",
       "graph": "workflows/api/wai-api.json",
+      "visual": "workflows/comfyui/18 - WAI v17 Illustration.json",
       "verified": true,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
@@ -618,7 +618,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Illustrious-family character illustration using the card's quality tail and restrained negative, with sampler control and two optional SDXL LoRA slots (off at strength 0).",
+      "stages": [
+        "WAI v17 checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "30-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "wai-pose",
@@ -670,8 +765,8 @@
       "id": "anime",
       "name": "Animagine \u2022 anime character",
       "category": "Characters",
-      "description": "Tag-oriented illustration model. First-generation sample is not character-consistency proof.",
       "graph": "workflows/api/anime-api.json",
+      "visual": "workflows/comfyui/07 - Animagine XL Anime.json",
       "verified": true,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
@@ -706,7 +801,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Animagine XL 4.0",
+      "description": "Tag-oriented illustration model in the author's documented tag order (subject, character, series, rating, detail, quality tail), with sampler control and two optional SDXL LoRA slots.",
+      "stages": [
+        "Animagine 4.0 Opt checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, original, safe, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job d14cb0b0-87b0-4c92-9795-74c61a7f8f13 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "pose",
@@ -758,8 +948,8 @@
       "id": "pony",
       "name": "Pony V6 \u2022 stylized character",
       "category": "Characters",
-      "description": "Keep the score tags in the default prompt while changing subject and style.",
       "graph": "workflows/api/pony-api.json",
+      "visual": "workflows/comfyui/15 - Pony Stylized Characters.json",
       "verified": true,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
@@ -794,14 +984,109 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Pony V6",
+      "description": "Pony V6 with the full score-tag prefix, source/rating tags and the clip-skip-2 the model card requires. Keep the prefix while changing subject and style.",
+      "stages": [
+        "Pony V6 checkpoint",
+        "2 optional style LoRA slots",
+        "Clip skip 2",
+        "Prompt + seed",
+        "30-step render"
+      ],
+      "source": "https://huggingface.co/AstraliteHeart/pony-diffusion-v6",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy",
+            "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field",
+            "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job 3103565f-5bfa-4ed7-a2ab-dcf28097a994 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "noob",
       "name": "NoobAI \u2022 hobby illustration",
       "category": "Experimental",
-      "description": "Hobby/research only under the author terms; do not use generated products commercially.",
       "graph": "workflows/api/noob-api.json",
+      "visual": "workflows/comfyui/14 - NoobAI Hobby Illustration.json",
       "verified": true,
       "commercial_note": "Author terms prohibit commercialization including generated products.",
       "positive": [
@@ -836,7 +1121,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "NoobAI XL 1.1",
+      "description": "Hobby/research only under the author terms. Uses the card's quality prefix and full negative, with sampler control and two optional SDXL LoRA slots.",
+      "stages": [
+        "NoobAI XL 1.1 checkpoint",
+        "2 optional style LoRA slots",
+        "Prompt + seed",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Laxhar/noobai-XL-1.1",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy",
+            "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "masterpiece, best quality, newest, absurdres, highres, safe, no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field",
+            "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job c24fd256-4c28-441d-ac2d-344ba9bc47c5 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "zimage",
@@ -922,8 +1302,8 @@
       "id": "anime-wai-quality",
       "name": "Anime WAI Portrait",
       "category": "Anime quality",
-      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
       "graph": "workflows/api/anime-wai-quality-api.json",
+      "visual": "workflows/comfyui/21 - Anime WAI Portrait.json",
       "verified": false,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
@@ -958,14 +1338,109 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait at 832 x 1216, Euler ancestral, CFG 5, WAI quality tail and two optional LoRA slots. See docs/ANIME-QUALITY.md.",
+      "stages": [
+        "WAI v17 checkpoint",
+        "2 optional style LoRA slots",
+        "Portrait prompt",
+        "30-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, best quality, amazing quality",
+            "negative": "bad quality, worst quality, worst detail, sketch, censor",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "anime-animagine-quality",
       "name": "Anime Animagine Portrait",
       "category": "Anime quality",
-      "description": "Prepared, schema-checked; not rendered. Adult character portrait, Euler ancestral, CFG 5, native SDXL size. See docs/ANIME-QUALITY.md.",
       "graph": "workflows/api/anime-animagine-quality-api.json",
+      "visual": "workflows/comfyui/22 - Anime Animagine Portrait.json",
       "verified": false,
       "commercial_note": "Animagine publisher source: cagliostrolab/animagine-xl-4.0. Check the model and reference-image terms before publishing.",
       "positive": [
@@ -1000,7 +1475,102 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "Animagine XL 4.0",
+      "description": "Prepared, schema-checked; not rendered. Adult character portrait at 832 x 1216, Euler ancestral, CFG 5, the author's tag order and two optional LoRA slots. See docs/ANIME-QUALITY.md.",
+      "stages": [
+        "Animagine 4.0 Opt checkpoint",
+        "2 optional style LoRA slots",
+        "Portrait prompt",
+        "28-step render",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "variants": [
+        {
+          "name": "Fantasy portrait",
+          "controls": {
+            "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 832,
+            "height": 1216
+          }
+        },
+        {
+          "name": "Fantasy environment",
+          "controls": {
+            "positive": "no humans, original, safe, scenery, fantasy, ancient ruins, overgrown vines, waterfall, floating island, light rays, dappled sunlight, volumetric lighting, wide shot, depth of field, masterpiece, high score, great score, absurdres",
+            "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+            "width": 1216,
+            "height": 832
+          }
+        },
+        {
+          "name": "Cinematic lighting adapter",
+          "controls": {
+            "lora": 0.6
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
     },
     {
       "id": "anime-refine",
@@ -1039,6 +1609,137 @@
         "image"
       ],
       "modality": "image"
+    },
+    {
+      "id": "anime-detail-fix",
+      "name": "Anime Detail Fix (faces, then hands)",
+      "category": "Anime quality",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anime-detail-fix-api.json",
+      "verified": true,
+      "commercial_note": "Repaints crops with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "seed": [
+        "12",
+        "seed"
+      ],
+      "steps": [
+        "12",
+        "steps"
+      ],
+      "cfg": [
+        "12",
+        "cfg"
+      ],
+      "denoise": [
+        "12",
+        "denoise"
+      ],
+      "sampler": [
+        "12",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "12",
+        "scheduler"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "bindings_extra": {
+        "seed": [
+          [
+            "13",
+            "seed"
+          ]
+        ],
+        "steps": [
+          [
+            "13",
+            "steps"
+          ]
+        ],
+        "cfg": [
+          [
+            "13",
+            "cfg"
+          ]
+        ],
+        "sampler": [
+          [
+            "13",
+            "sampler_name"
+          ]
+        ],
+        "scheduler": [
+          [
+            "13",
+            "scheduler"
+          ]
+        ],
+        "denoise": [
+          [
+            "13",
+            "denoise"
+          ]
+        ]
+      },
+      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "choices": {
+        "sampler": [
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "euler_ancestral",
+          "euler",
+          "dpmpp_3m_sde"
+        ],
+        "scheduler": [
+          "karras",
+          "simple",
+          "normal",
+          "sgm_uniform",
+          "beta"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://github.com/ltdrdata/ComfyUI-Impact-Pack",
+      "description": "The correction pass for finished anime images from any family: two Impact Pack FaceDetailer stages find faces (face_yolov8s) and then hands (hand_yolov8n) with YOLO, and repaint only those crops with WAI v17 at a low denoise, so the rest of the picture is untouched. The positive text steers the face pass; the hand pass has its own authored text. One denoise control drives both passes (authored 0.4): 0.3 keeps identity, 0.55 redraws a broken hand but also shifts the face.",
+      "stages": [
+        "Reference image",
+        "YOLO face boxes",
+        "WAI repaint at low denoise",
+        "YOLO hand boxes",
+        "WAI hand repaint",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Gentle (denoise 0.3)",
+          "controls": {
+            "denoise": 0.3
+          }
+        },
+        {
+          "name": "Strong (denoise 0.55)",
+          "controls": {
+            "denoise": 0.55
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job 14caa4fb-5999-497f-8b73-0bb2562229df (prompt 3eeba334-6161-4f84-bd36-de0c888c0d74) on the authored example image in 36.2 s; both detector passes fired and the output was inspected (evidence in experiments/curated/anime-fantasy-atelier). Not an art approval."
     },
     {
       "id": "anime-esrgan",
@@ -2254,9 +2955,36 @@
         "10",
         "strength_model"
       ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
       "modality": "image",
       "family": "Krea 2 Turbo",
       "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
       "description": "Free official retro-anime adapter on Krea Turbo FP8. A separate interpretation of your reference, with literal prompts and no hidden prompt enhancement.",
       "stages": [
         "Prompt",
@@ -2282,6 +3010,22 @@
         {
           "name": "3-seed audition",
           "batch_count": 3
+        },
+        {
+          "name": "Fast 8-step euler",
+          "controls": {
+            "steps": 8,
+            "sampler": "euler",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Target 15-step euler_a",
+          "controls": {
+            "steps": 15,
+            "sampler": "euler_ancestral",
+            "scheduler": "simple"
+          }
         }
       ],
       "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
@@ -2323,9 +3067,36 @@
         "10",
         "strength_model"
       ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
       "modality": "image",
       "family": "Krea 2 Turbo",
       "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
       "description": "Free official retro-anime adapter on Krea Turbo FP8. A separate interpretation of your reference, with literal prompts and no hidden prompt enhancement.",
       "stages": [
         "Prompt",
@@ -2351,6 +3122,22 @@
         {
           "name": "3-seed audition",
           "batch_count": 3
+        },
+        {
+          "name": "Fast 8-step euler",
+          "controls": {
+            "steps": 8,
+            "sampler": "euler",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Target 15-step euler_a",
+          "controls": {
+            "steps": 15,
+            "sampler": "euler_ancestral",
+            "scheduler": "simple"
+          }
         }
       ]
     },
@@ -2489,6 +3276,185 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
+      ]
+    },
+    {
+      "id": "anima-artist-stack",
+      "name": "Anima Artist Stack",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/anima-artist-stack-api.json",
+      "verified": true,
+      "commercial_note": "CircleStone Labs Non-Commercial model weights; each stacked artist-style LoRA carries its own civitai terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "lora5": [
+        "14",
+        "strength_model"
+      ],
+      "lora5_name": [
+        "14",
+        "lora_name"
+      ],
+      "lora6": [
+        "15",
+        "strength_model"
+      ],
+      "lora6_name": [
+        "15",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Anima",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "dpmpp_2m_sde_gpu",
+          "dpmpp_2m",
+          "res_multistep"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "normal",
+          "sgm_uniform"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://civitai.com/models/2458426?modelVersionId=2945208",
+      "description": "Anima base v1.0 with six artist-style adapter slots, authored at the strengths of the owner's reference image (xilmo 0.7, huashijw 0.6, koukouya 0.3, ke-ta 0.7, NEWANIMASTYLE 1.0, kieed 0.5). Anima also knows artist tags natively (@koukouya, @synswt, @kyano), so the 'Artist tags, no adapters' variant prunes every slot and leans on the base model alone. Strength 0 removes a slot from the submitted graph.",
+      "stages": [
+        "Prompt",
+        "Anima base v1.0",
+        "Six LoraLoaderModelOnly slots",
+        "30-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Reference stack 1328x1776",
+          "controls": {
+            "width": 1328,
+            "height": 1776,
+            "seed": 975436216244440
+          }
+        },
+        {
+          "name": "Artist tags, no adapters",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "lora3": 0,
+            "lora4": 0,
+            "lora5": 0,
+            "lora6": 0,
+            "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+            "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+            "cfg": 3,
+            "sampler": "dpmpp_2m_sde_gpu",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Turbo 8-step audition (slot 6 = turbo LoRA)",
+          "controls": {
+            "lora6_name": "anima-turbo-lora-v0.2.safetensors",
+            "lora6": 1.0,
+            "steps": 8,
+            "cfg": 1,
+            "sampler": "euler",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "Half-strength stack",
+          "controls": {
+            "lora": 0.35,
+            "lora2": 0.3,
+            "lora3": 0.15,
+            "lora4": 0.35,
+            "lora5": 0.5,
+            "lora6": 0.25
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 on Anima base v1.0 through Studio jobs 8a593206 (authored six-adapter stack, 24.3 s at 832x1216), 8eb5bc19 (Artist tags, no adapters, 20.1 s) and 6ae066d8 (Reference stack 1328x1776, 66.4 s); all three images inspected (experiments/curated/anime-fantasy-atelier). Earlier the same day the graph ran as ComfyUI probes on anima-aesthetic-v1.1 while the base checkpoint downloaded. Not an art approval; the adapters carry their own civitai terms.",
+      "dimension_limits": [
+        64,
+        1856
       ]
     },
     {
@@ -3255,6 +4221,447 @@
         "elapsed_seconds": 76.26,
         "status": "execution observed; creative acceptance open"
       }
+    },
+    {
+      "id": "krea-anime-atelier",
+      "name": "Krea 2 Anime Atelier",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-anime-atelier-api.json",
+      "visual": "workflows/comfyui/55 - Krea 2 Anime Atelier.json",
+      "verified": true,
+      "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "backend_id": "primary",
+      "description": "The owner's anime stack on Krea Turbo: four hot-swappable LoRA slots feeding one sampler. A slot left at strength 0 is pruned before submission, so an unused slot adds no compute; every authored slot must still name an installed file. Write natural-language paragraphs and keep each LoRA trigger where its card says (@NJSW33T and @NIJISIS at the start, fal style phrases at the end).",
+      "stages": [
+        "Prompt",
+        "Krea Turbo + 4 LoRA slots",
+        "15-step euler_ancestral",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Target stack (Niji Sweet Spot + TextFusion)",
+          "controls": {
+            "lora": 1.0,
+            "lora2": 1.0,
+            "lora3": 0,
+            "lora4": 0,
+            "steps": 15,
+            "sampler": "euler_ancestral",
+            "scheduler": "simple"
+          }
+        },
+        {
+          "name": "NIJISIS painterly",
+          "controls": {
+            "lora2": 0,
+            "lora3": 1.0,
+            "positive": "@NIJISIS, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work"
+          }
+        },
+        {
+          "name": "Oil fantasy",
+          "controls": {
+            "lora3": 0,
+            "lora4": 1.0,
+            "lora4_name": "fal-krea2-baroque-dreamscape-oil.safetensors",
+            "positive": "@NJSW33T, medium close-up portrait at eye level with a shallow depth of field, warm lantern light crossing cool moonlight, a young witch with long lavender hair and amber eyes in a wide-brimmed hat and a deep indigo travelling cloak trimmed with gold, standing on the mossy stone balcony of a hillside tower, drifting motes of light and open grimoires floating around her, calm half-smile, one hand steadying her hat while the wind lifts the cloak, painterly anime illustration with soft cel shading and delicate line work baroque dreamscape oil style"
+          }
+        },
+        {
+          "name": "Fast 8-step euler",
+          "controls": {
+            "steps": 8,
+            "sampler": "euler"
+          }
+        },
+        {
+          "name": "4-step audition",
+          "controls": {
+            "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+            "lora4": 0.85,
+            "steps": 4
+          }
+        },
+        {
+          "name": "Landscape 1152x768",
+          "controls": {
+            "width": 1152,
+            "height": 768
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job db02f6b1-8346-4361-a432-7734fc72d2c2 (variant '4-step audition': TextFusion 1.0 + Niji Sweet Spot 1.0 + 4-step LoRA 0.85, NIJISIS slot pruned at 0; 197 s at 768x1152); image inspected. The 15-step target settings were proven by direct ComfyUI probes (941 s), not through this preset. Not an art approval. Full target stack (TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832x1248) executed 2026-09-12 as job 7d589f47-7172-44fb-9541-4ab0602eafce in 827.6 s and inspected."
+    },
+    {
+      "id": "krea-style-lab",
+      "name": "Krea 2 Style Lab",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-style-lab-api.json",
+      "visual": "workflows/comfyui/56 - Krea 2 Style Lab.json",
+      "verified": true,
+      "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "backend_id": "primary",
+      "description": "A two-slot style mixer for Krea Turbo: a fal style LoRA in slot one, an official Comfy-Org style adapter in slot two, and the 4-step distill LoRA in slot three for cheap auditions. Keep prompts short: the official adapter phrase opens the prompt, the fal trigger closes it.",
+      "stages": [
+        "Prompt + style triggers",
+        "Krea Turbo + 2 style slots",
+        "8-step euler",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "variants": [
+        {
+          "name": "Airy watercolour + soft watercolour",
+          "controls": {
+            "lora_name": "fal-krea2-airy-anime-watercolor.safetensors",
+            "lora": 1.0,
+            "lora2_name": "krea2_softwatercolor.safetensors",
+            "lora2": 0.6,
+            "positive": "art deco watercolor style, a fox spirit shrine on a cliff at dawn, paper lanterns and drifting petals, soft mist over the valley, airy anime watercolor style"
+          }
+        },
+        {
+          "name": "Cosy storybook + rainy window",
+          "controls": {
+            "lora_name": "fal-krea2-cozy-storybook-gouache.safetensors",
+            "lora": 1.0,
+            "lora2_name": "krea2_rainywindow.safetensors",
+            "lora2": 0.6,
+            "positive": "rainy window style, a young cartographer reading by candlelight in a crooked tower room, rain running down the glass, warm amber lamp, cozy storybook gouache style"
+          }
+        },
+        {
+          "name": "Dark fantasy film + ink wash",
+          "controls": {
+            "lora_name": "fal-krea2-dark-fantasy-film.safetensors",
+            "lora": 1.0,
+            "lora2_name": "krea2_darkbrush.safetensors",
+            "lora2": 0.6,
+            "positive": "monochrome ink wash style, a lone knight facing a vast ruined gate in a fog-filled valley, cold backlight, dark fantasy film style"
+          }
+        },
+        {
+          "name": "Emerald paperback + vintage tarot",
+          "controls": {
+            "lora_name": "fal-krea2-emerald-fantasy-paperback.safetensors",
+            "lora": 1.0,
+            "lora2_name": "krea2_vintagetarot.safetensors",
+            "lora2": 0.6,
+            "positive": "vintage tarot style, a hedge witch with a lantern and a crow on a moonlit forest path, emerald fantasy paperback style"
+          }
+        },
+        {
+          "name": "Cel-shaded daytime + sunset blur",
+          "controls": {
+            "lora_name": "fal-krea2-cel-shaded-daytime-anime.safetensors",
+            "lora": 1.0,
+            "lora2_name": "krea2_sunsetblur.safetensors",
+            "lora2": 0.6,
+            "positive": "ethereal motion blur style, two travellers crossing a windswept grass ridge above a sunlit sea, cel shaded daytime anime style"
+          }
+        },
+        {
+          "name": "4-step audition",
+          "controls": {
+            "lora3_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+            "lora3": 0.85,
+            "steps": 4
+          }
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e (variant '4-step audition', 207 s at 1024x1024); image inspected. Other style pairs are not yet run. Not an art approval."
+    },
+    {
+      "id": "krea-refine",
+      "name": "Krea 2 Refine Pass (img2img polish)",
+      "category": "Anime flagship",
+      "collection": "workflow-lab",
+      "graph": "workflows/api/krea-refine-api.json",
+      "verified": true,
+      "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "denoise": [
+        "7",
+        "denoise"
+      ],
+      "reference": [
+        "6",
+        "image"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "lora3": [
+        "12",
+        "strength_model"
+      ],
+      "lora3_name": [
+        "12",
+        "lora_name"
+      ],
+      "lora4": [
+        "13",
+        "strength_model"
+      ],
+      "lora4_name": [
+        "13",
+        "lora_name"
+      ],
+      "modality": "image",
+      "family": "Krea 2 Turbo",
+      "dimension_multiple": 16,
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "er_sde",
+          "res_multistep",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "beta",
+          "sgm_uniform",
+          "normal"
+        ]
+      },
+      "backend_id": "primary",
+      "source": "https://huggingface.co/Comfy-Org/Krea-2",
+      "description": "A global polish pass for a finished Krea 2 image: the picture is encoded with the Qwen VAE and re-sampled at denoise 0.35 with the 4-step distill LoRA in slot 3, keeping TextFusion and Niji Sweet Spot in slots 1-2 so the style stays put. It tightens small details and faces that came out mushy (the style-lab foxes) without changing the composition. Raise denoise towards 0.5 to redraw more; the source's own prompt belongs in the positive text.",
+      "stages": [
+        "Reference image",
+        "Qwen VAE encode",
+        "Krea 2 Turbo + adapters",
+        "4-step re-sample at low denoise",
+        "Qwen VAE decode",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Light touch (denoise 0.25)",
+          "controls": {
+            "denoise": 0.25
+          }
+        },
+        {
+          "name": "Redraw (denoise 0.5, 6 steps)",
+          "controls": {
+            "denoise": 0.5,
+            "steps": 6
+          }
+        },
+        {
+          "name": "Full 8-step without the distill LoRA",
+          "controls": {
+            "lora3": 0,
+            "steps": 8,
+            "denoise": 0.4
+          }
+        }
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval."
     }
   ]
 }
