@@ -1,5 +1,30 @@
 # Current state — 11 September 2026
 
+## Controlled edits through Studio - 12 September 2026
+
+The local character-edit client can prepare a pinned handoff, stage one ordinary Production
+comparison, explicitly request Start, collect a completed Workspace candidate and compose it through
+the original write mask. Studio retains ownership of execution, reservations and prompt IDs. The
+client pins both the authored catalog entry and raw workflow, independently checks native previews
+against the prepared bindings, and rejects compiled instructions over Studio's 8,000-character limit.
+Its journal preserves uncertain requests; there is no automatic retry or native-editor layer import.
+
+Author fix `1c13415`, integrated with main `7264134` as `56e2c505`, passed the full Windows suite:
+776 tests, 763 passed and 13 skipped. Repository validation passed. These checks include real Handler
+integration with inert execution. See [the bridge guide](docs/character-consistency/STUDIO-BRIDGE.md).
+The independent review and hosted checks remain recorded on PR #78 rather than inferred from these
+local results.
+
+A real boot-trim proposal was prepared and staged with the earlier local client `e409c242` at
+`C:/AI/character-lab/scoped-boot-edit-20260912/`. Production project
+`98f83d0d3304472f9db5dbc065357aa3` remains planned: allowance 1, reserved 0, no job or prompt ID.
+Its 288x488 source context and approved front identity image were uploaded and pinned; the supplied
+back view is the review canon. Automatic approval review rejected the Start command as "blocked by
+policy" before execution. No candidate was generated or composited, and neural edit quality and
+memory improvement remain unverified. The preserved pre-integration handoff uses a different catalog
+pin schema from the final client; it is historical staging evidence, not final-client execution proof.
+Retain its original journal/project and the adjacent status note; do not reset them for a new allowance.
+
 ## Controlled character edits: Windows proof - 12 September 2026
 
 The actor-scoped offline planner and pixel bridge were integrated with main `44fc561` and exercised
