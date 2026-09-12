@@ -1,5 +1,17 @@
 # Current state — 11 September 2026
 
+## Scene editor interaction checks - 12 September 2026
+
+Unsaved clip notices and disabled document actions now update on input without replacing the focused
+field or preview video. Commands and manual reloads are serialized; stale polls cannot overwrite a
+newer command response. Completion updates the global render status, and artifact links show filenames.
+Chromium 151 with synthetic sources and real FFmpeg verified typing focus, continuing playback,
+persisted edits, a held export blocking conflicting actions, download completion and a 390 px layout.
+The browser recorded no JavaScript errors, external requests or ComfyUI calls. Full suite: 516 run,
+507 passed and 9 skipped; repository validation passed. Raw proof is retained under
+`.runtime/session-2026-09-12/scene-interactions/`. The remaining Scene work stays tracked in #30;
+`HUMAN_TODO.md` retains optional creative choices, and this proof makes no art acceptance claim.
+
 ## Spoken atelier scene and manual repair option - 12 September 2026
 
 The primary Studio explicitly generated “The lantern is ready. Follow the light.” with the isolated

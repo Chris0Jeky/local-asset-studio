@@ -8,13 +8,18 @@ shot/audio splits. Sources are served by local range-capable URLs rather than em
 
 Use **Save changes** on a clip, then **Render scene**. While one or more clip fields are unsaved, the
 editor labels the preview as a saved revision and blocks render, export, restore, add, move, split and
-remove. Save each draft or use **Discard unsaved changes** to clear only the local fields; it makes no
+remove. The unsaved notice and disabled actions update immediately while typing, retaining keyboard
+focus and the current preview video. Save each draft or use **Discard unsaved changes** to clear only the local fields; it makes no
 request and never applies or discards a server revision. Saving one clip advances the remaining local
 drafts to that saved revision, so they remain individually saveable; an external change still returns a
 conflict. Reload after a conflict to compare the current server revision with retained fields before
 saving. History restore creates a new revision and preserves the intervening history. Browser, CLI and
 MCP all use the same expected-revision command API and database. Actor labels are provenance supplied by
 the client, not authentication or a creative approval.
+
+While a command or manual reload is pending, clip fields and document actions are disabled, including
+export, cancel, scene switching and new-scene creation. Polling cannot overwrite a newer command
+response. Render completion updates the global status and artifact links show their filenames.
 
 ## CLI and MCP
 
