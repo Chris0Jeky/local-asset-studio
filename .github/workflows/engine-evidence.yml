@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/godot_asset_adapter.py'
       - 'scripts/godot_probe.gd'
+      - 'scripts/godot_project.godot'
       - 'scripts/engine_validation.py'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'scripts/godot_asset_adapter.py'
       - 'scripts/godot_probe.gd'
+      - 'scripts/godot_project.godot'
       - 'scripts/engine_validation.py'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'

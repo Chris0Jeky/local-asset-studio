@@ -173,7 +173,7 @@ class EngineEvidenceTests(unittest.TestCase):
     def test_node_preload_environment_is_removed(self):
         with patch.dict(os.environ,{'NODE_OPTIONS':'--require untrusted','NODE_PATH':'untrusted'}):
             result=evidence.run_command([sys.executable,'-c','import os; print(os.getenv("NODE_OPTIONS")); print(os.getenv("NODE_PATH"))'],self.root,'environment',5)
-        self.assertEqual(result['stdout'].strip(),'None\nNone')
+        self.assertEqual(result['stdout'].splitlines(),['None','None'])
     def test_execute_failure_is_retained_and_not_rerun(self):
         with self.assertRaises(evidence.EvidenceError):adapter.execute(self.root,'manifest.json',self.root/'failed-run',self.root/'missing')
         failure=evidence.read_json(self.root/'failed-run/failure.json');self.assertEqual(failure['state'],'failed')

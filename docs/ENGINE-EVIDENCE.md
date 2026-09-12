@@ -25,6 +25,7 @@ boundary and the final duration with at most two fixed-step rounding tolerance
 | File | Boundary |
 |---|---|
 | `scripts/godot_asset_adapter.py` | Existing package/preflight/execute/inspect/export API and CLI; exclusive attempt directories |
+| `scripts/godot_project.godot` | Authored import profile; explicit animation sampling and disabled optimizer/compression for the generated AnimationPlayer |
 | `scripts/godot_probe.gd` | Authored Godot resource inspection, real sprite signals, GLB scene inventory and AnimationPlayer pose sampling |
 | `scripts/engine_validation.py` | Bounded JSON/GLB intake, source alpha reference, pinned validator bridge, bounded child process/logs |
 | `tools/gltf-validation/` | Explicit isolated npm tool installation; no frontend build/runtime dependency |
@@ -81,21 +82,30 @@ Neither a missing report nor a crash authorizes a blind rerun in the same folder
 
 The initial real Linux run passed sprite loop/one-shot/blank-frame checks,
 skin inventory and the invalid-accessor gate, but rejected the expected midpoint
-pose: the imported quaternion's Z component was 0.681998 instead of 0.707107.
-The retained effective `.import` settings showed Godot's 30 FPS animation bake.
-Interpolating its samples around the authored 240 ms apex rounded a 90-degree
-hinge pose to approximately 86 degrees. The strict pose assertion was not relaxed.
+pose: the imported quaternion's Z component was 0.681998 instead of 0.707107
+(86 versus 90 degrees). The effective `.import` settings used a 30 FPS animation
+bake. Raising the bake rate alone to 100 FPS did not solve the defect: the second
+run reported 0.661312, so that explanation was insufficient. The strict pose
+assertion was not relaxed; both failed artifacts were retained.
 
-The verification project now declares a 100 FPS scene-import profile, reads the
-effective FPS back from Godot's `.import` file, preserves immutable tracks and
-turns off automatic LOD/shadow meshes and name-suffix type conversions. This is
-an explicit verification configuration, not a lossless guarantee for every
-possible source key time. Source and imported poses still need task-specific
-comparisons. The original failed evidence remains in the first CI artifact.
+Godot's importer also enables per-AnimationPlayer optimization by default. The
+verification project now explicitly disables optimizer and compression through
+the supported scene subresource profile, alongside the 100 FPS sample rate,
+retained immutable tracks, disabled generated LOD/shadow meshes and disabled
+name-suffix type conversion. The probe reads the effective importer settings for
+the actual player import ID. An unmapped player cannot silently inherit a claim
+that its optimizer was disabled. Track key counts are retained as evidence.
 
-The initial Windows npm invocation also resolved the wrong working directory.
-The native lane now uses an explicit tool working-directory and `npm ci` with
-the exact registry integrity lock observed in the successful Linux installation.
+This is a verification configuration, not a lossless guarantee for every possible
+source key time. Source and imported poses still need task-specific comparisons.
+The strict original-fixture pose check must pass in the real-tool test lane.
+
+The first Windows npm invocation resolved the wrong working directory. The lane
+now uses an explicit tool working-directory and `npm ci` with the exact registry
+integrity lock observed in the successful Linux installation. The following
+Windows run exposed a CRLF-only assertion mismatch in the environment test;
+it now checks the two output lines independently, preserving the actual check
+that neither Node preload environment variable reaches the child.
 
 ## Limits and threat model
 
@@ -166,6 +176,7 @@ Reviewed 12 September 2026:
 
 - [Godot 4.5 AnimatedSprite2D](https://docs.godotengine.org/en/4.5/classes/class_animatedsprite2d.html): frame, loop and finished signal semantics; speed scale.
 - [Godot command line](https://docs.godotengine.org/en/4.5/tutorials/editor/command_line_tutorial.html): `--import`, `--headless`, and fixed FPS disabling real-time synchronization. Unknown flags can be silently ignored; the former undocumented `--user-data-dir` is removed.
+- [Godot importer source](https://github.com/godotengine/godot/blob/4.5-stable/editor/import/3d/resource_importer_scene.cpp): per-node import IDs and optimizer/compression settings.
 - [Khronos Node API](https://github.com/KhronosGroup/glTF-Validator/blob/main/node/index.js): `validateBytes`, format, maxIssues and externalResourceFunction. This adapter rejects resource loading.
 - [Khronos package identity](https://github.com/KhronosGroup/glTF-Validator/blob/main/node/package.json): official Apache-2.0 npm distribution.
 - [Godot 4.5 release](https://github.com/godotengine/godot-builds/releases/tag/4.5-stable): Linux archive SHA-256 `c7316e1fd782ad276a4d985a7673b5976eaaa8d90561a2bea5289210dc53e9ba`; Windows x64 archive SHA-256 `303206071cb8be502cfa5b1e2b37b848c280347c03f78dcc2eb8a630857f7d10`.

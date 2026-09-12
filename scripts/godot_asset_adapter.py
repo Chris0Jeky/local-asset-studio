@@ -165,15 +165,8 @@ def package_project(input_root, atlas_manifest, output_root, glb_path=None):
     if glb:
         shutil.copyfile(glb, target / 'assets/ember.glb')
         require(file_sha(target / 'assets/ember.glb') == glb_sha, 'GLB changed while snapshotting')
-    (target / 'project.godot').write_text(
-        '; Studio engine-evidence project; no imported scripts or plugins\n[application]\n'
-        'config/name="Studio Godot Asset Verification"\nrun/main_scene="res://main.tscn"\n'
-        '[rendering]\nrenderer/rendering_method="gl_compatibility"\n'
-        '[debug]\nfile_logging/enable_file_logging=false\n'
-        '[importer_defaults]\nscene={\n"animation/fps": 100.0,\n'
-        '"animation/remove_immutable_tracks": false,\n"meshes/generate_lods": false,\n'
-        '"meshes/create_shadow_meshes": false,\n"nodes/use_name_suffixes": false,\n'
-        '"nodes/use_node_type_suffixes": false\n}\n', encoding='utf-8', newline='\n')
+    template = Path(__file__).with_name('godot_project.godot')
+    (target / 'project.godot').write_bytes(template.read_bytes())
     (target / 'main.tscn').write_text(_project_tscn(manifest), encoding='utf-8', newline='\n')
     script = Path(__file__).with_name('godot_probe.gd').read_text(encoding='utf-8')
     (target / 'verify.gd').write_text(script.replace('__GLB_PATH__', 'res://assets/ember.glb' if glb else ''), encoding='utf-8', newline='\n')
@@ -243,6 +236,11 @@ def _verify_report(report, manifest, wants_glb, atlas=None):
         require(isinstance(glb, dict) and glb.get('loaded') is True and glb.get('meshes'), 'Godot did not import the requested GLB mesh')
         require(glb.get('import_profile', {}).get('animation_fps') == 100, 'Godot did not apply the declared animation import profile')
         require(isinstance(glb.get('animation_samples'), list), 'GLB animation sampling evidence is missing')
+        if glb['animation_samples']:
+            players = glb.get('import_profile', {}).get('players')
+            require(isinstance(players, list) and players and all(isinstance(p, dict)
+                    and p.get('optimizer_enabled') is False and p.get('compression_enabled') is False for p in players),
+                    'Godot animation import settings do not disable lossy optimization for every sampled player')
         for clip in glb['animation_samples']:
             require(isinstance(clip, dict) and len(clip.get('samples', [])) == 3, 'Incomplete GLB clip sampling')
 

@@ -59,7 +59,7 @@ func inventory_glb() -> Dictionary:
 		return inventory
 	var import_settings: ConfigFile = ConfigFile.new()
 	if import_settings.load(GLB_PATH + ".import") == OK:
-		inventory["import_profile"] = {"animation_fps": import_settings.get_value("params", "animation/fps", null)}
+		inventory["import_profile"] = {"animation_fps": import_settings.get_value("params", "animation/fps", null), "players": []}
 	var packed: Resource = load(GLB_PATH)
 	if not (packed is PackedScene):
 		inventory["load_error"] = "Godot did not load GLB as PackedScene"
@@ -111,6 +111,12 @@ func inventory_glb() -> Dictionary:
 		if item is AnimationPlayer:
 			var player: AnimationPlayer = item as AnimationPlayer
 			player.active = true
+			var import_id: String = str(player.get_meta("import_id", "PATH:" + str(root.get_path_to(player))))
+			var subresources: Dictionary = import_settings.get_value("params", "_subresources", {})
+			var settings: Dictionary = subresources.get("nodes", {}).get(import_id, {})
+			inventory.get("import_profile", {}).get("players", []).append({"import_id": import_id,
+				"optimizer_enabled": settings.get("optimizer/enabled", null),
+				"compression_enabled": settings.get("compression/enabled", null)})
 			for clip_name in player.get_animation_list():
 				inventory["animations"].append(str(clip_name))
 				if clip_name == "RESET":
@@ -118,7 +124,7 @@ func inventory_glb() -> Dictionary:
 				var animation: Animation = player.get_animation(clip_name)
 				var tracks: Array = []
 				for track in range(animation.get_track_count()):
-					tracks.append({"path": str(animation.track_get_path(track)), "type": animation.track_get_type(track)})
+					tracks.append({"path": str(animation.track_get_path(track)), "type": animation.track_get_type(track), "key_count": animation.track_get_key_count(track)})
 				var samples: Array = []
 				player.play(clip_name)
 				player.advance(0.0)
