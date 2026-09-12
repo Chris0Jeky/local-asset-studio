@@ -90,7 +90,8 @@
             "https://civitai.com/models/2844656"
           ],
           "observed": [
-            "euler_ancestral: 09dadd6e-3e60-4c37-80d1-9244bb8e848d, 412b3c9f-162b-434b-a2a6-e57635f82da1, d7bd3104-f348-46e6-811e-3b1d918c75c3"
+            "euler_ancestral: 09dadd6e-3e60-4c37-80d1-9244bb8e848d, 412b3c9f-162b-434b-a2a6-e57635f82da1, d7bd3104-f348-46e6-811e-3b1d918c75c3",
+            "er_sde at 4 steps: af080638-403f-41d4-87c2-4d821f299fe0 (usable, slightly more pointillist than euler_ancestral)"
           ]
         },
         {
@@ -119,6 +120,10 @@
           "sources": [
             "https://huggingface.co/ilkerzgi/fal-Krea-2-Style-LoRAs",
             "https://civitai.com/models/2554999"
+          ],
+          "observed": [
+            "9d0e794d-7e12-4f61-ab47-d00c813c5143 (witch-airy-watercolor-short-4step)",
+            "b993c08c-66c4-4d21-ac22-1d3a412ebf4a (witch-target-plus-baroque-oil-4step)"
           ]
         },
         {

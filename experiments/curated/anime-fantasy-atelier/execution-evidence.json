@@ -281,6 +281,162 @@
    "artifact": "examples/anime-fantasy-atelier/krea-anime-atelier-4step.jpg",
    "recipe": "krea-anime-atelier-4step-recipe.json",
    "inspection": "Witch with a wide ornate hat reading among floating books on a mossy wall at dusk; crisp line work, painterly cloth, coherent hands and gloves, legible book pages; a small signature-like squiggle bottom-right (typical of the Niji Sweet Spot training data)."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-airy-watercolor-short-4step",
+   "prompt_id": "9d0e794d-7e12-4f61-ab47-d00c813c5143",
+   "status": "success",
+   "seconds": 170.43,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "fal-krea2-airy-anime-watercolor.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "A young witch with wavy indigo hair and a big black hat sits",
+   "original": {
+    "path": "Studio/probes/witch-airy-watercolor-short-4step_00001_.png",
+    "sha256": "cbb2cb0b52a461f899a58188ee52b3401cf6ad90ff9fb9ebe08ac33dca4ae226",
+    "bytes": 1272169,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-airy-watercolor-short-4step.jpg",
+   "inspection": "fal airy-anime-watercolor alone with a short prompt (trigger at the end): clean watercolor illustration on white paper, soft blue hair, orange and lavender flowers; a completely different register from the same seed."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-4step",
+   "prompt_id": "d70e45a2-edff-419b-92d2-dae02e31eaf2",
+   "status": "success",
+   "seconds": 200.54,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NIJISIS, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-nijisis-4step_00001_.png",
+    "sha256": "219e360eff905f09df68d6483d03d411d49b7acd3e5935667972505fcd86ee4b",
+    "bytes": 1786846,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-nijisis-4step.jpg",
+   "inspection": "@NIJISIS trigger + NIJISIS @1.0 + 4-step LoRA: impasto meadow, vivid palette, black cat in lap and tabby beside; very close to the 15-step NIJISIS baseline at a fifth of the time."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-ersde-4step",
+   "prompt_id": "af080638-403f-41d4-87c2-4d821f299fe0",
+   "status": "success",
+   "seconds": 180.4,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "er_sde",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-ersde-4step_00001_.png",
+    "sha256": "5eaac0f9086b10150ab08ac266d109fdb941e32301e2c19fbc19bca2ce3a63b5",
+    "bytes": 1728468,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-ersde-4step.jpg",
+   "inspection": "Target stack with er_sde instead of euler_ancestral: same composition, slightly more pointillist flower field and glitter; both samplers are usable at 4 steps."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-plus-baroque-oil-4step",
+   "prompt_id": "b993c08c-66c4-4d21-ac22-1d3a412ebf4a",
+   "status": "success",
+   "seconds": 190.32,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "fal-krea2-baroque-dreamscape-oil.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-plus-baroque-oil-4step_00001_.png",
+    "sha256": "3f629a98335646c6c398ebfe324be332f477fba5da574cfbfa0aa2b1ddc13abf",
+    "bytes": 1735423,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-plus-baroque-oil-4step.jpg",
+   "inspection": "Target stack + fal baroque-dreamscape-oil @1.0 (trigger at the end): heavier oil-paint look, ruffled dress, dramatic garden light; the third style LoRA did not burn at four stacked adapters."
   }
  ]
 }
