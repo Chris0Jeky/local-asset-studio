@@ -216,6 +216,20 @@ class BridgeProtocol(unittest.TestCase):
         def drift(p):p['references'][0]['transform']['source_size']=[64,64];return p
         self.http.preview_hook=drift
         with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+    def test_preview_canvas_drift_rejected(self):
+        # The explicit latent, not the reference, decides the candidate size now.
+        def drift(p):p['workflow']['1']['inputs']['height']=64;return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+        self.assertEqual(0,self.http.count('POST','/api/production'))
+    def test_missing_transform_record_is_refused_not_raised(self):
+        def drift(p):p['references'][0]['transform']={};return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
+    def test_missing_canvas_node_is_refused_not_raised(self):
+        def drift(p):p['workflow']['1']={};return p
+        self.http.preview_hook=drift
+        with self.assertRaisesRegex(ValueError,'dimensions'):self.bridge.stage()
     def test_batch_boolean_alias_rejected(self):
         def drift(p):p['batch_count']=True;return p
         self.http.preview_hook=drift

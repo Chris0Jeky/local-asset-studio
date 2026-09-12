@@ -8,15 +8,15 @@
   "variants": [
     {
       "file": "qwen-1ref-api.json",
-      "canonical_sha256": "01db53ffbc4556838fa1fb506df585b248e4cd62e98bd8874b7d8d7a2e5ea2f3"
+      "canonical_sha256": "b7adbbcdedbec99fa7d319720a8d125473ded3363cb36ae91b6d4d0689d538af"
     },
     {
       "file": "qwen-2ref-api.json",
-      "canonical_sha256": "e0dcc0983caad1a5f6f7a8f0d486438f30438c11488125462b31f68f61279c68"
+      "canonical_sha256": "b19da02fc590ec304c65efdc678e759889f4d3f37ee9217145471262c8ce0a63"
     },
     {
       "file": "qwen-3ref-api.json",
-      "canonical_sha256": "54fa92379f78695d6cf11da1675981d176492482c53a8b58903e7f138cb3fa16"
+      "canonical_sha256": "be85274a70f24e0409baee2e456bcead3790498ad8057d5d889dcda26e592b5c"
     }
   ],
   "evidence": "Static topology only; no local schema snapshot, inference or art acceptance in this pass."

@@ -124,7 +124,8 @@ def reference_prompt(brief):
     image_index = 0
     for ref in brief.get('references', []):
         if ref['kind'] == 'image': image_index += 1
-        label = f'Image {image_index}' if ref['kind'] == 'image' else ref['id']
+        # TextEncodeQwenImageEditPlus injects "Picture {i+1}:" before the brief; name the same slots.
+        label = f'Picture {image_index}' if ref['kind'] == 'image' else ref['id']
         lines.append(f"{label} [{ref['role']}]: take {'; '.join(ref['take']) or 'only the named role'}. "
                      f"Do not copy {'; '.join(ref['ignore']) or 'unrequested features'}.")
     lines.append('Constraints: ' + '; '.join(brief['constraints']))
@@ -318,9 +319,9 @@ def qwen_variants(source):
     for count in (1, 2, 3):
         graph = copy.deepcopy(source)
         graph['4']['inputs']['image'] = 'asset-identity.png'
-        graph['6']['inputs']['prompt'] = ('Use the character identity and costume from Image 1. '
-            + ('Use only the pose from Image 2, not its identity or clothes. ' if count >= 2 else '')
-            + ('Use only the rendering style and palette from Image 3. ' if count == 3 else '')
+        graph['6']['inputs']['prompt'] = ('Use the character identity and costume from Picture 1. '
+            + ('Use only the pose from Picture 2, not its identity or clothes. ' if count >= 2 else '')
+            + ('Use only the rendering style and palette from Picture 3. ' if count == 3 else '')
             + 'Create a non-explicit fantasy portrait. Preserve the approved character design.')
         for index, name in ((2, 'pose'), (3, 'style')):
             if index <= count:

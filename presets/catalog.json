@@ -3852,6 +3852,7 @@
         "slots": "every slot is scaled to 1.0 MP before both encoders; no slot is fitted to a width",
         "secondary": "native Qwen encoder preprocessing: semantic branch ~384x384, reference-latent branch ~1 MP on the 8-pixel grid",
         "vae": "the encoder rounds each scaled reference to a multiple of 8",
+        "budget": "max_reference_pixels caps the authored per-reference target (megapixels x 1024^2), which is what the compiler checks; the recorded resized and vae sizes are the node's and the encoder's own rounded results and can sit a fraction of a percent either side of it",
         "canvas": "explicit EmptySD3LatentImage; output size is independent of every reference"
       },
       "max_reference_pixels": 1048576,
@@ -3881,7 +3882,7 @@
           }
         }
       ],
-      "source_graph_sha256": "874d0ac33c5d8c1757e6ff30328cddd28f36963bf85289239897bbb0ed303361"
+      "source_graph_sha256": "89d48a26fa751f027704a123ee62112bc69d50a4b3585150c01028bbec7aac01"
     },
     {
       "id": "qwen-2ref",
@@ -3959,6 +3960,7 @@
         "slots": "every slot is scaled to 1.0 MP before both encoders; no slot is fitted to a width",
         "secondary": "native Qwen encoder preprocessing: semantic branch ~384x384, reference-latent branch ~1 MP on the 8-pixel grid",
         "vae": "the encoder rounds each scaled reference to a multiple of 8",
+        "budget": "max_reference_pixels caps the authored per-reference target (megapixels x 1024^2), which is what the compiler checks; the recorded resized and vae sizes are the node's and the encoder's own rounded results and can sit a fraction of a percent either side of it",
         "canvas": "explicit EmptySD3LatentImage; output size is independent of every reference"
       },
       "max_reference_pixels": 1048576,
@@ -3988,7 +3990,7 @@
           }
         }
       ],
-      "source_graph_sha256": "1f93bebef70219c2ac084bac997ad0b448196407009cc6d91025317eb5db12f9"
+      "source_graph_sha256": "a5f28d4c8c62c7b69af8d69d0b1ae0f9121162f9b9f20c15560ca5f71f54d698"
     },
     {
       "id": "qwen-3ref",
@@ -4075,6 +4077,7 @@
         "slots": "every slot is scaled to 1.0 MP before both encoders; no slot is fitted to a width",
         "secondary": "native Qwen encoder preprocessing: semantic branch ~384x384, reference-latent branch ~1 MP on the 8-pixel grid",
         "vae": "the encoder rounds each scaled reference to a multiple of 8",
+        "budget": "max_reference_pixels caps the authored per-reference target (megapixels x 1024^2), which is what the compiler checks; the recorded resized and vae sizes are the node's and the encoder's own rounded results and can sit a fraction of a percent either side of it",
         "canvas": "explicit EmptySD3LatentImage; output size is independent of every reference"
       },
       "max_reference_pixels": 1048576,
@@ -4104,7 +4107,7 @@
           }
         }
       ],
-      "source_graph_sha256": "e95f34078fa8647ec788d16d2ebc4459a331e14296e9f3a8107de4d58e42e4bf",
+      "source_graph_sha256": "3c3342432b7ee0b1d8f68759e19b33b32e5368f712179a158f27961c0aa6aad2",
       "history": [
         "Superseded geometry (primary reference fitted to width 512, canvas VAE-encoded from it). Three-role manga edit: 512x768, 4 steps, seed 2026091101; 1334.646 seconds on RX 9070 XT Windows ROCm. Prompt c8b752b5-cb25-4438-8c66-f0e5fafcae04. Execution recorded; subjective acceptance remains open."
       ]

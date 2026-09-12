@@ -53,7 +53,7 @@
         "5",
         0
       ],
-      "prompt": "Use the character identity and costume from Image 1. Use only the pose from Image 2, not its identity or clothes. Use only the rendering style and palette from Image 3. Create a non-explicit fantasy portrait. Preserve the approved character design.",
+      "prompt": "Use the character identity and costume from Picture 1. Use only the pose from Picture 2, not its identity or clothes. Use only the rendering style and palette from Picture 3. Create a non-explicit fantasy portrait. Preserve the approved character design.",
       "image2": [
         "16",
         0

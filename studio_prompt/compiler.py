@@ -36,7 +36,7 @@ def compile_brief(b, profile_id):
         if b['tags']: prose.append('Visual descriptors: ' + ', '.join(b['tags']))
         if dialect == 'edit':
             for i, r in enumerate(refs, 1):
-                prose.append(f"Image {i} ({r['role']}): use {'; '.join(r['take']) or 'only the named role'}." +
+                prose.append(f"Picture {i} ({r['role']}): use {'; '.join(r['take']) or 'only the named role'}." +
                              (f" Do not transfer {'; '.join(r['ignore'])}." if r['ignore'] else ''))
         if dialect == 'motion' and not b['facets'].get('motion'):
             issue('MOTION_UNSPECIFIED', 'Specify subject movement, camera movement and what stays fixed; no motion invented.')

@@ -11,7 +11,10 @@ The canvas is independent of the references. Width and height are both editable,
 default to 832x1248 and must be multiples of 16 within roughly one megapixel.
 Every reference — not only the first — is scaled to 1.0 MP with its aspect
 preserved before either encoder branch sees it, so no reference sets the output
-size and none is silently shrunk. The prompt says **Picture 1/2/3** because
+size and none is silently shrunk. The catalog's `max_reference_pixels` caps that
+authored per-slot target, which is the number the compiler checks; the resized and
+VAE sizes it records are the node's and the encoder's own rounded results and can
+land a fraction of a percent either side of it. The prompt says **Picture 1/2/3** because
 `TextEncodeQwenImageEditPlus` injects exactly those tokens. **Preview resolved
 recipe** shows these choices and the complete graph without submitting work.
 Guidance expresses intent; it does not lock pixels, guarantee anatomical accuracy

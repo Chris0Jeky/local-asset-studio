@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import importlib.util
 import json
 import sys
@@ -106,10 +107,49 @@ class ReferenceTests(unittest.TestCase):
             with self.assertRaisesRegex(Exception,'multiple of 16'):
                 studio.prepare({'preset_id':preset['id'],'controls':dict(controls,width=840),'references':references})
 
-    def test_shipped_graphs_match_the_recipe_builder(self):
+    def recipe_builder(self):
         spec=importlib.util.spec_from_file_location('reference_recipes',ROOT/'scripts/build-reference-recipes.py')
-        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder);return builder
+
+    def test_shipped_graphs_match_the_recipe_builder(self):
+        builder=self.recipe_builder()
         for count in (1,2,3):
             source=json.loads((ROOT/f'research/game-assets/workflows/qwen-{count}ref-api.json').read_text(encoding='utf-8'))
             shipped=json.loads((ROOT/f'workflows/api/qwen-{count}ref-api.json').read_text(encoding='utf-8'))
             self.assertEqual(shipped,builder.geometry(source,count))
+
+    def test_shipped_catalog_block_matches_the_recipe_builder(self):
+        builder=self.recipe_builder()
+        presets={p['id']:p for p in json.loads((ROOT/'presets/catalog.json').read_text(encoding='utf-8'))['presets']}
+        for count in (1,2,3):
+            preset=presets[f'qwen-{count}ref']
+            source=(ROOT/f'research/game-assets/workflows/qwen-{count}ref-api.json').read_bytes()
+            # The digest names the exact bytes the shipped graph derives from; a stale one is a lie.
+            self.assertEqual(hashlib.sha256(source).hexdigest(),preset['source_graph_sha256'])
+            self.assertEqual([[builder.LATENT_NODE,'width'],[builder.LATENT_NODE,'height']],[preset['width'],preset['height']])
+            self.assertEqual(16,preset['dimension_multiple']);self.assertEqual([64,1536],preset['dimension_limits'])
+            self.assertEqual(1024*1024,preset['max_pixels']);self.assertEqual(1024*1024,preset['max_reference_pixels'])
+            self.assertEqual(builder.REFERENCE_MEGAPIXELS,preset['reference_policy']['megapixels'])
+            self.assertEqual([{'width':640,'height':960},{'width':builder.CANVAS[0],'height':builder.CANVAS[1]}],
+                             [v['controls'] for v in preset['variants']])
+            self.assertFalse(preset['verified']);self.assertNotIn('execution_note',preset)
+            graph=json.loads((ROOT/preset['graph']).read_text(encoding='utf-8'))
+            self.assertEqual(builder.PROMPTS[count],graph['6']['inputs']['prompt'])
+            self.assertEqual(list(builder.DEFAULT_IMAGES[:count]),
+                             [graph[slot['binding'][0]]['inputs']['image'] for slot in preset['reference_slots']])
+
+    def test_shipped_visual_graphs_match_the_recipe_builder(self):
+        from urllib.error import URLError
+        from urllib.request import urlopen
+        try:
+            with urlopen('http://127.0.0.1:8188/object_info',timeout=20) as stream: info=json.load(stream)
+        except (URLError,OSError):self.skipTest('Visual export needs a live ComfyUI node schema on 127.0.0.1:8188')
+        for path in (ROOT/'app',ROOT/'scripts'):
+            if str(path) not in sys.path: sys.path.insert(0,str(path))
+        spec=importlib.util.spec_from_file_location('expansion_builder',ROOT/'scripts/build-expansion.py')
+        expansion=importlib.util.module_from_spec(spec);spec.loader.exec_module(expansion)
+        for count in (1,2,3):
+            title=f'Qwen Atelier - {count} Reference'+('s' if count>1 else '')
+            graph=json.loads((ROOT/f'workflows/api/qwen-{count}ref-api.json').read_text(encoding='utf-8'))
+            shipped=json.loads((ROOT/f'workflows/comfyui/{49+count} - {title}.json').read_text(encoding='utf-8'))
+            self.assertEqual(shipped,expansion.visual(graph,title,info))

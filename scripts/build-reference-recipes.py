@@ -84,6 +84,7 @@ def build(info):
                                    'slots':'every slot is scaled to 1.0 MP before both encoders; no slot is fitted to a width',
                                    'secondary':'native Qwen encoder preprocessing: semantic branch ~384x384, reference-latent branch ~1 MP on the 8-pixel grid',
                                    'vae':'the encoder rounds each scaled reference to a multiple of 8',
+                                   'budget':"max_reference_pixels caps the authored per-reference target (megapixels x 1024^2), which is what the compiler checks; the recorded resized and vae sizes are the node's and the encoder's own rounded results and can sit a fraction of a percent either side of it",
                                    'canvas':'explicit EmptySD3LatentImage; output size is independent of every reference'},
                'max_reference_pixels':1024*1024,
                'stages':['Role-assigned references','Every reference scaled to 1.0 MP (aspect preserved)',f'Explicit {CANVAS[0]}x{CANVAS[1]} canvas','Qwen edit + matching Lightning','4-step sampling','Tiled decode'],

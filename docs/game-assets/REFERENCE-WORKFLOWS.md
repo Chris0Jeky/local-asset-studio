@@ -34,7 +34,11 @@ Files are in `research/game-assets/workflows/`:
 | `qwen-3ref-api.json` | Picture 1: identity/costume; Picture 2: pose; Picture 3: rendering style |
 
 `TextEncodeQwenImageEditPlus` literally injects `Picture {i+1}:` before the brief, so a prompt that
-says "Image 2" names nothing the model was given.
+says "Image 2" names nothing the model was given. Every producer that writes into that encoder follows
+the same rule: the factory prompt and reference labels in `scripts/game_asset_pipeline.py`, the study
+handoff in `scripts/character_study.py`, the `edit` dialect in `studio_prompt/compiler.py` and the
+Studio compiler in `app/references.py`. Curated pilot evidence under `experiments/curated/` keeps its
+original wording; it is a record of what was run, not an instruction.
 
 These are actual API graph JSON files derived from the repository's existing `workflows/api/qwen-api.json` at commit `6bd4e5ba36c3df22011727772754b6e9b3d13c70`, not text-only blueprints. `provenance.json` records the original Git blob and canonical JSON hash. The factory verifies the expected baseline node identities and rejects collisions or an already multi-reference baseline. It deep-copies the source rather than mutating it.
 
