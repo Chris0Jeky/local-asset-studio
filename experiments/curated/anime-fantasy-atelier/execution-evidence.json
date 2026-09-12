@@ -473,6 +473,45 @@
    "artifact": "examples/anime-fantasy-atelier/krea-style-lab-4step.jpg",
    "recipe": "krea-style-lab-4step-recipe.json",
    "inspection": "Watercolor fox shrine under a cherry tree at sunset with paper lanterns and drifting petals; clean paper-white ground, legible lantern and shrine structure, three foxes; the airy-anime-watercolor style reads clearly at four steps."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-anime-atelier",
+   "variant": null,
+   "job_id": "7d589f47-7172-44fb-9541-4ab0602eafce",
+   "prompt_ids": [
+    "a63ca7e1-c87a-4288-bcd9-959ff93d1827"
+   ],
+   "status": "completed",
+   "seconds": 827.6,
+   "controls": {
+    "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
+    "steps": 15,
+    "cfg": 1,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "width": 832,
+    "height": 1248,
+    "seed": 20260912,
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "lora": 1.0,
+    "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "lora2": 1.0,
+    "lora3": 1.0,
+    "lora4": 0,
+    "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+   },
+   "submitted_lora_chain": [],
+   "original": {
+    "path": "Studio/krea-anime-atelier_00002_.png",
+    "sha256": "6d37a921b1e884ca9b4cc8901e30d73a43217fbce3eeb937e6f16657d3b105e6",
+    "bytes": 1368620,
+    "width": 832,
+    "height": 1248
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-target-stack-koukouya.jpg",
+   "recipe": "krea-target-stack-koukouya-recipe.json",
+   "inspection": "Meadow witch at golden hour with a black cat and a wooden staff: the koukouya adapter is unmistakable (loose painterly brush, patched cloak, loose strokes in the grass and flowers), face and hands clean, the cat reads well; this is the closest match yet to the owner's target image 142028671."
   }
  ]
 }

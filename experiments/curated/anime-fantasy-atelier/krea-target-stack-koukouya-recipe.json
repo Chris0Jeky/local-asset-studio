@@ -1,0 +1,25 @@
+{
+ "preset_id": "krea-anime-atelier",
+ "controls": {
+  "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
+  "steps": 15,
+  "cfg": 1,
+  "sampler": "euler_ancestral",
+  "scheduler": "simple",
+  "width": 832,
+  "height": 1248,
+  "seed": 20260912,
+  "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+  "lora": 1.0,
+  "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+  "lora2": 1.0,
+  "lora3": 1.0,
+  "lora4": 0,
+  "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+ },
+ "batch_count": 1,
+ "graph_path": "workflows\\api\\krea-anime-atelier-api.json",
+ "created_at": 1789184213.764567,
+ "references": [],
+ "parent_assets": []
+}

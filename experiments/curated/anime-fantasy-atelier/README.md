@@ -19,6 +19,7 @@ quality-88 JPEG copies for viewing. Every run here was inspected by eye; none is
 | `noob` "Fantasy portrait" (Studio job) | [noob](../../../examples/anime-fantasy-atelier/noob-fantasy-portrait.jpg) | 832x1216, 28 steps, cfg 5.5 | 28.2 s |
 | `anime` (Animagine 4) "Fantasy portrait" (Studio job) | [animagine](../../../examples/anime-fantasy-atelier/anime-fantasy-portrait.jpg) | 832x1216, 28 steps, cfg 5 | 30.2 s |
 | `pony` "Fantasy portrait" with CLIPSetLastLayer -2 (Studio job) | [pony](../../../examples/anime-fantasy-atelier/pony-fantasy-portrait.jpg) | 832x1216, 30 steps, cfg 6 | 30.2 s |
+| `krea-anime-atelier` with the FULL target stack: TextFusion @1.0 + Niji Sweet Spot @1.0 + koukouya @1.0 (Studio job, first run with koukouya installed) | [krea-target-stack-koukouya](../../../examples/anime-fantasy-atelier/krea-target-stack-koukouya.jpg) | 832x1248, 15 steps, euler_ancestral/simple, cfg 1, seed 20260912 | 827.6 s |
 
 The Krea target-stack probes reproduce the owner's reference image settings (civitai image 142028671:
 15 steps, Euler a, simple, cfg 1) with two of its three LoRAs; the third (koukouya style) is not
