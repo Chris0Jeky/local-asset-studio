@@ -33,10 +33,9 @@ variants for the 1328×1776 reference, the adapter-free artist-tag look, the tur
 repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
 the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
 
-**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the 1328×1776
-reference variant; the three new recipes; the `anime-detail-fix` and `krea-refine` variants other than the authored
-defaults; the Civitai node pack's own sign-in and downloads (only import and node registration were checked); the
-Manager UI beyond its version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the `krea-dark-scifi-comic-warrior` recipe; the
+detail-fix/refine variants beyond the authored defaults; the Civitai panel sign-in and downloads; the Manager UI beyond its
+version endpoint; the Krea 2 Q5 GGUF (partial download left in place).
 
 **Owner's creative review** of the first atelier pass is recorded in `HUMAN_TODO.md` (q-2 closed) and the guide.
 

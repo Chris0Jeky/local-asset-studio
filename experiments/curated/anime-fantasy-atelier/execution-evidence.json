@@ -734,7 +734,7 @@
   {
    "kind": "studio-job",
    "preset_id": "anima-artist-stack",
-   "variant": null,
+   "variant": "Artist tags, no adapters",
    "job_id": "8eb5bc19-782c-42d0-87d1-2f7cedd73187",
    "prompt_ids": [
     "26f7ee38-67a0-49ba-bb03-fafa4913ddb9"
@@ -769,7 +769,7 @@
   {
    "kind": "studio-job",
    "preset_id": "anima-artist-stack",
-   "variant": null,
+   "variant": "Reference stack 1328x1776",
    "job_id": "6ae066d8-2faa-4856-b1ed-c9e169c22c40",
    "prompt_ids": [
     "efdabf38-d27a-4e01-89ab-1e8fead5a7b1"

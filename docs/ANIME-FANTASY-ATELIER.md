@@ -157,7 +157,8 @@ The compact Qwen encoder reads sentences and tags alike; artist tags take an `@`
 
 Executed 12 September 2026 on base v1.0: the authored six-adapter stack (24 s at 832×1216), the adapter-free artist-tag
 variant (20 s) and the 1328×1776 reference (66 s), all clean; both artist-driven looks tend to hallucinate a small
-signature glyph in a corner, so crop or repaint it with `anime-detail-fix`'s reference workflow when it matters.
+signature glyph in a corner; crop it when it matters (`anime-detail-fix` only repaints detected faces and hands, so it
+will not remove a corner mark).
 
 ### SDXL anime families
 
