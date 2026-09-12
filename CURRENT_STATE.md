@@ -1,5 +1,15 @@
 # Current state — 11 September 2026
 
+## Gallery handoff identity guard — 12 September 2026
+
+The Studio UX now refuses a gallery output that has no saved `asset_id` instead of substituting the
+last active Workspace asset. A fixture-browser run opened an unrelated asset detail, removed the
+gallery output identity, and proved that the gallery action opened no handoff, made no reference
+request and retained the prior lineage. Restoring the output identity selected its own asset, while
+the asset-detail action retained its active-asset behavior. The 58-check fixture journey had no
+browser exceptions and no execution/setup mutations. This is a local UI boundary proof only: no
+live Studio, ComfyUI, model, project, queue or generated output was touched.
+
 ## Recipe inspection on the configured Windows host — 12 September 2026
 
 The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
