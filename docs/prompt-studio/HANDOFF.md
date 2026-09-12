@@ -4,7 +4,7 @@ Read AGENTS.md, CURRENT_STATE.md and this directory before acting. Preserve acti
 
 ## Immediate work
 
-Run the new tests and compiler examples. Start the opt-in launcher only after the normal Studio is deliberately stopped with no active work; never kill an unrelated process to claim integration success. Verify the existing Studio still works, the new page loads on8191 and no page/import/compile action creates a job.
+Run the new tests and compiler examples. Start Studio normally; never kill an unrelated process to claim integration success. Verify existing Studio routes still work, Prompt Lab loads on 8191, and no page/import/compile action creates a job.
 
 Inspect the actual helper runtime support for this Windows/Radeon machine. Trial one installed Qwen3.5-4B or Qwen3-VL-4B bundle with exact runner/model/projector identity; keep a CPU or alternative backend comparison where supported. The supplied Ollama adapter is concrete but not a promise of GPU compatibility. Do not replace working Comfy Torch to install a helper. No model is pulled automatically.
 

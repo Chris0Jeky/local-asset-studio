@@ -34,7 +34,7 @@ Begin with “what are you making?”, optional references and a model-specific 
 
 Manual edits, CLI actions and agent proposals should use the same revisioned commands. The implemented proposal API checks the expected intent revision, accepts an explicit field subset and returns a new copy plus reversible operations. It is not a database transaction, authenticated signature or multi-client lock. The later shared project service must perform real compare-and-swap and persist approval/history.
 
-The delivered opt-in page wraps the current Studio handler and delegates normal routes unchanged. It has no model calls on load and does not submit generation. The local helper is CLI-only for now. Live reference upload/binding, one-click proposal generation, saved intent projects and typed MCP tools should attach to existing issues21/22/30 rather than create competing systems.
+The delivered page extends the normal Studio handler and delegates normal routes unchanged. Startup binds the loopback port before creating Studio, then attaches the same Studio instance to the extended handler; it has no model calls on load and does not submit generation. The local helper is CLI-only for now. Live reference upload/binding, one-click proposal generation, saved intent projects and typed MCP tools should attach to existing issues21/22/30 rather than create competing systems.
 
 ## Efficient local execution
 

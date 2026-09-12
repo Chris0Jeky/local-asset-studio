@@ -4,7 +4,7 @@ Research and implementation snapshot: **11 September 2026**, based on main `f6e0
 
 ## What works now
 
-A pure Python compiler preserves a typed creative brief and projects it into nine explicit model profiles. It returns native field drafts, reference-slot maps, coverage, unresolved requirements and content hashes. Optional local vision/text analysis produces **reviewable proposals**, not silent edits. Locked fields and exact speech/lyrics remain protected. A bounded PNG metadata inspector recovers embedded claims without executing workflows. A graph handoff changes only explicitly registered text inputs, not sampling/model settings. A small UI runs on the existing Studio handler through an opt-in launcher.
+A pure Python compiler preserves a typed creative brief and projects it into nine explicit model profiles. It returns native field drafts, reference-slot maps, coverage, unresolved requirements and content hashes. Optional local vision/text analysis produces **reviewable proposals**, not silent edits. Locked fields and exact speech/lyrics remain protected. A bounded PNG metadata inspector recovers embedded claims without executing workflows. A graph handoff changes only explicitly registered text inputs, not sampling/model settings. The small UI runs on the normal Studio handler.
 
 The profiles cover SDXL prose, approved Animagine4 tags, positive-only FLUX2, Qwen Edit2511 three-image conditioning, Wan2.2 I2V motion, Qwen3-TTS VoiceDesign, ACE-Step1.5 music, a sound-description route and image-only TRELLIS2. Scope and limitations are in each profile; no generic fallback pretends to support an unknown model.
 
@@ -21,13 +21,13 @@ python -m unittest discover -s tests -p 'test_studio_prompt*.py' -v
 
 Output parent folders must exist. Files are exclusive-create: choose a new name rather than overwrite evidence. The compiler and parser use the standard library; Pillow is optional for image analysis preparation.
 
-For the page, wait for active work to finish, then deliberately stop the current Studio process using its normal controls. Run:
+For the page, start Studio normally using `Start Studio.cmd`, `scripts/Start-Studio.ps1`, or:
 
 ```console
-python scripts/start_prompt_studio.py --repo-root .
+python app/server.py --repo-root .
 ```
 
-Open `http://127.0.0.1:8191/prompt-lab.html`. The launcher refuses an occupied port rather than killing another process. It wraps the actual existing handler and creates the original Studio worker; it is not a second queue or a replacement app. The ordinary desktop launcher is unchanged. Returning to it restores the normal startup path. Page load, compilation, import, helper-proposal acceptance and graph preview never submit generation.
+Open `http://127.0.0.1:8191/prompt-lab.html`, or choose Prompt Lab from the Studio header. Normal startup binds the port before creating the Studio worker, so an occupied port never starts a second queue or replaces another process. `scripts/start_prompt_studio.py` remains a compatibility entry point to that same startup. Page load, compilation, import, helper-proposal acceptance and graph preview never submit generation.
 
 ## Optional local helper
 
