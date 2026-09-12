@@ -1,5 +1,18 @@
 # Current state — 11 September 2026
 
+## Confirmed Comfy error timing — 12 September 2026
+
+The #77 follow-up now records a confirmed ComfyUI history error as a failed Studio job before
+propagating the existing exception. It persists the observed finish time and computes the Studio
+wall interval only from a finite, non-boolean start that is not in the future; legacy or invalid
+starts keep elapsed time unknown, and repeated observation preserves the first terminal timestamp.
+The full Windows suite ran 781 tests: 768 passed and 13 skipped, using the configured Studio test
+interpreter. Repository validation and a fresh independent review passed. The causal test records
+60 seconds from Studio start to failure observation, distinct from the fixture's 25-second Comfy
+event interval; it fails on the original history-error method and passes on the fix. Transport-loss
+and uncertain submissions retain unknown completion times. No historical jobs were backfilled and
+no live generation was used for this proof; the running Studio still needs the merged app reload.
+
 ## Controlled edits through Studio - 12 September 2026
 
 The local character-edit client can prepare a pinned handoff, stage one ordinary Production
