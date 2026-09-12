@@ -27,15 +27,21 @@ pinned revisions, configured FFmpeg paths, progress/cancellation and retained in
 A real Windows Chromium 151 fixture exercised a shared UI/CLI/MCP edit sequence, stale rejection with
 retained fields, explicit reload, queued rendering, decoded playback, source ZIP download and mobile
 layout. It completed a six-second 144-frame/288000-sample procedural preview with zero ComfyUI calls,
-external browser requests or JS errors. The disposable-port fixture adapts only Host/Origin to its
-ephemeral port; separate HTTP tests exercise the unchanged product 8191 guards. Full source and runtime
-evidence will be preserved at `.runtime/session-2026-09-12/shared-scenes/`.
+external browser requests or JS errors. A later real Chromium draft proof at
+`.runtime/browser-proof-1789222397/receipt.json` exercised dirty render, New Scene and current-scene
+guards without an extra POST, then stale rejection, reload and a saved edit; its isolated fixture made
+zero ComfyUI requests. The disposable-port fixtures adapt only Host/Origin to an ephemeral port; separate
+HTTP tests exercise the unchanged product 8191 guards. Full source and runtime evidence is preserved at
+`.runtime/session-2026-09-12/shared-scenes/`.
 
-Independent review found no critical/high product defects. Nonblocking #30 follow-ups are explicit:
-document actions use saved revisions even with unsaved visible fields; cancellation can lose during
-Workspace publication; concurrent same-revision exports can leave an unregistered loser ZIP. Cached
-waveforms/thumbnails and proxy renders remain future work. See `docs/SCENE-EDITOR.md` for limits and
-recovery. No neural audio, native editor parity, licensing or creative acceptance is claimed;
+Independent review found no critical/high product defects. Draft fields now visibly identify the saved
+revision and block document and scene-navigation actions until each clip is saved or the local draft is
+explicitly discarded. A full native scene recipe and receipt are durably written before Workspace
+publication (PR #54), so a publication failure retains its provenance and diagnostics. Nonblocking #30
+follow-ups remain: draft notice/action-state refresh after the first input, UI response serialization
+after reload/export/cancel, cancellation/publication arbitration, and concurrent-export orphan accounting.
+Cached waveforms/thumbnails and proxy renders remain future work. See `docs/SCENE-EDITOR.md` for limits
+and recovery. No neural audio, native editor parity, licensing or creative acceptance is claimed;
 `HUMAN_TODO.md` remains unchanged.
 
 ## Model download redirect policy - 12 September 2026

@@ -6,11 +6,15 @@ bytes and SHA-256 hashes, preserves their Workspace asset IDs, and starts no ren
 The first slice has cuts, dissolves, static overlays, audio trim/gain/fades/mute/bus, shot ordering and
 shot/audio splits. Sources are served by local range-capable URLs rather than embedded in the page.
 
-Use **Save changes** on a clip, then **Render scene**. Rendering and companion export use the saved
-revision; unsaved fields are not included. Reload after a conflict to compare the current server
-revision with retained fields before saving. History restore creates a new revision and preserves the
-intervening history. Browser, CLI and MCP all use the same expected-revision command API and database.
-Actor labels are provenance supplied by the client, not authentication or a creative approval.
+Use **Save changes** on a clip, then **Render scene**. While one or more clip fields are unsaved, the
+editor labels the preview as a saved revision and blocks render, export, restore, add, move, split and
+remove. Save each draft or use **Discard unsaved changes** to clear only the local fields; it makes no
+request and never applies or discards a server revision. Saving one clip advances the remaining local
+drafts to that saved revision, so they remain individually saveable; an external change still returns a
+conflict. Reload after a conflict to compare the current server revision with retained fields before
+saving. History restore creates a new revision and preserves the intervening history. Browser, CLI and
+MCP all use the same expected-revision command API and database. Actor labels are provenance supplied by
+the client, not authentication or a creative approval.
 
 ## CLI and MCP
 
@@ -79,7 +83,7 @@ Synthetic sources, receipts, screenshots, plans and exports survive in
 `.runtime/session-2026-09-12/shared-scenes/` after coordinator closeout.
 
 #30 stays open for cached thumbnails/waveforms, proxy/range renders and targeted cache invalidation,
-clearer unsaved-field handling for document actions, cancellation/publication arbitration and
-concurrent-export orphan accounting. This preview editor does not claim NLE/DAW parity, lossy native
-editor round trips, voice/music inference or perceptual acceptance. `HUMAN_TODO.md` retains the owner's
-optional creative choices; runtime success does not approve art or model terms.
+cancellation/publication arbitration and concurrent-export orphan accounting. This preview editor does
+not claim NLE/DAW parity, lossy native editor round trips, voice/music inference or perceptual acceptance.
+`HUMAN_TODO.md` retains the owner's optional creative choices; runtime success does not approve art or
+model terms.
