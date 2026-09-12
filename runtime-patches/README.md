@@ -33,3 +33,18 @@ then `git apply -R`. A refusal means the file has changed and needs inspection;
 do not use reset/restore to discard unrelated runtime changes. Restart the owned
 ComfyUI process after applying or reversing the patch. New generation results and
 remaining limitations are recorded in [CURRENT_STATE.md](../CURRENT_STATE.md).
+
+## Runtime additions, 12 September 2026 (packages and launcher flag, no ComfyUI source edited)
+
+Installed into `python_embeded` with `pip install "comfyui_manager==4.2.2" "python-socketio[client]>=5.8,<6"`.
+Only new packages were added; nothing already installed (Torch, ROCm, transformers, huggingface-hub) was
+upgraded — the `pip freeze` diff before/after is `.runtime/pip-freeze-{before,after}-manager-2026-09-12.txt`
+in the Studio checkout and lists exactly: bidict 0.24.1, chardet 7.6.0, comfyui-manager 4.2.2,
+cryptography 50.0.1, gitdb 4.0.12, GitPython 3.1.62, PyGithub 2.10.0, PyJWT 2.14.0, PyNaCl 1.6.2,
+python-engineio 4.14.0, python-socketio 5.16.4, simple-websocket 1.1.0, smmap 5.0.3, toml 0.10.2, uv 0.12.13,
+websocket-client 1.9.2, wsproto 1.3.2.
+
+`C:/AI/Start-ComfyUI.ps1` gained `--enable-manager` at the end of its argument list. SHA-256 (first 16 hex)
+before `873287a534d2ccaf`, after `526fcda531f6d7ad`; the untouched copy is `.runtime/Start-ComfyUI.ps1.before-manager`.
+`custom_nodes/civitai-comfy-nodes` is a git clone at upstream commit `1bcb195` (7 September 2026).
+

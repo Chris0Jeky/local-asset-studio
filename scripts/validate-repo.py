@@ -5,7 +5,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
-fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name']
+fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name','lora5','lora5_name','lora6','lora6_name']
 bound={};named_loras=[]
 for preset in catalog:
     path=(root/preset['graph']).resolve()
@@ -39,7 +39,11 @@ for preset in catalog:
             if key in variant.get('controls',{}):assert variant['controls'][key] in preset.get('choices',{}).get(key,[]), (preset['id'],variant['name'],key)
         for key,value in variant.get('controls',{}).items():
             if key.endswith('_name'):named_loras.append((preset['id']+' variant '+variant['name'],value))
-    for key in ('lora_name','lora2_name','lora3_name','lora4_name'):
+        limits=preset.get('dimension_limits',[64,1536]);multiple=preset.get('dimension_multiple',8)
+        for key in ('width','height'):
+            if key in variant.get('controls',{}):
+                value=variant['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],variant['name'],key,value,'outside dimension_limits or off the dimension_multiple grid')
+    for key in ('lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name'):
         for node,field in ([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[]):
             authored=graph[node]['inputs'][field]
             assert isinstance(authored,str) and authored.endswith('.safetensors') and authored==Path(authored).name, (preset['id'],key,authored)
@@ -73,6 +77,10 @@ if recipe_path.is_file():
             if key in recipe.get('controls',{}):assert recipe['controls'][key] in recipe_preset.get('choices',{}).get(key,[]), (recipe['id'],key)
         for key,value in recipe.get('controls',{}).items():
             if key.endswith('_name'):named_loras.append(('recipe '+recipe['id'],value))
+        limits=recipe_preset.get('dimension_limits',[64,1536]);multiple=recipe_preset.get('dimension_multiple',8)
+        for key in ('width','height'):
+            if key in recipe.get('controls',{}):
+                value=recipe['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (recipe['id'],key,value,'outside dimension_limits or off the dimension_multiple grid')
         assert recipe.get('status') in {'executed','unverified'}, (recipe['id'],recipe.get('status'))
         assert isinstance(recipe.get('sources',[]),list), recipe['id']
 library=json.loads((root/'models/library.json').read_text(encoding='utf-8'))

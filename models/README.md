@@ -98,7 +98,7 @@ not legal advice and the linked model page governs.
 | `Krea2_TextFusion_Refusal_Reduction.safetensors` | none | 1.0 | [model 2775340](https://civitai.com/models/2775340?modelVersionId=3125118) | Image, RentCivit, Rent, Sell; derivatives allowed; different licence not allowed |
 | `Niji_Sweet_Spot_Krea2_v2A.safetensors` | `@NJSW33T` (start) | 0.8-1.5 | [model 2554999](https://civitai.com/models/2554999?modelVersionId=3210573) | Image, RentCivit, Rent (no Sell); derivatives **not** allowed |
 | `NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors` | `@NIJISIS` (start) | 1.0 | [model 2863875](https://civitai.com/models/2863875?modelVersionId=3302337) | Image, RentCivit, Rent (no Sell); derivatives allowed |
-| `krea2_koukouya_sytle_c1-st3000.safetensors` | none | 1.0 | [model 2844656](https://civitai.com/models/2844656?modelVersionId=3211621) | Image, RentCivit, Rent, Sell; derivatives allowed |
+| `krea2_koukouya_style_c1-st3000.safetensors` | none | 1.0 | [model 2844656](https://civitai.com/models/2844656?modelVersionId=3211621) | Image, RentCivit, Rent, Sell; derivatives allowed |
 
 NIJISIS was downloaded by the owner on 12 September 2026 (the owner spent the Buzz); its SHA-256 was verified
 against the installed file. **koukouya is not installed**: its size and SHA-256 come from the civitai version

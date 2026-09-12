@@ -248,6 +248,20 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(both['7']['inputs']['model'],['1',0])
         self.assertEqual(sorted(both),['1','2','4','7'])
 
+    def test_six_slots_are_controls_and_a_fully_disabled_chain_collapses(self):
+        preset,graph=self.lora_stack()
+        for n in range(12,16):
+            graph[str(n)]={'class_type':'LoraLoaderModelOnly','inputs':{'model':[str(n-1),0],'lora_name':f'style{n}.safetensors','strength_model':0.5}}
+        graph['7']['inputs']['model']=['15',0]
+        for slot,node in (('lora3','12'),('lora4','13'),('lora5','14'),('lora6','15')): preset[slot]=[node,'strength_model']; preset[slot+'_name']=[node,'lora_name']
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]})); (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        self.assertTrue({'lora5','lora5_name','lora6','lora6_name'}<=set(server.CONTROL_KEYS))
+        _,kept,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora6':'0.9','lora6_name':'other.safetensors','lora5':0}})
+        self.assertNotIn('14',kept); self.assertEqual(kept['15']['inputs']['model'],['13',0]); self.assertEqual(kept['15']['inputs'],{'model':['13',0],'lora_name':'other.safetensors','strength_model':0.9})
+        _,off,_,_,_=s.prepare({'preset_id':'demo','controls':{k:0 for k in server.LORA_SLOTS}})
+        self.assertEqual(sorted(off),['1','2','4','7']); self.assertEqual(off['7']['inputs']['model'],['1',0])
+
     def test_disabled_lora_loader_rewires_both_model_and_clip(self):
         self.lora_stack('LoraLoader'); s=self.studio()
         _,graph,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':0,'lora2':0}})

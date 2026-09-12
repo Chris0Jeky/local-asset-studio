@@ -473,6 +473,215 @@
    "artifact": "examples/anime-fantasy-atelier/krea-style-lab-4step.jpg",
    "recipe": "krea-style-lab-4step-recipe.json",
    "inspection": "Watercolor fox shrine under a cherry tree at sunset with paper lanterns and drifting petals; clean paper-white ground, legible lantern and shrine structure, three foxes; the airy-anime-watercolor style reads clearly at four steps."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-anime-atelier",
+   "variant": null,
+   "job_id": "7d589f47-7172-44fb-9541-4ab0602eafce",
+   "prompt_ids": [
+    "a63ca7e1-c87a-4288-bcd9-959ff93d1827"
+   ],
+   "status": "completed",
+   "seconds": 827.6,
+   "controls": {
+    "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
+    "steps": 15,
+    "cfg": 1,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "width": 832,
+    "height": 1248,
+    "seed": 20260912,
+    "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+    "lora": 1.0,
+    "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+    "lora2": 1.0,
+    "lora3": 1.0,
+    "lora4": 0,
+    "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_koukouya_style_c1-st3000.safetensors",
+     1.0
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-anime-atelier_00002_.png",
+    "sha256": "6d37a921b1e884ca9b4cc8901e30d73a43217fbce3eeb937e6f16657d3b105e6",
+    "bytes": 1368620,
+    "width": 832,
+    "height": 1248
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-target-stack-koukouya.jpg",
+   "recipe": "krea-target-stack-koukouya-recipe.json",
+   "inspection": "Meadow witch at golden hour with a black cat and a wooden staff: the koukouya adapter is unmistakable (loose painterly brush, patched cloak, loose strokes in the grass and flowers), face and hands clean, the cat reads well; this is the closest match yet to the owner's target image 142028671."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anime-detail-fix",
+   "variant": null,
+   "job_id": "14caa4fb-5999-497f-8b73-0bb2562229df",
+   "prompt_ids": [
+    "3eeba334-6161-4f84-bd36-de0c888c0d74"
+   ],
+   "status": "completed",
+   "seconds": 36.2,
+   "controls": {},
+   "submitted_lora_chain": [],
+   "original": {
+    "path": "Studio/anime-detail-fix_00001_.png",
+    "sha256": "13124c379a1fb2b4c8cfdc09caa2226adf2341b3346ebf2f156f3dc9525c943f",
+    "bytes": 908142,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anime-detail-fix-noob-hands.jpg",
+   "recipe": "anime-detail-fix-noob-hands-recipe.json",
+   "inspection": "Only the two detected crops changed. The raised hand is now a clean five-digit hand with readable joints and a proper thumb; the face pass opened and sharpened the eye (teal iris, cleaner lashes) while keeping the profile and hair - at denoise 0.4 the expression shifts slightly, so use the Gentle variant when only hands need work."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "krea-refine",
+   "variant": null,
+   "job_id": "21e4a629-9b7c-4cd2-a87e-dae80a2082f4",
+   "prompt_ids": [
+    "2e0583fa-46da-45ff-a4ca-490ed29f5716"
+   ],
+   "status": "completed",
+   "seconds": 233.2,
+   "controls": {
+    "positive": "two red foxes with fluffy tails sitting together on a snowy hill under a starry night sky, soft moonlight, detailed fur, expressive fox faces, painterly anime illustration"
+   },
+   "submitted_lora_chain": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "original": {
+    "path": "Studio/krea-refine_00001_.png",
+    "sha256": "f5a64954945c8b13ac67c322fc1a8eade628f47bc97c0f7354283d31cf9eee80",
+    "bytes": 1447544,
+    "width": 1024,
+    "height": 1024
+   },
+   "artifact": "examples/anime-fantasy-atelier/krea-refine-style-lab-foxes.jpg",
+   "recipe": "krea-refine-style-lab-foxes-recipe.json",
+   "inspection": "Composition, shrine, lanterns, cherry tree and petal fall preserved; the foxes now have proper fox faces with distinct snouts, ears and eyes and layered fur, but the third fox merged into the pair, so denoise 0.35 already redraws grouped subjects - use Light touch (0.25) to keep every subject."
+  },
+  {
+   "kind": "comfyui-probe",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": null,
+   "prompt_ids": [
+    "8c4152b9-2e5f-4c0a-be9e-91a19f1c3a98"
+   ],
+   "status": "completed",
+   "seconds": 35.0,
+   "controls": {
+    "unet_name": "anima-aesthetic-v1.1.safetensors (substituted; base v1.0 still downloading)",
+    "removed_slots": [
+     "anima-ke-ta_style_v1",
+     "anima-kieed_v9_step6000"
+    ]
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ]
+   ],
+   "original": {
+    "path": "Studio/probes/anima-stack-aesthetic11-4adapters_00001_.png",
+    "sha256": "77324f3838b7ac68f76434c590312e03b399674f86a3cfcb10e3ec5dc126a73a",
+    "bytes": 1380074,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-4adapters.jpg",
+   "recipe": "anima-stack-aesthetic11-4adapters-recipe.json",
+   "inspection": "Silver-haired witch on a stone balcony at dusk with hanging lanterns and a tower: clean face and eyes, correct hands hidden by sleeves, loose sketch-like linework and painterly cloth from the xilmo/huashijw/koukouya/NEWANIMASTYLE mix; no artefacts at 30 steps. Proves the six-slot Anima chain and loader path, not the base v1.0 look."
+  },
+  {
+   "kind": "comfyui-probe",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": null,
+   "prompt_ids": [
+    "422a4cf3-b10b-40a2-a60f-9b72ff0dcb87"
+   ],
+   "status": "completed",
+   "seconds": 25.0,
+   "controls": {
+    "unet_name": "anima-aesthetic-v1.1.safetensors (substituted; base v1.0 still downloading)"
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/probes/anima-stack-aesthetic11-6adapters_00001_.png",
+    "sha256": "5edafcb85ecc5de86761a27288f97b3c7f18a910ad13f19e127d2416874df755",
+    "bytes": 1431327,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-6adapters.jpg",
+   "recipe": "anima-stack-aesthetic11-6adapters-recipe.json",
+   "inspection": "All six adapters including the kieed LyCORIS file loaded without key warnings in the ComfyUI log. Crisper, more illustrative linework than the four-adapter probe: clean face and orange eyes, layered cloak trim, lanterns and tower intact, sky lanterns; no anatomy errors. Base v1.0 look still unproven."
   }
  ]
 }

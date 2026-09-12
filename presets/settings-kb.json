@@ -609,10 +609,12 @@
         "style": "descriptive prose mixed with character and quality tags; the compact Qwen encoder reads sentences, so write one or two of them and then tag the details",
         "prefix": "",
         "suffix": "",
-        "negative": "lowres, blurry, bad anatomy, bad hands, text, watermark, signature",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia",
         "notes": [
           "this family does take a negative prompt (node 5 in the authored graphs)",
-          "the authored graph runs euler/simple at cfg 4.0 and 30 steps; compare seeds before adding steps"
+          "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
+          "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776",
+          "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\""
         ]
       },
       "defaults": {
@@ -625,6 +627,10 @@
       },
       "resolutions": [
         [
+          832,
+          1216
+        ],
+        [
           768,
           1152
         ],
@@ -635,6 +641,14 @@
         [
           1152,
           768
+        ],
+        [
+          1248,
+          1824
+        ],
+        [
+          1328,
+          1776
         ]
       ],
       "axes": [
@@ -642,11 +656,11 @@
           "id": "steps",
           "control": "steps",
           "values": [
+            8,
             20,
-            30,
-            36
+            30
           ],
-          "rationale": "the preset's own Quick study / Fine study variants use 20 and 36 around the authored 30.",
+          "rationale": "30 is the template and reference value; 8 only with the official turbo LoRA at cfg 1; 20 for a quick study.",
           "sources": [
             "https://huggingface.co/circlestone-labs/Anima"
           ]
@@ -655,25 +669,63 @@
           "id": "cfg",
           "control": "cfg",
           "values": [
-            3.5,
+            3.0,
             4.0,
             5.0
           ],
-          "rationale": "the authored value is 4.0; this family drifts to plastic shading above 5.",
+          "rationale": "the template value is 4.0; the painterly artist-tag references run 3.0; this family drifts to plastic shading above 5.",
           "sources": [
             "https://huggingface.co/circlestone-labs/Anima"
+          ]
+        },
+        {
+          "id": "sampler",
+          "control": "sampler",
+          "values": [
+            "euler",
+            "euler_ancestral",
+            "dpmpp_2m_sde_gpu"
+          ],
+          "rationale": "the template uses euler; the six-adapter reference used euler_ancestral; the artist-tag references used dpmpp_2m_sde_gpu at cfg 3.",
+          "sources": [
+            "https://civitai.com/images/139608451",
+            "https://civitai.com/images/131843377"
+          ]
+        },
+        {
+          "id": "adapter_strength",
+          "control": "lora",
+          "values": [
+            0.35,
+            0.7,
+            1.0
+          ],
+          "rationale": "the reference six-adapter stack ran its lead style at 0.7; halve every strength when six adapters fight for the same style.",
+          "sources": [
+            "https://civitai.com/images/139608451"
           ]
         }
       ],
       "lora_rules": {
-        "max_active": 0,
-        "warn_total_strength": 0.0,
-        "ladder": [],
+        "max_active": 6,
+        "warn_total_strength": 4.0,
+        "ladder": [
+          1.0,
+          0.7,
+          0.6,
+          0.5,
+          0.3
+        ],
         "notes": [
-          "no Anima-compatible LoRA is installed; the Studio presets bind no LoRA slot for this family"
+          "the reference stack totals 3.9 across six adapters, so the usual 2.5 warning does not apply to this family",
+          "LoraLoaderModelOnly loads LoRA and LyCORIS (LoCon) files alike",
+          "a slot at strength 0 is pruned from the submitted graph",
+          "the official turbo LoRA replaces the step count (8 at cfg 1) and is not a style"
         ]
       },
       "sources": [
+        "https://civitai.com/images/139608451",
+        "https://civitai.com/models/2458426?modelVersionId=2945208",
         "https://huggingface.co/circlestone-labs/Anima"
       ],
       "licence_note": "CircleStone Labs Non-Commercial weights; the model card states separate terms for generated outputs."
@@ -1608,27 +1660,6 @@
         "Installed and pinned 2026-09-12 after a retried download."
       ]
     },
-    "krea2_koukouya_sytle_c1-st3000.safetensors": {
-      "family": "Krea 2 Turbo",
-      "label": "koukouya style (not installed)",
-      "trigger": "",
-      "trigger_position": "none",
-      "strength": [
-        1.0,
-        1.0
-      ],
-      "default": 1.0,
-      "role": "style",
-      "installed": false,
-      "source": "https://civitai.com/models/2844656",
-      "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
-      "licence": "civitai listing; terms not read",
-      "notes": [
-        "the third adapter in the owner's target image, still missing: civitai downloads need a personal API key",
-        "author settings: 1280x1856 or 1536x1536, weight 1.0, er_sde with simple, 8-10 steps",
-        "tracked in HUMAN_TODO.md"
-      ]
-    },
     "pixel-art-xl.safetensors": {
       "family": "SDXL 1.0",
       "label": "Pixel Art XL",
@@ -1724,6 +1755,177 @@
       "notes": [
         "pre-existing install with no download receipt in this repo",
         "set steps to 8 when this slot is on; it is an accelerator, not a style"
+      ]
+    },
+    "krea2_koukouya_style_c1-st3000.safetensors": {
+      "family": "Krea 2 Turbo",
+      "label": "koukouya style (Krea 2)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "default": 1.0,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2844656",
+      "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343",
+      "licence": "civitai listing for model 2844656 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "the third adapter in the owner's target image 142028671, installed 2026-09-12 with the owner's civitai API key",
+        "author settings: 1280x1856 or 1536x1536, weight 1.0, er_sde with simple, 8-10 steps"
+      ],
+      "bytes": 234680576,
+      "observed": [
+        "Studio job 7d589f47 (2026-09-12): stacked at 1.0 after TextFusion 1.0 and Niji Sweet Spot 1.0, 15 steps euler_ancestral/simple at 832x1248, 827.6 s; the painterly koukouya brushwork dominates the result"
+      ]
+    },
+    "anima-xilmo-000020.safetensors": {
+      "family": "Anima",
+      "label": "xilmo style (Anima)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.35,
+        1.0
+      ],
+      "default": 0.7,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2683021?modelVersionId=3012652",
+      "sha256": "4b809d9e96aaadefe49748806a07174e17b9d7e44fd02ad84ad751b8538bfb04",
+      "bytes": 91872048,
+      "licence": "civitai listing for model 2683021 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 0.7 inside a six-adapter stack",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-koukouya_v2_step2500.safetensors": {
+      "family": "Anima",
+      "label": "koukouya artist style (Anima)",
+      "trigger": "@40u40uya",
+      "trigger_position": "start",
+      "strength": [
+        0.15,
+        1.0
+      ],
+      "default": 0.3,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2696189?modelVersionId=3027537",
+      "sha256": "550dc39728e7ad2e55a3904b62c0bfec5308b2956e09a94a5319ce54ca31e80d",
+      "bytes": 91851152,
+      "licence": "civitai listing for model 2696189 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 0.3; Anima base also knows the plain @koukouya artist tag without any adapter",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-huashijw_v2_step10000.safetensors": {
+      "family": "Anima",
+      "label": "huashijw artist style (Anima)",
+      "trigger": "@hu45h11w",
+      "trigger_position": "start",
+      "strength": [
+        0.3,
+        1.0
+      ],
+      "default": 0.6,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2753686?modelVersionId=3098204",
+      "sha256": "34ec97ee29a3efa76bc89174f7ebdd05a2b3130c80152007a5ca53d8cf6bc79b",
+      "bytes": 91851152,
+      "licence": "civitai listing for model 2753686 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 0.6",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-turbo-lora-v0.2.safetensors": {
+      "family": "Anima",
+      "label": "Anima turbo LoRA v0.2 (8 steps, cfg 1)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "default": 1.0,
+      "role": "accelerator",
+      "installed": true,
+      "source": "https://huggingface.co/circlestone-labs/Anima-Official-LoRAs",
+      "sha256": "1b55e40bdb1d0e5a78cb498f245fccfdaae97823265db957d2aabdcf4cd3caf1",
+      "bytes": 148902616,
+      "licence": "Hugging Face model card (CircleStone Labs); not read here",
+      "notes": [
+        "official accelerator from the ComfyUI Anima base v1 template: 8 steps at cfg 1 with euler/simple; not a style adapter"
+      ]
+    },
+    "anima-newanimastyle-v1.safetensors": {
+      "family": "Anima",
+      "label": "NEWANIMASTYLE V1 (Anima)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.5,
+        1.0
+      ],
+      "default": 1.0,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2830377?modelVersionId=3193726",
+      "sha256": "390a59ededd9df62a8c6e9f7dc92d867206649dcc25d2618fe9103d12dbdc6da",
+      "bytes": 138663776,
+      "licence": "civitai listing for model 2830377 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit, Rent, Sell; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 1.0 (listed there as V1-390a); civitai file name was an opaque id, renamed on intake",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-ke-ta_style_v1.safetensors": {
+      "family": "Anima",
+      "label": "ke-ta style (Anima)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.35,
+        1.0
+      ],
+      "default": 0.7,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
+      "sha256": "52107d036a03158f1722942f1a6ea56def7699d4d00c63c629cf91774a7ba21b",
+      "bytes": 109091912,
+      "licence": "civitai listing for model 2852885 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit, Rent; derivatives NOT allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 0.7",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-kieed_v9_step6000.safetensors": {
+      "family": "Anima",
+      "label": "kieed artist style (Anima, LyCORIS/LoCon)",
+      "trigger": "@k144d",
+      "trigger_position": "start",
+      "strength": [
+        0.25,
+        1.0
+      ],
+      "default": 0.5,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2012383?modelVersionId=2972811",
+      "sha256": "682af9283b6378b2c4f2b748948b860827247732eb12036227b1e04f15d9be97",
+      "bytes": 46006024,
+      "licence": "civitai listing for model 2012383 (read from /api/v1/models on 2026-09-12): allowCommercialUse RentCivit; derivatives allowed; different licence allowed; credit not required. Read the model page before any commercial use.",
+      "notes": [
+        "a LoCon (LyCORIS) file; ComfyUI's LoraLoaderModelOnly loads LoCon/LoHa/LoKr natively, no extra node",
+        "reference image 139608451 used it at 0.5",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
       ]
     }
   }

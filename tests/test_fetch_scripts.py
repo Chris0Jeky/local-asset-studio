@@ -115,6 +115,10 @@ class CivitaiHelperTests(TempMixin):
         for name in ('model.ckpt','',None):
             with self.assertRaises(SystemExit):civitai.safe_name(name)
 
+    def test_terms_note_does_not_invent_flags_the_version_payload_lacks(self):
+        note=civitai.terms_note({'id':9,'modelId':8,'model':{'name':'x'},'baseModel':'Anima'})
+        self.assertIn('carries no permission flags',note); self.assertNotIn('none listed',note); self.assertIn('/models/8',note)
+
     def test_terms_note_repeats_the_listing_flags_verbatim(self):
         note=civitai.terms_note(self.version)
         self.assertIn('Image, RentCivit, Rent',note);self.assertIn('derivatives allowed',note)

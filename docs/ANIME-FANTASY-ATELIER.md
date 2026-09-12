@@ -58,9 +58,34 @@ The nineteen fal styles are `airy-anime-watercolor`, `amber-dusk-anime`, `azure-
 `emerald-lamplight-oil`. Trigger example: `fal-krea2-airy-anime-watercolor` →
 `airy anime watercolor style` at the end of the prompt.
 
-**Not installed:** `krea2_koukouya_sytle_c1-st3000` (no trigger; the author documents 1280×1856 or
-1536×1536, weight 1.0, `er_sde`/`simple`, 8–10 steps). Downloading it needs a civitai personal API key
-— see [HUMAN_TODO.md](../HUMAN_TODO.md) and `scripts/civitai-fetch.py`.
+**koukouya (Krea 2), installed 12 September 2026:** `krea2_koukouya_style_c1-st3000` (no trigger; the author
+documents 1280×1856 or 1536×1536, weight 1.0, `er_sde`/`simple`, 8–10 steps). Fetched with
+`scripts/civitai-fetch.py` once the owner's key was in `CIVITAI_API_TOKEN`; the receipt hash matches the
+listing. The `krea-atelier-target-stack` recipe now carries all three adapters of the target image.
+
+### Anima adapters (civitai, installed 12 September 2026)
+
+Anima base v1.0 (`anima-base-v1.0.safetensors`) is the checkpoint behind the owner's second baseline,
+[civitai image 139608451](https://civitai.com/images/139608451): no text prompt at all, six style adapters,
+Euler a, `simple`, 30 steps, cfg 4, 1328×1776. The `anima-artist-stack` preset binds all six as slots at
+exactly those strengths. `LoraLoaderModelOnly` loads the LyCORIS (LoCon) file like any LoRA.
+
+| File | Trigger | Reference strength | Notes |
+|---|---|---|---|
+| `anima-xilmo-000020` | — | 0.7 | lead style of the reference stack |
+| `anima-huashijw_v2_step10000` | `@hu45h11w` | 0.6 | artist style |
+| `anima-koukouya_v2_step2500` | `@40u40uya` | 0.3 | Anima base also knows the plain `@koukouya` tag |
+| `anima-ke-ta_style_v1` | — | 0.7 | |
+| `anima-newanimastyle-v1` | — | 1.0 | civitai lists it as V1-390a; renamed on intake |
+| `anima-kieed_v9_step6000` | `@k144d` | 0.5 | LyCORIS/LoCon |
+| `anima-turbo-lora-v0.2` | — | 1.0 with 8 steps, cfg 1 | official accelerator (Hugging Face), not a style |
+
+The adapter-free painterly look of [images 131843207–131843406](https://civitai.com/images/131843377)
+needs no file at all: Anima base with `@synswt, @koukouya, @kyano \(kyanora3141\)` at the start of a tag
+prompt, cfg 3, `dpmpp_2m_sde_gpu`, `simple`, 30 steps, 832×1216, negative
+`worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame`. That is the
+"Artist tags, no adapters" variant and the `anima-painterly-artist-tags` recipe.
+
 
 ### SDXL adapters
 
@@ -74,9 +99,9 @@ The nineteen fal styles are `airy-anime-watercolor`, `amber-dusk-anime`, `azure-
 
 ## LoRA slots and pruning
 
-`krea-anime-atelier` exposes four adapter slots, `krea-style-lab` three, the SDXL anime presets two and the
-retro-anime pair one. Every slot is a pair of controls: a
-strength (`lora`, `lora2`, `lora3`, `lora4`) and a filename (`lora_name`, `lora2_name`, …). The
+`anima-artist-stack` exposes six adapter slots, `krea-anime-atelier` and `krea-refine` four, `krea-style-lab`
+three, the SDXL anime presets two and the retro-anime pair one. Every slot is a pair of controls: a
+strength (`lora` … `lora6`) and a filename (`lora_name`, `lora2_name`, …). The
 filename select lists the LoRAs ComfyUI actually reports as installed.
 
 - **Strength 0 means off.** Before submitting, Studio removes every LoRA node whose strength is 0 and
@@ -84,8 +109,9 @@ filename select lists the LoRAs ComfyUI actually reports as installed.
   would have authored without that adapter — no "loaded at 0" placeholder.
 - The authored graph always references installed files, because ComfyUI rejects an unknown
   `lora_name` with HTTP 400 *before* execution, even at strength 0.
-- Keep at most three adapters active. Total strength above roughly 2.5 tends to fight itself; a
-  sensible ladder when stacking is 1.0 / 0.8 / 0.6.
+- Keep at most three adapters active on Krea 2. Total strength above roughly 2.5 tends to fight itself; a
+  sensible ladder when stacking is 1.0 / 0.8 / 0.6. Anima's reference stack is the exception: six adapters
+  totalling 3.9, each a partial style, with the lead at 0.7.
 - TextFusion and NIJISIS both edit the same text-fusion path. Stacking them is allowed and untested
   here; treat a combined result as an experiment, not a known-good recipe.
 - The saved job recipe keeps strengths *and* filenames verbatim, so an evidence record names the
@@ -113,6 +139,21 @@ Prompt style is a **natural-language paragraph of 30–150 words**, ordered came
 subject → environment → expression → pose → style. No Danbooru quality soup, with one exception: Niji
 Sweet Spot was trained on tag-ish prompts and accepts them. Put `@NJSW33T` or `@NIJISIS` at the
 *start*; put a fal style trigger at the *end* of a short prompt.
+
+### Anima base v1.0 (`anima-artist-stack`)
+
+Loader chain: `UNETLoader(anima-base-v1.0)`, `CLIPLoader(qwen_3_06b_base, type="stable_diffusion")`, the Qwen
+image VAE, a real negative prompt. This is the official ComfyUI "Anima base v1" template minus its subgraph.
+The compact Qwen encoder reads sentences and tags alike; artist tags take an `@` prefix.
+
+| Setting | Value |
+|---|---|
+| Steps | 30 (template and both references); 8 only with the official turbo LoRA at cfg 1 |
+| CFG | 4 (template, six-adapter reference); 3 for the painterly artist-tag look |
+| Sampler | `euler` (template), `euler_ancestral` (six-adapter reference), `dpmpp_2m_sde_gpu` (artist-tag references) |
+| Scheduler | `simple` |
+| Resolution | 832×1216, 1024×1024, 1248×1824, 1328×1776 (16-pixel grid) |
+| Negative | `worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia` |
 
 ### SDXL anime families
 
@@ -177,6 +218,32 @@ records the KB checksum so a later reader knows which revision of the knowledge 
 Planning reserves nothing — it submits only when you press **Start comparison**, and the existing
 generation budget still applies. The narrative behind the knowledge base is in
 [SETTINGS-KNOWLEDGE.md](SETTINGS-KNOWLEDGE.md).
+
+## The owner's creative review (12 September 2026)
+
+Recorded from the owner's message, not inferred (full wording in [HUMAN_TODO.md](../HUMAN_TODO.md)):
+`krea-anime-atelier` "genuinely great"; every Krea witch probe with the target stack "very good" (er_sde,
+15-step, 4-step) or "good" (baroque oil, airy watercolour); NIJISIS baseline "potential but imperfect", its
+4-step run "very good"; `krea-style-lab` nice from afar but the foxes lose detail and their faces morph;
+WAI okay-ish with imperfections; NoobAI has potential but six fingers; Pony "a complete mess". Almost every
+image carries a small imperfection the owner would like corrected by a follow-up workflow.
+
+## The correction pass
+
+Two presets answer that, both driven by a reference image (upload one, or the authored example runs):
+
+- **`anime-detail-fix`** — the ADetailer pattern in ComfyUI: Impact Pack `FaceDetailer` twice, first with
+  the `face_yolov8s` detector, then with `hand_yolov8n`, repainting only the detected crops with WAI v17 at
+  denoise 0.4 (faces) / 0.45 (hands). Nothing outside the boxes changes. It is model-agnostic on the input
+  side, so a Krea, Anima or SDXL image all go through the same pass; the repaint style is WAI's, which suits
+  anime faces and hands. One denoise control drives both passes: start at "Gentle" (0.3) when only hands need
+  work, use "Strong" (0.55) for a hand that must be redrawn and accept that the face is repainted harder too.
+- **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
+  0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
+  faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
+
+Neither is a hires-fix; upscaling stays with the existing ESRGAN handoff. Execution results, when a pass has
+been run, are in `experiments/curated/anime-fantasy-atelier/`.
 
 ## Timing reality
 
