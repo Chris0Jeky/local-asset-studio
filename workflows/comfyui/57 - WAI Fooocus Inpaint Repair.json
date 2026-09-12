@@ -1,6 +1,6 @@
 {
   "last_node_id": 12,
-  "last_link_id": 19,
+  "last_link_id": 21,
   "nodes": [
     {
       "id": 1,
@@ -22,7 +22,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            7
+            9
           ]
         },
         {
@@ -37,8 +37,8 @@
           "name": "VAE",
           "type": "VAE",
           "links": [
-            5,
-            15
+            6,
+            17
           ]
         }
       ],
@@ -75,7 +75,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            11
+            4
           ]
         }
       ],
@@ -112,7 +112,7 @@
           "name": "CONDITIONING",
           "type": "CONDITIONING",
           "links": [
-            12
+            5
           ]
         }
       ],
@@ -143,8 +143,8 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            4,
-            16
+            7,
+            18
           ]
         },
         {
@@ -183,7 +183,7 @@
           "name": "INPAINT_PATCH",
           "type": "INPAINT_PATCH",
           "links": [
-            8
+            10
           ]
         }
       ],
@@ -221,8 +221,8 @@
           "name": "MASK",
           "type": "MASK",
           "links": [
-            6,
-            18
+            8,
+            20
           ]
         }
       ],
@@ -236,10 +236,10 @@
     },
     {
       "id": 7,
-      "type": "VAEEncodeForInpaint",
+      "type": "INPAINT_VAEEncodeInpaintConditioning",
       "pos": [
         740,
-        400
+        330
       ],
       "size": [
         320,
@@ -250,37 +250,65 @@
       "mode": 0,
       "inputs": [
         {
-          "name": "pixels",
-          "type": "IMAGE",
+          "name": "positive",
+          "type": "CONDITIONING",
           "link": 4
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 5
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 5
+          "link": 6
+        },
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 7
         },
         {
           "name": "mask",
           "type": "MASK",
-          "link": 6
+          "link": 8
         }
       ],
       "outputs": [
         {
-          "name": "LATENT",
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            13
+          ]
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "latent_inpaint",
           "type": "LATENT",
           "links": [
-            9,
-            13
+            11
+          ]
+        },
+        {
+          "name": "latent_samples",
+          "type": "LATENT",
+          "links": [
+            15
           ]
         }
       ],
       "properties": {
-        "Node name for S&R": "VAEEncodeForInpaint"
+        "Node name for S&R": "INPAINT_VAEEncodeInpaintConditioning"
       },
-      "widgets_values": [
-        6
-      ]
+      "widgets_values": []
     },
     {
       "id": 8,
@@ -300,17 +328,17 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 7
+          "link": 9
         },
         {
           "name": "patch",
           "type": "INPAINT_PATCH",
-          "link": 8
+          "link": 10
         },
         {
           "name": "latent",
           "type": "LATENT",
-          "link": 9
+          "link": 11
         }
       ],
       "outputs": [
@@ -318,7 +346,7 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            10
+            12
           ]
         }
       ],
@@ -345,22 +373,22 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 10
+          "link": 12
         },
         {
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 11
+          "link": 13
         },
         {
           "name": "negative",
           "type": "CONDITIONING",
-          "link": 12
+          "link": 14
         },
         {
           "name": "latent_image",
           "type": "LATENT",
-          "link": 13
+          "link": 15
         }
       ],
       "outputs": [
@@ -368,7 +396,7 @@
           "name": "LATENT",
           "type": "LATENT",
           "links": [
-            14
+            16
           ]
         }
       ],
@@ -382,7 +410,7 @@
         5.5,
         "euler_ancestral",
         "karras",
-        0.85
+        0.7
       ]
     },
     {
@@ -403,12 +431,12 @@
         {
           "name": "samples",
           "type": "LATENT",
-          "link": 14
+          "link": 16
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": 15
+          "link": 17
         }
       ],
       "outputs": [
@@ -416,7 +444,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            17
+            19
           ]
         }
       ],
@@ -443,17 +471,17 @@
         {
           "name": "destination",
           "type": "IMAGE",
-          "link": 16
+          "link": 18
         },
         {
           "name": "source",
           "type": "IMAGE",
-          "link": 17
+          "link": 19
         },
         {
           "name": "mask",
           "type": "MASK",
-          "link": 18
+          "link": 20
         }
       ],
       "outputs": [
@@ -461,7 +489,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            19
+            21
           ]
         }
       ],
@@ -492,7 +520,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 19
+          "link": 21
         }
       ],
       "outputs": [
@@ -537,30 +565,46 @@
     ],
     [
       4,
-      4,
+      2,
       0,
       7,
       0,
-      "IMAGE"
+      "CONDITIONING"
     ],
     [
       5,
+      3,
+      0,
+      7,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      6,
       1,
       2,
       7,
-      1,
+      2,
       "VAE"
     ],
     [
-      6,
+      7,
+      4,
+      0,
+      7,
+      3,
+      "IMAGE"
+    ],
+    [
+      8,
       6,
       0,
       7,
-      2,
+      4,
       "MASK"
     ],
     [
-      7,
+      9,
       1,
       0,
       8,
@@ -568,7 +612,7 @@
       "MODEL"
     ],
     [
-      8,
+      10,
       5,
       0,
       8,
@@ -576,15 +620,15 @@
       "INPAINT_PATCH"
     ],
     [
-      9,
+      11,
       7,
-      0,
+      2,
       8,
       2,
       "LATENT"
     ],
     [
-      10,
+      12,
       8,
       0,
       9,
@@ -592,31 +636,31 @@
       "MODEL"
     ],
     [
-      11,
-      2,
+      13,
+      7,
       0,
       9,
       1,
       "CONDITIONING"
     ],
     [
-      12,
-      3,
-      0,
+      14,
+      7,
+      1,
       9,
       2,
       "CONDITIONING"
     ],
     [
-      13,
+      15,
       7,
-      0,
+      3,
       9,
       3,
       "LATENT"
     ],
     [
-      14,
+      16,
       9,
       0,
       10,
@@ -624,7 +668,7 @@
       "LATENT"
     ],
     [
-      15,
+      17,
       1,
       2,
       10,
@@ -632,7 +676,7 @@
       "VAE"
     ],
     [
-      16,
+      18,
       4,
       0,
       11,
@@ -640,7 +684,7 @@
       "IMAGE"
     ],
     [
-      17,
+      19,
       10,
       0,
       11,
@@ -648,7 +692,7 @@
       "IMAGE"
     ],
     [
-      18,
+      20,
       6,
       0,
       11,
@@ -656,7 +700,7 @@
       "MASK"
     ],
     [
-      19,
+      21,
       11,
       0,
       12,

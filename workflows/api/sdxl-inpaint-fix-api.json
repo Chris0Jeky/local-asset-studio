@@ -50,21 +50,28 @@
     }
   },
   "7": {
-    "class_type": "VAEEncodeForInpaint",
+    "class_type": "INPAINT_VAEEncodeInpaintConditioning",
     "inputs": {
-      "pixels": [
-        "4",
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "3",
         0
       ],
       "vae": [
         "1",
         2
       ],
+      "pixels": [
+        "4",
+        0
+      ],
       "mask": [
         "6",
         0
-      ],
-      "grow_mask_by": 6
+      ]
     }
   },
   "8": {
@@ -80,7 +87,7 @@
       ],
       "latent": [
         "7",
-        0
+        2
       ]
     }
   },
@@ -97,18 +104,18 @@
       "sampler_name": "euler_ancestral",
       "scheduler": "karras",
       "positive": [
-        "2",
-        0
-      ],
-      "negative": [
-        "3",
-        0
-      ],
-      "latent_image": [
         "7",
         0
       ],
-      "denoise": 0.85
+      "negative": [
+        "7",
+        1
+      ],
+      "latent_image": [
+        "7",
+        3
+      ],
+      "denoise": 0.7
     }
   },
   "10": {
