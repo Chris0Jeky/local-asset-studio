@@ -613,6 +613,8 @@
         "notes": [
           "this family does take a negative prompt (node 5 in the authored graphs)",
           "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
+          "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776",
+          "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
           "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\"",
           "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776"
         ]
@@ -1862,6 +1864,48 @@
       "licence": "Hugging Face model card (CircleStone Labs); not read here",
       "notes": [
         "official accelerator from the ComfyUI Anima base v1 template: 8 steps at cfg 1 with euler/simple; not a style adapter"
+      ]
+    },
+    "anima-newanimastyle-v1.safetensors": {
+      "family": "Anima",
+      "label": "NEWANIMASTYLE V1 (Anima)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.5,
+        1.0
+      ],
+      "default": 1.0,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2830377?modelVersionId=3193726",
+      "sha256": "390a59ededd9df62a8c6e9f7dc92d867206649dcc25d2618fe9103d12dbdc6da",
+      "bytes": 138663776,
+      "licence": "civitai listing for model 2830377 version 3193726: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 1.0 (listed there as V1-390a); civitai file name was an opaque id, renamed on intake",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
+      ]
+    },
+    "anima-ke-ta_style_v1.safetensors": {
+      "family": "Anima",
+      "label": "ke-ta style (Anima)",
+      "trigger": "",
+      "trigger_position": "none",
+      "strength": [
+        0.35,
+        1.0
+      ],
+      "default": 0.7,
+      "role": "style",
+      "installed": true,
+      "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
+      "sha256": "52107d036a03158f1722942f1a6ea56def7699d4d00c63c629cf91774a7ba21b",
+      "bytes": 109091912,
+      "licence": "civitai listing for model 2852885 version 3221815: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "notes": [
+        "reference image 139608451 used it at 0.7",
+        "downloaded 2026-09-12 with the owner's civitai API key; sha256 matched the listing"
       ]
     }
   }

@@ -1002,8 +1002,7 @@
       "strength": [
         0.35,
         0.7
-      ],
-      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+      ]
     },
     {
       "id": "anima-kieed-v9-step6000",
@@ -1040,6 +1039,23 @@
         1.0
       ],
       "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+    },
+    {
+      "id": "anima-newanimastyle-v1",
+      "name": "NEWANIMASTYLE / V1",
+      "file": "loras/anima-newanimastyle-v1.safetensors",
+      "source": "https://civitai.com/models/2830377?modelVersionId=3193726",
+      "url": "https://civitai.com/api/download/models/3193726",
+      "bytes": 138663776,
+      "sha256": "390a59ededd9df62a8c6e9f7dc92d867206649dcc25d2618fe9103d12dbdc6da",
+      "family": "Anima",
+      "license": "",
+      "terms": "civitai listing for model 2830377 version 3193726: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [
