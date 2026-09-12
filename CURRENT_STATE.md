@@ -1,5 +1,18 @@
 # Current state — 11 September 2026
 
+## Retained observation dispatch race (#113) — 12 September 2026
+
+Late review of #105 exposed a duplicate-generation dispatch when Gallery Resume changed a retained
+known-prompt job to queued after Production's entry check. Production now rechecks fresh tracking
+authorization around stage dispatch and reconciliation, and queued jobs with submission evidence
+take the observation path. Locks are released before backend I/O. Three offline causal assertions
+failed on the original code; all 16 Production tests pass with the fix. Prompt IDs, graph receipts,
+budgets and explicit continuation consent remain intact. No live prompt or runtime was touched;
+GPU execution, creative quality and licensing acceptance were not assessed. The configured full
+suite passes 875 tests run / 861 passed / 14 skipped in 85.169 seconds; repository validation passes
+61 graphs/bindings, 62 pins, 808 tracked paths and 65 LoRA names. A scoped independent check confirms
+the baseline's extra synthetic POST and finds no remaining duplicate path in the changed dispatch.
+
 ## Stop tracking uncertain prompts — 12 September 2026
 
 The local Gallery can record an explicit reason for stopping observation of an
