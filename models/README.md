@@ -102,8 +102,6 @@ not legal advice and the linked model page governs.
 
 NIJISIS was downloaded by the owner on 12 September 2026 (the owner spent the Buzz); its SHA-256 was verified
 against the installed file. **koukouya was installed on 12 September 2026** with the owner's civitai key (`CIVITAI_API_TOKEN`), receipt hash matching the listing; the `krea-atelier-target-stack` recipe names all three adapters.
-metadata, not from a local file, so Studio's **Models & folders** will show it missing until someone fetches
-it with an API key or the browser. That is a `HUMAN_TODO.md` item, not an agent decision.
 
 ### Acquisition scripts
 
