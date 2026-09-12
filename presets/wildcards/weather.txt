@@ -1,0 +1,15 @@
+# Weather and air.
+clear sky
+scattered clouds
+overcast
+light rain
+heavy rain
+drizzle on wet stone
+rolling fog
+morning mist
+falling snow
+drifting petals in the wind
+thunderstorm on the horizon
+dust motes in still air
+floating particles
+sea spray
