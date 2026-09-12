@@ -36,9 +36,16 @@ class Production:
                 CREATE TABLE IF NOT EXISTS budgets(id TEXT PRIMARY KEY, allowance INTEGER NOT NULL, reserved INTEGER NOT NULL DEFAULT 0);
                 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, root_id TEXT NOT NULL REFERENCES budgets(id), plan TEXT NOT NULL, state TEXT NOT NULL, created REAL NOT NULL);
             ''')
-            for row in db.execute('SELECT id,state FROM projects').fetchall():
+            for row in db.execute('SELECT id,plan,state FROM projects').fetchall():
+                plan=json.loads(row['plan'])
                 state=json.loads(row['state'])
-                if state['status'] in ('queued','running','observing'):
+                active_voice_attempt=plan.get('kind')=='voice' and any(attempt.get('status')=='running' for attempt in state.get('attempts',{}).values())
+                if plan.get('kind')=='voice' and (state['status'] in ('queued','running','observing') or active_voice_attempt):
+                    for attempt in state.get('attempts',{}).values():
+                        if attempt.get('status')=='running':attempt.update(status='interrupted',message='Studio restarted while this voice attempt was active; execution state is unproven.')
+                    state.update(status='interrupted',message='Studio restarted while a voice take was active. Inspect retained request, attempt, job and output records; no inference was resumed.')
+                    db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
+                elif state['status'] in ('queued','running','observing'):
                     state.update(status='interrupted',message='Studio restarted. Inspect known jobs before explicitly resuming; nothing was resubmitted.')
                     db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
 
@@ -84,8 +91,11 @@ class Production:
         result={k:project[k] for k in ('id','root_id','created_at')}
         result.update(name=plan['name'],kind=plan['kind'],parent_project=plan.get('parent_project'),
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
-                      recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
-                      variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
+                       recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
+                       variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
+        if plan.get('kind')=='voice':
+            from voice_baseline import resume_eligibility
+            result['voice_resume']=resume_eligibility(self,project)
         if full:result['plan']=plan
         return result
 
@@ -390,12 +400,13 @@ class Production:
         self.studio.queue.put(('production',identifier));return self.get(identifier)
 
     def stop(self, identifier):
-        project=self._get(identifier)
-        if project['plan']['kind']=='av':return self.av.cancel(identifier)
-        if project['state']['status'] not in ('queued','running','observing'):raise ValueError('This experiment is not active')
-        message='Stop requested. The current owned job may finish; later stages will not start.'
-        if project['plan']['kind']=='voice':message='Stop requested. The current voice job may already be publishing retained Workspace outputs.'
-        self._mutate(identifier,stop_requested=True,message=message)
+        with self.lock:
+            project=self._get(identifier)
+            if project['plan']['kind']=='av':return self.av.cancel(identifier)
+            if project['state']['status'] not in ('queued','running','observing'):raise ValueError('This experiment is not active')
+            message='Stop requested. The current owned job may finish; later stages will not start.'
+            if project['plan']['kind']=='voice':message='Stop requested. The current voice job may already be publishing retained Workspace outputs.'
+            self._mutate(identifier,stop_requested=True,message=message)
         return self.get(identifier)
 
     def resume(self, identifier):
@@ -419,6 +430,27 @@ class Production:
             project=self._get(identifier);state=project['state']
             state.setdefault('attempts',{}).setdefault(str(index),{}).update(fields)
             self._state(identifier,state)
+
+    def finish_voice(self, identifier, job, measurements):
+        """Commit a fully published voice take under the same lock used by stop()."""
+        with self.lock,self.connect() as db:
+            db.execute('BEGIN IMMEDIATE');project=self._get(identifier,db);state=project['state']
+            too_late=bool(state.get('stop_requested'))
+            message=('Stop arrived after complete Workspace publication; published voice outputs are retained for inspection.' if too_late else 'Dry and scene-ready baseline takes completed; listening review remains open.')
+            job.update(status='completed',publication_status='published',message=message)
+            if too_late:job['cancellation_too_late']=True
+            else:job.pop('cancellation_too_late',None)
+            self.studio._save(job);self.studio.jobs[job['id']]=job
+            state.update(status='completed',message=message,artifacts=self._voice_artifacts(identifier),measurements=measurements,finished_at=time.time())
+            state.setdefault('attempts',{}).setdefault('0',{}).update(status='completed',finished_at=time.time(),message=message)
+            if too_late:state['cancellation_too_late']=True
+            else:state.pop('cancellation_too_late',None)
+            db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),identifier))
+        return self.get(identifier)
+
+    def _voice_artifacts(self, identifier):
+        from voice_baseline import artifacts
+        return artifacts(self,identifier)
 
     def run(self, identifier):
         project=self._get(identifier);plan=project['plan']

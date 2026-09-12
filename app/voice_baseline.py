@@ -115,16 +115,25 @@ def artifacts(production,identifier):
     return result
 
 
+def resume_eligibility(production, project):
+    """Report whether an interrupted voice plan has no durable execution evidence."""
+    identifier=project['id'];state=project['state'];directory=production.root/identifier
+    if state.get('status')!='interrupted':return {'eligible':False,'message':'Only an interrupted voice take can resume.'}
+    if state.get('stop_requested'):return {'eligible':False,'message':'This take has a recorded stop request; inspect it and prepare a new take if needed.'}
+    if state.get('attempts'):return {'eligible':False,'message':'A durable voice attempt exists; Studio will not retry it.'}
+    if state.get('artifacts'):return {'eligible':False,'message':'Retained voice artifacts exist; Studio will not retry the take.'}
+    job_id=uuid.uuid5(uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex
+    recorded_job=(job_id in production.studio.jobs or (production.studio.runs/job_id).exists() or any(job.get('project_id')==identifier and job.get('operation')==OPERATION for job in production.studio.jobs.values()))
+    if recorded_job:return {'eligible':False,'message':'A durable owned voice job exists; Studio will not retry it.'}
+    if (directory/'request.json').exists():return {'eligible':False,'message':'A durable voice request exists; Studio will not retry it.'}
+    if (directory/'voice').exists():return {'eligible':False,'message':'Retained voice output files exist; Studio will not retry the take.'}
+    return {'eligible':True,'message':'No request, attempt, owned job or voice output exists. Resume only queues this unstarted plan.'}
+
+
 def resume(production, identifier):
     with production.studio.lock,production.lock:
-        project=production._get(identifier);state=project['state'];directory=production.root/identifier
-        need(state.get('status') in ('interrupted','queued'),'Only an unstarted interrupted voice take can resume')
-        attempts=state.get('attempts',{})
-        job_id=uuid.uuid5(uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex
-        recorded_job=job_id in production.studio.jobs or any(job.get('project_id')==identifier and job.get('operation')==OPERATION for job in production.studio.jobs.values())
-        need(not (directory/'request.json').exists() and not attempts and not recorded_job and not (directory/'voice').exists(),
-             'Voice inference may have started; inspect retained files and prepare a new take')
-        if state['status']=='queued':return production.get(identifier)
+        project=production._get(identifier);eligibility=resume_eligibility(production,project)
+        need(eligibility['eligible'],eligibility['message'])
         production._mutate(identifier,status='queued',stop_requested=False,message='Explicitly resumed an unstarted voice plan; no inference was repeated.')
         production.studio.queue.put(('production',identifier));return production.get(identifier)
 
@@ -168,19 +177,9 @@ def run(production,identifier,plan):
         job['native_recipe'].update(receipt=receipt,qc=qc)
         studio._save(job);studio.jobs[job_id]=job
         studio.index_outputs(job)
-        published=all(output.get('asset_id') and not output.get('snapshot_error') for output in job['outputs'])
-        if cancelled() and published:
-            job.update(status='completed',publication_status='published',cancellation_too_late=True,message='Stop arrived after Workspace publication completed; published voice outputs are retained for inspection.')
-            studio._save(job);studio.jobs[job_id]=job
-            production._attempt(identifier,0,status='completed',finished_at=time.time(),message=job['message'])
-            production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time(),cancellation_too_late=True)
-            return
-        job.update(status='completed',message='Dry and scene-ready baseline takes completed; listening review remains open.')
+        published=bool(job['outputs']) and all(output.get('asset_id') and not output.get('snapshot_error') for output in job['outputs'])
         need(published,'Voice output registration failed; inspect retained files')
-        job['publication_status']='published'
-        studio._save(job);studio.jobs[job_id]=job
-        production._attempt(identifier,0,status='completed',finished_at=time.time())
-        production._mutate(identifier,status='completed',message=job['message'],artifacts=artifacts(production,identifier),measurements=qc,finished_at=time.time())
+        production.finish_voice(identifier,job,qc)
     except Exception as exc:
         status='cancelled' if isinstance(exc,RenderCancelled) else 'failed'
         if job is not None:
