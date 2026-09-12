@@ -2,7 +2,11 @@
 
 The 11 September implementation connects the research in merged PRs #20 and #8
 to the local Studio. Open the desktop shortcut or `http://127.0.0.1:8191`.
-The configured installation has 54 recipes, 55 API graphs and 54 visual workflows.
+The 11 September line here said "54 recipes, 55 API graphs and 54 visual workflows"; **counted from the
+repository on 12 September 2026 the Studio carries 60 presets, 60 API graphs, 56 visual workflows and 17
+named recipes** (`presets/catalog.json`, `workflows/api/`, `workflows/comfyui/`, `presets/recipes.json`).
+Presets and recipes are different things: a recipe is a named starting point that fills one preset's
+controls, so the old sentence also counted presets as recipes.
 
 ## Good places to start
 

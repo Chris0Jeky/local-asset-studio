@@ -534,6 +534,20 @@ Not executed: the koukouya LoRA from the reference image (civitai login required
 exercised without reserving budget), the Krea 2 Q5 GGUF speed comparison (download in progress), and any
 art acceptance — [HUMAN_TODO.md](HUMAN_TODO.md) keeps the creative choices open.
 
+**Correction, 12 September 2026 (the paragraph above stands as written; these two entries were already
+overtaken when it was written).** `krea-style-lab` *was* executed: Studio job
+`f373ba3b-3f88-4cdb-8bc2-bc4afa36d67e`, prompt `cc0ede07-97b9-4549-ba46-6b02e6ec18bb`, 207.119 s at
+1024×1024 / 4 steps with `fal-krea2-airy-anime-watercolor` + the 4-step distill LoRA at 0.85; output
+`f66874e6…`, inspected, and the preset is `verified: true`. The owner reviewed that image the same day
+(HUMAN_TODO q-2: "nice from afar but the foxes lose detail and their faces morph"), which is what
+`krea-refine` job `21e4a629` was then run against. The koukouya LoRA was likewise installed and executed
+later that day — HUMAN_TODO q-1 is closed, `models/library.json` carries the pin, and job
+`7d589f47-7172-44fb-9541-4ab0602eafce` (827.6 s, 832×1248) is the full target stack including it.
+Both records are in
+[experiments/curated/anime-fantasy-atelier/execution-evidence.json](experiments/curated/anime-fantasy-atelier/execution-evidence.json).
+Still not executed from that list: the recipes marked `unverified`, the planner-driven comparisons, the
+Krea 2 Q5 GGUF speed comparison, and any art acceptance beyond the owner's recorded q-2 remarks.
+
 ## Creative production milestone
 
 Studio now has **54 recipes**, a persistent asset Workspace, role-guided Qwen
