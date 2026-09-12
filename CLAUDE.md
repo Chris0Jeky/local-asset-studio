@@ -15,7 +15,7 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 213 tests, ~3 s, offline (one Windows symlink skip)
+python -m unittest discover -s tests          # 864 tests, about a minute, offline; budget a minute, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
@@ -23,18 +23,28 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
 package manager: Python 3.12 + Pillow/psutil; plain JS in `app/static/` with a vendored model-viewer.
+The skip count is environment-dependent — 37 measured on the default shell, fewer where FFmpeg, Godot and
+Node are on `PATH`, more without Windows symlink privilege. A differing skip count is not a regression.
 
 ## Proving checks (narrowest command per seam)
 
 | Changed seam | Command |
 | --- | --- |
-| `app/<module>.py` | `python -m unittest tests.test_<module>` (`test_server` covers routing; `FakeStudio` fakes ComfyUI) |
+| `app/<module>.py` | `python -m unittest discover -s tests -p "test_<module>.py"` (`test_server` covers routing; `FakeStudio` fakes ComfyUI) |
 | `presets/**`, `workflows/**`, `models/library.json` | `python scripts/validate-repo.py`; graph nodes against a running ComfyUI: `python scripts/validate-live.py` |
 | `app/static/*.js` | `node --check app/static/app.js` then `python -m unittest tests.test_frontend_handoffs` (skips without Node) |
 | `scripts/game_asset_*.py`, `research/game-assets/**` | `python -m unittest discover -s tests -p "test_game_asset_*.py"` (own CI lane) |
 | `scripts/krita_roundtrip.py`, `godot_asset_adapter.py`, `articulated_prop.py` | `tests.test_krita_roundtrip`, `tests.test_godot_asset_adapter`, `tests.test_articulated_*` |
 | `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
+
+Use the `discover -s tests -p` form by default: 12 of 52 test modules import a sibling unqualified, so
+`python -m unittest tests.<name>` dies on import for `test_production`, `test_backends`, `test_review_desk`,
+`test_av_projects`, `test_engine_*`, `test_review_http`, `test_failed_job_timing`, `test_voice_baseline` and
+the three `test_character_*` integration modules. Four `app/` modules have no same-named test file:
+`articulated.py` → `test_articulated_operation` (+ `test_production`), `backend_contracts.py` →
+`test_backend_safety`, `download_contracts.py` → `test_model_install_safety` and `test_model_redirects`,
+`review_media.py` → `test_review_desk`.
 
 CI (`.github/workflows/check.yml`) runs the full suite plus `validate-repo.py` on every push and PR.
 
