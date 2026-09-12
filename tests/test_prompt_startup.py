@@ -1,4 +1,7 @@
+import base64
 import http.client
+import hashlib
+import io
 import importlib.util
 import json
 from pathlib import Path
@@ -48,6 +51,35 @@ class PromptStartupTests(unittest.TestCase):
         intent = {"schema_version": 1, "id": "creative-brief", "task": "image", "brief": "An observatory keeper.", "facets": {}, "tags": [], "avoid": [], "constraints": [], "references": [], "verbatim": {}, "parameters": {}, "locked": ["verbatim"]}
         status, compiled = self.request("POST", "/api/prompt/compile", {"intent": intent, "profile_id": "sdxl-prose-v1"}, {"Origin": "http://127.0.0.1:8191"})
         self.assertEqual(status, 200); self.assertFalse(compiled["generation_submitted"]); self.assertEqual(self.http.RequestHandlerClass.studio.jobs, {})
+
+    def test_metadata_http_accepts_actual_formats_and_bound_sidecar_without_jobs(self):
+        from PIL import Image
+        image = Image.new('RGB', (2, 3))
+        origin = {"Origin": "http://127.0.0.1:8191"}
+        for fmt in ('PNG', 'JPEG', 'WEBP'):
+            with self.subTest(format=fmt):
+                stream = io.BytesIO(); image.save(stream, format=fmt); raw = stream.getvalue()
+                sidecar = {"schema_version": 1, "image_sha256": hashlib.sha256(raw).hexdigest(),
+                           "producer": {"name": "HTTP fixture", "version": "1"},
+                           "entries": [{"keyword": "parameters", "value": "Fixture, not generation evidence"}]}
+                status, report = self.request("POST", "/api/prompt/metadata", {
+                    "media_base64": base64.b64encode(raw).decode(),
+                    "sidecar_base64": base64.b64encode(json.dumps(sidecar).encode()).decode()}, origin)
+                self.assertEqual(status, 200, report)
+                self.assertFalse(report["workflow_executed"])
+                self.assertEqual(report["sidecar"]["image_binding"], "hash_matched_not_authenticated")
+                self.assertEqual(report["sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.http.RequestHandlerClass.studio.jobs, {})
+
+    def test_metadata_http_malformed_payload_is_400_and_never_generates(self):
+        for payload in ({"media_base64": "%%%%"}, {"media_base64": "AA=="},
+                        {"media_base64": "", "png_base64": ""}, {"media_base64": "", "execute": True}):
+            with self.subTest(payload=payload):
+                status, error = self.request("POST", "/api/prompt/metadata", payload,
+                                             {"Origin": "http://127.0.0.1:8191"})
+                self.assertEqual(status, 400)
+                self.assertFalse(error["generation_submitted"])
+        self.assertEqual(self.http.RequestHandlerClass.studio.jobs, {})
 
     def test_prompt_routes_keep_loopback_host_and_origin_guards(self):
         status, _ = self.request("GET", "/api/prompt/profiles", headers={"Host": "studio.example:8191"})

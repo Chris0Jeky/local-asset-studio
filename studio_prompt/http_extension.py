@@ -3,7 +3,7 @@ import base64
 import hashlib
 from urllib.parse import urlparse
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
-from .metadata import inspect_png
+from .recipe_intake import inspect_media
 
 
 def dispatch(path, value, studio=None):
@@ -12,8 +12,18 @@ def dispatch(path, value, studio=None):
     if path == '/api/prompt/apply':
         fields(value, ('intent','proposal','accepted_fields')); return apply_proposal(value['intent'],value['proposal'],value['accepted_fields'])
     if path == '/api/prompt/metadata':
-        fields(value, ('png_base64',)); need(isinstance(value['png_base64'],str) and len(value['png_base64'])<=3000000,'PNG payload too large')
-        return inspect_png(base64.b64decode(value['png_base64'],validate=True))
+        fields(value, (), ('png_base64', 'media_base64', 'sidecar_base64', 'output_node'))
+        keys = [key for key in ('png_base64', 'media_base64') if key in value]
+        need(len(keys) == 1, 'Supply exactly one media payload')
+        def unpack(key):
+            data = value[key]
+            need(isinstance(data, str) and len(data) <= 3000000, 'Media payload too large')
+            return base64.b64decode(data, validate=True)
+        raw = unpack(keys[0])
+        if keys[0] == 'png_base64':
+            need(raw.startswith(b'\x89PNG\r\n\x1a\n'), 'Legacy payload requires PNG bytes')
+        return inspect_media(raw, unpack('sidecar_base64') if 'sidecar_base64' in value else None,
+                             value.get('output_node'))
     if path == '/api/prompt/bind':
         fields(value, ('compiled','binding')); need(studio is not None,'Studio binding context unavailable')
         binding=value['binding']; preset=studio.preset(binding['preset_id']); graph,path=studio.graph_for(preset)
@@ -40,7 +50,7 @@ def extend_handler(base):
             if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
             try:
                 need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
-                # Strict decoder and tighter cap; PNG metadata endpoint accepts small images only.
+                # Strict decoder and tighter cap; metadata endpoint accepts small media only.
                 body=self.rfile.read(self._content_length(1024*1024))
                 result=dispatch(self.path,decode(body),self.studio)
                 return self._json(200,result)
