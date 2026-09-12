@@ -171,6 +171,21 @@ real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes
 one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
 warnings or errors. This does not claim human listening or voice acceptance.
 
+## Voice resume polling snapshot follow-up - 12 September 2026
+
+The interrupted Voice resume eligibility check now snapshots `Studio.jobs` while holding the
+Studio lock, then uses that same snapshot for deterministic and metadata job checks after releasing
+the lock. The causal regression inserted an unrelated job from an unrelated job's metadata callback:
+the baseline raised `RuntimeError: dictionary changed size during iteration` from `production.list()`;
+the fixed `production.list()` and `production.get()` remain eligible and the queue stays empty. A
+small lock probe also verified snapshot acquisition under lock and metadata scanning after release;
+matching voice jobs under nonstandard IDs remain a resume refusal. Focused Voice and Production
+discover suites passed: 15 and 13 tests. The configured full suite passed 826 tests (813 passed,
+13 skipped), and repository validation passed. Raw command logs, including the baseline failure, are
+retained under `.runtime/voice-polling/`; the direct `unittest tests.test_voice_baseline` form failed
+at import because this repository's test module imports its sibling without the tests directory on
+the module path, while the discover form is the valid proving command.
+
 ## Scene editor interaction checks - 12 September 2026
 
 Unsaved clip notices and disabled document actions now update on input without replacing the focused
