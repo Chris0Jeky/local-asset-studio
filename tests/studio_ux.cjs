@@ -60,7 +60,9 @@ test('draft rejects unsupported versions, batches and identities', () => {
 test('draft carries per-input lineage attribution and rejects unbacked claims', () => {
   const d=draft();d.recipe.parent_by_input={reference:'source'};
   assert.deepEqual(U.normalizeDraft(d).recipe.parent_by_input,{reference:'source'});
-  assert.deepEqual(U.normalizeDraft(draft()).recipe.parent_by_input,{},'A draft without the field normalizes to no attribution');
+  assert.equal(U.normalizeDraft(draft()).recipe.parent_by_input,undefined,'A draft without the field stays without it, so the reload fallback still runs');
+  const empty=draft();empty.recipe.parent_by_input={};
+  assert.equal(U.normalizeDraft(empty).recipe.parent_by_input,undefined,'An empty mapping is not frozen into the draft');
   for(const mapping of [{reference:'not-a-declared-parent'},{unknownInput:'source'},{reference:42},['source'],'source']) {
     const bad=draft();bad.recipe.parent_by_input=mapping;assert.equal(U.normalizeDraft(bad),null);
   }

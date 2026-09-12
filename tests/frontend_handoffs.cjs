@@ -182,7 +182,7 @@ async function savedSetupCarriesPerInputAttribution() {
   assert.deepEqual(recipe.parent_by_input, {reference: 'asset-a', lastReference: 'asset-b'}, 'The setup records which input each source is on');
 
   const {element, requests, run, parents} = sandbox(first, local); // A fresh page: nothing carries over.
-  run(`applySaved(${JSON.stringify({...recipe, batch_count: recipe.batch})});`);
+  run(`applySaved(${JSON.stringify(recipe)});`); // Exactly what saved() hands applySaved on a reload.
   assert.deepEqual(parents(), ['asset-a', 'asset-b'], 'The reload keeps the declared lineage');
   element('#reference').files = [localFile('replacement-first.png')];
   element('#reference').onchange();
@@ -208,12 +208,17 @@ async function legacySetupWithoutAttributionIsUnchanged() {
   ambiguous.element('#reference').onchange();
   assert.deepEqual(ambiguous.parents(), ['asset-a', 'asset-b'], 'An unattributed parent is still never dropped');
 
-  const single = sandbox(first, local);
-  single.run(`applySaved(${JSON.stringify(legacy({reference: 'from-asset-a.png'}, ['asset-a']))});`);
-  assert.deepEqual(JSON.parse(single.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The unambiguous legacy case is still attributed');
-  single.element('#reference').files = [localFile('replacement-first.png')];
-  single.element('#reference').onchange();
-  assert.deepEqual(single.parents(), [], 'and a swap still releases it');
+  for (const [label, record] of [['no field at all', legacy({reference: 'from-asset-a.png'}, ['asset-a'])],
+    // A draft written before #112 normalizes with an empty mapping; that is absence, not "nothing was
+    // attributed", so the fallback must still run or the reload regresses a case that works on main.
+    ['an empty mapping', {...legacy({reference: 'from-asset-a.png'}, ['asset-a']), parent_by_input: {}}]]) {
+    const single = sandbox(first, local);
+    single.run(`applySaved(${JSON.stringify(record)});`);
+    assert.deepEqual(JSON.parse(single.run('JSON.stringify(parentByInput)')), {reference: 'asset-a'}, 'The unambiguous legacy case is still attributed with ' + label);
+    single.element('#reference').files = [localFile('replacement-first.png')];
+    single.element('#reference').onchange();
+    assert.deepEqual(single.parents(), [], 'and a swap still releases it with ' + label);
+  }
 }
 
 // A job-exported recipe is rebuilt server-side by compile_references, so its records never carry a

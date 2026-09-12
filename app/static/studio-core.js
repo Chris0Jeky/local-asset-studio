@@ -28,10 +28,11 @@
     if(!Array.isArray(pending)||pending.some(x=>!['reference','lastReference'].includes(x)))return null;
     // Per-input lineage attribution (#108): a known input mapped to an asset this draft already declares.
     const mapped=value.recipe.parent_by_input??{};if(!mapped||typeof mapped!=='object'||Array.isArray(mapped))return null;
+    // Emitted only when something was actually attributed, so a legacy draft never freezes an empty map.
     const attribution=Object.entries(mapped);
     if(attribution.length>8||attribution.some(([k,v])=>!['reference','lastReference'].includes(k)||typeof v!=='string'||!ids.includes(v)))return null;
     const batch=Number(value.recipe.batch??1);if(!Number.isInteger(batch)||batch<1||batch>4)return null;
-    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,parent_assets:[...ids],parent_by_input:Object.fromEntries(attribution),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
+    return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}

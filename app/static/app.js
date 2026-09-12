@@ -233,7 +233,9 @@ function applySaved(s){
   // has neither, and an unattributed parent is never dropped by a later edit.
   if(!selected.reference_slots?.length){
     const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
-    const mapped=s.parent_by_input&&typeof s.parent_by_input==='object'&&!Array.isArray(s.parent_by_input)?s.parent_by_input:null;
+    // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
+    // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
+    const saved=s.parent_by_input,mapped=saved&&typeof saved==='object'&&!Array.isArray(saved)&&Object.keys(saved).length?saved:null;
     if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
     else if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
   }
