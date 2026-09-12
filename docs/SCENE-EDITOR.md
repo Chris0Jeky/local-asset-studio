@@ -53,6 +53,8 @@ worker queue. Each attempt owns its new `renders/ATTEMPT_ID` directory with sour
 logs, output and receipt. Completed video/PCM output enters Workspace with source lineage and the
 full scene recipe. Before Workspace indexing, the full native request and receipt are durably recorded
 as a publishing attempt; publication failures retain the recipe, diagnostics and any registered assets.
+On restart, only completed AV publication is indexed; failed or incomplete attempts retain their exact
+Workspace asset set and diagnostics for inspection.
 Previous previews remain available and are labelled stale after later edits.
 
 Cancel targets a named active attempt. Owned FFmpeg children are terminated and joined; files and logs
