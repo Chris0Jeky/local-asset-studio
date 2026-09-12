@@ -1,0 +1,74 @@
+"""Shared document routes; no ComfyUI call is reachable from this module."""
+import sqlite3
+from urllib.parse import urlsplit
+from .core import decode, need
+from .documents import WorkflowDocuments, DocumentError
+
+PREFIX = '/api/workflow-studio/documents'
+
+
+def store(studio):
+    with studio.lock:
+        cached = getattr(studio, '_workflow_documents', None)
+        if cached is None or cached.workspace is not studio.assets:
+            cached = WorkflowDocuments(studio.assets)
+            studio._workflow_documents = cached
+        return cached
+
+
+def route(path, value, studio):
+    parsed = urlsplit(path)
+    need(not parsed.query and not parsed.fragment, 'Document routes do not accept query parameters')
+    path = parsed.path
+    if path == PREFIX:
+        return store(studio).list() if value is None else store(studio).create(value)
+    need(path.startswith(PREFIX + '/'), 'Unknown document route')
+    parts = path[len(PREFIX) + 1:].split('/')
+    repository = store(studio)
+    if value is None:
+        if len(parts) == 1: return repository.get(parts[0])
+        if len(parts) == 2 and parts[1] == 'history': return repository.history(parts[0])
+        if len(parts) == 3 and parts[1] == 'revisions' and parts[2].isdigit():
+            return repository.get(parts[0], int(parts[2]))
+    elif len(parts) == 2:
+        key, action = parts
+        if action == 'commands': return repository.command(key, value)
+        if action == 'preview': return repository.preview(key, value)
+        if action == 'restore': return repository.command(key, value, restore=True)
+        if action == 'fork': return repository.fork(key, value)
+    raise DocumentError('not_found', 'Unknown document operation', 404)
+
+
+def extend_handler(base):
+    class DocumentHandler(base):
+        def _document_route(self):
+            path = urlsplit(self.path).path
+            return path == PREFIX or path.startswith(PREFIX + '/')
+
+        def _document_reply(self, value):
+            try:
+                return self._json(200, route(self.path, value, self.studio))
+            except DocumentError as exc:
+                return self._json(exc.status, exc.result())
+            except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
+                return self._json(400, {'error': str(exc), 'code': 'invalid_document_command', 'generation_submitted': False})
+            except (sqlite3.Error, OSError):
+                return self._json(503, {'error': 'Workflow storage is unavailable', 'code': 'storage_unavailable',
+                    'generation_submitted': False, 'recovery': 'Retain the same request ID and content; inspect before retrying.'})
+
+        def do_GET(self):
+            if not self._document_route(): return super().do_GET()
+            if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
+            return self._document_reply(None)
+
+        def do_POST(self):
+            if not self._document_route(): return super().do_POST()
+            if not self._safe_mutation(): return self._json(403, {'error': 'Local same-origin request required'})
+            try:
+                need(self.headers.get('Content-Type', '').split(';')[0] == 'application/json', 'application/json required')
+                value = decode(self.rfile.read(self._content_length(1048576)))
+                need(isinstance(value, dict), 'JSON object required')
+            except (ValueError, OSError, RecursionError) as exc:
+                return self._json(400, {'error': str(exc), 'code': 'invalid_request', 'generation_submitted': False})
+            return self._document_reply(value)
+    return DocumentHandler
