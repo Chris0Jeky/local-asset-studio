@@ -1,14 +1,17 @@
 """Read-only native-node validation of Workflow Lab graphs; never queues work."""
-import json
+import argparse, json
 from pathlib import Path
 from urllib.request import urlopen
 
 root=Path(__file__).resolve().parents[1]
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--collection',default='workflow-lab')
+validation_args=parser.parse_args()
 info=json.load(urlopen('http://127.0.0.1:8188/object_info',timeout=30))
 presets=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 errors=[];missing=[];count=0
 for preset in presets:
-    if preset.get('collection')!='workflow-lab':continue
+    if preset.get('collection')!=validation_args.collection:continue
     count+=1
     graph=json.loads((root/preset['graph']).read_text(encoding='utf-8'))
     for key,node in graph.items():

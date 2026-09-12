@@ -1,0 +1,11 @@
+# Time of day.
+dawn
+early morning
+midday
+late afternoon
+golden hour
+dusk
+blue hour
+night
+deep night under stars
+moonlit midnight

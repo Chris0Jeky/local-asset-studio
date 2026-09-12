@@ -4,5 +4,7 @@
   "python": "C:/AI/ComfyUI_windows_portable/python_embeded/python.exe",
   "comfy_launcher": "C:/AI/Start-ComfyUI.ps1",
   "blender": "C:/AI/blender-4.5.13-windows-x64/blender.exe",
+  "krita": "C:/Program Files/Krita (x64)/bin/krita.exe",
+  "godot": "C:/AI/asset-tools/godot/Godot_v4.7.2-stable_win64.exe",
   "asset_python": "C:/AI/asset-tools/venv/Scripts/python.exe"
 }

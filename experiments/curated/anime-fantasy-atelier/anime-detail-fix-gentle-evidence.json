@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "date": "2026-09-12",
+  "preset_id": "anime-detail-fix",
+  "variant": "Gentle (denoise 0.3)",
+  "job_id": "e4e49006-fb1b-419c-8045-fe54d1ddeb12",
+  "prompt_ids": [
+    "a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea"
+  ],
+  "backend": "primary",
+  "elapsed_seconds": 42.28045201301575,
+  "seed": 2026091201,
+  "input": {
+    "filename": "atelier-noob-hands.jpg",
+    "sha256": "183256b4b8f51a083d7ed29da59c7e3001209e965b862320410caf6d4cbe0793",
+    "dimensions": [
+      832,
+      1216
+    ]
+  },
+  "output": {
+    "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\anime-detail-fix_00002_.png",
+    "sha256": "6d1b00413297acfe0f0a67e402ed1dc357246aceefc513f8e2c540e62fd618e8",
+    "dimensions": [
+      832,
+      1216
+    ],
+    "asset_id": "73c9ccde2b05568f89ce69d8fa84ae45"
+  },
+  "graph_sha256": "ba34ad9aa80e42e5321e2e42f78329cc383080c9a1cf42f15131dcd3034226a9",
+  "inspection": {
+    "reviewer": "assistant",
+    "observed": "Face and eye are sharper. The malformed raised hand still visibly carries an extra digit; denoise 0.3 did not meet the hand-repair objective. Composition and pale-hair/gold-ring subject remain recognizable.",
+    "scope": "Full input and output images opened; not a human preference or a quantitative quality score.",
+    "target_defect_fixed": false
+  },
+  "execution": "completed",
+  "human_art_acceptance": "not_requested_or_inferred",
+  "rights": "No new clearance; WAI provenance/terms and original NoobAI restrictions remain as recorded.",
+  "memory_peak_bytes": null,
+  "timing_note": "Observed Studio elapsed time; loading/cache state not controlled. Earlier authored pass uses 0.4 face / 0.45 hand, so this is one observed variant, not an equal-compute benchmark."
+}

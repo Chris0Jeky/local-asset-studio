@@ -1,0 +1,4 @@
+interface:
+  display_name: "Studio Preset Slice"
+  short_description: "Add or change a Studio preset or workflow graph"
+  default_prompt: "Use $studio-preset-slice for this task and follow its workflow and guardrails."

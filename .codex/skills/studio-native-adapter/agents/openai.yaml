@@ -1,0 +1,4 @@
+interface:
+  display_name: "Studio Native Adapter"
+  short_description: "Krita, Blender or Godot export path work"
+  default_prompt: "Use $studio-native-adapter for this task and follow its workflow and guardrails."

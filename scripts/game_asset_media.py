@@ -16,6 +16,7 @@ from game_asset_pipeline import read_json, require, inside, integer, text, slug,
 
 MAX_PIXELS = 16 * 1024 * 1024
 MAX_FILE = 64 * 1024 * 1024
+ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
 
 def pil():
@@ -115,6 +116,15 @@ def png_bytes(im):
     buf = io.BytesIO(); im.save(buf, format='PNG'); return buf.getvalue()
 
 
+def zip_entry(archive, name, data, compress_type=zipfile.ZIP_DEFLATED):
+    """Write fixed ZIP metadata so identical layer inputs reproduce byte-for-byte."""
+    info = zipfile.ZipInfo(name, date_time=ZIP_EPOCH)
+    info.compress_type = compress_type
+    info.create_system = 3
+    info.external_attr = 0o600 << 16
+    archive.writestr(info, data)
+
+
 def ora(manifest, root, output):
     Image = pil(); dims = size(manifest.get('canvas'))
     require(manifest.get('schema_version') == 1, 'Expected layer schema 1')
@@ -140,11 +150,11 @@ def ora(manifest, root, output):
                       'composite-op':'svg:src-over'})
     thumb = merged.copy(); thumb.thumbnail((256,256), Image.Resampling.LANCZOS)
     with zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_DEFLATED) as out:
-        out.writestr('mimetype', b'image/openraster', compress_type=zipfile.ZIP_STORED)
-        out.writestr('stack.xml', ET.tostring(doc, encoding='utf-8', xml_declaration=True))
-        for i, (_, im) in enumerate(prepared): out.writestr(f'data/layer{i:03d}.png', png_bytes(im))
-        out.writestr('mergedimage.png', png_bytes(merged))
-        out.writestr('Thumbnails/thumbnail.png', png_bytes(thumb))
+        zip_entry(out, 'mimetype', b'image/openraster', zipfile.ZIP_STORED)
+        zip_entry(out, 'stack.xml', ET.tostring(doc, encoding='utf-8', xml_declaration=True))
+        for i, (_, im) in enumerate(prepared): zip_entry(out, f'data/layer{i:03d}.png', png_bytes(im))
+        zip_entry(out, 'mergedimage.png', png_bytes(merged))
+        zip_entry(out, 'Thumbnails/thumbnail.png', png_bytes(thumb))
     return {'output':str(output),'sha256':file_sha(output),'layers':len(prepared),
             'format':'OpenRaster flat normal RGBA layers','krita_live_import_tested':False,
             'not_preserved':['animation','rig','groups','masks','non-normal blend modes','ICC profiles']}
