@@ -10,9 +10,9 @@ the same environment variable, so no key is typed into its panel). ComfyUI PID i
 
 **Installed with SHA-256 receipts** (`.runtime/downloads/receipts.json`, pinned in `models/library.json`): the Krea 2
 koukouya adapter (HUMAN_TODO q-1 closed), Anima adapters xilmo, huashijw, koukouya, NEWANIMASTYLE, and the official
-Anima turbo LoRA. **Still downloading at closeout** (civitai and Hugging Face both throttled to well under 1 MB/s from
-this network): `anima-ke-ta_style_v1`, `anima-kieed_v9_step6000` (LyCORIS) and the 4 GB `anima-base-v1.0` checkpoint.
-They are pinned from the civitai listing with a `status` note; the Studio reports them as missing until the files land.
+Anima turbo LoRA. ke-ta and kieed (LyCORIS) landed later in the pass with verified receipts. **Still downloading at closeout** (civitai and
+Hugging Face both throttled to well under 1 MB/s from this network): the 4 GB `anima-base-v1.0` checkpoint, pinned from
+the civitai listing with a `status` note; the Studio reports it as missing until the file lands.
 Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `anima-base-retry-2026-09-12.log`.
 
 **Executed and inspected** (`experiments/curated/anime-fantasy-atelier/`, JPEG copies in `examples/anime-fantasy-atelier/`):

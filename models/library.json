@@ -1019,8 +1019,7 @@
       "strength": [
         0.25,
         0.5
-      ],
-      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+      ]
     },
     {
       "id": "anima-base-v1-0",
