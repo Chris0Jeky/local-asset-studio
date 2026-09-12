@@ -555,7 +555,7 @@
       },
       "batch_count": 1,
       "status": "unverified",
-      "notes": "A new original, clothed adult fantasy character; not a reconstruction of an unseen artwork. This is the complete verified WAI/Illustrious lane from the screenshot transcription: WAI v17 plus Noirpopwave at 1.0. It must not load Anima or Anima LoRAs.",
+      "notes": "A new original, clothed adult fantasy character; not a reconstruction of an unseen artwork. This is the compatible WAI/Illustrious lane from the screenshot transcription: WAI v17 plus Noirpopwave at 1.0. File hashes are verified; this combination has not yet been rendered. It must not load Anima or Anima LoRAs.",
       "sources": [
         "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
         "https://civitai.com/models/827184?modelVersionId=2883731",
