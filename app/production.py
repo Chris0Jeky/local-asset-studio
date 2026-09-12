@@ -294,6 +294,10 @@ class Production:
         directory=self.root/identifier;directory.mkdir();self.studio._write_json_atomic(directory/'plan.json',plan)
         return self.get(identifier)
 
+    def voice_baseline(self, payload):
+        from voice_baseline import prepare
+        return prepare(self,payload)
+
     def _run_articulated(self, identifier, plan):
         if self._get(identifier)['state'].get('stop_requested'):
             self._mutate(identifier,status='stopped',message='Stopped before Blender execution');return
@@ -393,6 +397,7 @@ class Production:
         return self.get(identifier)
 
     def resume(self, identifier):
+        if self._get(identifier)['plan']['kind']=='voice':raise ValueError('Inspect retained voice files and prepare a new take; voice inference is never automatically repeated')
         if self._get(identifier)['plan']['kind']=='av':raise ValueError('Inspect the previous scene attempt and explicitly request a new render')
         with self.studio.lock, self.lock:
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
@@ -415,6 +420,9 @@ class Production:
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='av':return self.av.run(identifier)
+        if plan['kind']=='voice':
+            from voice_baseline import run
+            return run(self,identifier,plan)
         if plan['kind']=='native':return self._run_native(identifier,plan)
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
         self.studio.check_production_bundle(plan['bundle'])
@@ -499,4 +507,7 @@ class Production:
         if not path.is_relative_to(base) or not path.is_file():raise ValueError('Artifact unavailable')
         allowed={a['path'] for a in project['state'].get('artifacts',[])}|{'plan.json','comparison.json'}
         if relative not in allowed:raise ValueError('This file is not a published experiment artifact')
+        if project['plan']['kind']=='voice' and relative!='plan.json':
+            artifact=next((a for a in project['state'].get('artifacts',[]) if a['path']==relative),None)
+            if not artifact or self._file_hash(path)!=artifact['sha256']:raise ValueError('Voice artifact changed')
         return path
