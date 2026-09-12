@@ -3284,7 +3284,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/anima-artist-stack-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "CircleStone Labs Non-Commercial model weights; each stacked artist-style LoRA carries its own civitai terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -3451,7 +3451,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran twice as direct ComfyUI probes (.runtime/probes/anima-stack-aesthetic11-{4,6}adapters.json, 35 s and 25 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0; the second probe carried all six adapters including the kieed LyCORIS file with no key warnings. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look is not.",
+      "execution_note": "Executed 2026-09-12 on Anima base v1.0 through Studio jobs 8a593206 (authored six-adapter stack, 24.3 s at 832x1216), 8eb5bc19 (Artist tags, no adapters, 20.1 s) and 6ae066d8 (Reference stack 1328x1776, 66.4 s); all three images inspected (experiments/curated/anime-fantasy-atelier). Earlier the same day the graph ran as ComfyUI probes on anima-aesthetic-v1.1 while the base checkpoint downloaded. Not an art approval; the adapters carry their own civitai terms.",
       "dimension_limits": [
         64,
         1856

@@ -682,6 +682,141 @@
    "artifact": "examples/anime-fantasy-atelier/anima-stack-aesthetic11-6adapters.jpg",
    "recipe": "anima-stack-aesthetic11-6adapters-recipe.json",
    "inspection": "All six adapters including the kieed LyCORIS file loaded without key warnings in the ComfyUI log. Crisper, more illustrative linework than the four-adapter probe: clean face and orange eyes, layered cloak trim, lanterns and tower intact, sky lanterns; no anatomy errors. Base v1.0 look still unproven."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": "8a593206-22b5-4951-bb63-80cc0538885b",
+   "prompt_ids": [
+    "9b2f2fff-b486-430c-ae19-3e75993759b8"
+   ],
+   "status": "completed",
+   "seconds": 24.3,
+   "controls": {},
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/anima-artist-stack_00001_.png",
+    "sha256": "e146b83d0002e8de1f03cf69f7aca7353763e827f2ad4d13f8fdb8aab13fb419",
+    "bytes": 1423357,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-artist-stack-authored.jpg",
+   "recipe": "anima-artist-stack-authored-recipe.json",
+   "inspection": "Silver-haired witch under drifting sky lanterns on a stone balcony at dusk: clean face and orange eyes, crisp layered cloak with gold trim, lanterns and tower legible, no anatomy errors; the six-adapter mix reads as polished illustrative anime with sketch-like edges. First execution of the preset exactly as authored."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": "8eb5bc19-782c-42d0-87d1-2f7cedd73187",
+   "prompt_ids": [
+    "26f7ee38-67a0-49ba-bb03-fafa4913ddb9"
+   ],
+   "status": "completed",
+   "seconds": 20.1,
+   "controls": {
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "positive": "@synswt, @koukouya, @kyano \\(kyanora3141\\), 1girl, solo, a young traveller in a straw hat and a patched linen dress standing in tall grass under a lone tree, holding her hat against the wind, birds taking flight, looking up, cowboy shot, outdoors, painterly, impasto, brush stroke, textured brushwork, high contrast, vivid, film grain, depth of field, detailed foreground, dim lighting, sunny",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, pink theme, cropped, out of frame",
+    "cfg": 3,
+    "sampler": "dpmpp_2m_sde_gpu",
+    "scheduler": "simple"
+   },
+   "submitted_lora_chain": [],
+   "original": {
+    "path": "Studio/anima-artist-stack_00002_.png",
+    "sha256": "972e23fae129102ad608a3fb57eca9e1e9cd1fea9ca78e079290c0c3e863d447",
+    "bytes": 1395526,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-artist-tags-no-adapters.jpg",
+   "recipe": "anima-artist-tags-no-adapters-recipe.json",
+   "inspection": "A girl in a straw hat holding it against the wind in tall sunlit grass under a blue sky with birds, one tree: the painterly, film-grain deitychaser look arrives from the base model alone with no adapter; hands and face clean; a small hallucinated signature glyph sits in the bottom-right corner, typical of artist-tag prompts."
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anima-artist-stack",
+   "variant": null,
+   "job_id": "6ae066d8-2faa-4856-b1ed-c9e169c22c40",
+   "prompt_ids": [
+    "efdabf38-d27a-4e01-89ab-1e8fead5a7b1"
+   ],
+   "status": "completed",
+   "seconds": 66.4,
+   "controls": {
+    "width": 1328,
+    "height": 1776,
+    "seed": 975436216244440
+   },
+   "submitted_lora_chain": [
+    [
+     "anima-xilmo-000020.safetensors",
+     0.7
+    ],
+    [
+     "anima-huashijw_v2_step10000.safetensors",
+     0.6
+    ],
+    [
+     "anima-koukouya_v2_step2500.safetensors",
+     0.3
+    ],
+    [
+     "anima-ke-ta_style_v1.safetensors",
+     0.7
+    ],
+    [
+     "anima-newanimastyle-v1.safetensors",
+     1.0
+    ],
+    [
+     "anima-kieed_v9_step6000.safetensors",
+     0.5
+    ]
+   ],
+   "original": {
+    "path": "Studio/anima-artist-stack_00003_.png",
+    "sha256": "fa430a21912070074b7a689d0054733050f05a6cdaf7a86c9d6c1b1119bade89",
+    "bytes": 3043269,
+    "width": 1328,
+    "height": 1776
+   },
+   "artifact": "examples/anime-fantasy-atelier/anima-reference-stack-1328x1776.jpg",
+   "recipe": "anima-reference-stack-1328x1776-recipe.json",
+   "inspection": "The strongest Anima result: witch on a lantern-lit balcony with a purple dusk, sky lanterns, detailed cloak lacing and gold trim, expressive eyes, wind in the hair; no anatomy errors at the full reference size; a faint hallucinated signature mark in the bottom-right corner, as in the artist-tag run. 66 s, so this size is cheap on Anima."
   }
  ]
 }

@@ -21,8 +21,9 @@ in spirit under "Recorded owner decisions" below and in `docs/ANIME-FANTASY-ATEL
 decide here; the follow-up work (a correction pass for hands, faces and small details) is tracked in
 `CURRENT_STATE.md`.
 
-**q-3 — Anima artist-stack baselines (human-only; subjective).** Look at the `anima-artist-stack` outputs recorded
-in `experiments/curated/anime-fantasy-atelier/` and say which of the two looks to pursue: the six-adapter
+**q-3 — Anima artist-stack baselines (human-only; subjective).** Three outputs now exist on Anima base v1.0
+(`anima-artist-stack-authored`, `anima-artist-tags-no-adapters`, `anima-reference-stack-1328x1776` in
+`examples/anime-fantasy-atelier/`). Say which of the two looks to pursue: the six-adapter
 reference stack (civitai image 139608451) or the adapter-free painterly artist tags (`@synswt, @koukouya, @kyano`,
 images 131843207–131843406). Execution is not art approval, and the six adapters' civitai terms are recorded,
 not cleared.

@@ -155,6 +155,10 @@ The compact Qwen encoder reads sentences and tags alike; artist tags take an `@`
 | Resolution | 832×1216, 1024×1024, 1248×1824, 1328×1776 (16-pixel grid) |
 | Negative | `worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia` |
 
+Executed 12 September 2026 on base v1.0: the authored six-adapter stack (24 s at 832×1216), the adapter-free artist-tag
+variant (20 s) and the 1328×1776 reference (66 s), all clean; both artist-driven looks tend to hallucinate a small
+signature glyph in a corner, so crop or repaint it with `anime-detail-fix`'s reference workflow when it matters.
+
 ### SDXL anime families
 
 | Family | Prompt grammar | Negative | Sampler / scheduler | Steps | CFG | Resolution |

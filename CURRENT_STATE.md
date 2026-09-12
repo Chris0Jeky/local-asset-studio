@@ -22,6 +22,7 @@ Background download logs: `.runtime/downloads/civitai-retry2-2026-09-12.log`, `a
 | `anime-detail-fix` on the NoobAI portrait with the six-finger hand (job `14caa4fb`) | 36.2 s; hand repainted to five clean digits, eye opened and sharpened; only the two crops changed |
 | `krea-refine` on the style-lab fox shrine (job `21e4a629`) | 233.2 s; fox faces are fox faces again, composition kept; the third fox merged into the pair at denoise 0.35 |
 | `anima-artist-stack` graph as ComfyUI probes on anima-aesthetic-v1.1: four adapters, then all six (kieed is LyCORIS) | 35.0 s and 25.0 s; clean witch portraits, no LoRA key warnings; proves the six-slot chain, the LyCORIS load and the loader path, not the base v1.0 look |
+| `anima-artist-stack` on Anima base v1.0 as authored, the artist-tag variant and the 1328×1776 reference variant (jobs `8a593206`, `8eb5bc19`, `6ae066d8`) | 24.3 s, 20.1 s, 66.4 s; all clean, no anatomy errors; the artist-tag runs hallucinate a small signature glyph bottom-right |
 
 **Contract change.** `CONTROL_KEYS` and `LORA_SLOTS` now run to six slots (`lora5`, `lora6` and their `_name` twins) in
 the server, planner, validator and UI; the six-slot rows were confirmed in the running UI's DOM (Slot 1–6).
@@ -32,7 +33,7 @@ variants for the 1328×1776 reference, the adapter-free artist-tag look, the tur
 repaint), `krea-refine` (Qwen-VAE img2img polish with the 4-step distill LoRA). Recipes: the six-adapter reference,
 the painterly artist tags, the dark sci-fi comic warrior (Krea 2, no adapter), and the target stack now names koukouya.
 
-**NOT verified.** `anima-artist-stack` as authored (base v1.0); the 1328×1776
+**NOT verified.** `anima-artist-stack`'s turbo and half-strength variants; the 1328×1776
 reference variant; the three new recipes; the `anime-detail-fix` and `krea-refine` variants other than the authored
 defaults; the Civitai node pack's own sign-in and downloads (only import and node registration were checked); the
 Manager UI beyond its version endpoint; the Krea 2 Q5 GGUF (partial download left in place).

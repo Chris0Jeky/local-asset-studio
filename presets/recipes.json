@@ -482,8 +482,8 @@
         "lora6": 0.5
       },
       "batch_count": 1,
-      "status": "unverified",
-      "evidence": "",
+      "status": "executed",
+      "evidence": "Studio job 6ae066d8-2faa-4856-b1ed-c9e169c22c40 (Reference stack 1328x1776 variant, identical controls), 66.4 s on 2026-09-12; experiments/curated/anime-fantasy-atelier/anima-reference-stack-1328x1776-recipe.json",
       "notes": "Civitai image 139608451 carried no text prompt, only the six adapter tags at these strengths (xilmo 0.7, huashijw 0.6, koukouya 0.3, ke-ta 0.7, NEWANIMASTYLE 1.0, kieed 0.5) with Anima base v1.0, Euler a, simple, 30 steps, cfg 4, seed 975436216244440. The subject here is an original character; the triggers @40u40uya, @hu45h11w and @k144d are the adapters' own.",
       "sources": [
         "https://civitai.com/images/139608451"
@@ -514,11 +514,11 @@
         "steps": 30,
         "width": 832,
         "height": 1216,
-        "seed": 1430179099
+        "seed": 975436216244440
       },
       "batch_count": 1,
-      "status": "unverified",
-      "evidence": "",
+      "status": "executed",
+      "evidence": "Studio job 8eb5bc19-782c-42d0-87d1-2f7cedd73187 (Artist tags, no adapters variant, identical controls), 20.1 s on 2026-09-12; experiments/curated/anime-fantasy-atelier/anima-artist-tags-no-adapters-recipe.json",
       "notes": "The look of civitai images 131843207 / 131843332 / 131843377 / 131843406 (deitychaser): Anima base v1.0 alone, artist tags @synswt, @koukouya, @kyano \\(kyanora3141\\) at the start, cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps, 832x1216, negative with score_1-3 and \"pink theme\". Every adapter slot is at 0 and pruned. Subject rewritten as an original character.",
       "sources": [
         "https://civitai.com/images/131843406",
