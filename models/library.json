@@ -1261,7 +1261,7 @@
       "sha256": "32f7f838e0c6d8f13437ba8411e77a4688d77a2e34df8857e4ef4d51f6b97692",
       "license": "openrail",
       "family": "Fooocus inpaint",
-      "terms": "Licence \"openrail\" declared in the lllyasviel/fooocus_inpaint repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for fooocus_inpaint_head.pth at revision 74bbcc070e55 (checked 2026-09-12); a hash match proves the bytes, not the creator. The repository card declares \"openrail\"; upstream Fooocus itself is AGPL-3.0. Only the head is installed here, not any inpaint_v*.fooocus.patch weight. .pth: pinned for presence and verification only, never installed automatically.",
+      "terms": "Licence \"openrail\" declared in the lllyasviel/fooocus_inpaint repository card, read from the Hugging Face API on 2026-09-12. SHA-256 of the installed file matches the Hugging Face LFS oid for fooocus_inpaint_head.pth at revision 74bbcc070e55 (checked 2026-09-12); a hash match proves the bytes, not the creator. The repository card declares \"openrail\"; upstream Fooocus itself is AGPL-3.0. The matching inpaint_v26.fooocus.patch (1,323,362,033 bytes, LFS oid f8657a025104, evidence in PR #100) is installed beside this head but its .patch suffix is outside the pinned suffix set, so it has no entry here. .pth: pinned for presence and verification only, never installed automatically.",
       "trigger": ""
     },
     {

@@ -4,10 +4,12 @@
 
 No weights are stored in Git. They remain in the configured ComfyUI `models` directory. This registry does not install a fresh machine automatically.
 
-`library.json` now pins **every** model file installed under the ComfyUI `models` tree: the 22
-Workflow Lab assets, the 30 anime/fantasy adapters below, and the 45 previously unpinned files
-listed in [Everything else installed](#everything-else-installed-45), each with its exact filename,
-destination folder, source URL, size, SHA-256, model family and terms.
+`library.json` now pins **every file with a pinned suffix** (`.safetensors`, `.gguf`, `.pth`, `.pt`,
+`.onnx`) installed under the ComfyUI `models` tree: the 22 Workflow Lab assets, the 30 anime/fantasy
+adapters below, and the 45 previously unpinned files listed in
+[Everything else installed](#everything-else-installed-45), each with its exact filename, destination
+folder, source URL, size, SHA-256, model family and terms. Weights with any other suffix are outside
+that set and are not pinned; see the note at the end of that section.
 The first 22 were installed and checksum-verified on 11 September 2026. Use Studio's
 **Models & folders** for presence, verification receipts, available storage and
 explicit install/resume actions. The older manifest describes the original set;
@@ -25,7 +27,8 @@ Other installed options: SDXL base, FLUX Klein 4B FP8, RealVisXL V5 FP16, Animag
 
 On 12 September 2026 every file under the ComfyUI `models` tree with a `.safetensors`, `.gguf`,
 `.pth`, `.pt` or `.onnx` suffix was enumerated and SHA-256 hashed from the installed bytes, then
-compared with `library.json`. Forty-five were unpinned; all forty-five are pinned below. Sizes and
+compared with `library.json`. One hundred and seven files matched that suffix set; forty-five were
+unpinned, and all forty-five are pinned below. Sizes and
 hashes come from the installed files, not from a card. Where a receipt, `installed-manifest.json`
 or `anime-detailing-install.json` already recorded a hash, it agreed — **no mismatches**. Thirty-seven
 also match the Hugging Face LFS oid at the exact pinned revision; a hash match proves the bytes came
@@ -102,6 +105,14 @@ Two further licence facts are recorded, not cleared: `Laxhar/noobai-XL-1.1` decl
 License 1.0-SD (no commercial products, hobby and research only), and `Acly/MAT` is `cc-by-nc-4.0`
 (non-commercial only). `lllyasviel/fooocus_inpaint` declares `openrail` in its repository card even
 though upstream Fooocus itself is AGPL-3.0; both facts are in that entry's `terms`.
+
+Two installed files fall outside the pinned suffix set and therefore have no entry, by design:
+
+- **`inpaint/inpaint_v26.fooocus.patch`** (1,323,362,033 bytes, `lllyasviel/fooocus_inpaint`, LFS oid
+  `f8657a025104`, evidence in PR #100) — the patch weight the pinned `fooocus_inpaint_head.pth` pairs
+  with. `.patch` is not a suffix `SUFFIXES` recognises, so neither the pin nor the inventory list it.
+- **`diffusion_models/krea2_turbo-Q5_K_M.gguf.part`** (2.96 GB) — the abandoned Krea 2 Q5 transfer.
+  A `.part` file is by definition unfinished; it stays for inspection and is never pinned.
 
 The CCIP identity model (`model_feat.onnx`, `deepghs/ccip_onnx`, licence `openrail`) downloaded the
 same evening lives at `C:\AI\asset-tools\ccip\`, outside the ComfyUI model tree. It is a critic

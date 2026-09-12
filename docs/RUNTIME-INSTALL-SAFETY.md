@@ -149,7 +149,17 @@ mtime/ctime observations. Old or changed receipts become
 `explicit-reverification-required`; **they do not trigger a download or rehash on
 page load**. Explicit Install verifies an existing matching file without network.
 These metadata checks are a cheap freshness cache, not an immutable store or a
-new hash on every inventory read. Deliberately forged metadata, coarse filesystem
+new hash on every inventory read.
+
+`/api/library` reports one more `verification` state and two extra fields per asset:
+
+- `pin-only-manual-verification` — the file is present but the installer will never
+  touch it, so no receipt can ever mark it verified. Re-hash it outside Studio.
+- `installable` (bool) and `install_note` (string or null) — false with a reason when
+  the pin is not a `.safetensors` weight, or when it has no curated source URL and its
+  file is missing. Both refusals happen before any lease, receipt or `.part` exists, so
+  a blocked pin leaves no download state behind. An unsourced pin whose file *is*
+  present stays installable: explicit Install verifies it in place without network. Deliberately forged metadata, coarse filesystem
 timestamps and unsupported filesystem identity semantics remain limitations.
 
 A failure to write an error receipt must not mask the original exception or leave
