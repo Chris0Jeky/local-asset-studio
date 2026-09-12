@@ -25,7 +25,7 @@ soft lighting, simple background
 
 Costume variations: `halter top, long skirt, gold jewelry`; `swimsuit, beach, sun hat`; `cropped jacket, high-waisted shorts, boots`; or `off-shoulder dress, embroidered fabric`. Replace the costume rather than appending mutually contradictory outfits. The token `1girl` is an anime subject-count convention; specify an adult subject separately.
 
-For WAI, the preset adds `masterpiece, best quality`. For Animagine, it uses the author's quality suffix: `masterpiece, high score, great score, absurdres`. These are learned style/quality cues, not resolution controls or anatomical guarantees. Pony uses a different score-tag vocabulary; copying its tags into every other model is not a universal improvement.
+For WAI, the preset now ends with the author's own tail `masterpiece, best quality, amazing quality` and uses the short WAI negative. For Animagine, it uses the author's quality suffix: `masterpiece, high score, great score, absurdres`. These are learned style/quality cues, not resolution controls or anatomical guarantees. Pony uses a different score-tag vocabulary; copying its tags into every other model is not a universal improvement.
 
 A restrained negative prompt is already supplied. `bad hands`, extra-digit and malformed-eye terms are weak preferences, not an anatomical validator. Avoid long copied lists of contradictory terms and heavily weighted tags until you know what each changes.
 
@@ -37,11 +37,11 @@ A restrained negative prompt is already supplied. `bad hands`, extra-digit and m
 | Resolution | 832 x 1216 portrait; 1024 square | Allocates pixels and changes composition. Very small faces/hands have little detail budget. Generating directly at 2048 can introduce duplication and anatomy problems; use a second pass instead. |
 | Steps | WAI 30; Animagine 28 | More denoising iterations, usually more time. Beyond a sensible range, benefits diminish; 80 steps will not reliably repair a malformed skeleton. |
 | CFG | 5; compare 4, 5, 6 | Higher values push conditioning harder, sometimes increasing contrast, harsh contours, or artifacts. Lower values can soften the look but lose prompt details. It is not a quality percentage. |
-| Sampler / scheduler | Euler ancestral / normal for the portraits | Changes the numerical denoising path and noise schedule. Alternatives can change texture and composition. These controls are on the ComfyUI KSampler node, not the simple Studio form. |
+| Sampler / scheduler | Euler ancestral / normal for the portraits | Changes the numerical denoising path and noise schedule. Alternatives can change texture and composition. Since the atelier update these are Studio form controls with a per-family allow-list (`choices` in the catalog). |
 | Denoise for a new image | **1.0** | Start from noise. Lowering it on an empty latent is not the same as improving an existing image. |
 | Denoise for refinement | **0.22**, explore 0.15–0.30 | Lower preserves more; higher redraws more and can change face, costume, or identity. Upscaling first provides a larger canvas, not new true detail by itself. |
 | Denoise for masked repair | **0.40**, explore 0.25–0.55 | Lower makes subtle corrections; higher can reconstruct structure but depart from the original. These are starting ranges, not measured optima. |
-| LoRA strength | None initially | Higher strength gives a stronger learned concept/style, potentially distorting anatomy or overpowering the checkpoint. Add one architecture-compatible LoRA at a time. |
+| LoRA strength | Two slots per SDXL anime preset, both authored at 0 (a 0-strength slot is pruned from the submitted graph) | Higher strength gives a stronger learned concept/style, potentially distorting anatomy or overpowering the checkpoint. Add one architecture-compatible LoRA at a time. |
 | Batch | 1–4 in Studio | Produces separate candidates serially, with incremented seeds. It does not increase one image's quality. |
 
 Do not add SDXL's generic refiner, a V-prediction switch, CLIP-skip hacks, or multiple detail LoRAs simply because an unrelated workflow used them. They change the model's expected processing. The new graphs load the checkpoint's own CLIP and VAE through **CheckpointLoaderSimple**.

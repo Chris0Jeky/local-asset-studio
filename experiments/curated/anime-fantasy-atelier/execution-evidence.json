@@ -1,0 +1,243 @@
+{
+ "date": "2026-09-12",
+ "runtime": "ComfyUI 0.35.0 (restarted once after a HIP OOM wedged its prompt worker); Windows ROCm 7.2.1; RX 9070 XT 16GB; Studio at the atelier integration branch",
+ "observations": [
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-4step",
+   "prompt_id": "af39c7de-8bad-47d5-a9ba-8e3333ef8573",
+   "status": "failed",
+   "seconds": null,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NIJISIS, The painting style is highly textured, with thick,",
+   "failure": "HIP out of memory in Krea2 rms_norm (12.61 GiB allocated, 1.90 GiB free) at 768x1152; ComfyUI's prompt_worker thread then died on a secondary ModuleNotFoundError (torch._subclasses.schema_check_mode) while formatting the error, leaving the queue wedged. ComfyUI restarted afterwards; this prompt produced no output."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-nijisis-baseline",
+   "prompt_id": "09dadd6e-3e60-4c37-80d1-9244bb8e848d",
+   "status": "success",
+   "seconds": 986.58,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "NIJISIS_KREA_2_krea2_3274861_epoch_8.safetensors",
+     1.0
+    ]
+   ],
+   "positive_prefix": "The painting style is highly textured, with thick, brush-lik",
+   "original": {
+    "path": "Studio/probes/witch-nijisis-baseline_00001_.png",
+    "sha256": "c51fd1c0a7d3e4dd45163433613a8bd9784b121f66bc88c593cd0d422ccc1083",
+    "bytes": 1731777,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-nijisis-baseline.jpg"
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-stack",
+   "prompt_id": "412b3c9f-162b-434b-a2a6-e57635f82da1",
+   "status": "success",
+   "seconds": 941.15,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-stack_00001_.png",
+    "sha256": "5c255dc16b4b6b2fa978a879a0800b599340ad41a5ccc43f41f6f7c3e6b56566",
+    "bytes": 1699829,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-stack.jpg"
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "witch-target-stack-4step",
+   "prompt_id": "d7bd3104-f348-46e6-811e-3b1d918c75c3",
+   "status": "success",
+   "seconds": 270.94,
+   "settings": {
+    "width": 768,
+    "height": 1152,
+    "seed": 281715418,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple"
+   },
+   "loras": [
+    [
+     "Krea2_TextFusion_Refusal_Reduction.safetensors",
+     1.0
+    ],
+    [
+     "Niji_Sweet_Spot_Krea2_v2A.safetensors",
+     1.0
+    ],
+    [
+     "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+     0.85
+    ]
+   ],
+   "positive_prefix": "@NJSW33T, The painting style is highly textured, with thick,",
+   "original": {
+    "path": "Studio/probes/witch-target-stack-4step_00001_.png",
+    "sha256": "0c7185a87f155ff386b7543632fd3953ba923a2a5b710953fb7dd0ae754c491d",
+    "bytes": 1757402,
+    "width": 768,
+    "height": 1152
+   },
+   "artifact": "examples/anime-fantasy-atelier/witch-target-stack-4step.jpg"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "wai",
+   "variant": "Fantasy portrait",
+   "job_id": "b69ec018-c789-44f3-94d8-971854c0226e",
+   "prompt_ids": [
+    "30c916fd-7202-4dc6-a7eb-a9585e709a14"
+   ],
+   "status": "completed",
+   "seconds": 26.191957473754883,
+   "controls": {
+    "positive": "1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, dutch angle, depth of field, fantasy, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/WAI-Illustration_00012_.png",
+    "sha256": "76ca9f7d1ce6836edf13a0c84de545c6dd30edd74adc4b6c41e6457c4a063049",
+    "bytes": 1455612,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/wai-fantasy-portrait.jpg",
+   "recipe": "wai-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "noob",
+   "variant": "Fantasy portrait",
+   "job_id": "c24fd256-4c28-441d-ac2d-344ba9bc47c5",
+   "prompt_ids": [
+    "2e5227fe-96be-4edb-9c51-976bfbc1f7a8"
+   ],
+   "status": "completed",
+   "seconds": 28.165553331375122,
+   "controls": {
+    "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy",
+    "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/noob_00004_.png",
+    "sha256": "5b859bcd5b7a88fcecaaaca5d7320b964334d8b23306e5256b4eb1cbac281f9c",
+    "bytes": 1163746,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/noob-fantasy-portrait.jpg",
+   "recipe": "noob-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "anime",
+   "variant": "Fantasy portrait",
+   "job_id": "d14cb0b0-87b0-4c92-9795-74c61a7f8f13",
+   "prompt_ids": [
+    "69f4a967-bffa-40ac-b276-1b4d9d80d16e"
+   ],
+   "status": "completed",
+   "seconds": 30.195152044296265,
+   "controls": {
+    "positive": "1girl, original, safe, solo, adult woman, elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, upper body, depth of field, fantasy, masterpiece, high score, great score, absurdres",
+    "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Expansion/Animagine_00004_.png",
+    "sha256": "e169667015b8114cc3270cacd3f0d7becedb963e68d0a2b40ef63b39e2b20c5c",
+    "bytes": 1584970,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/anime-fantasy-portrait.jpg",
+   "recipe": "anime-fantasy-recipe.json"
+  },
+  {
+   "kind": "studio-job",
+   "preset_id": "pony",
+   "variant": "Fantasy portrait",
+   "job_id": "3103565f-5bfa-4ed7-a2ab-dcf28097a994",
+   "prompt_ids": [
+    "187c77f9-5f91-439f-b196-2b24c6d7c917"
+   ],
+   "status": "completed",
+   "seconds": 30.173527479171753,
+   "controls": {
+    "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult elven sorceress, long white hair, pointy ears, ornate robe, magic circle, floating particles, rim lighting, backlighting, cowboy shot, depth of field, fantasy",
+    "negative": "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark",
+    "width": 832,
+    "height": 1216
+   },
+   "original": {
+    "path": "Studio/pony_00002_.png",
+    "sha256": "470dc97282968c707d9a80dc40819d765a80b4f85e13963ecad7f3f8f75f39bb",
+    "bytes": 1807293,
+    "width": 832,
+    "height": 1216
+   },
+   "artifact": "examples/anime-fantasy-atelier/pony-fantasy-portrait.jpg",
+   "recipe": "pony-fantasy-recipe.json"
+  }
+ ]
+}

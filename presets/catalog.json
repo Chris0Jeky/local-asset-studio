@@ -584,7 +584,7 @@
       "category": "Characters",
       "graph": "workflows/api/wai-api.json",
       "visual": "workflows/comfyui/18 - WAI v17 Illustration.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved.",
       "positive": [
         "2",
@@ -713,7 +713,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
+      "execution_note": "Executed 2026-09-12 through Studio job b69ec018-c789-44f3-94d8-971854c0226e (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "wai-pose",
@@ -767,7 +767,7 @@
       "category": "Characters",
       "graph": "workflows/api/anime-api.json",
       "visual": "workflows/comfyui/07 - Animagine XL Anime.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -896,7 +896,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
+      "execution_note": "Executed 2026-09-12 through Studio job d14cb0b0-87b0-4c92-9795-74c61a7f8f13 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "pose",
@@ -950,7 +950,7 @@
       "category": "Characters",
       "graph": "workflows/api/pony-api.json",
       "visual": "workflows/comfyui/15 - Pony Stylized Characters.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -1079,7 +1079,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
+      "execution_note": "Executed 2026-09-12 through Studio job 3103565f-5bfa-4ed7-a2ab-dcf28097a994 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "noob",
@@ -1087,7 +1087,7 @@
       "category": "Experimental",
       "graph": "workflows/api/noob-api.json",
       "visual": "workflows/comfyui/14 - NoobAI Hobby Illustration.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Author terms prohibit commercialization including generated products.",
       "positive": [
         "2",
@@ -1216,7 +1216,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Graph re-authored 2026-09-12 (prompt grammar, LoRA slots, sampler bindings); the earlier successful run no longer describes it, so no execution is claimed."
+      "execution_note": "Executed 2026-09-12 through Studio job c24fd256-4c28-441d-ac2d-344ba9bc47c5 (variant 'Fantasy portrait', ~30 s at 832x1216) with both LoRA slots at 0 (pruned); image inspected; not an art approval or all-settings guarantee."
     },
     {
       "id": "zimage",
