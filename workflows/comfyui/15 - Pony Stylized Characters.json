@@ -1,6 +1,6 @@
 {
-  "last_node_id": 7,
-  "last_link_id": 9,
+  "last_node_id": 10,
+  "last_link_id": 14,
   "nodes": [
     {
       "id": 1,
@@ -22,15 +22,14 @@
           "name": "MODEL",
           "type": "MODEL",
           "links": [
-            3
+            10
           ]
         },
         {
           "name": "CLIP",
           "type": "CLIP",
           "links": [
-            1,
-            2
+            11
           ]
         },
         {
@@ -82,7 +81,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "score_9, score_8_up, score_7_up, source_cartoon, solo, adult fox adventurer, full body, standing, green travelling cloak, brown boots, holding a lantern, simple white background, expressive face, clean silhouette"
+        "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, solo, adult fox adventurer, anthro, full body, standing, green travelling cloak, brown boots, holding a lantern, simple background, white background, expressive face, clean silhouette"
       ]
     },
     {
@@ -119,7 +118,7 @@
         "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "blurry, low quality, distorted, watermark, text, duplicated objects, cropped"
+        "score_4, score_5, score_6, worst quality, low quality, blurry, text, watermark"
       ]
     },
     {
@@ -207,7 +206,7 @@
         2026091103,
         "fixed",
         30,
-        6,
+        6.0,
         "euler_ancestral",
         "normal",
         1.0
@@ -287,28 +286,171 @@
       "widgets_values": [
         "Studio/pony"
       ]
+    },
+    {
+      "id": 8,
+      "type": "LoraLoader",
+      "pos": [
+        1080,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 10
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoader"
+      },
+      "widgets_values": [
+        "cinematic lighting.safetensors",
+        0,
+        0
+      ],
+      "title": "Style LoRA slot 1 (off at strength 0)"
+    },
+    {
+      "id": 9,
+      "type": "LoraLoader",
+      "pos": [
+        1440,
+        340
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 12
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoraLoader"
+      },
+      "widgets_values": [
+        "manga-ink-screentone.safetensors",
+        0,
+        0
+      ],
+      "title": "Style LoRA slot 2 (off at strength 0)"
+    },
+    {
+      "id": 10,
+      "type": "CLIPSetLastLayer",
+      "pos": [
+        1440,
+        0
+      ],
+      "size": [
+        340,
+        260
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1,
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPSetLastLayer"
+      },
+      "widgets_values": [
+        -2
+      ],
+      "title": "Clip skip 2 (Pony V6)"
     }
   ],
   "links": [
     [
       1,
-      1,
-      1,
+      10,
+      0,
       2,
       0,
       "CLIP"
     ],
     [
       2,
-      1,
-      1,
+      10,
+      0,
       3,
       0,
       "CLIP"
     ],
     [
       3,
-      1,
+      9,
       0,
       5,
       0,
@@ -361,6 +503,46 @@
       7,
       0,
       "IMAGE"
+    ],
+    [
+      10,
+      1,
+      0,
+      8,
+      0,
+      "MODEL"
+    ],
+    [
+      11,
+      1,
+      1,
+      8,
+      1,
+      "CLIP"
+    ],
+    [
+      12,
+      8,
+      0,
+      9,
+      0,
+      "MODEL"
+    ],
+    [
+      13,
+      8,
+      1,
+      9,
+      1,
+      "CLIP"
+    ],
+    [
+      14,
+      9,
+      1,
+      10,
+      0,
+      "CLIP"
     ]
   ],
   "groups": [],
