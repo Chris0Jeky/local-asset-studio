@@ -111,7 +111,7 @@ Every model transfer now owns its redirect handler. The initial URL must be an
 HTTPS/443 URL without user-info on `huggingface.co`, `civitai.com` or
 `civitai.red`; every redirect is checked before its target is opened, stays in
 the same provider family and the chain stops after five hops. Each accepted host
-must resolve only to globally routable addresses. A cross-host hop retains only
+must resolve only to globally routable, non-multicast addresses. A cross-host hop retains only
 `User-Agent`, identity encoding and `Range`, so credentials, cookies, custom Host
 values and future caller-specific headers cannot travel to a storage host.
 
