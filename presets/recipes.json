@@ -77,7 +77,8 @@
         "https://civitai.com/models/2775340",
         "https://civitai.com/models/2844656"
       ],
-      "status": "unverified"
+      "status": "executed",
+      "evidence": "Studio job 7d589f47-7172-44fb-9541-4ab0602eafce, prompt a63ca7e1-c87a-4288-bcd9-959ff93d1827, 827.6 s at 832x1248 on 2026-09-12; experiments/curated/anime-fantasy-atelier/krea-target-stack-koukouya-recipe.json"
     },
     {
       "id": "krea-oil-fantasy",

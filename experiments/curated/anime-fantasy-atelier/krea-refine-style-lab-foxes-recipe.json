@@ -1,25 +1,11 @@
 {
  "version": 2,
- "preset_id": "krea-anime-atelier",
+ "preset_id": "krea-refine",
  "controls": {
-  "positive": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration",
-  "steps": 15,
-  "cfg": 1,
-  "sampler": "euler_ancestral",
-  "scheduler": "simple",
-  "width": 832,
-  "height": 1248,
-  "seed": 20260912,
-  "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
-  "lora": 1.0,
-  "lora2_name": "Niji_Sweet_Spot_Krea2_v2A.safetensors",
-  "lora2": 1.0,
-  "lora3": 1.0,
-  "lora4": 0,
-  "lora3_name": "krea2_koukouya_style_c1-st3000.safetensors"
+  "positive": "two red foxes with fluffy tails sitting together on a snowy hill under a starry night sky, soft moonlight, detailed fur, expressive fox faces, painterly anime illustration"
  },
  "batch_count": 1,
- "created_at": 1789184213.764567,
+ "created_at": 1789185112.0986276,
  "workflow": {
   "1": {
    "class_type": "UNETLoader",
@@ -49,7 +35,7 @@
      "2",
      0
     ],
-    "text": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration"
+    "text": "two red foxes with fluffy tails sitting together on a snowy hill under a starry night sky, soft moonlight, detailed fur, expressive fox faces, painterly anime illustration"
    }
   },
   "5": {
@@ -62,11 +48,9 @@
    }
   },
   "6": {
-   "class_type": "EmptyLatentImage",
+   "class_type": "LoadImage",
    "inputs": {
-    "width": 832,
-    "height": 1248,
-    "batch_size": 1
+    "image": "atelier-style-lab-foxes.jpg"
    }
   },
   "7": {
@@ -85,15 +69,15 @@
      0
     ],
     "latent_image": [
-     "6",
+     "16",
      0
     ],
-    "seed": 20260912,
-    "steps": 15,
+    "seed": 281715418,
+    "steps": 4,
     "cfg": 1.0,
-    "sampler_name": "euler_ancestral",
+    "sampler_name": "euler",
     "scheduler": "simple",
-    "denoise": 1.0
+    "denoise": 0.35
    }
   },
   "8": {
@@ -116,7 +100,7 @@
      "8",
      0
     ],
-    "filename_prefix": "Studio/krea-anime-atelier"
+    "filename_prefix": "Studio/krea-refine"
    }
   },
   "10": {
@@ -148,16 +132,29 @@
      "11",
      0
     ],
-    "lora_name": "krea2_koukouya_style_c1-st3000.safetensors",
-    "strength_model": 1.0
+    "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+    "strength_model": 0.85
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "6",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
    }
   }
  },
  "submissions": [
   {
    "index": 0,
-   "prompt_id": "a63ca7e1-c87a-4288-bcd9-959ff93d1827",
-   "seed": 20260912,
+   "prompt_id": "2e0583fa-46da-45ff-a4ca-490ed29f5716",
+   "seed": 281715418,
    "graph": {
     "1": {
      "class_type": "UNETLoader",
@@ -187,7 +184,7 @@
        "2",
        0
       ],
-      "text": "@NJSW33T, cowboy shot, a young witch standing at the edge of an overgrown meadow at golden hour, warm backlighting through tall grass, wide-brimmed hat pushed back, long indigo hair lifted by the wind, patched green travelling cloak over a dark dress, calm half-smile, one hand resting on a wooden staff, a small black cat winding around her boots, emerald and gold palette, thick painterly brushwork, anime illustration"
+      "text": "two red foxes with fluffy tails sitting together on a snowy hill under a starry night sky, soft moonlight, detailed fur, expressive fox faces, painterly anime illustration"
      }
     },
     "5": {
@@ -200,11 +197,9 @@
      }
     },
     "6": {
-     "class_type": "EmptyLatentImage",
+     "class_type": "LoadImage",
      "inputs": {
-      "width": 832,
-      "height": 1248,
-      "batch_size": 1
+      "image": "atelier-style-lab-foxes.jpg"
      }
     },
     "7": {
@@ -223,15 +218,15 @@
        0
       ],
       "latent_image": [
-       "6",
+       "16",
        0
       ],
-      "seed": 20260912,
-      "steps": 15,
+      "seed": 281715418,
+      "steps": 4,
       "cfg": 1.0,
-      "sampler_name": "euler_ancestral",
+      "sampler_name": "euler",
       "scheduler": "simple",
-      "denoise": 1.0
+      "denoise": 0.35
      }
     },
     "8": {
@@ -254,7 +249,7 @@
        "8",
        0
       ],
-      "filename_prefix": "Studio/krea-anime-atelier"
+      "filename_prefix": "Studio/krea-refine"
      }
     },
     "10": {
@@ -286,8 +281,21 @@
        "11",
        0
       ],
-      "lora_name": "krea2_koukouya_style_c1-st3000.safetensors",
-      "strength_model": 1.0
+      "lora_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+      "strength_model": 0.85
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "6",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
      }
     }
    },
@@ -296,13 +304,13 @@
  ],
  "outputs": [
   {
-   "filename": "krea-anime-atelier_00002_.png",
+   "filename": "krea-refine_00001_.png",
    "subfolder": "Studio",
    "type": "output",
-   "seed": 20260912,
-   "prompt_id": "a63ca7e1-c87a-4288-bcd9-959ff93d1827",
+   "seed": 281715418,
+   "prompt_id": "2e0583fa-46da-45ff-a4ca-490ed29f5716",
    "media_type": "image",
-   "asset_id": "4b8ebed71f0a5b9fba58000ca7d1bad9"
+   "asset_id": "d576b9eb7f3c5553a1124cd7888ce570"
   }
  ],
  "parent_assets": [],

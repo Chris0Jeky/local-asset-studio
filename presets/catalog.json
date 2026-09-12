@@ -1616,7 +1616,7 @@
       "category": "Anime quality",
       "collection": "workflow-lab",
       "graph": "workflows/api/anime-detail-fix-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Repaints crops with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
       "positive": [
         "2",
@@ -1732,7 +1732,8 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job 14caa4fb-5999-497f-8b73-0bb2562229df (prompt 3eeba334-6161-4f84-bd36-de0c888c0d74) on the authored example image in 36.2 s; both detector passes fired and the output was inspected (evidence in experiments/curated/anime-fantasy-atelier). Not an art approval."
     },
     {
       "id": "anime-esrgan",
@@ -3443,7 +3444,8 @@
           "name": "3-seed audition",
           "batch_count": 3
         }
-      ]
+      ],
+      "execution_note": "Not yet executed as authored: on 2026-09-12 the graph ran as a direct ComfyUI probe (prompt in .runtime/probes/anima-stack-aesthetic11-4adapters.json, 35 s at 832x1216) with anima-aesthetic-v1.1 substituted for the still-downloading base v1.0 and the ke-ta/kieed slots removed. The six-slot chain, the triggers and the Anima loader path are proven; the base v1.0 look and the LyCORIS file are not."
     },
     {
       "id": "wan22-t2v",
@@ -4368,7 +4370,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job db02f6b1-8346-4361-a432-7734fc72d2c2 (variant '4-step audition': TextFusion 1.0 + Niji Sweet Spot 1.0 + 4-step LoRA 0.85, NIJISIS slot pruned at 0; 197 s at 768x1152); image inspected. The 15-step target settings were proven by direct ComfyUI probes (941 s), not through this preset. Not an art approval."
+      "execution_note": "Executed 2026-09-12 through Studio job db02f6b1-8346-4361-a432-7734fc72d2c2 (variant '4-step audition': TextFusion 1.0 + Niji Sweet Spot 1.0 + 4-step LoRA 0.85, NIJISIS slot pruned at 0; 197 s at 768x1152); image inspected. The 15-step target settings were proven by direct ComfyUI probes (941 s), not through this preset. Not an art approval. Full target stack (TextFusion + Niji Sweet Spot + koukouya, 15 steps, 832x1248) executed 2026-09-12 as job 7d589f47-7172-44fb-9541-4ab0602eafce in 827.6 s and inspected."
     },
     {
       "id": "krea-style-lab",
@@ -4531,7 +4533,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-refine-api.json",
-      "verified": false,
+      "verified": true,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -4648,7 +4650,8 @@
             "denoise": 0.4
           }
         }
-      ]
+      ],
+      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval."
     }
   ]
 }

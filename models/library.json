@@ -986,6 +986,60 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "anima-ke-ta-style-v1",
+      "name": "画风 ke-ta style 【anima】 / v1.0",
+      "file": "loras/anima-ke-ta_style_v1.safetensors",
+      "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
+      "url": "https://civitai.com/api/download/models/3221815",
+      "bytes": 109091912,
+      "sha256": "52107d036a03158f1722942f1a6ea56def7699d4d00c63c629cf91774a7ba21b",
+      "family": "Anima",
+      "license": "",
+      "terms": "civitai listing for model 2852885 version 3221815: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "trigger": "",
+      "strength": [
+        0.35,
+        0.7
+      ],
+      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+    },
+    {
+      "id": "anima-kieed-v9-step6000",
+      "name": "[Anima & SDXL] Artist Style: kieed / v1.0-anima-base1",
+      "file": "loras/anima-kieed_v9_step6000.safetensors",
+      "source": "https://civitai.com/models/2012383?modelVersionId=2972811",
+      "url": "https://civitai.com/api/download/models/2972811",
+      "bytes": 46006024,
+      "sha256": "682af9283b6378b2c4f2b748948b860827247732eb12036227b1e04f15d9be97",
+      "family": "Anima",
+      "license": "",
+      "terms": "civitai listing for model 2012383 version 2972811: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "trigger": "@k144d",
+      "strength": [
+        0.25,
+        0.5
+      ],
+      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
+    },
+    {
+      "id": "anima-base-v1-0",
+      "name": "Anima / base-v1.0",
+      "file": "diffusion_models/anima-base-v1.0.safetensors",
+      "source": "https://civitai.com/models/2458426?modelVersionId=2945208",
+      "url": "https://civitai.com/api/download/models/2945208",
+      "bytes": 4182218328,
+      "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
+      "family": "Anima",
+      "license": "",
+      "terms": "civitai listing for model 2458426 version 2945208: allowCommercialUse none listed; derivatives NOT allowed; different licence NOT allowed. Base model 'Anima'. Read the model page before any commercial use.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "status": "pinned from the civitai listing on 2026-09-12; the download was still in progress at closeout (network throttled to well under 1 MB/s), so verify the receipt in .runtime/downloads/receipts.json before relying on it"
     }
   ],
   "collections": [

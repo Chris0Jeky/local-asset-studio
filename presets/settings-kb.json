@@ -1776,7 +1776,10 @@
         "the third adapter in the owner's target image 142028671, installed 2026-09-12 with the owner's civitai API key",
         "author settings: 1280x1856 or 1536x1536, weight 1.0, er_sde with simple, 8-10 steps"
       ],
-      "bytes": 234680576
+      "bytes": 234680576,
+      "observed": [
+        "Studio job 7d589f47 (2026-09-12): stacked at 1.0 after TextFusion 1.0 and Niji Sweet Spot 1.0, 15 steps euler_ancestral/simple at 832x1248, 827.6 s; the painterly koukouya brushwork dominates the result"
+      ]
     },
     "anima-xilmo-000020.safetensors": {
       "family": "Anima",
