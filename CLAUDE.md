@@ -15,7 +15,7 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 864 tests, about a minute, offline; budget a minute, not seconds
+python -m unittest discover -s tests          # 865 tests, about a minute, offline; budget a minute, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
