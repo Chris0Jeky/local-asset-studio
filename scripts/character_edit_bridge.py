@@ -225,12 +225,23 @@ class Bridge:
             im=image_info(raw); require(list(im.size)==self.handoff['size'], 'Candidate size mismatch; no silent resize')
             dest=self.directory/f'candidate-{index}'
             require(not dest.exists() and not dest.is_symlink(), 'Candidate already collected; retain the existing evidence')
-            dest.mkdir(); save_new(dest/'candidate.png',raw)
             receipt={'kind':'character_edit_candidate','handoff_sha256':self.handoff['sha256'], 'project_id':project['id'],
                 'project_sha256':project['plan']['sha256'],'stage_index':index,'job_id':expected_id,'prompt_ids':job.get('prompt_ids',[]),
-                'asset_id':aid,'candidate':artifact(self.root,(dest/'candidate.png').relative_to(self.root).as_posix()),
+                'asset_id':aid,'candidate':{'path':(dest/'candidate.png').relative_to(self.root).as_posix(),'sha256':digest(raw)},
                 'job_recipe':recipe,'review_state':'unreviewed','semantic_approval':False}
-            receipt['sha256']=hashed(receipt); save_new(dest/'receipt.json',receipt)
+            receipt['sha256']=hashed(receipt)
+            require(len(canonical(receipt)) <= JSON_LIMIT, 'Candidate receipt exceeds the JSON byte limit')
+            # Publish a pair, never an image-only final directory. A failed staging
+            # directory is evidence: retain it rather than cleaning up or adopting it.
+            # The existing command lock serializes cooperating bridge writers.
+            staging=Path(tempfile.mkdtemp(prefix=f'.candidate-{index}-', dir=self.directory))
+            save_new(staging/'candidate.png',raw); save_new(staging/'receipt.json',receipt)
+            staged={'path':(staging/'candidate.png').relative_to(self.root).as_posix(),'sha256':receipt['candidate']['sha256']}
+            bytes_of(self.root,staged)
+            require(canonical(read(staging/'receipt.json')) == canonical(receipt), 'Staged candidate receipt changed')
+            self.inputs()  # Downloads/writes may have overlapped a source or mask edit.
+            require(not dest.exists() and not dest.is_symlink(), 'Candidate already collected; retain the existing evidence')
+            os.rename(staging,dest)  # Same parent/filesystem; not os.replace and not a copy.
             return receipt
 
     def compose(self, index, current_document, output):

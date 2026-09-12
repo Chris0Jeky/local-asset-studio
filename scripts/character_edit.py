@@ -145,6 +145,7 @@ def intent(value: dict, doc: dict) -> dict:
             strings(contact['actors'], 'contact participants', 2, 8)
             require(set(contact['actors']) <= changed and len(set(contact['actors'])) == len(contact['actors']), 'Invalid contact participants')
             box(contact['bounds'], doc['canvas']); text(contact['instruction'], 'contact instruction')
+        _contact_coverage(doc['relations'], contacts, changed)
     else: require(layout is None, 'Local operation cannot silently move actors')
     budget = value['budget']; keys(budget, {'owner', 'max_candidates', 'max_repairs'})
     identifier(budget['owner']); integer(budget['max_candidates'], 1, 64, 'candidate cap')
@@ -154,6 +155,29 @@ def intent(value: dict, doc: dict) -> dict:
     require(all(type(pref[k]) is bool for k in ('local_only', 'exclude_known_filters', 'exclude_documented_weight_restrictions')), 'Policy switches must be booleans')
     require(pref['unknown_policy'] in FILTER_PREFERENCES, 'Invalid unknown-policy choice')
     return value
+
+
+def _contact_coverage(relations: list, regions: list, changed: set[str]) -> None:
+    """Joint review regions must cover the declared, undirected contact graph.
+
+    A three-actor region may cover A-B and B-C without inventing A-C. Disconnected
+    groups need separate regions; no actor can hitchhike on somebody else's pair.
+    Relationships involving an unchanged actor remain outside this target scope.
+    """
+    declared = {frozenset((r['from'], r['to'])) for r in relations
+                if r['kind'] == 'contact' and {r['from'], r['to']} <= changed}
+    covered = set()
+    for region in regions:
+        participants = set(region['actors'])
+        edges = {pair for pair in declared if pair <= participants}
+        reached = {next(iter(participants))}
+        while True:
+            expanded = reached | {actor for pair in edges if pair & reached for actor in pair}
+            if expanded == reached: break
+            reached = expanded
+        require(reached == participants, 'A contact region must form a connected group of declared contact relations')
+        covered.update(edges)
+    require(declared <= covered, 'Every declared contact between target actors needs a matching contact region')
 
 
 def route_catalog(value: dict) -> dict:
