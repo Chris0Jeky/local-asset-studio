@@ -1,5 +1,23 @@
 # Current state — 11 September 2026
 
+## Spoken atelier scene and manual repair option - 12 September 2026
+
+The primary Studio explicitly generated “The lantern is ready. Follow the light.” with the isolated
+Kokoro CPU baseline, then assembled it with two retained atelier images. Voice job
+`5e0982574aa450dd8f8538148fdd67af` produced 2.8 seconds of dry audio (3.187 seconds measured model
+load/inference). Scene job `513bd06980514be5930a9aa981caf8cd`, scene
+`f14b08eba5e84375a2c604fd4e3db686` revision 2, produced a 720x1080, 156-frame/6.5-second preview with
+a dialogue offset and dissolve. No ComfyUI prompt was submitted. Both shots were inspected; the square
+shrine source is letterboxed. Browser playback and decoded PCM/frame checks passed. Independent
+offline ASR matched all seven normalized words; no human listening or character acceptance is inferred.
+Exact recipes and observations are in `experiments/curated/atelier-voice/`; raw output stays outside Git.
+
+The existing manual `anime-masked-repair` graph is now catalogued with RGBA-alpha instructions and
+`verified: false`. Upload preservation, binding and live node/file schema checks passed; no masked
+repair generation was submitted. Nonempty-alpha enforcement is a separate #62 follow-up. This does
+not imply a successful Krea hand repair: the earlier unsuccessful Gentle digit trial used the NoobAI
+portrait. `HUMAN_TODO.md` retains the owner's optional creative choices and model-use decisions.
+
 ## Offline CPU voice baseline - 12 September 2026
 
 The Voice baseline page now prepares pinned original-text takes and explicitly queues Kokoro CPU
