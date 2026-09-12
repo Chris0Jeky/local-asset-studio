@@ -68,6 +68,12 @@ python scripts/character_study.py handoff --plan experiments/runs/character-pilo
 
 The brief conforms to the existing game-assets v1 route. The handoff pins the **current** real catalog entry and raw graph and lists reference uploads/roles in order. It supplies positive text and seed proposals only. It deliberately supplies no armed Studio submission payload. Complete actual upload, live nodes/models, resize/crop, batch-size-one and shared-budget preflight before normal Studio Prepare/Generate. Do not POST this handoff as a graph.
 
+The first primary-case import POSTs an object to `/api/production` with `character_plan`,
+`character_handoff`, ordered uploaded `{reference_id,file}` entries, `name` and `max_seconds`.
+It verifies the self-hash, canon approval attestation (not identity authentication), raw catalog/template
+pins, exact approved references and slot roles before creating one ordinary planned comparison. It queues
+nothing; Start remains explicit. Caller controls, batch settings, parents and attempt kinds are rejected.
+
 Twelve attempts belong to the entire study, not each case brief. No extra image-producing warmups, repairs or blind retries are allowed by the pilot. Keep actual prompt IDs. Response loss means reconcile, not submit again. Follow #64/#65 and the existing game-assets agent contract.
 
 ## 6. Record attempts and reviews

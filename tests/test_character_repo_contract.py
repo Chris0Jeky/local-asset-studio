@@ -2,6 +2,7 @@
 from pathlib import Path
 import tempfile
 import unittest
+import copy
 from scripts import character_study as c
 from scripts import game_asset_pipeline as existing
 
@@ -34,6 +35,15 @@ class RepositoryContractTests(unittest.TestCase):
             self.assertFalse(result['submits_generation']); self.assertIsNone(result['submission_payload'])
             self.assertEqual(result['template_sha256'], c.file_sha(ROOT / result['template_path']))
         self.assertEqual(seen, {'qwen-1ref', 'flux-edit'})
+
+    def test_handoff_rechecks_its_hash_current_pins_and_reference_roles(self):
+        case = self.plan['cases'][0]
+        handoff = c.prepare_handoff(self.plan, case['id'], self.workspace, ROOT)
+        observed_case, preset = c.check_handoff(self.plan, handoff, ROOT)
+        self.assertEqual(observed_case['id'], case['id']); self.assertEqual(preset['id'], handoff['preset_id'])
+        for change in (lambda h: h['proposed_controls'].update(seed=0), lambda h: h['upload_requirements'][0].update(role='costume')):
+            altered = copy.deepcopy(handoff); change(altered); altered['handoff_sha256'] = c.sha({k: v for k, v in altered.items() if k != 'handoff_sha256'})
+            with self.assertRaises(ValueError): c.check_handoff(self.plan, altered, ROOT)
 
 
 if __name__ == '__main__': unittest.main()

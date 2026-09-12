@@ -266,15 +266,9 @@ def case_brief(plan: dict, case_id: str) -> dict:
                        'repair_attempts_per_stage': budget['max_repairs_per_case'], 'allow_paid_services': False}}
 
 
-def prepare_handoff(plan: dict, case_id: str, workspace: Path, repo_root: Path) -> dict:
-    """Pin an existing preset/template and list uploads; never return an armed job.
-
-    The Studio must still upload/bind references, inspect live models/nodes,
-    reserve the shared budget and use its ordinary Prepare/Generate path.
-    """
+def _handoff_template(plan: dict, case_id: str, repo_root: Path) -> dict:
+    """Build the only handoff a checked plan and current Studio inputs permit."""
     case = get_case(plan, case_id)
-    report = preflight(plan, workspace)
-    require(report['reference_and_canon_checks_passed'], '; '.join(report['blockers']))
     catalog = read_json(inside(repo_root, 'presets/catalog.json'))
     presets = catalog.get('presets')
     require(isinstance(presets, list), 'Invalid Studio catalog')
@@ -325,6 +319,35 @@ def prepare_handoff(plan: dict, case_id: str, workspace: Path, repo_root: Path) 
                              'Recheck template/catalog/reference hashes; use normal Studio Prepare and explicit Generate.']}
     result['handoff_sha256'] = sha(result)
     return result
+
+
+def prepare_handoff(plan: dict, case_id: str, workspace: Path, repo_root: Path) -> dict:
+    """Pin an existing preset/template and list uploads; never return an armed job.
+
+    The Studio must still upload/bind references, inspect live models/nodes,
+    reserve the shared budget and use its ordinary Prepare/Generate path.
+    """
+    report = preflight(plan, workspace)
+    require(report['reference_and_canon_checks_passed'], '; '.join(report['blockers']))
+    return _handoff_template(plan, case_id, repo_root)
+
+
+def check_handoff(plan: dict, handoff: dict, repo_root: Path) -> tuple[dict, dict]:
+    """Require the complete canonical handoff, rather than trusting a caller hash."""
+    check_plan(plan)
+    keys(handoff, {'schema_version', 'kind', 'plan_sha256', 'case_id', 'preset_id', 'catalog_entry_sha256',
+                   'template_path', 'template_sha256', 'proposed_controls', 'control_bindings',
+                   'upload_requirements', 'reference_policy', 'submits_generation', 'submission_payload',
+                   'unresolved', 'handoff_sha256'})
+    require(handoff['schema_version'] == 1 and handoff['kind'] == 'character_study_handoff', 'Not a character study handoff')
+    require(handoff['handoff_sha256'] == sha({k: v for k, v in handoff.items() if k != 'handoff_sha256'}), 'Handoff changed')
+    require(plan['canon']['approval']['state'] == 'approved', 'Canon approval attestation is required; it is not authentication')
+    expected = _handoff_template(plan, handoff['case_id'], repo_root)
+    require(handoff == expected, 'Handoff differs from the approved plan or current Studio preset')
+    case = get_case(plan, handoff['case_id'])
+    catalog = read_json(inside(repo_root, 'presets/catalog.json'))
+    preset = next(p for p in catalog['presets'] if p['id'] == case['preset_id'])
+    return case, preset
 
 
 def _measurement(value: Any, label: str) -> None:

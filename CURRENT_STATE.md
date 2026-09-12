@@ -1,5 +1,22 @@
 # Current state — 11 September 2026
 
+## Character primary-case import - 12 September 2026
+
+An explicit character plan/handoff/upload request can now prepare one primary case through the existing
+Production service. Import reconstructs the canonical handoff against current raw catalog/template
+bytes, checks approved reference roles and both Studio/Comfy input copies, and stores the case, canon,
+handoff and resolved recipe evidence. Separate cases share the study allowance; each remains batch one.
+Import queues nothing, and duplicate primary imports are refused. Canon approval is a local attestation,
+not reviewer authentication or generated-art acceptance.
+
+Inert direct integration checks proved zero-work import, shared budget, concurrent Start reservations,
+restart persistence, duplicate refusal and preflight rollback. Rehashed prompt/binding drift, non-image
+routes and changed Comfy input bytes were rejected before project/budget writes. The full suite ran 598
+tests: 588 passed and 10 skipped; repository validation passed. One independent review plus its scoped
+fix verification found no remaining Critical/High defect. This is the first import seam in #65;
+repairs, warmups, review promotion, dependency invalidation and live import execution remain unverified.
+The existing database-commit-before-plan-file-write recovery gap is tracked separately in #65.
+
 ## Character-consistency offline foundation - 12 September 2026
 
 The character study, archive and media commands now have local Windows integration evidence.
@@ -24,17 +41,21 @@ Prepare and Start now use the configured isolated Python to observe declared dis
 metadata only; the plan retains those observed versions and Start rejects either a bundle-manifest or
 Prepare-time drift. This is not a complete-environment hash and imports neither Torch nor a model. Controlled
 voice success, failure and cancellation terminalize attempt 0. The Production API can explicitly resume only
-a demonstrably unstarted interrupted plan; a queued plan remains idempotently queued, and any request,
-attempt, job or voice directory blocks a retry.
+a demonstrably unstarted interrupted plan. Both Voice and Production pages expose Resume only when
+the backend reports eligibility. Queued plans and any durable request, attempt, job, artifact or voice
+directory block resume; no browser action automatically retries inference.
 
 Voice Workspace publication is now marked `published` only after every output is registered. Failed,
 cancelled and still-publishing marked voice jobs retain their exact existing asset descriptors on Studio
 restart and are not newly indexed; legacy unmarked voice jobs keep the historical indexing path. A stop that
 arrives after complete publication is recorded as too late while retaining the published outputs. Inert
-version-drift, terminal-state, resume, publication and restart regressions passed. Remaining #56 work is
-the UI resume treatment, the atomic late-cancellation check-to-commit boundary, and abrupt-process nested
-attempt reconciliation; an abrupt death can still leave the last durable nested attempt state `running` and
-never authorizes inference repetition.
+version-drift, terminal-state, resume, publication and restart regressions passed. Stop and the final
+completion decision now share a lock. Startup reconciles active nested voice attempts to `interrupted`
+while preserving identifiers and evidence, and submits nothing. Full integrated suite: 593 run,
+583 passed and 10 skipped. Voice recovery UI, late-stop and abrupt-attempt follow-ups are implemented;
+real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes, hidden unsafe recovery,
+one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
+warnings or errors. This does not claim human listening or voice acceptance.
 
 ## Scene editor interaction checks - 12 September 2026
 
