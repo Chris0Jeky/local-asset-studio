@@ -12,6 +12,23 @@ later explicit Production Resume authorizes continuation after a terminal
 observation record. This is local synthetic coverage only: no Studio project,
 queue, ComfyUI request, generation, refund, or artistic acceptance occurred.
 
+## Identity-plus-pose probes and runtime instability — 12 September 2026 (evening)
+
+Two direct ComfyUI probes of an SDXL identity-plus-pose route (WAI v17 + `ip-adapter_sdxl_vit-h` on the canon
+front + `xinsir-openpose-sdxl` on a skeleton extracted from the canon back, 704×1536, 30 steps) completed:
+probe A with the `aqua (konosuba)` tag (prompt `550346d1…`, 111.1 s) reproduced the back-view costume closely;
+probe B without the tag (prompt `932c3093…`, 82.1 s) drifted, so the tag did the work and the base adapter at
+weight 0.6 on a centre-cropped torso does not carry an original design. Four follow-up probes never executed:
+ComfyUI died six times this evening with `0xC0000005` inside host-side tensor moves (checkpoint mmap reload,
+`partially_unload`, GGUF `.to()`), once on a FLUX.2 job the other agent submitted; three launch-flag sets
+(`--disable-mmap`, `--cache-classic`, defaults) made no difference and the investigation is parked in #89.
+Two Studio `qwen-2ref` jobs with front+back canon bound (`a2908800` uncertain, `f29937b7` failed on a host
+allocation at 87 % commit under `--reserve-vram 0.6`) confirm #77's host-commit ceiling; per-process
+attribution is on that issue. Seven files were downloaded with SHA-256 receipts (yolov9c hand/face detectors,
+person segmenter, the fal Qwen multiple-angles LoRA, the CCIP identity model, IP-Adapter plus and plus-face).
+Curated record: `experiments/curated/character-identity-pose-probes/`; nothing in it is art acceptance, and
+no HUMAN_TODO item changed.
+
 ## UI handoff follow-ups — 12 September 2026
 
 Gallery Continue now refreshes the exact output identity when it arrived after the current Workspace

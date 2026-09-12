@@ -1,0 +1,380 @@
+{
+ "date": "2026-09-12",
+ "session": "Claude coordinating session, evening",
+ "runtime": "ComfyUI 0.35.0 (six crashes and one clean failure this evening, all recorded in issues #89 and #77; restored each time with C:/AI/Start-ComfyUI.ps1); PyTorch 2.9.1+rocm7.2.1; RX 9070 XT 16 GB; 32 GB RAM with a fixed 40 GB page file; a Codex session, three Claude sessions, Chrome and the ChatGPT app resident",
+ "canon": {
+  "front": {
+   "upload": {
+    "file": "1ec646ae8a7c4fd99731c6534d07aacf_front.png.png",
+    "sha256": "1a6bcaa9a1faf3dcf1aebe199b7d272604beead0a8017104f0057a439d934415",
+    "bytes": 361901,
+    "width": 333,
+    "height": 734,
+    "original_name": "front.png",
+    "local_sha256": "1a6bcaa9a1faf3dcf1aebe199b7d272604beead0a8017104f0057a439d934415"
+   },
+   "source": "C:\\AI\\character-lab\\pilot-20260912\\examples\\standard-extracted\\front.png"
+  },
+  "back": {
+   "upload": {
+    "file": "292733f36e8b4b7bb0a86dcba6f45590_back.png.png",
+    "sha256": "92418200f3954d3f60fa3277dd66da6f9bf6487ad58ead0d7c76c85fcd376a3e",
+    "bytes": 286831,
+    "width": 279,
+    "height": 734,
+    "original_name": "back.png",
+    "local_sha256": "92418200f3954d3f60fa3277dd66da6f9bf6487ad58ead0d7c76c85fcd376a3e"
+   },
+   "source": "C:\\AI\\character-lab\\pilot-20260912\\examples\\standard-extracted\\back.png"
+  },
+  "portrait-calm": {
+   "upload": {
+    "file": "69e1c298fac347588b149dda260a3d88_portrait-calm.png.png",
+    "sha256": "41d41e38318134af2df34da30961dc24abdb6da8c7f085e5d8c77b964244b1ca",
+    "bytes": 181425,
+    "width": 291,
+    "height": 349,
+    "original_name": "portrait-calm.png",
+    "local_sha256": "41d41e38318134af2df34da30961dc24abdb6da8c7f085e5d8c77b964244b1ca"
+   },
+   "source": "C:\\AI\\character-lab\\pilot-20260912\\examples\\standard-extracted\\portrait-calm.png"
+  },
+  "padded_704x1536": {
+   "front": {
+    "file": "85a5138352904bf89b627084c43fb34f_canon-front-padded-704x1536.png.png",
+    "sha256": "ecfb7c3b2164adada0ea2228877734caa77d4e3971663d60d2a37142b9ab5adc",
+    "size": [
+     704,
+     1536
+    ],
+    "bg": [
+     247,
+     245,
+     245
+    ]
+   },
+   "back": {
+    "file": "f863829dd8bd4783a178558615e7d11a_canon-back-padded-704x1536.png.png",
+    "sha256": "8850f2925bb0e9dae0296ba052a70a8f7b4060957b52c8dad54ae18fe220da5e",
+    "size": [
+     704,
+     1536
+    ],
+    "bg": [
+     246,
+     245,
+     246
+    ]
+   }
+  },
+  "source": "C:/AI/character-lab/pilot-20260912/examples/standard-extracted (the approved pilot canon; hashes 1a6bcaa9, 92418200, 41d41e38)"
+ },
+ "boundary": "Probes A and B were direct ComfyUI /prompt submissions, not Studio jobs and not Production attempts; they prove the SDXL identity-plus-pose graph runs and what the base IP-Adapter carries, not art acceptance or licence clearance. WAI v17 knows the Danbooru tag aqua (konosuba), which the supplied canon matches item for item, so probe A carries a familiar-character prior; probe B (no tag) is the generalisable measurement. The four C/D probes never executed (ComfyUI died first).",
+ "downloads_with_receipts": [
+  {
+   "name": "hand_yolov9c",
+   "repo": "Bingsu/adetailer",
+   "path": "hand_yolov9c.pt",
+   "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/hand_yolov9c.pt",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\ultralytics\\bbox\\hand_yolov9c.pt",
+   "bytes": 51633747,
+   "sha256": "6f116f686ef5942fa0c1d08db481b3d7622047a97847eccfb2a264f9ce9777f2",
+   "fetched_at": "2026-09-12T19:52:00Z",
+   "seconds": 49.3,
+   "licence": "apache-2.0 (HF API)",
+   "purpose": "hand detector, mAP50 0.810 vs yolov8n 0.767",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "face_yolov9c",
+   "repo": "Bingsu/adetailer",
+   "path": "face_yolov9c.pt",
+   "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/face_yolov9c.pt",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\ultralytics\\bbox\\face_yolov9c.pt",
+   "bytes": 51648019,
+   "sha256": "d02fe493c31e1bbc6450f4dc6f1db86a02a59322ff1f6d318da0661d72ddd084",
+   "fetched_at": "2026-09-12T19:52:35Z",
+   "seconds": 35.7,
+   "licence": "apache-2.0 (HF API)",
+   "purpose": "face detector",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "person_yolov8m-seg",
+   "repo": "Bingsu/adetailer",
+   "path": "person_yolov8m-seg.pt",
+   "url": "https://huggingface.co/Bingsu/adetailer/resolve/main/person_yolov8m-seg.pt",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\ultralytics\\segm\\person_yolov8m-seg.pt",
+   "bytes": 54827683,
+   "sha256": "c8ab26f517173b1fe8342d336a09f443eb61cb08dcbfc78d53fff4c2547ae81e",
+   "fetched_at": "2026-09-12T19:53:08Z",
+   "seconds": 32.9,
+   "licence": "apache-2.0 (HF API)",
+   "purpose": "person segmentation for subject masks",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "qwen-image-edit-2511-multiple-angles-lora",
+   "repo": "fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA",
+   "path": "qwen-image-edit-2511-multiple-angles-lora.safetensors",
+   "url": "https://huggingface.co/fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA/resolve/main/qwen-image-edit-2511-multiple-angles-lora.safetensors",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\qwen-image-edit-2511-multiple-angles-lora.safetensors",
+   "bytes": 295140688,
+   "sha256": "42426ded4e25fd22879d9e198b857556445ef4ca56e8da3246d0345155bb6765",
+   "fetched_at": "2026-09-12T19:58:45Z",
+   "seconds": 337.2,
+   "licence": "apache-2.0 (HF card)",
+   "purpose": "Route 1 camera vocabulary <sks> [azimuth] [elevation] [distance]; E-A3 ablation",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "model_feat",
+   "repo": "deepghs/ccip_onnx",
+   "path": "ccip-caformer-24-randaug-pruned/model_feat.onnx",
+   "url": "https://huggingface.co/deepghs/ccip_onnx/resolve/main/ccip-caformer-24-randaug-pruned/model_feat.onnx",
+   "destination": "C:\\AI\\asset-tools\\ccip\\ccip-caformer-24-randaug-pruned\\model_feat.onnx",
+   "bytes": 150248245,
+   "sha256": "4ea118d16496274f4f6e08d3afc768cc592389e8f7f32f8732ce2215c228ac5f",
+   "fetched_at": "2026-09-12T19:59:36Z",
+   "seconds": 50.3,
+   "licence": "openrail (HF)",
+   "purpose": "anime character identity metric for the local critic (#66); published threshold ~0.178",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "ip-adapter-plus_sdxl_vit-h",
+   "repo": "h94/IP-Adapter",
+   "path": "sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors",
+   "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\ipadapter\\ip-adapter-plus_sdxl_vit-h.safetensors",
+   "bytes": 847517512,
+   "sha256": "3f5062b8400c94b7159665b21ba5c62acdcd7682262743d7f2aefedef00e6581",
+   "fetched_at": "2026-09-12T20:02:52Z",
+   "seconds": 196.0,
+   "licence": "apache-2.0 (HF)",
+   "purpose": "SDXL identity lane (plus) with the already-installed clip-vision_vit-h",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  },
+  {
+   "name": "ip-adapter-plus-face_sdxl_vit-h",
+   "repo": "h94/IP-Adapter",
+   "path": "sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors",
+   "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors",
+   "destination": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\ipadapter\\ip-adapter-plus-face_sdxl_vit-h.safetensors",
+   "bytes": 847517512,
+   "sha256": "677ad8860204f7d0bfba12d29e6c31ded9beefdf3e4bbd102518357d31a292c1",
+   "fetched_at": "2026-09-12T20:07:44Z",
+   "seconds": 292.4,
+   "licence": "apache-2.0 (HF)",
+   "purpose": "SDXL portrait identity lane (plus-face)",
+   "session": "claude 2026-09-12 research-strategy downloads",
+   "verified_against": "none yet (HF does not publish sha256 for LFS in this receipt; record only)"
+  }
+ ],
+ "observations": [
+  {
+   "kind": "comfyui-probe",
+   "name": "probe-A-tag",
+   "prompt_id": "550346d1-fd75-4f07-9ee0-9e97176e267d",
+   "status": "completed",
+   "seconds": 111.12,
+   "seconds_source": "ComfyUI log \"Prompt executed in\" line",
+   "settings": {
+    "checkpoint": "waiIllustriousSDXL_v170.safetensors",
+    "width": 704,
+    "height": 1536,
+    "seed": 20260912,
+    "steps": 30,
+    "cfg": 5.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "ipadapter": {
+     "file": "ip-adapter_sdxl_vit-h.safetensors",
+     "clip_vision": "clip-vision_vit-h.safetensors",
+     "weight": 0.6,
+     "weight_type": "linear",
+     "end_at": 0.9,
+     "image": "canon front padded to 704x1536; the IPAdapter node centre-cropped it to a square, so only the torso band conditioned the render"
+    },
+    "controlnet": {
+     "file": "xinsir-openpose-sdxl.safetensors",
+     "strength": 0.8,
+     "end_percent": 0.8,
+     "image": "OpenPose skeleton extracted from the canon back crop at the 704x1536 canvas"
+    }
+   },
+   "positive_prefix": "aqua (konosuba), solo, 1girl, full body, standing, from behind, back view, facin",
+   "output_sha256": "c41ab39eb8768f9882f032e7e9ad608ee1762245ac8f37f2f0de65cdfbf4c901",
+   "original_output": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\probe-sdxl-sheet-A-tag_00001_.png",
+   "copy": "examples/character-identity-pose-probes/probe-A-tag.jpg",
+   "copy_sha256": "16dde9b4bcd4f5621f689eb8291306cec6f275880e78d85971677a1abaa0e6f8",
+   "copy_bytes": 114417,
+   "assistant_inspection": "Back view with continuous long hair curtain, hair loop + ornament, gold upper-arm bands on white detached sleeves, navy pleated skirt with gold trim and purple frill, white thigh-highs, navy thigh boots with V-shaped gold tops, flat cel style, pose follows the skeleton. Not art acceptance. Familiar-character prior confound: WAI knows the aqua (konosuba) tag.",
+   "graph_note": "probe-A-tag-graph.json was reconstructed after the fact from the stored probe-B graph plus the recorded variant definition (character tag prepended, distinct filename prefix); the original A graph object was dropped from the session receipt during crash reconciliation. Prompt ID, output hash and timing are original."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "probe-B-notag",
+   "prompt_id": "932c3093-aa2e-4936-acad-e10d07414fcc",
+   "status": "completed",
+   "seconds": 82.067,
+   "seconds_source": "ComfyUI history execution timestamps",
+   "settings": {
+    "checkpoint": "waiIllustriousSDXL_v170.safetensors",
+    "width": 704,
+    "height": 1536,
+    "seed": 20260912,
+    "steps": 30,
+    "cfg": 5.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "ipadapter": {
+     "file": "ip-adapter_sdxl_vit-h.safetensors",
+     "clip_vision": "clip-vision_vit-h.safetensors",
+     "weight": 0.6,
+     "weight_type": "linear",
+     "end_at": 0.9,
+     "image": "canon front padded to 704x1536; the IPAdapter node centre-cropped it to a square, so only the torso band conditioned the render"
+    },
+    "controlnet": {
+     "file": "xinsir-openpose-sdxl.safetensors",
+     "strength": 0.8,
+     "end_percent": 0.8,
+     "image": "OpenPose skeleton extracted from the canon back crop at the 704x1536 canvas"
+    }
+   },
+   "positive_prefix": "solo, 1girl, full body, standing, from behind, back view, facing away, arms at s",
+   "output_sha256": "2c89b9c641453dba97ebd59d8c47a6f08d8e6bc29c4f60de2e2347e3330cf8ac",
+   "original_output": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\probe-sdxl-sheet-B-notag_00001_.png",
+   "copy": "examples/character-identity-pose-probes/probe-B-notag.jpg",
+   "copy_sha256": "0b648f9499f1554249eb70c29e264c5e9c7505d247ba890656c9a0d7b0c89f83",
+   "copy_bytes": 184696,
+   "assistant_inspection": "Design drifted: twin hair loops with yellow beads, a large cyan back bow, corset lacing, yellow knee boots, a different skirt. The base IP-Adapter at weight 0.6 on a centre-cropped torso did not carry the design; the character tag did the work in probe A. Not art acceptance."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "C-notag-pad",
+   "prompt_id": "68355544-288e-44f1-a2bc-28aede0984c4",
+   "status": "failed_not_executed",
+   "seconds": null,
+   "failure": "ComfyUI PID 40412 died with the same 0xC0000005 in torch/storage.py __getitem__ <- load_torch_file <- CheckpointLoaderSimple on the prompt after B (log C:/AI/logs/20260912-201600-error.log). Second reproduction of the reload crash; no output on disk. Not resubmitted under the same runtime flags."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "C2-notag-pad-w0.6",
+   "prompt_id": "4fc41047-263c-4e18-8c17-e3f5e7308f2c",
+   "status": "failed_not_executed",
+   "seconds": null,
+   "failure": "ComfyUI PID 41108 (--disable-mmap) died with 0xC0000005 in torch module.to()/convert <- model_patcher.partially_unload <- free_memory <- load_models_gpu during VAEDecode (log C:/AI/logs/20260912-202719-error.log). Sampling had completed 30 steps at ~1.3 it/s. No output on disk."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "C3-notag-pad-w0.6-classic",
+   "prompt_id": "c773fffd-626b-49c0-aef7-5909846a40fc",
+   "status": "failed_not_executed",
+   "seconds": null,
+   "failure": "ComfyUI PID 9020 (--cache-classic) died with 0xC0000005 on the first prompt after start (log C:/AI/logs/20260912-203031-error.log). No output on disk. Runtime investigation parked after three different flag sets (default, --disable-mmap, --cache-classic)."
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "openpose-preprocessor-probe",
+   "prompt_ids": {
+    "back": "0eb56879-0d2f-414c-9cbb-715130df8794",
+    "front": "d4326a66-7720-4265-b524-317a6ac3fc82"
+   },
+   "status": "completed",
+   "note": "No diffusion; preprocessor only. Inert capability probe for the SDXL pose route.",
+   "annotator_weights_downloaded_on_first_use": {
+    "body_pose_model.pth": {
+     "bytes": 209267595,
+     "sha256": "25a948c16078b0f08e236bda51a385d855ef4c153598947c28c0d47ed94bb746",
+     "source": "https://huggingface.co/lllyasviel/Annotators/resolve/main/body_pose_model.pth"
+    },
+    "facenet.pth": {
+     "bytes": 153718792,
+     "sha256": "8beb52e548624ffcc4aed12af7aee7dcbfaeea420c75609fee999fe7add79d43",
+     "source": "https://huggingface.co/lllyasviel/Annotators/resolve/main/facenet.pth"
+    },
+    "hand_pose_model.pth": {
+     "bytes": 147341049,
+     "sha256": "b76b00d1750901abd07b9f9d8c98cc3385b8fe834a26d4b4f0aad439e75fc600",
+     "source": "https://huggingface.co/lllyasviel/Annotators/resolve/main/hand_pose_model.pth"
+    }
+   }
+  },
+  {
+   "kind": "comfyui-probe",
+   "name": "openpose-canvas-skeletons",
+   "prompt_ids": {
+    "front": "09e7274b-649b-4b75-825a-16bd9531e0a4",
+    "back": "549f47c2-32e0-4923-8aa5-7c1a1b6e7ef7"
+   },
+   "status": "completed",
+   "uploads": {
+    "front": {
+     "file": "8b307492ac494ce1a5a9f3ab9680f599_pose-front-704x1536.png.png",
+     "sha256": "b3c41162a83a93119c9aa0f2551133cf3b7489d66ceb9d82978f84e1dc062fc2",
+     "size": [
+      704,
+      1536
+     ],
+     "prompt_id": "09e7274b-649b-4b75-825a-16bd9531e0a4",
+     "source_output": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\pose-front-704_00001_.png"
+    },
+    "back": {
+     "file": "d1d1ec5eaa7f4a00bc5e51bce7cf4f37_pose-back-704x1536.png.png",
+     "sha256": "bb9e13efb0363d3b2ff4ca41e4e8ef32e630369d8004cf9889e2db4fec2f9d66",
+     "size": [
+      704,
+      1536
+     ],
+     "prompt_id": "549f47c2-32e0-4923-8aa5-7c1a1b6e7ef7",
+     "source_output": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\pose-back-704_00001_.png"
+    }
+   },
+   "skeleton_copy": "examples/character-identity-pose-probes/pose-back-704x1536.png"
+  },
+  {
+   "kind": "studio-job",
+   "job_id": "a2908800-7214-4caa-ad23-3844527cdf5d",
+   "preset_id": "qwen-2ref",
+   "prompt_ids": [
+    "f67b09af-08cb-47b6-aaa7-95a348ac57ab"
+   ],
+   "status": "uncertain",
+   "elapsed_seconds": null,
+   "references": [
+    "identity",
+    "costume"
+   ],
+   "width": 512,
+   "runtime": null,
+   "note": "ComfyUI died with 0xC0000005 while loading QwenImage (GGUF) for this prompt at --reserve-vram 2, commit 60 %, 29 GB headroom. Prompt ID retained by the Studio job; NOT resubmitted. Sixth crash tonight (#89).",
+   "log": "C:/AI/logs/20260912-203908-error.log"
+  },
+  {
+   "kind": "studio-job",
+   "job_id": "f29937b7-478f-4598-b756-661305d18ed9",
+   "preset_id": "qwen-2ref",
+   "prompt_ids": [
+    "0603c5be-0321-4325-ae5f-9a268b94d605"
+   ],
+   "status": "failed",
+   "elapsed_seconds": 46.177194595336914,
+   "references": [
+    "identity",
+    "costume"
+   ],
+   "width": 512,
+   "runtime": "PID 4916, launcher flags with --reserve-vram 0.6 (verified in argv)",
+   "note": "KSampler raised DefaultCPUAllocator: not enough memory (4,377,600 bytes) 46 s after start; host commit rose from 60 % (29 GB headroom) before submission to 87 % (9.2 GB headroom, 5.3 GB physical free) at failure. Same failure class as #77; ComfyUI did not crash. Not resubmitted.",
+   "log": "C:/AI/logs/20260912-205922-error.log"
+  }
+ ]
+}
