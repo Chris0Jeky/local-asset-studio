@@ -63,6 +63,63 @@ class ServerTests(unittest.TestCase):
         with patch.object(server,'urlopen',side_effect=replies) as request: s._run(job)
         return s, job, request
 
+    @staticmethod
+    def _commit_reading(available):
+        return {'available_bytes':available,'limit_bytes':96*1024**3,'committed_bytes':64*1024**3,'unknown_reason':None}
+
+    def _heavy_studio(self, replies=(), explicit=True):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True}))
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['unet_name']='qwen-image-edit-2511-Q4_K_M.gguf'
+        graph['3']={'class_type':'ImageScaleToTotalPixels','inputs':{'megapixels':1.0}}
+        preset=dict(PRESET,**({'host_commit_heavy':True} if explicit else {}))
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}));(self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        return FakeStudio(self.root,replies)
+
+    def test_host_commit_gate_rejects_low_and_unknown_heavy_graphs_before_any_prompt(self):
+        for reading,message in ((self._commit_reading(32*1024**3-1),'below the required 32 GiB'),
+                                ({'available_bytes':None,'limit_bytes':None,'committed_bytes':None,'unknown_reason':'counter unavailable'},'counter unavailable')):
+            with self.subTest(reading=reading),patch.object(server.host_memory,'read',return_value=reading):
+                studio=self._heavy_studio()
+                with self.assertRaisesRegex(server.StudioError,message):studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+                self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+                self.assertFalse(studio.jobs)
+
+    def test_host_commit_exact_threshold_allows_submission_and_records_readings(self):
+        minimum=32*1024**3;studio=self._heavy_studio([{'queue_running':[],'queue_pending':[]},{'prompt_id':'heavy'},{'heavy':{'status':{'status_str':'success'},'outputs':{}}}],explicit=False)
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(minimum),self._commit_reading(minimum)]):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/prompt','/history/heavy'])
+        self.assertEqual([entry['phase'] for entry in job['host_commit_readings']],['prepared','pre-submit'])
+
+    def test_host_commit_drop_after_queue_wait_never_marks_submission_intent(self):
+        minimum=32*1024**3;studio=self._heavy_studio([{'queue_running':[],'queue_pending':[]}])
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(minimum),self._commit_reading(minimum-1)]):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertNotIn('pending_submission',job);self.assertEqual(job['prompt_ids'],[])
+        self.assertIn('No prompt was submitted',job['message']);self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+
+    def test_host_commit_block_between_batch_members_keeps_prior_prompt_as_partial(self):
+        minimum=32*1024**3;studio=self._heavy_studio([{'queue_running':[],'queue_pending':[]},{'prompt_id':'first'},{'first':{'status':{'status_str':'success'},'outputs':{}}}])
+        with patch.object(server.host_memory,'read',side_effect=[self._commit_reading(minimum),self._commit_reading(minimum),self._commit_reading(minimum-1)]):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':2},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['prompt_ids'],['first']);self.assertNotIn('pending_submission',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue','/prompt','/history/first'])
+
+    def test_host_commit_gate_ignores_nonheavy_qwen_encoder_and_observation(self):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True}))
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['clip_name']='qwen_3_4b.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'sdxl'},{'sdxl':{'status':{'status_str':'success'},'outputs':{}}}])
+        with patch.object(server.host_memory,'read',side_effect=AssertionError('non-heavy graph must not read commit memory')):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed')
+        minimum=32*1024**3;heavy=self._heavy_studio([])
+        with patch.object(server.host_memory,'read',return_value=self._commit_reading(minimum)):
+            job=heavy.jobs[heavy.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        job.update(status='uncertain',prompt_ids=['known'],submissions=[{'index':0,'prompt_id':'known','seed':1,'graph':job['graph'],'status':'observing'}]);heavy.replies=iter([{'known':{'status':{'status_str':'success'},'outputs':{}}}])
+        with patch.object(server.host_memory,'read',side_effect=AssertionError('observation must not read commit memory')):heavy._resume(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in heavy.requests if args],['/history/known'])
+
     def test_malformed_prompt_responses_are_uncertain_and_retain_intent(self):
         cases=(
             ('malformed-json',self._http_response(b'{')),
