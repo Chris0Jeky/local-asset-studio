@@ -8,6 +8,7 @@ from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 import json
 from pathlib import Path
+import socket
 import tempfile
 import threading
 from types import MethodType
@@ -35,6 +36,9 @@ class ReviewHTTPTests(unittest.TestCase):
         try:
             options={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**(headers or {})}
             conn.request(method,path,json.dumps(payload) if payload is not None else None,options)
+            # The production guard can reject before reading a request body. Signal that
+            # this client has finished writing before waiting for the early response.
+            if conn.sock is not None:conn.sock.shutdown(socket.SHUT_WR)
             reply=conn.getresponse();return reply.status,reply.read(),dict(reply.headers)
         finally:conn.close()
     def command(self,payload,**kwargs):return self.request('POST',f'/api/production/{self.identifier}/review',payload,**kwargs)
@@ -50,7 +54,7 @@ class ReviewHTTPTests(unittest.TestCase):
     def test_origin_and_host_are_enforced_before_open(self):
         for headers in ({'Origin':'https://evil.invalid'},{'Host':'evil.invalid'},{'Origin':'null'},{'Origin':'http://user@127.0.0.1:8191'}):
             with self.subTest(headers=headers):
-                status,_,_=self.command({'action':'open'},headers=headers);self.assertEqual(status,403)
+                status,_,_=self.request('POST',f'/api/production/{self.identifier}/review',headers=headers);self.assertEqual(status,403)
         self.assertFalse(self.studio.production.reviews.exists(self.identifier))
     def test_stale_revision_is_a_useful_http_error_not_an_overwrite(self):
         _,data,_=self.command({'action':'open'});revision=json.loads(data)['revision']
