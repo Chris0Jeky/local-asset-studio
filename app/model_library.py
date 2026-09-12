@@ -9,9 +9,8 @@ import shutil
 import threading
 import time
 import uuid
-from urllib.parse import urlparse
-from urllib.request import Request, urlopen
-from download_contracts import InstallLease, asset_id as checked_id, file_identity, publish_verified, relative_model_path, validate_pins, validate_response
+from urllib.request import Request
+from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, relative_model_path, validate_pins, validate_response
 
 FOLDERS = {
     "checkpoints": "Complete image models", "diffusion_models": "Diffusion / video / 3D models",
@@ -248,9 +247,7 @@ class ModelLibrary:
 
     def _download(self, asset, target):
         url = asset["url"]
-        parsed = urlparse(url)
-        if parsed.scheme != "https" or parsed.hostname not in ("huggingface.co", "civitai.com", "civitai.red") or parsed.username or parsed.password:
-            raise ValueError("Automatic installation requires a curated HTTPS model source")
+        download_source_provider(url)
         part = self.partial_path(target)
         size = asset["bytes"]
         offset = part.stat().st_size if part.exists() else 0
