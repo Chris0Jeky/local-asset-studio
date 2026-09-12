@@ -1,6 +1,6 @@
 'use strict';
 const $=selector=>document.querySelector(selector),esc=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-let avProjects=[],avId=null,avDocument=null,avDrafts=new Map(),avSelection=null,avPolling=null,avPollBusy=false,avWorkspace=[],avDraftRevision=null,avMutationBusy=false;
+let avProjects=[],avId=null,avDocument=null,avDrafts=new Map(),avSelection=null,avPolling=null,avPollBusy=false,avWorkspace=[],avDraftRevision=null,avMutationBusy=false,avReadEpoch=0,avLoadRequest=0;
 const activeRenderStatuses=new Set(['queued','running','rendering']);
 function avMessage(text,error=false){const el=$('#avStatus');el.textContent=text;el.classList.toggle('error',error);}
 async function avApi(path,options={}){const response=await fetch(path,options);let data={};try{data=await response.json();}catch(_){throw Error('The Studio returned an unreadable response.');}if(!response.ok)throw Error(data.error||'Request failed');return data;}
@@ -13,12 +13,30 @@ function frameRate(doc){const fps=doc?.project?.fps||[24,1];return Number(fps[0]
 function sourceMap(){return new Map((avDocument?.sources||[]).map(source=>[source.key,source]));}
 function draftFor(section,id){const key=section+':'+id;if(!avDrafts.has(key))avDrafts.set(key,{});return avDrafts.get(key);}
 function draftValue(section,clip,field){const draft=avDrafts.get(section+':'+clip.id);return draft&&Object.hasOwn(draft,field)?draft[field]:clip[field];}
-function setDraft(section,id,field,value){if(!avDrafts.size)avDraftRevision=avDocument.revision;draftFor(section,id)[field]=value;}
+function setDraft(section,id,field,value){if(avMutationBusy)return;if(!avDrafts.size)avDraftRevision=avDocument.revision;draftFor(section,id)[field]=value;updateDraftControls();}
 function clearDraft(section,id){avDrafts.delete(section+':'+id);if(!avDrafts.size)avDraftRevision=null;}
 function hasDrafts(){return avDrafts.size>0;}
 function clearDrafts(){avDrafts.clear();avDraftRevision=null;}
-function draftActionDisabled(){return hasDrafts()?' disabled':'';}
+function draftActionDisabled(){return hasDrafts()||avMutationBusy?' disabled':'';}
 function requireSavedDocument(action){if(!hasDrafts())return true;avMessage('Save or discard unsaved clip changes before '+action+'.',true);return false;}
+function draftNotice(){return hasDrafts()?'<p class="av-warning">'+avDrafts.size+' clip '+(avDrafts.size===1?'change is':'changes are')+' unsaved. Save each clip or <button data-discard-drafts>Discard unsaved changes</button> before using document actions.</p>':'';}
+function updateDraftControls(){
+  const notice=$('#avDraftNotice');if(notice)notice.innerHTML=draftNotice();
+  const dirty=hasDrafts(),busy=avMutationBusy,shots=avDocument?.project?.shots||[],index=avSelection?.section==='shots'?shots.findIndex(clip=>clip.id===avSelection.id):-1;
+  for(const button of document.querySelectorAll('#avContent button')){
+    const d=button.dataset;let disabled=busy;
+    if(d.renderAction==='render')disabled||=dirty||!avDocument?.capabilities?.render_ready;
+    else if(d.renderAction==='export'||Object.hasOwn(d,'remove')||Object.hasOwn(d,'restore')||Object.hasOwn(d,'split'))disabled||=dirty;
+    else if(d.add)disabled||=dirty||!sectionSources(d.add).length;
+    else if(d.move)disabled||=dirty||index<0||(Number(d.move)<0?index===0:index===shots.length-1);
+    button.disabled=disabled;
+  }
+  for(const input of document.querySelectorAll('[data-field]'))input.disabled=busy;
+  for(const selector of ['#newScene','#reloadScene','#refreshScenes']){const button=$(selector);if(button)button.disabled=busy||(selector==='#newScene'&&dirty);}
+  for(const button of document.querySelectorAll('[data-project]'))button.disabled=busy||dirty;
+}
+function beginOperation(){if(avMutationBusy)return false;avMutationBusy=true;avReadEpoch++;updateDraftControls();return true;}
+function endOperation(){avMutationBusy=false;updateDraftControls();}
 function integer(raw,label){const n=Number(raw);if(!Number.isSafeInteger(n))throw Error(label+' must be a whole number.');return n;}
 function number(raw,label){const n=Number(raw);if(!Number.isFinite(n))throw Error(label+' must be a number.');return n;}
 function selected(section,id){return avSelection?.section===section&&avSelection?.id===id;}
@@ -38,9 +56,9 @@ function capabilityText(capabilities){if(!capabilities)return '';
   const missing=capabilities.missing_tools||[];return capabilities.render_ready?'Rendering is ready locally.':missing.length?'Render unavailable: '+missing.join(', ')+'.':'Render readiness is unavailable.';
 }
 async function refreshProjects(preferred=null){
-  const data=await avApi('/api/av');avProjects=data.projects||[];$('#avCapabilities').textContent=capabilityText(data.capabilities);
+  const epoch=avReadEpoch,data=await avApi('/api/av');if(epoch!==avReadEpoch)return;avProjects=data.projects||[];$('#avCapabilities').textContent=capabilityText(data.capabilities);
   if(preferred)avId=preferred;if(!avId&&avProjects.length)avId=avProjects[0].id;
-  renderProjects();if(avId&&(!avDocument||avDocument.id!==avId))await loadScene(avId);
+  renderProjects();updateDraftControls();if(avId&&(!avDocument||avDocument.id!==avId))await loadScene(avId);
   else avMessage(avProjects.length?'Scene list refreshed.':'Create a scene from saved Workspace media.');
 }
 function stopPolling(){if(avPolling){clearInterval(avPolling);avPolling=null;}avPollBusy=false;}
@@ -48,26 +66,30 @@ function maintainPolling(){
   const active=activeRenderStatuses.has(avDocument?.render?.status);
   if(!active){stopPolling();return;}
   if(avPolling)return;
-  avPolling=setInterval(async()=>{if(avPollBusy||!avId)return;avPollBusy=true;try{await loadScene(avId,true);}catch(error){avMessage(error.message,true);}finally{avPollBusy=false;}},1000);
+  avPolling=setInterval(async()=>{if(avPollBusy||avMutationBusy||!avId)return;avPollBusy=true;try{await loadScene(avId,true);}catch(error){avMessage(error.message,true);}finally{avPollBusy=false;}},1000);
 }
 async function loadScene(id=avId,poll=false){
-  if(!id)return;const document=await avApi('/api/av/'+encodeURIComponent(id));
-  if(id!==avId)return;
+  if(!id||avMutationBusy)return;if(!poll&&!beginOperation())return;
+  const epoch=avReadEpoch,request=++avLoadRequest;
+  try{const document=await avApi('/api/av/'+encodeURIComponent(id));
+  if(id!==avId||epoch!==avReadEpoch||request!==avLoadRequest)return;
   if(poll){
     if(document.revision!==avDocument.revision)avMessage('A newer server revision is available. Reload to compare; unsaved fields are retained.');
+    else if(document.render&&!$('#avStatus').classList.contains('error'))avMessage(document.render.message||'Render '+document.render.status+'.');
     avDocument.render=document.render;avDocument.status=document.status;updatePolledStatus(document);
     const panel=$('.av-preview');
     if(panel){const video=panel.querySelector('video'),url=video?.getAttribute('src');panel.outerHTML=renderPreview(avDocument);const replacement=$('.av-preview video');if(video&&replacement&&replacement.getAttribute('src')===url)replacement.replaceWith(video);}
   }else{avDocument=document;if(avDrafts.size){avDraftRevision=document.revision;for(const draft of avDrafts.values())delete draft.conflict;}renderDocument();}
-  maintainPolling();
+  maintainPolling();updateDraftControls();
   if(!poll)avMessage('Loaded revision '+document.revision+'.');
+  }catch(error){if(id===avId&&epoch===avReadEpoch&&request===avLoadRequest)throw error;}finally{if(!poll)endOperation();}
 }
 function renderPreview(doc){
   const render=doc.render,ready=doc.capabilities?.render_ready,active=activeRenderStatuses.has(render?.status),previewUrl=sameOriginUrl(render?.preview_url),stale=!!render?.stale;
   const status=render?render.status:'Not rendered';
   const preview=previewUrl?'<video controls preload="metadata" src="'+esc(previewUrl)+'" aria-label="Scene preview"></video>':'<p class="muted">No rendered preview yet.</p>';
   const label=previewUrl?(stale?'Preview from saved revision '+esc(render.preview_revision)+' · older than saved scene':'Preview from saved revision '+esc(render.preview_revision)):'No preview available';
-  const artifacts=(render?.artifacts||[]).map(a=>'<a href="'+esc(sameOriginUrl(a.url))+'?download" download>'+esc(a.role||a.path)+'</a>').join('');
+  const artifacts=(render?.artifacts||[]).map(a=>'<a href="'+esc(sameOriginUrl(a.url))+'?download" download>'+esc((a.path||a.role||'File').split('/').pop())+'</a>').join('');
   return '<section class="panel av-preview"><div class="av-preview-media">'+preview+'</div><div class="av-preview-meta"><div><span class="eyebrow">RENDER</span><h3><span class="av-status-dot '+(active?'active':'')+'"></span> '+esc(status)+'</h3><p>'+esc(render?.message||'Rendering never starts automatically.')+'</p></div><p class="'+(stale?'av-warning':'muted')+'">'+label+'</p>'+(Number.isFinite(render?.progress)?'<p>Progress '+Math.round(render.progress)+'%</p>':'')+'<div class="av-document-actions">'+(active?'<button data-render-action="cancel">Cancel this render</button>':'<button class="primary" data-render-action="render" '+(!ready||hasDrafts()?'disabled':'')+'>Render scene</button>')+'<button data-render-action="export"'+draftActionDisabled()+'>Export companion ZIP</button></div><div class="av-render-artifacts">'+artifacts+'</div></div></section>';
 }
 function sectionSources(section){const sources=avDocument?.sources||[];return sources.filter(source=>section==='audio'?source.kind==='audio':section==='overlays'?source.kind==='image':['image','video'].includes(source.kind));}
@@ -95,24 +117,36 @@ function renderHistory(){return '<details class="av-history"><summary>Revision h
 function renderDocument(){
   if(!avDocument){$('#avEmpty').hidden=false;$('#avContent').hidden=true;return;}$('#avEmpty').hidden=true;$('#avContent').hidden=false;
   const doc=avDocument,conflicts=[...avDrafts.values()].some(draft=>draft.conflict),render=doc.render;
-  const unsaved=hasDrafts()?'<p class="av-warning">'+avDrafts.size+' clip '+(avDrafts.size===1?'change is':'changes are')+' unsaved. Preview and document actions use saved revision '+doc.revision+'. Save each clip or <button data-discard-drafts>Discard unsaved changes</button>.</p>':'';
+  const unsaved='<div id="avDraftNotice">'+draftNotice()+'</div>',video=$('.av-preview video'),videoUrl=video?.getAttribute('src');
   $('#avContent').innerHTML='<section class="panel"><div class="av-document-head"><div><span class="eyebrow">SCENE</span><h2>'+esc(doc.name)+'</h2><p id="avDocumentStatus" class="av-revision">Revision '+doc.revision+' · '+esc(doc.status||'saved')+'</p></div><div class="av-document-actions"><button id="documentReload">Reload server revision</button></div></div>'+unsaved+(conflicts?'<p class="av-warning">The server changed this scene. Your unsaved fields are still retained here. Reload to compare, then save the fields you want to keep.</p>':'')+'</section>'+renderPreview(doc)+renderTimeline()+'<section class="av-sections">'+renderSection('shots','Shots · cuts and dissolves')+renderSection('audio','Audio · trim, gain and fades')+renderSection('overlays','Static overlays')+'</section>'+renderSources()+renderHistory();
+  const replacement=$('.av-preview video');if(video&&replacement&&replacement.getAttribute('src')===videoUrl)replacement.replaceWith(video);updateDraftControls();
 }
 function clipBy(section,id){return (avDocument?.project?.[section]||[]).find(clip=>clip.id===id);}
 function collectChanges(section,id){const clip=clipBy(section,id),fields=[...document.querySelectorAll('[data-section="'+CSS.escape(section)+'"][data-clip="'+CSS.escape(id)+'"]')];if(!clip||!fields.length)throw Error('That clip is no longer available. Reload the scene.');const dirty=avDrafts.get(section+':'+id)||{};const changes={};for(const input of fields){const field=input.dataset.field;if(!Object.hasOwn(dirty,field))continue;const value=input.type==='checkbox'?input.checked:input.value;changes[field]=input.type==='checkbox'?value:(field==='bus'?value:(field==='gain_db'||field==='opacity'?number(value,field):integer(value,field)));}return changes;}
-async function mutate(body,success){if(avMutationBusy)return;if(['add','move','split','remove','restore','render'].includes(body.action)&&!requireSavedDocument(body.action))return;avMutationBusy=true;const id=avId,revision=body.action==='edit'&&avDraftRevision!==null?avDraftRevision:avDocument.revision;try{const doc=await avPost('/api/av/'+encodeURIComponent(id),{...body,expected_revision:revision,actor:'user'});if(id!==avId)return;avDocument=doc;if(success)success();if(body.action==='edit'&&hasDrafts())avDraftRevision=doc.revision;renderDocument();maintainPolling();await refreshProjects(id);avMessage(body.action==='render'?'Render queued for revision '+doc.revision+'.':'Saved revision '+doc.revision+'.');}catch(error){if(/^Scene conflict:/i.test(error.message)){if(avSelection)draftFor(avSelection.section,avSelection.id).conflict=true;renderDocument();}avMessage(error.message,true);}finally{avMutationBusy=false;}}
-async function openNewScene(){
-  if(!requireSavedDocument('opening a new scene'))return;
-  $('#sceneCreateStatus').textContent='Loading registered Workspace media…';$('#sceneAssets').innerHTML='';$('#sceneDialog').showModal();
-  try{const data=await avApi('/api/workspace');avWorkspace=(data.assets||[]).filter(asset=>!asset.trashed_at&&/\.(png|mp4|wav)$/i.test(asset.filename||''));const preselected=queryIds();$('#sceneAssets').innerHTML=avWorkspace.map(asset=>'<label class="av-source-choice"><input type="checkbox" value="'+esc(asset.id)+'" '+(preselected.has(asset.id)?'checked':'')+'><span><b>'+esc(asset.title||asset.filename)+'</b><small>'+esc(asset.filename)+' · '+esc(asset.media_type)+' · '+esc(asset.bytes)+' bytes</small></span></label>').join('')||'<p class="muted">No supported PNG, MP4 or WAV sources are registered in Workspace.</p>';$('#sceneCreateStatus').textContent=avWorkspace.length?'Select at least one visual source. Audio is optional.':'';}catch(error){$('#sceneCreateStatus').textContent=error.message;}
+async function mutate(body,success){
+  if(avMutationBusy)return;if(['add','move','split','remove','restore','render','export'].includes(body.action)&&!requireSavedDocument(body.action))return;
+  if(!beginOperation())return;const id=avId,revision=body.action==='edit'&&avDraftRevision!==null?avDraftRevision:avDocument.revision;
+  try{
+    const payload={...body,actor:'user'};if(body.action!=='cancel')payload.expected_revision=revision;
+    const doc=await avPost('/api/av/'+encodeURIComponent(id),payload);if(id!==avId)return;avDocument=doc;if(success)success();
+    if(body.action==='edit'&&hasDrafts())avDraftRevision=doc.revision;renderDocument();maintainPolling();await refreshProjects(id);
+    if(body.action==='export'){const url=sameOriginUrl(doc.export_url);if(url)location.assign(url);avMessage('Companion ZIP is ready.');}
+    else avMessage(body.action==='render'?'Render queued for revision '+doc.revision+'.':body.action==='cancel'?'Cancel requested for this render.':'Saved revision '+doc.revision+'.');
+  }catch(error){if(/^Scene conflict:/i.test(error.message)){if(avSelection)draftFor(avSelection.section,avSelection.id).conflict=true;renderDocument();}avMessage(error.message,true);}finally{endOperation();}
 }
-async function createScene(event){event.preventDefault();if(!requireSavedDocument('creating a new scene'))return;const ids=[...document.querySelectorAll('#sceneAssets input:checked')].map(input=>input.value),assets=ids.map(id=>avWorkspace.find(asset=>asset.id===id)).filter(Boolean),visual=assets.filter(asset=>asset.media_type==='image'||asset.media_type==='video'),audio=assets.filter(asset=>asset.media_type==='audio');if(!ids.length){$('#sceneCreateStatus').textContent='Select at least one registered source.';return;}if(!visual.length){$('#sceneCreateStatus').textContent='Select at least one PNG or MP4 visual source.';return;}if(visual.length>16||audio.length>32){$('#sceneCreateStatus').textContent='A scene accepts up to 16 visual sources and 32 audio sources.';return;}$('#createScene').disabled=true;try{const doc=await avPost('/api/av',{action:'create',name:$('#sceneName').value,asset_ids:ids,fps:[24,1],size:[640,360],frames_per_shot:72,actor:'user'});avId=doc.id;avDocument=doc;avDrafts.clear();$('#sceneDialog').close();renderDocument();await refreshProjects(avId);avMessage('Created scene revision '+doc.revision+'.');}catch(error){$('#sceneCreateStatus').textContent=error.message;}finally{$('#createScene').disabled=false;}}
+async function openNewScene(){
+  if(avMutationBusy||!requireSavedDocument('opening a new scene')||!beginOperation())return;
+  $('#sceneCreateStatus').textContent='Loading registered Workspace media…';$('#sceneAssets').innerHTML='';$('#sceneDialog').showModal();
+  try{const data=await avApi('/api/workspace');avWorkspace=(data.assets||[]).filter(asset=>!asset.trashed_at&&/\.(png|mp4|wav)$/i.test(asset.filename||''));const preselected=queryIds();$('#sceneAssets').innerHTML=avWorkspace.map(asset=>'<label class="av-source-choice"><input type="checkbox" value="'+esc(asset.id)+'" '+(preselected.has(asset.id)?'checked':'')+'><span><b>'+esc(asset.title||asset.filename)+'</b><small>'+esc(asset.filename)+' · '+esc(asset.media_type)+' · '+esc(asset.bytes)+' bytes</small></span></label>').join('')||'<p class="muted">No supported PNG, MP4 or WAV sources are registered in Workspace.</p>';$('#sceneCreateStatus').textContent=avWorkspace.length?'Select at least one visual source. Audio is optional.':'';}catch(error){$('#sceneCreateStatus').textContent=error.message;}finally{endOperation();}
+}
+async function createScene(event){event.preventDefault();if(avMutationBusy||!requireSavedDocument('creating a new scene'))return;const ids=[...document.querySelectorAll('#sceneAssets input:checked')].map(input=>input.value),assets=ids.map(id=>avWorkspace.find(asset=>asset.id===id)).filter(Boolean),visual=assets.filter(asset=>asset.media_type==='image'||asset.media_type==='video'),audio=assets.filter(asset=>asset.media_type==='audio');if(!ids.length){$('#sceneCreateStatus').textContent='Select at least one registered source.';return;}if(!visual.length){$('#sceneCreateStatus').textContent='Select at least one PNG or MP4 visual source.';return;}if(visual.length>16||audio.length>32){$('#sceneCreateStatus').textContent='A scene accepts up to 16 visual sources and 32 audio sources.';return;}if(!beginOperation())return;$('#createScene').disabled=true;try{const doc=await avPost('/api/av',{action:'create',name:$('#sceneName').value,asset_ids:ids,fps:[24,1],size:[640,360],frames_per_shot:72,actor:'user'});stopPolling();avId=doc.id;avDocument=doc;clearDrafts();avSelection=null;$('#sceneDialog').close();renderDocument();await refreshProjects(avId);avMessage('Created scene revision '+doc.revision+'.');}catch(error){$('#sceneCreateStatus').textContent=error.message;}finally{$('#createScene').disabled=false;endOperation();}}
 $('#newScene').onclick=()=>openNewScene();$('#cancelScene').onclick=()=>$('#sceneDialog').close();$('#sceneForm').onsubmit=createScene;
-$('#refreshScenes').onclick=()=>refreshProjects().catch(error=>avMessage(error.message,true));$('#reloadScene').onclick=()=>loadScene(avId).catch(error=>avMessage(error.message,true));
-$('#avProjectList').onclick=event=>{const project=event.target.closest('[data-project]');if(!project||avMutationBusy||!requireSavedDocument('switching scenes'))return;stopPolling();avId=project.dataset.project;avDrafts.clear();avSelection=null;renderProjects();loadScene(avId).catch(error=>avMessage(error.message,true));};
+$('#refreshScenes').onclick=()=>avMutationBusy?undefined:refreshProjects().catch(error=>avMessage(error.message,true));$('#reloadScene').onclick=()=>loadScene(avId).catch(error=>avMessage(error.message,true));
+$('#avProjectList').onclick=event=>{const project=event.target.closest('[data-project]');if(!project||avMutationBusy||!requireSavedDocument('switching scenes'))return;stopPolling();avReadEpoch++;avId=project.dataset.project;clearDrafts();avSelection=null;renderProjects();return loadScene(avId).catch(error=>avMessage(error.message,true));};
 $('#avContent').addEventListener('input',event=>{const input=event.target;if(!input.dataset.field)return;setDraft(input.dataset.section,input.dataset.clip,input.dataset.field,input.type==='checkbox'?input.checked:input.value);});
 $('#avContent').addEventListener('change',event=>{if(event.target.id==='splitClip'){const section=event.target.value.split(':')[0];$('#splitUnit').textContent=section==='audio'?'samples':'frames';}});
 $('#avContent').onclick=async event=>{
+  if(avMutationBusy)return;
   if(event.target.closest('#documentReload')){await loadScene(avId);return;}
   if(event.target.closest('[data-discard-drafts]')){clearDrafts();renderDocument();avMessage('Discarded unsaved clip changes.');return;}
   const save=event.target.closest('[data-save]');if(save){const [section,id]=save.dataset.save.split(':');avSelection={section,id};await mutate({action:'edit',section,clip_id:id,changes:collectChanges(section,id)},()=>clearDraft(section,id));return;}
@@ -121,7 +155,7 @@ $('#avContent').onclick=async event=>{
   const move=event.target.closest('[data-move]');if(move&&avSelection?.section==='shots'){const clips=avDocument.project.shots,index=clips.findIndex(clip=>clip.id===avSelection.id);await mutate({action:'move',clip_id:avSelection.id,index:index+Number(move.dataset.move)});return;}
   if(event.target.closest('[data-split]')){const [section,id]=$('#splitClip').value.split(':'),at=integer($('#splitAt').value,'Split position');avSelection={section,id};await mutate({action:'split',section,clip_id:id,at});return;}
   const restore=event.target.closest('[data-restore]');if(restore){await mutate({action:'restore',source_revision:integer(restore.dataset.restore,'Revision')});return;}
-  const renderAction=event.target.closest('[data-render-action]')?.dataset.renderAction;if(renderAction==='render'){await mutate({action:'render'});return;}if(renderAction==='export'){if(!requireSavedDocument('export'))return;try{const doc=await avPost('/api/av/'+encodeURIComponent(avId),{action:'export',expected_revision:avDocument.revision,actor:'user'});avDocument=doc;renderDocument();const url=sameOriginUrl(doc.export_url);if(url)location.assign(url);avMessage('Companion ZIP is ready.');}catch(error){avMessage(error.message,true);}return;}if(renderAction==='cancel'&&avDocument.render?.id){try{const doc=await avPost('/api/av/'+encodeURIComponent(avId),{action:'cancel',render_id:avDocument.render.id,actor:'user'});avDocument=doc;renderDocument();maintainPolling();avMessage('Cancel requested for this render.');}catch(error){avMessage(error.message,true);}return;}
+  const renderAction=event.target.closest('[data-render-action]')?.dataset.renderAction;if(renderAction==='render'||renderAction==='export'){await mutate({action:renderAction});return;}if(renderAction==='cancel'&&avDocument.render?.id){await mutate({action:'cancel',render_id:avDocument.render.id});return;}
   if(event.target.closest('input,select,label,video,audio,a'))return;
   const select=event.target.closest('[data-select-clip]');if(select){const [section,id]=select.dataset.selectClip.split(':');selectClip(section,id);}
 };

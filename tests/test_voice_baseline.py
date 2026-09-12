@@ -1,5 +1,6 @@
 """Fault contracts for the owned voice runner; no weights/network in tests."""
 import json
+import importlib.metadata
 from pathlib import Path
 import subprocess
 import sys
@@ -20,7 +21,8 @@ class VoiceTests(unittest.TestCase):
         files={}
         for role in ('config','model','voice'):
             path=self.root/(role+'.bin');path.write_bytes(role.encode());files[role]={'path':str(path),'bytes':path.stat().st_size,'sha256':file_hash(path)}
-        self.manifest={'schema_version':1,'model_id':'hexgrad/Kokoro-82M','revision':'a'*40,'python':sys.executable,'voice':'af_heart','lang_code':'a','files':files,'versions':{},'license':{'id':'fixture'}}
+        (self.root/'scripts/voice_runtime_probe.py').write_bytes((Path(__file__).parents[1]/'scripts/voice_runtime_probe.py').read_bytes())
+        self.manifest={'schema_version':1,'model_id':'hexgrad/Kokoro-82M','revision':'a'*40,'python':sys.executable,'voice':'af_heart','lang_code':'a','files':files,'versions':{'pip':importlib.metadata.version('pip')},'license':{'id':'fixture'}}
         self.manifest_path=self.root/'bundle.json';self.manifest_path.write_text(json.dumps(self.manifest),encoding='utf-8')
         self.studio.config.update(voice_baseline_bundle=str(self.manifest_path),ffmpeg=sys.executable)
     def tearDown(self):test_production.ProductionTests.tearDown(self)
@@ -39,7 +41,7 @@ class VoiceTests(unittest.TestCase):
         with patch('voice_baseline._run_owned') as run:prepared=self.prepare()
         run.assert_not_called();self.assertEqual(prepared['state']['status'],'planned');self.assertEqual(self.studio.queue.qsize(),0)
         plan=self.production._get(prepared['id'])['plan'];self.assertEqual(plan['lines'][0]['id'],'hello')
-        self.assertEqual(plan['bundle']['files'],self.manifest['files']);self.assertEqual(self.studio.requests,[])
+        self.assertEqual(plan['bundle']['files'],self.manifest['files']);self.assertEqual(plan['observed_versions'],self.manifest['versions']);self.assertEqual(self.studio.requests,[])
     def test_page_capabilities_does_not_load_or_hash_models(self):
         with patch('voice_baseline.file_hash',side_effect=AssertionError('unexpected hash')):self.assertTrue(voice_baseline.capabilities(self.studio)['configured'])
     def test_bad_line_ids_and_unbounded_requests_fail_before_writes(self):
@@ -52,11 +54,23 @@ class VoiceTests(unittest.TestCase):
         self.production.start(prepared['id'])
         with patch('voice_baseline._run_owned') as run:self.production.run(prepared['id'])
         run.assert_not_called();self.assertEqual(self.production.get(prepared['id'])['state']['status'],'failed')
+        self.assertEqual(self.production.get(prepared['id'])['state']['attempts']['0']['status'],'failed')
+
+    def test_manifest_package_drift_rejects_prepare_and_observed_drift_rejects_start(self):
+        self.manifest['versions']['pip']='not-the-installed-version';self.manifest_path.write_text(json.dumps(self.manifest),encoding='utf-8')
+        with self.assertRaisesRegex(ValueError,'package versions changed from the bundle manifest'):self.prepare()
+        self.manifest['versions']['pip']=importlib.metadata.version('pip');self.manifest_path.write_text(json.dumps(self.manifest),encoding='utf-8')
+        prepared=self.prepare();self.production.start(prepared['id'])
+        with patch('voice_baseline.observed_versions',return_value={'pip':'new-version'}),patch('voice_baseline._run_owned') as run:
+            self.production.run(prepared['id'])
+        run.assert_not_called();attempt=self.production.get(prepared['id'])['state']['attempts']['0']
+        self.assertEqual(attempt['status'],'failed');self.assertEqual(self.production.get(prepared['id'])['state']['status'],'failed')
     def test_owned_queue_outputs_dry_and_scene_copies_with_full_recipe(self):
         prepared=self.prepare();self.production.start(prepared['id'])
         self.assertEqual(self.studio.queue.get_nowait(),('production',prepared['id']))
         with patch('voice_baseline._run_owned',side_effect=self.fake_execute):self.production.run(prepared['id'])
         project=self.production.get(prepared['id']);self.assertEqual(project['state']['status'],'completed',project)
+        self.assertEqual(project['state']['attempts']['0']['status'],'completed')
         job=next(iter(self.studio.jobs.values()));self.assertEqual(job['operation'],voice_baseline.OPERATION)
         self.assertEqual(job['native_recipe']['lines'][0]['text'],'The lantern is ready.')
         self.assertEqual([o['filename'] for o in job['outputs']],['hello.wav','hello-scene.wav'])
@@ -69,10 +83,35 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(run.call_count,1);self.assertEqual(self.production.get(prepared['id'])['state']['status'],'failed')
         self.assertTrue((self.production.root/prepared['id']/'request.json').is_file())
         with patch('voice_baseline._run_owned') as run:self.production.run(prepared['id'])
-        run.assert_not_called();self.assertEqual(self.production.get(prepared['id'])['state']['status'],'interrupted')
-        with self.assertRaisesRegex(ValueError,'never automatically repeated'):self.production.resume(prepared['id'])
+        run.assert_not_called();self.assertEqual(self.production.get(prepared['id'])['state']['status'],'failed')
+        with self.assertRaisesRegex(ValueError,'unstarted interrupted'):self.production.resume(prepared['id'])
         self.assertTrue(next(iter(self.studio.jobs.values()))['native_recipe']['bundle'])
     def test_cancel_before_execution_does_not_start_child(self):
         prepared=self.prepare();self.production.start(prepared['id']);self.production.stop(prepared['id'])
         with patch('voice_baseline._run_owned') as run:self.production.run(prepared['id'])
-        run.assert_not_called();self.assertEqual(self.production.get(prepared['id'])['state']['status'],'cancelled')
+        run.assert_not_called();state=self.production.get(prepared['id'])['state'];self.assertEqual(state['status'],'cancelled');self.assertEqual(state['attempts']['0']['status'],'cancelled')
+
+    def test_only_unstarted_voice_plan_can_explicitly_resume(self):
+        prepared=self.prepare();self.production._mutate(prepared['id'],status='interrupted')
+        resumed=self.production.resume(prepared['id']);self.assertEqual(resumed['state']['status'],'queued')
+        self.assertEqual(self.studio.queue.get_nowait(),('production',prepared['id']))
+        unsafe=self.prepare();self.production._attempt(unsafe['id'],0,operation=voice_baseline.OPERATION,job_id='a'*32,status='running')
+        self.production._mutate(unsafe['id'],status='interrupted')
+        with self.assertRaisesRegex(ValueError,'may have started'):self.production.resume(unsafe['id'])
+        self.assertTrue(self.studio.queue.empty())
+
+    def test_queued_unstarted_voice_resume_does_not_duplicate_the_owned_queue_item(self):
+        prepared=self.prepare();self.production.start(prepared['id'])
+        resumed=self.production.resume(prepared['id'])
+        self.assertEqual(resumed['state']['status'],'queued');self.assertEqual(self.studio.queue.qsize(),1)
+
+    def test_stop_during_workspace_publication_preserves_registered_outputs(self):
+        prepared=self.prepare();self.production.start(prepared['id']);original=self.studio.index_outputs
+        def index_then_stop(job):
+            original(job);self.production.stop(prepared['id'])
+        with patch.object(self.studio,'index_outputs',side_effect=index_then_stop),patch('voice_baseline._run_owned',side_effect=self.fake_execute):
+            self.production.run(prepared['id'])
+        project=self.production.get(prepared['id']);job=next(iter(self.studio.jobs.values()))
+        self.assertEqual(project['state']['status'],'completed');self.assertTrue(project['state']['cancellation_too_late'])
+        self.assertEqual(project['state']['attempts']['0']['status'],'completed')
+        self.assertEqual(job['publication_status'],'published');self.assertTrue(job['cancellation_too_late']);self.assertTrue(all(output.get('asset_id') for output in job['outputs']))

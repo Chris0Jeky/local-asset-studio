@@ -1,0 +1,133 @@
+{
+  "version": 2,
+  "preset_id": "voice-baseline",
+  "controls": {},
+  "batch_count": 0,
+  "created_at": 1789224734.51573,
+  "workflow": {},
+  "submissions": [],
+  "outputs": [
+    {
+      "filename": "lantern-opening.wav",
+      "native_path": "voice/lantern-opening.wav",
+      "type": "output",
+      "media_type": "audio",
+      "asset_id": "f11ecbb16f985ad78a91208371a228dd"
+    },
+    {
+      "filename": "lantern-opening-scene.wav",
+      "native_path": "voice/lantern-opening-scene.wav",
+      "type": "output",
+      "media_type": "audio",
+      "asset_id": "fbcca83f6f0a5c45b5e741798e19a2ac"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "native_recipe": {
+    "speaker_id": "atelier-witch",
+    "lines": [
+      {
+        "id": "lantern-opening",
+        "text": "The lantern is ready. Follow the light."
+      }
+    ],
+    "bundle": {
+      "schema_version": 1,
+      "model_id": "hexgrad/Kokoro-82M",
+      "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "python": "C:\\AI\\voice-lab-kokoro\\venv312\\Scripts\\python.exe",
+      "voice": "af_heart",
+      "lang_code": "a",
+      "files": {
+        "config": {
+          "path": "C:\\AI\\voice-lab-kokoro\\models\\config.json",
+          "sha256": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f",
+          "bytes": 2351
+        },
+        "model": {
+          "path": "C:\\AI\\voice-lab-kokoro\\models\\kokoro-v1_0.pth",
+          "sha256": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4",
+          "bytes": 327212226
+        },
+        "voice": {
+          "path": "C:\\AI\\voice-lab-kokoro\\models\\voices\\af_heart.pt",
+          "sha256": "0ab5709b8ffab19bfd849cd11d98f75b60af7733253ad0d67b12382a102cb4ff",
+          "bytes": 523425
+        }
+      },
+      "versions": {
+        "kokoro": "0.9.4",
+        "torch": "2.14.0+cpu",
+        "misaki": "0.9.4",
+        "spacy": "3.8.16",
+        "en_core_web_sm": "3.8.0",
+        "soundfile": "0.14.0",
+        "huggingface_hub": "1.31.0"
+      },
+      "license": {
+        "id": "Apache-2.0",
+        "source": "https://huggingface.co/hexgrad/Kokoro-82M"
+      },
+      "python_sha256": "0b471133e110cfb53a061cad528ce8e517d7b9ac41a0a396c39ad795a487fc14"
+    },
+    "receipt": {
+      "version": 1,
+      "model_id": "hexgrad/Kokoro-82M",
+      "model_revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+      "voice": "af_heart",
+      "speaker_id": "atelier-witch",
+      "load_seconds": 2.0,
+      "elapsed_seconds": 3.187000000005355,
+      "lines": [
+        {
+          "id": "lantern-opening",
+          "speaker_id": "atelier-witch",
+          "text": "The lantern is ready. Follow the light.",
+          "graphemes": [
+            "The lantern is ready. Follow the light."
+          ],
+          "phonemes": [
+            "\u00f0\u0259 l\u02c8\u00e6nt\u0259\u0279n \u026az \u0279\u02c8\u025bdi. f\u02c8\u0251lO \u00f0\u0259 l\u02c8It."
+          ],
+          "file": "lantern-opening.wav",
+          "sha256": "7bac17e89872fb465dcd6e199a2aaa9d2cb940a0ac7e849565551fc4e67cd098",
+          "bytes": 134444,
+          "sample_rate": 24000,
+          "samples": 67200,
+          "seconds": 2.8,
+          "elapsed_seconds": 1.187000000005355
+        }
+      ],
+      "cpu_threads": 6,
+      "network_enabled": false,
+      "voice_identity": "built-in baseline voice, not a designed or cloned character identity",
+      "creative_acceptance": "not_reviewed",
+      "transcription": "not_performed",
+      "alignment": "not_performed",
+      "performance_instructions_supported": false
+    },
+    "qc": {
+      "lantern-opening": {
+        "samples": 134400,
+        "sample_rate": 48000,
+        "channels": 1,
+        "duration_seconds": 2.8,
+        "sample_peak_dbfs": [
+          -7.652282612426914
+        ],
+        "rms_dbfs": [
+          -26.507295511765886
+        ],
+        "dc_offset": [
+          -9.932518005371093e-06
+        ],
+        "full_scale_sample_count": [
+          0
+        ],
+        "near_or_at_clipping": false,
+        "method": "16-bit decoded sample statistics; not LUFS, true peak, intelligibility or perceptual review"
+      }
+    }
+  }
+}

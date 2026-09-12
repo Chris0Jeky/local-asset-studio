@@ -13,6 +13,13 @@ from PIL import Image
 def png():
     stream = io.BytesIO(); Image.new('RGB', (8, 12), 'purple').save(stream, 'PNG'); return stream.getvalue()
 
+def rgba_png(width=8, height=8, transparent=True):
+    stream = io.BytesIO()
+    image = Image.new('RGBA', (width, height), (40, 80, 120, 255))
+    if transparent: image.putpixel((3, 4), (40, 80, 120, 0))
+    image.save(stream, 'PNG')
+    return stream.getvalue()
+
 SPEC = importlib.util.spec_from_file_location("asset_server", Path(__file__).parents[1] / "app/server.py")
 server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
 
@@ -58,6 +65,32 @@ class ServerTests(unittest.TestCase):
         with self.assertRaisesRegex(server.StudioError,"Reference upload is invalid"):
             s.prepare({"preset_id":"demo","controls":{"reference":"plain.png"}})
 
+    def test_anime_masked_repair_preserves_valid_rgba_bytes_and_rejects_invalid_masks(self):
+        graph={"4":{"class_type":"LoadImage","inputs":{"image":"authored-mask.png"}}}
+        preset={"id":"anime-masked-repair","name":"Masked repair","category":"Test","graph":"workflows/api/masked-repair-api.json","reference":["4","image"]}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/masked-repair-api.json').write_text(json.dumps(graph))
+        s=self.studio(); source=rgba_png(); upload=s.upload('hand-mask.png','image/png',source)
+        for path in (self.root/'experiments/uploads'/upload['file'], self.root/'fake-comfy/input'/upload['file']):
+            self.assertEqual(path.read_bytes(),source)
+            with Image.open(path) as decoded:
+                self.assertEqual(decoded.mode,'RGBA')
+                self.assertEqual(decoded.getpixel((3,4)),(40,80,120,0))
+        _,bound,_,_,_=s.prepare({'preset_id':'anime-masked-repair','controls':{'reference':upload['file']}})
+        self.assertEqual(bound['4']['inputs']['image'],upload['file'])
+        opaque=s.upload('opaque.png','image/png',rgba_png(transparent=False))['file']
+        rgb=s.upload('rgb.png','image/png',png())['file']
+        unaligned=s.upload('unaligned.png','image/png',rgba_png(height=12))['file']
+        jpeg=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(jpeg,'JPEG')
+        jpg=s.upload('masked.jpg','image/jpeg',jpeg.getvalue())['file']
+        webp=io.BytesIO(); Image.new('RGB',(8,8),'purple').save(webp,'WEBP')
+        webp_file=s.upload('masked.webp','image/webp',webp.getvalue())['file']
+        for file, message in ((None,'RGBA PNG upload'),(opaque,'transparent repair region'),(rgb,'RGBA PNG'),(unaligned,'divisible by 8'),(jpg,'RGBA PNG'),(webp_file,'RGBA PNG')):
+            with self.subTest(file=file), self.assertRaisesRegex(server.StudioError,message):
+                s.create_job({'preset_id':'anime-masked-repair','controls':{} if file is None else {'reference':file}})
+        self.assertEqual(s.jobs,{})
+        self.assertTrue(s.queue.empty())
+
     def test_imported_image_survives_restart_without_generation(self):
         s=self.studio();result=s.import_image('frame.png','image/png',png())
         self.assertEqual(s.queue.qsize(),0)
@@ -84,6 +117,30 @@ class ServerTests(unittest.TestCase):
         s=self.studio(); job=s.create_job({"preset_id":"demo","controls":{}}); live=s.jobs[job["id"]]; live["status"]="running"; s._save(live)
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
+
+    def test_voice_publication_marker_preserves_exact_prior_assets_on_restart(self):
+        s=self.studio()
+        def voice_job(identifier, marker):
+            directory=self.root/'experiments/projects'/identifier/'voice';directory.mkdir(parents=True)
+            for name in ('first.wav','second.wav'):(directory/name).write_bytes(name.encode())
+            job={'id':identifier,'operation':'native.voice-baseline.v1','project_id':identifier,'status':marker,'publication_status':marker,
+                 'created_at':1,'preset_id':'voice-baseline','preset_name':'Fixture','controls':{},'batch_count':0,'prompt_ids':[],
+                 'submissions':[],'parent_assets':[],'references':[],'graph':{},'graph_path':'','outputs':[
+                     {'filename':'first.wav','native_path':'voice/first.wav','type':'output','media_type':'audio'}]}
+            (s.runs/identifier).mkdir();s.index_outputs(job);prior=job['outputs'][0]['asset_id']
+            job['outputs'].append({'filename':'second.wav','native_path':'voice/second.wav','type':'output','media_type':'audio'})
+            s._save(job);s.jobs[identifier]=job;return prior
+        prior={marker:voice_job(f'{index:032x}',marker) for index,marker in enumerate(('publishing','failed','cancelled'),1)}
+        restored=self.studio()
+        for index,marker in enumerate(('publishing','failed','cancelled'),1):
+            job=restored.jobs[f'{index:032x}']
+            self.assertEqual(job['outputs'][0]['asset_id'],prior[marker]);self.assertNotIn('asset_id',job['outputs'][1])
+        legacy='f'*32;directory=self.root/'experiments/projects'/legacy/'voice';directory.mkdir(parents=True);(directory/'legacy.wav').write_bytes(b'legacy')
+        job={'id':legacy,'operation':'native.voice-baseline.v1','project_id':legacy,'status':'completed','created_at':1,'preset_id':'voice-baseline',
+             'preset_name':'Legacy','controls':{},'batch_count':0,'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[],
+             'graph':{},'graph_path':'','outputs':[{'filename':'legacy.wav','native_path':'voice/legacy.wav','type':'output','media_type':'audio'}]}
+        (s.runs/legacy).mkdir();s._save(job);s.jobs[legacy]=job
+        self.assertTrue(self.studio().jobs[legacy]['outputs'][0].get('asset_id'))
     def test_mock_comfy_success_failure_and_uncertain_post(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p1"},{"p1":{"status":{"status_str":"success"},"outputs":{"9":{"images":[{"filename":"ok.png","subfolder":"","type":"output"}]}}}}]
         s=FakeStudio(self.root,replies); job=s.create_job({"preset_id":"demo","controls":{}}); s._run(s.jobs[job["id"]]); self.assertEqual(s.jobs[job["id"]]["status"],"completed")

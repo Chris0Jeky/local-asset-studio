@@ -94,11 +94,11 @@ class Studio:
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
-            # Failed or still-publishing AV attempts retain their recipe and
-            # assets for inspection; only completed publication may be indexed
-            # on restart.  Legacy AV jobs have no publication marker and still
-            # use the historical recovery path.
-            if job.get("operation") == "native.av-preview.v1" and "publication_status" in job and job["publication_status"] != "published": continue
+            # Failed or still-publishing native AV/voice attempts retain their
+            # recipe and exact prior asset set for inspection; only completed
+            # publication may be indexed on restart. Legacy jobs without a
+            # publication marker keep the historical recovery path.
+            if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
             self.index_outputs(job)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -210,6 +210,18 @@ class Studio:
         if not isinstance(extras, list): raise StudioError("Preset has invalid companion bindings")
         for binding in extras: self._bind(graph, binding, value)
 
+    def _validate_masked_repair_reference(self, upload):
+        """Require the alpha source that the manual repair graph actually uses."""
+        from PIL import Image, UnidentifiedImageError
+        try:
+            with Image.open(upload) as decoded:
+                if decoded.format != "PNG" or decoded.mode != "RGBA": raise StudioError("Anime Masked Repair requires a real RGBA PNG upload")
+                width, height = decoded.size
+                if width % 8 or height % 8: raise StudioError("Anime Masked Repair requires width and height divisible by 8; no padding or cropping is applied")
+                if decoded.getchannel("A").getextrema()[0] == 255: raise StudioError("Anime Masked Repair requires a transparent repair region in the alpha channel")
+        except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
+            raise StudioError("Anime Masked Repair requires a valid RGBA PNG upload") from exc
+
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         if not isinstance(payload, dict): raise StudioError("JSON object required")
@@ -275,7 +287,10 @@ class Studio:
             uploads = self.experiments / "uploads"
             upload = inside(uploads.resolve(), uploads / name)
             if not upload.is_file(): raise StudioError("Reference upload is unavailable")
+            if preset["id"] == "anime-masked-repair" and key == "reference": self._validate_masked_repair_reference(upload)
             self._bind_control(graph, preset, key, upload.name)
+        if preset["id"] == "anime-masked-repair" and "reference" not in controls:
+            raise StudioError("Anime Masked Repair requires a real RGBA PNG upload; the authored example cannot be queued")
         if preset.get("max_pixels"):
             actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")

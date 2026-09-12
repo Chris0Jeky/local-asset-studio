@@ -31,13 +31,21 @@ does not install it. Runtime versions and complete installation receipts live be
 A take has at most 2,000 text characters and 120 seconds of generated samples. The owned inference
 process has a 180-second deadline; the separate FFmpeg resample step has 60 seconds. Cancellation
 terminates owned processes and preserves the request, logs and partial files. Failed or interrupted
-takes are retained for inspection; prepare a new take to try again. Studio does not resume inference
-or repeat an uncertain attempt. A full recipe is saved before execution and attached to Workspace
-outputs. Model/config/voice bytes and runner/Python/FFmpeg executable hashes are checked at Prepare
-and Start. Python package versions are recorded, not a hash of the complete installed environment.
-Do not upgrade that environment between Prepare and Generate: installed package drift is currently
-not checked. Cancellation can lose during final Workspace publication. The internal attempt record
-can still say `running` after completion; use the project/job status and retained artifacts for recovery.
+takes are retained for inspection; prepare a new take to try again. An explicitly requested resume is
+allowed only after an interrupted or queued plan is proven unstarted: no request file, attempt record,
+owned job or voice-output directory may exist. Studio never resumes inference or repeats an uncertain
+attempt. A full recipe is saved before execution and attached to Workspace outputs. Model/config/voice
+bytes and runner/Python/FFmpeg executable hashes are checked at Prepare and Start. At both boundaries,
+the configured isolated Python runs a bounded metadata-only child that uses `importlib.metadata`; it does
+not import the model or Torch, download packages, or claim to hash the complete environment. Observed
+distribution versions must match both the bundle manifest and the versions observed at Prepare.
+
+Cancellation checks run before publication and again after Workspace registration. If a stop arrives
+after publication starts and one or more outputs are registered, the take records that cancellation was
+too late and preserves the published outputs; it does not falsely report a cancelled no-output take.
+Controlled success, failure and cancellation paths finalize the nested attempt. An abrupt process death
+can still leave its last durable attempt state as `running`; recovery treats that as unproven and never
+repeats inference.
 
 Dry output is 24 kHz mono PCM16. The scene copy is resampled to 48 kHz mono PCM16 with no loudness
 normalization or other mix processing. Receipts retain exact text, graphemes, phonemes, file hashes,

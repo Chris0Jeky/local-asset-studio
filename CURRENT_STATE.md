@@ -1,5 +1,55 @@
 # Current state — 11 September 2026
 
+## Voice runtime consistency and recovery - 12 September 2026
+
+Prepare and Start now use the configured isolated Python to observe declared distribution versions through
+metadata only; the plan retains those observed versions and Start rejects either a bundle-manifest or
+Prepare-time drift. This is not a complete-environment hash and imports neither Torch nor a model. Controlled
+voice success, failure and cancellation terminalize attempt 0. The Production API can explicitly resume only
+a demonstrably unstarted interrupted plan; a queued plan remains idempotently queued, and any request,
+attempt, job or voice directory blocks a retry.
+
+Voice Workspace publication is now marked `published` only after every output is registered. Failed,
+cancelled and still-publishing marked voice jobs retain their exact existing asset descriptors on Studio
+restart and are not newly indexed; legacy unmarked voice jobs keep the historical indexing path. A stop that
+arrives after complete publication is recorded as too late while retaining the published outputs. Inert
+version-drift, terminal-state, resume, publication and restart regressions passed. Remaining #56 work is
+the UI resume treatment, the atomic late-cancellation check-to-commit boundary, and abrupt-process nested
+attempt reconciliation; an abrupt death can still leave the last durable nested attempt state `running` and
+never authorizes inference repetition.
+
+## Scene editor interaction checks - 12 September 2026
+
+Unsaved clip notices and disabled document actions now update on input without replacing the focused
+field or preview video. Commands and manual reloads are serialized; stale polls cannot overwrite a
+newer command response. Completion updates the global render status, and artifact links show filenames.
+An earlier polling error can still remain in the global message until a manual action (#30).
+Chromium 151 with synthetic sources and real FFmpeg verified typing focus, continuing playback,
+persisted edits, a held export blocking conflicting actions, download completion and a 390 px layout.
+The browser recorded no JavaScript errors, external requests or ComfyUI calls. Full suite: 516 run,
+507 passed and 9 skipped; repository validation passed. Raw proof is retained under
+`.runtime/session-2026-09-12/scene-interactions/`. The remaining Scene work stays tracked in #30;
+`HUMAN_TODO.md` retains optional creative choices, and this proof makes no art acceptance claim.
+
+## Spoken atelier scene and manual repair option - 12 September 2026
+
+The primary Studio explicitly generated “The lantern is ready. Follow the light.” with the isolated
+Kokoro CPU baseline, then assembled it with two retained atelier images. Voice job
+`5e0982574aa450dd8f8538148fdd67af` produced 2.8 seconds of dry audio (3.187 seconds measured model
+load/inference). Scene job `513bd06980514be5930a9aa981caf8cd`, scene
+`f14b08eba5e84375a2c604fd4e3db686` revision 2, produced a 720x1080, 156-frame/6.5-second preview with
+a dialogue offset and dissolve. No ComfyUI prompt was submitted. Both shots were inspected; the square
+shrine source is letterboxed. Browser playback and decoded PCM/frame checks passed. Independent
+offline ASR matched all seven normalized words; no human listening or character acceptance is inferred.
+Exact recipes and observations are in `experiments/curated/atelier-voice/`; raw output stays outside Git.
+
+The existing manual `anime-masked-repair` graph is now catalogued with RGBA-alpha instructions and
+`verified: false`. Upload preservation, binding and live node/file schema checks passed; no masked
+repair generation was submitted. PR #67 now enforces a supplied nonempty RGBA alpha mask with dimensions
+divisible by eight before any job is created; valid PNG bytes remain unchanged. This does
+not imply a successful Krea hand repair: the earlier unsuccessful Gentle digit trial used the NoobAI
+portrait. `HUMAN_TODO.md` retains the owner's optional creative choices and model-use decisions.
+
 ## Offline CPU voice baseline - 12 September 2026
 
 The Voice baseline page now prepares pinned original-text takes and explicitly queues Kokoro CPU
