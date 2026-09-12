@@ -41,7 +41,8 @@ Per-process attribution is in #77's newest comments (idle ComfyUI 16.8 GB after 
 `node.exe` 10.7 GB, ~15 GB non-process). **Measured:** the reserve does not move the host-commit
 ceiling. **NOT verified:** the narrow exit test — no log yet shows `Requested to load QwenImage` then
 `loaded completely; … full load: True` at 832×1216 with two references. Derivation, fit table and the
-≥20 GiB commit gate: `docs/RUNTIME-PRECONDITIONS.md`.
+≥32 GiB commit gate (raised from 20 GiB: the run above started at 29 GB headroom and still failed):
+`docs/RUNTIME-PRECONDITIONS.md`.
 
 ## Integrated Studio workflow UI verification — 12 September 2026
 
