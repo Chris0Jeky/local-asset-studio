@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-12",
+  "scope": "Current-session CPU archive restore, source intake, extraction, composition and synthetic offline contract tests. No neural inference or user-workstation execution.",
+  "archive_sha256": "528489fd0c37e2ae2e6a76666dd17c5d942af1a66fa1ba5fa6d096c2fcc0ace8",
+  "archive_members_verified": 71,
+  "archive_uncompressed_bytes_verified": 27336577,
+  "source_sheets": 3,
+  "each_source_size": [1448, 1086],
+  "nonopaque_pixels_in_each_source": 0,
+  "pixel_exact_crops": 33,
+  "crop_counts": {"standard": 13, "ornate": 13, "summer": 7},
+  "source_hashes": {
+    "standard": "446f425aa21d2e76003b2af6ea5e23284371f8a489becccfc1bce360f299e85b",
+    "ornate": "10decf2f3e726cc80848e57eb26332a7b41b04609172762a67499100b9335326",
+    "summer": "eb4334dc6af423d66ec589b486421c7850585f31cacdca68e97c76d9e862e767"
+  },
+  "recomposed_standard_card_sha256": "11c7cf241e0cd712813d11ae19bcd76a0b560e90c8c46550b85fa2cfad213a73",
+  "repeated_composition_identical_bytes_in_same_runtime": true,
+  "draft_plan_sha256": "b9c7a51b2b8819ef17508d41c88082eca4391ce8c99dc524de6ecfcf6a660f4c",
+  "draft_plan_cases": 12,
+  "draft_preflight_blockers_after_correct_restore": ["Canon is not explicitly human-approved; do not infer acceptance from the example."],
+  "local_focused_tests": {"discovered": 65, "passed": 65, "skipped": 0, "files": ["tests/test_character_archive.py", "tests/test_character_media.py", "tests/test_character_study.py"]},
+  "repository_contract_tests": "Two additional tests use real catalog/templates and existing brief validation in GitHub CI. Not run in the partial local staging directory.",
+  "full_repository_tests_local": "Not run: container git had no network access to the private repository; current files were inspected through the GitHub connector. Check PR CI separately.",
+  "neural_inference": false,
+  "owner_art_approval": false,
+  "rights_clearance": false,
+  "engine_acceptance": false
+}
