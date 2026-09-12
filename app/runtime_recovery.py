@@ -13,6 +13,8 @@ from pathlib import Path
 
 from backend_contracts import connection_refused, endpoint_ready
 
+REFUSAL_PROBE_TIMEOUT = 3
+
 
 class RuntimeRecovery:
     """Observe one configured backend and, only when opted in, restart a dead one."""
@@ -107,7 +109,9 @@ class RuntimeRecovery:
                 self._record("reconnecting", "Backend switch is active; recovery is waiting.")
                 return self.snapshot()
             try:
-                stats = manager.request(profile, "/system_stats", 1)
+                # Windows can surface a one-second urllib timeout before it reports
+                # the connection refusal that authorizes a bounded recovery launch.
+                stats = manager.request(profile, "/system_stats", REFUSAL_PROBE_TIMEOUT)
                 if endpoint_ready(stats):
                     self._ready(profile, stats)
                     return self.snapshot()

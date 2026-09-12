@@ -1,5 +1,9 @@
 # Current state — 11 September 2026
 
+## Windows refusal classification — 12 September 2026
+
+The recovery monitor gives its read-only `/system_stats` probe three seconds to receive a Windows connection refusal. A one-second urllib probe timed out at 1.011 seconds on this host and was conservatively classified as unreachable; three and five seconds received `ConnectionRefusedError` (errno/winerror 10061) at about 2.04 seconds. The monitor still starts only after that exact refusal and all existing process/work interlocks; ordinary timeouts remain unreachable and do not authorize launch. This records a host fault-injection observation, not a live recovery success or GPU execution.
+
 ## Bounded ComfyUI recovery — 12 September 2026
 
 Studio now has an opt-in (`runtime_auto_recover: true`, default false) monitor for the currently selected configured backend. It persists a bounded state and event log under `.runtime/`, classifies healthy, startup, absent, live-but-unreachable and foreign/ambiguous listener states, and may start only a confirmed-dead selected profile with no fresh queued, submitting or running Studio work. It never switches backend family, scans/reassigns ports, stops a process, clears a queue or calls `/prompt`; retained uncertain jobs remain evidence and are never replayed. Startup processes are retained, repeated failures open a breaker, and a same-origin Reset recovery control only clears that breaker for a later monitor observation. A dead Studio worker is reported as degraded and blocks new jobs. Offline causal tests cover one launch across repeated polls, no prompt route, foreign/live/busy preservation, bounded restart attempts, retained startup and healthy reconnect/schema invalidation. No live process, generation, GPU or endpoint was exercised; runtime health, recovery effectiveness and creative acceptance remain unverified.
