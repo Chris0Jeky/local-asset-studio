@@ -1,5 +1,38 @@
 # Current state — 11 September 2026
 
+## Integrated Studio workflow UI verification — 12 September 2026
+
+The shared workspace navigation, guided creation, saved drafts and reusable image
+handoffs in PR #82 integrate main `896f948` at `0cc4970`. The configured Windows full
+suite ran 864 tests: 850 passed and 14 skipped, in 206.251 seconds; repository
+validation passed (60 graphs/bindings, 62 pinned assets, 805 tracked paths). The
+independent review's confirmed gallery identity defect was fixed in `720b8f9`, and
+its scoped recheck passed all 58 inert browser checks. Newly completed assets can
+still need a library refresh (#86); a dormant legacy handoff adapter is tracked
+separately on the PR. The current asset-detail and indexed gallery paths passed.
+This local proof does not claim the interface is already deployed or that the
+longer full-suite duration has been attributed to a cause.
+
+PR #85 merged as `896f948`, after PR #84 (`04903e9`) and PR #83 (`06d2750`). One
+guarded idle Studio reload to PID 27572 preserved all 77 job-state hashes and 17
+projects and loaded the tested Voice and character-scope sources. ComfyUI had
+restarted outside this task to PID 40412; the reload preserved that process and
+its history. The receipt is `primary/.runtime/session-2026-09-12/scope-reload/after.json`.
+The two new portrait-scope cases were then imported with shared allowance two and
+zero reserved attempts. Their first Start check found external ComfyUI work and
+stopped before writing intent or sending a request. Both remain planned at this
+checkpoint; the old pilot and blocked boot-edit probe remain unchanged.
+
+## Gallery handoff identity guard — 12 September 2026
+
+The Studio UX now refuses a gallery output that has no saved `asset_id` instead of substituting the
+last active Workspace asset. A fixture-browser run opened an unrelated asset detail, removed the
+gallery output identity, and proved that the gallery action opened no handoff, made no reference
+request and retained the prior lineage. Restoring the output identity selected its own asset, while
+the asset-detail action retained its active-asset behavior. The 58-check fixture journey had no
+browser exceptions and no execution/setup mutations. This is a local UI boundary proof only: no
+live Studio, ComfyUI, model, project, queue or generated output was touched.
+
 ## Matched portrait prompt scope — 12 September 2026
 
 Opt-in request/plan/handoff v2 can select existing canon descriptions and invariants
