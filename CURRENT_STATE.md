@@ -1,5 +1,16 @@
 # Current state — 11 September 2026
 
+## Prompt response uncertainty — 12 September 2026
+
+The `/prompt` submission boundary now treats malformed JSON, invalid UTF-8, truncated HTTP
+responses, non-object replies and blank or non-string prompt IDs as uncertain. It keeps the
+expanded pending graph and earlier batch evidence, and does not retry or alter reservations;
+valid prompt ID strings remain exact and HTTP 400 rejection remains definite failure. Focused
+server and production tests passed 51/51; the source full suite ran 872 tests: 837 passed and 35
+skipped. Repository validation passed (61 graphs/bindings, 62 pinned assets, 808 tracked
+paths). This is inert mocked HTTP proof only; no live backend, generation, GPU or art-quality
+evidence was produced.
+
 ## Retained observation dispatch race (#113) — 12 September 2026
 
 Late review of #105 exposed a duplicate-generation dispatch when Gallery Resume changed a retained

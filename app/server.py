@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+from http.client import HTTPException
 import io
 import json
 import math
@@ -841,10 +842,10 @@ class Studio:
                     job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
                     self._save(job); return
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
-            except (URLError, TimeoutError, OSError) as exc:
+            except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
-            prompt_id = response.get("prompt_id")
-            if not isinstance(prompt_id, str):
+            prompt_id = response.get("prompt_id") if isinstance(response, dict) else None
+            if not isinstance(response, dict) or not isinstance(prompt_id, str) or not prompt_id.strip():
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
