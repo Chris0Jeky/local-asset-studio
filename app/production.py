@@ -39,6 +39,9 @@ class Production:
                     state.update(status='interrupted',message='Studio restarted. Inspect known jobs before explicitly resuming; nothing was resubmitted.')
                     db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
 
+        from review_desk import ReviewDesk
+        self.reviews=ReviewDesk(self)
+
     @contextmanager
     def connect(self):
         db=sqlite3.connect(self.db,timeout=15);db.row_factory=sqlite3.Row
@@ -393,18 +396,26 @@ class Production:
         return [{'path':target.name,'url':f'/api/production/{identifier}/files/{target.name}','sha256':hashlib.sha256(target.read_bytes()).hexdigest(),'role':'comparison'}]
 
     def review(self, identifier, payload):
-        project=self._get(identifier)
-        if project['state']['status'] not in ('awaiting_review','reviewed'):raise ValueError('Review is available after a completed comparison')
-        selected=payload.get('asset_id');notes=payload.get('notes','')
-        if not isinstance(notes,str) or len(notes)>8000:raise ValueError('Review notes must be text up to 8000 characters')
-        candidates=[o.get('asset_id') for s in self.public(project)['stages'] for o in (s['job'] or {}).get('outputs',[])]
-        if selected is not None and selected not in candidates:raise ValueError('Choose an output from this experiment')
-        reviewer=payload.get('reviewer','local-user')
-        if reviewer not in ('local-user','local-agent'):raise ValueError('Identify the local reviewer')
-        self._mutate(identifier,status='reviewed',review={'status':'selected' if selected else 'needs_work','asset_id':selected,'notes':notes,'reviewer':reviewer,'at':time.time()},message='Creative review recorded separately from model terms and engine checks.')
+        if not isinstance(payload,dict):raise ValueError('Review command must be an object')
+        if 'action' in payload:return self.reviews.command(identifier,payload)
+        with self.lock,self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            if db.execute('SELECT 1 FROM comparison_reviews WHERE project_id=?',(identifier,)).fetchone():
+                raise ValueError('Use Review desk for this study; legacy selection cannot overwrite its revisioned evidence')
+            project=self._get(identifier,db)
+            if project['state']['status'] not in ('awaiting_review','reviewed'):raise ValueError('Review is available after a completed comparison')
+            selected=payload.get('asset_id');notes=payload.get('notes','')
+            if not isinstance(notes,str) or len(notes)>8000:raise ValueError('Review notes must be text up to 8000 characters')
+            candidates=[o.get('asset_id') for s in self.public(project)['stages'] for o in (s['job'] or {}).get('outputs',[])]
+            if selected is not None and selected not in candidates:raise ValueError('Choose an output from this experiment')
+            reviewer=payload.get('reviewer','local-user')
+            if reviewer not in ('local-user','local-agent'):raise ValueError('Identify the local reviewer')
+            project['state'].update(status='reviewed',review={'status':'selected' if selected else 'needs_work','asset_id':selected,'notes':notes,'reviewer':reviewer,'at':time.time()},message='Creative review recorded separately from model terms and engine checks.')
+            db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(project['state']),identifier))
         return self.get(identifier)
 
     def file(self, identifier, relative):
+        if relative.startswith('reviews/'):return self.reviews.file(identifier,relative)
         project=self._get(identifier)
         base=(self.root/project['id']).resolve();path=(base/relative).resolve()
         if not path.is_relative_to(base) or not path.is_file():raise ValueError('Artifact unavailable')
