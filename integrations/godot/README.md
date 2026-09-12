@@ -1,17 +1,44 @@
 # Godot asset adapter
 
-`scripts/godot_asset_adapter.py` packages a Studio `sprite_atlas` manifest into a new Godot 4 project. It creates `AtlasTexture` entries and one `SpriteFrames` animation, with `relative_duration = duration_ms / 1000 * 60`. The `AnimatedSprite2D` offset keeps the shared manifest anchor at node origin; nearest or linear filtering and loop policy are retained.
+`scripts/godot_asset_adapter.py` packages a Studio `sprite_atlas` manifest into a
+new Godot 4 project. AtlasTexture regions, common anchor, individual durations,
+loop policy and nearest/linear filtering are retained. Packaging submits nothing.
 
-The adapter takes only root-confined input paths and a caller-selected Godot executable. It launches Godot with fixed argument arrays, never runs manifest text as code, and refuses an existing output root. `run` performs a headless import, runs the generated verification scene, and retains Godot's own frame/timing/anchor/alpha-region report. An optional GLB is copied read-only and loaded by Godot for scene, mesh, material, and animation inventory.
+**Verification v2** now observes `frame_changed` and `animation_looped` or
+`animation_finished` before accepting a sprite. The earlier adapter's 480 ms
+report was calculated from imported SpriteFrames durations; it did not wait for
+a full cycle. The new report retains that configured value and separately records
+observed simulation timing at 240 fixed steps/second. It is not a rendering-speed
+benchmark. Blank/hold frames are checked against the original alpha pixels, not
+rejected simply for being empty.
 
-```powershell
-python scripts/game_asset_demo.py --out .runtime/godot-fixture
-python scripts/godot_asset_adapter.py run `
-  --input-root "$PWD/.runtime/godot-fixture" `
-  --atlas-manifest atlas/manifest.json `
-  --glb examples/lanternkeeper/ember.glb `
-  --output-root "$PWD/.runtime/godot-project" `
-  --godot C:/AI/asset-tools/godot/Godot_v4.7.2-stable_win64.exe
+GLB verification additionally requires the pinned Khronos tool and an explicit
+Node executable. Install the tool deliberately, outside the ComfyUI environment:
+
+```console
+npm ci --prefix tools/gltf-validation --ignore-scripts --no-audit --no-fund
 ```
 
-`engine-report.json` proves only the imported package's headless behavior. Visual art acceptance, licence approval, rig quality, collision, root motion, and runtime platform coverage still need their own gates.
+Set `node` to the absolute Node executable path in `config/local.json`, beside
+your existing `godot` path. This is used by the current Studio native-export
+route; no second queue or new UI is needed. CLI callers may pass `--node`.
+Sprite-only verification and atlas/ORA packaging do not need Node.
+
+```powershell
+python scripts/godot_asset_adapter.py run `
+  --input-root "$PWD/.runtime/approved-asset-inputs" `
+  --atlas-manifest atlas/manifest.json `
+  --glb model.glb `
+  --output-root "$PWD/.runtime/godot-new-attempt" `
+  --godot "C:/path/to/Godot.exe" `
+  --node "C:/Program Files/nodejs/node.exe"
+```
+
+All inputs above must actually exist under the explicit input root. The command
+does not discover/download them. The original files remain unchanged.
+
+Read [Engine evidence](../../docs/ENGINE-EVIDENCE.md) for architecture, limits,
+CI/local test commands, source pins, report semantics and failure recovery.
+A successful format/import check is not art, licence, rig, collision, root-motion
+or cross-platform gameplay acceptance. GLB pose samples are labelled samples,
+not proof of complete temporal/visual quality.

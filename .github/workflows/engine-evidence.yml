@@ -1,0 +1,53 @@
+name: Native engine evidence
+on:
+  pull_request:
+    paths:
+      - 'scripts/godot_asset_adapter.py'
+      - 'scripts/godot_probe.gd'
+      - 'scripts/engine_validation.py'
+      - 'tools/gltf-validation/**'
+      - 'tests/*engine*.py'
+      - '.github/workflows/engine-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/godot_asset_adapter.py'
+      - 'scripts/godot_probe.gd'
+      - 'scripts/engine_validation.py'
+      - 'tools/gltf-validation/**'
+      - 'tests/*engine*.py'
+      - '.github/workflows/engine-evidence.yml'
+permissions:
+  contents: read
+concurrency:
+  group: engine-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt
+      - run: npm install --prefix tools/gltf-validation --ignore-scripts --no-audit --no-fund
+      - run: python -c "from pathlib import Path; print(Path('tools/gltf-validation/package-lock.json').read_text())"
+      - run: python tests/install_engine_test_runtime.py
+      - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
+      - run: python -m unittest discover -s tests -p test_engine_live.py -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-engine-evidence-${{ matrix.os }}
+          path: engine-evidence
+          retention-days: 14
+          if-no-files-found: warn
