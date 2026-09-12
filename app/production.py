@@ -481,6 +481,16 @@ class Production:
             if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
                 raise ValueError('Switch to this experiment\'s backend before resuming it')
             if project['state']['status'] not in ('interrupted','uncertain','stopped'):raise ValueError('Only interrupted experiments can resume')
+            stop_tokens=[]
+            for attempt in project['state'].get('attempts',{}).values():
+                job=self.studio.jobs.get(attempt.get('job_id'))
+                if job:
+                    tokens=self.studio.tracking_stop_tokens(job)
+                    if tokens and job.get('status')!='completed':
+                        raise ValueError('Resume observation of the retained prompt before authorizing later stages')
+                    stop_tokens.extend(tokens)
+            state=dict(project['state']);authorized=set(state.get('tracking_stop_authorizations',[]));authorized.update(stop_tokens)
+            if stop_tokens: self._mutate(identifier,tracking_stop_authorizations=sorted(authorized),message='Explicit continuation authorized after retained prompt observation')
             self._mutate(identifier,status='queued',stop_requested=False,message='Queued to reconcile known jobs and continue never-started stages')
             self.studio.queue.put(('production',identifier))
         return self.get(identifier)
@@ -516,6 +526,11 @@ class Production:
         project=self._get(identifier);plan=project['plan']
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
         if plan['kind']=='voice' and project['state']['status'] in ('completed','failed','cancelled','stopped'):return
+        authorized=set(project['state'].get('tracking_stop_authorizations',[]))
+        for attempt in project['state'].get('attempts',{}).values():
+            job=self.studio.jobs.get(attempt.get('job_id'))
+            if job and set(self.studio.tracking_stop_tokens(job))-authorized:
+                self._mutate(identifier,status='uncertain',message='A retained stop-tracking event has not authorized Production continuation. No later stage was submitted.');return
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='av':return self.av.run(identifier)
         if plan['kind']=='voice':

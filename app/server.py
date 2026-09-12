@@ -372,10 +372,12 @@ class Studio:
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
+        result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
+        result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._known_prompt_error(job) is None
         return result
 
     def export_recipe(self, job):
@@ -546,6 +548,90 @@ class Studio:
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
+
+    @staticmethod
+    def _tracking_stopped(job):
+        disposition = job.get("tracking_disposition")
+        return isinstance(disposition, dict) and disposition.get("status") == "stopped"
+
+    @staticmethod
+    def _tracking_history(job):
+        disposition = job.get("tracking_disposition")
+        if not isinstance(disposition, dict): return []
+        history = disposition.get("history")
+        if isinstance(history, list) and all(isinstance(event, dict) for event in history): return [dict(event) for event in history]
+        return [{k: v for k, v in disposition.items() if k != "history"}]
+
+    def tracking_stop_tokens(self, job):
+        tokens = []
+        for event in self._tracking_history(job):
+            if event.get("status") == "stopped":
+                tokens.append(event.get("event_id") or f"legacy:{job.get('id')}:{event.get('recorded_at')}")
+        return tokens
+
+    @staticmethod
+    def _known_prompt_error(job):
+        if job.get("pending_submission"): return "A submission outcome is still unknown"
+        prompt_ids = job.get("prompt_ids")
+        submissions = job.get("submissions")
+        if not isinstance(prompt_ids, list) or not prompt_ids or any(type(prompt_id) is not str or not prompt_id.strip() for prompt_id in prompt_ids):
+            return "No known prompt IDs are available to observe"
+        if len(set(prompt_ids)) != len(prompt_ids) or not isinstance(submissions, list) or not submissions:
+            return "Known prompt IDs are inconsistent"
+        submission_ids = []
+        for submission in submissions:
+            prompt_id = submission.get("prompt_id") if isinstance(submission, dict) else None
+            if type(prompt_id) is not str or not prompt_id.strip() or prompt_id not in prompt_ids:
+                return "Known prompt IDs are inconsistent"
+            submission_ids.append(prompt_id)
+        if set(submission_ids) != set(prompt_ids) or len(set(submission_ids)) != len(submission_ids):
+            return "Known prompt IDs are inconsistent"
+        if not any(submission.get("status") not in ("completed", "failed") for submission in submissions):
+            return "No unresolved known prompt IDs are available to observe"
+        return None
+
+    def _stop_tracking_error(self, job):
+        if Studio._tracking_stopped(job): return "Tracking was already stopped"
+        if job.get("status") != "uncertain": return "Only an uncertain job can stop tracking"
+        return Studio._known_prompt_error(job)
+
+    def stop_tracking(self, job_id, reason):
+        if type(reason) is not str: raise StudioError("Stop-tracking reason must be text")
+        reason = reason.strip()
+        if not reason: raise StudioError("Stop-tracking reason is required")
+        if len(reason) > 1000: raise StudioError("Stop-tracking reason must be at most 1000 characters")
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            disposition = job.get("tracking_disposition")
+            if self._tracking_stopped(job):
+                if disposition.get("reason") != reason: raise StudioError("Tracking was already stopped with a different reason")
+                return self.public(job)
+            error = self._stop_tracking_error(job)
+            if error: raise StudioError(error)
+            recorded = {"status": "stopped", "reason": reason, "recorded_at": time.time(), "event_id": uuid.uuid4().hex}
+            history = self._tracking_history(job) if isinstance(job.get("tracking_disposition"), dict) else []
+            disposition = dict(recorded)
+            if history: disposition["history"] = history + [dict(recorded)]
+            prospective = dict(job); prospective["tracking_disposition"] = disposition
+            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job["tracking_disposition"] = disposition
+            return self.public(job)
+
+    def _resume_tracking(self, job):
+        if job.get("status") != "uncertain": raise StudioError("Only an uncertain job can resume observation")
+        error = self._known_prompt_error(job)
+        if error: raise StudioError(error)
+        history = self._tracking_history(job)
+        resumed = dict(job["tracking_disposition"])
+        resumed.update(status="resumed")
+        resumed["history"] = history + [{"status": "resumed", "recorded_at": time.time()}]
+        prospective = dict(job)
+        prospective.update(status="queued", message="Queued to resume observation of retained prompt IDs; no image will be resubmitted.", tracking_disposition=resumed)
+        self._write_json_atomic(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+        job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
+        self.queue.put(("observe", job["id"]))
+        return self.public(job)
 
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
@@ -772,7 +858,10 @@ class Studio:
         for _ in range(720):
             try: history = self._request("/history/" + prompt_id, timeout=15, base_url=job.get('comfy_url')).get(prompt_id)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError):
-                job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job); return False
+                with self.lock:
+                    if self._tracking_stopped(job): return False
+                    job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
+                return False
             if history:
                 status = history.get("status", {})
                 if status.get("status_str") == "error":
@@ -796,7 +885,9 @@ class Studio:
                                 if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             time.sleep(2)
-        job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
+        with self.lock:
+            if self._tracking_stopped(job): return False
+            job["status"] = "uncertain"; job["message"] = "Timed out while observing ComfyUI; it was not resubmitted."; self._save(job)
         return False
 
     def resume_job(self, job_id):
@@ -807,12 +898,15 @@ class Studio:
     def _queue_observation(self, job_id):
         job = self.jobs.get(job_id)
         if not job: raise StudioError("Unknown job")
+        if self._tracking_stopped(job): return self._resume_tracking(job)
         pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
         if not pending: raise StudioError("No known prompt IDs are available to resume")
         job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
 
     def _resume(self, job):
-        job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
+        with self.lock:
+            if self._tracking_stopped(job): return
+            job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
             if submission.get("status") != "completed" and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
@@ -1028,6 +1122,8 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
                 self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
+                return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             return self._json(404, {"error":"Not found"})

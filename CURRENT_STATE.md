@@ -6,10 +6,22 @@ The `/prompt` submission boundary now treats malformed JSON, invalid UTF-8, trun
 responses, non-object replies and blank or non-string prompt IDs as uncertain. It keeps the
 expanded pending graph and earlier batch evidence, and does not retry or alter reservations;
 valid prompt ID strings remain exact and HTTP 400 rejection remains definite failure. Focused
-server and production tests passed 51/51; the configured full suite passed 872 tests with 35
-skipped, and repository validation passed (61 graphs/bindings, 62 pinned assets, 808 tracked
+server and production tests passed 51/51; the source full suite ran 872 tests: 837 passed and 35
+skipped. Repository validation passed (61 graphs/bindings, 62 pinned assets, 808 tracked
 paths). This is inert mocked HTTP proof only; no live backend, generation, GPU or art-quality
 evidence was produced.
+
+## Stop tracking uncertain prompts — 12 September 2026
+
+The local Gallery can record an explicit reason for stopping observation of an
+uncertain known prompt without changing its prompt IDs, submissions, recipes,
+graphs, outputs, timing, lineage, or Production reservation. The retained
+state records immutable stop/resume history. An explicit Gallery Resume only
+queues observation of those retained prompt IDs; it never resubmits a graph or
+continues Production. A prior stop event blocks stale Production work until a
+later explicit Production Resume authorizes continuation after a terminal
+observation record. This is local synthetic coverage only: no Studio project,
+queue, ComfyUI request, generation, refund, or artistic acceptance occurred.
 
 ## UI handoff follow-ups — 12 September 2026
 
