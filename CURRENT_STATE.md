@@ -1,5 +1,58 @@
 # Current state — 11 September 2026
 
+## Recipe inspection on the configured Windows host — 12 September 2026
+
+The PR #80 integration at `2402763` includes main `db066ec` (the failed-job timing and readiness
+fixes). The configured Windows suite ran 825 tests: 812 passed and 13 skipped; repository validation
+passed (60 graphs/bindings, 62 pinned assets, 791 tracked paths). A fresh independent review found
+no defects and ran 47 provenance/HTTP tests plus the real frontend behavior and syntax checks.
+The procedural demo and CLI ran locally: explicit output `final` remained selected, the deliberately
+conflicting sidecar retained both graph claims, and matching the image hash did not authenticate
+either claim. No model or generation service was used. Reports are retained under the primary
+checkout's `.runtime/session-2026-09-12/recipe-inspection-demo/`, with test logs in the review
+worktree's `.runtime/recipe-inspection-review/`. Windows browser file-selection behavior was not
+separately exercised; the author's Linux browser evidence and its fixture boundary remain recorded
+in `docs/prompt-studio/INSPECTION-VERIFICATION.md`.
+
+PR #81 merged as `db066ec`. The running Studio served the updated static JavaScript, and its Create
+page reached ComfyUI connected with Generate enabled for the ready Anima recipe in the local
+browser. The temporary verification tab was closed without submitting anything. Its 12 raw
+evidence files were archived with verified hashes under
+`primary/.runtime/session-2026-09-12/readiness-status/raw/` before plain worktree removal.
+
+## Confirmed Comfy error timing — 12 September 2026
+
+The #77 follow-up now records a confirmed ComfyUI history error as a failed Studio job before
+propagating the existing exception. It persists the observed finish time and computes the Studio
+wall interval only from a finite, non-boolean start that is not in the future; legacy or invalid
+starts keep elapsed time unknown, and repeated observation preserves the first terminal timestamp.
+PR #79 merged as `451a681`. The actual idle reload was verified at 18:10 UTC: Studio PID 1236
+reloaded from 31288 while retaining the same 77 terminal jobs, raw state-file hashes and timestamps,
+17 projects, ComfyUI PID 10984 and history, with an empty queue. The raw receipt is
+`primary/.runtime/session-2026-09-12/timing-reload/after.json`. The full Windows suite ran 781 tests:
+768 passed and 13 skipped, using the configured Studio test interpreter. Repository validation and a
+fresh independent review passed. The causal test records
+60 seconds from Studio start to failure observation, distinct from the fixture's 25-second Comfy
+event interval; it fails on the original history-error method and passes on the fix. Transport-loss
+and uncertain submissions retain unknown completion times. No historical jobs were backfilled and
+no neural failure run was used for this proof.
+
+## Readiness state wording — 12 September 2026
+
+The Create view now keeps ComfyUI readiness neutral while its first health request is pending and
+labels failed health requests as unavailable rather than offline. Generate remains disabled until a
+known online, schema-ready response with the selected recipe's models present; periodic health
+refreshes retain the last known result until their response arrives. The focused VM check covers
+pending, online, known-offline, request-failure, recovery, missing-schema and missing-model states
+without posting a job. The full configured Windows suite ran 782 tests: 769 passed and 13 skipped;
+repository validation passed (60 preset graphs/bindings, 62 pinned assets and 783 tracked paths).
+The real Create page was also checked in a browser against an inert loopback fixture serving the
+changed static files: pending and unavailable responses disabled Generate, known online enabled it,
+a healthy poll recovered from the request failure without a reload, and known offline stayed explicit
+and disabled. Every write was rejected by the fixture and its request log recorded zero POSTs.
+Test logs are retained under `.runtime/readiness-status/`; browser evidence is under
+`primary/.runtime/session-2026-09-12/readiness-browser/`.
+
 ## Controlled edits through Studio - 12 September 2026
 
 The local character-edit client can prepare a pinned handoff, stage one ordinary Production
@@ -117,6 +170,21 @@ while preserving identifiers and evidence, and submits nothing. Full integrated 
 real Chromium with inert API fixtures verified explicit Start/Stop/Resume routes, hidden unsafe recovery,
 one request on rapid keyboard Resume, and no horizontal overflow at 390 px. The fixture emitted no console
 warnings or errors. This does not claim human listening or voice acceptance.
+
+## Voice resume polling snapshot follow-up - 12 September 2026
+
+The interrupted Voice resume eligibility check now snapshots `Studio.jobs` while holding the
+Studio lock, then uses that same snapshot for deterministic and metadata job checks after releasing
+the lock. The causal regression inserted an unrelated job from an unrelated job's metadata callback:
+the baseline raised `RuntimeError: dictionary changed size during iteration` from `production.list()`;
+the fixed `production.list()` and `production.get()` remain eligible and the queue stays empty. A
+small lock probe also verified snapshot acquisition under lock and metadata scanning after release;
+matching voice jobs under nonstandard IDs remain a resume refusal. Focused Voice and Production
+discover suites passed: 15 and 13 tests. The configured full suite passed 826 tests (813 passed,
+13 skipped), and repository validation passed. Raw command logs, including the baseline failure, are
+retained under `.runtime/voice-polling/`; the direct `unittest tests.test_voice_baseline` form failed
+at import because this repository's test module imports its sibling without the tests directory on
+the module path, while the discover form is the valid proving command.
 
 ## Scene editor interaction checks - 12 September 2026
 

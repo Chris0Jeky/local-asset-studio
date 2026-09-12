@@ -2,11 +2,13 @@
 import hashlib
 import struct
 import zlib
-from .core import need, decode
+from .core import need, decode, canonical
+from .graph_provenance import inspect_graph
 
 PNG = b'\x89PNG\r\n\x1a\n'
 TEXT_CAP = 128 * 1024
 FILE_CAP = 16 * 1024 * 1024
+REPORT_CAP = 2 * 1024 * 1024
 
 
 def inflate(data):
@@ -64,7 +66,45 @@ def inspect_png(raw):
                     value = inputs.get(field)
                     if type(value) in (str, int, float, bool):
                         claims.append({'node': str(node_id), 'class_type': cls, 'field': field, 'value': value})
-    return {'kind': 'png_recipe_inspection', 'sha256': hashlib.sha256(raw).hexdigest(), 'dimensions': dimensions,
+    return enrich_report({'kind': 'png_recipe_inspection', 'sha256': hashlib.sha256(raw).hexdigest(), 'dimensions': dimensions,
             'entries': entries, 'node_claims': claims, 'workflow_executed': False,
             'status': 'metadata_claims_found' if entries else 'no_text_metadata',
-            'warning': 'Metadata may be edited or stale. Node prompts are not classified as positive/negative without graph reachability. Missing metadata cannot reveal an exact original prompt or seed.'}
+            'pixel_data_validated': False})
+
+
+def enrich_report(report):
+    """Attach independent graph reports without choosing between conflicting claims."""
+    graphs = []; grouped = {}; diagnostics = list(report.get('diagnostics', []))
+    report_bytes = len(canonical(report['entries'])) + len(canonical(report.get('node_claims', [])))
+    # Re-enrichment after explicit sidecar attachment is idempotent.
+    diagnostics = [d for d in diagnostics if d.get('code') not in ('uninterpreted_prompt_claim',)]
+    for index, item in enumerate(report['entries']):
+        item.setdefault('location', f"png/text/{index}")
+        item.setdefault('source_sha256', report['sha256'])
+        value = item.get('value')
+        item['text_sha256'] = hashlib.sha256(value.encode('utf-8')).hexdigest() if isinstance(value, str) else None
+        grouped.setdefault(item['keyword'], []).append(index)
+        if item['keyword'] != 'prompt' or not isinstance(value, str): continue
+        try:
+            graph = inspect_graph(decode(value.encode('utf-8')))
+            cost = len(canonical(graph))
+            need(report_bytes + cost <= REPORT_CAP, 'Combined graph report byte budget exceeded')
+            report_bytes += cost
+        except (ValueError, TypeError, RecursionError) as exc:
+            diagnostics.append({'code': 'uninterpreted_prompt_claim', 'entry': index, 'reason': str(exc)})
+            continue
+        graph['entry'] = index; graph['source_sha256'] = item['source_sha256']; graphs.append(graph)
+    conflicts = []
+    for keyword, indices in grouped.items():
+        if len(indices) < 2: continue
+        hashes = {report['entries'][i].get('text_sha256') or report['entries'][i].get('payload_sha256') for i in indices}
+        conflicts.append({'keyword': keyword, 'entries': indices,
+                          'status': 'conflicting_claims' if len(hashes) > 1 else 'duplicate_claims'})
+    report.update({'graphs': graphs, 'duplicate_records': conflicts, 'diagnostics': diagnostics,
+                   'schema_version': 2, 'workflow_executed': False,
+                   'warning': 'Embedded and sidecar metadata are editable claims, not authenticated provenance. '
+                              'Known graph links can trace sampler roles but do not prove which output produced these pixels '
+                              'or that negative guidance affected execution. Unknown operators stay unresolved. '
+                              'Missing metadata cannot reveal an exact original prompt, seed or model.'})
+    if report['entries']: report['status'] = 'metadata_claims_found'
+    return report

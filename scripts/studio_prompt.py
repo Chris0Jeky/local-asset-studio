@@ -6,6 +6,7 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from studio_prompt.core import read_json,write_new,new_brief,profiles,compile_brief,apply_proposal,bind_graph,experiment_plan
 from studio_prompt.metadata import inspect_png,FILE_CAP
+from studio_prompt.recipe_intake import inspect_media,TEXT_CAP
 from studio_prompt.local_helper import request_payload,run_local
 
 
@@ -21,6 +22,7 @@ def main(argv=None):
             c.add_argument('--model',required=True);c.add_argument('--workspace');c.add_argument('--images',action='store_true')
         if name=='run-helper':c.add_argument('--port',type=int,default=11434);c.add_argument('--idle-confirmed',action='store_true');c.add_argument('--cache',action='store_true')
     c=sub.add_parser('inspect-png');c.add_argument('image');c.add_argument('--out')
+    c=sub.add_parser('inspect-media');c.add_argument('image');c.add_argument('--out');c.add_argument('--sidecar');c.add_argument('--output-node')
     c=sub.add_parser('apply');c.add_argument('brief');c.add_argument('proposal');c.add_argument('--accept',action='append',required=True);c.add_argument('--out',required=True)
     c=sub.add_parser('bind');c.add_argument('compiled');c.add_argument('graph');c.add_argument('binding');c.add_argument('--out',required=True)
     a=p.parse_args(argv)
@@ -29,6 +31,12 @@ def main(argv=None):
         elif a.command=='new':value=new_brief(a.description,a.task)
         elif a.command=='inspect-png':
             with Path(a.image).open('rb') as f:value=inspect_png(f.read(FILE_CAP+1))
+        elif a.command=='inspect-media':
+            with Path(a.image).open('rb') as f:raw=f.read(FILE_CAP+1)
+            sidecar=None
+            if a.sidecar:
+                with Path(a.sidecar).open('rb') as f:sidecar=f.read(TEXT_CAP+1)
+            value=inspect_media(raw,sidecar,a.output_node)
         elif a.command=='apply':
             prop=read_json(a.proposal); prop=prop.get('proposal',prop)
             value=apply_proposal(read_json(a.brief),prop,a.accept)['intent']

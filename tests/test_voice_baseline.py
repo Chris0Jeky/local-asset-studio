@@ -112,6 +112,7 @@ class VoiceTests(unittest.TestCase):
             ('request',lambda identifier:(self.production.root/identifier/'request.json').write_text('{}')),
             ('attempt',lambda identifier:self.production._attempt(identifier,0,status='interrupted')),
             ('job',lambda identifier:(self.studio.runs/voice_baseline.uuid.uuid5(voice_baseline.uuid.NAMESPACE_URL,'studio-voice:'+identifier).hex).mkdir()),
+            ('nonstandard-job',lambda identifier:self.studio.jobs.__setitem__('legacy-voice-id',{'project_id':identifier,'operation':voice_baseline.OPERATION})),
             ('output',lambda identifier:(self.production.root/identifier/'voice').mkdir()),
         )
         for marker,write in cases:
@@ -119,6 +120,31 @@ class VoiceTests(unittest.TestCase):
             eligibility=self.production.get(take['id'])['voice_resume']
             self.assertFalse(eligibility['eligible'],marker)
             with self.assertRaisesRegex(ValueError,'will not retry|durable voice attempt'):self.production.resume(take['id'])
+
+    def test_voice_resume_eligibility_uses_stable_job_snapshot_during_metadata_scan(self):
+        prepared=self.prepare();self.production._mutate(prepared['id'],status='interrupted')
+        studio=self.studio
+        class LockProbe:
+            def __init__(self):self.held=False;self.entered=0;self.scan_held=[]
+            def __enter__(self):self.held=True;self.entered+=1;return self
+            def __exit__(self,*exc):self.held=False
+        probe=LockProbe();studio.lock=probe
+        class InsertingJob(dict):
+            inserted=False
+            def get(self,key,default=None):
+                if key=='project_id' and not self.inserted:
+                    probe.scan_held.append(probe.held)
+                    self.inserted=True
+                    studio.jobs['unrelated-2']={'project_id':'another-project','operation':'other'}
+                return super().get(key,default)
+        studio.jobs['unrelated-1']=InsertingJob(project_id='another-project',operation='other')
+        listed=self.production.list()
+        fetched=self.production.get(prepared['id'])
+        self.assertEqual(probe.entered,2)
+        self.assertEqual(probe.scan_held,[False])
+        self.assertTrue(next(project for project in listed if project['id']==prepared['id'])['voice_resume']['eligible'])
+        self.assertTrue(fetched['voice_resume']['eligible'])
+        self.assertTrue(studio.queue.empty())
 
     def test_restart_marks_nested_running_voice_attempt_interrupted_without_queueing(self):
         prepared=self.prepare();self.production.start(prepared['id'])

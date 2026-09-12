@@ -1,0 +1,164 @@
+{
+  "checkpoint": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "SYNTHETIC-DO-NOT-EXECUTE.safetensors"
+    }
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "An original observatory keeper holding a brass compass."
+    }
+  },
+  "negative": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "extra fingers, duplicated compass"
+    }
+  },
+  "unused": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "UNUSED: a spaceship over the ocean"
+    }
+  },
+  "refinement": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "Preserve the keeper and compass; refine the sleeve seam."
+    }
+  },
+  "zero": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "negative",
+        0
+      ]
+    }
+  },
+  "latent": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 64,
+      "height": 64,
+      "batch_size": 1
+    }
+  },
+  "base": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "checkpoint",
+        0
+      ],
+      "positive": [
+        "positive",
+        0
+      ],
+      "negative": [
+        "negative",
+        0
+      ],
+      "latent_image": [
+        "latent",
+        0
+      ],
+      "seed": 42,
+      "steps": 8,
+      "cfg": 7,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1
+    }
+  },
+  "refine": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "checkpoint",
+        0
+      ],
+      "positive": [
+        "refinement",
+        0
+      ],
+      "negative": [
+        "zero",
+        0
+      ],
+      "latent_image": [
+        "base",
+        0
+      ],
+      "seed": 43,
+      "steps": 4,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.25
+    }
+  },
+  "base_decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "base",
+        0
+      ],
+      "vae": [
+        "checkpoint",
+        2
+      ]
+    }
+  },
+  "final_decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "refine",
+        0
+      ],
+      "vae": [
+        "checkpoint",
+        2
+      ]
+    }
+  },
+  "preview": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "base_decode",
+        0
+      ]
+    }
+  },
+  "final": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "final_decode",
+        0
+      ],
+      "filename_prefix": "SYNTHETIC-DO-NOT-EXECUTE"
+    }
+  }
+}
