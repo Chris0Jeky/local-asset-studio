@@ -41,3 +41,18 @@ Studio jobs prove the catalog bindings and the strength-0 slot pruning: the subm
 `*-recipe.json` files contain no zero-strength LoRA loader, and Pony's clip-skip node was rewired to
 the checkpoint. SDXL timings are at 832x1216 with warm model caches; Krea timings include LoRA
 patching. Timings are not benchmarks.
+
+
+## Gentle correction follow-up — 12 September 2026
+
+`anime-detail-fix`, **Gentle (denoise 0.3)** in both detailer passes, completed as Studio job
+`e4e49006-fb1b-419c-8045-fe54d1ddeb12`, prompt `a31964f3-3ba7-47f5-a6bd-e6fbd22ce9ea`,
+in **42.280 s**. The authored 832×1216 NoobAI example, seed 2026091201, 24 steps, CFG 5 and
+dpmpp_2m/karras were retained. [Exact recipe](anime-detail-fix-gentle-noob-hands-recipe.json),
+[run and input/output hashes](anime-detail-fix-gentle-evidence.json),
+[unaltered output](../../../examples/anime-fantasy-atelier/anime-detail-fix-gentle-noob-hands.png).
+
+Assistant inspection: the face/eye is sharper, but the raised hand still carries an extra digit.
+This completed run **did not meet the hand-repair objective**; it is retained as a failed candidate
+for that objective, not a runtime failure or accepted artwork. The earlier authored pass used 0.4
+face / 0.45 hand; no new default, broad quality claim or licence clearance follows from this trial.
