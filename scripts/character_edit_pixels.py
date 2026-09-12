@@ -79,10 +79,15 @@ def _inputs(root: Path, plan: dict) -> tuple[Image.Image, Image.Image, Image.Ima
 
 def _patches(source: Image.Image, mask: Image.Image, plan: dict) -> tuple[dict, dict]:
     request = plan['intent']; box = tuple(request['context_box'])
-    crop = source.crop(box); edit = mask.crop(box); width, height = crop.size
+    crop = source.crop(box)
+    # PNG tRNS is metadata on RGB images. Materialize it before pasting onto a
+    # fresh canvas, otherwise transparent pixels become opaque in model context.
+    # Leave ordinary RGB/RGBA contexts unchanged for existing bundle compatibility.
+    if crop.mode == 'RGB' and 'transparency' in crop.info: crop = crop.convert('RGBA')
+    edit = mask.crop(box); width, height = crop.size
     align = request['patch_alignment']; pw = (-width) % align; ph = (-height) % align
     require((width + pw) * (height + ph) <= 24000000, 'Padded patch exceeds pixel budget')
-    context = Image.new(source.mode, (width + pw, height + ph), 0); context.paste(crop, (0, 0))
+    context = Image.new(crop.mode, (width + pw, height + ph), 0); context.paste(crop, (0, 0))
     padded = Image.new('L', context.size, 0); padded.paste(edit, (0, 0))
     # Context padding is explicitly black/transparent, not a resizing operation.
     if 'icc_profile' in source.info: context.info['icc_profile'] = source.info['icc_profile']
@@ -145,6 +150,7 @@ def _verify_bundle(root: Path, plan: dict, folder: str, patches: dict, transform
         actual = png(verify_artifact(receipt_path.parent, record))
         require(actual.mode == expected.mode and actual.size == expected.size
                 and actual.tobytes() == expected.tobytes()
+                and actual.convert('RGBA').tobytes() == expected.convert('RGBA').tobytes()
                 and actual.info.get('icc_profile') == expected.info.get('icc_profile'), 'Bundle pixels/profile changed')
     return bundle
 
