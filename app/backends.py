@@ -15,8 +15,9 @@ class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):return None
 
 
-# ComfyUI's own Windows default is 600 MB (comfy/model_management.py:865, +100 MB on 16 GB+ cards).
-# 2 GB left the Qwen Q4_K_M unet on the full/partial load boundary; see docs/RUNTIME-PRECONDITIONS.md.
+# --reserve-vram replaces ComfyUI's default rather than adding to it. That default is 600+100 MiB on
+# this 16,304 MB Windows card (comfy/model_management.py:863-867), so 0.6 GB is ~86 MiB under it,
+# while 2 GB left the Qwen Q4_K_M unet on the full/partial load boundary. docs/RUNTIME-PRECONDITIONS.md.
 PRIMARY_RESERVE_VRAM='0.6'
 
 

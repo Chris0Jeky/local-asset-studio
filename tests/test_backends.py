@@ -3,7 +3,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from test_server import server, FakeStudio, GRAPH, PRESET
 from backends import PRIMARY_RESERVE_VRAM, BackendManager
 
@@ -28,12 +28,26 @@ class BackendTests(unittest.TestCase):
         self.assertFalse(BackendManager.matches_configured_process(profile,str(self.root/'foreign.exe'),argv,profile['root']))
 
     def test_primary_launch_reserves_the_measured_vram_amount(self):
-        # 0.6 GB is ComfyUI's own Windows default; 2 GB put Qwen Q4_K_M on the partial-load boundary (#77).
+        # 2 GB put Qwen Q4_K_M on the partial-load boundary (#77); 0.6 GB (614 MiB) is ~86 MiB under
+        # ComfyUI's own Windows default for this 16,304 MB card, 600+100 MiB (model_management.py:863-867).
         profile=self.studio.backends.profiles['primary'];argv=BackendManager.primary_argv(profile)
         self.assertEqual(argv.count('--reserve-vram'),1)
         self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
         self.assertEqual(PRIMARY_RESERVE_VRAM,'0.6')
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+
+    def test_switch_actually_launches_primary_with_the_reserve_flag(self):
+        # primary_argv alone would stay green if the call site were reverted; assert what Popen receives.
+        manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')
+        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        launched=MagicMock(pid=4321);launched.poll.return_value=1
+        with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
+             patch.object(manager,'process',return_value=None),patch('backends.subprocess.Popen',return_value=launched) as popen:
+            manager._switch('primary')
+        argv=popen.call_args.args[0]
+        self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
+        self.assertEqual(argv[:3],[manager.profiles['primary']['python'],'-s',manager.profiles['primary']['entry']])
+        self.assertEqual(manager.operation['status'],'failed');self.assertFalse(manager.busy)
 
     def test_local_uncertain_and_external_queue_each_prevent_switch(self):
         manager=self.studio.backends
