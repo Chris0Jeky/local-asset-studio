@@ -20,6 +20,12 @@ function renderProduction(){
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
   let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){
+    const clock=p.state.time_budget;
+    if(clock&&!p.state.time_budget_error){
+      const minutes=seconds=>(seconds/60).toFixed(1);
+      html+='<p class="muted">Time allowance: '+esc(minutes(clock.measured_seconds))+' min measured'+(clock.unmeasured_seconds?' + '+esc(minutes(clock.unmeasured_seconds))+' min conservatively charged (unmeasured interruption or legacy run)':'')+' / '+esc(minutes(clock.limit_seconds))+' min total. '+esc(minutes(clock.remaining_seconds))+' min remaining at last checkpoint. Stops apply between stages; an active stage may overrun. Offline time is not measured runtime.</p>';
+      if(resumable&&!active&&!clock.active&&clock.limit_seconds<=14340)html+='<div class="timeExtension"><label>Additional minutes<input id="extendTimeMinutes" type="number" min="1" max="'+Math.floor((14400-clock.limit_seconds)/60)+'" value="'+Math.min(15,Math.floor((14400-clock.limit_seconds)/60))+'" required></label><label>Reason for extending time<input id="extendTimeReason" maxlength="1000" required></label><button data-project-action="extend-time">Extend time only</button><small>No generation is started and no generation allowance is added. Resume separately.</small></div>';
+    }else if(p.state.time_budget_error)html+='<p role="alert">'+esc(p.state.time_budget_error)+'</p>';
     if(['awaiting_review','reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
     html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
@@ -112,7 +118,7 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
 }catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
 $('#productionList').onclick=e=>{const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
-$('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume'].includes(action);
+$('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending)return;
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{
@@ -123,6 +129,11 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   if(open){await refreshAssets();openAsset(open);return;}if(recipe){await exportRecipe(recipe);return;}
   if(action==='branch'){applySaved({preset:p.recipe.preset_id,controls:p.recipe.controls,references:p.recipe.references,parent_assets:p.recipe.parent_assets});await openComparison(p);return;}
   if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
+  else if(action==='extend-time'){
+    const seconds=Number($('#extendTimeMinutes').value)*60,reason=$('#extendTimeReason').value.trim();
+    if(!Number.isInteger(seconds)||seconds<60||!reason)throw Error('Give additional time in whole seconds and a reason.');
+    await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});
+  }
   else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
   if(action||choice)await refreshProduction(true);
 }catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
