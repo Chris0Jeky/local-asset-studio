@@ -51,6 +51,29 @@ Studio MP4 output adapter. Portrait/landscape authored pairs are resolved from
 the source before binding; deviations are warned and execution is labeled
 separately from review.
 
+## Runtime, model and tooling reconciliation — 13 September 2026
+
+A read-only reconciliation at Git head `52c0b497df0ca45834c836f391e835371c65c238` found both
+loopback services stopped: ports 8188 and 8191 refused connections and no matching ComfyUI or Studio
+process was present. The persisted recovery receipt still said `healthy` with an absent PID because it
+records the last observation rather than continuously proving liveness. Runtime recovery now exposes a
+restored healthy receipt as `checking` until the first current endpoint probe, and a healthy observation
+clears stale startup and breaker fields. No service was restarted and no generation was submitted by
+this reconciliation.
+
+Pinned sizes and existing verified receipts confirm that CSTati v3, YumeFlux ILv1, JANIMA v1,
+FLUX.2 dev Q4 with its Mistral encoder, H3 and Wan components are complete on disk. AniFox v2 remains
+partial (`81,421,471` of `6,938,040,706` bytes), as does the separate Krea Q5 download. Full hashes were
+not recomputed. The next baseline step is therefore available for CSTati, YumeFlux and JANIMA once the
+runtime is recovered; AniFox must finish first. FLUX.2 and H3 remain separate feasibility lanes because
+their unresolved failures are runtime/memory compatibility failures, not missing-download failures.
+
+The official Comfy local agent toolchain is installed outside the shared ROCm environment under
+`C:\AI\agent-tools\comfy-mcp`: `comfy-cli` 1.20.0 and `comfy-mcp` 0.10.0. Its default local workspace is
+the installed `C:\AI\ComfyUI_windows_portable\ComfyUI`. Codex has local and cloud MCP registrations;
+cloud OAuth completed successfully for the account-holder's selected workspace. Current official Comfy skills and
+the reviewed V3-first custom-node development skills are installed for both Codex and Claude user scopes.
+
 ## Interactive timing estimates and failure clarity — 13 September 2026
 
 Studio now exposes a read-only `/api/estimate` calculation beside the Create workspace. It learns
@@ -131,9 +154,9 @@ the face and bangs. Hands were hidden in pockets in all three, so hand quality i
 owner chose B as the starting look; A and B remain experiments and neither enters the shortlist.
 Full output hashes and paths are in [the execution record](docs/ANIMA-BASELINE-EXECUTION-2026-09-13.md).
 
-Five saved Workflow Studio baseline documents are present. Anima v1 is valid against the live
-schema; CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1 remain blocked by missing local model
-files. The source checkout is `8f471d6`; the live Studio process is PID `28992` from source
+Five saved Workflow Studio baseline documents are present. At this historical checkpoint Anima v1 was
+valid against the live schema while CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1 were blocked by
+missing local model files. The opening reconciliation supersedes that download state. The source checkout is `8f471d6`; the live Studio process was PID `28992` from source
 `07da7f1`, and ComfyUI is PID `24720` unchanged. The later compiler/MCP deployment is not yet
 deployed. Timings are cache-confounded and carry no performance claim. Native crash prevention,
 reliability, licensing and art acceptance remain unverified.
@@ -144,9 +167,9 @@ The two earlier handoffs were reconciled against merged GitHub heads, checks and
 
 Live recovery initially failed because Windows refusal took about two seconds but the monitor timed out after one. PR #128 fixed that deadline. The controlled idle-stop test then observed exactly one automatic ComfyUI replacement, a healthy loopback endpoint, an idle queue and unchanged uncertain jobs. Pinned memory is disabled in the managed launcher. Two real inference runs and an idle cache release succeeded; native crash prevention remains unproven. The late protected-process ambiguity fix is merged as PR #132, separately from this successful recovery test; its live deployment remains pending.
 
-PR #126 Guided Workflow Studio and PR #129 host-commit admission are deployed. Local memory enforcement is enabled and a non-submitting check rejected a qualifying large graph below 32 GiB without creating a job. The page file is configured at 64 GiB but still effectively 40 GiB until the owner restarts Windows. No automatic reboot is authorized. See [HUMAN_TODO](HUMAN_TODO.md) for the supplied creative choices, verified curation membership and remaining owner execution step; those choices are no longer undecided.
+PR #126 Guided Workflow Studio and PR #129 host-commit admission are deployed. Local memory enforcement is enabled and a non-submitting check rejected a qualifying large graph below 32 GiB without creating a job. At this historical checkpoint the page file was configured at 64 GiB but still effectively 40 GiB; the opening section and [HUMAN_TODO](HUMAN_TODO.md) record the later owner restart and successful recheck. The supplied creative choices are no longer undecided.
 
-The new modular baseline catalog and larger resource downloads are in progress. Download source pins, local hash verification, executed generation and art acceptance are tracked separately. [The production brief](docs/FANTASY-CHARACTER-BRIEF.md) records the owner's non-sexual creative scope and preserves the separate character-study canon.
+At this historical checkpoint the new modular baseline catalog and larger resource downloads were in progress. The opening section records their current completion state. Download source pins, local hash verification, executed generation and art acceptance are tracked separately. [The production brief](docs/FANTASY-CHARACTER-BRIEF.md) records the owner's non-sexual creative scope and preserves the separate character-study canon.
 
 ## Protected pre-listen launcher ambiguity — 13 September 2026
 

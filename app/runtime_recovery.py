@@ -38,6 +38,11 @@ class RuntimeRecovery:
                 if isinstance(saved, dict): self.state.update({k: v for k, v in saved.items() if k != "events"})
             except (OSError, ValueError):
                 pass
+            if self.state.get("status") == "healthy":
+                self.state.update(
+                    status="checking",
+                    message="Saved health is historical; waiting for a current endpoint observation.",
+                )
         if self.enabled and self.autostart:
             self.thread = threading.Thread(target=self._monitor, daemon=True, name="studio-runtime-recovery")
             self.thread.start()
@@ -117,6 +122,8 @@ class RuntimeRecovery:
         if self.state.get("status") != "healthy" or (identity and identity != self.state.get("endpoint_identity")):
             self.studio._schema = None
             self.studio._schema_at = 0
+        for key in ("startup_pid", "startup_at", "breaker_until"):
+            self.state.pop(key, None)
         self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0)
 
     def tick(self):
