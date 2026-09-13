@@ -171,6 +171,43 @@ class WorkerRecoveryTests(unittest.TestCase):
         self.assertEqual(result['state']['status'],'uncertain');self.assertEqual(job['status'],'uncertain')
         self.assertEqual(len(self.studio.jobs),1);self.assertEqual(result['budget']['reserved'],2)
         self.assertIn('pending_submission',job);self.assertEqual(self.studio.requests,[])
+    def project_save_fault(self, known):
+        lab=self.studio.production;project=lab.create(self.fixture.intent());lab.start(project['id'])
+        good=self.job();save=self.studio._save;seen=[];retained={}
+        def execute(job):
+            if job['id']==good['id']:seen.append(job['id']);return
+            if known:job.update(status='running',prompt_ids=['known'],submissions=[{'prompt_id':'known','status':'observing'}])
+            else:job.update(status='submitting',pending_submission={'index':0,'graph':copy.deepcopy(job['graph'])})
+            save(job);retained.update(id=job['id'],state=(self.studio.runs/job['id']/'state.json').read_bytes())
+            raise RuntimeError('execution processing failed after possible submission')
+        def persist(job):
+            if job.get('status')=='uncertain':raise OSError('run directory is full; SQLite remains writable')
+            return save(job)
+        with patch.object(self.studio,'_run',side_effect=execute),patch.object(self.studio,'_save',side_effect=persist):
+            self.dispatch([('production',project['id']),('generate',good['id'])])
+        result=lab.get(project['id']);job=self.studio.jobs[retained['id']]
+        self.assertEqual(result['state']['status'],'uncertain')
+        self.assertIn('run directory is full',result['state']['message'])
+        self.assertEqual(job['status'],'uncertain');self.assertEqual(result['budget']['reserved'],2)
+        self.assertEqual(seen,[good['id']]);self.assertEqual(len(self.studio.jobs),2)
+        self.assertEqual((self.studio.runs/job['id']/'state.json').read_bytes(),retained['state'])
+        preserved={name:(self.studio.runs/job['id']/name).read_bytes() for name in ('recipe.json','workflow.json')}
+        restarted=FakeStudio(self.root,[]);recovered=restarted.production.get(project['id'])
+        self.assertEqual(recovered['state']['status'],'uncertain');self.assertEqual(recovered['budget'],result['budget'])
+        self.assertEqual(restarted.jobs[job['id']]['prompt_ids'],['known'] if known else [])
+        for _ in range(2):
+            restarted.replies=iter([OSError('history unavailable')])
+            restarted.production.resume(project['id']);restarted.production.run(project['id'])
+            self.assertEqual(restarted.production.get(project['id'])['state']['status'],'uncertain')
+        self.assertFalse(any(args[0]=='/prompt' for args,_ in restarted.requests))
+        self.assertEqual(restarted.production.get(project['id'])['budget'],result['budget'])
+        self.assertEqual(len(restarted.jobs),2)
+        self.assertEqual({name:(restarted.runs/job['id']/name).read_bytes() for name in preserved},preserved)
+    def test_pending_project_save_failure_preserves_durable_uncertainty(self):
+        self.project_save_fault(False)
+    def test_known_project_save_failure_preserves_durable_uncertainty(self):
+        self.project_save_fault(True)
+
     def test_history_round_trip_uses_original_id_not_another_path_or_query(self):
         seen=[];prompt_id=' /id?other=1#fragment % plus+日本語 '
         class History(BaseHTTPRequestHandler):

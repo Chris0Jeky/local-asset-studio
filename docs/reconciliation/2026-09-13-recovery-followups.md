@@ -166,7 +166,7 @@ continuation, as tested by the earlier dispatch-race cases.
 ## Verification and reproducibility
 
 Baseline full suite at the source above: **1,463 tests, 15 skipped, pass**.
-The final local candidate ran **1,497 tests: 1,482 passed, 15 skipped**
+The initial published local candidate ran **1,497 tests: 1,482 passed, 15 skipped**
 (131.518 seconds), including 34 new unittest cases and real-HTTP terminal
 commands. Repository validation passed 66 graphs/bindings, 121 pins and 86 LoRA
 names. Use the final PR checks and verification comment for hosted/head-specific
@@ -208,6 +208,25 @@ Local Chromium launched, but navigating to the fixture returned
 `ERR_BLOCKED_BY_ADMINISTRATOR`. No flag disabling browser security or container
 policy was used. A local browser pass is **not** claimed; the hosted browser
 result and retained screenshots must be read for the exact PR head.
+
+## Review and screenshot follow-ups
+
+The initial hosted browser fixture proved framing and keyboard reconciliation,
+but screenshot inspection found the worker warning inside the hidden Models
+view. A stronger actual-visibility assertion failed on that candidate. The
+shared shell now places the same notice first in the main workspace on navigation,
+including after the workbench inserts Overview; it does not start any new poller.
+Desktop/mobile screenshots and the visible notice are checked on the final head.
+
+Automated review identified a separate persistence edge: a run-directory write
+could fail while SQLite still worked, leaving an unresolved job under a falsely
+failed project. Two causal pending/known-ID tests reproduced this. The outer
+coordinator fallback now records **uncertain**, including the processing/recording
+error, rather than certifying failure. Normal stage reconciliation still records
+confirmed terminal outcomes. The tests verify unchanged recipes/workflows and
+reserved attempts, restart persistence, repeated observation with no new prompt
+POST and continued dispatch of the next item. There are now 36 new unittest
+cases; final full-suite and head-specific CI results are recorded on the PR.
 
 ## Remaining work and handoff
 

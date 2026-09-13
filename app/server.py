@@ -1164,7 +1164,9 @@ class Studio:
             except Exception as exc:
                 try:
                     if action == 'production':
-                        self.production._mutate(job_id, status='failed', message='Studio coordinator failed; inspect retained job evidence: ' + str(exc)[:400])
+                        # Escaping here can be a failed job-state write after a POST.
+                        # Only normal stage reconciliation can certify a terminal outcome.
+                        self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
                     elif job is not None: self.record_job_failure(job, exc)
                 except Exception as recording_error:
                     # A disk/SQLite/diagnostic error must not end the only queue
