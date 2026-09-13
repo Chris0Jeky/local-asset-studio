@@ -12,7 +12,9 @@ next load, the input mapping disappeared while the parent asset survived as unat
 
 The decision here is to **block that inconsistent named save, not silently delete the user's source
 history or invent a new pending-reference persistence format**. The message identifies Reference /
-first frame, Last frame, or both, and asks for reattachment or a different source file. The draft,
+first frame, Last frame, or both, and asks for reattachment through **Pull from library**.
+For a new local file, first import it into Asset library; selecting a file in the recipe
+only puts it in browser memory until an upload occurs, so a named setup must not claim to save it. The draft,
 wording and setup name remain unchanged. The user can still use the existing draft export to keep
 an unresolved task. No availability retry, upload or generation is initiated by the blocked save.
 
@@ -22,7 +24,8 @@ an unresolved task. No availability retry, upload or generation is initiated by 
    the real-script Node handoff contracts with first/last-frame cases and exact restore/swap checks.
 2. Add a synchronous `checkedSetupControls()` projection/guard immediately before the existing
    named-setup POST. It reads `values()` once and checks the two known input mappings against that
-   exact controls snapshot and declared parents. It returns the unchanged controls or raises a
+   exact controls snapshot and declared parents. It also rejects a selected but unstaged local
+   first/last-frame file, even after choosing it released the old parent. It returns the unchanged controls or raises a
    recovery message. It does not mutate the draft, parents, references or generation readiness.
 3. Present named-save feedback beside Save in `#setupStatus`, a polite status region, as well as the
    existing legacy status. Empty names, rejected saves and confirmed success use the same surface.
@@ -40,7 +43,9 @@ an unresolved task. No availability retry, upload or generation is initiated by 
   incomplete mapping rather than guessing which relationship the user intended to preserve.
 - Historical/unattributed parents are not assigned to an input or discarded by this guard.
 - Reattaching through the library uses its actual parent mapping. Choosing a replacement follows
-  the existing source-release handlers. Recipe reload followed by replacement still releases only
+  the existing source-release handlers. An unstaged local replacement is explicitly blocked from
+  named saving; import into Asset library and attach through the picker, without generating.
+  Recipe reload followed by replacement still releases only
   the replaced input's source; the other frame's source remains.
 - Named setups remain stored by the existing Workspace service. There is no schema migration,
   secondary store, queue, execution adapter or browser autosave rewrite.
@@ -64,10 +69,14 @@ where zero was required. The extended browser pass also reproduced the pointer o
 absence of adjacent save feedback. Logs of those failures are retained under the ignored runtime
 output, not reclassified as successful runs.
 
-The final local browser driver records **17 passing expectations**, using actual HTML/JS/CSS and
+The initial local browser driver recorded **17 passing expectations**. Independent review found
+a selected-but-not-uploaded replacement could still be omitted by Save. A new real-script test
+reproduced that omission (`1 !== 0`), then the guard and guidance were corrected. The expanded
+driver records **21 passing expectations**, including both local file inputs and explicit
+library recovery, using actual HTML/JS/CSS and
 real temporary SQLite setup persistence. The original reference/handoff Node suite passes with
 new first/last-input regression scenarios. The full-suite outcome and source identities are in
-`SETUP-LINEAGE-RESULTS.json`.
+`SETUP-LINEAGE-RESULTS.json` (initial checkpoint) and `SETUP-LINEAGE-REVIEW.json` (review follow-up).
 
 Local navigation is policy-blocked (`ERR_BLOCKED_BY_ADMINISTRATOR` in this environment). Successful
 local browser checks therefore explicitly use **inert storage/API transport**, via the existing

@@ -150,6 +150,25 @@ async def run(args):
             record = next(s for s in Handler.store.setups() if s['name'] == 'Both restored')['recipe']
             check('SETUP-11', 'Reattaching both inputs preserves their independent lineage mapping',
                   record['parent_by_input'] == {'reference': 'asset-0', 'lastReference': 'asset-1'})
+            # A real file-input selection releases lineage but has no durable upload yet.
+            for index, (input_id, key, source, other) in enumerate([
+                    ('reference', 'reference', 'asset-0', 'asset-1'),
+                    ('lastReference', 'last_reference', 'asset-1', 'asset-0')]):
+                before = len(Handler.store.setups()); post_count = len(fixture.POSTS)
+                await page.set_input_files('#'+input_id, str(ROOT/'examples/references/lantern-reference.png'))
+                await save(page, 'Selected only '+input_id)
+                check('SETUP-'+str(18+index*2), 'A local '+input_id+' selection cannot be silently omitted from a saved setup',
+                      len(Handler.store.setups()) == before and
+                      not any(p['path'] in {'/api/setups', '/api/upload'} for p in fixture.POSTS[post_count:]) and
+                      'not uploaded' in await page.inner_text('#setupStatus') and
+                      'Pull from library' in await page.inner_text('#setupStatus') and
+                      await page.input_value('#saveName') == 'Selected only '+input_id and
+                      await page.locator('#'+input_id).evaluate('(el)=>el.files.length===1') and
+                      await page.evaluate('parentAssets') == [other])
+                await pull(page, source, input_id); await save(page, 'Library recovery '+input_id)
+                recovered = next(s for s in Handler.store.setups() if s['name']=='Library recovery '+input_id)['recipe']
+                check('SETUP-'+str(19+index*2), 'Library reattachment recovers the '+input_id+' save with a staged file',
+                      bool(recovered['controls'].get(key)) and recovered['parent_by_input'].get(input_id) == source)
             Handler.fail_check = False
             await restore(page, draft(file='missing.png'))
             check('SETUP-12', 'A confirmed missing file follows the existing claim-release path',

@@ -407,10 +407,14 @@ $('#gallery').onclick=async e=>{
 // that uncertainty in the draft, but do not persist it as unattributed setup lineage.
 function checkedSetupControls() {
   const controls=values();
-  const pending=[['reference','reference','Reference / first frame'],['lastReference','last_reference','Last frame']]
+  const inputs=[['reference','reference','Reference / first frame'],['lastReference','last_reference','Last frame']];
+  const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
+  if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
+    ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
+  const pending=inputs
     .filter(([input,key])=>parentByInput[input]&&parentAssets.includes(parentByInput[input])&&!controls[key]);
   if(pending.length)throw Error('Setup not saved: reattach '+pending.map(([, ,label])=>label).join(' and ')+
-    ' or choose a different source file. Its source link has no attached file. Your draft and setup name are unchanged.');
+    ' using Pull from library. To use a new local file, import it into Asset library first. Its source link has no attached file. Your draft and setup name are unchanged.');
   return controls;
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
