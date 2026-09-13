@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-13",
+  "source_commit": "07da7f1",
+  "backend_id": "primary",
+  "comfy_url": "http://127.0.0.1:8188",
+  "comfy_process_pid": 24720,
+  "runtime": {
+    "os": "win32",
+    "comfyui_version": "0.35.0",
+    "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "pytorch_version": "2.9.1+rocm7.2.1"
+  },
+  "peak_memory": null,
+  "observations": [
+    {
+      "case": "anima-base",
+      "preset_id": "anima-v1-baseline",
+      "job_id": "058abcb0-e962-45da-8534-43443e9a3f60",
+      "prompt_ids": [
+        "47dd2edd-8fc1-45d2-9d99-64ccb6f587dd"
+      ],
+      "status": "completed",
+      "seconds": 28.098373651504517,
+      "recipe": "anima-base-recipe.json",
+      "recipe_sha256": "b15aeeed02bf6995bc09420b7c7b066b63d096201486f77f4fd0f19fd73f393c",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
+      "output": {
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00001_.png",
+        "bytes": 1052391,
+        "sha256": "a3ee765d1dc1d2813ccbb0f2372b039eb3b34916da6d8a666c5dc4c641bc6d5b"
+      },
+      "dimensions": [
+        832,
+        1216
+      ],
+      "inspection": "Clean graphic coat, trousers and boots at the station. Hands in pockets.",
+      "art_status": "experiment",
+      "license_status": "unverified"
+    },
+    {
+      "case": "anima-style",
+      "preset_id": "anima-v1-baseline",
+      "job_id": "91b42081-f15f-46ac-9d36-a819d6e5d857",
+      "prompt_ids": [
+        "75f6f833-6e5f-41bf-9eac-ab8c202f117d"
+      ],
+      "status": "completed",
+      "seconds": 20.146408081054688,
+      "recipe": "anima-style-recipe.json",
+      "recipe_sha256": "4d77ae69ac1cf4d91dfb747d87d3d19308cf97f56206e51605fe91f87aa8f091",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
+      "output": {
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00002_.png",
+        "bytes": 1133744,
+        "sha256": "c88233c7320a6fc1520213edf05c491f71403d0365bb23545ec93f5336560a13"
+      },
+      "dimensions": [
+        832,
+        1216
+      ],
+      "inspection": "Softer cinematic shading; owner selected this starting look. Hands in pockets.",
+      "art_status": "experiment",
+      "license_status": "unverified"
+    },
+    {
+      "case": "anima-style-seed2",
+      "preset_id": "anima-v1-baseline",
+      "job_id": "a14fac06-2359-46f3-867e-feea7497118e",
+      "prompt_ids": [
+        "52345ff4-863b-4b79-a69b-e0f7784f7fde"
+      ],
+      "status": "completed",
+      "seconds": 18.077874183654785,
+      "recipe": "anima-style-seed2-recipe.json",
+      "recipe_sha256": "bfdbb35213b74f8205a78bfe16583aadff251c215bb4c85b654edfc012fe40d2",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
+      "output": {
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00003_.png",
+        "bytes": 1055309,
+        "sha256": "99c1a25c4b77630b9d0c2ade29e2cc7e464ea9521122ab1992b5c523105ce7c3"
+      },
+      "dimensions": [
+        832,
+        1216
+      ],
+      "inspection": "Similar wardrobe and softer shading, but a different face and bangs. Hands in pockets.",
+      "art_status": "experiment",
+      "license_status": "unverified"
+    }
+  ],
+  "limits": [
+    "Timing is cache-confounded.",
+    "No character identity, hand, pose/reference, repair or upscale proof.",
+    "Native crash prevention and general reliability are unproven.",
+    "Owner chose B as a starting look, not finished art or licensing approval."
+  ]
+}

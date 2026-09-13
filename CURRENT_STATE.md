@@ -1,5 +1,56 @@
 # Current state — 11 September 2026
 
+## Session closeout — 13 September 2026
+
+The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
+#137 (backend startup final observation, `042f40e`), #138 (preset-compatible document execution,
+`1f198ca`), #139 (curated Anima evidence, `07d643f`), #141 (fresh runtime-status displays,
+`c26cefc`), #142 (unknown-header intake, `ac19add`), and #145 (saved-workflow run controls,
+`559347c`). Current main validation ran **1,102 tests: 1,086 passed, 16 skipped**, with repository
+validation passing 66 graphs/bindings, 121 pins, 910 tracked paths and 86 LoRA names. The latest
+browser check reopened `Anima - B softer cinematic shading` at revision 3, loaded 1,224 nodes,
+passed connections, changed the first style strength from 1.0 to 1.25 with keyboard input and
+Tab, and Undo restored 1.0; no job was queued.
+
+The live loopback endpoints are healthy (`127.0.0.1:8191` Studio PID `28992`,
+`127.0.0.1:8188` ComfyUI PID `24720`, worker and recovery healthy, schema available, queue
+empty), but `/api/jobs` retains uncertain records
+`a2908800-7214-4caa-ad23-3844527cdf5d` and `0cbaae1b-1134-548c-9e03-50bac00b75b9`, and
+production retains one uncertain record. The closeout therefore did not stop either runtime;
+the merged runtime and backend fixes are source-verified but not live-reloaded. Host commit
+headroom is 12.72 GiB, below the documented 32 GiB gate; the effective page file is still
+40 GiB pending the owner-controlled restart.
+
+The four large model transfers remain active and incomplete: CSTati PID `7800`, JANIMA PID
+`24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
+`.part` files and failure receipts remain preserved; no model-install or checksum-complete claim
+is made. PRs #146 and #149 remain open for a later pass (#146 is green with one open thread;
+#149 has a failed check, two pending checks and one open thread). HUMAN_TODO decisions remain
+recorded; only q-4's owner-controlled restart is still an action, and it must wait until
+downloads finish and work is saved.
+
+## Modular Anima baseline execution — 13 September 2026
+
+Three bounded Anima v1 runs completed and were visually inspected by the root agent at the same
+832×1216 canvas: base with all style slots disabled (job
+`058abcb0-e962-45da-8534-43443e9a3f60`, prompt
+`47dd2edd-8fc1-45d2-9d99-64ccb6f587dd`, 28.098 s), first style with only slot 1 at `1.0` (job
+`91b42081-f15f-46ac-9d36-a819d6e5d857`, prompt
+`75f6f833-6e5f-41bf-9eac-ab8c202f117d`, 20.146 s), and the same style at seed `2026091302`
+(job `a14fac06-2359-46f3-867e-feea7497118e`, prompt
+`52345ff4-863b-4b79-a69b-e0f7784f7fde`, 18.078 s). A showed a clean graphic coat, trousers and
+boots at the station; B supplied softer cinematic shading; C kept a similar wardrobe but changed
+the face and bangs. Hands were hidden in pockets in all three, so hand quality is unproven. The
+owner chose B as the starting look; A and B remain experiments and neither enters the shortlist.
+Full output hashes and paths are in [the execution record](docs/ANIMA-BASELINE-EXECUTION-2026-09-13.md).
+
+Five saved Workflow Studio baseline documents are present. Anima v1 is valid against the live
+schema; CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1 remain blocked by missing local model
+files. The source checkout is `8f471d6`; the live Studio process is PID `28992` from source
+`07da7f1`, and ComfyUI is PID `24720` unchanged. The later compiler/MCP deployment is not yet
+deployed. Timings are cache-confounded and carry no performance claim. Native crash prevention,
+reliability, licensing and art acceptance remain unverified.
+
 ## Live reconciliation and creative baseline — 13 September 2026
 
 The two earlier handoffs were reconciled against merged GitHub heads, checks and local receipts. The original screenshot resources are installed and pinned; PR #127 supplies separate WAI/Noirpopwave and Anima/Failleaf/sky02/BunnySlop recipes. Both produced inspected 832×1216 images, in 38.26 and 34.22 seconds respectively. Their exact job/prompt IDs and limitations are in [the reconciliation report](docs/STUDIO-REVIEW-2026-09-12.md). The owner chose **experiment only** for both; neither enters the promising shortlist. They are not a controlled cross-family comparison or proof of source-image likeness.

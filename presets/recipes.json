@@ -715,7 +715,8 @@
       "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
       "batch_count": 1,
       "notes": "Every model-only adapter slot is 0 and will be pruned. Slot 1 names nsfw_girls_anima; slots 2-6 preserve the tested Anima stack shape but are disabled for this baseline.",
-      "sources": ["https://huggingface.co/circlestone-labs/Anima"], "status": "unverified"
+      "sources": ["https://huggingface.co/circlestone-labs/Anima"], "status": "executed",
+      "evidence": "Studio job 058abcb0-e962-45da-8534-43443e9a3f60, prompt 47dd2edd-8fc1-45d2-9d99-64ccb6f587dd, 28.098 s; output C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Anima-v1-Baseline_00001_.png, SHA-256 a3ee765d1dc1d2813ccbb0f2372b039eb3b34916da6d8a666c5dc4c641bc6d5b; visually inspected. Receipt: .runtime/session-2026-09-12/reconciliation/modular-probes/anima-base/."
     },
     {
       "id": "anima-v1-first-adapter-comparison",
@@ -725,8 +726,9 @@
       "tags": ["anime", "adult-original-character", "adapter-audition"],
       "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 1.0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
       "batch_count": 1,
-      "notes": "Single-adapter comparison against anima-v1-base: same prompt, seed, CFG 4.5, Euler and simple settings; slot 1 only at authored strength 1.0. It is unverified and editable; slots 2-6 are pruned.",
-      "sources": [], "status": "unverified"
+      "notes": "Single-adapter comparison against anima-v1-base: same prompt, seed, CFG 4.5, Euler and simple settings; slot 1 only at authored strength 1.0. It remains editable; slots 2-6 are pruned.",
+      "sources": [], "status": "executed",
+      "evidence": "Studio job 91b42081-f15f-46ac-9d36-a819d6e5d857, prompt 75f6f833-6e5f-41bf-9eac-ab8c202f117d, 20.146 s; output C:/AI/ComfyUI_windows_portable/ComfyUI/output/Studio/Anima-v1-Baseline_00002_.png, SHA-256 c88233c7320a6fc1520213edf05c491f71403d0365bb23545ec93f5336560a13; visually inspected with softer cinematic shading. Receipt: .runtime/session-2026-09-12/reconciliation/modular-probes/anima-style/."
     },
     {
       "id": "anima-v1-screenshot-sampling-comparison",

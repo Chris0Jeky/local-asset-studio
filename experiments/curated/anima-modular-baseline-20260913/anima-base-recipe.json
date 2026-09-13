@@ -1,0 +1,248 @@
+{
+  "version": 2,
+  "preset_id": "anima-v1-baseline",
+  "controls": {
+    "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026091301,
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0,
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+  },
+  "batch_count": 1,
+  "created_at": 1789259449.5608575,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "anima-base-v1.0.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_06b_base.safetensors",
+        "type": "stable_diffusion",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition."
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark"
+      }
+    },
+    "6": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 832,
+        "height": 1216,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026091301,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/Anima-v1-Baseline"
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "47dd2edd-8fc1-45d2-9d99-64ccb6f587dd",
+      "seed": 2026091301,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-base-v1.0.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors",
+            "type": "stable_diffusion",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition."
+          }
+        },
+        "5": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark"
+          }
+        },
+        "6": {
+          "class_type": "EmptyLatentImage",
+          "inputs": {
+            "width": 832,
+            "height": 1216,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026091301,
+            "steps": 30,
+            "cfg": 4.5,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/Anima-v1-Baseline"
+          }
+        }
+      },
+      "status": "completed"
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "Anima-v1-Baseline_00001_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026091301,
+      "prompt_id": "47dd2edd-8fc1-45d2-9d99-64ccb6f587dd",
+      "media_type": "image",
+      "asset_id": "c6ffc592c8f35eb58f9d4bdb2d97575f"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "native_recipe": null
+}

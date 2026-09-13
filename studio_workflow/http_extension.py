@@ -11,7 +11,7 @@ PREFIX = '/api/workflow-studio'
 
 def capabilities():
     return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True,
-            'registered_recipe_tickets': True, 'arbitrary_graph_execution': False,
+            'registered_recipe_tickets': True, 'preset_document_tickets': True, 'arbitrary_graph_execution': False,
             'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
             'shared_document_commands': True, 'named_steps': True, 'agent_sdk': True, 'mcp': False,
             'custom_frontend_widgets': False, 'shared_worker': True,
@@ -59,6 +59,11 @@ def post(path, value, studio):
     if path == PREFIX + '/compile':
         need(set(value) == {'document'}, 'Supply one document')
         return compile_document(value['document'], schema(studio))
+    if path == PREFIX + '/prepare-document':
+        from .preset_adapter import prepare_document
+        need(set(value) == {'document', 'preset_id'} and isinstance(value['preset_id'], str),
+             'Supply a workflow document and registered preset_id')
+        return prepare_document(studio, value['document'], value['preset_id'])
     if path == PREFIX + '/prepare':
         need(set(value) == {'recipe'}, 'Supply one registered recipe')
         return prepare_ticket(studio, value['recipe'])
