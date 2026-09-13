@@ -15,6 +15,7 @@ from unittest.mock import patch
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
+from http_refusal_transport import atomic_json_post
 from studio_workflow.core import catalog, new_document, compile_document, canonical
 from studio_workflow.commands import apply_commands, execution_inputs_sha256
 from studio_workflow.documents import WorkflowDocuments, DocumentError
@@ -211,11 +212,13 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.client.fork(key, 2, 'Branch', request_id='fork')['origin']['revision'], 2)
         self.assertEqual(len(self.client.documents()['documents']), 2)
     def test_origin_and_duplicate_keys_are_refused_before_document_creation(self):
-        for raw, origin in ((canonical({'request_id': 'bad', 'document': self.doc}), 'http://evil.test'),
-                            (b'{"request_id":"a","request_id":"b"}', self.url)):
-            req = Request(self.url + PREFIX, data=raw, headers={'Content-Type': 'application/json', 'Origin': origin})
-            with self.assertRaises(HTTPError) as caught: urlopen(req)
-            caught.exception.close()
+        self.assertEqual(atomic_json_post(self.server.server_port, PREFIX,
+                                          canonical({'request_id': 'bad', 'document': self.doc}),
+                                          host='127.0.0.1:' + str(self.server.server_port), origin='http://evil.test')[0], 403)
+        req = Request(self.url + PREFIX, data=b'{"request_id":"a","request_id":"b"}',
+                      headers={'Content-Type': 'application/json', 'Origin': self.url})
+        with self.assertRaises(HTTPError) as caught: urlopen(req)
+        caught.exception.close()
         self.assertEqual(self.client.documents()['documents'], [])
     def test_cli_shared_service_and_machine_conflict_exit(self):
         path = Path(self.temp.name) / 'doc.json'; path.write_bytes(canonical(self.doc))
