@@ -67,7 +67,13 @@ class RecipeEvidenceTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(retained_workflow.read_bytes()).hexdigest(), observation['workflow']['sha256'])
                 self.assertEqual(evidence['job_id'], observation['job_id'])
                 self.assertEqual(evidence['prompt_id'], observation['prompt_id'])
-                self.assertEqual(evidence['seconds'], observation['output']['elapsed_seconds'])
+                output = observation['output']
+                correction = output.get('elapsed_seconds_correction')
+                if correction:
+                    self.assertEqual(output['elapsed_seconds'], 36.2181400594635)
+                    self.assertEqual(correction['job_id'], observation['job_id'])
+                    self.assertRegex(correction['receipt_sha256'], r'^[0-9a-f]{64}$')
+                self.assertEqual(evidence['seconds'], correction['value'] if correction else output['elapsed_seconds'])
                 self.assertEqual(evidence['record'], BASELINE_RECORD)
                 self.assertEqual(evidence['case'], case)
                 self.assertIn(observation['output']['sha256'], evidence['note'])
@@ -101,7 +107,7 @@ const records = record.observations || record.baselines;
 for (const [id, name] of Object.entries(JSON.parse(process.argv[2]))) {
   const recipe=recipes.find(r=>r.id===id), observation=records.find(r=>(r.case||r.id)===name);
   const promptId=observation.prompt_ids?.[0]||observation.prompt_id;
-  const seconds=observation.seconds??observation.output?.elapsed_seconds;
+  const seconds=observation.seconds??observation.output?.elapsed_seconds_correction?.value??observation.output?.elapsed_seconds;
   context.recipe=recipe;
   const before=JSON.stringify(recipe), html=vm.runInContext('describeRecipe(recipe)',context);
   assert.ok(html.includes('ComfyUI prompt '+promptId),id+' lacks retained prompt ID');
