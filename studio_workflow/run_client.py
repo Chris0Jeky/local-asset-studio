@@ -6,7 +6,7 @@ import re
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 
-from .client import ClientError
+from .client import ClientError, read_response
 from .commands import identifier
 from .core import MAX_BYTES, canonical, decode, digest, need
 
@@ -61,7 +61,7 @@ class SavedRuns:
         except HTTPError as exc:
             status = exc.code
             try:
-                with exc: raw = exc.read(MAX_BYTES + 1)
+                with exc: raw = read_response(exc, MAX_BYTES)
                 data = decode(raw)
             except (ValueError, OSError, HTTPException): data = {}
             if not isinstance(data, dict): data = {}

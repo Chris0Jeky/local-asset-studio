@@ -194,11 +194,11 @@ def request(value, studio):
 def observe(transport, value):
     """Client-only wrapper keeps read errors useful without changing legacy transport."""
     from urllib.error import HTTPError
-    from .client import ClientError
+    from .client import ClientError, read_response
     q = query(value)
     try: result = transport(PREFIX, q)
     except HTTPError as exc:
-        with exc: raw = exc.read(65537)
+        with exc: raw = read_response(exc, 65536)
         try: detail = json.loads(raw) if len(raw) <= 65536 else {}
         except (ValueError, UnicodeError): detail = {}
         if not isinstance(detail, dict) or not isinstance(detail.get('error'), str):
