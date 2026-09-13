@@ -76,6 +76,12 @@ Asset finishing uses the existing Pillow/rembg environment, configured as `asset
 
 ## Installing another model
 
+The readiness panel and health response now share [exact-path model requirements](MODEL-REQUIREMENTS.md),
+including declared inpaint heads/patches. Unknown folders are reported rather than guessed. Install
+appears only when the existing installer explicitly supports that pin and the selected backend root;
+pin-only or unsourced dependencies explain the manual/source-review path instead. File presence is
+not a content-hash, model-compatibility or creative-acceptance claim.
+
 Three standard-library scripts put a weight into the configured ComfyUI folders. None starts ComfyUI or the
 studio. The HF/Civitai acquisition scripts download named resources, retain failed `.part` transfers, and
 append their receipts to `.runtime/downloads/receipts.json`. Browser intake instead creates an independent

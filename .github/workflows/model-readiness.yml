@@ -1,0 +1,70 @@
+name: Preset model readiness
+on:
+  pull_request:
+    paths:
+      - 'app/model_requirements.py'
+      - 'app/model_library.py'
+      - 'app/download_contracts.py'
+      - 'app/server.py'
+      - 'app/static/app.js'
+      - 'tests/test_preset_model*.py'
+      - 'tests/preset_model*'
+      - '.github/workflows/model-readiness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/model_requirements.py'
+      - 'app/model_library.py'
+      - 'app/download_contracts.py'
+      - 'app/server.py'
+      - 'app/static/app.js'
+      - 'tests/test_preset_model*.py'
+      - 'tests/preset_model*'
+      - '.github/workflows/model-readiness.yml'
+permissions:
+  contents: read
+concurrency:
+  group: model-readiness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p 'test_preset_model*.py' -v
+      - run: python -m unittest discover -s tests -p test_server.py -v
+      - run: python -m unittest discover -s tests -p test_model_library.py -v
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/preset_model_browser.py --out .runtime/preset-model-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preset-model-browser-proof
+          path: .runtime/preset-model-browser/
+          if-no-files-found: ignore
+          retention-days: 7

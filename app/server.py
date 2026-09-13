@@ -824,6 +824,9 @@ class Studio:
         with self._fingerprint_lock:
             cache=read_json(cache_path,{}) or {}
             for requirement in inspection['requirements']:
+                if requirement.get('path') is None:
+                    raise StudioError('Cannot resolve required model: ' + requirement['file'] + ' — ' + requirement.get('note', 'Inspect the declared location'))
+                if requirement.get('present') is not True: raise StudioError('Required model is unavailable: ' + requirement['file'])
                 path=Path(requirement['path']).resolve()
                 if not path.is_relative_to(self.library.models) or not path.is_file():raise StudioError('Required model is unavailable: '+requirement['file'])
                 stat=path.stat();key=str(path);record=cache.get(key,{})
@@ -1002,10 +1005,18 @@ class Studio:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
             except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): info, info_available = {}, False
-            missing = {}
+            missing = {}; observations = {}
+            assets = self.library.manifest().get('assets', [])
+            from model_requirements import model_selection
             for preset in self.catalog()["presets"]:
                 try:
                     graph, _ = self.graph_for(preset)
+                    for requirement in self.preset_requirements(preset, graph, assets=assets, observations=observations):
+                        if requirement['present'] is not True:
+                            label = requirement['file'] if requirement['present'] is False else 'Unresolved dependency: ' + requirement['file'] + ' — ' + requirement['note']
+                            missing.setdefault(preset.get('id'), []).append(label)
+                    # One endpoint's schema cannot speak for another backend family.
+                    if hasattr(self, 'backends') and preset.get('backend_id', 'primary') != self.backends.active: continue
                     for node in graph.values():
                         class_info = info.get(node.get("class_type"), {})
                         if info_available and node.get("class_type") not in info:
@@ -1015,38 +1026,26 @@ class Studio:
                         for field, value in node.get("inputs", {}).items():
                             choice = options.get(field)
                             enum = choice[0] if isinstance(choice, list) and choice and isinstance(choice[0], list) else choice[1].get("options") if isinstance(choice, list) and len(choice) > 1 and isinstance(choice[1], dict) and choice[0] == "COMBO" else None
-                            if field.endswith("_name") and isinstance(value, str) and isinstance(enum, list) and value not in enum:
+                            if (field.endswith("_name") or model_selection(node.get("class_type"), field, value)) and isinstance(value, str) and isinstance(enum, list) and value not in enum:
                                 missing.setdefault(preset.get("id"), []).append(value)
-                except (StudioError, AttributeError, TypeError): pass
+                except (ValueError, OSError, AttributeError, TypeError) as exc:
+                    missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
+            missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
             return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
         except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
         if graph is None: graph, _ = self.graph_for(preset)
-        known = {Path(a["file"]).name: a for a in self.library.manifest().get("assets", [])}
-        # `head` is the Fooocus inpaint loader's field; without it the .pth falls to the "models" default
-        # and the panel reports an installed file as missing at a path it never lived at.
-        folders = {"ckpt_name": "checkpoints", "unet_name": "diffusion_models", "clip_name": "text_encoders", "vae_name": "vae", "lora_name": "loras", "control_net_name": "controlnet", "clip_vision_name": "clip_vision", "head": "inpaint"}
-        requirements = []
-        for node in graph.values():
-            for field, value in node.get("inputs", {}).items():
-                if not isinstance(value, str) or Path(value).suffix.lower() not in (".safetensors", ".gguf", ".pth", ".pt", ".onnx"): continue
-                asset = known.get(Path(value).name, {})
-                folder = folders.get(field, "upscale_models" if node.get("class_type") == "UpscaleModelLoader" else "ultralytics" if node.get("class_type") == "UltralyticsDetectorProvider" else "models")
-                relative = asset.get("file", folder + "/" + value)
-                path = self.library.models / relative
-                if relative not in [r["file"] for r in requirements]: requirements.append({"file": relative, "path": str(path), "present": path.is_file(), "asset_id": asset.get("id"), "source": asset.get("source"), "folder": folder})
+        return {"id": preset_id, "requirements": self.preset_requirements(preset, graph),
+                "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
+
+    def preset_requirements(self, preset, graph, *, assets=None, observations=None):
+        from model_requirements import requirements
         model_root = self.library.models
         if hasattr(self, 'backends'):
-            model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root'])/'models'
-        for relative in preset.get('model_files', []):
-            path = inside(model_root.resolve(), model_root/relative)
-            if relative not in [r['file'] for r in requirements]: requirements.append({'file': relative, 'path': str(path), 'present': path.is_file(), 'folder': relative.split('/')[0]})
-        for requirement in requirements:
-            path = inside(model_root.resolve(), model_root/requirement['file'])
-            requirement.update(path=str(path), present=path.is_file())
-        return {"id": preset_id, "requirements": requirements, "nodes": [{"id": key, "type": node.get("class_type")} for key, node in graph.items()], "graph": graph}
+            model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root']) / 'models'
+        return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations)
 
     def inspect_workflow(self, payload):
         data = payload.get("workflow") if isinstance(payload, dict) else None
