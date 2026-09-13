@@ -225,14 +225,17 @@ def resource_context(graph, manifest, preset):
 
 
 def targets(target, graph, mapped, resources):
-    pairs = mapped.get(target['control'], []) if 'control' in target else [
+    control_target = 'control' in target
+    pairs = mapped.get(target['control'], []) if control_target else [
         [b['node'], target['input']] for r in resources if r['file'] == target['resource']
         for b in r['bindings'] if b['active'] is not False]
     if not pairs: return []
     result = []
     for node, field in pairs:
         data = graph[node]
-        if data.get('class_type') not in target['node_types'] or field not in data['inputs']: return []
+        if data.get('class_type') not in target['node_types'] or field not in data['inputs']:
+            if control_target: return []
+            continue
         result.append({'key': node + '.' + field, 'node': node, 'input': field,
                        'control': next((k for k, ps in mapped.items() if [node, field] in ps), None),
                        'current': data['inputs'][field]})

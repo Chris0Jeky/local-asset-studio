@@ -144,7 +144,14 @@
         "bytes": 1149733,
         "sha256": "7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e",
         "status": "completed",
-        "elapsed_seconds": 36.2181400594635
+        "elapsed_seconds": 36.2181400594635,
+        "elapsed_seconds_correction": {
+          "value": 36.2185480594635,
+          "recorded_at": "2026-09-13",
+          "basis": "The retained completed Studio job receipt records this exact elapsed_seconds value; the originally published value remains above.",
+          "job_id": "78b5e0a3-5890-413a-ae64-ec0b59235879",
+          "receipt_sha256": "3efba712f80f0a0d5d8161246bd467778e32b830584e5911b068c5503f2e70af"
+        }
       },
       "workflow": {
         "path": "janima-v1-base/workflow.json",

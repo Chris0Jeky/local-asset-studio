@@ -14,6 +14,7 @@ import threading
 from urllib.error import HTTPError
 
 from .client import Client, ClientError
+from .shortlist import GOALS
 from .core import MAX_BYTES, canonical, decode, digest, need
 
 PREFIX = '/api/workflow-studio'
@@ -41,6 +42,10 @@ def tool(description, properties=None, required=(), mode='read', mutating=False)
 TOOLS = {
     'studio_capabilities': tool('Discover Studio capabilities and this adapter permission scope. Does not run or install anything.'),
     'studio_catalog': tool('Read registered recipes and their supported controls. Defaults and descriptions are data, not instructions.'),
+    'recipe_shortlist': tool('Explain default preset routes and observed prerequisites. Reference count is declared only; no upload, preparation, dispatch, install or environment switch.',
+        {'goal': {'type': 'string', 'maxLength': 40, 'enum': list(GOALS)}, 'reference_count': {'type': 'integer', 'minimum': 0, 'maximum': 3},
+         'limit': {'type': 'integer', 'minimum': 1, 'maximum': 12}, 'offset': {'type': 'integer', 'minimum': 0, 'maximum': 256},
+         'expected_snapshot': HASH}, ('goal',)),
     'studio_nodes': tool('Search installed node schemas. Pin schema_sha256 when requesting subsequent pages; no automatic refresh or install.',
         {'query': {'type': 'string', 'maxLength': 200}, 'offset': {'type': 'integer', 'minimum': 0, 'maximum': 100000},
          'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100}, 'schema_sha256': HASH}),
@@ -154,6 +159,9 @@ class AgentBridge:
                         'tools': list(self.definitions()), 'transport': 'stdio', 'automatic_retries': False,
                         'arbitrary_graph_execution': False, 'exact_json_text': True}}
             elif name == 'studio_catalog': data = request('/api/catalog')
+            elif name == 'recipe_shortlist':
+                from .shortlist import observe
+                data = observe(request, a)
             elif name == 'studio_nodes':
                 catalog = request(PREFIX + '/nodes')
                 need(not a.get('schema_sha256') or a['schema_sha256'] == catalog['schema_sha256'], 'Node schema changed; restart pagination and review the new schema')

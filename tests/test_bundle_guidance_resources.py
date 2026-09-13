@@ -63,6 +63,34 @@ class GuidanceResourceTests(unittest.TestCase):
                          ['graph_input', 'graph_input', 'catalog_declaration'])
         self.assertEqual([p, g, m, k], before)
 
+    def test_resource_target_keeps_matching_loader_when_duplicate_binding_is_incompatible(self):
+        p, g, m, k = fixture()
+        g['5'] = copy.deepcopy(g['2'])
+        g['5']['class_type'] = 'LoraLoader'
+        g['5']['inputs']['strength_clip'] = 0.0
+        k['guidance']['claims'][0]['settings'] = [{
+            'target': {'resource': ADAPTER, 'input': 'strength_model', 'node_types': ['LoraLoaderModelOnly']},
+            'recommended': {'range': [0.5, 1.0]}, 'tested': None}]
+
+        report = G.explain(p, g, {}, k, m)
+
+        self.assertEqual([check['key'] for check in report['claims'][0]['checks']], ['2.strength_model'])
+
+    def test_control_target_keeps_all_binding_contract_when_one_loader_is_incompatible(self):
+        p, g, m, k = fixture()
+        g['5'] = copy.deepcopy(g['2'])
+        g['5']['class_type'] = 'LoraLoader'
+        g['5']['inputs']['strength_clip'] = 0.0
+        p['bindings_extra'] = {'lora4': [['5', 'strength_model']]}
+        k['guidance']['claims'][0]['settings'] = [{
+            'target': {'control': 'lora4', 'node_types': ['LoraLoaderModelOnly']},
+            'recommended': {'range': [0.5, 1.0]}, 'tested': None}]
+
+        report = G.explain(p, g, {}, k, m)
+
+        self.assertEqual(report['claims'][0]['checks'], [])
+        self.assertEqual(report['claims'][0]['applicability'], 'unknown')
+
     def test_disabled_graph_adapter_is_not_reactivated_by_declaration(self):
         p, g, m, k = fixture(); p['model_files'] = [ADAPTER]
         report = G.explain(p, g, {'lora4': 0}, k, m)
