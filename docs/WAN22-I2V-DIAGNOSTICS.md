@@ -4,6 +4,12 @@ This is the source-bound contract for Studio's offline I2V diagnostic. It reads
 an existing recorded video and its job recipe; it never calls ComfyUI's
 `/prompt` endpoint and does not regenerate a job.
 
+The Workspace action is available only for a recorded `wan22-i2v` job whose
+graph contains `Wan22ImageToVideoLatent`. Native AV previews and other video
+jobs are outside this diagnostic's supported scope and are rejected by the
+backend. If a supported report fails because its recorded files are unavailable,
+the action remains available so the operator can retry after restoring them.
+
 ## Current forensic record
 
 The visually failed recording is Studio job

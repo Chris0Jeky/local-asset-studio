@@ -36,8 +36,9 @@ function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)
 // parent_asset lineage claim; `local` answers /api/upload, which never does. That asymmetry is what the
 // swap contracts below turn on, so the two responses must stay distinguishable. `availability` maps a
 // saved reference file to its sha256 for /api/references/check; anything absent reads as unavailable.
-function sandbox(attached, local, availability = null) {
+function sandbox(attached, local, availability = null, diagnostic = null) {
   const elements = new Map(), requests = [];
+  let clickHandler;
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
@@ -46,7 +47,7 @@ function sandbox(attached, local, availability = null) {
     return elements.get(selector);
   };
   const context = vm.createContext({
-    document: {querySelector: element, querySelectorAll: () => [], addEventListener() {}},
+    document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
     URL, Blob, StudioContinuation, window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
@@ -54,9 +55,10 @@ function sandbox(attached, local, availability = null) {
       const data = url === '/api/assets/reference' ? attached : url === '/api/upload' ? local
         : url === '/api/references/check' ? JSON.parse(options.body).files.map(file => ({file, available: Boolean(availability?.[file]), sha256: availability?.[file]}))
         : url === '/api/jobs' ? {id: 'child-job', message: 'Queued'}
+        : url.includes('/i2v-diagnostic') ? (diagnostic || {})
         : url.startsWith('/api/inspect/') ? {requirements: [], nodes: [], graph: {}}
         : {};
-      return {ok: true, json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
+      return {ok: !(url.includes('/i2v-diagnostic') && diagnostic?.error), json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
     },
   });
   for (const name of ['app.js', 'references.js', 'workspace.js']) {
@@ -66,7 +68,7 @@ function sandbox(attached, local, availability = null) {
   run(`catalog=${JSON.stringify({presets})}; online=schemaAvailable=true;
     jobs=[{id:'source-job',outputs:[{asset_id:'source-asset'}]}];
     refresh=async()=>{}; loadSetups=async()=>{};`);
-  return {element, requests, context, run, parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
+  return {element, requests, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
 }
 
 const localFile = (name = 'unrelated.png') => ({name, size: 2048, type: 'image/png'});
@@ -289,6 +291,26 @@ async function pullingIntoASlotReplacesItsSource() {
   assert.doesNotMatch(workbench, /parentAssets=\[\.\.\.new Set/, 'The picker must not append lineage without releasing the slot it replaced');
 }
 
+async function i2vDiagnosticEligibilityAndRetry() {
+  const report={job:{},source:{},requested:{},preprocessing:{},video:{probe:{}},artifacts:{},graph:{}};
+  const supported=sandbox(null,null,null,report);
+  supported.run(`assetState.assets=[{id:'wan-video',title:'Wan video',media_type:'video',job_id:'wan-job',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024}];openAsset('wan-video');`);
+  assert.match(supported.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job"/,'Workspace exposes diagnostics for recorded Wan I2V output');
+  await supported.click({closest: selector => selector === '[data-i2v-diagnostic]' ? {dataset:{i2vDiagnostic:'wan-job'},disabled:false} : null});
+  assert.match(supported.element('#assetDiagnostic').innerHTML,/Offline I2V diagnostic/,'Successful diagnostics render the report');
+
+  const unsupported=sandbox(null,null);
+  for (const preset_id of ['av-preview','generic-video']) {
+    unsupported.run(`assetState.assets=[{id:'unsupported',title:'Unsupported video',media_type:'video',job_id:'other-job',preset_id:${JSON.stringify(preset_id)},source:{},lineage:[],tags:[],bytes:1024}];openAsset('unsupported');`);
+    assert.equal(unsupported.element('#assetDiagnostic').innerHTML,'','Workspace hides diagnostics for unsupported video jobs');
+  }
+
+  const failed=sandbox(null,null,null,{error:'I2V diagnostic unavailable: recorded Wan output is missing'});
+  failed.run(`assetState.assets=[{id:'wan-video',title:'Wan video',media_type:'video',job_id:'wan-job',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024}];openAsset('wan-video');`);
+  await failed.click({closest: selector => selector === '[data-i2v-diagnostic]' ? {dataset:{i2vDiagnostic:'wan-job'},disabled:false} : null});
+  assert.match(failed.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job"/,'Failed diagnostics restore the retry button');
+}
+
 async function explicitLocalAbandonment() {
   const {element, requests, run} = sandbox({}, {});
   run(`jobs=[{id:'uncertain-job',preset_name:'Lost response',status:'uncertain',message:'Unknown',outputs:[],prompt_ids:[],can_abandon:true,abandon_requires_acknowledgement:true}];renderJobs();`);
@@ -326,5 +348,6 @@ async function explicitLocalAbandonment() {
   await legacySetupWithoutAttributionIsUnchanged();
   await importedRecipeKeepsUnattributedParents();
   await pullingIntoASlotReplacesItsSource();
+  await i2vDiagnosticEligibilityAndRetry();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});

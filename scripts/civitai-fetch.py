@@ -125,7 +125,7 @@ def append_receipt(root,record):
  return record
 
 def _resume_partial(part,target,expected_size):
- if not part.exists() and not part.is_symlink():return 0,hashlib.sha256()
+ if not part.exists() and not part.is_symlink():raise SystemExit(f'--resume requires an existing partial file: {part}')
  try:info=part.lstat()
  except OSError as error:raise SystemExit(f'Cannot inspect the partial download: {part} ({error})')
  if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or getattr(info,'st_nlink',1)!=1:
@@ -160,11 +160,19 @@ def download(url,target,token,expected_size=None,expected_sha=None,chunk=4*1024*
  target.parent.mkdir(parents=True,exist_ok=True)
  part=target.with_suffix(target.suffix+'.part')
  if (part.exists() or part.is_symlink()) and not resume:raise SystemExit('A partial download is already in place; inspect it first: '+str(part))
+ start=time.time()
  if resume:size,digest=_resume_partial(part,target,expected_size)
  else:size,digest=0,hashlib.sha256()
+ if resume and size==expected_size:
+  if not expected_sha:raise SystemExit('Cannot publish a complete partial without a pinned SHA-256; partial file preserved: '+str(part))
+  actual=digest.hexdigest()
+  if actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
+  if target.exists():raise SystemExit('Destination appeared during resume; both files preserved')
+  part.rename(target)
+  return size,actual,round(time.time()-start,1)
  headers=dict(AGENT,Authorization='Bearer '+token,**{'Accept-Encoding':'identity'})
  if resume:headers['Range']=f'bytes={size}-'
- opener=opener or build_opener(DropAuth());start=time.time()
+ opener=opener or build_opener(DropAuth())
  try:
   with opener.open(Request(url,headers=headers),timeout=120) as response:
    if resume:_validate_resume_response(response,size,expected_size)
@@ -188,7 +196,7 @@ def main(argv=None):
  parser.add_argument('--name',help='destination filename (default: the sanitised civitai filename)')
  parser.add_argument('--family',default='');parser.add_argument('--trigger',default='')
  parser.add_argument('--dry-run',action='store_true',help='read the public metadata only; no token needed')
- parser.add_argument('--resume',action='store_true',help='explicitly resume an existing .part file after strict range validation')
+ parser.add_argument('--resume',action='store_true',help='resume an existing .part file after strict range validation; never starts a fresh transfer')
  args=parser.parse_args(argv)
  token=None if args.dry_run else read_token()
  version=fetch_version(args.version_id,token)
