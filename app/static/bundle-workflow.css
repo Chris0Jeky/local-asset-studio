@@ -1,0 +1,11 @@
+/* Inline reusable-workflow handoff inside the existing Bundle Explorer. */
+#bundleExplorer .bundle-workflow,#bundleExplorer .bundle-workflow *{box-sizing:border-box}
+#bundleExplorer .bundle-workflow{background:#f0f4eb;border:1px solid #bdcdb4;border-radius:12px;padding:18px;margin:20px 0;overflow-wrap:anywhere}
+#bundleExplorer .bundle-workflow>label:not(.bundle-consent){display:block;font-size:13px;margin:12px 0}
+#bundleExplorer .bundle-workflow input:not([type=checkbox]){display:block;width:100%;background:white;border:1px solid #aebfaa;border-radius:6px;padding:10px;margin-top:6px}
+#bundleExplorer .bundle-workflow-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+#bundleExplorer .bundle-workflow-preview{font-size:13px}
+#bundleExplorer .bundle-workflow dt{font-weight:650;margin-top:12px}
+#bundleExplorer .bundle-workflow dd{margin:4px 0 12px}
+#bundleExplorer .bundle-workflow p[role=status]{font-size:13px}
+@media(max-width:600px){#bundleExplorer .bundle-workflow{padding:12px}#bundleExplorer .bundle-workflow-actions button{flex:1 1 140px}}
