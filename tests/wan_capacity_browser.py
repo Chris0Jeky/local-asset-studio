@@ -57,7 +57,7 @@ def run(output):
                         page.locator(f'[data-key="{key}"]').fill(value)
                     page.wait_for_function("!document.querySelector('#generate').disabled")
                     assert 'Held:' not in page.locator('#i2vModeNote').text_content()
-                    page.locator('#batch').fill('3')
+                    page.locator('#batch').select_option('3')
                     assert page.locator('#generate').is_enabled()  # Serial outputs are not latent batches.
                     page.locator('[data-key="frames"]').fill('')
                     page.wait_for_function("document.querySelector('#generate').disabled")  # Empty falls back to the long mode.
