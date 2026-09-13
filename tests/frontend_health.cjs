@@ -66,5 +66,16 @@ const respondHealth = async payload => {
   assert.equal(state().disabled, true, 'missing recipe models still block generation');
   assert.equal(state().text, 'Recipe needs models');
   assert.equal(requests.some(request => request.url === '/api/jobs'), false, 'readiness checks never submit a job');
+  pending = vm.runInContext('health()', context); await Promise.resolve();
+  await respondHealth({online: true, worker_alive: true, schema_available: true, missing_models: {},
+    worker_failure: {action:'production',id:'failed-project',recording_error:'disk full',durable:false}}); await pending;
+  assert.equal(element('#workerFailure').hidden, false);
+  assert.match(element('#workerFailure').textContent, /failed-project/);
+  assert.match(element('#workerFailure').textContent, /not saved/i);
+  assert.equal(state().disabled, false, 'a contained recording error is not a dead worker');
+  pending = vm.runInContext('health()', context); await Promise.resolve();
+  await respondHealth({online:true,worker_alive:true,schema_available:true,missing_models:{},worker_failure:null}); await pending;
+  assert.equal(element('#workerFailure').hidden, true);
+  assert.equal(requests.length, 0, 'health and warning rendering do not mutate jobs');
   console.log('Readiness status distinguishes pending, offline, unavailable, and ready states without job submission.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

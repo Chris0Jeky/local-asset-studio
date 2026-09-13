@@ -21,6 +21,9 @@ import project_storage
 
 
 class StorageStudio:
+    def require_worker(self):
+        from test_server import server
+        return server.Studio.require_worker(self)
     def __init__(self, root):
         self.root=Path(root);self.experiments=self.root/'experiments';self.experiments.mkdir(exist_ok=True)
         self.template=self.root/'template.json';self.template.write_text('{}')
