@@ -1,0 +1,39 @@
+name: UX retry source snapshot
+on:
+  push:
+    branches: ['codex/ux-retry-source-20260913']
+    paths: ['.github/workflows/ux-retry-source.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4ff057c84abb26664d066160580677361c857eb4
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Archive tracked source only
+        run: |
+          mkdir -p /tmp/ux-source
+          git archive --format=zip HEAD > /tmp/ux-source/main.zip
+          git ls-tree -r HEAD > /tmp/ux-source/main-tree.txt
+          git log -1 --format='%H %T' > /tmp/ux-source/main-identity.txt
+      - uses: actions/checkout@v4
+        with:
+          ref: a4bdd89343616be399886a5f26ffef38adf35381
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Archive existing PR source
+        run: |
+          git archive --format=zip HEAD > /tmp/ux-source/pr202.zip
+          git ls-tree -r HEAD > /tmp/ux-source/pr202-tree.txt
+          git log -1 --format='%H %T' > /tmp/ux-source/pr202-identity.txt
+          sha256sum /tmp/ux-source/*.zip > /tmp/ux-source/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-retry-pinned-source
+          path: /tmp/ux-source/
+          retention-days: 1
