@@ -121,3 +121,81 @@ class TerminalHTTPTests(unittest.TestCase):
         self.assertEqual(request('POST'),result);fixture.assert_preserved(before)
     def test_failed_reconciliation_uses_existing_http_command_without_queuing(self):self.reconcile('failed')
     def test_partial_reconciliation_uses_existing_http_command_without_queuing(self):self.reconcile('partial')
+
+
+class TerminalPreservationTests(unittest.TestCase):
+    """Real files/Workspace rows and competing calls, without a model runtime."""
+    def setUp(self):
+        self.fixture=TerminalObservationTests();self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+
+    def retain_image(self):
+        fixture=self.fixture;studio=fixture.studio;job=fixture.job
+        source=studio.comfy_root/'output'/'retained.png';source.parent.mkdir(exist_ok=True)
+        source.write_bytes(fixtures.png())
+        job['outputs']=[{'filename':source.name,'type':'output','subfolder':'','prompt_id':'retained','media_type':'image'}]
+        studio.index_outputs(job);studio._save(job)
+        asset_id=job['outputs'][0].get('asset_id')
+        self.assertIsNotNone(asset_id)
+        return source,asset_id
+
+    def preserved_files(self,source,asset_id,studio=None):
+        import hashlib
+        from PIL import Image
+        studio=studio or self.fixture.studio
+        snapshot=studio.assets.file(asset_id)
+        with Image.open(snapshot) as image:
+            image.load();pixels=(image.mode,image.size,image.tobytes())
+        return {'source':source.read_bytes(),'snapshot':snapshot.read_bytes(),
+                'sha256':hashlib.sha256(snapshot.read_bytes()).hexdigest(),'pixels':pixels,
+                'workspace':studio.assets.snapshot()}
+
+    def reconcile_with_image(self,outcome):
+        fixture=self.fixture;fixture.terminal(outcome);source,asset_id=self.retain_image()
+        before=fixture.snapshot();files=self.preserved_files(source,asset_id)
+        self.assertEqual(files['sha256'],fixture.studio.assets.get(asset_id)['sha256'])
+        first=fixture.lab.resume(fixture.identifier)
+        fixture.assert_preserved(before)
+        self.assertEqual(self.preserved_files(source,asset_id),files)
+        # Restart creates a new Studio/Workspace reader; no synthetic consumer
+        # is started, and the restored result must not require another action.
+        restarted=FakeStudio(fixture.fixture.root,[])
+        self.assertEqual(restarted.production.get(fixture.identifier)['state'],first['state'])
+        self.assertEqual(restarted.production.resume(fixture.identifier)['state'],first['state'])
+        self.assertEqual(self.preserved_files(source,asset_id,restarted),files)
+        self.assertEqual(restarted.requests,[]);self.assertTrue(restarted.queue.empty())
+        self.assertEqual(restarted.production.get(fixture.identifier)['budget'],before['budget'])
+        self.assertEqual(restarted.jobs[fixture.job['id']]['outputs'],before['job']['outputs'])
+
+    def test_failed_reconciliation_preserves_real_png_workspace_and_restart(self):
+        self.reconcile_with_image('failed')
+
+    def test_partial_reconciliation_preserves_real_png_workspace_and_restart(self):
+        self.reconcile_with_image('partial')
+
+    def test_concurrent_reconcile_and_stale_dispatch_keep_one_disposition(self):
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+        fixture=self.fixture;fixture.terminal('failed')
+        before=fixture.snapshot();state=fixture.lab.get(fixture.identifier)['state']
+        # Only test request threads are started. Existing Studio workers were
+        # suppressed at construction; neither command is allowed to queue one.
+        fixture.fixture.patches[0].stop()
+        barrier=threading.Barrier(4,timeout=5)
+        def call(index):
+            barrier.wait()
+            if index==0:fixture.lab.run(fixture.identifier)  # stale queued pass
+            else:fixture.lab.resume(fixture.identifier)
+            return fixture.lab.get(fixture.identifier)['state']
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            futures=[pool.submit(call,index) for index in range(4)]
+            results=[future.result(timeout=10) for future in futures]
+        self.assertTrue(all(result==results[0] for result in results))
+        receipt=results[0]['tracking_terminal_reconciliation']
+        self.assertFalse(receipt['new_work_authorized']);self.assertEqual(len(receipt['jobs']),1)
+        self.assertEqual(results[0]['time_budget'],state['time_budget'])
+        self.assertEqual(results[0]['started_at'],state['started_at'])
+        fixture.assert_preserved(before)
+        with patch.object(threading.Thread,'start',lambda *_:None):restarted=FakeStudio(fixture.fixture.root,[])
+        self.assertEqual(restarted.production.get(fixture.identifier)['state'],results[0])
+        self.assertEqual(restarted.requests,[]);self.assertTrue(restarted.queue.empty())
