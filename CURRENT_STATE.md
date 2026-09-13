@@ -1,5 +1,22 @@
 # Current state — 13 September 2026
 
+## Worker, framing and terminal recovery — source checks, 13 September 2026
+
+The oldest-open follow-up extends the existing coordinator rather than replaying
+merged #93/#94 work. Worker failure-recording errors are contained, direct queue
+admission checks a dead worker before reservation, and exact prompt IDs are
+encoded for history observation without changing receipts. One shared response
+boundary adds framing/MIME headers to static, JSON, error and ranged-media paths.
+Stopped known prompts that later finish failed or partial can be reconciled into
+a failed Production project without new work or continuation consent.
+
+Source, causal tests, operator flow and limits are recorded in
+[the follow-up reconciliation](docs/reconciliation/2026-09-13-recovery-followups.md).
+Full local suite and hosted head-specific results belong to that document and
+the PR verification record. This entry is not a Windows/GPU, native-artwork or
+licensing assertion. Local browser navigation was policy-blocked; browser CI is
+separate. No workstation process/configuration or HUMAN_TODO decision changed.
+
 ## Metadata reload browser recovery evidence — 13 September 2026
 
 [METADATA-RELOAD-RECOVERY.md](docs/ux-qa/METADATA-RELOAD-RECOVERY.md) now has
