@@ -1,0 +1,23 @@
+'use strict';
+const assert = require('node:assert/strict');
+const {State, signature, validatePending, KEY} = require('../app/static/workflow-project-state.js');
+let count = 0;
+const test = (name, fn) => { fn(); count++; console.log('PASS ' + name); };
+function fixture() { const data = new Map(); let n = 0; const storage = {getItem:k=>data.get(k),setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)}; return {data, storage, state:new State(storage, ()=>'key-' + (++n))}; }
+const doc = {name:'Example',revision:0,nodes:{'1':{class_type:'Number',inputs:{value:5}}}};
+const result = (revision=1,head=revision,value=doc) => ({id:'saved-id',revision,head_revision:head,document:{...value,revision}});
+test('request persists before sending', () => { const f=fixture();const p=f.state.begin(doc);assert.equal(JSON.parse(f.storage.getItem(KEY)).body.request_id,p.body.request_id); });
+test('storage failure creates no sendable pending write', () => { const f=fixture();f.storage.setItem=()=>{throw Error('full')};assert.throws(()=>f.state.begin(doc));assert.equal(f.state.pending,null); });
+test('repeat save blocked until pending outcome resolves', () => { const f=fixture();f.state.begin(doc);assert.throws(()=>f.state.begin(doc,true)); });
+test('success attaches authoritative revision', () => { const f=fixture();f.state.begin(doc);const action=f.state.success(result(),doc);assert.equal(f.state.binding.revision,1);assert.equal(f.state.dirty(doc),false);assert.equal(action.replace,false); });
+test('delayed successful save preserves later edits', () => { const f=fixture();f.state.begin(doc);const changed={...doc,name:'Later'};const action=f.state.success(result(),changed);assert.equal(action.replace,false);assert.equal(f.state.dirty(changed),true);assert.equal(f.state.binding.revision,1); });
+test('replaced draft never attaches old save response', () => { const f=fixture();f.state.begin(doc);f.state.detach();assert.equal(f.state.success(result(),doc).detached,true);assert.equal(f.state.binding,null); });
+test('replayed old receipt never treated as current', () => { const f=fixture();f.state.begin(doc);f.state.success(result(1,3),doc);assert.equal(f.state.binding.conflict,true);assert.throws(()=>f.state.begin(doc));f.state.begin(doc,true); });
+test('network and 503 errors keep exact pending payload', () => { const f=fixture();const p=f.state.begin(doc);f.state.failure(undefined);f.state.failure(503);assert.deepEqual(f.state.pending,p); });
+test('409 keeps local conflict instead of changing expected revision', () => { const f=fixture();f.state.attach(result());f.state.begin(doc);f.state.failure(409);assert.equal(f.state.binding.revision,1);assert.equal(f.state.binding.conflict,true);assert.equal(f.state.pending,null); });
+test('reload recovery is detached and never auto sends', () => { const f=fixture();f.state.begin(doc);const recovered=new State(f.storage,()=>'new-session');assert.ok(recovered.pending);assert.equal(recovered.success(result(),doc).detached,true); });
+test('restore uses expected revision and retains intervening local edits', () => { const f=fixture();f.state.attach(result(2));const p=f.state.begin(doc,false,1);assert.equal(p.body.expected_revision,2);assert.equal(p.body.revision,1);const action=f.state.success(result(3),{...doc,name:'Later'});assert.equal(action.replace,false); });
+test('unchanged draft can accept explicit restore', () => { const f=fixture();f.state.attach(result(2));f.state.begin(doc,false,1);assert.equal(f.state.success(result(3),doc).replace,true); });
+test('signatures ignore JSON ordering and local revision counter', () => { assert.equal(signature({name:'x',revision:4,nodes:{a:1,b:2}}),signature({nodes:{b:2,a:1},revision:99,name:'x'})); });
+test('retained request cannot call a model or arbitrary URL', () => { const f=fixture();const p=f.state.begin(doc);for(const path of ['/api/jobs','https://evil.test','/api/workflow-studio/documents/../run'])assert.throws(()=>validatePending({...p,path})); });
+console.log(count + ' saved-workflow browser state contracts passed');
