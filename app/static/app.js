@@ -37,7 +37,7 @@ function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
   $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
   $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
-  $('#health').className = 'pill ' + (online && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
+  $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
 }
 const activeLoraSlots = () => loraSlotKeys.filter(k => selected && (selected[loraNameKey(k)] || selected.bindings_extra?.[loraNameKey(k)]));
 const loraEntry = name => (name && knowledge?.loras?.[name]) || null;
@@ -144,6 +144,7 @@ function selectPreset(id, reset=true) {
 async function health() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
+    if(typeof renderRecovery==='function')renderRecovery(h.recovery);
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
