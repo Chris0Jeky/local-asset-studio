@@ -1,5 +1,6 @@
 """Opt-in browser proof of Wan mode admission; synthetic APIs, no GPU calls."""
 import argparse
+import hashlib
 import json
 import os
 import threading
@@ -12,6 +13,7 @@ import studio_browser_smoke as fixture
 def run(output):
     from playwright.sync_api import sync_playwright
     output.mkdir(parents=True, exist_ok=True)
+    fixture.POSTS.clear()
     http = ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
     worker = threading.Thread(target=http.serve_forever, daemon=True)
     worker.start()
@@ -45,11 +47,38 @@ def run(output):
                     page.keyboard.press('Home')
                     page.keyboard.press('Tab')
                     assert page.locator('#generate').is_enabled()
+                    # Manual controls must change the verdict even though the mode label stays put.
+                    page.locator('#i2vMode').select_option('balanced')
+                    page.locator('[data-key="frames"]').fill('81')
+                    page.wait_for_function("document.querySelector('#generate').disabled")
+                    assert '81 frames' in page.locator('#uxBlockers').text_content()
+                    page.locator('#i2vMode').select_option('quality')
+                    for key, value in (('width', '512'), ('height', '768'), ('frames', '33')):
+                        page.locator(f'[data-key="{key}"]').fill(value)
+                    page.wait_for_function("!document.querySelector('#generate').disabled")
+                    assert 'Held:' not in page.locator('#i2vModeNote').text_content()
+                    page.locator('#batch').select_option('3')
+                    assert page.locator('#generate').is_enabled()  # Serial outputs are not latent batches.
+                    page.locator('[data-key="frames"]').fill('')
+                    page.wait_for_function("document.querySelector('#generate').disabled")  # Empty falls back to the long mode.
+                    page.evaluate("selectPreset('wan22-t2v')")
+                    page.wait_for_function("document.querySelector('#generate').disabled")
+                    assert '81 frames' in page.locator('#uxBlockers').text_content()
+                    page.screenshot(path=str(output / f't2v-default-{width}.png'))
+                    page.get_by_role('button', name='Short motion study', exact=False).click()
+                    page.wait_for_function("!document.querySelector('#generate').disabled")
+                    page.get_by_role('button', name='3.4-second shot', exact=False).click()
+                    page.wait_for_function("document.querySelector('#generate').disabled")
+                    page.evaluate("applySaved({preset:'wan22-t2v', controls:{frames:33}})")
+                    page.wait_for_function("!document.querySelector('#generate').disabled")
+                    page.evaluate("applyRecipe({preset_id:'wan22-t2v', name:'Long recipe', controls:{frames:81}})")
+                    page.wait_for_function("document.querySelector('#generate').disabled")
                     assert not errors, errors
                     writes = [entry for entry in fixture.POSTS if entry['path'] not in ('/api/estimate', '/api/references/check')]
                     assert not writes, writes
                     cases.append({'width': width, 'quick_and_balanced_enabled': True, 'long_modes_disabled': True,
-                                  'mode_switch_restores_generate': True, 'generation_mutations': 0, 'page_errors': errors})
+                                  'mode_switch_restores_generate': True, 'manual_overrides': True, 't2v_default_and_variants': True,
+                                  'saved_and_named_overrides': True, 'generation_mutations': 0, 'page_errors': errors})
                     context.close()
             finally:
                 browser.close()
@@ -57,7 +86,10 @@ def run(output):
         http.shutdown()
         http.server_close()
         worker.join(5)
-    (output / 'result.json').write_text(json.dumps(cases, indent=2), encoding='utf-8')
+    receipt = {'mode': 'native-http-synthetic-api', 'cases': cases,
+               'source_sha256': {name: hashlib.sha256((fixture.ROOT/name).read_bytes()).hexdigest() for name in
+                                 ('app/static/app.js', 'app/wan_capacity.py', 'tests/wan_capacity_browser.py')}}
+    (output / 'result.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
     print(json.dumps(cases, indent=2))
 
 
