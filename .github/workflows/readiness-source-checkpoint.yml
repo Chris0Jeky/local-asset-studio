@@ -1,0 +1,24 @@
+name: Readiness source checkpoint
+on:
+  push:
+    branches: [codex/readiness-source-checkpoint]
+    paths: [.github/workflows/readiness-source-checkpoint.yml]
+permissions:
+  contents: read
+jobs:
+  checkpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aebe10c58c7fa3ce8f89276740096eaf98c2cc20
+          persist-credentials: false
+      - name: Export tracked source only
+        run: git archive --format=zip --output="$RUNNER_TEMP/readiness-source.zip" HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readiness-source-aebe10c
+          path: ${{ runner.temp }}/readiness-source.zip
+          retention-days: 1
+          if-no-files-found: error
