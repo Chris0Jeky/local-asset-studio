@@ -12,11 +12,23 @@ resource files have verified receipts; source pins, local installation and licen
 separate facts.
 
 The actual saved-document walkthrough is: **Guided workflows → Workflow builder → Refresh saved →
-choose Baseline - Anima v1 → Open current → Steps view**. Individual style Steps are disabled in
+choose Baseline - Anima v1 → Open current → Load / refresh installed nodes → Steps view**. Wait
+until the node catalog reports its loaded classes; otherwise the saved controls show as unavailable.
+Individual style Steps are disabled in
 the base document and require the explicit typed bypass before editing. To reproduce the executed
 first-style case, set the first style strength to `1.0` and enable only that style; all other style
 slots stay disabled. The base case keeps every style disabled. Registered-preset generation remains
 the supported execution path; an arbitrary edited graph is currently export-only.
+
+The owner's selected B setup is also saved separately as **Anima - B softer cinematic shading**,
+Workspace document `b4b8770a-c8d9-5055-b031-c08ce0b37762`, revision 3. It enables only the first
+style at strength 1.0. Its compiled graph has the same node inputs and connections as executed B;
+the original base document remains at revision 1. The browser walkthrough verified navigation,
+opening the base document, loading 1,224 installed node classes, rendering Steps, checking the
+base connections and saving a separate copy. Numeric/text edits did not reach the saved copy
+during automation, and later browser confirmation handling timed out. The revision-checked SDK
+set and verified B's exact values; browser editing and reopening the final B copy remain unverified.
+No generation was submitted by this authoring walkthrough.
 
 ## Where resources belong
 

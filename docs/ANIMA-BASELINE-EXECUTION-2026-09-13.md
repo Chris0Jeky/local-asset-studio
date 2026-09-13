@@ -25,3 +25,10 @@ and control boundary. They do not establish character identity consistency, pose
 masked correction, upscale quality, licensing, commercial permission or general reliability.
 Elapsed times are confounded by cache state and carry no performance claim. Native crash
 prevention is unproven; this is a light Anima execution only.
+
+The selected controls are now also preserved in the separate saved Workflow Studio document
+**Anima - B softer cinematic shading**, ID `b4b8770a-c8d9-5055-b031-c08ce0b37762`, revision 3.
+Its compiled node inputs and connections equal B's retained submitted graph (numeric `1` and
+`1.0` compare equally; serialized hashes differ). The base document remains unchanged. This
+is authoring evidence, with the bounded browser result described in the [walkthrough](MODULAR-ILLUSTRATION-BASELINES.md),
+not another generation. Receipts are under the reconciliation directory's `saved-baseline-documents/`.
