@@ -12,6 +12,11 @@ execution, Anima evidence, runtime status, intake and builder run controls.
 #146 nor #151 was merged when this work started. The source-404 review fix in
 #146 is retained; #151's bot review was unavailable because of its usage limit.
 
+Both #146 and #151 are now merged, and #155 carries the reusable Steps handoff
+onto `main`; #143 and #144 remain open for representative portfolios and
+version-scoped substitutions. See the [live GitHub reconciliation](../reconciliation/2026-09-13-github.md)
+for the complete PR/issue map.
+
 This change connects bundle drafts to those existing shared documents. It does
 not replace their commands, ticket journal, model manager or worker. #143 still
 owns representative portfolios; the owner's Anima B preference is not promoted

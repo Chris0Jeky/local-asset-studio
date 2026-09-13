@@ -8,6 +8,8 @@ named recipes** (`presets/catalog.json`, `workflows/api/`, `workflows/comfyui/`,
 Presets and recipes are different things: a recipe is a named starting point that fills one preset's
 controls, so the old sentence also counted presets as recipes.
 
+For the live PR/issue inventory, merged-work map and issue-closure decisions, see the [13 September GitHub reconciliation](reconciliation/2026-09-13-github.md). Historical implementation notes below retain their original evidence boundaries.
+
 ## Good places to start
 
 | Intent | Route | Useful controls |
@@ -67,22 +69,24 @@ commercial rights or a finished game asset.
 
 | Issues | Implemented here | Remaining research or acceptance |
 |---|---|---|
-| #1 | Cheap startup identity, cached discovery, decoded input validation, removed-reference feedback | Closed by the demonstrated behavior once this branch lands |
-| #2 | Explicit isolated switching, visual/API HiDream recipes, concept and reference runs | Controlled higher-step comparison; upstream warning remains documented |
-| #9 / #26 | Existing pinned bundle library; model paths and scoped execution evidence retained | Further provenance/terms intake, Hunyuan-specific applicability; H3 confirmation does not cover another provider |
-| #10 / #22 | Trusted catalog execution, one-axis comparisons, root budgets, durable attempts, branching, source packs | Full accepted character-pack vertical slice; generic arbitrary-stage execution is not enabled |
-| #21 | One/two/three role-reference graphs and UI, reference hashes and preview | Actual one/two-reference renders, controlled pose/identity acceptance |
-| #11 / #18 | Isolated H3 loader, bounded construction probes and a completed short video/audio preview | Base-quality/anchor variants, caching and seed-hunt comparisons remain; the native loader still needs the wrapper |
-| #12 / #13 | Existing working short Wan image-to-video route and typed controls | Shot continuation/reshoots, LTX/VACE comparisons and measured temporal refinement |
+| #1 | Cheap startup identity, cached discovery, decoded input validation, removed-reference feedback | Closed by [PR #39](https://github.com/Chris0Jeky/local-asset-studio/pull/39); the remaining H3 limits are separate |
+| #2 | Explicit isolated switching, visual/API HiDream recipes, concept and reference runs | Remains open for controlled higher-step comparison; upstream warning remains documented |
+| #9 / #26 | Existing pinned bundle library; model paths and scoped execution evidence retained | #9 remains open for provenance/terms/intake and hardware proof; #26 remains open for Hunyuan-specific applicability |
+| #10 / #22 | Trusted catalog execution, one-axis comparisons, root budgets, durable attempts, branching, source packs | Remain open for the accepted character-pack vertical slice; generic arbitrary-stage execution is not enabled |
+| #21 | One/two/three role-reference graphs and UI, reference hashes and preview | Remains open for actual one/two-reference renders and controlled pose/identity acceptance |
+| #11 / #18 | Isolated H3 loader, bounded construction probes and a completed short video/audio preview | #18 is closed by [PR #39](https://github.com/Chris0Jeky/local-asset-studio/pull/39); #11 remains open for base-quality/anchor variants and native-loader work |
+| #12 / #13 | Existing working short Wan image-to-video route and typed controls | Remain open for shot continuation/reshoots, LTX/VACE comparisons and measured temporal refinement |
 | #14 / #23 | Matched anime adapters, reference atelier, native KRA save/reopen | Interactive Krita diffusion, layered puppets and in-between studies |
 | #15 / #24 / #25 | Godot sprite/GLB adapter, timed playback, authored articulated Blender baseline | Khronos validation, gameplay collision/rig stress tests, automatic part/rig experiments and cleanup-effort comparisons |
-| #16 / #17 | Workspace, Experiments, environment and native-export controls | Remaining roadmap items above; no blanket completion claim |
+| #16 / #17 | Workspace, Experiments, environment and native-export controls | Remain open for the remaining roadmap items; no blanket completion claim |
 
 The exact Seed Hunter v1.6 graph remains preserved. Its inspected dependency
 report identifies 24 unresolved node classes, the int8 video VAE, latent upscaler,
 TAE and RIFE weights. The isolated native H3 route now runs, but those extra packs
 have not been installed or validated. The current Wan recipe is an available short-motion alternative; it does
 not implement Seed Hunter continuation, native audio or latent upscaling.
+
+The current Workflow Studio tickets [#118–#123](https://github.com/Chris0Jeky/local-asset-studio/issues/118) and bundle tickets [#143–#144](https://github.com/Chris0Jeky/local-asset-studio/issues/143) remain open. Merged PRs #126, #131, #138, #145, #146, #150, #152, #154 and #155, plus the open [#157](https://github.com/Chris0Jeky/local-asset-studio/pull/157) UI continuation, provide foundations and scoped slices; they do not establish completion of those umbrella or acceptance tickets.
 
 Independent review found and fixed native restart recovery and a Krita snapshot
 provenance race. One lower-priority limitation remains: failed Krita logs are
