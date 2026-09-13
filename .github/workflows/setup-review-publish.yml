@@ -1,0 +1,44 @@
+name: Publish setup review correction
+on:
+  push:
+    branches: [codex/setup-review-transport]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: d85d7f9478cfdace33952b444e2b75e9146b2d75
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and apply reviewed delta
+        run: |
+          python - <<'PY'
+          import base64,hashlib,lzma
+          from pathlib import Path
+          patch=lzma.decompress(base64.b64decode(Path('transport-source/transport/setup-review.b64').read_text(),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='537254832e2def0ea38eab2d270ed2e5e81d78708186938f508648920b6cb042'
+          Path('review.patch').write_bytes(patch)
+          PY
+          cd candidate
+          test "$(git rev-parse HEAD)" = d85d7f9478cfdace33952b444e2b75e9146b2d75
+          git switch -c codex/saved-setup-lineage
+          git apply --check ../review.patch
+          git apply ../review.patch
+          node tests/frontend_handoffs.cjs
+          git diff --check
+          git config user.name 'Studio QA'
+          git config user.email 'studio-qa@users.noreply.github.com'
+          git add app docs tests
+          git commit -m 'Reject unstaged local references before reporting setup saved'
+          git push origin HEAD:refs/heads/codex/saved-setup-lineage
+          git rev-parse HEAD HEAD^{tree}
