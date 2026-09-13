@@ -46,7 +46,7 @@
       stopped = true; epoch++; active.forEach(c => c.abort());
       if (highlighted) highlighted.classList.remove('studio-guide-target');
       listeners.forEach(name => document.removeEventListener(name, stale));
-      window.removeEventListener('hashchange', stale); window.removeEventListener('popstate', restorePosition);
+      window.removeEventListener('hashchange', toolChanged); window.removeEventListener('popstate', restorePosition);
       panel.remove();
     }
     function showTool(url) {
@@ -121,8 +121,16 @@
       if (event?.target && panel.contains(event.target)) return;
       epoch++; display(C.unknown('The tool or input changed. Check this step again; previous observations are not completion evidence.')); find();
     }
-    const listeners = ['input','change','workflow:render','workflow:project'];
-    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', stale); window.addEventListener('popstate', restorePosition);
+    // History traversal emits popstate before hashchange. The restored mount
+    // already belongs to the destination; its paired hash event is not an edit.
+    let observedTool = location.pathname + location.hash;
+    function toolChanged() {
+      const tool = location.pathname + location.hash;
+      if (tool === observedTool) return;
+      observedTool = tool; stale();
+    }
+    const listeners = ['input','change','studio:recipe','workflow:render','workflow:project'];
+    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', toolChanged); window.addEventListener('popstate', restorePosition);
     run.onchange = () => { epoch++; persist(); display(C.unknown('Run selection changed. Check this specific run.')); };
     const checkButton = add('Check this step', async () => {
       if (busy || stopped) return; busy = true; checkButton.disabled = true;
