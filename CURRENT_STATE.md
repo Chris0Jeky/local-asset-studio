@@ -1,5 +1,33 @@
 # Current state — 11 September 2026
 
+## Interactive timing estimates and failure clarity — 13 September 2026
+
+Studio now exposes a read-only `/api/estimate` calculation beside the Create workspace. It learns
+from completed local ComfyUI runs and weights workflow, model files, LoRA names and strengths,
+resolution, steps, frames, references, sampler/scheduler, prompt size, graph-node complexity and
+batch size. Failed, uncertain, imported and native-only records are excluded. The browser refreshes
+the estimate after recipe, control, LoRA, variation, reference and seed changes; sparse history is
+shown as a wide, explicitly provisional range rather than false precision.
+
+The historical Krea failure is now classified as a memory-allocation failure when the engine reports
+`KSampler: bad allocation`; the UI retains the prompt ID, engine detail and a next action. A bare
+historical record may not contain the new structured `failure` field, so the client also derives a
+safe explanation from the retained message without retrying the prompt. A live estimate for the
+current Krea 2 Anime Atelier shape returned 812.2 seconds, a 496–1128 second typical range, medium
+confidence, 35 completed local samples and 3 exact-workflow matches. This is a timing aid, not an
+execution guarantee, and it excludes queue wait.
+
+The Studio server was restarted from the current checkout as PID 7376 after confirming an empty
+ComfyUI queue; ComfyUI PID 20212 was not restarted. Both endpoints are healthy, the schema is
+available, and the queue remains empty. No generation was submitted by this pass. Browser smoke is
+not verified because the environment lacks the optional `playwright` package. HUMAN_TODO q-4 is
+unchanged: the owner-controlled Windows restart remains pending for the configured page file.
+
+Focused server tests (50), UX policy checks (34), repository validation and the full suite (1,256
+tests, 1,206 passed and 50 skipped) pass. The full suite needed `C:\Python314` first on PATH so
+Node's bundle test could resolve `python`; without that explicit environment the Windows Store
+`python.exe` alias caused one harness-only failure.
+
 ## Session closeout — 13 September 2026
 
 The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
