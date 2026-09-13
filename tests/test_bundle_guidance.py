@@ -13,6 +13,7 @@ import threading
 import unittest
 
 from studio_workflow import guidance as G
+from http_refusal_transport import atomic_json_post
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = 'diffusion_models/base.safetensors'
@@ -222,7 +223,9 @@ class GuidanceHTTPTests(unittest.TestCase):
         status,result=self.send();self.assertEqual(status,200);self.assertEqual(result['claims'][0]['applicability'],'applies')
         after={p.relative_to(self.studio.root):p.read_bytes() for p in self.studio.root.rglob('*') if p.is_file()};self.assertEqual(before,after)
     def test_host_and_origin_are_still_enforced(self):
-        self.assertEqual(self.send(host='evil.invalid')[0],403);self.assertEqual(self.send(origin='https://evil.invalid')[0],403)
+        body=json.dumps(self.payload).encode()
+        self.assertEqual(atomic_json_post(self.http.server_port,'/api/workflow-studio/guidance',body,host='evil.invalid')[0],403)
+        self.assertEqual(atomic_json_post(self.http.server_port,'/api/workflow-studio/guidance',body,origin='https://evil.invalid')[0],403)
     def test_changed_template_and_binding_are_rejected(self):
         self.g['3']['inputs']['steps']=20;self.assertEqual(self.send()[0],400)
         self.g['3']['inputs']['steps']=15;self.p['steps']=['3','cfg'];self.assertEqual(self.send()[0],400)
