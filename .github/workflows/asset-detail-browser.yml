@@ -9,6 +9,8 @@ on:
       - 'tests/test_asset_workspace*'
       - 'tests/asset_metadata*'
       - 'tests/test_asset_metadata*'
+      - 'tests/asset_library*'
+      - 'tests/test_asset_library*'
       - 'tests/asset_detail*'
       - 'tests/test_asset_detail*'
       - 'tests/asset_reload_browser.py'
@@ -53,6 +55,11 @@ jobs:
       - name: Scoped reload and historical receipts against actual SQLite
         if: matrix.response-delay-ms == 0
         run: python tests/asset_workspace_browser.py --out .runtime/asset-workspace-proof
+      - name: Selection and filtered views against actual metadata storage
+        if: matrix.response-delay-ms == 0
+        run: |
+          node tests/asset_library_contracts.cjs
+          python tests/asset_library_browser.py --out .runtime/asset-library-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -62,5 +69,6 @@ jobs:
             .runtime/asset-reload-proof/
             .runtime/asset-metadata-proof/
             .runtime/asset-workspace-proof/
+            .runtime/asset-library-proof/
           if-no-files-found: ignore
           retention-days: 7

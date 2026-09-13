@@ -235,18 +235,69 @@ async function refreshAssets(force=false) {
   } catch(e) { assetMessage(e.message,true); }
   finally {assetRefreshing=false;}
 }
-function visibleAssets() {
-  const query=$('#assetSearch').value.trim().toLowerCase(), type=$('#assetType').value;
-  const list=assetState.assets.filter(a=>{
+// Scope, filters and checkbox selection are separate projections over the loaded Workspace.
+const assetSelectionLimit=200;
+function assetScopeAssets() {
+  if(assetScope.startsWith('collection:') && !assetState.collections.some(c=>'collection:'+c.id===assetScope))return [];
+  return assetState.assets.filter(a=>{
     if(assetScope==='trash'?!a.trashed_at:!!a.trashed_at)return false;
     if(assetScope==='favorite'&&!a.favorite)return false;
-    if(['selected','needs_work'].includes(assetScope)&&a.review!==assetScope)return false;
-    if(assetScope.startsWith('collection:')&&!a.collections.includes(assetScope.slice(11)))return false;
-    return (type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,...a.tags].join(' ').toLowerCase().includes(query);
+    if(['selected','needs_work','unreviewed'].includes(assetScope)&&(a.review||'unreviewed')!==assetScope)return false;
+    return !assetScope.startsWith('collection:') || a.collections.includes(assetScope.slice(11));
   });
+}
+function assetFiltersActive(){return !!$('#assetSearch').value.trim() || $('#assetType').value!=='all';}
+function visibleAssets() {
+  const query=$('#assetSearch').value.trim().toLowerCase(), type=$('#assetType').value;
+  const list=assetScopeAssets().filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,...a.tags].join(' ').toLowerCase().includes(query));
   const sort=$('#assetSort').value;
   return list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='oldest'?a.created_at-b.created_at:b.created_at-a.created_at);
 }
+function assetSelectionInfo(visible=visibleAssets()) {
+  const records=new Map(assetState.assets.map(a=>[a.id,a])),shown=new Set(visible.map(a=>a.id));
+  const entries=[...assetSelection].map(id=>({id,asset:records.get(id),visible:shown.has(id)}));
+  return {entries,visible:entries.filter(e=>e.visible).length,hidden:entries.filter(e=>!e.visible).length,missing:entries.filter(e=>!e.asset).length};
+}
+function assetEmptyState() {
+  const scope=assetScopeAssets(),collection=assetScope.startsWith('collection:');
+  let title,description,action='<button data-scope="all" data-asset-browse-scope>Browse all assets</button>';
+  if(collection && !assetState.collections.some(c=>'collection:'+c.id===assetScope)){
+    title='Collection unavailable';description='This collection is no longer in the loaded Workspace. Your original assets are not deleted with a collection.';
+  }else if(scope.length && assetFiltersActive()){
+    title='No matching assets';description='This view contains '+scope.length+' assets, but none match your search and media filter. Your selection is unchanged.';
+    action='<button data-asset-clear-filters>Clear filters in this view</button>';
+  }else if(assetScope==='trash'){
+    title='Trash is empty';description='Assets moved to Trash remain recoverable here.';
+  }else if(collection){
+    title='This collection has no assets';description='Select assets in the library, choose this collection as the destination, then add them.';
+  }else if(assetScope==='favorite'){
+    title='No favorites yet';description='Use the star on an asset to find it here. Favorites do not change your review notes.';
+  }else if(assetScope==='selected'){
+    title='No keepers yet';description='Mark a reviewed asset as a keeper to find it here. Checking a selection box only chooses assets for an action.';
+  }else if(assetScope==='unreviewed'){
+    title='No assets awaiting review';description='Your active assets already have a saved review. Browse all assets to revisit a decision.';
+  }else if(assetScope==='needs_work'){
+    title='No assets marked Needs work';description='Open an asset and save a Needs work review to collect candidates for correction here.';
+  }else if(assetState.assets.some(a=>a.trashed_at)){
+    title='Your assets are in Trash';description='Open Trash to review and restore them. Moving assets to Trash does not delete their originals.';
+    action='<button data-scope="trash" data-asset-browse-scope>Open Trash</button>';
+  }else{
+    title='Your asset library is empty';description='Import an existing image to organize or continue working on it. Importing does not generate a new image.';
+    action='<button data-asset-import>Import images</button>';
+  }
+  return '<div class="asset-empty"><h3>'+title+'</h3><p>'+description+'</p>'+action+'</div>';
+}
+// This guards ordinary pointer/keyboard activation. Existing execution and native-tool gates still apply.
+function assetSelectionCanProceed(action) {
+  if(!assetSelection.size)return false;
+  const selection=assetSelectionInfo();
+  if(selection.missing){assetMessage(selection.missing+(selection.missing===1?' selected asset is unavailable.':' selected assets are unavailable.')+' Review the selection or keep only visible assets before continuing.',true);return false;}
+  if(assetSelection.size>assetSelectionLimit){assetMessage('Choose at most '+assetSelectionLimit+' assets per action. The current selection has not been changed.',true);return false;}
+  if(selection.entries.some(e=>e.asset.workspace_id && e.asset.workspace_id!==assetState.workspace_id)){assetMessage('Selected assets belong to a different Workspace. Refresh the library before continuing.',true);return false;}
+  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Mark as keeper',add_collection:'Add to collection',remove_collection:'Remove from collection',export:'Export pack',scene:'Create scene',native:'Create native export'};
+  return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
+}
+function clearAssetFilters() {$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
   if(asset.media_type==='image')return '<img loading="lazy" src="'+url+'" alt="'+alt+'">';
@@ -257,20 +308,27 @@ function assetPreview(asset, detail=false) {
 function renderAssets() {
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope);
   $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
-  $('#assetVisibleCount').textContent=assets.length+' assets';
-  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',favorite:'Favorites',selected:'Selected',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
+  $('#assetVisibleCount').textContent=assetFiltersActive()?assets.length+' of '+assetScopeAssets().length+' assets':assets.length+' assets';
+  $('#clearAssetFilters').hidden=!assetFiltersActive();
+  $('#selectVisible').disabled=!assets.length;
+  $('#selectVisible').textContent=assets.length>assetSelectionLimit?'Select first '+assetSelectionLimit+' of '+assets.length:'Select visible';
+  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Keepers',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
   $('#collectionActions').hidden=!col;
   $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
   document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));
   const destination=$('#bulkCollection').value;
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   if(assetState.collections.some(c=>c.id===destination))$('#bulkCollection').value=destination;
-  $('#assetGrid').innerHTML=assets.map(a=>'<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>').join('')||'<div class="asset-empty"><h3>'+(assetScope==='trash'?'Trash is empty.':'Room for the next idea.')+'</h3><p>'+(assetScope==='trash'?'Deleted assets can be restored here.':'Generate an asset, or change your filters to see more of your work.')+'</p></div>';
+  $('#assetGrid').innerHTML=assets.map(a=>'<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>').join('')||assetEmptyState();
   renderAssetSelection();
 }
 function renderAssetSelection() {
   $('#assetBulk').hidden=!assetSelection.size;
   $('#assetSelectionCount').textContent=assetSelection.size+' selected';
+  const selection=assetSelectionInfo();
+  $('#assetSelectionSummary').textContent=selection.visible+' visible · '+selection.hidden+' outside this view'+(selection.missing?' · '+selection.missing+' unavailable':'')+'. Actions use the whole selection, not just matching results.';
+  $('#keepVisibleSelection').disabled=!selection.hidden;
+  $('#assetSelectedList').innerHTML=selection.entries.slice(0,assetSelectionLimit).map(e=>'<li><span>'+esc(e.asset?.title||e.id)+'</span><small>'+(!e.asset?'Unavailable':e.asset.trashed_at?'In Trash':e.visible?'Visible':'Outside this view')+'</small></li>').join('')+(selection.entries.length>assetSelectionLimit?'<li>Only the first '+assetSelectionLimit+' selections are listed. Reduce the selection before acting.</li>':'');
   $('#createScene').href='/av.html?asset_ids='+encodeURIComponent([...assetSelection].join(','));
   document.querySelectorAll('[data-bulk="restore"]').forEach(b=>b.hidden=assetScope!=='trash');
   document.querySelectorAll('[data-bulk="trash"]').forEach(b=>b.hidden=assetScope==='trash');
@@ -382,7 +440,15 @@ $('#newCollection').onclick=()=>openCollection();$('#renameCollection').onclick=
 $('#cancelCollection').onclick=()=>$('#collectionDialog').close();
 $('#collectionForm').onsubmit=async e=>{e.preventDefault();try{const col=await post('/api/collections',{action:collectionEditing?'rename':'create',id:collectionEditing,name:$('#collectionName').value,description:$('#collectionDescription').value});$('#collectionDialog').close();assetScope='collection:'+col.id;await refreshAssets(true);}catch(err){assetMessage(err.message,true);}};
 $('#deleteCollection').onclick=async()=>{try{await post('/api/collections',{action:'delete',id:assetScope.slice(11)});assetScope='all';await refreshAssets(true);assetMessage('Collection removed. Its assets are still in your workspace.');}catch(e){assetMessage(e.message,true);}};
-$('#selectVisible').onclick=()=>{assetSelection=new Set(visibleAssets().slice(0,200).map(a=>a.id));renderAssets();};
+$('#selectVisible').onclick=()=>{const assets=visibleAssets();assetSelection=new Set(assets.slice(0,assetSelectionLimit).map(a=>a.id));renderAssets();assetMessage(assets.length>assetSelectionLimit?'Selected the first '+assetSelectionLimit+' of '+assets.length+' matching assets in the current sort order. Choose smaller groups for the rest.':'Selected '+assets.length+' visible assets. Any earlier selection was replaced.');};
+$('#clearAssetFilters').onclick=clearAssetFilters;
+$('#keepVisibleSelection').onclick=()=>{const visible=new Set(visibleAssets().map(a=>a.id));assetSelection=new Set([...assetSelection].filter(id=>visible.has(id)));renderAssets();$('#assetSearch').focus();assetMessage('Selection now contains only visible assets. Any earlier unconfirmed command is unchanged.');};
+document.addEventListener('click',e=>{
+  const control=e.target.closest('[data-bulk],#createScene,#nativeExport');
+  if(!control || control.getAttribute?.('aria-disabled')==='true')return;
+  const action=control.dataset?.bulk || (control.id==='createScene'?'scene':control.id==='nativeExport'?'native':null);
+  if(action && !assetSelectionCanProceed(action)){e.preventDefault();e.stopImmediatePropagation();}
+},true);
 $('#clearAssetSelection').onclick=()=>{assetSelection.clear();renderAssets();};
 $('#closeAssetDialog').onclick=closeAssetDetails;
 $('#assetDialog').addEventListener('cancel',e=>{e.preventDefault();closeAssetDetails();});
@@ -440,7 +506,9 @@ document.addEventListener('click',async e=>{
       catch(err){if(current())renderI2VDiagnosticAction(asset,err.message);}
       return;
     }
-    const scope=e.target.closest('[data-scope]');if(scope)setAssetScope(scope.dataset.scope);
+    if(e.target.closest('[data-asset-clear-filters]')){clearAssetFilters();return;}
+    if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
+    const scope=e.target.closest('[data-scope]');if(scope){if(scope.hasAttribute?.('data-asset-browse-scope')){$('#assetSearch').value='';$('#assetType').value='all';}setAssetScope(scope.dataset.scope);}
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
     const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
     const lineage=e.target.closest('[data-lineage]');if(lineage)openAsset(lineage.dataset.lineage);
@@ -452,11 +520,11 @@ document.addEventListener('click',async e=>{
       const payload={ids,action,collection_id:$('#bulkCollection').value};
       if(action==='favorite')Object.assign(payload,{action:'edit',favorite:true});
       if(action==='selected')Object.assign(payload,{action:'edit',review:'selected'});
-      await mutateAssets(payload);assetSelection.clear();renderAssets();assetMessage(action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.');
+      await mutateAssets(payload);const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();assetMessage((action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.')+(changed?' Your changed selection was kept.':''));
     }
   }catch(err){assetMessage(err.message,true);message(err.message,true);}
 });
-document.addEventListener('change',e=>{const id=e.target.dataset.assetCheck;if(id){e.target.checked?assetSelection.add(id):assetSelection.delete(id);e.target.closest('.asset-card').classList.toggle('is-selected',e.target.checked);renderAssetSelection();}});
+document.addEventListener('change',e=>{const id=e.target.dataset.assetCheck;if(id){if(e.target.checked&&!assetSelection.has(id)&&assetSelection.size>=assetSelectionLimit){e.target.checked=false;assetMessage('Choose at most '+assetSelectionLimit+' assets per action. Your existing selection is unchanged.',true);return;}e.target.checked?assetSelection.add(id):assetSelection.delete(id);e.target.closest('.asset-card').classList.toggle('is-selected',e.target.checked);renderAssetSelection();}});
 // Reload recovery is read-only until the operator chooses Check or Retry.
 try{
   assetRetainedDetail=assetRecovery.read('detail');
