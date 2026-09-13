@@ -132,6 +132,18 @@ async def run(out,inert):
                 await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
                 await page.fill('#positive','A real edit invalidates the report')
                 check(await page.locator('#shortlistResults article').count()==0,'actual editor input invalidates the old shortlist')
+                for action,label in [
+                    ("selectPreset('pixel-lora')",'selecting a recipe'),
+                    ("applyRecipe({preset_id:'pixel-lora',name:'Review setup',controls:{positive:'New wording'}})",'applying a same-preset setup'),
+                    ("applySaved({preset:'pixel-lora',controls:{positive:'Imported wording'}})",'importing a setup')]:
+                    await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
+                    count_before=CALLS.count(PREFIX);await page.evaluate(action)
+                    check(await page.locator('#shortlistResults article').count()==0,label+' invalidates cards through the actual document notification')
+                    check(CALLS.count(PREFIX)==count_before,label+' does not automatically recheck')
+                DELAY=.5;await page.click('#checkStartingRecipes');await page.wait_for_function("document.querySelector('#checkStartingRecipes').disabled")
+                await page.evaluate("selectPreset('gentle-variation');selectPreset('pixel-lora')")
+                await asyncio.sleep(.7);DELAY=0
+                check(await page.locator('#shortlistResults article').count()==0,'real recipe A to B to A discards an in-flight report')
                 if not inert:
                     count_before=CALLS.count(PREFIX)
                     entry=await context.new_page();entry.on('pageerror',lambda e:errors.append(str(e)))

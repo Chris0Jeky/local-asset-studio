@@ -225,6 +225,32 @@ No GPU run, source upload, package/driver/page-file change in the managed runtim
 service restart, HUMAN_TODO edit, licence approval or private asset acceptance is
 performed by this slice.
 
+## Review follow-up: effective defaults and document events
+
+The first hosted candidate (`a306afa`) passed all nine workflows, including 25
+native-browser assertions and the real official-SDK MCP protocol test. Independent
+review then exposed two gaps outside that initial coverage:
+
+- Disabled optional LoRA loaders were counted as missing prerequisites even though
+  preparation removes them. Shortlisting now deep-copies the raw default graph and
+  calls the existing `Studio.prune_disabled_loras` before class, dependency and
+  capacity observations. Raw template identity is retained; shared graph objects
+  and template files remain unchanged. Active model/CLIP strengths still require
+  the loader and its files; explicit catalog `model_files` remain requirements.
+- `studio:recipe` is dispatched on `document` without bubbling. The chooser now
+  subscribes there, like the guide, rather than on `window`. Selection, same-preset
+  setup and import clear old cards and invalidate in-flight replies without a new
+  request. A real A → B → A selection cannot revive the earlier result.
+
+The added actual-catalog cases reproduced four assertion failures on the original
+candidate (WAI, Animagine, Anima and the explicit-declaration comparison). The
+expanded full-shell browser reproduced the missing notification using actual
+`selectPreset`, not a synthetic substitute event. After correction, all 32 focused
+cases run locally with one optional MCP-SDK skip, and 29 inert browser assertions
+pass. Native coverage adds three entry/deep-link checks; final hosted evidence is
+recorded in PR #217. These distinctions remain separate from workstation/model
+execution and artistic acceptance.
+
 ## Primary technical references
 
 Reviewed for this implementation, 13 September 2026:

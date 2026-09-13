@@ -128,6 +128,52 @@ class ActualCatalogTests(unittest.TestCase):
             result=request({'goal':'animate-image','reference_count':1,'limit':12},self.s)
         row=next(c for c in result['candidates'] if c['preset_id']=='wan22-i2v')
         self.assertIn('capacity_hold',[c['code'] for c in row['checks']])
+    def test_disabled_lora_dependencies_follow_real_pruning_without_changing_source(self):
+        presets=self.s.catalog()['presets']
+        for key in ('wai','anime','anima-v1-baseline'):
+            with self.subTest(preset=key):
+                preset=next(p for p in presets if p['id']==key)
+                graph,path=self.s.graph_for(preset);raw=path.read_bytes();original=copy.deepcopy(graph)
+                effective=copy.deepcopy(graph);self.s.prune_disabled_loras(effective)
+                self.assertLess(len(effective),len(graph))
+                for row in self.s.preset_requirements(preset,effective):
+                    self.assertIsNotNone(row['path'],row)
+                    target=Path(row['path']);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(b'synthetic presence only')
+                info={n['class_type']:{} for n in effective.values()}
+                with (patch.object(self.s,'catalog',return_value={'presets':[preset]}),
+                      patch.object(self.s,'graph_for',return_value=(graph,path)),
+                      patch.object(self.s,'node_info',return_value=info),
+                      patch.object(self.s,'prepare',side_effect=AssertionError('No preparation'))):
+                    row=request({'goal':'new-image'},self.s)['candidates'][0]
+                self.assertNotIn('nodes_missing',[c['code'] for c in row['checks']])
+                self.assertNotIn('models_missing',[c['code'] for c in row['checks']])
+                self.assertFalse(any(r['file'].startswith('loras/') for r in row['requirements']))
+                self.assertEqual(graph,original);self.assertEqual(path.read_bytes(),raw)
+        self.assertEqual(self.s.jobs,{})
+    def test_clip_only_lora_and_explicit_declarations_are_still_required(self):
+        preset=next(p for p in self.s.catalog()['presets'] if p['id']=='wai')
+        graph,path=self.s.graph_for(preset)
+        for node in graph.values():
+            if node['class_type']=='LoraLoader':node['inputs']['strength_clip']=0.5
+        path.write_text(json.dumps(graph),encoding='utf-8')
+        preset=next(p for p in self.s.catalog()['presets'] if p['id']=='wai')
+        preset['model_files']=['loras/explicit-required.safetensors']
+        info={n['class_type']:{} for n in graph.values() if n['class_type']!='LoraLoader'}
+        with patch.object(self.s,'catalog',return_value={'presets':[preset]}),patch.object(self.s,'node_info',return_value=info):
+            row=request({'goal':'new-image'},self.s)['candidates'][0]
+        self.assertIn('nodes_missing',[c['code'] for c in row['checks']])
+        self.assertTrue(any(r['file']=='loras/explicit-required.safetensors' for r in row['requirements']))
+        self.assertTrue(any(r['file']=='loras/cinematic lighting.safetensors' for r in row['requirements']))
+        # Turning graph adapters off does not erase an explicit catalog requirement.
+        for node in graph.values():
+            if node['class_type']=='LoraLoader':node['inputs']['strength_clip']=0
+        path.write_text(json.dumps(graph),encoding='utf-8')
+        preset=next(p for p in self.s.catalog()['presets'] if p['id']=='wai')
+        preset['model_files']=['loras/explicit-required.safetensors']
+        with patch.object(self.s,'catalog',return_value={'presets':[preset]}),patch.object(self.s,'node_info',return_value=info):
+            row=request({'goal':'new-image'},self.s)['candidates'][0]
+        self.assertEqual([r['file'] for r in row['requirements'] if r['file'].startswith('loras/')],['loras/explicit-required.safetensors'])
+
     def test_actual_mask_routes_never_promote_a_declared_file_to_valid_mask(self):
         with patch.object(self.s,'node_info',side_effect=OSError('offline')):
             result=request({'goal':'masked-repair','reference_count':1,'limit':12},self.s)
