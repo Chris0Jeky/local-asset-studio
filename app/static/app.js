@@ -9,7 +9,7 @@ let catalog, selected, online = null, schemaAvailable = false, workerAlive = tru
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
-async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
+async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 const i2vModeBlocker = () => selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value)?.execution_block || null;

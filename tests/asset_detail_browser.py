@@ -31,7 +31,7 @@ class State:
     def __init__(self):
         self.writes=[]; self.gate=threading.Event(); self.gate.set()
         self.diagnostic_gate=threading.Event(); self.diagnostic_gate.set()
-        self.fail_write=False; self.fail_diagnostic=False; self.diagnostics=0
+        self.fail_write=False; self.fail_diagnostic=False; self.diagnostics=0; self.receipts={}
 
 class Handler(fixture.Handler):
     state=None
@@ -49,12 +49,18 @@ class Handler(fixture.Handler):
             self.state.writes.append(copy.deepcopy(data))
             if not self.state.gate.wait(10):return self.json({'error':'Fixture deadline'},504)
             if self.state.fail_write:return self.json({'error':'Workspace unavailable (synthetic fault)'},503)
+            if data['request_id'] in self.state.receipts:return self.json(self.state.receipts[data['request_id']])
+            selected=[a for a in fixture.ASSETS if a['id'] in data['ids']]
+            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','current':selected},409)
             for asset in fixture.ASSETS:
                 if asset['id'] in data['ids']:
-                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action'}})
+                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','request_id','expected_revisions'}})
                     elif data['action']=='trash':asset['trashed_at']=123
                     elif data['action']=='restore':asset['trashed_at']=None
-            return self.json({'updated':len(data['ids'])})
+                    asset['metadata_revision']+=1
+            receipt={'status':'applied','request_id':data['request_id'],'updated':data['ids'],'action':data['action'],'revisions':{a['id']:a['metadata_revision'] for a in selected},'applied':{k:v for k,v in data.items() if k in {'title','notes','tags','favorite','review'}} if data['action']=='edit' else {'trashed_at':123 if data['action']=='trash' else None}}
+            self.state.receipts[data['request_id']]=receipt
+            return self.json(receipt)
         return super().do_POST()
 
 async def inert_page(page, port):
@@ -64,7 +70,7 @@ async def inert_page(page, port):
         def request():
             connection=HTTPConnection('127.0.0.1',port,timeout=12)
             try:
-                connection.request(options.get('method') or 'GET',path,(options.get('body') or '').encode('utf-8'),options.get('headers') or {})
+                connection.request(options.get('method') or 'GET',path,(options.get('body') or '').encode('utf-8'),dict(options.get('headers') or {}, Origin=f'http://127.0.0.1:{port}'))
                 reply=connection.getresponse();return {'status':reply.status,'body':reply.read().decode()}
             finally:connection.close()
         return await asyncio.to_thread(request)
@@ -116,7 +122,7 @@ async def run(args):
             await page.fill('#assetNotes','Keep my detailed repair notes')
             await page.click('#assetFavorite');await settle()
             await check('ASSET-01','Favorite preserves unsaved notes',await page.input_value('#assetNotes')=='Keep my detailed repair notes')
-            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite'})
+            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite','request_id','expected_revisions'})
             await open_asset();await page.fill('#assetNotes','Stay on Escape')
             page.remove_listener('dialog',discard_dialog)
             prompts=[]
