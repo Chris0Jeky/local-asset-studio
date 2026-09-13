@@ -279,8 +279,43 @@ function mediaCard(job,index,output) {
   return '<article class="imageCard">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
+const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
+function renderMixedBatch(job) {
+  const batch=job.mixed_batch;if(!batch)return '';
+  if(!batch.revision)return '<p role="status">'+esc(batch.message)+'</p>';
+  const known=(batch.known||[]).map(s=>'Output '+(s.index+1)+': '+s.status).join(' · ');
+  const detail='<p>'+esc(known)+'</p><p>Output '+esc(batch.unknown_index+1)+' has an unknown submission outcome. '+esc(batch.never_submitted_count)+' later outputs were not submitted.</p><p><small>'+esc(batch.message)+'</small></p>';
+  if(job.status==='abandoned')return detail;
+  return '<details class="mixedBatchControls" data-job="'+esc(job.id)+'" data-revision="'+esc(batch.revision)+'"><summary>Recover mixed batch</summary>'+detail+
+    '<button data-mixed-action="observe" data-job="'+esc(job.id)+'" '+(batch.can_observe?'':'disabled')+'>Check known batch receipts</button><p><small>Only unresolved known IDs are queried, once per check. No generation, retry, cancellation or later stage.</small></p>'+
+    '<label>Reason for local disposition<input data-mixed-reason maxlength="1000" required></label><label><input type="checkbox" data-mixed-ack> I understand that all unresolved remote outcomes remain unknown and this does not cancel remote work.</label>'+
+    '<button data-mixed-action="dispose" data-job="'+esc(job.id)+'" '+(batch.can_dispose?'':'disabled')+'>Abandon remaining batch locally</button><small>Preserves outputs, exact submission evidence and spent reservations. A repair is a separate explicit action.</small></details>';
+}
+async function mixedBatchAction(button) {
+  const identifier=button.dataset.job;if(button.disabled||mixedBatchBusy.has(identifier))return;
+  const box=button.closest('.mixedBatchControls'),action=button.dataset.mixedAction;
+  if(!box||!['observe','dispose'].includes(action))throw Error('Refresh the batch evidence before choosing an action.');
+  const reason=box.querySelector('[data-mixed-reason]')?.value.trim(),ack=box.querySelector('[data-mixed-ack]')?.checked===true;
+  if(action==='dispose'&&!reason)throw Error('Give a reason for the local disposition.');
+  if(action==='dispose'&&!ack)throw Error('Acknowledge the unresolved remote outcomes before recording this disposition.');
+  let request=mixedBatchCommands.get(identifier);
+  if(request&&(request.action!==action||(action==='dispose'&&request.payload.reason!==reason)))throw Error('The previous command response is unconfirmed. Retry that exact action and reason or inspect the current job first.');
+  if(!request){request={action,payload:{request_id:crypto.randomUUID(),expected_revision:box.dataset.revision,...(action==='dispose'?{reason,acknowledge_unknown:true}:{})}};mixedBatchCommands.set(identifier,request);}
+  button.disabled=true;mixedBatchBusy.add(identifier);let confirmed=false;
+  try {
+    await post('/api/jobs/'+encodeURIComponent(identifier)+(action==='observe'?'/observe-known':'/dispose-mixed'),request.payload);
+    confirmed=true;mixedBatchCommands.delete(identifier);await refresh();
+  } catch(error) {
+    if(!confirmed){
+      if(error.status>=400&&error.status<500)mixedBatchCommands.delete(identifier);
+      else throw Error('Response not confirmed for request '+request.payload.request_id+'. Inspect the job or retry this exact action; its request identity is retained.');
+    }
+    throw error;
+  } finally {button.disabled=false;mixedBatchBusy.delete(identifier);}
+}
 function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
+  const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
   const cards=[];
   jobs.forEach(job=>{
     if(job.status!=='completed'){
@@ -293,11 +328,13 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
       const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
-      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
-  $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>'; renderCompare();
+  $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>' ;
+  for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
+  renderCompare();
 }
 async function refreshJobs(){try{const next=await api('/api/jobs'),signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
 function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
@@ -411,6 +448,7 @@ $('#generate').onclick=async()=>{
 };
 $('#gallery').onclick=async e=>{
   try{
+    const mixed=e.target.closest('[data-mixed-action]');if(mixed){await mixedBatchAction(mixed);return;}
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index};pinned=pinned.some(x=>x.job===p.job&&x.index===p.index)?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}

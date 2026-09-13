@@ -19,3 +19,7 @@
 
 /* A full-width saved-setup row must paint above the sticky recipe picker. */
 .studio-main .saved{position:relative;z-index:1}
+
+/* In the two-/one-column layout the picker shares the Gallery's columns.
+   Keep it in document flow: stacking either panel above the other hides controls. */
+@media(max-width:1480px){.studio-main .setup{position:static}}
