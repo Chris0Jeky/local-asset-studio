@@ -2,6 +2,8 @@ import copy
 import io
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -65,6 +67,20 @@ class CampaignReceiptTests(unittest.TestCase):
             with redirect_stdout(output):
                 self.assertEqual(0, campaign.main(["inspect", "--workspace", str(root), "--campaign", "campaign.json"]))
             self.assertEqual("character_edit_campaign", json.loads(output.getvalue())["kind"])
+
+    def test_direct_script_create_and_inspect_work_outside_the_repository(self):
+        script = Path(__file__).resolve().parents[1] / "scripts" / "character_edit_campaign.py"
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); outside = root / "outside"; outside.mkdir()
+            command = [sys.executable, str(script), "create", "--workspace", str(root), "--out", "campaign.json",
+                       "--budget-owner", "character-pilot", "--max-generation-attempts", "12", "--campaign-id", "a" * 32]
+            created = subprocess.run(command, cwd=outside, text=True, capture_output=True, check=False)
+            self.assertEqual(0, created.returncode, created.stderr)
+            self.assertEqual("a" * 32, json.loads(created.stdout)["campaign_id"])
+            inspected = subprocess.run([sys.executable, str(script), "inspect", "--workspace", str(root), "--campaign", "campaign.json"],
+                                        cwd=outside, text=True, capture_output=True, check=False)
+            self.assertEqual(0, inspected.returncode, inspected.stderr)
+            self.assertEqual("character_edit_campaign", json.loads(inspected.stdout)["kind"])
 
 
 if __name__ == "__main__":

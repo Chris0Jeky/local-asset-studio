@@ -8,7 +8,12 @@ from __future__ import annotations
 import argparse
 import copy
 from pathlib import Path
+import sys
 import uuid
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from scripts import character_edit_bridge_io as io
 
