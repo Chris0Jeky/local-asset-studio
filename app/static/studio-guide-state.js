@@ -22,6 +22,7 @@
       return met('Required sources are attached in the workbench. Bytes, roles and compatibility are rechecked by the normal preparation path.');
     }
     if (check === 'readiness') {
+      if (s.recipe.runtime_block) return blocked('This recipe is blocked by runtime configuration: ' + (typeof s.recipe.runtime_block === 'string' ? s.recipe.runtime_block : 'inspect its requirement notice in Create.'));
       if (s.switching) return blocked('An environment switch is in progress. Wait for it to finish; the guide will not switch it.');
       const h = s.health;
       if (!object(h)) return unknown('Readiness is unavailable. A failed check is not evidence that the backend is ready.');

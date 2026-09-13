@@ -102,7 +102,7 @@
       const refs = roleCount ? {attached:roles.length === roleCount && roles.every(r => typeof r.file === 'string' && r.file), missing:roles.some(r => r.missing)}
         : {attached:typeof reference === 'string' && !!reference && (!p?.last_reference || (typeof last === 'string' && !!last)), selected:files.length > 0};
       return {
-        recipe:p ? {id:p.id, backend_id:p.backend_id || 'primary'} : null,
+        recipe:p ? {id:p.id, backend_id:p.backend_id || 'primary', runtime_block:p.runtime_block || null} : null,
         prompt_present:!!document.getElementById('positive')?.value.trim(),
         references:{...refs, supported:!!(roleCount || p?.reference), mask:!!p?.requires_rgba_mask,
           pending:mainPage && typeof referencePending !== 'undefined' ? referencePending > 0 : false},

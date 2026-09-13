@@ -32,3 +32,16 @@ source environment where navigation is blocked.
 No model, job, ticket, installed runtime, user setting or creative decision is
 changed. See [the guide architecture](EVIDENCE-GUIDES.md) for the evidence predicates,
 source boundaries and remaining manual stages.
+
+## Runtime-block review correction
+
+Automated review identified a separate readiness inconsistency: the original coach
+snapshot omitted `recipe.runtime_block`, so a healthy endpoint could hide the same
+configured blocker that disabled Generate. The snapshot now retains that field and
+the evidence predicate returns a blocked result before considering healthy signals.
+The exact configured reason is displayed as text; no configuration is changed.
+
+The added Node test fails against the prior predicate (observed `met`, expected
+`blocked`) and passes after the fix. Native browser coverage sets a synthetic
+blocker on the real selected-recipe object and checks that both Generate and the
+coach are blocked. This is a fixture, not an alteration of owner runtime policy.

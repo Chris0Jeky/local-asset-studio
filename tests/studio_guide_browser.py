@@ -96,6 +96,9 @@ def run(out):
             visit('first-image','readiness');page.evaluate("selectPreset('pixel-lora')")
             page.click('#checkGuideStep');page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
             check('memory fit' in page.locator('#guideEvidence').inner_text(),'ready evidence excludes memory and creative guarantees')
+            page.evaluate("selected.runtime_block='Synthetic incompatible runtime';updateReady()");page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='blocked' and 'Synthetic incompatible runtime' in page.locator('#guideEvidence').inner_text() and page.locator('#generate').is_disabled(),'configured runtime block is honored by both guide and Generate')
+            page.evaluate('selected.runtime_block=null;updateReady()')
             FAIL_HEALTH=True;page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
             check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','failed readiness is unknown rather than success')
             FAIL_HEALTH=False;HEALTH_DELAY=.5
