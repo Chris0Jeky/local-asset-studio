@@ -248,7 +248,7 @@ function mediaCard(job,index,output) {
   return '<article class="imageCard">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
-function renderJobs(signature=jobsDataSignature) {
+function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const cards=[];
   jobs.forEach(job=>{
