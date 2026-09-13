@@ -362,23 +362,24 @@ def model_records(studio, graph, directory: Path):
     return records
 
 
-def _semantic_value(value, graph):
-    if isinstance(value, list) and len(value) == 2 and str(value[0]) in graph and isinstance(value[1], int):
-        return {"ref_class": graph[str(value[0])].get("class_type"), "slot": value[1]}
+def _semantic_value(value, graph, positions):
+    if isinstance(value, list) and len(value) == 2 and str(value[0]) in graph and type(value[1]) is int:
+        return {"ref_class": graph[str(value[0])].get("class_type"), "ref_position": positions[str(value[0])], "slot": value[1]}
     if isinstance(value, list):
-        return [_semantic_value(item, graph) for item in value]
+        return [_semantic_value(item, graph, positions) for item in value]
     if isinstance(value, dict):
-        return {key: _semantic_value(item, graph) for key, item in value.items()}
+        return {key: _semantic_value(item, graph, positions) for key, item in value.items()}
     return value
 
 
 def semantic_graph(graph):
     result = []
+    positions = {str(key): index for index, key in enumerate(graph)}
     for key, node in graph.items():
         result.append({
             "node_id": str(key),
             "class_type": node.get("class_type"),
-            "inputs": {field: _semantic_value(value, graph) for field, value in (node.get("inputs") or {}).items()},
+            "inputs": {field: _semantic_value(value, graph, positions) for field, value in (node.get("inputs") or {}).items()},
         })
     return result
 
@@ -389,10 +390,10 @@ def graph_diff(actual, canonical):
     changes = []
     for index in range(max(len(left), len(right))):
         if index >= len(left):
-            changes.append({"kind": "added", "position": index, "canonical_node_id": None, "actual_node_id": right[index]["node_id"], "canonical": None, "actual": right[index]})
+            changes.append({"kind": "removed", "position": index, "canonical_node_id": right[index]["node_id"], "actual_node_id": None, "canonical": right[index], "actual": None})
             continue
         if index >= len(right):
-            changes.append({"kind": "removed", "position": index, "canonical_node_id": left[index]["node_id"], "actual_node_id": None, "canonical": left[index], "actual": None})
+            changes.append({"kind": "added", "position": index, "canonical_node_id": None, "actual_node_id": left[index]["node_id"], "canonical": None, "actual": left[index]})
             continue
         actual_node, canonical_node = left[index], right[index]
         if actual_node["class_type"] != canonical_node["class_type"]:
@@ -401,8 +402,10 @@ def graph_diff(actual, canonical):
         for field in sorted(fields):
             actual_value = actual_node["inputs"].get(field)
             canonical_value = canonical_node["inputs"].get(field)
-            if actual_value != canonical_value:
-                changes.append({"kind": "input", "position": index, "canonical_node_id": canonical_node["node_id"], "actual_node_id": actual_node["node_id"], "class_type": actual_node["class_type"], "field": field, "canonical": canonical_value, "actual": actual_value})
+            actual_present, canonical_present = field in actual_node["inputs"], field in canonical_node["inputs"]
+            if actual_value != canonical_value or actual_present != canonical_present:
+                changes.append({"kind": "input", "position": index, "canonical_node_id": canonical_node["node_id"], "actual_node_id": actual_node["node_id"], "class_type": actual_node["class_type"], "field": field, "canonical": canonical_value, "actual": actual_value,
+                                "canonical_present": canonical_present, "actual_present": actual_present})
     return changes
 
 
