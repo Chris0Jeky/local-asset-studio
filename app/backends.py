@@ -2,6 +2,7 @@
 from __future__ import annotations
 import copy
 import json
+import os
 from pathlib import Path
 import subprocess
 import threading
@@ -138,12 +139,36 @@ class BackendManager:
         matches=[]
         for process in psutil.process_iter():
             try:
-                if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
+                name=process.name()
             except psutil.NoSuchProcess:continue
             except psutil.AccessDenied:
-                # An inaccessible process is not evidence that it is ours. It is never killed.
-                continue
+                # Without even a name, this process could be the configured launcher.
+                raise ValueError('A process identity could not be read while checking the configured backend; no recovery launch was authorized')
+            if not isinstance(name,str) or not name:
+                name=self.windows_process_name(process.pid)
+                if not name:raise ValueError('A process name could not be read while checking the configured backend; no recovery launch was authorized')
+            if Path(name).stem.casefold()!=Path(profile['python']).stem.casefold():continue
+            try:
+                if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
+            except psutil.NoSuchProcess:continue
+            except psutil.AccessDenied as exc:
+                # A protected Python process can be our launcher before it has bound its port.
+                raise ValueError('A candidate configured Python process could not be verified; no recovery launch was authorized') from exc
         return matches
+
+    @staticmethod
+    def windows_process_name(pid):
+        """Read one protected Windows process name without trusting psutil's blank fields."""
+        if os.name!='nt' or not isinstance(pid,int) or pid<=0:return None
+        # `-Command` consumes trailing arguments, so interpolate only the validated observed integer.
+        command=f'$p=[System.Diagnostics.Process]::GetProcessById({pid});[Console]::Out.Write($p.ProcessName)'
+        try:
+            result=subprocess.run(['powershell.exe','-NoProfile','-NonInteractive','-Command',command],stdin=subprocess.DEVNULL,
+                                  capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=2,check=False,
+                                  creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        except (OSError,subprocess.TimeoutExpired):return None
+        name=result.stdout.strip() if result.returncode==0 else ''
+        return name or None
 
     def launch_recovery(self, profile):
         """Launch exactly one selected profile without switching or stopping any process."""

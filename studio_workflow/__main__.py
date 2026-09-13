@@ -7,40 +7,13 @@ import math
 from pathlib import Path
 import sys
 import time
-from urllib.parse import urlsplit, quote
-from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHandler
+from urllib.parse import quote
 from urllib.error import HTTPError, URLError
 from .core import decode, canonical, need
+from .client import Client, ClientError, NoRedirect
+from . import document_cli
 
 PREFIX = '/api/workflow-studio'
-
-
-class NoRedirect(HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise ValueError('Redirect refused; use the actual loopback Studio address')
-
-
-class Client:
-    def __init__(self, base='http://127.0.0.1:8191', timeout=30):
-        parsed = urlsplit(base)
-        need(parsed.scheme == 'http' and parsed.hostname in ('127.0.0.1', '::1')
-             and not parsed.username and not parsed.password and parsed.path in ('', '/')
-             and not parsed.query and not parsed.fragment, 'Use a literal loopback HTTP Studio origin')
-        need(math.isfinite(timeout) and 0 < timeout <= 120, 'HTTP timeout must be 0–120 seconds')
-        self.base, self.timeout = base.rstrip('/'), timeout
-        self.opener = build_opener(ProxyHandler({}), NoRedirect())
-
-    def request(self, path, body=None):
-        need(path.startswith('/api/') and not path.startswith('//'), 'Studio API path required')
-        raw = canonical(body) if body is not None else None
-        request = Request(self.base + path, data=raw,
-                          headers={'Origin': self.base, 'Content-Type': 'application/json', 'Accept': 'application/json'})
-        with self.opener.open(request, timeout=self.timeout) as response:
-            data = response.read(16 * 1024 * 1024 + 1)
-            need(len(data) <= 16 * 1024 * 1024, 'Response exceeds 16 MiB')
-            result = json.loads(data)
-            need(isinstance(result, dict), "Studio returned a non-object response")
-            return result
 
 
 def parser():
@@ -50,6 +23,7 @@ def parser():
     sub = p.add_subparsers(dest='command', required=True)
     for name in ('capabilities', 'guides', 'nodes', 'catalog'):
         sub.add_parser(name)
+    document_cli.add_parser(sub)
     for name, field in (('prepare', 'recipe'), ('run', 'ticket'), ('compile', 'document'), ('import', 'graph')):
         q = sub.add_parser(name)
         q.add_argument('--' + field, required=True, type=Path)
@@ -69,7 +43,9 @@ def main(argv=None):
     command = args.command
     try:
         client = Client(args.url, args.http_timeout)
-        if command in ('capabilities', 'guides', 'nodes', 'catalog'):
+        if command == 'documents':
+            result = document_cli.execute(args)
+        elif command in ('capabilities', 'guides', 'nodes', 'catalog'):
             result = client.request('/api/catalog' if command == 'catalog' else PREFIX + '/' + command)
         elif command in ('prepare', 'run', 'compile', 'import'):
             key = {'prepare': 'recipe', 'run': 'ticket', 'compile': 'document', 'import': 'graph'}[command]
@@ -106,8 +82,11 @@ def main(argv=None):
         return 0
     except (ValueError, OSError, HTTPError, URLError, TimeoutError, HTTPException, UnicodeError) as exc:
         result = {'error': str(exc), 'command': command}
+        if isinstance(exc, ClientError): result.update(exc.result, http_status=exc.status, code=exc.code)
         if command == 'run': result['recovery'] = 'Outcome may be unknown. Retain the same ticket and inspect it; never prepare a replacement ticket to retry.'
+        elif command == 'documents': result['recovery'] = 'Retain the same request ID and content. Inspect the current revision; do not silently rebase a conflicting edit.'
         print(json.dumps(result, ensure_ascii=False))
+        if isinstance(exc, ClientError) and exc.status == 409: return 6
         return 3 if command == 'run' else 2
 
 
