@@ -69,6 +69,11 @@ No native graph is synthesized from these fields in this first slice. Unsupporte
 
 ## Checks
 
+An existing protected result can also be carried into a saved KRA as a separate,
+reversible layer. See [Krita edit revisions](KRITA-EDIT-REVISIONS.md) for explicit
+configuration, supported file types, execute-once recovery and the real native
+synthetic proof. This does not create or approve a neural candidate.
+
 ```console
 python -m unittest discover -s tests -p "test_character_edit*.py" -v
 python -m unittest discover -s tests

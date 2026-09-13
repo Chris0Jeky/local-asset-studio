@@ -28,6 +28,29 @@ remaining attempts. Its uncertain portrait and previously blocked boot Start
 are preserved. The restart wording and the live public-repository observation
 are reconciled without recording a new owner approval.
 
+## Native protected-edit revision — 13 September 2026
+
+The new `character_krita.py` adapter carries an existing protected edit result
+into a new KRA paint layer using a configured, fixed Krita runner module. It
+rechecks the source/document and pixel contracts before native execution,
+persists the attempt first, refuses repeats, verifies native layer readback and
+source restoration, then saves/reopens and checks the exported pixels.
+
+The real synthetic two-actor proof at
+`C:/AI/character-lab/native-edit-proof-20260913/native-revision-3` passed on
+Krita 5.2.16: 4,032 changed pixels, 94,272 preserved pixels, original KRA intact,
+original layer canvas-pixel/metadata checks unchanged, and exact saved/reopened
+result. The before/after and reopened PNG were inspected. The prior native
+package is retained after a diagnosed Python binding return-value mismatch;
+no failed or uncertain attempt was repeated. See
+[Krita edit revisions](docs/character-consistency/KRITA-EDIT-REVISIONS.md) for
+artifact hashes, commands and supported-input limits.
+
+This is a mechanical native-edit proof. No neural generation, anatomy repair,
+costume-design acceptance, interactive GUI editing or private pilot budget
+change is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains the owner-decision
+record; no new creative acceptance was supplied.
+
 ## Wan admission and isolated tiled-decode capacity — 13 September 2026
 
 The ordinary Wan decoder is now held above the recorded 512x768/33-frame,
@@ -100,7 +123,8 @@ separately from review.
 ## Resource efficiency programme and first measurement — 13 September 2026
 
 The architecture and staged plan are in [RESOURCE-EFFICIENCY.md](docs/RESOURCE-EFFICIENCY.md),
-tracked by #172 and scoped issues #173–#178. Existing execution, recovery, Workspace and Wan
+tracked by #172 and scoped issues #173–#178. PR #182 closed #173 and #174; #175–#178 and the
+umbrella #172 remain open. Existing execution, recovery, Workspace and Wan
 capacity owners are retained. The first implementation adds a finite read-only resource profiler
 and the browser scheduling slice tracked by #174: serial read lanes, hidden-page suspension,
 4-second active / 15-second idle job observation and view-specific refreshes. Existing unchanged

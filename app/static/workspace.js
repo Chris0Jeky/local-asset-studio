@@ -1,5 +1,55 @@
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false;
+// Transient editor state only. Workspace remains the authority for persisted metadata.
+let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
+function assetDetailValues() {
+  return {title:$('#assetTitle').value, tags:$('#assetTags').value, review:$('#assetReview').value, notes:$('#assetNotes').value};
+}
+function assetDetailDirty() { return !!assetDetailBaseline && JSON.stringify(assetDetailValues())!==JSON.stringify(assetDetailBaseline); }
+function assetDetailStatus(text, error=false) {
+  let status=$('#assetDetailStatus');
+  if(!status){status=document.createElement('p');status.id='assetDetailStatus';status.className='muted';status.setAttribute('role','status');status.setAttribute('aria-live','polite');$('#saveAssetDetails').parentElement.before(status);}
+  status.textContent=text;status.classList.toggle('error',error);
+}
+function assetDetailControls() {
+  for(const id of ['saveAssetDetails','assetFavorite','assetTrash'])$('#'+id).disabled=assetDetailBusy;
+  $('#saveAssetDetails').textContent=assetDetailBusy?'Saving…':'Save details';
+  for(const id of ['assetTitle','assetTags','assetReview','assetNotes'])$('#'+id).disabled=assetDetailBusy && assetDetailDiscarding;
+}
+function assetDetailCanLeave() {
+  if(assetDetailBusy){assetDetailStatus('A save is still pending. Your edits remain here until its outcome is known.');return false;}
+  return !assetDetailDirty() || window.confirm('Discard unsaved changes to this asset? Cancel keeps your edits here.');
+}
+function closeAssetDetails() { if(assetDetailCanLeave())$('#assetDialog').close(); }
+function assetDetailContextCurrent(id,epoch) { return $('#assetDialog').open && activeAsset?.id===id && assetDetailEpoch===epoch; }
+// A timeout means unconfirmed, not definitely unsaved. Never retry a metadata POST automatically.
+async function writeAssetDetails(payload, success) {
+  if(assetDetailBusy || !activeAsset || !$('#assetDialog').open)return;
+  const id=activeAsset.id, epoch=assetDetailEpoch, controller=new AbortController();
+  assetDetailBusy=true;assetDetailDiscarding=['trash','restore'].includes(payload.action);assetDetailControls();
+  assetDetailStatus(assetDetailDiscarding?'Updating Trash status… Detail fields are paused until this finishes.':'Saving this change… You can keep editing; only the clicked snapshot is sent.');
+  const timer=setTimeout(()=>controller.abort(),15000);
+  try {
+    await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,ids:[id]}),signal:controller.signal});
+    if(assetDetailContextCurrent(id,epoch))success();
+    // Refresh the library without repopulating the open form or interrupting its media.
+    void refreshAssets(true);
+  } catch(error) {
+    if(assetDetailContextCurrent(id,epoch))assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
+  } finally {
+    clearTimeout(timer);assetDetailBusy=false;assetDetailDiscarding=false;assetDetailControls();
+  }
+}
+for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
+  const changed=()=>assetDetailStatus(assetDetailBusy?'Saving the earlier snapshot. Any newer edits remain unsaved.':assetDetailDirty()?'Unsaved changes. Save details to keep them.':'No unsaved changes.');
+  $('#'+id).addEventListener('input',changed);$('#'+id).addEventListener('change',changed);
+}
+// Existing continuation/scene/recipe guards still own their handoffs. Do not leave during a write.
+document.addEventListener('click',e=>{
+  if(assetDetailBusy && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],.ux-scene-link,#assetRecipe')){
+    e.preventDefault();e.stopImmediatePropagation();assetDetailStatus('Finish the pending save before continuing with this asset.');
+  }
+},true);
 $('#importAssets').onchange=async e=>{
   const files=[...e.target.files];if(!files.length)return;
   if(files.length>32){assetMessage('Import up to 32 images at a time.',true);return;}
@@ -88,10 +138,15 @@ function renderI2VDiagnosticAction(asset,error='') {
   $('#assetDiagnostic').innerHTML=supported?'<button data-i2v-diagnostic="'+esc(asset.job_id)+'">Offline I2V diagnostic</button><small>Reads the existing video and recipe only; no generation is submitted.</small>'+(error?'<p class="i2v-warning">'+esc(error)+'</p>':''):'';
 }
 function openAsset(id) {
-  activeAsset=assetState.assets.find(a=>a.id===id);if(!activeAsset)return;
+  const candidate=assetState.assets.find(a=>a.id===id);
+  if(!candidate){assetDetailStatus('This asset is no longer in the loaded workspace. Refresh the library to check it.',true);return false;}
+  if($('#assetDialog').open && activeAsset?.id===id)return true;
+  if($('#assetDialog').open && !assetDetailCanLeave())return false;
+  activeAsset=candidate;assetDetailEpoch++;assetDiagnosticRequest++;
   const a=activeAsset;
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);
-  $('#assetTitle').value=a.title;$('#assetTags').value=a.tags.join(', ');$('#assetReview').value=a.review;$('#assetNotes').value=a.notes;
+  $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
+  assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes. Review records your selection, not artistic or licensing approval.');
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p><details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at?'Restore':'Move to Trash';
   $('#assetDownload').href=a.url+'?download';
@@ -99,6 +154,7 @@ function openAsset(id) {
   renderI2VDiagnosticAction(a);
   $('#assetLineage').innerHTML=a.lineage.length?'<h3>Source assets</h3>'+a.lineage.map(id=>{const parent=assetState.assets.find(p=>p.id===id);return '<button data-lineage="'+esc(id)+'">'+esc(parent?.title||id)+'</button>';}).join(''):'';
   if(!$('#assetDialog').open)$('#assetDialog').showModal();
+  return true;
 }
 async function handoffAsset(id,presetId) {
   const result=await post('/api/assets/reference',{id});
@@ -119,16 +175,52 @@ $('#collectionForm').onsubmit=async e=>{e.preventDefault();try{const col=await p
 $('#deleteCollection').onclick=async()=>{try{await post('/api/collections',{action:'delete',id:assetScope.slice(11)});assetScope='all';await refreshAssets(true);assetMessage('Collection removed. Its assets are still in your workspace.');}catch(e){assetMessage(e.message,true);}};
 $('#selectVisible').onclick=()=>{assetSelection=new Set(visibleAssets().slice(0,200).map(a=>a.id));renderAssets();};
 $('#clearAssetSelection').onclick=()=>{assetSelection.clear();renderAssets();};
-$('#closeAssetDialog').onclick=()=>$('#assetDialog').close();
-$('#assetDialog').addEventListener('close',()=>{$('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';});
-$('#saveAssetDetails').onclick=async()=>{try{await mutateAssets({ids:[activeAsset.id],action:'edit',title:$('#assetTitle').value,tags:$('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean),review:$('#assetReview').value,notes:$('#assetNotes').value});$('#assetDialog').close();assetMessage('Asset details saved.');}catch(e){assetMessage(e.message,true);}};
-$('#assetFavorite').onclick=async()=>{await mutateAssets({ids:[activeAsset.id],action:'edit',favorite:!activeAsset.favorite});openAsset(activeAsset.id);};
-$('#assetTrash').onclick=async()=>{const action=activeAsset.trashed_at?'restore':'trash';await mutateAssets({ids:[activeAsset.id],action});$('#assetDialog').close();assetMessage(action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.');};
+$('#closeAssetDialog').onclick=closeAssetDetails;
+$('#assetDialog').addEventListener('cancel',e=>{e.preventDefault();closeAssetDetails();});
+$('#assetDialog').addEventListener('close',()=>{
+  // A queued close event can arrive after a new session has already opened.
+  if($('#assetDialog').open)return;
+  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;
+  $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';
+});
+$('#saveAssetDetails').onclick=async()=>{
+  const snapshot=assetDetailValues();
+  const saved={title:snapshot.title.trim(),tags:[...new Set(snapshot.tags.split(',').map(t=>t.trim()).filter(Boolean))],review:snapshot.review,notes:snapshot.notes.trim()};
+  await writeAssetDetails({action:'edit',...saved},()=>{
+    const unchanged=JSON.stringify(assetDetailValues())===JSON.stringify(snapshot);
+    Object.assign(activeAsset,saved);
+    assetDetailBaseline={title:saved.title,tags:saved.tags.join(', '),review:saved.review,notes:saved.notes};
+    if(unchanged)for(const [key,id] of Object.entries({title:'assetTitle',tags:'assetTags',review:'assetReview',notes:'assetNotes'}))$('#'+id).value=assetDetailBaseline[key];
+    assetDetailStatus(assetDetailDirty()?'Snapshot saved. Your newer edits are still unsaved.':'Details saved. Continue with this asset whenever you are ready.');
+  });
+};
+$('#assetFavorite').onclick=async()=>{
+  const favorite=!activeAsset?.favorite;
+  await writeAssetDetails({action:'edit',favorite},()=>{
+    activeAsset.favorite=favorite;$('#assetFavorite').textContent=favorite?'★ Favorited':'☆ Favorite';
+    assetDetailStatus((favorite?'Added to Favorites.':'Removed from Favorites.')+(assetDetailDirty()?' Your detail edits are still unsaved.':' No detail fields changed.'));
+  });
+};
+$('#assetTrash').onclick=async()=>{
+  if(!activeAsset || !assetDetailCanLeave())return;
+  const action=activeAsset.trashed_at?'restore':'trash';
+  await writeAssetDetails({action},()=>{
+    assetDetailBaseline=null;$('#assetDialog').close();assetMessage(action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.');
+  });
+};
 $('#assetRecipe').onclick=()=>exportRecipe(activeAsset.job_id);
 document.addEventListener('click',async e=>{
   try{
     const diagnostic=e.target.closest('[data-i2v-diagnostic]');
-    if(diagnostic){const diagnosticAsset=activeAsset;diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted">Building offline report from the existing recording…</p>';try{const report=await api('/api/jobs/'+encodeURIComponent(diagnostic.dataset.i2vDiagnostic)+'/i2v-diagnostic');renderI2VDiagnostic(report);}catch(err){renderI2VDiagnosticAction(diagnosticAsset,err.message);throw err;}return;}
+    if(diagnostic){
+      const asset=activeAsset, epoch=assetDetailEpoch, request=++assetDiagnosticRequest;
+      if(!asset || asset.media_type!=='video' || asset.preset_id!=='wan22-i2v' || asset.job_id!==diagnostic.dataset.i2vDiagnostic)return;
+      const current=()=>assetDetailContextCurrent(asset.id,epoch) && request===assetDiagnosticRequest;
+      diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted" role="status">Building offline report from the existing recording…</p>';
+      try {const report=await api('/api/jobs/'+encodeURIComponent(asset.job_id)+'/i2v-diagnostic');if(current())renderI2VDiagnostic(report);}
+      catch(err){if(current())renderI2VDiagnosticAction(asset,err.message);}
+      return;
+    }
     const scope=e.target.closest('[data-scope]');if(scope)setAssetScope(scope.dataset.scope);
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
     const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}

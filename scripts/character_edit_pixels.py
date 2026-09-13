@@ -155,8 +155,8 @@ def _verify_bundle(root: Path, plan: dict, folder: str, patches: dict, transform
     return bundle
 
 
-def apply(root: Path, plan: dict, bundle_folder: str, candidate: dict, output: str) -> dict:
-    """Publish a new decoded-pixel-preserving composite, never 'approve' the art."""
+def render(root: Path, plan: dict, bundle_folder: str, candidate: dict) -> dict:
+    """Recheck all dependencies and compute the protected result without publishing."""
     source, mask, protect = _inputs(root, plan); patches, transform = _patches(source, mask, plan)
     bundle = _verify_bundle(root, plan, bundle_folder, patches, transform)
     patch = png(verify_artifact(root, candidate))
@@ -172,6 +172,17 @@ def apply(root: Path, plan: dict, bundle_folder: str, candidate: dict, output: s
     outside_changes = ImageChops.multiply(delta, locked).histogram()[255]
     protected_changes = ImageChops.multiply(delta, protect).histogram()[255]
     require(outside_changes == 0 and protected_changes == 0, 'Pixel preservation invariant failed')
+    return {'source': source, 'mask': mask, 'protect': protect, 'bundle': bundle,
+            'transform': transform, 'result': result, 'delta': delta,
+            'outside_changes': outside_changes, 'protected_changes': protected_changes}
+
+
+def apply(root: Path, plan: dict, bundle_folder: str, candidate: dict, output: str) -> dict:
+    """Publish a new decoded-pixel-preserving composite, never 'approve' the art."""
+    rendered = render(root, plan, bundle_folder, candidate)
+    result, delta, mask = (rendered[k] for k in ('result', 'delta', 'mask'))
+    bundle, transform = rendered['bundle'], rendered['transform']
+    outside_changes, protected_changes = rendered['outside_changes'], rendered['protected_changes']
     with _new_output(root, output) as stage:
         _save(result, stage / 'result.png'); _save(delta, stage / 'changed-pixels.png')
         receipt = {'schema_version': 1, 'kind': 'character_edit_result', 'plan_sha256': plan['plan_sha256'],

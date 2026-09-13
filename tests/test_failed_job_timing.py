@@ -67,7 +67,13 @@ class FailedJobTimingTests(unittest.TestCase):
              patch.object(server.Studio, "validate_graph", lambda *a: None):
             intent = {"name": "Failure timing", "recipe": {"preset_id": "demo", "controls": {}}, "axis": "seed", "values": [1], "max_generations": 1}
             project = studio.production.create(intent); studio.production.start(project["id"])
-            with patch.object(server.time, "time", side_effect=[90.0, 95.0, 100.0, 135.0, 100.0, 125.0, 160.0, 170.0]): studio.production.run(project["id"])
+            execute = studio._run
+            def timed_job(job):
+                # Pin the job timing seam, not unrelated coordinator wall-clock
+                # reads. Production now uses a separate monotonic time ledger.
+                with patch.object(server.time, "time", side_effect=[100.0, 125.0, 160.0]):
+                    return execute(job)
+            with patch.object(studio, "_run", side_effect=timed_job): studio.production.run(project["id"])
             state = studio.production.get(project["id"])
             job = next(iter(studio.jobs.values()))
             self.assertEqual(state["state"]["status"], "failed"); self.assertEqual(job["elapsed_seconds"], 60.0)

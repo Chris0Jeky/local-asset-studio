@@ -1,0 +1,246 @@
+{
+  "schema": "studio.ux-qa-checkpoint/v1",
+  "date": "2026-09-13",
+  "base_commit": "2bf0efb0da12c28d6767b8092544baab26c1c6cc",
+  "base_tree": "bf8474bf33636db7501daa98189f66d2367566f0",
+  "transport_mode": "inert: injected storage and API transport; native origin/network/media not tested",
+  "scope": "Actual Studio HTML/JS/CSS, synthetic assets and HTTP API fixture. No model inference, owner-PC, art or licence evidence.",
+  "baseline": {
+    "expectations": 17,
+    "pass": 7,
+    "fail": 10,
+    "workspace_js_sha256": "d9cf79819651dc5418e209826aedde00602c580f52a5eff3975d000a22c53811"
+  },
+  "after": {
+    "expectations": 30,
+    "pass": 30,
+    "fail": 0,
+    "workspace_js_sha256": "9415239350eb0277a0a166d7d8303e65d770d298b4a148b56d67868d7e866cc8",
+    "style_css_sha256": "85eabc0ae79705472ce1cff8d8c35048b19443418578c290f1399d6829b066dc",
+    "javascript_errors": [],
+    "metadata_write_count": 9,
+    "generation_posts": 0
+  },
+  "checks": [
+    {
+      "id": "ASSET-01",
+      "expectation": "Favorite preserves unsaved notes",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-02",
+      "expectation": "Favorite writes only favorite, not review/notes",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-03",
+      "expectation": "Escape offers discard consent; Stay preserves draft",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-04",
+      "expectation": "Lineage navigation cannot discard edits without consent",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-05",
+      "expectation": "Close button offers the same discard choice as Escape",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-06",
+      "expectation": "Save keeps the current asset open for continuation",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-07",
+      "expectation": "Save failure is visible inside the open dialog",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-08",
+      "expectation": "Duplicate save is disabled during in-flight mutation",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-09",
+      "expectation": "Late save preserves newer typing and leaves it unsaved",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-10",
+      "expectation": "Save persists its click-time snapshot exactly once",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-11",
+      "expectation": "Late diagnostic success cannot replace the newly selected asset panel",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-12",
+      "expectation": "Late diagnostic failure cannot attach retry to another asset",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-13",
+      "expectation": "Current diagnostic failure retains explicit retry",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-14",
+      "expectation": "390px dialog remains within viewport",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-15",
+      "expectation": "720px dialog remains within viewport",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-16",
+      "expectation": "These scenarios never create a generation or switch/install a backend",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-17",
+      "expectation": "No JavaScript exceptions in complete shell",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-18",
+      "expectation": "A→B→A rejects old diagnostic success",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-19",
+      "expectation": "A→B→A rejects old diagnostic failure",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-20",
+      "expectation": "Close/reopen rejects the previous session diagnostic",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-21",
+      "expectation": "Favorite preserves title, tags and review together",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-22",
+      "expectation": "Missing navigation target retains the active editor",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-23",
+      "expectation": "Pending write holds close and navigation in the same session",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-24",
+      "expectation": "Confirmed clean save can close normally",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-25",
+      "expectation": "Favorite failure is visible, retains edits and releases controls",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-26",
+      "expectation": "390px preview uses at most 35% viewport height",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-27",
+      "expectation": "720px preview uses at most 35% viewport height",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-28",
+      "expectation": "Dirty/save messages have a polite status region",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-29",
+      "expectation": "Keyboard reaches Save from Notes and keeps the confirmed asset open",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    },
+    {
+      "id": "ASSET-30",
+      "expectation": "Trash error restores editing and retains the unsaved draft",
+      "before": "not run in initial baseline",
+      "after": "pass"
+    }
+  ],
+  "additional_state_contracts": {
+    "passed": 17,
+    "counted_as_unittest_cases": 1,
+    "command": "node tests/asset_detail_contracts.cjs"
+  },
+  "remaining_confirmed_defect": {
+    "scenario": "Two clients edit from the same initial asset metadata",
+    "a_confirmed_notes": "A confirmed correction",
+    "b_stale_notes": "",
+    "final_notes": "",
+    "expected": "Stale write conflicts rather than erasing A notes",
+    "observed": "Both writes accepted; earlier notes overwritten",
+    "scope": "Temporary real SQLite AssetWorkspace; no Studio construction, inference or user files"
+  },
+  "limitations": [
+    "Native HTTP/browser origin and storage are pending actual CI evidence.",
+    "No model inference, Windows workstation, native editor, screen-reader or 200% zoom evidence.",
+    "Synthetic video placeholders do not establish media decoding.",
+    "Cross-client metadata conflict remains issue #188.",
+    "Asset detail drafts are transient and do not survive browser reload."
+  ],
+  "full_offline_suite": {
+    "command": "python -m unittest discover -s tests",
+    "run": 1366,
+    "passed": 1351,
+    "skipped": 15,
+    "failures": 0,
+    "seconds": 80.731,
+    "warnings_observed": [
+      "Pillow Image.getdata deprecation",
+      "ResourceWarning for an unclosed socket at process exit"
+    ]
+  },
+  "repository_validation": {
+    "command": "python scripts/validate-repo.py",
+    "passed": true,
+    "preset_graphs_and_bindings": 66,
+    "pinned_assets": 121,
+    "lora_names_checked": 86
+  }
+}
