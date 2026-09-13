@@ -1,0 +1,58 @@
+name: Recipe shortlist contracts
+on:
+  pull_request:
+    paths:
+      - 'studio_workflow/**'
+      - 'app/static/**'
+      - 'app/server.py'
+      - 'app/model_requirements.py'
+      - 'app/continuation.py'
+      - 'app/wan_capacity.py'
+      - 'tests/*recipe_shortlist*'
+      - 'tests/studio_browser_smoke.py'
+      - 'tests/asset_detail_browser.py'
+      - '.github/workflows/recipe-shortlist.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.28.1'"
+      - run: python -m unittest discover -s tests -p 'test_recipe_shortlist*.py' -v
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Native HTTP and actual Studio shell, synthetic dependencies
+        run: python tests/recipe_shortlist_browser.py --out .runtime/shortlist-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recipe-shortlist-browser
+          path: .runtime/shortlist-native/
+          retention-days: 7
+          if-no-files-found: error
