@@ -63,14 +63,14 @@ class Handler(fixture.Handler):
             if self.state.fail_write:return self.json({'error':'Workspace unavailable (synthetic fault)'},503)
             if data['request_id'] in self.state.receipts:return self.json(self.state.receipts[data['request_id']])
             selected=[a for a in fixture.ASSETS if a['id'] in data['ids']]
-            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','current':selected},409)
+            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','workspace_id':'1'*32,'current':selected},409)
             for asset in fixture.ASSETS:
                 if asset['id'] in data['ids']:
-                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','request_id','expected_revisions'}})
+                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','workspace_id','request_id','expected_revisions'}})
                     elif data['action']=='trash':asset['trashed_at']=123
                     elif data['action']=='restore':asset['trashed_at']=None
                     asset['metadata_revision']+=1
-            receipt={'status':'applied','request_id':data['request_id'],'updated':data['ids'],'action':data['action'],'revisions':{a['id']:a['metadata_revision'] for a in selected},'applied':{k:v for k,v in data.items() if k in {'title','notes','tags','favorite','review'}} if data['action']=='edit' else {'trashed_at':123 if data['action']=='trash' else None}}
+            receipt={'workspace_id':'1'*32,'current':copy.deepcopy(selected),'status':'applied','request_id':data['request_id'],'updated':data['ids'],'action':data['action'],'revisions':{a['id']:a['metadata_revision'] for a in selected},'applied':{k:v for k,v in data.items() if k in {'title','notes','tags','favorite','review'}} if data['action']=='edit' else {'trashed_at':123 if data['action']=='trash' else None}}
             self.state.receipts[data['request_id']]=receipt
             return self.json(receipt)
         return super().do_POST()
@@ -169,7 +169,7 @@ async def run(args):
             await page.fill('#assetNotes','Keep my detailed repair notes')
             await page.click('#assetFavorite');await settle()
             await check('ASSET-01','Favorite preserves unsaved notes',await page.input_value('#assetNotes')=='Keep my detailed repair notes')
-            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite','request_id','expected_revisions'})
+            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','workspace_id','favorite','request_id','expected_revisions'})
             await open_asset();await page.fill('#assetNotes','Stay on Escape')
             page.remove_listener('dialog',discard_dialog)
             prompts=[]
