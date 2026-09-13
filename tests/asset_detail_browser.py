@@ -2,7 +2,8 @@
 
 Native HTTP: python tests/asset_detail_browser.py --out .runtime/asset-detail
 Policy-restricted component mode: add --inert (test storage/transport, not native networking).
-Add --baseline to record unmet expectations without failing the run.
+Add --baseline to record unmet expectations; JavaScript exceptions still fail.
+Add --response-delay-ms 400 to exercise slow synthetic mutation/diagnostic responses.
 """
 import argparse
 import asyncio
@@ -12,10 +13,10 @@ import json
 import re
 import shutil
 import threading
+import time
 from http.client import HTTPConnection
 from pathlib import Path
 
-from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,26 +29,37 @@ for asset in BASE_ASSETS:
     asset['url'] = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="768"%3E%3C/svg%3E'
 
 class State:
-    def __init__(self):
+    def __init__(self, delay_ms=0):
+        self.delay_seconds=delay_ms/1000; self.started=threading.Condition()
         self.writes=[]; self.gate=threading.Event(); self.gate.set()
         self.diagnostic_gate=threading.Event(); self.diagnostic_gate.set()
         self.fail_write=False; self.fail_diagnostic=False; self.diagnostics=0; self.receipts={}
+    def wait_started(self, kind, count):
+        with self.started:
+            ready=self.started.wait_for(lambda: (len(self.writes) if kind=='write' else self.diagnostics)>=count,timeout=5)
+        if not ready:raise TimeoutError('Synthetic '+kind+' request did not reach its gate')
 
 class Handler(fixture.Handler):
     state=None
     def do_GET(self):
         if self.path.endswith('/i2v-diagnostic'):
-            self.state.diagnostics+=1
-            failed=self.state.fail_diagnostic
+            with self.state.started:
+                self.state.diagnostics+=1
+                failed=self.state.fail_diagnostic
+                self.state.started.notify_all()
             if not self.state.diagnostic_gate.wait(10):return self.json({'error':'Fixture deadline'},504)
+            time.sleep(self.state.delay_seconds)  # Deliberate server fault injection, not a test settling wait.
             if failed:return self.json({'error':'Recorded file unavailable (synthetic fault)'},503)
             return self.json({'job':{'id':self.path.split('/')[3]},'source':{'filename':self.path.split('/')[3]},'requested':{},'video':{'probe':{}},'graph':{},'artifacts':{}})
         return super().do_GET()
     def do_POST(self):
         if self.path=='/api/assets/update':
             data=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
-            self.state.writes.append(copy.deepcopy(data))
+            with self.state.started:
+                self.state.writes.append(copy.deepcopy(data))
+                self.state.started.notify_all()
             if not self.state.gate.wait(10):return self.json({'error':'Fixture deadline'},504)
+            time.sleep(self.state.delay_seconds)
             if self.state.fail_write:return self.json({'error':'Workspace unavailable (synthetic fault)'},503)
             if data['request_id'] in self.state.receipts:return self.json(self.state.receipts[data['request_id']])
             selected=[a for a in fixture.ASSETS if a['id'] in data['ids']]
@@ -71,11 +83,11 @@ async def inert_page(page, port):
             connection=HTTPConnection('127.0.0.1',port,timeout=12)
             try:
                 connection.request(options.get('method') or 'GET',path,(options.get('body') or '').encode('utf-8'),dict(options.get('headers') or {}, Origin=f'http://127.0.0.1:{port}'))
-                reply=connection.getresponse();return {'status':reply.status,'body':reply.read().decode()}
+                reply=connection.getresponse();return {'status':reply.status,'body':reply.read().decode('utf-8')}
             finally:connection.close()
         return await asyncio.to_thread(request)
     await page.expose_function('__qaTransport',transport)
-    markup=(STATIC/'index.html').read_text()
+    markup=(STATIC/'index.html').read_text(encoding='utf-8')
     # No navigation-policy bypass. Native storage/origin, media loading and navigation are untested here.
     boot='''<script>class QAStorage{constructor(){this.data=new Map()}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
 Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage()});
@@ -84,15 +96,28 @@ window.fetch=async(path,options={})=>{const r=await __qaTransport(path,{method:o
     def script(match):
         file=STATIC/match.group(1).removeprefix('/static/')
         if 'vendor' in str(file):return ''
-        return '<script>'+file.read_text().replace('</script','<\\/script')+'</script>'
+        return '<script>'+file.read_text(encoding='utf-8').replace('</script','<\\/script')+'</script>'
     markup=re.sub(r'<script(?: type="module")? src="([^"]+)"></script>',script,markup)
-    markup=re.sub(r'<link rel="stylesheet" href="/static/([^"]+)">',lambda m:'<style>'+(STATIC/m.group(1)).read_text()+'</style>',markup)
+    markup=re.sub(r'<link rel="stylesheet" href="/static/([^"]+)">',lambda m:'<style>'+(STATIC/m.group(1)).read_text(encoding='utf-8')+'</style>',markup)
     markup=re.sub(r' src="/(?:api|examples)/[^"]+"','',markup)
     await page.set_content(markup)
 
+def check_result(checks, errors, baseline=False):
+    """Baseline relaxes expectations only, never execution failures."""
+    if errors or (not baseline and any(c['status']=='fail' for c in checks)):
+        raise SystemExit(1)
+
+
+def delay_milliseconds(value):
+    number=int(value)
+    if not 0<=number<=2000:raise argparse.ArgumentTypeError('Use a delay between 0 and 2000 milliseconds')
+    return number
+
+
 async def run(args):
+    from playwright.async_api import async_playwright
     args.out.mkdir(parents=True,exist_ok=True)
-    state=State();Handler.state=state;fixture.ASSETS[:]=copy.deepcopy(BASE_ASSETS);fixture.POSTS.clear()
+    state=State(getattr(args,'response_delay_ms',0));Handler.state=state;fixture.ASSETS[:]=copy.deepcopy(BASE_ASSETS);fixture.POSTS.clear()
     server=fixture.ThreadingHTTPServer(('127.0.0.1',0),Handler)
     threading.Thread(target=server.serve_forever,daemon=True).start()
     checks=[];errors=[];browser=None
@@ -110,12 +135,33 @@ async def run(args):
             await page.wait_for_function('!!catalog && !!selected')
             await page.evaluate("showView('assets')")
             await page.wait_for_selector('[data-asset-open="asset-0"]')
+            # Observe the existing API promise without changing requests, results,
+            # errors or the product code. Works in native and inert transport modes.
+            await page.evaluate("""() => {
+              window.__assetQaCalls=[]; const original=api;
+              api=async(...args)=>{
+                const kind=args[0]==='/api/assets/update'?'write':args[0].endsWith('/i2v-diagnostic')?'diagnostic':null;
+                if(!kind)return original(...args);
+                const call={kind,pending:true};__assetQaCalls.push(call);
+                try{return await original(...args);}finally{call.pending=false;}
+              };
+            }""")
             async def open_asset(i=0):
                 # Test setup closes without user input; each assertion exercises real user actions.
                 await page.evaluate("""() => new Promise(resolve => {const d=document.querySelector('#assetDialog');if(!d.open){resolve();return;}d.addEventListener('close',resolve,{once:true});d.close();})""")
                 await page.evaluate(f"openAsset('asset-{i}')")
-                await page.wait_for_timeout(30)
-            async def settle():await page.wait_for_timeout(180)
+                await page.wait_for_function("id => document.querySelector('#assetDialog').open && activeAsset?.id===id",arg=f'asset-{i}')
+            async def settle():
+                held=[kind for kind,gate in [('write',state.gate),('diagnostic',state.diagnostic_gate)] if not gate.is_set()]
+                # A held response must have reached the server before the test
+                # navigates or changes fault flags; merely starting fetch is not enough.
+                for kind in held:
+                    count=await page.evaluate("kind => __assetQaCalls.filter(c=>c.kind===kind).length",kind)
+                    await asyncio.to_thread(state.wait_started,kind,count)
+                await page.wait_for_function("""held =>
+                  !__assetQaCalls.some(c=>c.pending && !held.includes(c.kind)) &&
+                  (held.includes('write') || !assetDetailBusy) && !assetRefreshing
+                """,arg=held)
             async def discard_dialog(dialog):await dialog.accept()
             page.on('dialog',discard_dialog)
             await open_asset()
@@ -147,7 +193,7 @@ async def run(args):
             state.fail_write=False
             await open_asset();state.gate.clear();await page.fill('#assetNotes','First snapshot')
             count=len(state.writes);await page.click('#saveAssetDetails')
-            await page.wait_for_timeout(50);await page.fill('#assetNotes','Newer edits during save')
+            await settle();await page.fill('#assetNotes','Newer edits during save')
             await check('ASSET-08','Duplicate save is disabled during in-flight mutation',await page.locator('#saveAssetDetails').is_disabled())
             state.gate.set();await settle()
             await check('ASSET-09','Late save preserves newer typing and leaves it unsaved',await page.locator('#assetDialog').is_visible() and await page.input_value('#assetNotes')=='Newer edits during save' and await status.count()>0 and 'unsaved' in (await status.inner_text()).lower())
@@ -214,14 +260,16 @@ async def run(args):
         state.gate.set();state.diagnostic_gate.set();server.shutdown();server.server_close()
         receipt={'scope':'Actual Studio HTML/JS/CSS, synthetic assets and HTTP API fixture. No model inference, owner-PC, art or licence evidence.',
                  'mode':'inert: injected storage and API transport; native origin/network/media not tested' if args.inert else 'native browser HTTP against synthetic API',
+                 'response_delay_ms':getattr(args,'response_delay_ms',0),
+                 'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                  'workspace_js_sha256':hashlib.sha256((STATIC/'workspace.js').read_bytes()).hexdigest(),
                  'style_css_sha256':hashlib.sha256((STATIC/'style.css').read_bytes()).hexdigest(),'checks':checks,'errors':errors,
                  'pass':sum(c['status']=='pass' for c in checks),'fail':sum(c['status']=='fail' for c in checks),'write_count':len(state.writes),
                  'posts':fixture.POSTS,'mutations':state.writes}
-        (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+        (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n',encoding='utf-8')
         print(json.dumps({k:receipt[k] for k in ['mode','pass','fail','errors']},indent=2))
-    if not args.baseline and any(c['status']=='fail' for c in checks):raise SystemExit(1)
+    check_result(checks,errors,args.baseline)
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--baseline',action='store_true');parser.add_argument('--chromium')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--baseline',action='store_true');parser.add_argument('--chromium');parser.add_argument('--response-delay-ms',type=delay_milliseconds,default=0)
     asyncio.run(run(parser.parse_args()))
