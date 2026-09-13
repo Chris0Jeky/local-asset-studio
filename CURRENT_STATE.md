@@ -1,5 +1,9 @@
 # Current state — 11 September 2026
 
+## Protected pre-listen launcher ambiguity — 13 September 2026
+
+Recovery now inspects the cheap process name before reading full command identity. When psutil returns a blank protected name, a bounded hidden Windows `GetProcessById` lookup resolves that observed PID without any special-case PID or name exemption. A resolved non-Python process is excluded; a protected process named as the configured Python launcher, or one whose name cannot be resolved, remains ambiguous and blocks recovery rather than risking a duplicate pre-listen ComfyUI process. A process that vanishes during the scan remains absent. Offline tests cover fallback non-Python, fallback Python and unresolved cases; the prior read-only host probe saw `Secure System` at PID 284 through Windows while psutil returned blanks.
+
 ## Windows refusal classification — 12 September 2026
 
 The recovery monitor gives its read-only `/system_stats` probe three seconds to receive a Windows connection refusal. A one-second urllib probe timed out at 1.011 seconds on this host and was conservatively classified as unreachable; three and five seconds received `ConnectionRefusedError` (errno/winerror 10061) at about 2.04 seconds. The monitor still starts only after that exact refusal and all existing process/work interlocks; ordinary timeouts remain unreachable and do not authorize launch. This records a host fault-injection observation, not a live recovery success or GPU execution.
