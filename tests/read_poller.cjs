@@ -35,5 +35,11 @@ const deferred = () => { let resolve;return {promise:new Promise(done => {resolv
   await fire(4000);assert.equal(attempts,2,'a failed lane schedules a later recovery read');
   poller.dispose();assert.equal(timers.size,0,'dispose clears every pending timer');
   listeners.get('visibilitychange')?.();await flush();assert.equal(attempts,2,'disposed polling never resumes');
+  let overviewView='assets', overviewReads=0;timers.clear();
+  const overviewPoller=new ReadPoller({document,setTimeout:window.setTimeout,clearTimeout:window.clearTimeout});
+  overviewPoller.register('overview',{interval:12000,shouldPoll:()=>overviewView==='home',task:async()=>{overviewReads++;}});overviewPoller.start();
+  overviewView='home';await overviewPoller.refresh('overview');assert.equal(overviewReads,1,'entering home reads immediately');
+  overviewView='assets';await fire(12000);assert.equal(overviewReads,1,'an interval that expires away from home does not read');assert.equal(timer(12000),undefined,'the skipped overview does not retain a timer');
+  overviewView='home';await overviewPoller.refresh('overview');assert.equal(overviewReads,2,'returning home routes through the lane');assert.ok(timer(12000),'returning home restores the twelve-second cadence');overviewPoller.dispose();
   console.log('Read polling contracts passed: hidden, serialized, view-gated, recovery, terminal cadence, and disposal.');
 })().catch(error => { console.error(error);process.exitCode=1; });

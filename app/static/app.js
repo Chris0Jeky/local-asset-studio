@@ -398,7 +398,9 @@ $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;
-  readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;window.addEventListener?.('pagehide',()=>readPoller.dispose(),{once:true});
+  readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;
+  window.addEventListener?.('pagehide',event=>{if(!event.persisted)readPoller.dispose();});
+  window.addEventListener?.('pageshow',event=>{if(event.persisted)readPoller.wake(true);});
   const readAssets=refreshAssets,readProduction=refreshProduction,readLibrary=refreshLibrary;
   refreshAssets=(...args)=>readPoller.refresh('assets',...args);
   refreshProduction=(...args)=>readPoller.refresh('production',...args);
@@ -419,10 +421,10 @@ $('#importWorkflow').onchange=async e=>{
 };
 (async()=>{
   try{
-    catalog=await api('/api/catalog');configureReadPolling();await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
+    catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
     selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
     const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
-    readPoller?.start();
+    configureReadPolling();readPoller?.start();
   }catch(e){message(e.message,true);}
 })();

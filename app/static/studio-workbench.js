@@ -174,7 +174,7 @@
     q('#uxAttention').innerHTML=records.join('')||(plans&&runJobs?'<div class="ux-empty"><b>A clear desk.</b><p>Prepare a comparison to test one change, or start with a recipe above.</p><a href="/#create">Prepare your first pass →</a></div>':'<p>Run status is unavailable. Refresh before deciding what to start.</p>');
     const recent=assets.filter(a=>!a.trashed_at).sort((a,b)=>b.created_at-a.created_at).slice(0,6);q('#uxRecent').innerHTML=recent.map(a=>'<button class="ux-recent-card" data-ux-open-asset="'+escape(a.id)+'">'+assetPreview(a)+'<span><b>'+escape(a.title)+'</b><small>'+escape(a.media_type)+' · '+escape(a.review||'unreviewed')+'</small></span></button>').join('')||'<div class="ux-empty panel"><h3>'+(workspace?'Make room for your first asset.':'Asset library is unavailable.')+'</h3><p>Import an existing image or create from a recipe. Sources stay available for the next step.</p><a href="/#assets">Open Asset library →</a></div>';
   }
-  q('#uxRefreshHome').onclick=refreshHome;
+  q('#uxRefreshHome').onclick=()=>refreshHome();
   document.addEventListener('click',async e=>{try{const close=e.target.closest('[data-ux-close]');if(close){if((close.dataset.uxClose==='uxHandoff'&&handoffBusy)||(close.dataset.uxClose==='uxSourcePicker'&&pickerBusy))return;q('#'+close.dataset.uxClose).close();}const intent=e.target.closest('[data-ux-intent]');if(intent)chooseIntent(intent.dataset.uxIntent);const dest=e.target.closest('[data-ux-destination]');if(dest&&!handoffBusy){handoffIntent=dest.dataset.uxDestination;handoffRecipes();}const hand=e.target.closest('[data-ux-handoff]');if(hand)openHandoff(hand.dataset.uxHandoff);const scope=e.target.closest('[data-ux-scope]');if(scope){assetScope=scope.dataset.uxScope;q('#assetSearch').value='';q('#assetType').value='all';assetSelection.clear();showView('assets');renderAssets();}const open=e.target.closest('[data-ux-open-asset]');if(open){await refreshAssets();openAsset(open.dataset.uxOpenAsset);}const project=e.target.closest('[data-ux-project]');if(project){productionId=project.dataset.uxProject;if(view==='production')renderProduction();}}catch(err){announce(err.message,true);}});
   // Native file input remains the accessible fallback for drag-and-drop imports.
   const drop=element('div','ux-import-drop','<b>Bring existing work into the studio</b><span>Drop up to 32 PNG, JPG or WebP images here, or use Import images.</span>');drop.id='uxImportDrop';q('#assetsView .asset-workspace').before(drop);drop.ondragover=e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();drop.classList.add('dragover');}};drop.ondragleave=()=>drop.classList.remove('dragover');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');const files=[...e.dataTransfer.files];if(files.length>32||files.some(f=>!['image/png','image/jpeg','image/webp'].includes(f.type))){assetMessage('Import up to 32 PNG, JPEG or WebP images. No files were submitted.',true);return;}const transfer=new DataTransfer();files.forEach(f=>transfer.items.add(f));q('#importAssets').files=transfer.files;q('#importAssets').dispatchEvent(new Event('change',{bubbles:true}));};
@@ -182,7 +182,9 @@
   let overviewPollingAttached=false;
   function attachOverviewPolling(){
     if(overviewPollingAttached||!window.StudioReadPoller)return;
-    overviewPollingAttached=true;window.StudioReadPoller.register('overview',{interval:12000,shouldPoll:()=>view==='home',task:refreshHome});
+    const readHome=refreshHome;overviewPollingAttached=true;
+    window.StudioReadPoller.register('overview',{interval:12000,shouldPoll:()=>view==='home',task:readHome});
+    refreshHome=(...args)=>window.StudioReadPoller.refresh('overview',...args);
   }
   window.addEventListener('studio-read-poller-ready',attachOverviewPolling);attachOverviewPolling();
   showView(U.normalizeView(location.hash));initializeDrafts();

@@ -18,19 +18,20 @@
       this.lanes.set(name,lane);if(this.started)this._schedule(lane);return this;
     }
     start() { if(this.disposed)return;this.started=true;this.wake(); }
-    wake(immediate=false) { if(this.disposed||!this.started||this.document?.hidden)return;for(const lane of this.lanes.values()){if(immediate&&lane.shouldPoll())this._run(lane,[]);else this._schedule(lane);} }
+    wake(immediate=false) { if(this.disposed||!this.started||this.document?.hidden)return;for(const lane of this.lanes.values()){if(immediate&&lane.shouldPoll()){if(lane.timer!==null){this.clearTimeout(lane.timer);lane.timer=null;}this._run(lane,[]);}else this._schedule(lane);} }
     refresh(name, ...args) {
       const lane=this.lanes.get(name);if(!lane||this.disposed)return Promise.resolve();
       if(lane.timer!==null){this.clearTimeout(lane.timer);lane.timer=null;}
       if(lane.inFlight){
-        if(!lane.queued)lane.queued={args,waiters:[]};else lane.queued.args=args;
-        return new Promise(resolve=>lane.queued.waiters.push(resolve));
+        if(!lane.queued){let resolve;lane.queued={args,promise:new Promise(done=>{resolve=done;}),resolve};}
+        else lane.queued.args=args;
+        return lane.queued.promise;
       }
       return this._run(lane,args);
     }
     dispose() {
       if(this.disposed)return;this.disposed=true;this.document?.removeEventListener?.('visibilitychange',this.visible);
-      for(const lane of this.lanes.values()){if(lane.timer!==null)this.clearTimeout(lane.timer);lane.timer=null;lane.queued?.waiters.forEach(resolve=>resolve());lane.queued=null;}
+      for(const lane of this.lanes.values()){if(lane.timer!==null)this.clearTimeout(lane.timer);lane.timer=null;lane.queued?.resolve();lane.queued=null;}
     }
     _schedule(lane) {
       if(lane.timer!==null){this.clearTimeout(lane.timer);lane.timer=null;}
@@ -42,7 +43,7 @@
       if(lane.inFlight)return lane.inFlight;
       lane.inFlight=Promise.resolve().then(()=>lane.task(...args)).catch(()=>undefined).then(()=>{
         lane.inFlight=null;const queued=lane.queued;lane.queued=null;
-        if(queued){this._run(lane,queued.args).then(()=>queued.waiters.forEach(resolve=>resolve()));}
+        if(queued){this._run(lane,queued.args).then(queued.resolve);}
         else this._schedule(lane);
       });
       return lane.inFlight;
