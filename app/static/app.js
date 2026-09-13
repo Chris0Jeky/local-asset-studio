@@ -175,10 +175,13 @@ function renderJobs() {
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
+      const failure=window.StudioUX?.failureDetails?.(job);
+      const failureContext=[failure?.node_type,failure?.exception_type].filter(Boolean).join(' · ');
+      const failurePanel=failure?'<div class="jobFailure"><b>'+esc(failure.title||'Why it failed')+'</b><p>'+esc(failure.summary)+'</p><p><b>Next:</b> '+esc(failure.action)+'</p><small>Engine detail'+(failureContext?' · '+esc(failureContext):'')+': '+esc(failure.detail)+'</small></div>':'';
       const stoppedNote=stopped?'<p><b>Tracking stopped</b>: '+esc(job.tracking_disposition.reason)+'<br><small>Recorded '+esc(new Date(job.tracking_disposition.recorded_at*1000).toLocaleString())+'</small></p>':'';
       const resume=stopped&&job.can_resume_tracking?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation of retained prompt</button>':!stopped&&['uncertain','partial'].includes(job.status)&&job.prompt_ids?.length?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation</button>':'';
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
-      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+resume+stop+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+resume+stop+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });

@@ -413,6 +413,20 @@ class ServerTests(unittest.TestCase):
         saved=json.loads((s.runs/job["id"]/'state.json').read_text())
         self.assertEqual(saved["finished_at"],160.0); self.assertEqual(saved["elapsed_seconds"],60.0)
 
+    def test_allocation_failure_publishes_cause_and_next_action(self):
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"allocation-failed"},
+                 {"allocation-failed":{"status":{"status_str":"error","messages":[
+                     ["execution_error",{"node_id":"7","node_type":"KSampler","exception_type":"RuntimeError","exception_message":"bad allocation"}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job["failure"]["kind"],"memory_allocation")
+        self.assertEqual(job["failure"]["node_type"],"KSampler")
+        self.assertEqual(job["failure"]["node_id"],"7")
+        self.assertIn("not an invalid prompt",job["failure"]["summary"])
+        self.assertIn("smaller resolution",job["failure"]["action"])
+        self.assertEqual(s.public(job)["failure"],job["failure"])
+        self.assertEqual(self.studio().jobs[job["id"]]["failure"]["detail"],"bad allocation")
+
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"seed":40},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)

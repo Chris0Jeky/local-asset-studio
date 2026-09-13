@@ -14,6 +14,25 @@
   const normalizeView=hash=>VIEWS.includes(String(hash||'').replace(/^#/,''))?String(hash).replace(/^#/,''):'home';
   function recipesFor(id,presets,source=false){const intent=INTENTS.find(x=>x.id===id);if(!intent)return[];const rank=p=>{const i=intent.prefer.indexOf(p.id);return i<0?100:i;};return presets.filter(p=>intent.accept(p)&&(!source||!!p.reference)).sort((a,b)=>rank(a)-rank(b)||Number(!!b.verified)-Number(!!a.verified)||a.name.localeCompare(b.name));}
   function summarize(assets=[],plans=[],jobs=[]){const retained=assets.filter(a=>!a.trashed_at);return{assets:retained.length,keepers:retained.filter(a=>a.review==='selected').length,unreviewed:retained.filter(a=>!a.review||a.review==='unreviewed').length,needsWork:retained.filter(a=>a.review==='needs_work').length,activeJobs:jobs.filter(j=>ACTIVE.includes(j.status)),activePlans:plans.filter(p=>ACTIVE.includes(p.state?.status)),reviewPlans:plans.filter(p=>p.state?.status==='awaiting_review'),attentionJobs:jobs.filter(j=>ATTENTION.includes(j.status)),attentionPlans:plans.filter(p=>ATTENTION.includes(p.state?.status)),prepared:plans.filter(p=>p.state?.status==='planned')};}
+  function failureDetails(job={}){
+    const raw=typeof job.message==='string'?job.message:'';
+    const failure=job.failure&&typeof job.failure==='object'?job.failure:null;
+    if(failure||job.status==='failed'&&/ComfyUI reported an execution error|bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455/i.test(raw)){
+      const memory=failure?.kind==='memory_allocation'||/bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455/i.test(raw);
+      const detail=typeof failure?.detail==='string'&&failure.detail?failure.detail:raw||'No engine exception detail was returned.';
+      return{
+        kind:failure?.kind||(memory?'memory_allocation':'execution_error'),
+        title:failure?.title||(memory?'Memory allocation failed':'ComfyUI execution failed'),
+        summary:failure?.summary||(memory?'ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt.':'ComfyUI reported an execution error. The recipe and prompt ID were retained so the engine detail can be investigated without resubmitting it.'),
+        action:failure?.action||(memory?'Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically.':'Check the engine detail below and retry only after correcting the reported workflow or runtime issue. The original prompt was not retried automatically.'),
+        detail,
+        node_type:typeof failure?.node_type==='string'?failure.node_type:'',
+        node_id:typeof failure?.node_id==='string'?failure.node_id:'',
+        exception_type:typeof failure?.exception_type==='string'?failure.exception_type:''
+      };
+    }
+    return null;
+  }
   function readiness({preset,online,schemaAvailable,missing=[],referencesReady=true,switching=false,backend=null,busy=false}){const blockers=[];if(!preset)blockers.push('Choose a recipe.');if(busy)blockers.push('An attachment or submission is in progress.');if(switching)blockers.push('The model environment is switching.');if(online==null)blockers.push('ComfyUI readiness is not yet confirmed. Check Models & setup if the health response stays unavailable.');else if(!online)blockers.push('ComfyUI is offline. Start it with the Studio launcher.');else if(!schemaAvailable)blockers.push('Node readiness is not available yet.');if(preset?.runtime_block)blockers.push(preset.runtime_block);if(backend&&preset&&(preset.backend_id||'primary')!==backend)blockers.push('Switch explicitly to '+(preset.backend_id||'primary')+' in Models & setup.');if(missing.length)blockers.push('Missing requirements: '+missing.join(', '));if(!referencesReady)blockers.push('Attach every required reference before starting.');return{ready:!blockers.length,blockers};}
   function sceneEligibility(assets){if(!assets.length)return{ok:false,reason:'Select a PNG image or MP4 video to begin.'};if(assets.some(a=>a.trashed_at||!{image:/\.png$/i,video:/\.mp4$/i,audio:/\.wav$/i}[a.media_type]?.test(a.filename||'')))return{ok:false,reason:'Scenes accept PNG, MP4 and WAV sources. Convert other formats first.'};const visuals=assets.filter(a=>['image','video'].includes(a.media_type)).length;if(!visuals)return{ok:false,reason:'Add a PNG or MP4 in the scene picker; audio needs a visual source.'};if(visuals>16||assets.filter(a=>a.media_type==='audio').length>32)return{ok:false,reason:'Use at most 16 visuals and 32 audio sources per scene.'};return{ok:true,reason:'Timing is chosen next. The Scene editor validates source bytes and WAV format.'};}
   function normalizeDraft(value){
@@ -36,5 +55,5 @@
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,readiness,sceneEligibility,normalizeDraft,promptTransfer};
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,sceneEligibility,normalizeDraft,promptTransfer};
 });
