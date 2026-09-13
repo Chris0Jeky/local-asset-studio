@@ -5,7 +5,11 @@ completed jobs used the same source graph template SHA-256
 `d20751dd896497052b56f60bb27b78eef862ce96c40fd74d10fea05b04194e19`, 832×1216 output, 30
 steps, CFG 4.5, Euler/simple sampling and the same fully clothed adult original-character
 prompt. The source receipts are retained under
-`.runtime/session-2026-09-12/reconciliation/modular-probes/`.
+`.runtime/session-2026-09-12/reconciliation/modular-probes/`. Small exact recipe copies and
+backend/runtime, timing and inspection evidence are also committed in
+[`experiments/curated/anima-modular-baseline-20260913/`](../experiments/curated/anima-modular-baseline-20260913/README.md).
+The backend was `primary`, ComfyUI at `http://127.0.0.1:8188`, PID 24720, ROCm PyTorch
+`2.9.1+rocm7.2.1`; the committed evidence records the complete observed version strings.
 
 | Case | Job ID / ComfyUI prompt ID | Controls changed from A | Output and file proof | Elapsed |
 | --- | --- | --- | --- | ---: |

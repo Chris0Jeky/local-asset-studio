@@ -15,7 +15,7 @@ The actual saved-document walkthrough is: **Guided workflows → Workflow builde
 choose Baseline - Anima v1 → Open current → Load / refresh installed nodes → Steps view**. Wait
 until the node catalog reports its loaded classes; otherwise the saved controls show as unavailable.
 Individual style Steps are disabled in
-the base document and require the explicit typed bypass before editing. To reproduce the executed
+the base document, which already supplies their explicit typed bypasses for compilation. To reproduce the executed
 first-style case, set the first style strength to `1.0` and enable only that style; all other style
 slots stay disabled. The base case keeps every style disabled. Registered-preset generation remains
 the supported execution path; an arbitrary edited graph is currently export-only.
