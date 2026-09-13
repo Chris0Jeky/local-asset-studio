@@ -1,6 +1,6 @@
 # Studio review — 12 September 2026
 
-This reconciles the two session handoffs against local Git, GitHub and the running applications. The initial snapshot was `main == origin/main == 064d6026f54b77f19fb701cee5409d2a316c993f`, with a clean primary checkout and no open PRs. Claude's earlier `0769d02` handoff preceded the merge of Codex's #115; they describe successive states.
+This reconciles the two session handoffs against local Git, GitHub and the running applications. The initial snapshot was `main == origin/main == 064d6026f54b77f19fb701cee5409d2a316c993f`, with a clean primary checkout and no open PRs. Claude's earlier `0769d02` handoff preceded the merge of Codex's #115; they describe successive states. This is a dated historical snapshot; use the [13 September GitHub reconciliation](reconciliation/2026-09-13-github.md) for the current PR and issue state.
 
 ## What was accomplished
 

@@ -5,7 +5,9 @@
 
 ## Reconciliation before implementation
 
-#146 is still open. Its review correctly identified that the real Studio static
+At the time of this historical implementation review, #146 was still open. It is now
+merged; the current PR/issue status is maintained in the [GitHub reconciliation](../reconciliation/2026-09-13-github.md).
+Its review correctly identified that the real Studio static
 handler rejected the showcase JSON route. The parent now imports a generated,
 checked-in ES module through the existing allowed JavaScript route, without
 broadening the static-file policy. Serialization/parity and real-Handler HTTP
@@ -15,7 +17,7 @@ mocked fixture was not proof of HTTP integration.
 
 Merged #138/#145 already provide preset-compatible builder tickets and run/recover
 controls; #131/#134 already own shared documents, steps and agent access. This
-slice does not replace any of them. #142 and open #149 own download/intake
+slice does not replace any of them. #142 and merged #149 own download/intake
 behavior; nothing here installs or moves model files. #139 records the owner's
 choice of Anima B's softer cinematic shading; its images remain experiments,
 not finished-art acceptance or a representative portfolio. HUMAN_TODO and the
