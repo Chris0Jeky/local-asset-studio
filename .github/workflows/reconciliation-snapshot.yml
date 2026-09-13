@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Reconcile current main and verify the source package
+      - name: Verify tested source and reconcile concurrent main
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -30,7 +30,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
-          git merge --no-edit origin/main
           python - <<'PY'
           import base64, hashlib, json, lzma, os, pathlib, subprocess, urllib.request
           blobs = ['af652e86eb37095b1d1c40e79545e8d345d41667','55d40a73280a908b2fbb8a71db84677c38c239ee','597d2dea1053c17a700f06ec730b56db725428ab','5ceabcf2b5d59e095888690aaee289e87551b39f']
@@ -56,7 +55,7 @@ jobs:
                   assert not pathlib.Path(name).exists(), name
               else:
                   actual = subprocess.check_output(['git','rev-parse','HEAD:' + name],text=True).strip()
-                  assert actual == before, ('Concurrent source change; reconcile rather than overwrite', name, actual, before)
+                  assert actual == before, ('Concurrent branch change; preserve rather than overwrite', name, actual, before)
           patch = pathlib.Path('/tmp/recovery-evidence/source.patch')
           patch.write_text(package['patch'],encoding='utf-8')
           subprocess.run(['git','apply','--check',str(patch)],check=True)
@@ -66,7 +65,24 @@ jobs:
           for name, record in manifest.items():
               assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == record['sha256'], name
           pathlib.Path('/tmp/recovery-evidence/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
-          print('Verified exact tested source for',len(manifest),'files against current main.')
+          subprocess.run(['git','commit','-m','fix: reconcile experiment time and submission evidence (#93, #94)'],check=True)
+          result = subprocess.run(['git','merge','--no-edit','origin/main'])
+          if result.returncode:
+              conflicts = subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+              assert conflicts == ['tests/frontend_handoffs.cjs'], ('Unexpected conflict; nothing will be pushed', conflicts)
+              name = conflicts[0]
+              current = subprocess.check_output(['git','rev-parse','origin/main:' + name],text=True).strip()
+              assert current == '24456ab7c7f3f68ef383aab0adfa9d85195f780e', 'New upstream test changes require review'
+              ours = subprocess.check_output(['git','show','HEAD:' + name],text=True)
+              theirs = subprocess.check_output(['git','show','origin/main:' + name],text=True)
+              addition = ours[ours.index('async function explicitLocalAbandonment()'):ours.index('(async () => {')]
+              assert addition.endswith('}\n\n') and theirs.count('(async () => {') == 1
+              merged = theirs.replace('(async () => {',addition + '(async () => {\n  await explicitLocalAbandonment();',1)
+              assert hashlib.sha256(merged.encode()).hexdigest() == 'd4b847678d4d3e4fe239a8f9fcda5d8db461047b766e15ab45512f7e74ffe127'
+              pathlib.Path(name).write_text(merged,encoding='utf-8')
+              subprocess.run(['git','add',name],check=True)
+              subprocess.run(['git','commit','--no-edit'],check=True)
+          print('Verified source and reconciled current main without dropping either frontend contract.')
           PY
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - name: Full repository suite and validation
@@ -74,10 +90,9 @@ jobs:
           set -o pipefail
           python -m unittest discover -s tests 2>&1 | tee /tmp/recovery-evidence/full-suite.log
           python scripts/validate-repo.py 2>&1 | tee /tmp/recovery-evidence/validation.log
-          git diff --cached --check
-      - name: Publish only the verified source changes
+          git diff --check
+      - name: Publish only after verification
         run: |
-          git commit -m 'fix: reconcile experiment time and submission evidence (#93, #94)'
           git push origin HEAD:codex/oldest-issue-reconciliation
           git rev-parse HEAD | tee /tmp/recovery-evidence/published-commit.txt
       - name: Retain verification source and logs
