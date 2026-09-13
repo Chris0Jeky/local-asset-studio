@@ -1,5 +1,17 @@
 # Validation record
 
+## Native graph validation follow-up — 13 September 2026
+
+`game_asset_pipeline.graph_check` now checks string union sockets, explicitly
+selected V3 dynamic branches and declared socketless scalar widgets. The read-only
+`validate-live.py` delegates to it and defaults to every catalog entry, with explicit
+collection/backend/preset filters and offline saved-schema mode. See
+[Graph validation](../GRAPH-VALIDATION.md) for the contracts, source-derived fixture
+scope, per-preset reports, verification commands and remaining installed-schema proof.
+No native inference or new creative acceptance is established by this follow-up.
+
+## Initial offline delivery — 11 September 2026
+
 11 September 2026. Chat execution environment: Python 3.13.5, Pillow 12.3.0, Linux. This is not the user's Windows/Radeon workstation.
 
 ## Performed
