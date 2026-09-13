@@ -7,15 +7,10 @@ permissions:
   contents: write
 jobs:
   publish:
-    strategy:
-      fail-fast: false
-      matrix:
-        slice: [schema, owner]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       PYTHONUTF8: '1'
-      SLICE: ${{ matrix.slice }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,63 +21,54 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify reviewed patch identities against the unchanged PR head
+      - name: Verify final review patch against the unchanged schema PR head
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/review-proof
+          mkdir -p /tmp/schema-final-proof
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin codex/backend-schema-captures codex/mixed-batch-stage-ownership
+          git fetch origin codex/backend-schema-captures
           python - <<'PY'
           import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
           def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
-          sha='d29f688daca7b5375e04c1e2be1836802e9f2cae'
-          req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-          with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
+          sha='21b1e13e1232e1d176948bbe8b290dc12cea78ca'
+          request=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          with urllib.request.urlopen(request,timeout=30) as response:blob=json.load(response)
           archive=base64.b64decode(blob['content'])
           assert hashlib.sha1(b'blob '+str(len(archive)).encode()+b'\0'+archive).hexdigest()==sha
-          assert hashlib.sha256(archive).hexdigest()=='d85defe8c330cde45d74c1919e32c5bbbe471a772f1a5e66fe0a9dcffb70f51f'
-          package=json.loads(lzma.decompress(archive));name=os.environ['SLICE'];item=package['slices'][name]
-          heads={'schema':'54f89b129cd460626edaf5aeee9253aaee960a01','owner':'2efd3dbc39c0891265462bd6bba9cc0bab7ea433'}
-          branches={'schema':'codex/backend-schema-captures','owner':'codex/mixed-batch-stage-ownership'}
-          branch=branches[name];assert item['head']==heads[name]
-          assert git('rev-parse','origin/'+branch)==heads[name], 'PR changed; preserve rather than overwrite'
-          subprocess.run(['git','switch','-C','verified-review','origin/'+branch],check=True)
-          allowed={'schema':{'scripts/validate-live.py','tests/test_schema_capture.py','docs/GRAPH-SCHEMA-CAPTURES.md'},'owner':{'app/production.py','tests/test_mixed_batch.py','tests/test_mixed_batch_owner.py','docs/reconciliation/2026-09-13-stage-ownership.md'}}[name]
-          assert set(item['manifest'])==allowed
-          for path,record in item['manifest'].items():assert git('rev-parse','HEAD:'+path)==record['before_blob'],path
-          root=pathlib.Path('/tmp/review-proof');patch=root/'review.patch';patch.write_text(item['patch'],encoding='utf-8')
+          assert hashlib.sha256(archive).hexdigest()=='3108b1e2f9e32709a4970f5aed08ecc6d1817bd65a2dc2e1e67a895d122e8f7a'
+          package=json.loads(lzma.decompress(archive));head='d36555da1984900adbfc9e0eba130dc795e7bf13'
+          assert package['head']==head and git('rev-parse','origin/codex/backend-schema-captures')==head, 'PR changed; preserve it'
+          subprocess.run(['git','switch','-C','verified-schema-final','origin/codex/backend-schema-captures'],check=True)
+          allowed={'scripts/validate-live.py','tests/test_schema_capture.py','docs/GRAPH-SCHEMA-CAPTURES.md'}
+          assert set(package['manifest'])==allowed
+          for path,record in package['manifest'].items():assert git('rev-parse','HEAD:'+path)==record['before_blob'],path
+          root=pathlib.Path('/tmp/schema-final-proof');patch=root/'review.patch';patch.write_text(package['patch'],encoding='utf-8')
           subprocess.run(['git','apply','--check',str(patch)],check=True)
           subprocess.run(['git','apply','--index',str(patch)],check=True)
           assert set(git('diff','--cached','--name-only').splitlines())==allowed
-          for path,record in item['manifest'].items():assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==record['sha256'],path
-          (root/'manifest.json').write_text(json.dumps({'slice':name,'branch':branch,'base':package['base'],'previous_head':heads[name],'files':item['manifest'],'tested_tree':git('write-tree')},indent=2),encoding='utf-8')
+          for path,record in package['manifest'].items():assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==record['sha256'],path
+          (root/'manifest.json').write_text(json.dumps({'base':package['base'],'previous_head':head,'files':package['manifest'],'tested_tree':git('write-tree')},indent=2),encoding='utf-8')
           PY
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - name: Full suite and repository contracts
         run: |
           set -o pipefail
-          python -m unittest discover -s tests 2>&1 | tee /tmp/review-proof/full-suite.log
-          python scripts/validate-repo.py 2>&1 | tee /tmp/review-proof/validation.log
+          python -m unittest discover -s tests 2>&1 | tee /tmp/schema-final-proof/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/schema-final-proof/validation.log
           git diff --cached --check
           git diff --exit-code
       - name: Publish only verified reviewed source
         run: |
-          if [ "$SLICE" = schema ]; then
-            branch=codex/backend-schema-captures
-            git commit -m 'fix: require complete and consistent schema capture metadata (#97)'
-          else
-            branch=codex/mixed-batch-stage-ownership
-            git commit -m 'fix: verify retained backend storage root for mixed batches (#228)'
-          fi
-          git push origin HEAD:"$branch"
-          git rev-parse HEAD > /tmp/review-proof/published-commit.txt
-          git rev-parse HEAD^{tree} > /tmp/review-proof/published-tree.txt
-          git diff --binary 3d3135a17811d2e4846ada05aae35e06f60d92f4 HEAD > /tmp/review-proof/complete.patch
+          git commit -m 'fix: parse complete schema URLs and reject contradictory historical rows (#97)'
+          git push origin HEAD:codex/backend-schema-captures
+          git rev-parse HEAD > /tmp/schema-final-proof/published-commit.txt
+          git rev-parse HEAD^{tree} > /tmp/schema-final-proof/published-tree.txt
+          git diff --binary 3d3135a17811d2e4846ada05aae35e06f60d92f4 HEAD > /tmp/schema-final-proof/complete.patch
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: chronological-reviewed-${{ matrix.slice }}-proof
-          path: /tmp/review-proof/
+          name: chronological-final-schema-proof
+          path: /tmp/schema-final-proof/
           retention-days: 7
