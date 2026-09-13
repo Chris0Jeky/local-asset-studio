@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify exact source identities without overwriting concurrent work
+      - name: Verify exact initial and follow-up source trees
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -32,15 +32,15 @@ jobs:
           python - <<'PY'
           import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
           def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
-          assert git('rev-parse','HEAD')=='34f5b95746478b1292f3fc9cc35d77ee8358ed3b', 'Branch changed; reconcile first'
-          chunks=[]
-          for sha in ('0b404d73456c848112e9cf45ceb512588f966656','396fd81664c5c017d535923233320b0eb2f18c29'):
+          def get_blob(sha):
               req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
               with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
               data=base64.b64decode(blob['content'])
               assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
-              chunks.append(data)
-          archive=b''.join(chunks)
+              return data
+          root=pathlib.Path('/tmp/mixed-publication')
+          assert git('rev-parse','HEAD')=='34f5b95746478b1292f3fc9cc35d77ee8358ed3b', 'Branch changed; reconcile first'
+          archive=b''.join(get_blob(sha) for sha in ('0b404d73456c848112e9cf45ceb512588f966656','396fd81664c5c017d535923233320b0eb2f18c29'))
           assert hashlib.sha256(archive).hexdigest()=='19b487b469bbbd76c33cd172c6b774dc1dcfed3003a0eca4b4d53dfe5e1474bb'
           package=json.loads(lzma.decompress(archive))
           assert package['base']=='f1283853bbc918ee5d93161a25bf92fcb3596640'
@@ -49,20 +49,30 @@ jobs:
           assert git('rev-parse','HEAD:.github/workflows/production-storage.yml')==package['ci_blob']=='3c49383cb0ec1fefac5af2da33cfbc4d5b3fa9fa'
           allowed={'app/mixed_batch.py','app/production.py','app/server.py','app/static/app.js','app/static/production.js','docs/reconciliation/2026-09-13-mixed-batch-recovery.md','tests/mixed_batch_browser.py','tests/mixed_batch_frontend.cjs','tests/test_mixed_batch.py','tests/test_mixed_batch_http.py'}
           assert set(package['manifest'])==allowed
-          for name,record in package['manifest'].items():
-              before=record['before_blob']
-              if before is None:assert not pathlib.Path(name).exists(),name
-              else:assert git('rev-parse','HEAD:'+name)==before,name
-          root=pathlib.Path('/tmp/mixed-publication')
-          patch=root/'source.patch';patch.write_text(package['patch'],encoding='utf-8')
-          subprocess.run(['git','apply','--check',str(patch)],check=True)
-          subprocess.run(['git','apply','--index',str(patch)],check=True)
-          assert set(git('diff','--cached','--name-only').splitlines())==allowed
-          for name,record in package['manifest'].items():
-              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==record['sha256'],name
-          assert git('write-tree')==package['after_tree']=='c45d6c3939887955d06eed8cecd121dfb11fd04a'
-          (root/'manifest.json').write_text(json.dumps({k:v for k,v in package.items() if k!='patch'},indent=2),encoding='utf-8')
-          print('Exact ten source files and tested integrated tree verified.')
+          def apply(pkg,name):
+              for filename,record in pkg['manifest'].items():
+                  before=record['before_blob']
+                  if before is None:assert not pathlib.Path(filename).exists(),filename
+                  else:assert git('rev-parse',':'+filename)==before,filename
+              patch=root/(name+'.patch');patch.write_text(pkg['patch'],encoding='utf-8')
+              subprocess.run(['git','apply','--check',str(patch)],check=True)
+              subprocess.run(['git','apply','--index',str(patch)],check=True)
+              for filename,record in pkg['manifest'].items():
+                  assert hashlib.sha256(pathlib.Path(filename).read_bytes()).hexdigest()==record['sha256'],filename
+              assert git('write-tree')==pkg['after_tree']
+              (root/(name+'-manifest.json')).write_text(json.dumps({k:v for k,v in pkg.items() if k!='patch'},indent=2),encoding='utf-8')
+          apply(package,'initial-source')
+          assert git('write-tree')=='c45d6c3939887955d06eed8cecd121dfb11fd04a'
+          data=get_blob('123e6ba40167b1b09c184ccb8fe922e18f28aed7')
+          assert hashlib.sha256(data).hexdigest()=='a774dee2502b38c2ef94c2863811ab3fcf3c58a31e3a25e7fcc023dbc4c8e8e7'
+          followup=json.loads(lzma.decompress(data))
+          assert followup['before_tree']==git('write-tree')
+          assert set(followup['manifest'])=={'app/mixed_batch.py','app/server.py','app/static/studio.css','docs/reconciliation/2026-09-13-mixed-batch-recovery.md','tests/mixed_batch_browser.py','tests/test_mixed_batch.py'}
+          apply(followup,'followup')
+          assert set(git('diff','--cached','--name-only').splitlines())==allowed|{'app/static/studio.css'}
+          assert git('write-tree')=='00507ba0a183f6576ead16f2f054ecdfb526052d'
+          (root/'complete.patch').write_text(subprocess.check_output(['git','diff','--cached','--binary',package['base']],text=True),encoding='utf-8')
+          print('Both exact source trees and all eleven source files verified.')
           PY
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - name: Full suite and repository validation
@@ -83,7 +93,7 @@ jobs:
           python tests/mixed_batch_browser.py --out /tmp/mixed-publication/browser 2>&1 | tee /tmp/mixed-publication/browser.log
       - name: Publish only after all verification
         run: |
-          test "$(git write-tree)" = 'c45d6c3939887955d06eed8cecd121dfb11fd04a'
+          test "$(git write-tree)" = '00507ba0a183f6576ead16f2f054ecdfb526052d'
           git diff --exit-code
           git commit -m 'fix: recover mixed batches without replaying unknown submissions (#187)'
           git push origin HEAD:codex/mixed-batch-recovery
