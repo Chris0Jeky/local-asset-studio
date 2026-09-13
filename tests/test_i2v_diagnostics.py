@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import io
 import json
 import tempfile
@@ -35,7 +36,8 @@ class I2VDiagnosticTests(unittest.TestCase):
         (self.root / "experiments/uploads").mkdir(parents=True)
         (self.root / "config/local.json").write_text(json.dumps({"comfy_root": str(self.root / "fake-comfy")}), encoding="utf-8")
         self.reference = "a" * 32 + "_source.png"
-        (self.root / "experiments/uploads" / self.reference).write_bytes(png())
+        self.reference_bytes = png()
+        (self.root / "experiments/uploads" / self.reference).write_bytes(self.reference_bytes)
         self.graph = {
             "1": {"class_type": "UNETLoader", "inputs": {"unet_name": "model.safetensors"}},
             "2": {"class_type": "CLIPLoader", "inputs": {"clip_name": "text.safetensors", "type": "wan", "device": "default"}},
@@ -72,7 +74,7 @@ class I2VDiagnosticTests(unittest.TestCase):
             "metadata_controls": ["mode"],
             "source_orientation": "auto-swap-authored-pairs",
             "orientation_pairs": [[512, 768], [768, 512], [1280, 704], [704, 1280]],
-            "i2v_modes": [{"id": "canonical", "controls": {"width": 1280, "height": 704, "frames": 41, "steps": 30, "seed": 9, "sampler": "uni_pc", "scheduler": "simple"}}],
+            "i2v_modes": [{"id": "canonical", "name": "Canonical upstream", "controls": {"width": 1280, "height": 704, "frames": 41, "steps": 30, "seed": 9, "sampler": "uni_pc", "scheduler": "simple"}, "required_reference": {"label": "official fixture", "sha256": hashlib.sha256(self.reference_bytes).hexdigest()}}],
         }
         (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [self.preset]}), encoding="utf-8")
         (self.root / "workflows/api/wan-api.json").write_text(json.dumps(self.graph), encoding="utf-8")
@@ -99,6 +101,7 @@ class I2VDiagnosticTests(unittest.TestCase):
         studio = self.studio()
         prepared, graph, _, controls, _ = studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical", "reference": self.reference}})
         self.assertEqual(controls["mode"], "canonical")
+        self.assertEqual(graph["4"]["inputs"]["image"], self.reference)
         self.assertEqual(graph["7"]["inputs"]["width"], 704)
         self.assertEqual(graph["7"]["inputs"]["height"], 1280)
         self.assertEqual(graph["7"]["inputs"]["length"], 41)
@@ -106,6 +109,16 @@ class I2VDiagnosticTests(unittest.TestCase):
         preparation = prepared.get("_prepared_source")
         self.assertEqual(preparation["orientation_action"], "swapped to match source")
         self.assertEqual(preparation["source"]["dimensions"], [832, 1248])
+
+    def test_canonical_i2v_mode_rejects_missing_or_mismatched_source(self):
+        studio = self.studio()
+        with self.assertRaisesRegex(server.StudioError, "requires the official fixture upload"):
+            studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical"}})
+        other = studio.upload("other.png", "image/png", png(768, 512))["file"]
+        with self.assertRaisesRegex(server.StudioError, "selected source does not match"):
+            studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical", "reference": other}})
+        self.assertEqual(studio.jobs, {})
+        self.assertTrue(studio.queue.empty())
 
     def test_graph_diff_normalizes_links_and_reports_literals(self):
         canonical = {"1": {"class_type": "A", "inputs": {"value": 1}}, "2": {"class_type": "B", "inputs": {"source": ["1", 0]}}}

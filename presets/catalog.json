@@ -3836,7 +3836,11 @@
             "denoise": 1.0
           },
           "description": "Studio MP4 adapter with the official example's model, 1280x704 quick-test shape, 41 frames and 30 steps. Use the official fennec input for the installation control case.",
-          "warning": "The upstream visual JSON randomizes its seed; this Studio control case pins the seed shown in that file for reproducibility."
+          "warning": "The upstream visual JSON randomizes its seed; this Studio control case pins the seed shown in that file for reproducibility.",
+          "required_reference": {
+            "label": "official fennec input",
+            "sha256": "ec0cbf7d8a81eb6fbfda1309b49a644f6cf123ccf5036197e8592ba205f67d71"
+          }
         }
       ],
       "choices": {

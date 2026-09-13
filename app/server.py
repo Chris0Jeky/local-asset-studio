@@ -246,6 +246,33 @@ class Studio:
                 return mode
         raise StudioError("Unsupported I2V mode")
 
+    def _validate_i2v_mode_source(self, preset, mode, graph, controls):
+        """Fail closed when a mode promises one exact reference image."""
+        required = (mode or {}).get("required_reference")
+        if required is None:
+            return
+        if not isinstance(required, dict) or not re.fullmatch(r"[0-9a-f]{64}", str(required.get("sha256", ""))):
+            raise StudioError("I2V mode has an invalid required reference declaration")
+        who = mode.get("name") or mode.get("id") or "This I2V mode"
+        label = required.get("label") if isinstance(required.get("label"), str) else "declared canonical source"
+        name = controls.get("reference")
+        if not name:
+            raise StudioError(f"{who} requires the {label} upload; the authored example cannot be queued")
+        binding = preset.get("reference")
+        try:
+            bound = graph[str(binding[0])]["inputs"][str(binding[1])]
+        except (KeyError, TypeError, IndexError):
+            raise StudioError("Preset has an invalid canonical source binding")
+        if bound != name:
+            raise StudioError(f"{who} did not bind the selected source")
+        expected = required["sha256"]
+        uploads = self.experiments / "uploads"
+        upload = inside(uploads.resolve(), uploads / name)
+        comfy_input = inside((self.comfy_root / "input").resolve(), self.comfy_root / "input" / name)
+        for source in (upload, comfy_input):
+            if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected:
+                raise StudioError(f"{who} requires the {label}; the selected source does not match")
+
     def _prepare_i2v(self, preset, graph, controls):
         """Resolve source orientation before dimension bindings are applied.
 
@@ -316,6 +343,7 @@ class Studio:
         supported = {k for k in CONTROL_KEYS if preset.get(k) or (preset.get("bindings_extra") or {}).get(k)} | set(preset.get("metadata_controls", []))
         unknown = set(controls) - supported
         if unknown: raise StudioError("Unsupported controls: " + ", ".join(sorted(unknown)))
+        mode = None
         if "mode" in controls:
             mode = self._i2v_mode(preset, controls["mode"])
             for key, value in (mode.get("controls") or {}).items():
@@ -391,6 +419,7 @@ class Studio:
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         self.prune_disabled_loras(graph)
         self.ensure_reference_inputs(graph)
+        self._validate_i2v_mode_source(preset, mode, graph, controls)
         self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
 
