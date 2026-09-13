@@ -1,5 +1,28 @@
 # Current state — 13 September 2026
 
+## Native protected-edit revision — 13 September 2026
+
+The new `character_krita.py` adapter carries an existing protected edit result
+into a new KRA paint layer using a configured, fixed Krita runner module. It
+rechecks the source/document and pixel contracts before native execution,
+persists the attempt first, refuses repeats, verifies native layer readback and
+source restoration, then saves/reopens and checks the exported pixels.
+
+The real synthetic two-actor proof at
+`C:/AI/character-lab/native-edit-proof-20260913/native-revision-3` passed on
+Krita 5.2.16: 4,032 changed pixels, 94,272 preserved pixels, original KRA intact,
+original layer canvas-pixel/metadata checks unchanged, and exact saved/reopened
+result. The before/after and reopened PNG were inspected. The prior native
+package is retained after a diagnosed Python binding return-value mismatch;
+no failed or uncertain attempt was repeated. See
+[Krita edit revisions](docs/character-consistency/KRITA-EDIT-REVISIONS.md) for
+artifact hashes, commands and supported-input limits.
+
+This is a mechanical native-edit proof. No neural generation, anatomy repair,
+costume-design acceptance, interactive GUI editing or private pilot budget
+change is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains the owner-decision
+record; no new creative acceptance was supplied.
+
 ## Wan admission and isolated tiled-decode capacity — 13 September 2026
 
 The ordinary Wan decoder is now held above the recorded 512x768/33-frame,
