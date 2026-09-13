@@ -415,7 +415,7 @@ class Studio:
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1019,6 +1019,48 @@ class Studio:
     def _finite_number(value):
         return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
+    @staticmethod
+    def _execution_failure(detail):
+        """Turn a ComfyUI execution error into a cautious, user-facing diagnosis."""
+        detail = detail if isinstance(detail, dict) else {}
+
+        def text(name, limit):
+            value = detail.get(name)
+            return value.strip()[:limit] if isinstance(value, str) and value.strip() else ""
+
+        node_type = text("node_type", 120)
+        node_id = text("node_id", 80)
+        exception_type = text("exception_type", 160)
+        exception_message = text("exception_message", 450)
+        combined = " ".join(value for value in (exception_type, exception_message) if value).lower()
+        allocation = bool(re.search(r"bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455", combined))
+
+        if allocation:
+            kind = "memory_allocation"
+            title = "Memory allocation failed"
+            if re.search(r"defaultcpuallocator|alloc_cpu|paging file|os error 1455|commit", combined):
+                summary = "ComfyUI could not allocate system memory while running the workflow. This is usually host-memory or commit pressure, not an invalid prompt."
+                action = "Close other memory-heavy apps and retry only after host memory has recovered; if it repeats, lower the resolution or batch size. The original prompt was not retried automatically."
+            elif re.search(r"cuda|hip|device|gpu|vram", combined):
+                summary = "ComfyUI could not allocate GPU memory while running the workflow. This is usually VRAM or backend pressure, not an invalid prompt."
+                action = "Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically."
+            else:
+                summary = "ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt."
+                action = "Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically."
+        else:
+            kind = "execution_error"
+            title = "ComfyUI execution failed"
+            target = node_type or "the workflow"
+            summary = f"ComfyUI reported an execution error in {target}. The recipe and prompt ID were retained so the engine detail can be investigated without resubmitting it."
+            action = "Check the engine detail below and retry only after correcting the reported workflow or runtime issue. The original prompt was not retried automatically."
+
+        result = {"kind": kind, "title": title, "summary": summary, "action": action,
+                  "detail": exception_message or "No engine exception detail was returned."}
+        if node_type: result["node_type"] = node_type
+        if node_id: result["node_id"] = node_id
+        if exception_type: result["exception_type"] = exception_type
+        return result
+
     def _record_history_failure(self, job, submission, message):
         submission["status"] = "failed"; job["status"] = "failed"; job["message"] = message
         started = job.get("started_at")
@@ -1084,6 +1126,7 @@ class Studio:
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
                     detail = errors[-1] if errors else {}
                     submission["status"] = "failed"
+                    job["failure"] = self._execution_failure(detail)
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
                     message = "ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)

@@ -36,6 +36,21 @@ test('active, attention and planned work stay distinct', () => {
   for(const key of ['prepared','reviewPlans','attentionPlans','activePlans','attentionJobs','activeJobs']) assert.equal(s[key].length,1,key);
 });
 test('submitting jobs remain active on the overview', () => assert.equal(U.summarize([],[],[{status:'submitting'}]).activeJobs.length,1));
+test('memory allocation failures explain the cause and next action', () => {
+  const failure=U.failureDetails({status:'failed',message:'Generation failed: ComfyUI reported an execution error: KSampler: bad allocation'});
+  assert.equal(failure.kind,'memory_allocation');
+  assert.match(failure.summary,/memory|GPU|VRAM/i);
+  assert.match(failure.action,/resolution|batch|LoRA/i);
+  const host=U.failureDetails({status:'failed',message:'Generation failed: ComfyUI reported an execution error: VAEDecode: DefaultCPUAllocator: not enough memory'});
+  assert.equal(host.kind,'memory_allocation');
+});
+test('structured execution failures retain engine context', () => {
+  const failure=U.failureDetails({status:'failed',failure:{kind:'memory_allocation',title:'Memory allocation failed',summary:'Allocation summary',action:'Allocation action',node_type:'KSampler',exception_type:'RuntimeError',detail:'bad allocation'}});
+  assert.equal(failure.title,'Memory allocation failed');
+  assert.equal(failure.node_type,'KSampler');
+  assert.equal(failure.exception_type,'RuntimeError');
+  assert.equal(failure.detail,'bad allocation');
+});
 test('pending or unavailable health is not mislabeled offline',()=>{const r=ready({online:null});assert.equal(r.ready,false);assert.match(r.blockers.join(' '),/not yet confirmed/);assert.doesNotMatch(r.blockers.join(' '),/offline/);});
 test('ready recipe has no invented blockers', () => assert.deepEqual(ready(),{ready:true,blockers:[]}));
 for (const [name,overrides] of Object.entries({offline:{online:false},unknown_schema:{schemaAvailable:false},no_recipe:{preset:null},missing_files:{missing:['model']},missing_references:{referencesReady:false},backend_mismatch:{backend:'other'},switching:{switching:true},pending_transfer:{busy:true},blocked_runtime:{preset:{runtime_block:'Requires measured setup'}}})) {
