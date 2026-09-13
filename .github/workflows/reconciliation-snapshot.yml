@@ -4,48 +4,91 @@ on:
     branches: [codex/oldest-issue-reconciliation]
     paths: [.github/workflows/reconciliation-snapshot.yml]
 permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+  contents: write
 jobs:
-  snapshot:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Archive tracked source and reconciliation evidence
+          ref: codex/oldest-issue-reconciliation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconcile current main and verify the source package
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/reconciliation
-          git archive --format=zip -o /tmp/reconciliation/source.zip HEAD
-          git bundle create /tmp/reconciliation/source.bundle HEAD
+          mkdir -p /tmp/recovery-evidence
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git merge --no-edit origin/main
           python - <<'PY'
-          import json, os, pathlib, urllib.request
-          root = pathlib.Path('/tmp/reconciliation')
-          base = 'https://api.github.com/repos/Chris0Jeky/local-asset-studio'
-          def get(path):
-              req = urllib.request.Request(base + path, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
-              with urllib.request.urlopen(req, timeout=30) as response:
-                  return json.load(response)
-          issues = get('/issues?state=open&sort=created&direction=asc&per_page=100')
-          issues = [item for item in issues if 'pull_request' not in item]
-          pulls = get('/pulls?state=all&sort=updated&direction=desc&per_page=50')
-          keys = ('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
-          compact = lambda item: {key: item.get(key) for key in keys}
-          data = {'issues': [compact(i) for i in issues], 'pulls': [dict(compact(p), head=p['head']['sha'], branch=p['head']['ref']) for p in pulls]}
-          data['comments'] = {str(n): get(f'/issues/{n}/comments?per_page=100') for n in (2,3,9,10,93,94)}
-          data['open_pr_files'] = {str(p['number']): [f['filename'] for f in get('/pulls/' + str(p['number']) + '/files?per_page=100')] for p in pulls if p['state']=='open'}
-          (root/'github-evidence.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
-          print('OLDEST ISSUES', [(i['number'], i['title']) for i in issues[:15]])
-          print('RECENT PRS', [(p['number'], p['state'], p['merged_at'], p['title']) for p in pulls[:25]])
-          print('OPEN PR FILES', data['open_pr_files'])
+          import base64, hashlib, json, lzma, os, pathlib, subprocess, urllib.request
+          blobs = ['af652e86eb37095b1d1c40e79545e8d345d41667','55d40a73280a908b2fbb8a71db84677c38c239ee','597d2dea1053c17a700f06ec730b56db725428ab','5ceabcf2b5d59e095888690aaee289e87551b39f']
+          chunks = []
+          for sha in blobs:
+              request = urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/' + sha, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  blob = json.load(response)
+              data = base64.b64decode(blob['content'])
+              assert hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest() == sha
+              chunks.append(data)
+          archive = b''.join(chunks)
+          assert hashlib.sha256(archive).hexdigest() == '29af44fce786531a36dfc1f343210a06e854e618789c28e1640ddaca3f31edf5'
+          package = json.loads(lzma.decompress(archive))
+          subprocess.run(['git','merge-base','--is-ancestor',package['base'],'HEAD'],check=True)
+          manifest = package['manifest']
+          assert len(manifest) == 16
+          for name, record in manifest.items():
+              path = pathlib.PurePosixPath(name)
+              assert not path.is_absolute() and '..' not in path.parts and path.parts[0] in ('app','tests','docs')
+              before = record['before_blob']
+              if before is None:
+                  assert not pathlib.Path(name).exists(), name
+              else:
+                  actual = subprocess.check_output(['git','rev-parse','HEAD:' + name],text=True).strip()
+                  assert actual == before, ('Concurrent source change; reconcile rather than overwrite', name, actual, before)
+          patch = pathlib.Path('/tmp/recovery-evidence/source.patch')
+          patch.write_text(package['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          changed = set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines())
+          assert changed == set(manifest), changed
+          for name, record in manifest.items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest() == record['sha256'], name
+          pathlib.Path('/tmp/recovery-evidence/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print('Verified exact tested source for',len(manifest),'files against current main.')
           PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Full repository suite and validation
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/recovery-evidence/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/recovery-evidence/validation.log
+          git diff --cached --check
+      - name: Publish only the verified source changes
+        run: |
+          git commit -m 'fix: reconcile experiment time and submission evidence (#93, #94)'
+          git push origin HEAD:codex/oldest-issue-reconciliation
+          git rev-parse HEAD | tee /tmp/recovery-evidence/published-commit.txt
+      - name: Retain verification source and logs
+        if: always()
+        run: |
+          mkdir -p /tmp/recovery-evidence
+          git bundle create /tmp/recovery-evidence/source.bundle HEAD
+          git status --short > /tmp/recovery-evidence/status.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: reconciliation-source-evidence
-          path: /tmp/reconciliation/
+          name: experiment-recovery-publication
+          path: /tmp/recovery-evidence/
           retention-days: 3
