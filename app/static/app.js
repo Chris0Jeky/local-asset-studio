@@ -12,6 +12,7 @@ let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResult
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
+const i2vModeBlocker = () => selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value)?.execution_block || null;
 function applyI2VMode(id, notify=true) {
   const spec = selected?.i2v_modes?.find(mode => mode.id === id);
   if (!spec) return;
@@ -20,8 +21,8 @@ function applyI2VMode(id, notify=true) {
     if (input) input.value = value;
   });
   const modeInput = $('#i2vMode'); if (modeInput) modeInput.value = id;
-  const note = $('#i2vModeNote'); if (note) note.textContent = [spec.description, spec.warning].filter(Boolean).join(' ');
-  updateLoraHints(); scheduleTimeEstimate();
+  const note = $('#i2vModeNote'); if (note) note.textContent = [spec.execution_block, spec.description, spec.warning].filter(Boolean).join(' ');
+  updateLoraHints(); updateReady(); scheduleTimeEstimate();
   if (notify) message(spec.name + ' loaded. Review the settings before generating.' + (spec.warning ? ' ' + spec.warning : ''));
 }
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
@@ -92,7 +93,8 @@ function renderPresets() {
 }
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
-  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady()) || continuationBlockers().length > 0;
+  const modeBlock = i2vModeBlocker();
+  $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || !!modeBlock || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady()) || continuationBlockers().length > 0;
   $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
   scheduleTimeEstimate();
