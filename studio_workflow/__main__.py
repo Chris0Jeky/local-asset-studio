@@ -44,6 +44,21 @@ def parser():
     return p
 
 
+def _emit_ascii_diagnostic(value):
+    try: text = json.dumps(value, ensure_ascii=True, allow_nan=False) + '\n'
+    except (TypeError, ValueError): text = '{"status":"diagnostic_encoding_error","code":"diagnostic_encoding_error"}\n'
+    try: sys.stdout.write(text)
+    except (OSError, UnicodeError, ValueError): pass
+
+
+def _received_encoding_diagnostic(command, received, exc):
+    return {'status': 'received_response_encoding_error', 'code': 'received_result_nonfinite', 'command': command,
+            'error': str(exc), 'response_received': True,
+            'received_result': {'encoding': 'json-with-nonfinite-tokens',
+                                'text': json.dumps(received, ensure_ascii=False, indent=2, allow_nan=True)},
+            'recovery': 'The Studio response was received once but contains non-finite values. Preserve received_result.text and the original request or ticket ID; do not repeat the operation. No output file was created.'}
+
+
 def main(argv=None):
     args = parser().parse_args(argv)
     command = args.command
@@ -87,7 +102,10 @@ def main(argv=None):
                     result = {'status': 'observation_timeout', 'job': result, 'message': 'Observation stopped; the job was not cancelled.'}
                     break
                 time.sleep(min(args.interval, max(0, deadline - time.monotonic())))
-        encoded = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+        try: encoded = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+        except ValueError as exc:
+            _emit_ascii_diagnostic(_received_encoding_diagnostic(command, result, exc))
+            return 2
         if target:
             exporting = True
             # Refuse overwrite: tickets are durable request identities, not scratch files.
@@ -110,9 +128,12 @@ def main(argv=None):
         elif exporting:
             result.update(code='local_output_error', response_received=True, result=received,
                           recovery='The Studio response was received but local export failed. Retain the returned result and original ticket or request ID; do not create replacement work. The output path was not overwritten and may contain an incomplete file.')
+        elif received is not None:
+            result.update(status='received_response_output_error', code='stdout_unavailable', response_received=True, result=received,
+                          recovery='The Studio response was received but local stdout failed. Retain the returned result and original ticket or request ID; do not repeat the operation.')
         elif command == 'run': result['recovery'] = 'Outcome may be unknown. Retain the same ticket and inspect it; never prepare a replacement ticket to retry.'
         elif command == 'documents': result['recovery'] = 'Retain the same request ID and content. Inspect the current revision; do not silently rebase a conflicting edit.'
-        print(json.dumps(result, ensure_ascii=False))
+        _emit_ascii_diagnostic(result)
         if output_preflight or exporting: return 2
         if isinstance(exc, ClientError) and exc.status == 409: return 6
         return 3 if command == 'run' else 2
