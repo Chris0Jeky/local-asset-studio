@@ -29,6 +29,10 @@ def parser():
         q.add_argument('--' + field, required=True, type=Path)
         q.add_argument('--out', type=Path)
         if name == 'run': q.add_argument('--approve', action='store_true')
+    q = sub.add_parser('prepare-document', help='Project supported builder edits into a registered recipe ticket')
+    q.add_argument('--document', required=True, type=Path)
+    q.add_argument('--preset', required=True)
+    q.add_argument('--out', type=Path, help='Write only the run ticket; stdout contains the full source report')
     for name in ('status', 'wait'):
         q = sub.add_parser(name)
         q.add_argument('job_id')
@@ -47,6 +51,9 @@ def main(argv=None):
             result = document_cli.execute(args)
         elif command in ('capabilities', 'guides', 'nodes', 'catalog'):
             result = client.request('/api/catalog' if command == 'catalog' else PREFIX + '/' + command)
+        elif command == 'prepare-document':
+            result = client.request(PREFIX + '/prepare-document',
+                                    {'document': decode(args.document.read_bytes()), 'preset_id': args.preset})
         elif command in ('prepare', 'run', 'compile', 'import'):
             key = {'prepare': 'recipe', 'run': 'ticket', 'compile': 'document', 'import': 'graph'}[command]
             value = decode(getattr(args, key).read_bytes())
@@ -72,7 +79,9 @@ def main(argv=None):
         encoded = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
         if getattr(args, 'out', None):
             # Refuse overwrite: tickets are durable request identities, not scratch files.
-            with args.out.open('x', encoding='utf-8') as stream: stream.write(encoded)
+            with args.out.open('x', encoding='utf-8') as stream:
+                stream.write(json.dumps(result['ticket'], ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+                             if command == 'prepare-document' else encoded)
         print(encoded, end='')
         if result.get('valid') is False: return 2
         state = result.get('status') or result.get('job', {}).get('status')
