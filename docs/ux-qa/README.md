@@ -1,4 +1,11 @@
 # Studio UX QA — 13 September 2026
+## Named setup lineage follow-up
+
+[SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with
+an explicit reattachment instruction and retained drafts. It also records and fixes a
+sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidence
+is separate from the earlier asset-detail and metadata-concurrency checkpoints.
+
 
 ## What this pass changes
 

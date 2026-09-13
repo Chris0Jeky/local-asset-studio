@@ -143,7 +143,9 @@ async function swapDropsHandoffLineage(handoffPreset) {
   assert.equal(requests.some(r => r.url === '/api/jobs'), false, 'A source-bound continuation cannot silently submit a replacement file');
   element('#saveName').value = 'Swapped reference';
   await element('#save').onclick();
-  assert.deepEqual(requests.find(r => r.url === '/api/setups').data.recipe.parent_assets, [], 'Saved setups carry the same corrected lineage');
+  assert.equal(requests.some(r => r.url === '/api/setups'), false, 'An unstaged replacement cannot be reported saved');
+  assert.match(element('#setupStatus').textContent,/not uploaded/);
+  assert.deepEqual(parents(), [], 'The unsaved replacement still drops the old source');
 }
 
 // On a role board the lineage is per slot: replacing one image drops only that image's source.
@@ -330,7 +332,61 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #117: an unavailable check may keep a source claim in memory but clear the attachment.
+// Named setup persistence must not turn that uncertainty into an unattributed durable parent.
+async function unresolvedInputLineageCannotBeSaved() {
+  for(const missing of ['reference','lastReference']) {
+    const s=sandbox(null,null);
+    s.run(`selectPreset('h3-first-last');uploaded='first.png';lastUploaded='last.png';
+      parentAssets=['asset-a','asset-b'];parentByInput={reference:'asset-a',lastReference:'asset-b'};
+      ${missing==='reference'?'uploaded':'lastUploaded'}=null;`);
+    s.element('#saveName').value='Recoverable draft';s.element('#positive').value='Keep this wording';
+    await s.element('#save').onclick();
+    assert.equal(s.requests.filter(r=>r.url==='/api/setups').length,0,'No durable parent for an empty '+missing);
+    assert.equal(s.element('#saveName').value,'Recoverable draft');
+    assert.equal(s.element('#positive').value,'Keep this wording');
+    assert.deepEqual(s.parents(),['asset-a','asset-b'],'Failed availability is not evidence to discard in-memory lineage');
+    assert.match(s.element('#status').textContent,/reattach/i,'Recovery instruction names the next action');
+    assert.match(s.element('#status').textContent,missing==='reference'?/first frame/i:/last frame/i);
+    s.run(`${missing==='reference'?'uploaded':'lastUploaded'}='restored.png';`);
+    await s.element('#save').onclick();
+    const saved=s.requests.find(r=>r.url==='/api/setups').data.recipe;
+    assert.deepEqual(saved.parent_by_input,{reference:'asset-a',lastReference:'asset-b'});
+    assert.deepEqual(saved.parent_assets,['asset-a','asset-b']);
+    const reload=sandbox(null,null);reload.run(`applySaved(${JSON.stringify(saved)})`);
+    reload.element(missing==='reference'?'#reference':'#lastReference').files=[localFile()];
+    reload.element(missing==='reference'?'#reference':'#lastReference').onchange();
+    assert.deepEqual(reload.parents(),[missing==='reference'?'asset-b':'asset-a'],'Reload and swap releases only the replaced source');
+  }
+  const legacy=sandbox(null,null);
+  legacy.run(`selectPreset('h3-first-last');parentAssets=['historical-parent'];parentByInput={};`);
+  legacy.element('#saveName').value='Legacy unbound history';await legacy.element('#save').onclick();
+  assert.deepEqual(legacy.requests.find(r=>r.url==='/api/setups').data.recipe.parent_assets,['historical-parent'],'Never invent attribution for historical parents');
+}
+
+// Review #202: choosing a replacement from disk is not yet a persisted upload.
+async function unstagedLocalFilesCannotBeSaved() {
+  for(const input of ['reference','lastReference']) {
+    const s=sandbox(null,null);
+    s.run(`selectPreset('h3-first-last');uploaded='first.png';lastUploaded='last.png';claimInputParent('reference','asset-a');claimInputParent('lastReference','asset-b');`);
+    s.element('#'+input).files=[localFile('replacement.png')];s.element('#'+input).onchange();
+    s.element('#saveName').value='Keep pending local selection';
+    const parents=s.parents();await s.element('#save').onclick();
+    assert.equal(s.requests.length,0,'An unstaged selected '+input+' must neither save nor upload implicitly');
+    assert.equal(s.element('#saveName').value,'Keep pending local selection');
+    assert.equal(s.element('#'+input).files[0].name,'replacement.png');
+    assert.deepEqual(s.parents(),parents,'Save must not recreate the released old source');
+    assert.match(s.element('#setupStatus').textContent,/not uploaded.*Asset library.*Pull from library/);
+    assert.match(s.element('#setupStatus').textContent,input==='reference'?/first frame/:/Last frame/);
+    // Clearing a browser-only selection permits the already supported source-free setup.
+    s.element('#'+input).files=[];s.element('#'+input).onchange();
+    await s.element('#save').onclick();
+    assert.equal(s.requests.filter(r=>r.url==='/api/setups').length,1);
+  }
+}
+
 (async () => {
+  await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
@@ -349,5 +405,6 @@ async function explicitLocalAbandonment() {
   await importedRecipeKeepsUnattributedParents();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
+  await unresolvedInputLineageCannotBeSaved();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
