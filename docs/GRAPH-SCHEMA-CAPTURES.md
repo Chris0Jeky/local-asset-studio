@@ -107,7 +107,7 @@ python -m unittest discover -s tests -p test_graph_catalog_validation.py -v
 python scripts/validate-repo.py
 ```
 
-The 22 capture tests exercise exact one-GET bytes, offline subprocess replay,
+The original 22 capture tests exercise exact one-GET bytes, offline subprocess replay,
 retained failed/missing graphs, stale catalog/graph bindings, relabelling/subset
 refusal, malformed/oversized input, rehashed-but-inconsistent manifests,
 non-authoritative historical results, symlinks, write failure and two real
@@ -120,3 +120,18 @@ Primary references: [ComfyUI route contract](https://docs.comfy.org/development/
 and [Python filesystem operations](https://docs.python.org/3/library/os.html#os.fsync).
 The distinction between `/object_info` inspection and `/prompt` submission is
 why this collector deliberately does not use native prompt validation as a probe.
+
+## Review follow-up: complete version-1 metadata
+
+Replay also requires an actual UTC capture timestamp and numeric-loopback
+`object_info` source, a complete typed historical report, matching duplicate
+backend/schema/binding identities, static-only verification fields, and consistent
+coverage and historical row counts. Rehashing an incomplete manifest does not
+make it valid. This is structural integrity, not authentication. A coherent
+historical failure is still revalidated rather than used as the current verdict.
+
+Six additional test methods exercise missing, mistyped and contradictory metadata
+while verifying no network call or snapshot modification. Their negative cases
+failed before this correction; all 28 capture methods pass afterwards. The
+original historical-count test now uses a coherent historical failed row, not
+internally impossible counts, to prove that replay recomputes the current result.

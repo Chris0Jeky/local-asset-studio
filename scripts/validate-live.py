@@ -119,6 +119,59 @@ def capture_bindings(report):
             for row in report['results']]
 
 
+def check_capture_metadata(capture):
+    """Require complete v1 evidence, without treating historical checks as authority."""
+    def digest(value):
+        return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+    pipeline.text(capture.get('captured_at'), 'capture timestamp')
+    stamp = datetime.fromisoformat(capture['captured_at'])
+    pipeline.require(stamp.utcoffset() == timezone.utc.utcoffset(stamp), 'Capture timestamp must be UTC')
+    source = capture.get('schema_source'); pipeline.text(source, 'capture schema source')
+    pipeline.require(source.endswith('/object_info'), 'Capture source must identify object_info')
+    loopback_port(source[:-len('/object_info')])
+    pipeline.require(digest(capture.get('catalog_sha256')), 'Invalid captured catalog digest')
+    report = capture.get('capture_results')
+    pipeline.require(isinstance(report, dict), 'Missing historical capture report')
+    for key in ('selected', 'passed', 'failed', 'catalog_total'):
+        pipeline.integer(report.get(key), 0, 2048, 'Captured '+key)
+    pipeline.require(report['selected'] == len(capture['bindings']) <= report['catalog_total'],
+                     'Historical capture coverage differs')
+    for key in ('backend_id', 'schema_sha256', 'schema_source'):
+        pipeline.require(report.get(key) == capture[key], 'Historical capture identity differs: '+key)
+    pipeline.require(report.get('backend_identity_verified') is False and report.get('inference_verified') is False,
+                     'Historical capture cannot verify backend identity or inference')
+    pipeline.integer(report.get('submissions'), 0, 0, 'Captured submissions')
+    pipeline.require(report.get('scope') == 'static-graphs-against-one-schema'
+                     and report.get('schema_scope') == 'backend-bound-snapshot', 'Invalid historical capture scope')
+    rows = report.get('results')
+    pipeline.require(isinstance(rows, list) and len(rows) == report['selected'], 'Invalid historical result rows')
+    ids = set()
+    for binding, row in zip(capture['bindings'], rows):
+        pipeline.require(isinstance(binding, dict) and set(binding) == {'preset_id', 'backend_id', 'graph', 'graph_sha256'},
+                         'Invalid captured graph binding')
+        pipeline.text(binding.get('preset_id'), 'captured preset ID')
+        pipeline.require(binding['preset_id'] not in ids and binding['backend_id'] == capture['backend_id'],
+                         'Duplicate or mismatched captured backend binding')
+        ids.add(binding['preset_id'])
+        pipeline.require(binding['graph_sha256'] is None or digest(binding['graph_sha256']), 'Invalid captured graph digest')
+        pipeline.require(isinstance(row, dict) and all(key in row for key in ('preset_id', 'backend_id', 'graph', 'status')),
+                         'Invalid historical graph result')
+        pipeline.require(row['status'] in ('passed', 'invalid'), 'Unknown historical graph result status')
+        if row['status'] == 'passed':
+            pipeline.integer(row.get('nodes'), 1, 512, 'Captured node count')
+            pipeline.require(digest(row.get('graph_sha256')) and row.get('static_topology') == 'passed'
+                             and row.get('node_snapshot_checked') is True and row.get('inference_verified') is False,
+                             'Incomplete static graph result')
+        else:
+            pipeline.require(isinstance(row.get('error'), str), 'Missing historical graph error')
+            pipeline.require('inference_verified' not in row or row['inference_verified'] is False,
+                             'Historical graph error cannot verify inference')
+    pipeline.require(capture_bindings(report) == capture['bindings'], 'Historical graph bindings differ')
+    passed = sum(row['status'] == 'passed' for row in rows)
+    pipeline.require(report['passed'] == passed and report['failed'] == len(rows)-passed,
+                     'Historical result counts are inconsistent')
+
+
 def read_capture(path):
     with Path(path).open('rb') as stream: raw = stream.read(MAX_CAPTURE_BYTES + 1)
     pipeline.require(len(raw) <= MAX_CAPTURE_BYTES, 'Schema capture exceeds the byte limit')
@@ -136,6 +189,7 @@ def read_capture(path):
     pipeline.require(digest == capture.get('schema_sha256'), 'Captured schema bytes changed')
     pipeline.require(isinstance(capture.get('bindings'), list) and 0 < len(capture['bindings']) <= 2048,
                      'Invalid captured graph coverage')
+    check_capture_metadata(capture)
     return capture, info, digest
 
 
@@ -169,6 +223,8 @@ def main(argv=None):
             pipeline.require(backend is None or backend == snapshot['backend_id'], 'Snapshot backend cannot be relabelled')
             backend = snapshot['backend_id']
             pipeline.require(pipeline.sha(catalog) == snapshot.get('catalog_sha256'), 'Catalog changed since schema capture; capture new evidence')
+            pipeline.require(snapshot['capture_results']['catalog_total'] == len(catalog['presets']),
+                             'Historical catalog coverage differs')
         selected = select_presets(catalog.get('presets'), collection=args.collection,
                                   backend=backend, preset_ids=args.preset)
         url = args.comfy_url or 'http://127.0.0.1:8188'

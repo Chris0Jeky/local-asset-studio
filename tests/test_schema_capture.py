@@ -1,5 +1,6 @@
 """Backend-labelled schema evidence, exclusive publication and offline replay."""
 import base64
+import copy
 from contextlib import redirect_stdout, redirect_stderr
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -170,11 +171,76 @@ class SchemaCaptureTests(unittest.TestCase):
         self.assertEqual(len(self.routes),1)
 
     def test_historical_success_counts_are_not_authority_on_replay(self):
-        self.capture();saved=json.loads(self.output.read_bytes());saved['capture_results']['passed']=999
+        self.capture();saved=json.loads(self.output.read_bytes());history=saved['capture_results']
+        # A structurally valid historical failure must not determine replay.
+        history['results'][0]={**saved['bindings'][0],'status':'invalid','error':'Earlier checker rejected this graph'}
+        history.update(passed=2,failed=1)
         saved['sha256']=validator.pipeline.sha({k:v for k,v in saved.items() if k!='sha256'})
         self.output.write_text(json.dumps(saved))
         code,out,err=self.cli('--schema-snapshot',str(self.output))
         self.assertEqual(code,0,err);self.assertEqual(json.loads(out)['passed'],3);self.assertEqual(len(self.routes),1)
+
+    def rehashed(self, saved):
+        saved['sha256']=validator.pipeline.sha({k:v for k,v in saved.items() if k!='sha256'})
+        self.output.write_text(json.dumps(saved))
+
+    def assert_rehashed_refused(self, saved):
+        self.rehashed(saved);before=self.output.read_bytes()
+        with patch.object(validator,'build_opener',side_effect=AssertionError('No replay transport')):
+            code,out,err=self.cli('--schema-snapshot',str(self.output))
+        self.assertEqual(code,2,err or out);self.assertEqual(out,'')
+        self.assertEqual(self.output.read_bytes(),before);self.assertEqual(len(self.routes),1)
+
+    def test_replay_requires_provenance_and_historical_report_even_after_rehash(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for field in ('captured_at','schema_source','capture_results','catalog_sha256'):
+            with self.subTest(field=field):
+                saved=copy.deepcopy(original);saved.pop(field);self.assert_rehashed_refused(saved)
+
+    def test_capture_time_must_be_an_actual_utc_timestamp(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for value in (None,True,1,'not a timestamp','2026-09-13','2026-09-13T20:00:00','2026-09-13T20:00:00+02:00'):
+            with self.subTest(value=value):
+                saved=copy.deepcopy(original);saved['captured_at']=value;self.assert_rehashed_refused(saved)
+        saved=copy.deepcopy(original);saved['captured_at']='2026-09-13T20:00:00Z';self.rehashed(saved)
+        code,out,err=self.cli('--schema-snapshot',str(self.output));self.assertEqual(code,0,err)
+
+    def test_capture_source_must_be_a_numeric_loopback_object_info_endpoint(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for value in (None,3,'http://other:8188/object_info',self.url+'/prompt',self.url+'/object_info?x=1'):
+            with self.subTest(value=value):
+                saved=copy.deepcopy(original);saved['schema_source']=value
+                saved['capture_results']['schema_source']=value;self.assert_rehashed_refused(saved)
+
+    def test_historical_report_requires_all_contract_fields_and_valid_shape(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for field in original['capture_results']:
+            with self.subTest(missing=field):
+                saved=copy.deepcopy(original);saved['capture_results'].pop(field);self.assert_rehashed_refused(saved)
+        for field,value in (('selected',True),('passed','3'),('passed',999),('failed',-1),('catalog_total',False),('results',{})):
+            with self.subTest(field=field,value=value):
+                saved=copy.deepcopy(original);saved['capture_results'][field]=value;self.assert_rehashed_refused(saved)
+
+    def test_duplicate_identity_and_verification_claims_must_agree(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for field,value in (('backend_id','hidream'),('schema_sha256','0'*64),('schema_source',self.url+'/changed'),
+                            ('backend_identity_verified',True),('inference_verified',True),('submissions',1),
+                            ('schema_scope','all-backends'),('scope','inference'),('selected',2),('catalog_total',999)):
+            with self.subTest(field=field):
+                saved=copy.deepcopy(original);saved['capture_results'][field]=value;self.assert_rehashed_refused(saved)
+
+    def test_historical_rows_require_matching_bindings_and_static_only_checks(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for field,value in (('preset_id','other'),('backend_id','hidream'),('graph','graphs/changed.json'),
+                            ('graph_sha256','0'*64),('status','invented'),('nodes',True),
+                            ('node_snapshot_checked',False),('inference_verified',True),('static_topology','inferred')):
+            with self.subTest(field=field):
+                saved=copy.deepcopy(original);saved['capture_results']['results'][0][field]=value
+                self.assert_rehashed_refused(saved)
+        for field in original['capture_results']['results'][0]:
+            with self.subTest(missing_row_field=field):
+                saved=copy.deepcopy(original);saved['capture_results']['results'][0].pop(field)
+                self.assert_rehashed_refused(saved)
 
     def test_missing_graph_is_an_explicit_failed_result_not_silently_omitted(self):
         (self.root/'graphs/lab.json').unlink();code,out,err=self.capture()
