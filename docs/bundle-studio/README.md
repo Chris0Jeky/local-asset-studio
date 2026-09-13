@@ -30,8 +30,20 @@ full selected preset before overlaying the resolved recipe, clears references
 with explicit consent and sets batch count to one, even for authored sweep
 recipes. The normal draft mechanism is retained, not replaced.
 
+**Guided tuning:** Try a related same-preset setup, choose whether to preserve
+your wording, seed and canvas, then review and stage its complete sampling and
+adapter changes. Draft edits have undo/redo; final Apply remains separate. Edited
+configurations do not inherit the source recipe's execution receipt. This is
+transient browser state, not a new shared-document store.
+
+**Preview delivery:** the canonical JSON index has a generated checked-in JS
+module so it can load through Studio's existing static-file policy. Normal
+startup requires no build. See the delivery correction below.
+
 ## Read next
 
+- [Guided tuning, reconciliation and tests](GUIDED-TUNING.md)
+- [Showcase HTTP delivery correction](DELIVERY-FIX.md)
 - [Architecture and next interaction model](ARCHITECTURE.md)
 - [Representative-example protocol](REPRESENTATIVE-EXAMPLES.md)
 - [Validation and remaining acceptance](VALIDATION.md)

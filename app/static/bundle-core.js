@@ -64,5 +64,83 @@
     return rows;
   }
   function editable(p,key){return bound(p,key)&&(['positive','negative','seed','steps','cfg','width','height'].includes(key)||SLOTS.includes(key));}
-  return{SLOTS,KEYS,bound,canonical,links,limits,value,resolve,diff,guidance,adapters,evidence,sample,resources,editable};
+  // Detached tuning only. These revisions are not Workspace/server concurrency tokens.
+  const clone=v=>JSON.parse(JSON.stringify(v));
+  function freeze(v){if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}return v;}
+  function controlLabel(key){
+    const slot=SLOTS.findIndex(k=>key===k||key===k+'_name');
+    if(slot>=0)return 'Adapter '+(slot+1)+(key.endsWith('_name')?' file':' strength');
+    return ({positive:'Prompt',negative:'Negative prompt',cfg:'Guidance (CFG)',seed:'Seed',steps:'Sampling steps',width:'Canvas width',height:'Canvas height',sampler:'Sampler',scheduler:'Schedule',denoise:'Denoise strength'})[key]||key;
+  }
+  function imageRoute(p){return (p.modality||'image')==='image'&&!p.reference&&!p.last_reference&&!p.reference_slots?.length;}
+  function tuningSession(p,r){return freeze({revision:0,past:[],present:{controls:resolve(p,r),origin:r.id,originSnapshot:canonical(r)},future:[]});}
+  function recordTuning(p,r,state,controls,origin,expectedRevision,originSnapshot=state.present.originSnapshot){
+    if(state.revision!==expectedRevision)throw Error('The draft changed; review this change again.');
+    if(typeof origin!=='string'||origin.length>160)throw Error('Invalid source recipe identity');
+    const next={controls:resolve(p,r,controls),origin,originSnapshot};
+    if(canonical(next)===canonical(state.present))return state;
+    return freeze({revision:state.revision+1,past:[...clone(state.past),clone(state.present)].slice(-32),present:next,future:[]});
+  }
+  function travelTuning(state,direction){
+    if(!['undo','redo'].includes(direction))throw Error('Unknown draft history command');
+    const stack=direction==='undo'?state.past:state.future;if(!stack.length)return state;
+    const previous=clone(state.present),next=clone(stack[stack.length-1]);
+    return freeze({revision:state.revision+1,present:next,
+      past:direction==='undo'?clone(state.past.slice(0,-1)):[...clone(state.past),previous].slice(-32),
+      future:direction==='undo'?[...clone(state.future),previous].slice(-32):clone(state.future.slice(0,-1))});
+  }
+  function adapterClaims(kb,p,controls){
+    const family=guidance(kb,p).family;
+    return adapters(p,controls,kb).map(a=>{
+      const recordedFamily=kb?.family_aliases?.[a.family]||a.family;
+      const range=a.range.length===2&&a.range[0]<=a.range[1]?a.range:null;
+      return{...a,range,scope:'stored file record',knowledgeDate:kb?.updated||null,
+        familyRelation:!family||!recordedFamily?'unknown':family===recordedFamily?'same label':'different label',
+        verification:'Recorded metadata only; installed bytes and runtime compatibility are not verified.'};
+    });
+  }
+  function proposeTuning(p,source,state,target,kb,options={}){
+    if(!imageRoute(p)||target?.preset_id!==p.id||source?.preset_id!==p.id)throw Error('Choose an image recipe using this exact preset; cross-preset and reference changes need a separate handoff.');
+    if(!object(options)||Object.entries(options).some(([k,v])=>!['keepIdea','keepSeed','keepCanvas'].includes(k)||typeof v!=='boolean'))throw Error('Invalid preservation choices');
+    const preserve={keepIdea:true,keepSeed:true,keepCanvas:true,...options};
+    const before=resolve(p,source,state.present.controls),authored=resolve(p,target),after={...authored};
+    const kept=[...(preserve.keepIdea?['positive','negative']:[]),...(preserve.keepSeed?['seed']:[]),...(preserve.keepCanvas?['width','height']:[])];
+    for(const k of kept)if(own(before,k))after[k]=before[k];
+    const changes=diff(before,after).map(c=>({...c,group:['positive','negative'].includes(c.key)?'Idea':SLOTS.some(k=>c.key===k||c.key===k+'_name')?'Adapter stack':['width','height','seed'].includes(c.key)?'Composition':'Sampling'}));
+    const claims=adapterClaims(kb,p,after),warnings=[];
+    for(const a of claims.filter(a=>a.active)){
+      if(a.familyRelation==='different label')warnings.push(a.label+': the stored family label differs; same-preset authoring is not compatibility proof.');
+      if(!a.sha256)warnings.push(a.label+': no exact file hash in the stored guidance.');
+      if(a.trigger&&!String(after.positive||'').includes(a.trigger))warnings.push(a.label+': recorded trigger '+a.trigger+' is absent. Review your prompt; no text has been inserted.');
+      else if(a.trigger&&((a.position==='start'&&!String(after.positive||'').trim().startsWith(a.trigger))||(a.position==='end'&&!String(after.positive||'').trim().endsWith(a.trigger))))warnings.push(a.label+': the stored card suggests the trigger at the '+a.position+'. Your wording is unchanged.');
+      if(a.range&&(Number(a.strength)<a.range[0]||Number(a.strength)>a.range[1]))warnings.push(a.label+': authored strength lies outside the stored source range; inspect the source conditions.');
+    }
+    const adapted=diff(authored,after).length>0;
+    return freeze({version:1,revision:state.revision,targetId:target.id,targetName:target.name,
+      identity:canonical({preset:p,source,target,knowledge:kb||null}),before,after,options:preserve,changes,claims,warnings,
+      evidence:evidence(target),sources:links(target.sources),notes:text(target.notes),adapted,
+      notice:adapted?'Your preserved fields make this a variation of the source recipe. Its historical example is not a preview.':'All effective controls match the authored recipe; historical execution still has its own resource/runtime context.'});
+  }
+  function acceptTuning(p,source,state,target,kb,proposal){
+    if(!proposal||proposal.revision!==state.revision)throw Error('The draft changed; review this change again.');
+    const fresh=proposeTuning(p,source,state,target,kb,proposal.options);
+    if(canonical(fresh)!==canonical(proposal))throw Error('The recipe or guidance changed; prepare a fresh proposal.');
+    return recordTuning(p,source,state,fresh.after,target.id,state.revision,canonical(target));
+  }
+  function transferProblems(p,controls,installed=[]){
+    const problems=[];
+    for(const k of ['sampler','scheduler',...SLOTS.map(k=>k+'_name')]){
+      if(!own(controls,k))continue;
+      const names=k.endsWith('_name');let choices=p.choices?.[k]||[];
+      if(names){if(!choices.length)choices=installed;choices=[...choices,...(p.defaults?.[k]?[p.defaults[k]]:[])];}
+      if(!choices.includes(String(controls[k])))problems.push(k+': '+controls[k]+' is not an available workbench choice. Refresh Models & setup; no empty selector will be applied.');
+    }
+    return problems;
+  }
+  function tuningHandoff(p,recipe,controls){
+    const normalized=resolve(p,recipe,controls),changed=diff(resolve(p,recipe),normalized).length>0;
+    return{...clone(recipe),controls:normalized,batch_count:1,...(changed?{name:recipe.name+' · edited draft',status:'unverified',evidence:null,
+      notes:'Unexecuted variation of '+recipe.id+'. Source execution and examples do not certify these edits. '+text(recipe.notes)}:{})};
+  }
+  return{controlLabel,imageRoute,tuningSession,recordTuning,travelTuning,adapterClaims,proposeTuning,acceptTuning,transferProblems,tuningHandoff,SLOTS,KEYS,bound,canonical,links,limits,value,resolve,diff,guidance,adapters,evidence,sample,resources,editable};
 });
