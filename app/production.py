@@ -634,6 +634,8 @@ class Production:
                 if (stage.get('operation')!='comfy.generate.v1'
                         or job.get('preset_id')!=stage['request'].get('preset_id')
                         or job.get('comfy_url')!=plan['bundle'].get('comfy_url')
+                        or not isinstance(plan['bundle'].get('comfy_root'),str) or not plan['bundle']['comfy_root']
+                        or job.get('comfy_root')!=plan['bundle']['comfy_root']
                         or fingerprint(stage['graph'])!=stage['graph_sha256']
                         or fingerprint(job['graph'])!=stage['graph_sha256']):
                     raise ValueError('job recipe, backend or graph differs from the pinned stage')

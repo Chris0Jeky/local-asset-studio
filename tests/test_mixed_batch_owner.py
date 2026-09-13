@@ -62,6 +62,13 @@ class MixedBatchOwnerTests(unittest.TestCase):
                 self.case.job.clear();self.case.job.update(copy.deepcopy(original));self.case.job[key]=value
                 self.dispose();self.assert_held(self.owner)
 
+    def test_backend_storage_root_must_match_the_plan_even_when_url_matches(self):
+        self.case.job['comfy_root']=str(self.case.root/'different-comfy-storage')
+        self.dispose();self.assert_held(self.owner)
+
+    def test_missing_backend_storage_root_is_not_adopted_as_legacy_evidence(self):
+        self.case.job.pop('comfy_root');self.dispose();self.assert_held(self.owner)
+
     def test_mapping_key_must_match_the_retained_job_identity(self):
         self.dispose();self.studio.jobs['alias']=self.case.job
         self.lab._mutate(self.owner,attempts={'0':{'job_id':'alias'}});self.assert_held(self.owner)

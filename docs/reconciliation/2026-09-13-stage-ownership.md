@@ -86,3 +86,17 @@ are inert test fixtures. No GPU, native-artwork or rights acceptance is claimed.
 restart is requested. The exhausted character pilot, uncertain portrait, parked
 AniFox transfer and rejected Wan output remain untouched. Creative selection and
 acceptance remain owner decisions.
+
+## Review follow-up: retained backend storage identity
+
+The reviewer identified a missing half of the backend association: matching
+`comfy_url` alone did not establish matching `comfy_root`. Two regressions now
+reject a different or missing retained storage root before capability/Resume/
+stale dispatch can mutate any evidence. The plan must retain a nonempty string
+root, and the job must match it exactly, as existing execution checks require.
+
+The generic preflight test double omitted the root that real Studio preflight
+already persists. Both generic Production preflight fixtures now supply that real
+field before creating/fingerprinting plans; no production migration or relaxed
+legacy fallback was added. Both new methods fail against the earlier guard
+with the corrected fixture, then all 51 mixed-batch tests pass with the fix.

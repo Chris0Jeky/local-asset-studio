@@ -20,7 +20,7 @@ class ProductionTests(unittest.TestCase):
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(GRAPH))
         self.patches=[patch.object(threading.Thread,'start',lambda *_:None),
-            patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url}),
+            patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
         for p in self.patches:p.start()
@@ -228,7 +228,7 @@ class PlannedSweepTests(unittest.TestCase):
         (self.root/'workflows/api/planned-api.json').write_text(json.dumps(PLAN_GRAPH))
         self.kb_bytes=json.dumps(PLAN_KB).encode('utf-8');(self.root/'presets/settings-kb.json').write_bytes(self.kb_bytes)
         self.patches=[patch.object(threading.Thread,'start',lambda *_:None),
-            patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url}),
+            patch.object(server.Studio,'production_preflight',lambda s,*a:{'test_bundle':True,'comfy_url':s.comfy_url,'comfy_root':str(s.comfy_root)}),
             patch.object(server.Studio,'check_production_bundle',lambda *a:None),
             patch.object(server.Studio,'validate_graph',lambda *a:None)]
         for p in self.patches:p.start()
