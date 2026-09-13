@@ -1,0 +1,53 @@
+diff --git a/app/static/studio-guide-state.js b/app/static/studio-guide-state.js
+index 96a68a7..cc270b3 100644
+--- a/app/static/studio-guide-state.js
++++ b/app/static/studio-guide-state.js
+@@ -24,2 +24,3 @@
+     if (check === 'readiness') {
++      if (s.recipe.runtime_block) return blocked('This recipe is blocked by runtime configuration: ' + (typeof s.recipe.runtime_block === 'string' ? s.recipe.runtime_block : 'inspect its requirement notice in Create.'));
+       if (s.switching) return blocked('An environment switch is in progress. Wait for it to finish; the guide will not switch it.');
+diff --git a/app/static/studio-guide.js b/app/static/studio-guide.js
+index 18cc365..0032825 100644
+--- a/app/static/studio-guide.js
++++ b/app/static/studio-guide.js
+@@ -104,3 +104,3 @@
+       return {
+-        recipe:p ? {id:p.id, backend_id:p.backend_id || 'primary'} : null,
++        recipe:p ? {id:p.id, backend_id:p.backend_id || 'primary', runtime_block:p.runtime_block || null} : null,
+         prompt_present:!!document.getElementById('positive')?.value.trim(),
+diff --git a/docs/workflow-studio/GUIDE-NAVIGATION.md b/docs/workflow-studio/GUIDE-NAVIGATION.md
+index 6a25adb..771bcd3 100644
+--- a/docs/workflow-studio/GUIDE-NAVIGATION.md
++++ b/docs/workflow-studio/GUIDE-NAVIGATION.md
+@@ -34 +34,14 @@ changed. See [the guide architecture](EVIDENCE-GUIDES.md) for the evidence predi
+ source boundaries and remaining manual stages.
++
++## Runtime-block review correction
++
++Automated review identified a separate readiness inconsistency: the original coach
++snapshot omitted `recipe.runtime_block`, so a healthy endpoint could hide the same
++configured blocker that disabled Generate. The snapshot now retains that field and
++the evidence predicate returns a blocked result before considering healthy signals.
++The exact configured reason is displayed as text; no configuration is changed.
++
++The added Node test fails against the prior predicate (observed `met`, expected
++`blocked`) and passes after the fix. Native browser coverage sets a synthetic
++blocker on the real selected-recipe object and checks that both Generate and the
++coach are blocked. This is a fixture, not an alteration of owner runtime policy.
+diff --git a/tests/studio_guide_browser.py b/tests/studio_guide_browser.py
+index b06acbc..a4b5788 100644
+--- a/tests/studio_guide_browser.py
++++ b/tests/studio_guide_browser.py
+@@ -98,2 +98,5 @@ def run(out):
+             check('memory fit' in page.locator('#guideEvidence').inner_text(),'ready evidence excludes memory and creative guarantees')
++            page.evaluate("selected.runtime_block='Synthetic incompatible runtime';updateReady()");page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
++            check(page.locator('#guideEvidence').get_attribute('data-state')=='blocked' and 'Synthetic incompatible runtime' in page.locator('#guideEvidence').inner_text() and page.locator('#generate').is_disabled(),'configured runtime block is honored by both guide and Generate')
++            page.evaluate('selected.runtime_block=null;updateReady()')
+             FAIL_HEALTH=True;page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
+diff --git a/tests/studio_guide_state.cjs b/tests/studio_guide_state.cjs
+index ad1fab7..2ab175f 100644
+--- a/tests/studio_guide_state.cjs
++++ b/tests/studio_guide_state.cjs
+@@ -29 +29,2 @@ test('hidden and visibility-hidden targets remain untouched',()=>{const node={ge
+ test('routes cannot redirect outside the authored tools',()=>{const origin='http://127.0.0.1:8191';for(const value of ['https://untrusted.invalid/','javascript:alert(1)','/api/jobs','/?execute=true','http://user@127.0.0.1:8191/'])assert.throws(()=>C.route(value,origin));assert.equal(C.route('/workflow-studio.html#agents',origin).hash,'#agents');});
++test('configured runtime blocks dominate otherwise healthy readiness',()=>{const s=ready();s.recipe={...s.recipe,runtime_block:'Observed incompatible runtime'};assert.equal(state('readiness',s),'blocked');assert.match(C.evaluate('readiness',s).message,/Observed incompatible runtime/);delete s.health;assert.equal(state('readiness',s),'blocked');});
