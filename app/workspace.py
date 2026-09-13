@@ -6,6 +6,7 @@ atomic; a content-addressed file store keeps media available between backends.
 """
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import time
@@ -133,13 +134,22 @@ class AssetWorkspace:
                 suffix = ".data"
             destination = self.media / (hexdigest + suffix)
             if destination.exists():
-                if digest_file(destination) != hexdigest:
-                    raise WorkspaceError("An existing asset snapshot has changed; original retained")
+                self._verify_snapshot(destination, hexdigest)
             else:
-                temporary.replace(destination)
+                # Link only our private copy, never the mutable Comfy output. A
+                # competing name is checked, not overwritten by a rename fallback.
+                try: os.link(temporary, destination)
+                except FileExistsError: self._verify_snapshot(destination, hexdigest)
             return str(destination.relative_to(self.root)), hexdigest, size
         finally:
             temporary.unlink(missing_ok=True)
+
+    @staticmethod
+    def _verify_snapshot(path, expected):
+        if path.is_symlink() or not path.is_file():
+            raise WorkspaceError("An existing asset snapshot is not a regular file; original retained")
+        if digest_file(path) != expected:
+            raise WorkspaceError("An existing asset snapshot has changed; original retained")
 
     def register(self, job, index, source):
         asset_id = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{job['id']}:{index}").hex
