@@ -20,9 +20,10 @@ class Manager:
     def __init__(self):
         self.active = "primary"; self.profiles = {"primary": PROFILE}; self.busy = False
         self.online = False; self.error = None; self.matching = []; self.listener = None; self.launches = 0; self.routes = []; self.timeouts = []
+        self.stats = {"system": {"comfyui_version": "test", "ram_free": 100}, "devices": [{"name": "test", "vram_free": 50}]}
     def request(self, profile, route, timeout):
         self.routes.append(route); self.timeouts.append(timeout)
-        if self.online: return {"system": {"comfyui_version": "test", "device": "test"}}
+        if self.online: return self.stats
         if self.error: raise self.error
         raise URLError(OSError(errno.ECONNREFUSED, "refused"))
     def process(self, profile):
@@ -120,11 +121,50 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(self.recovery.snapshot()["attempts"], 0)
         self.assertIsNone(self.studio._schema); self.assertEqual(self.studio._schema_at, 0)
 
+    def test_volatile_memory_does_not_invalidate_schema_but_verified_restart_does(self):
+        class Process:
+            def __init__(self, pid, created_at): self.pid = pid; self.created_at = created_at
+            def create_time(self): return self.created_at
+        self.studio.backends.online = True
+        self.studio.backends.listener = Process(40, 100.0)
+        self.recovery.tick()
+        first_identity = self.recovery.snapshot()["endpoint_identity"]
+        self.studio._schema = {"current": True}; self.studio._schema_at = 8
+        self.studio.backends.stats["system"]["ram_free"] = 10
+        self.studio.backends.stats["devices"][0]["vram_free"] = 5
+        self.recovery.tick()
+        self.assertEqual(self.recovery.snapshot()["endpoint_identity"], first_identity)
+        self.assertEqual(self.studio._schema, {"current": True}); self.assertEqual(self.studio._schema_at, 8)
+        self.studio.backends.listener = Process(41, 200.0)
+        self.recovery.tick()
+        self.assertNotEqual(self.recovery.snapshot()["endpoint_identity"], first_identity)
+        self.assertIsNone(self.studio._schema); self.assertEqual(self.studio._schema_at, 0)
+
+    def test_observed_reconnect_invalidates_schema_without_process_identity(self):
+        self.studio.backends.online = True
+        self.recovery.tick()
+        self.studio._schema = {"current": True}; self.studio._schema_at = 8
+        self.studio.backends.online = False
+        self.recovery.tick()
+        self.studio.backends.online = True
+        self.recovery.tick()
+        self.assertIsNone(self.studio._schema); self.assertEqual(self.studio._schema_at, 0)
+
     def test_disabled_recovery_records_dead_backend_without_starting_it(self):
         studio = Studio(Path(self.tmp.name) / "disabled", enabled=False); recovery = RuntimeRecovery(studio)
         recovery.tick()
         self.assertEqual(studio.backends.launches, 0)
         self.assertEqual(recovery.snapshot()["status"], "crashed-absent")
+
+    def test_disabled_recovery_does_not_restore_enabled_status_or_startup_identity(self):
+        self.recovery.state.update(status="startup", message="Started backend", startup_pid=9001, startup_at=10, attempts=2)
+        self.studio._write_json_atomic(self.recovery.path, self.recovery.state)
+        studio = Studio(Path(self.tmp.name), enabled=False); recovery = RuntimeRecovery(studio)
+        snapshot = recovery.snapshot()
+        self.assertEqual(snapshot["status"], "disabled")
+        self.assertEqual(snapshot["attempts"], 0)
+        self.assertNotIn("message", snapshot)
+        self.assertNotIn("startup_pid", snapshot)
 
 
 if __name__ == "__main__": unittest.main()
