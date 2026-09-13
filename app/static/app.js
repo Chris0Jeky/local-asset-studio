@@ -5,7 +5,7 @@ const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
-let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
+let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
@@ -218,7 +218,7 @@ function selectPreset(id, reset=true, transition=false) {
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected();
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
 }
-async function health() {
+async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
@@ -230,6 +230,7 @@ async function health() {
     else if(missingByPreset[selected?.id]?.length) message('This recipe needs: ' + missingByPreset[selected.id].join(', '),true);
   } catch(e) { online=null; schemaAvailable=false; healthError=true; updateReady(); }
 }
+function health(){return readPoller?readPoller.refresh('health'):refreshHealth();}
 function values() {
   const c={}; if(selected.positive)c.positive=$('#positive').value; if(selected.negative)c.negative=$('#negative').value;
   controlKeys.forEach(k=>{const input=getControl(k); if(input&&input.value!=='')c[k]=input.value;});
@@ -247,8 +248,8 @@ function mediaCard(job,index,output) {
   return '<article class="imageCard">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
-function renderJobs() {
-  const signature=JSON.stringify(jobs); if(signature===jobsSignature)return; jobsSignature=signature;
+function renderJobs(signature=jobsDataSignature) {
+  if(signature===jobsSignature)return; jobsSignature=signature;
   const cards=[];
   jobs.forEach(job=>{
     if(job.status!=='completed'){
@@ -265,7 +266,8 @@ function renderJobs() {
   });
   $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>'; renderCompare();
 }
-async function refresh(){try{const next=await api('/api/jobs'),historyChanged=JSON.stringify(next)!==JSON.stringify(jobs);jobs=next;renderJobs();if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
+async function refreshJobs(){try{const next=await api('/api/jobs'),signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
+function refresh(){return readPoller?readPoller.refresh('jobs'):refreshJobs();}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase();$('#inventory').innerHTML=library.inventory.filter(m=>m.file.toLowerCase().includes(q)).map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';}
 async function refreshLibrary(){
@@ -396,6 +398,22 @@ $('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
+function configureReadPolling(){
+  if(!window.ReadPoller||readPoller)return;
+  readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;
+  window.addEventListener?.('pagehide',event=>{if(!event.persisted)readPoller.dispose();});
+  window.addEventListener?.('pageshow',event=>{if(event.persisted)readPoller.wake(true);});
+  const readAssets=refreshAssets,readProduction=refreshProduction,readLibrary=refreshLibrary;
+  refreshAssets=(...args)=>readPoller.refresh('assets',...args);
+  refreshProduction=(...args)=>readPoller.refresh('production',...args);
+  refreshLibrary=(...args)=>readPoller.refresh('library',...args);
+  readPoller.register('jobs',{interval:()=>jobs.some(j=>['running','waiting','queued'].includes(j.status))?4000:15000,task:refreshJobs});
+  readPoller.register('health',{interval:15000,task:refreshHealth});
+  readPoller.register('assets',{interval:15000,shouldPoll:()=>view==='assets',task:readAssets});
+  readPoller.register('production',{interval:15000,shouldPoll:()=>view==='production',task:readProduction});
+  readPoller.register('library',{interval:15000,shouldPoll:()=>view==='models'||view==='learn',task:readLibrary});
+  window.dispatchEvent?.(new Event('studio-read-poller-ready'));
+}
 document.addEventListener('click',async e=>{
   const copy=e.target.closest('[data-copy]'),folder=e.target.closest('[data-folder]'),button=e.target.closest('[data-install]');
   try{if(copy){await navigator.clipboard.writeText(copy.dataset.copy);copy.textContent='Copied';}if(folder)await post('/api/folders/open',{id:folder.dataset.folder});if(button&&!button.disabled)await install(button.dataset.install);}catch(err){message(err.message,true);$('#downloadStatus').textContent=err.message;}
@@ -409,6 +427,6 @@ $('#importWorkflow').onchange=async e=>{
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
     selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);await loadSetups();await health();await refresh();await refreshAssets();await refreshLibrary();
     const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);
-    setInterval(async()=>{await refresh();if(view==='production')await refreshProduction();if(view==='assets'||jobs.some(j=>['running','waiting','queued'].includes(j.status)))await refreshAssets();},4000);setInterval(async()=>{await health();if(view==='models')await refreshLibrary();},15000);
+    configureReadPolling();readPoller?.start();
   }catch(e){message(e.message,true);}
 })();
