@@ -193,11 +193,16 @@ class AssetWorkspace:
         by_id = {a["id"]: a for a in assets}
         for asset in assets:
             asset["collections"] = []
+        counts = {}
         for row in membership:
-            if row["asset_id"] in by_id:
-                by_id[row["asset_id"]]["collections"].append(row["collection_id"])
+            asset = by_id.get(row["asset_id"])
+            if asset is not None:
+                collection_id = row["collection_id"]
+                asset["collections"].append(collection_id)
+                if not asset["trashed_at"]:
+                    counts[collection_id] = counts.get(collection_id, 0) + 1
         for collection in collections:
-            collection["count"] = sum(collection["id"] in a["collections"] and not a["trashed_at"] for a in assets)
+            collection["count"] = counts.get(collection["id"], 0)
         return {"assets": assets, "collections": collections, "workspace_id": identity}
 
     @staticmethod
