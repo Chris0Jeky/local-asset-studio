@@ -206,6 +206,27 @@ its acceptance remain with #163; this strategy does not claim its results as a U
 
 ## Evidence and rollout boundaries
 
+Implemented browser slice: `app/static/read-poller.js` serialises each main-page read lane,
+uses 4-second active / 15-second idle jobs cadence, suspends automatic reads while hidden,
+and refreshes only the relevant Workspace/Production/library/overview views. Manual reads
+coalesce behind an in-flight read; they never share a cached mutation result. It computes one
+jobs signature per response and preserves Workspace-triggered gallery invalidation. Hidden
+observation and browser navigation never stop or repeat a generation. This does not yet
+deduplicate overview's grouped GETs against other lanes, bound full response sizes, or migrate
+AV/voice pages; those are explicit follow-ups under #175/#177.
+
+The actual frontend passed a Chromium fixture with inert APIs and shortened intervals:
+zero automatic GETs during simulated hidden state, one jobs request in flight during a slow
+Create read, continuing overview refresh after returning Home, and working refresh after
+browser Back. No page errors or mutating requests occurred. Screenshots were recorded at
+1440px and 390px. That run did not use BFCache; deterministic tests cover persisted events.
+This is browser interaction proof, not a before/after memory or production-rate benchmark.
+Reproduce the opt-in fixture with installed Playwright/Chromium outside the model environment:
+
+```powershell
+python tests/read_poller_browser.py --out .runtime/read-poller-browser
+```
+
 The profiler has real loopback fixture tests for its route, redirect/proxy refusal, body
 bounds, malformed data and timeout handling. Unit tests cover commit/RAM separation,
 unavailable counters, PID reuse, CPU deltas, serial finite sampling and partial receipts.

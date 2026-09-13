@@ -55,8 +55,10 @@ separately from review.
 
 The architecture and staged plan are in [RESOURCE-EFFICIENCY.md](docs/RESOURCE-EFFICIENCY.md),
 tracked by #172 and scoped issues #173–#178. Existing execution, recovery, Workspace and Wan
-capacity owners are retained. The first implementation adds a finite read-only resource profiler;
-the separate browser scheduling slice is tracked by #174. Cache/offload policy changes, server
+capacity owners are retained. The first implementation adds a finite read-only resource profiler
+and the browser scheduling slice tracked by #174: serial read lanes, hidden-page suspension,
+4-second active / 15-second idle job observation and view-specific refreshes. Existing unchanged
+gallery/Workspace guards are preserved. Cache/offload policy changes, server
 event sync, bounded media/history and broader stage admission remain planned work.
 
 The profiler ran on both shell and portable Python without loading Torch or the Studio server.
@@ -68,6 +70,13 @@ generation-peak benchmark or proof of browser GPU cost. No generation, runtime r
 configuration change was performed by this resource slice; raw JSONL receipts remain ignored.
 Generation memory reduction, native-crash prevention and comparative offload performance remain
 unverified. Human creative acceptance and licensing remain separate.
+
+An inert Chromium fixture using the actual frontend and shortened polling intervals verified
+zero automatic reads while simulated hidden, one in-flight jobs request during a slow Create
+read, overview polling after leaving/reentering Home, and working refresh after browser Back.
+It recorded no page errors or mutating requests; screenshots cover 1440px and 390px viewports.
+That browser run did not use BFCache; persisted lifecycle events are covered by deterministic
+tests only. These prove observation behavior, not a measured browser-memory reduction.
 
 ## Runtime, model and tooling reconciliation — 13 September 2026
 
