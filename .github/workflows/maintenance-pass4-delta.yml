@@ -1,0 +1,28 @@
+name: Maintenance pass 4 main delta
+on:
+  push:
+    branches: [codex/maintenance-pass4-transfer-20260913]
+    paths: [.github/workflows/maintenance-pass4-delta.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 3d3135a17811d2e4846ada05aae35e06f60d92f4
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export exact intervening tracked changes
+        run: |
+          git diff --binary 28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3 HEAD > "$RUNNER_TEMP/main-delta.patch"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass4-main-delta
+          path: |
+            ${{ runner.temp }}/main-delta.patch
+            ${{ runner.temp }}/identity.txt
+          retention-days: 1
