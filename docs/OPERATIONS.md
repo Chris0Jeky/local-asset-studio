@@ -98,6 +98,10 @@ python scripts/intake-downloads.py --dry-run
   is read **only** from the `CIVITAI_API_TOKEN` environment variable — never from the command line, never from
   `config/local.json`, never printed, and never forwarded when civitai redirects the download to its CDN host.
   A 401, a 403 (including region blocks) and a 429 each produce a specific message; nothing is installed.
+  Pass `--resume` only when the named `.part` file already exists. The script verifies a complete partial
+  against the pinned size and SHA-256 and publishes it with a receipt without requesting another body; a
+  missing or corrupted partial is refused and retained. An incomplete partial resumes only after strict
+  HTTP range and identity-encoding checks.
 - **`intake-downloads.py`** inspects `.safetensors` files already sitting in `~/Downloads` (or `--from <dir>`).
   LoRA key/training-metadata hints take precedence, followed by checkpoint, VAE and text-encoder signatures.
   The supported diffusion-backbone hint requires all three key groups: `blocks.*`, `img_in.*` and
