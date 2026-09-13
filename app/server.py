@@ -33,6 +33,8 @@ from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
+import host_memory
+from runtime_recovery import RuntimeRecovery
 import prompting
 from studio_prompt.http_extension import extend_handler
 
@@ -40,6 +42,7 @@ HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError): pass
@@ -91,6 +94,7 @@ class Studio:
         self._schema_lock = threading.Lock()
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
+        self._host_commit = None; self._host_commit_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock()
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
@@ -105,6 +109,7 @@ class Studio:
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
+        self.runtime_recovery = RuntimeRecovery(self)
 
     def catalog(self):
         data = read_json(self.catalog_path)
@@ -231,6 +236,9 @@ class Studio:
 
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
+        # A real started worker that has exited cannot service a new queue safely.
+        if getattr(self, 'worker', None) is not None and self.worker.ident is not None and not self.worker.is_alive():
+            raise StudioError('Studio worker is unavailable. Restart Studio; no generation was queued.')
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
         if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
@@ -311,7 +319,40 @@ class Studio:
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         self.prune_disabled_loras(graph)
         self.ensure_reference_inputs(graph)
+        self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
+
+    def host_commit_reading(self, refresh=False):
+        if refresh or self._host_commit is None or time.monotonic() - self._host_commit_at > 3:
+            self._host_commit = host_memory.read(); self._host_commit_at = time.monotonic()
+        return dict(self._host_commit)
+
+    @staticmethod
+    def host_commit_required(preset, graph):
+        explicit = preset.get('host_commit_heavy') is True
+        model_bound = False; megapixels = 0.0
+        for node in graph.values():
+            inputs = node.get('inputs', {})
+            for field in ('unet_name', 'model_name', 'diffusion_model', 'checkpoint_name'):
+                value = inputs.get(field)
+                if isinstance(value, str):
+                    value = value.lower()
+                    if 'qwen-image-edit-2511' in value or 'flux-2' in value or 'flux2-' in value: model_bound = True
+            width,height=inputs.get('width'),inputs.get('height')
+            if isinstance(width,(int,float)) and not isinstance(width,bool) and isinstance(height,(int,float)) and not isinstance(height,bool): megapixels=max(megapixels,float(width)*float(height)/(1024**2))
+            scaled=inputs.get('megapixels')
+            if node.get('class_type')=='ImageScaleToTotalPixels' and isinstance(scaled,(int,float)) and not isinstance(scaled,bool): megapixels=max(megapixels,float(scaled))
+        return (explicit or model_bound) and megapixels >= 1.0
+
+    def host_commit_preflight(self, preset, graph, refresh=False):
+        if not self.config.get('enforce_host_commit_headroom') or not self.host_commit_required(preset, graph): return None
+        reading=self.host_commit_reading(refresh)
+        reason=reading.get('unknown_reason');available=reading.get('available_bytes')
+        if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
+        if not isinstance(available,int) or available < HOST_COMMIT_MINIMUM:
+            actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
+            raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
+        return reading
 
     def prune_disabled_loras(self, graph):
         """Drop LoRA loaders left at strength 0 and rewire whatever consumed them.
@@ -367,6 +408,8 @@ class Studio:
         job["parent_assets"] = parents
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
+        reading=self.host_commit_preflight(preset, graph)
+        if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time())]
         self._save(job); self.jobs[job_id] = job
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
@@ -483,6 +526,7 @@ class Studio:
         return graph_check(graph,self.node_info())
 
     def production_preflight(self, preset, graph):
+        self.host_commit_preflight(preset, graph, refresh=True)
         self.node_info(refresh=True)
         self.validate_graph(graph)
         if shutil.disk_usage(self.experiments).free<2*1024**3:raise StudioError('At least 2 GiB free workspace storage is required')
@@ -663,6 +707,7 @@ class Studio:
             return self._schema
 
     def health(self, refresh=False):
+        worker_alive = self.worker.ident is None or self.worker.is_alive()
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
@@ -683,8 +728,8 @@ class Studio:
                             if field.endswith("_name") and isinstance(value, str) and isinstance(enum, list) and value not in enum:
                                 missing.setdefault(preset.get("id"), []).append(value)
                 except (StudioError, AttributeError, TypeError): pass
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -828,6 +873,14 @@ class Studio:
         self._wait_for_queue(job.get('comfy_url'))
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
+            try:
+                try:preset=self.preset(job['preset_id'])
+                except StudioError:preset={}
+                reading=self.host_commit_preflight(preset, graph, refresh=True)
+            except StudioError as exc:
+                job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
+            if reading:
+                job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -1021,7 +1074,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             path = urlparse(self.path).path
             if path == "/api/identity": return self._json(200, self.studio.identity())
-            if path == '/api/backends': return self._json(200, self.studio.backends.snapshot())
+            if path == '/api/backends':
+                result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
@@ -1090,6 +1144,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
+            if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 size=self._content_length(20*1024*1024)

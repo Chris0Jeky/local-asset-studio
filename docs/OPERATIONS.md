@@ -6,6 +6,8 @@ The launcher reuses the installed AMD ComfyUI runtime and weights. It checks whe
 
 `config/local.json` holds this PC's paths and is ignored by Git. The defaults are in `config/example.json`. The current embedded Python/ROCm installation must not be upgraded casually: install experimental dependencies separately and preserve the working runtime.
 
+`primary_disable_pinned_memory` is false by default. Set it true only for an explicitly measured primary-runtime experiment; it adds ComfyUI's existing `--disable-pinned-memory` launcher flag and does not alter packages, models or any other backend family.
+
 This PC's `experiments_root` points to the original source checkout's `experiments`
 directory, preserving its existing jobs and uploads. Back up that configured path,
 not an empty `experiments/runs` in a second checkout. The desktop shortcut launches
@@ -24,6 +26,8 @@ The studio submits jobs serially and waits for the ComfyUI queue. Avoid simultan
 
 ## When something goes wrong
 
+- **Runtime recovery (opt-in):** set `runtime_auto_recover: true` in local config only if you want Studio to monitor the selected configured backend. It observes the fixed loopback endpoint at a bounded three-second probe deadline and records `.runtime/runtime-recovery.json` plus `.runtime/runtime-recovery.log`. It may start that selected profile only after connection refusal, an exact launcher scan finds no retained process, and no fresh Studio work is queued, submitting or running. For blank protected psutil names, the scan asks Windows for that observed PID's process name with a bounded hidden read-only lookup. A resolved non-Python name is excluded; an unresolved name or protected configured-Python identity remains ambiguous and blocks recovery. It never changes backend family, scans or rewires ports, stops a process, clears a queue, or submits/replays a prompt. An uncertain job is retained as evidence and does not trigger replay; a truly dead backend can still be started while it is retained. A live-but-unhealthy or foreign/ambiguous listener is preserved and reported for inspection. Startup is retained through its timeout and failed starts open the bounded breaker; use **Reset recovery** after inspection to clear the breaker for the next monitor pass.
+- **Studio worker unavailable:** health reports this separately and generation is refused. Restart Studio; recovery only covers the selected ComfyUI runtime and never starts a second Studio worker.
 - **Offline:** use the desktop shortcut again; inspect `.runtime/` and the ComfyUI launcher logs if startup fails.
 - **Missing model/reference:** confirm the configured ComfyUI root, model filename and supplied reference. The presets use exact filenames. Model weights are not bundled in Git.
 - **Long job:** Qwen and other large models can take minutes. Do not repeatedly submit. The gallery tracks the existing prompt ID.
@@ -122,4 +126,3 @@ URL. Licence and territory facts belong in `models/README.md` next to the pin: r
   `civitai.com/user/account`; never write it into `config/local.json`, the repository, or a command line.
 - **Undo.** Remove `--enable-manager` from the launcher and delete the `custom_nodes/civitai-comfy-nodes`
   folder; the added pip packages are inert without them.
-
