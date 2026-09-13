@@ -1,0 +1,174 @@
+diff --git a/.github/workflows/guided-journey-browser.yml b/.github/workflows/guided-journey-browser.yml
+new file mode 100644
+index 0000000..e37daf8
+--- /dev/null
++++ b/.github/workflows/guided-journey-browser.yml
+@@ -0,0 +1,38 @@
++name: Guided journey browser
++on:
++  pull_request:
++    paths:
++      - 'app/static/**'
++      - 'studio_workflow/guides.py'
++      - 'tests/studio_guide*'
++      - 'tests/studio_browser_smoke.py'
++      - 'tests/test_studio_guide.py'
++      - '.github/workflows/guided-journey-browser.yml'
++permissions:
++  contents: read
++jobs:
++  journeys:
++    runs-on: ubuntu-latest
++    timeout-minutes: 10
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          persist-credentials: false
++      - uses: actions/setup-python@v5
++        with:
++          python-version: '3.12'
++      - uses: actions/setup-node@v4
++        with:
++          node-version: '22'
++      - run: python -m pip install playwright==1.57.0
++      - run: python -m playwright install --with-deps chromium
++      - run: python -m unittest discover -s tests -p test_studio_guide.py -v
++      - name: Actual pages and native HTTP, storage, keyboard and stage navigation
++        run: python tests/studio_guide_browser.py --out .runtime/guide-proof
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: guide-browser-proof
++          path: .runtime/guide-proof/
++          if-no-files-found: ignore
++          retention-days: 7
+diff --git a/app/static/studio-guide-state.js b/app/static/studio-guide-state.js
+new file mode 100644
+index 0000000..96a68a7
+--- /dev/null
++++ b/app/static/studio-guide-state.js
+@@ -0,0 +1,90 @@
++/* Pure observation rules. A met prerequisite is never creative acceptance. */
++(function(root){
++  'use strict';
++  const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
++  const result = (state, message) => ({state, message});
++  const unknown = message => result('unknown', message || 'Not checked. Use Check this step to inspect current evidence.');
++  function evaluate(check, s = {}) {
++    const met = text => result('met', text), blocked = text => result('blocked', text);
++    if (check === 'manual') return result('manual', 'This step needs your judgment. Next records navigation only.');
++    if (['recipe', 'reference_recipe', 'prompt', 'references', 'readiness'].includes(check) && !s.recipe)
++      return blocked('Choose a recipe in Create first.');
++    if (check === 'recipe') return met('Recipe selected: ' + s.recipe.id + '. Selection is not a readiness check.');
++    if (check === 'reference_recipe') return s.references?.supported ? met('A reference-capable recipe is selected. Inspect its source and editing mechanism.') : blocked('Choose a recipe with reference inputs; a text-only recipe cannot preserve a supplied source.');
++    if (check === 'prompt') return s.prompt_present ? met('Wording is present. Its suitability and intended invariants still need your review.') : blocked('Describe the result or instruction in the prompt field.');
++    if (check === 'references') {
++      const r = s.references;
++      if (!r?.supported) return blocked('This recipe has no supported reference input. Choose a reference recipe first.');
++      if (r.pending) return unknown('Reference upload or validation is still pending.');
++      if (r.selected && !r.attached) return unknown('A local source is selected but not yet staged. Use normal recipe preparation; the guide does not upload it.');
++      if (!r.attached || r.missing) return blocked('Attach every required reference. Missing sources are not replaced by recipe examples.');
++      if (r.mask) return unknown('A source is attached, but this guide does not validate RGBA mask coverage. Inspect the mask through the recipe tools.');
++      return met('Required sources are attached in the workbench. Bytes, roles and compatibility are rechecked by the normal preparation path.');
++    }
++    if (check === 'readiness') {
++      if (s.switching) return blocked('An environment switch is in progress. Wait for it to finish; the guide will not switch it.');
++      const h = s.health;
++      if (!object(h)) return unknown('Readiness is unavailable. A failed check is not evidence that the backend is ready.');
++      if (h.online === false) return blocked('ComfyUI reports offline. Inspect Models & setup; no restart was requested here.');
++      if (h.worker_alive === false) return blocked('The Studio worker is unavailable. Do not start a run until it is restored.');
++      if (h.online !== true || h.schema_available !== true || h.worker_alive !== true || !object(h.missing_models)) return unknown('Backend, worker or node-schema readiness is not fully known.');
++      const b = s.backend_report;
++      if (!s.backend || !object(b) || !Array.isArray(b.profiles) || b.busy !== false) return unknown('The active environment is not fully known. Inspect Models & setup.');
++      const profile = b.profiles.filter(p => object(p) && p.id === b.active);
++      if (b.active !== s.backend || profile.length !== 1 || typeof profile[0].url !== 'string' || profile[0].url !== h.comfy_url) return unknown('Readiness and environment identities differ. Recheck after the environment settles.');
++      if (s.backend !== s.recipe.backend_id) return blocked('This recipe needs ' + s.recipe.backend_id + '; the active environment is ' + s.backend + '. Switching is your decision.');
++      const missing = h.missing_models[s.recipe.id] ?? [];
++      if (!Array.isArray(missing)) return unknown('Dependency readiness was malformed. Inspect the recipe requirements.');
++      if (missing.length) return blocked('Missing dependencies: ' + missing.map(String).join(', '));
++      return met('Current backend, worker and reported dependencies are ready. This does not certify memory fit, custom-node behavior or generation quality.');
++    }
++    if (check === 'schema') return s.authoring?.schema_loaded ? met('Installed node definitions are loaded. Native-only behavior may still need an adapter.') : blocked('Load the installed node catalog in Workflow builder.');
++    if (check === 'graph_check') {
++      if (!s.authoring?.document_present) return blocked('Import or create a workflow first.');
++      if (!s.authoring.schema_matches) return blocked('Load the correct environment and explicitly reconcile the draft schema.');
++      if (s.authoring.checked_valid === null) return blocked('Use Check connections after the latest draft change.');
++      return s.authoring.checked_valid === true ? met('The current draft passed static connection checks. Runtime validation and resources are separate.') : blocked('The current connection check has errors. Follow the node/input diagnostics.');
++    }
++    if (check === 'saved') {
++      if (!s.project?.id) return blocked('Use Save to Workspace or open a saved workflow.');
++      if (s.project.blocked || s.project.conflict) return unknown('Resolve the pending save or conflict before preparing a new run.');
++      return s.project.dirty ? blocked('Local edits are unsaved. Save deliberately or keep them as a separate copy.') : met('Attached to Workspace revision ' + s.project.revision + '. Saving did not run it.');
++    }
++    if (check === 'selection') return Number.isSafeInteger(s.selection) && s.selection > 0 ? met(s.selection + ' assets selected. Selection does not establish that they are accepted.') : blocked('Select the source assets in the Asset library.');
++    if (check === 'output' || check === 'review') {
++      const j = s.job;
++      if (!s.job_id) return unknown('Choose the specific run to inspect. The guide never assumes the latest run belongs to this task.');
++      if (!object(j) || j.id !== s.job_id || !Array.isArray(j.outputs) || !j.outputs.every(object)) return unknown('The selected run evidence is unavailable or malformed. Keep its original identity.');
++      if (['uncertain','submitting','running','waiting','queued'].includes(j.status)) return unknown('Selected run is ' + j.status + '. Observe the original job; do not create a replacement to retry.');
++      if (!['completed','partial','failed','cancelled'].includes(j.status)) return unknown('The selected run has an unrecognized state.');
++      if (!j.outputs.length) return blocked('No output is recorded for this run (' + j.status + '). Engine completion alone is not output evidence.');
++      if (check === 'output') return met(j.outputs.length + ' output records found for the selected run (' + j.status + '). Inspect the files; this is not art acceptance.');
++      if (!Array.isArray(s.assets)) return unknown('Asset review records are unavailable.');
++      const decisions = [];
++      for (const output of j.outputs) {
++        const matches = s.assets.filter(a => object(a) && typeof output.asset_id === 'string' && a.id === output.asset_id && a.job_id === j.id);
++        if (matches.length !== 1 || !['unreviewed','selected','needs_work','rejected'].includes(matches[0].review)) return unknown('An output has no unique matching Workspace review record.');
++        decisions.push(matches[0].review);
++      }
++      if (decisions.includes('unreviewed')) return blocked(decisions.filter(x => x !== 'unreviewed').length + ' of ' + decisions.length + ' output reviews recorded. Review the remaining outputs yourself.');
++      return met('Review decisions recorded: ' + decisions.join(', ') + '. Recording a rejection also completes review; the guide never approves artwork.');
++    }
++    return unknown('This step has no evidence adapter yet. Continue manually without a completion claim.');
++  }
++  function visibleTarget(step, doc) {
++    for (const selector of [step.target, ...(step.alternatives || [])]) {
++      if (typeof selector !== 'string' || !/^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector)) continue;
++      const node = doc.getElementById(selector.slice(1));
++      if (node && node.getClientRects().length && !node.closest('[hidden]') &&
++        !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility)) return node;
++    }
++    return null;
++  }
++  function route(value, origin) {
++    const u = new URL(value, origin);
++    if (u.username || u.password || u.origin !== origin || !['/', '/workflow-studio.html', '/av.html', '/voice.html'].includes(u.pathname) || u.search) throw Error('Unsupported guide route');
++    return u;
++  }
++  const api = {evaluate, unknown, visibleTarget, route};
++  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
++})(globalThis);
+diff --git a/app/static/studio-guide.css b/app/static/studio-guide.css
+index 66e2879..056a278 100644
+--- a/app/static/studio-guide.css
++++ b/app/static/studio-guide.css
+@@ -1 +1,2 @@
+ .studio-guide-panel{border:1px solid #78948a!important;border-left:5px solid #baffb9!important;border-radius:12px;padding:20px!important;margin:16px 0 28px!important;background:#1a2926!important;color:#edf6ef!important;max-width:1100px;box-sizing:border-box;scroll-margin-top:90px}.studio-guide-panel h2{font:650 23px/1.3 system-ui,sans-serif!important;margin:8px 0!important;color:#f0f6f1!important}.studio-guide-panel p{font:14px/1.6 system-ui,sans-serif!important;color:#d3e3da!important;margin:8px 0!important;max-width:960px}.studio-guide-panel .studio-guide-progress{font:700 11px/1.4 system-ui,sans-serif!important;text-transform:uppercase;letter-spacing:.1em;color:#baffb9!important}.studio-guide-panel small{font:12px/1.5 system-ui,sans-serif!important;color:#becfc5!important;display:block;margin-top:12px}.studio-guide-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.studio-guide-actions button{font:14px system-ui,sans-serif!important;min-height:42px;padding:9px 14px!important;background:#15221e!important;border:1px solid #758e83!important;border-radius:8px;color:#edf6ef!important;cursor:pointer}.studio-guide-actions button:focus-visible{outline:3px solid #baffb9;outline-offset:3px}.studio-guide-target{outline:3px solid #baffb9!important;outline-offset:5px!important;scroll-margin:100px}@media(max-width:600px){.studio-guide-panel{padding:16px!important}.studio-guide-actions button{flex:1 1 130px}.studio-guide-panel h2{font-size:21px!important}}
++.studio-guide-panel{grid-column:1/-1;min-width:0}.studio-guide-panel label{display:block;font:14px/1.5 system-ui,sans-serif}.studio-guide-panel select{display:block;width:100%;max-width:760px;min-height:44px;margin:8px 0;color:inherit;background:#15221e;border:1px solid #758e83;padding:8px}.studio-guide-panel [hidden]{display:none!important}.studio-guide-panel #guideEvidence{border:1px solid #758e83;border-radius:8px;padding:12px;overflow-wrap:anywhere}.studio-guide-panel #guideEvidence[data-state=blocked]{border-left:5px solid #edc575}.studio-guide-panel #guideEvidence[data-state=met]{border-left:5px solid #baffb9}.studio-guide-panel select:focus-visible{outline:3px solid #baffb9;outline-offset:3px}.studio-guide-actions button:disabled{opacity:.6;cursor:wait}@media(prefers-reduced-motion:reduce){.studio-guide-panel,.studio-guide-target{scroll-behavior:auto!important;transition:none!important}}@media(forced-colors:active){.studio-guide-panel,.studio-guide-panel #guideEvidence,.studio-guide-actions button{border-color:CanvasText!important}.studio-guide-target{outline-color:Highlight!important}}
+diff --git a/app/static/studio-shell.js b/app/static/studio-shell.js
+index 4f4bc88..6e9e58b 100644
+--- a/app/static/studio-shell.js
++++ b/app/static/studio-shell.js
+@@ -37,3 +37,3 @@
+     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/studio-guide.css';document.head.append(css);
+-    const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);
++    const rules=document.createElement('script');rules.src='/static/studio-guide-state.js';rules.onload=()=>{const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);};document.body.append(rules);
+   }
+diff --git a/app/static/workflow-studio.js b/app/static/workflow-studio.js
+index 21722e5..ab4d6d0 100644
+--- a/app/static/workflow-studio.js
++++ b/app/static/workflow-studio.js
+@@ -203,5 +203,5 @@
+       const card = el('article', null, {class: 'wf-goal'}); card.append(el('small', `PATH ${String(index + 1).padStart(2, '0')} · ${guide.steps.length} STEPS`), el('h3', guide.title), el('p', guide.summary));
+-      function href(step) { const url = new URL(guide.steps[step].route, document.baseURI); url.searchParams.set('guide', guide.id); url.searchParams.set('step', String(step)); return url.pathname + url.search + url.hash; }
++      function href(step) { const url = new URL(guide.steps[step].route, document.baseURI); url.searchParams.set('guide', guide.id); url.searchParams.set('step', String(step)); if (guide.steps[step].id) url.searchParams.set('stage', guide.steps[step].id); return url.pathname + url.search + url.hash; }
+       card.append(el('a', 'Start guided path →', {href: href(0)}));
+-      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); if (saved && Number.isInteger(saved.step) && saved.step > 0 && saved.step < guide.steps.length) card.append(el('a', `Resume at step ${saved.step + 1} →`, {href: href(saved.step)})); } catch (_) {}
++      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); const resume = saved?.stage ? guide.steps.findIndex(s => s.id === saved.stage) : saved?.step; if (Number.isInteger(resume) && resume > 0 && resume < guide.steps.length) card.append(el('a', `Resume at step ${resume + 1} →`, {href: href(resume)})); } catch (_) {}
+       host.append(card);
+@@ -232,2 +232,5 @@
+     snapshot: () => doc && clone(doc), schema: () => schema && clone(schema), epoch: () => epoch,
++    authoringStatus: () => Object.freeze({document_present: !!doc, schema_loaded: !!schema,
++      schema_matches: !!doc && !!schema && doc.backend_id === schema.backend_id && doc.schema_sha256 === schema.schema_sha256,
++      checked_valid: checked?.valid ?? null, epoch, schema_epoch: schemaEpoch}),
+     load: replace, change: changed, validate: safeNumbers, status,
