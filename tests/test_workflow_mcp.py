@@ -60,6 +60,25 @@ class MCPProtocolTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(rejected.isError); self.assertEqual(client.calls, [])
             blocked = await session.call_tool('recipe_run', {})
             self.assertTrue(blocked.isError); self.assertEqual(client.calls, [])
+    async def test_saved_run_execute_is_hash_bound_and_permission_scoped(self):
+        from mcp.shared.memory import create_connected_server_and_client_session
+        source = {'request_id': 'original', 'record_sha256': 'a'*64, 'ticket_sha256': 'b'*64, 'job_id': 'job-1'}
+        client = RecordingClient()
+        def response(path, body=None):
+            client.calls.append((path, body))
+            return {'source': source, 'dispatch': {'status': 'reconciliation_required', 'job_id': 'job-1'}}
+        client.request = response
+        async with create_connected_server_and_client_session(build_server(AgentBridge(client)), raise_exceptions=True) as session:
+            tools = {t.name for t in (await session.list_tools()).tools}
+            self.assertIn('saved_run_review', tools); self.assertNotIn('saved_run_execute', tools)
+            self.assertEqual(client.calls, [])
+        async with create_connected_server_and_client_session(build_server(AgentBridge(client, 'execute')), raise_exceptions=True) as session:
+            result = await session.call_tool('saved_run_execute', {k: source[k] for k in ('request_id', 'record_sha256', 'ticket_sha256')})
+            self.assertTrue(result.isError)
+            self.assertEqual(result.structuredContent['error']['code'], 'reconciliation_required')
+            self.assertEqual(client.calls, [('/api/workflow-studio/document-runs/original/run',
+                {'approved': True, 'record_sha256': 'a'*64, 'ticket_sha256': 'b'*64})])
+
     async def test_compile_error_has_tool_error_and_unchanged_diagnostics(self):
         from mcp.shared.memory import create_connected_server_and_client_session
         client = RecordingClient()
