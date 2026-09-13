@@ -1,0 +1,25 @@
+name: Context handoff current source
+on:
+  push:
+    branches: [codex/context-handoff-transport]
+    paths: [.github/workflows/context-source-current.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 96ef4c208522df655ffa09b118479a9705249f1c
+          persist-credentials: false
+      - run: |
+          git archive --format=zip --output=source.zip HEAD
+          git rev-parse HEAD > SOURCE_SHA.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: context-handoff-current-source
+          path: |
+            source.zip
+            SOURCE_SHA.txt
+          retention-days: 1
