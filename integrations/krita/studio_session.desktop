@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=@MODULE@
+X-Python-2-Compatible=false
+Name=Studio character document session
+Comment=Explicit capture and reversible protected-result import actions

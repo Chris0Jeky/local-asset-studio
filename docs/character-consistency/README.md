@@ -1,5 +1,10 @@
 # Character consistency: one complete production path
 
+The [open-document Krita session](KRITA-DOCUMENT-SESSION.md) now connects an
+existing protected result to a reversible native layer with unsaved-state guards.
+Its recorded mechanical proof is separate from neural repair yield and creative
+acceptance. The earlier saved-file adapter and all original evidence remain.
+
 This programme turns an accepted design into repeatable character panels, then an editable and playable character pack. It extends #22, #14 and #21. It does not introduce another Studio, queue, model manager or painting application.
 
 Start with [research and findings](RESEARCH.md), [goals and waypoints](ROADMAP.md), [architecture](ARCHITECTURE.md) and the [local-agent runbook](RUNBOOK.md). Work is tracked in #64 (the first live pilot), #65 (shared execution) and #66 (calibrated review/repair). The existing #23/#24 own native layered sources and engine playback.
