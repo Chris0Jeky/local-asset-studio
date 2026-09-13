@@ -128,7 +128,7 @@ $('#assetRecipe').onclick=()=>exportRecipe(activeAsset.job_id);
 document.addEventListener('click',async e=>{
   try{
     const diagnostic=e.target.closest('[data-i2v-diagnostic]');
-    if(diagnostic){const diagnosticAsset=activeAsset;diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted">Building offline report from the existing recording…</p>';try{const report=await api('/api/jobs/'+encodeURIComponent(diagnostic.dataset.i2vDiagnostic)+'/i2v-diagnostic');renderI2VDiagnostic(report);}catch(err){renderI2VDiagnosticAction(diagnosticAsset,err.message);throw err;}return;}
+    if(diagnostic){const diagnosticAsset=activeAsset, diagnosticAssetId=diagnosticAsset?.id, diagnosticJobId=diagnostic.dataset.i2vDiagnostic, diagnosticIsCurrent=()=>activeAsset?.id===diagnosticAssetId&&activeAsset?.job_id===diagnosticJobId;diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted">Building offline report from the existing recording…</p>';try{const report=await api('/api/jobs/'+encodeURIComponent(diagnosticJobId)+'/i2v-diagnostic');if(!diagnosticIsCurrent())return;renderI2VDiagnostic(report);}catch(err){if(!diagnosticIsCurrent())return;renderI2VDiagnosticAction(diagnosticAsset,err.message);throw err;}return;}
     const scope=e.target.closest('[data-scope]');if(scope)setAssetScope(scope.dataset.scope);
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
     const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}

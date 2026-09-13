@@ -36,7 +36,7 @@ function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)
 // parent_asset lineage claim; `local` answers /api/upload, which never does. That asymmetry is what the
 // swap contracts below turn on, so the two responses must stay distinguishable. `availability` maps a
 // saved reference file to its sha256 for /api/references/check; anything absent reads as unavailable.
-function sandbox(attached, local, availability = null, diagnostic = null) {
+function sandbox(attached, local, availability = null, diagnostic = null, diagnosticResponse = null) {
   const elements = new Map(), requests = [];
   let clickHandler;
   const element = selector => {
@@ -55,10 +55,10 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
       const data = url === '/api/assets/reference' ? attached : url === '/api/upload' ? local
         : url === '/api/references/check' ? JSON.parse(options.body).files.map(file => ({file, available: Boolean(availability?.[file]), sha256: availability?.[file]}))
         : url === '/api/jobs' ? {id: 'child-job', message: 'Queued'}
-        : url.includes('/i2v-diagnostic') ? (diagnostic || {})
+        : url.includes('/i2v-diagnostic') ? (diagnosticResponse ? await diagnosticResponse() : diagnostic || {})
         : url.startsWith('/api/inspect/') ? {requirements: [], nodes: [], graph: {}}
         : {};
-      return {ok: !(url.includes('/i2v-diagnostic') && diagnostic?.error), json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
+      return {ok: !(url.includes('/i2v-diagnostic') && data?.error), json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
     },
   });
   for (const name of ['app.js', 'references.js', 'workspace.js']) {
@@ -73,6 +73,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
 
 const localFile = (name = 'unrelated.png') => ({name, size: 2048, type: 'image/png'});
 const flush = () => new Promise(resolve => setImmediate(resolve)); // Drain a fire-and-forget restore.
+function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return {promise, resolve}; }
 
 async function check(presetId, targetPreset, slots, workspace = false) {
   const upload = sourceAttachment('a'.repeat(32) + '_retained.png');
@@ -311,6 +312,35 @@ async function i2vDiagnosticEligibilityAndRetry() {
   assert.match(failed.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job"/,'Failed diagnostics restore the retry button');
 }
 
+async function i2vDiagnosticIgnoresNavigation() {
+  const report={job:{},source:{},requested:{},preprocessing:{},video:{probe:{}},artifacts:{},graph:{}};
+  const successGate=deferred();
+  const success=sandbox(null,null,null,null,()=>successGate.promise);
+  success.run(`assetState.assets=[
+    {id:'wan-a',title:'Wan A',media_type:'video',job_id:'wan-job-a',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024},
+    {id:'wan-b',title:'Wan B',media_type:'video',job_id:'wan-job-b',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024}
+  ];openAsset('wan-a');`);
+  const successRequest=success.click({closest: selector => selector === '[data-i2v-diagnostic]' ? {dataset:{i2vDiagnostic:'wan-job-a'},disabled:false} : null});
+  success.run(`openAsset('wan-b');`);
+  successGate.resolve(report);
+  await successRequest;
+  assert.match(success.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job-b"/,'Navigation renders the newly selected asset action');
+  assert.doesNotMatch(success.element('#assetDiagnostic').innerHTML,/class="i2v-diagnostic"/,'A stale successful response does not repaint the newly selected asset');
+
+  const failureGate=deferred();
+  const failure=sandbox(null,null,null,null,()=>failureGate.promise);
+  failure.run(`assetState.assets=[
+    {id:'wan-a',title:'Wan A',media_type:'video',job_id:'wan-job-a',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024},
+    {id:'wan-b',title:'Wan B',media_type:'video',job_id:'wan-job-b',preset_id:'wan22-i2v',source:{},lineage:[],tags:[],bytes:1024}
+  ];openAsset('wan-a');`);
+  const failureRequest=failure.click({closest: selector => selector === '[data-i2v-diagnostic]' ? {dataset:{i2vDiagnostic:'wan-job-a'},disabled:false} : null});
+  failure.run(`openAsset('wan-b');`);
+  failureGate.resolve({error:'I2V diagnostic unavailable: recorded Wan output is missing'});
+  await failureRequest;
+  assert.match(failure.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job-b"/,'Navigation keeps the newly selected asset retry action');
+  assert.doesNotMatch(failure.element('#assetDiagnostic').innerHTML,/recorded Wan output is missing/,'A stale failed response does not repaint the newly selected asset');
+}
+
 (async () => {
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
@@ -329,5 +359,6 @@ async function i2vDiagnosticEligibilityAndRetry() {
   await importedRecipeKeepsUnattributedParents();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
+  await i2vDiagnosticIgnoresNavigation();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
