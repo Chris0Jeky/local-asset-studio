@@ -119,7 +119,27 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.recovery.tick()
         self.assertEqual(self.recovery.snapshot()["status"], "healthy")
         self.assertEqual(self.recovery.snapshot()["attempts"], 0)
+        self.assertNotIn("startup_pid", self.recovery.snapshot())
+        self.assertNotIn("startup_at", self.recovery.snapshot())
         self.assertIsNone(self.studio._schema); self.assertEqual(self.studio._schema_at, 0)
+
+    def test_saved_healthy_state_is_checking_until_a_current_probe(self):
+        self.recovery.state.update(
+            status="healthy", message="Selected backend is healthy.", endpoint_identity="old",
+            startup_pid=9001, startup_at=10, breaker_until=20, attempts=0,
+        )
+        self.studio._write_json_atomic(self.recovery.path, self.recovery.state)
+        recovery = RuntimeRecovery(Studio(Path(self.tmp.name)))
+        snapshot = recovery.snapshot()
+        self.assertEqual(snapshot["status"], "checking")
+        self.assertIn("historical", snapshot["message"])
+        recovery.studio.backends.online = True
+        recovery.tick()
+        snapshot = recovery.snapshot()
+        self.assertEqual(snapshot["status"], "healthy")
+        self.assertNotIn("startup_pid", snapshot)
+        self.assertNotIn("startup_at", snapshot)
+        self.assertNotIn("breaker_until", snapshot)
 
     def test_volatile_memory_does_not_invalidate_schema_but_verified_restart_does(self):
         class Process:
