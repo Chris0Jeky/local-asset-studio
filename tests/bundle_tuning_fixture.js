@@ -1,0 +1,8 @@
+/* Synthetic data for policy and browser tests; no generation evidence. */
+(function(root){
+const p={id:'paint',family:'Paint',positive:['4','text'],negative:['5','text'],steps:['7','steps'],cfg:['7','cfg'],seed:['7','seed'],width:['6','width'],height:['6','height'],sampler:['7','sampler_name'],scheduler:['7','scheduler'],lora:['9','strength_model'],lora_name:['9','lora_name'],lora2:['10','strength_model'],lora2_name:['10','lora_name'],choices:{sampler:['euler','euler_ancestral'],scheduler:['simple'],lora_name:['ink.safetensors','wash.safetensors'],lora2_name:['turbo.safetensors']},defaults:{positive:'My original idea',negative:'blur',steps:30,cfg:4,seed:123,width:768,height:1152,sampler:'euler',scheduler:'simple',lora:1,lora_name:'ink.safetensors',lora2:0,lora2_name:'turbo.safetensors'},dimension_multiple:16};
+const source={id:'base',name:'Base',preset_id:'paint',controls:{},status:'executed',evidence:{prompt_id:'source-proof'},sources:['https://example.org/source']};
+const target={id:'fast',name:'Fast wash',preset_id:'paint',controls:{positive:'wash_trigger, a greenhouse',negative:'text',steps:4,cfg:1,seed:456,width:512,height:768,sampler:'euler_ancestral',lora_name:'wash.safetensors',lora:0.8,lora2:1},status:'executed',evidence:'Historical fast trial'};
+const kb={updated:'2026-09-13',loras:{'wash.safetensors':{family:'Paint',role:'style',strength:[0.7,1],trigger:'wash_trigger',trigger_position:'start',sha256:'a'.repeat(64),source:'https://example.org/wash'},'turbo.safetensors':{family:'Paint',role:'accelerator',strength:[1,1]}}};
+const data={preset:p,source,target,knowledge:kb};if(typeof module==='object'&&module.exports)module.exports=data;else root.BundleFixture=data;
+})(globalThis);

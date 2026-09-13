@@ -1,0 +1,14 @@
+/* Same detached Bundle Explorer, not a second workbench. */
+#bundleTuning select{display:block;width:100%;max-width:100%;padding:10px;margin:8px 0 14px;border:1px solid #b8c7bc;border-radius:8px;background:#fff}
+#bundleTuning .bundle-preserve{display:grid;gap:9px;margin:12px 0 18px}
+#bundleTuning .bundle-preserve label{display:flex;gap:9px;align-items:flex-start;font-size:13px}
+#bundleTuning input[type=checkbox]{flex:none;width:18px;height:18px;margin:2px 0}
+#bundleTuning .bundle-history{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px;padding-top:15px;border-top:1px solid #cad8c2}
+#bundleTuning .bundle-history small{flex-basis:100%;color:#52624f}
+#bundleProposal{min-width:0;overflow-wrap:anywhere}
+#bundleProposal dd{max-height:140px;overflow:auto;white-space:pre-wrap;padding:6px 0}
+#bundleProposal .bundle-warning{border-left:3px solid #936920;padding-left:12px;color:#62471a}
+#bundleStage{margin-top:14px}
+@media(max-width:600px){#bundleTuning{padding:13px}#bundleTuning select{font-size:13px}#bundleTuning .bundle-history button{flex:1;font-size:12px}}
+
+@media(max-width:850px){#bundleTuning{scroll-margin-top:190px}}
