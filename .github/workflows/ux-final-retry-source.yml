@@ -1,0 +1,30 @@
+name: UX final retry source
+on:
+  push:
+    branches: ['codex/ux-retry-source-20260913']
+    paths: ['.github/workflows/ux-final-retry-source.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 22ec26dc549a4648a6e94f80f5d3c870f03c6520
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive both exact revisions and reachable commit history
+        run: |
+          mkdir -p /tmp/ux-resume
+          git branch snapshot-main 22ec26dc549a4648a6e94f80f5d3c870f03c6520
+          git fetch --no-tags origin ac9702d19cbe69a4b48d61f5458f92e2c701e3b4
+          git branch snapshot-recovery ac9702d19cbe69a4b48d61f5458f92e2c701e3b4
+          git bundle create /tmp/ux-resume/source.bundle snapshot-main snapshot-recovery
+          sha256sum /tmp/ux-resume/source.bundle > /tmp/ux-resume/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-final-retry-source
+          path: /tmp/ux-resume/
+          retention-days: 1
