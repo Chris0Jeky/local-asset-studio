@@ -109,7 +109,7 @@ class SessionTests(unittest.TestCase):
         buffers = {'native-source.kra': (self.capture/'source.kra').read_bytes(),
                    'source.bgra': self.doc.source, 'overlay.bgra': self.result[:4] + b'\x00' * 12,
                    'result.bgra': self.result}
-        self.plan = {'schema_version': 1, 'operation': 'character.krita-layer.v1',
+        self.plan = {'schema_version': 1, 'operation': 'character.krita-layer.v1', 'live_dependencies': [],
                      'canvas': [2, 2], 'profile': native_edit.PROFILE, 'edit_plan_sha256': 'a'*64,
                      'semantic_approval': False, 'neural_inference': False, 'changed_pixels': 1,
                      'files': {n: {'bytes': len(b), 'sha256': native_edit.digest(b)} for n,b in buffers.items()}}
