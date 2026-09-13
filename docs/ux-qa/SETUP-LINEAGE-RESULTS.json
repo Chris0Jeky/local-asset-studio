@@ -1,0 +1,134 @@
+{
+  "schema": "studio.ux-qa-checkpoint/v1",
+  "date": "2026-09-13",
+  "base_commit": "06bd93aed2f019cb978eb5795e9f116cfb7ff749",
+  "issue": 117,
+  "before": {
+    "node_regression": "Failed: old Save handler emitted one /api/setups POST where zero was expected",
+    "browser_findings": [
+      "Normal saved-setup click intercepted by sticky recipe picker",
+      "No adjacent named-save feedback"
+    ]
+  },
+  "browser": {
+    "mode": "inert: injected browser storage/API transport",
+    "scope": "Actual Studio shell and SQLite setup storage; synthetic references and unrelated services; no inference.",
+    "pass": 17,
+    "fail": 0,
+    "errors": [],
+    "checks": [
+      {
+        "id": "SETUP-01",
+        "expectation": "Failed check clears the attachment but retains its uncertain source claim",
+        "passed": true
+      },
+      {
+        "id": "SETUP-02",
+        "expectation": "Save after failed observation creates no durable setup",
+        "passed": true
+      },
+      {
+        "id": "SETUP-03",
+        "expectation": "Recovery instruction identifies the reference input and reattachment",
+        "passed": true
+      },
+      {
+        "id": "SETUP-17",
+        "expectation": "Save error is also exposed beside Save in a polite status region",
+        "passed": true
+      },
+      {
+        "id": "SETUP-04",
+        "expectation": "Blocked save preserves wording, name and in-memory lineage",
+        "passed": true
+      },
+      {
+        "id": "SETUP-05",
+        "expectation": "Save does not silently retry the availability request",
+        "passed": true
+      },
+      {
+        "id": "SETUP-06",
+        "expectation": "390px recovery feedback remains within the page width",
+        "passed": true
+      },
+      {
+        "id": "SETUP-07",
+        "expectation": "Explicit reattachment saves the actual file with attributable lineage",
+        "passed": true
+      },
+      {
+        "id": "SETUP-16",
+        "expectation": "Saved setup button is not covered by the sticky recipe panel",
+        "passed": true
+      },
+      {
+        "id": "SETUP-08",
+        "expectation": "Fresh page reload followed by source replacement releases the old parent",
+        "passed": true
+      },
+      {
+        "id": "SETUP-09",
+        "expectation": "Two unresolved inputs are both named",
+        "passed": true
+      },
+      {
+        "id": "SETUP-10",
+        "expectation": "Reattaching the first frame alone cannot save a stale last-frame claim",
+        "passed": true
+      },
+      {
+        "id": "SETUP-11",
+        "expectation": "Reattaching both inputs preserves their independent lineage mapping",
+        "passed": true
+      },
+      {
+        "id": "SETUP-12",
+        "expectation": "A confirmed missing file follows the existing claim-release path",
+        "passed": true
+      },
+      {
+        "id": "SETUP-13",
+        "expectation": "A source-free setup remains savable without inventing lineage",
+        "passed": true
+      },
+      {
+        "id": "SETUP-14",
+        "expectation": "No generation, backend switch, installation or other unexpected mutation",
+        "passed": true
+      },
+      {
+        "id": "SETUP-15",
+        "expectation": "No JavaScript errors in the full Studio shell",
+        "passed": true
+      }
+    ]
+  },
+  "full_offline_suite": {
+    "run": 1463,
+    "passed": 1448,
+    "skipped": 15,
+    "failures": 0,
+    "seconds": 166.125,
+    "exit_code": 0,
+    "warning": "Existing exit-time socket ResourceWarning"
+  },
+  "validation": {
+    "passed": true,
+    "graphs": 66,
+    "pinned_assets": 121,
+    "lora_names": 86
+  },
+  "code_sha256": {
+    "app/static/app.js": "4886d71c64009ea45814c1103998995a50f6dd046a878774a9884a370cb65393",
+    "app/static/index.html": "f136120d25e56033b73dfa5b71aba8e4404c01260b83f18e4e90aeaa9dfe8e9f",
+    "app/static/studio.css": "ec9d27922ab82f74a5c0f31d1642592f1a4cd4d6ed0be554a71ca32e70acde01",
+    "tests/frontend_handoffs.cjs": "4297fea919a339967deb8884c2018835297e2678263059515cb66de50584005c",
+    "tests/setup_lineage_browser.py": "115ec2c881162544779fe433f8b7266503510ec704aedd004a31bee9c6c12e18"
+  },
+  "limitations": [
+    "Native browser CI pending at initial publication; local inert is not native networking/storage.",
+    "References and unrelated services synthetic; setup persistence is actual temporary SQLite.",
+    "No arbitrary external setup JSON validation, historical lineage repair, inference or owner-PC acceptance."
+  ]
+}

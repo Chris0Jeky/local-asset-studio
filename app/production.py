@@ -123,6 +123,7 @@ class Production:
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
                        recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
                        variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
+        result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
@@ -476,6 +477,7 @@ class Production:
             return self._start(identifier)
 
     def _start(self, identifier):
+        self.studio.require_worker()
         with self.lock,self.connect() as db:
             db.execute('BEGIN IMMEDIATE');project=self._get(identifier,db)
             state=project['state'];plan=project['plan']
@@ -506,12 +508,15 @@ class Production:
             return resume(self,identifier)
         if project['plan']['kind']=='av':raise ValueError('Inspect the previous scene attempt and explicitly request a new render')
         with self.studio.lock, self.lock:
+            project=self._get(identifier)
+            project_storage.require(self.root,identifier,project['plan'])
+            if self._reconcile_tracking_terminal(identifier,project):return self.get(identifier)
+            self.studio.require_worker()
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project=self._get(identifier)
             if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
                 raise ValueError('Switch to this experiment\'s backend before resuming it')
             if project['state']['status'] not in ('interrupted','uncertain','stopped'):raise ValueError('Only interrupted experiments can resume')
-            project_storage.require(self.root,identifier,project['plan'])
             stop_tokens=[]
             for attempt in project['state'].get('attempts',{}).values():
                 job=self.studio.jobs.get(attempt.get('job_id'))
@@ -596,10 +601,37 @@ class Production:
         from voice_baseline import artifacts
         return artifacts(self,identifier)
 
+    def _tracking_terminal_records(self, project):
+        if project['plan']['kind']!='comparison':return []
+        records=[]
+        for index,attempt in project['state'].get('attempts',{}).items():
+            job=self.studio.jobs.get(attempt.get('job_id'))
+            if job and self.studio.tracking_stop_tokens(job) and submission_evidence.terminal_failure(job):
+                records.append({'stage':index,'job_id':job['id'],'status':job['status'],'prompt_ids':list(job['prompt_ids'])})
+        return records
+
+    def _reconcile_tracking_terminal(self, identifier, project):
+        # Caller holds Studio then Production locks. This is a single local state
+        # write, not observation, cancellation, continuation consent or new work.
+        state=project['state']
+        if state['status'] not in ('interrupted','uncertain','stopped','queued','running','observing','failed'):return False
+        records=self._tracking_terminal_records(project)
+        if not records:return False
+        if state['status']=='failed' and state.get('tracking_terminal_reconciliation',{}).get('jobs')==records:return True
+        state=copy.deepcopy(state);now=time.time()
+        for record in records:
+            state['attempts'][record['stage']].update(status=record['status'],prompt_ids=record['prompt_ids'],reconciled_at=now)
+        state.update(status='failed',message='Retained prompt observation ended failed or partial. An explicit repair branch is required; no later stage or retry was authorized.',
+                     tracking_terminal_reconciliation={'version':1,'recorded_at':now,'jobs':records,'new_work_authorized':False})
+        self._state(identifier,state)
+        return True
+
     def _tracking_continuation_allowed(self, identifier):
         # Match resume's lock order; never retain these locks during backend I/O.
         with self.studio.lock, self.lock:
-            state=self._get(identifier)['state'];authorized=set(state.get('tracking_stop_authorizations',[]))
+            project=self._get(identifier)
+            if self._reconcile_tracking_terminal(identifier,project):return False
+            state=project['state'];authorized=set(state.get('tracking_stop_authorizations',[]))
             for attempt in state.get('attempts',{}).values():
                 job=self.studio.jobs.get(attempt.get('job_id'))
                 if job and set(self.studio.tracking_stop_tokens(job))-authorized:
@@ -656,7 +688,8 @@ class Production:
                 elif job['status']=='uncertain' or (job['status']=='queued' and (job.get('prompt_ids') or job.get('submissions') or 'pending_submission' in job)):
                     if 'pending_submission' in job or not job.get('prompt_ids'):
                         self._mutate(identifier,status='uncertain',message='A submission outcome is unknown. No duplicate or later stage was submitted.');return
-                    self.studio._resume(job)
+                    try:self.studio._resume(job)
+                    except Exception as exc:self.studio.record_job_failure(job,exc)
                 elif job['status'] in ('failed','partial','abandoned'):
                     self._mutate(identifier,status='failed',message='A recorded stage failed. Branch with an explicit repair; no automatic generation retry.');return
                 elif job['status'] not in ('completed','queued'):
@@ -681,7 +714,7 @@ class Production:
                 project_storage.require(self.root,identifier,plan)
                 try:self.studio._run(job)
                 except Exception as exc:
-                    if job.get('status')!='abandoned':job.update(status='failed',message=str(exc)[:400]);self.studio._save(job)
+                    self.studio.record_job_failure(job,exc)
             self._attempt(identifier,index,finished_at=time.time(),status=job['status'],prompt_ids=job.get('prompt_ids',[]))
             if not self._tracking_continuation_allowed(identifier):return
             if job['status']!='completed':

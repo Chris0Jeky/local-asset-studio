@@ -16,3 +16,6 @@
 .ux-continuation{display:grid;grid-template-columns:96px minmax(0,1fr);gap:1rem;margin:1rem 0;padding:1rem;border:1px solid var(--line,#455b56);border-left:3px solid var(--accent,#cbef93);border-radius:10px;background:var(--panel,#1b2525)}
 .ux-continuation[hidden]{display:none}.ux-continuation>img{width:96px;max-height:150px;object-fit:contain;border-radius:6px}.ux-continuation h3{margin:.35rem 0;font-size:1.05rem;overflow-wrap:anywhere}.ux-continuation p{margin:.55rem 0;line-height:1.5}.ux-continuation pre,#uxHandoffPrompt{white-space:pre-wrap;overflow-wrap:anywhere;max-height:15rem;overflow:auto;font:inherit;line-height:1.5}.ux-context-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}.ux-context-actions button{min-height:38px}#variants button:has(small){display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;text-align:left}#variants button small{font-weight:400;line-height:1.35;color:var(--muted,#aac0ba)}
 @media(max-width:600px){.ux-continuation{grid-template-columns:64px minmax(0,1fr);padding:.75rem;gap:.65rem}.ux-continuation>img{width:64px}.ux-context-actions{display:grid}.ux-context-actions button{min-height:44px}#variants button:has(small){flex-basis:100%}}
+
+/* A full-width saved-setup row must paint above the sticky recipe picker. */
+.studio-main .saved{position:relative;z-index:1}
