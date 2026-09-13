@@ -2,6 +2,11 @@ name: Preset model readiness
 on:
   pull_request:
     paths:
+      - 'app/wan_capacity.py'
+      - 'tests/test_wan*.py'
+      - 'tests/wan*.cjs'
+      - 'tests/wan_capacity_browser.py'
+      - 'tests/studio_browser_smoke.py'
       - 'app/model_requirements.py'
       - 'app/model_library.py'
       - 'app/download_contracts.py'
@@ -13,6 +18,11 @@ on:
   push:
     branches: [main]
     paths:
+      - 'app/wan_capacity.py'
+      - 'tests/test_wan*.py'
+      - 'tests/wan*.cjs'
+      - 'tests/wan_capacity_browser.py'
+      - 'tests/studio_browser_smoke.py'
       - 'app/model_requirements.py'
       - 'app/model_library.py'
       - 'app/download_contracts.py'
@@ -46,6 +56,7 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p 'test_preset_model*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_wan*.py' -v
       - run: python -m unittest discover -s tests -p test_server.py -v
       - run: python -m unittest discover -s tests -p test_model_library.py -v
   browser:
@@ -61,10 +72,13 @@ jobs:
       - run: python -m pip install playwright==1.57.0
       - run: python -m playwright install --with-deps chromium
       - run: python tests/preset_model_browser.py --out .runtime/preset-model-browser
+      - run: python tests/wan_capacity_browser.py --out .runtime/wan-capacity-browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: preset-model-browser-proof
-          path: .runtime/preset-model-browser/
+          path: |
+            .runtime/preset-model-browser/
+            .runtime/wan-capacity-browser/
           if-no-files-found: ignore
           retention-days: 7
