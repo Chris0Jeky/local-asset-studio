@@ -53,7 +53,7 @@ class Handler(fixture.Handler):
 def run(out):
     global FAIL_HEALTH, HEALTH_DELAY
     from playwright.sync_api import sync_playwright
-    out.mkdir(parents=True,exist_ok=True); checks=[]; errors=[]
+    out.mkdir(parents=True,exist_ok=True); checks=[]; errors=[]; history_checks=[]
     fixture.ASSETS[0]['job_id']='fixture-job'; fixture.ASSETS[0]['review']='unreviewed'
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
     thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
@@ -83,8 +83,13 @@ def run(out):
                     else:check('no single control' in page.locator('#guideTargetStatus').inner_text(),guide['id']+'/'+step['id']+' is explicitly manual')
             visit('reference-edit','sources');page.evaluate("selectPreset('pixel-lora')")
             page.click('#showGuideControl');check('not visible' in page.locator('#guideTargetStatus').inner_text(),'hidden reference inputs are not activated')
-            page.evaluate("selectPreset('gentle-variation')");page.click('#showGuideControl')
+            page.evaluate("selectPreset('gentle-variation')")
+            check('Target control is available' in page.locator('#guideTargetStatus').inner_text(),'recipe rendering rediscovers a newly visible target without clicking Show')
+            page.click('#showGuideControl')
             check(page.locator('#referenceWrap').evaluate('n=>n.classList.contains("studio-guide-target")'),'a later single-reference control is rediscovered')
+            page.evaluate("selectPreset('pixel-lora')")
+            check('not visible' in page.locator('#guideTargetStatus').inner_text() and page.locator('.studio-guide-target').count()==0,'recipe rendering clears a now-hidden target and its highlight')
+            page.evaluate("selectPreset('gentle-variation')")
             page.evaluate("uploaded='staged-fixture.png'");page.click('#checkGuideStep')
             page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
             check('attached' in page.locator('#guideEvidence').inner_text(),'actual string reference identity is recognized without upload')
@@ -96,6 +101,15 @@ def run(out):
             visit('first-image','readiness');page.evaluate("selectPreset('pixel-lora')")
             page.click('#checkGuideStep');page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
             check('memory fit' in page.locator('#guideEvidence').inner_text(),'ready evidence excludes memory and creative guarantees')
+            page.evaluate("selectPreset('gentle-variation')")
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','programmatic recipe selection invalidates prior readiness')
+            page.evaluate("selectPreset('pixel-lora')");page.click('#checkGuideStep')
+            page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
+            page.evaluate("applyRecipe({preset_id:'pixel-lora',name:'Guide setup',controls:{positive:'Setup changed wording'}})")
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','same-preset setup changes invalidate evidence without a DOM input event')
+            page.click('#checkGuideStep');page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
+            page.evaluate("applySaved({preset:'pixel-lora',controls:{positive:'Imported wording'}})")
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','saved/imported setup invalidates prior evidence')
             page.evaluate("selected.runtime_block='Synthetic incompatible runtime';updateReady()");page.click('#checkGuideStep');page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
             check(page.locator('#guideEvidence').get_attribute('data-state')=='blocked' and 'Synthetic incompatible runtime' in page.locator('#guideEvidence').inner_text() and page.locator('#generate').is_disabled(),'configured runtime block is honored by both guide and Generate')
             page.evaluate('selected.runtime_block=null;updateReady()')
@@ -120,6 +134,42 @@ def run(out):
             page.click('#checkGuideStep');check(page.locator('#guideEvidence').get_attribute('data-state')=='blocked','editing invalidates old connection evidence')
             page.get_by_role('button',name='Next step',exact=True).click();page.wait_for_url('**stage=save*')
             check(page.evaluate('WorkflowStudio.snapshot().nodes["1"].inputs.text')=='Changed' and page.evaluate('!!WorkflowStudio.schema()'),'same-page workflow steps preserve the draft and loaded schema')
+            def history_probe():
+                page.evaluate("""window.guideHistoryPhases=[];
+                    for(const type of ['popstate','hashchange'])window.addEventListener(type,e=>
+                        window.guideHistoryPhases.push({type,trusted:e.isTrusted,url:location.href}));""")
+            def history_wait(label, required):
+                # Query-changing stage traversal need not emit hashchange in Chromium.
+                # Fragment-only traversal must exercise both native phases, never dispatchEvent.
+                try:
+                    page.wait_for_function("types=>types.every(type=>window.guideHistoryPhases.some(e=>e.type===type))",arg=required,timeout=10000)
+                finally:
+                    snapshot=page.evaluate("({url:location.href,events:window.guideHistoryPhases,state:document.querySelector('#guideEvidence')?.dataset.state})")
+                    history_checks.append(dict(label=label,**snapshot))
+                    (out/'history.json').write_text(json.dumps(history_checks,indent=2),encoding='utf-8')
+                phases=[e['type'] for e in snapshot['events']]
+                check(all(e['trusted'] for e in snapshot['events']),'native trusted history events: '+label)
+                if 'hashchange' in required:
+                    check(phases.index('popstate')<phases.index('hashchange'),'popstate precedes hashchange: '+label)
+                check(snapshot['state']=='manual',label)
+            visit('compare','budget');history_probe()
+            page.get_by_role('button',name='Next step',exact=True).click();page.wait_for_url('**stage=inspect*')
+            page.evaluate('window.guideHistoryPhases=[]');page.go_back();page.wait_for_url('**stage=budget*')
+            history_wait('native Back restores the manual budget stage',['popstate'])
+            page.fill('#positive','Changed after history')
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','real edits still invalidate the restored manual stage')
+            page.evaluate('window.guideHistoryPhases=[]');page.go_forward();page.wait_for_url('**stage=inspect*')
+            history_wait('native Forward restores the manual inspection stage',['popstate'])
+            # Keep the query unchanged so Chromium emits the paired hashchange.
+            # This uses the actual workbench navigation seam and native history, not fake events.
+            page.evaluate("window.guideHistoryPhases=[];showView('create')")
+            history_wait('native fragment navigation retains manual classification',['popstate','hashchange'])
+            page.evaluate('window.guideHistoryPhases=[]');page.go_back();page.wait_for_url('**#production')
+            history_wait('native fragment Back preserves manual classification through both phases',['popstate','hashchange'])
+            page.evaluate('window.guideHistoryPhases=[]');page.go_forward();page.wait_for_url('**#create')
+            history_wait('native fragment Forward preserves manual classification through both phases',['popstate','hashchange'])
+            page.fill('#positive','Changed after fragment traversal')
+            check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','real edits still invalidate after paired history phases')
             visit('first-image','wording');page.evaluate('window.guideNavigationSentinel="retained"');page.fill('#positive','Keep my exact guide draft')
             page.locator('#showGuideControl').focus();page.keyboard.press('Enter')
             check(page.locator('#positive').evaluate('n=>n===document.activeElement'),'keyboard control discovery focuses without clicking Generate')
@@ -145,7 +195,7 @@ def run(out):
             forbidden=[x for x in CALLS if x[0]!='GET' and x[1] not in ('/api/estimate','/api/workflow-studio/nodes/refresh','/api/workflow-studio/compile')]
             check(not forbidden,'zero generation, installation, switching or asset-mutation calls: '+str(forbidden))
             browser.close()
-        (out/'result.json').write_text(json.dumps({'passed':len(checks),'checks':checks,'native_browser_transport':True,'fixture_data':True,'calls':CALLS},indent=2),encoding='utf-8')
+        (out/'result.json').write_text(json.dumps({'passed':len(checks),'checks':checks,'native_browser_transport':True,'fixture_data':True,'history':history_checks,'calls':CALLS},indent=2),encoding='utf-8')
     finally:server.shutdown();server.server_close();thread.join(5)
 
 if __name__=='__main__':
