@@ -34,8 +34,7 @@ jobs:
           p.write_text(s[:start]+source[a:b]+s[end:],encoding='utf-8')
           p=Path('app/static/index.html');s=p.read_text(encoding='utf-8');s=s.replace('<div id="savedList"></div>','<p id="setupStatus" class="status" role="status" aria-live="polite"></p><div id="savedList"></div>');p.write_text(s,encoding='utf-8')
           p=Path('docs/ux-qa/README.md');s=p.read_text(encoding='utf-8');source=previous(str(p));section=source[source.index('## Named setup lineage follow-up'):source.index('## What this pass changes')]
-          # Retain the current metadata section and original blank line exactly.
-          p.write_text(s[:s.index('\n')+1]+section.rstrip()+'\n\n'+s[s.index('\n')+1:],encoding='utf-8')
+          p.write_text(s[:s.index('\n')+1]+section.rstrip()+'\n\n\n'+s[s.index('\n')+1:],encoding='utf-8')
           paths=same+['app/static/app.js','app/static/index.html','docs/ux-qa/README.md']
           subprocess.run(['git','add','--',*paths],check=True)
           actual=subprocess.check_output(['git','write-tree']).decode().strip()
