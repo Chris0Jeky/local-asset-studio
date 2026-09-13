@@ -1,0 +1,139 @@
+{
+  "schema": "studio.ux-metadata-qa/v1",
+  "base_commit": "06bd93aed2f019cb978eb5795e9f116cfb7ff749",
+  "base_tree": "9561db4b2bf6bba7178f10554bcc95479f0d6a7d",
+  "before": {
+    "stale_form": "Failed: second client overwrote confirmed notes; no WorkspaceError raised"
+  },
+  "after": {
+    "sqlite_tests": 18,
+    "production_http_tests": 6,
+    "new_node_contracts": 10,
+    "existing_node_contracts": 17,
+    "node_contract_unittest_wrappers": 2,
+    "full_suite": {
+      "run": 1488,
+      "passed": 1473,
+      "skipped": 15,
+      "failures": 0,
+      "seconds": 170.846
+    },
+    "metadata_browser": {
+      "mode": "inert storage/transport, real metadata HTTP and SQLite",
+      "checks": [
+        {
+          "id": "META-01 stale form never erases confirmed notes",
+          "passed": true
+        },
+        {
+          "id": "META-02 conflict retains local draft",
+          "passed": true
+        },
+        {
+          "id": "META-03 conflict shows saved version",
+          "passed": true
+        },
+        {
+          "id": "META-04 explicit rebase does not write",
+          "passed": true
+        },
+        {
+          "id": "META-05 untouched remote notes survive rebase",
+          "passed": true
+        },
+        {
+          "id": "META-06 reviewed save writes only dirty title",
+          "passed": true
+        },
+        {
+          "id": "META-07 same-field conflict exposes both choices",
+          "passed": true
+        },
+        {
+          "id": "META-08 narrow conflict remains within viewport",
+          "passed": true
+        },
+        {
+          "id": "META-09 use saved version is read-only",
+          "passed": true
+        },
+        {
+          "id": "META-10 dropped HTTP reply leaves committed server evidence",
+          "passed": true
+        },
+        {
+          "id": "META-11 status lookup never repeats POST",
+          "passed": true
+        },
+        {
+          "id": "META-12 receipt preserves newer typing as unsaved",
+          "passed": true
+        },
+        {
+          "id": "META-13 explicit retry preserves exact command",
+          "passed": true
+        },
+        {
+          "id": "META-14 duplicate POST has one SQLite effect",
+          "passed": true
+        },
+        {
+          "id": "META-15 absent receipt stays unknown",
+          "passed": true
+        },
+        {
+          "id": "META-16 retry after pre-commit failure preserves draft intent",
+          "passed": true
+        },
+        {
+          "id": "META-17 stale bulk leaves every review unchanged",
+          "passed": true
+        },
+        {
+          "id": "META-18 stale bulk preserves selection",
+          "passed": true
+        },
+        {
+          "id": "META-21 recovered Trash preserves later typing",
+          "passed": true
+        },
+        {
+          "id": "META-19 no generation/backend mutation",
+          "passed": true
+        },
+        {
+          "id": "META-20 no page exceptions",
+          "passed": true
+        }
+      ],
+      "errors": []
+    },
+    "prior_asset_browser": {
+      "mode": "inert storage/transport, synthetic API",
+      "passed": 30,
+      "failed": 0
+    },
+    "validation": {
+      "graphs": 66,
+      "pins": 121,
+      "lora_names": 86,
+      "passed": true
+    }
+  },
+  "source_sha256": {
+    "app/workspace.py": "f69a1f20d4d8d158dc393ef53ae18c8c2853c2b08d3d13465e3ff1649052597a",
+    "app/server.py": "86bca33627d25ebf825d2c42fcf111f5f0d484e0152a01ae4fc129ea21d7aa3a",
+    "app/static/workspace.js": "2150849cd0e4044cb2016f4a5df8f9183e79aa095092c5ac440e46dd578b4ab8",
+    "app/static/app.js": "721375846bffecb612920b7cdc60ba75ed40ee046314ed5b7d844308caec779b",
+    "app/static/style.css": "a94a015eda1e6b0b873003d7ebb2ee2a49370ec84a67fec5617e33623264a699",
+    "tests/asset_metadata_browser.py": "99f3640bfd185c999358e362c41d30e5d9ba3c0fa0c324f82a09850d04bc7645"
+  },
+  "hosted_native_status": "Pending publication; inspect actual PR checks and verification comment.",
+  "limits": [
+    "No GPU, generation, owner-PC, native editor or art acceptance evidence.",
+    "Browser drafts/pending command references remain transient across page reload.",
+    "Successful receipts retained indefinitely; no silent expiry/pruning.",
+    "15 existing skipped tests and exit-time socket ResourceWarning retained.",
+    "Review is self-review; no independent reviewer result claimed."
+  ]
+}

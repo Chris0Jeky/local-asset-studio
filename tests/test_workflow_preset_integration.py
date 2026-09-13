@@ -9,9 +9,9 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
-from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.request import Request
 
+from http_refusal_transport import atomic_json_post
 from test_workflow_preset_adapter import GRAPH, PRESET, INFO
 from studio_workflow.core import catalog, new_document, digest
 from studio_workflow.preset_adapter import prepare_document
@@ -87,11 +87,10 @@ class PresetIntegrationTests(unittest.TestCase):
         client = WorkflowClient(self.url)
         report = client.prepare_document(self.doc, preset_id='example')
         self.assertEqual(report['recipe']['preset_id'], 'example'); self.assertFalse(self.studio.jobs)
-        req = Request(self.url + '/api/workflow-studio/prepare-document',
-                      data=json.dumps({'document': self.doc, 'preset_id': 'example'}).encode(),
-                      headers={'Content-Type': 'application/json', 'Host': '127.0.0.1:8191', 'Origin': 'https://untrusted.invalid'})
-        with self.assertRaises(HTTPError) as caught: urlopen(req, timeout=3)
-        self.assertEqual(caught.exception.code, 403); caught.exception.close()
+        refusal = atomic_json_post(self.http.server_port, '/api/workflow-studio/prepare-document',
+                                   json.dumps({'document': self.doc, 'preset_id': 'example'}).encode(),
+                                   origin='https://untrusted.invalid')
+        self.assertEqual(refusal[0], 403)
     def test_cli_writes_a_runnable_ticket_and_prints_source_report(self):
         from studio_workflow.__main__ import main
         source = self.root / 'workflow.json'; source.write_text(json.dumps(self.doc), encoding='utf-8')

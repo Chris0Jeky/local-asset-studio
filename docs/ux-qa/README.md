@@ -57,3 +57,13 @@ For a workstation acceptance check, open a real existing asset; type notes; Favo
 The highest-priority next work is #188's metadata concurrency plus #117's source-availability/lineage save contract. After these, join existing guide evidence and continuation records into one contextual task summary as described in `ARCHITECTURE.md`. Keep that summary observational: it should explain what is preserved, what changes and what still needs action, without taking over execution.
 
 No new human creative decision is required for these changes. Existing artwork selection, model-specific permissions and output acceptance remain with the owner and `HUMAN_TODO.md`; this pass changes none of them.
+
+## Continuation: conditional metadata and recovery
+
+The follow-on implementation for #188 is recorded in [METADATA-CONCURRENCY.md](METADATA-CONCURRENCY.md).
+It adds actual Workspace revision checks and durable command receipts, a draft-preserving
+conflict comparison, and explicit exact-request recovery. [METADATA-RESULTS.json](METADATA-RESULTS.json)
+records this pass separately from the original local before/after checkpoint. The
+metadata browser fixture uses the production metadata HTTP handler and temporary real
+SQLite storage, with synthetic non-generation endpoints. #117 remains a separate
+reference-lineage task; neither browser session epochs nor metadata revisions solve it.

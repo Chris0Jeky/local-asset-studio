@@ -7,6 +7,7 @@ import shutil
 import unittest
 from unittest.mock import patch
 
+from http_refusal_transport import atomic_json_post
 from test_workflow_document_runs import RunFixture
 from studio_workflow.core import canonical, digest
 from studio_workflow.documents import DocumentError
@@ -129,7 +130,7 @@ class SavedDispatchIntegrationTests(unittest.TestCase):
             path = PREFIX + '/prepared-run'
             status, packet = fixture.request(path + '/review'); self.assertEqual(status, 200, packet)
             body = {'approved': True, **{k: packet['source'][k] for k in ('record_sha256', 'ticket_sha256')}}
-            self.assertEqual(fixture.request(path + '/run', body, origin='https://foreign.invalid')[0], 403)
+            self.assertEqual(atomic_json_post(fixture.http.server_port, path + '/run', canonical(body), origin='https://foreign.invalid')[0], 403)
             self.assertEqual(fixture.request(path + '/run', {**body, 'record_sha256': 'a'*64})[0], 409)
             self.assertFalse(fixture.studio.jobs)
             first = fixture.request(path + '/run', body); self.assertEqual(first[0], 200, first)
