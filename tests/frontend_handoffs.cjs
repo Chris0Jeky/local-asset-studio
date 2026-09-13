@@ -3,12 +3,34 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const StudioContinuation = require('../app/static/continuation-core.js');
+
+const templateSha = 'b'.repeat(64);
+const operation = id => id === 'plain' ? 'new-image'
+  : id === 'wan22-i2v' || id === 'h3-first-last' ? 'image-to-video'
+  : id === 'trellis-auto-cutout' ? 'image-to-3d'
+  : id.startsWith('qwen') ? 'instruction-edit'
+  : id === 'anime-detail-fix' ? 'localized-detail' : 'image-to-image';
 
 const presets = ['plain', 'gentle-variation', 'qwen-1ref', 'qwen-3ref', 'wan22-i2v', 'trellis-auto-cutout', 'anime-detail-fix', 'krea-refine'].map(id => ({
   id, name: id, modality: id === 'wan22-i2v' ? 'video' : id === 'trellis-auto-cutout' ? '3d' : 'image',
   reference: id === 'plain' ? undefined : ['4', 'image'],
   reference_slots: id.startsWith('qwen') ? Array.from({length: id === 'qwen-1ref' ? 1 : 3}, () => ({role: 'identity', contribution: 'Keep the character', avoid: 'Background'})) : undefined,
+  positive: ['1', 'text'], defaults: {},
+  continuation_capability: {consumes_source: id !== 'plain', operation: operation(id), prompt_role: id.startsWith('qwen') ? 'instruction' : id === 'wan22-i2v' ? 'motion' : 'description', requires_mask: false, reference_count: id.startsWith('qwen') ? (id === 'qwen-1ref' ? 1 : 3) : 1, template_sha256: templateSha},
 })).concat([{id: 'h3-first-last', name: 'h3-first-last', modality: 'video', reference: ['4', 'image'], last_reference: ['5', 'image']}]);
+
+presets[presets.length - 1].positive = ['1', 'text'];
+presets[presets.length - 1].defaults = {};
+presets[presets.length - 1].continuation_capability = {consumes_source: true, operation: 'image-to-video', prompt_role: 'motion', requires_mask: false, reference_count: 2, template_sha256: templateSha};
+
+function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)) {
+  return {file, sha256, width: 512, height: 768, parent_asset: parent, context: {
+    version: 1, asset_id: parent, sha256, title: 'Exact selected output', preset_id: 'plain', preset_name: 'Source fixture',
+    prompt_id: 'prompt-1', positive: 'The exact retained source description.', negative: 'blur',
+    prompt_origin: 'submitted-output', prompt_role: 'description', width: 512, height: 768,
+  }};
+}
 
 // One page sandbox over the real scripts. `attached` answers /api/assets/reference, which carries the
 // parent_asset lineage claim; `local` answers /api/upload, which never does. That asymmetry is what the
@@ -25,7 +47,7 @@ function sandbox(attached, local, availability = null) {
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener() {}},
-    URL, Blob, location: {hash: ''}, setInterval() {},
+    URL, Blob, StudioContinuation, window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
       if (options.method === 'POST') requests.push({url, data: options.headers?.['Content-Type'] === 'application/json' ? JSON.parse(options.body) : null});
@@ -51,7 +73,7 @@ const localFile = (name = 'unrelated.png') => ({name, size: 2048, type: 'image/p
 const flush = () => new Promise(resolve => setImmediate(resolve)); // Drain a fire-and-forget restore.
 
 async function check(presetId, targetPreset, slots, workspace = false) {
-  const upload = {file: 'retained.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'source-asset'};
+  const upload = sourceAttachment('a'.repeat(32) + '_retained.png');
   const {element, requests, context, run} = sandbox(upload, {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   run(`selectPreset(${JSON.stringify(presetId)});`);
   const button = {dataset: {job: 'source-job', index: '0', ...(targetPreset ? {preset: targetPreset} : {})}};
@@ -76,19 +98,20 @@ async function check(presetId, targetPreset, slots, workspace = false) {
   assert.deepEqual(state.parents, ['source-asset'], 'Gallery handoff must retain the selected source identity');
   assert.equal(state.preset, targetPreset || (presetId === 'plain' ? 'gentle-variation' : presetId));
   assert.equal(state.references.length, slots);
+  const canSubmit = !element('#generate').disabled;
   if (slots) {
     assert.equal(state.references[0].file, upload.file);
     assert.equal(state.references[0].sha256, upload.sha256);
     assert.equal(state.references[0].role, 'identity');
     assert.equal(state.ready, slots === 1, 'Unfilled additional slots must still block generation');
-    assert.equal(element('#generate').disabled, slots !== 1);
+    assert.equal(canSubmit, slots === 1 && !selectedRequiresNewPrompt(state.preset), 'Source inputs and task-specific wording both govern readiness');
   }
   element('#saveName').value = 'Retained gallery handoff';
   await element('#save').onclick();
   const saved = requests.find(r => r.url === '/api/setups').data.recipe;
   assert.deepEqual(saved.parent_assets, ['source-asset']);
   assert.deepEqual(saved.references, state.references);
-  if (state.ready) {
+  if (canSubmit) {
     await element('#generate').onclick();
     const submitted = requests.find(r => r.url === '/api/jobs').data;
     assert.deepEqual(submitted.parent_assets, ['source-asset']);
@@ -97,10 +120,14 @@ async function check(presetId, targetPreset, slots, workspace = false) {
   }
 }
 
+function selectedRequiresNewPrompt(id) {
+  return id.startsWith('qwen') || id === 'wan22-i2v' || id === 'h3-first-last';
+}
+
 // A Workspace handoff followed by a different local file must not record the new output as a child of
 // the old asset: the workspace lineage column, the run recipe and every export read parent_assets.
 async function swapDropsHandoffLineage(handoffPreset) {
-  const attached = {file: 'from-source-asset.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'source-asset'};
+  const attached = sourceAttachment('a'.repeat(32) + '_from-source-asset.png');
   const local = {file: 'unrelated-local-file.png', sha256: 'c'.repeat(64), width: 640, height: 640};
   const {element, requests, run, parents} = sandbox(attached, local);
   run(`selectPreset('plain');
@@ -111,9 +138,7 @@ async function swapDropsHandoffLineage(handoffPreset) {
   element('#reference').onchange();
   assert.deepEqual(parents(), [], 'Choosing a different local file drops the handoff lineage');
   await element('#generate').onclick();
-  const submitted = requests.find(r => r.url === '/api/jobs').data;
-  assert.deepEqual(submitted.parent_assets, [], 'A swapped reference must never be submitted as a child of the old asset');
-  assert.equal(submitted.controls.reference, local.file, 'The unrelated local file is what is actually generated from');
+  assert.equal(requests.some(r => r.url === '/api/jobs'), false, 'A source-bound continuation cannot silently submit a replacement file');
   element('#saveName').value = 'Swapped reference';
   await element('#save').onclick();
   assert.deepEqual(requests.find(r => r.url === '/api/setups').data.recipe.parent_assets, [], 'Saved setups carry the same corrected lineage');
@@ -145,7 +170,7 @@ async function slotSwapKeepsTheOtherSlots() {
 // Two reference inputs are two attachment points: changing the last frame must not disown the source
 // attached to the first frame, whose copy is still what the recipe generates from.
 async function firstLastFramesAttributeSeparately() {
-  const attached = {file: 'from-asset-a.png', sha256: 'a'.repeat(64), width: 512, height: 768, parent_asset: 'asset-a'};
+  const attached = sourceAttachment('a'.repeat(32) + '_from-asset-a.png', 'asset-a');
   const local = {file: 'own-last-frame.png', sha256: 'c'.repeat(64), width: 512, height: 768};
   const {element, requests, run, parents} = sandbox(attached, local);
   run(`selectPreset('plain');
@@ -155,6 +180,7 @@ async function firstLastFramesAttributeSeparately() {
   element('#lastReference').files = [localFile('last.png')];
   element('#lastReference').onchange();
   assert.deepEqual(parents(), ['asset-a'], 'Choosing a last frame from disk keeps the first frame lineage');
+  element('#positive').value = 'A slow orbit around the subject.';
   await element('#generate').onclick();
   const submitted = requests.find(r => r.url === '/api/jobs').data;
   assert.deepEqual(submitted.parent_assets, ['asset-a']);
@@ -256,7 +282,7 @@ async function pullingIntoASlotReplacesItsSource() {
   assert.deepEqual(parents(), ['asset-b'], 'Pulling a new source into a slot replaces the one it held');
   const workbench = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
   assert.match(workbench, /replaceParentAsset\(/, 'The library picker must attribute through the shared helper');
-  assert.match(workbench, /setHandoffParent\(/, 'The workbench handoff must attribute through the shared helper');
+  assert.match(workbench, /beginContinuation\(/, 'The workbench handoff must enter the shared source-bound transition');
   assert.doesNotMatch(workbench, /parentAssets=\[\.\.\.new Set/, 'The picker must not append lineage without releasing the slot it replaced');
 }
 
