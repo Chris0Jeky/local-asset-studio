@@ -1,0 +1,243 @@
+{
+  "schema": "studio.library-context-qa/v1",
+  "base_commit": "28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3",
+  "local_mode": "inert storage/transport; actual metadata HTTP/SQLite",
+  "browser_before": {
+    "passed": 7,
+    "failed": 24
+  },
+  "browser_after": {
+    "passed": 31,
+    "failed": 0,
+    "errors": [],
+    "metadata_writes": 2
+  },
+  "checks": [
+    {
+      "id": "LIB-01",
+      "expectation": "Filtering preserves both selected IDs",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-02",
+      "expectation": "Matching and total counts are separate",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-03",
+      "expectation": "Hidden selection is explicit beside the actions",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-04",
+      "expectation": "Selection review lists the hidden asset by title",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-31",
+      "expectation": "Desktop search and filter controls share one compact row",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-05",
+      "expectation": "Cancel hidden-item Favorite causes no metadata POST",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-06",
+      "expectation": "Cancel leaves the entire selection in place",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-07",
+      "expectation": "Consent sends one command with exactly the selected IDs",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-08",
+      "expectation": "The ordinary Workspace revision/request/scope contract remains",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-09",
+      "expectation": "Cancel hidden-item export sends no pack request",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-10",
+      "expectation": "Cancel hidden-item native handoff does not open export setup",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-11",
+      "expectation": "Cancel hidden-item scene handoff stops activation before the link",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-12",
+      "expectation": "Keep only visible prunes local selection to the one matching asset",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-13",
+      "expectation": "Pruning returns keyboard focus to search",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-14",
+      "expectation": "Keyboard filter reset keeps sort and selection",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-15",
+      "expectation": "Populated Trash with no matches is described as filtered",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-16",
+      "expectation": "Empty-state reset preserves Trash scope and reveals its asset",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-17",
+      "expectation": "An empty collection has a specific next step",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-18",
+      "expectation": "Keepers means saved review state, not checkbox selection",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-29",
+      "expectation": "A late bulk success does not erase a selection changed while waiting",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-30",
+      "expectation": "Awaiting review counts only its own unreviewed active assets",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-19",
+      "expectation": "Select visible discloses the bounded batch size first",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-20",
+      "expectation": "Select visible selects 200 and explains the remaining matches",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-21",
+      "expectation": "Manual 201st selection is refused without losing the first 200",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-22",
+      "expectation": "Unavailable selected IDs prevent bulk mutation without silent removal",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-23",
+      "expectation": "Unavailable records remain visible in selection review",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-24",
+      "expectation": "390px selection review fits without horizontal overflow",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-25",
+      "expectation": "720px selection review fits without horizontal overflow",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-26",
+      "expectation": "Selection feedback has polite status semantics",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-27",
+      "expectation": "No generation, native preparation or backend mutation is sent",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "LIB-28",
+      "expectation": "No JavaScript errors",
+      "before": "pass",
+      "after": "pass"
+    }
+  ],
+  "source_sha256": {
+    "app/static/workspace.js": "bd19bf52fb0903f61e828d5c9ea9bb17789ef9393e3a69cd622e8aa94a9ef490",
+    "app/static/index.html": "2843800aa319a986d3bc7c25ccd1f830cb6f50f2b2d55120ffd3c4ae43678924",
+    "app/static/style.css": "433c246c9d9b6e60f43ef9da3c0057ae33322073abf7dd91de89eff61626fc3e"
+  },
+  "node_contracts": {
+    "passed": 14,
+    "unittest_wrappers": 1
+  },
+  "limits": [
+    "Hosted native evidence is separate from local inert transport/storage.",
+    "No model generation or art/licence acceptance.",
+    "205-row case is in-memory UI data, not pagination or large-library performance.",
+    "Click consent is an interaction policy, not a server authorization boundary."
+  ],
+  "full_offline_suite": {
+    "command": "python -m unittest discover -s tests",
+    "run": 1675,
+    "passed": 1659,
+    "skipped": 16,
+    "failures": 0,
+    "seconds": 118.699,
+    "warnings": [
+      "Existing Pillow getdata deprecation",
+      "Exit-time unclosed socket ResourceWarning; deliberate injected worker failures remain in logs"
+    ]
+  },
+  "validation": {
+    "graphs_bindings": 66,
+    "pinned_assets": 121,
+    "lora_names": 86,
+    "tracked_paths": 1136,
+    "passed": true
+  },
+  "concurrent_main": {
+    "commit": "3d3135a17811d2e4846ada05aae35e06f60d92f4",
+    "pr": 226,
+    "changed_paths_overlap": false,
+    "local_evidence": "Pinned baseline plus this patch only; integrated current-main evidence requires hosted CI"
+  }
+}

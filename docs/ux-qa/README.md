@@ -1,5 +1,9 @@
 # Studio UX QA — 13 September 2026
 
+## Library selection and filtered views
+
+[Library context](LIBRARY-CONTEXT.md) records hidden-selection consent, scope-aware empty states, the visible batch limit, preserved newer selections and the browser comparison. It builds on the merged recovery work below; it is not #177 pagination or another journal.
+
 ## Workspace-bound recovery follow-up
 
 [WORKSPACE-RECOVERY.md](WORKSPACE-RECOVERY.md) extends the merged #211 journal with
