@@ -138,6 +138,8 @@ class Studio:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
                 preset["defaults"] = defaults
+                capacity = wan_capacity.projection(preset, graph)
+                if capacity is not None: preset["wan_decode_capacity"] = capacity
                 preset["continuation_capability"] = dict(continuation.capability(preset, graph), template_sha256=hashlib.sha256(template_path.read_bytes()).hexdigest())
                 authored = {v for node in graph.values() for field, v in (node.get("inputs") or {}).items() if field == "lora_name" and isinstance(v, str)}
             except (StudioError, KeyError, TypeError, IndexError, AttributeError):
