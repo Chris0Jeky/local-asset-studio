@@ -32,11 +32,12 @@ class RuntimeRecovery:
         self.log_path = studio.root / ".runtime" / "runtime-recovery.log"
         self.lock = threading.Lock()
         self.state = {"status": "disabled" if not self.enabled else "idle", "attempts": 0, "events": []}
-        try:
-            saved = json.loads(self.path.read_text(encoding="utf-8"))
-            if isinstance(saved, dict): self.state.update({k: v for k, v in saved.items() if k != "events"})
-        except (OSError, ValueError):
-            pass
+        if self.enabled:
+            try:
+                saved = json.loads(self.path.read_text(encoding="utf-8"))
+                if isinstance(saved, dict): self.state.update({k: v for k, v in saved.items() if k != "events"})
+            except (OSError, ValueError):
+                pass
         if self.enabled and self.autostart:
             self.thread = threading.Thread(target=self._monitor, daemon=True, name="studio-runtime-recovery")
             self.thread.start()
@@ -87,14 +88,33 @@ class RuntimeRecovery:
         return any(item.get("state", {}).get("status") in ("queued", "running", "observing") for item in self.studio.production.list())
 
     @staticmethod
-    def _identity(stats):
+    def _identity(profile, stats, process=None):
         system = stats.get("system") if isinstance(stats, dict) else None
         if not isinstance(system, dict): return None
-        return hashlib.sha256(json.dumps(system, sort_keys=True, default=str).encode()).hexdigest()
+        stable_system = {key: system[key] for key in (
+            "os", "comfyui_version", "required_frontend_version", "installed_frontend_version",
+            "python_version", "pytorch_version", "embedded_python", "argv",
+        ) if key in system}
+        stable_devices = []
+        for device in stats.get("devices", []):
+            if isinstance(device, dict):
+                stable_devices.append({key: device[key] for key in ("name", "type", "index") if key in device})
+        observed = {"backend": profile.get("id"), "url": profile.get("url"), "system": stable_system, "devices": stable_devices}
+        if process is not None:
+            try: pid, created_at = process.pid, process.create_time()
+            except Exception:
+                # Process identity is optional enrichment. Never guess it from a partial observation.
+                pass
+            else:
+                if isinstance(pid, int) and not isinstance(pid, bool) and isinstance(created_at, (int, float)) and not isinstance(created_at, bool):
+                    observed["process"] = {"pid": pid, "created_at": created_at}
+        return hashlib.sha256(json.dumps(observed, sort_keys=True, default=str).encode()).hexdigest()
 
     def _ready(self, profile, stats):
-        identity = self._identity(stats)
-        if identity and identity != self.state.get("endpoint_identity"):
+        try: process = self.studio.backends.process(profile)
+        except (OSError, ValueError): process = None
+        identity = self._identity(profile, stats, process)
+        if self.state.get("status") != "healthy" or (identity and identity != self.state.get("endpoint_identity")):
             self.studio._schema = None
             self.studio._schema_at = 0
         self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0)
