@@ -34,6 +34,7 @@ from references import compile_references, image_record
 from production import Production, fingerprint
 from backends import BackendManager
 import host_memory
+import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
 import continuation
@@ -423,6 +424,7 @@ class Studio:
         continuation.validate(self, payload, preset, graph)
         self.ensure_reference_inputs(graph)
         self._validate_i2v_mode_source(preset, mode, graph, controls)
+        wan_capacity.enforce(graph)
         self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
 
@@ -815,6 +817,7 @@ class Studio:
         return graph_check(graph,self.node_info())
 
     def production_preflight(self, preset, graph):
+        wan_capacity.enforce(graph)
         self.host_commit_preflight(preset, graph, refresh=True)
         self.node_info(refresh=True)
         self.validate_graph(graph)
@@ -1208,6 +1211,7 @@ class Studio:
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
                 continuation.validate(self, job, preset, graph, check_runtime=True)
+                wan_capacity.enforce(graph)
                 reading=self.host_commit_preflight(preset, graph, refresh=True)
             except (StudioError, ValueError, OSError) as exc:
                 job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
