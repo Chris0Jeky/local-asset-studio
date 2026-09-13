@@ -1,0 +1,13 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),C=require('../app/static/bundle-guidance-client.js');
+const f=()=>({preset:{id:'x',steps:['1','steps'],bindings_extra:{steps:[['2','steps']]}},controls:{steps:4},graph:{'1':{class_type:'KSampler',inputs:{steps:4}},'2':{class_type:'KSampler',inputs:{steps:4}}}});
+const r=()=>({format:C.FORMAT,preset_id:'x',generation_submitted:false,authoring_only:true,context_sha256:'a'.repeat(64),claims:[],resources:[],conflicts:[],uncovered_resources:[],diagnostics:[]});
+test('request captures primary and companion binding without mutating draft',()=>{const s=f(),before=JSON.stringify(s),p=C.payload(s);assert.deepEqual(p.expected_bindings.steps,[['1','steps'],['2','steps']]);assert.equal(JSON.stringify(s),before);});
+test('capture requires graph inspection',()=>{assert.throws(()=>C.payload({preset:{id:'x'}}),/inspection/);});
+test('unsafe browser integers and nonfinite values refuse',()=>{for(const steps of [2**54,Infinity,NaN])assert.throws(()=>C.payload({...f(),controls:{steps}}),/Exact/);});
+test('reserved keys and oversized snapshots refuse',()=>{const s=f();s.controls=JSON.parse('{"__proto__":1}');assert.throws(()=>C.payload(s));s.controls={positive:'a'.repeat(1048576)};assert.throws(()=>C.payload(s),/1 MiB/);});
+test('old replies cannot match a changed or reverted draft',()=>{const state=new C.Latest(),v=C.payload(f()),first=state.begin(v);state.invalidate();state.begin(v);assert.equal(state.accepts(first,v),false);});
+test('latest reply still requires exact current snapshot',()=>{const state=new C.Latest(),v=C.payload(f()),ticket=state.begin(v);assert.equal(state.accepts(ticket,v),true);v.controls.steps=8;assert.equal(state.accepts(ticket,v),false);});
+test('closing invalidates pending replies and stops new work',()=>{const s=new C.Latest(),v=C.payload(f()),t=s.begin(v);s.close();assert.equal(s.accepts(t,v),false);assert.throws(()=>s.begin(v));});
+test('a response cannot assert execution or belong to another recipe',()=>{assert.equal(C.validate(r(),'x').format,C.FORMAT);for(const bad of [{preset_id:'y'},{generation_submitted:true},{authoring_only:false},{context_sha256:'bad'},{claims:{}}])assert.throws(()=>C.validate({...r(),...bad},'x'));});
+test('malformed claim rows do not become current advice',()=>{assert.throws(()=>C.validate({...r(),claims:[{applicability:'safe'}]},'x'));});
