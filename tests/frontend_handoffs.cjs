@@ -330,6 +330,38 @@ async function explicitLocalAbandonment() {
   assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
 }
 
+// #117: an unavailable check may keep a source claim in memory but clear the attachment.
+// Named setup persistence must not turn that uncertainty into an unattributed durable parent.
+async function unresolvedInputLineageCannotBeSaved() {
+  for(const missing of ['reference','lastReference']) {
+    const s=sandbox(null,null);
+    s.run(`selectPreset('h3-first-last');uploaded='first.png';lastUploaded='last.png';
+      parentAssets=['asset-a','asset-b'];parentByInput={reference:'asset-a',lastReference:'asset-b'};
+      ${missing==='reference'?'uploaded':'lastUploaded'}=null;`);
+    s.element('#saveName').value='Recoverable draft';s.element('#positive').value='Keep this wording';
+    await s.element('#save').onclick();
+    assert.equal(s.requests.filter(r=>r.url==='/api/setups').length,0,'No durable parent for an empty '+missing);
+    assert.equal(s.element('#saveName').value,'Recoverable draft');
+    assert.equal(s.element('#positive').value,'Keep this wording');
+    assert.deepEqual(s.parents(),['asset-a','asset-b'],'Failed availability is not evidence to discard in-memory lineage');
+    assert.match(s.element('#status').textContent,/reattach/i,'Recovery instruction names the next action');
+    assert.match(s.element('#status').textContent,missing==='reference'?/first frame/i:/last frame/i);
+    s.run(`${missing==='reference'?'uploaded':'lastUploaded'}='restored.png';`);
+    await s.element('#save').onclick();
+    const saved=s.requests.find(r=>r.url==='/api/setups').data.recipe;
+    assert.deepEqual(saved.parent_by_input,{reference:'asset-a',lastReference:'asset-b'});
+    assert.deepEqual(saved.parent_assets,['asset-a','asset-b']);
+    const reload=sandbox(null,null);reload.run(`applySaved(${JSON.stringify(saved)})`);
+    reload.element(missing==='reference'?'#reference':'#lastReference').files=[localFile()];
+    reload.element(missing==='reference'?'#reference':'#lastReference').onchange();
+    assert.deepEqual(reload.parents(),[missing==='reference'?'asset-b':'asset-a'],'Reload and swap releases only the replaced source');
+  }
+  const legacy=sandbox(null,null);
+  legacy.run(`selectPreset('h3-first-last');parentAssets=['historical-parent'];parentByInput={};`);
+  legacy.element('#saveName').value='Legacy unbound history';await legacy.element('#save').onclick();
+  assert.deepEqual(legacy.requests.find(r=>r.url==='/api/setups').data.recipe.parent_assets,['historical-parent'],'Never invent attribution for historical parents');
+}
+
 (async () => {
   await explicitLocalAbandonment();
   await check('qwen-1ref', null, 1);
@@ -349,5 +381,6 @@ async function explicitLocalAbandonment() {
   await importedRecipeKeepsUnattributedParents();
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
+  await unresolvedInputLineageCannotBeSaved();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
