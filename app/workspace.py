@@ -6,6 +6,7 @@ atomic; a content-addressed file store keeps media available between backends.
 """
 import hashlib
 import json
+import re
 import sqlite3
 import time
 import uuid
@@ -14,7 +15,21 @@ from pathlib import Path
 
 
 class WorkspaceError(ValueError):
-    pass
+    status = 400
+    code = "invalid_asset_command"
+
+    def __init__(self, message, *, status=None, code=None, **details):
+        super().__init__(message)
+        self.status = status or self.status
+        self.code = code or self.code
+        self.details = details
+
+    def response(self):
+        return {"error": str(self), "code": self.code, **self.details}
+
+
+MAX_REVISION = 2**53 - 1
+METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
 
 def digest_file(path):
@@ -51,10 +66,17 @@ class AssetWorkspace:
                     collection_id TEXT REFERENCES collections(id) ON DELETE CASCADE,
                     asset_id TEXT REFERENCES assets(id) ON DELETE CASCADE,
                     PRIMARY KEY(collection_id, asset_id));
+                CREATE TABLE IF NOT EXISTS asset_commands (
+                    request_id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL,
+                    result TEXT NOT NULL, created_at REAL NOT NULL);
                 CREATE TABLE IF NOT EXISTS setups (
                     id TEXT PRIMARY KEY, name TEXT NOT NULL, recipe TEXT NOT NULL,
                     created_at REAL NOT NULL);
             """)
+            # Serialize migration discovery with the ALTER, including simultaneous clients.
+            db.execute("BEGIN IMMEDIATE")
+            if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
+                db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
 
     @contextmanager
     def connection(self):
@@ -138,6 +160,7 @@ class AssetWorkspace:
 
     def snapshot(self):
         with self.connection() as db:
+            db.execute("BEGIN")
             assets = [self._asset(r) for r in db.execute("SELECT * FROM assets ORDER BY created_at DESC,id")]
             collections = [dict(r) for r in db.execute("SELECT * FROM collections ORDER BY name COLLATE NOCASE")]
             membership = list(db.execute("SELECT collection_id,asset_id FROM collection_assets"))
@@ -161,10 +184,16 @@ class AssetWorkspace:
         action = payload.get("action", "create")
         identifier = payload.get("id")
         with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
             if action in ("rename", "delete"):
                 if not db.execute("SELECT id FROM collections WHERE id=?", (identifier,)).fetchone():
                     raise WorkspaceError("Collection not found")
                 if action == "delete":
+                    if db.execute("SELECT 1 FROM assets WHERE metadata_revision>=? AND id IN "
+                                  "(SELECT asset_id FROM collection_assets WHERE collection_id=?)", (MAX_REVISION, identifier)).fetchone():
+                        raise WorkspaceError("Asset revision limit reached; collection was preserved")
+                    db.execute("UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN "
+                               "(SELECT asset_id FROM collection_assets WHERE collection_id=?)", (identifier,))
                     db.execute("DELETE FROM collections WHERE id=?", (identifier,))
                     return {"id": identifier, "deleted": True}
             elif action == "create":
@@ -181,25 +210,81 @@ class AssetWorkspace:
                 db.execute("UPDATE collections SET name=?,description=? WHERE id=?", (name, description, identifier))
         return {"id": identifier, "name": name, "description": description}
 
+    @staticmethod
+    def request_id(value):
+        if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", value):
+            raise WorkspaceError("A request ID of 16–128 letters, digits, underscores or hyphens is required")
+        return value
+
+    def metadata(self, asset_id):
+        return {key: value for key, value in self.get(asset_id).items() if key in METADATA_FIELDS}
+
+    def command_status(self, request_id):
+        request_id = self.request_id(request_id)
+        with self.connection() as db:
+            row = db.execute("SELECT result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
+        # A missing receipt is not proof that an in-flight command cannot commit later.
+        return json.loads(row["result"]) if row else {"request_id": request_id, "status": "unknown"}
+
     def update(self, payload):
+        if not isinstance(payload, dict):
+            raise WorkspaceError("Asset command must be an object")
         ids = payload.get("ids", [])
-        if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or any(not isinstance(i, str) for i in ids):
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or any(not isinstance(i, str) or not 1 <= len(i) <= 128 for i in ids):
             raise WorkspaceError("Select between 1 and 200 assets")
         ids = list(dict.fromkeys(ids))
+        if "request_id" not in payload or "expected_revisions" not in payload:
+            raise WorkspaceError("Reload the asset metadata and supply expected_revisions and a new request_id; nothing changed",
+                                 status=428, code="asset_precondition_required")
+        request_id = self.request_id(payload["request_id"])
+        expected = payload["expected_revisions"]
+        if (not isinstance(expected, dict) or set(expected) != set(ids) or
+                any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= MAX_REVISION for v in expected.values())):
+            raise WorkspaceError("Supply one nonnegative safe integer revision for every selected asset")
+        allowed = {"ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
+        if set(payload) - allowed:
+            raise WorkspaceError("Unknown asset command fields")
+        try:
+            raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        except (TypeError, ValueError) as error:
+            raise WorkspaceError("Asset command must contain finite JSON values") from error
+        if len(raw.encode()) > 128 * 1024:
+            raise WorkspaceError("Asset command exceeds 128 KiB")
+        fingerprint = hashlib.sha256(raw.encode()).hexdigest()
         action = payload.get("action")
         with self.connection() as db:
+            # No read-check/write gap: competing clients serialize at this boundary.
+            db.execute("BEGIN IMMEDIATE")
+            receipt = db.execute("SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
+            if receipt:
+                if receipt["fingerprint"] != fingerprint:
+                    raise WorkspaceError("That request ID already identifies a different command; nothing changed",
+                                         status=409, code="asset_request_reused", request_id=request_id)
+                return json.loads(receipt["result"])
             placeholders = ",".join("?" for _ in ids)
-            existing = db.execute(f"SELECT id FROM assets WHERE id IN ({placeholders})", ids).fetchall()
-            if len(existing) != len(ids):
-                raise WorkspaceError("One of the selected assets no longer exists; nothing changed")
+            rows = {r["id"]: r for r in db.execute(f"SELECT * FROM assets WHERE id IN ({placeholders})", ids)}
+            missing = [i for i in ids if i not in rows]
+            conflicts = [i for i in ids if i in rows and rows[i]["metadata_revision"] != expected[i]]
+            if missing or conflicts:
+                current = [{k: v for k, v in self._asset(rows[i]).items() if k in METADATA_FIELDS} for i in conflicts[:10]]
+                raise WorkspaceError("Selected asset metadata changed or no longer exists; nothing changed in this batch",
+                                     status=409, code="asset_revision_conflict", request_id=request_id,
+                                     conflict_ids=conflicts, missing_ids=missing, current=current)
+            if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in ids):
+                raise WorkspaceError("Asset revision limit reached; nothing changed")
+            applied = {}
             if action in ("add_collection", "remove_collection"):
                 collection_id = payload.get("collection_id")
+                if not isinstance(collection_id, str) or not 1 <= len(collection_id) <= 128:
+                    raise WorkspaceError("Choose an existing collection")
                 if not db.execute("SELECT id FROM collections WHERE id=?", (collection_id,)).fetchone():
                     raise WorkspaceError("Choose an existing collection")
                 if action == "add_collection":
                     db.executemany("INSERT OR IGNORE INTO collection_assets VALUES (?,?)", [(collection_id, i) for i in ids])
                 else:
                     db.executemany("DELETE FROM collection_assets WHERE collection_id=? AND asset_id=?", [(collection_id, i) for i in ids])
+                applied = {"collection_id": collection_id}
+                db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", ids)
             else:
                 changes = {}
                 if action in ("trash", "restore"):
@@ -226,8 +311,15 @@ class AssetWorkspace:
                 if not changes:
                     raise WorkspaceError("No changes supplied")
                 fields = ",".join(key + "=?" for key in changes)
-                db.execute(f"UPDATE assets SET {fields} WHERE id IN ({placeholders})", [*changes.values(), *ids])
-        return {"updated": ids, "action": action}
+                db.execute(f"UPDATE assets SET {fields},metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", [*changes.values(), *ids])
+                applied = dict(changes)
+                if "tags" in applied: applied["tags"] = json.loads(applied["tags"])
+                if "favorite" in applied: applied["favorite"] = bool(applied["favorite"])
+            result = {"status": "applied", "request_id": request_id, "updated": ids, "action": action,
+                      "revisions": {i: expected[i] + 1 for i in ids}, "applied": applied}
+            # Compact receipts retain changed fields and revisions, never N copies of media/notes.
+            db.execute("INSERT INTO asset_commands VALUES (?,?,?,?)", (request_id, fingerprint, json.dumps(result), time.time()))
+        return result
 
     def setups(self):
         with self.connection() as db:

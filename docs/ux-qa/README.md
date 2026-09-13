@@ -1,4 +1,11 @@
 # Studio UX QA — 13 September 2026
+## Named setup lineage follow-up
+
+[SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with
+an explicit reattachment instruction and retained drafts. It also records and fixes a
+sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidence
+is separate from the earlier asset-detail and metadata-concurrency checkpoints.
+
 
 ## What this pass changes
 
@@ -57,3 +64,43 @@ For a workstation acceptance check, open a real existing asset; type notes; Favo
 The highest-priority next work is #188's metadata concurrency plus #117's source-availability/lineage save contract. After these, join existing guide evidence and continuation records into one contextual task summary as described in `ARCHITECTURE.md`. Keep that summary observational: it should explain what is preserved, what changes and what still needs action, without taking over execution.
 
 No new human creative decision is required for these changes. Existing artwork selection, model-specific permissions and output acceptance remain with the owner and `HUMAN_TODO.md`; this pass changes none of them.
+
+## Continuation: conditional metadata and recovery
+
+The follow-on implementation for #188 is recorded in [METADATA-CONCURRENCY.md](METADATA-CONCURRENCY.md).
+It adds actual Workspace revision checks and durable command receipts, a draft-preserving
+conflict comparison, and explicit exact-request recovery. [METADATA-RESULTS.json](METADATA-RESULTS.json)
+records this pass separately from the original local before/after checkpoint. The
+metadata browser fixture uses the production metadata HTTP handler and temporary real
+SQLite storage, with synthetic non-generation endpoints. #117 remains a separate
+reference-lineage task; neither browser session epochs nor metadata revisions solve it.
+
+## Reload recovery browser proof — 13 September 2026
+
+[METADATA-RELOAD-RECOVERY.md](METADATA-RELOAD-RECOVERY.md) defines the per-tab
+journal contract. `tests/asset_reload_browser.py` adds browser proof over the
+actual Studio HTML, JavaScript and CSS with a disposable in-memory
+`asset_detail_browser.State`/`Handler` fixture on an OS-assigned loopback port.
+It exercises lost replies, reload with no POST or receipt polling, explicit
+receipt lookup, exact bytes/ID retry, a later command with a new ID/revision,
+Trash plus newer typing, and an unsent draft. It writes a JSON receipt and
+1440px/390px screenshots.
+
+The workflow runs native HTTP by default:
+
+```sh
+python tests/asset_reload_browser.py --out .runtime/asset-reload-proof
+```
+
+On a local machine where native browser navigation is blocked by policy, use
+only the explicit component mode:
+
+```sh
+python tests/asset_reload_browser.py --inert --out .runtime/asset-reload-component-proof
+```
+
+Inert mode injects storage and recreates the document before its scripts run;
+it is not evidence for native origin, browser retention, real SQLite, a running
+Studio, generation, backend behavior, artwork, licensing or owner acceptance.
+This per-tab/origin proof **Refs #204** and does not close its workspace-identity,
+native-browser, real-SQLite or server-restart acceptance cases.

@@ -237,6 +237,7 @@ class AVProjects:
         av.need(shutil.disk_usage(directory).free>=2*1024**3,'Render needs at least 2 GiB free')
         attempt=uuid.uuid4().hex
         with self.studio.lock,self.production.lock,self.production.connect() as db:
+            self.studio.require_worker()
             db.execute('BEGIN IMMEDIATE');document=self._read(db,identifier);self._expected(document,payload)
             active=db.execute("SELECT id FROM av_renders WHERE project_id=? AND status IN ('queued','running')",(identifier,)).fetchone()
             av.need(active is None,'This scene already has an active render')

@@ -7,14 +7,25 @@ on:
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
       - 'app/server.py'
+      - 'app/av_projects.py'
+      - 'app/voice_baseline.py'
       - 'app/static/app.js'
+      - 'app/static/index.html'
+      - 'app/static/studio-shell.js'
+      - 'app/static/studio-workbench.js'
       - 'app/static/production.js'
       - 'tests/test_submission_recovery.py'
       - 'tests/test_recovery_commands_http.py'
       - 'tests/test_oldest_issue_regressions.py'
       - 'tests/test_failed_job_timing.py'
+      - 'tests/test_worker_recovery.py'
+      - 'tests/test_http_security.py'
+      - 'tests/frontend_health.cjs'
       - 'tests/frontend_handoffs.cjs'
       - 'tests/production_clock_frontend.cjs'
+      - 'tests/production_terminal_frontend.cjs'
+      - 'tests/recovery_security_browser.py'
+      - 'tests/studio_browser_smoke.py'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
       - '.github/workflows/production-storage.yml'
@@ -26,14 +37,25 @@ on:
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
       - 'app/server.py'
+      - 'app/av_projects.py'
+      - 'app/voice_baseline.py'
       - 'app/static/app.js'
+      - 'app/static/index.html'
+      - 'app/static/studio-shell.js'
+      - 'app/static/studio-workbench.js'
       - 'app/static/production.js'
       - 'tests/test_submission_recovery.py'
       - 'tests/test_recovery_commands_http.py'
       - 'tests/test_oldest_issue_regressions.py'
       - 'tests/test_failed_job_timing.py'
+      - 'tests/test_worker_recovery.py'
+      - 'tests/test_http_security.py'
+      - 'tests/frontend_health.cjs'
       - 'tests/frontend_handoffs.cjs'
       - 'tests/production_clock_frontend.cjs'
+      - 'tests/production_terminal_frontend.cjs'
+      - 'tests/recovery_security_browser.py'
+      - 'tests/studio_browser_smoke.py'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
       - '.github/workflows/production-storage.yml'
@@ -57,6 +79,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p test_production_storage.py -v
       - run: python -m unittest discover -s tests -p test_production_storage_integration.py -v
@@ -66,8 +91,29 @@ jobs:
       - run: python -m unittest discover -s tests -p test_oldest_issue_regressions.py -v
       - run: python -m unittest discover -s tests -p test_recovery_commands_http.py -v
       - run: python -m unittest discover -s tests -p test_failed_job_timing.py -v
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - run: python -m unittest discover -s tests -p test_worker_recovery.py -v
+      - run: python -m unittest discover -s tests -p test_http_security.py -v
+      - run: python -m unittest discover -s tests -p test_production_terminal.py -v
       - run: node tests/frontend_handoffs.cjs
+      - run: node tests/frontend_health.cjs
       - run: node tests/production_clock_frontend.cjs
+      - run: node tests/production_terminal_frontend.cjs
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/recovery_security_browser.py --out .runtime/recovery-security-proof
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: recovery-security-browser-proof
+          path: .runtime/recovery-security-proof/
+          retention-days: 7

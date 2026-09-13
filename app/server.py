@@ -12,6 +12,7 @@ import mimetypes
 import random
 import re
 import shutil
+import sqlite3
 import sys
 import threading
 import time
@@ -22,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Queue
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse
+from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 # The portable Python includes ComfyUI's own `app` package in its search path.
@@ -102,7 +103,7 @@ class Studio:
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
-        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock()
+        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
@@ -332,9 +333,7 @@ class Studio:
 
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
-        # A real started worker that has exited cannot service a new queue safely.
-        if getattr(self, 'worker', None) is not None and self.worker.ident is not None and not self.worker.is_alive():
-            raise StudioError('Studio worker is unavailable. Restart Studio; no generation was queued.')
+        self.require_worker()
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
         if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
@@ -964,6 +963,7 @@ class Studio:
             return self.public(job)
 
     def _resume_tracking(self, job):
+        self.require_worker()
         if job.get("status") != "uncertain": raise StudioError("Only an uncertain job can resume observation")
         error = self._known_prompt_error(job)
         if error: raise StudioError(error)
@@ -1041,8 +1041,19 @@ class Studio:
                 self._schema = info; self._schema_at = time.monotonic()
             return self._schema
 
+    def worker_available(self):
+        worker = getattr(self, 'worker', None)
+        return worker is None or worker.ident is None or worker.is_alive()
+
+    def require_worker(self):
+        # Preserve pre-start/offline fixture behavior; never replace a dead worker
+        # or silently replay its queue. All queue writers share this admission.
+        if not Studio.worker_available(self):
+            raise StudioError('Studio worker is unavailable. Restart Studio; no work was queued or reserved.')
+
     def health(self, refresh=False):
-        worker_alive = self.worker.ident is None or self.worker.is_alive()
+        worker_alive = self.worker_available()
+        worker_failure = copy.deepcopy(self.worker_failure)
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
@@ -1073,8 +1084,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -1133,20 +1144,38 @@ class Studio:
             if not data.get("queue_running") and not data.get("queue_pending"): return
             time.sleep(2)
 
+    def record_job_failure(self, job, exc):
+        """Unexpected local failure cannot certify an unobserved remote outcome."""
+        with self.lock:
+            if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
+                uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
+                job['status'] = 'uncertain' if uncertain else 'failed'
+                job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
+            self._save(job)
+
     def _work(self):
         while True:
             action, job_id = self.queue.get()
-            if action == 'production':
-                try:self.production.run(job_id)
-                except Exception as exc:self.production._mutate(job_id,status='failed',message=str(exc)[:500])
-                continue
-            job = self.jobs.get(job_id)
-            if not job: continue
+            job = None
             try:
-                self._resume(job) if action == "observe" else self._run(job)
+                if action == 'production': self.production.run(job_id)
+                else:
+                    job = self.jobs.get(job_id)
+                    if job: self._resume(job) if action == 'observe' else self._run(job)
             except Exception as exc:
-                if job.get('status')!='abandoned':
-                    job["status"] = "failed"; job["message"] = f"Generation failed: {str(exc)[:300]}"; self._save(job)
+                try:
+                    if action == 'production':
+                        # Escaping here can be a failed job-state write after a POST.
+                        # Only normal stage reconciliation can certify a terminal outcome.
+                        self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
+                    elif job is not None: self.record_job_failure(job, exc)
+                except Exception as recording_error:
+                    # A disk/SQLite/diagnostic error must not end the only queue
+                    # consumer. Keep one bounded, explicitly non-durable alert.
+                    self.worker_failure = {'action': action, 'id': job_id, 'error': type(exc).__name__,
+                                           'recording_error': str(recording_error)[:500], 'durable': False}
+                    try: print('Studio worker could not persist failure:', self.worker_failure, file=sys.stderr, flush=True)
+                    except Exception: pass
 
     def _batch_graph(self, job, index):
         graph = copy.deepcopy(job["graph"])
@@ -1288,8 +1317,12 @@ class Studio:
     def _wait_history(self, job, submission):
         prompt_id = submission["prompt_id"]
         for _ in range(720):
-            try: history = self._request("/history/" + prompt_id, timeout=15, base_url=job.get('comfy_url')).get(prompt_id)
-            except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError):
+            try:
+                response = self._request("/history/" + quote(prompt_id, safe=''), timeout=15, base_url=job.get('comfy_url'))
+                if not isinstance(response, dict): raise ValueError('Invalid history response')
+                history = response.get(prompt_id)
+                if history is not None and not isinstance(history, dict): raise ValueError('Invalid prompt history')
+            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException):
                 with self.lock:
                     if self._tracking_stopped(job): return False
                     job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
@@ -1329,6 +1362,7 @@ class Studio:
             return self._queue_observation(job_id)
 
     def _queue_observation(self, job_id):
+        self.require_worker()
         job = self.jobs.get(job_id)
         if not job: raise StudioError("Unknown job")
         if job.get('status') == 'abandoned' or 'pending_submission' in job:
@@ -1384,10 +1418,18 @@ class Studio:
         return metadata
 
 class Handler(BaseHTTPRequestHandler):
+    def end_headers(self):
+        # One response boundary covers static, JSON, ranged/proxied media and
+        # inherited error responses without changing their body or MIME contract.
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Content-Security-Policy', "frame-ancestors 'none'")
+        super().end_headers()
+
     studio: Studio = None
     def log_message(self, fmt, *args): pass
     def _json(self, status, obj):
-        raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
         return self.headers.get("Host", "") in ("127.0.0.1:8191", "localhost:8191")
     def _safe_mutation(self):
@@ -1461,6 +1503,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
+            if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
+                return self._json(200, self.studio.assets.command_status(path.split("/")[4]))
+            if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
+                return self._json(200, self.studio.assets.metadata(path.split("/")[3]))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path == '/api/voice-baseline':
@@ -1531,6 +1577,7 @@ class Handler(BaseHTTPRequestHandler):
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
             if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+        except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (URLError, HTTPError, OSError) as exc: self._json(502, {"error": "ComfyUI image is unavailable"})
     def do_POST(self):
@@ -1564,7 +1611,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
-            if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
+            if self.path == "/api/assets/update":
+                try: return self._json(200, self.studio.assets.update(self._body_json()))
+                except sqlite3.Error:
+                    return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
+                                            "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_json().get("id")))
@@ -1586,6 +1637,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             return self._json(404, {"error":"Not found"})
+        except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 

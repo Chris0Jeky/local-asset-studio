@@ -9,7 +9,7 @@ let catalog, selected, online = null, schemaAvailable = false, workerAlive = tru
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
-async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
+async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 // Notification only: programmatic recipe changes do not emit DOM input/change.
@@ -225,6 +225,7 @@ async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
+    const failure=$('#workerFailure');if(failure){failure.hidden=!h.worker_failure;failure.textContent=h.worker_failure?'A failure record was not saved for '+h.worker_failure.action+' '+h.worker_failure.id+'. Inspect local storage and retained job records before continuing that task. No submission was retried.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
@@ -406,7 +407,22 @@ $('#gallery').onclick=async e=>{
     }
   }catch(err){message(err.message,true);}
 };
-$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:values(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
+// A failed availability read can leave a source claim with no staged file. Preserve
+// that uncertainty in the draft, but do not persist it as unattributed setup lineage.
+function checkedSetupControls() {
+  const controls=values();
+  const inputs=[['reference','reference','Reference / first frame'],['lastReference','last_reference','Last frame']];
+  const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
+  if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
+    ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
+  const pending=inputs
+    .filter(([input,key])=>parentByInput[input]&&parentAssets.includes(parentByInput[input])&&!controls[key]);
+  if(pending.length)throw Error('Setup not saved: reattach '+pending.map(([, ,label])=>label).join(' and ')+
+    ' using Pull from library. To use a new local file, import it into Asset library first. Its source link has no attached file. Your draft and setup name are unchanged.');
+  return controls;
+}
+function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
+$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
