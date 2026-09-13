@@ -47,6 +47,8 @@ new job lifecycle or execution journal. The server remains authoritative.
 - Preparation captures the draft epoch, recipe choice and displayed schema.
   A changed value while awaiting the result discards that late result without
   replacing current work. Editing after preparation disables the initial Run.
+  Schema comparison uses only backend/schema fingerprints, not unsafe numeric
+  bounds in installed node metadata (for example a uint64 seed maximum).
 - After dispatch intent is retained, all HTTP errors, malformed/null replies,
   wrong-job identities and transport failures leave the same ticket available.
   No failed response is used to claim generation did not occur.
@@ -66,7 +68,7 @@ after the editor/Steps scripts; other Studio pages are unchanged.
 
 ## Verification and limitations
 
-Two normal unittest wrappers execute **14 ticket-state contracts and nine
+Two normal unittest wrappers execute **14 ticket-state contracts and ten
 actual-UI wiring contracts** through Node. They prove no startup dispatch,
 prepared/run separation, stale results, consent refusal, double clicks, storage
 failure, response loss, exact replay, mismatched replies and observation-only GET.

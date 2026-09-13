@@ -17,6 +17,7 @@
   let state = null, busy = false;
   function say(text) { message.textContent = text; }
   function schemaMatches(doc) { const live = W.schema(); return !live || (doc && live.backend_id === doc.backend_id && live.schema_sha256 === doc.schema_sha256); }
+  function schemaIdentity() { const live = W.schema(); return JSON.stringify(live ? [live.backend_id, live.schema_sha256] : null); }
   const buttons = {};
   function action(id, label, fn) {
     const b = el('button', label, {type: 'button', id}); buttons[id] = b;
@@ -39,11 +40,11 @@
   }
   async function prepare() {
     if (state.record) throw Error('Resolve or clear the existing ticket first');
-    const source = W.snapshot(), epoch = W.epoch(), id = preset.value, live = T.signature(W.schema());
+    const source = W.snapshot(), epoch = W.epoch(), id = preset.value, live = schemaIdentity();
     if (!source || !id) throw Error('Load a workflow and choose its registered recipe above');
     say('Checking the entire draft against the chosen recipe…');
     const report = await request('/api/workflow-studio/prepare-document', {document: source, preset_id: id});
-    if (epoch !== W.epoch() || id !== preset.value || T.signature(W.schema()) !== live) throw Error('Draft, recipe or schema changed during preparation. Late ticket discarded; nothing ran.');
+    if (epoch !== W.epoch() || id !== preset.value || schemaIdentity() !== live) throw Error('Draft, recipe or schema changed during preparation. Late ticket discarded; nothing ran.');
     state.accept(report, source, id);
     say('Ticket prepared and retained in this tab. Review the controls below, then explicitly run.');
   }

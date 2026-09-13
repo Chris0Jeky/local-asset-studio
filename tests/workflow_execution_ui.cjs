@@ -36,6 +36,7 @@ function fixture(raw = null) {
     ? {job: {id: report.job_id, status: 'queued'}} : {id: report.job_id, status: 'completed'}});
   return {ids, calls, storage, downloads, click: id => ids.get(id).click(),
     setReply: fn => {reply = fn;}, consent: b => {answer = b;}, edit: () => {doc.name += ' edit'; epoch++; dispatch('workflow:render');},
+    wideSchema: () => {schema.nodes = {KSampler: {seed: {max: 2**64 - 1}}};},
     schema: () => {schema.schema_sha256 = 'b'.repeat(64); dispatch('workflow:render');},
     choose: () => {preset.value = 'another'; preset.listeners.change();}};
 }
@@ -58,6 +59,11 @@ async function test(name, fn) {await fn(); console.log('PASS ' + name); count++;
     f.setReply(async () => {assert.equal(JSON.parse(f.storage.raw).phase, 'attempted'); return new Promise(r => {done = r;});});
     const pending = f.click('runWorkflowTicket'); await f.click('runWorkflowTicket'); assert.equal(f.calls.length, 2);
     done({ok: true, json: async () => ({job: {id: report.job_id, status: 'queued'}})}); await pending;
+  });
+  await test('wide installed-schema bounds do not block an exact small user seed', async () => {
+    const f = fixture(); f.wideSchema(); await f.click('prepareWorkflowRun');
+    assert.equal(f.calls.length, 1); assert.equal(JSON.parse(f.storage.raw).report.recipe.controls.seed, 42);
+    assert.equal(f.ids.get('runWorkflowTicket').disabled, false);
   });
   await test('post-prepare edit and schema changes disable run', async () => {
     for (const change of ['edit', 'schema', 'choose']) {const f = fixture(); await f.click('prepareWorkflowRun'); f[change](); await f.click('runWorkflowTicket'); assert.equal(f.calls.length, 1);}
