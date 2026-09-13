@@ -1,4 +1,4 @@
-# Current state — 11 September 2026
+# Current state — 13 September 2026
 
 ## Interactive timing estimates and failure clarity — 13 September 2026
 
@@ -32,13 +32,15 @@ Node's bundle test could resolve `python`; without that explicit environment the
 
 ## Session closeout — 13 September 2026
 
-The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
+The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; it is historical evidence, not the current GitHub head. The live PR/issue inventory and closure decisions are maintained in the [GitHub reconciliation](docs/reconciliation/2026-09-13-github.md). At this snapshot `origin/main` is `cf225b43e2c81cd5e0985661d13aa3aec4fcb544`, with 82 merged PRs and three open PRs: [#156](https://github.com/Chris0Jeky/local-asset-studio/pull/156), [#157](https://github.com/Chris0Jeky/local-asset-studio/pull/157) and [#158](https://github.com/Chris0Jeky/local-asset-studio/pull/158).
+
+This pass merged
 #137 (backend startup final observation, `042f40e`), #138 (preset-compatible document execution,
 `1f198ca`), #139 (curated Anima evidence, `07d643f`), #141 (fresh runtime-status displays,
 `c26cefc`), #142 (unknown-header intake, `ac19add`), and #145 (saved-workflow run controls,
-`559347c`). Current main validation ran **1,102 tests: 1,086 passed, 16 skipped**, with repository
-validation passing 66 graphs/bindings, 121 pins, 910 tracked paths and 86 LoRA names. The latest
-browser check reopened `Anima - B softer cinematic shading` at revision 3, loaded 1,224 nodes,
+`559347c`). A fresh current-main validation rerun passed **1,253 tests with 50 skipped**, and
+repository validation passed 66 graphs/bindings, 121 pins, 962 tracked paths and 86 LoRA names.
+The earlier browser check reopened `Anima - B softer cinematic shading` at revision 3, loaded 1,224 nodes,
 passed connections, changed the first style strength from 1.0 to 1.25 with keyboard input and
 Tab, and Undo restored 1.0; no job was queued.
 
@@ -48,16 +50,20 @@ empty), but `/api/jobs` retains uncertain records
 `a2908800-7214-4caa-ad23-3844527cdf5d` and `0cbaae1b-1134-548c-9e03-50bac00b75b9`, and
 production retains one uncertain record. The closeout therefore did not stop either runtime;
 the merged runtime and backend fixes are source-verified but not live-reloaded. Host commit
-headroom is 11.72 GiB, below the documented 32 GiB gate; the effective page file is still
-40 GiB pending the owner-controlled restart.
+headroom is 11.72 GiB, below the documented 32 GiB gate at that historical snapshot; after the
+owner-authorized restart, the effective page file still needed a fresh allocation/headroom recheck.
+The newer opening section records the subsequent live reading.
 
-The four large model transfers remain active and incomplete: CSTati PID `7800`, JANIMA PID
+The four large model transfers were active and incomplete at closeout: CSTati PID `7800`, JANIMA PID
 `24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
 `.part` files and failure receipts remain preserved; no model-install or checksum-complete claim
-is made. PRs #146, #149 and #150 remain open and parked for a later pass; their latest hosted
-checks are green, but review and merge decisions remain unfinished. HUMAN_TODO decisions remain
-recorded; only q-4's owner-controlled restart is still an action, and it must wait until
-downloads finish and work is saved.
+is made. The former PR status sentence is superseded by the live reconciliation above: #146, #149
+and #150 are merged. Open #156 has five passing observed checks, open #157 has four, and the
+documentation PR #158 has two hosted checks in progress; none has a recorded review decision.
+At that snapshot, the HUMAN_TODO decisions were recorded; q-4's owner-controlled restart was
+still pending and had to wait until downloads finished and work was saved. The newer opening
+section and [HUMAN_TODO.md](HUMAN_TODO.md) record the subsequent owner action and remaining
+human-only recheck.
 
 ## Modular Anima baseline execution — 13 September 2026
 

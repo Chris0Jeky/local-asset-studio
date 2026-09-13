@@ -2,8 +2,10 @@
 
 Implementation slice for **#10 (Experiment Lab)** and **#16 (Studio UX)**. It
 supports the controlled studies in #3/#14 and evidence requirements in #22.
-Built on main `93b1f847b29cc6e5da488eacf297556453e94116`, independently of open
-PR #41's backend/install changes and the unmerged Prompt/AV labs. No new queue,
+Built on main `93b1f847b29cc6e5da488eacf297556453e94116`; at that historical
+checkpoint it was independent of then-open PR #41's backend/install changes and
+the unmerged Prompt/AV labs. The current PR/issue status is maintained in the
+[GitHub reconciliation](reconciliation/2026-09-13-github.md). No new queue,
 model manager, inference adapter, external service or framework is introduced.
 Atelier PR #42 landed during this pass. Its settings-sweep changes are retained
 through the PR test merge against current main; this branch does not replace them.

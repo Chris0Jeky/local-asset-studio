@@ -1,14 +1,16 @@
 # Production project storage and recovery
 
 Checkpoint: 13 September 2026, inspected main `a8eacdb108531c8c12a36c93f5a4f8a793e2fb74`.
-Fixes the concrete publication defect in #96, advancing the older Experiment Lab workstream #10.
+Fixes the concrete publication defect in now-closed #96 through merged PR #153, advancing the
+older Experiment Lab workstream #10. The live PR/issue map is in the [GitHub reconciliation](reconciliation/2026-09-13-github.md).
 This is implementation/test evidence, not deployment or GPU/creative evidence.
 
 ## Reconciliation and scope
 
 The oldest open issues still begin #2, #3, #9 and #10. #2/#3 retain real workstation
-comparison and creative-acceptance requirements. #137 and #142 are merged; #149 already
-covers #9's browser-publication follow-up, so this pass does not duplicate it. Open
+comparison and creative-acceptance requirements. #137, #142, #149 and #153 are merged;
+#149 covers the scoped #140 browser-publication follow-up, while #9's broader provenance
+and hardware scope remains open, so this pass does not duplicate it. Open
 bundle UX and workflow-lineage PRs likewise keep their own stores and contracts.
 
 At this main, `_create`, `native` and `articulated` committed their project/budget rows

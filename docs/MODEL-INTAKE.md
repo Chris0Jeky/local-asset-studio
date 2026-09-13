@@ -1,7 +1,9 @@
 # Browser model intake: independent copies and recoverable publication
 
-Implementation checkpoint: 13 September 2026. Extends oldest-open workstream #9 and
-publication issue #140, stacked on #142 (`3acd401e9a3b82152f4f24f8c55cd23e87c10011`).
+Implementation checkpoint: 13 September 2026. Extends oldest-open workstream #9 and the
+now-closed scoped publication issue #140, following merged PRs #142 and #149
+(`3acd401e9a3b82152f4f24f8c55cd23e87c10011`). The full #9 provenance, companion-bundle,
+authenticated-source and hardware-viability scope remains open; see the [live GitHub reconciliation](reconciliation/2026-09-13-github.md).
 Main was inspected at `c26cefcc8f279ca3f7fe365acfabb89071903bbc`; the earlier #2 and #3
 live-comparison boundaries remain unchanged. This does not replace ModelLibrary or
 complete #9's authenticated source/bundle/hardware work.
