@@ -14,7 +14,32 @@ const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'a
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 // Notification only: programmatic recipe changes do not emit DOM input/change.
 function recipeChanged() { document.dispatchEvent?.(new Event('studio:recipe')); }
-const i2vModeBlocker = () => selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value)?.execution_block || null;
+function i2vModeBlocker() {
+  const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value);
+  const capacity = selected?.wan_decode_capacity;
+  // Older catalogue responses retain their authored holds. No family/filename guessing.
+  if (!capacity) return mode?.execution_block || null;
+  const unknown = 'Wan decode readiness is unavailable. Reload the recipe before generating.';
+  const limits = capacity.limits, keys = ['width','height','length','batch_size'];
+  if (capacity.version !== 1 || !limits || !Array.isArray(capacity.latents) || !capacity.latents.length
+      || !['max_side','max_pixels','max_frames','batch_size'].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)) return unknown;
+  for (const latent of capacity.latents) {
+    if (!latent?.shape || !Array.isArray(latent.bindings)) return unknown;
+    const shape = {...latent.shape};
+    for (const binding of latent.bindings) {
+      if (!binding || !['frames','width','height'].includes(binding.control) || !keys.includes(binding.input)) return unknown;
+      let value = getControl(binding.control)?.value;
+      // values() omits an empty control; prepare then uses the mode, or the graph literal.
+      if (value === '' || value == null) value = mode?.controls?.[binding.control];
+      if (value != null) shape[binding.input] = (typeof value === 'number' || typeof value === 'string') ? Number(value) : NaN;
+    }
+    if (!keys.every(k => Number.isSafeInteger(shape[k]) && shape[k] > 0)) return unknown;
+    const {width, height, length: frames, batch_size: batch} = shape;
+    if (Math.max(width,height) > limits.max_side || width*height > limits.max_pixels || frames > limits.max_frames || batch !== limits.batch_size)
+      return `Held: ordinary Wan decode is unproven for ${width}x${height}, ${frames} frames, latent batch ${batch}. Use at most ${limits.max_side}px per side, ${limits.max_pixels} pixels, ${limits.max_frames} frames and latent batch ${limits.batch_size}. Quick diagnostic, Balanced or Short motion study provide smaller starting points. This is a capacity check, not a quality guarantee.`;
+  }
+  return null;
+}
 function applyI2VMode(id, notify=true) {
   const spec = selected?.i2v_modes?.find(mode => mode.id === id);
   if (!spec) return;
@@ -97,6 +122,8 @@ function renderPresets() {
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
   const modeBlock = i2vModeBlocker();
+  const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value), note = $('#i2vModeNote');
+  if (note && mode) note.textContent = [modeBlock, mode.description, mode.warning].filter(Boolean).join(' ');
   $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || !!modeBlock || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady()) || continuationBlockers().length > 0;
   $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
@@ -152,7 +179,7 @@ function applyRecipe(recipe) {
   const overrides={...(modeSpec?.controls||{}),...(recipe.controls||{})};
   const controls=continuationState?StudioContinuation.settings(selected,overrides,values()):overrides;
   Object.entries(controls).forEach(([k,v]) => { if(k==='mode')return;const el = k === 'positive' ? $('#positive') : k === 'negative' ? $('#negative') : getControl(k); if (el) el.value = v; });
-  $('#batch').value = recipe.batch_count || 1; updateLoraHints();
+  $('#batch').value = recipe.batch_count || 1; updateLoraHints(); updateReady();
   const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
   $('#recipeNotes').innerHTML = describeRecipe(recipe) + (continuationState ? '<p>Only the setup changed. Your source and wording are retained; the recorded execution used the original example, not this image.</p>' : '');
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
@@ -333,7 +360,7 @@ function applySaved(s){
     if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
     else if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
   }
-  $('#batch').value=s.batch_count||s.batch||1;message('Recipe loaded. Review the settings before generating.'); recipeChanged();
+  $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
 function continuationBlockers(){
@@ -365,8 +392,9 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)try{selectPreset(id);}catch(err){message(err.message,true);}};
-$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
-$('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);};
+$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
+$('#controls').oninput=()=>updateReady();
+$('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};
   $('#loraSlots').onchange=updateLoraHints;
   document.addEventListener('input',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('change',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
