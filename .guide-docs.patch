@@ -1,0 +1,160 @@
+diff --git a/docs/workflow-studio/EVIDENCE-GUIDES.md b/docs/workflow-studio/EVIDENCE-GUIDES.md
+new file mode 100644
+index 0000000..47faeef
+--- /dev/null
++++ b/docs/workflow-studio/EVIDENCE-GUIDES.md
+@@ -0,0 +1,103 @@
++# Evidence-aware guided paths
++
++Continuation of #118, 13 September 2026. This builds on the existing opt-in coach,
++not another navigation shell, queue or execution controller. Initial source was
++main `aebe10c58c7fa3ce8f89276740096eaf98c2cc20`, including merged #156/#157/#160/#161.
++The separate source-continuation work (#164) owns reference handoff mutations;
++this guide reads the workbench without replacing that mechanism.
++
++## Use it
++
++Open **Guided workflows**, choose a path, and start or resume it. The existing
++seven paths remain: first image, character/reference editing, comparisons, scenes,
++game assets, node workflows and headless agents. **Show the control** looks again
++at the current tool, including controls that appeared after selecting a recipe.
++It focuses the control without activating it. Reference steps support either the
++role board or the ordinary first/last reference controls, as appropriate.
++
++**Check this step** observes a prerequisite. It never presses Generate, uploads a
++file, switches environments, installs resources, saves a workflow or accepts art.
++The result has both a text label and a distinct presentation:
++
++| Label | Meaning |
++| --- | --- |
++| Observed | This specific prerequisite has current supporting evidence. |
++| Needs attention | A required selection/value/result is absent or a known blocker exists. |
++| Not known | Not checked, changed during a check, unavailable or unsupported evidence. |
++| Your decision | A human judgment or a step with no automatic evidence predicate. |
++
++For output/review steps, explicitly choose the run being inspected. The list shows
++up to 200 recent runs and labels that bound; the guide never guesses that the
++latest job belongs to the current task. A retained selection can be checked again
++on resume. A completed job without output records is not treated as a produced
++asset. A partial/failed run with outputs can have useful output evidence without
++being presented as successful inference.
++
++Review checks join each output's asset ID to its unique matching Workspace job
++record. `selected`, `needs_work` and `rejected` are all recorded decisions;
++`unreviewed` is not. **Recording review is not creative acceptance.** The coach
++never changes any of these values or interprets licensing decisions.
++
++## Architecture and contracts
++
++`studio_workflow/guides.py` publishes version 2 with stable per-path stage IDs,
++read-only predicate names and feature-owned target IDs. Old numeric-step links
++remain supported. New navigation/resume links carry both forms. The manifest
++copies shared steps before assigning IDs and never mutates a shared definition.
++Resume stores only path position and an explicitly chosen run identity, not prompt
++text, drafts, successful evidence or approval.
++
++`studio-guide-state.js` is a pure predicate/target/route module. `studio-guide.js`
++collects fresh snapshots on explicit checks. Its only startup request is GET of
++the guide manifest. Network observations use the existing GET health, backend,
++job and Workspace routes. These existing backend routes may perform their normal
++readiness probes; the coach has no direct ComfyUI connection. There are no new
++server endpoints, executors, stores or automatic polling loops.
++
++Readiness requires explicit online, worker, schema and dependency data and matching
++observed backend/endpoint identities. A timeout, malformed or incomplete reply is
++unknown, never ready. The result explicitly does not certify memory fit, custom
++validation or output quality. Final runtime admission remains authoritative.
++
++A selected local file is distinguished from a staged filename; masks need their
++existing dedicated validation, not an inferred pass. The graph coach reads the
++builder's frozen `authoringStatus()` projection of existing current connection
++checks; edits or schema changes invalidate those checks as before. Saved-state
++coaching reads the existing shared-document binding, including dirty, pending and
++conflict states. It does not save or run automatically.
++
++Epochs plus local snapshot equality discard delayed results after recipe, input,
++run selection, schema or shared-document changes. Navigation/source text is data,
++rendered using textContent. Targets are same-document visible IDs; route links are
++restricted to the existing local tools. Checks have a ten-second abort deadline
++and a 2 MiB post-read display bound; this is not a streaming network-byte limit.
++Pause aborts owned reads, removes listeners/highlights and retains position only.
++
++## Verification and release limits
++
++- `python -m unittest discover -s tests -p test_studio_guide.py -v`: manifest
++  version/stage/feature-anchor audit plus 22 Node evidence-rule contracts.
++- `python tests/studio_guide_browser.py --out .runtime/guide-proof`: actual Studio
++  pages/scripts/styles on the existing synthetic HTTP fixture, all seven paths,
++  delayed target discovery, HTTP failures, changed inputs, explicit run selection,
++  human review, graph-check invalidation, keyboard navigation, resume, 390px and
++  200% zoom. The fixture never exposes a real Comfy runtime.
++- `Guided journey browser` CI installs test-only pinned Playwright and uses native
++  HTTP/localStorage. The source environment blocks localhost browser navigation;
++  no local native-browser pass is claimed. Read the recorded hosted result.
++- The full unittest suite and repository validator remain separate gates. A
++  browser fixture is neither an owner-run creative journey nor inference evidence.
++
++No owner settings, models, downloads, queues or HUMAN_TODO values are changed.
++Intent-to-recipe recommendations, mask geometry, comparison/scene/export-specific
++completion predicates and an owner-run journey remain #118 work. Manual stages
++say so; there is no overall automatic "completed" badge or hidden action.
++
++## Primary-source research
++
++[W3C status messages](https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html),
++inspected 13 September 2026, informs the polite status region and separate explicit
++focus action. Status changes do not themselves move focus. Reduced-motion and
++forced-colour treatment extend the existing coach styling rather than introducing
++an animated/modal tour. These implementation choices are not a claim of full WCAG
++conformance or a completed assistive-technology audit.
+diff --git a/studio_workflow/guides.py b/studio_workflow/guides.py
+index 30cb171..e639256 100644
+--- a/studio_workflow/guides.py
++++ b/studio_workflow/guides.py
+@@ -6,2 +6,17 @@ def step(title, detail, route, target=None):
+ 
++# Stable stage IDs and read-only predicates. IDs survive copy/ordering changes;
++# the target IDs remain owned by the existing feature markup, not a second router.
++STAGES = {
++    'first-image': [('recipe', 'recipe'), ('wording', 'prompt'), ('settings', 'manual'),
++                    ('readiness', 'readiness'), ('output', 'output'), ('review', 'review')],
++    'reference-edit': [('mechanism', 'reference_recipe'), ('sources', 'references'), ('wording', 'prompt'),
++                       ('readiness', 'readiness'), ('output', 'output'), ('review', 'review')],
++    'compare': [('baseline', 'recipe'), ('budget', 'manual'), ('inspect', 'manual'), ('decision', 'manual')],
++    'scene': [('sources', 'selection'), ('scene', 'manual'), ('voice', 'manual'), ('review', 'manual')],
++    'game-assets': [('target', 'manual'), ('sources', 'selection'), ('export', 'manual'), ('engine', 'manual')],
++    'workflow': [('nodes', 'schema'), ('connections', 'manual'), ('check', 'graph_check'), ('save', 'saved'), ('run', 'manual')],
++    'agents': [('service', 'manual'), ('prepare', 'manual'), ('approve', 'manual'), ('observe', 'manual')],
++}
++
++
+ def guides():
+@@ -41,3 +56,3 @@ def guides():
+         ]),
+-        dict(id='workflow', title='Build my own node workflow', summary='Installed nodes → typed connections → checked API export.', steps=[
++        dict(id='workflow', title='Build my own node workflow', summary='Installed nodes → Steps or Nodes → save → review a compatible run.', steps=[
+             step('Load the installed node catalog', 'Workflow Studio reads the active backend’s node definitions. Search and add nodes, or import an API-format graph. Loading a catalog never runs a graph.', '/workflow-studio.html#builder', '#nodeSearch'),
+@@ -45,3 +60,4 @@ def guides():
+             step('Select outputs and check the graph', 'Compilation includes only selected output closures, retaining disconnected drafts in the document. Errors identify nodes and inputs. This is structural checking, not ComfyUI runtime validation.', '/workflow-studio.html#builder', '#compileWorkflow'),
+-            step('Save and hand off', 'Save the Studio document for further editing or export the checked API graph. This first slice does not submit arbitrary edited graphs. Native custom widgets and visual/subgraph import remain explicit adapter work.', '/workflow-studio.html#builder', '#exportGraph'),
++            step('Save the exact workflow', 'Use Save to Workspace to share a revision with agents. Resolve pending saves or unsaved edits before preparing a run. Exporting an API graph does not authorize execution.', '/workflow-studio.html#builder', '#saveSharedWorkflow'),
++            step('Prepare, review and run separately', 'For a supported registered image recipe, use Prepare saved revision and review its exact source and controls. Run / recover original uses that saved ticket, not later edits. History is shared with agents. References and arbitrary rewiring still need later execution adapters.', '/workflow-studio.html#builder', '#prepareSavedRun'),
+         ]),
+@@ -49,4 +65,4 @@ def guides():
+             step('Start the existing Studio server', 'Use python app/server.py --repo-root . on the configured machine. This starts the existing local service without opening a browser; keep its single worker and configured environments.', '/workflow-studio.html#agents', '#agentCommands'),
+-            step('Discover and prepare', 'Use python -m studio_workflow capabilities, catalog and prepare --recipe recipe.json --out ticket.json. Preparation pins a registered recipe and checks its current bindings. It may stage local reference copies, but submits no model job.', '/workflow-studio.html#agents', '#agentCommands'),
+-            step('Approve the exact ticket', 'Use run --ticket ticket.json --approve. The same retained ticket maps to the same job, including uncertain jobs. A new ticket is a new intentional attempt; do not create one to work around an unknown outcome.', '/workflow-studio.html#agents', '#agentCommands'),
++            step('Discover and prepare', 'Use python -m studio_workflow capabilities and documents list. The runs prepare command takes a saved document ID, expected revision, preset and retained request ID. Alternatively prepare a registered recipe file. Neither path executes it.', '/workflow-studio.html#agents', '#agentCommands'),
++            step('Approve the exact ticket', 'Use runs review PREPARATION_ID, then runs run with the approved record and ticket hashes and --approve. This keeps exact tickets on the server. MCP exposes the same operations. A new preparation is not recovery from an uncertain job.', '/workflow-studio.html#agents', '#agentCommands'),
+             step('Observe; never blindly retry', 'Use status JOB_ID or wait JOB_ID. Transport failure after submission means unknown, not failed. Inspect the same ticket/job and retain evidence. Existing recovery and resource limitations remain visible.', '/workflow-studio.html#agents', '#agentCommands'),
+@@ -54,3 +70,9 @@ def guides():
+     ]
+-    return {'version': 1, 'guides': items, 'generation_submitted': False,
++    for guide in items:
++        assert len(guide['steps']) == len(STAGES[guide['id']])
++        # common steps are shared above; copy before assigning per-guide stages.
++        guide['steps'] = [dict(item, id=stage_id, check=check) for item, (stage_id, check)
++                          in zip(guide['steps'], STAGES[guide['id']])]
++    next(g for g in items if g['id'] == 'reference-edit')['steps'][1]['alternatives'] = ['#referenceWrap', '#lastReferenceWrap']
++    return {'version': 2, 'guides': items, 'generation_submitted': False,
+             'progress_semantics': 'Navigation progress is self-reported, not evidence that a task completed.'}
