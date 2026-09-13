@@ -2,6 +2,7 @@
 import sqlite3
 from urllib.parse import urlsplit
 from .core import decode, need
+from .commands import apply_commands, fields
 from .documents import WorkflowDocuments, DocumentError
 
 PREFIX = '/api/workflow-studio/documents'
@@ -20,6 +21,10 @@ def route(path, value, studio):
     parsed = urlsplit(path)
     need(not parsed.query and not parsed.fragment, 'Document routes do not accept query parameters')
     path = parsed.path
+    if path == PREFIX + '/reduce':
+        fields(value, ('document', 'commands'))
+        return {'document': apply_commands(value['document'], value['commands']),
+                'committed': False, 'generation_submitted': False}
     if path == PREFIX:
         return store(studio).list() if value is None else store(studio).create(value)
     need(path.startswith(PREFIX + '/'), 'Unknown document route')
