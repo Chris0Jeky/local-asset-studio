@@ -19,7 +19,11 @@ jobs:
           p = json.loads(pathlib.Path('continuation-delivery.json').read_text())
           assert p['branch'] in ('codex/saved-run-hash-dispatch', 'codex/saved-run-history-ui')
           assert re.fullmatch('[0-9a-f]{40}', p['base'])
-          raw = gzip.decompress(base64.b64decode(p['patch_gzip_base64'], validate=True))
+          chunks = p.get('patch_chunks', [])
+          assert len(chunks) <= 12
+          assert all(re.fullmatch(r'continuation-chunk-[a-z0-9-]+\.txt', n) for n in chunks)
+          encoded = ''.join(pathlib.Path(n).read_text().strip() for n in chunks) if chunks else p['patch_gzip_base64']
+          raw = gzip.decompress(base64.b64decode(encoded, validate=True))
           assert hashlib.sha256(raw).hexdigest() == p['patch_sha256']
           patch = pathlib.Path('/tmp/continuation.patch'); patch.write_bytes(raw)
           git('fetch', '--depth=1', 'origin', p['base'])
