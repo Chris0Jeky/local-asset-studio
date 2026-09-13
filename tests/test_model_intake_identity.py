@@ -27,6 +27,17 @@ class IntakeIdentityTests(unittest.TestCase):
 
     def assert_source(self):self.assertEqual(self.source.read_bytes(), self.body)
 
+    def test_unresolved_temp_path_uses_the_model_library_canonical_destination(self):
+        # tempfile may return RUNNER~1 on Windows; ModelLibrary resolves runneradmin.
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw); comfy = root/'comfy'
+            source = root/'source.safetensors'; source.write_bytes(self.body)
+            target = intake.target_path(comfy, 'loras', 'demo.safetensors')
+            self.assertEqual(target, (comfy/'models/loras/demo.safetensors').resolve())
+            record = intake.import_candidate(root, comfy, source, 'loras', 'demo.safetensors',
+                                             intake.source_snapshot(source), 'operator-selected')
+            self.assertEqual(record['path'], str(target)); self.assertEqual(source.read_bytes(), self.body)
+
     def test_source_snapshot_uses_descriptor_timestamps_not_path_ctime(self):
         # This pins the Windows 3.12 stat/fstat ctime divergence on every platform.
         value = os.stat(self.source)

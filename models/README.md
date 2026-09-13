@@ -207,8 +207,17 @@ against the installed file. **koukouya was installed on 12 September 2026** with
 | --- | --- |
 | `python scripts/fetch-hf.py --repo <owner/name> --path <file> [--dest-folder loras] [--name <file>] [--dry-run]` | Hugging Face file, verified against the LFS oid in the repository tree |
 | `python scripts/civitai-fetch.py --version-id <id> [--file-id <id>] [--dry-run]` | civitai model version, verified against the listed SHA-256; token from `$CIVITAI_API_TOKEN` only |
-| `python scripts/intake-downloads.py [--from <dir>] [--dest-folder <folder>] [--dry-run]` | Sort finished browser downloads into the right model folder by safetensors header |
+| `python scripts/intake-downloads.py [--from <dir>] [--dest-folder <folder>] [--dry-run]` | Inspect model-role hints and copy reviewed browser downloads; retain originals |
 
-All three refuse to overwrite an existing destination, keep a failed transfer as a `.part` file, append a
-receipt to `.runtime/downloads/receipts.json` and print a `library.json` stub to paste in. A moved browser
-download has no source checksum, so its receipt records `verified: false` — fill in the provenance by hand.
+The HF/Civitai acquisition scripts retain failed `.part` transfers, append receipts to
+`.runtime/downloads/receipts.json` and print a `library.json` stub. Browser intake instead **copies, not
+moves**: the original remains in place and each operation records its intent, staged hash and publication
+state in `.runtime/downloads/intake/<operation-id>.json`. It reuses the pinned installer's lease and
+no-clobber publisher; a racing destination and failed partial copy are preserved. The other acquisition
+scripts are not made lease-aware by this change, so do not run competing writers.
+
+Unknown header roles are skipped before copying. `--dest-folder` is an explicit whole-batch override,
+not evidence of model identity or compatibility. Browser receipts retain `verified: false`,
+`expected_sha256: null` and `runtime_compatible: null`; an observed local hash is not source verification.
+Budget a full independent copy plus 20 GiB headroom. Inspect the per-operation journal after an interruption,
+and handle source cleanup separately. See [the intake and recovery guide](../docs/MODEL-INTAKE.md).

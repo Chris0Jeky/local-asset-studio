@@ -50,11 +50,17 @@ header inspection + stat identity
   -> persisted copied receipt; browser original remains
 ```
 
-A regular source's identity includes device, inode, size, modification time and change
-time (`st_ctime` is still creation time on Windows/Python 3.12). It is sampled around header classification, checked on the opened descriptor,
-checked after copying and again before publication. Symlinks and Windows junctions
-are rejected before resolving paths away. Model names use the existing portable path
-rules and supported-folder registry. These are observed-path interlocks against
+A regular source's identity includes device, inode, size, modification time and the
+ctime field from **os.fstat**, consistently obtained through an open descriptor. The
+receipt explicitly records `source_identity_api: os.fstat`. Windows/Python 3.12.10 CI
+showed that path stat's ctime can be creation time while fstat's is change time; mixing
+those APIs falsely rejected an unchanged file. The fix preserves the field and uses
+one API, rather than dropping or tolerating changed timestamps. Identity is sampled
+around header classification, checked on the copying descriptor, checked after copying
+and again before publication. Symlinks and Windows junctions
+are rejected before resolving paths away. The checked destination is then canonicalised
+to match ModelLibrary, including Windows short-path aliases such as RUNNER~1. Model
+names use the existing portable path rules and supported-folder registry. These are observed-path interlocks against
 ordinary mistakes and competing writes, not a sandbox against a hostile local process
 continually replacing ancestor directories after a check.
 
@@ -133,3 +139,26 @@ already-reviewed no-clobber helper instead of assuming `move` is exclusive publi
 No owner's downloads/models were touched, no GPU or native application ran, and no
 system configuration changed. HUMAN_TODO choices remain answered and untouched; the
 recorded owner-controlled Windows restart is not performed or authorized by this work.
+
+### Windows compatibility checks
+
+The first dedicated Windows run caught an actual stat/fstat ctime mismatch, not a
+failed model or weak assertion. Diagnostic run 34731218739 recorded identical device,
+inode, size and mtime with ctime values 1789263790055008600 (path) and
+1789263790057019300 (descriptor). The source API is now consistently os.fstat. The
+[CPython 3.12.10 file-information implementation](https://github.com/python/cpython/blob/v3.12.10/Python/fileutils.c)
+reads both CreationTime and ChangeTime; the pre-fix code should not compare the different
+public API projections as if they meant the same thing.
+
+At commit `6f4ad2dbc6c76465f8fc07ca96f46e787742ae1c`, all 35 publication tests (one
+cross-device skip), three new identity tests and the 15 role tests passed on Windows,
+including real junction rejection and the restored-mtime mutation case. The same run
+then exposed the legacy helper's required canonical destination: RUNNER~1 must resolve
+to the same path ModelLibrary uses. Canonicalisation now happens only **after** lexical
+link/junction rejection; the existing path-safety tests remain intact. A fourth identity
+test exercises the unresolved tempfile root through actual copying.
+
+Current focused local suite: **54 tests, 53 passed / one Windows-only skip**. Four are
+new identity/canonical-path regressions in addition to the 35 publication cases. The
+latest hosted run, linked on the PR, is the authority for the final Windows and full
+repository results. The earlier failed runs are retained rather than hidden.

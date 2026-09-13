@@ -49,7 +49,8 @@ def target_path(comfy_root, folder, name):
     if folder not in FOLDERS:raise ValueError('Unsupported destination folder')
     relative = relative_model_path(folder + '/' + name)
     if len(relative.parts) != 2 or relative.suffix != '.safetensors':raise ValueError('Expected one safetensors basename')
-    return plain_path(Path(comfy_root).absolute() / 'models' / relative)
+    # Inspect lexical ancestors before canonicalising Windows short-path aliases.
+    return plain_path(Path(comfy_root).absolute() / 'models' / relative).resolve()
 
 
 def _same_source(path, expected):
