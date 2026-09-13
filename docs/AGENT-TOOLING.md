@@ -66,8 +66,10 @@ runtime rules in `CLAUDE.md`. Both agents follow these rules; they are listed in
   `Stop-ComfyUI.ps1` own the process, and the Studio's own runtime recovery already handles restarts.
   Model installs go through `scripts/fetch-hf.py` or `scripts/civitai-fetch.py` with hash receipts.
 - **Generations belong in the Studio** (`http://127.0.0.1:8191`, or the Workflow Studio agent commands)
-  so the job record, exact graph and prompt ID are retained under `experiments/runs/`. Use `run_workflow`
-  only for a deliberate probe that is recorded in `CURRENT_STATE.md` with its prompt ID, and only when the
-  queue is idle and host commit headroom allows it (`docs/RUNTIME-PRECONDITIONS.md`).
-- `partner_generate` spends Comfy Cloud credits; do not call it without an explicit owner instruction.
-- `free_memory` is safe on an idle queue and is the same call the Studio uses; do not use it while a job runs.
+  so the job record, exact graph and prompt ID are retained under the configured experiments root. Do not
+  submit work through `run_workflow`, `run_template`, `generate_image`, `emit_partner_workflow` or
+  `upload_file` against the shared install: they bypass the Studio's evidence trail, its admission gates
+  and its uncertain-submission handling. `partner_generate` additionally spends Comfy Cloud credits.
+- `free_memory` (ComfyUI's `/free`) is not something the Studio calls. It was measured once by hand on an
+  idle queue and is recorded in `docs/RUNTIME-PRECONDITIONS.md` as unreliable on its own; treat it as a
+  manual, idle-queue-only operator action, never part of an agent routine.

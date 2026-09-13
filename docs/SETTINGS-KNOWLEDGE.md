@@ -150,7 +150,7 @@ The knowledge base keys families by the exact `family` strings used in `presets/
 
 `presets/recipes.json` holds 30 saved control sets (13 September 2026), served at `GET /api/recipes` with `available` and
 `missing` annotations computed from the installed LoRA list. Each carries `status` (`executed` or
-`unverified`), `notes`, `sources`, and - for the one executed recipe - an `evidence` block with the prompt ID
+`unverified`), `notes`, `sources`, and - for each executed recipe (nine on 13 September 2026) - an `evidence` block with the prompt ID
 and wall time. Applying a recipe is exactly like applying a variant: it writes the controls, nothing else.
 
 `presets/wildcards/*.txt` are the prompt lists: `medium`, `lighting`, `palette`, `composition`,

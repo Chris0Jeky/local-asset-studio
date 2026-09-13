@@ -13,7 +13,7 @@ the art), licensed (the terms allow the use). Update this page when a goal's sta
 | G3 Character sheets → figures, poses, in-betweens | ~25 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
 | G4 UX that reflects the real work | ~65 % | Workflow-first IA is real and wired to ComfyUI; no task family for sheet/figure/sprite work; review loop barely used (108 of 111 assets unreviewed) |
 | G5 UI that works and feels good | ~50 % | 79 synthetic journeys pass; no native-browser default lane; no owner usability statement on record (HUMAN_TODO q-6 asks) |
-| G6 Modular workflow editing in the Studio | ~55 % | Revisioned documents, Steps, bundles, agent parity exist; edited graphs are not runnable by design (#122); dynamic ComfyUI inputs were mis-read (fixed 14 Sep) |
+| G6 Modular workflow editing in the Studio | ~55 % | Revisioned documents, Steps, bundles, agent parity exist; edited graphs are not runnable by design (#122); dynamic ComfyUI inputs were mis-read (fixed in PR #262) |
 | G7 Everything else | ~40 % | Runtime resilience strongest; video/Wan and voice weakest; #77/#89 crash root causes still open |
 
 ## G1 — Workflows that genuinely work
@@ -36,7 +36,7 @@ the canonical control died in VAEDecode after 995 s of sampling; only the synthe
 ([WAN-DECODE-CAPACITY.md](WAN-DECODE-CAPACITY.md)). 27 presets have never produced a completed job, including every
 masked-repair and most detail-pass variants.
 
-**Fixed 13–14 September.** The `verified` flag is now auditable: every verified preset carries an execution note and
+**Fixed in PR #263.** The `verified` flag is now auditable: every verified preset carries an execution note and
 the validator enforces it; `flux`, `sdxl` and `sdxl-variation` were flagged without any recorded run and are now
 `verified: false`. Seven presets have completed live jobs but stay unverified because no inspection was written
 (`anime-refine`, `anime-complete`, `lineani-environment`, `cinematic-lighting-*`, `qwen-1ref`, `wan22-i2v`).
@@ -96,7 +96,7 @@ issues: #16, #36, #37, #38, #204.
 
 **Measured.** 79 synthetic Playwright journeys pass at 1440 px and 390 px; PR #211's native reload lane ran 19/19 in CI;
 read polling is bounded and visibility-aware; the frontend reviewer found no dangling handlers, no missing endpoints,
-no page-load submission and no double-submit path. Two real defects were found and fixed on 14 September: a recipe
+no page-load submission and no double-submit path. Two real defects were found and fixed in PR #262: a recipe
 swap during a reference upload could submit the wrong recipe, and a mid-upload slot change discarded the upload
 silently. **Unmeasured.** Native-browser default lane; owner's own usability opinion. No open issue owns UI quality.
 
@@ -105,7 +105,7 @@ silently. **Unmeasured.** Native-browser default lane; owner's own usability opi
 **Real.** Revisioned documents with CAS receipts, named Steps, guided paths, the Bundle Explorer with tuning, and
 SDK/CLI/MCP parity over one command vocabulary; six saved documents exist, one reopened at revision 3 with 1,224 nodes.
 **Blocking limitation.** An edited graph cannot run: the executor accepts only registered recipes with the 22 projected
-scalar/LoRA fields, and native visual-workflow import is refused by design. **Fixed 14 September.** The installed-node
+scalar/LoRA fields, and native visual-workflow import is refused by design. **Fixed in PR #262.** The installed-node
 schema mis-read every V3 dynamic input (`COMFY_DYNAMICCOMBO_V3`, `COMFY_AUTOGROW_V3`, `COMFY_MATCHTYPE_V3`; 50 inputs
 across 39 installed classes) as a plain socket, so the repo's own video presets could never pass "Check connections";
 they now report "native adapter needed" honestly. **Next slice.** The narrowest widening of #122: run a saved document

@@ -35,10 +35,10 @@ with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026
 | `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
-Use the `discover -s tests -p` form by default: 48 of the 126 test modules (measured 13 Sep 2026) import a sibling
-unqualified, so `python -m unittest tests.<name>` dies on import for them (every `test_workflow_*`, `test_asset_*`,
-`test_mixed_batch*`, `test_wan_*`, `test_engine_*`, `test_character_*`, plus `test_production`, `test_backends`,
-`test_review_desk`, `test_review_http`, `test_av_projects`). Eight `app/` modules have no same-named test file:
+Use the `discover -s tests -p` form by default: any module that imports a sibling test or fixture unqualified
+(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`; measured
+14 Sep 2026 that is 49 of 130 modules, including `test_production`, `test_backends`, `test_review_desk`,
+`test_voice_baseline`, `test_failed_job_timing` and part of each `test_workflow_*`/`test_character_*` family. Eight `app/` modules have no same-named test file:
 `articulated.py` → `test_articulated_operation`, `backend_contracts.py` → `test_backend_safety`, `download_contracts.py` →
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
