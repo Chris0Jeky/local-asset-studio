@@ -4,37 +4,97 @@ on:
     branches: [codex/chronology-next-snapshot]
     paths: [.github/workflows/chronology-next-snapshot.yml]
 permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+  contents: write
 jobs:
-  snapshot:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Capture newer main and overlap evidence
+          ref: codex/mixed-batch-recovery
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact source identities without overwriting concurrent work
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/chronology
-          git bundle create /tmp/chronology/source.bundle refs/remotes/origin/main ^268fc8fa4803374878c976c8af859f0200e1d155
+          mkdir -p /tmp/mixed-publication
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python - <<'PY'
-          import json,os,pathlib,subprocess,urllib.request
-          def get(path):
-              req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/'+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
-          pulls=get('pulls?state=open&per_page=100')
-          data={'main':subprocess.check_output(['git','rev-parse','origin/main'],text=True).strip(),'open_prs':[{'number':p['number'],'title':p['title'],'head':p['head']['sha'],'files':[f['filename'] for f in get('pulls/'+str(p['number'])+'/files?per_page=100')]} for p in pulls], 'issue187':get('issues/187')}
-          pathlib.Path('/tmp/chronology/integration.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
-          print('Main',data['main'])
-          print('Open PRs',data['open_prs'])
+          import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          assert git('rev-parse','HEAD')=='34f5b95746478b1292f3fc9cc35d77ee8358ed3b', 'Branch changed; reconcile first'
+          chunks=[]
+          for sha in ('0b404d73456c848112e9cf45ceb512588f966656','396fd81664c5c017d535923233320b0eb2f18c29'):
+              req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
+              data=base64.b64decode(blob['content'])
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+              chunks.append(data)
+          archive=b''.join(chunks)
+          assert hashlib.sha256(archive).hexdigest()=='19b487b469bbbd76c33cd172c6b774dc1dcfed3003a0eca4b4d53dfe5e1474bb'
+          package=json.loads(lzma.decompress(archive))
+          assert package['base']=='f1283853bbc918ee5d93161a25bf92fcb3596640'
+          subprocess.run(['git','merge-base','--is-ancestor',package['base'],'HEAD'],check=True)
+          assert git('rev-parse','HEAD^{tree}')==package['before_tree']=='ba64ac6c252f00178d2e9679dabd3293e1716281'
+          assert git('rev-parse','HEAD:.github/workflows/production-storage.yml')==package['ci_blob']=='3c49383cb0ec1fefac5af2da33cfbc4d5b3fa9fa'
+          allowed={'app/mixed_batch.py','app/production.py','app/server.py','app/static/app.js','app/static/production.js','docs/reconciliation/2026-09-13-mixed-batch-recovery.md','tests/mixed_batch_browser.py','tests/mixed_batch_frontend.cjs','tests/test_mixed_batch.py','tests/test_mixed_batch_http.py'}
+          assert set(package['manifest'])==allowed
+          for name,record in package['manifest'].items():
+              before=record['before_blob']
+              if before is None:assert not pathlib.Path(name).exists(),name
+              else:assert git('rev-parse','HEAD:'+name)==before,name
+          root=pathlib.Path('/tmp/mixed-publication')
+          patch=root/'source.patch';patch.write_text(package['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          assert set(git('diff','--cached','--name-only').splitlines())==allowed
+          for name,record in package['manifest'].items():
+              assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==record['sha256'],name
+          assert git('write-tree')==package['after_tree']=='c45d6c3939887955d06eed8cecd121dfb11fd04a'
+          (root/'manifest.json').write_text(json.dumps({k:v for k,v in package.items() if k!='patch'},indent=2),encoding='utf-8')
+          print('Exact ten source files and tested integrated tree verified.')
           PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Full suite and repository validation
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/mixed-publication/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/mixed-publication/validation.log
+          node tests/mixed_batch_frontend.cjs
+          node --check app/static/app.js
+          node --check app/static/production.js
+          git diff --cached --check
+          git diff --exit-code
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Verify the real browser recovery path
+        run: |
+          set -o pipefail
+          python tests/mixed_batch_browser.py --out /tmp/mixed-publication/browser 2>&1 | tee /tmp/mixed-publication/browser.log
+      - name: Publish only after all verification
+        run: |
+          test "$(git write-tree)" = 'c45d6c3939887955d06eed8cecd121dfb11fd04a'
+          git diff --exit-code
+          git commit -m 'fix: recover mixed batches without replaying unknown submissions (#187)'
+          git push origin HEAD:codex/mixed-batch-recovery
+          git rev-parse HEAD | tee /tmp/mixed-publication/published-commit.txt
+          git rev-parse HEAD^{tree} | tee /tmp/mixed-publication/published-tree.txt
+      - name: Retain source status
+        if: always()
+        run: git status --short > /tmp/mixed-publication/status.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: chronology-main-integration
-          path: /tmp/chronology/
-          retention-days: 3
+          name: mixed-batch-publication-proof
+          path: /tmp/mixed-publication/
+          retention-days: 7
