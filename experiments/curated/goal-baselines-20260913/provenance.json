@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "kind": "goal_baseline_curation",
+  "observed_at": "2026-09-13",
+  "source": {
+    "experiments_root": "C:/Users/jekyt/source/local-asset-studio/experiments",
+    "repository_head_at_reconciliation": "6dbcaa7b8be5acc600a991aab520dd6b30639f0e",
+    "recipe_format": "external run recipe.json; UTF-8 JSON"
+  },
+  "baselines": [
+    {
+      "id": "cstati-v3-base",
+      "preset_id": "cstati-v3-baseline",
+      "source_run": "runs/0b245661-1de8-4574-9f57-a51bb4bbdc6c",
+      "job_id": "0b245661-1de8-4574-9f57-a51bb4bbdc6c",
+      "prompt_id": "f0349550-e7f8-4d14-91ad-aad2ef799c92",
+      "recipe_sha256": "d68207982e2d97de87cffc5194666ee229447e2c41119ae798e94e647839506c",
+      "model": "cstatiANIMEV30XL_v30.safetensors",
+      "controls": {
+        "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091301,
+        "steps": 30,
+        "cfg": 4.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora": 0,
+        "lora2": 0
+      },
+      "output": {
+        "filename": "CSTati-v3-Baseline_00001_.png",
+        "bytes": 1182574,
+        "sha256": "80dbf7f7140fbcc122b70a88a02b72c927a9803fae81b2dd1cb57fc6b910b13d",
+        "status": "completed",
+        "elapsed_seconds": 28.16029953956604
+      },
+      "workflow": {
+        "path": "cstati-v3-base/workflow.json",
+        "sha256": "77a8a472260f45171ebcf90f6e2bcd87ba818e4bd9a11affa86f95814ffc1f1c"
+      },
+      "recipe": {
+        "path": "cstati-v3-base/recipe.json",
+        "sha256": "d68207982e2d97de87cffc5194666ee229447e2c41119ae798e94e647839506c"
+      },
+      "backend": {
+        "id": "primary",
+        "comfyui_version": "0.35.0",
+        "python_version": "3.12.10",
+        "pytorch_version": "2.9.1+rocm7.2.1",
+        "device": "cuda:0 AMD Radeon RX 9070 XT : native",
+        "model_hash_verification": "full file, after generation, 2026-09-13"
+      },
+      "model_files": [
+        {
+          "file": "checkpoints/cstatiANIMEV30XL_v30.safetensors",
+          "bytes": 6938040946,
+          "sha256": "98282084f1910797f93986bee5066dca3e3eee45ad9c357bc918171eb698dbef"
+        }
+      ]
+    },
+    {
+      "id": "yumeflux-ilv1-base",
+      "preset_id": "yumeflux-ilv1-baseline",
+      "source_run": "runs/4403908b-bedb-489d-a9ce-9f19e6136bab",
+      "job_id": "4403908b-bedb-489d-a9ce-9f19e6136bab",
+      "prompt_id": "e0dd0159-dc25-4b64-8833-2d18fd6158ae",
+      "recipe_sha256": "bebc4131a9decd7b9f5d5374119305a953669ed7e7c988b28d497fbf6483ed57",
+      "model": "yumefluxXLIllustrious_ilV10.safetensors",
+      "controls": {
+        "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091301,
+        "steps": 30,
+        "cfg": 4.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora": 0,
+        "lora2": 0
+      },
+      "output": {
+        "filename": "YumeFlux-ILv1-Baseline_00001_.png",
+        "bytes": 1209236,
+        "sha256": "f4b1c8fc07baae54f56ed051059c8682202c13407df9a1ef808b3a8f01d99d83",
+        "status": "completed",
+        "elapsed_seconds": 32.23714065551758
+      },
+      "workflow": {
+        "path": "yumeflux-ilv1-base/workflow.json",
+        "sha256": "5d1a80b032ddef8997cd7504bcc2b748b4cd4ea9da6ab8576bb1577061e0e2eb"
+      },
+      "recipe": {
+        "path": "yumeflux-ilv1-base/recipe.json",
+        "sha256": "bebc4131a9decd7b9f5d5374119305a953669ed7e7c988b28d497fbf6483ed57"
+      },
+      "backend": {
+        "id": "primary",
+        "comfyui_version": "0.35.0",
+        "python_version": "3.12.10",
+        "pytorch_version": "2.9.1+rocm7.2.1",
+        "device": "cuda:0 AMD Radeon RX 9070 XT : native",
+        "model_hash_verification": "full file, after generation, 2026-09-13"
+      },
+      "model_files": [
+        {
+          "file": "checkpoints/yumefluxXLIllustrious_ilV10.safetensors",
+          "bytes": 6938041252,
+          "sha256": "343db6af7af4a641c22e8809fc167ffa1a78dbe59803c2972bd21e9f3a9d8383"
+        }
+      ]
+    },
+    {
+      "id": "janima-v1-base",
+      "preset_id": "janima-v1-baseline",
+      "source_run": "runs/78b5e0a3-5890-413a-ae64-ec0b59235879",
+      "job_id": "78b5e0a3-5890-413a-ae64-ec0b59235879",
+      "prompt_id": "a9b824cc-f8de-4305-9e8e-43fe57567095",
+      "recipe_sha256": "4f75f4c5ec9152ab584c9bdc5ca0f73bb81645a8f67e3e47c32e8d6430ea6416",
+      "model": "JANIMAAnima_v10_2847103.safetensors",
+      "controls": {
+        "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091301,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora": 0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0
+      },
+      "output": {
+        "filename": "JANIMA-v1-Baseline_00001_.png",
+        "bytes": 1149733,
+        "sha256": "7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e",
+        "status": "completed",
+        "elapsed_seconds": 36.2181400594635
+      },
+      "workflow": {
+        "path": "janima-v1-base/workflow.json",
+        "sha256": "bb6a750fb089112819a86cf04be8102e645c136775af0909a0fcef3bec96f719"
+      },
+      "recipe": {
+        "path": "janima-v1-base/recipe.json",
+        "sha256": "4f75f4c5ec9152ab584c9bdc5ca0f73bb81645a8f67e3e47c32e8d6430ea6416"
+      },
+      "backend": {
+        "id": "primary",
+        "comfyui_version": "0.35.0",
+        "python_version": "3.12.10",
+        "pytorch_version": "2.9.1+rocm7.2.1",
+        "device": "cuda:0 AMD Radeon RX 9070 XT : native",
+        "model_hash_verification": "full file, after generation, 2026-09-13"
+      },
+      "model_files": [
+        {
+          "file": "diffusion_models/JANIMAAnima_v10_2847103.safetensors",
+          "bytes": 4182229976,
+          "sha256": "38694ed21a93dd425fd3bf5a8c7a9f15070c1ecf6e5ab5e2138989c334ceea26"
+        },
+        {
+          "file": "text_encoders/qwen_3_06b_base.safetensors",
+          "bytes": 1192135096,
+          "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba"
+        },
+        {
+          "file": "vae/qwen_image_vae.safetensors",
+          "bytes": 253806246,
+          "sha256": "a70580f0213e67967ee9c95f05bb400e8fb08307e017a924bf3441223e023d1f"
+        }
+      ]
+    }
+  ],
+  "inspection": {
+    "reviewer": "coordinator",
+    "summary": "All three existing images were inspected; hand detail and leg/foot overlap remain unresolved.",
+    "selected_count": 0,
+    "human_accepted_count": 0,
+    "art_status": "experiment_only",
+    "license_status": "unverified"
+  },
+  "pilot_accounting": {
+    "attempts_used": 12,
+    "completed_attempts": 11,
+    "selected_cases": 0,
+    "human_accepted_cases": 0,
+    "attempts_remaining": 0
+  },
+  "character_state": {
+    "portrait_follow_up": "uncertain after backend exit; no output and no retry",
+    "boot_edit": "staged only; approval review blocked Start before process creation; no start and no retry"
+  },
+  "limits": [
+    "Output files and raw operational receipts remain external.",
+    "Recipe and output hashes bind this curation to the observed source files; they do not promise a byte-identical rerender.",
+    "Generation completion is separate from visual acceptance, character identity, licensing and production approval."
+  ]
+}
