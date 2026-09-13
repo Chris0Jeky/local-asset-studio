@@ -220,83 +220,138 @@ def receipt_for(plan, receipts, workspace, task_id, paths, reviewer, note):
     return result
 
 
+def _input_descriptor(spec, name):
+    require(isinstance(spec, list) and spec and isinstance(spec[0], (str, list)),
+            'Invalid input descriptor: '+name)
+    require(len(spec) < 2 or isinstance(spec[1], dict), 'Invalid input options: '+name)
+    return spec[0], spec[1] if len(spec) > 1 else {}
+
+
 def expanded_input_contract(contract, live_inputs):
-    """Resolve V3 dynamic-combo branches using ComfyUI's dotted input names."""
+    """Resolve only explicitly selected V3 branches; absent dynamic inputs do not expand.
+
+    Mirrors DynamicCombo._expand_schema_for_dynamic in ComfyUI v0.35.0.
+    Inactive dotted inputs remain unknown, not silently discarded or default-filled.
+    """
+    require(isinstance(contract, dict) and isinstance(live_inputs, dict), 'Invalid node input contract')
     fields, required = {}, set()
     def visit(inputs, prefix='', depth=0):
         require(depth <= 8, 'Dynamic input nesting exceeds eight levels')
+        require(isinstance(inputs, dict), 'Invalid dynamic input contract: '+prefix)
         for group in ('required', 'optional'):
-            for name, spec in inputs.get(group, {}).items():
-                key = prefix + name
-                fields[key] = spec
-                if group == 'required': required.add(key)
-                if spec[0] == 'COMFY_DYNAMICCOMBO_V3':
-                    options = spec[1].get('options', [])
-                    selected = next((o for o in options if o['key'] == live_inputs.get(key)), None)
+            entries = inputs.get(group, {})
+            require(isinstance(entries, dict), 'Invalid input group: '+group)
+            for name, spec in entries.items():
+                text(name, 'input name'); key = prefix + name
+                require(key not in fields, 'Duplicate expanded input: '+key)
+                kind, options = _input_descriptor(spec, key)
+                if kind == 'COMFY_DYNAMICCOMBO_V3':
+                    choices = options.get('options')
+                    require(isinstance(choices, list) and 0 < len(choices) <= 1024,
+                            'Invalid dynamic options: '+key)
+                    require(all(isinstance(o, dict) and isinstance(o.get('key'), str)
+                                and isinstance(o.get('inputs'), dict) for o in choices),
+                            'Invalid dynamic options: '+key)
+                    names = [o['key'] for o in choices]
+                    require(len(set(names)) == len(names), 'Duplicate dynamic option: '+key)
+                    # The native schema omits an unset dynamic selector, including nested
+                    # required selectors (SaveVideo's flat legacy codec is one such case).
+                    if key not in live_inputs: continue
+                    selected = next((o for o in choices if o['key'] == live_inputs[key]), None)
                     require(selected is not None, 'Unknown dynamic input option: '+key)
-                    fields[key] = ['COMBO', dict(spec[1], options=[o['key'] for o in options])]
+                    fields[key] = ['COMBO', dict(options, options=names)]
+                    if group == 'required': required.add(key)
                     visit(selected['inputs'], key+'.', depth+1)
-    visit(contract.get('input', {}))
+                else:
+                    fields[key] = spec
+                    if group == 'required': required.add(key)
+                require(len(fields) <= 4096, 'Expanded input contract exceeds 4096 fields')
+    require(isinstance(contract.get('input'), dict), 'Invalid node input contract')
+    visit(contract['input'])
     return fields, required
+
+
+def socket_types_compatible(received, expected):
+    """JSON socket strings use non-strict union overlap; '*' is Any on either side.
+
+    Python type-operator overrides and runtime MatchType behaviour are not executed.
+    Empty/malformed tokens are not treated as wildcards.
+    """
+    if not isinstance(received, str) or not isinstance(expected, str): return False
+    source = {part.strip() for part in received.split(',')}
+    target = {part.strip() for part in expected.split(',')}
+    if '' in source or '' in target: return False
+    return '*' in source or '*' in target or bool(source & target)
 
 
 def graph_check(graph, info=None):
     require(isinstance(graph, dict) and 0 < len(graph) <= 512, 'Expected bounded API graph')
-    edges = {}
+    require(info is None or isinstance(info, dict), 'Expected object_info mapping')
+    # Validate every source node before following links, regardless of node ordering.
     for key, node in graph.items():
         require(isinstance(key, str) and isinstance(node, dict), 'Invalid node')
         text(node.get('class_type'), 'class_type')
         require(isinstance(node.get('inputs'), dict), 'Missing inputs')
+    edges = {}
+    for key, node in graph.items():
         edges[key] = set()
-        contract = None
-        if info is not None:
-            require(node['class_type'] in info, f"Missing node class: {node['class_type']}")
-            contract = info[node['class_type']]
-            fields, required = expanded_input_contract(contract, node['inputs'])
-            require(required <= set(node['inputs']), 'Missing required input')
-            require(set(node['inputs']) <= set(fields), 'Unknown input (snapshot may be stale)')
-        for name, value in node['inputs'].items():
-            descriptor = fields[name] if info is not None else None
-            expected = descriptor[0] if descriptor else None
-            enum = None
+        try:
+            fields = {}
             if info is not None:
-                require(isinstance(descriptor, list) and descriptor, f'Invalid input descriptor: {name}')
-                require(isinstance(expected, (str, list)), f'Invalid input descriptor: {name}')
-                if isinstance(expected, list):
-                    enum = expected
-                elif expected == 'COMBO':
-                    require(len(descriptor) > 1 and isinstance(descriptor[1], dict),
-                            f'Invalid COMBO enum: {name}')
-                    enum = descriptor[1].get('options')
-                if enum is not None:
+                require(node['class_type'] in info, f"Missing node class: {node['class_type']}")
+                schema = info[node['class_type']]
+                require(isinstance(schema, dict) and isinstance(schema.get('output'), list),
+                        'Invalid node output contract')
+                fields, required = expanded_input_contract(schema, node['inputs'])
+                require(required <= set(node['inputs']), 'Missing required input: '+', '.join(sorted(required-set(node['inputs']))))
+                require(set(node['inputs']) <= set(fields), 'Unknown input (snapshot may be stale): '+', '.join(sorted(set(node['inputs'])-set(fields))))
+            for name, value in node['inputs'].items():
+                text(name, 'input name')
+                expected, options = _input_descriptor(fields[name], name) if info is not None else (None, {})
+                enum = expected if isinstance(expected, list) else options.get('options') if expected == 'COMBO' else None
+                if isinstance(expected, list) or expected == 'COMBO':
                     require(isinstance(enum, list) and enum and all(
                         type(option) in {str, int, float, bool}
                         and (type(option) is not float or math.isfinite(option)) for option in enum),
                         f'Invalid COMBO enum: {name}')
-            if isinstance(value, list):
-                require(len(value) == 2 and isinstance(value[0], str) and type(value[1]) is int
-                        and value[1] >= 0 and value[0] in graph, 'Invalid graph link')
-                edges[key].add(value[0])
-                if info is not None:
-                    source = info.get(graph[value[0]]['class_type'], {})
-                    outputs = source.get('output', [])
-                    require(value[1] < len(outputs), 'Output index out of range')
-                    require(isinstance(expected, str) and (expected == outputs[value[1]] or expected == '*'),
-                            'Linked input type mismatch')
-            else:
-                require(type(value) in {str, int, float, bool}, 'Unsupported literal')
-                require(not isinstance(value, float) or math.isfinite(value), 'Non-finite graph literal')
-                if info is not None:
-                    if enum is not None: require(value in enum, f'Unavailable enum: {name}')
-                    elif expected in {'INT', 'FLOAT', 'STRING', 'BOOLEAN'}:
-                        valid = {'INT': type(value) is int, 'FLOAT': type(value) in {int, float},
-                                 'STRING': isinstance(value, str), 'BOOLEAN': type(value) is bool}
-                        require(valid[expected], f'Literal type mismatch: {name}')
-                        constraints = fields[name][1] if len(fields[name]) > 1 else {}
-                        if expected in {'INT', 'FLOAT'}:
-                            require('min' not in constraints or value >= constraints['min'], 'Below input minimum')
-                            require('max' not in constraints or value <= constraints['max'], 'Above input maximum')
-                    else: raise ValueError(f'Opaque input {name} requires a typed link')
+                if isinstance(value, list):
+                    require(len(value) == 2 and isinstance(value[0], str) and type(value[1]) is int
+                            and value[1] >= 0 and value[0] in graph, 'Invalid graph link: '+name)
+                    edges[key].add(value[0])
+                    if info is not None:
+                        source = info.get(graph[value[0]]['class_type'])
+                        require(isinstance(source, dict), 'Missing source node schema: '+value[0])
+                        outputs = source.get('output', [])
+                        require(isinstance(outputs, list) and value[1] < len(outputs), 'Output index out of range: '+name)
+                        require(options.get('socketless') is not True, 'Socketless input cannot take a link: '+name)
+                        require(socket_types_compatible(outputs[value[1]], expected),
+                                f'Linked input type mismatch: {name} ({outputs[value[1]]!r} -> {expected!r})')
+                else:
+                    require(type(value) in {str, int, float, bool}, 'Unsupported literal: '+name)
+                    require(not isinstance(value, float) or math.isfinite(value), 'Non-finite graph literal: '+name)
+                    if info is not None:
+                        if enum is not None: require(value in enum, f'Unavailable enum: {name} = {value!r}')
+                        elif expected in {'INT', 'FLOAT', 'STRING', 'BOOLEAN'}:
+                            valid = {'INT': type(value) is int, 'FLOAT': type(value) in {int, float},
+                                     'STRING': isinstance(value, str), 'BOOLEAN': type(value) is bool}
+                            require(valid[expected], f'Literal type mismatch: {name}')
+                            if expected in {'INT', 'FLOAT'}:
+                                for bound in ('min', 'max'):
+                                    if bound in options:
+                                        limit = options[bound]
+                                        require(type(limit) in {int, float} and (type(limit) is int or math.isfinite(limit)), 'Invalid numeric bound: '+name)
+                                require('min' not in options or value >= options['min'], 'Below input minimum: '+name)
+                                require('max' not in options or value <= options['max'], 'Above input maximum: '+name)
+                        elif options.get('socketless') is True and type(options.get('default')) in {str, int, float, bool}:
+                            # Explicit widget metadata, never a default on an opaque model socket.
+                            # Only its scalar shape is checked; custom widget semantics stay native.
+                            default = options['default']
+                            valid = type(value) is type(default) or (type(default) is float and type(value) is int)
+                            require(valid, 'Widget literal type mismatch: '+name)
+                            require(type(default) is not float or math.isfinite(default), 'Invalid widget default: '+name)
+                        else: raise ValueError(f'Opaque input {name} requires a typed link or supported socketless widget')
+        except ValueError as exc:
+            raise ValueError(f"Node {key} ({node['class_type']}): {exc}") from exc
     remaining = set(edges); visited = set()
     while remaining:
         ready = {k for k in remaining if edges[k] <= visited}
