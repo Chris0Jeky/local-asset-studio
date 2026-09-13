@@ -1969,5 +1969,331 @@
     "BunnyMid_Ani_v1.safetensors": {
       "family": "JANIMA v1 (Anima)", "label": "BunnyMid Ani v1", "trigger": "@m1d", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2833471?modelVersionId=3197565", "sha256": "a2a83ae3298163e2c66170fd38609c8dcbca95efe58b58ce91cef68e18c95808", "bytes": 138663746, "licence": "Source pinned; installation must be verified separately; licence terms unverified.", "notes": ["JANIMA slot 4. Disabled until a deliberate stack recipe is selected."]
     }
+  },
+  "guidance": {
+    "version": 1,
+    "claims": [
+      {
+        "id": "krea-four-step-comfy",
+        "title": "Four-step accelerator · ComfyUI settings",
+        "runtime": "comfyui",
+        "resources": [
+          {
+            "file": "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+            "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1"
+          },
+          {
+            "file": "loras/krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+            "sha256": "7590b2d2772f45d7b1252124c63918b1b807e93fbf9eab20546fa7233b4dc482"
+          }
+        ],
+        "when": [
+          {
+            "resource": "loras/krea2_turbo_4step_rank_64_lora_comfyui.safetensors",
+            "state": "active"
+          }
+        ],
+        "settings": [
+          {
+            "target": {
+              "control": "steps",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                4
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "cfg",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                1
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "sampler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                "euler"
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "scheduler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                "simple"
+              ]
+            },
+            "tested": null
+          }
+        ],
+        "source": {
+          "kind": "creator_documentation",
+          "locator": "Model card, ComfyUI → Settings; Usage uses a different Diffusers guidance convention.",
+          "url": "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA#comfyui",
+          "revision": null,
+          "retrieved_at": "2026-09-13"
+        },
+        "rationale": "The adapter card gives this ComfyUI starting schedule. Its Diffusers guidance value is not a ComfyUI CFG value. Source advice is not a quality measurement of your prompt or additional style stack.",
+        "review_after": "2026-12-12"
+      },
+      {
+        "id": "krea-unadapted-baseline",
+        "title": "Stock Turbo comparison · no active adapters",
+        "runtime": "comfyui",
+        "resources": [
+          {
+            "file": "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+            "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1"
+          }
+        ],
+        "when": [
+          {
+            "adapters": "none_active"
+          }
+        ],
+        "settings": [
+          {
+            "target": {
+              "control": "steps",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                8
+              ]
+            },
+            "tested": null
+          }
+        ],
+        "source": {
+          "kind": "creator_documentation",
+          "locator": "Model card, ComfyUI → Settings; Usage uses a different Diffusers guidance convention.",
+          "url": "https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA#comfyui",
+          "revision": null,
+          "retrieved_at": "2026-09-13"
+        },
+        "rationale": "The card compares against stock Turbo at eight steps with the accelerator bypassed. This claim is deliberately limited to a graph with no active adapters; it does not override a style-specific experiment.",
+        "review_after": "2026-12-12"
+      },
+      {
+        "id": "anima-turbo-authored-schedule",
+        "title": "Anima turbo v0.2 · stored starting schedule",
+        "runtime": "comfyui",
+        "resources": [
+          {
+            "file": "diffusion_models/anima-base-v1.0.safetensors",
+            "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e"
+          },
+          {
+            "file": "loras/anima-turbo-lora-v0.2.safetensors",
+            "sha256": "1b55e40bdb1d0e5a78cb498f245fccfdaae97823265db957d2aabdcf4cd3caf1"
+          }
+        ],
+        "when": [
+          {
+            "resource": "loras/anima-turbo-lora-v0.2.safetensors",
+            "state": "active"
+          }
+        ],
+        "settings": [
+          {
+            "target": {
+              "control": "steps",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                8
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "cfg",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                1
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "sampler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                "euler"
+              ]
+            },
+            "tested": null
+          },
+          {
+            "target": {
+              "control": "scheduler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": {
+              "values": [
+                "simple"
+              ]
+            },
+            "tested": null
+          }
+        ],
+        "source": {
+          "kind": "authored_hypothesis",
+          "locator": "Existing presets/settings-kb.json, anima-turbo-lora-v0.2 entry, at aebe10c58c7fa3ce8f89276740096eaf98c2cc20. Upstream mirror was opened but does not document these numeric settings in its model-card text.",
+          "url": "https://huggingface.co/circlestone-labs/Anima-Official-LoRAs",
+          "revision": null,
+          "retrieved_at": null
+        },
+        "rationale": "A transcription of the existing Studio starting schedule, not a freshly verified author recommendation or an executed comparison. Keep the accelerator and its sampling setup together when trying this recipe.",
+        "review_after": "2026-12-12"
+      },
+      {
+        "id": "krea-target-stack-observation",
+        "title": "Painterly target stack · historical trial",
+        "runtime": "comfyui",
+        "resources": [
+          {
+            "file": "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+            "sha256": "eb4dd8c612cfd10f64f25b057e6e6bbcb5737c94a7372177e456dbf7579502f1"
+          },
+          {
+            "file": "loras/Krea2_TextFusion_Refusal_Reduction.safetensors",
+            "sha256": "84ec722ddab93f6489c5315bca25de5dd1a7b7ec5045a3c4ce2f97f62e54e8e6"
+          },
+          {
+            "file": "loras/Niji_Sweet_Spot_Krea2_v2A.safetensors",
+            "sha256": "1aa1e5a2bd6222759ab59b77318a4e2a93b78ab12d795c82e4d237a2037c2c32"
+          },
+          {
+            "file": "loras/krea2_koukouya_style_c1-st3000.safetensors",
+            "sha256": "8cf2068c654ffc8f1e0478d251faa8c6b9f7fa1ad192f00063524202e61ba343"
+          }
+        ],
+        "when": [
+          {
+            "resource": "loras/Krea2_TextFusion_Refusal_Reduction.safetensors",
+            "state": "active"
+          },
+          {
+            "resource": "loras/Niji_Sweet_Spot_Krea2_v2A.safetensors",
+            "state": "active"
+          },
+          {
+            "resource": "loras/krea2_koukouya_style_c1-st3000.safetensors",
+            "state": "active"
+          }
+        ],
+        "settings": [
+          {
+            "target": {
+              "control": "steps",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": null,
+            "tested": {
+              "values": [
+                15
+              ]
+            }
+          },
+          {
+            "target": {
+              "control": "cfg",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": null,
+            "tested": {
+              "values": [
+                1
+              ]
+            }
+          },
+          {
+            "target": {
+              "control": "sampler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": null,
+            "tested": {
+              "values": [
+                "euler_ancestral"
+              ]
+            }
+          },
+          {
+            "target": {
+              "control": "scheduler",
+              "node_types": [
+                "KSampler"
+              ]
+            },
+            "recommended": null,
+            "tested": {
+              "values": [
+                "simple"
+              ]
+            }
+          }
+        ],
+        "source": {
+          "kind": "local_observation",
+          "locator": "experiments/curated/anime-fantasy-atelier/krea-target-stack-koukouya-recipe.json; prompt a63ca7e1-c87a-4288-bcd9-959ff93d1827. The full original prompt, size and strengths are in that receipt.",
+          "url": null,
+          "revision": "sha256:60dfb654791fa77d0591090a6a232fb3c6e5dac3218e5abbf03fd16da8f5aaef",
+          "retrieved_at": null
+        },
+        "rationale": "This historical trial used the values below. It is not advice to increase steps and it does not establish quality, timing or exact reproduction for this draft. Edited prompts, sizes and strengths are different trials.",
+        "review_after": "2026-12-12"
+      }
+    ]
   }
 }
