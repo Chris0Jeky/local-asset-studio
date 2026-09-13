@@ -72,10 +72,13 @@ def run(output):
                 page.evaluate("renderJobs('unrelated-fixture-refresh')")
                 assert box.locator('[data-mixed-reason]').input_value()=='Retain the unknown tail; no retry.'
                 assert box.locator('[data-mixed-ack]').is_checked()
-                for width in (1440,390):
+                for width in (1440,1100,390):
                     page.set_viewport_size({'width':width,'height':1000})
                     box.scroll_into_view_if_needed();page.screenshot(path=str(output/f'mixed-{width}.png'),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'Horizontal overflow'
+                    layout=page.evaluate("""()=>{const setup=document.querySelector('.setup').getBoundingClientRect(),gallery=document.querySelector('.gallery-panel').getBoundingClientRect();return {width:innerWidth,setupBottom:setup.bottom,galleryTop:gallery.top};}""")
+                    result.setdefault('stacked_layout',[]).append(layout)
+                    assert layout['setupBottom']<=layout['galleryTop']+1,'Recipe and Gallery panels overlap: '+str(layout)
                 box.locator('[data-mixed-action="dispose"]').focus();box.locator('[data-mixed-action="dispose"]').press('Enter')
                 page.wait_for_function("document.querySelector('#gallery')?.textContent.includes('Batch abandoned locally')")
                 assert len(mutations)==2 and mutations[1]['payload']['acknowledge_unknown'] is True

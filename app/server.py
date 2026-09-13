@@ -1026,7 +1026,13 @@ class Studio:
                     else:
                         data["status"] = "uncertain"
                         data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
-                    self._save(data)
+                    if "pending_submission" in data and data.get("prompt_ids"):
+                        # Restarting a mixed observation must not normalize or
+                        # reconstruct its retained recipe/workflow source files.
+                        data["message"] = "Restarted with a mixed batch; check known batch receipts or explicitly record a local disposition. The unknown submission was not repeated."
+                        self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
+                    else:
+                        self._save(data)
                 self.jobs[data["id"]] = data
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None):

@@ -246,3 +246,30 @@ certification:
 These sources do not establish the owner's installed runtime revision. Fixtures
 assert explicit success/error evidence and retain unsupported/malformed history
 as unknown rather than assuming compatibility with every custom node/runtime.
+
+## PR review and complete browser integration
+
+PR #224's normal checks exposed a second layout case after the initial browser
+proof: raising the Gallery above the sticky recipe picker made the shortlist's
+**Next suggestions** button unclickable. The initial stacking-only change is
+replaced, not layered with another z-index. At the existing 1480px breakpoint,
+where Gallery spans the picker column, the picker remains in normal document
+flow. The wider three-column layout retains its existing sticky behavior. Both
+the shortlist's native clicks and mixed recovery's pointer/keyboard controls are
+required; the mixed fixture additionally checks non-overlapping panel bounds at
+1440px, 1100px and 390px. No force-click or hidden-UI workaround is used.
+
+The review also identified startup source rewriting: `_load_jobs()` used the
+generic serializer for an interrupted accepted mixed observation. A causal test
+failed for queued, running and uncertain records, losing noncanonical original
+bytes and a retained recipe extension. Startup now publishes only `state.json`
+for jobs retaining both known IDs and a pending marker, including malformed mixed
+records that must remain held. Source bytes and extensions, pending intent, known
+IDs and command history remain intact. Restart does not enqueue a read; repeating
+the original command ID retrieves its state. Another test injects a locked
+startup state write and verifies that all original files remain unchanged.
+
+The final review checkpoint has 37 focused mixed tests. Final full-suite and
+hosted-browser results, the exact source identities, and the earlier failed
+browser run are reported on PR #224 rather than treating a prior passing run as
+proof of this corrected integration.

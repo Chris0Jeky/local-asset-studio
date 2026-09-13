@@ -295,3 +295,31 @@ class MixedBatchTests(unittest.TestCase):
             with self.assertRaises(SystemExit):self.studio._work()
         self.assertEqual(self.job['status'],'uncertain');self.no_posts_since(2)
         for name in ('recipe.json','workflow.json'):self.assertEqual(self.files()[name],before[name])
+    def test_restart_preserves_source_extensions_for_queued_running_and_uncertain_reads(self):
+        self.unresolved();payload=self.payload();self.command('observe',payload)
+        directory=self.studio.runs/self.job['id'];accepted=copy.deepcopy(self.job)
+        originals={}
+        for name in ('recipe.json','workflow.json'):
+            value=json.loads((directory/name).read_text())
+            if name=='recipe.json':value['retained_extension']={'source_note':'Do not normalize or drop me'}
+            originals[name]=(json.dumps(value,separators=(',',':'))+'\n').encode()
+        for phase in ('queued','running','uncertain'):
+            with self.subTest(phase=phase):
+                state=copy.deepcopy(accepted);state['status']=phase
+                state['mixed_batch_recovery']['history'][-1]['status']='queued' if phase=='queued' else 'running'
+                self.studio._write_json_atomic(directory/'state.json',{k:v for k,v in state.items() if k!='graph'})
+                for name,content in originals.items():(directory/name).write_bytes(content)
+                restarted=FakeStudio(self.root,[]);recovered=restarted.jobs[self.job['id']]
+                self.assertEqual(recovered['status'],'uncertain')
+                self.assertEqual(recovered['pending_submission'],accepted['pending_submission'])
+                self.assertEqual(recovered['prompt_ids'],accepted['prompt_ids'])
+                self.assertEqual(recovered['mixed_batch_recovery'],state['mixed_batch_recovery'])
+                for name,content in originals.items():self.assertEqual((directory/name).read_bytes(),content)
+                # Repeating the acknowledged identity retrieves, but never requeues, the old read.
+                server.mixed_batch.command(restarted,self.job['id'],'observe',payload)
+                self.assertTrue(restarted.queue.empty());self.assertEqual(restarted.requests,[])
+    def test_restart_state_write_failure_preserves_source_files_and_pending_intent(self):
+        self.command('observe',self.payload());directory=self.studio.runs/self.job['id'];before=self.files()
+        with patch.object(FakeStudio,'_write_json_atomic',side_effect=OSError('state file locked on restart')):
+            with self.assertRaisesRegex(OSError,'state file locked'):FakeStudio(self.root,[])
+        self.assertEqual(self.files(),before);self.no_posts_since(2)
