@@ -53,7 +53,7 @@ in [STATUS.md](STATUS.md) are chosen to move exactly that.
 ## Confirmed defects and their disposition
 
 Severity follows the repository's own bar (a realistic direct path to wrong behaviour). "Fixed" means PR #262
-(recovery exits, dynamic-input schema, Generate race, small frontend defects) or PR #243 (this document set and the
+(recovery exits, dynamic-input schema, Generate race, small frontend defects) or PR #263 (this document set and the
 catalog corrections).
 
 | Seam | Defect | Severity after refutation | Disposition |
