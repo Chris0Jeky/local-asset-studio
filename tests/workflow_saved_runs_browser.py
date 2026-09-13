@@ -71,7 +71,7 @@ def main():
                 def load_page(target):
                     if not args.inert:
                         target.goto('http://127.0.0.1:8191/workflow-studio.html', wait_until='networkidle'); return
-                    html = (ROOT/'app/static/workflow-studio.html').read_text()
+                    html = (ROOT/'app/static/workflow-studio.html').read_text(encoding='utf-8')
                     scripts = re.findall(r'<script src="([^"]+)"></script>', html)
                     styles = re.findall(r'<link rel="stylesheet" href="([^"]+)">', html)
                     html = re.sub(r'<script src="[^"]+"></script>|<link rel="stylesheet" href="[^"]+">', '', html)
@@ -99,8 +99,8 @@ def main():
                         window.fetch=async(route,options={})=>{const r=await fixtureRequest(route,options.body??null);return {
                           ok:r.status>=200&&r.status<300,status:r.status,json:async()=>JSON.parse(r.raw),text:async()=>r.raw}};
                     }''',browser_storage)
-                    for name in styles:target.add_style_tag(content=(ROOT/'app'/name.lstrip('/')).read_text())
-                    for name in scripts:target.add_script_tag(content=(ROOT/'app'/name.lstrip('/')).read_text())
+                    for name in styles:target.add_style_tag(content=(ROOT/'app'/name.lstrip('/')).read_text(encoding='utf-8'))
+                    for name in scripts:target.add_script_tag(content=(ROOT/'app'/name.lstrip('/')).read_text(encoding='utf-8'))
                 load_page(page)
                 assert page.locator('#prepareSavedRun').is_disabled()
                 page.select_option('#presetChoice','example'); page.click('#loadPreset')
@@ -162,7 +162,7 @@ def main():
                 assert '/prompt' not in comfy_requests and len(studio.jobs)==1
                 result={'browser':'inert full production page + injected HTTP bridge/storage/crypto' if args.inert else 'full production page + real HTTP/SQLite + native localStorage', 'jobs_queued':1,
                         'model_submissions':0,'page_errors':errors,'exact_wide_seed_export':True,'preparation_id':request_id}
-                (args.out/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result))
+                (args.out/'result.json').write_text(json.dumps(result,indent=2), encoding='utf-8');print(json.dumps(result))
                 browser.close()
         finally:http.shutdown();http.server_close();thread.join(5)
 
