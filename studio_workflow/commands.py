@@ -34,7 +34,10 @@ def apply_commands(source, commands):
     for command in commands:
         need(isinstance(command, dict), 'Each command must be an object')
         op = command.get('op')
-        if op == 'replace':
+        if op in ('put_step', 'remove_step', 'set_step_enabled', 'duplicate_step'):
+            from .steps import apply_step_command
+            apply_step_command(doc, command)
+        elif op == 'replace':
             fields(command, ('op', 'document'))
             replacement = document(command['document'])
             replacement['revision'] = doc['revision']
@@ -56,6 +59,8 @@ def apply_commands(source, commands):
             if op == 'remove_node':
                 fields(command, ('op', 'id'))
                 # Keep consumers' dangling links so the compiler can explain them.
+                from .steps import remove_member
+                remove_member(doc, key)
                 del doc['nodes'][key]; doc['positions'].pop(key, None); doc['bypass'].pop(key, None)
                 for field in ('outputs', 'disabled'): doc[field] = [x for x in doc[field] if x != key]
             elif op == 'set_enabled':

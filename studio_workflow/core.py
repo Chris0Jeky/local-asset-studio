@@ -182,7 +182,7 @@ def document(value: dict) -> dict:
     need(len(canonical(value)) <= MAX_BYTES, "Document exceeds the 1 MiB authoring limit")
     _bounded(value)
     need(set(value) <= {"format", "name", "revision", "backend_id", "schema_sha256", "nodes", "outputs",
-                        "disabled", "bypass", "positions", "source"}, "Unknown document fields")
+                        "disabled", "bypass", "positions", "source", "steps"}, "Unknown document fields")
     need(isinstance(value.get("name"), str) and len(value["name"]) <= 160, "Name must be at most 160 characters")
     need(type(value.get("revision")) is int and 0 <= value["revision"] <= 2**53 - 1, "Invalid document revision")
     need(isinstance(value.get("backend_id"), str) and bool(value["backend_id"]), "Backend identity required")
@@ -213,6 +213,9 @@ def document(value: dict) -> dict:
         need(key in nodes and isinstance(xy, list) and len(xy) == 2
              and all(type(n) in (int, float) and math.isfinite(n) and abs(n) <= 100000 for n in xy),
              "Invalid node position")
+    if "steps" in value:
+        from .steps import validate_steps
+        validate_steps(value)
     return copy.deepcopy(value)
 
 
