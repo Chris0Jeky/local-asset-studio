@@ -1,0 +1,37 @@
+name: Verified guide review fix
+on:
+  push:
+    branches: [codex/workflow-guidance-source]
+    paths: ['.github/workflows/guidance-review-fix.yml']
+permissions:
+  contents: write
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify source correction without updating the PR branch
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, subprocess, tempfile
+          def git(*args):return subprocess.check_output(['git',*args]).decode().strip()
+          patch=pathlib.Path('.guide-runtime-fix.patch').read_bytes()
+          assert hashlib.sha256(patch).hexdigest()=='103a559473b6fd5794e86b87eed847bcb6b39ab6461e04de9f29528b025c6d6a'
+          expected={'app/static/studio-guide-state.js':'cc270b39beb21dbc3c6a2744ddb82ad33d693555','app/static/studio-guide.js':'00328255252449c0b97fa61b9111dff3a3f68372','docs/workflow-studio/GUIDE-NAVIGATION.md':'771bcd34cfacd6ae560d7dde3d26028212a9b185','tests/studio_guide_browser.py':'a4b578812610a2e1fd84d4db7603c30fef428bf5','tests/studio_guide_state.cjs':'2ab175f5bd7d494f9e84d486dcb3dc2422b0d37c'}
+          with tempfile.NamedTemporaryFile() as f:
+              f.write(patch);f.flush()
+              git('switch','--detach','89621cf59a347314940b38208e1946c324afcabd')
+              git('apply','--check','--index',f.name);git('apply','--index',f.name)
+          assert sorted(git('diff','--cached','--name-only').splitlines())==sorted(expected)
+          for p,sha in expected.items():assert git('rev-parse',':'+p)==sha,p
+          git('diff','--cached','--check')
+          git('config','user.name','Cristian Tcaci');git('config','user.email','59696583+Chris0Jeky@users.noreply.github.com')
+          git('commit','-m','Honor configured runtime blockers in guide readiness')
+          branch='codex/guided-review-fix'
+          assert not git('ls-remote','--heads','origin',branch)
+          git('push','origin','HEAD:refs/heads/'+branch)
+          print('Verified correction',git('rev-parse','HEAD'))
+          PY
