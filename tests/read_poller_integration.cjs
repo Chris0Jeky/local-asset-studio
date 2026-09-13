@@ -1,0 +1,24 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const elements = new Map(), requests = [];
+const element = selector => { if(!elements.has(selector))elements.set(selector,{value:'',files:[],hidden:false,disabled:false,textContent:'',innerHTML:'',href:'',className:'',classList:{toggle() {}},addEventListener() {},closest() { return null; }});return elements.get(selector); };
+const events = new Map(), timers = new Map();let timerId = 0;
+const document = {hidden:false,querySelector:element,querySelectorAll:()=>[],addEventListener(name,fn){events.set(name,fn);},removeEventListener(name){events.delete(name);}};
+const window = {document,confirm:()=>true,setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId;},clearTimeout(id){timers.delete(id);},addEventListener(name,fn){events.set(name,fn);},dispatchEvent(event){events.get(event.type)?.(event);}};
+const catalog = {presets:[{id:'plain',name:'Plain',category:'Test',description:'fixture',commercial_note:'',defaults:{},stages:[]}]};
+const route = url => url==='/api/catalog'?catalog:url==='/api/options'?{loras:[]}:url==='/api/knowledge'?{}:url==='/api/recipes'?{recipes:[]}:url==='/api/setups'?[]:url==='/api/identity'?{workspace:'fixture'}:url==='/api/health'?{online:true,worker_alive:true,schema_available:true,missing_models:{}}:url==='/api/jobs'?[]:url==='/api/library'?{storage:{free_bytes:1,total_bytes:1,reserve_bytes:0},assets:[],folders:[],collections:[],inventory:[]}:url.startsWith('/api/inspect/')?{requirements:[],nodes:[],graph:{}}:{};
+const context = vm.createContext({window,document,Event:class Event { constructor(type){this.type=type;} },URL,Blob,Promise,Map,Math,Number,Error,JSON,Date,crypto:{subtle:{}},localStorage:{getItem:()=> '1',setItem() {}},navigator:{clipboard:{writeText:async()=>{}}},location:{hash:''},fetch:async(url,options={})=>{requests.push({url,method:options.method||'GET'});return {ok:true,json:async()=>route(url)};},refreshAssets:async()=>{},refreshProduction:async()=>{}});
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static/read-poller.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static/app.js'),'utf8'),context);
+(async()=>{
+  for(let i=0;i<8;i++)await new Promise(setImmediate);
+  assert.ok(requests.some(request=>request.url==='/api/jobs'),'initial job read is retained: '+JSON.stringify({requests,status:element('#status').textContent}));
+  assert.equal(requests.filter(request=>request.url==='/api/jobs'&&request.method==='POST').length,0,'loading the scheduled UI never submits a generation');
+  assert.ok(context.window.StudioReadPoller,'the real app registers its read lanes');
+  assert.ok(timers.size>=2,'the real app schedules bounded follow-up reads: '+JSON.stringify({requests,status:element('#status').textContent,timers:[...timers.values()]}));
+  context.window.StudioReadPoller.dispose();
+  console.log('Read poller app integration passed: loading reads status without generating.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

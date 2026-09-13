@@ -1,0 +1,39 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const listeners = new Map(), timers = new Map();let nextTimer = 1;
+const document = {hidden: true, addEventListener(name, fn) { listeners.set(name, fn); }, removeEventListener(name, fn) { if(listeners.get(name) === fn) listeners.delete(name); }};
+const window = {document, setTimeout(fn, delay) { const id=nextTimer++;timers.set(id,{fn,delay});return id; }, clearTimeout(id) { timers.delete(id); }};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../app/static/read-poller.js'), 'utf8'), {window, Promise, Map, Math, Number, Error});
+const {ReadPoller} = window;
+const flush = async () => { for(let i=0;i<6;i++)await Promise.resolve(); };
+const timer = delay => [...timers.entries()].find(([,entry]) => entry.delay === delay);
+const fire = async delay => { const [id,entry]=timer(delay)||[];assert.ok(entry, 'expected '+delay+' ms timer');timers.delete(id);entry.fn();await flush(); };
+const deferred = () => { let resolve;return {promise:new Promise(done => {resolve=done;}),resolve}; };
+
+(async () => {
+  const poller = new ReadPoller({document,setTimeout:window.setTimeout,clearTimeout:window.clearTimeout});
+  let reads=0, active=true, view='create', slow=deferred();
+  poller.register('jobs',{interval:()=>active?4000:15000,task:async()=>{reads++;if(reads===1)await slow.promise;}});
+  poller.register('assets',{interval:12000,shouldPoll:()=>view==='assets',task:async()=>{reads+=100;}});
+  poller.start();
+  assert.equal(reads,0,'hidden documents make zero automatic reads');
+  document.hidden=false;listeners.get('visibilitychange')();await flush();
+  assert.equal(reads,1,'visibility resumes one active lane immediately');
+  assert.equal(timers.size,0,'a slow request does not accumulate a next timer');
+  const direct=poller.refresh('jobs');await flush();assert.equal(reads,1,'manual refresh waits behind the in-flight read');
+  slow.resolve();await direct;await flush();assert.equal(reads,2,'one queued manual refresh runs after the first settles');
+  active=false;await fire(4000);assert.equal(reads,3,'a terminal job state is read once at the active cadence');
+  assert.equal(timer(15000)[1].delay,15000,'idle jobs schedule at fifteen seconds');
+  assert.equal(timers.size,1,'inactive views do not schedule their own reads');
+  view='assets';poller.wake();await fire(12000);assert.equal(reads,103,'a newly active view gets its own read');
+
+  let attempts=0;poller.register('recovery',{interval:4000,task:async()=>{attempts++;if(attempts===1)throw Error('offline');}});
+  await fire(4000);assert.equal(attempts,1,'a failed lane attempt is contained');
+  await fire(4000);assert.equal(attempts,2,'a failed lane schedules a later recovery read');
+  poller.dispose();assert.equal(timers.size,0,'dispose clears every pending timer');
+  listeners.get('visibilitychange')?.();await flush();assert.equal(attempts,2,'disposed polling never resumes');
+  console.log('Read polling contracts passed: hidden, serialized, view-gated, recovery, terminal cadence, and disposal.');
+})().catch(error => { console.error(error);process.exitCode=1; });

@@ -179,5 +179,11 @@
   // Native file input remains the accessible fallback for drag-and-drop imports.
   const drop=element('div','ux-import-drop','<b>Bring existing work into the studio</b><span>Drop up to 32 PNG, JPG or WebP images here, or use Import images.</span>');drop.id='uxImportDrop';q('#assetsView .asset-workspace').before(drop);drop.ondragover=e=>{if([...e.dataTransfer.types].includes('Files')){e.preventDefault();drop.classList.add('dragover');}};drop.ondragleave=()=>drop.classList.remove('dragover');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragover');const files=[...e.dataTransfer.files];if(files.length>32||files.some(f=>!['image/png','image/jpeg','image/webp'].includes(f.type))){assetMessage('Import up to 32 PNG, JPEG or WebP images. No files were submitted.',true);return;}const transfer=new DataTransfer();files.forEach(f=>transfer.items.add(f));q('#importAssets').files=transfer.files;q('#importAssets').dispatchEvent(new Event('change',{bubbles:true}));};
   q('#importAssets').closest('label').tabIndex=0;q('#importAssets').closest('label').setAttribute('role','button');q('#importAssets').closest('label').onkeydown=e=>{if(['Enter',' '].includes(e.key)){e.preventDefault();q('#importAssets').click();}};
-  showView(U.normalizeView(location.hash));initializeDrafts();setInterval(()=>{if(view==='home'&&!document.hidden)refreshHome();},12000);
+  let overviewPollingAttached=false;
+  function attachOverviewPolling(){
+    if(overviewPollingAttached||!window.StudioReadPoller)return;
+    overviewPollingAttached=true;window.StudioReadPoller.register('overview',{interval:12000,shouldPoll:()=>view==='home',task:refreshHome});
+  }
+  window.addEventListener('studio-read-poller-ready',attachOverviewPolling);attachOverviewPolling();
+  showView(U.normalizeView(location.hash));initializeDrafts();
 })();
