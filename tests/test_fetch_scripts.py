@@ -4,6 +4,7 @@ Nothing here touches the network, ComfyUI or the configured model folders. Green
 behave; it does not prove that a real download succeeds.
 """
 import email.message
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -133,12 +134,57 @@ class CivitaiHelperTests(TempMixin):
         self.assertIn('404',civitai.explain_http(404));self.assertIn('429',civitai.explain_http(429))
 
     def test_authorization_is_dropped_when_a_download_redirects_to_another_host(self):
-        request=Request('https://civitai.com/api/download/models/1',headers={'Authorization':'Bearer secret'})
+        request=Request('https://civitai.com/api/download/models/1',headers={'Authorization':'Bearer secret','Range':'bytes=7-'})
         headers=email.message.Message()
         same=civitai.DropAuth().redirect_request(request,None,302,'Found',headers,'https://civitai.com/other')
         away=civitai.DropAuth().redirect_request(request,None,302,'Found',headers,'https://cdn.example.com/file.safetensors')
         self.assertEqual(same.get_header('Authorization'),'Bearer secret')
+        self.assertEqual(away.get_header('Range'),'bytes=7-')
         self.assertIsNone(away.get_header('Authorization'))
+
+    def test_resume_appends_only_an_exact_identity_range_and_publishes_atomically(self):
+        body=b'prefix-rest';offset=len(b'prefix');target=self.root/'models/loras/demo.safetensors'
+        part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(body[:offset])
+        response=_FakeResponse(206,{'Content-Range':f'bytes {offset}-{len(body)-1}/{len(body)}',
+                                    'Content-Length':str(len(body)-offset),'Content-Encoding':'identity'},body[offset:])
+        opener=_FakeOpener(response)
+        size,digest,_=civitai.download('https://civitai.com/api/download/models/1',target,'secret',len(body),hashlib.sha256(body).hexdigest(),resume=True,opener=opener)
+        self.assertEqual((size,digest), (len(body),hashlib.sha256(body).hexdigest()))
+        self.assertEqual(target.read_bytes(),body);self.assertFalse(part.exists())
+        self.assertEqual(opener.request.get_header('Range'),f'bytes={offset}-')
+        self.assertEqual(opener.request.get_header('Authorization'),'Bearer secret')
+        self.assertEqual(dict(opener.request.header_items())['Accept-encoding'],'identity')
+
+    def test_resume_rejects_an_ignored_or_wrong_range_and_preserves_the_partial(self):
+        body=b'prefix-rest';offset=len(b'prefix');target=self.root/'models/loras/demo.safetensors'
+        for response in (_FakeResponse(200,{'Content-Length':str(len(body)-offset)},body[offset:]),
+                         _FakeResponse(206,{'Content-Range':f'bytes {offset+1}-{len(body)-1}/{len(body)}',
+                                             'Content-Length':str(len(body)-offset-1)},body[offset+1:])):
+            with self.subTest(status=response.status):
+                target.unlink(missing_ok=True);part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True,exist_ok=True);part.write_bytes(body[:offset])
+                with self.assertRaises(SystemExit):civitai.download('https://civitai.com/api/download/models/1',target,'secret',len(body),None,resume=True,opener=_FakeOpener(response))
+                self.assertEqual(part.read_bytes(),body[:offset]);self.assertFalse(target.exists())
+
+    def test_resume_rejects_an_oversized_partial_without_opening_the_network(self):
+        target=self.root/'models/loras/demo.safetensors';part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(b'x'*9)
+        opener=_FakeOpener(_FakeResponse(206,{},b''))
+        with self.assertRaisesRegex(SystemExit,'larger than the pinned size'):
+            civitai.download('https://civitai.com/api/download/models/1',target,'secret',8,None,resume=True,opener=opener)
+        self.assertEqual(part.read_bytes(),b'x'*9);self.assertIsNone(opener.request)
+
+    def test_resume_rejects_compressed_content_and_preserves_the_partial(self):
+        body=b'prefix-rest';offset=len(b'prefix');target=self.root/'models/loras/demo.safetensors';part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(body[:offset])
+        response=_FakeResponse(206,{'Content-Range':f'bytes {offset}-{len(body)-1}/{len(body)}','Content-Length':str(len(body)-offset),'Content-Encoding':'gzip'},body[offset:])
+        with self.assertRaisesRegex(SystemExit,'identity content encoding'):
+            civitai.download('https://civitai.com/api/download/models/1',target,'secret',len(body),None,resume=True,opener=_FakeOpener(response))
+        self.assertEqual(part.read_bytes(),body[:offset]);self.assertFalse(target.exists())
+
+    def test_default_mode_refuses_an_existing_partial(self):
+        target=self.root/'models/loras/demo.safetensors';part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(b'partial')
+        opener=_FakeOpener(_FakeResponse(200,{},b''))
+        with self.assertRaisesRegex(SystemExit,'already in place'):
+            civitai.download('https://civitai.com/api/download/models/1',target,'secret',12,None,opener=opener)
+        self.assertEqual(part.read_bytes(),b'partial');self.assertIsNone(opener.request)
 
     def test_stub_records_the_civitai_source_and_trigger(self):
         chosen=civitai.pick_file(self.version)
@@ -148,6 +194,22 @@ class CivitaiHelperTests(TempMixin):
         self.assertEqual(entry['source'],'https://civitai.com/models/2863875?modelVersionId=3302337')
         self.assertEqual(entry['trigger'],'@NIJISIS');self.assertEqual(entry['family'],'Krea 2')
         self.assertIn('allowCommercialUse',entry['terms'])
+
+
+class _FakeResponse:
+    def __init__(self,status,headers,body):
+        self.status=status;self.headers=email.message.Message();self.body=body;self.index=0
+        for key,value in headers.items():self.headers[key]=value
+    def __enter__(self):return self
+    def __exit__(self,*args):return False
+    def read(self,chunk=-1):
+        if self.index>=len(self.body):return b''
+        end=len(self.body) if chunk<0 else self.index+chunk;value=self.body[self.index:end];self.index=end;return value
+
+
+class _FakeOpener:
+    def __init__(self,response):self.response=response;self.request=None
+    def open(self,request,timeout=120):self.request=request;return self.response
 
 
 class IntakeHeaderTests(TempMixin):
