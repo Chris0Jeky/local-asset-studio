@@ -46,6 +46,12 @@ async function test(name, fn) {await fn(); console.log('PASS ' + name); count++;
   await test('startup and restored intent make no requests', async () => {
     const f = fixture(); assert.equal(f.calls.length, 0); await f.click('prepareWorkflowRun');
     const reload = fixture(f.storage.raw); assert.equal(reload.calls.length, 0); assert.ok(reload.ids.get('downloadWorkflowTicket'));
+    await f.click('runWorkflowTicket'); const attempted = fixture(f.storage.raw);
+    assert.equal(attempted.calls.length, 0); assert.match(attempted.ids.get('workflowRunStatus').textContent, /prior dispatch attempt/);
+    assert.doesNotMatch(attempted.ids.get('workflowRunStatus').textContent, /Nothing was sent/);
+    assert.equal(attempted.ids.get('runWorkflowTicket').disabled, true);
+    assert.equal(attempted.ids.get('recoverWorkflowTicket').disabled, false);
+    assert.match(reload.ids.get('workflowRunStatus').textContent, /Prepared ticket restored/);
   });
   await test('prepare, download, decline and run are separate actions', async () => {
     const f = fixture(); await f.click('prepareWorkflowRun'); assert.equal(f.calls.length, 1);

@@ -90,7 +90,12 @@
     if (r) summary.textContent = `${r.report.recipe.preset_id} · ${r.phase} · ${r.last_status || 'not observed'}\nRequest: ${r.report.ticket.request_id}\nJob: ${r.report.job_id}\nTicket SHA-256: ${r.report.ticket_sha256}\nSource: ${r.report.document_sha256}\nControls: ${JSON.stringify(r.report.recipe.controls, null, 2)}\n${r.phase === 'prepared' && !state.matches(doc, preset.value) ? 'Draft changed: Run is disabled. Clear this unsubmitted ticket and prepare deliberately.' : 'One graph invocation; the recipe may produce multiple outputs.'}`;
     else summary.textContent = 'No retained ticket. Nothing is queued by opening or editing this page.';
   }
-  try { state = new T.State(sessionStorage); if (state.record) say('A ticket was retained from this tab. Nothing was sent. Inspect it before any run or recovery.'); }
+  try {
+    state = new T.State(sessionStorage);
+    if (state.record) say(state.record.phase === 'attempted'
+      ? 'A prior dispatch attempt is retained; it may already be queued, running or completed. Observe the original job or recover the same request. Reload sent no new request.'
+      : 'Prepared ticket restored. Reload sent no request; an exported copy may have run elsewhere. Inspect it before running.');
+  }
   catch (error) { say('Run controls unavailable: ' + error.message); }
   document.addEventListener('workflow:render', sync); document.addEventListener('workflow:replace', sync);
   preset.addEventListener('change', sync);
