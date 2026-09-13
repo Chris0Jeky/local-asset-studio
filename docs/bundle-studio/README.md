@@ -1,0 +1,42 @@
+# Creative Bundle Explorer
+
+13 September 2026 · first implementation slice · baseline `8f471d6`.
+
+In **Create**, open **Explore creative bundles** above recipe search. Search by
+look, family or a resource name; inspect the recipe and its historical example;
+expand ingredients, adapter explanations and source guidance; adapt a setting;
+review the differences and explicitly apply to Create. Generate remains a
+separate existing action.
+
+## Delivered
+
+The explorer projects `presets/recipes.json`, the live catalog's defaults and
+bindings, `presets/settings-kb.json`, and the existing inspection endpoint. It
+adds neither a new recipe database nor a model manager or executor. The existing
+workbench remains the editing/submission authority.
+
+The two initial preview links are already-recorded local Krea trials. Cards with
+no documented preview say so. A changed prompt, dimension, seed or strength does
+not turn an old image into a preview of the new configuration. Source-listed
+ranges and recorded hashes are labelled as stored evidence, not measurements of
+the currently installed files.
+
+Text-to-image recipes can be applied. Reference and non-image routes remain
+inspect-only in this slice. Editable controls cover supported prompt fields,
+seed, steps, CFG, dimensions and authored numeric adapter strengths. Sampler,
+scheduler and file substitution remain available through the existing
+workbench; this slice does not certify arbitrary combinations. Apply resets the
+full selected preset before overlaying the resolved recipe, clears references
+with explicit consent and sets batch count to one, even for authored sweep
+recipes. The normal draft mechanism is retained, not replaced.
+
+## Read next
+
+- [Architecture and next interaction model](ARCHITECTURE.md)
+- [Representative-example protocol](REPRESENTATIVE-EXAMPLES.md)
+- [Validation and remaining acceptance](VALIDATION.md)
+
+Follow-ups: [#143](https://github.com/Chris0Jeky/local-asset-studio/issues/143)
+representative portfolios; [#144](https://github.com/Chris0Jeky/local-asset-studio/issues/144)
+version-scoped recommendations and atomic module changes. These extend #9, #10,
+#14, #16, #36 and #118–#120; they do not close those broader workstreams.
