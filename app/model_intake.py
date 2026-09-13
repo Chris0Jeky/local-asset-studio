@@ -28,10 +28,21 @@ def plain_path(path):
     return path
 
 
+def _stat_identity(value):
+    return {'device': value.st_dev, 'inode': value.st_ino, 'size': value.st_size,
+            'mtime_ns': value.st_mtime_ns, 'ctime_ns': value.st_ctime_ns}
+
+
 def source_snapshot(path):
     path = plain_path(path)
     if not stat.S_ISREG(path.stat().st_mode):raise ValueError('Intake source must be a regular file')
-    return file_identity(path)
+    # Use the descriptor API for every source snapshot. On Windows/Python 3.12,
+    # stat(path).ctime is creation time while fstat(fd).ctime can be change time.
+    # Mixing them rejects unchanged files; do not drop the change-time field.
+    with path.open('rb') as stream:
+        value = os.fstat(stream.fileno())
+        if not stat.S_ISREG(value.st_mode):raise ValueError('Opened intake source is not a regular file')
+        return _stat_identity(value)
 
 
 def target_path(comfy_root, folder, name):
@@ -46,9 +57,7 @@ def _same_source(path, expected):
 
 
 def _handle_identity(stream):
-    value = os.fstat(stream.fileno())
-    return {'device': value.st_dev, 'inode': value.st_ino, 'size': value.st_size,
-            'mtime_ns': value.st_mtime_ns, 'ctime_ns': value.st_ctime_ns}
+    return _stat_identity(os.fstat(stream.fileno()))
 
 
 def _save(path, record, phase, **updates):
@@ -108,7 +117,7 @@ def import_candidate(root, comfy_root, source, folder, name, expected_identity, 
         record = {'version': 1, 'kind': 'browser-intake', 'id': identifier,
                   'origin': str(source), 'path': str(target), 'partial_path': str(staged),
                   'receipt_path': str(journal), 'file': name, 'folder': folder, 'folder_basis': folder_basis,
-                  'source_identity': expected_identity, 'bytes': expected_identity['size'],
+                  'source_identity': expected_identity, 'source_identity_api': 'os.fstat', 'bytes': expected_identity['size'],
                   'sha256': None, 'expected_sha256': None, 'verified': False, 'runtime_compatible': None,
                   'source_cleanup': 'not-requested', 'licence': 'TODO: record source and licence'}
         _save(journal, record, 'intent')
