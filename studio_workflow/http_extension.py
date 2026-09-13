@@ -5,6 +5,7 @@ from .core import catalog, new_document, compile_document, document, decode, nee
 from .guides import guides
 from .execution import prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
+from .run_http import extend_handler as extend_run_records
 
 PREFIX = '/api/workflow-studio'
 
@@ -14,7 +15,7 @@ def capabilities():
             'registered_recipe_tickets': True, 'preset_document_tickets': True, 'arbitrary_graph_execution': False,
             'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
             'shared_document_commands': True, 'named_steps': True, 'agent_sdk': True, 'mcp': False,
-            'custom_frontend_widgets': False, 'shared_worker': True,
+            'custom_frontend_widgets': False, 'shared_worker': True, 'saved_revision_run_records': True,
             'limits': {'document_bytes': 1048576, 'nodes': 256, 'graph_invocations_per_ticket': 1},
             'generation_submitted': False}
 
@@ -100,4 +101,4 @@ def extend_handler(base):
                 if not is_run: result['generation_submitted'] = False
                 else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
                 return self._json(400, result)
-    return extend_documents(WorkflowHandler)
+    return extend_run_records(extend_documents(WorkflowHandler))
