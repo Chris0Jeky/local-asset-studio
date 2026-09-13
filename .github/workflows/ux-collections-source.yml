@@ -1,0 +1,28 @@
+name: Collection UX source
+on:
+  push:
+    branches: ['codex/ux-collections-transfer']
+    paths: ['.github/workflows/ux-collections-source.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 2f91421ecbe0e014cceef1074f4d79e4c57051df
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive tracked source only
+        run: |
+          mkdir -p /tmp/collection-source
+          git branch ux-pinned HEAD
+          git bundle create /tmp/collection-source/source.bundle ux-pinned
+          sha256sum /tmp/collection-source/source.bundle > /tmp/collection-source/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: collection-ux-source
+          path: /tmp/collection-source/
+          retention-days: 1
