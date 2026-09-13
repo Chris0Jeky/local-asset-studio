@@ -46,8 +46,15 @@ same request identity for explicit recovery.
 module so it can load through Studio's existing static-file policy. Normal
 startup requires no build. See the delivery correction below.
 
+**Contextual guidance:** “Why these settings?” checks the actual draft against
+resource-scoped records in the existing settings library. It distinguishes
+upstream advice, authored starting points and historical observations, shows
+prerequisites and conflicts, and updates after edits without applying changes.
+Matching catalog pins is not fresh verification of installed model bytes.
+
 ## Read next
 
+- [Resource-scoped settings explanations](SCOPED-GUIDANCE.md)
 - [Reusable Steps workflows and retained-save contract](REUSABLE-WORKFLOWS.md)
 - [Guided tuning, reconciliation and tests](GUIDED-TUNING.md)
 - [Showcase HTTP delivery correction](DELIVERY-FIX.md)
