@@ -8,6 +8,7 @@ import threading
 import unittest
 
 import test_production as fixtures
+from http_refusal_transport import atomic_json_post
 from test_server import FakeStudio, png, server
 
 
@@ -38,10 +39,13 @@ class ResponseSecurityTests(unittest.TestCase):
         def close():http.shutdown();http.server_close();thread.join(2)
         self.addCleanup(close);return http,thread
     def request(self,path,method='GET',headers=None,payload=None):
+        request_headers={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**(headers or {})}
+        body=json.dumps(payload).encode() if payload is not None else None
+        if method=='POST' and body and (request_headers['Host'] not in ('127.0.0.1:8191','localhost:8191') or request_headers['Origin'] not in ('http://127.0.0.1:8191','http://localhost:8191')):
+            return atomic_json_post(self.http.server_port,path,body,host=request_headers['Host'],origin=request_headers['Origin'],response_details=True)
         conn=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:
-            conn.request(method,path,json.dumps(payload) if payload is not None else None,
-                         {'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**(headers or {})})
+            conn.request(method,path,body,request_headers)
             if conn.sock:
                 try:conn.sock.shutdown(socket.SHUT_WR)
                 except OSError:pass

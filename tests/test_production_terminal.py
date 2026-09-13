@@ -58,15 +58,25 @@ class TerminalObservationTests(unittest.TestCase):
         after=self.lab.get(self.identifier)['state']
         self.assertEqual(after['started_at'],state['started_at']);self.assertEqual(after['time_budget'],state['time_budget'])
     def assertNoGeneration(self):return patch.object(self.studio,'_run',side_effect=AssertionError('No generation is permitted'))
-    def test_terminal_reconciliation_is_durable_idempotent_and_needs_no_worker(self):
-        self.terminal('failed');restarted=FakeStudio(self.fixture.root,[]);lab=restarted.production
+    def assert_terminal_reconciliation_survives_restart(self,status):
+        self.terminal(status)
+        if status=='partial':self.job['outputs']=[{'filename':'retained.png','type':'output','subfolder':'','prompt_id':'retained'}];self.studio._save(self.job)
+        before=self.snapshot();restarted=FakeStudio(self.fixture.root,[]);lab=restarted.production
         with patch.object(restarted,'require_worker',side_effect=AssertionError('No work admission needed')):
             first=lab.resume(self.identifier);second=lab.resume(self.identifier)
         self.assertEqual(first,second);self.assertEqual(first['state']['status'],'failed')
         again=FakeStudio(self.fixture.root,[])
         self.assertEqual(again.production.get(self.identifier)['state'],first['state'])
-        self.assertEqual(again.production.get(self.identifier)['budget'],first['budget'])
+        self.assertEqual(again.production.get(self.identifier)['budget'],before['budget'])
+        restored=again.jobs[self.job['id']]
+        self.assertEqual(restored['prompt_ids'],before['job']['prompt_ids']);self.assertEqual(restored['submissions'],before['job']['submissions'])
+        self.assertEqual(restored['outputs'],before['job']['outputs']);self.assertEqual(restored['tracking_disposition'],before['job']['tracking_disposition'])
+        self.assertEqual((again.production.root/self.identifier/'plan.json').read_bytes(),before['plan'])
         self.assertEqual(again.requests,[]);self.assertTrue(again.queue.empty());self.assertTrue(restarted.queue.empty())
+    def test_terminal_reconciliation_is_durable_idempotent_and_needs_no_worker(self):
+        self.assert_terminal_reconciliation_survives_restart('failed')
+    def test_partial_terminal_reconciliation_survives_restart_without_new_work(self):
+        self.assert_terminal_reconciliation_survives_restart('partial')
     def test_failed_state_write_leaves_previous_project_and_receipts_intact(self):
         self.terminal('failed');before=self.snapshot();project=self.lab.get(self.identifier)
         with patch.object(self.lab,'_state',side_effect=OSError('database unavailable')):
