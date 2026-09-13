@@ -42,7 +42,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      addEventListener() {}, scrollIntoView() {}, close() {}, showModal() {},
+      addEventListener() {}, scrollIntoView() {}, close() {this.open=false;}, showModal() {this.open=true;},
     });
     return elements.get(selector);
   };
