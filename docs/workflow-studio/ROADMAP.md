@@ -1,30 +1,100 @@
-# Six major workstreams
+# Workflow Studio: remaining work after reconciliation
 
-The initial PR is a foundation across these issues; it intentionally closes none of them. Each issue includes deliverables, acceptance evidence, dependencies and exclusions.
+**13 September 2026; inspected main `06bd93aed2f019cb978eb5795e9f116cfb7ff749`.**
+All six original issues remain open for real residual acceptance. Their foundation
+paragraphs predate several merged implementations; do not use those paragraphs as
+instructions to build another store, SDK, MCP bridge or saved-run journal.
 
-| Workstream | Issue | Initial slice | Completion gate |
-|---|---|---|---|
-| Guided creation | [#118](https://github.com/Chris0Jeky/local-asset-studio/issues/118) | Seven paths, contextual coach, explicit navigation progress | Stable anchors and real evidence predicates across actual supported journeys |
-| Installed-node controls | [#119](https://github.com/Chris0Jeky/local-asset-studio/issues/119) | Scalar/combo/schema subset, typed connections and unsupported diagnostics | Installed-schema fixture corpus and adapter support matrix |
-| Shared authoring and Step modules | [#120](https://github.com/Chris0Jeky/local-asset-studio/issues/120) | Document/compiler, browser history/drafts, diagram and inspector | Server revisions/CAS, command parity, reusable modules, scalable accessible UI |
-| Native Comfy interoperability | [#121](https://github.com/Chris0Jeky/local-asset-studio/issues/121) | Explicit unsupported boundary; original API data retained | Measured visual/subgraph/custom-widget round-trip on pinned native versions |
-| Authored-graph execution | [#122](https://github.com/Chris0Jeky/local-asset-studio/issues/122) | Registered-recipe tickets only; existing worker | Shared-executor adapter, resources, budgets, failure injection and owner-run live evidence |
-| Agent SDK and MCP | [#123](https://github.com/Chris0Jeky/local-asset-studio/issues/123) | Direct stdlib JSON CLI and headless recipe runs | Same commands/revisions/plans across human UI, SDK, CLI and MCP |
+## Issue disposition and existing ownership
 
-## Suggested delivery sequence
+| Workstream | Existing implementation to preserve | Remaining acceptance / next increment |
+| --- | --- | --- |
+| [#118 Guided creation](https://github.com/Chris0Jeky/local-asset-studio/issues/118) | `guides.py`, `studio-guide-state.js`, `studio-guide.js`: seven evidence-aware paths; #169. This pass addresses focused #185/#190. | Capability-backed recipe proposals with explicit missing/unknown prerequisites; specialist comparison/scene/export/reference predicates; owner-run separately reviewed journey. |
+| [#119 Installed-node controls](https://github.com/Chris0Jeky/local-asset-studio/issues/119) | `core.py`, `node_outputs.py`, existing builder fields. #156/#167/#168 already advance validation/output normalization/resource diagnostics. | Installed-version golden corpus; declared adapter support levels; dynamic/list/union/native-widget fidelity; lossless wide-integer editing; shared compatibility reports. |
+| [#120 Shared authoring](https://github.com/Chris0Jeky/local-asset-studio/issues/120) | `commands.py`, `documents.py`, `steps.py`, `workflow-projects.js`: revisions/CAS/receipts/preview/restore/fork, Steps and inverse commands. | Typed reusable module interfaces/fan-out; actual workflow reference handles and slot lineage; measured 50/150/256-node interaction budgets and large-catalog rendering. |
+| [#121 Native interoperability](https://github.com/Chris0Jeky/local-asset-studio/issues/121) | Separate API-document contract; native visual import is deliberately refused. | Record installed frontend/backend/node versions; preserve original native artifacts; measured bidirectional adapters for widgets, reroutes, mode semantics and nested subgraphs. |
+| [#122 Authored execution](https://github.com/Chris0Jeky/local-asset-studio/issues/122) | `preset_adapter.py`, `document_runs.py`, `saved_dispatch.py`: supported image projection, revision-bound run records, exact-ticket/hash review, existing worker. | Reference/source binding and broader authored-graph adapters; native/resource/side-effect admission; full failure matrix and owner-run evidence before arbitrary execution. |
+| [#123 Headless agents](https://github.com/Chris0Jeky/local-asset-studio/issues/123) | `sdk.py`, `agent_bridge.py`, `mcp_server.py`, document/run CLIs: shared command parity, permission modes, retained-request recovery. | New-machine capability/runbook acceptance, bounded output/artifact access and provenance, reconnectable progress with ownership/cancellation semantics; live mixed human/agent acceptance. |
 
-**A. Stabilize the first slice.** Review this PR against current main, run hosted source validation and actual-browser walkthroughs on the configured machine. Exercise representative installed node definitions; record native-only classes. Keep edited graphs export-only. Add semantic anchors and evidence predicates without automatic actions.
+No broad issue is complete merely because one of its foundations merged. #185 and
+#190 are bounded guide defects, not substitutes for all #118 acceptance. Runtime
+recovery, source continuation and resource profiling retain their existing owners;
+this guide patch does not claim those issues.
 
-**B. Shared document commands and Step view.** Implement #120 after schema fixtures from #119. Demonstrate a reusable “generate → optionally refine → export” workflow whose checkbox module semantics match its node view. Prove round-trip command parity, revision conflicts and undo before adding collaborative editing or agent writes.
+## Architecture to keep
 
-**C. Native fidelity and execution.** Advance #121's adapter matrix, then #122's shared-runtime promotion. Resolve/consume relevant runtime fixes owned by #22/#10 and existing recovery issues. Do not claim the graph is runnable because a diagram is connected or `/object_info` is available.
+```text
+Guided observation ──────────► existing feature state/read endpoints
+Steps / Nodes / CLI / SDK / MCP
+             │ one studio.workflow/v1 document and command vocabulary
+             ▼
+     Workspace immutable revisions + expected_revision + retained request IDs
+             │ only a supported execution adapter
+             ▼
+     saved revision + immutable run record + exact ticket review
+             ▼
+     existing Studio admission / worker / prompt IDs / Workspace outputs
+```
 
-**D. Agent and production hardening.** Complete #123 over the same service. Add progress/event reconnection, SDK examples, MCP tool schemas and bounded artifact retrieval. Measure large-graph UX, run end-to-end failure injection and collect owner-approved live evidence separately from automated source checks.
+Guidance does not own jobs. A Step control references an existing node input, not a
+second value. A future compatibility projection must label editable, serializable,
+executable and native-only support separately, and must not become a replacement
+for the authoritative runtime validator. A fresh schema or connected diagram is
+not sufficient evidence for execution.
 
-## Reusable module example (target, not implemented)
+## Next implementation sequence
 
-A “character variant” module may expose identity references, pose source, prompt delta, sampler settings, optional localized repair and output/export choices. Every friendly field maps to explicit typed bindings. Disabling repair selects a declared image passthrough; disabling generation while keeping repair without an input image yields a clear prerequisite error. Switching to Nodes reveals the same structure. An agent editing pose strength issues the same command as the slider.
+### 1. Capability-backed choice, within #118/#119
 
-## Do not expand scope by stealth
+Extend the current guided launcher rather than introducing a wizard with its own
+recipe state. Start with new-image versus source-preserving edit. Read the actual
+catalog/capability records and the selected source role. Produce a deterministic
+shortlist with explicit reasons and **unknown**, **needs setup**, or **candidate**
+status; a candidate is not a readiness approval. Reuse existing dependency and
+continuation checks. Do not rank a blocked preferred preset ahead of alternatives
+without showing the blocker, or infer editing capability from a name substring.
 
-No second executor, no model/package upgrades, no automatic environment switching, no blanket custom-node installation, no global Comfy interruption, no arbitrary file/network widget execution. Owner choices and creative acceptance remain in HUMAN_TODO/review records, not inferred from these features. Every phase must retain the distinction between generated, accepted and licensed.
+First write pure fixtures for: missing source, unsupported source role, inactive
+backend, missing model, unavailable health, schema drift, and no suitable recipe.
+Then add opt-in UI rendering and keyboard tests. Selecting a suggestion must use
+the normal reviewed handoff/selection path. A delayed shortlist cannot replace a
+newer choice; page load and inspection must create zero jobs/installs/switches.
+Publish the same explanatory result for agents rather than inventing a separate
+LLM-only recommender. No LLM is needed for this deterministic first increment.
+
+### 2. Installed-schema corpus and adapter support, within #119
+
+Capture only schema/version evidence from the configured runtime; do not upgrade
+it to match current online documentation. Redact local paths/tokens where present
+before checking in fixtures. Extend `core.py`/existing normalization seams using
+one adapter at a time: union/list semantics, optional/forced inputs, dynamic
+choices, then model/image/mask widgets. Each adapter needs lossless unsupported
+retention, browser and Python precision tests, stale-schema refusal, bounded
+rendering, and explicit execution support status. Coordinate the real graph
+checker with #97 rather than adding another divergent checker.
+
+### 3. Reference-bearing shared workflows, within #120/#122
+
+Specify a versioned asset-handle contract before changing execution. Bind Workspace
+identity and source bytes to exact node/input/role; preserve original-source and
+staged-copy identities separately. Add stale asset/mask/revision tests before
+allowing a compatible saved reference workflow. Use the existing prepare/dispatch
+journal and source-continuation ownership, including concurrent human/agent edits
+and uncertain submission. Do not enable general graph execution as a side effect.
+
+### 4. Native format and agent acceptance, within #121/#123
+
+Decide between explicit native handoff and a version-pinned adapter using the
+installed corpus, not an iframe proof. Preserve original opaque native data before
+any conversion. Start with one supported visual graph, then nested/subgraph cases.
+For agents, run the same saved revision through CLI/SDK/MCP; inject response loss,
+conflict and restart; observe the original request. Test a clean tools environment
+without touching ComfyUI packages. Record owner artistic review separately.
+
+## Primary-source checks
+
+Checked 13 September 2026: [ComfyUI server routes](https://docs.comfy.org/development/comfyui-server/comms_routes)
+distinguish node descriptions (`/object_info`) from prompt validation/submission
+(`POST /prompt`). This supports keeping schema-driven authoring separate from
+execution admission. It does not establish the installed version's widget or
+subgraph support. Existing `RESEARCH.md` retains the broader native-format research.
