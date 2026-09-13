@@ -1,5 +1,12 @@
 # Studio UX QA — 13 September 2026
 
+## Review reload recovery
+
+[RELOAD-RECOVERY.md](RELOAD-RECOVERY.md) adds explicit per-tab draft and unconfirmed-save
+recovery over the existing metadata revision/receipt service. It distinguishes local drafts,
+confirmed server fields and exact earlier requests; #204 remains open for broader durability.
+
+
 ## What this pass changes
 
 A practical review session should let someone inspect an output, write specific repair notes, mark a preference, look at its source, save, and choose the next operation without losing their place or their work. This pass makes that one connected workflow dependable before adding another launcher or tour.

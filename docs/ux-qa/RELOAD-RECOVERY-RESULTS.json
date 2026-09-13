@@ -1,0 +1,182 @@
+{
+  "schema": "studio.ux-qa-checkpoint/v1",
+  "date": "2026-09-13",
+  "base_commit": "e9a062036f2f38ece4e6cf90ccb2ca40939695d4",
+  "base_tree": "105e996187c98a261957268ecb1f6c377c183912",
+  "issue": 204,
+  "issue_disposition": "Refs; per-tab reload slice, not full closure",
+  "source_sha256": {
+    "app/static/review-recovery-core.js": "6146bc8d13aeec86846418600f4d86ec6e45170fb7595b7d0696c1aa719dcd49",
+    "app/static/review-recovery-ui.js": "4f0b36c38489cc23038e9e02fa1458a564f24db92c12879f5f1b575ded0c2f2a",
+    "app/static/workspace.js": "e865454a50fd7441edb1b32891b18d92d2b341f0cf5e1155139e50c051dd484f",
+    "app/workspace.py": "09658805736f52b74fb68fe9da1bddf3c22fe0cc04bfd3a7f04ac3fda60ff3ba"
+  },
+  "before": [
+    "New journal contract initially failed because the journal module did not exist.",
+    "Existing snapshot had no persistent workspace identity.",
+    "Real-script dispatch test failed: checkpoint refusal did not prevent the original write.",
+    "Cross-workspace command regression returned an unknown-field error before adding atomic scope validation.",
+    "New offer-status browser expectation failed on misleading clean-form status, then passed after scoped copy correction."
+  ],
+  "browser": {
+    "mode": "inert: copied journal across new pages; real HTTP/SQLite, not native reload/storage",
+    "pass": 27,
+    "fail": 0,
+    "errors": [],
+    "checks": [
+      {
+        "id": "RELOAD-01 draft checkpoint before any server mutation",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-02 explicit offer after reload",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-03 offer blocks accidental metadata save",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-27 offer status distinguishes saved metadata from local draft",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-04 restore is read-only and retains draft",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-26 pending command is bound to its server database",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-05 confirmed clean save removes the recovery draft",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-06 tabs have independent drafts",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-07 stale restored draft uses revision conflict",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-08 read-only conflict exposes both versions",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-09 narrow conflict stays within viewport",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-10 immutable command is distinct from newer typing",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-11 lost-response reload never posts automatically",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-12 receipt recovery after store restart is read-only",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-13 receipt retains newer typing as unsaved",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-14 explicit exact retry preserves bytes and single effect",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-15 missing receipt remains unknown",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-16 retry after pre-commit loss uses original identity",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-17 failed restore retains its offer and record",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-18 explicit discard does not change saved metadata",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-19 declined unprotected save dispatches nothing",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-20 another workspace never inherits recovery",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-21 returning to original workspace recovers original draft",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-22 normal discard close clears only the local draft",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-23 future journal version is retained visibly",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-24 no generation or backend changes",
+        "passed": true
+      },
+      {
+        "id": "RELOAD-25 no JavaScript exceptions",
+        "passed": true
+      }
+    ],
+    "limits": [
+      "No owner-PC generation, native editor, screen-reader or browser-crash recovery evidence.",
+      "Closed tabs clear sessionStorage; bulk command drafts remain transient."
+    ]
+  },
+  "regression_browser": {
+    "metadata": 21,
+    "detail": 30,
+    "mode": "inert with real metadata HTTP/SQLite and full shell; detail driver retains merged #205 causal waits/UTF-8 safeguards"
+  },
+  "state_contracts": {
+    "journal_scenarios": 11,
+    "real_script_hook_scenarios": 3,
+    "counted_as_unittest_cases": 2,
+    "workspace_identity_tests": 3
+  },
+  "offline_suite": {
+    "run": 1506,
+    "passed": 1491,
+    "skipped": 15,
+    "failures": 0,
+    "seconds": 94.604,
+    "warnings": [
+      "Existing Pillow Image.getdata deprecation",
+      "Existing exit-time unclosed socket ResourceWarning"
+    ]
+  },
+  "validator": {
+    "passed": true,
+    "preset_graphs_bindings": 66,
+    "pins": 121,
+    "lora_names": 86
+  },
+  "harness_adjustments": [
+    "Native dialog.close queues its close event; new reload driver now waits for actual local journal cleanup before asserting a discard.",
+    "Existing asset-detail scenarios explicitly clear local recovery in test setup so independent cases do not restore another case\u2019s unconfirmed command; production behavior unchanged.",
+    "Metadata command assertions include the new workspace_id protocol field."
+  ],
+  "hosted_native_ci": "Pending at publication; check actual PR CI and downloaded receipt. Local component mode is not native reload/storage evidence.",
+  "additional_issue": 215,
+  "boundaries": [
+    "SessionStorage is tab/origin scoped, not cross-tab authority or closed-tab/crash backup.",
+    "No bulk metadata command journal, arbitrary imported recipe recovery, native editor, screen-reader or actual zoom certification.",
+    "No owner-PC model inference, managed-runtime changes, queue mutation or human creative decision.",
+    "A database copy retains its identity; the identity is neither authentication nor media integrity."
+  ]
+}

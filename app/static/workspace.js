@@ -3,6 +3,7 @@ let assetSignature = '', assetRefreshing = false;
 // Transient editor state only. Workspace remains the authority for persisted metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
 let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending = null, assetLibraryBusy = false;
+let assetReviewRecovery = null; // Optional tab-local recovery adapter, loaded after this module.
 const assetFormIds = {title:'assetTitle',tags:'assetTags',review:'assetReview',notes:'assetNotes'};
 function metadataForm(asset) { return {title:asset.title||'',tags:(asset.tags||[]).join(', '),review:asset.review||'unreviewed',notes:asset.notes||''}; }
 function validAssetMetadata(value) {
@@ -45,13 +46,14 @@ function assetDetailStatus(text, error=false) {
   status.textContent=text;status.classList.toggle('error',error);
 }
 function assetDetailControls() {
-  for(const id of ['saveAssetDetails','assetFavorite','assetTrash'])$('#'+id).disabled=assetDetailBusy || !!assetDetailConflict || (id!=='saveAssetDetails' && !!assetDetailPending);
+  for(const id of ['saveAssetDetails','assetFavorite','assetTrash'])$('#'+id).disabled=!!assetReviewRecovery?.blocked() || assetDetailBusy || !!assetDetailConflict || (id!=='saveAssetDetails' && !!assetDetailPending);
   $('#saveAssetDetails').textContent=assetDetailBusy?'Saving…':assetDetailPending?'Confirm earlier save':'Save details';
-  for(const id of ['assetTitle','assetTags','assetReview','assetNotes'])$('#'+id).disabled=assetDetailBusy && assetDetailDiscarding;
+  for(const id of ['assetTitle','assetTags','assetReview','assetNotes'])$('#'+id).disabled=!!assetReviewRecovery?.blocked() || assetDetailBusy && assetDetailDiscarding;
 }
 function assetDetailCanLeave() {
+  if(assetReviewRecovery?.leavingBlocked?.()){assetDetailStatus('Inspect, restore or discard the local recovery record before leaving this asset.');return false;}
   if(assetDetailBusy){assetDetailStatus('A save is still pending. Your edits remain here until its outcome is known.');return false;}
-  if(assetDetailPending)return window.confirm('The earlier save is unconfirmed and may already have been applied. Closing discards this tab’s remaining draft, not the server change. Close anyway?');
+  if(assetDetailPending)return window.confirm('The earlier save is unconfirmed and may already have been applied. Closing does not cancel it. Keep this tab open and use Review recovery to return; check the local recovery status before relying on reload. Close the editor?');
   return !assetDetailDirty() || window.confirm('Discard unsaved changes to this asset? Cancel keeps your edits here.');
 }
 function closeAssetDetails() { if(assetDetailCanLeave())$('#assetDialog').close(); }
@@ -83,10 +85,10 @@ function resolveAssetConflict(keepEdits) {
   assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();
   $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at?'Restore':'Move to Trash';
   assetDetailStatus(keepEdits?'Your edits are rebased for review, not saved. Check the fields, then Save details.':'Saved snapshot loaded. Nothing was written.');
-  $('#saveAssetDetails').focus();
+  assetReviewRecovery?.changed(true);$('#saveAssetDetails').focus();
 }
 async function performAssetSave(operation, observe=false) {
-  if(assetDetailBusy)return;
+  if(assetDetailBusy || assetReviewRecovery?.blocked())return;
   const {id,epoch,command,body,success}=operation,controller=new AbortController();
   const current=()=>assetDetailContextCurrent(id,epoch);
   assetDetailBusy=true;assetDetailDiscarding=['trash','restore'].includes(command.action);assetDetailControls();
@@ -101,7 +103,9 @@ async function performAssetSave(operation, observe=false) {
     void refreshAssets(true);
   } catch(error) {
     if(!current())return;
-    if(error.status===409 && error.data?.code==='asset_revision_conflict'){
+    if(error.status===409 && error.data?.code==='asset_workspace_conflict'){
+      assetDetailStatus('Workspace changed. The earlier save remains unconfirmed in its original workspace. Return there to check its receipt; no change was made here.',true);
+    } else if(error.status===409 && error.data?.code==='asset_revision_conflict'){
       assetDetailPending=null;assetDetailConflict=error.data;renderAssetConflict();assetDetailStatus('Conflict: this asset changed elsewhere. Compare the saved values with your draft before saving again.',true);
     } else if(!observe && error.status>=400 && error.status<500){
       assetDetailPending=null;assetDetailStatus('Not saved. '+error.message+' Your edits remain here.',true);
@@ -110,26 +114,28 @@ async function performAssetSave(operation, observe=false) {
     }
   } finally {
     clearTimeout(timer);assetDetailBusy=false;assetDetailDiscarding=false;assetDetailControls();renderAssetSaveRecovery();
+    if(id===activeAsset?.id && epoch===assetDetailEpoch)assetReviewRecovery?.changed(!assetDetailPending);
   }
 }
 // Receipt retries preserve immutable request bytes. They never become generation retries.
 async function writeAssetDetails(payload, success) {
-  if(assetDetailBusy || assetDetailConflict || !activeAsset || !$('#assetDialog').open)return;
+  if(assetDetailBusy || assetDetailConflict || assetReviewRecovery?.blocked() || !activeAsset || !$('#assetDialog').open)return;
   if(assetDetailPending)return performAssetSave(assetDetailPending);
   try {
     const command=assetCommand({...payload,ids:[activeAsset.id]},[activeAsset]);
-    assetDetailPending={id:activeAsset.id,epoch:assetDetailEpoch,command,body:JSON.stringify(command),success};
-    await performAssetSave(assetDetailPending);
+    const operation={id:activeAsset.id,epoch:assetDetailEpoch,command,body:JSON.stringify(command),snapshot:assetDetailValues(),success};
+    if(assetReviewRecovery && !assetReviewRecovery.beforeSend(operation))return;
+    assetDetailPending=operation;await performAssetSave(operation);
   } catch(error){assetDetailStatus(error.message,true);}
 }
 async function checkAssetSave(){if(assetDetailPending)return performAssetSave(assetDetailPending,true);}
 for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
-  const changed=()=>{if(assetDetailConflict){renderAssetConflict();return;}assetDetailStatus(assetDetailBusy?'Saving the earlier snapshot. Any newer edits remain unsaved.':assetDetailPending?'The earlier save is unconfirmed. Newer edits remain local.':assetDetailDirty()?'Unsaved changes. Save details to keep them.':'No unsaved changes.');};
+  const changed=()=>{assetReviewRecovery?.changed();if(assetDetailConflict){renderAssetConflict();return;}assetDetailStatus(assetDetailBusy?'Saving the earlier snapshot. Any newer edits remain unsaved.':assetDetailPending?'The earlier save is unconfirmed. Newer edits remain local.':assetDetailDirty()?'Unsaved changes. Save details to keep them.':'No unsaved changes.');};
   $('#'+id).addEventListener('input',changed);$('#'+id).addEventListener('change',changed);
 }
 // Existing continuation/scene/recipe guards still own their handoffs. Do not leave during a write.
 document.addEventListener('click',e=>{
-  if((assetDetailBusy || assetDetailPending || assetDetailConflict) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],.ux-scene-link,#assetRecipe')){
+  if((assetDetailBusy || assetDetailPending || assetDetailConflict || assetReviewRecovery?.blocked()) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],.ux-scene-link,#assetRecipe')){
     e.preventDefault();e.stopImmediatePropagation();assetDetailStatus('Finish the pending save before continuing with this asset.');
   }
 },true);
@@ -153,7 +159,7 @@ async function refreshAssets(force=false) {
   assetRefreshing=true;
   try {
     const data=await api('/api/workspace'), signature=JSON.stringify(data);
-    assetState=data;
+    assetState=data;assetReviewRecovery?.refreshed();
     if(force||signature!==assetSignature){assetSignature=signature;renderAssets();jobsSignature='';renderJobs();}
   } catch(e) { assetMessage(e.message,true); }
   finally {assetRefreshing=false;}
@@ -254,6 +260,7 @@ function openAsset(id) {
   if(!candidate){assetDetailStatus('This asset is no longer in the loaded workspace. Refresh the library to check it.',true);return false;}
   if($('#assetDialog').open && activeAsset?.id===id)return true;
   if($('#assetDialog').open && !assetDetailCanLeave())return false;
+  if($('#assetDialog').open)assetReviewRecovery?.closed();
   activeAsset={...candidate};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);
@@ -266,7 +273,7 @@ function openAsset(id) {
   renderI2VDiagnosticAction(a);
   $('#assetLineage').innerHTML=a.lineage.length?'<h3>Source assets</h3>'+a.lineage.map(id=>{const parent=assetState.assets.find(p=>p.id===id);return '<button data-lineage="'+esc(id)+'">'+esc(parent?.title||id)+'</button>';}).join(''):'';
   if(!$('#assetDialog').open)$('#assetDialog').showModal();
-  return true;
+  assetReviewRecovery?.opened();return true;
 }
 async function handoffAsset(id,presetId) {
   const result=await post('/api/assets/reference',{id});
@@ -292,7 +299,7 @@ $('#assetDialog').addEventListener('cancel',e=>{e.preventDefault();closeAssetDet
 $('#assetDialog').addEventListener('close',()=>{
   // A queued close event can arrive after a new session has already opened.
   if($('#assetDialog').open)return;
-  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;
+  assetReviewRecovery?.closed();assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;
   $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';
 });
 $('#saveAssetDetails').onclick=async()=>{

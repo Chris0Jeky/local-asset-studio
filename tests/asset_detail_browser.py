@@ -149,6 +149,8 @@ async def run(args):
             async def open_asset(i=0):
                 # Test setup closes without user input; each assertion exercises real user actions.
                 await page.evaluate("""() => new Promise(resolve => {const d=document.querySelector('#assetDialog');if(!d.open){resolve();return;}d.addEventListener('close',resolve,{once:true});d.close();})""")
+                # Independent scenarios must not restore the prior case's retained pending command.
+                await page.evaluate("if(window.StudioReviewRecovery)sessionStorage.removeItem(StudioReviewRecovery.KEY)")
                 await page.evaluate(f"openAsset('asset-{i}')")
                 await page.wait_for_function("id => document.querySelector('#assetDialog').open && activeAsset?.id===id",arg=f'asset-{i}')
             async def settle():
@@ -168,7 +170,7 @@ async def run(args):
             await page.fill('#assetNotes','Keep my detailed repair notes')
             await page.click('#assetFavorite');await settle()
             await check('ASSET-01','Favorite preserves unsaved notes',await page.input_value('#assetNotes')=='Keep my detailed repair notes')
-            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite','request_id','expected_revisions'})
+            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite','request_id','expected_revisions','workspace_id'})
             await open_asset();await page.fill('#assetNotes','Stay on Escape')
             page.remove_listener('dialog',discard_dialog)
             prompts=[]

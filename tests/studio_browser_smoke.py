@@ -74,7 +74,7 @@ class Handler(BaseHTTPRequestHandler):
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/jobs':JOBS,
-            '/api/workspace':{'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
+            '/api/workspace':{'workspace_id':'a'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},

@@ -50,6 +50,8 @@ class AssetWorkspace:
         with self.connection() as db:
             db.executescript("""
                 PRAGMA journal_mode=WAL;
+                CREATE TABLE IF NOT EXISTS workspace_identity (
+                    singleton INTEGER PRIMARY KEY CHECK(singleton=1), identity TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS assets (
                     id TEXT PRIMARY KEY, job_id TEXT NOT NULL, output_index INTEGER NOT NULL,
                     title TEXT NOT NULL, media_type TEXT NOT NULL, path TEXT NOT NULL,
@@ -75,6 +77,8 @@ class AssetWorkspace:
             """)
             # Serialize migration discovery with the ALTER, including simultaneous clients.
             db.execute("BEGIN IMMEDIATE")
+            db.execute("INSERT OR IGNORE INTO workspace_identity(singleton,identity) VALUES(1,?)",
+                       (uuid.uuid4().hex,))
             if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
 
@@ -161,6 +165,7 @@ class AssetWorkspace:
     def snapshot(self):
         with self.connection() as db:
             db.execute("BEGIN")
+            identity = db.execute("SELECT identity FROM workspace_identity WHERE singleton=1").fetchone()[0]
             assets = [self._asset(r) for r in db.execute("SELECT * FROM assets ORDER BY created_at DESC,id")]
             collections = [dict(r) for r in db.execute("SELECT * FROM collections ORDER BY name COLLATE NOCASE")]
             membership = list(db.execute("SELECT collection_id,asset_id FROM collection_assets"))
@@ -172,7 +177,7 @@ class AssetWorkspace:
                 by_id[row["asset_id"]]["collections"].append(row["collection_id"])
         for collection in collections:
             collection["count"] = sum(collection["id"] in a["collections"] and not a["trashed_at"] for a in assets)
-        return {"assets": assets, "collections": collections}
+        return {"workspace_id": identity, "assets": assets, "collections": collections}
 
     @staticmethod
     def text(value, name, maximum):
@@ -241,7 +246,7 @@ class AssetWorkspace:
         if (not isinstance(expected, dict) or set(expected) != set(ids) or
                 any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= MAX_REVISION for v in expected.values())):
             raise WorkspaceError("Supply one nonnegative safe integer revision for every selected asset")
-        allowed = {"ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
+        allowed = {"ids", "action", "request_id", "expected_revisions", "workspace_id", "title", "notes", "tags", "favorite", "review", "collection_id"}
         if set(payload) - allowed:
             raise WorkspaceError("Unknown asset command fields")
         try:
@@ -255,6 +260,11 @@ class AssetWorkspace:
         with self.connection() as db:
             # No read-check/write gap: competing clients serialize at this boundary.
             db.execute("BEGIN IMMEDIATE")
+            if "workspace_id" in payload:
+                identity = db.execute("SELECT identity FROM workspace_identity WHERE singleton=1").fetchone()[0]
+                if payload["workspace_id"] != identity:
+                    raise WorkspaceError("This save belongs to a different workspace; nothing changed here",
+                                         status=409, code="asset_workspace_conflict", request_id=request_id)
             receipt = db.execute("SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
             if receipt:
                 if receipt["fingerprint"] != fingerprint:
