@@ -1,0 +1,63 @@
+name: Recovery review publication
+on:
+  push:
+    branches: [codex/chronological-recovery-followups]
+    paths: [.github/workflows/recovery-review-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/chronological-recovery-followups
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply only the reviewed three-file patch
+        run: |
+          mkdir -p /tmp/review-proof
+          python - <<'PY'
+          import base64, hashlib, json, lzma, pathlib, subprocess
+          encoded='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'
+          payload=base64.b64decode(encoded)
+          assert hashlib.sha256(payload).hexdigest()=='926221c38776bdb2d175c0b9c22ade7b10a1f775e06269d2f604cae85d3cb9a6'
+          data=json.loads(lzma.decompress(payload));manifest=data['manifest']
+          assert set(manifest)=={'app/server.py','tests/test_worker_recovery.py','docs/reconciliation/2026-09-13-recovery-followups.md'}
+          for name,record in manifest.items():
+              assert subprocess.check_output(['git','rev-parse','HEAD:'+name],text=True).strip()==record['before'],name
+          patch=pathlib.Path('/tmp/review-proof/source.patch');patch.write_text(data['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          for name,record in manifest.items():assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==record['after'],name
+          pathlib.Path('/tmp/review-proof/manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Verify final source before publishing
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/review-proof/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/review-proof/validation.log
+          node --check app/static/studio-shell.js
+          git diff --cached --check
+      - name: Publish the verified regression fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: preserve project uncertainty after a failed job-state write'
+          git push origin HEAD:codex/chronological-recovery-followups
+          git rev-parse HEAD > /tmp/review-proof/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-regression-proof
+          path: /tmp/review-proof/
+          retention-days: 7
