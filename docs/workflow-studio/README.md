@@ -96,3 +96,6 @@ The native browser command requires test-only Playwright and permission for loca
 HTTP navigation. CI provides its isolated browser environment. Unit contracts with
 synthetic DOM/HTTP seams are not native rendering evidence. Neither kind of test
 proves a model produces useful artwork on the owner's machine.
+
+Selected-source route advice: [Find recipes for an image](SOURCE-AWARE-SHORTLIST.md)
+checks one primary Workspace identity and proposed role without modifying Create.

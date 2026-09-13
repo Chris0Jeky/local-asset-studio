@@ -1,7 +1,10 @@
 """Reference-role compilation and byte-level provenance, independent of inference."""
 import hashlib
+import io
 import math
 from pathlib import Path
+
+MAX_REFERENCE_BYTES=20*1024*1024
 
 ROLES={'identity','pose','style','costume','composition','geometry','motion','mask'}
 
@@ -24,9 +27,13 @@ def image_record(root, name):
     path=(root/name).resolve()
     if root.resolve() not in path.parents or not path.is_file():
         raise ValueError('Saved reference is unavailable. Attach it again; the saved recipe was preserved.')
-    if path.stat().st_size>20*1024*1024: raise ValueError('Reference exceeds 20 MiB')
-    raw=path.read_bytes()
-    with Image.open(path) as image: width,height=ImageOps.exif_transpose(image).size
+    if path.stat().st_size>MAX_REFERENCE_BYTES: raise ValueError('Reference exceeds 20 MiB')
+    # Capture once: both provenance and dimensions must describe these exact bytes.
+    # The read bound also holds when a source grows after the stat precheck.
+    with path.open('rb') as stream: raw=stream.read(MAX_REFERENCE_BYTES+1)
+    if len(raw)>MAX_REFERENCE_BYTES: raise ValueError('Reference exceeds 20 MiB')
+    with io.BytesIO(raw) as stream, Image.open(stream) as image:
+        with ImageOps.exif_transpose(image) as oriented: width,height=oriented.size
     return {'file':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'width':width,'height':height}
 
 

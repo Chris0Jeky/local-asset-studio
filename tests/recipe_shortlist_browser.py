@@ -62,6 +62,14 @@ async def run(out,inert):
         for p in studio.presets:
             if p['id']=='anima-portrait':p['name']='<img src=x onerror=window.shortlistInjected=true>'
         fixture.CATALOG['presets']=copy.deepcopy(studio.presets)
+        # Actual immutable Workspace source bytes; external runtime remains synthetic.
+        from workspace import AssetWorkspace
+        studio.assets=AssetWorkspace(temp);studio.jobs={}
+        first=fixture.ASSETS[0];source_path=ROOT/first['url'].lstrip('/')
+        source_id=studio.assets.register({'id':'shortlist-source','outputs':[{'filename':source_path.name,'media_type':'image'}]},0,source_path)
+        with studio.assets.connection() as db:db.execute('UPDATE assets SET id=?,title=? WHERE id=?',(first['id'],first['title'],source_id))
+        first['sha256']=studio.assets.get(first['id'])['sha256']
+        checked_source_path=studio.assets.file(first['id'])
         Handler.studio=studio
         http=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
         origin='http://127.0.0.1:'+str(http.server_port)
@@ -156,6 +164,43 @@ async def run(out,inert):
                     check(await entry.locator('#recipeShortlistLink a').get_attribute('href')=='/?recipe_goal=new-image#create','guided journeys provide a direct link to the existing recipe chooser')
                     check(CALLS.count(PREFIX)==count_before,'entry links do not automatically inspect or choose recipes')
                     await entry.close()
+                # Real Asset detail entry point, not a synthetic source event.
+                current_before=await page.evaluate(snapshot);previous=CALLS.count(PREFIX)
+                await page.evaluate("showView('assets');openAsset('asset-0')")
+                await page.wait_for_selector('#uxFindSourceRecipes',timeout=2000)
+                notes=await page.locator('#assetNotes').input_value()
+                await page.fill('#assetNotes','Keep unsaved metadata')
+                await page.click('#uxFindSourceRecipes')
+                check(await page.locator('#assetDialog').evaluate('n=>n.open') and CALLS.count(PREFIX)==previous,'unsaved metadata prevents advice navigation and stays editable')
+                await page.fill('#assetNotes',notes);await page.click('#uxFindSourceRecipes')
+                await page.wait_for_function("document.querySelector('#recipeShortlist').open&&!document.querySelector('#shortlistSourceRole').disabled")
+                check(CALLS.count(PREFIX)==previous and await page.evaluate(snapshot)==current_before,'selecting an advice source preserves Create and makes no observation or attachment request')
+                await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults .shortlist-source')
+                check('Source checked:' in await page.locator('#shortlistResults').inner_text() and 'Not attached' in await page.locator('#shortlistResults').inner_text(),'selected Workspace bytes are checked but not reported as attached')
+                await page.select_option('#shortlistSourceRole','pose')
+                check(await page.locator('#shortlistResults article').count()==0,'changing the intended source role invalidates prior cards without requesting')
+                await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
+                await page.locator('#shortlistResults article details > summary').first.click()
+                check('prompt guidance' in await page.locator('#shortlistResults').inner_text() and 'not geometric' in await page.locator('#shortlistResults').inner_text(),'named source roles expose prompt-guidance limits rather than pose-control promises')
+                await page.locator('#checkStartingRecipes').focus()
+                await page.screenshot(path=str(out/'source-desktop.png'))
+                await page.set_viewport_size({'width':390,'height':844})
+                check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'source guidance fits the 390px shell')
+                await page.locator('#checkStartingRecipes').focus()
+                await page.locator('#checkStartingRecipes').scroll_into_view_if_needed()
+                await page.screenshot(path=str(out/'source-mobile.png'))
+                await page.set_viewport_size({'width':1440,'height':1100})
+                raw_source=checked_source_path.read_bytes()
+                try:
+                    checked_source_path.write_bytes(b'changed after library selection')
+                    await page.click('#checkStartingRecipes');await page.wait_for_function("!document.querySelector('#checkStartingRecipes').disabled")
+                    check('changed' in await page.locator('#shortlistStatus').inner_text() and await page.locator('#shortlistResults article').count()==0,'changed source bytes reject advice rather than falling back to declared counts')
+                finally:checked_source_path.write_bytes(raw_source)
+                await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
+                DELAY=.7;await page.click('#checkStartingRecipes');await page.wait_for_function("document.querySelector('#checkStartingRecipes').disabled")
+                await page.click('#clearShortlistSource');await asyncio.sleep(.9);DELAY=0
+                check(await page.locator('#shortlistResults article').count()==0 and await page.locator('#shortlistSourceRole').is_disabled(),'clearing advice source discards a delayed source-bound reply')
+                check(await page.evaluate(snapshot)==current_before,'source inspection role changes and clearing preserve prompts attachments and lineage')
                 check(not errors,'no page exceptions')
                 forbidden=[x for x in CALLS if x not in (PREFIX,'/api/estimate')]
                 check(not forbidden,'zero generation/install/switch/asset writes: '+str(forbidden))
@@ -163,7 +208,7 @@ async def run(out,inert):
                 await browser.close()
         finally:
             receipt={'checks':checks,'passed':sum(c['passed'] for c in checks),'errors':errors,'native_browser_transport':not inert,'synthetic_dependencies':True,'calls':CALLS,
-                     'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/recipe-shortlist.js','app/static/recipe-shortlist.css','app/static/studio-shell.js','studio_workflow/shortlist.py')}}
+                     'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/recipe-shortlist.js','app/static/recipe-shortlist.css','app/static/studio-shell.js','app/static/studio-workbench.js','studio_workflow/shortlist.py','studio_workflow/shortlist_source.py')}}
             (out/'result.json').write_text(json.dumps(receipt,indent=2),encoding='utf-8')
             http.shutdown();http.server_close();thread.join(5)
 

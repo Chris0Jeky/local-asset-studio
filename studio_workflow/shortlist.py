@@ -15,6 +15,7 @@ import sys
 import time
 
 from .core import digest, need
+from .shortlist_source import SOURCE_FIELDS, SOURCE_ROLES, validate_source_query, inspect_source, assignment, validate_source_reply
 
 PREFIX = '/api/workflow-studio/shortlist'
 FORMAT = 'studio.recipe-shortlist/v1'
@@ -33,8 +34,8 @@ MAX_PRESETS, MAX_REQUIREMENTS = 256, 128
 
 
 def query(value):
-    need(type(value) is dict and set(value) <= {'goal', 'reference_count', 'limit', 'offset', 'expected_snapshot'},
-         'Supply goal, reference_count, limit, offset and optional expected_snapshot only')
+    need(type(value) is dict and set(value) <= {'goal', 'reference_count', 'limit', 'offset', 'expected_snapshot'} | SOURCE_FIELDS,
+         'Supply goal, reference_count, limit, offset, optional expected_snapshot and exact source fields only')
     need(type(value.get('goal')) is str and value['goal'] in GOALS, 'Choose a supported recipe goal')
     result = {'reference_count': 0, 'limit': 6, 'offset': 0, **value}
     for field, low, high in [('reference_count', 0, 3), ('limit', 1, 12), ('offset', 0, MAX_PRESETS)]:
@@ -42,6 +43,7 @@ def query(value):
     token = result.get('expected_snapshot')
     need(token is None or type(token) is str and re.fullmatch('[0-9a-f]{64}', token), 'Invalid snapshot SHA-256')
     need(result['offset'] == 0 or token is not None, 'Further pages require expected_snapshot')
+    validate_source_query(result)
     return result
 
 
@@ -64,7 +66,7 @@ def _status(checks):
         'unknown' if any(c['state'] == 'unknown' for c in checks) else 'observed')
 
 
-def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observations):
+def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observations, source=None):
     cap = preset['continuation_capability']; key = preset['id']; checks = []
     row = {'preset_id': key, 'name': _text(preset.get('name'), 160) or key,
            'description': _text(preset.get('description')), 'backend_id': preset.get('backend_id', 'primary'),
@@ -87,8 +89,10 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
         _check(checks, 'references_missing', 'blocked', f'This route needs {count} reference image(s); you declared {q["reference_count"]}. Attach them in Create.')
     elif q['reference_count'] > count:
         _check(checks, 'unused_references', 'blocked', f'This route consumes {count} reference image(s), not {q["reference_count"]}. Extra images will not be silently dropped.')
-    elif count:
+    elif count and not source:
         _check(checks, 'references_unchecked', 'unknown', 'Your image count is a declaration. Files, role assignments, staging and bytes have not been checked.')
+    if source:
+        _check(checks, 'source_not_staged', 'unknown', 'The selected primary asset bytes match the Workspace record. It is not attached by this check; other references, roles and transforms still require review in Create.')
     if cap.get('requires_mask'):
         _check(checks, 'mask_required', 'blocked', 'Prepare and attach the required RGBA repair image in Create. A declared image is not a checked repair mask.')
     try:
@@ -99,6 +103,9 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
         # Match preparation's no-op adapter handling without modifying template data.
         graph = copy.deepcopy(graph)
         studio.prune_disabled_loras(graph)
+        if source:
+            row['source_assignment'], check = assignment(preset, graph, source)
+            _check(checks, *check)
         # This deliberately checks class presence only, not a second graph validator.
         classes = sorted({n['class_type'] for n in graph.values()})
         if matching_backend and info:
@@ -139,6 +146,7 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
 def request(value, studio):
     """One explicit observation. Uses existing caches; no new store or polling loop."""
     q = query(value)
+    source = inspect_source(studio, q)
     runtime = _runtime(studio); catalog_before = studio.catalog_path.read_bytes()
     need(len(catalog_before) <= 8*1024*1024, 'Preset catalog exceeds shortlist limit')
     data = studio.catalog(); presets = data.get('presets')
@@ -168,22 +176,25 @@ def request(value, studio):
         if preset.get('modality', 'image') != modality or cap['operation'] not in operations: continue
         if cap['consumes_source'] != (cap['reference_count'] > 0):
             diagnostics.append({'preset_id': preset['id'], 'message': 'Reference wiring is not established.'});continue
-        rows.append(_candidate(studio, preset, q, info, runtime, worker_alive, assets, observations))
+        rows.append(_candidate(studio, preset, q, info, runtime, worker_alive, assets, observations, source))
     need(runtime == _runtime(studio) and studio.catalog_path.read_bytes() == catalog_before
          and observed_schema is getattr(studio, '_schema', None) and schema_stamp == getattr(studio, '_schema_at', None),
          'Studio context changed during inspection; check again without reusing this page')
+    need(source == inspect_source(studio, q), 'Source context changed during inspection; reopen the asset and check again')
     rows.sort(key=lambda r: ({'observed': 0, 'unknown': 1, 'needs_setup': 2}[r['status']],
                            sum(c['state'] == 'blocked' for c in r['checks']), r['name'].casefold(), r['preset_id']))
     identity = {'goal': q['goal'], 'reference_count': q['reference_count'], 'runtime': runtime,
                 'schema_sha256': digest(info) if info else None, 'catalog_sha256': hashlib.sha256(catalog_before).hexdigest(),
                 'candidates': rows, 'diagnostics': diagnostics}
+    if source is not None: identity['source'] = source
     snapshot = digest(identity)
     need(not q.get('expected_snapshot') or snapshot == q['expected_snapshot'], 'Shortlist changed; return to the first page and review the new observations')
     start, end = q['offset'], q['offset'] + q['limit']
     return {'format': FORMAT, 'goal': q['goal'], 'reference_count': q['reference_count'],
             'checked_at': time.time(), 'snapshot_sha256': snapshot, 'backend_id': runtime['backend_id'],
             'schema_sha256': identity['schema_sha256'], 'schema_error': schema_error,
-            'source_semantics': 'Declared image count only; no source is selected, uploaded or validated.',
+            'source': source,
+            'source_semantics': ('Primary Workspace image bytes checked against the selected SHA-256; no attachment or role applied. Additional images remain declarations.' if source else 'Declared image count only; no source is selected, uploaded or validated.'),
             'scope': 'Default preset route and listed prerequisites only. Native graph validation, full memory fit, licensing and output quality remain separate. Preparation rechecks current state.',
             'total': len(rows), 'counts': {key: sum(r['status'] == key for r in rows) for key in LABELS},
             'offset': start, 'next_offset': end if end < len(rows) else None,
@@ -194,11 +205,11 @@ def request(value, studio):
 def observe(transport, value):
     """Client-only wrapper keeps read errors useful without changing legacy transport."""
     from urllib.error import HTTPError
-    from .client import ClientError
+    from .client import ClientError, read_response
     q = query(value)
     try: result = transport(PREFIX, q)
     except HTTPError as exc:
-        with exc: raw = exc.read(65537)
+        with exc: raw = read_response(exc, 65536)
         try: detail = json.loads(raw) if len(raw) <= 65536 else {}
         except (ValueError, UnicodeError): detail = {}
         if not isinstance(detail, dict) or not isinstance(detail.get('error'), str):
@@ -215,6 +226,7 @@ def observe(transport, value):
          and type(result.get('total')) is int and 0 <= result['total'] <= MAX_PRESETS, message)
     need(type(result.get('candidates')) is list and len(result['candidates']) == min(q['limit'],max(0,result['total']-q['offset']))
          and all(type(row) is dict for row in result['candidates']), message)
+    validate_source_reply(result, q, message)
     end = q['offset'] + q['limit']
     need(result.get('next_offset') == (end if end < result['total'] else None), message)
     return result
@@ -230,11 +242,15 @@ def main(argv=None):
     parser.add_argument('--limit', type=int, default=6)
     parser.add_argument('--offset', type=int, default=0)
     parser.add_argument('--expected-snapshot')
+    parser.add_argument('--source-asset-id')
+    parser.add_argument('--source-sha256')
+    parser.add_argument('--source-role', choices=SOURCE_ROLES)
     args = parser.parse_args(argv)
     try:
         from .sdk import WorkflowClient
+        source = {key: getattr(args,key) for key in SOURCE_FIELDS if getattr(args,key) is not None}
         value = WorkflowClient(args.url, args.http_timeout).shortlist(args.goal, reference_count=args.references,
-                limit=args.limit, offset=args.offset, expected_snapshot=args.expected_snapshot)
+                limit=args.limit, offset=args.offset, expected_snapshot=args.expected_snapshot, **source)
         print(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False));return 0
     except (ValueError, OSError, HTTPException) as exc:
         print(json.dumps({'code': 'shortlist_unavailable', 'error': str(exc), 'generation_submitted': False}));return 2

@@ -98,3 +98,12 @@ distinguish node descriptions (`/object_info`) from prompt validation/submission
 (`POST /prompt`). This supports keeping schema-driven authoring separate from
 execution admission. It does not establish the installed version's widget or
 subgraph support. Existing `RESEARCH.md` retains the broader native-format research.
+
+## Source-aware guidance continuation, 13 September 2026
+
+Merged #217 supplies count-based default-recipe advice. The next source adapter
+checks one actual primary Workspace image and an explicitly proposed role through
+the same UI/HTTP/SDK/CLI/read-MCP service. See
+[SOURCE-AWARE-SHORTLIST.md](SOURCE-AWARE-SHORTLIST.md) for delivered boundaries and
+the ordered multi-source, reviewed reversible-handoff acceptance still remaining
+in #232 under #118/#21/#123. This adds no native round-trip or arbitrary execution support.
