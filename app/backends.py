@@ -209,6 +209,7 @@ class BackendManager:
 
     def _check_startup_processes(self):
         """A refused port is not evidence that its configured launcher is absent."""
+        listeners={}
         for profile in self.profiles.values():
             processes=self.configured_processes(profile)
             if not processes:continue
@@ -217,6 +218,8 @@ class BackendManager:
             if len(processes)!=1 or identity!=(processes[0].pid,processes[0].create_time()):
                 raise ValueError(profile['name']+' has a configured startup process without a unique matching listener. '
                                  'Existing processes were preserved; inspect startup before switching explicitly.')
+            listeners[profile['id']]=listener
+        return listeners
 
     def switch(self, identifier):
         if identifier not in self.profiles:raise ValueError('Unknown backend')
@@ -274,23 +277,28 @@ class BackendManager:
             if not owned:
                 if observed[identifier] is not None:raise ValueError('Target process disappeared during preflight; retry explicitly')
                 self.operation['message']='Starting '+target['name'];self._save()
-                self._check_startup_processes()
-                stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
-                if identifier=='primary':
-                    argv=self.primary_argv(target)
-                elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
-                else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
-                with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
-                    launched=subprocess.Popen(argv,cwd=target['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-                self.operation.update(pid=launched.pid,log_directory=str(logs));self._save()
-                if identifier=='primary':Path(target['pidfile']).write_text(str(launched.pid))
-                for _ in range(120):
-                    if launched.poll() is not None:raise ValueError('The selected runtime exited during startup; inspect its saved log')
-                    try:
-                        if endpoint_ready(self.request(target,'/system_stats')):break
-                    except (OSError,ValueError):pass
-                    time.sleep(1)
-                else:raise ValueError('Runtime startup timed out; no generation was submitted')
+                verified_listeners=self._check_startup_processes()
+                # The startup scan may have verified a target listener after the
+                # earlier preflight observation. Reuse it instead of launching a
+                # second configured process from the stale `owned` snapshot.
+                owned=verified_listeners.get(identifier)
+                if not owned:
+                    stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
+                    if identifier=='primary':
+                        argv=self.primary_argv(target)
+                    elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
+                    else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
+                    with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
+                        launched=subprocess.Popen(argv,cwd=target['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                    self.operation.update(pid=launched.pid,log_directory=str(logs));self._save()
+                    if identifier=='primary':Path(target['pidfile']).write_text(str(launched.pid))
+                    for _ in range(120):
+                        if launched.poll() is not None:raise ValueError('The selected runtime exited during startup; inspect its saved log')
+                        try:
+                            if endpoint_ready(self.request(target,'/system_stats')):break
+                        except (OSError,ValueError):pass
+                        time.sleep(1)
+                    else:raise ValueError('Runtime startup timed out; no generation was submitted')
             # Reusing an existing listener also requires a healthy, idle endpoint.
             if not endpoint_ready(self.request(target,'/system_stats')):raise ValueError('Target endpoint is not ready')
             self._idle(target)

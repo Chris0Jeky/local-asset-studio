@@ -51,7 +51,8 @@ class BackendTests(unittest.TestCase):
         manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
         launched=MagicMock(pid=4321);launched.poll.return_value=1
         with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
-             patch.object(manager,'process',return_value=None),patch('backends.subprocess.Popen',return_value=launched) as popen:
+             patch.object(manager,'process',return_value=None),patch.object(manager,'configured_processes',return_value=[]), \
+             patch('backends.subprocess.Popen',return_value=launched) as popen:
             manager._switch('primary')
         argv=popen.call_args.args[0]
         self.assertEqual(argv[argv.index('--reserve-vram')+1],'0.6')
@@ -60,7 +61,8 @@ class BackendTests(unittest.TestCase):
 
     def test_local_uncertain_and_external_queue_each_prevent_switch(self):
         manager=self.studio.backends
-        with patch.object(manager,'available',return_value=True),patch.object(manager,'request',return_value={'queue_running':[],'queue_pending':[]}):
+        with patch.object(manager,'available',return_value=True),patch.object(manager,'configured_processes',return_value=[]), \
+             patch.object(manager,'request',return_value={'queue_running':[],'queue_pending':[]}):
             self.studio.jobs['unknown']={'status':'uncertain'}
             with self.assertRaisesRegex(ValueError,'reconcile'):manager.switch('hidream')
             self.studio.jobs.clear()

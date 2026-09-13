@@ -133,6 +133,18 @@ class StartupInterlockTests(unittest.TestCase):
         with patch.object(self.manager, '_save', side_effect=persist):self.run_worker()
         self.preserved(); self.assertIn('startup', self.manager.operation['message'])
 
+    def test_target_listener_arriving_after_start_intent_is_reused_without_popen(self):
+        save = self.manager._save
+        def persist():
+            save()
+            if self.manager.operation.get('message', '').startswith('Starting '):
+                self.listeners['hidream'] = self.process(200)
+        with patch.object(self.manager, '_save', side_effect=persist):self.run_worker()
+        self.launch.assert_not_called()
+        self.activate.assert_called_once_with('hidream')
+        self.assertEqual(self.manager.operation['status'], 'completed')
+        self.assertNotIn('/prompt', self.routes)
+
     def test_ready_matching_target_is_reused_without_launch(self):
         self.listeners['hidream'] = self.process(200)
         self.run_worker()

@@ -63,6 +63,44 @@ Process and HTTP doubles are inert; no actual process is launched/terminated and
 `/prompt` request is made. Full-repository tests and validation run in the existing PR CI;
 read that run's result separately from the focused local proof.
 
+## Final listener observation follow-up
+
+The final scan after the saved start intent can itself observe the target becoming a
+healthy configured listener. Previously `_switch()` kept the earlier `owned=None`
+snapshot after that scan and called `Popen`, producing the duplicate-launch path
+reported by the runtime-status inert probe. The scan now returns its already verified
+listener observations, and `_switch()` reuses the target listener from that final
+result. It does not add a global atomicity claim: an unverified, foreign or ambiguous
+process still refuses the switch, and a process that appears after the final scan can
+still require an explicit later switch.
+
+`test_target_listener_arriving_after_start_intent_is_reused_without_popen` is the
+causal regression assertion. It binds the target listener while the start intent is
+saved. Before the correction it failed because `Popen` was called once; after the
+correction it proves that no launch occurs, the verified target is activated, and no
+`/prompt` request is made. The focused interlock suite now has 12 passing tests.
+
+Two existing `test_backends.py` controls now mock an empty configured-process scan.
+They exercise queue admission and primary argv construction, not host process
+discovery; after the earlier startup interlock landed, letting either test enumerate
+the workstation's protected processes made their broad `Popen` mocks observe the
+Windows name fallback. The dedicated startup-interlock suite retains its explicit
+process/listener doubles and covers the scan's behavior.
+
+On the configured isolated MCP 1.28.1 interpreter, the final evidence was:
+
+```sh
+C:/.../workflow-studio-integration/.runtime/mcp-sdk-venv/Scripts/python.exe -m unittest discover -s tests -p test_backend_startup_interlock.py -v  # 12 passed
+C:/.../workflow-studio-integration/.runtime/mcp-sdk-venv/Scripts/python.exe -m unittest discover -s tests -p test_backend_safety.py -v             # 31 passed
+C:/.../workflow-studio-integration/.runtime/mcp-sdk-venv/Scripts/python.exe -m unittest discover -s tests -p test_backends.py -v                   # 15 passed
+C:/.../workflow-studio-integration/.runtime/mcp-sdk-venv/Scripts/python.exe -m unittest discover -s tests                                          # 1085 passed, 16 skipped
+C:/.../workflow-studio-integration/.runtime/mcp-sdk-venv/Scripts/python.exe scripts/validate-repo.py                                                # 66 graphs/bindings, 121 pins, 894 paths, 86 LoRA names
+```
+
+The Node and FFmpeg paths were prepended for each command. Complete local logs are
+retained outside Git under `.runtime/codex-pr137-startup-fix/`; no runtime, queue or
+installed application was touched.
+
 ## Human / live boundary
 
 No generated art was accepted and no choices in `HUMAN_TODO.md` changed. Its creative
