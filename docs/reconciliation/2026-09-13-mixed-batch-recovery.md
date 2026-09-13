@@ -228,25 +228,6 @@ center-point hit target before clicking; it does not hide the picker, force a
 click, or replace pointer acceptance with keyboard-only execution. This failed
 run published no feature source. Final follow-up results are in the PR record.
 
-Integration correction, 13 September 2026: PR check `34781117002` showed that
-the intermediate gallery stacking rule intercepted the existing shortlist's
-ordinary **Next suggestions** pointer click. The picker now stays in its own
-grid row (`position: static`) whenever Recent runs spans the full grid below
-it, at widths up to 1480px. The existing mobile layout already used that
-behavior; the wider three-column layout retains its sticky picker. Both the
-mixed-recovery native pointer proof and the existing shortlist pointer proof
-are required on the corrected head. Their final results belong to the PR
-record; neither test may force a click or hide the obstructing content.
-
-The connector also identified a distinct startup publication path: an accepted
-queued observation enters `_load_jobs` on restart, where the generic serializer
-changed the retained recipe/workflow bytes. A direct reproduction confirmed
-different SHA-256 values while the current-schema parsed values stayed equal.
-Mixed jobs with a known prefix and pending intent now publish only `state.json`
-during startup recovery. A regression fails before the fix and checks exact
-source bytes through two restarts both before and after observation queueing,
-including repeated request identity with no queued reads or remote requests.
-
 No GPU generation, new models, installed package changes, owner runtime/config
 changes, new native-editor evidence, artistic acceptance or licence decision
 was performed. `HUMAN_TODO.md` remains untouched. This implements software
@@ -265,3 +246,35 @@ certification:
 These sources do not establish the owner's installed runtime revision. Fixtures
 assert explicit success/error evidence and retain unsupported/malformed history
 as unknown rather than assuming compatibility with every custom node/runtime.
+
+## PR review and complete browser integration
+
+PR #224's normal check `34781117002` exposed a second layout case after the initial browser
+proof: raising the Gallery above the sticky recipe picker made the shortlist's
+**Next suggestions** button unclickable. The initial stacking-only change is
+replaced, not layered with another z-index. At the existing 1480px breakpoint,
+where Gallery spans the picker column, the picker remains in normal document
+flow. The wider three-column layout retains its existing sticky behavior. Both
+the shortlist's native clicks and mixed recovery's pointer/keyboard controls are
+required; the mixed fixture additionally checks non-overlapping panel bounds at
+1440px, 1100px and 390px. No force-click or hidden-UI workaround is used.
+
+The review also identified startup source rewriting: `_load_jobs()` used the
+generic serializer for an interrupted accepted mixed observation. A causal test
+failed for queued, running and uncertain records, losing noncanonical original
+bytes and a retained recipe extension. Startup now publishes only `state.json`
+for jobs retaining both known IDs and a pending marker, including malformed mixed
+records that must remain held. Source bytes and extensions, pending intent, known
+IDs and command history remain intact. Restart does not enqueue a read; repeating
+the original command ID retrieves its state. Another test injects a locked
+startup state write and verifies that all original files remain unchanged.
+
+The independent current-schema reproduction preserved parsed values but changed
+source SHA-256 values before the fix. The combined integration also retains the
+regression for two restarts both before and after observation queueing, with
+exact source bytes, repeated request identity, and no queued reads or requests.
+
+The author's review checkpoint has 37 focused mixed tests. Final full-suite and
+hosted-browser results, the exact source identities, and the earlier failed
+browser run are reported on PR #224 rather than treating a prior passing run as
+proof of this corrected integration.
