@@ -1,0 +1,42 @@
+name: Workspace initialization and storage
+on:
+  pull_request:
+    paths:
+      - 'app/workspace.py'
+      - 'tests/test_workspace*.py'
+      - 'tests/workspace_snapshot_benchmark.py'
+      - 'tests/test_asset_metadata*.py'
+      - '.github/workflows/workspace-storage.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/workspace.py'
+      - 'tests/test_workspace*.py'
+      - 'tests/workspace_snapshot_benchmark.py'
+      - 'tests/test_asset_metadata*.py'
+      - '.github/workflows/workspace-storage.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p 'test_workspace*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_asset_metadata*.py' -v
