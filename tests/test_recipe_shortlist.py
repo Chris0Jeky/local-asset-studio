@@ -45,6 +45,9 @@ def make_studio(root):
             path=self.root/preset['graph'];return json.loads(path.read_bytes()),path
         def preset_requirements(self, preset, graph, **kwargs):
             self.calls.append('requirements:'+preset['id']);return copy.deepcopy(self.requirements[preset['id']])
+        def prune_disabled_loras(self,graph):
+            from server import Studio as ActualStudio
+            return ActualStudio.prune_disabled_loras(self,graph)
         def host_commit_preflight(self,preset,graph): self.calls.append('memory:'+preset['id']);return None
         def __getattr__(self,key): raise AssertionError('Unexpected execution/storage access: '+key)
     return Studio()

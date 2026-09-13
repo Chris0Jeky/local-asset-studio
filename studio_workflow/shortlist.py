@@ -96,6 +96,9 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
         need(type(graph) is dict and 0 < len(graph) <= 256, 'Unsupported graph size')
         need(type(cap.get('template_sha256')) is str and hashlib.sha256(path.read_bytes()).hexdigest() == cap['template_sha256'],
              'Recipe graph changed or its identity is unavailable; check again')
+        # Match preparation's no-op adapter handling without modifying template data.
+        graph = copy.deepcopy(graph)
+        studio.prune_disabled_loras(graph)
         # This deliberately checks class presence only, not a second graph validator.
         classes = sorted({n['class_type'] for n in graph.values()})
         if matching_backend and info:

@@ -130,7 +130,7 @@
     // #197 supplies recipe events. On older shells input edits still invalidate safely.
     const changed=e=>{if(!panel.contains(e.target))session.invalidate('Studio inputs changed. Check starting recipes again when needed.');};
     $('#createView').addEventListener('input',changed);$('#createView').addEventListener('change',changed);
-    w.addEventListener('studio:recipe',()=>session.invalidate('Recipe changed. This report does not cover your current settings.'));
+    d.addEventListener('studio:recipe',()=>session.invalidate('Recipe changed. This report does not cover your current settings.'));
     w.addEventListener('hashchange',()=>{if(w.location.hash!=='#create')session.invalidate('Return to Create and check again when needed.');});
     d.addEventListener('change',e=>{if(e.target.id==='backendChoice')session.invalidate('Environment choice changed. Check after any explicit switch.');});
     d.addEventListener('click',e=>{if(e.target.closest?.('#switchBackend'))session.invalidate('Environment change requested. Check after it finishes.');});
