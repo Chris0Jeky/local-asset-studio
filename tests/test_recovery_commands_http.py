@@ -7,6 +7,7 @@ import threading
 import unittest
 
 import test_production as fixtures
+from http_refusal_transport import atomic_json_post
 from test_server import FakeStudio, server
 
 
@@ -48,7 +49,8 @@ class RecoveryHTTPTests(unittest.TestCase):
         for route,payload in ((f"/api/jobs/{self.job['id']}/abandon",{'reason':'Keep','acknowledge_unknown':True}),
                               (f'/api/production/{self.identifier}/extend-time',{'reason':'Finish','expected_revision':0,'seconds':60})):
             for headers in ({'Host':'evil.invalid'},{'Origin':'https://evil.invalid'},{'Origin':'null'}):
-                with self.subTest(route=route,headers=headers):self.assertEqual(self.request(route,payload,headers)[0],403)
+                options={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191',**headers}
+                with self.subTest(route=route,headers=headers):self.assertEqual(atomic_json_post(self.http.server_port,route,json.dumps(payload).encode(),host=options['Host'],origin=options['Origin'])[0],403)
         self.assertEqual(self.job['status'],'uncertain');self.assertEqual(self.studio.requests,[])
     def test_extension_conflict_and_rejection_do_not_enqueue(self):
         route=f'/api/production/{self.identifier}/extend-time';queued=self.studio.queue.qsize()
@@ -63,5 +65,5 @@ class RecoveryHTTPTests(unittest.TestCase):
             for value in (None,[],True,'not a command'):
                 with self.subTest(route=route,value=value):self.assertEqual(self.request(route,value)[0],400)
             bad=route.rsplit('/',1)[0]+'/extra/'+route.rsplit('/',1)[1]
-            self.assertEqual(self.request(bad,{})[0],400)
+            self.assertEqual(atomic_json_post(self.http.server_port,bad,json.dumps({}).encode())[0],400)
         self.assertEqual(self.job['status'],'uncertain');self.assertEqual(self.studio.requests,[])
