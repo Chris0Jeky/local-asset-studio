@@ -199,6 +199,7 @@ class Session:
             node = self.document.createNode('Proposed edit ' + plan['edit_plan_sha256'][:12], 'paintlayer')
             native.need(node is not None, 'Krita did not create a proposed layer')
             native.need(self.document.rootNode().addChildNode(node,self.document.topLevelNodes()[-1]), 'Krita did not attach proposed layer')
+            self.document.setModified(True)
             width,height = plan['canvas']
             node.setPixelData(buffers['overlay.bgra'],0,0,width,height)
             self._settle()

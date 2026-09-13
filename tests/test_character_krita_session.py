@@ -165,6 +165,13 @@ class SessionTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.session.import_request(self.request)
         self.assertEqual(len(self.doc.nodes), 3)
 
+    def test_import_marks_previously_clean_document_modified(self):
+        self.doc.dirty = False
+        self.session.capture(self.root/'clean-capture')
+        ds.prepare_request(self.root/'clean-capture/snapshot.json', self.native, self.root/'clean-import.json')
+        self.session.import_request(self.root/'clean-import.json')
+        self.assertTrue(self.doc.modified())
+
     def test_human_edit_to_proposed_or_hidden_layer_blocks_compare(self):
         self.session.import_request(self.request)
         for index in (0, 2):
