@@ -156,23 +156,15 @@ def catalog(info: dict, backend_id: str) -> dict:
         elif isinstance(raw.get("inputs"), dict):
             inputs = [_input(name, descriptor, True) for name, descriptor in raw["inputs"].items()
                       if name not in RESERVED]
-        outputs = []
-        if isinstance(raw.get("outputs"), list):
-            for index, output in enumerate(raw["outputs"]):
-                if isinstance(output, dict):
-                    outputs.append({"index": output.get("index", index), "type": output.get("type", "UNKNOWN"),
-                                    "name": output.get("name", str(index)), "is_list": bool(output.get("is_list"))})
-        else:
-            names = raw.get("output_name") or []
-            lists = raw.get("output_is_list") or []
-            for index, kind in enumerate(raw.get("output") or []):
-                outputs.append({"index": index, "type": kind if isinstance(kind, str) else "UNKNOWN",
-                                "name": names[index] if index < len(names) else str(kind),
-                                "is_list": bool(lists[index]) if index < len(lists) else False})
+        from .node_outputs import outputs as output_ports
+        outputs, output_errors = output_ports(raw)
+        schema_errors.extend(output_errors)
+        if 'output_node' in raw and type(raw['output_node']) is not bool:
+            schema_errors.append('output_node must be boolean')
         nodes[class_type] = {"class_type": class_type, "name": raw.get("display_name") or class_type,
                              "category": raw.get("category", "Uncategorized"),
                              "description": raw.get("description", ""), "inputs": inputs, "outputs": outputs,
-                             "output_node": bool(raw.get("output_node")),
+                             "output_node": raw.get("output_node") is True,
                              "module": raw.get("python_module"), "schema_errors": schema_errors,
                              "unsupported": bool(schema_errors) or any(i["widget"] == "unsupported" for i in inputs)}
     return {"version": 1, "backend_id": backend_id, "schema_sha256": digest(info), "nodes": nodes,
