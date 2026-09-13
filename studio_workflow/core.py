@@ -98,7 +98,7 @@ def _input(name: str, descriptor: Any, required: bool) -> dict:
         options = copy.deepcopy(descriptor[1]) if len(descriptor) > 1 and isinstance(descriptor[1], dict) else {}
     else:
         return {"name": name, "type": "UNKNOWN", "required": required,
-                "widget": "unsupported", "reason": "Unrecognized input descriptor", "options": {}}
+                "widget": "unsupported", "reason": "Unrecognized input descriptor", "options": {}, "hidden": False}
     if isinstance(kind, list):
         options["options"] = copy.deepcopy(kind)
         kind = "COMBO"
@@ -110,6 +110,16 @@ def _input(name: str, descriptor: Any, required: bool) -> dict:
     if kind not in SCALARS | {"COMBO"} and (options.get("socketless") or "default" in options):
         widget = "unsupported"
     reasons = []
+    if kind in {"INT", "FLOAT"}:
+        # Metadata drives browser controls. Do not coerce a plugin's invalid
+        # bound/step into a plausible dial or let comparison raise TypeError.
+        numeric = lambda n: type(n) is int or (type(n) is float and math.isfinite(n))
+        if any(not numeric(options[k]) for k in ("min", "max", "step") if k in options):
+            reasons.append("Numeric bounds and step must be finite numbers")
+        elif ("min" in options and "max" in options and options["min"] > options["max"]):
+            reasons.append("Numeric minimum exceeds maximum")
+        elif "step" in options and options["step"] <= 0:
+            reasons.append("Numeric step must be positive")
     if kind in {"DYNAMIC_COMBO", "DYNAMIC_AUTOGROW", "UNKNOWN"}:
         reasons.append("Dynamic/custom input needs a native adapter")
     for flag in ("rawLink", "remote"):
@@ -132,10 +142,15 @@ def catalog(info: dict, backend_id: str) -> dict:
     for class_type, raw in info.items():
         if not isinstance(raw, dict) or not isinstance(class_type, str) or class_type in RESERVED:
             continue
-        inputs = []
+        inputs, schema_errors = [], []
         if isinstance(raw.get("input"), dict):
             for group in ("required", "optional"):
-                for name, descriptor in (raw["input"].get(group) or {}).items():
+                entries = raw["input"].get(group)
+                if entries is None: continue
+                if not isinstance(entries, dict):
+                    schema_errors.append(group + " input definitions must be an object")
+                    continue
+                for name, descriptor in entries.items():
                     if name not in RESERVED:
                         inputs.append(_input(name, descriptor, group == "required"))
         elif isinstance(raw.get("inputs"), dict):
@@ -158,8 +173,8 @@ def catalog(info: dict, backend_id: str) -> dict:
                              "category": raw.get("category", "Uncategorized"),
                              "description": raw.get("description", ""), "inputs": inputs, "outputs": outputs,
                              "output_node": bool(raw.get("output_node")),
-                             "module": raw.get("python_module"),
-                             "unsupported": any(i["widget"] == "unsupported" for i in inputs)}
+                             "module": raw.get("python_module"), "schema_errors": schema_errors,
+                             "unsupported": bool(schema_errors) or any(i["widget"] == "unsupported" for i in inputs)}
     return {"version": 1, "backend_id": backend_id, "schema_sha256": digest(info), "nodes": nodes,
             "generation_submitted": False,
             "notice": "Installed schema, not an execution or custom-widget compatibility guarantee."}
@@ -270,6 +285,8 @@ def compile_document(value: dict, schema: dict) -> dict:
         if kind is None:
             error("missing_class", "Node is not installed: " + node["class_type"], key)
             kind = {"inputs": [], "outputs": []}
+        for problem in kind.get("schema_errors", []):
+            error("invalid_node_schema", problem, key)
         if kind.get("output_node") and key not in doc["outputs"]:
             error("unselected_output", "A selected output depends on an unselected output; select it explicitly", key)
         specs = {x["name"]: x for x in kind["inputs"] if not x["hidden"]}
