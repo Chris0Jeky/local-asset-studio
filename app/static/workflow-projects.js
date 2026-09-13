@@ -37,6 +37,7 @@
     if (!choice.value) throw Error('Choose a saved workflow.');
     if (W.snapshot() && !confirm('Open saved workflow? Export the current local draft first to keep unsaved changes.')) return;
     const token = ++readToken, epoch = W.epoch(), result = await request(P.PREFIX + '/' + choice.value);
+    if (state.pending || state.busy) throw Error('A save began while opening. Nothing was replaced; open again after the save resolves.');
     if (token !== readToken || epoch !== W.epoch()) throw Error('The draft changed while opening. Nothing was replaced.');
     load(result); say(`Opened ${result.document.name} at server revision ${result.revision}.`);
   }
