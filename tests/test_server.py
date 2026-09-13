@@ -771,11 +771,29 @@ class ServerTests(unittest.TestCase):
             with self.subTest(batch=batch):
                 studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
                 job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':batch},enqueue=False)['id']]
-                job.update(status='uncertain',message='Local processing failed; remote outcome requires inspection.',prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}])
+                job.update(status='uncertain',message='Local processing failed; remote outcome requires inspection.',prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}],outputs=[{'filename':'demo_00001_.png','subfolder':'Studio','type':'output','prompt_id':'p0'}])
                 public=studio.resume_job(job['id']);self.assertEqual(public['status'],'queued');self.assertEqual(studio.queue.get(),('observe',job['id']))
-                studio._resume(job)
-                self.assertEqual(job['status'],expected);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+                with patch.object(studio,'index_outputs',wraps=studio.index_outputs) as indexed: studio._resume(job)
+                self.assertEqual(job['status'],expected);self.assertEqual([args[0] for args,_ in studio.requests if args],[]);indexed.assert_called_once()
+                self.assertTrue(job['message'].startswith('Reconciled from retained receipts'))
                 if expected=='partial': self.assertIn('Remaining images were not submitted',job['message'])
+
+    def test_reconciling_an_unchanged_partial_keeps_the_recorded_gate_reason(self):
+        studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+        job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':3},enqueue=False)['id']]
+        reason='Host commit headroom 20.0 GiB is below the required 32 GiB. No prompt was submitted for output 2.'
+        job.update(status='partial',message=reason,prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}])
+        studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['message'],reason);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+
+    def test_an_unrecognized_queue_entry_shape_counts_as_listed(self):
+        replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]
+        for _ in range(3): replies+=[{}]*server.HISTORY_QUEUE_CHECK_EVERY+[{'queue_running':[{'prompt_id':'p'}],'queue_pending':[]}]
+        replies.append({'p':{'status':{'status_str':'success'},'outputs':{}}})
+        studio=FakeStudio(self.root,replies)
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed')
 
     def test_an_active_job_cannot_be_queued_for_observation_twice(self):
         studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True

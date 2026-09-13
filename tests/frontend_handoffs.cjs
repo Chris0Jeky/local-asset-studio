@@ -401,6 +401,7 @@ async function recipeSwapDuringUploadNeverSubmits() {
   assert.equal(s.requests.some(r => r.url === '/api/jobs'), false, 'A recipe swapped during the source upload must not be submitted');
   assert.equal(s.run('selected.id'), 'qwen-1ref');
   assert.equal(s.run('submitting'), false, 'Generate is released after the refused submission');
+  assert.equal(s.run('uploaded'), null, 'The refused upload is not left bound to the recipe it was not made for');
   s.context.fetch = fetch;
   s.run(`selectPreset('gentle-variation');`);
   s.element('#reference').files = [localFile()];

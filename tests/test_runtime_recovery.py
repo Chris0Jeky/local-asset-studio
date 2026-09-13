@@ -195,5 +195,8 @@ class RuntimeRecoveryTests(unittest.TestCase):
         r._record("healthy","Selected backend is healthy.",pid=5);r._record("offline","Backend refused")
         lines=[__import__("json").loads(l) for l in r.log_path.read_text(encoding="utf-8").splitlines()]
         self.assertEqual([l["status"] for l in lines],["healthy","healthy","offline"]);self.assertEqual(lines[1]["pid"],5);self.assertTrue(all("at" in l for l in lines))
+        r.reset();r.reset()
+        tail=[__import__("json").loads(l)["status"] for l in r.log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(tail,["healthy","healthy","offline","idle","idle"],"an explicit reset is logged every time")
 
 if __name__ == "__main__": unittest.main()

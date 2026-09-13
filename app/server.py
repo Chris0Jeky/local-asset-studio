@@ -1344,7 +1344,8 @@ class Studio:
             entries = data.get(key)
             if not isinstance(entries, list): return True
             for entry in entries:
-                if isinstance(entry, (list, tuple)) and len(entry) > 1 and entry[1] == prompt_id: return True
+                if not isinstance(entry, (list, tuple)) or len(entry) < 2: return True  # unrecognized shape: assume listed
+                if entry[1] == prompt_id: return True
         return False
 
     def _wait_history(self, job, submission):
@@ -1417,6 +1418,7 @@ class Studio:
         pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
         # Every retained receipt terminal: _resume reconciles the job's own status without any ComfyUI request.
         if not pending and not (job.get("submissions") and job.get("status") in ("uncertain", "partial")): raise StudioError("No known prompt IDs are available to resume")
+        if not pending: job["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}  # what the queued reconciliation started from
         job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
 
     def _resume(self, job):
@@ -1424,15 +1426,23 @@ class Studio:
             if self._tracking_stopped(job): return
             if job.get('status') == 'abandoned' or 'pending_submission' in job:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
+            prior = job.pop("reconciliation", None) or {}
+            prior_status, prior_message = prior.get("status", job.get("status")), prior.get("message", job.get("message"))
+            unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
             if submission.get("status") != "completed" and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
         if observed < job["batch_count"]:
-            job["status"] = "partial"
-            job["message"] = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
+            status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
         else:
-            job["status"] = "completed"; job["message"] = "Complete"
+            status = "completed"; message = "Complete"
+        if not unresolved:
+            # Pure reconciliation of terminal receipts: index what was never indexed and keep the
+            # recorded reason when the status does not change (a gate refusal explains a partial).
+            self.index_outputs(job)
+            message = prior_message if status == prior_status and prior_message else "Reconciled from retained receipts: " + message
+        job["status"] = status; job["message"] = message
         self._save(job)
 
     def upload(self, filename, content_type, body):
