@@ -1,9 +1,9 @@
-"""Sort finished .safetensors downloads into the right ComfyUI model folder by reading their header.
+"""Inspect finished .safetensors downloads and copy reviewed candidates into ComfyUI.
 
 Offline: it inspects the safetensors header (metadata plus tensor key shapes), never the network. Files are
-moved, never overwritten; each move prints a receipt and a `models/library.json` entry stub. Standard library only.
+copied without overwriting destinations; originals stay in place. Each copy has a durable intake journal. Standard library only.
 """
-import argparse,hashlib,json,re,shutil,sys,time
+import argparse,json,re,sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -11,6 +11,7 @@ sys.path.insert(0,str(ROOT/'app'))
 # One folder allow-list for the whole repo: drifting copies let a script write where the
 # Models view cannot read, and three copies had already diverged (9, 9 and 11 entries).
 from model_library import FOLDERS as _FOLDERS
+from model_intake import import_candidate, source_snapshot, target_path
 FOLDERS=tuple(_FOLDERS)
 LORA_MARKERS=('.lora_a.','.lora_b.','.lora_down.','.lora_up.','.lora.down.','.lora.up.','.lora_magnitude','.hada_w','.lokr_','.oft_','.diff_b')
 LORA_PREFIXES=('lora_unet_','lora_te_','lora_te1_','lora_te2_','lora_transformer_')
@@ -60,21 +61,17 @@ def plan(paths,folder=None):
  items=[]
  for path in paths:
   item={'path':Path(path),'folder':folder,'error':None,'folder_basis':'operator-selected' if folder is not None else 'unknown'}
-  if folder is None:
-   try:
+  try:
+   item['source_identity']=source_snapshot(path)
+   if folder is None:
     item['folder']=classify(read_header(path))
     if item['folder'] is None:
      item['error']='Unknown model role: no supported header signature. File preserved; inspect the source and use --dest-folder only after review.'
     else:item['folder_basis']='header-hint'
-   except (ValueError,OSError) as error:item.update(error=str(error),folder_basis='unreadable-header')
+   if source_snapshot(path)!=item['source_identity']:raise ValueError('Source changed during header inspection; original preserved')
+  except (ValueError,OSError) as error:item.update(error=str(error),folder_basis='unreadable-header')
   items.append(item)
  return items
-
-def sha256(path,chunk=8*1024**2):
- digest=hashlib.sha256()
- with Path(path).open('rb') as stream:
-  for block in iter(lambda:stream.read(chunk),b''):digest.update(block)
- return digest.hexdigest()
 
 def safe_name(name):
  base=Path(str(name or '')).name
@@ -84,10 +81,8 @@ def safe_name(name):
 
 def destination(comfy_root,folder,name):
  if folder not in FOLDERS:raise SystemExit('Unsupported destination folder: '+str(folder))
- models=(Path(comfy_root)/'models').resolve()
- target=(models/folder/safe_name(name)).resolve()
- if not target.is_relative_to(models):raise SystemExit('Destination escapes the model library')
- return target
+ try:return target_path(comfy_root,folder,safe_name(name))
+ except ValueError as error:raise SystemExit(str(error)) from error
 
 def slug(name):
  value=re.sub(r'[^a-z0-9]+','-',re.sub(r'\.safetensors$','',str(name).lower())).strip('-')
@@ -99,16 +94,8 @@ def stub(folder,name,size,digest,source='',family='',trigger='',strength=None):
          'license':'','terms':'TODO: record where this file came from and its licence before relying on it',
          'family':family,'trigger':trigger,'strength':strength or [1.0,1.0]}
 
-def append_receipt(root,record):
- path=Path(root)/'.runtime/downloads/receipts.json';path.parent.mkdir(parents=True,exist_ok=True)
- existing=json.loads(path.read_text(encoding='utf-8')) if path.is_file() else []
- if not isinstance(existing,list):raise SystemExit('receipts.json is not a list; inspect it before writing')
- existing.append(record)
- temp=path.with_name(path.name+'.tmp');temp.write_text(json.dumps(existing,indent=2),encoding='utf-8',newline='\n');temp.replace(path)
- return record
-
 def main(argv=None):
- parser=argparse.ArgumentParser(description='Move finished .safetensors downloads into the ComfyUI model folders.')
+ parser=argparse.ArgumentParser(description='Copy reviewed .safetensors downloads into ComfyUI; preserve browser originals.')
  parser.add_argument('--from',dest='source',type=Path,default=Path.home()/'Downloads')
  parser.add_argument('--dest-folder',choices=FOLDERS,help='operator-selected folder; bypasses header classification, not proof of model compatibility')
  parser.add_argument('--name',help='rename a single file on the way in')
@@ -118,7 +105,7 @@ def main(argv=None):
  candidates=sorted(path for path in args.source.glob('*.safetensors') if path.is_file())
  if args.name and len(candidates)!=1:raise SystemExit('--name needs exactly one candidate file; found '+str(len(candidates)))
  if not candidates:print('Nothing to intake in '+str(args.source));return 0
- comfy_root=load_config()['comfy_root'];moved=0
+ comfy_root=load_config()['comfy_root'];copied=0
  for item in plan(candidates,args.dest_folder):
   path=item['path']
   if item['error']:print('SKIP',path.name,'-',item['error']);continue
@@ -127,16 +114,10 @@ def main(argv=None):
   print('  Folder basis: '+item['folder_basis']+'; identity and runtime compatibility are unverified.')
   if args.dry_run:continue
   if target.exists():print('SKIP',path.name,'- destination already exists; nothing was overwritten');continue
-  size=path.stat().st_size;digest=sha256(path)
-  target.parent.mkdir(parents=True,exist_ok=True)
-  if target.exists():print('SKIP',path.name,'- destination appeared while hashing');continue
-  shutil.move(str(path),str(target));moved+=1
-  receipt={'file':target.name,'origin':str(path),'bytes':size,'sha256':digest,'expected_sha256':None,'verified':False,
-           'folder':item['folder'],'folder_basis':item['folder_basis'],'runtime_compatible':None,'licence':'TODO: record the source and licence','fetched':time.strftime('%Y-%m-%dT%H:%M:%S')}
-  append_receipt(ROOT,receipt)
+  receipt=import_candidate(ROOT,comfy_root,path,item['folder'],target.name,item['source_identity'],item['folder_basis']);copied+=1
   print('RECEIPT',json.dumps(receipt,indent=2))
-  print('LIBRARY STUB',json.dumps(stub(item['folder'],target.name,size,digest),indent=2))
- print(f'{len(candidates)} candidate(s); {moved} moved. A moved file is not a verified one: a browser download has no source checksum.')
+  print('LIBRARY STUB',json.dumps(stub(item['folder'],target.name,receipt['bytes'],receipt['sha256']),indent=2))
+ print(f'{len(candidates)} candidate(s); {copied} copied. Browser originals retained. Copies are not source-verified; inspect the per-operation intake receipts.')
  return 0
 
 if __name__=='__main__':raise SystemExit(main())

@@ -76,12 +76,12 @@ Asset finishing uses the existing Pillow/rembg environment, configured as `asset
 
 ## Installing another model
 
-Three standard-library scripts put a weight into the configured ComfyUI folders. None of them starts ComfyUI
-or the studio, and the acquisition scripts download only named resources. Existing destinations are skipped;
-a failed network transfer retains its `.part` file for inspection. Each prints a receipt (appended to
-`.runtime/downloads/receipts.json`) and a `models/library.json` entry stub to paste in and complete by hand.
-The browser-intake move/receipt path is not transactional against concurrent writers or source mutation;
-that separate publication follow-up is tracked in #140. Do not run competing intake writers.
+Three standard-library scripts put a weight into the configured ComfyUI folders. None starts ComfyUI or the
+studio. The HF/Civitai acquisition scripts download named resources, retain failed `.part` transfers, and
+append their receipts to `.runtime/downloads/receipts.json`. Browser intake instead creates an independent
+copy and a per-operation journal under `.runtime/downloads/intake/`, preserving its original. It shares the
+pinned installer's exclusive lease and no-clobber publication; the other acquisition scripts are not made
+lease-aware here, so do not run competing writers. See [intake and recovery](MODEL-INTAKE.md).
 
 ```console
 python scripts/fetch-hf.py --repo Comfy-Org/Krea-2 --path loras/krea2_darkbrush.safetensors --dry-run
@@ -102,14 +102,17 @@ python scripts/intake-downloads.py --dry-run
   LoRA key/training-metadata hints take precedence, followed by checkpoint, VAE and text-encoder signatures.
   The supported diffusion-backbone hint requires all three key groups: `blocks.*`, `img_in.*` and
   `final_layer.*`, optionally under `diffusion_model.` or `model.diffusion_model.`. Unrecognised or incomplete
-  signatures produce **SKIP / Unknown model role**, preserving the candidate before hashing, moving or writing
+  signatures produce **SKIP / Unknown model role**, preserving the candidate before hashing, copying or writing
   a receipt; a familiar filename is not evidence. Mixed batches still process recognised candidates.
   `--dest-folder` explicitly selects a folder for the **whole batch** and bypasses header inspection; use an
   isolated directory of reviewed candidates, preferably with `--dry-run` first. The CLI and receipt label
   `folder_basis` as `header-hint` or `operator-selected`, neither of which proves model identity, lineage or
   compatibility. Browser receipts retain `verified: false`, `expected_sha256: null` and
-  `runtime_compatible: null`; record actual provenance separately. See the
-  [intake contracts and evidence](reconciliation/2026-09-13-oldest-open-issues.md).
+  `runtime_compatible: null`; record actual provenance separately. Recognised candidates are **copied, not
+  moved**, with source identity rechecks and staged byte verification before publication. Browser originals
+  remain in place; full copy space plus the existing 20 GiB reserve is required. Per-operation receipts retain
+  interrupted evidence. See [the publication contract and recovery steps](MODEL-INTAKE.md), extending the
+  earlier [role-classification checkpoint](reconciliation/2026-09-13-oldest-open-issues.md).
 
 After an install, restart ComfyUI (or refresh its model lists) so the new file appears in the node dropdowns,
 then add the pinned entry to `models/library.json` and run `python scripts/validate-repo.py`. The entry needs a

@@ -1,0 +1,44 @@
+name: Browser model intake
+on:
+  pull_request:
+    paths:
+      - 'app/model_intake.py'
+      - 'app/model_library.py'
+      - 'app/download_contracts.py'
+      - 'scripts/intake-downloads.py'
+      - 'tests/test_model_intake.py'
+      - 'tests/test_intake_unknown.py'
+      - 'tests/test_fetch_scripts.py'
+      - '.github/workflows/model-intake.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/model_intake.py'
+      - 'app/model_library.py'
+      - 'app/download_contracts.py'
+      - 'scripts/intake-downloads.py'
+      - 'tests/test_model_intake.py'
+      - 'tests/test_intake_unknown.py'
+      - 'tests/test_fetch_scripts.py'
+      - '.github/workflows/model-intake.yml'
+permissions:
+  contents: read
+concurrency:
+  group: model-intake-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  publication:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_model_intake.py -v
+      - run: python -m unittest discover -s tests -p test_intake_unknown.py -v
+      - run: python -m unittest discover -s tests -p test_fetch_scripts.py -v
