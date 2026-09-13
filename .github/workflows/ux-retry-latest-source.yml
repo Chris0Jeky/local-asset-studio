@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: e9a062036f2f38ece4e6cf90ccb2ca40939695d4
+          ref: a5f2e3f2fd0188c9538d1d5be7f6889804afacae
           fetch-depth: 1
           persist-credentials: false
       - name: Archive tracked source only
