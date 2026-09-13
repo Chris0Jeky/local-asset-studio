@@ -218,7 +218,7 @@ function selectPreset(id, reset=true, transition=false) {
   if(transition){continuationState=null;continuationSource=null;}
   recipeTemplateHash=null;
   selected=next; recipeChanged();
-  if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected();
+  if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
 }
 async function refreshHealth() {

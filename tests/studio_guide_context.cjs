@@ -22,7 +22,7 @@ class Element {
   querySelector(){return null;} closest(){return null;} getClientRects(){return this.hidden?[]:[{}];}
   matches(){return true;} focus(){} scrollIntoView(){} addEventListener(){}
 }
-async function page(check='readiness') {
+async function page(check='readiness',target=null) {
   const document=hub(), window=hub(), main=new Element('main'), controls=new Map(), calls=[], writes=[];
   const node=id=>{if(!controls.has(id)){const e=new Element();e.id=id;controls.set(id,e);}return controls.get(id);};
   const walk=(n,id)=>n.id===id?n:n.children.map(c=>walk(c,id)).find(Boolean);
@@ -39,7 +39,7 @@ async function page(check='readiness') {
     fetch:async(url,options={})=>{calls.push([options.method||'GET',url]);if(url==='/api/catalog')return new Promise(()=>{});
       let data;
       if(url==='/api/workflow-studio/guides')data={guides:[{id:'fixture',title:'Fixture',steps:[
-        {id:'one',title:'One',detail:'Test',check,route:'/#create'},
+        {id:'one',title:'One',detail:'Test',check,route:'/#create',target},
         {id:'two',title:'Two',detail:'Test',check:'manual',route:'/#assets'}]}]};
       else if(url==='/api/backends')data={active:'primary',busy:false,profiles:[{id:'primary',url:'http://127.0.0.1:8188'}]};
       else if(url==='/api/health'){if(context.holdHealth)await context.holdHealth;data={online:true,schema_available:true,worker_alive:true,missing_models:{},comfy_url:'http://127.0.0.1:8188'};}
@@ -106,4 +106,17 @@ test('the real picker, variation, seed and mode handlers notify without text inp
     p=>p.run("selected.i2v_modes=[{id:'test',name:'Fixture mode',controls:{positive:'Mode wording'}}];updateReady=()=>{};applyI2VMode('test')"),
   ];
   for(const action of actions){const p=await page();await p.ready();action(p);assert.equal(p.evidence().dataset.state,'unknown');}
+});
+
+test('recipe selection refreshes guide targets after rendering without losing early invalidation',async()=>{
+  const p=await page('prompt','#reference');p.node('reference').hidden=true;await p.ready();
+  p.run(`renderSelected=()=>{window.stateDuringRender=document.getElementById('guideEvidence').dataset.state;
+    $('#reference').hidden=selected.id!=='b';};selectPreset('b');`);
+  assert.equal(p.window.stateDuringRender,'unknown','old evidence is invalid before rendering');
+  assert.match(p.document.getElementById('guideTargetStatus').textContent,/Target control is available/,'newly visible target discovered without clicking Show');
+  p.run("selectPreset('a')");
+  assert.match(p.document.getElementById('guideTargetStatus').textContent,/not visible/,'hidden target is no longer offered');
+  await p.ready();p.run("renderSelected=()=>{throw Error('Fixture render failure');}");
+  assert.throws(()=>p.run("selectPreset('b')"),/Fixture render failure/);
+  assert.equal(p.evidence().dataset.state,'unknown','failed render cannot keep old success');
 });
