@@ -1534,6 +1534,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
+            if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
+                return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
             if path == '/api/voice-baseline':
                 from voice_baseline import capabilities
                 return self._json(200,{'capabilities':capabilities(self.studio),'projects':[p for p in self.studio.production.list() if p['kind']=='voice']})
@@ -1624,6 +1626,7 @@ class Handler(BaseHTTPRequestHandler):
                 if len(parts)!=4:raise StudioError('Unknown scene command route')
                 return self._json(200,self.studio.production.av.command(parts[3],self._body_json()))
             if self.path == '/api/production':return self._json(201,self.studio.production.create(self._body_json()))
+            if self.path == '/api/production/campaigns':return self._json(201,self.studio.production.register_edit_campaign(self._body_json()))
             if self.path == '/api/production-export':return self._json(201,self.studio.production.native(self._body_json()))
             if self.path == '/api/experiments/plan': return self._json(200, self.studio.production.plan(self._body_json()))
             if self.path.startswith('/api/production/'):
