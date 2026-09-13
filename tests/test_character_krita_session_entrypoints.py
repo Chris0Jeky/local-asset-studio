@@ -96,8 +96,11 @@ class InstallTests(unittest.TestCase):
         desktop = [item for name, item in gui["outputs"].items() if name.endswith(".desktop")]
         self.assertEqual(1, len(desktop))
         self.assertIn(gui["module"], Path(desktop[0]["path"]).read_text(encoding="utf-8"))
-        with self.assertRaisesRegex(ValueError, "proof module"):
-            entrypoints.install(self.config, "runner", include_proof=True)
+        normal = entrypoints.install(self.config, "runner")
+        self.assertNotIn("session_proof.py", normal['outputs'])
+        proof = entrypoints.install(self.config, "runner", include_proof=True)
+        self.assertIn("session_proof.py", proof['outputs'])
+        self.assertNotEqual(normal['module'], proof['module'])
         with self.assertRaisesRegex(ValueError, "runner-only"):
             entrypoints.install(self.config, "gui", include_proof=True)
 
