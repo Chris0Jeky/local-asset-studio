@@ -63,7 +63,7 @@ class Handler(fixture.Handler):
             return self.json(receipt)
         return super().do_POST()
 
-async def inert_page(page, port):
+async def inert_page(page, port, saved_session=None):
     """Actual HTML/scripts/styles with explicit test-only storage and API transport."""
     async def transport(path,options):
         if not isinstance(path,str) or not path.startswith('/api/') or '..' in path:raise ValueError('Test transport only serves fixture APIs')
@@ -77,8 +77,9 @@ async def inert_page(page, port):
     await page.expose_function('__qaTransport',transport)
     markup=(STATIC/'index.html').read_text()
     # No navigation-policy bypass. Native storage/origin, media loading and navigation are untested here.
-    boot='''<script>class QAStorage{constructor(){this.data=new Map()}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
-Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage()});
+    session=json.dumps({str(key):str(value) for key,value in (saved_session or {}).items()}).replace('<','\\u003c')
+    boot='''<script>class QAStorage{constructor(initial={}){this.data=new Map(Object.entries(initial))}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
+Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage('''+session+''')});
 window.fetch=async(path,options={})=>{const r=await __qaTransport(path,{method:options.method,body:options.body,headers:options.headers});return new Response(r.body,{status:r.status,headers:{'Content-Type':'application/json'}})};</script>'''
     markup=markup.replace('<head>','<head>'+boot)
     def script(match):

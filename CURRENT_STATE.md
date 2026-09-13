@@ -1,5 +1,21 @@
 # Current state — 13 September 2026
 
+## Metadata reload browser recovery evidence — 13 September 2026
+
+[METADATA-RELOAD-RECOVERY.md](docs/ux-qa/METADATA-RELOAD-RECOVERY.md) now has
+an accompanying browser driver. Its local policy-restricted run recorded 19/19
+checks with actual Studio HTML, scripts and CSS, an ephemeral loopback
+in-memory fixture, and 1440px/390px screenshots. It covered lost replies,
+reloads with no metadata POST or receipt check, explicit receipt lookup, exact
+retry, a later new command, recovered Trash typing and an unsent draft.
+
+The local result uses explicit `--inert`: injected session storage and a fresh
+document recreate the saved state, so it is not native-origin, browser-storage,
+SQLite, Studio-runtime, generation, backend or artwork evidence. The dedicated
+workflow runs the same driver in its default native HTTP mode and publishes its
+receipt and screenshots. Raw local evidence is ignored at
+`.runtime/goal-20260913/asset-journal-browser/`.
+
 ## Native protected-edit revision — 13 September 2026
 
 The new `character_krita.py` adapter carries an existing protected edit result
