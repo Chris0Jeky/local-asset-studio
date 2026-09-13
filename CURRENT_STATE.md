@@ -2,7 +2,7 @@
 
 ## Session closeout — 13 September 2026
 
-The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; it is historical evidence, not the current GitHub head. The live PR/issue inventory and closure decisions are maintained in the [GitHub reconciliation](docs/reconciliation/2026-09-13-github.md). At this snapshot `origin/main` is `cf225b43e2c81cd5e0985661d13aa3aec4fcb544`, with 82 merged PRs and two open PRs: [#156](https://github.com/Chris0Jeky/local-asset-studio/pull/156) and [#157](https://github.com/Chris0Jeky/local-asset-studio/pull/157).
+The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; it is historical evidence, not the current GitHub head. The live PR/issue inventory and closure decisions are maintained in the [GitHub reconciliation](docs/reconciliation/2026-09-13-github.md). At this snapshot `origin/main` is `cf225b43e2c81cd5e0985661d13aa3aec4fcb544`, with 82 merged PRs and three open PRs: [#156](https://github.com/Chris0Jeky/local-asset-studio/pull/156), [#157](https://github.com/Chris0Jeky/local-asset-studio/pull/157) and [#158](https://github.com/Chris0Jeky/local-asset-studio/pull/158).
 
 This pass merged
 #137 (backend startup final observation, `042f40e`), #138 (preset-compatible document execution,
@@ -27,8 +27,9 @@ The four large model transfers were active and incomplete at closeout: CSTati PI
 `24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
 `.part` files and failure receipts remain preserved; no model-install or checksum-complete claim
 is made. The former PR status sentence is superseded by the live reconciliation above: #146, #149
-and #150 are merged. Open #156 has five passing observed checks and open #157 has four; neither
-has a recorded review decision. HUMAN_TODO decisions remain
+and #150 are merged. Open #156 has five passing observed checks, open #157 has four, and the
+documentation PR #158 has two hosted checks in progress; none has a recorded review decision.
+HUMAN_TODO decisions remain
 recorded; only q-4's owner-controlled restart is still an action, and it must wait until
 downloads finish and work is saved.
 
