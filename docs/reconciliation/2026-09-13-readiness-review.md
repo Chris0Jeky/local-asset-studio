@@ -21,8 +21,21 @@ The same per-observation cache carries both fields; no extra scan/hash is added.
 
 Four tests in `test_preset_model_occupied.py` exercise actual empty files, directories
 with retained children, absent targets and explicit fixture changes across fresh
-observations. All four pass locally together with the original 23 new tests: **27
-new ordinary tests** in this PR. Hosted final results are recorded on the PR by head.
+observations. They pass locally together with the original 23 new tests and the two
+HTTP cases below: **29 new ordinary tests** in this PR. Final hosted results are
+recorded on the PR by head.
+
+## Per-preset exception review
+
+The second review suggested that catching ValueError no longer catches StudioError.
+That claim is refuted by the actual declaration in `app/server.py`:
+`class StudioError(ValueError): pass`. No production exception change is necessary.
+Two added real-Handler HTTP regressions in `test_preset_model_health_errors.py` delete
+or invalidate one actual catalog graph after Studio construction. Both prove
+`graph_for` raises StudioError, `/api/health` still returns HTTP 200 with the broken
+preset's diagnostic, and an unrelated healthy preset remains unblocked. Both tests
+pass on the existing catch, with no queued job or model request. The finding is
+answered with that evidence rather than redundant production code.
 
 ## Visually separate explanations
 
