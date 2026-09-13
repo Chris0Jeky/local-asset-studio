@@ -1,0 +1,61 @@
+name: Publish maintenance pass 4
+on:
+  push:
+    branches: [codex/maintenance-pass4-transfer-20260913]
+    paths: [.github/workflows/maintenance-pass4-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3
+      - name: Verify exact tested source before creating feature branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYCODE'
+          import base64, hashlib, json, os, pathlib, subprocess, zlib
+          repo='Chris0Jeky/local-asset-studio'
+          base='28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3'
+          chunks=['d73587373a7a6dda34a4d0e4efdffa151a27ba4b','4432ddd63cd40fe6e775f45f298d677eca951279','567667936ad083f5c764ee4517c6507690c45338','8e4e43723352229cf01ab6987d02fffa7cc962f4','dea637c9f4f0f359072c83f22ac5821bdbfd670d']
+          payload=b''
+          for sha in chunks:
+              obj=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/git/blobs/{sha}']))
+              data=base64.b64decode(''.join(obj['content'].split()),validate=True)
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+              payload+=data
+          assert hashlib.sha256(payload).hexdigest()=='dfb0a86d51cbad5e419570ebe7d6b1b068acdd224fdcf7b8a507e027baf2fad1'
+          raw=zlib.decompress(base64.b64decode(payload,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='ba396fdc70181a17d8822d7f5585d9139249e54f78d10799b0e42c7731bd5a5a'
+          specs=json.loads(raw)
+          assert [s['branch'] for s in specs]==['codex/reference-byte-provenance','codex/workspace-no-clobber','codex/workflow-response-completeness']
+          def git(*args):return subprocess.check_output(['git',*args]).decode().strip()
+          receipts=[]
+          for spec in specs:
+              assert spec['base']==base
+              assert not git('ls-remote','--heads','origin','refs/heads/'+spec['branch']), 'Existing branch; refusing overwrite'
+              git('checkout','--detach',base)
+              assert git('rev-parse','HEAD^{tree}')=='5e920817385cf6c6d4aef2154267eb6c0d0c4511'
+              patch=spec['patch'].encode()
+              assert hashlib.sha256(patch).hexdigest()==spec['patch_sha256']
+              subprocess.run(['git','apply','--index','--whitespace=error'],input=patch,check=True)
+              assert git('write-tree')==spec['tree'], 'Source mismatch'
+              assert not any(p.startswith('.github/') for p in git('diff','--cached','--name-only').splitlines())
+              subprocess.run(['git','diff','--cached','--check'],check=True)
+              git('-c','user.name=Studio maintenance','-c','user.email=studio-maintenance@users.noreply.github.com','commit','-m',spec['message'])
+              assert git('rev-parse','HEAD^{tree}')==spec['tree']
+              git('push','origin','HEAD:refs/heads/'+spec['branch'])
+              receipts.append({'branch':spec['branch'],'head':git('rev-parse','HEAD'),'tree':spec['tree'],'final_tree':spec['final_tree']})
+          path=pathlib.Path(os.environ['RUNNER_TEMP'])/'publication.json'
+          path.write_text(json.dumps(receipts,indent=2),encoding='utf-8')
+          print(path.read_text())
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass4-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 1
