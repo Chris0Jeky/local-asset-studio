@@ -192,6 +192,10 @@ async def run(args):
             status=page.locator('#assetDetailStatus')
             await check('ASSET-07','Save failure is visible inside the open dialog',await status.count()>0 and 'unavailable' in (await status.inner_text()).lower() and await page.input_value('#assetNotes')=='Retain this after error')
             state.fail_write=False
+            # A 503 has unknown commit semantics. Resolve this fixture command
+            # explicitly before the independent snapshot scenario; closing and
+            # reopening must retain it rather than silently replacing its ID.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();state.gate.clear();await page.fill('#assetNotes','First snapshot')
             count=len(state.writes);await page.click('#saveAssetDetails')
             await settle();await page.fill('#assetNotes','Newer edits during save')
@@ -235,6 +239,9 @@ async def run(args):
             await open_asset();state.fail_write=True;await page.fill('#assetNotes','Recover this favorite error');await page.click('#assetFavorite');await settle()
             await check('ASSET-25','Favorite failure is visible, retains edits and releases controls',await page.input_value('#assetNotes')=='Recover this favorite error' and 'unavailable' in (await status.inner_text()).lower() and not await page.locator('#saveAssetDetails').is_disabled())
             state.fail_write=False
+            # This failed favorite is likewise an unconfirmed command. Resolve it
+            # explicitly so the keyboard-save and layout scenarios begin clean.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();await page.fill('#assetNotes','A draft at narrow width')
             for width in [390,720]:
                 await page.set_viewport_size({'width':width,'height':1100});await settle()
