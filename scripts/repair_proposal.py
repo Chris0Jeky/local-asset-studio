@@ -266,12 +266,18 @@ def read_proposal(path: Path) -> dict:
     def constant(_):
         fail('json', 'Nonfinite JSON constant')
 
+    def bounded_int(literal):
+        if len(literal.lstrip('-')) > 20:
+            fail('json', 'Integer literal exceeds the proposal digit bound')
+        return int(literal)
+
     with path.open('rb') as stream:
         raw = stream.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         fail('bytes', 'Input exceeds the byte bound')
     try:
-        value = json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=constant)
+        value = json.loads(raw.decode('utf-8'), object_pairs_hook=pairs,
+                           parse_constant=constant, parse_int=bounded_int)
         bounded_structure(value)
         return value
     except (UnicodeError, json.JSONDecodeError, RecursionError) as error:
