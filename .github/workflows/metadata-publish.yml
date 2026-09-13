@@ -1,0 +1,61 @@
+name: Publish tested metadata QA patch
+on:
+  push:
+    branches: [codex/metadata-qa-transport]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 06bd93aed2f019cb978eb5795e9f116cfb7ff749
+          path: candidate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Decode exact reviewed patch
+        run: |
+          python - <<'PY'
+          import base64, hashlib, lzma
+          from pathlib import Path
+          source=Path('transport-source/transport')
+          encoded=''.join((source/f'part-{i}.txt').read_text() for i in range(4))
+          patch=lzma.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='113c46419142469ae2f05d05dce1cd4be44c871950e24c0930fd3e340bac9ce1'
+          Path('metadata.patch').write_bytes(patch)
+          PY
+      - name: Apply without helper files
+        working-directory: candidate
+        run: |
+          test "$(git rev-parse HEAD)" = 06bd93aed2f019cb978eb5795e9f116cfb7ff749
+          git switch -c codex/asset-metadata-conflicts
+          git apply --check --unidiff-zero ../metadata.patch
+          git apply --unidiff-zero ../metadata.patch
+          git diff --check
+      - name: Focused verification
+        working-directory: candidate
+        run: |
+          python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+          python -m unittest discover -s tests -p 'test_asset_metadata*.py' -v
+          node tests/asset_detail_contracts.cjs
+          python scripts/validate-repo.py
+      - name: Publish new feature branch only
+        working-directory: candidate
+        run: |
+          git config user.name 'Studio QA'
+          git config user.email 'studio-qa@users.noreply.github.com'
+          git add app docs tests
+          git commit -m 'Protect asset metadata with conditional saves and durable receipts'
+          git push origin HEAD:refs/heads/codex/asset-metadata-conflicts
+          git rev-parse HEAD HEAD^{tree}
+          git diff --stat HEAD^
