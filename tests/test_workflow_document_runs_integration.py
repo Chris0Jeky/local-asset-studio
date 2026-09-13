@@ -6,6 +6,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from http_refusal_transport import atomic_json_post
 from studio_workflow.core import canonical
 from studio_workflow.document_http import store as documents
 from studio_workflow.run_http import PREFIX
@@ -40,7 +41,7 @@ class DocumentRunIntegrationTests(unittest.TestCase):
         self.assertEqual(observed['observation']['job']['id'], report['job_id'])
         self.assertEqual(self.studio.queue.qsize(), 1); self.assertEqual(len(self.studio.jobs), 1)
     def test_real_security_resource_failure_and_revision_conflict(self):
-        self.assertEqual(self.request(PREFIX, self.value, 'https://untrusted.invalid')[0], 403)
+        self.assertEqual(atomic_json_post(self.http.server_port, PREFIX, canonical(self.value), origin='https://untrusted.invalid')[0], 403)
         with patch.object(self.studio, 'host_commit_preflight', side_effect=self.server_module.StudioError('Resource gate')):
             code, result = self.request(PREFIX, self.value)
             self.assertEqual(code, 400, result); self.assertIn('Resource gate', result['error'])

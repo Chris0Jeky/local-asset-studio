@@ -12,6 +12,7 @@ import wave
 import zipfile
 from unittest.mock import patch
 
+from http_refusal_transport import atomic_json_post
 import test_production
 from test_server import FakeStudio, png
 from studio_av import project as av
@@ -96,7 +97,7 @@ class SceneTests(unittest.TestCase):
             self.assertEqual(status,400);self.assertIn('Scene conflict',raw.decode())
             status,data=request('GET',doc['sources'][0]['url'],headers={'Range':'bytes=0-7'})
             self.assertEqual(status,206);self.assertEqual(data,png()[:8])
-            self.assertEqual(request('POST','/api/av/'+doc['id'],command,{'Origin':'https://evil.invalid'})[0],403)
+            self.assertEqual(atomic_json_post(http.server_port,'/api/av/'+doc['id'],json.dumps(command).encode(),origin='https://evil.invalid')[0],403)
             self.assertEqual(request('GET','/api/production/'+doc['id']+'/files/inputs/source0.png')[0],400)
             self.assertEqual(self.studio.queue.qsize(),0)
         finally:http.shutdown();http.server_close();worker.join(2)
