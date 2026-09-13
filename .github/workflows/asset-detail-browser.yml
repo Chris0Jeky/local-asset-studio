@@ -19,6 +19,10 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        response-delay-ms: [0, 400]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,18 +35,23 @@ jobs:
           node-version: '22'
       - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m playwright install --with-deps chromium
-      - run: python -m unittest discover -s tests -p 'test_asset_detail_contracts.py' -v
+      - run: python -m unittest discover -s tests -p 'test_asset_detail*.py' -v
       - run: node tests/asset_recovery_contracts.cjs
       - name: Native browser HTTP against synthetic Studio APIs
-        run: python tests/asset_detail_browser.py --out .runtime/asset-detail-proof
+        run: python tests/asset_detail_browser.py --out .runtime/asset-detail-proof --response-delay-ms ${{ matrix.response-delay-ms }}
       - name: Native browser reload recovery against ephemeral synthetic Studio APIs
+        if: matrix.response-delay-ms == 0
         run: python tests/asset_reload_browser.py --out .runtime/asset-reload-proof
+      - name: Baseline exception and expectation exit probes
+        if: matrix.response-delay-ms == 0
+        run: python tests/asset_detail_driver_probe.py --out .runtime/asset-detail-proof/driver-probes
       - name: Two clients and lost responses against real metadata storage
+        if: matrix.response-delay-ms == 0
         run: python tests/asset_metadata_browser.py --out .runtime/asset-metadata-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: asset-detail-workflow-proof
+          name: asset-detail-workflow-proof-${{ matrix.response-delay-ms }}ms
           path: |
             .runtime/asset-detail-proof/
             .runtime/asset-reload-proof/
