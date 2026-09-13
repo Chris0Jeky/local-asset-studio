@@ -155,6 +155,28 @@ class CivitaiHelperTests(TempMixin):
         self.assertEqual(opener.request.get_header('Authorization'),'Bearer secret')
         self.assertEqual(dict(opener.request.header_items())['Accept-encoding'],'identity')
 
+    def test_resume_publishes_a_complete_verified_partial_without_network(self):
+        body=b'already-complete';target=self.root/'models/loras/demo.safetensors'
+        part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(body)
+        opener=_FakeOpener(_FakeResponse(416,{},b''))
+        size,digest,_=civitai.download('https://civitai.com/api/download/models/1',target,'secret',len(body),hashlib.sha256(body).hexdigest(),resume=True,opener=opener)
+        self.assertEqual((size,digest),(len(body),hashlib.sha256(body).hexdigest()))
+        self.assertEqual(target.read_bytes(),body);self.assertFalse(part.exists());self.assertIsNone(opener.request)
+
+    def test_resume_rejects_a_corrupted_complete_partial_and_preserves_it(self):
+        body=b'already-complete';target=self.root/'models/loras/demo.safetensors'
+        corrupted=body[:-1]+b'X';part=target.with_suffix('.safetensors.part');part.parent.mkdir(parents=True);part.write_bytes(corrupted)
+        opener=_FakeOpener(_FakeResponse(416,{},b''))
+        with self.assertRaisesRegex(SystemExit,'SHA-256 mismatch for complete partial'):
+            civitai.download('https://civitai.com/api/download/models/1',target,'secret',len(body),hashlib.sha256(body).hexdigest(),resume=True,opener=opener)
+        self.assertEqual(part.read_bytes(),corrupted);self.assertFalse(target.exists());self.assertIsNone(opener.request)
+
+    def test_resume_refuses_a_missing_partial_without_opening_the_network(self):
+        target=self.root/'models/loras/demo.safetensors';opener=_FakeOpener(_FakeResponse(206,{},b''))
+        with self.assertRaisesRegex(SystemExit,'requires an existing partial file'):
+            civitai.download('https://civitai.com/api/download/models/1',target,'secret',8,'a'*64,resume=True,opener=opener)
+        self.assertFalse(target.exists());self.assertIsNone(opener.request)
+
     def test_resume_rejects_an_ignored_or_wrong_range_and_preserves_the_partial(self):
         body=b'prefix-rest';offset=len(b'prefix');target=self.root/'models/loras/demo.safetensors'
         for response in (_FakeResponse(200,{'Content-Length':str(len(body)-offset)},body[offset:]),
