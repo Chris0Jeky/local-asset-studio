@@ -36,6 +36,7 @@ from backends import BackendManager
 import host_memory
 from runtime_recovery import RuntimeRecovery
 import prompting
+import continuation
 from studio_prompt.http_extension import extend_handler
 
 HOST, PORT = "127.0.0.1", 8191
@@ -125,11 +126,12 @@ class Studio:
             if hasattr(self, 'backends') and backend != self.backends.active:
                 preset['runtime_block'] = 'Switch to ' + self.backends.profiles[backend]['name'] + ' to use this recipe.'
             try:
-                graph, _ = self.graph_for(preset); defaults = {}
+                graph, template_path = self.graph_for(preset); defaults = {}
                 for key in CONTROL_KEYS:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
                 preset["defaults"] = defaults
+                preset["continuation_capability"] = dict(continuation.capability(preset, graph), template_sha256=hashlib.sha256(template_path.read_bytes()).hexdigest())
                 authored = {v for node in graph.values() for field, v in (node.get("inputs") or {}).items() if field == "lora_name" and isinstance(v, str)}
             except (StudioError, KeyError, TypeError, IndexError, AttributeError):
                 preset["defaults"] = {}; authored = set()
@@ -318,6 +320,7 @@ class Studio:
             raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         self.prune_disabled_loras(graph)
+        continuation.validate(self, payload, preset, graph)
         self.ensure_reference_inputs(graph)
         self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
@@ -406,6 +409,7 @@ class Studio:
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
+        if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         job["references"] = preset.get("_prepared_references", [])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         reading=self.host_commit_preflight(preset, graph)
@@ -415,7 +419,7 @@ class Studio:
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "continuation")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -590,7 +594,7 @@ class Studio:
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
-                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe')}
+                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe'), "continuation": job.get("continuation")}
 
     def output_path(self, output, job=None):
         if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1','native.voice-baseline.v1'):
@@ -616,9 +620,13 @@ class Studio:
     def asset_reference(self, asset_id):
         asset = self.assets.get(asset_id)
         if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
+        context = continuation.source_context(self, asset_id)
         source = self.assets.file(asset_id)
-        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", source.read_bytes())
+        raw = source.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
+        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw)
         result["parent_asset"] = asset_id
+        result["context"] = context
         return result
 
     def import_image(self, filename, content_type, body):
@@ -752,6 +760,7 @@ class Studio:
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
+        if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
         self._write_json_atomic(directory / "recipe.json", recipe)
         self._write_json_atomic(directory / "workflow.json", job["graph"])
         state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
@@ -1081,8 +1090,9 @@ class Studio:
             try:
                 try:preset=self.preset(job['preset_id'])
                 except StudioError:preset={}
+                continuation.validate(self, job, preset, graph, check_runtime=True)
                 reading=self.host_commit_preflight(preset, graph, refresh=True)
-            except StudioError as exc:
+            except (StudioError, ValueError, OSError) as exc:
                 job['status']='partial' if job.get('prompt_ids') else 'failed';job['message']=str(exc)+'. No prompt was submitted for output '+str(i+1)+'.';self._save(job);return
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
@@ -1311,6 +1321,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
                 file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
                 return self._local_file(file, True)
+            if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
+                return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
             if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))
             if path == "/api/knowledge": return self._json(200, self.studio.knowledge())
