@@ -47,8 +47,9 @@ TOOLS = {
     'workflow_list': tool('List saved workflows in the existing Workspace. First document access may initialize its tables, never a model job.'),
     'workflow_get': tool('Read a workflow or immutable revision. Decode data_json with an exact-integer parser.',
         {'document_id': IDENTIFIER, 'revision': REVISION}, ('document_id',)),
-    'workflow_history': tool('Read the service-bounded revision history, including its truncation metadata.',
-        {'document_id': IDENTIFIER}, ('document_id',)),
+    'workflow_history': tool('Read newest-first revision history pages, preserving summary truncation metadata. Follow next_before_revision until null.',
+        {'document_id': IDENTIFIER, 'before_revision': REVISION,
+         'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100}}, ('document_id',)),
     'workflow_preview': tool('Preview shared commands at an expected revision without committing them. This is not generation approval.',
         {'document_id': IDENTIFIER, 'expected_revision': REVISION, 'commands_json': TEXT},
         ('document_id', 'expected_revision', 'commands_json')),
@@ -92,7 +93,7 @@ def validate_arguments(spec, arguments):
 
 def encoded_result(name, data, error=None, context=None):
     raw = canonical(data)
-    need(len(raw) <= MAX_REPLY, 'Tool result exceeds 2 MiB; request a smaller node page')
+    need(len(raw) <= MAX_REPLY, 'Tool result exceeds 2 MiB; reduce the node/history page limit when available')
     result = {'ok': error is None, 'operation': name, 'data_json': raw.decode('utf-8'), 'data_sha256': digest(data)}
     if error is not None: result['error'] = error
     if context: result['context'] = context
@@ -152,6 +153,16 @@ class AgentBridge:
                 if name == 'workflow_history': path += '/history'
                 elif 'revision' in a: path += '/revisions/' + str(a['revision'])
                 data = request(path)
+                if name == 'workflow_history':
+                    rows = data.get('revisions')
+                    need(isinstance(rows, list) and all(isinstance(r, dict) and type(r.get('revision')) is int
+                         and r['revision'] >= 1 for r in rows), 'Studio returned invalid revision history')
+                    rows = sorted(rows, key=lambda r: r['revision'], reverse=True)
+                    if 'before_revision' in a: rows = [r for r in rows if r['revision'] < a['before_revision']]
+                    limit = a.get('limit', 50)
+                    page = rows[:limit]
+                    data = {**data, 'revisions': page,
+                            'next_before_revision': page[-1]['revision'] if len(rows) > limit else None}
             elif name in ('workflow_preview', 'workflow_apply'):
                 body = {'expected_revision': a['expected_revision'], 'commands': payload('commands_json', list)}
                 if name == 'workflow_apply': body['request_id'] = a['request_id']

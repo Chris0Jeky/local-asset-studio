@@ -88,6 +88,7 @@ class BridgeTests(unittest.TestCase):
                  ('workflow_history', {'document_id': 'a'}, '/api/workflow-studio/documents/a/history'),
                  ('job_status', {'job_id': 'job-1'}, '/api/jobs/job-1'), ('studio_catalog', {}, '/api/catalog')]
         for name, args, path in cases:
+            self.client.result = {'revisions': []} if name == 'workflow_history' else {'status': 'ok'}
             self.assertTrue(self.bridge.invoke(name, args)['ok']); self.assertEqual(self.client.calls[-1], (path, None))
     def test_create_fork_restore_preview_use_shared_shapes(self):
         cases = [('workflow_create', {'document_json': '{}', 'request_id': 'new'}, '/api/workflow-studio/documents', {'document': {}, 'request_id': 'new'}),
