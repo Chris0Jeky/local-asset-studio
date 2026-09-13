@@ -1,0 +1,52 @@
+name: Graph validation contracts
+on:
+  pull_request:
+    paths:
+      - 'scripts/game_asset_pipeline.py'
+      - 'scripts/validate-live.py'
+      - 'app/backend_contracts.py'
+      - 'app/server.py'
+      - 'presets/catalog.json'
+      - 'workflows/api/**'
+      - 'tests/test_graph*.py'
+      - 'tests/test_validate_live.py'
+      - 'tests/test_game_asset_pipeline.py'
+      - 'tests/fixtures/graph-validation/**'
+      - '.github/workflows/graph-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/game_asset_pipeline.py'
+      - 'scripts/validate-live.py'
+      - 'app/backend_contracts.py'
+      - 'app/server.py'
+      - 'presets/catalog.json'
+      - 'workflows/api/**'
+      - 'tests/test_graph*.py'
+      - 'tests/test_validate_live.py'
+      - 'tests/test_game_asset_pipeline.py'
+      - 'tests/fixtures/graph-validation/**'
+      - '.github/workflows/graph-validation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: graph-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p test_graph_validation.py -v
+      - run: python -m unittest discover -s tests -p test_validate_live.py -v
+      - run: python -m unittest discover -s tests -p test_graph_catalog_validation.py -v
+      - run: python -m unittest discover -s tests -p test_game_asset_pipeline.py -v
