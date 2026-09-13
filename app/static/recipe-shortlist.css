@@ -1,0 +1,19 @@
+.recipe-shortlist{margin:12px 0;padding:12px;border:1px solid var(--line,#344047);border-radius:12px;min-width:0}
+.recipe-shortlist summary{cursor:pointer;font-weight:650;line-height:1.5}
+.recipe-shortlist p,.recipe-shortlist li{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.recipe-shortlist form{display:grid;gap:8px;margin:12px 0}
+.recipe-shortlist label{font-size:13px}
+.recipe-shortlist select,.recipe-shortlist button{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+.recipe-shortlist select{width:100%}
+.recipe-shortlist .shortlist-status{min-height:2em}
+.recipe-shortlist #shortlistResults{max-height:60vh;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:5px}
+.recipe-shortlist .shortlist-card{border-top:1px solid var(--line,#344047);padding:14px 0}
+.recipe-shortlist .shortlist-card h4{margin:0 0 8px;font-size:15px;overflow-wrap:anywhere}
+.recipe-shortlist .shortlist-verdict{font-weight:650}
+.recipe-shortlist ul{padding-left:18px}
+.recipe-shortlist .shortlist-pages{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.recipe-shortlist :focus-visible{outline:2px solid currentColor;outline-offset:3px}
+@media(max-width:600px){.recipe-shortlist #shortlistResults{max-height:55vh}.recipe-shortlist{padding:10px}}
+@media(forced-colors:active){.recipe-shortlist,.recipe-shortlist .shortlist-card{border-color:CanvasText}}
+
+.recipe-shortlist .shortlist-card>details{margin-top:12px}.recipe-shortlist #shortlistResults>details{margin-bottom:12px}

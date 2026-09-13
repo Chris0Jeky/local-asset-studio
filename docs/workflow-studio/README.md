@@ -6,6 +6,10 @@ retain their original verification dates; use this page and [ROADMAP.md](ROADMAP
 for the current boundaries. No GPU generation or owner-machine acceptance is
 established by this reconciliation.
 
+For an outcome-based shortlist of current default routes and their prerequisites,
+use **Create → Recipe library → Help me choose a recipe**. The same read-only
+[recipe shortlist](RECIPE-SHORTLIST.md) is available to CLI, SDK and MCP clients.
+
 ## What you can use now
 
 Open **Guided workflows** in the Studio navigation.
