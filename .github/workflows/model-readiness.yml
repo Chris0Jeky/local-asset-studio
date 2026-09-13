@@ -12,6 +12,9 @@ on:
       - 'app/download_contracts.py'
       - 'app/server.py'
       - 'app/static/app.js'
+      - 'app/static/style.css'
+      - 'tests/control_layout_browser.py'
+      - 'tests/asset_detail_browser.py'
       - 'tests/test_preset_model*.py'
       - 'tests/preset_model*'
       - '.github/workflows/model-readiness.yml'
@@ -28,6 +31,9 @@ on:
       - 'app/download_contracts.py'
       - 'app/server.py'
       - 'app/static/app.js'
+      - 'app/static/style.css'
+      - 'tests/control_layout_browser.py'
+      - 'tests/asset_detail_browser.py'
       - 'tests/test_preset_model*.py'
       - 'tests/preset_model*'
       - '.github/workflows/model-readiness.yml'
@@ -73,6 +79,7 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: python tests/preset_model_browser.py --out .runtime/preset-model-browser
       - run: python tests/wan_capacity_browser.py --out .runtime/wan-capacity-browser
+      - run: python tests/control_layout_browser.py --out .runtime/control-layout-browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,5 +87,6 @@ jobs:
           path: |
             .runtime/preset-model-browser/
             .runtime/wan-capacity-browser/
+            .runtime/control-layout-browser/
           if-no-files-found: ignore
           retention-days: 7
