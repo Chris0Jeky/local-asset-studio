@@ -23,7 +23,8 @@ async function main() {
   const document = {body: new Element('body'), activeElement: null, listeners: {},
     createElement: tag => new Element(tag), createTextNode: text => ({text}),
     querySelector: selector => selector === '#builder .wf-toolbar' ? toolbar : selector === '#builder .wf-builder' ? builder : ids.get(selector.slice(1)),
-    addEventListener(name, fn) { this.listeners[name] = fn; }};
+    addEventListener(name, fn) { this.listeners[name] = fn; },
+    dispatchEvent(event) { this.listeners[event.type]?.(event); }};
   const diagnostics = new Element('div'); diagnostics.id = 'workflowDiagnostics';
   const calls = []; let pendingHistory;
   // State's public contract: success can rebind without replacing the local draft.
@@ -38,6 +39,7 @@ async function main() {
   }
   const W = {snapshot: () => ({name: 'Draft', nodes: {}}), validate() {}, epoch: () => 1, load() {}};
   const context = {window: {WorkflowStudio: W, WorkflowProjectState: {State, PREFIX: '/documents'}}, document,
+    Event: class {constructor(type) {this.type = type;}},
     crypto: {randomUUID: () => 'request'}, sessionStorage: {}, confirm: () => true,
     fetch: async (route, options) => {
       calls.push([route, options]);
@@ -47,6 +49,7 @@ async function main() {
     }};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../app/static/workflow-projects.js'), 'utf8'), context);
   assert.equal(calls.length, 0, 'Loading the UI is inert');
+  assert.equal(context.window.WorkflowProject.snapshot().id, 'A');
   const history = ids.get('workflowRevisionChoice'), restore = ids.get('restoreSharedWorkflow');
   await ids.get('loadWorkflowHistory').onclick();
   history.value = '1'; history.onchange(); assert.equal(restore.disabled, false);
@@ -54,6 +57,7 @@ async function main() {
   pendingHistory = new Promise(resolve => { release = resolve; });
   const late = ids.get('loadWorkflowHistory').onclick();
   await ids.get('copySharedWorkflow').onclick();
+  assert.equal(context.window.WorkflowProject.snapshot().id, 'B', 'Bridge reflects a copy attached without editor replacement');
   assert.equal(history.value, '', 'Copy clears the old document history selection');
   assert.equal(history.children.length, 1, 'Only the load-history placeholder remains');
   assert.equal(restore.disabled, true, 'Copy cannot restore a revision from the prior identity');
