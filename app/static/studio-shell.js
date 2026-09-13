@@ -41,4 +41,8 @@
     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/studio-guide.css';document.head.append(css);
     const rules=document.createElement('script');rules.src='/static/studio-guide-state.js';rules.onload=()=>{const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);};document.body.append(rules);
   }
+  if(isMain||route==='workflows'){
+    const style=document.createElement('link');style.rel='stylesheet';style.href='/static/recipe-shortlist.css';document.head.append(style);
+    const script=document.createElement('script');script.src='/static/recipe-shortlist.js';script.defer=true;document.body.append(script);
+  }
 })();
