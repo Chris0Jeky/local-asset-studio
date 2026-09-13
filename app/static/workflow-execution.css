@@ -1,0 +1,7 @@
+/* Kept scoped: importing a run panel must not restyle the node editor. */
+#workflowExecution{margin-top:24px;border-top:3px solid var(--wf-accent,#baffb9)}
+#workflowExecution .wf-toolbar{align-items:stretch}
+#workflowTicketSummary{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;font-size:12px}
+#workflowRunStatus{overflow-wrap:anywhere}
+#runWorkflowTicket:not(:disabled){border-color:var(--wf-accent,#baffb9);font-weight:700}
+@media(max-width:600px){#workflowExecution .wf-toolbar>button{flex:1 1 100%}}
