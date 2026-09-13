@@ -95,3 +95,7 @@ licensing acceptance is claimed. Arbitrary graphs, new nodes, selected-output
 subsets, full reference lineage, event-stream progress and owned cancellation
 remain #122. Native widget/subgraph fidelity remains #121. These run controls
 are a usable registered-compatible path, not complete ComfyUI frontend parity.
+
+## Persistent saved-revision path
+
+The separate **Saved runs** panel now connects Save to Workspace to durable preparation history, exact review and original-ticket execution shared with agents. Existing tab-local tickets above are unchanged. See [SAVED-RUN-BUILDER.md](SAVED-RUN-BUILDER.md) for explicit save/conflict handling, retained preparation notes and cross-tab recovery.
