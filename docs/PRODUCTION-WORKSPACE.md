@@ -32,6 +32,17 @@ original files, generation recipes, names/hashes and application reports. Select
 whole images become flat layers; the Krita route does not automatically segment
 an illustration into body parts or infer masks.
 
+## Incomplete project storage
+
+Comparisons, native exports and articulated props publish their directory and
+read-back-checked `plan.json` before their project/budget transaction commits.
+A retained `.incomplete-create` marker, missing directory, or missing/changed plan
+blocks Start, Resume and new worker dispatch; it does not reset reservations or
+replay known prompts. Startup reports storage problems while keeping prior outputs,
+attempts and review decisions intact. Restore and reconcile the original project
+explicitly rather than generating a replacement. See [storage and recovery](PRODUCTION-STORAGE.md)
+for the failure states, 16 MiB plan bound and operator procedure.
+
 ## Actual execution evidence
 
 Operational outputs live under the configured `experiments_root`, outside Git.
