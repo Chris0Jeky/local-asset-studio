@@ -11,6 +11,7 @@ from urllib.request import Request,urlopen
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'app'))
+sys.path.insert(0,str(ROOT))
 # One folder allow-list for the whole repo: drifting copies let a script write where the
 # Models view cannot read, and three copies had already diverged (9, 9 and 11 entries).
 from model_library import FOLDERS as _FOLDERS

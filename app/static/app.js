@@ -12,7 +12,34 @@ let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResult
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
-const i2vModeBlocker = () => selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value)?.execution_block || null;
+// Notification only: programmatic recipe changes do not emit DOM input/change.
+function recipeChanged() { document.dispatchEvent?.(new Event('studio:recipe')); }
+function i2vModeBlocker() {
+  const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value);
+  const capacity = selected?.wan_decode_capacity;
+  // Older catalogue responses retain their authored holds. No family/filename guessing.
+  if (!capacity) return mode?.execution_block || null;
+  const unknown = 'Wan decode readiness is unavailable. Reload the recipe before generating.';
+  const limits = capacity.limits, keys = ['width','height','length','batch_size'];
+  if (capacity.version !== 1 || !limits || !Array.isArray(capacity.latents) || !capacity.latents.length
+      || !['max_side','max_pixels','max_frames','batch_size'].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)) return unknown;
+  for (const latent of capacity.latents) {
+    if (!latent?.shape || !Array.isArray(latent.bindings)) return unknown;
+    const shape = {...latent.shape};
+    for (const binding of latent.bindings) {
+      if (!binding || !['frames','width','height'].includes(binding.control) || !keys.includes(binding.input)) return unknown;
+      let value = getControl(binding.control)?.value;
+      // values() omits an empty control; prepare then uses the mode, or the graph literal.
+      if (value === '' || value == null) value = mode?.controls?.[binding.control];
+      if (value != null) shape[binding.input] = (typeof value === 'number' || typeof value === 'string') ? Number(value) : NaN;
+    }
+    if (!keys.every(k => Number.isSafeInteger(shape[k]) && shape[k] > 0)) return unknown;
+    const {width, height, length: frames, batch_size: batch} = shape;
+    if (Math.max(width,height) > limits.max_side || width*height > limits.max_pixels || frames > limits.max_frames || batch !== limits.batch_size)
+      return `Held: ordinary Wan decode is unproven for ${width}x${height}, ${frames} frames, latent batch ${batch}. Use at most ${limits.max_side}px per side, ${limits.max_pixels} pixels, ${limits.max_frames} frames and latent batch ${limits.batch_size}. Quick diagnostic, Balanced or Short motion study provide smaller starting points. This is a capacity check, not a quality guarantee.`;
+  }
+  return null;
+}
 function applyI2VMode(id, notify=true) {
   const spec = selected?.i2v_modes?.find(mode => mode.id === id);
   if (!spec) return;
@@ -23,6 +50,7 @@ function applyI2VMode(id, notify=true) {
   const modeInput = $('#i2vMode'); if (modeInput) modeInput.value = id;
   const note = $('#i2vModeNote'); if (note) note.textContent = [spec.execution_block, spec.description, spec.warning].filter(Boolean).join(' ');
   updateLoraHints(); updateReady(); scheduleTimeEstimate();
+  if (notify) recipeChanged();
   if (notify) message(spec.name + ' loaded. Review the settings before generating.' + (spec.warning ? ' ' + spec.warning : ''));
 }
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
@@ -94,6 +122,8 @@ function renderPresets() {
 function updateReady() {
   const missing = missingByPreset[selected?.id] || [];
   const modeBlock = i2vModeBlocker();
+  const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value), note = $('#i2vModeNote');
+  if (note && mode) note.textContent = [modeBlock, mode.description, mode.warning].filter(Boolean).join(' ');
   $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || !!modeBlock || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady()) || continuationBlockers().length > 0;
   $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
@@ -149,11 +179,11 @@ function applyRecipe(recipe) {
   const overrides={...(modeSpec?.controls||{}),...(recipe.controls||{})};
   const controls=continuationState?StudioContinuation.settings(selected,overrides,values()):overrides;
   Object.entries(controls).forEach(([k,v]) => { if(k==='mode')return;const el = k === 'positive' ? $('#positive') : k === 'negative' ? $('#negative') : getControl(k); if (el) el.value = v; });
-  $('#batch').value = recipe.batch_count || 1; updateLoraHints();
+  $('#batch').value = recipe.batch_count || 1; updateLoraHints(); updateReady();
   const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
   $('#recipeNotes').innerHTML = describeRecipe(recipe) + (continuationState ? '<p>Only the setup changed. Your source and wording are retained; the recorded execution used the original example, not this image.</p>' : '');
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
-  scheduleTimeEstimate();
+  scheduleTimeEstimate(); recipeChanged();
 }
 async function loadAtelier() {
   // /api/options also warms the server's node schema, so the catalog's own
@@ -214,14 +244,15 @@ function selectPreset(id, reset=true, transition=false) {
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
   recipeTemplateHash=null;
-  selected=next;
-  if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected();
+  selected=next; recipeChanged();
+  if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
 }
 async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
+    const failure=$('#workerFailure');if(failure){failure.hidden=!h.worker_failure;failure.textContent=h.worker_failure?'A failure record was not saved for '+h.worker_failure.action+' '+h.worker_failure.id+'. Inspect local storage and retained job records before continuing that task. No submission was retried.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
@@ -329,7 +360,7 @@ function applySaved(s){
     if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
     else if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
   }
-  $('#batch').value=s.batch_count||s.batch||1;message('Recipe loaded. Review the settings before generating.');
+  $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
 function continuationBlockers(){
@@ -361,14 +392,15 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)try{selectPreset(id);}catch(err){message(err.message,true);}};
-$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');};
-$('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);};
+$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
+$('#controls').oninput=()=>updateReady();
+$('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};
   $('#loraSlots').onchange=updateLoraHints;
   document.addEventListener('input',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('change',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 $('#recipeSelect').onchange=e=>{if(e.target.value===''){if(continuationState)applyRecipe({preset_id:selected.id,name:'Recipe defaults',controls:{}});return;}try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
-$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();};
+$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();recipeChanged();};
 $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');updateReady();};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');updateReady();};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);return;}submitting=true;updateReady();
@@ -403,7 +435,22 @@ $('#gallery').onclick=async e=>{
     }
   }catch(err){message(err.message,true);}
 };
-$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){message('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:values(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();message('Setup saved in your workspace, available in every browser.');}catch(e){message(e.message,true);}};
+// A failed availability read can leave a source claim with no staged file. Preserve
+// that uncertainty in the draft, but do not persist it as unattributed setup lineage.
+function checkedSetupControls() {
+  const controls=values();
+  const inputs=[['reference','reference','Reference / first frame'],['lastReference','last_reference','Last frame']];
+  const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
+  if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
+    ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
+  const pending=inputs
+    .filter(([input,key])=>parentByInput[input]&&parentAssets.includes(parentByInput[input])&&!controls[key]);
+  if(pending.length)throw Error('Setup not saved: reattach '+pending.map(([, ,label])=>label).join(' and ')+
+    ' using Pull from library. To use a new local file, import it into Asset library first. Its source link has no attached file. Your draft and setup name are unchanged.');
+  return controls;
+}
+function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
+$('#save').onclick=async()=>{if(!selected)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load]);if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;

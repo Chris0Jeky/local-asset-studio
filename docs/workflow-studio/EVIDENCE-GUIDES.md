@@ -101,3 +101,11 @@ focus action. Status changes do not themselves move focus. Reduced-motion and
 forced-colour treatment extend the existing coach styling rather than introducing
 an animated/modal tour. These implementation choices are not a claim of full WCAG
 conformance or a completed assistive-technology audit.
+
+## Context and history follow-up
+
+[GUIDE-CONTEXT.md](GUIDE-CONTEXT.md) records the next scoped pass for #185/#190:
+explicit recipe-change notifications, paired browser history events, deterministic
+regressions and expanded native-browser contracts. Use the current
+[README](README.md) and [ROADMAP](ROADMAP.md) rather than historical foundation
+paragraphs to determine which shared authoring/agent services already exist.

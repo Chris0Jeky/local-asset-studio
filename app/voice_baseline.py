@@ -133,6 +133,7 @@ def resume_eligibility(production, project):
 
 def resume(production, identifier):
     with production.studio.lock,production.lock:
+        production.studio.require_worker()
         project=production._get(identifier);eligibility=resume_eligibility(production,project)
         need(eligibility['eligible'],eligibility['message'])
         production._mutate(identifier,status='queued',stop_requested=False,message='Explicitly resumed an unstarted voice plan; no inference was repeated.')
