@@ -10,6 +10,7 @@ on:
       - 'workflows/api/**'
       - 'tests/test_graph*.py'
       - 'tests/test_validate_live.py'
+      - 'tests/test_schema_capture.py'
       - 'tests/test_game_asset_pipeline.py'
       - 'tests/fixtures/graph-validation/**'
       - '.github/workflows/graph-validation.yml'
@@ -24,6 +25,7 @@ on:
       - 'workflows/api/**'
       - 'tests/test_graph*.py'
       - 'tests/test_validate_live.py'
+      - 'tests/test_schema_capture.py'
       - 'tests/test_game_asset_pipeline.py'
       - 'tests/fixtures/graph-validation/**'
       - '.github/workflows/graph-validation.yml'
@@ -48,5 +50,6 @@ jobs:
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p test_graph_validation.py -v
       - run: python -m unittest discover -s tests -p test_validate_live.py -v
+      - run: python -m unittest discover -s tests -p test_schema_capture.py -v
       - run: python -m unittest discover -s tests -p test_graph_catalog_validation.py -v
       - run: python -m unittest discover -s tests -p test_game_asset_pipeline.py -v
