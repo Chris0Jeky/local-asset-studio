@@ -230,11 +230,11 @@ class PresetModelReadinessTests(unittest.TestCase):
     def test_every_current_catalog_model_selection_has_an_explicit_location(self):
         from model_requirements import requirements
         repo = Path(__file__).resolve().parents[1]
-        presets = json.loads((repo/'presets/catalog.json').read_text())['presets']
-        assets = json.loads((repo/'models/library.json').read_text())['assets']
+        presets = json.loads((repo/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
+        assets = json.loads((repo/'models/library.json').read_text(encoding='utf-8'))['assets']
         studio = self.studio()
         for preset in presets:
-            graph = json.loads((repo/preset['graph']).read_text())
+            graph = json.loads((repo/preset['graph']).read_text(encoding='utf-8'))
             with self.subTest(preset=preset['id']):
                 rows = requirements(studio.library, preset, graph, studio.library.models, assets=assets)
                 self.assertTrue(all(row['path'] is not None for row in rows), rows)
