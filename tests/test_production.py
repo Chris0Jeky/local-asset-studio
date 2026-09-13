@@ -200,6 +200,13 @@ class ProductionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'plan changed'):lab.run(p['id'])
         self.assertEqual(self.post_count(studio),0)
 
+    def test_axis_values_that_bind_to_one_graph_are_refused_like_variants(self):
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        for axis,values in (('cfg',['0','1e-400']),('cfg',['7','7.000000000000000001']),('lora',['0','1e-400'])):
+            with self.subTest(axis=axis,values=values),self.assertRaisesRegex(ValueError,'Comparison values must resolve to different graphs'):
+                lab.create(self.intent(axis=axis,values=values))
+        self.assertEqual(lab.list(),[]);self.assertEqual(studio.queue.qsize(),0)
+        distinct=lab.create(self.intent(axis='cfg',values=['5','7']));self.assertEqual(len(distinct['stages']),2)
 
 PLAN_GRAPH={'1':{'class_type':'KSampler','inputs':{'text':'a witch in a lantern-lit atelier','seed':1,'steps':8,'cfg':1,'sampler_name':'euler','scheduler':'simple'}},
             '10':{'class_type':'LoraLoaderModelOnly','inputs':{'lora_name':'a.safetensors','strength_model':1.0}},
@@ -215,7 +222,6 @@ PLAN_KB={'version':1,'updated':'2026-09-12','families':{'Krea 2 Turbo':{
                     {'id':'sampler','control':'sampler','values':['euler','euler_ancestral','er_sde'],'rationale':'community cards','sources':['https://example.invalid/sampler']}],
             'lora_rules':{'ladder':[1.0,0.8,0.6],'warn_total_strength':2.5}}},
          'loras':{'a.safetensors':{'family':'Krea 2 Turbo','label':'TextFusion','role':'adherence','source':'https://example.invalid/a'}}}
-
 
 class PlannedSweepTests(unittest.TestCase):
     """Multi-setting sweeps planned from the settings library, still bounded."""

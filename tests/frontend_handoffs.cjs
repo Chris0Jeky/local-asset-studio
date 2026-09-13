@@ -388,7 +388,42 @@ async function unstagedLocalFilesCannotBeSaved() {
   }
 }
 
+
+// The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
+async function recipeSwapDuringUploadNeverSubmits() {
+  const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
+  s.run(`selectPreset('gentle-variation');`);
+  s.element('#reference').files = [localFile()];
+  s.element('#reference').onchange();
+  const fetch = s.context.fetch;
+  s.context.fetch = async (url, options) => { const result = await fetch(url, options); if (url === '/api/upload') s.run(`selectPreset('qwen-1ref');`); return result; };
+  await s.element('#generate').onclick();
+  assert.equal(s.requests.some(r => r.url === '/api/jobs'), false, 'A recipe swapped during the source upload must not be submitted');
+  assert.equal(s.run('selected.id'), 'qwen-1ref');
+  assert.equal(s.run('submitting'), false, 'Generate is released after the refused submission');
+  assert.equal(s.run('uploaded'), null, 'The refused upload is not left bound to the recipe it was not made for');
+  s.context.fetch = fetch;
+  s.run(`selectPreset('gentle-variation');`);
+  s.element('#reference').files = [localFile()];
+  s.element('#reference').onchange();
+  await s.element('#generate').onclick();
+  assert.equal(s.requests.filter(r => r.url === '/api/jobs').length, 1, 'An undisturbed upload still submits exactly once');
+  assert.equal(s.requests.find(r => r.url === '/api/jobs').data.controls.reference, 'own-upload.png', 'The upload made for this recipe is what gets submitted');
+  // Controls edited while the upload is in flight do not change what was approved: the pressed intent is submitted.
+  s.requests.length = 0;
+  s.element('#reference').files = [localFile()];
+  s.element('#reference').onchange();
+  s.element('#batch').value = '1';
+  s.context.fetch = async (url, options) => { const result = await fetch(url, options); if (url === '/api/upload') s.element('#batch').value = '4'; return result; };
+  await s.element('#generate').onclick();
+  const submitted = s.requests.find(r => r.url === '/api/jobs');
+  assert.ok(submitted, 'An edit to a control during the upload does not block the approved submission');
+  assert.equal(String(submitted.data.batch_count), '1', 'The batch count the operator pressed Generate with is submitted, not the mid-upload edit');
+  s.context.fetch = fetch;
+}
+
 (async () => {
+  await recipeSwapDuringUploadNeverSubmits();
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
   await check('qwen-1ref', null, 1);
