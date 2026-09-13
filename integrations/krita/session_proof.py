@@ -69,7 +69,7 @@ def run(args):
             native.need('stale' in str(exc), 'Unexpected stale-import rejection: '+str(exc))
             stale_error = str(exc)
         else: raise ValueError('Native import accepted stale hidden pixels')
-        native.need(len(doc.topLevelNodes()) == len(original['document']['layers']) and not (package/'live-intent.json').exists(), 'Stale import changed document or recorded an attempt')
+        native.need(len(doc.topLevelNodes()) == len(original['document']['node_order']) and not (package/'live-intent.json').exists(), 'Stale import changed document or recorded an attempt')
         # Restore only this test's known pixel mutation, then use the retained request.
         hidden.setPixelData(before_hidden,-2,0,2,2)
         doc.waitForDone(); doc.refreshProjection(); doc.waitForDone()
@@ -81,7 +81,7 @@ def run(args):
         native.need(bytes(doc.pixelData(0,0,width,height)) == bytes(source), 'Native source comparison is not exact')
         native.need(doc.exportImage(str(root/'source.png'),InfoObject()), 'Cannot export source comparison')
         session.show_result()
-        proposed = doc.topLevelNodes()[-1]
+        proposed = next(node for node in doc.topLevelNodes() if str(node.uniqueId()) == imported['layer_id'])
         proposed.setPixelData(bytes([1,2,3,255]),72,104,1,1)
         doc.waitForDone(); doc.refreshProjection(); doc.waitForDone()
         try: session.show_source()

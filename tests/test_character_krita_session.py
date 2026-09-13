@@ -59,6 +59,10 @@ class Selection:
     def height(self): return 2
 
 
+class SelectionNode(Node):
+    def type(self): return 'selectionmask'
+
+
 class Document:
     def __init__(self):
         self.source = bytes([30, 20, 10, 255]) * 4
@@ -190,6 +194,14 @@ class SessionTests(unittest.TestCase):
         self.doc.busy = True
         with self.assertRaisesRegex(ValueError, 'busy'): self.session.import_request(self.request)
         self.assertFalse((self.package/'live-intent.json').exists())
+
+    def test_native_global_selection_node_is_bound_separately_from_paint_layers(self):
+        self.doc.nodes.append(SelectionNode('Selection Mask', self.doc.sel.raw, False))
+        snapshot = self.session.capture(self.root/'selected-capture')
+        self.assertEqual(len(snapshot['document']['layers']), 2)
+        self.assertEqual(snapshot['document']['selection_node']['pixels_sha256'], native_edit.digest(self.doc.sel.raw))
+        self.doc.nodes[-1].raw = bytes([0,255,0,0])
+        with self.assertRaisesRegex(ValueError, 'selection'): self.session.inspect()
 
     def test_capture_and_request_refuse_overwrite(self):
         with self.assertRaises(FileExistsError): self.session.capture(self.capture)

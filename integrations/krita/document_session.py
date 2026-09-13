@@ -104,9 +104,23 @@ class Session:
             native.need(width > 0 and height > 0 and width * height <= native.MAX_PIXELS, 'Unsupported native canvas')
             native.need(doc.colorModel() == 'RGBA' and doc.colorDepth() == 'U8' and doc.colorProfile() == native.PROFILE, 'Unsupported native color space')
             nodes = doc.topLevelNodes()
-            native.need(1 <= len(nodes) <= 32, 'Native session requires 1..32 flat paint layers')
+            # Krita represents the active document selection as a root-level
+            # selectionmask. It is not a paint layer and has one-byte pixels.
+            selections = [n for n in nodes if n.type() == 'selectionmask']
+            paint_nodes = [n for n in nodes if n.type() != 'selectionmask']
+            native.need(len(selections) <= 1 and 1 <= len(paint_nodes) <= 32, 'Native session requires 1..32 paint layers and at most one global selection')
+            selection = doc.selection(); selection_node = None
+            if selections:
+                node = selections[0]; x,y,w,h = rect(node.bounds())
+                native.need(selection is not None and not node.childNodes() and not node.animated()
+                            and w >= 0 and h >= 0 and w*h <= native.MAX_PIXELS, 'Unsupported native selection node')
+                data = bytes(node.pixelData(x,y,w,h)) if w and h else b''
+                expected = bytes(selection.pixelData(x,y,w,h)) if w and h else b''
+                native.need(len(data) == w*h and data == expected, 'Native selection node differs from active selection')
+                selection_node = {'id':str(node.uniqueId()),'name':node.name(),'bounds':[x,y,w,h],
+                                  'visible':node.visible(),'locked':node.locked(),'pixels_sha256':native.digest(data)}
             layers = []; extent_pixels = 0
-            for node in nodes:
+            for node in paint_nodes:
                 native.need(node.type() == 'paintlayer' and not node.childNodes() and not node.animated(), 'Native session requires flat non-animated paint layers')
                 native.need(node.colorModel() == 'RGBA' and node.colorDepth() == 'U8' and node.colorProfile() == native.PROFILE and node.blendingMode() == 'normal', 'Unsupported native layer color or blending')
                 bounds = rect(node.bounds()); x,y,w,h = bounds
@@ -121,7 +135,7 @@ class Session:
                                'style_sha256': native.digest(style.encode('utf-8')), 'pixels_sha256': native.digest(raw)})
             raw = bytes(doc.pixelData(0,0,width,height))
             native.need(len(raw) == width*height*4, 'Incomplete native projection')
-            selection = doc.selection(); selected = None; selection_record = None
+            selected = None; selection_record = None
             if selection is not None:
                 bounds = [selection.x(),selection.y(),selection.width(),selection.height()]
                 x,y,w,h = bounds
@@ -132,7 +146,8 @@ class Session:
                 selection_record = {'bounds': bounds, 'sha256': native.digest(extent), 'canvas_sha256': native.digest(selected)}
             document = {'root_id': str(doc.rootNode().uniqueId()), 'canvas': [width,height],
                         'profile': native.PROFILE, 'filename': doc.fileName(), 'modified': doc.modified(),
-                        'layers': layers, 'selection': selection_record, 'projection_sha256': native.digest(raw)}
+                        'layers': layers, 'selection': selection_record, 'selection_node':selection_node,
+                        'node_order':[str(n.uniqueId()) for n in nodes], 'projection_sha256': native.digest(raw)}
             snapshot = {'schema_version': 1, 'kind': 'krita_document_snapshot', 'session_id': self.identifier,
                         'document': document, 'revision_sha256': native.digest(canonical(document))}
             return snapshot, raw, selected
@@ -198,7 +213,8 @@ class Session:
             native.need(self.inspect() == current, 'Native document became stale before import')
             node = self.document.createNode('Proposed edit ' + plan['edit_plan_sha256'][:12], 'paintlayer')
             native.need(node is not None, 'Krita did not create a proposed layer')
-            native.need(self.document.rootNode().addChildNode(node,self.document.topLevelNodes()[-1]), 'Krita did not attach proposed layer')
+            top = [n for n in self.document.topLevelNodes() if n.type() == 'paintlayer'][-1]
+            native.need(self.document.rootNode().addChildNode(node,top), 'Krita did not attach proposed layer')
             self.document.setModified(True)
             width,height = plan['canvas']
             node.setPixelData(buffers['overlay.bgra'],0,0,width,height)
@@ -207,6 +223,8 @@ class Session:
             after = self.inspect()
             native.need(after['document']['layers'][:-1] == current['document']['layers'], 'Original native layers changed during import')
             native.need(after['document']['selection'] == current['document']['selection'], 'Native selection changed during import')
+            native.need(after['document']['selection_node'] == current['document']['selection_node'], 'Native selection node changed during import')
+            native.need([i for i in after['document']['node_order'] if i != str(node.uniqueId())] == current['document']['node_order'], 'Original native node order changed during import')
             native.need(after['document']['projection_sha256'] == native.digest(buffers['result.bgra']), 'Native proposed projection differs from result')
             node.setVisible(False); self._settle()
             native.need(self.inspect()['document']['projection_sha256'] == current['document']['projection_sha256'], 'Hiding proposed layer did not restore source')
