@@ -5,6 +5,8 @@ on:
       - 'app/static/**'
       - 'app/workspace.py'
       - 'app/server.py'
+      - 'tests/asset_workspace*'
+      - 'tests/test_asset_workspace*'
       - 'tests/asset_metadata*'
       - 'tests/test_asset_metadata*'
       - 'tests/asset_detail*'
@@ -48,6 +50,9 @@ jobs:
       - name: Two clients and lost responses against real metadata storage
         if: matrix.response-delay-ms == 0
         run: python tests/asset_metadata_browser.py --out .runtime/asset-metadata-proof
+      - name: Scoped reload and historical receipts against actual SQLite
+        if: matrix.response-delay-ms == 0
+        run: python tests/asset_workspace_browser.py --out .runtime/asset-workspace-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,5 +61,6 @@ jobs:
             .runtime/asset-detail-proof/
             .runtime/asset-reload-proof/
             .runtime/asset-metadata-proof/
+            .runtime/asset-workspace-proof/
           if-no-files-found: ignore
           retention-days: 7

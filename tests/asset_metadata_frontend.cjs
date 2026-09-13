@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const {setup}=require('./asset_detail_contracts.cjs');
-const conflict=(s,current)=>{const e=Error('Asset changed; nothing applied');e.status=409;e.data={code:'asset_revision_conflict',current:[current],conflict_ids:['a'],missing_ids:[]};s.writes.at(-1).reject(e);};
+const conflict=(s,current)=>{const e=Error('Asset changed; nothing applied');e.status=409;e.data={workspace_id:s.run('activeAsset.workspace_id'),code:'asset_revision_conflict',current:[current],conflict_ids:['a'],missing_ids:[]};s.writes.at(-1).reject(e);};
 const saved=(s,fields={})=>({...JSON.parse(s.run('JSON.stringify(activeAsset)')),metadata_revision:1,...fields});
 let count=0;
 async function check(name,fn){await fn();count++;console.log('PASS',name);}
@@ -41,7 +41,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
   await check('Missing receipt stays unknown; malformed success is never accepted',async()=>{
     const s=setup();s.el('#assetNotes').value='keep';const p=s.el('#saveAssetDetails').onclick();s.writes[0].resolve({});await p;
     assert.equal(s.run('assetDetailDirty()'),true);assert.match(s.el('#assetDetailStatus').textContent,/not confirmed/);
-    const observing=s.run('checkAssetSave()');s.reads[0].resolve({status:'unknown',request_id:s.payload(0).request_id});await observing;
+    const observing=s.run('checkAssetSave()');s.reads[0].resolve({status:'unknown',workspace_id:s.payload(0).workspace_id,request_id:s.payload(0).request_id});await observing;
     assert.equal(s.writes.length,1);assert.equal(s.run('assetDetailDirty()'),true);assert.equal(s.el('#assetFavorite').disabled,true);
   });
   await check('Missing revision blocks writes rather than guessing zero',async()=>{

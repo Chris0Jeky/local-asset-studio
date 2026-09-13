@@ -47,7 +47,7 @@ for i, (title, file, review) in enumerate([
     ASSETS.append(dict(id=f'asset-{i}', title=title, filename=Path(file).name, media_type='image', review=review,
                        url='/'+file, created_at=1789228800-i*100, bytes=1024, sha256='a'*64, source={'seed':42},
                        preset_name='Synthetic UX fixture', job_id=None, notes='', lineage=[], collections=[],
-                       favorite=False, tags=['fixture'], trashed_at=None, metadata_revision=0))
+                       workspace_id='1'*32, favorite=False, tags=['fixture'], trashed_at=None, metadata_revision=0))
 JOBS = [dict(id='fixture-job',preset_name='Lantern study · synthetic fixture',preset_id='anima-portrait',status='completed',message='Completed fixture, not a model run',controls={'positive':'Explore one form, then continue with a variation.','seed':42},outputs=[{'filename':'lantern.png','asset_id':'asset-0','media_type':'image','seed':42}]),
         dict(id='allocation-failure',preset_name='Krea 2 Anime Atelier',preset_id='krea-anime-atelier',status='failed',message='Generation failed: ComfyUI reported an execution error: KSampler: bad allocation',failure={'kind':'memory_allocation','title':'Memory allocation failed','summary':'ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt.','action':'Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically.','node_type':'KSampler','exception_type':'RuntimeError','detail':'bad allocation'},controls={},prompt_ids=['fixture-prompt'],submissions=[{'prompt_id':'fixture-prompt','status':'failed'}],outputs=[])]
 PLANS = [dict(id='a'*32, name='Lantern study · choose the finish', kind='comparison', state={'status':'awaiting_review','message':'Synthetic review fixture'}, stages=[], budget={'allowance':4,'reserved':3}, axis='seed', values=[]),
@@ -77,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/jobs':JOBS,
-            '/api/workspace':{'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
+            '/api/workspace':{'workspace_id':'1'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},
