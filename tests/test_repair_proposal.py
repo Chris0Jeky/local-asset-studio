@@ -261,6 +261,19 @@ class RepairProposalTests(unittest.TestCase):
                 with self.assertRaises(ContractError):
                     read_proposal(path)
 
+    def test_large_integer_literal_is_a_structured_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'input.json'
+            path.write_text('{"size":' + '9' * 5000 + '}', encoding='utf-8')
+            with self.assertRaises(ContractError) as caught:
+                read_proposal(path)
+            self.assertEqual(caught.exception.code, 'json')
+            run = subprocess.run([sys.executable, str(ROOT / 'scripts/repair_proposal.py'), 'validate', str(path)],
+                                 text=True, capture_output=True, cwd=directory)
+            self.assertEqual(run.returncode, 2)
+            self.assertEqual(json.loads(run.stdout)['error']['code'], 'json')
+            self.assertNotIn('Traceback', run.stderr)
+
     def test_oversized_and_deep_input_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'input.json'
