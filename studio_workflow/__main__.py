@@ -4,6 +4,7 @@ import argparse
 from http.client import HTTPException
 import json
 import math
+import os
 from pathlib import Path
 import sys
 import time
@@ -47,7 +48,15 @@ def main(argv=None):
     args = parser().parse_args(argv)
     command = args.command
     if command == 'runs': return run_cli.execute(args)
+    result = None
+    output_preflight = exporting = False
     try:
+        target = getattr(args, 'out', None)
+        if target:
+            output_preflight = True
+            need(not os.path.lexists(target), 'Output already exists; nothing was requested')
+            need(target.parent.is_dir(), 'Output directory is missing; nothing was requested')
+            output_preflight = False
         client = Client(args.url, args.http_timeout)
         if command == 'documents':
             result = document_cli.execute(args)
@@ -79,7 +88,8 @@ def main(argv=None):
                     break
                 time.sleep(min(args.interval, max(0, deadline - time.monotonic())))
         encoded = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
-        if getattr(args, 'out', None):
+        if target:
+            exporting = True
             # Refuse overwrite: tickets are durable request identities, not scratch files.
             with args.out.open('x', encoding='utf-8') as stream:
                 stream.write(json.dumps(result['ticket'], ensure_ascii=False, indent=2, allow_nan=False) + '\n'
@@ -92,11 +102,18 @@ def main(argv=None):
         if state in ('failed', 'partial', 'cancelled'): return 5
         return 0
     except (ValueError, OSError, HTTPError, URLError, TimeoutError, HTTPException, UnicodeError) as exc:
+        received = result
         result = {'error': str(exc), 'command': command}
         if isinstance(exc, ClientError): result.update(exc.result, http_status=exc.status, code=exc.code)
-        if command == 'run': result['recovery'] = 'Outcome may be unknown. Retain the same ticket and inspect it; never prepare a replacement ticket to retry.'
+        if output_preflight:
+            result.update(code='output_unavailable', request_sent=False, recovery='Choose a new output path in an existing directory. No request was sent.')
+        elif exporting:
+            result.update(code='local_output_error', response_received=True, result=received,
+                          recovery='The Studio response was received but local export failed. Retain the returned result and original ticket or request ID; do not create replacement work. The output path was not overwritten and may contain an incomplete file.')
+        elif command == 'run': result['recovery'] = 'Outcome may be unknown. Retain the same ticket and inspect it; never prepare a replacement ticket to retry.'
         elif command == 'documents': result['recovery'] = 'Retain the same request ID and content. Inspect the current revision; do not silently rebase a conflicting edit.'
         print(json.dumps(result, ensure_ascii=False))
+        if output_preflight or exporting: return 2
         if isinstance(exc, ClientError) and exc.status == 409: return 6
         return 3 if command == 'run' else 2
 
