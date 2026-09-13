@@ -138,6 +138,7 @@ class AgentBridge:
             elif name == 'studio_nodes':
                 catalog = request(PREFIX + '/nodes')
                 need(not a.get('schema_sha256') or a['schema_sha256'] == catalog['schema_sha256'], 'Node schema changed; restart pagination and review the new schema')
+                need(isinstance(catalog.get('nodes'), dict), 'Studio returned an invalid node collection')
                 query = a.get('query', '').casefold()
                 rows = sorted(catalog['nodes'].values(), key=lambda x: x['class_type'])
                 rows = [r for r in rows if query in ' '.join(str(r.get(k, '')) for k in ('class_type', 'name', 'category')).casefold()]
@@ -170,6 +171,8 @@ class AgentBridge:
                 data = request(PREFIX + '/run', {'ticket': ticket, 'approved': True})
             else: data = request('/api/jobs/' + a['job_id'])
             need(isinstance(data, dict), 'Studio returned a non-object result')
+            if name == 'recipe_run' and 'job' in data:
+                need(isinstance(data['job'], dict), 'Studio returned an invalid job object')
             error = None
             if name == 'workflow_compile' and data.get('valid') is False:
                 error = {'code': 'invalid_workflow', 'message': 'Resolve the returned connection diagnostics; no generation was submitted.'}
