@@ -3,6 +3,7 @@
 No action runs at plugin load.  The controller deliberately retains a session
 only when the active document object and its root node still match the capture.
 """
+import json
 from pathlib import Path
 
 try:  # Installed package is flat; repository package keeps the shared module above us.
@@ -27,13 +28,13 @@ class Controller:
         return document
 
     def _key(self, document):
-        return (id(document), str(document.rootNode().uniqueId()))
+        return str(document.rootNode().uniqueId())
 
     def _captured(self):
         document = self._active()
         if self.session is None:
             raise ValueError("Capture this document before importing or comparing")
-        if self.identity != self._key(document) or self.session.document is not document:
+        if self.identity != self._key(document) or not (document == self.session.document):
             raise ValueError("The active document differs from the captured session; capture it as a new session")
         return self.session
 
@@ -52,9 +53,10 @@ class Controller:
         request = self.choose_request()
         if not request:
             return None
-        receipt = self._captured().import_request(Path(request))
-        root = Path(request).resolve().parent
-        self.report("Proposed layer imported", "Receipt: " + str(root / "live-result.json") + "\nPackage: " + str(root))
+        request_path = Path(request)
+        receipt = self._captured().import_request(request_path)
+        native_path = Path(json.loads(request_path.read_text(encoding="utf-8"))["native_plan"]["path"]).resolve()
+        self.report("Proposed layer imported", "Receipt: " + str(native_path.parent / "live-result.json") + "\nPackage: " + str(native_path.parent))
         return receipt
 
     def show_source(self):

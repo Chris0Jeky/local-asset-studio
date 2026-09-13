@@ -128,7 +128,7 @@ def _source_files(include_proof=False):
              "document_session.py": (PACKAGE_SOURCE / "document_session.py").read_bytes(),
              "native_edit.py": (PACKAGE_SOURCE / "native_edit.py").read_bytes()}
     if include_proof:
-        proof = PLUGIN_SOURCE / "session_proof.py"
+        proof = PACKAGE_SOURCE / "session_proof.py"
         require(proof.is_file(), "The optional session proof module is not available")
         files["session_proof.py"] = proof.read_bytes()
     return files
@@ -149,6 +149,19 @@ def _same_file(path, raw, label):
     require(path.is_file() and path.read_bytes() == raw, label + " differs from its pinned source")
 
 
+def _installed_names(destination, sources):
+    names = {path.name for path in destination.iterdir()}
+    extra = names - set(sources)
+    require(extra <= {"__pycache__"}, "Installed package has an unexpected file set")
+    cache = destination / "__pycache__"
+    if cache.exists():
+        require(cache.is_dir() and not cache.is_symlink(), "Installed bytecode cache is unsafe")
+        for entry in cache.iterdir():
+            require(entry.is_file() and not entry.is_symlink() and entry.suffix == ".pyc"
+                    and entry.name.split(".", 1)[0] in {Path(name).stem for name in sources},
+                    "Installed bytecode cache has an unexpected file")
+
+
 def install(config, target, include_proof=False):
     require(target in {"runner", "gui"}, "Target must be runner or gui")
     require(not include_proof or target == "runner", "Optional proof code is runner-only")
@@ -166,7 +179,7 @@ def install(config, target, include_proof=False):
     destination = scripts / module
     if destination.exists():
         require(destination.is_dir() and not destination.is_symlink(), "Installed package is not a directory")
-        require({path.name for path in destination.iterdir()} == set(sources), "Installed package has an unexpected file set")
+        _installed_names(destination, sources)
         for name, raw in sources.items():
             _same_file(destination / name, raw, "Installed module " + name)
     else:

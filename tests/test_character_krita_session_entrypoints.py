@@ -81,6 +81,16 @@ class InstallTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "differs"):
             entrypoints.install(self.config, "runner")
 
+    def test_install_accepts_only_normal_python_bytecode_cache(self):
+        first = entrypoints.install(self.config, "runner")
+        module = Path(next(iter(first["outputs"].values()))["path"]).parent
+        cache = module / "__pycache__"; cache.mkdir()
+        (cache / "plugin.cpython-311.pyc").write_bytes(b"cache")
+        self.assertEqual(first, entrypoints.install(self.config, "runner"))
+        (cache / "unrelated.pyc").write_bytes(b"cache")
+        with self.assertRaisesRegex(ValueError, "cache"):
+            entrypoints.install(self.config, "runner")
+
     def test_gui_install_writes_matching_desktop_and_runner_proof_is_opt_in(self):
         gui = entrypoints.install(self.config, "gui")
         desktop = [item for name, item in gui["outputs"].items() if name.endswith(".desktop")]
@@ -93,27 +103,48 @@ class InstallTests(unittest.TestCase):
 
 
 class PluginTests(unittest.TestCase):
-    def test_startup_is_inert_and_a_session_never_retargets_another_document(self):
+    def test_startup_is_inert_and_native_document_identity_never_retargets(self):
         class Root:
             def __init__(self, value): self.value = value
             def uniqueId(self): return self.value
         class Document:
-            def __init__(self, value): self.root = Root(value)
+            def __init__(self, value, native): self.root, self.native = Root(value), native
             def rootNode(self): return self.root
+            def __eq__(self, other): return isinstance(other, Document) and self.native == other.native
         class Application:
             def __init__(self, document): self.document, self.calls = document, 0
             def activeDocument(self): self.calls += 1; return self.document
-        app = Application(Document("one")); notices = []
+        app = Application(Document("one", "native-a")); notices = []
         controller = plugin.Controller(app, lambda: "C:/capture", lambda: "C:/request.json", lambda *value: notices.append(value))
         self.assertIsNone(controller.session)
         self.assertEqual(0, app.calls)
-        fake = mock.Mock(); fake.capture.return_value = {"captured": True}
+        fake = mock.Mock(document=app.document); fake.capture.return_value = {"captured": True}
         with mock.patch.object(plugin, "Session", return_value=fake):
             self.assertEqual({"captured": True}, controller.capture())
-        app.document = Document("two")
+        app.document = Document("one", "native-a")
+        fake.show_source.return_value = {"source": True}
+        self.assertEqual({"source": True}, controller.show_source())
+        app.document = Document("one", "native-b")
         with self.assertRaisesRegex(ValueError, "differs"):
             controller.show_source()
-        fake.show_source.assert_not_called()
+
+    def test_import_reports_the_pinned_native_package_path(self):
+        class Root:
+            def uniqueId(self): return "root"
+        class Document:
+            def rootNode(self): return Root()
+            def __eq__(self, other): return isinstance(other, Document)
+        class Application:
+            def activeDocument(self): return document
+        document = Document(); notices = []
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); request = root / "request.json"; package = root / "package"; package.mkdir()
+            native = package / "native-plan.json"; native.write_text("{}", encoding="utf-8")
+            request.write_text(json.dumps({"native_plan": {"path": str(native)}}), encoding="utf-8")
+            controller = plugin.Controller(Application(), lambda: None, lambda: str(request), lambda *value: notices.append(value))
+            controller.session = mock.Mock(document=document); controller.identity = "root"
+            controller.import_request()
+        self.assertIn("/package/live-result.json", notices[-1][1].replace("\\", "/"))
 
 
 if __name__ == "__main__":
