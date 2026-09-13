@@ -388,7 +388,29 @@ async function unstagedLocalFilesCannotBeSaved() {
   }
 }
 
+
+// The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
+async function recipeSwapDuringUploadNeverSubmits() {
+  const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
+  s.run(`selectPreset('gentle-variation');`);
+  s.element('#reference').files = [localFile()];
+  s.element('#reference').onchange();
+  const fetch = s.context.fetch;
+  s.context.fetch = async (url, options) => { const result = await fetch(url, options); if (url === '/api/upload') s.run(`selectPreset('qwen-1ref');`); return result; };
+  await s.element('#generate').onclick();
+  assert.equal(s.requests.some(r => r.url === '/api/jobs'), false, 'A recipe swapped during the source upload must not be submitted');
+  assert.equal(s.run('selected.id'), 'qwen-1ref');
+  assert.equal(s.run('submitting'), false, 'Generate is released after the refused submission');
+  s.context.fetch = fetch;
+  s.run(`selectPreset('gentle-variation');`);
+  s.element('#reference').files = [localFile()];
+  s.element('#reference').onchange();
+  await s.element('#generate').onclick();
+  assert.equal(s.requests.filter(r => r.url === '/api/jobs').length, 1, 'An undisturbed upload still submits exactly once');
+}
+
 (async () => {
+  await recipeSwapDuringUploadNeverSubmits();
   await unstagedLocalFilesCannotBeSaved();
   await explicitLocalAbandonment();
   await check('qwen-1ref', null, 1);
