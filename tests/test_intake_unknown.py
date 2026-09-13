@@ -12,6 +12,7 @@ from unittest.mock import patch
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/intake-downloads.py'
 spec = importlib.util.spec_from_file_location('intake_unknown_fixture', SCRIPT)
 intake = importlib.util.module_from_spec(spec); spec.loader.exec_module(intake)
+import model_intake
 
 BACKBONE = {'blocks.0.attn.wk.weight': {}, 'img_in.weight': {}, 'final_layer.linear.weight': {}}
 LORA = {'lora_unet_input_blocks_4_1_proj_in.lora_down.weight': {}}
@@ -21,8 +22,9 @@ UNKNOWN = {'unrecognised.component.weight': {}}
 class UnknownIntakeTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name); self.source = self.root/'downloads'; self.source.mkdir()
+        self.root = Path(temporary.name).resolve(); self.source = self.root/'downloads'; self.source.mkdir()
         self.comfy = self.root/'comfy'
+        reserve = patch.object(model_intake, 'RESERVE_BYTES', 0); reserve.start(); self.addCleanup(reserve.stop)
 
     def write(self, name, header):
         body = json.dumps(header).encode('utf-8')
@@ -36,6 +38,9 @@ class UnknownIntakeTests(unittest.TestCase):
             result = intake.main(['--from', str(self.source), *args])
         self.assertEqual(result, 0)
         return output.getvalue()
+
+    def receipts(self):
+        return [json.loads(p.read_text()) for p in (self.root/'.runtime/downloads/intake').glob('*.json')]
 
     def test_unknown_headers_have_no_default_folder(self):
         for header in ({}, UNKNOWN, {'__metadata__': {'modelspec.title': 'Diffusion model'}}):
@@ -74,20 +79,20 @@ class UnknownIntakeTests(unittest.TestCase):
         self.assertEqual((a['folder'], a['error']), (b['folder'], b['error']))
         self.assertIsNone(a['folder']); self.assertIsNotNone(a['error'])
 
-    def test_cli_unknown_preserves_file_without_hash_move_or_receipt(self):
+    def test_cli_unknown_preserves_file_without_copy_or_receipt(self):
         path = self.write('unknown.safetensors', UNKNOWN); before = path.read_bytes()
-        with patch.object(intake, 'sha256', side_effect=AssertionError('Unknown candidate must not be hashed')) as digest, \
-             patch.object(intake.shutil, 'move') as move, patch.object(intake, 'append_receipt') as receipt:
+        with patch.object(intake, 'import_candidate') as publish:
             output = self.run_cli()
-        digest.assert_not_called(); move.assert_not_called(); receipt.assert_not_called()
+        publish.assert_not_called()
         self.assertIn('SKIP unknown.safetensors', output); self.assertIn('Unknown model role', output)
         self.assertEqual(path.read_bytes(), before); self.assertFalse(self.comfy.exists())
+        self.assertFalse((self.root/'.runtime').exists())
 
     def test_dry_run_preserves_known_and_unknown_files(self):
         known = self.write('known.safetensors', LORA); unknown = self.write('unknown.safetensors', UNKNOWN)
-        with patch.object(intake, 'sha256') as digest, patch.object(intake.shutil, 'move') as move:
+        with patch.object(intake, 'import_candidate') as publish:
             output = self.run_cli('--dry-run')
-        digest.assert_not_called(); move.assert_not_called()
+        publish.assert_not_called()
         self.assertTrue(known.exists()); self.assertTrue(unknown.exists()); self.assertFalse(self.comfy.exists())
         self.assertIn('Unknown model role', output); self.assertIn('header-hint', output)
 
@@ -95,8 +100,8 @@ class UnknownIntakeTests(unittest.TestCase):
         path = self.write('unknown.safetensors', UNKNOWN); original = path.read_bytes()
         output = self.run_cli('--dest-folder', 'loras')
         target = self.comfy/'models/loras/unknown.safetensors'
-        self.assertEqual(target.read_bytes(), original); self.assertFalse(path.exists())
-        records = json.loads((self.root/'.runtime/downloads/receipts.json').read_text())
+        self.assertEqual(target.read_bytes(), original); self.assertEqual(path.read_bytes(), original)
+        records = self.receipts()
         self.assertEqual(records[0]['folder_basis'], 'operator-selected')
         self.assertIs(records[0]['verified'], False); self.assertIsNone(records[0]['runtime_compatible'])
         self.assertIsNone(records[0]['expected_sha256']); self.assertEqual(records[0]['sha256'], hashlib.sha256(original).hexdigest())
@@ -109,23 +114,23 @@ class UnknownIntakeTests(unittest.TestCase):
         self.assertEqual(item['folder'], 'diffusion_models'); self.assertIsNone(item['error'])
         self.assertEqual(item['folder_basis'], 'operator-selected')
 
-    def test_mixed_batch_moves_only_known_candidate_and_retains_unknown(self):
+    def test_mixed_batch_copies_only_known_candidate_and_retains_both_originals(self):
         known = self.write('known.safetensors', LORA); unknown = self.write('unknown.safetensors', UNKNOWN)
         output = self.run_cli()
-        self.assertFalse(known.exists()); self.assertTrue(unknown.exists())
+        self.assertTrue(known.exists()); self.assertTrue(unknown.exists())
         self.assertTrue((self.comfy/'models/loras/known.safetensors').exists())
         self.assertFalse((self.comfy/'models/diffusion_models/unknown.safetensors').exists())
-        records = json.loads((self.root/'.runtime/downloads/receipts.json').read_text())
+        records = self.receipts()
         self.assertEqual(len(records), 1); self.assertEqual(records[0]['folder_basis'], 'header-hint')
         self.assertIs(records[0]['verified'], False); self.assertIsNone(records[0]['runtime_compatible'])
-        self.assertIn('1 moved', output)
+        self.assertIn('1 copied', output)
 
     def test_existing_destination_is_never_replaced_by_override(self):
         path = self.write('unknown.safetensors', UNKNOWN)
         target = self.comfy/'models/loras/unknown.safetensors'; target.parent.mkdir(parents=True); target.write_bytes(b'keep')
         output = self.run_cli('--dest-folder', 'loras')
         self.assertTrue(path.exists()); self.assertEqual(target.read_bytes(), b'keep')
-        self.assertFalse((self.root/'.runtime/downloads/receipts.json').exists()); self.assertIn('nothing was overwritten', output)
+        self.assertFalse((self.root/'.runtime').exists()); self.assertIn('nothing was overwritten', output)
 
     def test_unreadable_header_has_no_role(self):
         path = self.source/'bad.safetensors'; path.write_bytes(b'bad')
