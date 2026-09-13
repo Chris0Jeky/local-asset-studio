@@ -38,6 +38,7 @@ CANONICAL_SOURCE_URL = (
     "https://github.com/comfyanonymous/ComfyUI_examples/blob/master/"
     "chroma/fennec_girl_hug.png"
 )
+SUPPORTED_PRESET_ID = "wan22-i2v"
 
 
 def _read_json(path: Path, fallback=None):
@@ -478,10 +479,21 @@ def _artifact_record(path: Path, job_id: str):
     }
 
 
+def _supported_wan_job(studio, job):
+    if job.get("preset_id") != SUPPORTED_PRESET_ID:
+        raise ValueError("Offline I2V diagnostic supports recorded Wan I2V jobs only")
+    preset = studio.preset(job.get("preset_id"))
+    graph = job.get("graph") or {}
+    if preset.get("modality") != "video" or not any(isinstance(node, dict) and node.get("class_type") == "Wan22ImageToVideoLatent" for node in graph.values()):
+        raise ValueError("Offline I2V diagnostic requires a recorded Wan22ImageToVideoLatent graph")
+    return preset
+
+
 def build_report(studio, job_id):
     job = studio.jobs.get(job_id)
     if not job:
         raise ValueError("Unknown job")
+    preset = _supported_wan_job(studio, job)
     outputs = [output for output in job.get("outputs", []) if output.get("media_type") == "video" or Path(output.get("filename", "")).suffix.lower() in {".mp4", ".webm", ".mov"}]
     if not outputs:
         raise ValueError("This job has no recorded video output")
@@ -494,7 +506,6 @@ def build_report(studio, job_id):
     video_identity = {"path": str(video), "filename": video.name, "bytes": video.stat().st_size, "sha256": sha256_file(video)}
     probe = probe_video(studio, video)
     graph = job.get("graph") or {}
-    preset = studio.preset(job.get("preset_id"))
     source_node = _node_by_class(graph, "LoadImage") or {}
     source = locate_source(studio, (source_node.get("inputs") or {}).get("image"))
     source_meta = {}
