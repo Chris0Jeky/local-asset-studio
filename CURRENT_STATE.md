@@ -51,6 +51,24 @@ Studio MP4 output adapter. Portrait/landscape authored pairs are resolved from
 the source before binding; deviations are warned and execution is labeled
 separately from review.
 
+## Resource efficiency programme and first measurement — 13 September 2026
+
+The architecture and staged plan are in [RESOURCE-EFFICIENCY.md](docs/RESOURCE-EFFICIENCY.md),
+tracked by #172 and scoped issues #173–#178. Existing execution, recovery, Workspace and Wan
+capacity owners are retained. The first implementation adds a finite read-only resource profiler;
+the separate browser scheduling slice is tracked by #174. Cache/offload policy changes, server
+event sync, bounded media/history and broader stage admission remain planned work.
+
+The profiler ran on both shell and portable Python without loading Torch or the Studio server.
+Three short live samples recorded Studio at about 62 MiB working set, ComfyUI at 2.03 GiB resident
+and 5.86 GiB private, and the sampler at 24.1 MiB resident. Samples took 2.55–4.77 ms and read
+1,333 bytes from `/system_stats`. Physical RAM available, Windows commit headroom and reported
+free VRAM were measured separately. These are observations during concurrent work, not a
+generation-peak benchmark or proof of browser GPU cost. No generation, runtime restart or shared
+configuration change was performed by this resource slice; raw JSONL receipts remain ignored.
+Generation memory reduction, native-crash prevention and comparative offload performance remain
+unverified. Human creative acceptance and licensing remain separate.
+
 ## Runtime, model and tooling reconciliation — 13 September 2026
 
 A read-only reconciliation at Git head `52c0b497df0ca45834c836f391e835371c65c238` found both
