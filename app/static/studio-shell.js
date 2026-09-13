@@ -29,6 +29,10 @@
   document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&!document.querySelector('dialog[open]')){e.preventDefault();openCommands();}if(e.key==='Escape'&&document.body.classList.contains('studio-nav-open')){closeNav();$('#studioNavToggle').focus();}});
   const route=location.pathname.includes('workflow-studio.html')?'workflows':location.pathname.includes('av.html')?'scene':location.pathname.includes('voice.html')?'voice':location.pathname.includes('prompt-lab.html')?'prompt':location.pathname.includes('review.html')?'review':'home';
   setView(isMain?StudioUX.normalizeView(location.hash):route);window.StudioShell={setView,openCommands};
+  if(isMain){
+    const css=document.createElement('link');css.rel='stylesheet';css.href='/static/bundle-explorer.css';document.head.append(css);
+    const core=document.createElement('script');core.src='/static/bundle-core.js';core.onload=()=>{const ui=document.createElement('script');ui.src='/static/bundle-explorer.js';document.body.append(ui);};document.body.append(core);
+  }
   if(new URLSearchParams(location.search).has('guide')){
     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/studio-guide.css';document.head.append(css);
     const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);
