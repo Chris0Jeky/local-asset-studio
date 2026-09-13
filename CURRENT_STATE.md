@@ -20,8 +20,10 @@ execution guarantee, and it excludes queue wait.
 The Studio server was restarted from the current checkout as PID 7376 after confirming an empty
 ComfyUI queue; ComfyUI PID 20212 was not restarted. Both endpoints are healthy, the schema is
 available, and the queue remains empty. No generation was submitted by this pass. Browser smoke is
-not verified because the environment lacks the optional `playwright` package. HUMAN_TODO q-4 is
-unchanged: the owner-controlled Windows restart remains pending for the configured page file.
+not verified because the environment lacks the optional `playwright` package. HUMAN_TODO q-4 now
+records the owner-controlled Windows restart as actioned; a live read confirms `C:\pagefile.sys` at
+65,536 MiB and 38,506,180,608 bytes (~35.9 GiB) of commit headroom, above the 32 GiB gate. Large
+Qwen/FLUX execution and art-quality acceptance remain unproven.
 
 Focused server tests (50), UX policy checks (34), repository validation and the full suite (1,256
 tests, 1,206 passed and 50 skipped) pass. The full suite needed `C:\Python314` first on PATH so
