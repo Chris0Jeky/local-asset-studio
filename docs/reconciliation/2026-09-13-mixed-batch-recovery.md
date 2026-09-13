@@ -228,6 +228,25 @@ center-point hit target before clicking; it does not hide the picker, force a
 click, or replace pointer acceptance with keyboard-only execution. This failed
 run published no feature source. Final follow-up results are in the PR record.
 
+Integration correction, 13 September 2026: PR check `34781117002` showed that
+the intermediate gallery stacking rule intercepted the existing shortlist's
+ordinary **Next suggestions** pointer click. The picker now stays in its own
+grid row (`position: static`) whenever Recent runs spans the full grid below
+it, at widths up to 1480px. The existing mobile layout already used that
+behavior; the wider three-column layout retains its sticky picker. Both the
+mixed-recovery native pointer proof and the existing shortlist pointer proof
+are required on the corrected head. Their final results belong to the PR
+record; neither test may force a click or hide the obstructing content.
+
+The connector also identified a distinct startup publication path: an accepted
+queued observation enters `_load_jobs` on restart, where the generic serializer
+changed the retained recipe/workflow bytes. A direct reproduction confirmed
+different SHA-256 values while the current-schema parsed values stayed equal.
+Mixed jobs with a known prefix and pending intent now publish only `state.json`
+during startup recovery. A regression fails before the fix and checks exact
+source bytes through two restarts both before and after observation queueing,
+including repeated request identity with no queued reads or remote requests.
+
 No GPU generation, new models, installed package changes, owner runtime/config
 changes, new native-editor evidence, artistic acceptance or licence decision
 was performed. `HUMAN_TODO.md` remains untouched. This implements software

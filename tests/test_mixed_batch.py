@@ -121,6 +121,23 @@ class MixedBatchTests(unittest.TestCase):
         self.command('dispose',disposition);before=copy.deepcopy(self.job)
         self.studio=FakeStudio(self.root,[]);self.job=self.studio.jobs[self.job['id']]
         self.command('dispose',disposition);self.assertEqual(self.job,before);self.assertTrue(self.studio.queue.empty())
+    def test_restart_preserves_exact_mixed_source_bytes_before_and_after_queueing(self):
+        for queued in (False,True):
+            with self.subTest(queued=queued):
+                payload=self.payload()
+                if queued:self.command('observe',payload)
+                directory=self.studio.runs/self.job['id']
+                for name in ('recipe.json','workflow.json'):
+                    value=json.loads((directory/name).read_bytes())
+                    (directory/name).write_text(json.dumps(value,sort_keys=True,indent=4)+'\n',encoding='utf-8')
+                originals=self.files();pending=copy.deepcopy(self.job['pending_submission'])
+                for restart in range(2):
+                    self.studio=FakeStudio(self.root,[]);self.job=self.studio.jobs[self.job['id']]
+                    self.assertEqual(self.job['status'],'uncertain')
+                    self.assertEqual(self.job['pending_submission'],pending)
+                    for name in ('recipe.json','workflow.json'):self.assertEqual(self.files()[name],originals[name])
+                    if queued:self.command('observe',payload)
+                    self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.requests,[])
     def test_stale_or_changed_command_identity_cannot_be_reused(self):
         payload=self.payload();self.command('observe',payload);self.consume()
         with self.assertRaises(ValueError):self.command('dispose',dict(payload,reason='Changed action',acknowledge_unknown=True))

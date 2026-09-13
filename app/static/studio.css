@@ -20,5 +20,5 @@
 /* A full-width saved-setup row must paint above the sticky recipe picker. */
 .studio-main .saved{position:relative;z-index:1}
 
-/* Full-width recent runs must paint above the earlier sticky recipe picker. */
-@media(max-width:1480px){.studio-main .gallery-panel{position:relative;z-index:1}}
+/* Keep the picker in its row when recent runs span the full grid below it. */
+@media(max-width:1480px){.studio-main .setup{position:static}}
