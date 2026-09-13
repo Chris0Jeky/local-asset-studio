@@ -43,5 +43,11 @@ quota/read/clear failures, explicit discard and missing assets. Existing detail,
 metadata and handoff contracts remain part of the offline gate. Browser evidence
 is recorded separately with its native or injected-storage mode stated.
 
+**Refs #204.** This per-tab/origin draft-recovery slice does not close the
+workspace-identity, native-browser, real-SQLite or server-restart acceptance
+work. Its in-memory browser fixture cannot show that different Workspace
+identities are isolated, that a browser retains its actual storage, or that an
+actual SQLite receipt remains recoverable after a controlled server restart.
+
 Successful metadata persistence does not record artistic, licensing or owner
 acceptance. Existing choices remain in [HUMAN_TODO.md](../../HUMAN_TODO.md).

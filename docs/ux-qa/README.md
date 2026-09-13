@@ -95,3 +95,5 @@ python tests/asset_reload_browser.py --inert --out .runtime/asset-reload-compone
 Inert mode injects storage and recreates the document before its scripts run;
 it is not evidence for native origin, browser retention, real SQLite, a running
 Studio, generation, backend behavior, artwork, licensing or owner acceptance.
+This per-tab/origin proof **Refs #204** and does not close its workspace-identity,
+native-browser, real-SQLite or server-restart acceptance cases.

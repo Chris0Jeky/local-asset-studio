@@ -16,6 +16,10 @@ workflow runs the same driver in its default native HTTP mode and publishes its
 receipt and screenshots. Raw local evidence is ignored at
 `.runtime/goal-20260913/asset-journal-browser/`.
 
+This work **Refs #204**; it does not establish workspace-identity isolation,
+native browser storage behavior, real SQLite recovery or server-restart
+acceptance. Those cases remain separate from this per-tab/origin fixture proof.
+
 ## Native protected-edit revision — 13 September 2026
 
 The new `character_krita.py` adapter carries an existing protected edit result
