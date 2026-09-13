@@ -196,6 +196,16 @@ class BridgeProtocol(unittest.TestCase):
         self.assertTrue(calls and all(method=='GET' for method,_,_,_ in calls))
         self.assertEqual(1,self.http.count('POST','/api/production/'+pid+'/start'))
         with self.assertRaises(ValueError):self.bridge.start()
+    def test_terminal_review_states_reconcile_without_another_start(self):
+        for status in ('awaiting_review','reviewed'):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);_,template=handoff(root);http=InertStudio(template);client=b.Bridge(root,'handoff.json',http)
+                pid=client.stage()['project']['id'];http.lost_start=True
+                with self.assertRaises(TimeoutError):client.start()
+                http.finish(pid);http.projects[pid]['state']['status']=status;before=len(http.calls)
+                result=client.reconcile_start();calls=http.calls[before:]
+                self.assertEqual(status,result['observation']['status']);self.assertEqual('started',client.state()['phase'])
+                self.assertTrue(calls and all(method=='GET' for method,_,_,_ in calls));self.assertEqual(1,http.count('POST','/api/production/'+pid+'/start'))
     def test_preexisting_named_project_prevents_fresh_budget(self):
         self.http.projects['a'*32]={'name':self.bridge.name}
         with self.assertRaisesRegex(ValueError,'already exists'):self.bridge.stage()

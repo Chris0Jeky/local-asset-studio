@@ -241,7 +241,7 @@ class Bridge:
             reserved=current.get('reserved'); root_reserved=project['budget'].get('reserved')
             require(type(reserved) is int and count>0 and reserved==count and type(root_reserved) is int and root_reserved>=count,
                     'The retained project does not prove this Start reserved its exact comparison stages')
-            require(current.get('status') in ('queued','running','observing','interrupted','uncertain','stopped','completed','failed'),
+            require(current.get('status') in ('queued','running','observing','interrupted','uncertain','stopped','completed','failed','awaiting_review','reviewed'),
                     'The retained project does not prove this Start was accepted; leave it pending and inspect Studio')
             observation={'status':current['status'],'reserved':reserved,'checked_at':time.time()}
             state.update(phase='started',start_observation=observation);self.write_state(state)
