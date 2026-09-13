@@ -188,7 +188,7 @@ function renderSelected() {
 }
 function dependencyMarkup(r) {
   const present=r.present===true, note=r.note || (present?'File present':r.present===false?'Missing · place in the indicated folder':'Availability unknown · inspect this requirement');
-  const installation=!present&&r.installable!==true ? '<small>'+esc(r.install_note || 'Automatic installation is unavailable; inspect the source and exact destination.')+'</small>' : '';
+  const installation=!present&&r.installable!==true ? '<br><small>'+esc(r.install_note || 'Automatic installation is unavailable; inspect the source and exact destination.')+'</small>' : '';
   const copy=typeof r.path==='string'&&r.path ? '<button data-copy="'+esc(r.path)+'" title="Copy full file path">Copy path</button>' : '';
   const installable=r.present===false&&r.asset_id&&r.installable===true;
   return '<div class="dependency '+(present?'':'missing')+'"><span class="dot">'+(present?'●':'○')+'</span><div class="file-text"><code>'+esc(r.file)+'</code><small>'+esc(note)+'</small>'+installation+'</div>'+copy+(installable?'<button data-install="'+esc(r.asset_id)+'">Install</button>':'')+'</div>';

@@ -57,6 +57,10 @@ def run(output):
                     assert panel.locator('[data-install]').count() == 1
                     assert panel.locator('[data-install="manual-patch"]').count() == 0
                     assert 'copy the reviewed file manually' in panel.text_content()
+                    notes = panel.locator('.dependency').first.locator('.file-text small')
+                    assert notes.count() == 2
+                    bounds = notes.evaluate_all('(items)=>items.map(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom}))')
+                    assert bounds[1]['top'] >= bounds[0]['bottom'], bounds
                     unknown = panel.locator('.dependency').filter(has_text='unknown.safetensors')
                     assert unknown.locator('[data-copy]').count() == 0
                     assert 'Model folder unknown' in unknown.text_content()
