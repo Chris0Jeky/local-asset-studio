@@ -28,6 +28,7 @@ class WorkspaceError(ValueError):
         return {"error": str(self), "code": self.code, **self.details}
 
 
+WAL_INITIALIZATION_TIMEOUT = 15
 MAX_REVISION = 2**53 - 1
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
@@ -48,8 +49,8 @@ class AssetWorkspace:
         self.media.mkdir(exist_ok=True)
         self.database = self.root / "assets.sqlite3"
         with self.connection() as db:
+            self._enable_wal(db)
             db.executescript("""
-                PRAGMA journal_mode=WAL;
                 CREATE TABLE IF NOT EXISTS assets (
                     id TEXT PRIMARY KEY, job_id TEXT NOT NULL, output_index INTEGER NOT NULL,
                     title TEXT NOT NULL, media_type TEXT NOT NULL, path TEXT NOT NULL,
@@ -79,6 +80,28 @@ class AssetWorkspace:
             db.execute("INSERT OR IGNORE INTO workspace_identity VALUES (1,?)", (uuid.uuid4().hex,))
             if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
+
+    @staticmethod
+    def _enable_wal(db):
+        # SQLite can return BUSY without invoking its busy handler when a lock
+        # upgrade would deadlock. Retry only this pre-transaction mode change.
+        deadline = time.monotonic() + WAL_INITIALIZATION_TIMEOUT
+        original_timeout = db.execute("PRAGMA busy_timeout").fetchone()[0]
+        while True:
+            remaining = max(0, deadline - time.monotonic())
+            db.execute(f"PRAGMA busy_timeout={min(100, int(remaining * 1000))}")
+            try:
+                mode = db.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+            except sqlite3.OperationalError as exc:
+                remaining = deadline - time.monotonic()
+                if getattr(exc, "sqlite_errorcode", None) != sqlite3.SQLITE_BUSY or remaining <= 0:
+                    raise
+                time.sleep(min(0.025, remaining))
+            else:
+                if mode != "wal":
+                    raise WorkspaceError(f"Workspace requires WAL journaling; SQLite retained {mode!r}")
+                db.execute(f"PRAGMA busy_timeout={original_timeout}")
+                return
 
     @contextmanager
     def connection(self):
