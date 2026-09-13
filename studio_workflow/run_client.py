@@ -1,6 +1,8 @@
-"""Client-only saved-run operations. No database, model call or execution method."""
+"""Saved-run HTTP client; explicit dispatch reuses the server-held ticket."""
 from __future__ import annotations
 from http.client import HTTPException
+import hashlib
+import re
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 
@@ -103,4 +105,44 @@ class SavedRuns:
             job = observation.get('job')
             need(isinstance(job, dict) and isinstance(job.get('id'), str) and job['id'] == observation.get('job_id')
                  and isinstance(job.get('status'), str), 'Invalid observed job')
+        return result
+
+    def review(self, request_id: str) -> dict:
+        result = self._call(PREFIX + '/' + key(request_id) + '/review')
+        source = result.get('source')
+        need(isinstance(source, dict) and source.get('request_id') == request_id, 'Review belongs to another request')
+        for field in ('record', 'ticket'):
+            raw = result.get(field + '_json')
+            need(isinstance(raw, str) and hashlib.sha256(raw.encode('utf-8')).hexdigest() == source.get(field + '_sha256'),
+                 'Exact review fingerprint mismatch')
+        record = decode(result['record_json'])
+        record_result({'record': record, 'record_sha256': source['record_sha256']}, {'request_id': request_id})
+        need(canonical(record['report']['ticket']).decode('utf-8') == result['ticket_json'], 'Review ticket differs from record')
+        request, report = record['request'], record['report']
+        expected = {'request_id': request_id, 'document_id': request['document_id'], 'revision': request['expected_revision'],
+                    'preset_id': request['preset_id'], 'document_sha256': report['document_sha256'],
+                    'record_sha256': digest(record), 'ticket_sha256': report['ticket_sha256'], 'job_id': report['job_id']}
+        need(source == expected and result['controls_json'] == canonical(report['recipe']['controls']).decode('utf-8'),
+             'Review metadata differs from its record')
+        return result
+
+    def run(self, request_id: str, *, record_sha256: str, ticket_sha256: str, approved: bool = False) -> dict:
+        request_id = key(request_id)
+        need(approved is True, 'Explicit approval is required')
+        for value in (record_sha256, ticket_sha256):
+            need(isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value), 'A SHA-256 approval is required')
+        result = self._call(PREFIX + '/' + request_id + '/run',
+                            {'approved': True, 'record_sha256': record_sha256, 'ticket_sha256': ticket_sha256})
+        source, dispatch = result.get('source'), result.get('dispatch')
+        need(isinstance(source, dict) and source.get('request_id') == request_id
+             and source.get('record_sha256') == record_sha256 and source.get('ticket_sha256') == ticket_sha256,
+             'Dispatch response belongs to another saved run')
+        need(isinstance(dispatch, dict), 'Invalid saved-run dispatch result')
+        job = dispatch.get('job')
+        if job is not None:
+            need(isinstance(job, dict) and isinstance(source.get('job_id'), str) and job.get('id') == source['job_id']
+                 and isinstance(job.get('status'), str), 'Dispatch job identity mismatch')
+        else:
+            need(dispatch.get('status') == 'reconciliation_required' and dispatch.get('job_id') == source.get('job_id'),
+                 'Unknown saved-run dispatch result; observe the original record')
         return result

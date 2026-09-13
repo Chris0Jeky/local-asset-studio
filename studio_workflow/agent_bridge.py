@@ -74,6 +74,11 @@ TOOLS = {
         {'request_id': IDENTIFIER, 'document_id': IDENTIFIER,
          'expected_revision': {'type': 'integer', 'minimum': 1, 'maximum': 1024}, 'preset_id': IDENTIFIER},
         ('request_id', 'document_id', 'expected_revision', 'preset_id'), 'execute', True),
+    'saved_run_review': tool('Read exact ticket/source JSON and hashes for review without numeric coercion or dispatch.',
+        {'request_id': IDENTIFIER}, ('request_id',)),
+    'saved_run_execute': tool('Explicitly execute or recover the exact server-held ticket approved by record and ticket SHA-256. May start generation if not previously attempted; never uses current draft edits.',
+        {'request_id': IDENTIFIER, 'record_sha256': HASH, 'ticket_sha256': HASH},
+        ('request_id', 'record_sha256', 'ticket_sha256'), 'execute', True),
     'saved_run_get': tool('Recover the original persisted ticket/report by preparation request_id. No schema read, replacement ticket or dispatch.',
         {'request_id': IDENTIFIER}, ('request_id',)),
     'saved_run_list': tool('Read metadata pages for a saved workflow. Follow next_before; pages do not embed the tickets.',
@@ -141,7 +146,7 @@ class AgentBridge:
             return self.client.request(path, body)
         try:
             a = validate_arguments(spec, arguments)
-            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision', 'preset_id', 'job_id') if k in a})
+            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision', 'preset_id', 'job_id', 'record_sha256', 'ticket_sha256') if k in a})
             def payload(key, typ=dict):
                 result = decode(a[key]); need(type(result) is typ, key + ' has the wrong JSON shape'); return result
             if name == 'studio_capabilities':
@@ -186,12 +191,16 @@ class AgentBridge:
                 body = {k: a[k] for k in ('revision', 'request_id')}
                 body.update({'expected_revision': a['expected_revision']} if name == 'workflow_restore' else {'name': a['name']})
                 data = request(DOCUMENTS + '/' + a['document_id'] + ('/restore' if name == 'workflow_restore' else '/fork'), body)
-            elif name in ('saved_run_prepare', 'saved_run_get', 'saved_run_list', 'saved_run_observe', 'saved_run_source'):
+            elif name in ('saved_run_execute', 'saved_run_review', 'saved_run_prepare', 'saved_run_get', 'saved_run_list', 'saved_run_observe', 'saved_run_source'):
                 from .run_client import SavedRuns
                 runs = SavedRuns(request)
                 if name == 'saved_run_prepare':
                     data = runs.prepare(a['document_id'], expected_revision=a['expected_revision'],
                                         preset_id=a['preset_id'], request_id=a['request_id'])
+                elif name == 'saved_run_review': data = runs.review(a['request_id'])
+                elif name == 'saved_run_execute':
+                    data = runs.run(a['request_id'], record_sha256=a['record_sha256'],
+                                    ticket_sha256=a['ticket_sha256'], approved=True)
                 elif name == 'saved_run_get': data = runs.get(a['request_id'])
                 elif name == 'saved_run_source': data = runs.by_job(a['job_id'])
                 elif name == 'saved_run_observe': data = runs.observe(a['request_id'])
@@ -212,6 +221,10 @@ class AgentBridge:
                 error = {'code': 'invalid_workflow', 'message': 'Resolve the returned connection diagnostics; no generation was submitted.'}
             if name == 'recipe_run' and (data.get('status') or (data.get('job') or {}).get('status')) in ('uncertain', 'reconciliation_required'):
                 error = {'code': 'reconciliation_required', 'message': 'Retain the exact ticket and observe the known job; do not prepare a replacement attempt.'}
+            if name == 'saved_run_execute':
+                outcome = data['dispatch']
+                if (outcome.get('status') or (outcome.get('job') or {}).get('status')) in ('uncertain', 'reconciliation_required'):
+                    error = {'code': 'reconciliation_required', 'message': 'Observe the original saved run; do not create a replacement.'}
             return finish(data, error)
         except (ClientError, HTTPError) as exc:
             status = exc.status if isinstance(exc, ClientError) else exc.code
