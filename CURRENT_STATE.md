@@ -1,5 +1,23 @@
 # Current state — 11 September 2026
 
+## Krea 2 allocation failure diagnosis — 13 September 2026
+
+The live failed job `5ac3e83c-9512-406d-86a2-cf3c8868aeb9` retained prompt
+`9cab0b9d-1a40-4c08-aaba-a41e9ee3aa7d` and failed in ComfyUI's `KSampler` while Krea2 was
+sampling. The ComfyUI log also recorded HIPBLAS internal-error fallbacks immediately before
+`RuntimeError: bad allocation`; the Krea2 model had loaded, so this is a device/backend
+allocation failure, not evidence of an invalid prompt. The exact free VRAM at the failure was
+not recorded, so a more specific root cause is not claimed. The run was not resubmitted.
+
+The source now persists a cautious structured execution diagnosis for future ComfyUI history
+errors and exposes it in Gallery: allocation failures explain the likely memory/backend class,
+retain the node and engine detail, and suggest lowering resolution, batch size or active LoRAs
+without automatic retry. Legacy failed records still render the same diagnosis from their
+preserved message. Focused backend, UX-policy, syntax and timing checks pass; the Playwright
+browser smoke is not verified on this host because its Python package is unavailable. This pass
+submitted no generation. The page-file activation and ≥32 GiB host-headroom gate in q-4 remain
+unchanged and are not claimed as the cause of this Krea2 device allocation failure.
+
 ## Session closeout — 13 September 2026
 
 The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
