@@ -22,7 +22,7 @@ The previous 893-test receipt means **893 tests run: 879 passed, 14 skipped**. I
 
 ## Runtime reality
 
-At initial inspection Studio listened on 8191 and ComfyUI on 8188, both online. ComfyUI's queue was empty. Studio held 68 completed, 10 failed and two uncertain job records; those are stored job outcomes, not a count of approved images.
+At initial inspection Studio listened on 8191 and ComfyUI on 8188, both online. ComfyUI's queue was empty. Studio retained completed and failed jobs alongside two uncertain records; stored job outcomes are not a count of approved images. The later full snapshot in `reconciliation/idle-model-cache-release/before.json` records 71 completed, 10 failed and two uncertain jobs.
 
 The uncertain Qwen job `a2908800-7214-4caa-ad23-3844527cdf5d` retains prompt `f67b09af-08cb-47b6-aaa7-95a348ac57ab`. The uncertain portrait job `0cbaae1b-1134-548c-9e03-50bac00b75b9` retains prompt `5bcce6dc-60d5-4075-8c9a-be4416693a58`. An empty queue after a runtime restart does not settle either outcome and does not authorize a retry.
 
