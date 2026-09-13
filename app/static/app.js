@@ -233,7 +233,7 @@ function renderJobs() {
   });
   $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>'; renderCompare();
 }
-async function refresh(){try{jobs=await api('/api/jobs');renderJobs();const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
+async function refresh(){try{const next=await api('/api/jobs'),historyChanged=JSON.stringify(next)!==JSON.stringify(jobs);jobs=next;renderJobs();if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}const job=jobs.find(j=>j.id===activeJobId);if(job){message(job.preset_name+': '+job.message,['failed','uncertain'].includes(job.status));if(['completed','failed','partial','uncertain'].includes(job.status))activeJobId=null;}}catch(e){message(e.message,true);}}
 function showView(next){view=next;['create','assets','production','models','learn'].forEach(name=>{$('#'+name+'View').hidden=name!==next;document.querySelector('[data-view="'+name+'"]').classList.toggle('active',name===next);});$('.hero').hidden=next!=='create';if(next==='models'||next==='learn')refreshLibrary();if(next==='assets')refreshAssets();if(next==='production')refreshProduction();location.hash=next;}
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase();$('#inventory').innerHTML=library.inventory.filter(m=>m.file.toLowerCase().includes(q)).map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';}
 async function refreshLibrary(){
@@ -301,6 +301,7 @@ $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.v
   $('#loraSlots').onchange=updateLoraHints;
   document.addEventListener('input',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('change',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
+  document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 $('#recipeSelect').onchange=e=>{if(e.target.value==='')return;try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
 $('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();};
 $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');};
