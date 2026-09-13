@@ -13,12 +13,35 @@ The source now persists a cautious structured execution diagnosis for future Com
 errors and exposes it in Gallery: allocation failures explain the likely memory/backend class,
 retain the node and engine detail, and suggest lowering resolution, batch size or active LoRAs
 without automatic retry. Legacy failed records still render the same diagnosis from their
-preserved message. Focused backend, UX-policy, syntax and timing checks pass; the Playwright
-browser smoke is not verified on this host because its Python package is unavailable. This pass
-submitted no generation. The page-file activation and ≥32 GiB host-headroom gate in q-4 remain
+preserved message. Focused backend, UX-policy, syntax and timing checks pass; the bundled
+Playwright Chromium smoke passes all 73 synthetic checks. This pass submitted no generation.
+The page-file activation and ≥32 GiB host-headroom gate in q-4 remain
 unchanged and are not claimed as the cause of this Krea2 device allocation failure.
 
-## Session closeout — 13 September 2026
+## Final reconciliation — 13 September 2026
+
+The five PRs from the review sweep (#146, #149, #150, #151 and #152) and the later
+Production storage fix #153 are merged with merge commits. `origin/main` is now
+`8150480355d6500fd9416f56545a0f7e5d468ceb`, and the live open-PR list is empty. The
+local crash-diagnosis patch is saved separately as commit `1a66904` on
+`codex/clear-comfy-failures`; it has not been pushed or merged. The patch does not
+retry failed prompts: it retains ComfyUI's node and exception context and shows a
+bounded memory/execution diagnosis in Gallery.
+
+Studio is healthy on `127.0.0.1:8191` (PID `17744`) and ComfyUI is responsive on
+`127.0.0.1:8188` (PID `20212`). The Comfy queue has one running Krea 2 prompt
+(`e74d2e28-64c5-4327-912c-b4cc6a03f93f`) and no pending entries, so neither runtime
+was restarted or stopped. The four resumable model downloads remain active and
+incomplete under `C:\AI\ComfyUI_windows_portable\ComfyUI\models`; their `.part`
+files are preserved and the helper is PID `17520`.
+
+The focused runtime checks, full 1,198-test suite (47 skips), repository validator,
+and bundled Playwright Chromium smoke (73 checks) pass. This is software and
+synthetic-browser evidence; native crash prevention, art acceptance and licensing
+remain separate gates. The owner-controlled q-4 restart remains pending in
+`HUMAN_TODO.md`, and no automatic reboot is authorized.
+
+## Earlier session closeout snapshot — 13 September 2026
 
 The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
 #137 (backend startup final observation, `042f40e`), #138 (preset-compatible document execution,
