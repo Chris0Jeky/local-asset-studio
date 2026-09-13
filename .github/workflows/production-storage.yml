@@ -1,0 +1,41 @@
+name: Production storage safety
+on:
+  pull_request:
+    paths:
+      - 'app/production.py'
+      - 'app/project_storage.py'
+      - 'tests/test_production*.py'
+      - 'tests/test_server.py'
+      - '.github/workflows/production-storage.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/production.py'
+      - 'app/project_storage.py'
+      - 'tests/test_production*.py'
+      - 'tests/test_server.py'
+      - '.github/workflows/production-storage.yml'
+permissions:
+  contents: read
+concurrency:
+  group: production-storage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  storage:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p test_production_storage.py -v
+      - run: python -m unittest discover -s tests -p test_production_storage_integration.py -v
+      - run: python -m unittest discover -s tests -p test_production.py -v

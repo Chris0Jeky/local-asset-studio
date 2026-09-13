@@ -20,6 +20,7 @@ from decimal import Decimal, InvalidOperation
 
 import settings_planner
 import prompting
+import project_storage
 
 
 def fingerprint(value):
@@ -49,6 +50,14 @@ class Production:
                     state.update(status='interrupted',message='Studio restarted. Inspect known jobs before explicitly resuming; nothing was resubmitted.')
                     db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
 
+                # Preserve execution/review state and reservations. This is a storage
+                # observation, not permission to reconstruct files or replay work.
+                if plan.get('kind') in project_storage.KINDS:
+                    reason=project_storage.problem(self.root,row['id'],plan)
+                    if reason:state['storage_issue']={'reason':reason,'checked_at':time.time()}
+                    else:state.pop('storage_issue',None)
+                    db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
+
         from review_desk import ReviewDesk
         self.reviews=ReviewDesk(self)
         from av_projects import AVProjects
@@ -61,6 +70,14 @@ class Production:
         try:
             with db:yield db
         finally:db.close()
+
+    def _insert_materialized(self, db, identifier, root_id, plan, state):
+        # Keep deterministic character imports idempotently rejected before touching
+        # their existing directory, including when a shared budget already exists.
+        if db.execute('SELECT 1 FROM projects WHERE id=?',(identifier,)).fetchone():
+            raise sqlite3.IntegrityError('Project identity already exists')
+        project_storage.materialize(self.root,identifier,plan,self.studio._write_json_atomic)
+        db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,root_id,json.dumps(plan),json.dumps(state),time.time()))
 
     def _get(self, identifier, db=None):
         if not isinstance(identifier,str) or not re.fullmatch('[0-9a-f]{32}',identifier):raise ValueError('Unknown experiment')
@@ -80,6 +97,8 @@ class Production:
 
     def public(self, project, full=False):
         plan=project['plan'];state=copy.deepcopy(project['state'])
+        if state.get('storage_issue'):
+            state['message']='Startup storage check: '+state['storage_issue']['reason']+'. Inspect project files before Start or Resume. '+state.get('message','')
         with self.connect() as db:
             budget=dict(db.execute('SELECT allowance,reserved FROM budgets WHERE id=?',(project['root_id'],)).fetchone())
         stages=[]
@@ -274,9 +293,8 @@ class Production:
             plan['sha256']=fingerprint(plan)
             state={'status':'planned','message':'Ready for explicit Start. No generation submitted.','attempts':{},'artifacts':[],
                    'stop_requested':False,'review':{'status':'unreviewed','notes':''}}
-            db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,root_id,json.dumps(plan),json.dumps(state),time.time()))
-        directory=self.root/identifier;directory.mkdir()
-        self.studio._write_json_atomic(directory/'plan.json',plan)
+            self._insert_materialized(db,identifier,root_id,plan,state)
+        project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
 
     def _character_handoff(self, payload):
@@ -335,10 +353,10 @@ class Production:
               'stages':[],'created_at':time.time()}
         plan['sha256']=fingerprint(plan)
         state={'status':'planned','message':'Native export prepared. Start explicitly; no generation is needed.','attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
-        with self.connect() as db:
+        with self.lock,self.connect() as db:
             db.execute('INSERT INTO budgets(id,allowance) VALUES (?,0)',(identifier,))
-            db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,identifier,json.dumps(plan),json.dumps(state),time.time()))
-        directory=self.root/identifier;directory.mkdir();self.studio._write_json_atomic(directory/'plan.json',plan)
+            self._insert_materialized(db,identifier,identifier,plan,state)
+        project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
 
     def _native_assets(self, ids):
@@ -358,10 +376,10 @@ class Production:
         plan={'version':1,'kind':'articulated','name':operation['intent']['name'],'operation_plan':operation,'stages':[],'created_at':time.time()}
         plan['sha256']=fingerprint(plan)
         state={'status':'planned','message':'Authored chest prepared. Start builds a hinged BLEND, animated GLB and four inspection views on the CPU.','attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
-        with self.connect() as db:
+        with self.lock,self.connect() as db:
             db.execute('INSERT INTO budgets(id,allowance) VALUES (?,0)',(identifier,))
-            db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,identifier,json.dumps(plan),json.dumps(state),time.time()))
-        directory=self.root/identifier;directory.mkdir();self.studio._write_json_atomic(directory/'plan.json',plan)
+            self._insert_materialized(db,identifier,identifier,plan,state)
+        project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
 
     def voice_baseline(self, payload):
@@ -451,6 +469,7 @@ class Production:
             db.execute('BEGIN IMMEDIATE');project=self._get(identifier,db)
             state=project['state'];plan=project['plan']
             if state['status']!='planned':raise ValueError('This experiment has already been started; inspect its existing attempts')
+            project_storage.require(self.root,identifier,plan)
             count=len(plan['stages']) if plan['kind']=='comparison' else 0
             budget=db.execute('SELECT * FROM budgets WHERE id=?',(project['root_id'],)).fetchone()
             if budget['reserved']+count>budget['allowance']:raise ValueError('The root experiment generation budget is exhausted, including its branches')
@@ -481,6 +500,7 @@ class Production:
             if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
                 raise ValueError('Switch to this experiment\'s backend before resuming it')
             if project['state']['status'] not in ('interrupted','uncertain','stopped'):raise ValueError('Only interrupted experiments can resume')
+            project_storage.require(self.root,identifier,project['plan'])
             stop_tokens=[]
             for attempt in project['state'].get('attempts',{}).values():
                 job=self.studio.jobs.get(attempt.get('job_id'))
@@ -535,6 +555,7 @@ class Production:
     def run(self, identifier):
         project=self._get(identifier);plan=project['plan']
         if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:raise ValueError('Experiment plan changed')
+        project_storage.require(self.root,identifier,plan)
         if plan['kind']=='voice' and project['state']['status'] in ('completed','failed','cancelled','stopped'):return
         if not self._tracking_continuation_allowed(identifier):return
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
@@ -546,6 +567,7 @@ class Production:
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
         self.studio.check_production_bundle(plan['bundle'])
         for index,stage in enumerate(plan['stages']):
+            project_storage.require(self.root,identifier,plan)
             if not self._tracking_continuation_allowed(identifier):return
             project=self._get(identifier);state=project['state']
             if state.get('stop_requested') or time.time()-state['started_at']>=plan['max_seconds']:
@@ -568,11 +590,13 @@ class Production:
                 prepared=self.studio.prepare(stage['request'])
                 if fingerprint(prepared[1])!=stage['graph_sha256']:raise ValueError('The resolved recipe changed; create an explicit branch')
                 if not self._tracking_continuation_allowed(identifier):return
+                project_storage.require(self.root,identifier,plan)
                 self.studio.create_job(stage['request'],enqueue=False,job_id=job_id)
                 job=self.studio.jobs[job_id]
                 job['project_id']=identifier;self.studio._save(job)
             if job['status']=='queued':
                 self._attempt(identifier,index,started_at=time.time())
+                project_storage.require(self.root,identifier,plan)
                 try:self.studio._run(job)
                 except Exception as exc:
                     job.update(status='failed',message=str(exc)[:400]);self.studio._save(job)
