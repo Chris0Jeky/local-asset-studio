@@ -12,6 +12,7 @@ import mimetypes
 import random
 import re
 import shutil
+import sqlite3
 import sys
 import threading
 import time
@@ -1428,7 +1429,7 @@ class Handler(BaseHTTPRequestHandler):
     studio: Studio = None
     def log_message(self, fmt, *args): pass
     def _json(self, status, obj):
-        raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
         return self.headers.get("Host", "") in ("127.0.0.1:8191", "localhost:8191")
     def _safe_mutation(self):
@@ -1502,6 +1503,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
+            if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
+                return self._json(200, self.studio.assets.command_status(path.split("/")[4]))
+            if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
+                return self._json(200, self.studio.assets.metadata(path.split("/")[3]))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path == '/api/voice-baseline':
@@ -1572,6 +1577,7 @@ class Handler(BaseHTTPRequestHandler):
             file = inside(Path(__file__).parent / "static", Path(__file__).parent / "static" / path.lstrip("/"))
             if not file.is_file() or file.suffix not in (".html", ".js", ".css"): return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
+        except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (URLError, HTTPError, OSError) as exc: self._json(502, {"error": "ComfyUI image is unavailable"})
     def do_POST(self):
@@ -1605,7 +1611,11 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
-            if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
+            if self.path == "/api/assets/update":
+                try: return self._json(200, self.studio.assets.update(self._body_json()))
+                except sqlite3.Error:
+                    return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
+                                            "code": "asset_storage_unconfirmed"})
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_json().get("id")))
@@ -1627,6 +1637,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
             return self._json(404, {"error":"Not found"})
+        except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})
         except OSError as exc: self._json(500, {"error": "Local operation failed: " + str(exc)[:200]})
 
