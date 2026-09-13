@@ -4,6 +4,7 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'app'))
+sys.path.insert(0,str(root))
 from model_library import FOLDERS, SUFFIXES
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'

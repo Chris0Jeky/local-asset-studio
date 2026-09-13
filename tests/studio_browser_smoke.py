@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'app'))
 import continuation
+import wan_capacity
 POSTS = []
 FAIL_WORKSPACE = False
 WORKSPACE_DELAY = 0
@@ -27,6 +28,8 @@ ONLINE = True
 CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))
 for preset in CATALOG['presets']:
     graph = json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
+    capacity = wan_capacity.projection(preset, graph)
+    if capacity is not None: preset['wan_decode_capacity'] = capacity
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}

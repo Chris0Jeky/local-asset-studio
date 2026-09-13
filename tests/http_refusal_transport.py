@@ -3,7 +3,7 @@ import json
 import socket
 
 
-def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://127.0.0.1:8191', timeout=5):
+def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://127.0.0.1:8191', timeout=5, response_details=False):
     """Send one nonempty JSON POST atomically and decode its JSON response."""
     if not isinstance(body, bytes) or not body:
         raise ValueError('Early-refusal checks require the original nonempty body bytes')
@@ -30,10 +30,10 @@ def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://
         version, status, _reason = lines[0].split(' ', 2)
         if not version.startswith('HTTP/'):
             raise ValueError('Invalid HTTP response')
-        headers = {}
+        headers = {}; header_pairs = []
         for line in lines[1:]:
             name, value = line.split(':', 1)
-            headers[name.lower()] = value.strip()
+            header_pairs.append((name, value.strip())); headers[name.lower()] = value.strip()
         size = int(headers['content-length'])
         while len(raw_body) < size:
             if not (chunk := connection.recv(65536)):
@@ -41,4 +41,5 @@ def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://
             raw_body += chunk
     if len(raw_body) != size:
         raise ValueError('Unexpected bytes after response body')
+    if response_details: return int(status), raw_body, header_pairs
     return int(status), json.loads(raw_body)
