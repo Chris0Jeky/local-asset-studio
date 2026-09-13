@@ -1,0 +1,28 @@
+name: UX latest source snapshot
+on:
+  push:
+    branches: ['codex/ux-retry-source-20260913']
+    paths: ['.github/workflows/ux-retry-latest-source.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: e9a062036f2f38ece4e6cf90ccb2ca40939695d4
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Archive tracked source only
+        run: |
+          mkdir -p /tmp/ux-latest
+          git archive --format=zip HEAD > /tmp/ux-latest/main.zip
+          git ls-tree -r HEAD > /tmp/ux-latest/main-tree.txt
+          git log -1 --format='%H %T' > /tmp/ux-latest/main-identity.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-latest-pinned-source
+          path: /tmp/ux-latest/
+          retention-days: 1
