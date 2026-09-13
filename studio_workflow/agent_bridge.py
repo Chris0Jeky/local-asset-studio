@@ -13,7 +13,7 @@ import re
 import threading
 from urllib.error import HTTPError
 
-from .client import Client, ClientError
+from .client import Client, ClientError, read_response
 from .shortlist import GOALS
 from .core import MAX_BYTES, canonical, decode, digest, need
 
@@ -239,7 +239,7 @@ class AgentBridge:
             if isinstance(exc, ClientError): data = exc.result
             else:
                 try:
-                    with exc: raw = exc.read(MAX_BYTES + 1)
+                    with exc: raw = read_response(exc, MAX_BYTES)
                     data = decode(raw)
                 except (ValueError, TypeError, OSError, HTTPException): data = {}
             data = data if isinstance(data, dict) else {}
