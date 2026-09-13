@@ -15,8 +15,8 @@ function setup() {
       showModal(){this.open=true;},close(){this.open=false;this.emit('close');},focus(){},scrollIntoView(){}});
     return elements.get(id);
   };
-  const context=vm.createContext({console,AbortController,Set,JSON,Date,
-    $:el,esc:value=>String(value??''),window:{confirm(){requests++;return approve;}},
+  const context=vm.createContext({console,AbortController,Set,JSON,Date,crypto:require("node:crypto").webcrypto,
+    $:el,esc:value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),window:{confirm(){requests++;return approve;}},
     document:{querySelectorAll:()=>[],addEventListener(name,fn,capture){handlers.push({name,fn,capture});}},
     setTimeout(fn){timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);},
     api:async(url,options={})=>{
@@ -28,19 +28,21 @@ function setup() {
   });
   const run=code=>vm.runInContext(code,context);
   run(source);
-  run(`refreshAssets=async()=>{};assetState.assets=['a','b'].map(id=>({id,title:id,notes:'original',tags:['tag'],review:'unreviewed',favorite:false,media_type:'video',preset_id:'wan22-i2v',job_id:'job-'+id,source:{},lineage:[],bytes:1}));openAsset('a');`);
-  return {el,run,writes,reads,timers,confirmations:()=>requests,approve(value){approve=value;},
+  run(`refreshAssets=async()=>{};assetState.assets=['a','b'].map(id=>({id,title:id,notes:'original',tags:['tag'],review:'unreviewed',favorite:false,media_type:'video',preset_id:'wan22-i2v',job_id:'job-'+id,metadata_revision:0,source:{},lineage:[],bytes:1}));openAsset('a');`);
+  const payload=index=>JSON.parse(writes[index].options.body);
+  const receipt=index=>{const p=payload(index);return {status:'applied',request_id:p.request_id,updated:p.ids,action:p.action,revisions:Object.fromEntries(p.ids.map(id=>[id,p.expected_revisions[id]+1])),applied:p.action==='edit'?Object.fromEntries(['title','notes','tags','favorite','review'].filter(k=>k in p).map(k=>[k,p[k]])):['trash','restore'].includes(p.action)?{trashed_at:p.action==='trash'?123:null}:{collection_id:p.collection_id}};};
+  return {el,run,writes,reads,timers,payload,metadata:index=>{const {request_id,expected_revisions,...fields}=payload(index);return fields;},receipt,accept:index=>writes[index].resolve(receipt(index)),confirmations:()=>requests,approve(value){approve=value;},
     async diagnostic(job='job-a') {const target={closest:selector=>selector==='[data-i2v-diagnostic]'?{dataset:{i2vDiagnostic:job}}:null};for(const h of handlers)if(h.name==='click'&&!h.capture)await h.fn({target});},
     capturedHandoff(){let prevented=false;for(const h of handlers)if(h.name==='click'&&h.capture)h.fn({target:{closest:()=>true},preventDefault(){prevented=true;},stopImmediatePropagation(){}});return prevented;}
   };
 }
 let passed=0;
 async function test(name,fn){await fn();passed++;console.log('PASS',name);}
-(async()=>{
+async function main(){
   await test('Favorite is independent from all edited fields',async()=>{
     const s=setup();s.el('#assetTitle').value='draft';s.el('#assetTags').value='x, y';s.el('#assetNotes').value='notes';s.el('#assetReview').value='selected';
-    const p=s.el('#assetFavorite').onclick();assert.equal(s.writes.length,1);assert.deepEqual(JSON.parse(s.writes[0].options.body),{ids:['a'],action:'edit',favorite:true});
-    s.writes[0].resolve({});await p;assert.equal(s.el('#assetTitle').value,'draft');assert.equal(s.el('#assetTags').value,'x, y');assert.equal(s.el('#assetNotes').value,'notes');assert.equal(s.el('#assetReview').value,'selected');assert.equal(s.run('assetDetailDirty()'),true);
+    const p=s.el('#assetFavorite').onclick();assert.equal(s.writes.length,1);assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',favorite:true});
+    s.accept(0);await p;assert.equal(s.el('#assetTitle').value,'draft');assert.equal(s.el('#assetTags').value,'x, y');assert.equal(s.el('#assetNotes').value,'notes');assert.equal(s.el('#assetReview').value,'selected');assert.equal(s.run('assetDetailDirty()'),true);
   });
   await test('Close, Escape and lineage require discard consent; same asset is inert',async()=>{
     const s=setup();s.el('#assetNotes').value='draft';s.el('#closeAssetDialog').onclick();assert.equal(s.el('#assetDialog').open,true);
@@ -53,25 +55,25 @@ async function test(name,fn){await fn();passed++;console.log('PASS',name);}
   await test('Save snapshots once; newer edits remain dirty; handoff/close waits',async()=>{
     const s=setup();s.el('#assetNotes').value='snapshot';const p=s.el('#saveAssetDetails').onclick();s.el('#assetNotes').value='newer';await s.el('#saveAssetDetails').onclick();
     assert.equal(s.writes.length,1);assert.equal(s.el('#saveAssetDetails').disabled,true);assert.equal(s.capturedHandoff(),true);s.el('#closeAssetDialog').onclick();assert.equal(s.el('#assetDialog').open,true);
-    s.writes[0].resolve({});await p;assert.equal(s.el('#assetDialog').open,true);assert.equal(s.el('#assetNotes').value,'newer');assert.equal(s.run('activeAsset.notes'),'snapshot');assert.equal(s.run('assetDetailDirty()'),true);assert.match(s.el('#assetDetailStatus').textContent,/unsaved/);assert.equal(s.el('#saveAssetDetails').disabled,false);
+    s.accept(0);await p;assert.equal(s.el('#assetDialog').open,true);assert.equal(s.el('#assetNotes').value,'newer');assert.equal(s.run('activeAsset.notes'),'snapshot');assert.equal(s.run('assetDetailDirty()'),true);assert.match(s.el('#assetDetailStatus').textContent,/unsaved/);assert.equal(s.el('#saveAssetDetails').disabled,false);
   });
   await test('Clean save normalizes metadata and keeps review semantics',async()=>{
     const s=setup();s.el('#assetTitle').value='  title  ';s.el('#assetTags').value=' a , a,b ';s.el('#assetNotes').value='  notes  ';s.el('#assetReview').value='needs_work';
-    const p=s.el('#saveAssetDetails').onclick();assert.deepEqual(JSON.parse(s.writes[0].options.body),{ids:['a'],action:'edit',title:'title',notes:'notes',tags:['a','b'],review:'needs_work'});s.writes[0].resolve({});await p;
+    const p=s.el('#saveAssetDetails').onclick();assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',title:'title',notes:'notes',tags:['a','b'],review:'needs_work'});s.accept(0);await p;
     assert.equal(s.run('assetDetailDirty()'),false);assert.equal(s.el('#assetDialog').open,true);assert.equal(s.run('activeAsset.review'),'needs_work');s.el('#closeAssetDialog').onclick();assert.equal(s.confirmations(),0);
   });
-  await test('Success does not wait for a hung library read',async()=>{const s=setup();s.run('refreshAssets=()=>new Promise(()=>{})');const p=s.el('#saveAssetDetails').onclick();s.writes[0].resolve({});await p;assert.equal(s.el('#saveAssetDetails').disabled,false);assert.equal(s.timers.size,0);});
+  await test('Success does not wait for a hung library read',async()=>{const s=setup();s.el('#assetNotes').value='Snapshot';s.run('refreshAssets=()=>new Promise(()=>{})');const p=s.el('#saveAssetDetails').onclick();s.accept(0);await p;assert.equal(s.el('#saveAssetDetails').disabled,false);assert.equal(s.timers.size,0);});
   await test('Timeout aborts actual signal, releases controls and never retries',async()=>{
     const s=setup();s.el('#assetNotes').value='keep';const p=s.el('#saveAssetDetails').onclick();[...s.timers.values()][0]();await p;
     assert.equal(s.writes[0].options.signal.aborted,true);assert.equal(s.el('#assetNotes').value,'keep');assert.equal(s.el('#saveAssetDetails').disabled,false);assert.match(s.el('#assetDetailStatus').textContent,/not confirmed.*timed out/);assert.equal(s.writes.length,1);assert.equal(s.timers.size,0);
   });
   await test('Write failure stays inside dialog; explicit retry can succeed',async()=>{
     const s=setup();s.el('#assetNotes').value='keep';let p=s.el('#saveAssetDetails').onclick();s.writes[0].reject(Error('disk full'));await p;assert.match(s.el('#assetDetailStatus').textContent,/disk full/);assert.equal(s.run('assetDetailDirty()'),true);
-    p=s.el('#saveAssetDetails').onclick();s.writes[1].resolve({});await p;assert.equal(s.run('assetDetailDirty()'),false);assert.equal(s.writes.length,2);
+    p=s.el('#saveAssetDetails').onclick();s.accept(1);await p;assert.equal(s.run('assetDetailDirty()'),false);assert.equal(s.writes.length,2);
   });
   await test('Trash cancellation writes nothing and confirmed trash stays recoverable',async()=>{
     const s=setup();s.el('#assetNotes').value='draft';await s.el('#assetTrash').onclick();assert.equal(s.writes.length,0);assert.equal(s.el('#assetDialog').open,true);
-    s.approve(true);const p=s.el('#assetTrash').onclick();assert.deepEqual(JSON.parse(s.writes[0].options.body),{ids:['a'],action:'trash'});assert.equal(s.el('#assetNotes').disabled,true);s.writes[0].resolve({});await p;assert.equal(s.el('#assetDialog').open,false);assert.equal(s.el('#assetNotes').disabled,false);
+    s.approve(true);const p=s.el('#assetTrash').onclick();assert.deepEqual(s.metadata(0),{ids:['a'],action:'trash'});assert.equal(s.el('#assetNotes').disabled,true);s.accept(0);await p;assert.equal(s.el('#assetDialog').open,false);assert.equal(s.el('#assetNotes').disabled,false);
   });
   for(const failure of [false,true])for(const navigation of ['other','aba','reopen'])await test(`Diagnostic ${failure?'failure':'success'} is scoped across ${navigation}`,async()=>{
     const s=setup();const p=s.diagnostic();assert.equal(s.reads.length,1);
@@ -86,4 +88,6 @@ async function test(name,fn){await fn();passed++;console.log('PASS',name);}
     const s=setup();const a=s.diagnostic(),b=s.diagnostic();s.reads[1].resolve({source:{filename:'new result'}});await b;const html=s.el('#assetDiagnostic').innerHTML;s.reads[0].resolve({source:{filename:'old result'}});await a;assert.equal(s.el('#assetDiagnostic').innerHTML,html);assert.match(html,/new result/);
   });
   console.log(`Asset detail contracts passed: ${passed}`);
-})().catch(error=>{console.error(error);process.exitCode=1;});
+}
+if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={setup};

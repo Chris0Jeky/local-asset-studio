@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'app/static/**'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/asset_metadata*'
+      - 'tests/test_asset_metadata*'
       - 'tests/asset_detail*'
       - 'tests/test_asset_detail*'
       - 'tests/studio_browser_smoke.py'
@@ -23,15 +27,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: python -m pip install playwright==1.57.0
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m playwright install --with-deps chromium
       - run: python -m unittest discover -s tests -p 'test_asset_detail_contracts.py' -v
       - name: Native browser HTTP against synthetic Studio APIs
         run: python tests/asset_detail_browser.py --out .runtime/asset-detail-proof
+      - name: Two clients and lost responses against real metadata storage
+        run: python tests/asset_metadata_browser.py --out .runtime/asset-metadata-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: asset-detail-workflow-proof
-          path: .runtime/asset-detail-proof/
+          path: |
+            .runtime/asset-detail-proof/
+            .runtime/asset-metadata-proof/
           if-no-files-found: ignore
           retention-days: 7
