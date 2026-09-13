@@ -34,6 +34,9 @@ class BackendSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
         self.studio=FixtureStudio(self.root);self.manager=BackendManager(self.studio)
+        # These fixtures own fake listeners, not the Windows/Linux runner's process table.
+        # Nonempty startup scans are exercised in test_backend_startup_interlock.py.
+        scan=patch('psutil.process_iter',return_value=[]);scan.start();self.addCleanup(scan.stop)
         for profile in self.manager.profiles.values():
             for item in self.manager.readiness(profile)['requirements']:
                 path=Path(item['path'])
