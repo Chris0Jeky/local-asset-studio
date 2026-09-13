@@ -38,6 +38,7 @@ class Production:
         with self.connect() as db:
             db.executescript('''
                 CREATE TABLE IF NOT EXISTS budgets(id TEXT PRIMARY KEY, allowance INTEGER NOT NULL, reserved INTEGER NOT NULL DEFAULT 0);
+                CREATE TABLE IF NOT EXISTS character_edit_campaigns(id TEXT PRIMARY KEY, manifest TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, root_id TEXT NOT NULL REFERENCES budgets(id), plan TEXT NOT NULL, state TEXT NOT NULL, created REAL NOT NULL);
             ''')
             for row in db.execute('SELECT id,plan,state FROM projects').fetchall():
@@ -147,7 +148,36 @@ class Production:
     def create(self, payload):
         with self.studio.lock:
             if isinstance(payload,dict) and 'character_handoff' in payload:return self._character_handoff(payload)
+            if isinstance(payload,dict) and 'character_edit_handoff' in payload:return self._character_edit_handoff(payload)
             return self._create(payload)
+
+    def edit_campaign(self, identifier, db=None):
+        from scripts.character_edit_campaign import validate
+        if not isinstance(identifier,str) or not re.fullmatch('[0-9a-f]{32}',identifier):raise ValueError('Unknown registered edit campaign')
+        if db is None:
+            with self.connect() as connection:return self.edit_campaign(identifier,connection)
+        row=db.execute('SELECT manifest FROM character_edit_campaigns WHERE id=?',(identifier,)).fetchone()
+        if row is None:raise ValueError('Edit campaign is not registered; register its selected cap explicitly')
+        campaign=validate(json.loads(row['manifest']));root_id='character-edit:'+identifier
+        budget=db.execute('SELECT allowance,reserved FROM budgets WHERE id=?',(root_id,)).fetchone()
+        if campaign['campaign_id']!=identifier or budget is None or budget['allowance']!=campaign['max_generation_attempts']:
+            raise ValueError('Registered edit campaign budget is inconsistent; inspect retained state')
+        return {'campaign':campaign,'root_id':root_id,'budget':dict(budget),'generation_submitted':False}
+
+    def register_edit_campaign(self, payload):
+        from scripts.character_edit_campaign import validate
+        if not isinstance(payload,dict) or set(payload)!={'campaign'}:raise ValueError('Register exactly one edit campaign receipt')
+        campaign=validate(payload['campaign']);identifier=campaign['campaign_id'];root_id='character-edit:'+identifier
+        with self.studio.lock,self.lock,self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            existing=db.execute('SELECT manifest FROM character_edit_campaigns WHERE id=?',(identifier,)).fetchone()
+            if existing is not None:
+                if json.loads(existing['manifest'])!=campaign:raise ValueError('This campaign ID is already registered with a different receipt')
+            else:
+                if db.execute('SELECT 1 FROM budgets WHERE id=?',(root_id,)).fetchone():raise ValueError('Unregistered campaign budget already exists; inspect it')
+                db.execute('INSERT INTO budgets(id,allowance) VALUES (?,?)',(root_id,campaign['max_generation_attempts']))
+                db.execute('INSERT INTO character_edit_campaigns(id,manifest) VALUES (?,?)',(identifier,json.dumps(campaign)))
+            return self.edit_campaign(identifier,db)
 
     def plan(self, payload):
         """Offer documented sweep variants.  Reserves nothing and submits nothing.
@@ -293,6 +323,10 @@ class Production:
                 previous=self._get(parent,db);root_id=previous['root_id']
             elif root_override:
                 root_id=root_override;allowance=allowance_override
+                if character_source is not None and character_source.get('kind')=='character_edit_import':
+                    registered=self.edit_campaign(character_source['campaign']['campaign_id'],db)
+                    if registered['campaign']!=character_source['campaign'] or root_id!=registered['root_id']:
+                        raise ValueError('Registered campaign differs from the edit import')
                 existing=db.execute('SELECT allowance FROM budgets WHERE id=?',(root_id,)).fetchone()
                 if existing is None:db.execute('INSERT INTO budgets(id,allowance) VALUES (?,?)',(root_id,allowance))
                 elif existing['allowance']!=allowance:raise ValueError('Study budget identity has a different allowance')
@@ -335,6 +369,43 @@ class Production:
                 'axis':'seed','values':[case['seed']],'max_seconds':payload['max_seconds'],'max_generations':plan['request']['budget']['max_generation_attempts']}
         try:return self._create(intent,character_source=source,root_override='character-study:'+plan['plan_sha256'],allowance_override=plan['request']['budget']['max_generation_attempts'],identifier_override=identity)
         except sqlite3.IntegrityError as exc:raise ValueError('This primary case is already imported; inspect its existing project') from exc
+
+    def _character_edit_handoff(self, payload):
+        from scripts import character_edit_bridge_plan as contracts, character_edit_campaign as campaigns
+        allowed={'character_edit_campaign','character_edit_plan','character_edit_handoff','uploads','name'}
+        if set(payload)!=allowed:raise ValueError('Edit import accepts only campaign, edit plan, handoff, uploads and name')
+        campaign=campaigns.validate(payload['character_edit_campaign']);plan=copy.deepcopy(payload['character_edit_plan'])
+        handoff=copy.deepcopy(payload['character_edit_handoff'])
+        if not isinstance(handoff,dict) or handoff.get('schema_version')!=2:raise ValueError('A v2 handoff is required for a shared campaign')
+        contracts.validate_handoff_contract(handoff,plan,campaign)
+        registered=self.edit_campaign(campaign['campaign_id'])
+        if registered['campaign']!=campaign:raise ValueError('Registered campaign differs from the edit import')
+        preset=self.studio.preset(handoff['preset_id'])
+        if contracts.preset_contract(preset)!=handoff['native_preset']:raise ValueError('Current native preset differs from the edit handoff')
+        if contracts.read(self.studio.root/'research/character-consistency/edit-routes.json')!=plan['catalog']:
+            raise ValueError('Current edit route evidence differs from the edit plan')
+        uploads=payload['uploads'];requirements=handoff['references'];bound=[]
+        if not isinstance(uploads,list) or len(uploads)!=len(requirements):raise ValueError('Upload every edit reference in handoff order')
+        for item,requirement in zip(uploads,requirements):
+            if not isinstance(item,dict) or set(item)!={'role','file'} or item['role']!=requirement['role']:
+                raise ValueError('Edit upload roles/order differ from the handoff')
+            filename=item['file']
+            if not isinstance(filename,str) or not re.fullmatch('[0-9a-f]{32}_[A-Za-z0-9._-]+\\.png',filename):raise ValueError('Invalid edit upload filename')
+            upload=self.studio.experiments/'uploads'/filename
+            if not upload.is_file() or self._file_hash(upload)!=requirement['image']['sha256']:raise ValueError('Uploaded edit reference bytes differ')
+            bound.append({'file':filename,'sha256':requirement['image']['sha256'],'role':requirement['role'],
+                          'contribution':requirement['contribution'],'avoid':requirement['avoid']})
+        source={'kind':'character_edit_import','campaign':campaign,'edit_plan':plan,'handoff':handoff,'uploads':bound,
+                'attempt_kind':'primary','parent_attempt_id':None}
+        recipe={'preset_id':handoff['preset_id'],'batch_count':1,'references':bound,
+                'controls':{'positive':handoff['positive'],'width':handoff['size'][0],'height':handoff['size'][1]},
+                'expected_template_sha256':handoff['template_sha256']}
+        identity=hashlib.sha256(('character-edit:'+campaign['campaign_id']+':'+plan['plan_sha256']).encode()).hexdigest()[:32]
+        intent={'name':payload['name'],'recipe':recipe,'axis':'seed','values':handoff['seeds'],
+                'max_seconds':handoff['max_seconds'],'max_generations':handoff['max_candidates']}
+        try:return self._create(intent,character_source=source,root_override=registered['root_id'],
+                                allowance_override=campaign['max_generation_attempts'],identifier_override=identity)
+        except sqlite3.IntegrityError as exc:raise ValueError('This campaign edit is already imported; inspect its existing project') from exc
 
     def native(self, payload):
         from native_exports import NativeExports, krita_roundtrip

@@ -1,5 +1,29 @@
 # Current state — 13 September 2026
 
+## Shared allowance for character edit revisions — 13 September 2026
+
+An offline campaign receipt and explicit Production registration now let v2
+edit handoffs share one immutable cap across independent revisions. Staging
+requires the registered receipt and does not create a missing campaign budget;
+explicit Start uses the existing transactional root reservation. The server
+checks embedded contracts and uploaded bytes without opening client workspace
+paths. See [campaign allowances](docs/character-consistency/CAMPAIGN-BUDGETS.md).
+
+The focused edit suite passed: 219 passed, four skipped (223 total). Inert real
+HTTP/Production tests covered idempotent registration, cap-change refusal,
+concurrent Starts sharing a cap, retained reservations on reopen, changed
+bindings/uploads, duplicate identity, raw local file freshness and legacy/study
+isolation. Review identified and fixed the client guard that mistook another
+revision's reservation for this project's Start; an actual bridge-client
+regression now covers sequential starts. A fresh scoped review confirmed that
+blocker resolved with no new HIGH/CRITICAL finding. The final full suite passed:
+1,653 passed, 54 skipped (1,707 total, 158.027 seconds). The validator passed
+with 66 graphs, 121 pins, 1,147 tracked paths and 86 LoRA names.
+
+No real campaign was registered or started, no pilot credit was added,
+and no runtime was restarted. Global repair-slot allocation, workstation use,
+neural quality and creative acceptance remain separate; #65 stays open.
+
 ## Open-document Krita revision guard — 13 September 2026
 
 The optional native session now captures the open document and imports an

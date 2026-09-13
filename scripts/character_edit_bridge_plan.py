@@ -55,7 +55,7 @@ def projected_graph(template, preset, request):
     return graph
 
 
-def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800):
+def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800, campaign=None):
     """Compile a local, reviewed edit to explicit Qwen reference slots. No HTTP."""
     from scripts import character_edit as edit, character_edit_pixels as pixels
     from scripts.character_study import validate_canon, verify_artifact
@@ -74,6 +74,12 @@ def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800)
     require(1 <= budget['max_candidates'] <= 16 and len(seeds) + budget['max_repairs'] <= budget['max_candidates'],
             'Primary candidates and reserved repairs must fit the existing Production cap (16)')
     require(type(max_seconds) is int and 60 <= max_seconds <= 14400, 'Invalid time budget')
+    campaign_value = None
+    if campaign is not None:
+        from scripts.character_edit_campaign import validate
+        campaign_value = validate(read(local(root, campaign)))
+        require(campaign_value['budget_owner'] == plan['budget_owner'], 'Campaign budget owner differs from the edit plan')
+        require(budget['max_candidates'] <= campaign_value['max_generation_attempts'], 'Edit allowance exceeds the campaign cap')
     actor = plan['document']['actors'][0]; refs = actor['references']
     require(1 <= len(refs) <= 2 and sum(r['role'] == 'identity' for r in refs) == 1,
             'Use exactly one identity and at most one other reference; this bridge never truncates references')
@@ -144,13 +150,17 @@ def prepare(workspace, plan_name, output, seeds, *, repo=ROOT, max_seconds=1800)
         'scope': 'One actor; semantic reference conditioning; write mask applied after generation, not sent as a native pose/inpaint control.',
         'context_conversion': 'Opaque source crop; zero-fill alignment padding explicitly matted to black RGB without resampling.',
         'submits_generation': False}
+    if campaign_value is not None:
+        handoff.update(schema_version=2, campaign=artifact(root,campaign),
+                       campaign_id=campaign_value['campaign_id'], campaign_sha256=campaign_value['campaign_sha256'])
     handoff['sha256'] = hashed(handoff); save_new(target/'handoff.json', handoff)
     return handoff
 
 
-def validate_handoff(root, value):
+def validate_handoff_contract(value, plan=None, campaign=None):
+    """Validate embedded JSON only; never resolve client workspace paths."""
     require(isinstance(value, dict) and value.get('kind') == 'character_edit_studio_handoff'
-            and type(value.get('schema_version')) is int and value['schema_version'] == 1, 'Invalid handoff')
+            and type(value.get('schema_version')) is int and value['schema_version'] in (1,2), 'Invalid handoff')
     require(value.get('sha256') == hashed({k: v for k, v in value.items() if k != 'sha256'}), 'Handoff hash mismatch')
     require(all(isinstance(value.get(k), str) and HEX.fullmatch(value[k]) for k in ('edit_plan_sha256','document_sha256','bundle_sha256')), 'Invalid identity digest')
     relative(value['bundle'])
@@ -172,12 +182,49 @@ def validate_handoff(root, value):
             and len(seeds)+value['reserved_repairs'] <= value['max_candidates'], 'Invalid candidate allowance')
     require(type(value['max_seconds']) is int and 60 <= value['max_seconds'] <= 14400, 'Invalid time budget')
     require(isinstance(value['positive'], str) and 0 < len(value['positive']) <= 8000, 'Invalid compiled brief')
-    for ref in value['originals']: bytes_of(root, ref)
-    bytes_of(root, value['plan'])
+    for ref in [value['plan'], *value['originals'], *(r['image'] for r in refs)]:
+        require(isinstance(ref,dict) and set(ref)=={'path','sha256'}
+                and isinstance(ref['sha256'],str) and HEX.fullmatch(ref['sha256']), 'Invalid artifact descriptor')
+        relative(ref['path'])
     for ref in refs:
         require(isinstance(ref['contribution'], str) and len(ref['contribution']) <= 1500
                 and isinstance(ref['avoid'], str) and len(ref['avoid']) <= 1500, 'Invalid reference guidance')
-        im = image_info(bytes_of(root, ref['image']))
-        if ref is refs[0]: require(list(im.size) == value['size'] and im.getchannel('A').getextrema() == (255,255), 'Model context changed')
     w,h=value['size']; require(type(w) is int and type(h) is int and 64<=w<=1536 and 64<=h<=1536 and w%8==h%8==0 and w*h<=1024**2, 'Invalid native crop size')
+    if value['schema_version']==2:
+        from scripts import character_edit as edit, character_edit_campaign as campaigns
+        edit.check_plan(plan); campaign=campaigns.validate(campaign)
+        require(set(value['campaign'])=={'path','sha256'} and isinstance(value['campaign']['sha256'],str)
+                and HEX.fullmatch(value['campaign']['sha256']), 'Invalid campaign artifact')
+        relative(value['campaign']['path'])
+        require(value['campaign_id']==campaign['campaign_id'] and value['campaign_sha256']==campaign['campaign_sha256'], 'Campaign identity differs')
+        require(value['edit_plan_sha256']==plan['plan_sha256'] and value['document_sha256']==plan['intent']['document_sha256'], 'Handoff document/plan identity differs')
+        require(value['budget_owner']==plan['budget_owner']==campaign['budget_owner'], 'Handoff budget owner differs')
+        require(value['max_candidates']==plan['intent']['budget']['max_candidates']
+                and value['reserved_repairs']==plan['intent']['budget']['max_repairs']
+                and value['max_candidates']<=campaign['max_generation_attempts'], 'Handoff candidate allowance differs')
+        require(len(plan['document']['actors'])==len(plan['targets'])==1
+                and plan['intent']['operation'] in ('anatomy-repair','costume-change','local-repaint')
+                and 'qwen-edit-local' in plan['candidate_routes'], 'Unsupported campaign edit plan')
+        expected_policy=next(r for r in plan['route_reports'] if r['route_id']=='qwen-edit-local')
+        require(canonical(value['policy'])==canonical(expected_policy)
+                and value['positive']==compile_instruction(plan['intent']['changes']), 'Handoff policy/instruction differs from the edit plan')
+        actor_refs=sorted(plan['document']['actors'][0]['references'],key=lambda r:r['role']!='identity')
+        require(len(actor_refs)+1==len(refs), 'Handoff actor reference count differs')
+        for actual,expected in zip(refs[1:],actor_refs):
+            require(actual=={'image':expected['image'],'role':expected['role'],
+                             'contribution':'; '.join(expected['take']),'avoid':'; '.join(expected['ignore'])},
+                    'Handoff actor reference differs from the edit plan')
+    return value
+
+
+def validate_handoff(root, value):
+    plan=campaign=None
+    if isinstance(value,dict) and value.get('schema_version')==2:
+        plan=decode(bytes_of(root,value['plan'])); campaign=decode(bytes_of(root,value['campaign']))
+    validate_handoff_contract(value,plan,campaign)
+    for ref in value['originals']: bytes_of(root, ref)
+    bytes_of(root, value['plan'])
+    for index,ref in enumerate(value['references']):
+        im = image_info(bytes_of(root, ref['image']))
+        if index==0: require(list(im.size) == value['size'] and im.getchannel('A').getextrema() == (255,255), 'Model context changed')
     return value

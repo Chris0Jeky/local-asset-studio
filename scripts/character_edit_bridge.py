@@ -34,12 +34,33 @@ from scripts.character_edit_bridge_plan import (
 )
 
 
+def campaign_record(value, campaign):
+    require(isinstance(value,dict) and value.get('campaign')==campaign
+            and value.get('root_id')=='character-edit:'+campaign['campaign_id'], 'Registered campaign differs from the selected receipt')
+    budget=value.get('budget',{})
+    require(type(budget.get('allowance')) is int and type(budget.get('reserved')) is int
+            and budget['allowance']==campaign['max_generation_attempts'] and 0<=budget['reserved']<=budget['allowance'],
+            'Registered campaign budget differs')
+    return value
+
+
+def register_campaign(workspace, campaign_name, client=None, *, inspect_only=False):
+    from scripts.character_edit_campaign import validate
+    root=Path(workspace).resolve(strict=True); campaign=validate(read(local(root,campaign_name)))
+    client=client or StudioHTTP()
+    if inspect_only:result=client.request('GET','/api/production/campaigns/'+campaign['campaign_id'])
+    else:result=client.request('POST','/api/production/campaigns',{'campaign':campaign})
+    return campaign_record(result,campaign)
+
+
 class Bridge:
     """Command receipts, not a second queue or a trust boundary against the local owner."""
     def __init__(self, workspace, handoff_name, client=None):
         self.root = Path(workspace).resolve(strict=True)
         self.handoff_name = handoff_name
         self.handoff = validate_handoff(self.root, read(local(self.root, handoff_name)))
+        self.campaign = decode(bytes_of(self.root,self.handoff['campaign'])) if self.handoff['schema_version']==2 else None
+        self.edit_plan = decode(bytes_of(self.root,self.handoff['plan'])) if self.campaign else None
         self.client = client or StudioHTTP()
         # One client receipt location per edit plan, not one fresh budget per seed/output folder.
         self.directory = self.root/('.edit-bridge-'+self.handoff['edit_plan_sha256'])
@@ -108,12 +129,22 @@ class Bridge:
         require(isinstance(identifier,str) and PROJECT.fullmatch(identifier), 'No valid known project ID')
         project = self.client.request('GET','/api/production/'+identifier)
         p = project['plan']; stages = p['stages']; expected = state['previews']
-        require(project['id'] == identifier and project['root_id'] == identifier and p['name'] == self.name
+        root_id='character-edit:'+self.campaign['campaign_id'] if self.campaign else identifier
+        require(project['id'] == identifier and project['root_id'] == root_id and p['name'] == self.name
                 and p['kind'] == 'comparison' and p.get('parent_project') is None, 'Unexpected Production ownership')
         require(canonical(p['values']) == canonical(self.handoff['seeds']) and p['axis'] == 'seed'
                 and len(stages) == len(expected), 'Production cases differ from this handoff')
         require(type(project['budget']['allowance']) is int and type(project['budget']['reserved']) is int and
-                0 <= project['budget']['reserved'] <= project['budget']['allowance'] and project['budget']['allowance'] == self.handoff['max_candidates'], 'Production budget differs')
+                0 <= project['budget']['reserved'] <= project['budget']['allowance'] and project['budget']['allowance'] ==
+                (self.campaign['max_generation_attempts'] if self.campaign else self.handoff['max_candidates']), 'Production budget differs')
+        if self.campaign:
+            expected_id=hashlib.sha256(('character-edit:'+self.campaign['campaign_id']+':'+self.handoff['edit_plan_sha256']).encode()).hexdigest()[:32]
+            source=p.get('character_source') or {}
+            expected_uploads=[dict(file=u['file'],sha256=r['image']['sha256'],role=r['role'],contribution=r['contribution'],avoid=r['avoid'])
+                              for u,r in zip(state['uploads'],self.handoff['references'])]
+            require(identifier==expected_id and source=={'kind':'character_edit_import','campaign':self.campaign,
+                    'edit_plan':self.edit_plan,'handoff':self.handoff,'uploads':expected_uploads,
+                    'attempt_kind':'primary','parent_attempt_id':None}, 'Production campaign provenance differs')
         expected_inputs = {u['file']: r['image']['sha256'] for u,r in zip(state['uploads'], self.handoff['references'])}
         actual = p.get('bundle',{}).get('inputs',[])
         require(len(actual) == len(expected_inputs) and
@@ -133,6 +164,8 @@ class Bridge:
             require(state['phase'] in ('prepared','uploading'), 'Already staged or creation outcome uncertain: use status/reconcile, never repeat creation')
             require(state['phase'] != 'uploading' or resume_uploads, 'Uploads interrupted; explicitly use --resume-uploads (no neural retry)')
             state['identity'] = self.identity(state); template_graph=self.templates()
+            if self.campaign:
+                campaign_record(self.client.request('GET','/api/production/campaigns/'+self.campaign['campaign_id']),self.campaign)
             state['phase'] = 'uploading'; self.write_state(state)
             for i,ref in enumerate(self.handoff['references']):
                 if i < len(state['uploads']):
@@ -175,6 +208,10 @@ class Bridge:
             state['previews']=previews
             state['request']={'name':self.name,'recipe':recipe,'axis':'seed','values':self.handoff['seeds'],
                               'max_generations':self.handoff['max_candidates'],'max_seconds':self.handoff['max_seconds']}
+            if self.campaign:
+                state['request']={'name':self.name,'character_edit_campaign':self.campaign,'character_edit_plan':self.edit_plan,
+                    'character_edit_handoff':self.handoff,
+                    'uploads':[{'role':r['role'],'file':u['file']} for u,r in zip(state['uploads'],self.handoff['references'])]}
             existing = self.client.request('GET','/api/production')
             require(not any(p.get('name')==self.name for p in existing), 'An edit project already exists; creation is not repeated')
             self.inputs(); self.templates()
@@ -199,7 +236,8 @@ class Bridge:
         with self.locked():
             self.inputs(); state=self.state(); require(state['phase']=='staged', 'Start already requested or not staged; inspect the known project, do not retry')
             self.identity(state); self.templates(); project=self.project(state)
-            require(project['state']['status']=='planned' and project['budget']['reserved']==0, 'Project has already been started elsewhere')
+            # Other revisions may already hold reservations in the shared root.
+            require(project['state']['status']=='planned' and (self.campaign is not None or project['budget']['reserved']==0), 'Project has already been started elsewhere')
             state['phase']='start_pending'; self.write_state(state)
             response=self.client.request('POST','/api/production/'+state['project_id']+'/start',{})
             state['phase']='started'; self.write_state(state)
@@ -269,6 +307,10 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__); sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('prepare'); p.add_argument('--workspace',required=True); p.add_argument('--plan',required=True)
     p.add_argument('--out',required=True); p.add_argument('--seeds',type=int,nargs='+',required=True); p.add_argument('--max-seconds',type=int,default=1800)
+    p.add_argument('--campaign',help='Explicit campaign receipt; omitted keeps legacy v1 behavior')
+    for name in ('register-campaign','campaign-status'):
+        p=sub.add_parser(name); p.add_argument('--workspace',required=True); p.add_argument('--campaign',required=True)
+        p.add_argument('--studio-port',type=int,default=8191)
     for name in ('stage','start','status','reconcile','collect','compose'):
         p=sub.add_parser(name); p.add_argument('--workspace',required=True); p.add_argument('--handoff',required=True)
         p.add_argument('--studio-port',type=int,default=8191)
@@ -277,7 +319,9 @@ def main():
         if name=='compose':p.add_argument('--current-document',required=True); p.add_argument('--out',required=True)
     args=parser.parse_args()
     try:
-        if args.command=='prepare':value=prepare(args.workspace,args.plan,args.out,args.seeds,max_seconds=args.max_seconds)
+        if args.command=='prepare':value=prepare(args.workspace,args.plan,args.out,args.seeds,max_seconds=args.max_seconds,campaign=args.campaign)
+        elif args.command in ('register-campaign','campaign-status'):
+            value=register_campaign(args.workspace,args.campaign,StudioHTTP(args.studio_port),inspect_only=args.command=='campaign-status')
         else:
             bridge=Bridge(args.workspace,args.handoff,StudioHTTP(args.studio_port))
             if args.command=='stage':value=bridge.stage(resume_uploads=args.resume_uploads)
