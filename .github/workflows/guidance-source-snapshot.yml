@@ -1,0 +1,28 @@
+name: Guidance source snapshot
+on:
+  push:
+    branches: [codex/workflow-guidance-source]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: aebe10c58c7fa3ce8f89276740096eaf98c2cc20
+      - name: Archive tracked source and blob manifest
+        run: |
+          git archive --format=zip HEAD -o "$RUNNER_TEMP/source.zip"
+          git rev-parse HEAD > "$RUNNER_TEMP/source-head.txt"
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guidance-source
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source-head.txt
+            ${{ runner.temp }}/source-tree.txt
+          retention-days: 1
