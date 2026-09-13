@@ -6,6 +6,7 @@ on:
       - 'app/project_storage.py'
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
+      - 'app/mixed_batch.py'
       - 'app/server.py'
       - 'app/av_projects.py'
       - 'app/voice_baseline.py'
@@ -25,6 +26,9 @@ on:
       - 'tests/production_clock_frontend.cjs'
       - 'tests/production_terminal_frontend.cjs'
       - 'tests/recovery_security_browser.py'
+      - 'tests/test_mixed_batch*.py'
+      - 'tests/mixed_batch_frontend.cjs'
+      - 'tests/mixed_batch_browser.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
@@ -36,6 +40,7 @@ on:
       - 'app/project_storage.py'
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
+      - 'app/mixed_batch.py'
       - 'app/server.py'
       - 'app/av_projects.py'
       - 'app/voice_baseline.py'
@@ -55,6 +60,9 @@ on:
       - 'tests/production_clock_frontend.cjs'
       - 'tests/production_terminal_frontend.cjs'
       - 'tests/recovery_security_browser.py'
+      - 'tests/test_mixed_batch*.py'
+      - 'tests/mixed_batch_frontend.cjs'
+      - 'tests/mixed_batch_browser.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
@@ -94,6 +102,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_worker_recovery.py -v
       - run: python -m unittest discover -s tests -p test_http_security.py -v
       - run: python -m unittest discover -s tests -p test_production_terminal.py -v
+      - run: python -m unittest discover -s tests -p 'test_mixed_batch*.py' -v
+      - run: node tests/mixed_batch_frontend.cjs
       - run: node tests/frontend_handoffs.cjs
       - run: node tests/frontend_health.cjs
       - run: node tests/production_clock_frontend.cjs
@@ -111,6 +121,7 @@ jobs:
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt playwright==1.57.0
       - run: python -m playwright install --with-deps chromium
       - run: python tests/recovery_security_browser.py --out .runtime/recovery-security-proof
+      - run: python tests/mixed_batch_browser.py --out .runtime/recovery-security-proof/mixed-batch
       - uses: actions/upload-artifact@v4
         if: always()
         with:
