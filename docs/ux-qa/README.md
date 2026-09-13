@@ -1,4 +1,11 @@
 # Studio UX QA — 13 September 2026
+## Named setup lineage follow-up
+
+[SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with
+an explicit reattachment instruction and retained drafts. It also records and fixes a
+sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidence
+is separate from the earlier asset-detail and metadata-concurrency checkpoints.
+
 
 ## What this pass changes
 
@@ -57,10 +64,3 @@ For a workstation acceptance check, open a real existing asset; type notes; Favo
 The highest-priority next work is #188's metadata concurrency plus #117's source-availability/lineage save contract. After these, join existing guide evidence and continuation records into one contextual task summary as described in `ARCHITECTURE.md`. Keep that summary observational: it should explain what is preserved, what changes and what still needs action, without taking over execution.
 
 No new human creative decision is required for these changes. Existing artwork selection, model-specific permissions and output acceptance remain with the owner and `HUMAN_TODO.md`; this pass changes none of them.
-
-## Named setup lineage follow-up
-
-[SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with
-an explicit reattachment instruction and retained drafts. It also records and fixes a
-sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidence
-is separate from the earlier asset-detail and metadata-concurrency checkpoints.
