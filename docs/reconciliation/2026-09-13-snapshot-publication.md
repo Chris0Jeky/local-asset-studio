@@ -92,3 +92,13 @@ This is a software-only maintenance slice. No owner database, source media,
 configuration, model, runtime process or HUMAN_TODO decision was changed.
 No generation, upload, download or new artistic/rights acceptance follows from
 the fixtures. Independent review and owner-runtime acceptance remain separate.
+
+## Native Windows fixture follow-up
+
+The first hosted Windows storage run passed all publication/preservation checks
+but failed an expected return-path assertion: the fixture hard-coded a POSIX
+separator while the unchanged Workspace protocol returns the platform's native
+relative path. The expected path now uses `str(Path('media') / name)`. Digest,
+size, inode reuse, actual syscall interception, source retention and cleanup
+assertions are unchanged. This is a test portability correction, not a change
+to product path serialization. Native rerun results are recorded on the PR.

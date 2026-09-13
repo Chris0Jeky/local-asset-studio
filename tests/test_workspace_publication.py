@@ -72,7 +72,7 @@ class WorkspacePublicationTests(unittest.TestCase):
         with self.racing_publication(competitor):
             result = self.store.snapshot_file(self.source)
         self.assertEqual(self.destination.stat().st_ino, identity[0])
-        self.assertEqual(result, ('media/' + self.destination.name, self.digest, len(self.content)))
+        self.assertEqual(result, (str(Path('media') / self.destination.name), self.digest, len(self.content)))
         self.assert_source_and_temporaries()
 
     def test_snapshot_never_aliases_the_mutable_source(self):
