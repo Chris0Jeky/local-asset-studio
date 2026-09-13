@@ -6,6 +6,11 @@ one endpoint, not all installations; a successful check is not runtime certifica
 """
 from __future__ import annotations
 import argparse
+import base64
+from datetime import datetime, timezone
+import io
+import os
+import tempfile
 import hashlib
 from http.client import HTTPException
 import json
@@ -20,29 +25,31 @@ sys.path.insert(0, str(ROOT / 'app'))
 from backend_contracts import loopback_port
 
 MAX_SCHEMA_BYTES = 32 * 1024**2
+MAX_CAPTURE_BYTES = 64 * 1024**2
 
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl): return None
 
 
-def read_schema(stream):
+def read_schema(stream, *, include_raw=False):
     raw = stream.read(MAX_SCHEMA_BYTES + 1)
     pipeline.require(len(raw) <= MAX_SCHEMA_BYTES, 'Node schema exceeds 32 MiB')
     def reject(value): raise ValueError('Non-finite schema value: '+value)
     info = json.loads(raw.decode('utf-8'), object_pairs_hook=pipeline.pairs, parse_constant=reject)
     pipeline.require(isinstance(info, dict) and bool(info), 'Expected nonempty object_info mapping')
     pipeline.require(all(isinstance(value, dict) for value in info.values()), 'Expected node-schema objects')
-    return info, hashlib.sha256(raw).hexdigest()
+    result = (info, hashlib.sha256(raw).hexdigest())
+    return (*result, raw) if include_raw else result
 
 
-def load_schema(path=None, comfy_url='http://127.0.0.1:8188'):
+def load_schema(path=None, comfy_url='http://127.0.0.1:8188', *, include_raw=False):
     if path is not None:
-        with Path(path).open('rb') as stream: return read_schema(stream)
+        with Path(path).open('rb') as stream: return read_schema(stream, include_raw=include_raw)
     loopback_port(comfy_url)
     # Explicit local discovery only: no proxy, redirect, retry or /prompt validation.
     with build_opener(ProxyHandler({}), NoRedirect()).open(comfy_url.rstrip('/')+'/object_info', timeout=30) as stream:
-        return read_schema(stream)
+        return read_schema(stream, include_raw=include_raw)
 
 
 def select_presets(presets, *, collection=None, backend=None, preset_ids=()):
@@ -70,6 +77,7 @@ def validate_catalog(root, presets, info):
                   'graph': preset.get('graph'), 'status': 'invalid'}
         try:
             graph = pipeline.read_json(pipeline.inside(root, preset.get('graph')))
+            result['graph_sha256'] = pipeline.sha(graph)
             result.update(pipeline.graph_check(graph, info), status='passed')
         except (OSError, ValueError, TypeError, KeyError, RecursionError, OverflowError) as exc:
             result['error'] = str(exc)
@@ -80,6 +88,57 @@ def validate_catalog(root, presets, info):
             'submissions': 0}
 
 
+
+def capture_target(path):
+    path = Path(path)
+    pipeline.require(path.parent.is_dir(), 'Capture parent must already be a directory')
+    pipeline.require(not os.path.lexists(path), 'Capture target already exists; choose a new evidence file')
+    return path
+
+
+def publish_capture(path, capture):
+    """Flush an owned staging file, then publish without replacing another writer."""
+    path = capture_target(path)
+    raw = json.dumps(capture, ensure_ascii=True, allow_nan=False, indent=2).encode('utf-8')
+    pipeline.require(len(raw) <= MAX_CAPTURE_BYTES, 'Schema capture exceeds the byte limit')
+    fd, temporary = tempfile.mkstemp(prefix='.schema-capture-', suffix='.tmp', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+        with open(temporary, 'rb') as stream:
+            pipeline.require(stream.read(MAX_CAPTURE_BYTES + 1) == raw, 'Capture readback differs')
+        os.link(temporary, path)  # Atomic no-clobber on the same filesystem; no replace fallback.
+    except (OSError, ValueError) as exc:
+        raise ValueError('Schema capture was not published; staging evidence retained at '+temporary+': '+str(exc)) from exc
+    try: os.unlink(temporary)
+    except OSError: pass  # The complete published file remains authoritative.
+
+
+def capture_bindings(report):
+    return [{key: row.get(key) for key in ('preset_id', 'backend_id', 'graph', 'graph_sha256')}
+            for row in report['results']]
+
+
+def read_capture(path):
+    with Path(path).open('rb') as stream: raw = stream.read(MAX_CAPTURE_BYTES + 1)
+    pipeline.require(len(raw) <= MAX_CAPTURE_BYTES, 'Schema capture exceeds the byte limit')
+    def reject(value): raise ValueError('Non-finite capture value: '+value)
+    capture = json.loads(raw.decode('utf-8'), object_pairs_hook=pipeline.pairs, parse_constant=reject)
+    pipeline.require(isinstance(capture, dict) and type(capture.get('version')) is int and capture['version'] == 1,
+                     'Unsupported schema capture version')
+    pipeline.require(capture.get('sha256') == pipeline.sha({k:v for k,v in capture.items() if k != 'sha256'}),
+                     'Schema capture changed; integrity check failed')
+    pipeline.text(capture.get('backend_id'), 'captured backend ID')
+    pipeline.require(capture.get('backend_identity_verified') is False, 'Capture does not authenticate backend identity')
+    pipeline.require(isinstance(capture.get('schema_base64'), str), 'Missing captured schema bytes')
+    schema_raw = base64.b64decode(capture['schema_base64'], validate=True)
+    info, digest = read_schema(io.BytesIO(schema_raw))
+    pipeline.require(digest == capture.get('schema_sha256'), 'Captured schema bytes changed')
+    pipeline.require(isinstance(capture.get('bindings'), list) and 0 < len(capture['bindings']) <= 2048,
+                     'Invalid captured graph coverage')
+    return capture, info, digest
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo-root', type=Path, default=ROOT)
@@ -88,18 +147,50 @@ def main(argv=None):
     parser.add_argument('--preset', action='append', default=[], help='exact preset ID; repeat to select several')
     source = parser.add_mutually_exclusive_group()
     source.add_argument('--object-info', type=Path, help='saved raw object_info JSON; no network requests')
-    source.add_argument('--comfy-url', default='http://127.0.0.1:8188', help='explicit managed loopback backend URL')
+    source.add_argument('--comfy-url', help='explicit managed loopback backend URL; normal default is port 8188')
+    source.add_argument('--schema-snapshot', type=Path, help='replay a backend-bound capture offline against unchanged catalog graphs')
+    parser.add_argument('--capture-schema', type=Path, help='save exact schema bytes and graph identities; requires --backend and --comfy-url, no subset filters')
     parser.add_argument('--json', action='store_true', help='emit the complete per-preset report as JSON')
     args = parser.parse_args(argv)
     try:
+        capturing = args.capture_schema is not None
+        snapshot = None
+        if capturing:
+            pipeline.require(bool(args.backend) and bool(args.comfy_url), 'Capture requires explicit --backend and --comfy-url')
+            pipeline.require(args.object_info is None and args.schema_snapshot is None, 'Capture requires a live schema, not another file')
+            capture_target(args.capture_schema)  # Refuse known output problems before contacting a backend.
+        if capturing or args.schema_snapshot:
+            pipeline.require(not args.preset and args.collection is None, 'Schema captures require complete backend coverage, not subset filters')
         catalog = pipeline.read_json(args.repo_root/'presets/catalog.json')
         pipeline.require(isinstance(catalog, dict), 'Expected catalog object')
+        backend = args.backend
+        if args.schema_snapshot:
+            snapshot, info, digest = read_capture(args.schema_snapshot)
+            pipeline.require(backend is None or backend == snapshot['backend_id'], 'Snapshot backend cannot be relabelled')
+            backend = snapshot['backend_id']
+            pipeline.require(pipeline.sha(catalog) == snapshot.get('catalog_sha256'), 'Catalog changed since schema capture; capture new evidence')
         selected = select_presets(catalog.get('presets'), collection=args.collection,
-                                  backend=args.backend, preset_ids=args.preset)
-        info, digest = load_schema(args.object_info, args.comfy_url)
+                                  backend=backend, preset_ids=args.preset)
+        url = args.comfy_url or 'http://127.0.0.1:8188'
+        if capturing: info, digest, schema_raw = load_schema(comfy_url=url, include_raw=True)
+        elif snapshot is None: info, digest = load_schema(args.object_info, url)
         report = validate_catalog(args.repo_root, selected, info)
         report.update(catalog_total=len(catalog['presets']), schema_sha256=digest,
-                      schema_source=str(args.object_info) if args.object_info else args.comfy_url.rstrip('/')+'/object_info')
+                      schema_source=str(args.schema_snapshot or args.object_info) if args.schema_snapshot or args.object_info else url.rstrip('/')+'/object_info')
+        if snapshot is not None:
+            pipeline.require(capture_bindings(report) == snapshot['bindings'], 'Graph coverage or content changed since schema capture')
+        if capturing or snapshot is not None:
+            report.update(schema_scope='backend-bound-snapshot', backend_id=backend, backend_identity_verified=False)
+        if capturing:
+            capture = {'version':1, 'captured_at':datetime.now(timezone.utc).isoformat(),
+                       'backend_id':backend, 'backend_identity_verified':False,
+                       'schema_source':url.rstrip('/')+'/object_info', 'schema_sha256':digest,
+                       'schema_base64':base64.b64encode(schema_raw).decode('ascii'),
+                       'catalog_sha256':pipeline.sha(catalog), 'bindings':capture_bindings(report),
+                       'capture_results':report}
+            capture['sha256'] = pipeline.sha(capture)
+            publish_capture(args.capture_schema, capture)
+            report['schema_capture'] = str(args.capture_schema)
         if args.json: print(json.dumps(report, ensure_ascii=True, allow_nan=False))
         else:
             print('Schema:', report['schema_source'], 'SHA-256:', digest)
