@@ -51,6 +51,8 @@ an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by cod
 
 **Modular baselines, 13 September 2026:** the owner clarified that no sexual imagery will be produced and requested the referenced resources for creative freedom. Build architecture-compatible baseline graphs with independently editable style controls and optional correction, pose/reference and upscale stages. Resource listing names do not become prompt instructions.
 
+**Modular Anima baseline choice, 13 September 2026:** the owner chose **B — softer cinematic shading** as the starting look for the fantasy-character pack. This selects the look only: both A (base) and B (first style) remain experiments, neither enters the private shortlist, and no art acceptance or licence decision is implied. The older lanternkeeper demonstrations remain experiment-only. The owner-controlled restart remains pending until the outstanding model downloads are finished and work is saved; no automatic reboot is authorized.
+
 **Character-consistency pilot canon, 12 September 2026:** In response to the choice of reference canon
 for the twelve-case pilot, the owner answered: "Use the supplied standard costume, including its shown
 back view". This selects the standard supplied design for the private reference-preservation study;

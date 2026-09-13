@@ -51,7 +51,6 @@ class ModularIllustrationBaselineTests(unittest.TestCase):
         for recipe_id in ('cstati-v3-base','yumeflux-ilv1-base','anifox-v2-base','anima-v1-base','janima-v1-base'):
             with self.subTest(recipe_id=recipe_id):
                 controls=RECIPES[recipe_id]['controls']
-                self.assertTrue(RECIPES[recipe_id]['status']=='unverified')
                 self.assertTrue(all(value==0 for key,value in controls.items() if key.startswith('lora')))
         stack=RECIPES['janima-v1-authored-five-adapter-stack']
         self.assertEqual([stack['controls'][f'lora{n or ""}'] for n in ('',2,3,4,5)],[0.3,0.6,0.35,0.25,0.5])

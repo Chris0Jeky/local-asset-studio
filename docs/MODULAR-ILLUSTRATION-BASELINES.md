@@ -1,10 +1,26 @@
 # Modular illustration baselines
 
-This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: false` remains until an inspected generation is recorded. A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
+This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: true` is used only for the Anima preset after the bounded inspected execution recorded in [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md). A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
+
+## Executed boundary — 13 September 2026
+
+The Anima v1 graph is valid against the live ComfyUI schema and five saved Workflow Studio
+documents exist for the baseline routes. The Anima document compiled successfully. The four
+other checkpoint documents (CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1) remain uncompiled
+because their checkpoint or diffusion-model files are not downloaded locally. Six of the ten new
+resource files have verified receipts; source pins, local installation and licence terms remain
+separate facts.
+
+The actual saved-document walkthrough is: **Guided workflows → Workflow builder → Refresh saved →
+choose Baseline - Anima v1 → Open current → Steps view**. Individual style Steps are disabled in
+the base document and require the explicit typed bypass before editing. To reproduce the executed
+first-style case, set the first style strength to `1.0` and enable only that style; all other style
+slots stay disabled. The base case keeps every style disabled. Registered-preset generation remains
+the supported execution path; an arbitrary edited graph is currently export-only.
 
 ## Where resources belong
 
-The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations.
+The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations. Six of the ten new files currently have verified receipts; the four checkpoint/diffusion-model downloads above remain missing.
 
 | Folder | Resources | Why |
 | --- | --- | --- |
@@ -62,6 +78,6 @@ flowchart LR
 
 In Workflow Studio, open **Guided workflows → Workflow builder**, choose **Start from a recipe**, import the registered API graph, select outputs and **Check connections**, then use **Export checked API graph**. This exports the checked API format. PR #130 supplies [shared document revisions and agent commands](workflow-studio/SHARED-DOCUMENTS.md), and PR #131 adds [named Steps and revision-safe saving](workflow-studio/STEPS-AND-SAVING.md). Use **Create named step** to group existing nodes and expose their controls, then switch between **Steps view** and **Nodes view** over the same document. Disabling a producer still needs an explicit compatible bypass; no replacement connection is guessed. Arbitrary edited graphs remain export-only pending #122, and reusable module libraries with typed external interfaces remain work in #120/#121. The existing registered-preset route remains the supported generation path.
 
-## What remains before execution
+## What remains before broader execution
 
-Exact source pins are recorded; downloads are being verified individually. Wait until the selected model files are complete, then inspect the preset against the live node schema. A successful generation establishes only that exact graph/control combination. A useful reliability study next holds the graph and prompt fixed across several seeds and logs completion, runtime failures and visual defects separately. The two earlier lanternkeeper demonstrations remain experiments at the owner's request.
+Exact source pins are recorded; six of ten new resource files have verified receipts and the four other checkpoint/diffusion-model downloads remain pending. The selected Anima preset has been inspected against the live node schema and executed only at the bounded base and first-style controls recorded in [the execution note](ANIMA-BASELINE-EXECUTION-2026-09-13.md). A successful generation establishes only that exact graph/control combination. A useful reliability study next holds the graph and prompt fixed across several seeds and logs completion, runtime failures and visual defects separately. The two earlier lanternkeeper demonstrations remain experiments at the owner's request.

@@ -1,5 +1,27 @@
 # Current state — 11 September 2026
 
+## Modular Anima baseline execution — 13 September 2026
+
+Three bounded Anima v1 runs completed and were visually inspected by the root agent at the same
+832×1216 canvas: base with all style slots disabled (job
+`058abcb0-e962-45da-8534-43443e9a3f60`, prompt
+`47dd2edd-8fc1-45d2-9d99-64ccb6f587dd`, 28.098 s), first style with only slot 1 at `1.0` (job
+`91b42081-f15f-46ac-9d36-a819d6e5d857`, prompt
+`75f6f833-6e5f-41bf-9eac-ab8c202f117d`, 20.146 s), and the same style at seed `2026091302`
+(job `a14fac06-2359-46f3-867e-feea7497118e`, prompt
+`52345ff4-863b-4b79-a69b-e0f7784f7fde`, 18.078 s). A showed a clean graphic coat, trousers and
+boots at the station; B supplied softer cinematic shading; C kept a similar wardrobe but changed
+the face and bangs. Hands were hidden in pockets in all three, so hand quality is unproven. The
+owner chose B as the starting look; A and B remain experiments and neither enters the shortlist.
+Full output hashes and paths are in [the execution record](docs/ANIMA-BASELINE-EXECUTION-2026-09-13.md).
+
+Five saved Workflow Studio baseline documents are present. Anima v1 is valid against the live
+schema; CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1 remain blocked by missing local model
+files. The source checkout is `8f471d6`; the live Studio process is PID `28992` from source
+`07da7f1`, and ComfyUI is PID `24720` unchanged. The later compiler/MCP deployment is not yet
+deployed. Timings are cache-confounded and carry no performance claim. Native crash prevention,
+reliability, licensing and art acceptance remain unverified.
+
 ## Live reconciliation and creative baseline — 13 September 2026
 
 The two earlier handoffs were reconciled against merged GitHub heads, checks and local receipts. The original screenshot resources are installed and pinned; PR #127 supplies separate WAI/Noirpopwave and Anima/Failleaf/sky02/BunnySlop recipes. Both produced inspected 832×1216 images, in 38.26 and 34.22 seconds respectively. Their exact job/prompt IDs and limitations are in [the reconciliation report](docs/STUDIO-REVIEW-2026-09-12.md). The owner chose **experiment only** for both; neither enters the promising shortlist. They are not a controlled cross-family comparison or proof of source-image likeness.
