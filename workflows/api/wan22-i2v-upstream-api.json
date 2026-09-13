@@ -23,7 +23,7 @@
   "4": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "lantern-reference.png"
+      "image": "fennec_girl_hug.png"
     }
   },
   "5": {
@@ -33,7 +33,7 @@
         "2",
         0
       ],
-      "text": "Animate the supplied image with a single subtle, physically coherent motion. Preserve its character, composition, palette, and linework. The camera makes one gentle forward tracking move. No text."
+      "text": "a cute anime girl with fennec ears and a fluffy tail walking in a beautiful field"
     }
   },
   "6": {
@@ -43,7 +43,7 @@
         "2",
         0
       ],
-      "text": "static scene, camera shake, flicker, text, subtitles, watermark, extra limbs, distorted face, blurry details"
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
     }
   },
   "7": {
@@ -57,9 +57,9 @@
         "4",
         0
       ],
-      "width": 512,
-      "height": 768,
-      "length": 17,
+      "width": 1280,
+      "height": 704,
+      "length": 41,
       "batch_size": 1
     }
   },
@@ -92,8 +92,8 @@
         "7",
         0
       ],
-      "seed": 2026091103,
-      "steps": 20,
+      "seed": 869177064731501,
+      "steps": 30,
       "cfg": 5.0,
       "sampler_name": "uni_pc",
       "scheduler": "simple",
@@ -130,7 +130,7 @@
         "11",
         0
       ],
-      "filename_prefix": "Studio/Wan22-i2v",
+      "filename_prefix": "Studio/Wan22-i2v-canonical",
       "format": "auto",
       "codec": "auto"
     }

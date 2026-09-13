@@ -1,5 +1,56 @@
 # Current state — 13 September 2026
 
+## Wan 2.2 I2V forensic diagnostic and control path — 13 September 2026
+
+The visually failed Wan recording was located without resubmission: Studio job
+`9bf10278-d1be-404d-b314-3b9b741909ce`, ComfyUI prompt
+`9deb42bb-55f4-4187-bd30-0a09d8323513`, output
+`C:\AI\ComfyUI_windows_portable\ComfyUI\output\Studio\Wan22-i2v_00003_.mp4`.
+The engine completed the job, but the asset review is `rejected`; completion is
+not quality acceptance. Its exact `state.json`, `recipe.json` and `workflow.json`
+remain in the external run directory. The graph used the uploaded 832x1248
+source, 512x512, 81 frames, 20 steps, CFG 5, seed 2026091103, `uni_pc` /
+`simple`, denoise 1 and shift 8, with the three pinned Wan model filenames.
+
+Frames 0, 1, 4, 8, 16, 32, 48, 64 and 80 were extracted from the existing MP4.
+The first frame is recognizable inside the requested square crop; visible
+multi-colour/mosaic smearing appears by frame 2 and is obvious by frame 4,
+with later collapse. The diagnostic contact sheet, onset samples and source
+comparison are in `.runtime/i2v-diagnostics/2026-09-13-9bf10278/` and are
+derived from the existing output only. The historical 512x768/33-frame job
+`e33116f1-7253-451a-8d41-f20a99aca808` (Comfy prompt
+`460ed2dd-1a6b-45e1-9374-ac130595517c`) retained a coherent swordswoman,
+umbrella, rain and neon-street scene across sampled frames. That is sampled
+coherence evidence, not an acceptance assertion.
+
+The installed `Wan22ImageToVideoLatent` center-crops and bilinearly resamples
+the input via `common_upscale` before VAE encoding. 832x1248 to 512x512 is the
+center crop box `[0,208,832,1040]` (832x832), then bilinear resize to 512x512;
+it is neither full-source stretch nor letterbox. The new offline report exposes
+this, source/output dimensions, requested settings, exact graph diff, model
+hashes and sampled artifacts at `/api/jobs/<id>/i2v-diagnostic`.
+
+The one canonical installation control was also recorded: Studio job
+`e2799ee8-db57-4e0b-b71a-59823526ac4c`, ComfyUI prompt
+`314092cf-4bcc-4d5f-a1b5-8bf99b3403fd`, official source hash
+`ec0cbf7d8a81eb6fbfda1309b49a644f6cf123ccf5036197e8592ba205f67d71`,
+1280x704, 41 frames and 30 steps. After about 995.6 seconds it failed at
+`VAEDecode` with HIP OOM while allocating 18.56 GiB on the 15.92 GiB GPU; the
+history's executed nodes stop before node 10 and no video was produced. Source
+inspection shows the installed 3D tiled fallback selected, by its estimator, an
+11-slice temporal tile and 32x32 latent spatial tile before the final decoder
+convolution still exceeded capacity. This isolates the control failure to
+decode memory capacity; model identity, prompts and KSampler completion were
+not the failing seam. No Run B was submitted.
+
+The Wan preset now defaults to source-aware **Quick diagnostic** (17 frames),
+with explicit **Balanced** (33), **Quality** (81, opt-in) and **Canonical
+upstream** modes. The canonical mode follows ComfyUI's official Wan 2.2 5B
+workflow's 1280x704/30-step/41-frame quick-test shape and uses a deliberate
+Studio MP4 output adapter. Portrait/landscape authored pairs are resolved from
+the source before binding; deviations are warned and execution is labeled
+separately from review.
+
 ## Interactive timing estimates and failure clarity — 13 September 2026
 
 Studio now exposes a read-only `/api/estimate` calculation beside the Create workspace. It learns

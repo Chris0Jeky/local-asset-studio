@@ -14,7 +14,7 @@ video, geometry, and textured 3D. Each addition has an editable native ComfyUI g
 | Dramatic lighting | Cinematic Anime Lighting | Compare the adapter against strength 0; it uses the SDXL base family |
 | Modern anime illustration | Anima Aesthetic 1.1 | Descriptive prose plus tags, 20 / 30 / 36 steps, CFG near 4 |
 | Retro anime | Krea 2 Retro Anime | Official free adapter on Turbo FP8; compare adapter strength 0 and 1 |
-| Animate an illustration | Wan 2.2 Animate Image | Start with one motion and 33 frames, then 81 frames at the same seed |
+| Animate an illustration | Wan 2.2 Animate Image | Start with **Quick diagnostic**; use **Balanced**, **Quality** (81 frames opt-in), or **Canonical upstream** deliberately |
 | Geometry from a reference | Hunyuan3D Draft | Inspect silhouette in the GLB viewer, then try Detail for denser geometry |
 | Textured 3D | TRELLIS.2 Automatic Cutout | Isolate one subject; inspect all sides, seams, materials, and topology |
 
@@ -43,6 +43,13 @@ embedded workflow in ComfyUI or deliberately start from the current preset.
 Model weights and uploaded reference images are separate local dependencies;
 the JSON does not bundle them. Identical seeds alone do not promise identical
 images across different models, runtime versions, or GPU implementations.
+
+Wan 2.2 I2V has an offline diagnostic action on recorded video assets. It reports
+the source and requested geometry, the installed center-crop/resample behavior,
+model hashes, prompts, canonical upstream graph differences and sampled frames
+without submitting a new job. The route records engine execution separately from
+creative review or quality acceptance. See [WAN22-I2V-DIAGNOSTICS.md](WAN22-I2V-DIAGNOSTICS.md)
+for the control-case contract and the current forensic record.
 
 ## What goes in which folder?
 

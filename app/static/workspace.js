@@ -73,6 +73,16 @@ function openCollection(id=null) {
   $('#collectionName').value=col?.name||'';$('#collectionDescription').value=col?.description||'';
   $('#collectionDialog').showModal();$('#collectionName').focus();
 }
+function diagnosticArtifact(record, label) {
+  return record?.present && record.url ? '<a href="' + esc(record.url) + '" target="_blank" rel="noreferrer">' + esc(label) + '</a>' : '<span class="muted">' + esc(label) + ' unavailable</span>';
+}
+function renderI2VDiagnostic(report) {
+  const source=report.source||{}, requested=report.requested||{}, prep=report.preprocessing||{}, probe=report.video?.probe||{};
+  const models=(report.models||[]).map(model=>'<li><code>'+esc(model.filename)+'</code> · <span class="review-'+(model.pin_status==='verified'?'selected':'rejected')+'">'+esc(model.pin_status||'unknown')+'</span><br><small>'+esc(model.sha256||'hash unavailable')+' · '+(model.bytes?esc((model.bytes/1024/1024/1024).toFixed(2)+' GiB'):'size unavailable')+'</small></li>').join('')||'<li>No model records found in the submitted graph.</li>';
+  const diff=(report.graph?.semantic_diff||[]).map(change=>'<li><code>'+esc(change.kind||'change')+'</code> · node '+esc(change.actual_node_id||change.canonical_node_id||change.position||'')+' · '+esc(change.field||change.class_type||'graph')+'<br><small>canonical '+esc(JSON.stringify(change.canonical??null))+'<br>actual '+esc(JSON.stringify(change.actual??null))+'</small></li>').join('')||'<li>No semantic differences detected.</li>';
+  const warning=prep.warning?'<p class="i2v-warning">'+esc(prep.warning)+'</p>':'';
+  $('#assetDiagnostic').innerHTML='<section class="i2v-diagnostic"><h3>Offline I2V diagnostic</h3><p><b>No generation submitted.</b> This report reads the recorded job, local media, graph, runtime and model files.</p>'+warning+'<div class="i2v-diagnostic-grid"><div><b>Source</b><p>'+esc(source.dimensions?.join(' × ')||'unknown')+' · '+esc(source.aspect_ratio??'unknown')+' aspect · '+esc(source.orientation||'unknown')+'</p><small><code>'+esc(source.path||source.filename||'unavailable')+'</code><br>'+esc(source.sha256||'hash unavailable')+'</small></div><div><b>Requested</b><p>'+esc(requested.dimensions?.join(' × ')||'unknown')+' · '+esc(requested.aspect_ratio??'unknown')+' aspect · '+esc(requested.frames??'unknown')+' frames · '+esc(requested.steps??'unknown')+' steps</p><small>Mode: '+esc(requested.mode||'not recorded')+' · '+esc(requested.sampler||'unknown')+' / '+esc(requested.scheduler||'unknown')+'</small></div><div><b>Decoded output</b><p>'+esc(probe.stream?.width??'unknown')+' × '+esc(probe.stream?.height??'unknown')+' · '+esc(probe.frame_count??'unknown')+' frames</p><small>Execution review: '+esc(report.job?.review||'not recorded')+' · quality acceptance: not inferred</small></div><div><b>Preprocessing</b><p>'+esc(prep.strategy||'unknown')+'</p><small>Crop box: '+esc(JSON.stringify(prep.crop_box||null))+' · letterbox: '+esc(prep.letterbox??'unknown')+' · full-source stretch: '+esc(prep.stretches_full_source??'unknown')+'</small></div></div><p><b>Artifacts:</b> '+diagnosticArtifact(report.artifacts?.contact_sheet,'Contact sheet')+' · '+diagnosticArtifact(report.artifacts?.preprocessed_first_frame,'Preprocessed first frame')+' · '+diagnosticArtifact(report.artifacts?.report,'JSON report')+'</p><details><summary>Model files and hashes</summary><ul>'+models+'</ul></details><details><summary>Exact prompts</summary><pre>'+esc(JSON.stringify(report.prompts||{},null,2))+'</pre></details><details><summary>Semantic graph diff from canonical upstream</summary><p>Canonical: <code>'+esc(report.graph?.canonical_path||'unavailable')+'</code></p><ul>'+diff+'</ul></details></section>';
+}
 function openAsset(id) {
   activeAsset=assetState.assets.find(a=>a.id===id);if(!activeAsset)return;
   const a=activeAsset;
@@ -82,6 +92,7 @@ function openAsset(id) {
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at?'Restore':'Move to Trash';
   $('#assetDownload').href=a.url+'?download';
   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
+  $('#assetDiagnostic').innerHTML=a.media_type==='video'&&a.job_id?'<button data-i2v-diagnostic="'+esc(a.job_id)+'">Offline I2V diagnostic</button><small>Reads the existing video and recipe only; no generation is submitted.</small>':'';
   $('#assetLineage').innerHTML=a.lineage.length?'<h3>Source assets</h3>'+a.lineage.map(id=>{const parent=assetState.assets.find(p=>p.id===id);return '<button data-lineage="'+esc(id)+'">'+esc(parent?.title||id)+'</button>';}).join(''):'';
   if(!$('#assetDialog').open)$('#assetDialog').showModal();
 }
@@ -105,13 +116,15 @@ $('#deleteCollection').onclick=async()=>{try{await post('/api/collections',{acti
 $('#selectVisible').onclick=()=>{assetSelection=new Set(visibleAssets().slice(0,200).map(a=>a.id));renderAssets();};
 $('#clearAssetSelection').onclick=()=>{assetSelection.clear();renderAssets();};
 $('#closeAssetDialog').onclick=()=>$('#assetDialog').close();
-$('#assetDialog').addEventListener('close',()=>{$('#assetDetailMedia').innerHTML='';});
+$('#assetDialog').addEventListener('close',()=>{$('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';});
 $('#saveAssetDetails').onclick=async()=>{try{await mutateAssets({ids:[activeAsset.id],action:'edit',title:$('#assetTitle').value,tags:$('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean),review:$('#assetReview').value,notes:$('#assetNotes').value});$('#assetDialog').close();assetMessage('Asset details saved.');}catch(e){assetMessage(e.message,true);}};
 $('#assetFavorite').onclick=async()=>{await mutateAssets({ids:[activeAsset.id],action:'edit',favorite:!activeAsset.favorite});openAsset(activeAsset.id);};
 $('#assetTrash').onclick=async()=>{const action=activeAsset.trashed_at?'restore':'trash';await mutateAssets({ids:[activeAsset.id],action});$('#assetDialog').close();assetMessage(action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.');};
 $('#assetRecipe').onclick=()=>exportRecipe(activeAsset.job_id);
 document.addEventListener('click',async e=>{
   try{
+    const diagnostic=e.target.closest('[data-i2v-diagnostic]');
+    if(diagnostic){diagnostic.disabled=true;$('#assetDiagnostic').innerHTML='<p class="muted">Building offline report from the existing recording…</p>';const report=await api('/api/jobs/'+encodeURIComponent(diagnostic.dataset.i2vDiagnostic)+'/i2v-diagnostic');renderI2VDiagnostic(report);return;}
     const scope=e.target.closest('[data-scope]');if(scope)setAssetScope(scope.dataset.scope);
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
     const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
