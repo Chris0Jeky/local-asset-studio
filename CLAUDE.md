@@ -15,16 +15,15 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 865 tests, about a minute, offline; budget a minute, not seconds
+python -m unittest discover -s tests          # 1674 tests, 2-3 minutes, offline; budget minutes, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
-package manager: Python 3.12 + Pillow/psutil; plain JS in `app/static/` with a vendored model-viewer.
-The skip count is environment-dependent — 37 measured on the default shell, fewer where FFmpeg, Godot and
-Node are on `PATH`, more without Windows symlink privilege. A differing skip count is not a regression.
+package manager: Python 3.12 + Pillow/psutil; plain JS in `app/static/` with a vendored model-viewer. The skip
+count is environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`): not a regression.
 
 ## Proving checks (narrowest command per seam)
 
@@ -78,7 +77,8 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 - A completed render is neither art acceptance nor licence clearance. Hunyuan3D 2.1 and HY-Motion 1.0 exclude
   UK use; NoobAI excludes commercial products; WAI hashes do not authenticate its creator. Record, never infer.
 - Never edit installed ComfyUI or upgrade packages in the shared Torch/ROCm runtime; local patches go to
-  `runtime-patches/` with before/after hashes. Backend switches are explicit and never package upgrades.
+  `runtime-patches/` with before/after hashes. Backend switches are explicit and never package upgrades. The same
+  bar applies to comfy-mcp's update/install/download/launch/stop tools: read-only use only (`docs/AGENT-TOOLING.md`).
 - Form values serialize as strings: validate with `number()` (Decimal, finite, range) — a `100 ms` bug shipped once.
 - `.runtime/` is gitignored evidence (logs, pidfiles, probes, review JSON). Read it; do not commit it.
 - Stop only Studio-owned PIDs, and only after confirming no queued, running or partial Studio work.
