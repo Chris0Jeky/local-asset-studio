@@ -1,10 +1,10 @@
 # Creative choices
 
-No human setup action is required on the configured PC once launcher validation is complete. These are optional choices, not inferred approvals:
+The earlier creative choices below are answered. The configured page-file increase still needs an owner-controlled Windows restart; save work in all applications first. No automatic restart is authorized.
 
-- [ ] Choose your preferred pixel-art result after the first LoRA comparison.
-- [ ] Pick one real game or product brief for a focused production pack.
-- [ ] Decide which results are good enough to curate; successful execution alone is not art approval.
+- [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
+- [x] Pick a focused production brief: **Fantasy character illustration pack** (owner, 12 September 2026). The prepared brief is in [FANTASY-CHARACTER-BRIEF.md](docs/FANTASY-CHARACTER-BRIEF.md); this selects the work, not finished-art acceptance.
+- [x] Choose an initial private shortlist (owner, 12 September 2026): the ornate witch with floating books and colourful witch holding a black cat are in **Promising — needs correction**, both marked `needs_work`. Original hashes and membership were verified. This is not finished-art or commercial-use approval; future candidates still need review.
 
 The repository defaults to private. Public visibility has not been requested.
 
@@ -21,23 +21,35 @@ in spirit under "Recorded owner decisions" below and in `docs/ANIME-FANTASY-ATEL
 decide here; the follow-up work (a correction pass for hands, faces and small details) is tracked in
 `CURRENT_STATE.md`.
 
-**q-3 — Anima artist-stack baselines (human-only; subjective).** Three outputs now exist on Anima base v1.0
+**q-3 — Anima direction: answered by the owner, 12 September 2026.** The owner chose: **"Pursue the new screenshot stack"**, superseding the older two-option comparison below as the immediate priority. The owner subsequently supplied `https://civitai.red/images/134076830` for technical analysis. Build compatible Anima and SDXL starting points from the resource metadata. This is a direction choice, not a claim of exact reproduction, art acceptance or licence clearance.
+
+Historical comparison: three outputs exist on Anima base v1.0
 (`anima-artist-stack-authored`, `anima-artist-tags-no-adapters`, `anima-reference-stack-1328x1776` in
-`examples/anime-fantasy-atelier/`). Say which of the two looks to pursue: the six-adapter
+`examples/anime-fantasy-atelier/`). The previous choices were the six-adapter
 reference stack (civitai image 139608451) or the adapter-free painterly artist tags (`@synswt, @koukouya, @kyano`,
 images 131843207–131843406). Execution is not art approval, and the six adapters' civitai terms are recorded,
 not cleared.
 
-**q-4 — page file: fixed 40 GB gives the ~73–77 GB commit limit that #77 and #89 hit; moving to
-system-managed or larger is a system setting for the owner (do not tick).** Measured 12 September
+**q-4 — page file: authorized and configured, 12 September 2026; activation pending an owner-controlled Windows restart.** The owner explicitly answered: **"Authorize a fixed 64 GiB page file; do not reboot automatically"**. After backing up the original settings, the elevated helper set C: initial and maximum to `65536` MiB; both values verified at 22:32 UTC. Windows still reports the effective allocated size as `40960` MiB. No reboot was performed. This specific authorization supersedes the earlier owner-only restriction for this change; it does not authorize driver, package or other system changes, or prove a native-crash fix.
+
+**Next human execution step:** after saving work in all applications, use **Start → Power → Restart** when convenient. Then ask Studio to recheck the effective page-file allocation and commit headroom. The large Qwen/FLUX proving run stays gated until at least 32 GiB of headroom is actually measured. Rollback, if requested later, is the recorded original fixed `40960` MiB initial/maximum setting.
+
+**Gate now deployed:** PR #129 implements the rule, and local `enforce_host_commit_headroom` is enabled. A non-submitting live check rejected an eligible 1 MP FLUX graph at 11.0 GiB headroom without creating a job. A later idle ComfyUI cache release recovered headroom to about 22.5 GiB, with the same process and unchanged jobs; this remains below the required threshold. The historical operator-only description below refers to the original handoff, not the current application.
+
+Historical measurement: fixed 40 GB gives the ~73–77 GB commit limit that #77 and #89 hit. Measured 12 September
 2026: `SizeStoredInPagingFiles` 41,943,040 KiB, commit limit 77,014,286,336 B; #77's failure was at
 97 % committed, and a Qwen job at `--reserve-vram 0.6` still failed on a host allocation at 87 %
 committed, so the VRAM reserve is measurably not the lever. The ≥32 GiB commit gate (raised from 20 GiB after the run above started at 29 GB headroom and still failed) is documented as
 an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
-`app/` samples commit headroom before submitting. Agents must not change paging: #77 says not to
-treat it as a default fix. This item records the option, not a decision.
+`app/` samples commit headroom before submitting at the original handoff. #77 says not to treat paging as a default fix. The later explicit owner decision and verified configuration above supersede this historical undecided option.
 
 ## Recorded owner decisions
+
+**New WAI baseline, 13 September 2026:** the owner answered **"Keep only as an experiment"** for the teal-coat lanternkeeper, job `2607afc1-84e8-4f46-ae43-a8042b1c6ae7`, output `WAI-Illustration_00013_.png`. It remains outside the promising shortlist; successful execution is not creative acceptance.
+
+**New Anima baseline, 13 September 2026:** the owner also answered **"Keep only as an experiment"** for job `c345a7e5-0f32-46d3-b09f-ac3628c77fd7`, output `anima-artist-stack_00004_.png`. It remains outside the shortlist; no duplicate-lantern correction is commissioned from that optional choice.
+
+**Modular baselines, 13 September 2026:** the owner clarified that no sexual imagery will be produced and requested the referenced resources for creative freedom. Build architecture-compatible baseline graphs with independently editable style controls and optional correction, pose/reference and upscale stages. Resource listing names do not become prompt instructions.
 
 **Character-consistency pilot canon, 12 September 2026:** In response to the choice of reference canon
 for the twelve-case pilot, the owner answered: "Use the supplied standard costume, including its shown
