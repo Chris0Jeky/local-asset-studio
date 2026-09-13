@@ -96,6 +96,81 @@ class CampaignHTTP(unittest.TestCase):
         with self.assertRaises(ValueError):one.start()
         self.assertEqual(self.studio.queue.qsize(),2)
 
+    def test_campaign_accepted_start_response_loss_reconciles_with_get_only(self):
+        self.register(); client,_,_=self.revision('accepted-start',(11,)); pid=client.stage()['project']['id']
+        request=client.client.request
+        def lost(method,path,*args,**kwargs):
+            value=request(method,path,*args,**kwargs)
+            if method=='POST' and path=='/api/production/'+pid+'/start':raise TimeoutError('Synthetic lost client response after accepted Start')
+            return value
+        with patch.object(client.client,'request',side_effect=lost), self.assertRaises(TimeoutError):client.start()
+        self.assertEqual('start_pending',client.state()['phase']);self.assertEqual(1,self.studio.queue.qsize())
+        before=self.studio.production.get(pid);journal=copy.deepcopy(client.state());calls=[]
+        def observe(method,path,*args,**kwargs):
+            calls.append((method,path));return request(method,path,*args,**kwargs)
+        with patch.object(client.client,'request',side_effect=observe):result=client.reconcile_start()
+        after=self.studio.production.get(pid)
+        self.assertTrue(calls and all(method=='GET' for method,_ in calls));self.assertEqual('started',client.state()['phase'])
+        self.assertEqual({key:journal[key] for key in ('handoff_sha256','project_id','project_sha256')},
+                         {key:client.state()[key] for key in ('handoff_sha256','project_id','project_sha256')})
+        self.assertEqual({'status':'queued','reserved':1}, {k:result['observation'][k] for k in ('status','reserved')})
+        self.assertEqual(result['observation'],client.state()['start_observation'])
+        self.assertEqual(before['budget'],after['budget']);self.assertEqual(1,self.studio.queue.qsize())
+        self.assertFalse(result['generation_submitted']);self.assertEqual(0,result['mutating_http_requests'])
+        with self.assertRaises(ValueError):client.start()
+        self.assertEqual(1,self.studio.queue.qsize())
+
+    def test_planned_pending_start_is_not_adopted_from_another_revision_reservation(self):
+        self.register(); one,_,_=self.revision('pending-start',(11,)); two,_,_=self.revision('other-start',(22,),number=2)
+        first=one.stage()['project'];second=two.stage()['project'];request=one.client.request
+        def lost_before_accept(method,path,*args,**kwargs):
+            if method=='POST' and path=='/api/production/'+first['id']+'/start':raise TimeoutError('Synthetic lost client request before server acceptance')
+            return request(method,path,*args,**kwargs)
+        with patch.object(one.client,'request',side_effect=lost_before_accept), self.assertRaises(TimeoutError):one.start()
+        two.start();before=one.directory.joinpath('state.json').read_bytes();calls=[]
+        def observe(method,path,*args,**kwargs):
+            calls.append((method,path));return request(method,path,*args,**kwargs)
+        with patch.object(one.client,'request',side_effect=observe), self.assertRaisesRegex(ValueError,'does not prove'):one.reconcile_start()
+        self.assertTrue(calls and all(method=='GET' for method,_ in calls));self.assertEqual(before,one.directory.joinpath('state.json').read_bytes())
+        self.assertEqual('planned',self.studio.production.get(first['id'])['state']['status'])
+        self.assertEqual(1,self.studio.production.get(second['id'])['budget']['reserved']);self.assertEqual(1,self.studio.queue.qsize())
+
+    def test_campaign_start_reconciliation_after_reopen_keeps_reservation_and_never_resumes(self):
+        self.register();client,_,_=self.revision('restart-start',(11,));pid=client.stage()['project']['id'];request=client.client.request
+        def lost(method,path,*args,**kwargs):
+            value=request(method,path,*args,**kwargs)
+            if method=='POST' and path=='/api/production/'+pid+'/start':raise TimeoutError('Synthetic lost client response after accepted Start')
+            return value
+        with patch.object(client.client,'request',side_effect=lost), self.assertRaises(TimeoutError):client.start()
+        queue_size=self.studio.queue.qsize();reopened=fixtures.server.Production(self.studio);self.studio.production=reopened
+        self.assertEqual('interrupted',reopened.get(pid)['state']['status']);self.assertEqual(1,reopened.get(pid)['state']['reserved'])
+        before=len(self.inference_calls);result=client.reconcile_start()
+        self.assertEqual('interrupted',result['observation']['status']);self.assertEqual(1,result['observation']['reserved'])
+        self.assertEqual(queue_size,self.studio.queue.qsize());self.assertEqual(before,len(self.inference_calls))
+        self.assertEqual({'allowance':3,'reserved':1},reopened.get(pid)['budget'])
+
+    def test_campaign_start_reconciliation_refuses_provenance_or_reservation_mismatch_without_journal_change(self):
+        self.register();client,_,_=self.revision('mismatch-start',(11,));pid=client.stage()['project']['id'];request=client.client.request
+        def lost(method,path,*args,**kwargs):
+            value=request(method,path,*args,**kwargs)
+            if method=='POST' and path=='/api/production/'+pid+'/start':raise TimeoutError('Synthetic lost client response after accepted Start')
+            return value
+        with patch.object(client.client,'request',side_effect=lost), self.assertRaises(TimeoutError):client.start()
+        for mutate in (lambda project:project['plan']['character_source'].__setitem__('attempt_kind','repair'),
+                       lambda project:project['state'].__setitem__('reserved',0),
+                       lambda project:project['state'].__setitem__('reserved',True),
+                       lambda project:project['state'].pop('reserved'),
+                       lambda project:project['state'].__setitem__('status','unrecognized')):
+            with self.subTest(mutate=mutate):
+                before=client.directory.joinpath('state.json').read_bytes()
+                def altered(method,path,*args,**kwargs):
+                    project=request(method,path,*args,**kwargs)
+                    if method=='GET' and path=='/api/production/'+pid:
+                        project=copy.deepcopy(project);mutate(project)
+                    return project
+                with patch.object(client.client,'request',side_effect=altered), self.assertRaises(ValueError):client.reconcile_start()
+                self.assertEqual(before,client.directory.joinpath('state.json').read_bytes())
+
     def test_server_contract_has_no_workspace_reads_and_rejects_changed_bindings(self):
         self.register(); _, plan, handoff = self.revision('pinned')
         payload = self.payload(plan,handoff)
