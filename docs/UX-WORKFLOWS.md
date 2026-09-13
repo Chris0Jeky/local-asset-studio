@@ -107,7 +107,7 @@ silently approximated. On storage failure, the existing compilation export remai
 
 ### Navigate without learning five applications
 
-All five HTML entry pages share the same grouped sidebar, breadcrumb and tool finder. Ctrl/Cmd+K opens
+All six HTML entry pages share the same grouped sidebar, breadcrumb and tool finder. Ctrl/Cmd+K opens
 the finder, Enter follows a filtered result, and Escape closes it. Main-workspace hashes support direct
 links and browser Back/Forward; specialist tools remain independently served pages. Mobile navigation
 collapses, source/dialog layouts reflow, and reduced-motion preferences are respected. Native dialogs

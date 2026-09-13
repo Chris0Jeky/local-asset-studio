@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
 Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter.
 
@@ -22,8 +20,8 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
-package manager: Python 3.12 + Pillow/psutil; plain JS in `app/static/` with a vendored model-viewer. The skip
-count is environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`): not a regression.
+package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
+with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`).
 
 ## Proving checks (narrowest command per seam)
 
@@ -37,15 +35,17 @@ count is environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node 
 | `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
-Use the `discover -s tests -p` form by default: 12 of 52 test modules import a sibling unqualified, so
-`python -m unittest tests.<name>` dies on import for `test_production`, `test_backends`, `test_review_desk`,
-`test_av_projects`, `test_engine_*`, `test_review_http`, `test_failed_job_timing`, `test_voice_baseline` and
-the three `test_character_*` integration modules. Four `app/` modules have no same-named test file:
-`articulated.py` → `test_articulated_operation` (+ `test_production`), `backend_contracts.py` →
-`test_backend_safety`, `download_contracts.py` → `test_model_install_safety` and `test_model_redirects`,
-`review_media.py` → `test_review_desk`.
+Use the `discover -s tests -p` form by default: 48 of the 126 test modules (measured 13 Sep 2026) import a sibling
+unqualified, so `python -m unittest tests.<name>` dies on import for them (every `test_workflow_*`, `test_asset_*`,
+`test_mixed_batch*`, `test_wan_*`, `test_engine_*`, `test_character_*`, plus `test_production`, `test_backends`,
+`test_review_desk`, `test_review_http`, `test_av_projects`). Eight `app/` modules have no same-named test file:
+`articulated.py` → `test_articulated_operation`, `backend_contracts.py` → `test_backend_safety`, `download_contracts.py` →
+`test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
+`model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI (`.github/workflows/check.yml`) runs the full suite plus `validate-repo.py` on every push and PR.
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 19 further
+path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
+only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 
 ## Architecture
 

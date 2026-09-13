@@ -21,7 +21,7 @@ environment, build an authored hinged prop, or export selected images to Krita
 and a tested Godot sprite project. See [Workspace](docs/WORKSPACE.md),
 [reference editing](docs/REFERENCE-ATELIER.md) and [native exports](docs/NATIVE-EXPORTS.md).
 
-Start with the [first-image walkthrough](docs/START-HERE.md), then try the [five guided experiments](docs/EXPERIMENTS.md). The [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
+Start with the [first-image walkthrough](docs/START-HERE.md), then read [experiments and native finishing](docs/EXPERIMENTS.md) for bounded comparisons and export plans. The [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
 
 ## What is here
 
@@ -92,7 +92,7 @@ The [anime detailing guide](docs/ANIME-DETAILING.md) covers installed ESRGAN, au
 
 ### Anime & fantasy atelier
 
-The **Anime flagship** category now carries Krea 2 Turbo presets with LoRA slots (four on `krea-anime-atelier`, three on `krea-style-lab`, one on the retro-anime pair; the SDXL anime presets carry two). A slot set
+The **Anime flagship** category now carries Krea 2 Turbo presets with LoRA slots (four on `krea-anime-atelier` and `krea-refine`, three on `krea-style-lab`, one on the retro-anime pair; the SDXL anime presets carry two and the Anima/JANIMA stacks up to six). A slot set
 to strength 0 is removed from the submitted graph, so the same preset covers a plain render, a single
 style adapter, or a stacked look. **Recipes** in the create view apply a complete named starting point
 (preset, prompt, settings and LoRA stack) in one click; prompts accept `{a|b|c}` and `__wildcard__`
