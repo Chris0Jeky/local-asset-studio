@@ -67,9 +67,12 @@ class RuntimeRecovery:
         self.state.update(status=status, message=message, updated_at=now, **extra)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.studio._write_json_atomic(self.path, self.state)
-        event = {"at": now, "status": status, "message": message, **extra}
+        # The state file carries freshness; the log records changes, not every identical poll.
+        event = {"status": status, "message": message, **extra}
+        if event == getattr(self, "_last_event", None): return
         with self.log_path.open("a", encoding="utf-8") as log:
-            log.write(json.dumps(event, sort_keys=True) + "\n")
+            log.write(json.dumps({"at": now, **event}, sort_keys=True, default=str) + "\n")
+        self._last_event = json.loads(json.dumps(event, sort_keys=True, default=str))  # only after the line is written
 
     def reset(self):
         """An explicit same-origin retry only clears the breaker; it cannot switch families."""
@@ -78,6 +81,7 @@ class RuntimeRecovery:
             self.state.pop("startup_pid", None)
             self.state.pop("startup_at", None)
             self.state["attempts"] = 0
+            self._last_event = None  # an explicit operator action is always logged, even when repeated
             self._record("idle", "Recovery breaker reset. The configured monitor will re-observe the selected backend.")
             return self.snapshot()
 
