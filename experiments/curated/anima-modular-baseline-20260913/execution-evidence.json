@@ -22,7 +22,8 @@
       "status": "completed",
       "seconds": 28.098373651504517,
       "recipe": "anima-base-recipe.json",
-      "recipe_sha256": "6f74fc28c8b89680eb81b4ba6f9318d3e8b743a283bba0e67b560b7251d80db9",
+      "recipe_sha256": "b15aeeed02bf6995bc09420b7c7b066b63d096201486f77f4fd0f19fd73f393c",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
       "output": {
         "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00001_.png",
         "bytes": 1052391,
@@ -46,7 +47,8 @@
       "status": "completed",
       "seconds": 20.146408081054688,
       "recipe": "anima-style-recipe.json",
-      "recipe_sha256": "c67243f6c41d1b848c1692e2042a679223959fc9f7880f7bb8ade8189e595132",
+      "recipe_sha256": "4d77ae69ac1cf4d91dfb747d87d3d19308cf97f56206e51605fe91f87aa8f091",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
       "output": {
         "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00002_.png",
         "bytes": 1133744,
@@ -70,7 +72,8 @@
       "status": "completed",
       "seconds": 18.077874183654785,
       "recipe": "anima-style-seed2-recipe.json",
-      "recipe_sha256": "42ac6780bb65fbc5695fc044add161ed5e1f4c68dc4aea56f09e8622ffde713b",
+      "recipe_sha256": "bfdbb35213b74f8205a78bfe16583aadff251c215bb4c85b654edfc012fe40d2",
+      "recipe_hash_format": "UTF-8 with LF newlines, matching Git blob",
       "output": {
         "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\output\\Studio\\Anima-v1-Baseline_00003_.png",
         "bytes": 1055309,
