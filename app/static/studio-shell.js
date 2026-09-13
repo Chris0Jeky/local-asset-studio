@@ -35,6 +35,6 @@
   }
   if(new URLSearchParams(location.search).has('guide')){
     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/studio-guide.css';document.head.append(css);
-    const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);
+    const rules=document.createElement('script');rules.src='/static/studio-guide-state.js';rules.onload=()=>{const coach=document.createElement('script');coach.src='/static/studio-guide.js';document.body.append(coach);};document.body.append(rules);
   }
 })();
