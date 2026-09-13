@@ -74,6 +74,36 @@ the installed `C:\AI\ComfyUI_windows_portable\ComfyUI`. Codex has local and clou
 cloud OAuth completed successfully for the account-holder's selected workspace. Current official Comfy skills and
 the reviewed V3-first custom-node development skills are installed for both Codex and Claude user scopes.
 
+## Source-bound continuation guard — 13 September 2026
+
+Studio continuation handoffs now retain a versioned source identity, destination preset, operation
+intent, staged-file identity and graph-template hash. The server derives source-consuming capability
+from the registered graph, rejects unsupported or source-free destinations during both preparation
+and pre-submit dispatch, and rechecks the staged and Comfy input bytes before any prompt submission.
+A same-family text-to-image recipe can therefore no longer silently replace a refinement route.
+
+When a selected output has exactly one retained submission matching its `prompt_id`, its submitted
+positive and negative text is available as source context. It is copied only between description
+roles; edit instructions and motion briefs start blank and block execution until the operator writes
+the new task. Missing or ambiguous history never falls back to a recipe example. Continuation state
+survives drafts, named setups, job records and recipe exports, and the browser keeps its prior stale
+handoff protections while adding source/context equality checks before applying an async attachment.
+
+Preset shortcuts now restore the destination's complete authored sampling and adapter state before
+applying the selected override, while preserving source, wording, size and seed. In particular,
+Krea Refine's `Full 8-step without the distill LoRA` followed by `Light touch` restores the currently
+authored 4 steps, 0.25 denoise and slot-3 distill strength 0.85 rather than retaining the disabled
+adapter. Recipe examples are exact-preset only during a continuation and cannot overwrite source or
+edited wording.
+
+The full repository suite passes **1,322 tests with 51 skipped**, and repository validation passes
+66 graphs/bindings, 121 pinned assets, 986 tracked paths and 86 LoRA names. The suite was run with
+`C:\Python314` first on `PATH` because the Codex shell's extensionless Python shim is not resolved by
+Node child processes on Windows. A synthetic Playwright run passes all 79 UI journeys with no browser
+exceptions, no generation submission and desktop/mobile screenshots inspected. These checks prove
+the data, server and browser contracts only: no ComfyUI inference was submitted, and static graph
+reachability is not a promise of visual identity preservation, art acceptance or model licensing.
+
 ## Interactive timing estimates and failure clarity — 13 September 2026
 
 Studio now exposes a read-only `/api/estimate` calculation beside the Create workspace. It learns

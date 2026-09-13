@@ -15,9 +15,9 @@ OPTIONAL_REFERENCE_ROLES = ('costume', 'style', 'pose')
 
 
 def preset_contract(preset):
-    """Ignore only UI-derived fields; pin the selected authored catalog entry."""
+    """Ignore server-derived fields; pin the selected authored catalog entry."""
     require(isinstance(preset, dict) and preset.get('id') in ('qwen-2ref', 'qwen-3ref'), 'Unsupported native preset')
-    return copy.deepcopy({k:v for k,v in preset.items() if k not in ('defaults', 'runtime_block', 'missing_loras')})
+    return copy.deepcopy({k:v for k,v in preset.items() if k not in ('defaults', 'runtime_block', 'missing_loras', 'continuation_capability')})
 
 
 def compile_instruction(changes):
@@ -181,5 +181,3 @@ def validate_handoff(root, value):
         if ref is refs[0]: require(list(im.size) == value['size'] and im.getchannel('A').getextrema() == (255,255), 'Model context changed')
     w,h=value['size']; require(type(w) is int and type(h) is int and 64<=w<=1536 and 64<=h<=1536 and w%8==h%8==0 and w*h<=1024**2, 'Invalid native crop size')
     return value
-
-

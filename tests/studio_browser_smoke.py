@@ -5,10 +5,12 @@ Requires Playwright and Chromium, outside the managed model environment.
 The local fixture server serves real frontend files and explicitly synthetic API data.
 """
 import argparse
+import hashlib
 import os
 import shutil
 import json
 import mimetypes
+import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -16,16 +18,20 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'app'))
+import continuation
 POSTS = []
 FAIL_WORKSPACE = False
 WORKSPACE_DELAY = 0
 ONLINE = True
-CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text())
+CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))
 for preset in CATALOG['presets']:
-    graph = json.loads((ROOT / preset['graph']).read_text())
+    graph = json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}
+    preset['continuation_capability'] = continuation.capability(preset, graph)
+    preset['continuation_capability']['template_sha256'] = hashlib.sha256((ROOT / preset['graph']).read_bytes()).hexdigest()
 ASSETS = []
 for i, (title, file, review) in enumerate([
     ('Lantern · material study', 'examples/references/lantern-reference.png', 'unreviewed'),
@@ -43,6 +49,13 @@ JOBS = [dict(id='fixture-job',preset_name='Lantern study · synthetic fixture',p
         dict(id='allocation-failure',preset_name='Krea 2 Anime Atelier',preset_id='krea-anime-atelier',status='failed',message='Generation failed: ComfyUI reported an execution error: KSampler: bad allocation',failure={'kind':'memory_allocation','title':'Memory allocation failed','summary':'ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt.','action':'Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically.','node_type':'KSampler','exception_type':'RuntimeError','detail':'bad allocation'},controls={},prompt_ids=['fixture-prompt'],submissions=[{'prompt_id':'fixture-prompt','status':'failed'}],outputs=[])]
 PLANS = [dict(id='a'*32, name='Lantern study · choose the finish', kind='comparison', state={'status':'awaiting_review','message':'Synthetic review fixture'}, stages=[], budget={'allowance':4,'reserved':3}, axis='seed', values=[]),
          dict(id='b'*32, name='Motion study · prepared, not started', kind='comparison', state={'status':'planned','message':'Synthetic planned fixture'}, stages=[], budget={'allowance':4,'reserved':0}, axis='seed', values=[])]
+
+def source_context(asset):
+    return {'version':1, 'asset_id':asset['id'], 'sha256':asset['sha256'], 'title':asset['title'],
+            'preset_id':'anima-portrait', 'preset_name':'Synthetic UX fixture', 'job_id':'fixture-job',
+            'prompt_id':'fixture-prompt', 'positive':'Explore one form, then continue with a variation.',
+            'negative':'blur', 'prompt_origin':'submitted-output', 'prompt_role':'description',
+            'warning':'', 'width':512, 'height':768}
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
@@ -67,10 +80,17 @@ class Handler(BaseHTTPRequestHandler):
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},
             '/api/av':{'projects':[],'capabilities':{'render_ready':False}},
             '/api/voice-baseline':{'projects':[],'capabilities':{'configured':False}},
-            '/api/prompt/profiles':json.loads((ROOT/'research/prompt-studio/profiles.json').read_text()),
+            '/api/prompt/profiles':json.loads((ROOT/'research/prompt-studio/profiles.json').read_text(encoding='utf-8')),
         }
         if path in data:return self.json(data[path])
         if path.startswith('/api/inspect/'):return self.json({'requirements':[],'nodes':[],'graph':{}})
+        if path.startswith('/api/assets/') and path.endswith('/context'):
+            asset_id=path.split('/')[3]; asset=next((a for a in ASSETS if a['id']==asset_id),None)
+            return self.json(source_context(asset) if asset else {'error':'Fixture asset missing'},200 if asset else 404)
+        if path.startswith('/api/assets/') and path.endswith('/file'):
+            asset_id=path.split('/')[3]; asset=next((a for a in ASSETS if a['id']==asset_id),None)
+            if not asset:return self.json({'error':'Fixture asset missing'},404)
+            path=asset['url']
         if path.startswith('/api/image/'):path='/examples/references/lantern-reference.png'
         if path.startswith('/api/uploads/'):path='/examples/references/lantern-reference.png'
         if path.startswith('/api/examples/'):path='/examples/'+path.removeprefix('/api/examples/')
@@ -82,7 +102,10 @@ class Handler(BaseHTTPRequestHandler):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
         data=json.loads(raw) if self.headers.get('Content-Type')=='application/json' else {}
         POSTS.append({'path':self.path,'data':data})
-        if self.path=='/api/assets/reference':return self.json({'file':'fixture.png','sha256':'a'*64,'width':512,'height':768})
+        if self.path=='/api/assets/reference':
+            asset=next(a for a in ASSETS if a['id']==data['id'])
+            return self.json({'file':'a'*32+'_fixture.png','sha256':asset['sha256'],'width':512,'height':768,
+                              'parent_asset':asset['id'],'context':source_context(asset)})
         if self.path=='/api/estimate':return self.json({'available':True,'estimate_seconds':42,'range_seconds':[30,55],'confidence':'medium','sample_count':4,'matched_samples':3,'basis':['3 completed runs of this workflow','scaled for 832×1216, 15 steps, 1 active LoRA, 1 output'],'features':{'workflow':'Synthetic workflow','model':['fixture-model'],'loras':['fixture-lora'],'resolution':[832,1216],'steps':15,'frames':1,'node_count':8,'references':1,'modality':'image'}})
         if self.path=='/api/references/check':return self.json([{'file':f,'available':f!='missing.png','sha256':'a'*64} for f in data['files']])
         if self.path=='/api/prompt/compile':
@@ -137,7 +160,7 @@ def run(screenshots):
             if screenshots:page.screenshot(path=str(screenshots/'overview-desktop.png'),full_page=True)
             page.keyboard.press('Control+k');check(page.locator('#studioCommandDialog').is_visible(),'Ctrl+K opens finder');page.fill('#studioCommandSearch','voice');check(page.locator('#studioCommandResults a').count()==1,'finder filters tools');page.keyboard.press('Escape');check(not page.locator('#studioCommandDialog').is_visible(),'Escape closes finder')
             page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.locator('#uxRecipeLabel').inner_text().startswith('Qwen'),'intent chooses compatible recipe');check(page.locator('#generate').is_disabled(),'empty required slots block generation')
-            page.click('#uxPullAsset');page.wait_for_selector('[data-ux-pull="asset-0"]');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "fixture.png"');check(page.evaluate('parentAssets[0]')=='asset-0','picker preserves lineage');check(page.locator('#generate').is_enabled(),'filled required slot becomes ready');check(page.locator('#gallery .reference-output').count()==1,'output actions consolidate to one handoff');check(all(x['path']!='/api/jobs' for x in POSTS),'source picker does not generate')
+            page.click('#uxPullAsset');page.wait_for_selector('[data-ux-pull="asset-0"]');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "'+('a'*32)+'_fixture.png"');check(page.evaluate('parentAssets[0]')=='asset-0','picker preserves lineage');check(page.locator('#generate').is_enabled(),'filled required slot becomes ready');check(page.locator('#gallery .reference-output').count()==1,'output actions consolidate to one handoff');check(all(x['path']!='/api/jobs' for x in POSTS),'source picker does not generate')
             page.fill('#positive','A saved workflow draft');page.wait_for_timeout(500);check(page.evaluate('Object.keys(localStorage).some(k=>k.includes("qwen-1ref"))'),'edited draft is persisted')
             if screenshots:
                 page.evaluate('window.scrollTo(0,0)');page.screenshot(path=str(screenshots/'create-desktop.png'),full_page=True)
@@ -152,7 +175,8 @@ def run(screenshots):
             WORKSPACE_DELAY=.3;page.evaluate("jobs[0].outputs[0].asset_id='asset-stale'");page.click('#gallery .reference-output');page.evaluate("jobs[0].outputs[0].asset_id='asset-0'");page.click('#gallery .reference-output');page.wait_for_function("document.querySelector('#uxHandoff').open");page.wait_for_timeout(450);check('Lantern' in page.locator('#uxHandoffSource').inner_text(),'stale gallery refresh cannot replace a newer handoff');page.click('[data-ux-close="uxHandoff"]');WORKSPACE_DELAY=0
             page.evaluate("showView('assets')");page.wait_for_selector('[data-asset-open="asset-0"]');page.locator('[data-asset-open="asset-0"]').first.click();page.fill('#assetNotes','Do not lose this edit');page.click('[data-ux-handoff="asset-0"]');check(not page.locator('#uxHandoff').is_visible(),'unsaved asset edits block handoff');check(page.locator('#assetNotes').input_value()=='Do not lose this edit','handoff preserves unsaved details');page.fill('#assetNotes','');page.click('[data-ux-handoff="asset-0"]');check(page.locator('#uxHandoff').is_visible(),'asset opens reviewed handoff');page.click('[data-ux-destination="animate"]');check('wan22-i2v' in page.locator('#uxDestination').inner_html(),'handoff filters to image-input video recipes');check('wan22-t2v' not in page.locator('#uxDestination').inner_html(),'text-only destination excluded for image handoff')
             if screenshots:page.screenshot(path=str(screenshots/'handoff-desktop.png'))
-            page.click('#uxPrepareHandoff');page.wait_for_function('selected.id === "wan22-i2v"');check(page.evaluate('parentAssets[0]')=='asset-0','handoff preserves source in new recipe');check(all(x['path']!='/api/jobs' for x in POSTS),'handoff has zero generation mutations')
+            page.click('#uxPrepareHandoff');page.wait_for_function('selected.id === "wan22-i2v"');check(page.evaluate('parentAssets[0]')=='asset-0','handoff preserves source in new recipe');check(page.locator('#uxContinuation').is_visible(),'prepared handoff keeps an explicit source-bound context panel');check(page.locator('#positive').input_value()=='','image description is not copied into a motion brief');check(page.locator('#generate').is_disabled(),'motion continuation waits for explicit motion wording');check(all(x['path']!='/api/jobs' for x in POSTS),'handoff has zero generation mutations')
+            if screenshots:page.locator('#uxContinuation').screenshot(path=str(screenshots/'handoff-prepared-desktop.png'))
             page.evaluate("showView('assets')");page.check('[data-asset-check="asset-5"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='true','JPEG scene selection blocked');page.click('#createScene',force=True);check(page.url.endswith('#assets'),'blocked scene handoff does not navigate');page.click('#clearAssetSelection');page.check('[data-asset-check="asset-0"]');check(page.locator('#createScene').get_attribute('aria-disabled')=='false','PNG scene selection allowed')
             page.evaluate("showView('models')");check(page.locator('.environment-panel .runtime-bar').is_visible(),'environment controls live in Models');page.go_back();page.wait_for_timeout(150);check(page.locator('#assetsView').is_visible(),'browser Back restores previous view')
             FAIL_WORKSPACE=True;page.evaluate("showView('home')");page.wait_for_function('document.querySelector("#uxHomeHealth").textContent.includes("unavailable")');check('—' in page.locator('#uxStats').inner_text(),'unavailable workspace is not reported as zero');FAIL_WORKSPACE=False
@@ -165,12 +189,12 @@ def run(screenshots):
             if screenshots:page.screenshot(path=str(screenshots/'create-mobile.png'),full_page=True)
             for route in ['assets','production','models','learn']:
                 page.evaluate(f"showView('{route}')");page.wait_for_timeout(100);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'mobile {route} has no horizontal overflow')
-            page.evaluate("showView('create');selectPreset('qwen-2ref')");page.click('#uxPullAsset');page.select_option('#uxSourceSlot','1');page.click('[data-ux-pull="asset-1"]');page.wait_for_function('referenceRecords[1].file === "fixture.png"');check(page.evaluate('referenceRecords[0].file') is None,'named source picker fills only selected slot');check(page.locator('#generate').is_disabled(),'remaining required slot still blocks run')
+            page.evaluate("showView('create');selectPreset('qwen-2ref')");page.click('#uxPullAsset');page.select_option('#uxSourceSlot','1');page.click('[data-ux-pull="asset-1"]');page.wait_for_function('referenceRecords[1].file === "'+('a'*32)+'_fixture.png"');check(page.evaluate('referenceRecords[0].file') is None,'named source picker fills only selected slot');check(page.locator('#generate').is_disabled(),'remaining required slot still blocks run')
             missing={'version':1,'updatedAt':123,'recipe':{'preset':'gentle-variation','controls':{'positive':'Restore without silently falling back','reference':'missing.png'},'batch':1,'parent_assets':['asset-0'],'references':[]}}
             page.set_input_files('#uxImportDraft',{'name':'draft.json','mimeType':'application/json','buffer':json.dumps(missing).encode()});page.wait_for_function('selected.id === "gentle-variation" && document.querySelector("#uxSourceNote").textContent.includes("unavailable")');check(page.locator('#generate').is_disabled(),'missing restored input never falls back to example');check(page.locator('#positive').input_value()=='Restore without silently falling back','draft import restores its text')
             invalid=json.loads(json.dumps(missing));invalid['recipe']['references']=[{'width':'<img onerror=alert(1)>'}]
             page.set_input_files('#uxImportDraft',{'name':'invalid.json','mimeType':'application/json','buffer':json.dumps(invalid).encode()});page.wait_for_function('document.querySelector("#uxNotice").textContent.includes("not a supported")');check(page.evaluate('selected.id')=='gentle-variation','invalid imported draft leaves active recipe intact')
-            page.click('#uxPullAsset');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "fixture.png"');check(page.locator('#generate').is_enabled(),'reattachment resolves missing-input block')
+            page.click('#uxPullAsset');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "'+('a'*32)+'_fixture.png"');check(page.locator('#generate').is_enabled(),'reattachment resolves missing-input block')
             ONLINE=False;page.evaluate('health()');check(page.locator('#generate').is_disabled(),'offline runtime blocks generation');ONLINE=True;page.evaluate('health()')
             page.fill('#positive','Keep this tab draft');page.wait_for_timeout(400)
             other=context.new_page();other.goto(origin);other.wait_for_function('!!selected');other.evaluate("localStorage.setItem('studio-draft-v1:ux-test-workspace:gentle-variation',JSON.stringify({version:1,updatedAt:Date.now()+1,recipe:{preset:'gentle-variation',controls:{positive:'Other tab draft'},batch:1}}))")

@@ -102,8 +102,8 @@ async function handoffAsset(id,presetId) {
   if(presetId==='reference')preset=catalog.presets.find(p=>p.id==='qwen-1ref')||catalog.presets.find(p=>p.id==='gentle-variation')||catalog.presets.find(p=>p.reference&&(p.modality||'image')==='image');
   if(presetId==='anime-upscale')preset=catalog.presets.find(p=>p.id==='anime-esrgan-2x')||catalog.presets.find(p=>p.reference&&/upscale/i.test(p.name));
   if(!preset)throw Error('That recipe is unavailable');
-  selectPreset(preset.id);uploaded=result.file;setHandoffParent('reference',id);
-  if(preset.reference_slots){Object.assign(referenceRecords[0],result);renderReferenceSlots();}
+  const intent=preset.modality==='video'?'animate':preset.modality==='3d'?'mesh':/fix|refine|upscale|esrgan/.test(preset.id)?'repair':'edit';
+  beginContinuation(result,preset.id,intent);
   $('#referenceHint').textContent='Attached '+(assetState.assets.find(a=>a.id===id)?.title||'asset')+' · '+result.width+' × '+result.height;
   $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:'smooth'});message('Source asset attached. Adjust your brief, then generate.');
 }

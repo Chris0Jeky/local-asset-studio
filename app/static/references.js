@@ -63,6 +63,6 @@ $('#referenceCards').onclick=e=>{
 $('#referenceCards').ondragover=e=>{e.preventDefault();};
 $('#referenceCards').ondrop=e=>{e.preventDefault();const card=e.target.closest('[data-ref-drop]');if(card)uploadRoleFile(Number(card.dataset.refDrop),e.dataTransfer.files[0]);};
 $('#previewResolvedRecipe').onclick=async()=>{
-  try{const result=await post('/api/preview',{preset_id:selected.id,controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value});$('#graphPreview').textContent=JSON.stringify(result,null,2);$('#graphPreview').closest('details').open=true;message('Resolved recipe previewed. No generation submitted.');}
+  try{const result=await post('/api/preview',{preset_id:selected.id,...continuationPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value});$('#graphPreview').textContent=JSON.stringify(result,null,2);$('#graphPreview').closest('details').open=true;message('Resolved recipe previewed. No generation submitted.');}
   catch(e){message(e.message,true);}
 };
