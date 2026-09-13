@@ -43,3 +43,9 @@ class WorkflowClient(Client):
         """Prepare compatible image-recipe edits; returns a report containing its run ticket."""
         return self.request('/api/workflow-studio/prepare-document',
                             {'document': document, 'preset_id': identifier(preset_id)})
+
+    @property
+    def saved_runs(self):
+        """Prepare/recover revision-bound tickets; never executes them."""
+        from .run_client import SavedRuns
+        return SavedRuns(self.request)
