@@ -67,7 +67,8 @@ def _copy(source, staged, expected):
     digest = hashlib.sha256(); total = 0
     plain_path(staged); _same_source(source, expected)
     with source.open('rb') as reader:
-        if _handle_identity(reader) != expected:raise ValueError('Opened source differs from the planned file')
+        observed = _handle_identity(reader)
+        if observed != expected:raise ValueError(f'Opened source differs from the planned file: expected {expected}; observed {observed}')
         with staged.open('xb') as writer:
             while chunk := reader.read(CHUNK_BYTES):
                 total += len(chunk)
@@ -76,7 +77,8 @@ def _copy(source, staged, expected):
                     raise ValueError('Insufficient space during intake; partial copy preserved')
                 writer.write(chunk); digest.update(chunk)
             writer.flush(); os.fsync(writer.fileno())
-        if _handle_identity(reader) != expected:raise ValueError('Source changed during intake; partial copy preserved')
+        observed = _handle_identity(reader)
+        if observed != expected:raise ValueError(f'Source changed during intake; partial copy preserved: expected {expected}; observed {observed}')
     _same_source(source, expected)
     if total != expected['size']:raise ValueError('Source size changed during intake; partial copy preserved')
     return digest.hexdigest()
