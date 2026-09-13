@@ -30,11 +30,15 @@ function setup(options={}) {
   });
   const run=code=>vm.runInContext(code,context);
   run(recoverySource);run(source);
-  run(`refreshAssets=async()=>{};assetState.assets=['a','b'].map(id=>({id,title:id,notes:'original',tags:['tag'],review:'unreviewed',favorite:false,media_type:'video',preset_id:'wan22-i2v',job_id:'job-'+id,metadata_revision:0,source:{},lineage:[],bytes:1}));`);
+  run(`refreshAssets=async()=>{};assetState.workspace_id='1'.repeat(32);assetState.assets=['a','b'].map(id=>({id,workspace_id:assetState.workspace_id,title:id,notes:'original',tags:['tag'],review:'unreviewed',favorite:false,media_type:'video',preset_id:'wan22-i2v',job_id:'job-'+id,metadata_revision:0,source:{},lineage:[],bytes:1}));`);
+  run('renderLibraryRecovery()');
   if(options.autoOpen!==false)run("openAsset('a')");
   const payload=index=>JSON.parse(writes[index].options.body);
-  const receipt=index=>{const p=payload(index);return {status:'applied',request_id:p.request_id,updated:p.ids,action:p.action,revisions:Object.fromEntries(p.ids.map(id=>[id,p.expected_revisions[id]+1])),applied:p.action==='edit'?Object.fromEntries(['title','notes','tags','favorite','review'].filter(k=>k in p).map(k=>[k,p[k]])):['trash','restore'].includes(p.action)?{trashed_at:p.action==='trash'?123:null}:{collection_id:p.collection_id}};};
-  return {el,run,writes,reads,timers,storage,payload,metadata:index=>{const {request_id,expected_revisions,...fields}=payload(index);return fields;},receipt,accept:index=>writes[index].resolve(receipt(index)),confirmations:()=>requests,approve(value){approve=value;},
+  const receipt=index=>{const p=payload(index),applied=p.action==='edit'?Object.fromEntries(['title','notes','tags','favorite','review'].filter(k=>k in p).map(k=>[k,p[k]])):['trash','restore'].includes(p.action)?{trashed_at:p.action==='trash'?123:null}:{collection_id:p.collection_id};
+    const state=JSON.parse(run('JSON.stringify(assetState)'));
+    return {status:'applied',workspace_id:p.workspace_id,request_id:p.request_id,updated:p.ids,action:p.action,revisions:Object.fromEntries(p.ids.map(id=>[id,p.expected_revisions[id]+1])),applied,
+      current:p.ids.map(id=>({...state.assets.find(a=>a.id===id),...applied,id,workspace_id:p.workspace_id,metadata_revision:p.expected_revisions[id]+1}))};};
+  return {el,run,writes,reads,timers,storage,payload,metadata:index=>{const {workspace_id,request_id,expected_revisions,...fields}=payload(index);return fields;},receipt,accept:index=>writes[index].resolve(receipt(index)),confirmations:()=>requests,approve(value){approve=value;},
     async diagnostic(job='job-a') {const target={closest:selector=>selector==='[data-i2v-diagnostic]'?{dataset:{i2vDiagnostic:job}}:null};for(const h of handlers)if(h.name==='click'&&!h.capture)await h.fn({target});},
     capturedHandoff(){let prevented=false;for(const h of handlers)if(h.name==='click'&&h.capture)h.fn({target:{closest:()=>true},preventDefault(){prevented=true;},stopImmediatePropagation(){}});return prevented;}
   };

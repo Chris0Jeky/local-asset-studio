@@ -2,6 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecovery=api;})(globalThis,function(){
   'use strict';
   const PREFIX='studio.asset-recovery.v1.', LIMIT=512*1024;
+  const workspace=value=>typeof value==='string' && /^[0-9a-f]{32}$/.test(value);
   const object=value=>value && typeof value==='object' && !Array.isArray(value);
   const form=value=>object(value) && ['title','tags','review','notes'].every(k=>typeof value[k]==='string');
   function operation(value){
@@ -15,7 +16,11 @@
     try{return JSON.stringify(JSON.parse(value.body))===JSON.stringify(c);}catch(_){return false;}
   }
   function valid(slot,value){
-    if(!object(value) || value.version!==1)return false;
+    if(!object(value) || ![1,2].includes(value.version))return false;
+    if(value.version===2 && (!workspace(value.workspace_id) ||
+       (value.operation && value.operation.command?.workspace_id!==value.workspace_id) ||
+       (slot==='detail' && value.metadata?.workspace_id!==value.workspace_id) ||
+       (value.conflict && (value.conflict.workspace_id!==value.workspace_id || !Array.isArray(value.conflict.current) || value.conflict.current.some(m=>m.workspace_id!==value.workspace_id)))))return false;
     if(slot==='library')return operation(value.operation) && Array.isArray(value.selection) && value.selection.every(id=>typeof id==='string');
     const m=value.metadata;
     return slot==='detail' && typeof value.id==='string' && object(m) && m.id===value.id &&
@@ -48,5 +53,5 @@
     }
     return {read,write,clear};
   }
-  return {create,PREFIX};
+  return {create,PREFIX,workspace};
 });

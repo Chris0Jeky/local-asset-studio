@@ -23,7 +23,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Queue
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 # The portable Python includes ComfyUI's own `app` package in its search path.
@@ -1497,6 +1497,14 @@ class Handler(BaseHTTPRequestHandler):
                     if not chunk: break
                     self.wfile.write(chunk); remaining -= len(chunk)
         except (BrokenPipeError, ConnectionResetError): pass
+    def _asset_query_scope(self):
+        scopes = parse_qs(urlparse(self.path).query, keep_blank_values=True).get("workspace_id")
+        if scopes is None:
+            return None
+        if len(scopes) != 1:
+            raise WorkspaceError("Supply exactly one Workspace identity")
+        return scopes[0]
+
     def do_GET(self):
         if not self._safe_host(): return self._json(403, {"error":"Loopback Host required"})
         try:
@@ -1506,9 +1514,9 @@ class Handler(BaseHTTPRequestHandler):
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();return self._json(200,result)
             if path == "/api/workspace": return self._json(200, self.studio.assets.snapshot())
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
-                return self._json(200, self.studio.assets.command_status(path.split("/")[4]))
+                return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
-                return self._json(200, self.studio.assets.metadata(path.split("/")[3]))
+                return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path == '/api/voice-baseline':

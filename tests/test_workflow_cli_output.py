@@ -2,6 +2,7 @@
 from contextlib import redirect_stdout
 import io
 import json
+import math
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -124,6 +125,41 @@ class OutputTests(unittest.TestCase):
         self.assertEqual(result['job']['seed'], wide)
         self.assertEqual(json.loads(output.read_bytes()), result)
         self.assertEqual(self.studio.calls, 1)
+
+    def test_nonfinite_received_response_is_retained_before_output_export(self):
+        ticket = self.ticket(); output = Path(self.temp.name) / 'nonfinite.json'
+        original_public = self.studio.public
+        def nonfinite(job):
+            result = original_public(job)
+            result['response_metadata'] = {
+                'nested': {'not_a_number': float('nan'), 'positive': float('inf'), 'negative': float('-inf')},
+                'label': 'snowman ☃',
+            }
+            return result
+        self.studio.public = nonfinite
+        rendered = io.StringIO()
+        with patch.object(cli.Client, 'request', wraps=cli.Client(self.url).request) as request, redirect_stdout(rendered):
+            code = cli.main(['--url', self.url, 'run', '--ticket', str(ticket), '--approve', '--out', str(output)])
+        def reject_nonfinite(token): raise AssertionError('Outer diagnostic is not strict JSON: ' + token)
+        result = json.loads(rendered.getvalue(), parse_constant=reject_nonfinite)
+        self.assertEqual(code, 2, result)
+        self.assertEqual(request.call_count, 1)
+        self.assertEqual(self.studio.calls, 1)
+        self.assertFalse(output.exists(), 'Encoding failure must happen before any output file is created')
+        self.assertTrue(rendered.getvalue().isascii(), 'The encoding diagnostic must be ASCII-only strict JSON')
+        self.assertEqual(result['status'], 'received_response_encoding_error')
+        self.assertTrue(result['response_received'])
+        self.assertEqual(result['received_result']['encoding'], 'json-with-nonfinite-tokens')
+        received = result['received_result']['text']
+        self.assertIn('NaN', received)
+        self.assertIn('Infinity', received)
+        self.assertIn('-Infinity', received)
+        decoded = json.loads(received)
+        self.assertEqual(decoded['job']['id'], next(iter(self.studio.jobs)))
+        self.assertTrue(math.isnan(decoded['job']['response_metadata']['nested']['not_a_number']))
+        self.assertEqual(decoded['job']['response_metadata']['nested']['positive'], float('inf'))
+        self.assertEqual(decoded['job']['response_metadata']['nested']['negative'], float('-inf'))
+        self.assertEqual(decoded['job']['response_metadata']['label'], 'snowman ☃')
 
     def test_genuinely_lost_run_response_retains_uncertainty(self):
         ticket = self.ticket()
