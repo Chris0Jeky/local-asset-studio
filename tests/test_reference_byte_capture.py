@@ -27,7 +27,8 @@ class ReferenceByteCaptureTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
+        # Match production's canonical spelling (Windows temp paths can be aliases).
+        self.root = Path(self.temporary.name).resolve()
         self.path = self.root / 'source.png'
         self.original = encoded()
         self.path.write_bytes(self.original)

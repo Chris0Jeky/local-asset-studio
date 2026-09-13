@@ -78,3 +78,13 @@ This is a software-only maintenance slice. No owner database, source media,
 configuration, model, runtime process or HUMAN_TODO decision was changed.
 No generation, upload, download or new artistic/rights acceptance follows from
 the fixtures. Independent review and owner-runtime acceptance remain separate.
+
+## Native Windows fixture follow-up
+
+The first hosted Windows lane passed the product compatibility cases but exposed
+two path-interception fixtures that never reached their hooks: they compared an
+unresolved temporary-directory spelling with production's resolved path. An
+aliased-directory reproduction on Linux produced the same two failures. The
+fixture now canonicalizes its temporary root before constructing its expected
+source path; the same alias reproduction passes. No production code or assertion
+was weakened. Native Windows rerun evidence is recorded separately on the PR.
