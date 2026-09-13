@@ -20,9 +20,10 @@ unchanged and are not claimed as the cause of this Krea2 device allocation failu
 
 ## Final reconciliation — 13 September 2026
 
-The five PRs from the review sweep (#146, #149, #150, #151 and #152) and the later
-Production storage fix #153 are merged with merge commits. `origin/main` is now
-`8150480355d6500fd9416f56545a0f7e5d468ceb`, and the live open-PR list is empty. The
+The five PRs from the review sweep (#146, #149, #150, #151 and #152), the Production
+storage fix #153, the exact saved-run dispatch fix #154 and the reusable bundle workflow
+#155 are merged with merge commits. `origin/main` is now
+`cf225b43e2c81cd5e0985661d13aa3aec4fcb544`, and the live open-PR list is empty. The
 local crash-diagnosis patch is saved separately as commit `1a66904` on
 `codex/clear-comfy-failures`; it has not been pushed or merged. The patch does not
 retry failed prompts: it retains ComfyUI's node and exception context and shows a
