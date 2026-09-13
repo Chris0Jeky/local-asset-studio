@@ -50,8 +50,9 @@ empty), but `/api/jobs` retains uncertain records
 `a2908800-7214-4caa-ad23-3844527cdf5d` and `0cbaae1b-1134-548c-9e03-50bac00b75b9`, and
 production retains one uncertain record. The closeout therefore did not stop either runtime;
 the merged runtime and backend fixes are source-verified but not live-reloaded. Host commit
-headroom is 11.72 GiB, below the documented 32 GiB gate; after the owner-authorized restart,
-the effective page file still needs a fresh allocation/headroom recheck.
+headroom is 11.72 GiB, below the documented 32 GiB gate at that historical snapshot; after the
+owner-authorized restart, the effective page file still needed a fresh allocation/headroom recheck.
+The newer opening section records the subsequent live reading.
 
 The four large model transfers were active and incomplete at closeout: CSTati PID `7800`, JANIMA PID
 `24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
@@ -59,9 +60,10 @@ The four large model transfers were active and incomplete at closeout: CSTati PI
 is made. The former PR status sentence is superseded by the live reconciliation above: #146, #149
 and #150 are merged. Open #156 has five passing observed checks, open #157 has four, and the
 documentation PR #158 has two hosted checks in progress; none has a recorded review decision.
-HUMAN_TODO decisions remain
-recorded; only q-4's owner-controlled restart is still an action, and it must wait until
-downloads finish and work is saved.
+At that snapshot, the HUMAN_TODO decisions were recorded; q-4's owner-controlled restart was
+still pending and had to wait until downloads finished and work was saved. The newer opening
+section and [HUMAN_TODO.md](HUMAN_TODO.md) record the subsequent owner action and remaining
+human-only recheck.
 
 ## Modular Anima baseline execution — 13 September 2026
 
