@@ -34,7 +34,7 @@ The archived material is a historical snapshot from `0ffec70b109396aaacb590f2136
 
 Current-session CPU proofs and tests are recorded in `research/character-consistency/OFFLINE-EVIDENCE.json`. Neural inference, workstation installation, reference upload, live queue integration, actual art acceptance and engine playback are not claimed by this slice. The original guide's visual examples derive from the user's supplied images, not new local model generations.
 
-`HUMAN_TODO.md` remains authoritative and unchanged: optional pixel look, product brief, curation and Anima q-3 creative choices remain open. No permission, model installation or creative acceptance is inferred by importing the bundle.
+At this historical foundation checkpoint, `HUMAN_TODO.md` held the optional pixel look, product brief, curation and Anima q-3 creative choices. The current [HUMAN_TODO.md](../../HUMAN_TODO.md) records q-1 through q-4 as answered. No permission, model installation or creative acceptance is inferred by importing the bundle.
 
 ## Controlled-edit extension
 
