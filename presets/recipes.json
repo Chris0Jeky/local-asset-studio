@@ -723,9 +723,20 @@
       "preset_id": "anima-v1-baseline",
       "family": "Anima",
       "tags": ["anime", "adult-original-character", "adapter-audition"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 1.0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
+      "batch_count": 1,
+      "notes": "Single-adapter comparison against anima-v1-base: same prompt, seed, CFG 4.5, Euler and simple settings; slot 1 only at authored strength 1.0. It is unverified and editable; slots 2-6 are pruned.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anima-v1-screenshot-sampling-comparison",
+      "name": "Anima v1 - screenshot sampling comparison",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["anime", "adult-original-character", "sampling-comparison"],
       "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 5.5, "sampler": "euler_ancestral", "scheduler": "simple", "denoise": 1.0, "lora": 1.0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
       "batch_count": 1,
-      "notes": "Single-adapter comparison from the supplied Anima screenshot settings: slot 1 only at authored strength 1.0, CFG 5.5, Euler ancestral and simple. It is unverified and editable; slots 2-6 are pruned.",
+      "notes": "Multi-setting comparison from the supplied Anima screenshot settings: same prompt and seed as anima-v1-base, slot 1 at 1.0, with CFG 5.5 and Euler ancestral. It is unverified and editable; slots 2-6 are pruned.",
       "sources": [], "status": "unverified"
     },
     {

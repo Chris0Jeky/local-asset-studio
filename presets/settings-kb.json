@@ -1067,22 +1067,22 @@
     "CSTati v3 (SDXL)": {
       "prompt": {"style": "tag-oriented fully clothed adult original-character prompt", "prefix": "", "suffix": "masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor", "notes": ["Starting values are authored from the supplied screenshot brief, not a model-card transcription."]},
       "defaults": {"sampler": "euler_ancestral", "scheduler": "karras", "steps": 30, "cfg": 4.0, "width": 832, "height": 1216},
-      "axes": [], "sources": [], "licence_note": "Pending model-library provenance and terms integration."
+      "axes": [], "sources": [], "licence_note": "Source pinned; installation separately verified; licence terms unverified."
     },
     "YumeFlux ILv1 (SDXL)": {
       "prompt": {"style": "tag-oriented fully clothed adult original-character prompt", "prefix": "", "suffix": "masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor", "notes": ["Starting values are authored from the supplied screenshot brief, not a model-card transcription."]},
       "defaults": {"sampler": "euler_ancestral", "scheduler": "karras", "steps": 30, "cfg": 4.0, "width": 832, "height": 1216},
-      "axes": [], "sources": [], "licence_note": "Pending model-library provenance and terms integration."
+      "axes": [], "sources": [], "licence_note": "Source pinned; installation separately verified; licence terms unverified."
     },
     "AniFox v2 (SDXL)": {
       "prompt": {"style": "tag-oriented fully clothed adult original-character prompt", "prefix": "", "suffix": "masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor", "notes": ["Starting values are authored from the supplied screenshot brief, not a model-card transcription."]},
       "defaults": {"sampler": "euler_ancestral", "scheduler": "karras", "steps": 30, "cfg": 5.0, "width": 832, "height": 1216},
-      "axes": [], "sources": [], "licence_note": "Pending model-library provenance and terms integration."
+      "axes": [], "sources": [], "licence_note": "Source pinned; installation separately verified; licence terms unverified."
     },
     "JANIMA v1 (Anima)": {
       "prompt": {"style": "descriptive prose for a fully clothed adult original character", "prefix": "", "suffix": "", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts", "notes": ["Sampler values and five-adapter strengths are cautious authored starting values, not source transcription."]},
       "defaults": {"sampler": "euler", "scheduler": "simple", "steps": 30, "cfg": 4.5, "width": 832, "height": 1216},
-      "axes": [], "sources": [], "licence_note": "Pending model-library provenance and terms integration."
+      "axes": [], "sources": [], "licence_note": "Source pinned; installation separately verified; licence terms unverified."
     }
   },
   "loras": {
@@ -1949,25 +1949,25 @@
       ]
     },
     "nsfw_girls.safetensors": {
-      "family": "CSTati v3 (SDXL)", "label": "First screenshot-family SDXL adapter", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["Used only as the first optional slot in CSTati v3, YumeFlux ILv1 and AniFox v2 baseline graphs. Compatibility and availability are unverified."]
+      "family": "CSTati v3 (SDXL)", "label": "First screenshot-family SDXL adapter", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2822856?modelVersionId=3184370", "sha256": "730396e711a1b04db566b78772b6de8f4fdb2178e07430295256912078702ca9", "bytes": 340803344, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["Used only as the first optional slot in CSTati v3, YumeFlux ILv1 and AniFox v2 baseline graphs. Compatibility and availability are unverified."]
     },
     "noirpopwave.safetensors": {
-      "family": "CSTati v3 (SDXL)", "label": "Noir screenshot-family SDXL adapter", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["Second optional slot, kept at 0 by every new SDXL baseline recipe. Compatibility and availability are unverified."]
+      "family": "CSTati v3 (SDXL)", "label": "Noir screenshot-family SDXL adapter", "trigger": "noirpopwave", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2398033?modelVersionId=2696276", "sha256": "7c9e15de134f38d4deeb96148cb2e562291622ccc0f786ed85485b9de3c4f044", "bytes": 228454636, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["Second optional slot, kept at 0 by every new SDXL baseline recipe. Compatibility and availability are unverified."]
     },
     "nsfw_girls_anima.safetensors": {
-      "family": "Anima", "label": "First Anima baseline adapter", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["Slot 1 in Anima v1 and slot 5 in JANIMA v1. The graph and recipes keep it disabled by default."]
+      "family": "Anima", "label": "First Anima baseline adapter", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2822856?modelVersionId=3225971", "sha256": "85e3916808205df13dd5a25e45934f7014e12f030c6473d21139a250531d18f4", "bytes": 57495432, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["Slot 1 in Anima v1 and slot 5 in JANIMA v1. The graph and recipes keep it disabled by default."]
     },
     "anima-highres-aesthetic-boost.safetensors": {
-      "family": "JANIMA v1 (Anima)", "label": "Anima high-resolution aesthetic boost", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["JANIMA slot 1. Disabled until a deliberate stack recipe is selected."]
+      "family": "JANIMA v1 (Anima)", "label": "Anima high-resolution aesthetic boost", "trigger": "", "trigger_position": "none", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2540444?modelVersionId=2855073", "sha256": "db5b2dcc4e1afa215058b7a85fb9377124c2e9aabd48c25e595af7199207c299", "bytes": 138662176, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["JANIMA slot 1. Disabled until a deliberate stack recipe is selected."]
     },
     "rapscallion_cherrypick_min1024_prodigy_lr1_4000_stylepush.safetensors": {
-      "family": "JANIMA v1 (Anima)", "label": "Rapscallion style push", "trigger": "@rapscallion_style", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["JANIMA slot 2. Disabled until a deliberate stack recipe is selected."]
+      "family": "JANIMA v1 (Anima)", "label": "Rapscallion style push", "trigger": "@rapscallion_style", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/1130747?modelVersionId=3056000", "sha256": "38ed01a3bb39ef5df18fd75270bb03c846a460e65c2c90252f10290e9123a400", "bytes": 264457744, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["JANIMA slot 2. Disabled until a deliberate stack recipe is selected."]
     },
     "BunnySlop_Ani_v5.56.safetensors": {
-      "family": "JANIMA v1 (Anima)", "label": "BunnySlop Ani v5.56", "trigger": "@sl0p", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["JANIMA slot 3. This exact v5.56 filename is distinct from older retained BunnySlop files."]
+      "family": "JANIMA v1 (Anima)", "label": "BunnySlop Ani v5.56", "trigger": "@sl0p", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2613391?modelVersionId=3174127", "sha256": "13427fef75b0558d1e29c487cebbce4b501db43f0841e31f6eb97c4acc191c17", "bytes": 138663759, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["JANIMA slot 3. This exact v5.56 filename is distinct from older retained BunnySlop files."]
     },
     "BunnyMid_Ani_v1.safetensors": {
-      "family": "JANIMA v1 (Anima)", "label": "BunnyMid Ani v1", "trigger": "@m1d", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "", "sha256": "unpinned", "bytes": 0, "licence": "Pending source, checksum and terms verification.", "notes": ["JANIMA slot 4. Disabled until a deliberate stack recipe is selected."]
+      "family": "JANIMA v1 (Anima)", "label": "BunnyMid Ani v1", "trigger": "@m1d", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2833471?modelVersionId=3197565", "sha256": "a2a83ae3298163e2c66170fd38609c8dcbca95efe58b58ce91cef68e18c95808", "bytes": 138663746, "licence": "Source pinned; installation separately verified; licence terms unverified.", "notes": ["JANIMA slot 4. Disabled until a deliberate stack recipe is selected."]
     }
   }
 }

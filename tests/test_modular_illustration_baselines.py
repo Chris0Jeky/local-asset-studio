@@ -57,6 +57,27 @@ class ModularIllustrationBaselineTests(unittest.TestCase):
         self.assertEqual([stack['controls'][f'lora{n or ""}'] for n in ('',2,3,4,5)],[0.3,0.6,0.35,0.25,0.5])
         self.assertIn('not screenshot/source transcription',stack['notes'])
         comparison=RECIPES['anima-v1-first-adapter-comparison']['controls']
-        self.assertEqual((comparison['steps'],comparison['cfg'],comparison['sampler'],comparison['scheduler']),(30,5.5,'euler_ancestral','simple'))
+        base=RECIPES['anima-v1-base']['controls']
+        self.assertEqual((comparison['steps'],comparison['cfg'],comparison['sampler'],comparison['scheduler']),(base['steps'],base['cfg'],base['sampler'],base['scheduler']))
         self.assertEqual(comparison['lora'],1.0)
         self.assertTrue(all(comparison[f'lora{n}']==0 for n in range(2,7)))
+        screenshot=RECIPES['anima-v1-screenshot-sampling-comparison']['controls']
+        self.assertEqual((screenshot['positive'],screenshot['negative'],screenshot['seed'],screenshot['lora']),(base['positive'],base['negative'],base['seed'],1.0))
+        self.assertEqual((screenshot['steps'],screenshot['cfg'],screenshot['sampler'],screenshot['scheduler']),(30,5.5,'euler_ancestral','simple'))
+        self.assertTrue(all(screenshot[f'lora{n}']==0 for n in range(2,7)))
+
+    def test_new_adapter_metadata_matches_model_library(self):
+        settings=json.loads((ROOT/'presets/settings-kb.json').read_text(encoding='utf-8'))['loras']
+        library={asset['file']:asset for asset in json.loads((ROOT/'models/library.json').read_text(encoding='utf-8'))['assets']}
+        names=('nsfw_girls.safetensors','noirpopwave.safetensors','nsfw_girls_anima.safetensors','anima-highres-aesthetic-boost.safetensors','rapscallion_cherrypick_min1024_prodigy_lr1_4000_stylepush.safetensors','BunnySlop_Ani_v5.56.safetensors','BunnyMid_Ani_v1.safetensors')
+        for name in names:
+            with self.subTest(name=name):
+                setting=settings[name]; asset=library[f'loras/{name}']
+                self.assertEqual({key:setting[key] for key in ('source','sha256','bytes','trigger')},{key:asset[key] for key in ('source','sha256','bytes','trigger')})
+                self.assertEqual(setting['licence'],'Source pinned; installation separately verified; licence terms unverified.')
+
+    def test_new_family_licence_notes_preserve_unverified_terms(self):
+        families=json.loads((ROOT/'presets/settings-kb.json').read_text(encoding='utf-8'))['families']
+        for family in ('CSTati v3 (SDXL)','YumeFlux ILv1 (SDXL)','AniFox v2 (SDXL)','JANIMA v1 (Anima)'):
+            with self.subTest(family=family):
+                self.assertEqual(families[family]['licence_note'],'Source pinned; installation separately verified; licence terms unverified.')

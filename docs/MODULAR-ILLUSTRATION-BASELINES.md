@@ -8,9 +8,9 @@ The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. S
 
 | Folder | Resources | Why |
 | --- | --- | --- |
-| `checkpoints/` | CSTati version3160406; YumeFlux3135837; AniFox3081757 | Full Illustrious/SDXL checkpoints, loaded with their encoder and VAE through `CheckpointLoaderSimple`. |
-| `diffusion_models/` | JANIMA2967640, file2847103 | Split Anima diffusion weights, loaded through `UNETLoader`; it uses the existing separate text encoder and VAE. |
-| `loras/` | Style adapters3225971(Anima) and3184370(Illustrious); aesthetic boost2855073; Rapscallion3056000; BunnySlop3174127; BunnyMid3197565 | Architecture-specific adapters. The similarly named Anima and Illustrious files are not interchangeable. |
+| `checkpoints/` | CSTati version 3160406; YumeFlux version 3135837; AniFox version 3081757 | Full Illustrious/SDXL checkpoints, loaded with their encoder and VAE through `CheckpointLoaderSimple`. |
+| `diffusion_models/` | JANIMA version 2967640, file 2847103 | Split Anima diffusion weights, loaded through `UNETLoader`; it uses the existing separate text encoder and VAE. |
+| `loras/` | Style adapters 3225971 (Anima) and 3184370 (Illustrious); aesthetic boost 2855073; Rapscallion 3056000; BunnySlop 3174127; BunnyMid 3197565 | Architecture-specific adapters. The similarly named Anima and Illustrious files are not interchangeable. |
 
 Source listing URLs are retained beside every pin. Current API responses do not provide creator licence/commercial-use permission fields for these additions, so those remain unverified. Files and download receipts stay outside Git's source artifacts; installing them does not upgrade ComfyUI or Python.
 
@@ -42,6 +42,8 @@ JANIMA's five slots are, in order: `anima-highres-aesthetic-boost.safetensors`, 
 
 Use one layer at a time:
 
+`anima-v1-first-adapter-comparison` is the one-variable Anima audition: it enables only slot 1 while keeping the baseline's CFG, sampler and scheduler. The separate `anima-v1-screenshot-sampling-comparison` keeps the same prompt and seed but uses the supplied CFG 5.5 and Euler ancestral settings, so it tests multiple settings together.
+
 1. Generate an unmodified base recipe.
 2. Change only one style adapter or its strength at the fixed seed.
 3. For SDXL pose guidance, start with **WAI — pose guide** (`wai-pose`). Its current checkpoint is WAI. Replacing that loader with another Illustrious checkpoint is an editable experiment, not a recorded run. Anima needs its own compatible conditioning route; never connect an SDXL ControlNet directly to it.
@@ -58,7 +60,7 @@ flowchart LR
   Repair --> Scale
 ```
 
-This is a comparison plan, not a modular Step implementation. In the current PR #126 Workflow Studio path, open **Guided workflows → Workflow builder**, choose **Start from a recipe**, import the registered API graph, select outputs and **Check connections**, then use **Export checked API graph**. It is a checked API export, not a ComfyUI visual workflow file and not permission to execute a changed graph. Arbitrary edited graphs are export-only pending #122; shared document commands and reusable Step modules remain unimplemented work in #120. Do not add a second editor, raw `/prompt` executor or another queue to bridge those gaps.
+This is a comparison plan, not a modular Step implementation. In the current PR #126 Workflow Studio path, open **Guided workflows → Workflow builder**, choose **Start from a recipe**, import the registered API graph, select outputs and **Check connections**, then use **Export checked API graph**. It is a checked API export, not a ComfyUI visual workflow file and not permission to execute a changed graph. PR #130's shared document commands have landed on `main` at `fd5aba1`; see [shared document commands](workflow-studio/SHARED-DOCUMENTS.md). Revision and agent commands are implemented. PR #131's named Step UI is under review; arbitrary graph execution remains pending in #122, and reusable executable modules are not yet implemented. Do not add a second editor, raw `/prompt` executor or another queue to bridge those gaps.
 
 ## What remains before execution
 
