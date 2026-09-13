@@ -229,16 +229,43 @@ function dependencyMarkup(r) {
   const installable=r.present===false&&r.asset_id&&r.installable===true;
   return '<div class="dependency '+(present?'':'missing')+'"><span class="dot">'+(present?'●':'○')+'</span><div class="file-text"><code>'+esc(r.file)+'</code><small>'+esc(note)+'</small>'+installation+'</div>'+copy+(installable?'<button data-install="'+esc(r.asset_id)+'">Install</button>':'')+'</div>';
 }
+// A recipe ID alone cannot reject A→B→A or repeated-check responses.
+let inspectionEpoch=0, inspectionController=null;
 async function inspectSelected() {
-  const id = selected?.id; if (!id) return;
+  const epoch=++inspectionEpoch, preset=selected, id=preset?.id;
+  inspectionController?.abort();inspectionController=null;
+  if(!id)return;
+  const controller=typeof AbortController==='function'?new AbortController():null;
+  inspectionController=controller;
+  const current=()=>epoch===inspectionEpoch&&selected===preset;
+  $('#dependencyCount').textContent='Checking…';
+  $('#dependencies').textContent='Checking required files for '+(preset.name||id)+'…';
+  $('#dependencies').setAttribute?.('aria-busy','true');
+  $('#nodeList').innerHTML='';$('#graphPreview').textContent='';
+  let timer=null;
+  const deadline=new Promise((_,reject)=>{
+    if(typeof setTimeout==='function')timer=setTimeout(()=>{controller?.abort();reject(Error('Required-file check timed out. No installation or generation was started.'));},15000);
+  });
   try {
-    const data = await api('/api/inspect/' + encodeURIComponent(id)); if (selected?.id !== id) return;
-    $('#dependencyCount').textContent = data.requirements.filter(r => r.present).length + ' / ' + data.requirements.length + ' present';
-    $('#dependencies').innerHTML = data.requirements.map(dependencyMarkup).join('') || '<p class="muted">No separate weight files in this workflow.</p>';
-    $('#nodeList').innerHTML = data.nodes.map(n => '<code>' + esc(n.type) + '</code>').join('');
-    $('#graphPreview').textContent = JSON.stringify(data.graph,null,2);
-  } catch(e) { $('#dependencies').textContent=e.message; }
+    const data=await Promise.race([api('/api/inspect/'+encodeURIComponent(id),{signal:controller?.signal}),deadline]);
+    if(!current())return;
+    if(!Array.isArray(data?.requirements)||!Array.isArray(data.nodes)||!data.graph||typeof data.graph!=='object')throw Error('The required-file response is incomplete.');
+    // Build all markup before publishing any successful count.
+    const requirements=data.requirements.map(dependencyMarkup).join('')||'<p class="muted">No separate weight files in this workflow.</p>';
+    const nodes=data.nodes.map(n=>'<code>'+esc(n.type)+'</code>').join('');
+    const graph=JSON.stringify(data.graph,null,2);
+    $('#dependencyCount').textContent=data.requirements.filter(r=>r.present===true).length+' / '+data.requirements.length+' present';
+    $('#dependencies').innerHTML=requirements;$('#nodeList').innerHTML=nodes;$('#graphPreview').textContent=graph;
+  } catch(e) {
+    if(!current())return;
+    $('#dependencyCount').textContent='Unavailable';
+    $('#dependencies').innerHTML='<p class="error" role="status">Could not check required files for '+esc(preset.name||id)+': '+esc(e.message)+'</p><button type="button" data-inspect-retry="'+esc(id)+'">Recheck required files</button>';
+  } finally {
+    if(timer!==null)clearTimeout(timer);
+    if(current()){$('#dependencies').setAttribute?.('aria-busy','false');inspectionController=null;}
+  }
 }
+
 function selectPreset(id, reset=true, transition=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
@@ -509,6 +536,9 @@ function configureReadPolling(){
   window.dispatchEvent?.(new Event('studio-read-poller-ready'));
 }
 document.addEventListener('click',async e=>{
+  const inspectRetry=e.target.closest('[data-inspect-retry]');
+  if(inspectRetry){if(inspectRetry.dataset.inspectRetry===selected?.id)await inspectSelected();return;}
+
   const copy=e.target.closest('[data-copy]'),folder=e.target.closest('[data-folder]'),button=e.target.closest('[data-install]');
   try{if(copy){await navigator.clipboard.writeText(copy.dataset.copy);copy.textContent='Copied';}if(folder)await post('/api/folders/open',{id:folder.dataset.folder});if(button&&!button.disabled)await install(button.dataset.install);}catch(err){message(err.message,true);$('#downloadStatus').textContent=err.message;}
 });
