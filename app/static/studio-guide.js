@@ -5,9 +5,7 @@
   if (!C || !id || !/^[a-z-]{1,40}$/.test(id)) return;
   const make = (tag, text, attrs = {}) => { const n = document.createElement(tag); if (text !== null) n.textContent = text; for (const [k,v] of Object.entries(attrs)) n.setAttribute(k,v); return n; };
   const main = document.querySelector('main'); if (!main) return;
-  let stopped = false, busy = false, epoch = 0;
-  const active = new Set();
-  async function get(path) {
+  async function read(path, active = new Set()) {
     const controller = new AbortController(); active.add(controller);
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -17,7 +15,9 @@
       return JSON.parse(text);
     } finally { clearTimeout(timeout); active.delete(controller); }
   }
-  get('/api/workflow-studio/guides').then(data => {
+  function mount(data, params) {
+    let stopped = false, busy = false, epoch = 0;
+    const active = new Set(), get = path => read(path, active);
     const guide = data.guides?.find(g => g.id === id); if (!guide) throw Error('Unknown guided path.');
     let index = guide.steps.findIndex(s => s.id === params.get('stage'));
     if (index < 0) index = Number(params.get('step') || 0);
@@ -42,10 +42,35 @@
       catch (_) { targetNote.textContent += ' Browser resume storage is unavailable.'; }
     }
     const add = (label, fn, key) => { const b = make('button', label, {type:'button'}); if (key) b.id = key; b.onclick = fn; actions.append(b); return b; };
+    function cleanup() {
+      stopped = true; epoch++; active.forEach(c => c.abort());
+      if (highlighted) highlighted.classList.remove('studio-guide-target');
+      listeners.forEach(name => document.removeEventListener(name, stale));
+      window.removeEventListener('hashchange', stale); window.removeEventListener('popstate', restorePosition);
+      panel.remove();
+    }
+    function showTool(url) {
+      if (url.pathname === '/' && url.hash) document.dispatchEvent(new CustomEvent('studio:navigate', {detail:url.hash.slice(1)}));
+      else if (url.hash) document.getElementById(url.hash.slice(1))?.scrollIntoView({block:'start'});
+    }
+    function navigate(url) {
+      persist();
+      if (url.pathname !== location.pathname) {
+        if (confirm('Open another Studio page? Save or export unsaved work first; local files may need reattaching. The guide does not save it for you.')) location.assign(url.pathname + url.search + url.hash);
+        return;
+      }
+      cleanup(); history.pushState(null, '', url.pathname + url.search + url.hash);
+      showTool(url);
+      if (url.searchParams.get('guide') === id) mount(data, url.searchParams);
+    }
+    function restorePosition() {
+      const url = new URL(location.href); cleanup(); showTool(url);
+      if (url.searchParams.get('guide') === id) mount(data, url.searchParams);
+    }
     function go(next) {
       const url = C.route(guide.steps[next].route, location.origin);
       url.searchParams.set('guide', id); url.searchParams.set('step', String(next)); url.searchParams.set('stage', guide.steps[next].id);
-      location.assign(url.pathname + url.search + url.hash);
+      navigate(url);
     }
     function correctTool() { return location.pathname === targetURL.pathname && (!targetURL.hash || location.hash === targetURL.hash); }
     let highlighted = null;
@@ -97,7 +122,7 @@
       epoch++; display(C.unknown('The tool or input changed. Check this step again; previous observations are not completion evidence.')); find();
     }
     const listeners = ['input','change','workflow:render','workflow:project'];
-    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', stale);
+    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', stale); window.addEventListener('popstate', restorePosition);
     run.onchange = () => { epoch++; persist(); display(C.unknown('Run selection changed. Check this specific run.')); };
     const checkButton = add('Check this step', async () => {
       if (busy || stopped) return; busy = true; checkButton.disabled = true;
@@ -129,17 +154,16 @@
     add('Show the control', () => find(true), 'showGuideControl');
     if (index) add('Back', () => go(index - 1));
     add('Open this step’s tool', () => go(index));
-    add(index < guide.steps.length - 1 ? 'Next step' : 'Return to guided paths', () => index < guide.steps.length - 1 ? go(index + 1) : location.assign('/workflow-studio.html#journeys'));
+    add(index < guide.steps.length - 1 ? 'Next step' : 'Return to guided paths', () => index < guide.steps.length - 1 ? go(index + 1) : navigate(C.route('/workflow-studio.html#journeys', location.origin)));
     add('Pause guide', () => {
-      stopped = true; epoch++; active.forEach(c => c.abort()); if (highlighted) highlighted.classList.remove('studio-guide-target');
-      listeners.forEach(name => document.removeEventListener(name, stale)); window.removeEventListener('hashchange', stale);
-      panel.remove(); const url = new URL(location.href); ['guide','step','stage'].forEach(k => url.searchParams.delete(k));
+      cleanup(); const url = new URL(location.href); ['guide','step','stage'].forEach(k => url.searchParams.delete(k));
       history.replaceState(null, '', url.pathname + url.search + url.hash);
     });
     panel.append(progress,heading,detail,runLabel,evidence,actions,targetNote,
       make('small','Guide position is navigation only. Observed prerequisites, engine results, human review and licensing are separate.'));
     main.prepend(panel); display(step.check === 'manual' ? C.evaluate('manual') : C.unknown()); find(); persist();
-  }).catch(error => {
+  }
+  read('/api/workflow-studio/guides').then(data => mount(data, params)).catch(error => {
     main.prepend(make('p', 'Guided walkthrough unavailable: ' + error.message + ' Open Guided workflows to choose a path; the Studio remains usable.', {role:'status'}));
   });
 })();
