@@ -16,41 +16,25 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Capture tracked source and issue evidence
+      - name: Capture newer main and overlap evidence
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/chronology
-          git bundle create /tmp/chronology/source.bundle --all
+          git bundle create /tmp/chronology/source.bundle refs/remotes/origin/main ^268fc8fa4803374878c976c8af859f0200e1d155
           python - <<'PY'
-          import datetime,json,os,pathlib,subprocess,urllib.request
-          base='https://api.github.com/repos/Chris0Jeky/local-asset-studio'
+          import json,os,pathlib,subprocess,urllib.request
           def get(path):
-              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/'+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
               with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
-          def pages(path):
-              result=[]
-              for page in range(1,11):
-                  items=get(path+('&' if '?' in path else '?')+'per_page=100&page='+str(page))
-                  result.extend(items)
-                  if len(items)<100:return result
-              raise RuntimeError('Pagination exceeded bound')
-          keys=('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
-          compact=lambda i:{k:i.get(k) for k in keys}
-          issues=[i for i in pages('/issues?state=open&sort=created&direction=asc') if 'pull_request' not in i]
-          opened=pages('/pulls?state=open&sort=created&direction=asc')
-          pulls=get('/pulls?state=all&sort=updated&direction=desc&per_page=60')
-          data={'captured_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'main':subprocess.check_output(['git','rev-parse','origin/main'],text=True).strip(),'issues':[compact(i) for i in issues],'pulls':[dict(compact(p),head=p['head']['sha'],branch=p['head']['ref']) for p in pulls]}
-          data['comments']={str(n):pages('/issues/'+str(n)+'/comments') for n in (2,3,9,10,21,24,97,187,198)}
-          data['open_pr_files']={str(p['number']):[f['filename'] for f in pages('/pulls/'+str(p['number'])+'/files')] for p in opened}
-          data['recent_closed']=[compact(i) for i in get('/issues?state=closed&sort=updated&direction=desc&per_page=40') if 'pull_request' not in i]
-          pathlib.Path('/tmp/chronology/github-evidence.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
+          pulls=get('pulls?state=open&per_page=100')
+          data={'main':subprocess.check_output(['git','rev-parse','origin/main'],text=True).strip(),'open_prs':[{'number':p['number'],'title':p['title'],'head':p['head']['sha'],'files':[f['filename'] for f in get('pulls/'+str(p['number'])+'/files?per_page=100')]} for p in pulls], 'issue187':get('issues/187')}
+          pathlib.Path('/tmp/chronology/integration.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
           print('Main',data['main'])
-          print('Oldest',[(i['number'],i['title']) for i in issues[:15]])
-          print('Open PR files',data['open_pr_files'])
+          print('Open PRs',data['open_prs'])
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: chronology-next-source
+          name: chronology-main-integration
           path: /tmp/chronology/
           retention-days: 3
