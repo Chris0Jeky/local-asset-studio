@@ -114,6 +114,8 @@ def run(screenshots):
             page.evaluate("showView('create')")
             page.wait_for_selector('#timeEstimate:not([hidden])')
             check('42' in page.locator('#estimateValue').inner_text(),'interactive time estimate is shown')
+            layout=page.evaluate("""() => { const box=s => { const r=document.querySelector(s).getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right}; }; return {editor:box('.editor'),estimate:box('#timeEstimate'),gallery:box('.gallery-panel')}; }""")
+            check(layout['gallery']['top']==layout['editor']['top'] and layout['gallery']['left']>=layout['editor']['right'] and layout['estimate']['top']>layout['editor']['top'],'recent runs stays in the right column beside the editor')
             before_estimates=len([post for post in POSTS if post['path']=='/api/estimate']);page.fill('#positive','A timing estimate interaction');page.wait_for_timeout(350)
             check(len([post for post in POSTS if post['path']=='/api/estimate'])>before_estimates,'time estimate refreshes after a control change')
             failed=page.locator('#gallery .jobStatus').filter(has_text='Memory allocation failed')
