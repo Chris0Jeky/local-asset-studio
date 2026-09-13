@@ -1,5 +1,81 @@
 # Current state — 13 September 2026
 
+## Three image baselines and full Wan control — 13 September 2026
+
+CSTati v3, YumeFlux ILv1 and JANIMA v1 each completed one registered Studio
+base recipe at 832x1216, seed 2026091301, 30 steps and zero LoRA strengths.
+Elapsed times were 28.16, 32.24 and 36.22 seconds respectively. All three PNGs
+were inspected; hand detail and leg/foot overlap remain unresolved. Their
+catalog execution flags now reflect these limited runs. Exact recipes, graphs,
+job/prompt IDs, runtime versions and output/model hashes are retained in
+[the baseline curation](experiments/curated/goal-baselines-20260913/README.md).
+Five distinct required model files passed full SHA-256 and byte-size checks
+against the pinned library after generation. No adapter-stack, licensing,
+character-identity or finished-art acceptance is claimed.
+
+AniFox v2 remains unavailable. The final bounded transfer stopped at a range
+validation error after 13 complete 64 MiB chunks; their hashes match the retained
+local receipts. Three incomplete range files and all earlier partials are
+preserved. No model was assembled, published, loaded or sampled. The exception
+type alone does not establish the precise cause. Further automatic transfers
+are parked for this goal; the baseline remains open under issue #14.
+
+The full canonical Wan control with a deliberately changed tiled decoder also
+completed: prompt `7722bd99-5a2f-4233-b799-82b126ff278a`, 1005.258 seconds,
+1280x704, 41 frames at 24 fps. **Its video failed visual inspection**, with
+breakup beginning at frame 1 and later cyan/white flicker and smeared anatomy.
+The full contact sheet was inspected; all frames and the video remain local.
+This establishes completion for that exact run, not usable animation or general
+decode capacity. No additional sampling is scheduled; see
+[Wan decode capacity](docs/WAN-DECODE-CAPACITY.md).
+
+[HUMAN_TODO.md](HUMAN_TODO.md) q-1 through q-4 remain answered. The character
+pilot still has 12 attempts used, 11 completed, no selected/accepted case and no
+remaining attempts. Its uncertain portrait and previously blocked boot Start
+are preserved. The restart wording and the live public-repository observation
+are reconciled without recording a new owner approval.
+## Worker, framing and terminal recovery — source checks, 13 September 2026
+
+The oldest-open follow-up extends the existing coordinator rather than replaying
+merged #93/#94 work. Worker failure-recording errors are contained, direct queue
+admission checks a dead worker before reservation, and exact prompt IDs are
+encoded for history observation without changing receipts. One shared response
+boundary adds framing/MIME headers to static, JSON, error and ranged-media paths.
+Stopped known prompts that later finish failed or partial can be reconciled into
+a failed Production project without new work or continuation consent.
+
+Source, causal tests, operator flow and limits are recorded in
+[the follow-up reconciliation](docs/reconciliation/2026-09-13-recovery-followups.md).
+Full local suite and hosted head-specific results belong to that document and
+the PR verification record. This entry is not a Windows/GPU, native-artwork or
+licensing assertion. Local browser navigation was policy-blocked; browser CI is
+separate. No workstation process/configuration or HUMAN_TODO decision changed.
+
+## Metadata reload browser recovery evidence — 13 September 2026
+
+[METADATA-RELOAD-RECOVERY.md](docs/ux-qa/METADATA-RELOAD-RECOVERY.md) now has
+an accompanying browser driver. Its local policy-restricted run recorded 19/19
+checks with actual Studio HTML, scripts and CSS, an ephemeral loopback
+in-memory fixture, and 1440px/390px screenshots. It covered lost replies,
+reloads with no metadata POST or receipt check, explicit receipt lookup, exact
+retry, a later new command, recovered Trash typing and an unsent draft.
+
+The local result uses explicit `--inert`: injected session storage and a fresh
+document recreate the saved state, so it is not native-origin, browser-storage,
+SQLite, Studio-runtime, generation, backend or artwork evidence. The dedicated
+workflow runs the same driver in its default native HTTP mode and publishes its
+receipt and screenshots. Raw local evidence is ignored at
+`.runtime/goal-20260913/asset-journal-browser/`.
+
+This work **Refs #204**; it does not establish workspace-identity isolation,
+native browser storage behavior, real SQLite recovery or server-restart
+acceptance. Those cases remain separate from this per-tab/origin fixture proof.
+
+PR #211's native reload CI ran 19/19 checks at `fa49054` before merge
+`bbd37e7`. That per-tab/origin proof still does not establish workspace identity,
+real SQLite recovery, or Studio-restart acceptance for #204. The root Studio
+restart remained policy-blocked locally and was not retried.
+
 ## Native protected-edit revision — 13 September 2026
 
 The new `character_krita.py` adapter carries an existing protected edit result

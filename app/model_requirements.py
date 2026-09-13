@@ -9,25 +9,8 @@ import stat
 from download_contracts import relative_model_path, validate_pins
 from model_library import FOLDERS, SUFFIXES
 
-# Reviewed class/input storage roles used by this catalog. This is not a universal
-# custom-node inference engine; new loaders need a declaration or reviewed adapter.
-MODEL_INPUT_FOLDERS = {
-    ('CheckpointLoaderSimple', 'ckpt_name'): 'checkpoints',
-    ('ImageOnlyCheckpointLoader', 'ckpt_name'): 'checkpoints',
-    ('UNETLoader', 'unet_name'): 'diffusion_models',
-    ('UnetLoaderGGUF', 'unet_name'): 'diffusion_models',
-    ('CLIPLoader', 'clip_name'): 'text_encoders',
-    ('CLIPVisionLoader', 'clip_name'): 'clip_vision',
-    ('VAELoader', 'vae_name'): 'vae',
-    ('LoraLoader', 'lora_name'): 'loras',
-    ('LoraLoaderModelOnly', 'lora_name'): 'loras',
-    ('ControlNetLoader', 'control_net_name'): 'controlnet',
-    ('UpscaleModelLoader', 'model_name'): 'upscale_models',
-    ('UltralyticsDetectorProvider', 'model_name'): 'ultralytics',
-    ('LoadBackgroundRemovalModel', 'bg_removal_name'): 'background_removal',
-    ('INPAINT_LoadFooocusInpaint', 'head'): 'inpaint',
-    ('INPAINT_LoadFooocusInpaint', 'patch'): 'inpaint',
-}
+from studio_workflow.model_contracts import MODEL_INPUT_FOLDERS
+
 # Do not misclassify ordinary prompt/output text merely because it ends in a suffix.
 TEXT_FIELDS = {'text', 'prompt', 'positive', 'negative', 'filename_prefix'}
 

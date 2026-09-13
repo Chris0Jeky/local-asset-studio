@@ -63,19 +63,19 @@ class Handler(fixture.Handler):
             if self.state.fail_write:return self.json({'error':'Workspace unavailable (synthetic fault)'},503)
             if data['request_id'] in self.state.receipts:return self.json(self.state.receipts[data['request_id']])
             selected=[a for a in fixture.ASSETS if a['id'] in data['ids']]
-            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','current':selected},409)
+            if any(a['metadata_revision']!=data['expected_revisions'][a['id']] for a in selected):return self.json({'error':'Synthetic stale revision','code':'asset_revision_conflict','workspace_id':'1'*32,'current':selected},409)
             for asset in fixture.ASSETS:
                 if asset['id'] in data['ids']:
-                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','request_id','expected_revisions'}})
+                    if data['action']=='edit':asset.update({k:v for k,v in data.items() if k not in {'ids','action','workspace_id','request_id','expected_revisions'}})
                     elif data['action']=='trash':asset['trashed_at']=123
                     elif data['action']=='restore':asset['trashed_at']=None
                     asset['metadata_revision']+=1
-            receipt={'status':'applied','request_id':data['request_id'],'updated':data['ids'],'action':data['action'],'revisions':{a['id']:a['metadata_revision'] for a in selected},'applied':{k:v for k,v in data.items() if k in {'title','notes','tags','favorite','review'}} if data['action']=='edit' else {'trashed_at':123 if data['action']=='trash' else None}}
+            receipt={'workspace_id':'1'*32,'current':copy.deepcopy(selected),'status':'applied','request_id':data['request_id'],'updated':data['ids'],'action':data['action'],'revisions':{a['id']:a['metadata_revision'] for a in selected},'applied':{k:v for k,v in data.items() if k in {'title','notes','tags','favorite','review'}} if data['action']=='edit' else {'trashed_at':123 if data['action']=='trash' else None}}
             self.state.receipts[data['request_id']]=receipt
             return self.json(receipt)
         return super().do_POST()
 
-async def inert_page(page, port):
+async def inert_page(page, port, saved_session=None):
     """Actual HTML/scripts/styles with explicit test-only storage and API transport."""
     async def transport(path,options):
         if not isinstance(path,str) or not path.startswith('/api/') or '..' in path:raise ValueError('Test transport only serves fixture APIs')
@@ -89,8 +89,9 @@ async def inert_page(page, port):
     await page.expose_function('__qaTransport',transport)
     markup=(STATIC/'index.html').read_text(encoding='utf-8')
     # No navigation-policy bypass. Native storage/origin, media loading and navigation are untested here.
-    boot='''<script>class QAStorage{constructor(){this.data=new Map()}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
-Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage()});
+    session=json.dumps({str(key):str(value) for key,value in (saved_session or {}).items()}).replace('<','\\u003c')
+    boot='''<script>class QAStorage{constructor(initial={}){this.data=new Map(Object.entries(initial))}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
+Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage('''+session+''')});
 window.fetch=async(path,options={})=>{const r=await __qaTransport(path,{method:options.method,body:options.body,headers:options.headers});return new Response(r.body,{status:r.status,headers:{'Content-Type':'application/json'}})};</script>'''
     markup=markup.replace('<head>','<head>'+boot)
     def script(match):
@@ -149,8 +150,6 @@ async def run(args):
             async def open_asset(i=0):
                 # Test setup closes without user input; each assertion exercises real user actions.
                 await page.evaluate("""() => new Promise(resolve => {const d=document.querySelector('#assetDialog');if(!d.open){resolve();return;}d.addEventListener('close',resolve,{once:true});d.close();})""")
-                # Independent scenarios must not restore the prior case's retained pending command.
-                await page.evaluate("if(window.StudioReviewRecovery)sessionStorage.removeItem(StudioReviewRecovery.KEY)")
                 await page.evaluate(f"openAsset('asset-{i}')")
                 await page.wait_for_function("id => document.querySelector('#assetDialog').open && activeAsset?.id===id",arg=f'asset-{i}')
             async def settle():
@@ -170,7 +169,7 @@ async def run(args):
             await page.fill('#assetNotes','Keep my detailed repair notes')
             await page.click('#assetFavorite');await settle()
             await check('ASSET-01','Favorite preserves unsaved notes',await page.input_value('#assetNotes')=='Keep my detailed repair notes')
-            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','favorite','request_id','expected_revisions','workspace_id'})
+            await check('ASSET-02','Favorite writes only favorite, not review/notes',set(state.writes[-1])=={'ids','action','workspace_id','favorite','request_id','expected_revisions'})
             await open_asset();await page.fill('#assetNotes','Stay on Escape')
             page.remove_listener('dialog',discard_dialog)
             prompts=[]
@@ -193,6 +192,10 @@ async def run(args):
             status=page.locator('#assetDetailStatus')
             await check('ASSET-07','Save failure is visible inside the open dialog',await status.count()>0 and 'unavailable' in (await status.inner_text()).lower() and await page.input_value('#assetNotes')=='Retain this after error')
             state.fail_write=False
+            # A 503 has unknown commit semantics. Resolve this fixture command
+            # explicitly before the independent snapshot scenario; closing and
+            # reopening must retain it rather than silently replacing its ID.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();state.gate.clear();await page.fill('#assetNotes','First snapshot')
             count=len(state.writes);await page.click('#saveAssetDetails')
             await settle();await page.fill('#assetNotes','Newer edits during save')
@@ -236,6 +239,9 @@ async def run(args):
             await open_asset();state.fail_write=True;await page.fill('#assetNotes','Recover this favorite error');await page.click('#assetFavorite');await settle()
             await check('ASSET-25','Favorite failure is visible, retains edits and releases controls',await page.input_value('#assetNotes')=='Recover this favorite error' and 'unavailable' in (await status.inner_text()).lower() and not await page.locator('#saveAssetDetails').is_disabled())
             state.fail_write=False
+            # This failed favorite is likewise an unconfirmed command. Resolve it
+            # explicitly so the keyboard-save and layout scenarios begin clean.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();await page.fill('#assetNotes','A draft at narrow width')
             for width in [390,720]:
                 await page.set_viewport_size({'width':width,'height':1100});await settle()

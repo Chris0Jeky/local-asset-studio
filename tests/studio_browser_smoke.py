@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'app'))
 import continuation
+import wan_capacity
 POSTS = []
 FAIL_WORKSPACE = False
 WORKSPACE_DELAY = 0
@@ -27,6 +28,8 @@ ONLINE = True
 CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))
 for preset in CATALOG['presets']:
     graph = json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
+    capacity = wan_capacity.projection(preset, graph)
+    if capacity is not None: preset['wan_decode_capacity'] = capacity
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}
@@ -44,7 +47,7 @@ for i, (title, file, review) in enumerate([
     ASSETS.append(dict(id=f'asset-{i}', title=title, filename=Path(file).name, media_type='image', review=review,
                        url='/'+file, created_at=1789228800-i*100, bytes=1024, sha256='a'*64, source={'seed':42},
                        preset_name='Synthetic UX fixture', job_id=None, notes='', lineage=[], collections=[],
-                       favorite=False, tags=['fixture'], trashed_at=None, metadata_revision=0))
+                       workspace_id='1'*32, favorite=False, tags=['fixture'], trashed_at=None, metadata_revision=0))
 JOBS = [dict(id='fixture-job',preset_name='Lantern study · synthetic fixture',preset_id='anima-portrait',status='completed',message='Completed fixture, not a model run',controls={'positive':'Explore one form, then continue with a variation.','seed':42},outputs=[{'filename':'lantern.png','asset_id':'asset-0','media_type':'image','seed':42}]),
         dict(id='allocation-failure',preset_name='Krea 2 Anime Atelier',preset_id='krea-anime-atelier',status='failed',message='Generation failed: ComfyUI reported an execution error: KSampler: bad allocation',failure={'kind':'memory_allocation','title':'Memory allocation failed','summary':'ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt.','action':'Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically.','node_type':'KSampler','exception_type':'RuntimeError','detail':'bad allocation'},controls={},prompt_ids=['fixture-prompt'],submissions=[{'prompt_id':'fixture-prompt','status':'failed'}],outputs=[])]
 PLANS = [dict(id='a'*32, name='Lantern study · choose the finish', kind='comparison', state={'status':'awaiting_review','message':'Synthetic review fixture'}, stages=[], budget={'allowance':4,'reserved':3}, axis='seed', values=[]),
@@ -74,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/jobs':JOBS,
-            '/api/workspace':{'workspace_id':'a'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
+            '/api/workspace':{'workspace_id':'1'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},

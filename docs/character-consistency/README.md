@@ -18,6 +18,8 @@ These commands are offline building blocks. A successful plan, handoff or receip
 
 Twelve image-producing attempts: the existing `qwen-1ref` and `flux-edit` routes, three tasks, two seeds. Establish whether either installed configuration can preserve a reviewed character well enough to justify a larger production study. This is not a statistically powered leaderboard or a proven local equivalent of Images 2.5.
 
+The current pilot accounting is reconciled in [WORKSTATION-STATUS.md](WORKSTATION-STATUS.md): 12 attempts used, 11 completed, 0 selected, 0 human-accepted and 0 remaining. The record preserves the uncertain portrait follow-up and the approval-blocked boot edit without treating either as a retry or an acceptance.
+
 The committed supplied-character canon is **draft**. Source images are evidence of the desired look, not blanket approval of hidden costume construction. Human approval, source rights and successful execution remain separate. An original character is required for the later generalization/commercial milestone.
 
 ## Original delivery and Git policy

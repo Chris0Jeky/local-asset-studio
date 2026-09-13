@@ -1,10 +1,20 @@
 # Studio UX QA — 13 September 2026
 
-## Review reload recovery
+## Workspace-bound recovery follow-up
 
-[RELOAD-RECOVERY.md](RELOAD-RECOVERY.md) adds explicit per-tab draft and unconfirmed-save
-recovery over the existing metadata revision/receipt service. It distinguishes local drafts,
-confirmed server fields and exact earlier requests; #204 remains open for broader durability.
+[WORKSPACE-RECOVERY.md](WORKSPACE-RECOVERY.md) extends the merged #211 journal with
+database identity, scoped exact commands/read-only receipt checks, and comparison
+of historical receipts against newer saved metadata. It supersedes #216’s initial
+parallel-journal prototype. [WORKSPACE-RECOVERY-RESULTS.json](WORKSPACE-RECOVERY-RESULTS.json)
+records the separate local checkpoint; hosted native evidence belongs to the final PR head.
+
+## Named setup lineage follow-up
+
+[SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with
+an explicit reattachment instruction and retained drafts. It also records and fixes a
+sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidence
+is separate from the earlier asset-detail and metadata-concurrency checkpoints.
+
 
 
 ## What this pass changes
@@ -74,3 +84,33 @@ records this pass separately from the original local before/after checkpoint. Th
 metadata browser fixture uses the production metadata HTTP handler and temporary real
 SQLite storage, with synthetic non-generation endpoints. #117 remains a separate
 reference-lineage task; neither browser session epochs nor metadata revisions solve it.
+
+## Reload recovery browser proof — 13 September 2026
+
+[METADATA-RELOAD-RECOVERY.md](METADATA-RELOAD-RECOVERY.md) defines the per-tab
+journal contract. `tests/asset_reload_browser.py` adds browser proof over the
+actual Studio HTML, JavaScript and CSS with a disposable in-memory
+`asset_detail_browser.State`/`Handler` fixture on an OS-assigned loopback port.
+It exercises lost replies, reload with no POST or receipt polling, explicit
+receipt lookup, exact bytes/ID retry, a later command with a new ID/revision,
+Trash plus newer typing, and an unsent draft. It writes a JSON receipt and
+1440px/390px screenshots.
+
+The workflow runs native HTTP by default:
+
+```sh
+python tests/asset_reload_browser.py --out .runtime/asset-reload-proof
+```
+
+On a local machine where native browser navigation is blocked by policy, use
+only the explicit component mode:
+
+```sh
+python tests/asset_reload_browser.py --inert --out .runtime/asset-reload-component-proof
+```
+
+Inert mode injects storage and recreates the document before its scripts run;
+it is not evidence for native origin, browser retention, real SQLite, a running
+Studio, generation, backend behavior, artwork, licensing or owner acceptance.
+This per-tab/origin proof **Refs #204** and does not close its workspace-identity,
+native-browser, real-SQLite or server-restart acceptance cases.

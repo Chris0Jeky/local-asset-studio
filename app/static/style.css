@@ -49,11 +49,3 @@ model-viewer{display:block;width:100%;height:320px;background:radial-gradient(ci
 .asset-conflict-field h4,.asset-conflict-field details{grid-column:1/-1;margin:0}.asset-conflict-field pre{max-height:180px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin-bottom:0}
 .asset-save-recovery code{font-size:11px}.asset-conflict button,.asset-save-recovery button{min-height:40px}
 @media(max-width:600px){.asset-conflict-field{grid-template-columns:minmax(0,1fr)}}
-
-/* Recovery is adjacent to the editor, never an invisible toast behind it. */
-.asset-review-recovery{border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0;overflow-wrap:anywhere}
-.asset-review-recovery h3{font-size:15px}.asset-review-recovery p{font-size:12px}
-.asset-review-entry{border-top:1px solid var(--line);padding:12px 0;display:grid;gap:8px}
-.asset-review-recovery pre{max-height:200px;white-space:pre-wrap;overflow-wrap:anywhere}
-.asset-review-recovery button{min-height:40px}.asset-review-recovery details{min-width:0}
-#assetReviewStorage{overflow-wrap:anywhere;font-size:12px}

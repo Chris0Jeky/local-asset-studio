@@ -25,6 +25,8 @@ class AtomicRefusalTransportTests(unittest.TestCase):
         try:
             body = b'{"keep":"original"}'
             self.assertEqual(atomic_json_post(server.server_port, '/refuse', body, host='evil.invalid', origin='https://evil.invalid'), (403, {'error': 'refused'}))
+            status, raw, pairs = atomic_json_post(server.server_port, '/refuse', body, host='evil.invalid', origin='https://evil.invalid', response_details=True)
+            self.assertEqual((status, json.loads(raw)), (403, {'error': 'refused'})); self.assertIn(('Content-Type', 'application/json'), pairs)
         finally:
             server.shutdown(); server.server_close(); worker.join(2)
         self.assertEqual(seen['client'], '127.0.0.1')
