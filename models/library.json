@@ -887,7 +887,7 @@
     },
     {
       "id": "krea2-koukouya-style-c1-st3000",
-      "name": "画风 こうこうや koukouya style 【krea2】 / v1.0",
+      "name": "\u753b\u98ce \u3053\u3046\u3053\u3046\u3084 koukouya style \u3010krea2\u3011 / v1.0",
       "file": "loras/krea2_koukouya_style_c1-st3000.safetensors",
       "source": "https://civitai.com/models/2844656?modelVersionId=3211621",
       "url": "https://civitai.com/api/download/models/3211621",
@@ -921,7 +921,7 @@
     },
     {
       "id": "anima-koukouya-v2-step2500",
-      "name": "[Anima] Artist Style: koukouya/こうこうや / v1.0-anima-base1",
+      "name": "[Anima] Artist Style: koukouya/\u3053\u3046\u3053\u3046\u3084 / v1.0-anima-base1",
       "file": "loras/anima-koukouya_v2_step2500.safetensors",
       "source": "https://civitai.com/models/2696189?modelVersionId=3027537",
       "url": "https://civitai.com/api/download/models/3027537",
@@ -938,7 +938,7 @@
     },
     {
       "id": "anima-huashijw-v2-step10000",
-      "name": "[Anima] Artist Style: huashijw/画师jw / v1.0",
+      "name": "[Anima] Artist Style: huashijw/\u753b\u5e08jw / v1.0",
       "file": "loras/anima-huashijw_v2_step10000.safetensors",
       "source": "https://civitai.com/models/2753686?modelVersionId=3098204",
       "url": "https://civitai.com/api/download/models/3098204",
@@ -972,7 +972,7 @@
     },
     {
       "id": "anima-ke-ta-style-v1",
-      "name": "画风 ke-ta style 【anima】 / v1.0",
+      "name": "\u753b\u98ce ke-ta style \u3010anima\u3011 / v1.0",
       "file": "loras/anima-ke-ta_style_v1.safetensors",
       "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
       "url": "https://civitai.com/api/download/models/3221815",
@@ -1769,6 +1769,176 @@
       "family": "Anima",
       "terms": "Civitai model 2613391/version 2978487, read 2026-09-12: NSFW listing; allowCommercialUse RentCivit, Rent, Image; derivatives allowed; different licence allowed. Base model Anima. The downloaded file SHA-256 matches the listing. This metadata does not approve any output. Read the model page before commercial use.",
       "trigger": ""
+    },
+    {
+      "id": "cstatianimev30xl-v30",
+      "name": "cstatiANIMEV30XL_v30.safetensors",
+      "file": "checkpoints/cstatiANIMEV30XL_v30.safetensors",
+      "source": "https://civitai.com/models/2375917?modelVersionId=3160406",
+      "url": "https://civitai.com/api/download/models/3160406?fileId=3040811",
+      "bytes": 6938040946,
+      "sha256": "98282084f1910797f93986bee5066dca3e3eee45ad9c357bc918171eb698dbef",
+      "license": "",
+      "terms": "civitai version 3160406 of model 2375917: the version payload carries no permission flags; read https://civitai.com/models/2375917 (or /api/v1/models/2375917) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "yumefluxxlillustrious-ilv10",
+      "name": "yumefluxXLIllustrious_ilV10.safetensors",
+      "file": "checkpoints/yumefluxXLIllustrious_ilV10.safetensors",
+      "source": "https://civitai.com/models/2784021?modelVersionId=3135837",
+      "url": "https://civitai.com/api/download/models/3135837?fileId=3016575",
+      "bytes": 6938041252,
+      "sha256": "343db6af7af4a641c22e8809fc167ffa1a78dbe59803c2972bd21e9f3a9d8383",
+      "license": "",
+      "terms": "civitai version 3135837 of model 2784021: the version payload carries no permission flags; read https://civitai.com/models/2784021 (or /api/v1/models/2784021) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "anifoxxlv20-anifoxv2",
+      "name": "anifoxXLV20_anifoxV2.safetensors",
+      "file": "checkpoints/anifoxXLV20_anifoxV2.safetensors",
+      "source": "https://civitai.com/models/2389212?modelVersionId=3081757",
+      "url": "https://civitai.com/api/download/models/3081757?fileId=2961145",
+      "bytes": 6938040706,
+      "sha256": "c07eadce03076d02e6ffc38f51a078684f888df599fb84abe3821a048ae43d72",
+      "license": "",
+      "terms": "civitai version 3081757 of model 2389212: the version payload carries no permission flags; read https://civitai.com/models/2389212 (or /api/v1/models/2389212) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "nsfw-girls-anima",
+      "name": "nsfw_girls_anima.safetensors",
+      "file": "loras/nsfw_girls_anima.safetensors",
+      "source": "https://civitai.com/models/2822856?modelVersionId=3225971",
+      "url": "https://civitai.com/api/download/models/3225971?fileId=3108063",
+      "bytes": 57495432,
+      "sha256": "85e3916808205df13dd5a25e45934f7014e12f030c6473d21139a250531d18f4",
+      "license": "",
+      "terms": "civitai version 3225971 of model 2822856: the version payload carries no permission flags; read https://civitai.com/models/2822856 (or /api/v1/models/2822856) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "nsfw-girls",
+      "name": "nsfw_girls.safetensors",
+      "file": "loras/nsfw_girls.safetensors",
+      "source": "https://civitai.com/models/2822856?modelVersionId=3184370",
+      "url": "https://civitai.com/api/download/models/3184370?fileId=3064930",
+      "bytes": 340803344,
+      "sha256": "730396e711a1b04db566b78772b6de8f4fdb2178e07430295256912078702ca9",
+      "license": "",
+      "terms": "civitai version 3184370 of model 2822856: the version payload carries no permission flags; read https://civitai.com/models/2822856 (or /api/v1/models/2822856) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "janimaanima-v10-2847103",
+      "name": "JANIMAAnima_v10_2847103.safetensors",
+      "file": "diffusion_models/JANIMAAnima_v10_2847103.safetensors",
+      "source": "https://civitai.com/models/2642932?modelVersionId=2967640",
+      "url": "https://civitai.com/api/download/models/2967640?fileId=2847103",
+      "bytes": 4182229976,
+      "sha256": "38694ed21a93dd425fd3bf5a8c7a9f15070c1ecf6e5ab5e2138989c334ceea26",
+      "license": "",
+      "terms": "civitai version 2967640 of model 2642932: the version payload carries no permission flags; read https://civitai.com/models/2642932 (or /api/v1/models/2642932) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "anima-highres-aesthetic-boost",
+      "name": "anima-highres-aesthetic-boost.safetensors",
+      "file": "loras/anima-highres-aesthetic-boost.safetensors",
+      "source": "https://civitai.com/models/2540444?modelVersionId=2855073",
+      "url": "https://civitai.com/api/download/models/2855073?fileId=2741162",
+      "bytes": 138662176,
+      "sha256": "db5b2dcc4e1afa215058b7a85fb9377124c2e9aabd48c25e595af7199207c299",
+      "license": "",
+      "terms": "civitai version 2855073 of model 2540444: the version payload carries no permission flags; read https://civitai.com/models/2540444 (or /api/v1/models/2540444) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "rapscallion-cherrypick-min1024-prodigy-lr1-4000-stylepush",
+      "name": "rapscallion_cherrypick_min1024_prodigy_lr1_4000_stylepush.safetensors",
+      "file": "loras/rapscallion_cherrypick_min1024_prodigy_lr1_4000_stylepush.safetensors",
+      "source": "https://civitai.com/models/1130747?modelVersionId=3056000",
+      "url": "https://civitai.com/api/download/models/3056000?fileId=2934654",
+      "bytes": 264457744,
+      "sha256": "38ed01a3bb39ef5df18fd75270bb03c846a460e65c2c90252f10290e9123a400",
+      "license": "",
+      "terms": "civitai version 3056000 of model 1130747: the version payload carries no permission flags; read https://civitai.com/models/1130747 (or /api/v1/models/1130747) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "@rapscallion_style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "bunnyslop-ani-v5-56",
+      "name": "BunnySlop_Ani_v5.56.safetensors",
+      "file": "loras/BunnySlop_Ani_v5.56.safetensors",
+      "source": "https://civitai.com/models/2613391?modelVersionId=3174127",
+      "url": "https://civitai.com/api/download/models/3174127?fileId=3054626",
+      "bytes": 138663759,
+      "sha256": "13427fef75b0558d1e29c487cebbce4b501db43f0841e31f6eb97c4acc191c17",
+      "license": "",
+      "terms": "civitai version 3174127 of model 2613391: the version payload carries no permission flags; read https://civitai.com/models/2613391 (or /api/v1/models/2613391) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "@sl0p",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "bunnymid-ani-v1",
+      "name": "BunnyMid_Ani_v1.safetensors",
+      "file": "loras/BunnyMid_Ani_v1.safetensors",
+      "source": "https://civitai.com/models/2833471?modelVersionId=3197565",
+      "url": "https://civitai.com/api/download/models/3197565?fileId=3078640",
+      "bytes": 138663746,
+      "sha256": "a2a83ae3298163e2c66170fd38609c8dcbca95efe58b58ce91cef68e18c95808",
+      "license": "",
+      "terms": "civitai version 3197565 of model 2833471: the version payload carries no permission flags; read https://civitai.com/models/2833471 (or /api/v1/models/2833471) before any commercial use. Base model 'Anima'.",
+      "family": "Anima",
+      "trigger": "@m1d",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [
