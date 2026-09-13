@@ -8,6 +8,7 @@ from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
+from http_refusal_transport import atomic_json_post
 from test_server import server
 
 
@@ -53,7 +54,10 @@ class AssetMetadataHTTP(unittest.TestCase):
 
     def test_remote_origin_or_host_never_writes(self):
         for host,origin in [('evil.test','http://127.0.0.1:8191'),('127.0.0.1:8191','https://evil.test'),('127.0.0.1:8191','')]:
-            status,_,_=self.request('POST','/api/assets/update',self.command(),host=host,origin=origin);self.assertEqual(status,403)
+            # Host/Origin rejection happens before the handler reads a body. Use
+            # the atomic loopback transport so Windows cannot abort this refusal.
+            body=json.dumps(self.command()).encode('utf-8')
+            status,_=atomic_json_post(self.http.server_port,'/api/assets/update',body,host=host,origin=origin);self.assertEqual(status,403)
         status,_,_=self.request('GET','/api/assets/commands/'+'a'*32,host='evil.test');self.assertEqual(status,403)
         self.assertEqual(self.store.get(self.asset)['metadata_revision'],0)
 

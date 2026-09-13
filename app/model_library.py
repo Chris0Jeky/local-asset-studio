@@ -12,16 +12,7 @@ import uuid
 from urllib.request import Request
 from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, relative_model_path, validate_pins, validate_response
 
-FOLDERS = {
-    "checkpoints": "Complete image models", "diffusion_models": "Diffusion / video / 3D models",
-    "text_encoders": "Prompt interpreters", "vae": "Image, video and audio decoders",
-    "loras": "Style and capability adapters", "controlnet": "Pose and structure controls",
-    "clip_vision": "Reference image encoders", "upscale_models": "Image upscalers",
-    "embeddings": "Learned prompt tokens", "latent_upscale_models": "Latent video upscalers",
-    "background_removal": "Foreground isolation models", "ipadapter": "Reference identity adapters",
-    "ultralytics": "Face, hand and person detectors", "inpaint": "Inpaint heads and patches",
-    "vae_approx": "Fast latent previewers",
-}
+from studio_workflow.model_contracts import FOLDERS
 SUFFIXES = {".safetensors", ".gguf", ".pth", ".pt", ".onnx"}
 INSTALL_SUFFIX = ".safetensors"
 RESERVE_BYTES = 20 * 1024**3

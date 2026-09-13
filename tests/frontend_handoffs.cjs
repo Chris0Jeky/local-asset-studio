@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const StudioContinuation = require('../app/static/continuation-core.js');
+const StudioAssetRecovery = require('../app/static/asset-recovery.js');
 
 const templateSha = 'b'.repeat(64);
 const operation = id => id === 'plain' ? 'new-image'
@@ -48,7 +49,9 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
   };
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
-    URL, Blob, StudioContinuation, window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
+    URL, Blob, StudioContinuation, StudioAssetRecovery,
+    sessionStorage: {getItem(){return null;},setItem(){},removeItem(){}},
+    window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
       if (options.method === 'POST') requests.push({url, data: options.headers?.['Content-Type'] === 'application/json' ? JSON.parse(options.body) : null});
