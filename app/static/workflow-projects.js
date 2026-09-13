@@ -7,7 +7,7 @@
   const el = (tag, text, attrs = {}) => { const n = document.createElement(tag); if (text !== null) n.textContent = text; for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
   const btn = (text, action, id) => { const n = el('button', text, {type: 'button'}); if (id) n.id = id; n.onclick = guard(action); return n; };
   const uuid = () => crypto.randomUUID();
-  let applying = false, readToken = 0, reduceToken = 0, state, mode = 'nodes';
+  let applying = false, readToken = 0, reduceToken = 0, state, mode = 'nodes', historyOwner = null;
   const panel = el('section', null, {class: 'wf-panel wf-shared', 'aria-label': 'Saved workflows'});
   panel.append(el('h3', 'Saved workflows · shared with agents'));
   const actions = el('div', null, {class: 'wf-toolbar'}), choice = el('select', null, {id: 'sharedWorkflowChoice', 'aria-label': 'Saved workflow'});
@@ -64,12 +64,13 @@
     if (!state.binding) throw Error('Open a saved workflow first.');
     const key = state.binding.id, result = await request(P.PREFIX + '/' + key + '/history');
     if (state.binding?.id !== key) return;
+    historyOwner = key;
     history.replaceChildren(el('option', 'Choose revision to restore', {value: ''}));
     for (const item of result.revisions) history.append(el('option', `r${item.revision} · ${item.kind} · ${new Date(item.created_at * 1000).toLocaleString()}`, {value: item.revision}));
     say(`Saved history has ${result.revisions.length} revisions. Restore appends a new revision; it never deletes history.`);
   }
   async function restore() {
-    if (!history.value) throw Error('Choose a historical revision.');
+    if (!history.value || historyOwner !== state.binding?.id) throw Error('Load history for the current saved workflow, then choose a revision.');
     if (!confirm('Restore this saved revision as a new revision? Export any unsaved local edits first.')) return;
     state.begin(W.snapshot(), false, Number(history.value)); await sendPending();
   }
@@ -83,6 +84,12 @@
   catch (error) { say('Shared saving is unavailable: ' + error.message); }
   function sync() {
     if (!state) { panel.querySelectorAll('button').forEach(n => n.disabled = true); return; }
+    // A copy can attach a new document without calling load(). History belongs
+    // to its source identity, never merely to an integer revision.
+    if (historyOwner !== state.binding?.id) {
+      historyOwner = null;
+      history.replaceChildren(el('option', 'Load revision history', {value: ''}));
+    }
     const blocked = !!state.pending || state.busy, has = !!W.snapshot();
     stateLabel.textContent = state.pending ? 'Save pending · retain this request' : state.binding ? `Workspace r${state.binding.revision} · ${state.binding.conflict ? 'conflict — local draft retained' : state.dirty(W.snapshot()) ? 'unsaved local changes' : 'saved'}` : 'Local draft · not attached to a saved workflow';
     $('#saveSharedWorkflow').disabled = blocked || !has || !!state.binding?.conflict;
@@ -90,7 +97,7 @@
     $('#openSharedWorkflow').disabled = blocked;
     $('#retrySharedWorkflow').disabled = !state.pending || state.busy;
     $('#loadWorkflowHistory').disabled = !state.binding || state.busy;
-    $('#restoreSharedWorkflow').disabled = blocked || !state.binding || !!state.binding.conflict || !history.value;
+    $('#restoreSharedWorkflow').disabled = blocked || !state.binding || !!state.binding.conflict || !history.value || historyOwner !== state.binding.id;
   }
   history.onchange = sync;
   document.addEventListener('workflow:replace', () => { readToken++; if (!applying && state) { state.detach(); history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
