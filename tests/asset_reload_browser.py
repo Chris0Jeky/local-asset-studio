@@ -61,12 +61,12 @@ async def run(args):
                 await ready(page);return page
             async def accept_dialog(dialog):await dialog.accept()
             async def open_asset(page,identifier):
-                if await page.locator('#assetDialog').is_visible():
-                    if await page.evaluate('assetDetailDirty() || !!assetDetailPending || !!assetDetailConflict'):page.once('dialog',accept_dialog)
-                    await page.click('#closeAssetDialog')
-                    await page.wait_for_function('!document.querySelector("#assetDialog").open')
-                await page.evaluate('id=>openAsset(id)',identifier)
-                await page.wait_for_function('document.querySelector("#assetDialog").open')
+                # Explicitly leave this synthetic scenario through the editor's
+                # own draft-discard consent; closing first adds a second prompt.
+                page.on('dialog',accept_dialog)
+                try:await page.evaluate('id=>openAsset(id)',identifier)
+                finally:page.remove_listener('dialog',accept_dialog)
+                await page.wait_for_function('id=>document.querySelector("#assetDialog").open && activeAsset?.id===id',arg=identifier)
             async def unknown(page):
                 await page.wait_for_function('!assetDetailBusy && !!assetDetailPending')
             async def saved(page):
