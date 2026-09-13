@@ -21,7 +21,7 @@ environment, build an authored hinged prop, or export selected images to Krita
 and a tested Godot sprite project. See [Workspace](docs/WORKSPACE.md),
 [reference editing](docs/REFERENCE-ATELIER.md) and [native exports](docs/NATIVE-EXPORTS.md).
 
-Start with the [first-image walkthrough](docs/START-HERE.md), then read [experiments and native finishing](docs/EXPERIMENTS.md) for bounded comparisons and export plans. The [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
+Start with the [first-image walkthrough](docs/START-HERE.md), then read [experiments and native finishing](docs/EXPERIMENTS.md) for bounded comparisons and export plans. [Status by goal](docs/STATUS.md) says where each owner goal stands; the [documentation index](docs/README.md) names every page; the [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
 
 ## What is here
 
