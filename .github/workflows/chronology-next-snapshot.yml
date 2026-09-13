@@ -4,26 +4,77 @@ on:
     branches: [codex/chronology-next-snapshot]
     paths: [.github/workflows/chronology-next-snapshot.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  snapshot:
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/mixed-batch-recovery
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Capture incremental source for concurrent review reconciliation
-        run: |
-          mkdir -p /tmp/source
-          git bundle create /tmp/source/integration.bundle HEAD refs/remotes/origin/main ^f1283853bbc918ee5d93161a25bf92fcb3596640
-          git rev-parse HEAD > /tmp/source/head.txt
-          git rev-parse HEAD^{tree} > /tmp/source/tree.txt
-          git log -5 --oneline > /tmp/source/commits.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: pr224-concurrent-integration
-          path: /tmp/source/
-          retention-days: 3
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve concurrent integration and verify exact reviewed changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/descriptor-proof
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          assert git('rev-parse','HEAD')=='40b7fd5a22fddc2ab2023b09ff3715d57b038ee8', 'Concurrent PR update requires reconciliation'
+          sha='25236c490c66270f3091fca71be83da7d86f9328'
+          req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
+          data=base64.b64decode(blob['content'])
+          assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+          assert hashlib.sha256(data).hexdigest()=='bae2070b0bd95fd630f98aa7e006b86d46c3c368af7e65450e53d0e1dc8cb2dc'
+          package=json.loads(lzma.decompress(data))
+          assert git('rev-parse','HEAD^{tree}')==package['before_tree']=='927c5ca61161113da5fe0f6cd7a24f98f29c8861'
+          allowed={'app/mixed_batch.py','tests/test_mixed_batch.py','docs/reconciliation/2026-09-13-mixed-batch-recovery.md'}
+          assert set(package['manifest'])==allowed
+          for name,record in package['manifest'].items():assert git('rev-parse','HEAD:'+name)==record['before_blob'],name
+          root=pathlib.Path('/tmp/descriptor-proof');patch=root/'review-fix.patch';patch.write_text(package['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          for name,record in package['manifest'].items():assert hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()==record['sha256'],name
+          assert set(git('diff','--cached','--name-only').splitlines())==allowed
+          assert git('write-tree')==package['after_tree']=='5e920817385cf6c6d4aef2154267eb6c0d0c4511'
+          (root/'manifest.json').write_text(json.dumps({k:v for k,v in package.items() if k!='patch'},indent=2),encoding='utf-8')
+          PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt playwright==1.57.0
+      - name: Verify full suite and validator
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/descriptor-proof/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/descriptor-proof/validation.log
+          node tests/mixed_batch_frontend.cjs
+          git diff --cached --check
+      - run: python -m playwright install --with-deps chromium
+      - name: Verify both browser paths on the integrated source
+        run: |
+          python tests/mixed_batch_browser.py --out /tmp/descriptor-proof/mixed-browser
+          python tests/recipe_shortlist_browser.py --out /tmp/descriptor-proof/shortlist-browser
+      - name: Publish only verified changes
+        run: |
+          git diff --exit-code
+          test "$(git write-tree)" = '5e920817385cf6c6d4aef2154267eb6c0d0c4511'
+          git commit -m 'fix: keep unsupported mixed history descriptors recoverable'
+          git push origin HEAD:codex/mixed-batch-recovery
+          git rev-parse HEAD > /tmp/descriptor-proof/published-commit.txt
+          git rev-parse HEAD^{tree} > /tmp/descriptor-proof/published-tree.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mixed-descriptor-review-proof
+          path: /tmp/descriptor-proof/
+          retention-days: 7
