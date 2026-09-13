@@ -39,8 +39,9 @@
     if(preset?.id!==claim.preset_id||!cap?.consumes_source)reasons.push('This route cannot consume the selected source. Choose a source-based route or leave continuation explicitly.');
     if(cap&&(!routes[claim.intent]?.includes(cap.operation)||cap.template_sha256!==claim.template_sha256))reasons.push('The destination operation or graph changed. Reopen the handoff before running.');
     if(cap?.requires_mask)reasons.push('Prepare the RGBA repair mask in the dedicated repair workflow first.');
-    const file=preset?.reference_slots?.length?refs[0]?.file:controls.reference;
-    if(file!==claim.reference_file||!parents?.includes(claim.source_asset_id))reasons.push('The source attachment changed or is missing. Reopen Continue with the intended image. No example fallback is allowed.');
+    const files=preset?.reference_slots?.length?refs.map(item=>item?.file):[controls.reference,...(preset?.last_reference?[controls.last_reference]:[])];
+    if(files[0]!==claim.reference_file||!parents?.includes(claim.source_asset_id))reasons.push('The source attachment changed or is missing. Reopen Continue with the intended image. No example fallback is allowed.');
+    if(files.length!==(cap?.reference_count||0)||files.some(file=>typeof file!=='string'||!file))reasons.push('Attach every source input explicitly. An authored example cannot supply a missing continuation frame.');
     if(preset?.positive&&!String(controls.positive||'').trim())reasons.push(cap?.prompt_role==='motion'?'Describe the motion and camera movement before running.':cap?.prompt_role==='instruction'?'Say what to change and what to keep before running.':'Describe the desired image before running. No source description was available to copy.');
     return reasons;
   }

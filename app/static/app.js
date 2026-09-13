@@ -319,7 +319,12 @@ function applySaved(s){
   $('#batch').value=s.batch_count||s.batch||1;message('Recipe loaded. Review the settings before generating.');
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
-function continuationBlockers(){return continuationState?StudioContinuation.blockers(continuationState,selected,values(),parentAssets,attachedReferencePayload()):[];}
+function continuationBlockers(){
+  if(!continuationState)return[];
+  const controls=values();
+  if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
+  return StudioContinuation.blockers(continuationState,selected,controls,parentAssets,attachedReferencePayload());
+}
 function beginContinuation(result,presetId,intent='edit'){
   const target=catalog.presets.find(p=>p.id===presetId);
   if(!target)throw Error('The destination recipe is unavailable.');
@@ -351,7 +356,7 @@ $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.val
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 $('#recipeSelect').onchange=e=>{if(e.target.value===''){if(continuationState)applyRecipe({preset_id:selected.id,name:'Recipe defaults',controls:{}});return;}try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
 $('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();};
-$('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');};
+$('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');updateReady();};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');updateReady();};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);return;}submitting=true;updateReady();
   try{

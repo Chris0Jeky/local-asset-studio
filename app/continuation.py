@@ -41,6 +41,19 @@ def consumes_reference(graph, binding):
     return bool(outputs) and all(key in ancestors(graph, output) for output in outputs)
 
 
+def reference_bindings(preset):
+    """Return every declared image input once, in primary-source order."""
+    if preset.get("reference_slots"):
+        values = [slot.get("binding") for slot in preset["reference_slots"] if isinstance(slot, dict)]
+    else:
+        values = [preset.get("reference"), preset.get("last_reference")]
+    result = []
+    for value in values:
+        if isinstance(value, (list, tuple)) and len(value) == 2 and list(value) not in result:
+            result.append(list(value))
+    return result
+
+
 def prompt_role(graph, has_positive=True, modality="image"):
     if not has_positive: return "none"
     if modality == "video": return "motion"
@@ -50,7 +63,8 @@ def prompt_role(graph, has_positive=True, modality="image"):
 
 
 def capability(preset, graph):
-    consumed = consumes_reference(graph, preset.get("reference"))
+    bindings = reference_bindings(preset)
+    consumed = bool(bindings) and all(consumes_reference(graph, binding) for binding in bindings)
     role = prompt_role(graph, bool(preset.get("positive")), preset.get("modality", "image"))
     kinds = {node.get("class_type") for node in graph.values()}
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
@@ -74,7 +88,7 @@ def capability(preset, graph):
         "operation": operation,
         "prompt_role": role,
         "requires_mask": bool(preset.get("requires_rgba_mask")),
-        "reference_count": len(preset.get("reference_slots") or []) or (1 + bool(preset.get("last_reference")) if consumed else 0),
+        "reference_count": len(bindings) if consumed else 0,
         "scope": "Static registered graph wiring; not a guarantee of visual preservation.",
     }
 
@@ -159,18 +173,39 @@ def validate(studio, payload, preset, graph, check_runtime=False):
     if not isinstance(parents, list) or claim["source_asset_id"] not in parents:
         raise ValueError("Continuation source is missing from lineage.")
     controls = payload.get("controls") or {}
-    if not preset.get("reference_slots") and controls.get("reference") != claim["reference_file"]:
-        raise ValueError("Attach the continuation source explicitly; authored example inputs are not allowed.")
-    node, field = preset["reference"]
-    name = graph[str(node)]["inputs"][str(field)]
-    if name != claim["reference_file"] or not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)", name):
-        raise ValueError("The attached source changed. Reopen Continue with the intended image; the old source was not discarded.")
-    roots = [studio.experiments / "uploads"]
-    if check_runtime: roots.append(Path(payload.get("comfy_root", studio.comfy_root)) / "input")
-    for root in roots:
-        path = root / name
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > 20 * 1024 * 1024 or hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
-            raise ValueError("The continuation input bytes changed or are missing. Reattach the source before running.")
+    declared = []
+    if preset.get("reference_slots"):
+        supplied = payload.get("references")
+        slots = preset["reference_slots"]
+        if not isinstance(supplied, list) or len(supplied) != len(slots):
+            raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
+        declared = [(slot.get("binding"), record.get("file") if isinstance(record, dict) else None,
+                     record.get("sha256") if isinstance(record, dict) else None) for slot, record in zip(slots, supplied)]
+    else:
+        declared = [(preset.get(key), controls.get(key), None) for key in ("reference", "last_reference") if preset.get(key)]
+    if not declared or declared[0][1] != claim["reference_file"]:
+        raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
+    upload_root = studio.experiments / "uploads"
+    runtime_root = Path(payload.get("comfy_root", studio.comfy_root)) / "input"
+    for index, (binding, name, recorded_hash) in enumerate(declared):
+        try:
+            node, field = binding
+            bound = graph[str(node)]["inputs"][str(field)]
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("Every declared source input must have a valid graph binding.") from None
+        if not isinstance(name, str) or bound != name or not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)", name):
+            raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
+        upload = upload_root / name
+        if upload.is_symlink() or not upload.is_file() or upload.stat().st_size > 20 * 1024 * 1024:
+            raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
+        upload_hash = hashlib.sha256(upload.read_bytes()).hexdigest()
+        expected = source["sha256"] if index == 0 else recorded_hash or upload_hash
+        if upload_hash != expected:
+            raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
+        if check_runtime:
+            runtime = runtime_root / name
+            if runtime.is_symlink() or not runtime.is_file() or runtime.stat().st_size > 20 * 1024 * 1024 or hashlib.sha256(runtime.read_bytes()).hexdigest() != upload_hash:
+                raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
     if preset.get("positive"):
         text = controls.get("positive")
         if not isinstance(text, str) or not text.strip():

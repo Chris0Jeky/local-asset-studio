@@ -37,11 +37,15 @@ class ContinuationTests(unittest.TestCase):
             (self.root / path).mkdir(parents=True, exist_ok=True)
         (self.root / "config/local.json").write_text(json.dumps({"comfy_root": str(self.root / "fake-comfy")}))
         self.graph_path = self.root / PRESET["graph"]; self.graph_path.write_text(json.dumps(GRAPH))
+        self.multi_preset = dict(PRESET, id="first-last", name="First and last", graph="workflows/api/first-last.json", last_reference=["9", "image"])
+        multi_graph = copy.deepcopy(GRAPH); multi_graph["9"] = {"class_type": "LoadImage", "inputs": {"image": "authored-last.png"}}
+        multi_graph["6"]["inputs"]["last_image"] = ["9", 0]
+        self.multi_path = self.root / self.multi_preset["graph"]; self.multi_path.write_text(json.dumps(multi_graph))
         self.source_preset = {key: value for key, value in PRESET.items() if key != "reference"}
         self.source_preset.update(id="create", name="Anima source fixture", graph="workflows/api/create.json")
         graph = copy.deepcopy(GRAPH); graph["6"]["inputs"]["latent_image"] = ["3", 0]
         (self.root / self.source_preset["graph"]).write_text(json.dumps(graph))
-        (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [PRESET, self.source_preset]}))
+        (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [PRESET, self.source_preset, self.multi_preset]}))
         with patch.object(threading.Thread, "start"): self.studio = server.Studio(self.root)
         self.request = patch.object(self.studio, "_request", side_effect=AssertionError("Unexpected Comfy request")); self.request.start(); self.addCleanup(self.request.stop)
         created = self.studio.create_job({"preset_id": "create", "controls": {"positive": "{station|meadow}"}, "batch_count": 2}, enqueue=False)
@@ -133,6 +137,22 @@ class ContinuationTests(unittest.TestCase):
         with patch.object(self.studio, "_wait_for_queue"): self.studio._run(job)
         self.assertEqual(job["status"], "failed"); self.assertEqual(job["prompt_ids"], [])
         self.assertNotIn("pending_submission", job); self.assertIn("No prompt was submitted", job["message"])
+
+    def test_every_declared_source_input_is_explicit_and_dispatch_rechecked(self):
+        last = self.studio.upload("last.png", "image/png", png())
+        attachment = self.attachment
+        claim = dict(self.claim, preset_id="first-last", template_sha256=hashlib.sha256(self.multi_path.read_bytes()).hexdigest())
+        payload = dict(preset_id="first-last", controls={"positive": attachment["context"]["positive"], "reference": attachment["file"]}, parent_assets=[self.asset_id], continuation=claim)
+        with self.assertRaisesRegex(ValueError, "every declared source input"):
+            self.studio.prepare(payload)
+        payload["controls"]["last_reference"] = last["file"]
+        preview = self.studio.preview(payload)
+        self.assertEqual(preview["workflow"]["9"]["inputs"]["image"], last["file"])
+        job = self.studio.jobs[self.studio.create_job(payload, enqueue=False)["id"]]
+        job["graph"]["9"]["inputs"]["image"] = "authored-last.png"
+        with patch.object(self.studio, "_wait_for_queue"): self.studio._run(job)
+        self.assertEqual(job["status"], "failed"); self.assertEqual(job["prompt_ids"], [])
+        self.assertIn("every declared source input", job["message"])
 
     def test_legacy_jobs_keep_original_behavior_and_http_route_is_guarded(self):
         result = self.studio.create_job({"preset_id": "create", "controls": {}}, enqueue=False)

@@ -52,6 +52,11 @@ test('actionable blockers distinguish missing source from missing wording',()=>{
   assert.match(C.blockers(claim,p,{positive:'',reference:file},['source-asset']).join(),/Describe/);
   assert.match(C.blockers(claim,p,{positive:'yes',reference:'other.png'},['source-asset']).join(),/attachment changed/);
 });
+test('multi-input continuation cannot retain an authored last frame',()=>{
+  const multi={...p,last_reference:['7','image'],continuation_capability:{...cap,reference_count:2}};
+  assert.match(C.blockers(claim,multi,{positive:source.positive,reference:file},['source-asset']).join(),/every source input/);
+  assert.deepEqual(C.blockers(claim,multi,{positive:source.positive,reference:file,last_reference:'b'.repeat(32)+'_last.png'},['source-asset']),[]);
+});
 test('family matching never resurrects a text-only graph as a refinement',()=>{
   const same={...p,id:'same',family:'Anima'},different={...p,id:'different',family:'Krea'};
   const presets=[{id:'anima-portrait',name:'Source',family:'Anima'},{id:'new',name:'New',family:'Anima',continuation_capability:{...cap,consumes_source:false}},different,same];

@@ -177,10 +177,13 @@ async function firstLastFramesAttributeSeparately() {
     assetState.assets=[{id:'asset-a',title:'Original',media_type:'image',tags:[],source:{},lineage:[],bytes:1024}];openAsset('asset-a');`);
   await run(`handoffAsset('asset-a','h3-first-last')`);
   assert.deepEqual(parents(), ['asset-a'], 'The handoff attaches the source to the first frame');
+  assert.equal(element('#generate').disabled, true, 'An authored last-frame example cannot satisfy a continuation');
   element('#lastReference').files = [localFile('last.png')];
   element('#lastReference').onchange();
   assert.deepEqual(parents(), ['asset-a'], 'Choosing a last frame from disk keeps the first frame lineage');
   element('#positive').value = 'A slow orbit around the subject.';
+  run('updateReady()');
+  assert.equal(element('#generate').disabled, false, 'An explicit local last frame makes the reviewed continuation runnable');
   await element('#generate').onclick();
   const submitted = requests.find(r => r.url === '/api/jobs').data;
   assert.deepEqual(submitted.parent_assets, ['asset-a']);
