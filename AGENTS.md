@@ -28,6 +28,9 @@ Codex through `~/.codex/AGENTS.md`. This file carries only the Codex-runtime del
 - Skills: `.codex/skills/` mirrors `.claude/skills/` body-for-body; `tests/test_agent_harness.py` fails on
   drift. Change the Claude tree first, then port the body verbatim in the same commit.
 - Use native `rg` and `git` for repository search and state; `gh` for PRs and issues.
+- Every Codex PR body states each issue disposition: `Closes #N`/`Fixes #N` only for a complete issue,
+  otherwise `Refs #N` plus the remaining acceptance. List multiple closures individually, recheck
+  the live issue state before and after merge, and never use a closing keyword as a non-closing example.
 
 ## Skill routing
 
