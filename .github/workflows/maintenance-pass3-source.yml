@@ -1,0 +1,31 @@
+name: Maintenance pass 3 source
+on:
+  push:
+    branches: [codex/maintenance-pass3-transfer-20260913]
+    paths: [.github/workflows/maintenance-pass3-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 22ec26dc549a4648a6e94f80f5d3c870f03c6520
+          persist-credentials: false
+      - name: Export tracked source and issue state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git archive --format=tar HEAD > "$RUNNER_TEMP/source.tar"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+          gh api --paginate 'repos/Chris0Jeky/local-asset-studio/issues?state=open&per_page=100' --slurp > "$RUNNER_TEMP/issues.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass3-source
+          path: |
+            ${{ runner.temp }}/source.tar
+            ${{ runner.temp }}/identity.txt
+            ${{ runner.temp }}/issues.json
+          retention-days: 1
