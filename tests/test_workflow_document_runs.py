@@ -14,6 +14,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from http_refusal_transport import atomic_json_post
 from studio_workflow import preset_adapter
 from studio_workflow.core import canonical, catalog, new_document, digest
 from studio_workflow.documents import WorkflowDocuments, DocumentError
@@ -255,6 +256,7 @@ class RunHTTPTests(RunFixture, unittest.TestCase):
             def do_POST(handler): handler._json(404, {'error': 'base route'})
         handler = extend_handler(Base); handler.studio = self.runtime
         http = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+        self.http = http
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         def stop(): http.shutdown(); http.server_close(); thread.join(5)
         self.addCleanup(stop)
@@ -268,7 +270,7 @@ class RunHTTPTests(RunFixture, unittest.TestCase):
             with exc: return exc.code, json.loads(exc.read())
     def test_http_prepare_recover_conflict_observe_and_security(self):
         self.start_http()
-        self.assertEqual(self.request(PREFIX, self.value, 'https://untrusted.invalid')[0], 403)
+        self.assertEqual(atomic_json_post(self.http.server_port, PREFIX, canonical(self.value), origin='https://untrusted.invalid')[0], 403)
         code, first = self.request(PREFIX, self.value); self.assertEqual(code, 200)
         self.edit(); code, recovered = self.request(PREFIX + '/prepare-first')
         self.assertEqual(recovered['record'], first['record']); self.assertEqual(recovered['head_revision'], 2)
@@ -286,4 +288,3 @@ class RunHTTPTests(RunFixture, unittest.TestCase):
         self.assertEqual(self.request(PREFIX + '/unknown')[0], 404)
         with self.runtime.assets.connection() as db: db.execute("UPDATE workflow_document_runs_v1 SET record='{}'")
         self.assertEqual(self.request(PREFIX + '/prepare-first')[0], 503)
-

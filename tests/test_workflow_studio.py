@@ -14,6 +14,7 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from http_refusal_transport import atomic_json_post
 from studio_workflow import core
 from studio_workflow.execution import prepare_ticket, run_ticket
 from studio_workflow.http_extension import extend_handler, PREFIX, post
@@ -229,9 +230,9 @@ class HTTPTests(unittest.TestCase):
         client = Client(self.url)
         self.assertTrue(client.request(PREFIX + '/capabilities')['shared_worker'])
         self.assertEqual(client.request('/api/old'), {'existing_route': True})
-        request = Request(self.url + PREFIX + '/compile', data=b'{}', headers={'Origin': 'https://foreign.invalid', 'Content-Type': 'application/json'})
-        with self.assertRaises(HTTPError) as error: urlopen(request)
-        self.assertEqual(error.exception.code, 403); self.assertEqual(self.studio.calls, 0)
+        self.assertEqual(atomic_json_post(self.server.server_port, PREFIX + '/compile', b'{}',
+                                          host=self.server.expected_host, origin='https://foreign.invalid')[0], 403)
+        self.assertEqual(self.studio.calls, 0)
     def test_strict_json_import_has_no_side_effect(self):
         with self.assertRaises(HTTPError): Client(self.url).request(PREFIX + '/open', {'content': '{"x":1,"x":2}'})
         result = Client(self.url).request(PREFIX + '/open', {'content': json.dumps(GRAPH)})
