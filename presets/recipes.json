@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-12",
+  "updated": "2026-09-13",
   "note": "Saved control sets. status 'executed' means this machine ran these controls and the evidence block names the ComfyUI prompt ID; 'unverified' means the settings come from model and LoRA cards and have not been rendered here. Prompts are original characters and SFW. Wildcards ({a|b} and __name__) expand server-side at submission.",
   "recipes": [
     {
@@ -639,6 +639,127 @@
       "sources": [
         "https://civitai.com/images/141897933"
       ]
+    },
+    {
+      "id": "cstati-v3-base",
+      "name": "CSTati v3 - uncluttered baseline",
+      "preset_id": "cstati-v3-baseline",
+      "family": "CSTati v3 (SDXL)",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Baseline control. Both LoRA strengths are 0, so the server prunes both nodes before submission. This is a fully clothed adult original character prompt, not a source-image reproduction.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "cstati-v3-adapter-audition",
+      "name": "CSTati v3 - first adapter audition",
+      "preset_id": "cstati-v3-baseline",
+      "family": "CSTati v3 (SDXL)",
+      "tags": ["anime", "adult-original-character", "adapter-audition"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 1.0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Deliberate one-variable adapter audition: slot 1 only at authored strength 1.0; Noir slot 2 remains 0 and is pruned. Strength is editable and has no generation evidence.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "yumeflux-ilv1-base",
+      "name": "YumeFlux ILv1 - uncluttered baseline",
+      "preset_id": "yumeflux-ilv1-baseline",
+      "family": "YumeFlux ILv1 (SDXL)",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Baseline control. Both LoRA strengths are 0, so the server prunes both nodes before submission. This is a fully clothed adult original character prompt, not a source-image reproduction.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "yumeflux-ilv1-adapter-audition",
+      "name": "YumeFlux ILv1 - first adapter audition",
+      "preset_id": "yumeflux-ilv1-baseline",
+      "family": "YumeFlux ILv1 (SDXL)",
+      "tags": ["anime", "adult-original-character", "adapter-audition"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 1.0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Deliberate one-variable adapter audition: slot 1 only at authored strength 1.0; Noir slot 2 remains 0 and is pruned. Strength is editable and has no generation evidence.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anifox-v2-base",
+      "name": "AniFox v2 - uncluttered baseline",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 5, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Baseline control. Both LoRA strengths are 0, so the server prunes both nodes before submission. This is a fully clothed adult original character prompt, not a source-image reproduction.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anifox-v2-adapter-audition",
+      "name": "AniFox v2 - first adapter audition",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["anime", "adult-original-character", "adapter-audition"],
+      "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 5, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 1.0, "lora2": 0},
+      "batch_count": 1,
+      "notes": "Deliberate one-variable adapter audition: slot 1 only at authored strength 1.0; Noir slot 2 remains 0 and is pruned. Strength is editable and has no generation evidence.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anima-v1-base",
+      "name": "Anima v1 - uncluttered baseline",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
+      "batch_count": 1,
+      "notes": "Every model-only adapter slot is 0 and will be pruned. Slot 1 names nsfw_girls_anima; slots 2-6 preserve the tested Anima stack shape but are disabled for this baseline.",
+      "sources": ["https://huggingface.co/circlestone-labs/Anima"], "status": "unverified"
+    },
+    {
+      "id": "anima-v1-first-adapter-comparison",
+      "name": "Anima v1 - first adapter comparison",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["anime", "adult-original-character", "adapter-audition"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 1.0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
+      "batch_count": 1,
+      "notes": "Single-adapter comparison against anima-v1-base: same prompt, seed, CFG 4.5, Euler and simple settings; slot 1 only at authored strength 1.0. It is unverified and editable; slots 2-6 are pruned.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anima-v1-screenshot-sampling-comparison",
+      "name": "Anima v1 - screenshot sampling comparison",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["anime", "adult-original-character", "sampling-comparison"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 5.5, "sampler": "euler_ancestral", "scheduler": "simple", "denoise": 1.0, "lora": 1.0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0},
+      "batch_count": 1,
+      "notes": "Multi-setting comparison from the supplied Anima screenshot settings: same prompt and seed as anima-v1-base, slot 1 at 1.0, with CFG 5.5 and Euler ancestral. It is unverified and editable; slots 2-6 are pruned.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "janima-v1-base",
+      "name": "JANIMA v1 - uncluttered baseline",
+      "preset_id": "janima-v1-baseline",
+      "family": "JANIMA v1 (Anima)",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0},
+      "batch_count": 1,
+      "notes": "Every Anima-family adapter slot is 0 and will be pruned. JANIMA's diffusion-model path, encoder compatibility and output quality remain unverified.",
+      "sources": [], "status": "unverified"
+    },
+    {
+      "id": "janima-v1-authored-five-adapter-stack",
+      "name": "JANIMA v1 - authored five-adapter stack",
+      "preset_id": "janima-v1-baseline",
+      "family": "JANIMA v1 (Anima)",
+      "tags": ["anime", "adult-original-character", "adapter-stack", "assumed-settings"],
+      "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition, @rapscallion_style, @sl0p, @m1d.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 0.3, "lora2": 0.6, "lora3": 0.35, "lora4": 0.25, "lora5": 0.5},
+      "batch_count": 1,
+      "notes": "All five weights are cautious authored starting values (0.3, 0.6, 0.35, 0.25, 0.5), not screenshot/source transcription. They are deliberately editable and require a fresh single-run evidence record before any quality claim.",
+      "sources": [], "status": "unverified"
     }
   ]
 }
