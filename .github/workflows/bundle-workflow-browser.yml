@@ -1,0 +1,39 @@
+name: Bundle workflow browser
+on:
+  pull_request:
+    paths:
+      - 'app/static/bundle-*.js'
+      - 'app/static/bundle-*.css'
+      - 'app/static/workflow-project-state.js'
+      - 'studio_workflow/**'
+      - 'tests/bundle_workflow*'
+      - 'tests/test_bundle_workflow.py'
+      - '.github/workflows/bundle-workflow-browser.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m unittest discover -s tests -p 'test_bundle_workflow.py' -v
+      - name: Native HTTP, storage and existing SQLite service
+        run: python tests/bundle_workflow_browser.py --out .runtime/bundle-workflow-proof
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bundle-workflow-browser-proof
+          path: .runtime/bundle-workflow-proof/
+          if-no-files-found: ignore
+          retention-days: 7

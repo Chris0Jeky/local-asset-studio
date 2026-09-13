@@ -36,12 +36,19 @@ adapter changes. Draft edits have undo/redo; final Apply remains separate. Edite
 configurations do not inherit the source recipe's execution receipt. This is
 transient browser state, not a new shared-document store.
 
+**Reusable workflows:** Prepare a named Steps document from the tuned draft,
+review it, then explicitly save a new copy through the existing Workspace
+workflow service or download its JSON. Reopen it in Workflow builder for shared
+revision-checked editing. Saving never generates; interrupted saves retain the
+same request identity for explicit recovery.
+
 **Preview delivery:** the canonical JSON index has a generated checked-in JS
 module so it can load through Studio's existing static-file policy. Normal
 startup requires no build. See the delivery correction below.
 
 ## Read next
 
+- [Reusable Steps workflows and retained-save contract](REUSABLE-WORKFLOWS.md)
 - [Guided tuning, reconciliation and tests](GUIDED-TUNING.md)
 - [Showcase HTTP delivery correction](DELIVERY-FIX.md)
 - [Architecture and next interaction model](ARCHITECTURE.md)
