@@ -126,7 +126,11 @@ class Production:
                        variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
         result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
         mixed=self._mixed_batch_jobs(project)
-        result['can_reconcile_batch']=state['status'] in ('interrupted','uncertain','stopped') and bool(mixed) and all(mixed_batch.disposed(job) for _,job in mixed)
+        ownership_error=self._mixed_batch_ownership_error(project,mixed)
+        result['can_reconcile_batch']=not ownership_error and state['status'] in ('interrupted','uncertain','stopped') and bool(mixed) and all(mixed_batch.disposed(job) for _,job in mixed)
+        if ownership_error:
+            result['batch_reconciliation_error']=ownership_error
+            state['message']=ownership_error+' '+state.get('message','')
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
@@ -611,10 +615,39 @@ class Production:
         return [(index,job) for index,attempt in project['state'].get('attempts',{}).items()
                 if (job:=self.studio.jobs.get(attempt.get('job_id'))) and 'pending_submission' in job and job.get('prompt_ids')]
 
+    @staticmethod
+    def _mixed_batch_ownership_error(project, jobs):
+        # Persisted attempt links are evidence to check, not authority to adopt
+        # another job. Legacy jobs need no new field or deterministic-ID rewrite.
+        if not jobs:return None
+        try:
+            plan=project['plan'];stages=plan['stages'];seen=set()
+            if fingerprint({k:v for k,v in plan.items() if k!='sha256'})!=plan['sha256']:
+                raise ValueError('plan fingerprint differs')
+            for index,job in jobs:
+                if not isinstance(index,str) or not re.fullmatch(r'0|[1-9][0-9]{0,3}',index) or int(index)>=len(stages):
+                    raise ValueError('stage index is invalid')
+                stage=stages[int(index)];attempt=project['state']['attempts'][index]
+                if job.get('project_id')!=project['id'] or job.get('id')!=attempt.get('job_id') or job['id'] in seen:
+                    raise ValueError('job does not uniquely belong to this project stage')
+                seen.add(job['id'])
+                if (stage.get('operation')!='comfy.generate.v1'
+                        or job.get('preset_id')!=stage['request'].get('preset_id')
+                        or job.get('comfy_url')!=plan['bundle'].get('comfy_url')
+                        or fingerprint(stage['graph'])!=stage['graph_sha256']
+                        or fingerprint(job['graph'])!=stage['graph_sha256']):
+                    raise ValueError('job recipe, backend or graph differs from the pinned stage')
+        except (KeyError,TypeError,ValueError,RecursionError):
+            return ('The mixed batch ownership does not match its retained project, plan and stage. '
+                    'Inspect the attempt links; no reconciliation or new work was authorized.')
+        return None
+
     def _reconcile_batch_disposition(self, identifier, project):
         # A local disposition releases the local dead end, not a remote outcome,
         # reservation or later stage. Caller holds Studio then Production locks.
         jobs=self._mixed_batch_jobs(project)
+        ownership_error=self._mixed_batch_ownership_error(project,jobs)
+        if ownership_error:raise ValueError(ownership_error)
         if not jobs or not all(mixed_batch.disposed(job) for _,job in jobs):return False
         state=project['state']
         if state['status'] not in ('interrupted','uncertain','stopped','queued','running','observing','failed'):return False
