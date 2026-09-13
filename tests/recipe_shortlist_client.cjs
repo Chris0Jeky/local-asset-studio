@@ -35,3 +35,15 @@ test('invalid responses preserve no actionable stale report',async()=>{
  const events=[];const s=new C.Session(async()=>({...report(),goal:'edit-image'}),e=>events.push(e));await s.load(query);
  assert.equal(events.filter(e=>e.report).length,0);assert.match(events.at(-1).message,/context/);
 });
+const sourceQuery={goal:'edit-image',reference_count:1,limit:6,offset:0,source_asset_id:'asset-0',source_sha256:'b'.repeat(64),source_role:'pose'};
+const sourceReport=()=>({...report(),goal:'edit-image',reference_count:1,source:{asset_id:'asset-0',sha256:'b'.repeat(64),role:'pose',title:'My image',width:32,height:48,bytes_verified:true,staged:false}});
+test('binds an exact primary source without treating it as attached',()=>{assert.deepEqual(C.validate(sourceReport(),sourceQuery),sourceReport())});
+test('refuses missing substituted or staged source observations',()=>{
+ for(const source of [undefined,null,{...sourceReport().source,asset_id:'other'},{...sourceReport().source,sha256:'c'.repeat(64)},{...sourceReport().source,role:'identity'},{...sourceReport().source,bytes_verified:false},{...sourceReport().source,staged:true},{...sourceReport().source,width:0}])assert.throws(()=>C.validate({...sourceReport(),source},sourceQuery));
+ assert.throws(()=>C.validate({...report(),source:sourceReport().source},query));
+});
+test('changing advice source discards a delayed source-bound reply',async()=>{
+ const pending=deferred(),events=[];const s=new C.Session(()=>pending.promise,e=>events.push(e));const work=s.load(sourceQuery);
+ s.invalidate('Source changed');pending.resolve(sourceReport());await work;
+ assert.equal(events.filter(e=>e.report).length,0);
+});
