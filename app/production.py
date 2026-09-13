@@ -312,9 +312,10 @@ class Production:
             request['expected_template_sha256']=hashlib.sha256(path.read_bytes()).hexdigest()
             graph_hash=fingerprint(graph)
             stages.append({'operation':'comfy.generate.v1','label':chr(65+index),'request':request,'graph':graph,'graph_sha256':graph_hash})
-        # Different labels are not different work: two planned variants that resolve
-        # to the same graph would spend two reservations on one image.
-        if variants is not None and len({s['graph_sha256'] for s in stages})!=len(stages):raise ValueError('Planned variants must resolve to different graphs')
+        # Different labels or spellings are not different work: two candidates that resolve
+        # to the same graph would spend two reservations on one image. Decimal-distinct axis
+        # values can still collapse to one float when bound, so every comparison is checked.
+        if len({s['graph_sha256'] for s in stages})!=len(stages):raise ValueError(('Planned variants' if variants is not None else 'Comparison values')+' must resolve to different graphs')
         identifier=identifier_override or uuid.uuid4().hex
         parent=payload.get('parent_project')
         with self.lock,self.connect() as db:

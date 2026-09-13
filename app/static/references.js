@@ -20,7 +20,7 @@ async function uploadRoleFile(index,file){
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
     if(epoch===referenceEpoch){const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);}
   }catch(e){message(e.message,true);$('#referenceSummary').textContent=e.message;}
-  finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
+  finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}else{$('#referenceSummary').textContent='The slot changed while that image was uploading; it was not attached. Drop it again.';}}
 }
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;

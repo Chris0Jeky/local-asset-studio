@@ -120,7 +120,9 @@ def _input(name: str, descriptor: Any, required: bool) -> dict:
             reasons.append("Numeric minimum exceeds maximum")
         elif "step" in options and options["step"] <= 0:
             reasons.append("Numeric step must be positive")
-    if kind in {"DYNAMIC_COMBO", "DYNAMIC_AUTOGROW", "UNKNOWN"}:
+    # ComfyUI publishes its V3 dynamic families as COMFY_DYNAMICCOMBO_V3, COMFY_AUTOGROW_V3 and
+    # COMFY_MATCHTYPE_V3 (measured on 0.35.0); any other COMFY_*_V3 kind is treated the same way.
+    if kind in {"DYNAMIC_COMBO", "DYNAMIC_AUTOGROW", "UNKNOWN"} or (kind.startswith("COMFY_") and kind.endswith("_V3") and kind not in SCALARS | {"COMBO"}):
         reasons.append("Dynamic/custom input needs a native adapter")
     for flag in ("rawLink", "remote"):
         if options.get(flag):

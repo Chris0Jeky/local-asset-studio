@@ -131,7 +131,7 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
   else if(action==='extend-time'){
     const seconds=Number($('#extendTimeMinutes').value)*60,reason=$('#extendTimeReason').value.trim();
-    if(!Number.isInteger(seconds)||seconds<60||!reason)throw Error('Give additional time in whole seconds and a reason.');
+    if(!Number.isInteger(seconds)||seconds<60||!reason)throw Error('Give at least one whole minute of additional time and a reason.');
     await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});
   }
   else if(['start','stop','resume'].includes(action))await post('/api/production/'+p.id+'/'+action,{});
