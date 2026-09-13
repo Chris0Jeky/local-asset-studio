@@ -7,6 +7,7 @@ sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidenc
 is separate from the earlier asset-detail and metadata-concurrency checkpoints.
 
 
+
 ## What this pass changes
 
 A practical review session should let someone inspect an output, write specific repair notes, mark a preference, look at its source, save, and choose the next operation without losing their place or their work. This pass makes that one connected workflow dependable before adding another launcher or tour.
