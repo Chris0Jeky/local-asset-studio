@@ -1,0 +1,59 @@
+name: Verified Workspace recovery objects
+on:
+  push:
+    branches: ['codex/ux-retry-source-20260913']
+    paths: ['.github/workflows/ux-scope-final-objects.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 22ec26dc549a4648a6e94f80f5d3c870f03c6520
+          persist-credentials: false
+      - name: Verify complete candidate before creating source objects
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, lzma, os, subprocess, urllib.request
+          from pathlib import Path
+          api='https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'}
+          chunks=['57f566f705850be6faa0a1e1eb4c43ef3611f949','7b022e458374545acd404c875a93721276b696bc','26dc87f9f999b33611721ddd7e88c401ed4aeaa0']
+          parts=[]
+          for sha in chunks:
+              req=urllib.request.Request(api+'/'+sha,headers=headers)
+              with urllib.request.urlopen(req,timeout=30) as response:data=json.load(response)
+              raw=base64.b64decode(data['content'])
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+              parts.append(raw)
+          patch=lzma.decompress(base64.b64decode(b''.join(parts)))
+          assert len(patch)==98160
+          assert hashlib.sha256(patch).hexdigest()=='da601b9e26971ff7bbe3383e9b74ab8dbc74c08df78a0617c650216dab28dc0f'
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
+          tree=subprocess.check_output(['git','write-tree']).decode().strip()
+          assert tree=='179304d8f59fbfcc5f0b63e31ee34cf62f9d36b5',tree
+          paths=subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()
+          assert len(paths)==18
+          entries=[]
+          for path in paths:
+              raw=Path(path).read_bytes()
+              expected=subprocess.check_output(['git','rev-parse',':'+path]).decode().strip()
+              payload=json.dumps({'encoding':'base64','content':base64.b64encode(raw).decode()}).encode()
+              req=urllib.request.Request(api,data=payload,headers=headers,method='POST')
+              with urllib.request.urlopen(req,timeout=30) as response:result=json.load(response)
+              assert result['sha']==expected,path
+              entries.append({'path':path,'sha':expected,'mode':'100644','type':'blob'})
+          manifest={'base':'22ec26dc549a4648a6e94f80f5d3c870f03c6520','tree':tree,'files':entries}
+          Path('/tmp/workspace-recovery-objects.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print(json.dumps(manifest,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workspace-recovery-verified-objects
+          path: /tmp/workspace-recovery-objects.json
+          retention-days: 1
