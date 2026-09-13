@@ -130,7 +130,7 @@ def _resume_partial(part,target,expected_size):
  except OSError as error:raise SystemExit(f'Cannot inspect the partial download: {part} ({error})')
  if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or getattr(info,'st_nlink',1)!=1:
   raise SystemExit(f'Resume requires an unshared regular partial file: {part}')
- if part.resolve().parent!=target.parent:
+ if part.resolve().parent!=target.parent.resolve():
   raise SystemExit(f'Partial download is outside the intended model directory: {part}')
  if expected_size is None:raise SystemExit('Cannot resume without the pinned file size')
  if info.st_size>expected_size:
