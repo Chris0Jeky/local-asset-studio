@@ -5,7 +5,6 @@ on:
     paths: [.github/workflows/retry-chronological-snapshot.yml]
 permissions:
   contents: read
-  issues: read
   pull-requests: read
 jobs:
   snapshot:
@@ -16,41 +15,22 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Capture tracked source and bounded issue evidence
+      - name: Capture the existing reviewed recovery PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/retry-source
-          git bundle create /tmp/retry-source/source.bundle HEAD
+          mkdir -p /tmp/pr198-source
+          git bundle create /tmp/pr198-source/source.bundle HEAD refs/remotes/origin/main refs/remotes/origin/codex/chronological-recovery-followups
           python - <<'PY'
-          import datetime,json,os,pathlib,subprocess,urllib.request
-          base='https://api.github.com/repos/Chris0Jeky/local-asset-studio'
-          def get(path):
-              request=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(request,timeout=30) as response:return json.load(response)
-          def pages(path):
-              result=[]
-              for page in range(1,11):
-                  data=get(path+('&' if '?' in path else '?')+'per_page=100&page='+str(page))
-                  result.extend(data)
-                  if len(data)<100:return result
-              raise RuntimeError('Pagination exceeded bound')
-          keys=('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
-          compact=lambda item:{key:item.get(key) for key in keys}
-          issues=[i for i in pages('/issues?state=open&sort=created&direction=asc') if 'pull_request' not in i]
-          pulls=get('/pulls?state=all&sort=updated&direction=desc&per_page=60')
-          opened=pages('/pulls?state=open')
-          data={'captured_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'main':get('/commits/main')['sha'],'issues':[compact(i) for i in issues],'pulls':[dict(compact(p),head=p['head']['sha'],branch=p['head']['ref']) for p in pulls]}
-          data['comments']={str(n):pages('/issues/'+str(n)+'/comments') for n in (2,3,9,10,93,94,95,98,110,186,187)}
-          data['open_pr_files']={str(p['number']):[f['filename'] for f in pages('/pulls/'+str(p['number'])+'/files')] for p in opened}
-          data['selected_issues']={str(n):compact(get('/issues/'+str(n))) for n in (93,94,95,98,110,187)}
-          pathlib.Path('/tmp/retry-source/github-evidence.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
-          print('Main',data['main'])
-          print('Oldest',[(i['number'],i['title']) for i in issues[:20]])
-          print('Open PR files',data['open_pr_files'])
+          import json,os,pathlib,urllib.request
+          root=pathlib.Path('/tmp/pr198-source')
+          for name,endpoint in [('pr','pulls/198'),('reviews','pulls/198/reviews?per_page=100'),('comments','pulls/198/comments?per_page=100'),('discussion','issues/198/comments?per_page=100')]:
+              request=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/'+endpoint,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(request,timeout=30) as response:data=json.load(response)
+              (root/(name+'.json')).write_text(json.dumps(data,indent=2),encoding='utf-8')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: retry-chronological-source
-          path: /tmp/retry-source/
+          name: recovered-pr198-source
+          path: /tmp/pr198-source/
           retention-days: 3
