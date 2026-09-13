@@ -311,7 +311,27 @@ async function i2vDiagnosticEligibilityAndRetry() {
   assert.match(failed.element('#assetDiagnostic').innerHTML,/data-i2v-diagnostic="wan-job"/,'Failed diagnostics restore the retry button');
 }
 
+async function explicitLocalAbandonment() {
+  const {element, requests, run} = sandbox({}, {});
+  run(`jobs=[{id:'uncertain-job',preset_name:'Lost response',status:'uncertain',message:'Unknown',outputs:[],prompt_ids:[],can_abandon:true,abandon_requires_acknowledgement:true}];renderJobs();`);
+  const html=element('#gallery').innerHTML;
+  assert.match(html,/data-abandon-ack/);assert.match(html,/does not cancel remote work/);
+  assert.match(html,/maxlength="1000"/);assert.equal(requests.length,0,'Rendering never sends an abandonment or generation');
+  const reason={value:''},ack={checked:false};
+  const button={dataset:{job:'uncertain-job'},disabled:false,closest:()=>({querySelector:selector=>selector==='[data-abandon-reason]'?reason:ack})};
+  const event={target:{closest:selector=>selector==='.abandonJob'?button:null}};
+  await element('#gallery').onclick(event);assert.equal(requests.length,0);
+  reason.value='Retain the lost receipt';await element('#gallery').onclick(event);assert.equal(requests.length,0);
+  ack.checked=true;await element('#gallery').onclick(event);
+  assert.deepEqual(requests,[{url:'/api/jobs/uncertain-job/abandon',data:{reason:'Retain the lost receipt',acknowledge_unknown:true}}]);
+  assert.equal(button.disabled,false);
+  run(`jobs=[{id:'abandoned',preset_name:'Preserved',status:'abandoned',message:'Retained',outputs:[],prompt_ids:[],abandonment:{basis:'outcome_unknown',reason:'<script>not markup</script>'}}];renderJobs();`);
+  assert.match(element('#gallery').innerHTML,/&lt;script&gt;/);assert.doesNotMatch(element('#gallery').innerHTML,/class="abandonJob"/);
+  assert.match(element('#gallery').innerHTML,/Remote outcome remains unknown/);
+}
+
 (async () => {
+  await explicitLocalAbandonment();
   await check('qwen-1ref', null, 1);
   await check('qwen-3ref', null, 3);
   await check('plain', null, 0);
