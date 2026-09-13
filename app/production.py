@@ -21,6 +21,8 @@ from decimal import Decimal, InvalidOperation
 import settings_planner
 import prompting
 import project_storage
+import submission_evidence
+import production_clock
 
 
 def fingerprint(value):
@@ -40,6 +42,10 @@ class Production:
             for row in db.execute('SELECT id,plan,state FROM projects').fetchall():
                 plan=json.loads(row['plan'])
                 state=json.loads(row['state'])
+                if plan.get('kind')=='comparison' and 'time_budget' in state:
+                    try:state['time_budget']=production_clock.recover(production_clock.read(plan,state))
+                    except ValueError as exc:state['time_budget_error']=str(exc)
+                    db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),row['id']))
                 active_voice_attempt=plan.get('kind')=='voice' and any(attempt.get('status')=='running' for attempt in state.get('attempts',{}).values())
                 if plan.get('kind')=='voice' and (state['status'] in ('queued','running','observing') or active_voice_attempt):
                     for attempt in state.get('attempts',{}).values():
@@ -97,6 +103,11 @@ class Production:
 
     def public(self, project, full=False):
         plan=project['plan'];state=copy.deepcopy(project['state'])
+        if plan['kind']=='comparison':
+            try:
+                state['time_budget']=production_clock.read(plan,state)
+                state['time_budget']['remaining_seconds']=production_clock.remaining(state['time_budget'])
+            except ValueError as exc:state['time_budget_error']=str(exc)
         if state.get('storage_issue'):
             state['message']='Startup storage check: '+state['storage_issue']['reason']+'. Inspect project files before Start or Resume. '+state.get('message','')
         with self.connect() as db:
@@ -515,6 +526,49 @@ class Production:
             self.studio.queue.put(('production',identifier))
         return self.get(identifier)
 
+    def extend_time(self, identifier, payload):
+        if not isinstance(payload,dict):raise ValueError('Time extension must be an object')
+        with self.studio.lock,self.lock,self.connect() as db:
+            db.execute('BEGIN IMMEDIATE');project=self._get(identifier,db);state=project['state']
+            if project['plan']['kind']!='comparison' or state['status'] not in ('interrupted','uncertain','stopped'):
+                raise ValueError('Only inactive comparisons can extend their time allowance')
+            project_storage.require(self.root,identifier,project['plan'])
+            clock=production_clock.read(project['plan'],state)
+            if type(payload.get('expected_revision')) is not int or payload['expected_revision']!=clock['revision']:
+                raise ValueError('Time budget conflict: refresh the comparison before extending it')
+            state['time_budget']=production_clock.extend(clock,payload.get('seconds'),payload.get('reason'),time.time())
+            state['message']='Time allowance extended explicitly. Reconcile and resume separately; generation reservations and the pinned plan are unchanged.'
+            db.execute('UPDATE projects SET state=? WHERE id=?',(json.dumps(state),identifier))
+        return self.get(identifier)
+
+    @contextmanager
+    def _comparison_clock(self, identifier, plan):
+        token=uuid.uuid4().hex
+        with self.lock:
+            project=self._get(identifier)
+            clock=production_clock.begin(production_clock.read(plan,project['state']),token)
+            self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),
+                         time_budget=clock,stop_reason=None,message='Running the pinned experiment')
+        previous=time.monotonic()
+        def charge(finish=False):
+            nonlocal previous
+            with self.lock:
+                now=time.monotonic();project=self._get(identifier)
+                updated=production_clock.checkpoint(production_clock.read(plan,project['state']),token,now-previous,finish)
+                self._mutate(identifier,time_budget=updated)
+                previous=now
+                return updated
+        try:yield charge
+        finally:charge(finish=True)
+
+    def _comparison_may_start(self, identifier, charge):
+        clock=charge();state=self._get(identifier)['state']
+        if state.get('stop_requested'):
+            self._mutate(identifier,status='stopped',stop_reason='operator',message='Stopped at your request between stages. Existing outputs and reservations are retained.');return False
+        if production_clock.remaining(clock)<=0:
+            self._mutate(identifier,status='stopped',stop_reason='time_budget',message='Time allowance exhausted. Known jobs were reconciled; no later stage started. Extend time explicitly, then resume. Outputs, plan and generation reservations are retained.');return False
+        return True
+
     def _attempt(self, identifier, index, **fields):
         with self.lock:
             project=self._get(identifier);state=project['state']
@@ -558,6 +612,8 @@ class Production:
         project_storage.require(self.root,identifier,plan)
         if plan['kind']=='voice' and project['state']['status'] in ('completed','failed','cancelled','stopped'):return
         if not self._tracking_continuation_allowed(identifier):return
+        if plan['kind']=='comparison':
+            with self._comparison_clock(identifier,plan) as charge:return self._run_comparison(identifier,plan,charge)
         self._mutate(identifier,status='running',started_at=project['state'].get('started_at',time.time()),message='Running the pinned experiment')
         if plan['kind']=='av':return self.av.run(identifier)
         if plan['kind']=='voice':
@@ -565,26 +621,48 @@ class Production:
             return run(self,identifier,plan)
         if plan['kind']=='native':return self._run_native(identifier,plan)
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
+
+    def _run_comparison(self, identifier, plan, charge):
         self.studio.check_production_bundle(plan['bundle'])
         for index,stage in enumerate(plan['stages']):
             project_storage.require(self.root,identifier,plan)
             if not self._tracking_continuation_allowed(identifier):return
-            project=self._get(identifier);state=project['state']
-            if state.get('stop_requested') or time.time()-state['started_at']>=plan['max_seconds']:
-                self._mutate(identifier,status='stopped',message='Stopped between stages; existing outputs and reservations are retained.');return
+            # Inspect retained evidence BEFORE a time/stop gate. A deadline is
+            # not permission to discard a known prompt or repeat an unknown POST.
             job_id=str(uuid.uuid5(uuid.NAMESPACE_URL,f'asset-studio:{identifier}:stage:{index}'))
             self._attempt(identifier,index,job_id=job_id,operation=stage['operation'])
             job=self.studio.jobs.get(job_id)
             if job:
-                if job['status']=='uncertain' or (job['status']=='queued' and (job.get('prompt_ids') or job.get('submissions') or job.get('pending_submission'))):
-                    if job.get('pending_submission') or not job.get('prompt_ids'):
+                if submission_evidence.never_submitted(job):
+                    if not self._comparison_may_start(identifier,charge):return
+                    # Re-enter the FIRST submission using the same stage ID and
+                    # reservation, only after current pins and saved bytes agree.
+                    self.studio.check_production_bundle(plan['bundle'])
+                    prepared=self.studio.prepare(stage['request'])
+                    if (fingerprint(prepared[1])!=stage['graph_sha256'] or fingerprint(job['graph'])!=stage['graph_sha256']
+                            or job.get('controls')!=prepared[3] or job.get('batch_count')!=prepared[4]
+                            or job.get('preset_id')!=prepared[0]['id']):
+                        raise ValueError('The recovered recipe changed; create an explicit branch')
+                    preset=prepared[0]
+                    seeds=([preset['seed']] if preset.get('seed') else [])+preset.get('bindings_extra',{}).get('seed',[])
+                    prompts={key:([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[]) for key in ('positive','negative')}
+                    if job.get('seed_bindings')!=seeds or job.get('prompt_bindings')!=prompts or type(job.get('batch_count')) is not int:
+                        raise ValueError('The recovered recipe bindings changed; create an explicit branch')
+                    if job.get('comfy_url')!=plan['bundle']['comfy_url'] or job.get('comfy_root')!=str(self.studio.comfy_root):
+                        raise ValueError('The recovered job belongs to a different backend')
+                    with self.studio.lock:
+                        if not submission_evidence.never_submitted(job):raise ValueError('Recovered job disposition changed; no submission was authorized')
+                        job['status']='not_submitted'
+                elif job['status']=='uncertain' or (job['status']=='queued' and (job.get('prompt_ids') or job.get('submissions') or 'pending_submission' in job)):
+                    if 'pending_submission' in job or not job.get('prompt_ids'):
                         self._mutate(identifier,status='uncertain',message='A submission outcome is unknown. No duplicate or later stage was submitted.');return
                     self.studio._resume(job)
-                elif job['status'] in ('failed','partial'):
+                elif job['status'] in ('failed','partial','abandoned'):
                     self._mutate(identifier,status='failed',message='A recorded stage failed. Branch with an explicit repair; no automatic generation retry.');return
                 elif job['status'] not in ('completed','queued'):
                     self._mutate(identifier,status='uncertain',message='A stage has unresolved execution state. Inspect its known prompt ID.');return
             else:
+                if not self._comparison_may_start(identifier,charge):return
                 # Write the deterministic ID before creating a job, so a crash between stores is reconcilable.
                 self.studio.check_production_bundle(plan['bundle'])
                 prepared=self.studio.prepare(stage['request'])
@@ -594,12 +672,16 @@ class Production:
                 self.studio.create_job(stage['request'],enqueue=False,job_id=job_id)
                 job=self.studio.jobs[job_id]
                 job['project_id']=identifier;self.studio._save(job)
-            if job['status']=='queued':
+            if job['status'] in ('queued','not_submitted'):
+                if not self._comparison_may_start(identifier,charge):
+                    with self.studio.lock:
+                        if submission_evidence.never_submitted(job):job['status']='not_submitted';self.studio._save(job)
+                    return
                 self._attempt(identifier,index,started_at=time.time())
                 project_storage.require(self.root,identifier,plan)
                 try:self.studio._run(job)
                 except Exception as exc:
-                    job.update(status='failed',message=str(exc)[:400]);self.studio._save(job)
+                    if job.get('status')!='abandoned':job.update(status='failed',message=str(exc)[:400]);self.studio._save(job)
             self._attempt(identifier,index,finished_at=time.time(),status=job['status'],prompt_ids=job.get('prompt_ids',[]))
             if not self._tracking_continuation_allowed(identifier):return
             if job['status']!='completed':

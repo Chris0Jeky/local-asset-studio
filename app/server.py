@@ -36,6 +36,7 @@ from backends import BackendManager
 import host_memory
 from runtime_recovery import RuntimeRecovery
 import prompting
+import submission_evidence
 import continuation
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -521,12 +522,16 @@ class Studio:
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
         result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
         result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._known_prompt_error(job) is None
+        result["has_pending_submission"] = "pending_submission" in job
+        result["never_submitted"] = submission_evidence.never_submitted(job)
+        result["can_abandon"] = submission_evidence.abandonable(job)
+        result["abandon_requires_acknowledgement"] = result["can_abandon"] and not result["never_submitted"]
         return result
 
     @staticmethod
@@ -970,6 +975,35 @@ class Studio:
         self.queue.put(("observe", job["id"]))
         return self.public(job)
 
+    def abandon_job(self, job_id, reason, acknowledge_unknown=False):
+        """Record a terminal local disposition, not remote cancellation or success."""
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 1000:
+            raise StudioError("Give an abandonment reason of 1 to 1000 characters")
+        reason = reason.strip()
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job: raise StudioError("Unknown job")
+            recorded = job.get("abandonment")
+            if job.get("status") == "abandoned" and isinstance(recorded, dict):
+                if recorded.get("reason") != reason: raise StudioError("This job already has a retained abandonment reason")
+                return self.public(job)
+            if not submission_evidence.abandonable(job):
+                raise StudioError("Only inactive jobs without prompt IDs can be abandoned; known prompts use Stop tracking")
+            never_sent = submission_evidence.never_submitted(job)
+            if not never_sent and acknowledge_unknown is not True:
+                raise StudioError("Acknowledge that the remote outcome is unknown and no remote work will be cancelled")
+            disposition = {"basis": "never_submitted" if never_sent else "outcome_unknown", "reason": reason,
+                           "recorded_at": time.time(), "event_id": uuid.uuid4().hex,
+                           "acknowledged_unknown": not never_sent, "remote_cancelled": False}
+            message = ("Abandoned locally before submission. Recipe and reservations are retained." if never_sent else
+                       "Abandoned locally; the remote outcome remains unknown. No remote work was cancelled. Receipts and reservations are retained.")
+            prospective = dict(job, status="abandoned", message=message, abandonment=disposition)
+            # Commit one complete disposition before mutating memory. Keep the exact
+            # recipe, workflow and pending marker; failure leaves the job recoverable.
+            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job.update(status="abandoned", message=message, abandonment=disposition)
+            return self.public(job)
+
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
             data = read_json(state_path)
@@ -978,8 +1012,13 @@ class Studio:
                 data["graph"] = graph
                 data.setdefault('comfy_root', str(self.comfy_root))
                 data.setdefault('comfy_url', self.comfy_url)
-                if data.get("status") in ("queued", "waiting", "submitting", "running"):
-                    data["status"] = "uncertain"; data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
+                if data.get("status") in ("queued", "waiting", "submitting", "running", "uncertain"):
+                    if submission_evidence.never_submitted(data):
+                        data["status"] = "not_submitted"
+                        data["message"] = "Restarted before submission. Resume the owning experiment explicitly, or retain the recipe and abandon this local job. Nothing was submitted on restart."
+                    else:
+                        data["status"] = "uncertain"
+                        data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
                     self._save(data)
                 self.jobs[data["id"]] = data
 
@@ -1103,7 +1142,8 @@ class Studio:
             try:
                 self._resume(job) if action == "observe" else self._run(job)
             except Exception as exc:
-                job["status"] = "failed"; job["message"] = f"Generation failed: {str(exc)[:300]}"; self._save(job)
+                if job.get('status')!='abandoned':
+                    job["status"] = "failed"; job["message"] = f"Generation failed: {str(exc)[:300]}"; self._save(job)
 
     def _batch_graph(self, job, index):
         graph = copy.deepcopy(job["graph"])
@@ -1199,8 +1239,11 @@ class Studio:
         self._save(job)
 
     def _run(self, job):
-        job['started_at']=time.time()
-        job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
+        with self.lock:
+            if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
+                raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
+            job['started_at']=time.time()
+            job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
         self._wait_for_queue(job.get('comfy_url'))
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
@@ -1284,6 +1327,8 @@ class Studio:
     def _queue_observation(self, job_id):
         job = self.jobs.get(job_id)
         if not job: raise StudioError("Unknown job")
+        if job.get('status') == 'abandoned' or 'pending_submission' in job:
+            raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
         if self._tracking_stopped(job): return self._resume_tracking(job)
         pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
         if not pending: raise StudioError("No known prompt IDs are available to resume")
@@ -1292,6 +1337,8 @@ class Studio:
     def _resume(self, job):
         with self.lock:
             if self._tracking_stopped(job): return
+            if job.get('status') == 'abandoned' or 'pending_submission' in job:
+                raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
             if submission.get("status") != "completed" and not self._wait_history(job, submission): return
@@ -1508,6 +1555,9 @@ class Handler(BaseHTTPRequestHandler):
                 if parts[-1]=='start':return self._json(202,self.studio.production.start(identifier))
                 if parts[-1]=='stop':return self._json(200,self.studio.production.stop(identifier))
                 if parts[-1]=='resume':return self._json(202,self.studio.production.resume(identifier))
+                if parts[-1]=='extend-time':
+                    if len(parts)!=5:raise StudioError('Unknown time extension route')
+                    return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
             if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_json()))
             if self.path == "/api/assets/update": return self._json(200, self.studio.assets.update(self._body_json()))
@@ -1521,6 +1571,12 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
                 self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+            if self.path.startswith("/api/jobs/") and self.path.endswith("/abandon"):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown abandonment route')
+                payload = self._body_json()
+                if not isinstance(payload, dict): raise StudioError('Abandonment command must be an object')
+                return self._json(200, self.studio.abandon_job(parts[3], payload.get('reason'), payload.get('acknowledge_unknown', False)))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/stop-tracking"):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
             if self.path == "/api/upload":
