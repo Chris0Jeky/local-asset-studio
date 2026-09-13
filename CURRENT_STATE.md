@@ -20,8 +20,8 @@ empty), but `/api/jobs` retains uncertain records
 `a2908800-7214-4caa-ad23-3844527cdf5d` and `0cbaae1b-1134-548c-9e03-50bac00b75b9`, and
 production retains one uncertain record. The closeout therefore did not stop either runtime;
 the merged runtime and backend fixes are source-verified but not live-reloaded. Host commit
-headroom is 11.72 GiB, below the documented 32 GiB gate; the effective page file is still
-40 GiB pending the owner-controlled restart.
+headroom is 11.72 GiB, below the documented 32 GiB gate; after the owner-authorized restart,
+the effective page file still needs a fresh allocation/headroom recheck.
 
 The four large model transfers were active and incomplete at closeout: CSTati PID `7800`, JANIMA PID
 `24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
