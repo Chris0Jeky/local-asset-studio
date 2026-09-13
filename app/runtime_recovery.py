@@ -67,9 +67,12 @@ class RuntimeRecovery:
         self.state.update(status=status, message=message, updated_at=now, **extra)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.studio._write_json_atomic(self.path, self.state)
-        event = {"at": now, "status": status, "message": message, **extra}
+        # The state file carries freshness; the log records changes, not every identical poll.
+        event = {"status": status, "message": message, **extra}
+        if event == getattr(self, "_last_event", None): return
+        self._last_event = json.loads(json.dumps(event, sort_keys=True, default=str))
         with self.log_path.open("a", encoding="utf-8") as log:
-            log.write(json.dumps(event, sort_keys=True) + "\n")
+            log.write(json.dumps({"at": now, **event}, sort_keys=True, default=str) + "\n")
 
     def reset(self):
         """An explicit same-origin retry only clears the breaker; it cannot switch families."""

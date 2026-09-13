@@ -51,6 +51,9 @@ IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
+HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
+HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
@@ -742,7 +745,8 @@ class Studio:
             try:
                 asset_id = self.assets.register(job, index, self.output_path(output, job))
                 if asset_id: output["asset_id"] = asset_id
-            except (OSError, ValueError) as exc:
+            except (OSError, ValueError, sqlite3.Error) as exc:
+                # A storage fault while indexing a known output never changes the remote outcome.
                 output["snapshot_error"] = str(exc)[:200]
 
     def asset_reference(self, asset_id):
@@ -1331,9 +1335,24 @@ class Studio:
         job["status"] = "completed"; job["message"] = "Complete"
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
 
+    def _prompt_listed(self, job, prompt_id):
+        """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
+        try: data = self._request("/queue", timeout=10, base_url=job.get('comfy_url'))
+        except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException): return True
+        if not isinstance(data, dict): return True
+        for key in ("queue_running", "queue_pending"):
+            entries = data.get(key)
+            if not isinstance(entries, list): return True
+            for entry in entries:
+                if isinstance(entry, (list, tuple)) and len(entry) > 1 and entry[1] == prompt_id: return True
+        return False
+
     def _wait_history(self, job, submission):
         prompt_id = submission["prompt_id"]
-        for _ in range(720):
+        deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
+        while time.monotonic() < deadline:
+            with self.lock:
+                if self._tracking_stopped(job): return False
             try:
                 response = self._request("/history/" + quote(prompt_id, safe=''), timeout=15, base_url=job.get('comfy_url'))
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
@@ -1367,6 +1386,15 @@ class Studio:
                                                   media_type="video" if ext in (".mp4", ".webm", ".mov") else "3d" if ext in (".glb", ".gltf", ".obj", ".ply", ".stl") else "audio" if ext in (".mp3", ".wav", ".flac") else "image")
                                 if not any(o.get("filename") == descriptor["filename"] and o.get("subfolder") == descriptor["subfolder"] and o.get("prompt_id") == prompt_id for o in job["outputs"]): job["outputs"].append(descriptor)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
+            empty_polls += 1
+            if empty_polls % HISTORY_QUEUE_CHECK_EVERY == 0:
+                # A prompt in neither the queue nor the history is gone (restart, cleared queue); do not wait out the ceiling.
+                unlisted = 0 if self._prompt_listed(job, prompt_id) else unlisted + 1
+                if unlisted >= HISTORY_UNLISTED_STRIKES:
+                    with self.lock:
+                        if self._tracking_stopped(job): return False
+                        job["status"] = "uncertain"; job["message"] = "ComfyUI no longer lists this prompt in its queue or history (a restart or a cleared queue); it was not resubmitted. Inspect the runtime, then use Resume observation or Stop tracking."; self._save(job)
+                    return False
             time.sleep(2)
         with self.lock:
             if self._tracking_stopped(job): return False
@@ -1385,8 +1413,10 @@ class Studio:
         if job.get('status') == 'abandoned' or 'pending_submission' in job:
             raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
         if self._tracking_stopped(job): return self._resume_tracking(job)
+        if job.get("status") in ("queued", "waiting", "submitting", "running"): raise StudioError("This job is already queued or being observed; wait for it to settle")
         pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
-        if not pending: raise StudioError("No known prompt IDs are available to resume")
+        # Every retained receipt terminal: _resume reconciles the job's own status without any ComfyUI request.
+        if not pending and not (job.get("submissions") and job.get("status") in ("uncertain", "partial")): raise StudioError("No known prompt IDs are available to resume")
         job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
 
     def _resume(self, job):

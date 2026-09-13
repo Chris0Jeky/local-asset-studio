@@ -186,5 +186,14 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertNotIn("message", snapshot)
         self.assertNotIn("startup_pid", snapshot)
 
+    def test_identical_polls_refresh_state_but_append_one_log_line(self):
+        r=self.recovery
+        r._record("healthy","Selected backend is healthy.");first=__import__("json").loads(r.path.read_text(encoding="utf-8"))["updated_at"]
+        r._record("healthy","Selected backend is healthy.");r._record("healthy","Selected backend is healthy.")
+        self.assertEqual(len(r.log_path.read_text(encoding="utf-8").splitlines()),1)
+        self.assertGreaterEqual(__import__("json").loads(r.path.read_text(encoding="utf-8"))["updated_at"],first)
+        r._record("healthy","Selected backend is healthy.",pid=5);r._record("offline","Backend refused")
+        lines=[__import__("json").loads(l) for l in r.log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual([l["status"] for l in lines],["healthy","healthy","offline"]);self.assertEqual(lines[1]["pid"],5);self.assertTrue(all("at" in l for l in lines))
 
 if __name__ == "__main__": unittest.main()
