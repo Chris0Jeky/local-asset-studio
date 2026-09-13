@@ -1,0 +1,240 @@
+diff --git a/docs/workflow-studio/OUTPUT-SCHEMAS.md b/docs/workflow-studio/OUTPUT-SCHEMAS.md
+new file mode 100644
+index 0000000..6c82ff9
+--- /dev/null
++++ b/docs/workflow-studio/OUTPUT-SCHEMAS.md
+@@ -0,0 +1,48 @@
++# Output-port authoring contracts — 13 September 2026
++
++Continuation of #119, based on main `aebe10c58c7fa3ce8f89276740096eaf98c2cc20`.
++The merged #156 runtime graph checker remains authoritative for runtime preflight;
++this change fixes the separate authoring catalog's malformed-output boundary.
++
++## Reproduced defects
++
++A legacy `output: "IMAGE"` became five character-named ports. An integer output
++container or malformed `output_name`/`output_is_list` could raise while discovering
++all nodes. NodeDef-v2 records accepted boolean/fractional or duplicate slot indices,
++non-text types and truthy non-boolean list flags. `output_node: "false"` was treated
++as an output sink. These defects could hide valid nodes or offer nonexistent links.
++
++`node_outputs.outputs` now produces presentation ports plus node-local
++`schema_errors`. Invalid containers do not fall back to another format. Invalid
++slots do not shift the indices of later slots. Explicit v2 indices are retained,
++unique, integer and within this adapter's 0–9999 range. Types and names are text;
++list/sink flags are actual booleans. Short or absent legacy name/list arrays keep
++the established defaults. Outputless sinks, union strings and list annotations
++remain supported.
++
++The original schema is never mutated and its raw fingerprint remains unchanged.
++Unsupported workflow input data is preserved. The existing compiler rejects a
++selected dependency closure containing a malformed class, but can still export an
++unrelated valid closure. Nothing installs code, contacts a model or submits a job.
++
++## Tests and limits
++
++`python -m unittest discover -s tests -p test_workflow_output_schema.py -v`
++runs ten synthetic contract tests with parameterized malformed variants. Against
++the original `core.py` they produce 23 assertion failures and three errors; all ten
++pass with normalization. This is synthetic interface evidence, not an installed
++custom-node capture or proof of native execution. The full repository suite and
++`python scripts/validate-repo.py` remain required; see PR checks for their exact
++commit and environment results.
++
++This is not a full JSON-schema validator. Dynamic outputs, native JavaScript,
++custom validators and list execution semantics still need their declared adapters.
++No node's absence from these diagnostics establishes that its models fit memory or
++that a generated asset is accepted. #119 remains open for its wider deliverables.
++
++## Primary-source reference
++
++ComfyUI's [Node Definition JSON](https://docs.comfy.org/specs/nodedef_json), inspected
++13 September 2026, describes outputs as an array of records with type, index, name
++and list metadata. This adapter retains its existing omitted-name/index defaults
++and explicitly bounds supported indices; it does not claim full schema parity.
+diff --git a/studio_workflow/core.py b/studio_workflow/core.py
+index 06e1bb6..b23ad44 100644
+--- a/studio_workflow/core.py
++++ b/studio_workflow/core.py
+@@ -156,23 +156,15 @@ def catalog(info: dict, backend_id: str) -> dict:
+         elif isinstance(raw.get("inputs"), dict):
+             inputs = [_input(name, descriptor, True) for name, descriptor in raw["inputs"].items()
+                       if name not in RESERVED]
+-        outputs = []
+-        if isinstance(raw.get("outputs"), list):
+-            for index, output in enumerate(raw["outputs"]):
+-                if isinstance(output, dict):
+-                    outputs.append({"index": output.get("index", index), "type": output.get("type", "UNKNOWN"),
+-                                    "name": output.get("name", str(index)), "is_list": bool(output.get("is_list"))})
+-        else:
+-            names = raw.get("output_name") or []
+-            lists = raw.get("output_is_list") or []
+-            for index, kind in enumerate(raw.get("output") or []):
+-                outputs.append({"index": index, "type": kind if isinstance(kind, str) else "UNKNOWN",
+-                                "name": names[index] if index < len(names) else str(kind),
+-                                "is_list": bool(lists[index]) if index < len(lists) else False})
++        from .node_outputs import outputs as output_ports
++        outputs, output_errors = output_ports(raw)
++        schema_errors.extend(output_errors)
++        if 'output_node' in raw and type(raw['output_node']) is not bool:
++            schema_errors.append('output_node must be boolean')
+         nodes[class_type] = {"class_type": class_type, "name": raw.get("display_name") or class_type,
+                              "category": raw.get("category", "Uncategorized"),
+                              "description": raw.get("description", ""), "inputs": inputs, "outputs": outputs,
+-                             "output_node": bool(raw.get("output_node")),
++                             "output_node": raw.get("output_node") is True,
+                              "module": raw.get("python_module"), "schema_errors": schema_errors,
+                              "unsupported": bool(schema_errors) or any(i["widget"] == "unsupported" for i in inputs)}
+     return {"version": 1, "backend_id": backend_id, "schema_sha256": digest(info), "nodes": nodes,
+diff --git a/studio_workflow/node_outputs.py b/studio_workflow/node_outputs.py
+new file mode 100644
+index 0000000..4188299
+--- /dev/null
++++ b/studio_workflow/node_outputs.py
+@@ -0,0 +1,52 @@
++"""Normalize output ports without inventing ports from malformed metadata.
++
++This is presentation/authoring data, not ComfyUI's runtime validator. Retain
++original documents and report errors on the affected node definition only.
++"""
++from __future__ import annotations
++
++
++def outputs(raw: dict) -> tuple[list[dict], list[str]]:
++    result, errors = [], []
++
++    def port(index, kind, name, is_list):
++        if type(index) is not int or not 0 <= index <= 9999:
++            errors.append('Output index must be an integer from 0 to 9999')
++        elif any(p['index'] == index for p in result):
++            errors.append('Duplicate output index: ' + str(index))
++        elif not isinstance(kind, str) or not kind.strip():
++            errors.append('Output ' + str(index) + ' needs a nonempty type string')
++        elif not isinstance(name, str):
++            errors.append('Output ' + str(index) + ' name must be text')
++        elif type(is_list) is not bool:
++            errors.append('Output ' + str(index) + ' list annotation must be boolean')
++        else:
++            result.append({'index': index, 'type': kind, 'name': name, 'is_list': is_list})
++
++    if 'outputs' in raw:
++        # An explicitly malformed v2 field must not fall back to legacy ports.
++        if not isinstance(raw['outputs'], list):
++            return [], ['Output definitions must be an array']
++        for index, item in enumerate(raw['outputs']):
++            if not isinstance(item, dict):
++                errors.append('Output ' + str(index) + ' definition must be an object')
++                continue
++            port(item.get('index', index), item.get('type'), item.get('name', str(index)), item.get('is_list', False))
++    else:
++        kinds = raw.get('output', [])
++        if not isinstance(kinds, list):
++            return [], ['Legacy output types must be an array']
++        metadata = {}
++        for field in ('output_name', 'output_is_list'):
++            values = raw.get(field, [])
++            if not isinstance(values, list):
++                errors.append(field + ' must be an array')
++                values = []
++            if len(values) > len(kinds):
++                errors.append(field + ' has entries without a corresponding output')
++            metadata[field] = values
++        names, lists = metadata['output_name'], metadata['output_is_list']
++        for index, kind in enumerate(kinds):
++            port(index, kind, names[index] if index < len(names) else str(kind),
++                 lists[index] if index < len(lists) else False)
++    return result, errors
+diff --git a/tests/test_workflow_output_schema.py b/tests/test_workflow_output_schema.py
+new file mode 100644
+index 0000000..cfc42db
+--- /dev/null
++++ b/tests/test_workflow_output_schema.py
+@@ -0,0 +1,88 @@
++"""Malformed output definitions stay node-local; no ComfyUI/GPU invocation."""
++import copy
++import unittest
++from studio_workflow.core import catalog, compile_document, new_document
++
++
++class OutputSchemaTests(unittest.TestCase):
++    def schema(self, raw):
++        original = copy.deepcopy(raw)
++        schema = catalog({'Broken': raw, 'Good': {'output': [], 'output_node': True}}, 'primary')
++        self.assertEqual(raw, original)
++        self.assertIn('Good', schema['nodes'])
++        return schema
++
++    def test_invalid_legacy_output_containers_never_invent_ports(self):
++        for raw in ('IMAGE', 12, True, {}, None):
++            with self.subTest(raw=raw):
++                spec = self.schema({'output': raw})['nodes']['Broken']
++                self.assertEqual(spec['outputs'], [])
++                self.assertTrue(spec['schema_errors']); self.assertTrue(spec['unsupported'])
++
++    def test_invalid_parallel_metadata_is_local_and_not_coerced(self):
++        for name, value in (('output_name', 'images'), ('output_is_list', True),
++                            ('output_name', [17]), ('output_is_list', ['false']),
++                            ('output_name', ['image', 'phantom'])):
++            with self.subTest(name=name, value=value):
++                spec = self.schema({'output': ['IMAGE'], name: value})['nodes']['Broken']
++                self.assertTrue(spec['schema_errors'])
++                self.assertTrue(spec['unsupported'])
++
++    def test_bad_v2_container_does_not_fallback_to_legacy(self):
++        for value in (None, 1, {}, 'IMAGE'):
++            spec = self.schema({'outputs': value, 'output': ['IMAGE']})['nodes']['Broken']
++            self.assertEqual(spec['outputs'], []); self.assertTrue(spec['schema_errors'])
++
++    def test_invalid_v2_records_are_not_skipped_as_valid_definitions(self):
++        for value in (None, 'IMAGE', [], {}, {'type': ['IMAGE']}, {'type': ''},
++                      {'type': 'IMAGE', 'index': True}, {'type': 'IMAGE', 'index': 1.5},
++                      {'type': 'IMAGE', 'index': -1}, {'type': 'IMAGE', 'index': 10000},
++                      {'type': 'IMAGE', 'name': []}, {'type': 'IMAGE', 'is_list': 1}):
++            with self.subTest(value=value):
++                spec = self.schema({'outputs': [value]})['nodes']['Broken']
++                self.assertTrue(spec['schema_errors']); self.assertEqual(spec['outputs'], [])
++
++    def test_duplicate_index_is_diagnostic_and_later_ports_keep_their_ids(self):
++        spec = self.schema({'outputs': [{'index': 3, 'type': 'IMAGE'}, {'index': 3, 'type': 'MASK'},
++                                       {'index': 8, 'type': 'INT'}]})['nodes']['Broken']
++        self.assertEqual([x['index'] for x in spec['outputs']], [3, 8])
++        self.assertIn('Duplicate output index: 3', spec['schema_errors'])
++
++    def test_skipped_bad_slot_does_not_renumber_valid_ports(self):
++        spec = self.schema({'outputs': [None, {'type': 'IMAGE'}]})['nodes']['Broken']
++        self.assertEqual(spec['outputs'][0]['index'], 1)
++
++    def test_legacy_optional_metadata_defaults_preserve_list_union_and_names(self):
++        schema = self.schema({'output': ['MESH,FILE_3D_GLB', '*', 'INT'],
++                              'output_name': ['Mesh'], 'output_is_list': [True]})
++        spec = schema['nodes']['Broken']
++        self.assertEqual(spec['schema_errors'], [])
++        self.assertEqual(spec['outputs'], [
++            {'index': 0, 'type': 'MESH,FILE_3D_GLB', 'name': 'Mesh', 'is_list': True},
++            {'index': 1, 'type': '*', 'name': '*', 'is_list': False},
++            {'index': 2, 'type': 'INT', 'name': 'INT', 'is_list': False}])
++
++    def test_errors_block_selected_closure_not_unrelated_documents(self):
++        schema = self.schema({'output': 'IMAGE'})
++        schema['nodes']['Consumer'] = {'inputs': [{'name': 'images', 'type': 'IMAGE', 'widget': 'socket',
++            'required': True, 'hidden': False, 'options': {}}], 'outputs': [], 'output_node': True}
++        doc = new_document({'a': {'class_type': 'Broken', 'inputs': {}},
++                            'b': {'class_type': 'Consumer', 'inputs': {'images': ['a', 0]}},
++                            'c': {'class_type': 'Good', 'inputs': {}}}, schema)
++        before = copy.deepcopy(doc)
++        report = compile_document(doc, schema)
++        self.assertFalse(report['valid']); self.assertEqual(before, doc)
++        self.assertIn('invalid_node_schema', {e['code'] for e in report['errors']})
++        doc['outputs'] = ['c']
++        self.assertTrue(compile_document(doc, schema)['valid'])
++
++    def test_output_node_requires_real_boolean_not_truthiness(self):
++        for value in ('false', 1, [], {}):
++            spec = self.schema({'output': [], 'output_node': value})['nodes']['Broken']
++            self.assertFalse(spec['output_node']); self.assertTrue(spec['schema_errors'])
++
++    def test_v2_valid_outputs_and_outputless_sinks_still_work(self):
++        spec = self.schema({'outputs': [{'index': 0, 'type': 'IMAGE', 'is_list': True}]})['nodes']['Broken']
++        self.assertFalse(spec['schema_errors']); self.assertTrue(spec['outputs'][0]['is_list'])
++        spec = self.schema({'output': [], 'output_node': True})['nodes']['Broken']
++        self.assertFalse(spec['schema_errors']); self.assertTrue(spec['output_node'])
