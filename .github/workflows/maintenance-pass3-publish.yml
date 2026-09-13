@@ -1,0 +1,82 @@
+name: Publish maintenance pass 3
+on:
+  push:
+    branches: [codex/maintenance-pass3-transfer-20260913]
+    paths: [.github/workflows/maintenance-pass3-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 22ec26dc549a4648a6e94f80f5d3c870f03c6520
+      - name: Verify exact source before creating feature branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYCODE'
+          import base64, hashlib, json, os, pathlib, subprocess, zlib
+          repo='Chris0Jeky/local-asset-studio'
+          base='22ec26dc549a4648a6e94f80f5d3c870f03c6520'
+          chunks=['6c29b028fb8c21122d152fe3e2b6614cfc755107','6d51e8f31fd97812413cf066bdc4a23da26e6192','53ef58f8b7c57a17356b6a6f4e8c112f3d169b4c','b1bf204d3f087a010f39d9253063c2c7dcc406a1','4a88996c05c7dca6c0c965eba063c3ed77d541c5']
+          payload=b''
+          for sha in chunks:
+              obj=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/git/blobs/{sha}']))
+              raw=base64.b64decode(''.join(obj['content'].split()),validate=True)
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+              payload+=raw
+          raw=zlib.decompress(base64.b64decode(payload,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='7c02a621159f3a18408ab8b62bbc8e8804d3d8279d2aa319936435c42066ed7d'
+          specs=json.loads(raw)
+          assert [s['branch'] for s in specs]==['codex/workspace-initialization','codex/compact-control-layout','codex/workspace-collection-counts']
+          def git(*args):return subprocess.check_output(['git',*args]).decode().strip()
+          receipts=[]
+          for spec in specs:
+              assert spec['base']==base
+              assert not git('ls-remote','--heads','origin','refs/heads/'+spec['branch']), 'Existing ref; refusing overwrite'
+              git('checkout','--detach',base)
+              assert git('rev-parse','HEAD^{tree}')=='4768c39cbbbc5f0a6a2a6707fc6f39cde30a382f'
+              patch=spec['patch'].encode()
+              assert hashlib.sha256(patch).hexdigest()==spec['patch_sha256']
+              subprocess.run(['git','apply','--index','--whitespace=error'],input=patch,check=True)
+              assert git('write-tree')==spec['tree'], 'Source mismatch'
+              assert not any(p.startswith('.github/') for p in git('diff','--cached','--name-only').splitlines())
+              subprocess.run(['git','diff','--cached','--check'],check=True)
+              git('-c','user.name=Studio maintenance','-c','user.email=studio-maintenance@users.noreply.github.com','commit','-m',spec['message'])
+              assert git('rev-parse','HEAD^{tree}')==spec['tree']
+              git('push','origin','HEAD:refs/heads/'+spec['branch'])
+              receipts.append({'branch':spec['branch'],'head':git('rev-parse','HEAD'),'tree':spec['tree'],'final_tree':spec['final_tree']})
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'publication.json'
+          p.write_text(json.dumps(receipts,indent=2),encoding='utf-8')
+          print(p.read_text())
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass3-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 1
+  integration-source:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 268fc8fa4803374878c976c8af859f0200e1d155
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned intervening changes without runtime data
+        run: |
+          git diff --binary 22ec26dc549a4648a6e94f80f5d3c870f03c6520 HEAD > "$RUNNER_TEMP/main-delta.patch"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass3-main-delta
+          path: |
+            ${{ runner.temp }}/main-delta.patch
+            ${{ runner.temp }}/identity.txt
+          retention-days: 1
