@@ -186,12 +186,19 @@ function renderSelected() {
   updateReady(); inspectSelected();
   if(selected.runtime_block) message(selected.runtime_block,true);
 }
+function dependencyMarkup(r) {
+  const present=r.present===true, note=r.note || (present?'File present':r.present===false?'Missing · place in the indicated folder':'Availability unknown · inspect this requirement');
+  const installation=!present&&r.installable!==true ? '<small>'+esc(r.install_note || 'Automatic installation is unavailable; inspect the source and exact destination.')+'</small>' : '';
+  const copy=typeof r.path==='string'&&r.path ? '<button data-copy="'+esc(r.path)+'" title="Copy full file path">Copy path</button>' : '';
+  const installable=r.present===false&&r.asset_id&&r.installable===true;
+  return '<div class="dependency '+(present?'':'missing')+'"><span class="dot">'+(present?'●':'○')+'</span><div class="file-text"><code>'+esc(r.file)+'</code><small>'+esc(note)+'</small>'+installation+'</div>'+copy+(installable?'<button data-install="'+esc(r.asset_id)+'">Install</button>':'')+'</div>';
+}
 async function inspectSelected() {
   const id = selected?.id; if (!id) return;
   try {
     const data = await api('/api/inspect/' + encodeURIComponent(id)); if (selected?.id !== id) return;
     $('#dependencyCount').textContent = data.requirements.filter(r => r.present).length + ' / ' + data.requirements.length + ' present';
-    $('#dependencies').innerHTML = data.requirements.map(r => '<div class="dependency ' + (r.present ? '' : 'missing') + '"><span class="dot">' + (r.present ? '●' : '○') + '</span><div class="file-text"><code>' + esc(r.file) + '</code><small>' + (r.present ? 'File present' : 'Missing · place in the indicated folder') + '</small></div><button data-copy="' + esc(r.path) + '" title="Copy full file path">Copy path</button>' + (!r.present && r.asset_id ? '<button data-install="' + esc(r.asset_id) + '">Install</button>' : '') + '</div>').join('') || '<p class="muted">No separate weight files in this workflow.</p>';
+    $('#dependencies').innerHTML = data.requirements.map(dependencyMarkup).join('') || '<p class="muted">No separate weight files in this workflow.</p>';
     $('#nodeList').innerHTML = data.nodes.map(n => '<code>' + esc(n.type) + '</code>').join('');
     $('#graphPreview').textContent = JSON.stringify(data.graph,null,2);
   } catch(e) { $('#dependencies').textContent=e.message; }
@@ -259,9 +266,9 @@ async function refreshLibrary(){
     const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
     $('#modelCards').innerHTML=library.assets.map(a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180;
-      const pinOnly=a.installable===false;
+      const pinOnly=a.installable!==true;
       const state=a.verified?'SHA-256 verified':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
-      return '<article class="model-card"><span class="badge '+(a.verified?'tested':'')+'">'+esc(state)+'</span><h3>'+esc(a.name)+'</h3><p>'+esc(a.family)+' · '+gib(a.bytes)+'</p><code>'+esc(a.file)+'</code>'+(a.trigger?'<p>Trigger: <b>'+esc(a.trigger)+'</b></p>':'')+'<p>'+esc(a.license)+'</p>'+(active?'<progress max="'+a.bytes+'" value="'+(d.bytes_done||0)+'"></progress><p>'+gib(d.bytes_done)+' / '+gib(a.bytes)+'</p>':'')+(d.status==='failed'?'<p class="error">'+esc(d.message)+'</p>':'')+'<div class="model-actions"><a href="'+esc(safeUrl(a.source))+'" target="_blank" rel="noreferrer">Source ↗</a><button data-install="'+esc(a.id)+'" '+(a.verified||pinOnly||busy?'disabled':'')+' title="'+esc(pinOnly?(a.install_note||''):'')+'">'+(a.verified?'Installed':pinOnly?'Copy in by hand':a.present?'Verify existing file':'Install / use download')+'</button></div></article>';
+      return '<article class="model-card"><span class="badge '+(a.verified?'tested':'')+'">'+esc(state)+'</span><h3>'+esc(a.name)+'</h3><p>'+esc(a.family)+' · '+gib(a.bytes)+'</p><code>'+esc(a.file)+'</code>'+(a.trigger?'<p>Trigger: <b>'+esc(a.trigger)+'</b></p>':'')+'<p>'+esc(a.license)+'</p>'+(active?'<progress max="'+a.bytes+'" value="'+(d.bytes_done||0)+'"></progress><p>'+gib(d.bytes_done)+' / '+gib(a.bytes)+'</p>':'')+(d.status==='failed'?'<p class="error">'+esc(d.message)+'</p>':'')+'<div class="model-actions"><a href="'+esc(safeUrl(a.source))+'" target="_blank" rel="noreferrer">Source ↗</a><button data-install="'+esc(a.id)+'" '+(a.verified||pinOnly||busy?'disabled':'')+' title="'+esc(pinOnly?(a.install_note||'Automatic installation eligibility is unknown; refresh the library.'):'')+'">'+(a.verified?'Installed':pinOnly?'Copy in by hand':a.present?'Verify existing file':'Install / use download')+'</button></div></article>';
     }).join('');
     $('#folders').innerHTML=library.folders.map(f=>'<article class="folder"><b>'+esc(f.label)+'</b><code>'+esc(f.path)+'</code><button data-folder="'+esc(f.id)+'">Open folder</button><button data-copy="'+esc(f.path)+'">Copy path</button></article>').join('');
     $('#collections').innerHTML=(library.collections || []).map(c=>'<article class="collection"><b><a href="'+esc(safeUrl(c.url))+'" target="_blank" rel="noreferrer">'+esc(c.name)+' ↗</a></b><p>'+esc(c.description)+'</p><small>'+esc(c.status || '')+'</small></article>').join('');
@@ -356,7 +363,7 @@ $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)
 $('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;
 document.addEventListener('click',async e=>{
   const copy=e.target.closest('[data-copy]'),folder=e.target.closest('[data-folder]'),button=e.target.closest('[data-install]');
-  try{if(copy){await navigator.clipboard.writeText(copy.dataset.copy);copy.textContent='Copied';}if(folder)await post('/api/folders/open',{id:folder.dataset.folder});if(button)await install(button.dataset.install);}catch(err){message(err.message,true);$('#downloadStatus').textContent=err.message;}
+  try{if(copy){await navigator.clipboard.writeText(copy.dataset.copy);copy.textContent='Copied';}if(folder)await post('/api/folders/open',{id:folder.dataset.folder});if(button&&!button.disabled)await install(button.dataset.install);}catch(err){message(err.message,true);$('#downloadStatus').textContent=err.message;}
 });
 $('#importWorkflow').onchange=async e=>{
   try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Workflow JSON must be under 1 MiB');const report=await post('/api/workflow-inspect',{workflow:JSON.parse(await file.text()),name:file.name});$('#importReport').innerHTML='<p><b>'+report.node_count+' nodes inspected</b> · '+esc(report.format)+'</p><p>Missing nodes: '+esc(report.missing_nodes.join(', ')||'none detected')+'</p><p>Model filenames: '+esc(report.models.join(', ')||'none found in saved values')+'</p><p>Missing files: '+esc(report.missing_models.join(', ')||'none detected')+'</p><small>'+esc(report.note)+'</small>';}catch(err){$('#importReport').textContent=err.message;}finally{e.target.value='';}
