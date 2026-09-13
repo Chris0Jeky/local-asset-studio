@@ -1,5 +1,41 @@
 # Current state — 13 September 2026
 
+## Open-document Krita revision guard — 13 September 2026
+
+The optional native session now captures the open document and imports an
+existing protected edit as a reversible proposed layer. Its revision includes
+unsaved projection, ordered layers, hidden/off-canvas pixels and selection.
+Typed requests reuse the existing compositor and native package; Studio still
+owns model execution. See [the native session runbook](docs/character-consistency/KRITA-DOCUMENT-SESSION.md).
+
+A real Krita 5.2.16/Python 3.10.7 API fixture preserved an unsaved 384x256 source,
+rejected an invisible hidden-layer change, imported 4,032 exact patch pixels,
+preserved the other 94,272 pixels, and restored source/result by layer visibility.
+A later proposed-layer edit blocked comparison without hiding that edit. Both
+exports were visually inspected and independently decoded against the native
+buffers. Evidence: `C:/AI/character-lab/native-session-proof-20260913-c`;
+proof receipt SHA-256 `33cfb99d4d0528ced93a6af02b7b2c9c6732c95fafdc1557180cd5beeb99b14b`.
+The two earlier failed fixtures and native selection/identity probes remain.
+
+The final installer package also passed that fixed native harness in
+`native-session-proof-20260913-d-installed`; receipt SHA-256
+`507fd841b7d269ad44016249153985a97196ed287ecf5af4678e43a6d972cf45`.
+Extension registration succeeded. A separate native menu probe crashed inside
+`Window.addView()` in `kritarunner` before any Studio action; both attempts and
+the diagnostic stage journal remain. The GUI profile was not changed.
+Independent review found no HIGH/CRITICAL blockers; the non-blocking request
+dependency-manifest gap is tracked in #225.
+
+The integrated local suite passed: 1,639 passed, 54 skipped (1,693 total,
+158.260 seconds), including 30 focused Krita tests. The validator passed with
+66 graphs, 121 pins, 1,142 tracked paths and 86 LoRA names.
+
+This is native API/mechanical evidence. GUI dialogs/keyboard, general multilayer
+compatibility, real neural repair quality, accepted character packs and licensing
+remain unverified. No generation was submitted, the old character budgets remain
+unchanged, and the Studio restart/boot Start holds were not retried. Broader
+issues #71/#65/#72 remain open; HUMAN_TODO.md decisions are unchanged.
+
 ## Three image baselines and full Wan control — 13 September 2026
 
 CSTati v3, YumeFlux ILv1 and JANIMA v1 each completed one registered Studio

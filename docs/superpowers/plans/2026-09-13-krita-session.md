@@ -33,13 +33,13 @@ Interfaces: `Session(document)`, `inspect()`, `capture(output)`,
 `import_request(path)`, `show_source()` and `show_result()`. Capture returns a
 source/snapshot manifest; import consumes a pinned native plan and that manifest.
 
-- [ ] Write failing tests for import into a modified document, changes hidden by
+- [x] Write failing tests for import into a modified document, changes hidden by
   another layer, stale selection/order, failed native readback, repeat import,
   exact source/result toggles and refusal after user changes to the proposal.
-- [ ] Run `python -m unittest discover -s tests -p test_character_krita_session.py`.
-- [ ] Implement the session without network, shell, file overwrite or document
+- [x] Run `python -m unittest discover -s tests -p test_character_krita_session.py`.
+- [x] Implement the session without network, shell, file overwrite or document
   save/close on the active object. Persist exclusive intent before mutation.
-- [ ] Run the focused suite and existing `test_character_krita.py` contracts.
+- [x] Run the focused suite and existing `test_character_krita.py` contracts.
 
 The main causal shape is:
 
@@ -56,22 +56,27 @@ self.assertEqual(document.layer_count, original_count)
 Files: `integrations/krita/studio_session/`, its `.desktop` entry,
 `scripts/character_krita_session.py`, and session tests.
 
-- [ ] Build a request from a capture and the existing prepared native package;
+- [x] Build a request from a capture and the existing prepared native package;
   revalidate source hashes and serialize a new typed JSON request, never code.
-- [ ] Package the optional fixed-source extension; install only to an explicitly
+- [x] Package the optional fixed-source extension; install only to an explicitly
   configured native scripts directory, without replacing another installation.
-- [ ] Wire menu Capture/Import/Show source/Show result to the shared session.
+- [x] Wire menu Capture/Import/Show source/Show result to the shared session.
   Initialization has no canvas or filesystem mutation.
-- [ ] Prove invalid packages and changed snapshots fail before canvas mutation.
+- [x] Prove invalid packages and changed snapshots fail before canvas mutation.
 
 ## Task 3: native proof and handoff
 
-- [ ] Run a fixed repository harness via configured Krita on an owned synthetic
+- [x] Run a fixed repository harness via configured Krita on an owned synthetic
   document. Prove active unsaved-source preservation, exact import, source/result
   toggle and rejection after a hidden-layer edit; preserve failure artifacts.
-- [ ] Inspect native exported comparisons; run full unittest discovery and the
+- [x] Inspect native exported comparisons; run full unittest discovery and the
   repository validator serially.
-- [ ] Document commands, native evidence and unverified GUI/creative limits in
+- [x] Document commands, native evidence and unverified GUI/creative limits in
   the character runbook and CURRENT_STATE; leave #71/#65/#72 open.
-- [ ] Obtain one independent review, fix confirmed blocking defects, qualify
-  the final PR head, merge within T2 gates and remove only the owned clean tree.
+- [x] Obtain one independent review. No HIGH/CRITICAL blockers; non-blocking
+  dependency-manifest finding is tracked in #225. Real GUI actions remain
+  unverified after the separate runner view-binding crash.
+
+Post-implementation closeout still requires qualification of the final PR head,
+T2 merge gates and removal of the owned clean trees. Record those later events
+in the primary checkout's retained handoff; they are not inferred from this plan.
