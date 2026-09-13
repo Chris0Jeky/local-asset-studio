@@ -33,6 +33,7 @@ from model_library import ModelLibrary
 from workspace import AssetWorkspace, WorkspaceError, digest_file
 from references import compile_references, image_record
 from production import Production, fingerprint
+import mixed_batch
 from backends import BackendManager
 import host_memory
 import wan_capacity
@@ -533,6 +534,7 @@ class Studio:
         result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._known_prompt_error(job) is None
         result["has_pending_submission"] = "pending_submission" in job
         result["never_submitted"] = submission_evidence.never_submitted(job)
+        result["mixed_batch"] = mixed_batch.snapshot(job)
         result["can_abandon"] = submission_evidence.abandonable(job)
         result["abandon_requires_acknowledgement"] = result["can_abandon"] and not result["never_submitted"]
         return result
@@ -1158,19 +1160,26 @@ class Studio:
     def _work(self):
         while True:
             action, job_id = self.queue.get()
+            mixed_request = None
             job = None
             try:
+                if action == "observe-mixed": job_id, mixed_request = job_id
                 if action == 'production': self.production.run(job_id)
                 else:
                     job = self.jobs.get(job_id)
-                    if job: self._resume(job) if action == 'observe' else self._run(job)
+                    if job:
+                        if action == "observe-mixed": mixed_batch.run(self, job_id, mixed_request)
+                        elif action == "observe": self._resume(job)
+                        else: self._run(job)
             except Exception as exc:
                 try:
                     if action == 'production':
                         # Escaping here can be a failed job-state write after a POST.
                         # Only normal stage reconciliation can certify a terminal outcome.
                         self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
-                    elif job is not None: self.record_job_failure(job, exc)
+                    elif job is not None:
+                        if action == "observe-mixed": mixed_batch.record_failure(self, job, exc)
+                        else: self.record_job_failure(job, exc)
                 except Exception as recording_error:
                     # A disk/SQLite/diagnostic error must not end the only queue
                     # consumer. Keep one bounded, explicitly non-durable alert.
@@ -1636,6 +1645,12 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
             if self.path.startswith("/api/jobs/") and self.path.endswith("/resume"):
                 self._body_json(); return self._json(202, self.studio.resume_job(self.path.split("/")[3]))
+            if self.path.startswith("/api/jobs/") and self.path.endswith(("/observe-known", "/dispose-mixed")):
+                parts = self.path.split('/')
+                if len(parts) != 5: raise StudioError('Unknown mixed batch route')
+                action = 'observe' if parts[4] == 'observe-known' else 'dispose'
+                result = mixed_batch.command(self.studio, parts[3], action, self._body_json())
+                return self._json(202 if action == 'observe' else 200, result)
             if self.path.startswith("/api/jobs/") and self.path.endswith("/abandon"):
                 parts = self.path.split('/')
                 if len(parts) != 5: raise StudioError('Unknown abandonment route')

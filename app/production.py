@@ -22,6 +22,7 @@ import settings_planner
 import prompting
 import project_storage
 import submission_evidence
+import mixed_batch
 import production_clock
 
 
@@ -124,6 +125,8 @@ class Production:
                        recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
                        variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'))
         result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
+        mixed=self._mixed_batch_jobs(project)
+        result['can_reconcile_batch']=state['status'] in ('interrupted','uncertain','stopped') and bool(mixed) and all(mixed_batch.disposed(job) for _,job in mixed)
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
@@ -510,6 +513,8 @@ class Production:
         with self.studio.lock, self.lock:
             project=self._get(identifier)
             project_storage.require(self.root,identifier,project['plan'])
+            if self._reconcile_batch_disposition(identifier,project):return self.get(identifier)
+            if self._mixed_batch_jobs(project):raise ValueError('Resume observation cannot resolve this mixed batch. Inspect it in Gallery: check known receipts or explicitly record a local disposition before new work')
             if self._reconcile_tracking_terminal(identifier,project):return self.get(identifier)
             self.studio.require_worker()
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
@@ -601,6 +606,29 @@ class Production:
         from voice_baseline import artifacts
         return artifacts(self,identifier)
 
+    def _mixed_batch_jobs(self, project):
+        if project['plan']['kind']!='comparison':return []
+        return [(index,job) for index,attempt in project['state'].get('attempts',{}).items()
+                if (job:=self.studio.jobs.get(attempt.get('job_id'))) and 'pending_submission' in job and job.get('prompt_ids')]
+
+    def _reconcile_batch_disposition(self, identifier, project):
+        # A local disposition releases the local dead end, not a remote outcome,
+        # reservation or later stage. Caller holds Studio then Production locks.
+        jobs=self._mixed_batch_jobs(project)
+        if not jobs or not all(mixed_batch.disposed(job) for _,job in jobs):return False
+        state=project['state']
+        if state['status'] not in ('interrupted','uncertain','stopped','queued','running','observing','failed'):return False
+        records=[{'stage':index,'job_id':job['id'],'status':'abandoned','prompt_ids':list(job['prompt_ids']),
+                  'disposition_id':job['abandonment']['event_id']} for index,job in jobs]
+        if state['status']=='failed' and state.get('batch_terminal_reconciliation',{}).get('jobs')==records:return True
+        state=copy.deepcopy(state);now=time.time()
+        for record in records:
+            state['attempts'][record['stage']].update(status='abandoned',prompt_ids=record['prompt_ids'],reconciled_at=now)
+        state.update(status='failed',message='Mixed batch abandoned locally; remote outcomes remain unknown. New work requires an explicit repair branch. No reservation was refunded or later stage authorized.',
+                     batch_terminal_reconciliation={'version':1,'recorded_at':now,'jobs':records,'new_work_authorized':False})
+        self._state(identifier,state)
+        return True
+
     def _tracking_terminal_records(self, project):
         if project['plan']['kind']!='comparison':return []
         records=[]
@@ -630,6 +658,9 @@ class Production:
         # Match resume's lock order; never retain these locks during backend I/O.
         with self.studio.lock, self.lock:
             project=self._get(identifier)
+            if self._reconcile_batch_disposition(identifier,project):return False
+            if self._mixed_batch_jobs(project):
+                self._mutate(identifier,status='uncertain',message='A mixed batch retains an unknown submission. Inspect its known receipts or explicitly record a local disposition; no later stage was authorized.');return False
             if self._reconcile_tracking_terminal(identifier,project):return False
             state=project['state'];authorized=set(state.get('tracking_stop_authorizations',[]))
             for attempt in state.get('attempts',{}).values():
