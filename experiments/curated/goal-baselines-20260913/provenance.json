@@ -144,7 +144,7 @@
         "bytes": 1149733,
         "sha256": "7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e",
         "status": "completed",
-        "elapsed_seconds": 36.2181400594635
+        "elapsed_seconds": 36.2185480594635
       },
       "workflow": {
         "path": "janima-v1-base/workflow.json",
