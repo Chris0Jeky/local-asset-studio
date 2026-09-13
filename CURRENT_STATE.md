@@ -23,6 +23,24 @@ costume-design acceptance, interactive GUI editing or private pilot budget
 change is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains the owner-decision
 record; no new creative acceptance was supplied.
 
+## Wan admission and isolated tiled-decode capacity — 13 September 2026
+
+The ordinary Wan decoder is now held above the recorded 512x768/33-frame,
+single-latent-batch envelope. Preparation, Production preflight and final
+dispatch check the actual graph, including older queued jobs without mode
+metadata. The Create workspace explains the Quality/Canonical hold and restores
+Generate when the operator returns to Quick or Balanced. A synthetic browser
+check exercised both 1440px desktop and 390px mobile without submitting a job.
+
+One deliberately changed decode-only probe, prompt
+`b30b19f6-3bac-4e28-9f4f-bbed8b8b8ff7`, completed in 59.65 seconds and saved 41
+verified 1280x704 frames. It used spatial tile 512/overlap 64 and temporal tile
+8/overlap 4 over a synthetic zero latent. One diagnostic frame was inspected.
+No sampling or source encoding ran, and full-model coexistence and animation
+quality remain unverified. The prior failed canonical control is unchanged.
+Details and the retained evidence location are in
+[WAN-DECODE-CAPACITY.md](docs/WAN-DECODE-CAPACITY.md).
+
 ## Wan 2.2 I2V forensic diagnostic and control path — 13 September 2026
 
 The visually failed Wan recording was located without resubmission: Studio job

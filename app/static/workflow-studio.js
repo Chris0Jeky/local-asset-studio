@@ -201,9 +201,9 @@
     const data = await api('/guides'), host = $('#goalCards'); host.replaceChildren();
     data.guides.forEach((guide, index) => {
       const card = el('article', null, {class: 'wf-goal'}); card.append(el('small', `PATH ${String(index + 1).padStart(2, '0')} · ${guide.steps.length} STEPS`), el('h3', guide.title), el('p', guide.summary));
-      function href(step) { const url = new URL(guide.steps[step].route, document.baseURI); url.searchParams.set('guide', guide.id); url.searchParams.set('step', String(step)); return url.pathname + url.search + url.hash; }
+      function href(step) { const url = new URL(guide.steps[step].route, document.baseURI); url.searchParams.set('guide', guide.id); url.searchParams.set('step', String(step)); if (guide.steps[step].id) url.searchParams.set('stage', guide.steps[step].id); return url.pathname + url.search + url.hash; }
       card.append(el('a', 'Start guided path →', {href: href(0)}));
-      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); if (saved && Number.isInteger(saved.step) && saved.step > 0 && saved.step < guide.steps.length) card.append(el('a', `Resume at step ${saved.step + 1} →`, {href: href(saved.step)})); } catch (_) {}
+      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); const resume = saved?.stage ? guide.steps.findIndex(s => s.id === saved.stage) : saved?.step; if (Number.isInteger(resume) && resume > 0 && resume < guide.steps.length) card.append(el('a', `Resume at step ${resume + 1} →`, {href: href(resume)})); } catch (_) {}
       host.append(card);
     });
   }
@@ -230,6 +230,9 @@
   $('#exportGraph').onclick = () => { if (checked?.valid) download('workflow-api.json', checked.graph); };
   window.WorkflowStudio = Object.freeze({
     snapshot: () => doc && clone(doc), schema: () => schema && clone(schema), epoch: () => epoch,
+    authoringStatus: () => Object.freeze({document_present: !!doc, schema_loaded: !!schema,
+      schema_matches: !!doc && !!schema && doc.backend_id === schema.backend_id && doc.schema_sha256 === schema.schema_sha256,
+      checked_valid: checked?.valid ?? null, epoch, schema_epoch: schemaEpoch}),
     load: replace, change: changed, validate: safeNumbers, status,
     inspect: id => { selected = id; render(); $('#nodeInspector').scrollIntoView({block: 'start'}); },
     field: (host, id, input) => {

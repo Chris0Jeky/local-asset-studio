@@ -16,7 +16,7 @@ ROOT = Path(__file__).parents[1]
 SPEC = importlib.util.spec_from_file_location("asset_server_i2v", ROOT / "app/server.py")
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
-from i2v_diagnostics import artifact_path, centered_crop_plan, graph_diff
+from i2v_diagnostics import _supported_wan_job, artifact_path, centered_crop_plan, graph_diff
 
 
 def png(width=832, height=1248):
@@ -119,6 +119,17 @@ class I2VDiagnosticTests(unittest.TestCase):
             studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical", "reference": other}})
         self.assertEqual(studio.jobs, {})
         self.assertTrue(studio.queue.empty())
+
+    def test_diagnostic_accepts_only_recorded_wan_i2v_jobs(self):
+        studio = self.studio()
+        self.assertEqual(_supported_wan_job(studio, {"preset_id": "wan22-i2v", "graph": self.graph})["id"], "wan22-i2v")
+        for index, job in enumerate(({"preset_id": "av-preview", "graph": {}}, {"preset_id": "generic-video", "graph": {}})):
+            job = dict(job, id=f"unsupported-{index}")
+            studio.jobs[job["id"]] = job
+            with self.subTest(preset_id=job["preset_id"]), self.assertRaisesRegex(server.StudioError, "supports recorded Wan I2V jobs only"):
+                studio.i2v_diagnostic(job["id"])
+        with self.assertRaisesRegex(ValueError, "requires a recorded Wan22ImageToVideoLatent graph"):
+            _supported_wan_job(studio, {"preset_id": "wan22-i2v", "graph": {}})
 
     def test_graph_diff_normalizes_links_and_reports_literals(self):
         canonical = {"1": {"class_type": "A", "inputs": {"value": 1}}, "2": {"class_type": "B", "inputs": {"source": ["1", 0]}}}
