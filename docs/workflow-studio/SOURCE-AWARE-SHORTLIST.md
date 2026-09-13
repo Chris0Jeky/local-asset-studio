@@ -4,6 +4,9 @@ Continuation of #118/#123 after merged #217. This adds an actual primary Workspa
 image and a proposed use to the existing chooser. It does not apply a recipe,
 attach a source, set a reference role, or approve execution.
 
+The single-source contract below remains supported. For multiple checked images,
+use [ordered source advice](ORDERED-SOURCES.md), not a larger declared count.
+
 ## In the Studio
 
 Open an image in **Asset library**, then choose **Find recipes for this image**.

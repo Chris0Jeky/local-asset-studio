@@ -5,6 +5,15 @@ All six original issues remain open for real residual acceptance. Their foundati
 paragraphs predate several merged implementations; do not use those paragraphs as
 instructions to build another store, SDK, MCP bridge or saved-run journal.
 
+## Ordered-source continuation
+
+The chooser now checks one to three ordered Workspace images and proposed roles;
+see [ORDERED-SOURCES.md](ORDERED-SOURCES.md). This advances the observation portion
+of #232 and preserves legacy single-source/count-only requests. Complete reviewed
+setup diffs, expected-draft concurrency, explicit staging/apply and persisted
+undo/reload remain unimplemented in that slice. Neither the original #118/#123
+workstreams nor #232 are complete. The historical reconciliation below is retained.
+
 ## Issue disposition and existing ownership
 
 | Workstream | Existing implementation to preserve | Remaining acceptance / next increment |
