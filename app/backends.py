@@ -207,6 +207,17 @@ class BackendManager:
         except psutil.NoSuchProcess:return
         except psutil.AccessDenied as exc:raise ValueError('Cannot inspect the retained startup process; no new backend will be launched') from exc
 
+    def _check_startup_processes(self):
+        """A refused port is not evidence that its configured launcher is absent."""
+        for profile in self.profiles.values():
+            processes=self.configured_processes(profile)
+            if not processes:continue
+            listener=self.process(profile)
+            identity=(listener.pid,listener.create_time()) if listener else None
+            if len(processes)!=1 or identity!=(processes[0].pid,processes[0].create_time()):
+                raise ValueError(profile['name']+' has a configured startup process without a unique matching listener. '
+                                 'Existing processes were preserved; inspect startup before switching explicitly.')
+
     def switch(self, identifier):
         if identifier not in self.profiles:raise ValueError('Unknown backend')
         if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
@@ -214,6 +225,7 @@ class BackendManager:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')
             if self._local_work():raise ValueError('Finish or reconcile active Studio work before switching backends')
             self._check_retained_startup()
+            self._check_startup_processes()
             # Check every endpoint, including work submitted directly through ComfyUI.
             for profile in self.profiles.values():self._idle(profile,allow_offline=True)
             previous=self.operation
@@ -243,6 +255,7 @@ class BackendManager:
                 self._idle(profile,allow_offline=True)
                 process=self.process(profile)
                 observed[key]=(process.pid,process.create_time()) if process else None
+            self._check_startup_processes()
             for key,profile in self.profiles.items():
                 if key==identifier:continue
                 process=self.process(profile)
@@ -252,6 +265,7 @@ class BackendManager:
                 if observed[key]!=(process.pid,process.create_time()):raise ValueError('Backend process changed during preflight; all remaining processes preserved')
                 # Recheck just before termination; only this verified, idle local process is stopped.
                 self._idle(profile)
+                self._check_startup_processes()
                 self.operation.setdefault('stopped_processes', []).append({'profile':key,'pid':process.pid,'created_at':process.create_time(),'matched_entry':profile['entry']})
                 self.operation['message']='Stopping idle '+profile['name'];self._save()
                 process.terminate();process.wait(timeout=15)
@@ -260,6 +274,7 @@ class BackendManager:
             if not owned:
                 if observed[identifier] is not None:raise ValueError('Target process disappeared during preflight; retry explicitly')
                 self.operation['message']='Starting '+target['name'];self._save()
+                self._check_startup_processes()
                 stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+self.operation['id'];logs=self.studio.root/'.runtime/backends';logs.mkdir(parents=True,exist_ok=True)
                 if identifier=='primary':
                     argv=self.primary_argv(target)
