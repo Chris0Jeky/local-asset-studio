@@ -146,6 +146,12 @@ class GraphValidationTests(unittest.TestCase):
             info['Source']=source
             with self.subTest(source=source),self.assertRaises(ValueError):pipeline.graph_check(graph,info)
 
+    def test_incomplete_node_schema_cannot_certify_a_graph(self):
+        graph={'1':{'class_type':'Node','inputs':{}}}
+        for schema in ({'output':[]},{'input':{},'output':None},{'input':{}}):
+            with self.subTest(schema=schema),self.assertRaisesRegex(ValueError,'Invalid node (input|output) contract'):
+                pipeline.graph_check(graph,{'Node':schema})
+
     def test_diagnostics_name_node_class_and_field(self):
         with self.assertRaisesRegex(ValueError,r'Node save \(SaveVideo\): Unknown dynamic input option: format'):
             pipeline.graph_check(video(format='bad'),INFO)

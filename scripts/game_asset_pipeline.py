@@ -266,7 +266,8 @@ def expanded_input_contract(contract, live_inputs):
                     fields[key] = spec
                     if group == 'required': required.add(key)
                 require(len(fields) <= 4096, 'Expanded input contract exceeds 4096 fields')
-    visit(contract.get('input', {}))
+    require(isinstance(contract.get('input'), dict), 'Invalid node input contract')
+    visit(contract['input'])
     return fields, required
 
 
@@ -298,7 +299,10 @@ def graph_check(graph, info=None):
             fields = {}
             if info is not None:
                 require(node['class_type'] in info, f"Missing node class: {node['class_type']}")
-                fields, required = expanded_input_contract(info[node['class_type']], node['inputs'])
+                schema = info[node['class_type']]
+                require(isinstance(schema, dict) and isinstance(schema.get('output'), list),
+                        'Invalid node output contract')
+                fields, required = expanded_input_contract(schema, node['inputs'])
                 require(required <= set(node['inputs']), 'Missing required input: '+', '.join(sorted(required-set(node['inputs']))))
                 require(set(node['inputs']) <= set(fields), 'Unknown input (snapshot may be stale): '+', '.join(sorted(set(node['inputs'])-set(fields))))
             for name, value in node['inputs'].items():
