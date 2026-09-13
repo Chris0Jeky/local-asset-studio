@@ -1,0 +1,2 @@
+# Optional tools environment only. Never install into ComfyUI's Python.
+mcp==1.28.1
