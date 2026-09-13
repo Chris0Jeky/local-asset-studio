@@ -58,3 +58,14 @@ class GalleryHandoffTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('Voice recovery controls require', result.stdout, result.stdout + result.stderr)
+
+
+class ProductionClockFrontendTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_explicit_time_extension_does_not_resume_or_duplicate(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('production_clock_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Production time extension controls preserve', result.stdout)

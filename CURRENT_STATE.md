@@ -95,7 +95,8 @@ separately from review.
 ## Resource efficiency programme and first measurement — 13 September 2026
 
 The architecture and staged plan are in [RESOURCE-EFFICIENCY.md](docs/RESOURCE-EFFICIENCY.md),
-tracked by #172 and scoped issues #173–#178. Existing execution, recovery, Workspace and Wan
+tracked by #172 and scoped issues #173–#178. PR #182 closed #173 and #174; #175–#178 and the
+umbrella #172 remain open. Existing execution, recovery, Workspace and Wan
 capacity owners are retained. The first implementation adds a finite read-only resource profiler
 and the browser scheduling slice tracked by #174: serial read lanes, hidden-page suspension,
 4-second active / 15-second idle job observation and view-specific refreshes. Existing unchanged

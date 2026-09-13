@@ -550,7 +550,7 @@ class ServerTests(unittest.TestCase):
         s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']]
         job['status']='waiting';s._save(job)
         self.assertTrue((shared/'runs'/job['id']/'workflow.json').is_file())
-        self.assertEqual(self.studio().jobs[job['id']]['status'],'uncertain')
+        self.assertEqual(self.studio().jobs[job['id']]['status'],'not_submitted')
 
     def test_import_checks_exact_graph_and_freezes_template_contract(self):
         s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':'9007199254740993'}})['id']]
