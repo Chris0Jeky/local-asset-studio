@@ -5,6 +5,7 @@
 })(typeof window!=='undefined'?window:null,function(){
   'use strict';
   const goals={'new-image':'Create a new image','edit-image':'Change an existing image','reference-image':'Create with pose or identity references','upscale-image':'Upscale an image','masked-repair':'Repair a selected region','animate-image':'Animate an image','image-to-3d':'Build 3D from an image'};
+  const sourceRoles={source:'Whole image / first frame',identity:'Identity guidance',pose:'Pose guidance',style:'Style guidance',costume:'Costume guidance',composition:'Composition guidance'};
   const statuses={observed:'Listed prerequisites observed',unknown:'Some checks are unknown',needs_setup:'Needs attention before preparation'};
   const plain=x=>!!x&&typeof x==='object'&&!Array.isArray(x),integer=(x,lo,hi)=>Number.isSafeInteger(x)&&x>=lo&&x<=hi;
   const hash=x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x),text=(x,max)=>typeof x==='string'&&x.length<=max;
@@ -12,6 +13,9 @@
   function validate(r,q){
     const message='Shortlist response does not match this request context. Check again.';
     need(plain(r)&&r.format==='studio.recipe-shortlist/v1'&&r.goal===q.goal&&r.reference_count===q.reference_count,message);
+    if(q.source_asset_id){
+      const x=r.source;need(plain(x)&&x.asset_id===q.source_asset_id&&x.sha256===q.source_sha256&&x.role===q.source_role&&x.bytes_verified===true&&x.staged===false&&text(x.title,160)&&integer(x.width,1,Number.MAX_SAFE_INTEGER)&&integer(x.height,1,Number.MAX_SAFE_INTEGER),message);
+    }else need(r.source===undefined||r.source===null,message);
     need(r.generation_submitted===false&&r.execution_authorized===false&&hash(r.snapshot_sha256),message);
     need(!q.expected_snapshot||q.expected_snapshot===r.snapshot_sha256,message);
     need(integer(r.total,0,256)&&r.offset===q.offset&&Array.isArray(r.candidates)&&r.candidates.length<=q.limit&&r.candidates.length<=12,message);
@@ -24,6 +28,9 @@
       need(plain(c)&&text(c.preset_id,96)&&/^[A-Za-z0-9_.-]+$/.test(c.preset_id)&&!seen.has(c.preset_id)&&Object.hasOwn(statuses,c.status),message);seen.add(c.preset_id);
       need(text(c.name,160)&&text(c.description,800)&&text(c.backend_id,96)&&text(c.operation,96)&&text(c.prompt_role,96)&&integer(c.reference_count,0,3),message);
       need(c.template_sha256===null||c.template_sha256===undefined||hash(c.template_sha256),message);
+      if(c.source_assignment!==undefined){
+        const a=c.source_assignment;need(q.source_asset_id&&plain(a)&&a.asset_id===q.source_asset_id&&a.sha256===q.source_sha256&&a.role===q.source_role&&a.slot===1&&['whole-image','prompt-guidance','unsupported'].includes(a.role_mode)&&(a.binding===null||Array.isArray(a.binding)&&a.binding.length===2&&text(a.binding[0],96)&&a.binding[1]==='image'),message);
+      }
       need(Array.isArray(c.checks)&&c.checks.length<=32&&c.checks.every(x=>plain(x)&&text(x.code,96)&&['observed','unknown','blocked'].includes(x.state)&&text(x.message,800)),message);
       need(Array.isArray(c.requirements)&&c.requirements.length<=128&&c.requirements.every(x=>plain(x)&&Object.values(x).every(v=>v===null||typeof v==='boolean'||text(v,500))),message);
     }
@@ -64,11 +71,16 @@
     const gl=el('label','What are you making?');gl.htmlFor=goal.id;
     const cl=el('label','Reference images I plan to attach');cl.htmlFor=count.id;
     const check=el('button','Check starting recipes');check.id='checkStartingRecipes';check.type='submit';
-    form.append(gl,goal,cl,count,check);panel.append(form);
-    const note=el('p','The image count is a declaration, not an upload. Checking never changes settings or starts generation.');note.className='muted';panel.append(note);
+    const role=el('select');role.id='shortlistSourceRole';role.disabled=true;
+    for(const [value,label] of Object.entries(sourceRoles)){const option=el('option',label);option.value=value;role.append(option);}
+    const rl=el('label','Use the selected image for');rl.htmlFor=role.id;
+    const sourceNote=el('p','To check a saved source, open an image in Asset library and choose Find recipes for this image.','muted');sourceNote.id='shortlistSourceStatus';
+    const clear=el('button','Clear advice source');clear.type='button';clear.id='clearShortlistSource';clear.hidden=true;
+    form.append(gl,goal,cl,count,sourceNote,rl,role,clear,check);panel.append(form);
+    const note=el('p','Only the explicitly selected primary asset is byte-checked. Other image counts are declarations, not uploads. Checking never changes settings or starts generation.');note.className='muted';panel.append(note);
     const status=el('p','Choose an outcome, then check.','shortlist-status');status.id='shortlistStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const result=el('div');result.id='shortlistResults';panel.append(status,result);list.before(panel);
-    let last=null;
+    let last=null,source=null;
     const session=new Session(async(q,signal)=>{
       const response=await w.fetch('/api/workflow-studio/shortlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q),signal});
       const raw=await response.text();need(raw.length<=1024*1024,'Shortlist response exceeds the browser limit.');
@@ -78,7 +90,15 @@
       check.disabled=event.busy;panel.setAttribute('aria-busy',String(event.busy));last=null;result.replaceChildren();
       if(event.report){last=event.report;render(last);}else status.textContent=event.message;
     });
-    function currentQuery(offset=0,expected){const q={goal:goal.value,reference_count:Number(count.value),limit:6,offset};if(expected)q.expected_snapshot=expected;return q;}
+    function currentQuery(offset=0,expected){const q={goal:goal.value,reference_count:Number(count.value),limit:6,offset};if(expected)q.expected_snapshot=expected;if(source)Object.assign(q,{source_asset_id:source.asset_id,source_sha256:source.sha256,source_role:role.value});return q;}
+    clear.onclick=()=>{source=null;role.disabled=true;clear.hidden=true;sourceNote.textContent='No advice source selected. The reference count is only a declaration.';session.invalidate('Advice source cleared. Your Create attachments are unchanged.');};
+    d.addEventListener('studio:shortlist-source',e=>{
+      const x=e.detail;if(!plain(x)||!text(x.asset_id,96)||! /^[A-Za-z0-9_.-]+$/.test(x.asset_id)||!hash(x.sha256))return;
+      session.invalidate('Source selected for advice. Check explicitly; nothing was attached or applied.');
+      source={asset_id:x.asset_id,sha256:x.sha256};goal.value='edit-image';count.value='1';role.value='source';role.disabled=false;clear.hidden=false;
+      sourceNote.textContent='Advice source: '+(text(x.title,160)?x.title:x.asset_id)+'. Bytes will be checked when requested; this does not attach the image.';
+      panel.open=true;const drawer=panel.closest('.ux-recipe-drawer');if(drawer)drawer.open=true;check.focus();panel.scrollIntoView({block:'nearest',behavior:'auto'});
+    });
     function findPreset(row){
       try{
         need(last&&(!last.backend_id||typeof backendActive==='undefined'||backendActive===null||last.backend_id===backendActive)&&!(typeof backendSwitching!=='undefined'&&backendSwitching),'The environment changed. Check starting recipes again.');
@@ -100,6 +120,7 @@
       result.append(el('p','Default graphs · '+new Date(report.checked_at*1000).toLocaleTimeString()+'. This is not permission to run.','muted'));
       const scope=el('details');scope.append(el('summary','What this check covers'),el('p',report.scope));
       if(report.source_semantics)scope.append(el('p',report.source_semantics));result.append(scope);
+      if(report.source){const x=report.source;result.append(el('p','Source checked: '+x.title+' · '+x.width+' × '+x.height+' · '+sourceRoles[x.role]+'. Not attached.','shortlist-source'));}
       if(!report.total)result.append(el('p','No registered default route matches this outcome. Try another outcome or inspect the existing workflow builder; no substitute was selected.'));
       for(const row of report.candidates){
         const card=el('article',undefined,'shortlist-card');card.dataset.presetId=row.preset_id;card.dataset.state=row.status;
@@ -108,6 +129,7 @@
         card.append(el('p',attention?.message||'Listed prerequisites were observed. Select this recipe, review the settings and use the normal preparation checks.'));
         const find=el('button','Find in recipe library');find.type='button';find.onclick=()=>findPreset(row);card.append(find);
         const detail=el('details');detail.append(el('summary','How it works and what it needs'),el('p',row.description),el('p',row.operation+' · '+row.reference_count+' reference image(s) · '+row.backend_id,'muted'));
+        if(row.source_assignment){const a=row.source_assignment;detail.append(el('p','Selected source → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; assign and review inputs in Create.'));}
         const wording={description:'Describe the result you want to see.',instruction:'Describe the change to make and what must stay the same.',motion:'Describe the motion you want, not just the still image.',none:'This route has no authored text-prompt control.'};
         detail.append(el('p',wording[row.prompt_role]||'Inspect the recipe for its wording controls.'));
         const checks=el('ul');for(const c of row.checks)checks.append(el('li',c.message));detail.append(checks);
