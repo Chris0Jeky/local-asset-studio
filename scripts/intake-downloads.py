@@ -38,7 +38,7 @@ def read_header(path,limit=100*1024**2):
  return header
 
 def classify(header):
- """Map a safetensors header to a ComfyUI model folder. LoRA evidence wins over every other shape."""
+ """Return a folder hint or None, never identity/compatibility proof. LoRA evidence wins."""
  meta=header.get('__metadata__') if isinstance(header.get('__metadata__'),dict) else {}
  keys=[str(key).lower() for key in header if key!='__metadata__']
  architecture=str(meta.get('modelspec.architecture') or '').lower()
@@ -49,16 +49,24 @@ def classify(header):
  if 'first_stage_model' in parts and parts&{'conditioner','cond_stage_model'}:return 'checkpoints'
  if parts and parts<=VAE_PARTS and 'decoder' in parts:return 'vae'
  if any(key.startswith(('text_model.','model.embed_tokens','shared.','encoder.block.')) for key in keys):return 'text_encoders'
- return 'diffusion_models'
+ # Positive fixture-backed backbone signature; unknown families require operator review.
+ # A filename, metadata title or unrecognised tensor key is not diffusion evidence.
+ backbone=[key.removeprefix('model.diffusion_model.').removeprefix('diffusion_model.') for key in keys]
+ if all(any(key.startswith(prefix) for key in backbone) for prefix in ('blocks.','img_in.','final_layer.')):return 'diffusion_models'
+ return None
 
 def plan(paths,folder=None):
  """Classify each candidate without moving anything; errors are carried, not raised."""
  items=[]
  for path in paths:
-  item={'path':Path(path),'folder':folder,'error':None}
+  item={'path':Path(path),'folder':folder,'error':None,'folder_basis':'operator-selected' if folder is not None else 'unknown'}
   if folder is None:
-   try:item['folder']=classify(read_header(path))
-   except (ValueError,OSError) as error:item['error']=str(error)
+   try:
+    item['folder']=classify(read_header(path))
+    if item['folder'] is None:
+     item['error']='Unknown model role: no supported header signature. File preserved; inspect the source and use --dest-folder only after review.'
+    else:item['folder_basis']='header-hint'
+   except (ValueError,OSError) as error:item.update(error=str(error),folder_basis='unreadable-header')
   items.append(item)
  return items
 
@@ -102,7 +110,7 @@ def append_receipt(root,record):
 def main(argv=None):
  parser=argparse.ArgumentParser(description='Move finished .safetensors downloads into the ComfyUI model folders.')
  parser.add_argument('--from',dest='source',type=Path,default=Path.home()/'Downloads')
- parser.add_argument('--dest-folder',choices=FOLDERS,help='skip header classification and use this folder')
+ parser.add_argument('--dest-folder',choices=FOLDERS,help='operator-selected folder; bypasses header classification, not proof of model compatibility')
  parser.add_argument('--name',help='rename a single file on the way in')
  parser.add_argument('--dry-run',action='store_true')
  args=parser.parse_args(argv)
@@ -116,6 +124,7 @@ def main(argv=None):
   if item['error']:print('SKIP',path.name,'-',item['error']);continue
   target=destination(comfy_root,item['folder'],args.name or path.name)
   print(f'{path.name} -> {target}')
+  print('  Folder basis: '+item['folder_basis']+'; identity and runtime compatibility are unverified.')
   if args.dry_run:continue
   if target.exists():print('SKIP',path.name,'- destination already exists; nothing was overwritten');continue
   size=path.stat().st_size;digest=sha256(path)
@@ -123,7 +132,7 @@ def main(argv=None):
   if target.exists():print('SKIP',path.name,'- destination appeared while hashing');continue
   shutil.move(str(path),str(target));moved+=1
   receipt={'file':target.name,'origin':str(path),'bytes':size,'sha256':digest,'expected_sha256':None,'verified':False,
-           'folder':item['folder'],'licence':'TODO: record the source and licence','fetched':time.strftime('%Y-%m-%dT%H:%M:%S')}
+           'folder':item['folder'],'folder_basis':item['folder_basis'],'runtime_compatible':None,'licence':'TODO: record the source and licence','fetched':time.strftime('%Y-%m-%dT%H:%M:%S')}
   append_receipt(ROOT,receipt)
   print('RECEIPT',json.dumps(receipt,indent=2))
   print('LIBRARY STUB',json.dumps(stub(item['folder'],target.name,size,digest),indent=2))

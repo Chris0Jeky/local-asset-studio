@@ -33,6 +33,12 @@ Prepare separate SDXL/Illustrious lanes for CSTati v3, YumeFlux and AniFox, plus
 
 The owner clarified that the work is non-sexual. Source screenshots supply technical examples; their subject wording is not an instruction for the new prompts. Reuse Workflow Studio's graph import and editing work in PR #126. Reusable Step modules and arbitrary edited-graph execution remain separate workstreams #120 and #122; editable graph exports are useful before those features exist.
 
+The owner selected **B — softer cinematic shading** from the bounded Anima comparison as the
+starting look for this pack. Both comparison images remain experiments and no image was added to
+the shortlist or accepted as finished art. The separate character-consistency canon remains the
+supplied standard costume, including its shown back view; this look choice does not change that
+canon or establish art acceptance.
+
 ## Recovery rule
 
 If ComfyUI disconnects after accepting a prompt, preserve the prompt ID and submitted graph. Reconnect to observe that prompt; never submit it again to discover what happened. Restoring a runtime is not evidence that the interrupted generation failed or succeeded.
