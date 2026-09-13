@@ -21,7 +21,9 @@ jobs:
           spec = json.loads(pathlib.Path('.guidance-delivery.json').read_text())
           assert re.fullmatch(r'[0-9a-f]{40}', spec['base'])
           assert spec['target'] in ('codex/workflow-output-schema', 'codex/guided-evidence-journeys')
-          raw = pathlib.Path(spec['path']).read_bytes()
+          paths = spec.get('paths') or [spec['path']]
+          assert 1 <= len(paths) <= 8
+          raw = b''.join(pathlib.Path(path).read_bytes() for path in paths)
           assert hashlib.sha256(raw).hexdigest() == spec['sha256'], 'Transport hash mismatch; target unchanged'
           with tempfile.NamedTemporaryFile(suffix='.patch') as patch:
               patch.write(raw); patch.flush()
