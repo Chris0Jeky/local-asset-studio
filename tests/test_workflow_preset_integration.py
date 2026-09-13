@@ -45,6 +45,17 @@ class PresetIntegrationTests(unittest.TestCase):
             self.http.shutdown(); self.http.server_close(); self.thread.join(5)
         self.addCleanup(stop)
         self.url = 'http://127.0.0.1:' + str(self.http.server_port)
+        # Production intentionally accepts only its fixed :8191 Host/origin.
+        # Use those wire headers over an ephemeral test socket, without binding
+        # the user's Studio port or replacing either real security predicate.
+        def canonical_request(url, *args, **kwargs):
+            headers = dict(kwargs.get('headers', {}))
+            headers['Host'] = '127.0.0.1:8191'
+            if headers.get('Origin') == self.url: headers['Origin'] = 'http://127.0.0.1:8191'
+            kwargs['headers'] = headers
+            return Request(url, *args, **kwargs)
+        transport = patch('studio_workflow.client.Request', side_effect=canonical_request)
+        transport.start(); self.addCleanup(transport.stop)
     def test_real_preparation_and_ticket_job_recovery(self):
         self.doc['nodes']['3']['inputs'].update(text='local graph', seed=2**63-1)
         report = prepare_document(self.studio, self.doc, 'example')
@@ -78,7 +89,7 @@ class PresetIntegrationTests(unittest.TestCase):
         self.assertEqual(report['recipe']['preset_id'], 'example'); self.assertFalse(self.studio.jobs)
         req = Request(self.url + '/api/workflow-studio/prepare-document',
                       data=json.dumps({'document': self.doc, 'preset_id': 'example'}).encode(),
-                      headers={'Content-Type': 'application/json', 'Origin': 'https://untrusted.invalid'})
+                      headers={'Content-Type': 'application/json', 'Host': '127.0.0.1:8191', 'Origin': 'https://untrusted.invalid'})
         with self.assertRaises(HTTPError) as caught: urlopen(req, timeout=3)
         self.assertEqual(caught.exception.code, 403); caught.exception.close()
     def test_cli_writes_a_runnable_ticket_and_prints_source_report(self):
