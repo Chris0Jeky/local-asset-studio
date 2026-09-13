@@ -38,3 +38,8 @@ class WorkflowClient(Client):
     def fork(self, document_id: str, revision: int, name: str, *, request_id: str) -> dict:
         return self.request(PREFIX + '/' + identifier(document_id) + '/fork',
                             {'request_id': identifier(request_id), 'revision': revision, 'name': name})
+
+    def prepare_document(self, document: dict, *, preset_id: str) -> dict:
+        """Prepare compatible image-recipe edits; returns a report containing its run ticket."""
+        return self.request('/api/workflow-studio/prepare-document',
+                            {'document': document, 'preset_id': identifier(preset_id)})
