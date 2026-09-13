@@ -8,7 +8,7 @@ The external pilot summary records **12 attempts used, 11 completed, 0 selected,
 
 The scoped boot edit remains staged only. An approval review rejected the explicit Start command before process creation, so no start intent or generation was recorded and no retry is authorized by that evidence. The supplied standard costume, including its shown back view, remains the recorded private pilot canon; it does not accept a generated result.
 
-The latest implementation is the repository's offline character-study and media scripts. The restored `character-consistency-kit.zip` is the baseline input for that implementation; it is retained outside Git with the original sources and operational receipts.
+The latest implementation is the repository's character-study, edit planner, protected compositor and Studio bridge scripts, with their current runbooks. The restored `character-consistency-kit.zip` is retained as source material outside Git; it is not a replacement for the newer implementation. Original sources and operational receipts remain external.
 
 ## Completed baseline jobs
 
@@ -22,7 +22,7 @@ The coordinator visually inspected all three existing output images. They are us
 | YumeFlux ILv1 | `4403908b-bedb-489d-a9ce-9f19e6136bab` | `yumefluxXLIllustrious_ilV10.safetensors` | `YumeFlux-ILv1-Baseline_00001_.png` | completed |
 | JANIMA v1 | `78b5e0a3-5890-413a-ae64-ec0b59235879` | `JANIMAAnima_v10_2847103.safetensors` | `JANIMA-v1-Baseline_00001_.png` | completed |
 
-The three output files, raw job receipts, full workflow snapshots and private character sources are not copied into this repository. The curation publishes recipe controls, source-run identifiers and hashes only; it does not publish an image or a machine snapshot.
+The three output files, raw job receipts and private character sources are not copied into this repository. The curation publishes the exact generic-prompt recipes and submitted workflows, source-run identifiers, runtime versions and hashes. Five distinct required model files were hashed in full against the pinned library after execution. This publishes no image or full machine snapshot.
 
 ## Current visibility observation
 

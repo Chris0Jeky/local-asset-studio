@@ -1,0 +1,22 @@
+{
+  "preset_id": "cstati-v3-baseline",
+  "controls": {
+    "positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026091301,
+    "steps": 30,
+    "cfg": 4,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "denoise": 1.0,
+    "lora": 0,
+    "lora2": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\cstati-v3-baseline-api.json",
+  "created_at": 1789310793.8858619,
+  "references": [],
+  "parent_assets": []
+}

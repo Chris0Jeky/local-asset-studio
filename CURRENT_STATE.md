@@ -1,5 +1,33 @@
 # Current state — 13 September 2026
 
+## Three image baselines and full Wan control — 13 September 2026
+
+CSTati v3, YumeFlux ILv1 and JANIMA v1 each completed one registered Studio
+base recipe at 832x1216, seed 2026091301, 30 steps and zero LoRA strengths.
+Elapsed times were 28.16, 32.24 and 36.22 seconds respectively. All three PNGs
+were inspected; hand detail and leg/foot overlap remain unresolved. Their
+catalog execution flags now reflect these limited runs. Exact recipes, graphs,
+job/prompt IDs, runtime versions and output/model hashes are retained in
+[the baseline curation](experiments/curated/goal-baselines-20260913/README.md).
+Five distinct required model files passed full SHA-256 and byte-size checks
+against the pinned library after generation. No adapter-stack, licensing,
+character-identity or finished-art acceptance is claimed.
+
+The full canonical Wan control with a deliberately changed tiled decoder also
+completed: prompt `7722bd99-5a2f-4233-b799-82b126ff278a`, 1005.258 seconds,
+1280x704, 41 frames at 24 fps. **Its video failed visual inspection**, with
+breakup beginning at frame 1 and later cyan/white flicker and smeared anatomy.
+The full contact sheet was inspected; all frames and the video remain local.
+This establishes completion for that exact run, not usable animation or general
+decode capacity. No additional sampling is scheduled; see
+[Wan decode capacity](docs/WAN-DECODE-CAPACITY.md).
+
+[HUMAN_TODO.md](HUMAN_TODO.md) q-1 through q-4 remain answered. The character
+pilot still has 12 attempts used, 11 completed, no selected/accepted case and no
+remaining attempts. Its uncertain portrait and previously blocked boot Start
+are preserved. The restart wording and the live public-repository observation
+are reconciled without recording a new owner approval.
+
 ## Wan admission and isolated tiled-decode capacity — 13 September 2026
 
 The ordinary Wan decoder is now held above the recorded 512x768/33-frame,

@@ -3541,16 +3541,16 @@
       "category": "Anime quality",
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/cstati-v3-baseline-api.json",
-      "verified": false,
-      "commercial_note": "Source pins are present; local installation and licence terms are separate and remain unverified. A checked graph is not a generation or rights clearance.",
+      "verified": true,
+      "commercial_note": "Local base-model execution and file hashes are recorded; adapter terms, licensing and art acceptance remain separate and unverified.",
       "positive": ["2", "text"], "negative": ["3", "text"], "width": ["4", "width"], "height": ["4", "height"], "seed": ["5", "seed"], "steps": ["5", "steps"], "cfg": ["5", "cfg"], "denoise": ["5", "denoise"], "sampler": ["5", "sampler_name"], "scheduler": ["5", "scheduler"],
       "lora": ["8", "strength_model"], "lora_name": ["8", "lora_name"], "lora2": ["9", "strength_model"], "lora2_name": ["9", "lora_name"],
       "bindings_extra": {"lora": [["8", "strength_clip"]], "lora2": [["9", "strength_clip"]]},
       "choices": {"sampler": ["euler_ancestral", "euler", "dpmpp_2m"], "scheduler": ["karras", "normal", "simple"]},
       "modality": "image", "family": "CSTati v3 (SDXL)",
-      "description": "Prepared, not rendered. Fixed CSTati v3 checkpoint with a fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
+      "description": "Executed and inspected base control. Fixed CSTati v3 checkpoint with a fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["CSTati v3 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Schema/contract work only. No model download, live graph validation, generation, quality review or rights acceptance is claimed."
+      "execution_note": "Executed 2026-09-13: Studio job 0b245661-1de8-4574-9f57-a51bb4bbdc6c, ComfyUI prompt f0349550-e7f8-4d14-91ad-aad2ef799c92, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
     },
     {
       "id": "yumeflux-ilv1-baseline",
@@ -3558,16 +3558,16 @@
       "category": "Anime quality",
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/yumeflux-ilv1-baseline-api.json",
-      "verified": false,
-      "commercial_note": "Source pins are present; local installation and licence terms are separate and remain unverified. A checked graph is not a generation or rights clearance.",
+      "verified": true,
+      "commercial_note": "Local base-model execution and file hashes are recorded; adapter terms, licensing and art acceptance remain separate and unverified.",
       "positive": ["2", "text"], "negative": ["3", "text"], "width": ["4", "width"], "height": ["4", "height"], "seed": ["5", "seed"], "steps": ["5", "steps"], "cfg": ["5", "cfg"], "denoise": ["5", "denoise"], "sampler": ["5", "sampler_name"], "scheduler": ["5", "scheduler"],
       "lora": ["8", "strength_model"], "lora_name": ["8", "lora_name"], "lora2": ["9", "strength_model"], "lora2_name": ["9", "lora_name"],
       "bindings_extra": {"lora": [["8", "strength_clip"]], "lora2": [["9", "strength_clip"]]},
       "choices": {"sampler": ["euler_ancestral", "euler", "dpmpp_2m"], "scheduler": ["karras", "normal", "simple"]},
       "modality": "image", "family": "YumeFlux ILv1 (SDXL)",
-      "description": "Prepared, not rendered. Fixed YumeFlux ILv1 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
+      "description": "Executed and inspected base control. Fixed YumeFlux ILv1 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 4. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["YumeFlux ILv1 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Schema/contract work only. No model download, live graph validation, generation, quality review or rights acceptance is claimed."
+      "execution_note": "Executed 2026-09-13: Studio job 4403908b-bedb-489d-a9ce-9f19e6136bab, ComfyUI prompt e0dd0159-dc25-4b64-8833-2d18fd6158ae, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
     },
     {
       "id": "anifox-v2-baseline",
@@ -3608,15 +3608,15 @@
       "category": "Anime flagship",
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/janima-v1-baseline-api.json",
-      "verified": false,
-      "commercial_note": "Source pins are present; local installation and licence terms are separate and remain unverified. A checked graph is not a generation or rights clearance.",
+      "verified": true,
+      "commercial_note": "Local base-model execution and file hashes are recorded; adapter terms, licensing and art acceptance remain separate and unverified.",
       "positive": ["4", "text"], "negative": ["5", "text"], "width": ["6", "width"], "height": ["6", "height"], "seed": ["7", "seed"], "steps": ["7", "steps"], "cfg": ["7", "cfg"], "denoise": ["7", "denoise"], "sampler": ["7", "sampler_name"], "scheduler": ["7", "scheduler"],
       "lora": ["10", "strength_model"], "lora_name": ["10", "lora_name"], "lora2": ["11", "strength_model"], "lora2_name": ["11", "lora_name"], "lora3": ["12", "strength_model"], "lora3_name": ["12", "lora_name"], "lora4": ["13", "strength_model"], "lora4_name": ["13", "lora_name"], "lora5": ["14", "strength_model"], "lora5_name": ["14", "lora_name"],
       "choices": {"sampler": ["euler", "euler_ancestral", "dpmpp_2m_sde_gpu"], "scheduler": ["simple", "normal", "beta"]},
       "modality": "image", "family": "JANIMA v1 (Anima)", "dimension_multiple": 16,
-      "description": "Prepared, not rendered. JANIMA v1 is loaded as a diffusion model with the existing Anima encoder and VAE. Five Anima-family adapter controls default to 0 and are pruned until a deliberate stack recipe enables them. The starting sampler values are an authored, editable control rather than a screenshot transcription.",
+      "description": "Executed and inspected base control. JANIMA v1 is loaded as a diffusion model with the existing Anima encoder and VAE. Five Anima-family adapter controls default to 0 and are pruned until a deliberate stack recipe enables them. The starting sampler values are an authored, editable control rather than a screenshot transcription.",
       "stages": ["JANIMA v1 diffusion model", "Five optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
-      "execution_note": "Schema/contract work only. No model download, live graph validation, generation, quality review or rights acceptance is claimed."
+      "execution_note": "Executed 2026-09-13: Studio job 78b5e0a3-5890-413a-ae64-ec0b59235879, ComfyUI prompt a9b824cc-f8de-4305-9e8e-43fe57567095, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
     },
     {
       "id": "wan22-t2v",

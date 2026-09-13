@@ -1,0 +1,25 @@
+{
+  "preset_id": "janima-v1-baseline",
+  "controls": {
+    "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026091301,
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "denoise": 1.0,
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0
+  },
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\janima-v1-baseline-api.json",
+  "created_at": 1789311005.3583703,
+  "references": [],
+  "parent_assets": []
+}
