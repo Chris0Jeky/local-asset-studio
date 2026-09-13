@@ -59,10 +59,13 @@ def _presence(root, relative, observations):
             try: info = path.stat()
             except FileNotFoundError: info = None
             present = info is not None and stat.S_ISREG(info.st_mode) and info.st_size > 0
-            note = 'File present; content and runtime compatibility are separate checks.' if present else 'Missing or empty file; place it in the indicated folder.'
-            observations[key] = (str(path), present, note)
+            occupied = info is not None
+            note = ('File present; content and runtime compatibility are separate checks.' if present else
+                    'Destination is occupied by an empty or non-regular entry; inspect it before choosing a replacement.' if occupied else
+                    'Missing file; place it in the indicated folder.')
+            observations[key] = (str(path), present, note, occupied)
         except (OSError, ValueError) as exc:
-            observations[key] = (None, None, 'File availability unknown: ' + str(exc)[:250])
+            observations[key] = (None, None, 'File availability unknown: ' + str(exc)[:250], None)
     return observations[key]
 
 
@@ -84,16 +87,16 @@ def requirements(library, preset, graph, model_root, *, assets=None, observation
         key = relative if relative is not None else ('unknown', binding, selection)
         if key in rows: return
         row = {'file': relative or selection, 'folder': relative.split('/')[0] if relative else None,
-               'path': None, 'present': None, 'asset_id': None, 'source': None,
+               'path': None, 'present': None, 'occupied': None, 'asset_id': None, 'source': None,
                'installable': False, 'install_note': error, 'note': error}
         if relative is not None:
-            row['path'], row['present'], row['note'] = _presence(root, relative, observations)
+            row['path'], row['present'], row['note'], row['occupied'] = _presence(root, relative, observations)
             pins = known.get(relative, [])
             if len(pins) == 1:
                 asset = pins[0]; row.update(asset_id=asset.get('id'), source=asset.get('source'))
                 try:
                     validate_pins(asset)
-                    if row['present'] is None: blocked = row['note']
+                    if row['present'] is None or row['occupied'] is True and row['present'] is False: blocked = row['note']
                     elif root != library.models.resolve(): blocked = 'Select the matching backend explicitly before using its model installer.'
                     else: blocked = library.install_block(asset, row['present'])
                 except (ValueError, OSError) as exc: blocked = str(exc)
