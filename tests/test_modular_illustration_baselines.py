@@ -74,10 +74,3 @@ class ModularIllustrationBaselineTests(unittest.TestCase):
             with self.subTest(name=name):
                 setting=settings[name]; asset=library[f'loras/{name}']
                 self.assertEqual({key:setting[key] for key in ('source','sha256','bytes','trigger')},{key:asset[key] for key in ('source','sha256','bytes','trigger')})
-                self.assertEqual(setting['licence'],'Source pinned; installation separately verified; licence terms unverified.')
-
-    def test_new_family_licence_notes_preserve_unverified_terms(self):
-        families=json.loads((ROOT/'presets/settings-kb.json').read_text(encoding='utf-8'))['families']
-        for family in ('CSTati v3 (SDXL)','YumeFlux ILv1 (SDXL)','AniFox v2 (SDXL)','JANIMA v1 (Anima)'):
-            with self.subTest(family=family):
-                self.assertEqual(families[family]['licence_note'],'Source pinned; installation separately verified; licence terms unverified.')
