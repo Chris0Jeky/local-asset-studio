@@ -1,0 +1,10 @@
+.wf-saved-runs { margin-block: 1.25rem; }
+.wf-saved-runs .wf-toolbar { align-items: end; flex-wrap: wrap; }
+.wf-saved-runs select, .wf-saved-runs input { max-width: 100%; min-width: 12rem; flex: 1 1 14rem; }
+.wf-saved-runs pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 22rem; overflow: auto; }
+.wf-saved-runs #savedRunSource { white-space: pre-wrap; overflow-wrap: anywhere; }
+.wf-saved-runs details { margin-block: 1rem; }
+.wf-saved-runs summary { cursor: pointer; }
+.wf-saved-runs :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+@media (max-width: 600px) { .wf-saved-runs button { min-height: 44px; } .wf-saved-runs select, .wf-saved-runs input { min-width: 0; width: 100%; } }
+@media (forced-colors: active) { .wf-saved-runs { border: 1px solid CanvasText; } }

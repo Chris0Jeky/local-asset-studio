@@ -83,7 +83,16 @@
   $('#builder .wf-toolbar').before(panel);
   try { state = new P.State(sessionStorage, uuid); if (state.pending) say('A save request survived this tab’s reload. Retry its exact retained request to reconcile it; it will not overwrite the current draft.'); }
   catch (error) { say('Shared saving is unavailable: ' + error.message); }
+  let publishedProject = '';
+  function projectSnapshot() {
+    return {id: state?.binding?.id || null, revision: state?.binding?.revision || null,
+      dirty: !state || state.dirty(W.snapshot()), blocked: !state || !!state.pending || state.busy,
+      conflict: !!state?.binding?.conflict};
+  }
+  window.WorkflowProject = Object.freeze({snapshot: projectSnapshot});
   function sync() {
+    const next = JSON.stringify(projectSnapshot());
+    if (next !== publishedProject) { publishedProject = next; document.dispatchEvent(new Event('workflow:project')); }
     if (!state) { panel.querySelectorAll('button').forEach(n => n.disabled = true); return; }
     // A copy can attach a new document without calling load(). History belongs
     // to its source identity, never merely to an integer revision.
