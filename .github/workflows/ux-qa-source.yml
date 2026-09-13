@@ -1,0 +1,25 @@
+name: UX QA source snapshot
+on:
+  push:
+    branches: [codex/ux-qa-source-20260913b]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 06bd93aed2f019cb978eb5795e9f116cfb7ff749
+          persist-credentials: false
+      - run: |
+          mkdir -p /tmp/ux-source
+          git archive --format=zip -o /tmp/ux-source/source.zip HEAD
+          git ls-tree -r HEAD > /tmp/ux-source/tree.txt
+          git rev-parse HEAD HEAD^{tree} > /tmp/ux-source/identity.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-qa-source-06bd93a
+          path: /tmp/ux-source/
+          retention-days: 1
