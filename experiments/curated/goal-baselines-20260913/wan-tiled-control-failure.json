@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "kind": "wan_tiled_control_failure",
+  "observed_at": "2026-09-13",
+  "prompt_id": "7722bd99-5a2f-4233-b799-82b126ff278a",
+  "prior_job_id": "e2799ee8-db57-4e0b-b71a-59823526ac4c",
+  "source_sha256": "ec0cbf7d8a81eb6fbfda1309b49a644f6cf123ccf5036197e8592ba205f67d71",
+  "models": [
+    {
+      "kind": "diffusion_models",
+      "name": "wan2.2_ti2v_5B_fp16.safetensors",
+      "bytes": 9999658848,
+      "sha256": "456f901338bd9eadbded3828b819109a9b68e8a525ca5cf8d0049a69fcfeca1e"
+    },
+    {
+      "kind": "text_encoders",
+      "name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "bytes": 6735906897,
+      "sha256": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68"
+    },
+    {
+      "kind": "vae",
+      "name": "wan2.2_vae.safetensors",
+      "bytes": 1409400960,
+      "sha256": "e40321bd36b9709991dae2530eb4ac303dd168276980d3e9bc4b6e2b75fed156"
+    }
+  ],
+  "graph_sha256": "203a2c8941da4774d7bca3b1ed47721a79784d8ee6047642a9b966d1f4f429de",
+  "original_graph_sha256": "7b385f3ac053949c9eeccbf9819328efa31b1f5a91a072e6065a108911bd0dbd",
+  "controls": {
+    "width": 1280,
+    "height": 704,
+    "frames": 41,
+    "steps": 30,
+    "seed": 869177064731501,
+    "cfg": 5,
+    "sampler": "uni_pc",
+    "scheduler": "simple",
+    "tile_size": 512,
+    "overlap": 64,
+    "temporal_size": 8,
+    "temporal_overlap": 4
+  },
+  "elapsed_seconds": 1005.258,
+  "engine_status": "completed",
+  "output": {
+    "filename": "Wan22-tiled-canonical-20260913_00001_.mp4",
+    "bytes": 1678558,
+    "sha256": "8752bfc6ff7a38cc3d02410d3321661851d274261e8745919efa8862f57adcac",
+    "codec": "h264",
+    "width": 1280,
+    "height": 704,
+    "frames": 41,
+    "fps": 24,
+    "duration_seconds": 1.708008
+  },
+  "inspection": {
+    "frames_extracted": 41,
+    "all_frame_contact_sheet_inspected": true,
+    "first_broken_frame_zero_based": 1,
+    "notes": "Frame 0 coherent; frame 1 already oversaturated with mosaic breakup. Later frames flicker with cyan/white corruption and smeared anatomy.",
+    "visual_outcome": "failed",
+    "human_accepted": false
+  },
+  "boundaries": [
+    "One changed full control; no resubmission of the original graph.",
+    "Completed within available memory for this exact run; no usable video or general tiled capacity claim.",
+    "Raw graphs, history, preflight, video and 41 frames retained locally; no further sampler run scheduled."
+  ]
+}

@@ -1,12 +1,12 @@
 # Creative choices
 
-The earlier creative choices below are answered. The configured page-file increase still needs an owner-controlled Windows restart; save work in all applications first. No automatic restart is authorized.
+The earlier creative choices and q-1 through q-4 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
 
 - [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
 - [x] Pick a focused production brief: **Fantasy character illustration pack** (owner, 12 September 2026). The prepared brief is in [FANTASY-CHARACTER-BRIEF.md](docs/FANTASY-CHARACTER-BRIEF.md); this selects the work, not finished-art acceptance.
 - [x] Choose an initial private shortlist (owner, 12 September 2026): the ornate witch with floating books and colourful witch holding a black cat are in **Promising — needs correction**, both marked `needs_work`. Original hashes and membership were verified. This is not finished-art or commercial-use approval; future candidates still need review.
 
-The repository defaults to private. Public visibility has not been requested.
+The live repository visibility was observed as **PUBLIC** on 13 September 2026. This records the observed state; it does not infer owner approval or a visibility change.
 
 ## Anime & fantasy atelier — open items
 
