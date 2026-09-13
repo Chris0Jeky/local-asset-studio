@@ -35,6 +35,11 @@ excess images are called out; no extra source is silently dropped. A mask route
 cannot be made ready merely by claiming to have an image. Model locations reuse
 current folder/loader contracts; a present file is not a verified weight.
 
+A saved primary image can now be selected through **Asset library → Find recipes
+for this image**. See [source-aware advice](SOURCE-AWARE-SHORTLIST.md) for exact
+byte/role observations, optional API fields and the distinction from attaching
+that source. The count-only contract described above remains available.
+
 ## Headless use
 
 Use the normal Studio service, including its existing no-browser launch option.
