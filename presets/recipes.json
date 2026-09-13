@@ -649,7 +649,15 @@
       "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0},
       "batch_count": 1,
       "notes": "Baseline control. Both LoRA strengths are 0, so the server prunes both nodes before submission. This is a fully clothed adult original character prompt, not a source-image reproduction.",
-      "sources": [], "status": "unverified"
+      "sources": [], "status": "executed",
+      "evidence": {
+        "job_id": "0b245661-1de8-4574-9f57-a51bb4bbdc6c",
+        "prompt_id": "f0349550-e7f8-4d14-91ad-aad2ef799c92",
+        "seconds": 28.16029953956604,
+        "record": "experiments/curated/goal-baselines-20260913/provenance.json",
+        "case": "cstati-v3-base",
+        "note": "Studio job 0b245661-1de8-4574-9f57-a51bb4bbdc6c, prompt f0349550-e7f8-4d14-91ad-aad2ef799c92, 28.16029953956604 s; output CSTati-v3-Baseline_00001_.png, SHA-256 80dbf7f7140fbcc122b70a88a02b72c927a9803fae81b2dd1cb57fc6b910b13d; inspected as an experiment only. No selection, human acceptance, licensing decision, or production approval."
+      }
     },
     {
       "id": "cstati-v3-adapter-audition",
@@ -671,7 +679,15 @@
       "controls": {"positive": "1woman, solo, adult woman, original character, fully clothed, long dark hair, tailored travelling coat, high-neck shirt, trousers, leather boots, standing on a rain-washed station platform, calm expression, full body, detailed anime illustration, soft evening light, cinematic composition, masterpiece, best quality, amazing quality", "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4, "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0},
       "batch_count": 1,
       "notes": "Baseline control. Both LoRA strengths are 0, so the server prunes both nodes before submission. This is a fully clothed adult original character prompt, not a source-image reproduction.",
-      "sources": [], "status": "unverified"
+      "sources": [], "status": "executed",
+      "evidence": {
+        "job_id": "4403908b-bedb-489d-a9ce-9f19e6136bab",
+        "prompt_id": "e0dd0159-dc25-4b64-8833-2d18fd6158ae",
+        "seconds": 32.23714065551758,
+        "record": "experiments/curated/goal-baselines-20260913/provenance.json",
+        "case": "yumeflux-ilv1-base",
+        "note": "Studio job 4403908b-bedb-489d-a9ce-9f19e6136bab, prompt e0dd0159-dc25-4b64-8833-2d18fd6158ae, 32.23714065551758 s; output YumeFlux-ILv1-Baseline_00001_.png, SHA-256 f4b1c8fc07baae54f56ed051059c8682202c13407df9a1ef808b3a8f01d99d83; inspected as an experiment only. No selection, human acceptance, licensing decision, or production approval."
+      }
     },
     {
       "id": "yumeflux-ilv1-adapter-audition",
@@ -764,7 +780,15 @@
       "controls": {"positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.", "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark", "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5, "sampler": "euler", "scheduler": "simple", "denoise": 1.0, "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0},
       "batch_count": 1,
       "notes": "Every Anima-family adapter slot is 0 and will be pruned. JANIMA's diffusion-model path, encoder compatibility and output quality remain unverified.",
-      "sources": [], "status": "unverified"
+      "sources": [], "status": "executed",
+      "evidence": {
+        "job_id": "78b5e0a3-5890-413a-ae64-ec0b59235879",
+        "prompt_id": "a9b824cc-f8de-4305-9e8e-43fe57567095",
+        "seconds": 36.2185480594635,
+        "record": "experiments/curated/goal-baselines-20260913/provenance.json",
+        "case": "janima-v1-base",
+        "note": "Studio job 78b5e0a3-5890-413a-ae64-ec0b59235879, prompt a9b824cc-f8de-4305-9e8e-43fe57567095, 36.2185480594635 s; output JANIMA-v1-Baseline_00001_.png, SHA-256 7ce0bd00c4127d7342a1618558391bc20391c1a8ace85450236aa3449e1bde4e; inspected as an experiment only. No selection, human acceptance, licensing decision, or production approval."
+      }
     },
     {
       "id": "janima-v1-authored-five-adapter-stack",
