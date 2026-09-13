@@ -24,9 +24,9 @@ POSTS = []
 FAIL_WORKSPACE = False
 WORKSPACE_DELAY = 0
 ONLINE = True
-CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text())
+CATALOG = json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))
 for preset in CATALOG['presets']:
-    graph = json.loads((ROOT / preset['graph']).read_text())
+    graph = json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}
@@ -80,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},
             '/api/av':{'projects':[],'capabilities':{'render_ready':False}},
             '/api/voice-baseline':{'projects':[],'capabilities':{'configured':False}},
-            '/api/prompt/profiles':json.loads((ROOT/'research/prompt-studio/profiles.json').read_text()),
+            '/api/prompt/profiles':json.loads((ROOT/'research/prompt-studio/profiles.json').read_text(encoding='utf-8')),
         }
         if path in data:return self.json(data[path])
         if path.startswith('/api/inspect/'):return self.json({'requirements':[],'nodes':[],'graph':{}})

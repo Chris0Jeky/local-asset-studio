@@ -97,7 +97,7 @@ adapter. Recipe examples are exact-preset only during a continuation and cannot 
 edited wording.
 
 The full repository suite passes **1,309 tests with 51 skipped**, and repository validation passes
-66 graphs/bindings, 121 pinned assets, 982 tracked paths and 86 LoRA names. The suite was run with
+66 graphs/bindings, 121 pinned assets, 986 tracked paths and 86 LoRA names. The suite was run with
 `C:\Python314` first on `PATH` because the Codex shell's extensionless Python shim is not resolved by
 Node child processes on Windows. A synthetic Playwright run passes all 79 UI journeys with no browser
 exceptions, no generation submission and desktop/mobile screenshots inspected. These checks prove
