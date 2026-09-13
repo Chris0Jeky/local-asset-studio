@@ -212,6 +212,28 @@ class SchemaCaptureTests(unittest.TestCase):
                 saved=copy.deepcopy(original);saved['schema_source']=value
                 saved['capture_results']['schema_source']=value;self.assert_rehashed_refused(saved)
 
+    def test_replay_checks_the_complete_schema_source_url(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for suffix in ('/#/object_info','/?/object_info','/object_info#other','/object_info?other=1'):
+            with self.subTest(suffix=suffix):
+                saved=copy.deepcopy(original);source=self.url+suffix
+                saved['schema_source']=source;saved['capture_results']['schema_source']=source
+                self.assert_rehashed_refused(saved)
+
+    def test_historical_row_status_excludes_contradictory_fields(self):
+        self.capture();original=json.loads(self.output.read_bytes())
+        for field,value in (('nodes',2),('nodes',0),('static_topology','passed'),
+                            ('node_snapshot_checked',True),('node_snapshot_checked',False)):
+            with self.subTest(invalid_field=field,value=value):
+                saved=copy.deepcopy(original);report=saved['capture_results']
+                report['results'][0]={**saved['bindings'][0],'status':'invalid',
+                                      'error':'Earlier failure','inference_verified':False,field:value}
+                report.update(passed=2,failed=1);self.assert_rehashed_refused(saved)
+        for error in ('Earlier failure','',None):
+            with self.subTest(passed_error=error):
+                saved=copy.deepcopy(original);saved['capture_results']['results'][0]['error']=error
+                self.assert_rehashed_refused(saved)
+
     def test_historical_report_requires_all_contract_fields_and_valid_shape(self):
         self.capture();original=json.loads(self.output.read_bytes())
         for field in original['capture_results']:

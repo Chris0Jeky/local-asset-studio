@@ -16,6 +16,7 @@ from http.client import HTTPException
 import json
 from pathlib import Path
 import sys
+from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 
 import game_asset_pipeline as pipeline
@@ -127,8 +128,10 @@ def check_capture_metadata(capture):
     stamp = datetime.fromisoformat(capture['captured_at'])
     pipeline.require(stamp.utcoffset() == timezone.utc.utcoffset(stamp), 'Capture timestamp must be UTC')
     source = capture.get('schema_source'); pipeline.text(source, 'capture schema source')
-    pipeline.require(source.endswith('/object_info'), 'Capture source must identify object_info')
-    loopback_port(source[:-len('/object_info')])
+    parsed = urlsplit(source)
+    pipeline.require(parsed.path == '/object_info' and not parsed.query and not parsed.fragment,
+                     'Capture source must identify object_info without query or fragment')
+    loopback_port(parsed._replace(path='').geturl())
     pipeline.require(digest(capture.get('catalog_sha256')), 'Invalid captured catalog digest')
     report = capture.get('capture_results')
     pipeline.require(isinstance(report, dict), 'Missing historical capture report')
@@ -158,11 +161,14 @@ def check_capture_metadata(capture):
                          'Invalid historical graph result')
         pipeline.require(row['status'] in ('passed', 'invalid'), 'Unknown historical graph result status')
         if row['status'] == 'passed':
+            pipeline.require('error' not in row, 'Passed historical graph cannot contain an error')
             pipeline.integer(row.get('nodes'), 1, 512, 'Captured node count')
             pipeline.require(digest(row.get('graph_sha256')) and row.get('static_topology') == 'passed'
                              and row.get('node_snapshot_checked') is True and row.get('inference_verified') is False,
                              'Incomplete static graph result')
         else:
+            pipeline.require(not {'nodes', 'static_topology', 'node_snapshot_checked'}.intersection(row),
+                             'Invalid historical graph cannot contain success-only check fields')
             pipeline.require(isinstance(row.get('error'), str), 'Missing historical graph error')
             pipeline.require('inference_verified' not in row or row['inference_verified'] is False,
                              'Historical graph error cannot verify inference')

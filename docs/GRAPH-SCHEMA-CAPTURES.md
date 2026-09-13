@@ -135,3 +135,10 @@ while verifying no network call or snapshot modification. Their negative cases
 failed before this correction; all 28 capture methods pass afterwards. The
 original historical-count test now uses a coherent historical failed row, not
 internally impossible counts, to prove that replay recomputes the current result.
+
+The second review round also checks the complete parsed source URL: `/object_info`
+must be the actual path, not text inside a query or fragment. Historical invalid
+rows cannot carry success-only node/topology/check fields, and passed rows cannot
+carry an error. Two additional regression methods produced ten failing subcases
+before these corrections; all 30 capture tests pass afterwards. These checks still
+do not authenticate supplied history, and replay recomputes current graph results.
