@@ -11,7 +11,7 @@ from urllib.parse import quote
 from urllib.error import HTTPError, URLError
 from .core import decode, canonical, need
 from .client import Client, ClientError, NoRedirect
-from . import document_cli
+from . import document_cli, run_cli
 
 PREFIX = '/api/workflow-studio'
 
@@ -24,6 +24,7 @@ def parser():
     for name in ('capabilities', 'guides', 'nodes', 'catalog'):
         sub.add_parser(name)
     document_cli.add_parser(sub)
+    run_cli.add_parser(sub)
     for name, field in (('prepare', 'recipe'), ('run', 'ticket'), ('compile', 'document'), ('import', 'graph')):
         q = sub.add_parser(name)
         q.add_argument('--' + field, required=True, type=Path)
@@ -45,6 +46,7 @@ def parser():
 def main(argv=None):
     args = parser().parse_args(argv)
     command = args.command
+    if command == 'runs': return run_cli.execute(args)
     try:
         client = Client(args.url, args.http_timeout)
         if command == 'documents':

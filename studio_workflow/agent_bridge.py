@@ -70,6 +70,19 @@ TOOLS = {
         {'recipe_json': TEXT}, ('recipe_json',), 'execute', True),
     'recipe_run': tool('Explicitly run a prepared registered-recipe ticket through Studio. approved_ticket_sha256 must match that exact ticket; retain its request_id on uncertainty.',
         {'ticket_json': TEXT, 'approved_ticket_sha256': HASH}, ('ticket_json', 'approved_ticket_sha256'), 'execute', True),
+    'saved_run_prepare': tool('Persist a ticket for the exact saved head revision. Retain this preparation request_id; this does not run generation.',
+        {'request_id': IDENTIFIER, 'document_id': IDENTIFIER,
+         'expected_revision': {'type': 'integer', 'minimum': 1, 'maximum': 1024}, 'preset_id': IDENTIFIER},
+        ('request_id', 'document_id', 'expected_revision', 'preset_id'), 'execute', True),
+    'saved_run_get': tool('Recover the original persisted ticket/report by preparation request_id. No schema read, replacement ticket or dispatch.',
+        {'request_id': IDENTIFIER}, ('request_id',)),
+    'saved_run_list': tool('Read metadata pages for a saved workflow. Follow next_before; pages do not embed the tickets.',
+        {'document_id': IDENTIFIER, 'before': REVISION,
+         'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100}}, ('document_id',)),
+    'saved_run_observe': tool('Join the existing local job to its saved source once. not_observed is not proof of no dispatch. Never resubmits or polls Comfy.',
+        {'request_id': IDENTIFIER}, ('request_id',)),
+    'saved_run_source': tool('Find an immutable saved workflow source/report from an expected job ID; returns no result for unindexed legacy runs.',
+        {'job_id': IDENTIFIER}, ('job_id',)),
     'job_status': tool('Observe an existing Studio job once. No resubmission, cancellation, queue clearing or automatic polling.',
         {'job_id': IDENTIFIER}, ('job_id',)),
 }
@@ -128,7 +141,7 @@ class AgentBridge:
             return self.client.request(path, body)
         try:
             a = validate_arguments(spec, arguments)
-            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision') if k in a})
+            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision', 'preset_id', 'job_id') if k in a})
             def payload(key, typ=dict):
                 result = decode(a[key]); need(type(result) is typ, key + ' has the wrong JSON shape'); return result
             if name == 'studio_capabilities':
@@ -173,6 +186,16 @@ class AgentBridge:
                 body = {k: a[k] for k in ('revision', 'request_id')}
                 body.update({'expected_revision': a['expected_revision']} if name == 'workflow_restore' else {'name': a['name']})
                 data = request(DOCUMENTS + '/' + a['document_id'] + ('/restore' if name == 'workflow_restore' else '/fork'), body)
+            elif name in ('saved_run_prepare', 'saved_run_get', 'saved_run_list', 'saved_run_observe', 'saved_run_source'):
+                from .run_client import SavedRuns
+                runs = SavedRuns(request)
+                if name == 'saved_run_prepare':
+                    data = runs.prepare(a['document_id'], expected_revision=a['expected_revision'],
+                                        preset_id=a['preset_id'], request_id=a['request_id'])
+                elif name == 'saved_run_get': data = runs.get(a['request_id'])
+                elif name == 'saved_run_source': data = runs.by_job(a['job_id'])
+                elif name == 'saved_run_observe': data = runs.observe(a['request_id'])
+                else: data = runs.list(a['document_id'], before=a.get('before'), limit=a.get('limit', 25))
             elif name == 'recipe_prepare': data = request(PREFIX + '/prepare', {'recipe': payload('recipe_json')})
             elif name == 'recipe_run':
                 ticket = payload('ticket_json')
