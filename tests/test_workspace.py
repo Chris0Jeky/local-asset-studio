@@ -1,6 +1,7 @@
 import importlib.util
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location('asset_workspace', Path(__file__).parents[1] / 'app/workspace.py')
@@ -15,6 +16,11 @@ class WorkspaceTests(unittest.TestCase):
         self.job = {'id':'job-1', 'preset_name':'Study', 'outputs':[{'filename':'render.png','media_type':'image'}]}
         self.asset = self.store.register(self.job, 0, self.source)
 
+    @staticmethod
+    def write(store, payload):
+        return store.update(dict(payload, request_id=uuid.uuid4().hex,
+                                 expected_revisions={i: store.get(i)["metadata_revision"] for i in payload['ids'] if i != 'missing'}))
+
     def tearDown(self):
         self.temp.cleanup()
 
@@ -26,28 +32,28 @@ class WorkspaceTests(unittest.TestCase):
 
     def test_collections_many_to_many_and_deletion_preserves_assets(self):
         a=self.store.collection({'name':'Character'}); b=self.store.collection({'name':'Chapter one'})
-        for col in (a,b): self.store.update({'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        for col in (a,b): self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
         self.assertEqual(set(self.store.snapshot()['assets'][0]['collections']), {a['id'],b['id']})
         self.store.collection({'id':a['id'],'action':'delete'})
         self.assertEqual(self.store.snapshot()['assets'][0]['collections'],[b['id']])
         self.assertTrue(self.source.exists()); self.assertTrue(self.store.file(self.asset).exists())
 
     def test_edit_trash_restore_and_restart_preserve_metadata(self):
-        self.store.update({'ids':[self.asset],'action':'edit','title':'My ink study','tags':['ink','ink','pose'],'review':'needs_work','notes':'Fix the hand','favorite':True})
-        self.store.update({'ids':[self.asset],'action':'trash'})
+        self.write(self.store, {'ids':[self.asset],'action':'edit','title':'My ink study','tags':['ink','ink','pose'],'review':'needs_work','notes':'Fix the hand','favorite':True})
+        self.write(self.store, {'ids':[self.asset],'action':'trash'})
         recovered=workspace.AssetWorkspace(self.root)
         self.assertIsNotNone(recovered.get(self.asset)['trashed_at'])
-        recovered.update({'ids':[self.asset],'action':'restore'})
+        self.write(recovered, {'ids':[self.asset],'action':'restore'})
         result=recovered.get(self.asset)
         self.assertEqual(result['tags'],['ink','pose']); self.assertEqual(result['notes'],'Fix the hand')
         self.assertEqual(result['review'],'needs_work'); self.assertTrue(result['favorite']); self.assertIsNone(result['trashed_at'])
 
     def test_bulk_edit_rejects_missing_asset_atomically(self):
         with self.assertRaises(workspace.WorkspaceError):
-            self.store.update({'ids':[self.asset,'missing'],'action':'trash'})
+            self.write(self.store, {'ids':[self.asset,'missing'],'action':'trash'})
         self.assertIsNone(self.store.get(self.asset)['trashed_at'])
         with self.assertRaises(workspace.WorkspaceError):
-            self.store.update({'ids':[self.asset],'action':'edit','review':'commercially_approved'})
+            self.write(self.store, {'ids':[self.asset],'action':'edit','review':'commercially_approved'})
 
     def test_saved_setups_roundtrip_and_delete(self):
         # The recipe is stored verbatim, not whitelisted: the browser's per-input lineage attribution
