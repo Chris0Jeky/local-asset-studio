@@ -1,5 +1,34 @@
 # Current state — 11 September 2026
 
+## Session closeout — 13 September 2026
+
+The implementation evidence in this closeout was taken at main `042f40e39d0f965b2bd8677a59a99cf7491c3571`; this documentation-only closeout is now recorded on top of it. This pass merged
+#137 (backend startup final observation, `042f40e`), #138 (preset-compatible document execution,
+`1f198ca`), #139 (curated Anima evidence, `07d643f`), #141 (fresh runtime-status displays,
+`c26cefc`), #142 (unknown-header intake, `ac19add`), and #145 (saved-workflow run controls,
+`559347c`). Current main validation ran **1,102 tests: 1,086 passed, 16 skipped**, with repository
+validation passing 66 graphs/bindings, 121 pins, 910 tracked paths and 86 LoRA names. The latest
+browser check reopened `Anima - B softer cinematic shading` at revision 3, loaded 1,224 nodes,
+passed connections, changed the first style strength from 1.0 to 1.25 with keyboard input and
+Tab, and Undo restored 1.0; no job was queued.
+
+The live loopback endpoints are healthy (`127.0.0.1:8191` Studio PID `28992`,
+`127.0.0.1:8188` ComfyUI PID `24720`, worker and recovery healthy, schema available, queue
+empty), but `/api/jobs` retains uncertain records
+`a2908800-7214-4caa-ad23-3844527cdf5d` and `0cbaae1b-1134-548c-9e03-50bac00b75b9`, and
+production retains one uncertain record. The closeout therefore did not stop either runtime;
+the merged runtime and backend fixes are source-verified but not live-reloaded. Host commit
+headroom is 12.72 GiB, below the documented 32 GiB gate; the effective page file is still
+40 GiB pending the owner-controlled restart.
+
+The four large model transfers remain active and incomplete: CSTati PID `7800`, JANIMA PID
+`24844`, and the resumable YumeFlux/AniFox helper PID `12952` (wrapper PID `40040`). Their
+`.part` files and failure receipts remain preserved; no model-install or checksum-complete claim
+is made. PRs #146 and #149 remain open for a later pass (#146 is green with one open thread;
+#149 has a failed check, two pending checks and one open thread). HUMAN_TODO decisions remain
+recorded; only q-4's owner-controlled restart is still an action, and it must wait until
+downloads finish and work is saved.
+
 ## Modular Anima baseline execution — 13 September 2026
 
 Three bounded Anima v1 runs completed and were visually inspected by the root agent at the same
