@@ -3700,7 +3700,7 @@
       "collection": "workflow-lab",
       "graph": "workflows/api/wan22-i2v-api.json",
       "visual": "workflows/comfyui/47 - Wan 2.2 - Animate Image.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Apache-2.0 model package; check rights to supplied reference images.",
       "positive": [
         "5",
@@ -3734,6 +3734,14 @@
         "9",
         "cfg"
       ],
+      "sampler": [
+        "9",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "9",
+        "scheduler"
+      ],
       "reference": [
         "4",
         "image"
@@ -3744,34 +3752,118 @@
       "max_pixels": 983040,
       "frame_grid": 4,
       "frame_offset": 1,
-      "description": "Compact native video pipeline. Start with a short motion study, then expand the winning seed. Silent video at 24fps; no separate vision encoder or custom nodes.",
+      "metadata_controls": [
+        "mode"
+      ],
+      "source_orientation": "auto-swap-authored-pairs",
+      "orientation_pairs": [
+        [512, 768],
+        [768, 512],
+        [768, 1152],
+        [1152, 768],
+        [1280, 704],
+        [704, 1280]
+      ],
+      "canonical_graph": "workflows/api/wan22-i2v-upstream-api.json",
+      "recommended_resolution": {
+        "width": 1280,
+        "height": 704,
+        "frames": 121,
+        "source": "ComfyUI official Wan 2.2 5B example"
+      },
+      "i2v_default_mode": "quick-diagnostic",
+      "i2v_modes": [
+        {
+          "id": "quick-diagnostic",
+          "name": "Quick diagnostic",
+          "controls": {
+            "width": 512,
+            "height": 768,
+            "frames": 17,
+            "steps": 20,
+            "cfg": 5.0,
+            "sampler": "uni_pc",
+            "scheduler": "simple",
+            "denoise": 1.0
+          },
+          "description": "Short, source-aware smoke test. 81 frames are intentionally not part of the default validation path."
+        },
+        {
+          "id": "balanced",
+          "name": "Balanced",
+          "controls": {
+            "width": 512,
+            "height": 768,
+            "frames": 33,
+            "steps": 20,
+            "cfg": 5.0,
+            "sampler": "uni_pc",
+            "scheduler": "simple",
+            "denoise": 1.0
+          },
+          "description": "The existing short historical shape, with portrait orientation preserved for portrait sources."
+        },
+        {
+          "id": "quality",
+          "name": "Quality",
+          "controls": {
+            "width": 768,
+            "height": 1152,
+            "frames": 81,
+            "steps": 30,
+            "cfg": 5.0,
+            "sampler": "uni_pc",
+            "scheduler": "simple",
+            "denoise": 1.0
+          },
+          "description": "Higher-cost exploratory mode. 81 frames is opt-in and still requires visual review; it is not an acceptance claim.",
+          "warning": "Materially higher compute than the quick diagnostic mode; upstream recommends 1280x704 rather than this portrait variant."
+        },
+        {
+          "id": "canonical-upstream",
+          "name": "Canonical upstream",
+          "controls": {
+            "positive": "a cute anime girl with fennec ears and a fluffy tail walking in a beautiful field",
+            "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+            "width": 1280,
+            "height": 704,
+            "seed": 869177064731501,
+            "frames": 41,
+            "steps": 30,
+            "cfg": 5.0,
+            "sampler": "uni_pc",
+            "scheduler": "simple",
+            "denoise": 1.0
+          },
+          "description": "Studio MP4 adapter with the official example's model, 1280x704 quick-test shape, 41 frames and 30 steps. Use the official fennec input for the installation control case.",
+          "warning": "The upstream visual JSON randomizes its seed; this Studio control case pins the seed shown in that file for reproducibility.",
+          "required_reference": {
+            "label": "official fennec input",
+            "sha256": "ec0cbf7d8a81eb6fbfda1309b49a644f6cf123ccf5036197e8592ba205f67d71"
+          }
+        }
+      ],
+      "choices": {
+        "sampler": ["uni_pc"],
+        "scheduler": ["simple"]
+      },
+      "description": "Source-aware Wan 2.2 I2V pipeline. Choose an explicit diagnostic mode; execution is recorded separately from visual acceptance. Wan center-crops mismatched sources before bilinear resampling, so the target orientation is resolved before submission.",
       "stages": [
         "Image + motion prompt",
         "Wan 2.2 5B",
-        "20-step sampling",
+        "Mode-specific sampling",
         "Video VAE",
         "MP4 at 24fps"
       ],
       "source": "https://docs.comfy.org/tutorials/video/wan/wan2_2",
       "variants": [
         {
-          "name": "Short motion study",
-          "controls": {
-            "frames": 33
-          }
-        },
-        {
-          "name": "3.4-second shot",
-          "controls": {
-            "frames": 81
-          }
-        },
-        {
           "name": "3-seed audition",
           "batch_count": 3
         }
       ],
-      "execution_note": "Single local execution at the controls in experiments/curated/workflow-lab; not an art approval or all-settings guarantee."
+      "execution_note": "Runs are engine-execution records only. Inspect the offline I2V diagnostic report and record a separate human visual review; no preset mode implies quality acceptance.",
+      "deviation_warning": "The official Wan 2.2 example uses 1280x704, 30 steps and a 41-frame quick test (121 frames in its recommendation). Other modes are deliberate Studio deviations and are labeled as such."
     },
     {
       "id": "trellis-rgba",

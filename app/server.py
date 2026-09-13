@@ -37,10 +37,14 @@ import host_memory
 from runtime_recovery import RuntimeRecovery
 import prompting
 from studio_prompt.http_extension import extend_handler
+from i2v_diagnostics import artifact_path as i2v_artifact_path
+from i2v_diagnostics import build_report as build_i2v_report
+from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
@@ -234,6 +238,94 @@ class Studio:
         except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
             raise StudioError(who + " requires a valid RGBA PNG upload") from exc
 
+    @staticmethod
+    def _i2v_mode(preset, name):
+        modes = preset.get("i2v_modes") or []
+        for mode in modes:
+            if isinstance(mode, dict) and mode.get("id") == name:
+                return mode
+        raise StudioError("Unsupported I2V mode")
+
+    def _validate_i2v_mode_source(self, preset, mode, graph, controls):
+        """Fail closed when a mode promises one exact reference image."""
+        required = (mode or {}).get("required_reference")
+        if required is None:
+            return
+        if not isinstance(required, dict) or not re.fullmatch(r"[0-9a-f]{64}", str(required.get("sha256", ""))):
+            raise StudioError("I2V mode has an invalid required reference declaration")
+        who = mode.get("name") or mode.get("id") or "This I2V mode"
+        label = required.get("label") if isinstance(required.get("label"), str) else "declared canonical source"
+        name = controls.get("reference")
+        if not name:
+            raise StudioError(f"{who} requires the {label} upload; the authored example cannot be queued")
+        binding = preset.get("reference")
+        try:
+            bound = graph[str(binding[0])]["inputs"][str(binding[1])]
+        except (KeyError, TypeError, IndexError):
+            raise StudioError("Preset has an invalid canonical source binding")
+        if bound != name:
+            raise StudioError(f"{who} did not bind the selected source")
+        expected = required["sha256"]
+        uploads = self.experiments / "uploads"
+        upload = inside(uploads.resolve(), uploads / name)
+        comfy_input = inside((self.comfy_root / "input").resolve(), self.comfy_root / "input" / name)
+        for source in (upload, comfy_input):
+            if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected:
+                raise StudioError(f"{who} requires the {label}; the selected source does not match")
+
+    def _prepare_i2v(self, preset, graph, controls):
+        """Resolve source orientation before dimension bindings are applied.
+
+        Wan's node has an explicit center-crop contract.  The Studio therefore
+        chooses the opposite orientation for a known authored resolution pair,
+        while retaining an explicit warning for any remaining aspect mismatch.
+        """
+        if not preset.get("source_orientation") or not controls.get("reference"):
+            return
+        source = locate_source(self, controls.get("reference"))
+        source_path = source.get("path")
+        preparation = {"policy": preset.get("source_orientation"), "source": source}
+        if not source_path:
+            preparation["warning"] = "Source dimensions unavailable; orientation was not changed."
+            preset["_prepared_source"] = preparation
+            return
+        try:
+            metadata = image_metadata(Path(source_path))
+            preparation["source"].update(metadata)
+            width_value = controls.get("width")
+            height_value = controls.get("height")
+            if width_value is None and preset.get("width"):
+                width_value = graph[str(preset["width"][0])]["inputs"][str(preset["width"][1])]
+            if height_value is None and preset.get("height"):
+                height_value = graph[str(preset["height"][0])]["inputs"][str(preset["height"][1])]
+            target_width = number(width_value, "width", preset.get("dimension_limits", [64, 1536])[0], preset.get("dimension_limits", [64, 1536])[1], True)
+            target_height = number(height_value, "height", preset.get("dimension_limits", [64, 1536])[0], preset.get("dimension_limits", [64, 1536])[1], True)
+        except (StudioError, KeyError, TypeError, IndexError, OSError, ValueError) as exc:
+            preparation["warning"] = "Source-aware orientation could not be resolved: " + str(exc)[:200]
+            preset["_prepared_source"] = preparation
+            return
+        source_orientation = metadata["orientation"]
+        target_orientation = "square" if target_width == target_height else "landscape" if target_width > target_height else "portrait"
+        swapped = False
+        pairs = {tuple(pair) for pair in preset.get("orientation_pairs", []) if isinstance(pair, list) and len(pair) == 2}
+        if source_orientation in {"portrait", "landscape"} and target_orientation in {"portrait", "landscape"} and source_orientation != target_orientation and (target_width, target_height) in pairs:
+            controls["width"], controls["height"] = target_height, target_width
+            target_width, target_height = target_height, target_width
+            target_orientation = "landscape" if target_width > target_height else "portrait"
+            swapped = True
+        plan = centered_crop_plan(metadata["width"], metadata["height"], target_width, target_height)
+        preparation.update({
+            "source_orientation": source_orientation,
+            "requested_dimensions_before_orientation": [number(width_value, "width", 1, 16384, True), number(height_value, "height", 1, 16384, True)],
+            "dimensions_after_orientation": [target_width, target_height],
+            "orientation_action": "swapped to match source" if swapped else "preserved requested orientation",
+            "target_orientation": target_orientation,
+            "preprocessing": plan,
+        })
+        if plan["crop"] != "none":
+            preparation["warning"] = "Wan22ImageToVideoLatent will center-crop the source before bilinear resampling; no letterbox is used."
+        preset["_prepared_source"] = preparation
+
     def prepare(self, payload):
         if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
         # A real started worker that has exited cannot service a new queue safely.
@@ -247,9 +339,17 @@ class Studio:
             raise StudioError("The preset changed since this recipe was imported. Re-import it or deliberately select the current preset.")
         controls = payload.get("controls", {})
         if not isinstance(controls, dict): raise StudioError("controls must be an object")
-        supported = {k for k in CONTROL_KEYS if preset.get(k) or (preset.get("bindings_extra") or {}).get(k)}
+        controls = dict(controls)
+        supported = {k for k in CONTROL_KEYS if preset.get(k) or (preset.get("bindings_extra") or {}).get(k)} | set(preset.get("metadata_controls", []))
         unknown = set(controls) - supported
         if unknown: raise StudioError("Unsupported controls: " + ", ".join(sorted(unknown)))
+        mode = None
+        if "mode" in controls:
+            mode = self._i2v_mode(preset, controls["mode"])
+            for key, value in (mode.get("controls") or {}).items():
+                if key not in controls:
+                    controls[key] = value
+        self._prepare_i2v(preset, graph, controls)
         for key in ("positive", "negative"):
             if key in controls:
                 if not isinstance(controls[key], str) or len(controls[key]) > 8000: raise StudioError(f"{key} must be text up to 8000 characters")
@@ -319,6 +419,7 @@ class Studio:
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
         self.prune_disabled_loras(graph)
         self.ensure_reference_inputs(graph)
+        self._validate_i2v_mode_source(preset, mode, graph, controls)
         self.host_commit_preflight(preset, graph)
         return preset, graph, graph_path, controls, batch
 
@@ -403,6 +504,7 @@ class Studio:
         if job_id in self.jobs: raise StudioError('A job with this identity already exists; inspect it instead of resubmitting')
         directory = self.runs / job_id; directory.mkdir(exist_ok=not enqueue)
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
+        if preset.get("_prepared_source"): job["preparation"] = preset["_prepared_source"]
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
@@ -415,7 +517,7 @@ class Studio:
         return self.public(job)
 
     def public(self, job):
-        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition")
+        allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation")
         result = {k: job.get(k) for k in allowed}
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -590,7 +692,23 @@ class Studio:
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
-                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []), "native_recipe": job.get('native_recipe')}
+                "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
+                "preparation": job.get("preparation"), "native_recipe": job.get('native_recipe')}
+
+    def i2v_diagnostic(self, job_id):
+        job = self.jobs.get(job_id)
+        if not job: raise StudioError("Unknown job")
+        try:
+            return build_i2v_report(self, job_id)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise StudioError("I2V diagnostic unavailable: " + str(exc)[:300]) from exc
+
+    def i2v_diagnostic_file(self, job_id, filename):
+        if job_id not in self.jobs: raise StudioError("Unknown job")
+        try:
+            return i2v_artifact_path(self, job_id, filename)
+        except (OSError, ValueError) as exc:
+            raise StudioError(str(exc)) from exc
 
     def output_path(self, output, job=None):
         if (job or {}).get('operation') in ('native.articulated-prop.v1','native.av-preview.v1','native.voice-baseline.v1'):
@@ -669,7 +787,7 @@ class Studio:
     def preview(self, payload):
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         return {"preset_id":preset["id"], "workflow":graph, "references":preset.get("_prepared_references", []),
-                "batch_count":batch, "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
+                "batch_count":batch, "preparation":preset.get("_prepared_source"), "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
                 "submitted":False}
 
     def reference_status(self, payload):
@@ -1331,6 +1449,14 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/jobs": return self._json(200, [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)])
             if path.startswith("/api/jobs/") and path.endswith("/recipe"):
                 job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, self.studio.export_recipe(job)) if job else self._json(404, {"error":"Unknown job"})
+            if path.startswith("/api/jobs/") and path.endswith("/i2v-diagnostic"):
+                job_id = path.split("/")[3]
+                return self._json(200, self.studio.i2v_diagnostic(job_id))
+            if path.startswith("/api/jobs/") and "/i2v-diagnostic/" in path:
+                from urllib.parse import unquote
+                parts = path.split("/")
+                if len(parts) != 6 or parts[4] != "i2v-diagnostic": raise StudioError("Unknown diagnostic artifact")
+                return self._local_file(self.studio.i2v_diagnostic_file(parts[3], unquote(parts[5])))
             if path.startswith("/api/jobs/"):
                 job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/image/"):
