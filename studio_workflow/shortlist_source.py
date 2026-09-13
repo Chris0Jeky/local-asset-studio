@@ -1,4 +1,4 @@
-"""Optional primary-image observations for the existing recipe shortlist.
+"""Optional primary or ordered-image observations for the existing recipe shortlist.
 
 Uses the existing continuation source boundary; owns no files or attachment state.
 A named role here is a proposed prompt role, never a geometric control claim.
@@ -15,6 +15,17 @@ SOURCE_ROLES = {'source': 'Whole image / first frame', 'identity': 'Identity gui
 
 
 def validate_source_query(value):
+    if 'sources' in value:
+        need(not SOURCE_FIELDS.intersection(value), 'Use ordered sources or legacy primary-source fields, not both')
+        items = value['sources']
+        need(type(items) is list and 1 <= len(items) <= 3, 'Choose one to three ordered sources')
+        need(value.get('reference_count') == len(items), 'reference_count must equal the ordered source count')
+        for index, item in enumerate(items):
+            need(type(item) is dict and set(item) == {'asset_id', 'sha256', 'role'},
+                 f'Picture {index+1} requires only asset_id, sha256 and role')
+            validate_source_query({'source_asset_id': item['asset_id'], 'source_sha256': item['sha256'],
+                                   'source_role': item['role'], 'reference_count': 1})
+        return
     fields = SOURCE_FIELDS.intersection(value)
     if not fields: return
     need(fields == SOURCE_FIELDS, 'Supply source_asset_id, source_sha256 and source_role together')
@@ -42,28 +53,83 @@ def inspect_source(studio, value):
             'bytes_verified': True, 'staged': False}
 
 
-def assignment(preset, graph, source):
-    """Exact primary slot only; additional references remain the user's declarations."""
+def ordered_bindings(preset):
+    """Preserve slot positions, including invalid entries; never compact or deduplicate."""
+    slots = preset.get('reference_slots')
+    raw = ([slot.get('binding') if type(slot) is dict else None for slot in slots]
+           if type(slots) is list and slots else [preset.get('reference'), preset.get('last_reference')])
+    return [list(b) if isinstance(b, (list, tuple)) and len(b) == 2 and type(b[0]) is str
+            and 0 < len(b[0]) <= 96 and b[1] == 'image' else None for b in raw]
+
+
+def assignment(preset, graph, source, slot=1, ordered=False):
+    """Propose an exact slot, never staging or applying a prompt role."""
     from continuation import reference_bindings, consumes_reference
-    bindings = reference_bindings(preset)
-    binding = bindings[0] if bindings else None
-    result = {'asset_id': source['asset_id'], 'sha256': source['sha256'], 'slot': 1,
+    bindings = ordered_bindings(preset) if ordered else reference_bindings(preset)
+    binding = bindings[slot-1] if slot <= len(bindings) else None
+    result = {'asset_id': source['asset_id'], 'sha256': source['sha256'], 'slot': slot,
               'role': source['role'], 'binding': binding, 'role_mode': 'unsupported'}
+    if ordered and binding is not None and bindings.count(binding) > 1:
+        return result, ('source_binding_ambiguous', 'blocked',
+                        'Several slots write the same image input. No source assignment was guessed.')
     if not consumes_reference(graph, binding):
         return result, ('source_binding_unavailable', 'blocked',
-                        'The selected image has no verified primary input path to every supported saved output. No assignment was guessed.')
+                        'The selected image has no verified image input path to every supported saved output. No assignment was guessed.')
     if source['role'] == 'source':
         result['role_mode'] = 'whole-image'
         return result, ('source_wiring_observed', 'observed',
-                        'The primary image input reaches the saved outputs. This is whole-image wiring, not a promise to preserve identity or pixels.')
+                        'The image input reaches the saved outputs. This is whole-image wiring, not a promise to preserve identity or pixels.')
     slots = preset.get('reference_slots') or []
     # The existing compiler supports explicit roles only through reference_slots.
-    if slots and isinstance(slots[0], dict) and slots[0].get('binding') == binding and preset.get('positive'):
+    if len(slots) >= slot and isinstance(slots[slot-1], dict) and slots[slot-1].get('binding') == binding and preset.get('positive'):
         result['role_mode'] = 'prompt-guidance'
         return result, ('source_role_proposed', 'unknown',
-                        f'Assign {source["role"]} to Picture 1 after attaching this image in Create. This is prompt guidance, not geometric pose control or guaranteed visual preservation. No role was applied.')
+                        f'Assign {source["role"]} to Picture {slot} after attaching this image in Create. This is prompt guidance, not geometric pose control or guaranteed visual preservation. No role was applied.')
     return result, ('source_role_unsupported', 'blocked',
                     f'This route uses the whole image but does not expose an explicit {source["role"]} role slot. Choose Whole image / first frame or a role-aware route; the role will not be silently ignored.')
+
+
+def inspect_sources(studio, value):
+    if 'sources' not in value: return None
+    result = []
+    for index, item in enumerate(value['sources']):
+        try:
+            observed = inspect_source(studio, {'source_asset_id': item['asset_id'],
+                                      'source_sha256': item['sha256'], 'source_role': item['role']})
+        except (ValueError, KeyError) as exc:
+            raise ValueError(f'Picture {index+1}: {exc}') from exc
+        except OSError as exc:
+            raise ValueError(f'Picture {index+1}: source unavailable; reopen the image and check again.') from exc
+        result.append({**observed, 'slot': index+1})
+    return result
+
+
+def unassigned_sources(sources):
+    return [{'asset_id': x['asset_id'], 'sha256': x['sha256'], 'role': x['role'],
+             'slot': i+1, 'binding': None, 'role_mode': 'unsupported'} for i, x in enumerate(sources)]
+
+
+def validate_ordered_reply(result, query, message):
+    expected = query.get('sources')
+    if expected is None:
+        need(result.get('sources') is None, message)
+        need(all('source_assignments' not in row for row in result.get('candidates', [])), message)
+        return
+    observed = result.get('sources')
+    need(type(observed) is list and len(observed) == len(expected), message)
+    for index, (source, want) in enumerate(zip(observed, expected)):
+        singular = {'source_asset_id': want['asset_id'], 'source_sha256': want['sha256'], 'source_role': want['role']}
+        # Reuse the same identity/type contract as the legacy primary observation.
+        validate_source_reply({'source': source, 'candidates': []}, singular, message)
+        need(type(source.get('slot')) is int and source['slot'] == index+1, message)
+    for row in result.get('candidates', []):
+        need('source_assignment' not in row, message)
+        items = row.get('source_assignments')
+        need(type(items) is list and len(items) == len(expected), message)
+        for index, (item, want) in enumerate(zip(items, expected)):
+            need(type(item) is dict and type(item.get('slot')) is int and item['slot'] == index+1, message)
+            singular = {'source_asset_id': want['asset_id'], 'source_sha256': want['sha256'], 'source_role': want['role']}
+            validate_source_reply({'source': observed[index], 'candidates': [{'source_assignment': {**item, 'slot': 1}}]}, singular, message)
 
 
 def validate_source_reply(result, query, message):

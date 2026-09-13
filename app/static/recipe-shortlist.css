@@ -17,3 +17,9 @@
 @media(forced-colors:active){.recipe-shortlist,.recipe-shortlist .shortlist-card{border-color:CanvasText}}
 
 .recipe-shortlist .shortlist-card>details{margin-top:12px}.recipe-shortlist #shortlistResults>details{margin-bottom:12px}
+
+.recipe-shortlist .shortlist-source-row{min-width:0;margin:8px 0;padding:10px;border:1px solid var(--line,#344047);border-radius:8px}
+.recipe-shortlist .shortlist-source-row legend{font-size:13px;overflow-wrap:anywhere;max-width:100%}
+.recipe-shortlist .shortlist-source-row .shortlist-pages{gap:6px}
+
+.recipe-shortlist .shortlist-source-row button{padding:6px 10px;min-height:40px}
