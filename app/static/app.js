@@ -248,7 +248,7 @@ function mediaCard(job,index,output) {
   return '<article class="imageCard">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div><p>'+esc(job.controls.positive || job.preset_name)+'<br><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p></article>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
-function renderJobs(signature=jobsDataSignature) {
+function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const cards=[];
   jobs.forEach(job=>{
@@ -258,9 +258,11 @@ function renderJobs(signature=jobsDataSignature) {
       const failureContext=[failure?.node_type,failure?.exception_type].filter(Boolean).join(' · ');
       const failurePanel=failure?'<div class="jobFailure"><b>'+esc(failure.title||'Why it failed')+'</b><p>'+esc(failure.summary)+'</p><p><b>Next:</b> '+esc(failure.action)+'</p><small>Engine detail'+(failureContext?' · '+esc(failureContext):'')+': '+esc(failure.detail)+'</small></div>':'';
       const stoppedNote=stopped?'<p><b>Tracking stopped</b>: '+esc(job.tracking_disposition.reason)+'<br><small>Recorded '+esc(new Date(job.tracking_disposition.recorded_at*1000).toLocaleString())+'</small></p>':'';
-      const resume=stopped&&job.can_resume_tracking?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation of retained prompt</button>':!stopped&&['uncertain','partial'].includes(job.status)&&job.prompt_ids?.length?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation</button>':'';
+      const resume=stopped&&job.can_resume_tracking?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation of retained prompt</button>':!stopped&&!job.has_pending_submission&&['uncertain','partial'].includes(job.status)&&job.prompt_ids?.length?'<button class="resume" data-job="'+esc(job.id)+'">Resume observation</button>':'';
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
-      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+resume+stop+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
+      const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
+      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
@@ -381,6 +383,13 @@ $('#gallery').onclick=async e=>{
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const resume=e.target.closest('.resume');if(resume){await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();}
     const stop=e.target.closest('.stopTracking');if(stop){const reason=stop.parentElement.querySelector('[data-stop-tracking-reason]')?.value.trim();if(!reason)throw Error('Give a reason before stopping tracking.');await post('/api/jobs/'+encodeURIComponent(stop.dataset.job)+'/stop-tracking',{reason});await refresh();}
+    const abandon=e.target.closest('.abandonJob');if(abandon){
+      const box=abandon.closest('.abandonJobControls'),reason=box.querySelector('[data-abandon-reason]')?.value.trim(),ack=box.querySelector('[data-abandon-ack]');
+      if(!reason)throw Error('Give a reason before abandoning this local job.');
+      if(ack&&!ack.checked)throw Error('Acknowledge the unknown remote outcome before abandoning this local job.');
+      abandon.disabled=true;
+      try{await post('/api/jobs/'+encodeURIComponent(abandon.dataset.job)+'/abandon',{reason,acknowledge_unknown:!!ack?.checked});await refresh();}finally{abandon.disabled=false;}
+    }
     const ref=e.target.closest('.reference-output');if(ref){
       const source=jobs.find(j=>j.id===ref.dataset.job)?.outputs?.[Number(ref.dataset.index)];
       if(!source?.asset_id)throw Error('This output has no saved asset identity. Refresh the workspace before attaching it.');

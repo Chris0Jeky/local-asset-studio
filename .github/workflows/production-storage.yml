@@ -4,6 +4,17 @@ on:
     paths:
       - 'app/production.py'
       - 'app/project_storage.py'
+      - 'app/production_clock.py'
+      - 'app/submission_evidence.py'
+      - 'app/server.py'
+      - 'app/static/app.js'
+      - 'app/static/production.js'
+      - 'tests/test_submission_recovery.py'
+      - 'tests/test_recovery_commands_http.py'
+      - 'tests/test_oldest_issue_regressions.py'
+      - 'tests/test_failed_job_timing.py'
+      - 'tests/frontend_handoffs.cjs'
+      - 'tests/production_clock_frontend.cjs'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
       - '.github/workflows/production-storage.yml'
@@ -12,6 +23,17 @@ on:
     paths:
       - 'app/production.py'
       - 'app/project_storage.py'
+      - 'app/production_clock.py'
+      - 'app/submission_evidence.py'
+      - 'app/server.py'
+      - 'app/static/app.js'
+      - 'app/static/production.js'
+      - 'tests/test_submission_recovery.py'
+      - 'tests/test_recovery_commands_http.py'
+      - 'tests/test_oldest_issue_regressions.py'
+      - 'tests/test_failed_job_timing.py'
+      - 'tests/frontend_handoffs.cjs'
+      - 'tests/production_clock_frontend.cjs'
       - 'tests/test_production*.py'
       - 'tests/test_server.py'
       - '.github/workflows/production-storage.yml'
@@ -39,3 +61,13 @@ jobs:
       - run: python -m unittest discover -s tests -p test_production_storage.py -v
       - run: python -m unittest discover -s tests -p test_production_storage_integration.py -v
       - run: python -m unittest discover -s tests -p test_production.py -v
+      - run: python -m unittest discover -s tests -p test_submission_recovery.py -v
+      - run: python -m unittest discover -s tests -p test_production_clock.py -v
+      - run: python -m unittest discover -s tests -p test_oldest_issue_regressions.py -v
+      - run: python -m unittest discover -s tests -p test_recovery_commands_http.py -v
+      - run: python -m unittest discover -s tests -p test_failed_job_timing.py -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/frontend_handoffs.cjs
+      - run: node tests/production_clock_frontend.cjs
