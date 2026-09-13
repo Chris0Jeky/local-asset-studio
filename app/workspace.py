@@ -28,6 +28,7 @@ class WorkspaceError(ValueError):
         return {"error": str(self), "code": self.code, **self.details}
 
 
+WAL_INITIALIZATION_TIMEOUT = 15
 MAX_REVISION = 2**53 - 1
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
@@ -48,8 +49,8 @@ class AssetWorkspace:
         self.media.mkdir(exist_ok=True)
         self.database = self.root / "assets.sqlite3"
         with self.connection() as db:
+            self._enable_wal(db)
             db.executescript("""
-                PRAGMA journal_mode=WAL;
                 CREATE TABLE IF NOT EXISTS assets (
                     id TEXT PRIMARY KEY, job_id TEXT NOT NULL, output_index INTEGER NOT NULL,
                     title TEXT NOT NULL, media_type TEXT NOT NULL, path TEXT NOT NULL,
@@ -75,8 +76,32 @@ class AssetWorkspace:
             """)
             # Serialize migration discovery with the ALTER, including simultaneous clients.
             db.execute("BEGIN IMMEDIATE")
+            db.execute("CREATE TABLE IF NOT EXISTS workspace_identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), id TEXT NOT NULL)")
+            db.execute("INSERT OR IGNORE INTO workspace_identity VALUES (1,?)", (uuid.uuid4().hex,))
             if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
+
+    @staticmethod
+    def _enable_wal(db):
+        # SQLite can return BUSY without invoking its busy handler when a lock
+        # upgrade would deadlock. Retry only this pre-transaction mode change.
+        deadline = time.monotonic() + WAL_INITIALIZATION_TIMEOUT
+        original_timeout = db.execute("PRAGMA busy_timeout").fetchone()[0]
+        while True:
+            remaining = max(0, deadline - time.monotonic())
+            db.execute(f"PRAGMA busy_timeout={min(100, int(remaining * 1000))}")
+            try:
+                mode = db.execute("PRAGMA journal_mode=WAL").fetchone()[0]
+            except sqlite3.OperationalError as exc:
+                remaining = deadline - time.monotonic()
+                if getattr(exc, "sqlite_errorcode", None) != sqlite3.SQLITE_BUSY or remaining <= 0:
+                    raise
+                time.sleep(min(0.025, remaining))
+            else:
+                if mode != "wal":
+                    raise WorkspaceError(f"Workspace requires WAL journaling; SQLite retained {mode!r}")
+                db.execute(f"PRAGMA busy_timeout={original_timeout}")
+                return
 
     @contextmanager
     def connection(self):
@@ -161,7 +186,8 @@ class AssetWorkspace:
     def snapshot(self):
         with self.connection() as db:
             db.execute("BEGIN")
-            assets = [self._asset(r) for r in db.execute("SELECT * FROM assets ORDER BY created_at DESC,id")]
+            identity = self._workspace_id(db)
+            assets = [dict(self._asset(r), workspace_id=identity) for r in db.execute("SELECT * FROM assets ORDER BY created_at DESC,id")]
             collections = [dict(r) for r in db.execute("SELECT * FROM collections ORDER BY name COLLATE NOCASE")]
             membership = list(db.execute("SELECT collection_id,asset_id FROM collection_assets"))
         by_id = {a["id"]: a for a in assets}
@@ -177,7 +203,7 @@ class AssetWorkspace:
                     counts[collection_id] = counts.get(collection_id, 0) + 1
         for collection in collections:
             collection["count"] = counts.get(collection["id"], 0)
-        return {"assets": assets, "collections": collections}
+        return {"assets": assets, "collections": collections, "workspace_id": identity}
 
     @staticmethod
     def text(value, name, maximum):
@@ -221,15 +247,60 @@ class AssetWorkspace:
             raise WorkspaceError("A request ID of 16–128 letters, digits, underscores or hyphens is required")
         return value
 
-    def metadata(self, asset_id):
-        return {key: value for key, value in self.get(asset_id).items() if key in METADATA_FIELDS}
+    @staticmethod
+    def _workspace_id(db):
+        # Read within the caller's transaction, never cache identity across a replaced DB.
+        row = db.execute("SELECT id FROM workspace_identity WHERE singleton=1").fetchone()
+        if not row or not re.fullmatch(r"[0-9a-f]{32}", row["id"]):
+            raise WorkspaceError("Workspace identity is unavailable", status=503, code="asset_workspace_unavailable")
+        return row["id"]
 
-    def command_status(self, request_id):
+    @staticmethod
+    def _validate_scope(value):
+        if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{32}", value):
+            raise WorkspaceError("Workspace identity must be 32 lowercase hexadecimal characters")
+        return value
+
+    def _check_scope(self, db, expected):
+        identity = self._workspace_id(db)
+        if expected is not None and self._validate_scope(expected) != identity:
+            raise WorkspaceError("This recovery belongs to a different Workspace. Return to its original Workspace; nothing changed.",
+                                 status=409, code="asset_workspace_conflict", workspace_id=identity)
+        return identity
+
+    def _metadata_row(self, row, identity):
+        return dict({k: v for k, v in self._asset(row).items() if k in METADATA_FIELDS}, workspace_id=identity)
+
+    def metadata(self, asset_id, expected_workspace_id=None):
+        with self.connection() as db:
+            db.execute("BEGIN")
+            identity = self._check_scope(db, expected_workspace_id)
+            row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+            if row is None:
+                raise WorkspaceError("Asset not found")
+            return self._metadata_row(row, identity)
+
+    def _observe_receipt(self, db, receipt, expected_workspace_id):
+        if expected_workspace_id is None:
+            return receipt  # Preserve the historical unscoped API's exact receipt shape.
+        identity = self._check_scope(db, expected_workspace_id)
+        current = []
+        # Observed metadata is separate from the immutable receipt and bounded like conflicts.
+        for asset_id in receipt.get("updated", [])[:10]:
+            row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+            if row is not None:
+                current.append(self._metadata_row(row, identity))
+        return dict(receipt, workspace_id=identity, current=current)
+
+    def command_status(self, request_id, expected_workspace_id=None):
         request_id = self.request_id(request_id)
         with self.connection() as db:
+            db.execute("BEGIN")
+            self._check_scope(db, expected_workspace_id)
             row = db.execute("SELECT result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
-        # A missing receipt is not proof that an in-flight command cannot commit later.
-        return json.loads(row["result"]) if row else {"request_id": request_id, "status": "unknown"}
+            # A missing receipt cannot prove that an in-flight command will not commit.
+            receipt = json.loads(row["result"]) if row else {"request_id": request_id, "status": "unknown"}
+            return self._observe_receipt(db, receipt, expected_workspace_id)
 
     def update(self, payload):
         if not isinstance(payload, dict):
@@ -246,7 +317,8 @@ class AssetWorkspace:
         if (not isinstance(expected, dict) or set(expected) != set(ids) or
                 any(isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= MAX_REVISION for v in expected.values())):
             raise WorkspaceError("Supply one nonnegative safe integer revision for every selected asset")
-        allowed = {"ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
+        scope = self._validate_scope(payload["workspace_id"]) if "workspace_id" in payload else None
+        allowed = {"workspace_id", "ids", "action", "request_id", "expected_revisions", "title", "notes", "tags", "favorite", "review", "collection_id"}
         if set(payload) - allowed:
             raise WorkspaceError("Unknown asset command fields")
         try:
@@ -260,21 +332,22 @@ class AssetWorkspace:
         with self.connection() as db:
             # No read-check/write gap: competing clients serialize at this boundary.
             db.execute("BEGIN IMMEDIATE")
+            identity = self._check_scope(db, scope)
             receipt = db.execute("SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
             if receipt:
                 if receipt["fingerprint"] != fingerprint:
                     raise WorkspaceError("That request ID already identifies a different command; nothing changed",
                                          status=409, code="asset_request_reused", request_id=request_id)
-                return json.loads(receipt["result"])
+                return self._observe_receipt(db, json.loads(receipt["result"]), scope)
             placeholders = ",".join("?" for _ in ids)
             rows = {r["id"]: r for r in db.execute(f"SELECT * FROM assets WHERE id IN ({placeholders})", ids)}
             missing = [i for i in ids if i not in rows]
             conflicts = [i for i in ids if i in rows and rows[i]["metadata_revision"] != expected[i]]
             if missing or conflicts:
-                current = [{k: v for k, v in self._asset(rows[i]).items() if k in METADATA_FIELDS} for i in conflicts[:10]]
+                current = [self._metadata_row(rows[i], identity) for i in conflicts[:10]]
                 raise WorkspaceError("Selected asset metadata changed or no longer exists; nothing changed in this batch",
                                      status=409, code="asset_revision_conflict", request_id=request_id,
-                                     conflict_ids=conflicts, missing_ids=missing, current=current)
+                                     conflict_ids=conflicts, missing_ids=missing, current=current, workspace_id=identity)
             if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in ids):
                 raise WorkspaceError("Asset revision limit reached; nothing changed")
             applied = {}
@@ -322,8 +395,11 @@ class AssetWorkspace:
                 if "favorite" in applied: applied["favorite"] = bool(applied["favorite"])
             result = {"status": "applied", "request_id": request_id, "updated": ids, "action": action,
                       "revisions": {i: expected[i] + 1 for i in ids}, "applied": applied}
+            if scope is not None:
+                result["workspace_id"] = identity
             # Compact receipts retain changed fields and revisions, never N copies of media/notes.
             db.execute("INSERT INTO asset_commands VALUES (?,?,?,?)", (request_id, fingerprint, json.dumps(result), time.time()))
+            result = self._observe_receipt(db, result, scope)
         return result
 
     def setups(self):

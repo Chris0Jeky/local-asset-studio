@@ -64,11 +64,15 @@ class WorkspaceSnapshotCountsTests(unittest.TestCase):
         self.assert_counts(snapshot)
 
     def test_snapshot_is_read_only_and_empty_store_is_still_supported(self):
-        self.assertEqual(self.store.snapshot(), {'assets': [], 'collections': []})
+        empty = self.store.snapshot()
+        self.assertEqual(empty['assets'], [])
+        self.assertEqual(empty['collections'], [])
+        self.assertRegex(empty['workspace_id'], r'^[0-9a-f]{32}$')
         populate(self.store, 8, 4, 2)
         with self.store.connection() as db:
             before = '\n'.join(db.iterdump())
         first = self.store.snapshot()
+        self.assertEqual(first['workspace_id'], empty['workspace_id'])
         self.assertEqual(first, self.store.snapshot())
         with self.store.connection() as db:
             self.assertEqual(before, '\n'.join(db.iterdump()))

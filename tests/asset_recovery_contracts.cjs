@@ -12,9 +12,9 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.equal(retained(first).operation.body,first.writes[0].options.body);
     const next=setup({storage:first.storage,autoOpen:false});
     assert.equal(next.writes.length,0);assert.equal(next.reads.length,0);assert.equal(next.el('#assetDialog').open,false);
-    next.run("assetState.assets[0].metadata_revision=7;openAsset('a')");
+    next.run("assetState.assets[0].metadata_revision=1;openAsset('a')");
     assert.equal(next.run('activeAsset.metadata_revision'),0);assert.equal(next.el('#assetNotes').value,'sent');
-    const observing=next.run('checkAssetSave()');next.reads[0].resolve({status:'unknown',request_id:first.payload(0).request_id});await observing;
+    const observing=next.run('checkAssetSave()');next.reads[0].resolve({status:'unknown',workspace_id:first.payload(0).workspace_id,request_id:first.payload(0).request_id});await observing;
     assert.equal(next.writes.length,0);const retry=next.el('#saveAssetDetails').onclick();
     assert.equal(next.writes[0].options.body,first.writes[0].options.body);next.accept(0);await retry;
     assert.equal(retained(next),null);
@@ -36,7 +36,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
   await check('Conflict survives reload; rebasing only prepares a new reviewed save',async()=>{
     const first=setup();draft(first,'my edit');const save=first.el('#saveAssetDetails').onclick();
     const current={...JSON.parse(first.run('JSON.stringify(activeAsset)')),metadata_revision:3,title:'remote title'};
-    const error=Object.assign(Error('changed'),{status:409,data:{code:'asset_revision_conflict',current:[current]}});first.writes[0].reject(error);await save;
+    const error=Object.assign(Error('changed'),{status:409,data:{workspace_id:current.workspace_id,code:'asset_revision_conflict',current:[current]}});first.writes[0].reject(error);await save;
     const next=setup({storage:first.storage});assert.match(next.el('#assetDetailConflict').innerHTML,/remote title/);assert.equal(next.el('#saveAssetDetails').disabled,true);
     next.run('resolveAssetConflict(true)');assert.equal(next.writes.length,0);assert.equal(next.el('#assetNotes').value,'my edit');assert.equal(next.el('#assetTitle').value,'remote title');
     const again=setup({storage:next.storage});const p=again.el('#saveAssetDetails').onclick();assert.deepEqual(again.payload(0).expected_revisions,{a:3});assert.equal(again.payload(0).title,undefined);assert.notEqual(again.payload(0).request_id,first.payload(0).request_id);again.accept(0);await p;

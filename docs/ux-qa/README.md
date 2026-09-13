@@ -1,4 +1,13 @@
 # Studio UX QA — 13 September 2026
+
+## Workspace-bound recovery follow-up
+
+[WORKSPACE-RECOVERY.md](WORKSPACE-RECOVERY.md) extends the merged #211 journal with
+database identity, scoped exact commands/read-only receipt checks, and comparison
+of historical receipts against newer saved metadata. It supersedes #216’s initial
+parallel-journal prototype. [WORKSPACE-RECOVERY-RESULTS.json](WORKSPACE-RECOVERY-RESULTS.json)
+records the separate local checkpoint; hosted native evidence belongs to the final PR head.
+
 ## Named setup lineage follow-up
 
 [SETUP-LINEAGE.md](SETUP-LINEAGE.md) closes #117’s failed-observation save gap with

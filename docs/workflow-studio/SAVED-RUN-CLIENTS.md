@@ -136,6 +136,16 @@ its ticket can be recovered to another path. An incomplete local write can leave
 an owned partial file; preserve it for inspection and GET-export to a different
 name. This is not an automatic rollback of the already committed server record.
 
+If a received HTTP result contains `NaN`, `Infinity` or `-Infinity`, ordinary
+strict JSON cannot represent it. Before creating `--out`, the CLI emits an
+ASCII-only strict diagnostic with status `received_response_encoding_error` and
+stores the complete received result in `received_result.text` as
+`json-with-nonfinite-tokens`. The embedded text keeps those tokens explicit and
+preserves known fields and identifiers; it does not authorize another request.
+Ordinary finite results keep their existing JSON shape. ASCII-only diagnostics
+avoid ordinary stdout codec failures, but a closed, broken or partially written
+stdout stream cannot be made into a durable receipt.
+
 ## Scope and validation
 
 The existing builder Run control still uses its tab-local preparation path. These

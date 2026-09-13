@@ -1,0 +1,548 @@
+{
+  "schema": "studio.workspace-recovery-qa/v1",
+  "date": "2026-09-13",
+  "base_commit": "22ec26dc549a4648a6e94f80f5d3c870f03c6520",
+  "supersedes": "PR #216 initial parallel-journal prototype ac9702d; this revision extends merged #211 instead",
+  "reproductions": {
+    "unscoped_command": "Actual-script assertion: workspace_id undefined rather than opened Workspace ID",
+    "historical_receipt": {
+      "displayed_notes": "sent at N",
+      "dirty": false,
+      "conflict": false,
+      "independently_observed_notes": "saved at N+1"
+    },
+    "library_selection": "Changing page selection erased pending command selection: [] rather than [a,b]"
+  },
+  "focused_suite": {
+    "unittest_cases": 13,
+    "sqlite": 9,
+    "http": 3,
+    "javascript_wrappers": 1,
+    "javascript_scenarios_in_wrapper": 11,
+    "failures": 0
+  },
+  "full_offline_suite": {
+    "run": 1584,
+    "passed": 1569,
+    "skipped": 15,
+    "failures": 0,
+    "exit_code": 0,
+    "seconds": 131.065,
+    "warnings": [
+      "Pillow Image.getdata deprecation",
+      "Exit-time unclosed test socket ResourceWarning"
+    ]
+  },
+  "browser": {
+    "browser": {
+      "mode": "inert storage/transport and document recreation",
+      "passed": 25,
+      "failed": 0,
+      "errors": [],
+      "checks": [
+        {
+          "id": "SCOPE-01",
+          "expectation": "The actual submitted command binds the original Workspace",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-02",
+          "expectation": "Lost response retains exact request bytes before reload",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-03",
+          "expectation": "A second tab does not inherit the first tab draft",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-04",
+          "expectation": "Reload does not submit or automatically check an earlier save",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-05",
+          "expectation": "Explicit recovery retains newer typing and opened revision",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-06",
+          "expectation": "Receipt lookup is a Workspace-bound GET without another POST",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-07",
+          "expectation": "Historical success exposes newer saved metadata as a conflict",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-08",
+          "expectation": "Conflict distinguishes a confirmed old save from a rejected save",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-09",
+          "expectation": "Current conflict never replaces newer local typing",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-10",
+          "expectation": "390px conflict fits the dialog",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-11",
+          "expectation": "Rebase preserves unsaved notes without writing",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-12",
+          "expectation": "Reviewed save uses a new request at the observed revision",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-13",
+          "expectation": "Actual wrong-Workspace POST changes no B metadata",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-14",
+          "expectation": "Wrong-Workspace rejection retains the original request identity",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-15",
+          "expectation": "Same asset ID in a different Workspace cannot open A recovery",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-16",
+          "expectation": "Metadata observation itself rejects a switched Workspace",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-17",
+          "expectation": "An unapplied original request remains unknown after return to A",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-18",
+          "expectation": "Explicit retry applies exact original bytes only in A",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-19",
+          "expectation": "Pre-commit failure never invents a receipt",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-20",
+          "expectation": "Recovered pre-commit exact retry has one effect",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-21",
+          "expectation": "Unscoped legacy draft is not rebound to the current Workspace",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-22",
+          "expectation": "Explicit local discard clears only the journal",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-23",
+          "expectation": "Storage refusal prevents a new metadata POST",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-24",
+          "expectation": "No generation or backend mutations occur",
+          "passed": true
+        },
+        {
+          "id": "SCOPE-25",
+          "expectation": "No JavaScript exceptions",
+          "passed": true
+        }
+      ]
+    },
+    "metadata": {
+      "mode": "inert storage/transport, real metadata HTTP and SQLite",
+      "passed": 21,
+      "failed": 0,
+      "errors": [],
+      "checks": [
+        {
+          "id": "META-01 stale form never erases confirmed notes",
+          "passed": true
+        },
+        {
+          "id": "META-02 conflict retains local draft",
+          "passed": true
+        },
+        {
+          "id": "META-03 conflict shows saved version",
+          "passed": true
+        },
+        {
+          "id": "META-04 explicit rebase does not write",
+          "passed": true
+        },
+        {
+          "id": "META-05 untouched remote notes survive rebase",
+          "passed": true
+        },
+        {
+          "id": "META-06 reviewed save writes only dirty title",
+          "passed": true
+        },
+        {
+          "id": "META-07 same-field conflict exposes both choices",
+          "passed": true
+        },
+        {
+          "id": "META-08 narrow conflict remains within viewport",
+          "passed": true
+        },
+        {
+          "id": "META-09 use saved version is read-only",
+          "passed": true
+        },
+        {
+          "id": "META-10 dropped HTTP reply leaves committed server evidence",
+          "passed": true
+        },
+        {
+          "id": "META-11 status lookup never repeats POST",
+          "passed": true
+        },
+        {
+          "id": "META-12 receipt preserves newer typing as unsaved",
+          "passed": true
+        },
+        {
+          "id": "META-13 explicit retry preserves exact command",
+          "passed": true
+        },
+        {
+          "id": "META-14 duplicate POST has one SQLite effect",
+          "passed": true
+        },
+        {
+          "id": "META-15 absent receipt stays unknown",
+          "passed": true
+        },
+        {
+          "id": "META-16 retry after pre-commit failure preserves draft intent",
+          "passed": true
+        },
+        {
+          "id": "META-17 stale bulk leaves every review unchanged",
+          "passed": true
+        },
+        {
+          "id": "META-18 stale bulk preserves selection",
+          "passed": true
+        },
+        {
+          "id": "META-21 recovered Trash preserves later typing",
+          "passed": true
+        },
+        {
+          "id": "META-19 no generation/backend mutation",
+          "passed": true
+        },
+        {
+          "id": "META-20 no page exceptions",
+          "passed": true
+        }
+      ]
+    },
+    "detail": {
+      "mode": "inert: injected storage and API transport; native origin/network/media not tested",
+      "passed": 30,
+      "failed": 0,
+      "errors": [],
+      "checks": [
+        {
+          "id": "ASSET-01",
+          "expectation": "Favorite preserves unsaved notes",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-02",
+          "expectation": "Favorite writes only favorite, not review/notes",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-03",
+          "expectation": "Escape offers discard consent; Stay preserves draft",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-04",
+          "expectation": "Lineage navigation cannot discard edits without consent",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-05",
+          "expectation": "Close button offers the same discard choice as Escape",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-06",
+          "expectation": "Save keeps the current asset open for continuation",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-07",
+          "expectation": "Save failure is visible inside the open dialog",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-08",
+          "expectation": "Duplicate save is disabled during in-flight mutation",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-09",
+          "expectation": "Late save preserves newer typing and leaves it unsaved",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-10",
+          "expectation": "Save persists its click-time snapshot exactly once",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-11",
+          "expectation": "Late diagnostic success cannot replace the newly selected asset panel",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-12",
+          "expectation": "Late diagnostic failure cannot attach retry to another asset",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-13",
+          "expectation": "Current diagnostic failure retains explicit retry",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-18",
+          "expectation": "A→B→A rejects old diagnostic success",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-19",
+          "expectation": "A→B→A rejects old diagnostic failure",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-20",
+          "expectation": "Close/reopen rejects the previous session diagnostic",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-21",
+          "expectation": "Favorite preserves title, tags and review together",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-22",
+          "expectation": "Missing navigation target retains the active editor",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-23",
+          "expectation": "Pending write holds close and navigation in the same session",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-24",
+          "expectation": "Confirmed clean save can close normally",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-25",
+          "expectation": "Favorite failure is visible, retains edits and releases controls",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-14",
+          "expectation": "390px dialog remains within viewport",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-26",
+          "expectation": "390px preview uses at most 35% viewport height",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-15",
+          "expectation": "720px dialog remains within viewport",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-27",
+          "expectation": "720px preview uses at most 35% viewport height",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-28",
+          "expectation": "Dirty/save messages have a polite status region",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-29",
+          "expectation": "Keyboard reaches Save from Notes and keeps the confirmed asset open",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-30",
+          "expectation": "Trash error restores editing and retains the unsaved draft",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-16",
+          "expectation": "These scenarios never create a generation or switch/install a backend",
+          "status": "pass"
+        },
+        {
+          "id": "ASSET-17",
+          "expectation": "No JavaScript exceptions in complete shell",
+          "status": "pass"
+        }
+      ]
+    },
+    "reload": {
+      "mode": "inert: injected storage and document recreation; not native storage/origin/network proof",
+      "passed": 19,
+      "failed": 0,
+      "errors": [],
+      "checks": [
+        {
+          "id": "RELOAD-01",
+          "expectation": "Synthetic handler committed the snapshot before its reply was lost",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-02",
+          "expectation": "Reload sends no metadata POST or receipt check",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-03",
+          "expectation": "Reload presents recovery without opening the editor",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-04",
+          "expectation": "Review restores newer typing with the original opened revision",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-05",
+          "expectation": "Receipt check uses GET and sends zero metadata POSTs",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-06",
+          "expectation": "Receipt confirmation preserves newer typing as a draft",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-07",
+          "expectation": "Reload sends no metadata POST or receipt check",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-08",
+          "expectation": "Reload retains exact pending request bytes and ID",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-09",
+          "expectation": "Explicit retry sends the original body and request ID",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-10",
+          "expectation": "Duplicate exact retry has one synthetic metadata effect",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-11",
+          "expectation": "Later explicit save uses a new ID and current revision",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-12",
+          "expectation": "Reload sends no metadata POST or receipt check",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-13",
+          "expectation": "Recovered Trash receipt keeps newer typing and sends no POST",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-14",
+          "expectation": "Reload sends no metadata POST or receipt check",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-15",
+          "expectation": "Unsent draft reload remains local and uses zero POSTs",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-16",
+          "expectation": "Desktop recovery view has no horizontal overflow",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-17",
+          "expectation": "390px recovery view has no horizontal overflow",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-18",
+          "expectation": "No generation or backend mutation is sent",
+          "status": "pass"
+        },
+        {
+          "id": "RELOAD-19",
+          "expectation": "No complete-shell JavaScript exception occurred",
+          "status": "pass"
+        }
+      ]
+    }
+  },
+  "source_sha256": {
+    "app/workspace.py": "a5ae3effff04d146aa4c73faee4e8215880d9c796fa2f64c52087a3e04037674",
+    "app/server.py": "948cde08bbcc1ad7fb6645215ddacd9e8781464d7d473f48cfcf4e9afb764b9a",
+    "app/static/asset-recovery.js": "bad9bcbf44981e7d9d58046d8bd238f29339e433d1ae9b756414b595c5932017",
+    "app/static/workspace.js": "bc05b84686963476f5a2d1cb2a0ca1d5e8c2fad78dcce70240bff3a55e1bf833",
+    "tests/asset_workspace_browser.py": "b06e887d647c58085c68b76625a2cefb3a98666fe34be4b19d5b79dec546e876",
+    "tests/asset_workspace_scope.cjs": "c2a941493962a82326b3c024572156062ba87ab310a9dbbbed65ae717bb9d9b7"
+  },
+  "hosted_native": "Pending at this committed local checkpoint; verify final-head Actions receipt separately.",
+  "limitations": [
+    "Local inert evidence is not native tab reload/storage evidence.",
+    "No closed-tab/crash durability, physical cloned-database isolation or authentication claim.",
+    "Legacy unscoped journals are inspection/discard only, not rebound.",
+    "Old optional-unscoped API callers retain revision checks but not cross-Workspace isolation.",
+    "No owner-PC generation, real media quality, native editor, screen-reader or actual browser zoom acceptance.",
+    "Fresh concurrent WAL initialization remains #215."
+  ],
+  "validation": {
+    "passed": true,
+    "graphs_and_bindings": 66,
+    "pinned_assets": 121,
+    "lora_names": 86,
+    "tracked_paths": 1108
+  }
+}
