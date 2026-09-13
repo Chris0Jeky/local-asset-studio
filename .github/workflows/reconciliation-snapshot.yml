@@ -1,0 +1,51 @@
+name: Reconciliation snapshot
+on:
+  push:
+    branches: [codex/oldest-issue-reconciliation]
+    paths: [.github/workflows/reconciliation-snapshot.yml]
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive tracked source and reconciliation evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/reconciliation
+          git archive --format=zip -o /tmp/reconciliation/source.zip HEAD
+          git bundle create /tmp/reconciliation/source.bundle HEAD
+          python - <<'PY'
+          import json, os, pathlib, urllib.request
+          root = pathlib.Path('/tmp/reconciliation')
+          base = 'https://api.github.com/repos/Chris0Jeky/local-asset-studio'
+          def get(path):
+              req = urllib.request.Request(base + path, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  return json.load(response)
+          issues = get('/issues?state=open&sort=created&direction=asc&per_page=100')
+          issues = [item for item in issues if 'pull_request' not in item]
+          pulls = get('/pulls?state=all&sort=updated&direction=desc&per_page=50')
+          keys = ('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
+          compact = lambda item: {key: item.get(key) for key in keys}
+          data = {'issues': [compact(i) for i in issues], 'pulls': [dict(compact(p), head=p['head']['sha'], branch=p['head']['ref']) for p in pulls]}
+          data['comments'] = {str(n): get(f'/issues/{n}/comments?per_page=100') for n in (2,3,9,10,93,94)}
+          data['open_pr_files'] = {str(p['number']): [f['filename'] for f in get('/pulls/' + str(p['number']) + '/files?per_page=100')] for p in pulls if p['state']=='open'}
+          (root/'github-evidence.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
+          print('OLDEST ISSUES', [(i['number'], i['title']) for i in issues[:15]])
+          print('RECENT PRS', [(p['number'], p['state'], p['merged_at'], p['title']) for p in pulls[:25]])
+          print('OPEN PR FILES', data['open_pr_files'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reconciliation-source-evidence
+          path: /tmp/reconciliation/
+          retention-days: 3
