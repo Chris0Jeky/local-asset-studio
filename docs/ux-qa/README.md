@@ -7,6 +7,7 @@ sticky recipe picker obstructing saved-setup buttons. Its browser/SQLite evidenc
 is separate from the earlier asset-detail and metadata-concurrency checkpoints.
 
 
+
 ## What this pass changes
 
 A practical review session should let someone inspect an output, write specific repair notes, mark a preference, look at its source, save, and choose the next operation without losing their place or their work. This pass makes that one connected workflow dependable before adding another launcher or tour.
@@ -64,3 +65,13 @@ For a workstation acceptance check, open a real existing asset; type notes; Favo
 The highest-priority next work is #188's metadata concurrency plus #117's source-availability/lineage save contract. After these, join existing guide evidence and continuation records into one contextual task summary as described in `ARCHITECTURE.md`. Keep that summary observational: it should explain what is preserved, what changes and what still needs action, without taking over execution.
 
 No new human creative decision is required for these changes. Existing artwork selection, model-specific permissions and output acceptance remain with the owner and `HUMAN_TODO.md`; this pass changes none of them.
+
+## Continuation: conditional metadata and recovery
+
+The follow-on implementation for #188 is recorded in [METADATA-CONCURRENCY.md](METADATA-CONCURRENCY.md).
+It adds actual Workspace revision checks and durable command receipts, a draft-preserving
+conflict comparison, and explicit exact-request recovery. [METADATA-RESULTS.json](METADATA-RESULTS.json)
+records this pass separately from the original local before/after checkpoint. The
+metadata browser fixture uses the production metadata HTTP handler and temporary real
+SQLite storage, with synthetic non-generation endpoints. #117 remains a separate
+reference-lineage task; neither browser session epochs nor metadata revisions solve it.

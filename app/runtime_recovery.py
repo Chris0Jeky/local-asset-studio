@@ -31,6 +31,9 @@ class RuntimeRecovery:
         self.path = studio.root / ".runtime" / "runtime-recovery.json"
         self.log_path = studio.root / ".runtime" / "runtime-recovery.log"
         self.lock = threading.Lock()
+        # Cache observations are local to this monitor session, never launch authority.
+        self._schema_endpoint_identity = None
+        self._schema_process_identity = None
         self.state = {"status": "disabled" if not self.enabled else "idle", "attempts": 0, "events": []}
         if self.enabled:
             try:
@@ -118,10 +121,21 @@ class RuntimeRecovery:
     def _ready(self, profile, stats):
         try: process = self.studio.backends.process(profile)
         except (OSError, ValueError): process = None
+        endpoint = self._identity(profile, stats)
         identity = self._identity(profile, stats, process)
-        if self.state.get("status") != "healthy" or (identity and identity != self.state.get("endpoint_identity")):
+        observed_process = identity if identity != endpoint else None
+        continuous = self.state.get("status") == "healthy" and endpoint == self._schema_endpoint_identity
+        changed_process = (observed_process is not None and self._schema_process_identity is not None
+                           and observed_process != self._schema_process_identity)
+        if not continuous or changed_process:
             self.studio._schema = None
             self.studio._schema_at = 0
+        # Missing optional metadata is not a process change. Retain the last
+        # observation only for comparison with a later *observed* identity.
+        # Reconnects/endpoints reset it; snapshots still report current evidence.
+        if not continuous: self._schema_process_identity = None
+        if observed_process is not None: self._schema_process_identity = observed_process
+        self._schema_endpoint_identity = endpoint
         for key in ("startup_pid", "startup_at", "breaker_until"):
             self.state.pop(key, None)
         self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0)
