@@ -6,6 +6,24 @@ from pathlib import Path
 
 class GalleryHandoffTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_read_polling_is_bounded_and_visibility_aware(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('read_poller.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Read polling contracts passed', result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_read_poller_loads_the_real_app_without_generation(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('read_poller_integration.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Read poller app integration passed', result.stdout, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_readiness_status_distinguishes_pending_offline_and_failure(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('frontend_health.cjs'))],
