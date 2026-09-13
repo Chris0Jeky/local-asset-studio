@@ -1,5 +1,9 @@
 # Character consistency: one complete production path
 
+The [campaign allowance](CAMPAIGN-BUDGETS.md) lets independent edit revisions
+share an explicitly registered Production cap. The existing pilot's allowance
+and v1 handoffs remain separate; this adds no live generation credit.
+
 The [open-document Krita session](KRITA-DOCUMENT-SESSION.md) now connects an
 existing protected result to a reversible native layer with unsaved-state guards.
 Its recorded mechanical proof is separate from neural repair yield and creative

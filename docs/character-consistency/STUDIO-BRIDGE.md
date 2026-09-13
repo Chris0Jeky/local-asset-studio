@@ -2,7 +2,12 @@
 
 This is the runtime follow-up to [the offline editing bridge](EDITING.md), scoped to #71/#65. `scripts/character_edit_bridge.py` is a local-agent **client**, not another server, model runner or GPU queue. It can prepare an edit, upload its references, create an ordinary Production comparison, explicitly start it, retrieve a completed candidate and compose that candidate through the original mask. Transport/artifact IO and pure preparation contracts live in the companion `character_edit_bridge_io.py` and `character_edit_bridge_plan.py` modules.
 
-The same project is visible in the existing Studio Production/Review interface. The client does not make an artistic acceptance decision or import a result into a live Krita layer. Native document synchronization and multi-actor generation remain later #71 work.
+The same project is visible in the existing Studio Production/Review interface.
+Use an explicit [campaign receipt](CAMPAIGN-BUDGETS.md) to share a cap across
+independent v2 edit revisions; omitting it retains legacy v1 behavior. The
+separate [Krita document session](KRITA-DOCUMENT-SESSION.md) can import a protected
+result as a reversible native layer. Creative acceptance and multi-actor neural
+generation remain separate #71 work.
 
 ## Supported first slice
 
