@@ -35,10 +35,15 @@ jobs:
           for path, expected in spec['blobs'].items():
               assert git('rev-parse', ':' + path) == expected, 'File identity mismatch: ' + path
           git('diff', '--cached', '--check')
+          # Actions contents-write cannot publish a new workflow. Its verified
+          # bytes are added separately through the authorized connector, before PR.
+          workflow = '.github/workflows/guided-journey-browser.yml'
+          if workflow in actual:
+              git('rm', '--cached', workflow)
+              pathlib.Path(workflow).unlink()
           git('config', 'user.name', 'Cristian Tcaci')
           git('config', 'user.email', '59696583+Chris0Jeky@users.noreply.github.com')
           git('commit', '-m', spec['message'])
-          # New branch only, never force-update existing work.
           assert not git('ls-remote', '--heads', 'origin', spec['target']), 'Target branch already exists'
           git('push', 'origin', 'HEAD:refs/heads/' + spec['target'])
           print('Published', spec['target'], git('rev-parse', 'HEAD'))
