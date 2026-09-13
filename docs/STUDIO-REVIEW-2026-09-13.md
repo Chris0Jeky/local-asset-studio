@@ -52,7 +52,7 @@ in [STATUS.md](STATUS.md) are chosen to move exactly that.
 
 ## Confirmed defects and their disposition
 
-Severity follows the repository's own bar (a realistic direct path to wrong behaviour). "Fixed" means PR #242
+Severity follows the repository's own bar (a realistic direct path to wrong behaviour). "Fixed" means PR #262
 (recovery exits, dynamic-input schema, Generate race, small frontend defects) or PR #243 (this document set and the
 catalog corrections).
 
@@ -73,10 +73,10 @@ catalog corrections).
 | Catalog | 22 shipped visual workflows unlinked; Studio could not open them | low | Fixed for the 18 unambiguous exact twins |
 | Docs | MODULAR-ILLUSTRATION-BASELINES.md said three installed checkpoints were missing and only Anima was verified | misleading | Fixed |
 | Docs | CLAUDE.md test/skip/module counts were about half the true figures; a skill named a unittest command that always dies on import; three other stale counts | wrong-number | Fixed |
-| Server | `_wait_for_queue` waits without bound behind any ComfyUI work with no cancel path | low | Tracked: #244 |
+| Server | `_wait_for_queue` waits without bound behind any ComfyUI work with no cancel path | low | Tracked: #253 |
 | Server | `GET /api/jobs` serialises every historical job on every poll (157 KB at 94 jobs) | low | Tracked under #177 |
-| Catalog | `anime-detail-fix` authors the hand pass at denoise 0.45 but the shared denoise binding overwrites it | low | Tracked: #245 (needs the retained graph of the proven run before choosing a fix) |
-| Catalog | `pixel-lora`'s 128 px export is a fixed square, so a non-square request stretches | low | Tracked: #246 |
+| Catalog | `anime-detail-fix` authors the hand pass at denoise 0.45 but the shared denoise binding overwrites it | low | Tracked: #254 (needs the retained graph of the proven run before choosing a fix) |
+| Catalog | `pixel-lora`'s 128 px export is a fixed square, so a non-square request stretches | low | Tracked: #255 |
 | Validator | `wan22-t2v`'s authored 81-frame default is held by the decode gate; only "Short motion study" runs | deliberate per PR #180's record | Noted, not changed |
 
 Refuted as defects (mechanism real, framing wrong): a claimed unmigrated Workspace column rename that only ever

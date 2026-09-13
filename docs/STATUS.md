@@ -77,7 +77,7 @@ character exists to decompose for (pilot ended 0 selected).
 **Next slice.** Build the addressable-figure primitive and nothing else: one endpoint plus one Asset-library action that
 takes a multi-figure image and N marked rectangles and emits per-figure child assets with lineage back to the parent,
 each routable into the verified upscale/repair presets and back into the parent via the proven Krita path. Tracked as
-issue #241. Related: #23, #24, #65, #66, #71, #72, #22, #225.
+issue #252. Related: #23, #24, #65, #66, #71, #72, #22, #225.
 
 ## G4 — A UX that reflects the real work
 
@@ -89,7 +89,7 @@ hold, timing estimates from 35 completed local samples).
 The review surface that the whole architecture funnels into has processed 3 of 111 assets. No owner-facing UX
 feedback has ever been recorded; HUMAN_TODO q-6 now asks three concrete questions.
 
-**Next slice.** Add the sixth task family ("work on one figure / build a sprite sequence") once #241 exists. Open
+**Next slice.** Add the sixth task family ("work on one figure / build a sprite sequence") once #252 exists. Open
 issues: #16, #36, #37, #38, #204.
 
 ## G5 — A UI that works and feels good
