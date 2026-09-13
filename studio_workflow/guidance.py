@@ -16,6 +16,7 @@ import re
 from urllib.parse import urlsplit
 
 from .core import canonical, decode, digest, need
+from .model_contracts import FOLDERS, MODEL_INPUT_FOLDERS
 from .preset_adapter import CONTROLS, equivalent, graph_inputs
 
 FORMAT = 'studio.settings-guidance/v1'
@@ -40,7 +41,7 @@ def file_key(value):
     need(text(value, 300) and '\\' not in value and '\x00' not in value, 'Invalid resource path')
     parts = value.split('/')
     need(len(parts) >= 2 and all(p not in ('', '.', '..') and ':' not in p for p in parts)
-         and parts[0] in set(FILE_FIELDS.values()), 'Resource must use a model-library relative path')
+         and parts[0] in FOLDERS, 'Resource must use a model-library relative path')
     return value
 
 
@@ -172,35 +173,61 @@ def project(preset, template, controls):
     return graph, effective, mapped
 
 
-def resource_context(graph, manifest):
+def resource_context(graph, manifest, preset):
+    """Deduplicate exact paths while retaining every binding and declaration.
+
+    A declared companion has unknown activity until an authored graph binding
+    supplies evidence. Merely declaring a disabled adapter cannot reactivate it.
+    """
     need(isinstance(manifest, dict) and isinstance(manifest.get('assets'), list), 'Model pin registry unavailable')
+    declarations = preset.get('model_files', [])
+    need(isinstance(declarations, list), 'model_files must be a list of relative model paths')
+    declarations = list(dict.fromkeys(file_key(value) for value in declarations))
     pins = {}
     for item in manifest['assets']:
         if isinstance(item, dict): pins.setdefault(item.get('file'), []).append(item)
-    rows = []
-    for node, data in graph.items():
-        for field, folder in FILE_FIELDS.items():
-            name = data.get('inputs', {}).get(field)
-            if not isinstance(name, str) or not name: continue
-            try: path = file_key(folder + '/' + name)
-            except ValueError: continue
+    rows = {}
+
+    def add(path, binding=None):
+        if path not in rows:
             candidates = pins.get(path, [])
             hashes = {p.get('sha256') for p in candidates if isinstance(p.get('sha256'), str)
                       and re.fullmatch(r'[a-f0-9]{64}', p['sha256'])}
             known = len(hashes) == 1 and len(candidates) == 1
+            rows[path] = {'node': None, 'input': None, 'file': path, 'active': None,
+                          'pin_sha256': next(iter(hashes)) if known else None,
+                          'identity': 'catalog_pin' if known else 'ambiguous_pin' if candidates else 'unknown_file',
+                          'bindings': [], 'sources': []}
+        row = rows[path]
+        if binding is not None:
+            row['bindings'].append(binding)
+            row['sources'].append({'kind': 'graph_input', 'node': binding['node'], 'input': binding['input']})
+            # Retain the original single-binding fields for existing readers.
+            if row['node'] is None: row.update(node=binding['node'], input=binding['input'])
+            states = [b['active'] for b in row['bindings']]
+            row['active'] = True if True in states else None if None in states else False
+        else:
+            row['sources'].append({'kind': 'catalog_declaration', 'preset_id': preset['id']})
+
+    for node, data in graph.items():
+        for field, name in data.get('inputs', {}).items():
+            folder = MODEL_INPUT_FOLDERS.get((data.get('class_type'), field), FILE_FIELDS.get(field))
+            if folder is None or not isinstance(name, str) or not name: continue
+            try: path = file_key(folder + '/' + name.replace('\\', '/'))
+            except ValueError: continue
             active = True
-            if field == 'lora_name':
+            if folder == 'loras':
                 strengths = [data['inputs'][k] for k in ('strength_model', 'strength_clip') if k in data['inputs']]
                 active = any(x != 0 for x in strengths) if data.get('class_type') in LORA_TYPES and strengths and all(numeric(x) for x in strengths) else None
-            rows.append({'node': node, 'input': field, 'file': path, 'active': active,
-                         'pin_sha256': next(iter(hashes)) if known else None,
-                         'identity': 'catalog_pin' if known else 'ambiguous_pin' if candidates else 'unknown_file'})
-    return rows
+            add(path, {'node': node, 'input': field, 'active': active})
+    for path in declarations: add(path)
+    return list(rows.values())
 
 
 def targets(target, graph, mapped, resources):
     pairs = mapped.get(target['control'], []) if 'control' in target else [
-        [r['node'], target['input']] for r in resources if r['file'] == target['resource'] and r['active'] is not False]
+        [b['node'], target['input']] for r in resources if r['file'] == target['resource']
+        for b in r['bindings'] if b['active'] is not False]
     if not pairs: return []
     result = []
     for node, field in pairs:
@@ -214,7 +241,7 @@ def targets(target, graph, mapped, resources):
 
 def explain(preset, template, controls, kb, manifest, today=None):
     graph, effective, mapped = project(preset, template, controls)
-    resources = resource_context(graph, manifest); by_file = {}
+    resources = resource_context(graph, manifest, preset); by_file = {}
     for row in resources: by_file.setdefault(row['file'], []).append(row)
     guidance = kb.get('guidance', {}) if isinstance(kb, dict) else {}
     need(isinstance(guidance, dict) and guidance.get('version', 1) == 1
@@ -245,7 +272,7 @@ def explain(preset, template, controls, kb, manifest, today=None):
                 ok = None if current is None else current == (condition['state'] == 'active')
                 why = condition['resource'] + ' must be ' + condition['state']
             elif 'adapters' in condition:
-                rows = [r for r in resources if r['input'] == 'lora_name']
+                rows = [r for r in resources if r['file'].startswith('loras/')]
                 ok = False if any(r['active'] is True for r in rows) else None if any(r['active'] is None for r in rows) else True
                 why = 'every authored adapter must be inactive'
             else:

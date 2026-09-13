@@ -1,5 +1,8 @@
 # Architecture: one workflow, three human views, one execution boundary
 
+> Historical foundation record. See [README.md](README.md) and [ROADMAP.md](ROADMAP.md)
+> for the reconciled implementation status as of 13 September 2026.
+
 Status: initial authoring/guide/ticket slice implemented; full target architecture below is a proposal with release gates. Baseline inspected: `064d6026f54b77f19fb701cee5409d2a316c993f`.
 
 ## 1. Product model

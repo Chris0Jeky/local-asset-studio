@@ -75,7 +75,7 @@ class Handler(fixture.Handler):
             return self.json(receipt)
         return super().do_POST()
 
-async def inert_page(page, port):
+async def inert_page(page, port, saved_session=None):
     """Actual HTML/scripts/styles with explicit test-only storage and API transport."""
     async def transport(path,options):
         if not isinstance(path,str) or not path.startswith('/api/') or '..' in path:raise ValueError('Test transport only serves fixture APIs')
@@ -89,8 +89,9 @@ async def inert_page(page, port):
     await page.expose_function('__qaTransport',transport)
     markup=(STATIC/'index.html').read_text(encoding='utf-8')
     # No navigation-policy bypass. Native storage/origin, media loading and navigation are untested here.
-    boot='''<script>class QAStorage{constructor(){this.data=new Map()}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
-Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage()});
+    session=json.dumps({str(key):str(value) for key,value in (saved_session or {}).items()}).replace('<','\\u003c')
+    boot='''<script>class QAStorage{constructor(initial={}){this.data=new Map(Object.entries(initial))}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
+Object.defineProperty(window,'localStorage',{value:new QAStorage()});Object.defineProperty(window,'sessionStorage',{value:new QAStorage('''+session+''')});
 window.fetch=async(path,options={})=>{const r=await __qaTransport(path,{method:options.method,body:options.body,headers:options.headers});return new Response(r.body,{status:r.status,headers:{'Content-Type':'application/json'}})};</script>'''
     markup=markup.replace('<head>','<head>'+boot)
     def script(match):
@@ -191,6 +192,10 @@ async def run(args):
             status=page.locator('#assetDetailStatus')
             await check('ASSET-07','Save failure is visible inside the open dialog',await status.count()>0 and 'unavailable' in (await status.inner_text()).lower() and await page.input_value('#assetNotes')=='Retain this after error')
             state.fail_write=False
+            # A 503 has unknown commit semantics. Resolve this fixture command
+            # explicitly before the independent snapshot scenario; closing and
+            # reopening must retain it rather than silently replacing its ID.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();state.gate.clear();await page.fill('#assetNotes','First snapshot')
             count=len(state.writes);await page.click('#saveAssetDetails')
             await settle();await page.fill('#assetNotes','Newer edits during save')
@@ -234,6 +239,9 @@ async def run(args):
             await open_asset();state.fail_write=True;await page.fill('#assetNotes','Recover this favorite error');await page.click('#assetFavorite');await settle()
             await check('ASSET-25','Favorite failure is visible, retains edits and releases controls',await page.input_value('#assetNotes')=='Recover this favorite error' and 'unavailable' in (await status.inner_text()).lower() and not await page.locator('#saveAssetDetails').is_disabled())
             state.fail_write=False
+            # This failed favorite is likewise an unconfirmed command. Resolve it
+            # explicitly so the keyboard-save and layout scenarios begin clean.
+            await page.click('[data-asset-save-retry]');await settle()
             await open_asset();await page.fill('#assetNotes','A draft at narrow width')
             for width in [390,720]:
                 await page.set_viewport_size({'width':width,'height':1100});await settle()

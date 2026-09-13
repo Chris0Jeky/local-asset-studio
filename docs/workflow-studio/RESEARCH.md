@@ -1,5 +1,8 @@
 # Research and repo findings
 
+> Historical foundation record. See [README.md](README.md) and [ROADMAP.md](ROADMAP.md)
+> for the reconciled implementation status as of 13 September 2026.
+
 Reviewed 12 September 2026. External sources below are primary Comfy documentation, not proof of the user's installed version. No model/package install, GPU benchmark, native frontend audit or generation was performed in this pass.
 
 ## Comfy integration findings

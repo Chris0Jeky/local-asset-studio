@@ -36,3 +36,7 @@ class GuideManifestTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'),'Node is required for browser rule contracts')
     def test_node_evidence_contracts(self):
         subprocess.run(['node','--test',str(ROOT/'tests/studio_guide_state.cjs')],cwd=ROOT,check=True,capture_output=True,text=True,timeout=30)
+
+    @unittest.skipUnless(shutil.which('node'),'Node is required for coach context contracts')
+    def test_node_context_contracts(self):
+        subprocess.run(['node','--test',str(ROOT/'tests/studio_guide_context.cjs')],cwd=ROOT,check=True,capture_output=True,text=True,timeout=30)

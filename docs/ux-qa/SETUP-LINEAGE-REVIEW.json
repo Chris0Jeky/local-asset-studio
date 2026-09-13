@@ -1,0 +1,33 @@
+{
+  "schema": "studio.ux-qa-review/v1",
+  "date": "2026-09-13",
+  "base_commit": "06bd93aed2f019cb978eb5795e9f116cfb7ff749",
+  "reviewed_prior_head": "d85d7f9478cfdace33952b444e2b75e9146b2d75",
+  "finding": "PR #202 discussion_r4000399258: selecting a replacement local file releases its old parent but does not stage an upload; Save omitted the selection while reporting success.",
+  "reproduction": "The new real-script regression failed: 1 setup POST where 0 was expected.",
+  "resolution": "Reject selected but unstaged first/last-frame inputs. Preserve local selection and setup name; direct the user to import into Asset library and then Pull from library. No implicit upload or generation.",
+  "browser": {
+    "mode": "inert: injected browser storage/API transport",
+    "scope": "Actual Studio shell and real temporary SQLite setup storage; synthetic reference staging and unrelated services",
+    "pass": 21,
+    "fail": 0,
+    "errors": [],
+    "added_checks": ["SETUP-18", "SETUP-19", "SETUP-20", "SETUP-21"]
+  },
+  "full_offline_suite": {
+    "run": 1463,
+    "passed": 1448,
+    "skipped": 15,
+    "failures": 0,
+    "seconds": 174.773,
+    "exit_code": 0,
+    "warnings": ["Existing Pillow deprecation", "Existing exit-time socket ResourceWarning"]
+  },
+  "code_sha256": {
+    "app/static/app.js": "eb31f9aea1cb45d0a5cbb7af84bd47bf48359a77b8f7d11826e76116a1a63912",
+    "tests/frontend_handoffs.cjs": "5f882cd5570148eef79ea899420456b615827acb067875ef84933d980e6c1fb1",
+    "tests/setup_lineage_browser.py": "0f0e0bba6c311ad9d864f608151a1cefca094d6043f8729c6f65ae694e28556a"
+  },
+  "native_ci": "This is the local review checkpoint. Check hosted CI at the final PR head for native HTTP evidence; the prior 17-check native result does not establish the four added checks.",
+  "limitations": ["No automatic staging of local files during Save", "No arbitrary imported setup validation or historical lineage reconstruction", "No owner-PC generation, real Comfy upload or artistic acceptance"]
+}
