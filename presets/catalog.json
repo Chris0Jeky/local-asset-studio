@@ -52,7 +52,9 @@
           ]
         ]
       },
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 20.173 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/20 - SDXL Pixel Art LoRA and 128px Export.json"
     },
     {
       "id": "pixel-concept",
@@ -94,7 +96,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 14.057 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/12 - SDXL Pixel Prop Concept.json"
     },
     {
       "id": "realvis",
@@ -136,7 +140,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 23.914 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/09 - RealVis Product Photography.json"
     },
     {
       "id": "photo-banner",
@@ -178,7 +184,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 26.595 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/10 - RealVis Website Banner.json"
     },
     {
       "id": "abstract",
@@ -220,7 +228,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 18.69 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/11 - SDXL Abstract Website Art.json"
     },
     {
       "id": "stylized-prop",
@@ -262,7 +272,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 15.126 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/13 - SDXL Stylized Inventory Prop.json"
     },
     {
       "id": "flux",
@@ -270,7 +282,7 @@
       "category": "General generation",
       "description": "Fast four-step generation with plain-language prompts; first load takes longer.",
       "graph": "workflows/api/flux-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "4",
@@ -311,7 +323,8 @@
         ]
       },
       "dimension_multiple": 16,
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Set verified: false on 13 September 2026: no prompt ID, job, curated record or batch row exists for this preset in the repository. The graph is schema-checked only; re-prove it with one recorded, inspected run before flagging it verified."
     },
     {
       "id": "flux-edit",
@@ -364,7 +377,8 @@
         ]
       },
       "dimension_multiple": 16,
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 12 September 2026 in the character-reference pilot: six completed jobs (16.1-44.2 s, e.g. job c3aae5c1-2c90-5e72-90fc-01af730b2c01) recorded in experiments/curated/character-reference-pilot/ledger.json; the pilot rejected 10 of 11 images on identity/costume fidelity, so this is execution evidence only."
     },
     {
       "id": "gentle-variation",
@@ -402,7 +416,9 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 5.942 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/17 - SDXL Gentle Reference Variation.json"
     },
     {
       "id": "sdxl-variation",
@@ -410,7 +426,7 @@
       "category": "Image editing",
       "description": "Reinterpret a reference with a different prompt. More denoise means more change.",
       "graph": "workflows/api/sdxl-variation-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -440,7 +456,8 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Set verified: false on 13 September 2026: no prompt ID, job, curated record or batch row exists for this preset in the repository. The graph is schema-checked only; re-prove it with one recorded, inspected run before flagging it verified."
     },
     {
       "id": "qwen",
@@ -486,7 +503,9 @@
         "11",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 725.993 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/06 - Qwen Edit 20B Q4.json"
     },
     {
       "id": "qwen-quality",
@@ -532,7 +551,8 @@
         "11",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/16 - Qwen Slow Quality Edit.json"
     },
     {
       "id": "qwen-character",
@@ -578,7 +598,8 @@
         "11",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 567.223 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance."
     },
     {
       "id": "wai",
@@ -761,7 +782,9 @@
         "9",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 21.649 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/19 - WAI v17 Pose Control.json"
     },
     {
       "id": "anime",
@@ -944,7 +967,9 @@
         "9",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 19.031 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/08 - Animagine Pose Control.json"
     },
     {
       "id": "pony",
@@ -1256,7 +1281,9 @@
         "8",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 275.405 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "visual": "workflows/comfyui/05 - Z-Image Turbo.json"
     },
     {
       "id": "sdxl",
@@ -1264,7 +1291,7 @@
       "category": "General generation",
       "description": "Flexible baseline and a good place to learn steps, CFG, seeds, and prompt phrasing.",
       "graph": "workflows/api/sdxl-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -1298,7 +1325,8 @@
         "5",
         "denoise"
       ],
-      "modality": "image"
+      "modality": "image",
+      "execution_note": "Set verified: false on 13 September 2026: no prompt ID, job, curated record or batch row exists for this preset in the repository. The graph is schema-checked only; re-prove it with one recorded, inspected run before flagging it verified."
     },
     {
       "id": "anime-wai-quality",
@@ -1610,7 +1638,8 @@
         "4",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/23 - Anime Refine 1.5x.json"
     },
     {
       "id": "anime-detail-fix",
@@ -1832,7 +1861,8 @@
       ],
       "commercial_note": "Official Real-ESRGAN release. Check source image and applicable model terms.",
       "modality": "image",
-      "execution_notes": "Saved Anima-to-ESRGAN handoff completed as prompt 60949ec3-2ec2-471f-88cb-73fa78a5491c on 11 September 2026; source lineage retained. Art quality remains unaccepted."
+      "execution_notes": "Saved Anima-to-ESRGAN handoff completed as prompt 60949ec3-2ec2-471f-88cb-73fa78a5491c on 11 September 2026; source lineage retained. Art quality remains unaccepted.",
+      "visual": "workflows/comfyui/25 - Anime ESRGAN 2x.json"
     },
     {
       "id": "anime-face",
@@ -1870,7 +1900,8 @@
         "4",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/26 - WAI Auto Face Detail.json"
     },
     {
       "id": "anime-hand",
@@ -1908,7 +1939,8 @@
         "4",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/27 - WAI Auto Hand Detail.json"
     },
     {
       "id": "animagine-face",
@@ -1946,7 +1978,8 @@
         "4",
         "image"
       ],
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/28 - Animagine Auto Face Detail.json"
     },
     {
       "id": "anime-complete",
@@ -1996,7 +2029,8 @@
           ]
         ]
       },
-      "modality": "image"
+      "modality": "image",
+      "visual": "workflows/comfyui/29 - WAI Portrait Face and ESRGAN.json"
     },
     {
       "id": "lineani-portrait",
@@ -2917,7 +2951,7 @@
       "graph": "workflows/api/hunyuan-draft-api.json",
       "visual": "workflows/comfyui/40 - Hunyuan3D 2.1 - Draft.json",
       "verified": true,
-      "commercial_note": "Review the linked model terms for your intended use.",
+      "commercial_note": "Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26; docs/game-assets/LOCAL-RECONCILIATION.md). Execution here is not licence clearance; the owner's decision is recorded in HUMAN_TODO.md, never inferred.",
       "reference": [
         "2",
         "image"
@@ -2961,7 +2995,7 @@
       "graph": "workflows/api/hunyuan-detail-api.json",
       "visual": "workflows/comfyui/41 - Hunyuan3D 2.1 - Detail.json",
       "verified": false,
-      "commercial_note": "Review the linked model terms for your intended use.",
+      "commercial_note": "Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26; docs/game-assets/LOCAL-RECONCILIATION.md). Execution here is not licence clearance; the owner's decision is recorded in HUMAN_TODO.md, never inferred.",
       "reference": [
         "2",
         "image"
@@ -3783,8 +3817,7 @@
             "steps": 20,
             "cfg": 5.0,
             "sampler": "uni_pc",
-            "scheduler": "simple",
-            "denoise": 1.0
+            "scheduler": "simple"
           },
           "description": "Short, source-aware smoke test. 81 frames are intentionally not part of the default validation path."
         },
@@ -3798,8 +3831,7 @@
             "steps": 20,
             "cfg": 5.0,
             "sampler": "uni_pc",
-            "scheduler": "simple",
-            "denoise": 1.0
+            "scheduler": "simple"
           },
           "description": "The existing short historical shape, with portrait orientation preserved for portrait sources."
         },
@@ -3814,8 +3846,7 @@
             "steps": 30,
             "cfg": 5.0,
             "sampler": "uni_pc",
-            "scheduler": "simple",
-            "denoise": 1.0
+            "scheduler": "simple"
           },
           "description": "Higher-cost exploratory mode. 81 frames is opt-in and still requires visual review; it is not an acceptance claim.",
           "warning": "Materially higher compute than the quick diagnostic mode; upstream recommends 1280x704 rather than this portrait variant."
@@ -3834,8 +3865,7 @@
             "steps": 30,
             "cfg": 5.0,
             "sampler": "uni_pc",
-            "scheduler": "simple",
-            "denoise": 1.0
+            "scheduler": "simple"
           },
           "description": "Studio MP4 adapter with the official example's model, 1280x704 quick-test shape, 41 frames and 30 steps. Use the official fennec input for the installation control case.",
           "warning": "The upstream visual JSON randomizes its seed; this Studio control case pins the seed shown in that file for reproducibility.",

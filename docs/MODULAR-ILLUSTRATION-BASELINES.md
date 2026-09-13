@@ -1,15 +1,15 @@
 # Modular illustration baselines
 
-This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: true` is used only for the Anima preset after the bounded inspected execution recorded in [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md). A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
+This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: true` now covers four of the five: the Anima preset after the bounded inspected execution recorded in [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md), and the CSTati v3, YumeFlux ILv1 and JANIMA v1 base recipes after one recorded run each on 13 September 2026 (job and prompt IDs in [the goal-baseline curation](../experiments/curated/goal-baselines-20260913/README.md)). AniFox v2 stays unverified because its checkpoint download is incomplete. A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
 
 ## Executed boundary — 13 September 2026
 
 The Anima v1 graph is valid against the live ComfyUI schema and five saved Workflow Studio
-documents exist for the baseline routes. The Anima document compiled successfully. The four
-other checkpoint documents (CSTati v3, YumeFlux ILv1, AniFox v2 and JANIMA v1) remain uncompiled
-because their checkpoint or diffusion-model files are not downloaded locally. Six of the ten new
-resource files have verified receipts; source pins, local installation and licence terms remain
-separate facts.
+documents exist for the baseline routes. The Anima document compiled successfully. That was the state on the morning of
+13 September; by the evening the CSTati v3, YumeFlux ILv1 and JANIMA v1 checkpoints were installed and each
+base recipe had one recorded run, and nine of the ten new resource files had verified receipts. AniFox v2 is
+the single remaining download (its transfer is parked; see `CURRENT_STATE.md`). Source pins, local
+installation and licence terms remain separate facts.
 
 The actual saved-document walkthrough is: **Guided workflows → Workflow builder → Refresh saved →
 choose Baseline - Anima v1 → Open current → Load / refresh installed nodes → Steps view**. Wait
@@ -34,7 +34,7 @@ field with Tab before checking or saving. No generation was submitted by this wa
 
 ## Where resources belong
 
-The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations. Six of the ten new files currently have verified receipts; the four checkpoint/diffusion-model downloads above remain missing.
+The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations. Nine of the ten new files have verified receipts (13 September 2026, evening); only the AniFox v2 checkpoint remains missing.
 
 | Folder | Resources | Why |
 | --- | --- | --- |
@@ -94,4 +94,4 @@ In Workflow Studio, open **Guided workflows → Workflow builder**, choose **Sta
 
 ## What remains before broader execution
 
-Exact source pins are recorded; six of ten new resource files have verified receipts and the four other checkpoint/diffusion-model downloads remain pending. The selected Anima preset has been inspected against the live node schema and executed only at the bounded base and first-style controls recorded in [the execution note](ANIMA-BASELINE-EXECUTION-2026-09-13.md). A successful generation establishes only that exact graph/control combination. A useful reliability study next holds the graph and prompt fixed across several seeds and logs completion, runtime failures and visual defects separately. The two earlier lanternkeeper demonstrations remain experiments at the owner's request.
+Exact source pins are recorded; nine of ten new resource files have verified receipts and only the AniFox v2 checkpoint remains pending. The Anima preset has been inspected against the live node schema and executed at the bounded base and first-style controls recorded in [the execution note](ANIMA-BASELINE-EXECUTION-2026-09-13.md); CSTati v3, YumeFlux ILv1 and JANIMA v1 each have one recorded base run with unresolved hand detail and leg/foot overlap. A successful generation establishes only that exact graph/control combination. A useful reliability study next holds the graph and prompt fixed across several seeds and logs completion, runtime failures and visual defects separately. The two earlier lanternkeeper demonstrations remain experiments at the owner's request.
