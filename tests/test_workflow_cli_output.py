@@ -112,7 +112,8 @@ class OutputTests(unittest.TestCase):
         self.assertEqual(self.studio.calls, 1)
         self.assertTrue(result['response_received'])
         self.assertIn('job', result['result'])
-        self.assertEqual(len(output.read_bytes()), 12)
+        expected_prefix = json.dumps(result['result'], ensure_ascii=False, indent=2, allow_nan=False)[:12]
+        self.assertEqual(output.read_text(encoding='utf-8'), expected_prefix)
 
     def test_successful_output_and_stdout_preserve_wide_integers(self):
         ticket = self.ticket(); output = Path(self.temp.name) / 'result.json'; wide = 2**63 - 1
