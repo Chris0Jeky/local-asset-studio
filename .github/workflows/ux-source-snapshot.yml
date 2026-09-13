@@ -1,0 +1,28 @@
+name: UX source snapshot
+on:
+  push:
+    branches: ['codex/ux-snapshot-2215']
+    paths: ['.github/workflows/ux-source-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive tracked source and commit identity only
+        run: |
+          mkdir -p /tmp/ux-source
+          git branch ux-snapshot HEAD
+          git bundle create /tmp/ux-source/source.bundle ux-snapshot
+          sha256sum /tmp/ux-source/source.bundle > /tmp/ux-source/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-source-pinned
+          path: /tmp/ux-source/
+          retention-days: 1
