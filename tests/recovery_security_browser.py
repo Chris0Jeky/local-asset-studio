@@ -68,13 +68,16 @@ def run(output):
                 response=page.goto(origin);assert response.headers['content-security-policy']=="frame-ancestors 'none'"
                 page.wait_for_function('!!selected && typeof renderProduction === "function"')
                 page.wait_for_function('!document.querySelector("#workerFailure").hidden')
+                assert page.locator('#workerFailure').is_visible(), 'Storage diagnostics must be visible in the active workspace'
                 assert 'not saved' in page.locator('#workerFailure').inner_text()
                 page.evaluate("showView('production');productionId='"+IDENTIFIER+"';renderProduction()")
                 page.wait_for_selector('[data-project-action="resume"]')
+                assert page.locator('#workerFailure').is_visible(), 'Changing views must not hide an unresolved worker diagnostic'
                 button=page.locator('[data-project-action="resume"]')
                 assert button.inner_text()=='Reconcile outcome only' and button.is_enabled()
                 for width in (1440,390):
                     page.set_viewport_size({'width':width,'height':1000})
+                    assert page.locator('#workerFailure').is_visible()
                     page.screenshot(path=str(output/f'recovery-{width}.png'),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Horizontal overflow'
                 button.focus();button.press('Enter')
