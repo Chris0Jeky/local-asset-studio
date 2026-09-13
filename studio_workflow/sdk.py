@@ -1,0 +1,40 @@
+"""Small typed authoring SDK over the same HTTP commands used by the Studio UI."""
+from __future__ import annotations
+from .client import Client, ClientError
+from .commands import identifier
+
+PREFIX = '/api/workflow-studio/documents'
+
+
+class WorkflowClient(Client):
+    def documents(self) -> dict:
+        return self.request(PREFIX)
+
+    def get_document(self, document_id: str, revision: int | None = None) -> dict:
+        path = PREFIX + '/' + identifier(document_id)
+        if revision is not None:
+            if type(revision) is not int or revision < 1: raise ValueError('Positive revision required')
+            path += '/revisions/' + str(revision)
+        return self.request(path)
+
+    def create_document(self, document: dict, *, request_id: str) -> dict:
+        return self.request(PREFIX, {'request_id': identifier(request_id), 'document': document})
+
+    def apply(self, document_id: str, commands: list[dict], *, expected_revision: int, request_id: str) -> dict:
+        return self.request(PREFIX + '/' + identifier(document_id) + '/commands',
+                            {'request_id': identifier(request_id), 'expected_revision': expected_revision, 'commands': commands})
+
+    def preview(self, document_id: str, commands: list[dict], *, expected_revision: int) -> dict:
+        return self.request(PREFIX + '/' + identifier(document_id) + '/preview',
+                            {'expected_revision': expected_revision, 'commands': commands})
+
+    def history(self, document_id: str) -> dict:
+        return self.request(PREFIX + '/' + identifier(document_id) + '/history')
+
+    def restore(self, document_id: str, revision: int, *, expected_revision: int, request_id: str) -> dict:
+        return self.request(PREFIX + '/' + identifier(document_id) + '/restore',
+                            {'request_id': identifier(request_id), 'expected_revision': expected_revision, 'revision': revision})
+
+    def fork(self, document_id: str, revision: int, name: str, *, request_id: str) -> dict:
+        return self.request(PREFIX + '/' + identifier(document_id) + '/fork',
+                            {'request_id': identifier(request_id), 'revision': revision, 'name': name})

@@ -4,6 +4,7 @@ from urllib.error import URLError
 from .core import catalog, new_document, compile_document, document, decode, need
 from .guides import guides
 from .execution import prepare_ticket, run_ticket
+from .document_http import extend_handler as extend_documents
 
 PREFIX = '/api/workflow-studio'
 
@@ -11,7 +12,8 @@ PREFIX = '/api/workflow-studio'
 def capabilities():
     return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True,
             'registered_recipe_tickets': True, 'arbitrary_graph_execution': False,
-            'native_visual_roundtrip': False, 'server_saved_workflow_documents': False,
+            'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
+            'shared_document_commands': True, 'agent_sdk': True, 'mcp': False,
             'custom_frontend_widgets': False, 'shared_worker': True,
             'limits': {'document_bytes': 1048576, 'nodes': 256, 'graph_invocations_per_ticket': 1},
             'generation_submitted': False}
@@ -93,4 +95,4 @@ def extend_handler(base):
                 if not is_run: result['generation_submitted'] = False
                 else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
                 return self._json(400, result)
-    return WorkflowHandler
+    return extend_documents(WorkflowHandler)
