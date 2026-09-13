@@ -59,6 +59,33 @@ def _received_encoding_diagnostic(command, received, exc):
             'recovery': 'The Studio response was received once but contains non-finite values. Preserve received_result.text and the original request or ticket ID; do not repeat the operation. No output file was created.'}
 
 
+def _wait_for_job(client, path, seconds, interval):
+    """Bound polling starts and each socket wait; this never cancels remote work."""
+    deadline = time.monotonic() + seconds
+    original_timeout, last = client.timeout, None
+    def expired():
+        return {'status': 'observation_timeout', 'job': last,
+                'message': 'Observation stopped; the job was not cancelled.'}
+    try:
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0: return expired()
+            client.timeout = min(original_timeout, remaining)
+            try:
+                last = client.request(path)
+            except (TimeoutError, URLError) as exc:
+                timed_out = isinstance(exc, TimeoutError) or isinstance(getattr(exc, 'reason', None), TimeoutError)
+                if timed_out and time.monotonic() >= deadline: return expired()
+                raise
+            if last.get('status') not in ('queued', 'waiting', 'submitting', 'running'):
+                return last
+            remaining = deadline - time.monotonic()
+            if remaining <= 0: return expired()
+            time.sleep(min(interval, remaining))
+    finally:
+        client.timeout = original_timeout
+
+
 def main(argv=None):
     args = parser().parse_args(argv)
     command = args.command
@@ -93,15 +120,9 @@ def main(argv=None):
             if command == 'wait':
                 need(math.isfinite(args.seconds) and 0 < args.seconds <= 86400, 'Wait budget must be 0–86400 seconds')
                 need(math.isfinite(args.interval) and 0.1 <= args.interval <= 60, 'Polling interval must be 0.1–60 seconds')
-                deadline = time.monotonic() + args.seconds
-            while True:
+                result = _wait_for_job(client, path, args.seconds, args.interval)
+            else:
                 result = client.request(path)
-                if command == 'status' or result.get('status') not in ('queued', 'waiting', 'submitting', 'running'):
-                    break
-                if time.monotonic() >= deadline:
-                    result = {'status': 'observation_timeout', 'job': result, 'message': 'Observation stopped; the job was not cancelled.'}
-                    break
-                time.sleep(min(args.interval, max(0, deadline - time.monotonic())))
         try: encoded = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
         except ValueError as exc:
             _emit_ascii_diagnostic(_received_encoding_diagnostic(command, result, exc))
