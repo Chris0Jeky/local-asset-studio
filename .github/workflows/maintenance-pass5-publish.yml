@@ -1,0 +1,83 @@
+name: Publish maintenance pass 5
+on:
+  push:
+    branches: [codex/maintenance-pass5-retry-20260914]
+    paths: [.github/workflows/maintenance-pass5-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 2f91421ecbe0e014cceef1074f4d79e4c57051df
+      - name: Verify exact tested source before creating feature branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYCODE'
+          import base64, hashlib, json, os, pathlib, subprocess, zlib
+          repo='Chris0Jeky/local-asset-studio'
+          base='2f91421ecbe0e014cceef1074f4d79e4c57051df'
+          chunks=['78592c3c64af1a77ec1fb8ad1778e1ac3e327c34','49673d2e0477b0991b0aa90ff7fa38cbc070ca14','02eb7c3bf33a10e57db1eed17a6ac57f4056fb09','13cfcbc9521f4668186048c8e4fc0e7f85f657c9','a2302c59cd62f440e78084f1e5b895830dd20467']
+          payload=b''
+          for sha in chunks:
+              obj=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/git/blobs/{sha}']))
+              data=base64.b64decode(''.join(obj['content'].split()),validate=True)
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+              payload+=data
+          assert hashlib.sha256(payload).hexdigest()=='917749250b3b35b03e227467b4882fb898ec2169427fda93eb445b27dc47ebe3'
+          raw=zlib.decompress(base64.b64decode(payload,validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='8de6bf5345974917b8490bf42cd3465b127275c445a6d8c53070777ab2c78e64'
+          specs=json.loads(raw)
+          assert [s['branch'] for s in specs]==['codex/bounded-workflow-inputs','codex/workflow-observation-deadline','codex/exact-atlas-extrusion']
+          def git(*args):return subprocess.check_output(['git',*args]).decode().strip()
+          receipts=[]
+          for spec in specs:
+              assert spec['base']==base
+              assert not git('ls-remote','--heads','origin','refs/heads/'+spec['branch']), 'Existing branch; refusing overwrite'
+              git('checkout','--detach',base)
+              assert git('rev-parse','HEAD^{tree}')=='25da90c8445bc5e94cc73fd814964563c256f102'
+              patch=spec['patch'].encode()
+              assert hashlib.sha256(patch).hexdigest()==spec['patch_sha256']
+              subprocess.run(['git','apply','--index','--whitespace=error'],input=patch,check=True)
+              assert git('write-tree')==spec['tree'], 'Source mismatch'
+              assert not any(p.startswith('.github/') for p in git('diff','--cached','--name-only').splitlines())
+              subprocess.run(['git','diff','--cached','--check'],check=True)
+              git('-c','user.name=Studio maintenance','-c','user.email=studio-maintenance@users.noreply.github.com','commit','-m',spec['message'])
+              assert git('rev-parse','HEAD^{tree}')==spec['tree']
+              git('push','origin','HEAD:refs/heads/'+spec['branch'])
+              receipts.append({'branch':spec['branch'],'head':git('rev-parse','HEAD'),'tree':spec['tree'],'final_tree':spec['final_tree']})
+          path=pathlib.Path(os.environ['RUNNER_TEMP'])/'publication.json'
+          path.write_text(json.dumps(receipts,indent=2),encoding='utf-8')
+          print(path.read_text())
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass5-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 1
+  integration-source:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b90f8dbac2e70962d3db9e067242208864fdd51f
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned intervening changes
+        run: |
+          git diff --binary 2f91421ecbe0e014cceef1074f4d79e4c57051df HEAD > "$RUNNER_TEMP/main-delta.patch"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass5-main-delta
+          path: |
+            ${{ runner.temp }}/main-delta.patch
+            ${{ runner.temp }}/identity.txt
+          retention-days: 1
