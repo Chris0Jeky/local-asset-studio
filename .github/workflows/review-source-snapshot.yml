@@ -1,0 +1,28 @@
+name: Workflow review source snapshot
+on:
+  push:
+    branches: [codex/workflow-review-snapshot]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive tracked source only
+        run: |
+          python - <<'PY'
+          import pathlib, subprocess, zipfile
+          files = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          with zipfile.ZipFile('review-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for name in files:
+                  if name and pathlib.Path(name).is_file(): archive.write(name, name)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workflow-review-source
+          path: review-source.zip
+          retention-days: 1
