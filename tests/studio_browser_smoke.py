@@ -39,7 +39,8 @@ for i, (title, file, review) in enumerate([
                        url='/'+file, created_at=1789228800-i*100, bytes=1024, sha256='a'*64, source={'seed':42},
                        preset_name='Synthetic UX fixture', job_id=None, notes='', lineage=[], collections=[],
                        favorite=False, tags=['fixture'], trashed_at=None))
-JOBS = [dict(id='fixture-job',preset_name='Lantern study · synthetic fixture',preset_id='anima-portrait',status='completed',message='Completed fixture, not a model run',controls={'positive':'Explore one form, then continue with a variation.','seed':42},outputs=[{'filename':'lantern.png','asset_id':'asset-0','media_type':'image','seed':42}])]
+JOBS = [dict(id='fixture-job',preset_name='Lantern study · synthetic fixture',preset_id='anima-portrait',status='completed',message='Completed fixture, not a model run',controls={'positive':'Explore one form, then continue with a variation.','seed':42},outputs=[{'filename':'lantern.png','asset_id':'asset-0','media_type':'image','seed':42}]),
+        dict(id='allocation-failure',preset_name='Krea 2 Anime Atelier',preset_id='krea-anime-atelier',status='failed',message='Generation failed: ComfyUI reported an execution error: KSampler: bad allocation',failure={'kind':'memory_allocation','title':'Memory allocation failed','summary':'ComfyUI could not allocate memory while running the workflow. This usually indicates GPU/VRAM pressure or a backend allocation problem, not an invalid prompt.','action':'Release or restart ComfyUI memory, then retry with a smaller resolution, batch, or fewer active LoRAs. The original prompt was not retried automatically.','node_type':'KSampler','exception_type':'RuntimeError','detail':'bad allocation'},controls={},prompt_ids=['fixture-prompt'],submissions=[{'prompt_id':'fixture-prompt','status':'failed'}],outputs=[])]
 PLANS = [dict(id='a'*32, name='Lantern study · choose the finish', kind='comparison', state={'status':'awaiting_review','message':'Synthetic review fixture'}, stages=[], budget={'allowance':4,'reserved':3}, axis='seed', values=[]),
          dict(id='b'*32, name='Motion study · prepared, not started', kind='comparison', state={'status':'planned','message':'Synthetic planned fixture'}, stages=[], budget={'allowance':4,'reserved':0}, axis='seed', values=[])]
 
@@ -82,6 +83,7 @@ class Handler(BaseHTTPRequestHandler):
         data=json.loads(raw) if self.headers.get('Content-Type')=='application/json' else {}
         POSTS.append({'path':self.path,'data':data})
         if self.path=='/api/assets/reference':return self.json({'file':'fixture.png','sha256':'a'*64,'width':512,'height':768})
+        if self.path=='/api/estimate':return self.json({'available':True,'estimate_seconds':42,'range_seconds':[30,55],'confidence':'medium','sample_count':4,'matched_samples':3,'basis':['3 completed runs of this workflow','scaled for 832×1216, 15 steps, 1 active LoRA, 1 output'],'features':{'workflow':'Synthetic workflow','model':['fixture-model'],'loras':['fixture-lora'],'resolution':[832,1216],'steps':15,'frames':1,'node_count':8,'references':1,'modality':'image'}})
         if self.path=='/api/references/check':return self.json([{'file':f,'available':f!='missing.png','sha256':'a'*64} for f in data['files']])
         if self.path=='/api/prompt/compile':
             return self.json({'state':'review_required','fields':{'positive':'A lantern in a quiet forest','negative':'blur'},'profile':{'id':data['profile_id']},'intent':data['intent'],'errors':[],'diagnostics':[],'coverage':[],'profile_sha256':'a'*64})
@@ -107,9 +109,16 @@ def run(screenshots):
             page=context.new_page(); errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             page.goto(origin);page.wait_for_selector('#uxRecent .ux-recent-card');page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
             check(page.locator('#homeView').is_visible(),'overview is default')
-            check(not POSTS,'startup has zero POST mutations')
+            check(not [post for post in POSTS if post['path']=='/api/jobs'],'startup has zero generation mutations')
             check(not errors,'no browser boot exceptions: '+str(errors))
             page.evaluate("showView('create')")
+            page.wait_for_selector('#timeEstimate:not([hidden])')
+            check('42' in page.locator('#estimateValue').inner_text(),'interactive time estimate is shown')
+            before_estimates=len([post for post in POSTS if post['path']=='/api/estimate']);page.fill('#positive','A timing estimate interaction');page.wait_for_timeout(350)
+            check(len([post for post in POSTS if post['path']=='/api/estimate'])>before_estimates,'time estimate refreshes after a control change')
+            failed=page.locator('#gallery .jobStatus').filter(has_text='Memory allocation failed')
+            check(failed.count()==1,'failed allocation shows a clear diagnosis panel')
+            check('smaller resolution' in failed.inner_text() and 'bad allocation' in failed.inner_text(),'failure panel keeps the next action and engine detail')
             page.evaluate("""jobs.push({id:'trackable-job',preset_name:'Interrupted fixture',status:'uncertain',message:'Original uncertain outcome is retained.',controls:{},prompt_ids:['known-fixture'],submissions:[{prompt_id:'known-fixture',status:'observing'}],outputs:[],can_stop_tracking:true});renderJobs()""")
             check(page.locator('[data-stop-tracking-reason="trackable-job"]').count()==1,'uncertain known prompt exposes an explicit stop reason')
             before_posts=len(POSTS);page.click('.stopTracking');check(len(POSTS)==before_posts,'blank stop reason does not mutate')
@@ -164,7 +173,7 @@ def run(screenshots):
             page.fill('#positive','Keep this tab draft');page.wait_for_timeout(400)
             other=context.new_page();other.goto(origin);other.wait_for_function('!!selected');other.evaluate("localStorage.setItem('studio-draft-v1:ux-test-workspace:gentle-variation',JSON.stringify({version:1,updatedAt:Date.now()+1,recipe:{preset:'gentle-variation',controls:{positive:'Other tab draft'},batch:1}}))")
             page.wait_for_function('document.querySelector("#uxDraftStatus").textContent.includes("Another tab")');page.fill('#positive','Do not overwrite the other tab');page.wait_for_timeout(400);check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Other tab draft','cross-tab conflict pauses autosave');other.close();page.click('#uxKeepDraft');check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:gentle-variation")).recipe.controls.positive')=='Do not overwrite the other tab','explicit keep-this-tab resolves draft conflict')
-            check(set(x['path'] for x in POSTS) <= {'/api/assets/reference','/api/references/check','/api/prompt/compile','/api/jobs/trackable-job/stop-tracking'},'all tested navigation and handoffs avoid execution and setup mutations')
+            check(set(x['path'] for x in POSTS) <= {'/api/estimate','/api/assets/reference','/api/references/check','/api/prompt/compile','/api/jobs/trackable-job/stop-tracking'},'all tested navigation and handoffs avoid execution and setup mutations')
             check(not errors,'no browser exceptions through all journeys: '+str(errors))
             blocked=browser.new_context(viewport={'width':1280,'height':900});blocked.add_init_script("Object.defineProperty(window, 'localStorage', {get(){throw new DOMException('Storage disabled','SecurityError')}})")
             b=blocked.new_page();b.goto(origin+'/#create');b.wait_for_function('!!selected && schemaAvailable');check(b.locator('#createView').is_visible(),'blocked localStorage does not break startup');blocked.close();browser.close()

@@ -7,10 +7,54 @@ const loraNameKey = key => key + '_name';
 const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', activeJobId = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
+let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
 async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) throw Error(data.error || 'Request failed'); return data; }
 const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 function message(text, error=false) { $('#status').textContent = text; $('#status').classList.toggle('error', error); }
+function durationLabel(value) {
+  const seconds = Math.max(0, Number(value) || 0);
+  if (seconds < 60) return Math.max(1, Math.round(seconds)) + ' s';
+  const minutes = seconds / 60;
+  if (minutes < 60) return (minutes < 10 ? minutes.toFixed(1) : Math.round(minutes)) + ' min';
+  const hours = minutes / 60;
+  return (hours < 10 ? hours.toFixed(1) : Math.round(hours * 10) / 10) + ' h';
+}
+function estimateReferenceCount() {
+  const attached = typeof attachedReferencePayload === 'function' ? attachedReferencePayload().filter(r => r && r.file && !r.missing).length : 0;
+  const fileInputs = ['#reference', '#lastReference'].reduce((count, id) => count + ($('#' + id.slice(1))?.files?.length ? 1 : 0), 0);
+  return Math.max(attached, fileInputs, (uploaded ? 1 : 0) + (lastUploaded ? 1 : 0));
+}
+function renderTimeEstimate(data, key) {
+  if (key !== estimateKey || !$('#timeEstimate')) return;
+  const box = $('#timeEstimate'), value = $('#estimateValue'), range = $('#estimateRange'), basis = $('#estimateBasis');
+  if (!data?.available) {
+    value.textContent = 'Unavailable'; range.textContent = data?.reason || 'Choose a supported recipe to estimate it.'; basis.textContent = '';
+    box.hidden = false; return;
+  }
+  const confidence = {high:'high confidence',medium:'medium confidence',low:'low confidence',none:'no history yet'}[data.confidence] || 'provisional';
+  value.textContent = durationLabel(data.estimate_seconds);
+  range.textContent = 'Typical range: ' + durationLabel(data.range_seconds?.[0]) + '–' + durationLabel(data.range_seconds?.[1]) + ' · ' + confidence;
+  basis.textContent = (data.basis || []).join(' · ') + '. Queue wait is not included; the estimate learns from completed local ComfyUI runs.';
+  box.hidden = false; estimateResultKey = key;
+}
+function scheduleTimeEstimate() {
+  const box = $('#timeEstimate'); if (!box || !selected) return;
+  const payload = {preset_id:selected.id, controls:values(), batch_count:Number($('#batch')?.value || 1), reference_count:estimateReferenceCount()};
+  const key = JSON.stringify(payload);
+  if (key === estimateKey && (estimateTimer || estimateAbort || estimateResultKey === key)) return;
+  estimateKey = key; estimateResultKey = '';
+  if (estimateTimer) { clearTimeout(estimateTimer); estimateTimer = null; }
+  if (estimateAbort) { estimateAbort.abort(); estimateAbort = null; }
+  box.hidden = false; $('#estimateValue').textContent = 'Calculating…'; $('#estimateRange').textContent = 'Matching this workflow against completed local runs…'; $('#estimateBasis').textContent = '';
+  if (typeof setTimeout !== 'function') return;
+  estimateTimer = setTimeout(async () => {
+    estimateTimer = null; const controller = new AbortController(); estimateAbort = controller;
+    try { renderTimeEstimate(await api('/api/estimate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal}), key); }
+    catch (error) { if (error.name !== 'AbortError' && key === estimateKey) { $('#estimateValue').textContent = 'Unavailable'; $('#estimateRange').textContent = 'The local timing history could not be read.'; $('#estimateBasis').textContent = error.message; } }
+    finally { if (estimateAbort === controller) estimateAbort = null; }
+  }, 180);
+}
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
 // Lineage is attributed per attachment point. A slot-less input records its source in parentByInput;
@@ -38,6 +82,7 @@ function updateReady() {
   $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady());
   $('#health').textContent = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
   $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
+  scheduleTimeEstimate();
 }
 const activeLoraSlots = () => loraSlotKeys.filter(k => selected && (selected[loraNameKey(k)] || selected.bindings_extra?.[loraNameKey(k)]));
 const loraEntry = name => (name && knowledge?.loras?.[name]) || null;
@@ -89,6 +134,7 @@ function applyRecipe(recipe) {
   const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
   $('#recipeNotes').innerHTML = describeRecipe(recipe);
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
+  scheduleTimeEstimate();
 }
 async function loadAtelier() {
   // /api/options also warms the server's node schema, so the catalog's own
@@ -248,10 +294,12 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)selectPreset(id);};
-$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];Object.entries(v.controls||{}).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();message(v.name+' loaded. Press Generate to run.');};
-$('#loraSlots').onchange=updateLoraHints;
+$('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];Object.entries(v.controls||{}).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');};
+  $('#loraSlots').onchange=updateLoraHints;
+  document.addEventListener('input',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
+  document.addEventListener('change',e=>{if(e.target.closest('#createView'))scheduleTimeEstimate();});
 $('#recipeSelect').onchange=e=>{if(e.target.value==='')return;try{applyRecipe(familyRecipes()[Number(e.target.value)]);}catch(err){message(err.message,true);}};
-$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);};
+$('#randomSeed').onclick=()=>{const input=getControl('seed');if(input)input.value=Math.floor(Math.random()*2147483647);scheduleTimeEstimate();};
 $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');};$('#lastReference').onchange=()=>{lastUploaded=null;releaseInputParent('lastReference');};
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;submitting=true;updateReady();

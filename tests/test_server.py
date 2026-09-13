@@ -399,6 +399,21 @@ class ServerTests(unittest.TestCase):
         replies=[{"queue_running":[],"queue_pending":[]},URLError("timeout")]
         s=FakeStudio(self.root,replies); job=s.create_job({"preset_id":"demo","controls":{}}); s._run(s.jobs[job["id"]]); self.assertEqual(s.jobs[job["id"]]["status"],"uncertain")
 
+    def test_time_estimate_scales_matching_completed_runs_without_mutation(self):
+        s=self.studio(); graph=json.loads(json.dumps(GRAPH)); graph["1"]["inputs"].update({"ckpt_name":"demo-model.safetensors","width":512,"height":512,"steps":20})
+        s.jobs["completed-sample"]={"id":"completed-sample","status":"completed","preset_id":"demo","preset_name":"Demo","controls":{},"batch_count":1,"prompt_ids":["sample-prompt"],"submissions":[{"prompt_id":"sample-prompt","status":"completed"}],"outputs":[],"message":"Complete","graph":graph,"elapsed_seconds":12.0,"references":[]}
+        s.jobs["failed-sample"]={"id":"failed-sample","status":"failed","preset_id":"demo","controls":{},"batch_count":1,"prompt_ids":["failed-prompt"],"graph":graph,"elapsed_seconds":300.0}
+        before=set(s.jobs)
+        result=s.estimate({"preset_id":"demo","controls":{"width":1024,"height":512,"steps":20},"batch_count":2})
+        self.assertTrue(result["available"]); self.assertEqual(result["sample_count"],1); self.assertEqual(result["matched_samples"],1)
+        self.assertGreater(result["estimate_seconds"],12); self.assertLess(result["range_seconds"][0],result["estimate_seconds"]); self.assertLess(result["estimate_seconds"],result["range_seconds"][1])
+        self.assertIn("completed run",result["basis"][0]); self.assertEqual(set(s.jobs),before)
+
+    def test_time_estimate_uses_explicit_wide_fallback_without_history(self):
+        result=self.studio().estimate({"preset_id":"demo","controls":{},"batch_count":1})
+        self.assertTrue(result["available"]); self.assertEqual(result["confidence"],"none"); self.assertEqual(result["sample_count"],0)
+        self.assertIn("Generic modality fallback", " ".join(result["basis"]))
+
     def test_confirmed_history_failure_records_studio_interval(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"failed-one"},
                  {"failed-one":{"status":{"status_str":"error","messages":[

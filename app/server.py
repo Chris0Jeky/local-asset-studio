@@ -423,6 +423,169 @@ class Studio:
         result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._known_prompt_error(job) is None
         return result
 
+    @staticmethod
+    def _estimate_float(value, fallback=0.0):
+        try: result = float(value)
+        except (TypeError, ValueError): return fallback
+        return result if math.isfinite(result) else fallback
+
+    @staticmethod
+    def _estimate_name(value):
+        if not isinstance(value, str): return ""
+        return value.replace("\\", "/").rsplit("/", 1)[-1].strip()
+
+    @staticmethod
+    def _estimate_weighted_median(values):
+        ordered = []
+        for value, weight in values:
+            value = Studio._estimate_float(value, None); weight = Studio._estimate_float(weight, None)
+            if value is not None and weight is not None and weight > 0: ordered.append((value, weight))
+        ordered.sort()
+        if not ordered: return 0.0
+        halfway = sum(weight for _, weight in ordered) / 2
+        total = 0.0
+        for value, weight in ordered:
+            total += weight
+            if total >= halfway: return value
+        return ordered[-1][0]
+
+    def _estimate_graph(self, preset, controls):
+        graph, _ = self.graph_for(preset)
+        controls = controls if isinstance(controls, dict) else {}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", *LORA_SLOTS}
+        integer = {"seed", "steps", "width", "height", "frames", "fps"}
+        extras = preset.get("bindings_extra") or {}
+        for key, raw in controls.items():
+            if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
+            value = raw
+            binding = preset.get(key) or (extras.get(key) or [None])[0]
+            try: existing = graph[str(binding[0])]["inputs"].get(str(binding[1]))
+            except (KeyError, TypeError, IndexError): existing = None
+            if key in numeric and (key not in LORA_SLOTS or isinstance(existing, (int, float)) and not isinstance(existing, bool)):
+                parsed = self._estimate_float(raw, None)
+                if parsed is None: continue
+                value = int(parsed) if key in integer else parsed
+            try: self._bind_control(graph, preset, key, value)
+            except StudioError: continue
+        try: self.prune_disabled_loras(graph)
+        except (StudioError, KeyError, TypeError): pass
+        return graph
+
+    def _estimate_features(self, preset, graph, controls=None, batch_count=1, reference_count=0):
+        controls = controls if isinstance(controls, dict) else {}
+        nodes = [node for node in (graph or {}).values() if isinstance(node, dict)]
+        model_names, lora_names, lora_strengths, node_types = [], [], [], []
+        widths, heights, step_values, frame_values = [], [], [], []
+        samplers, schedulers = [], []
+        prompt_chars = sum(len(controls.get(key, "")) for key in ("positive", "negative") if isinstance(controls.get(key), str))
+        for node in nodes:
+            kind = str(node.get("class_type") or "")
+            node_types.append(kind)
+            inputs = node.get("inputs") or {}
+            for field in ("unet_name", "ckpt_name", "checkpoint_name", "model_name", "diffusion_model"):
+                name = self._estimate_name(inputs.get(field))
+                if name: model_names.append(name)
+            for field in ("width", "height"):
+                value = self._estimate_float(inputs.get(field), 0)
+                if value > 0: (widths if field == "width" else heights).append(value)
+            value = self._estimate_float(inputs.get("steps"), 0)
+            if value > 0: step_values.append(value)
+            for field in ("frames", "length", "num_frames", "video_length"):
+                value = self._estimate_float(inputs.get(field), 0)
+                if value > 0: frame_values.append(value)
+            if isinstance(inputs.get("sampler_name"), str): samplers.append(inputs["sampler_name"])
+            if isinstance(inputs.get("scheduler"), str): schedulers.append(inputs["scheduler"])
+            for field in ("text", "prompt", "positive", "negative"):
+                if isinstance(inputs.get(field), str): prompt_chars = max(prompt_chars, len(inputs[field]))
+            name = self._estimate_name(inputs.get("lora_name"))
+            if name:
+                strength = self._estimate_float(inputs.get("strength_model", inputs.get("strength", 1)), 1)
+                if abs(strength) > 0:
+                    lora_names.append(name); lora_strengths.append(abs(strength))
+        width = max(widths or [512]); height = max(heights or [512]); frames = max(frame_values or [1]); steps = max(step_values or [1])
+        lora_names = sorted(set(lora_names)); lora_strength = sum(lora_strengths)
+        references = max(int(self._estimate_float(reference_count, 0)), sum(1 for kind in node_types if "LoadImage" in kind))
+        complexity = max(1.0, float(len(nodes))) + 0.75 * len(lora_names) + 0.35 * references + 0.25 * len(preset.get("stages") or [])
+        complexity += sum(1.5 if any(tag in kind.lower() for tag in ("controlnet", "detailer", "upscale", "tiled")) else 0.5 if "ksampler" in kind.lower() else 0 for kind in node_types)
+        complexity += min(2.5, prompt_chars / 1200)
+        batch = max(1, min(4, int(self._estimate_float(batch_count, 1))))
+        model_names = sorted(set(model_names)); model_key = "|".join(model_names) or str(preset.get("family") or preset.get("id") or "unknown")
+        return {"workflow": str(preset.get("id") or ""), "workflow_name": str(preset.get("name") or preset.get("id") or "workflow"),
+                "family": str(preset.get("family") or ""), "modality": str(preset.get("modality") or "image"), "model": model_key,
+                "model_names": model_names, "lora_key": tuple(lora_names), "lora_names": lora_names, "lora_count": len(lora_names),
+                "lora_strength": lora_strength, "pixels": max(0.01, width * height / (1024 ** 2)), "width": width, "height": height,
+                "steps": steps, "frames": frames, "references": references, "prompt_chars": prompt_chars, "complexity": complexity,
+                "node_count": len(nodes), "sampler": samplers[0] if samplers else "", "scheduler": schedulers[0] if schedulers else "", "batch": batch}
+
+    def estimate(self, payload):
+        """Estimate end-to-end time from completed local ComfyUI runs without mutating state."""
+        if not isinstance(payload, dict): return {"available": False, "reason": "Estimate input must be an object."}
+        try:
+            presets = self.catalog().get("presets", [])
+            preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
+            controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
+            graph = self._estimate_graph(preset, controls)
+        except (StopIteration, StudioError, KeyError, TypeError, OSError):
+            return {"available": False, "reason": "Choose a supported recipe before estimating."}
+        references = payload.get("reference_count", 0)
+        target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
+        samples = []
+        for job in list(self.jobs.values()):
+            if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
+            elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
+            if elapsed <= 0: continue
+            sample_preset = next((p for p in presets if p.get("id") == job.get("preset_id")), None)
+            if not sample_preset: continue
+            sample = self._estimate_features(sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), len(job.get("references") or []))
+            sample["seconds"] = elapsed; samples.append(sample)
+
+        if samples:
+            candidates = []
+            for sample in samples:
+                weight = 1.0
+                if sample["workflow"] == target["workflow"]: weight *= 12
+                elif sample["family"] and sample["family"] == target["family"]: weight *= 4
+                if sample["model"] == target["model"]: weight *= 4
+                elif sample["modality"] != target["modality"]: weight *= 0.2
+                else: weight *= 0.7
+                if sample["lora_key"] == target["lora_key"]: weight *= 3
+                elif sample["lora_key"] or target["lora_key"]:
+                    overlap = len(set(sample["lora_key"]) & set(target["lora_key"])) / max(1, len(set(sample["lora_key"]) | set(target["lora_key"])))
+                    weight *= 1 + 2 * overlap if overlap else 0.65
+                if sample["lora_strength"] > 0 and target["lora_strength"] > 0:
+                    weight *= max(0.35, math.exp(-0.25 * abs(math.log(target["lora_strength"] / sample["lora_strength"]))))
+                elif sample["lora_strength"] != target["lora_strength"]:
+                    weight *= 0.75
+                for key, coefficient in (("pixels", 1.2), ("steps", 0.8), ("frames", 0.9), ("complexity", 0.6), ("references", 0.35), ("prompt_chars", 0.12)):
+                    if sample[key] > 0 and target[key] > 0: weight *= max(0.15, math.exp(-coefficient * abs(math.log(target[key] / sample[key]))))
+                if sample["sampler"] == target["sampler"] and target["sampler"]: weight *= 1.15
+                if sample["scheduler"] == target["scheduler"] and target["scheduler"]: weight *= 1.1
+                scales = []
+                for key, exponent in (("pixels", 0.8), ("steps", 0.9), ("frames", 0.75), ("complexity", 0.25)):
+                    ratio = max(0.2, min(4.0, target[key] / max(sample[key], 0.01))); scales.append(ratio ** exponent)
+                unit_scale = math.prod(scales)
+                adjusted = sample["seconds"] / max(1, sample["batch"]) * target["batch"] * (0.3 + 0.7 * unit_scale)
+                adjusted *= 1 + max(0, target["lora_count"] - sample["lora_count"]) * 0.04
+                candidates.append((max(1.0, adjusted), max(0.001, weight), sample))
+            median = self._estimate_weighted_median([(value, weight) for value, weight, _ in candidates])
+            mad = self._estimate_weighted_median([(abs(value - median), weight) for value, weight, _ in candidates])
+            exact = sum(1 for _, _, sample in candidates if sample["workflow"] == target["workflow"]); model_matches = sum(1 for _, _, sample in candidates if sample["model"] == target["model"])
+            confidence = "high" if exact >= 5 else "medium" if exact >= 2 or model_matches >= 4 else "low"
+            spread = max(2.0, median * (0.18 if confidence == "high" else 0.3 if confidence == "medium" else 0.45), mad * 1.8)
+            matched = exact or model_matches or min(3, len(candidates))
+            basis = ([f"{exact} completed run{'s' if exact != 1 else ''} of this workflow"] if exact else [f"{model_matches} completed run{'s' if model_matches != 1 else ''} with this model"] if model_matches else [f"{len(samples)} completed local runs across the library"])
+        else:
+            base = {"image": 45.0, "video": 240.0, "3d": 180.0, "audio": 30.0}.get(target["modality"], 60.0)
+            median = base * max(0.5, target["pixels"] ** 0.8) * max(0.5, target["steps"] / 20) * (1 + target["lora_count"] * 0.08) * target["batch"]
+            spread = max(10.0, median * 0.6); confidence = "none"; matched = 0; basis = ["No completed local run is comparable yet", "Generic modality fallback; expect a wide range"]
+        basis.append(f"scaled for {target['width']:.0f}×{target['height']:.0f}, {target['steps']:.0f} steps, {target['lora_count']} active LoRA{'s' if target['lora_count'] != 1 else ''}, {target['batch']} output{'s' if target['batch'] != 1 else ''}")
+        if target["frames"] > 1: basis.append(f"{target['frames']:.0f} frames at workflow complexity {target['node_count']} nodes")
+        return {"available": True, "estimate_seconds": round(max(1.0, median), 1), "range_seconds": [round(max(1.0, median - spread)), round(max(median + spread, median + 1))],
+                "confidence": confidence, "sample_count": len(samples), "matched_samples": matched, "basis": basis,
+                "features": {"workflow": target["workflow_name"], "model": target["model_names"] or [target["model"]], "loras": target["lora_names"],
+                             "resolution": [round(target["width"]), round(target["height"])], "steps": round(target["steps"]), "frames": round(target["frames"]),
+                             "node_count": target["node_count"], "references": target["references"], "modality": target["modality"]}}
+
     def export_recipe(self, job):
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
@@ -1142,6 +1305,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._safe_mutation(): return self._json(403, {"error":"Local same-origin request required"})
         try:
+            if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._body_json()))
             if self.path == "/api/jobs": return self._json(201, self.studio.create_job(self._body_json()))
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_json().get('id')))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
