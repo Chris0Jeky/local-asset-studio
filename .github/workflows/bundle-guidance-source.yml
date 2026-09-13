@@ -1,0 +1,28 @@
+name: Bundle guidance source snapshot
+on:
+  push:
+    branches: [codex/bundle-guidance-source]
+    paths: [.github/workflows/bundle-guidance-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aebe10c58c7fa3ce8f89276740096eaf98c2cc20
+          persist-credentials: false
+      - name: Archive only tracked source at the inspected commit
+        run: |
+          mkdir -p "$RUNNER_TEMP/bundle-guidance-source"
+          git archive --format=zip -o "$RUNNER_TEMP/bundle-guidance-source/source.zip" HEAD
+          git rev-parse HEAD > "$RUNNER_TEMP/bundle-guidance-source/commit.txt"
+          git ls-files --stage > "$RUNNER_TEMP/bundle-guidance-source/git-files.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-guidance-source
+          path: ${{ runner.temp }}/bundle-guidance-source/
+          retention-days: 1
+          if-no-files-found: error
