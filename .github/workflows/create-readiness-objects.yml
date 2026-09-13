@@ -1,0 +1,57 @@
+name: Verified Create readiness objects
+on:
+  push:
+    branches: ['codex/create-readiness-transfer']
+    paths: ['.github/workflows/create-readiness-objects.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3
+          persist-credentials: false
+      - name: Verify patch and complete tree before publishing source objects
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, lzma, os, subprocess, urllib.request
+          from pathlib import Path
+          api='https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'}
+          chunks=['c012c5a177142f991ae1bab41399fefb1720db14','9501c0b386cb782451142f548f97f117d92acb0f','aab1040deed179eb7d0e9dafb41871bbd0f43c51']
+          parts=[]
+          for sha in chunks:
+              with urllib.request.urlopen(urllib.request.Request(api+'/'+sha,headers=headers),timeout=30) as response:data=json.load(response)
+              raw=base64.b64decode(data['content'])
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+              parts.append(raw)
+          patch=lzma.decompress(base64.b64decode(b''.join(parts)))
+          assert len(patch)==62321
+          assert hashlib.sha256(patch).hexdigest()=='a9144e05701556bb8b77e8536627a6fe91863cf9e8ea36fabd3798fb889c27a4'
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
+          tree=subprocess.check_output(['git','write-tree']).decode().strip()
+          assert tree=='362706bb18161c187b47c609006534af6eb9f335',tree
+          paths=subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()
+          assert len(paths)==11
+          entries=[]
+          for path in paths:
+              raw=Path(path).read_bytes()
+              expected=subprocess.check_output(['git','rev-parse',':'+path]).decode().strip()
+              payload=json.dumps({'encoding':'base64','content':base64.b64encode(raw).decode()}).encode()
+              with urllib.request.urlopen(urllib.request.Request(api,data=payload,headers=headers,method='POST'),timeout=30) as response:result=json.load(response)
+              assert result['sha']==expected,path
+              entries.append({'path':path,'sha':expected,'mode':'100644','type':'blob'})
+          manifest={'base':'28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3','tree':tree,'files':entries}
+          Path('/tmp/create-readiness-objects.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print(json.dumps(manifest,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: create-readiness-verified-objects
+          path: /tmp/create-readiness-objects.json
+          retention-days: 1
