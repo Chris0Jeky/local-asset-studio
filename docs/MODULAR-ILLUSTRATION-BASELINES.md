@@ -25,10 +25,12 @@ Workspace document `b4b8770a-c8d9-5055-b031-c08ce0b37762`, revision 3. It enable
 style at strength 1.0. Its compiled graph has the same node inputs and connections as executed B;
 the original base document remains at revision 1. The browser walkthrough verified navigation,
 opening the base document, loading 1,224 installed node classes, rendering Steps, checking the
-base connections and saving a separate copy. Numeric/text edits did not reach the saved copy
-during automation, and later browser confirmation handling timed out. The revision-checked SDK
-set and verified B's exact values; browser editing and reopening the final B copy remain unverified.
-No generation was submitted by this authoring walkthrough.
+base connections and saving a separate copy. Initial automated input fills did not reach the
+saved copy, and confirmation handling timed out. The revision-checked SDK set B's exact values.
+A fresh Chrome tab then reopened B at revision 3, displayed the correct model, first style at
+strength 1.0, seed and sampling controls, and passed Check connections. A real keyboard edit
+changed strength to 1.25; leaving the field committed the edit, and Undo restored 1.0. Leave a
+field with Tab before checking or saving. No generation was submitted by this walkthrough.
 
 ## Where resources belong
 
