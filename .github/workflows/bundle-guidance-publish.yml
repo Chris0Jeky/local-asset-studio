@@ -56,6 +56,12 @@ jobs:
               assert git('rev-parse', ':' + path) == sha, 'Unexpected resulting bytes: ' + path
           subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
           print('All 13 resulting file identities match locally tested source.')
+          # The contents-only token cannot publish workflow changes. The authorized
+          # connector publishes that one verified file separately; never request a broader token.
+          workflow = '.github/workflows/bundle-workflow-browser.yml'
+          subprocess.run(['git', 'restore', '--source=HEAD', '--staged', '--worktree', workflow], check=True)
+          assert set(git('diff', '--cached', '--name-only').splitlines()) == set(expected) - {workflow}
+          print('Publishing the 12 non-workflow files only.')
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
