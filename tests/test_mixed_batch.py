@@ -106,6 +106,34 @@ class MixedBatchTests(unittest.TestCase):
             self.assertEqual(self.job['status'],'uncertain');self.assertEqual(self.job['submissions'][0]['status'],'observing')
             self.assertEqual(self.job['pending_submission'],pending);self.assertEqual(self.job['outputs'],outputs)
         self.no_posts_since(2);self.assertEqual(len(self.studio.requests),4+len(replies))
+    def test_input_history_descriptor_is_not_terminal_and_can_be_reobserved(self):
+        self.unresolved();originals=self.files();outputs=copy.deepcopy(self.job['outputs'])
+        pending=copy.deepcopy(self.job['pending_submission'])
+        response=completed();response['known']['outputs']['9']['images'].append(
+            {'filename':'reference.png','subfolder':'','type':'input'})
+        self.studio.replies=iter([response]);self.command('observe',self.payload());self.consume()
+        self.assertEqual(self.job['submissions'][0]['status'],'observing')
+        self.assertEqual(self.job['status'],'uncertain');self.assertEqual(self.job['outputs'],outputs)
+        self.assertIn('Invalid output location',self.job['mixed_batch_recovery']['history'][-1]['observations'][0]['message'])
+        self.assertEqual(self.job['pending_submission'],pending)
+        for name in ('recipe.json','workflow.json'):self.assertEqual(self.files()[name],originals[name])
+        self.studio=FakeStudio(self.root,[completed()]);self.job=self.studio.jobs[self.job['id']]
+        self.command('observe',self.payload('request-0002'));self.consume()
+        self.assertEqual(self.job['submissions'][0]['status'],'completed')
+        self.assertEqual(self.job['status'],'uncertain');self.assertEqual(len(self.job['outputs']),len(outputs))
+        self.assertEqual(self.fixture.post_count(self.studio),0);self.assertEqual(len(self.studio.requests),1)
+        self.assertTrue(self.studio.queue.empty())
+    def test_supported_temp_history_output_can_be_materialized(self):
+        self.unresolved();directory=self.root/'fake-comfy/temp';directory.mkdir()
+        raw=png();(directory/'preview.png').write_bytes(raw)
+        response=completed();response['known']['outputs']['9']['images']=[
+            {'filename':'preview.png','subfolder':'','type':'temp'}]
+        self.studio.replies=iter([response]);self.command('observe',self.payload());self.consume()
+        output=self.job['outputs'][-1]
+        self.assertEqual(self.job['submissions'][0]['status'],'completed')
+        self.assertEqual(output['type'],'temp');self.assertNotIn('snapshot_error',output)
+        self.assertEqual(self.studio.output_path(output,self.job).read_bytes(),raw)
+        self.assertEqual(self.studio.assets.file(output['asset_id']).read_bytes(),raw);self.no_posts_since(2)
     def test_known_failure_never_certifies_unknown_tail(self):
         self.unresolved();self.studio.replies=iter([{'known':{'status':{'status_str':'error','completed':False,
             'messages':[['execution_error',{'node_type':'Sampler','exception_message':'test failure'}]]},'outputs':{}}}])

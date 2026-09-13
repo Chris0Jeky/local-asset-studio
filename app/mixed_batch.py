@@ -160,7 +160,7 @@ def _history(response,submission):
             for output in collection:
                 if not isinstance(output,dict) or not isinstance(output.get('filename'),str) or not output['filename']:
                     raise ValueError('Invalid output descriptor')
-                if not isinstance(output.get('subfolder',''),str) or output.get('type') not in ('output','temp','input'):
+                if not isinstance(output.get('subfolder',''),str) or output.get('type') not in ('output','temp'):
                     raise ValueError('Invalid output location')
                 ext=Path(output['filename']).suffix.lower()
                 media_type='video' if ext in ('.mp4','.webm','.mov') else '3d' if ext in ('.glb','.gltf','.obj','.ply','.stl') else 'audio' if ext in ('.mp3','.wav','.flac') else 'image'

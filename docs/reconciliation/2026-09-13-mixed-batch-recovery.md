@@ -278,3 +278,16 @@ The author's review checkpoint has 37 focused mixed tests. Final full-suite and
 hosted-browser results, the exact source identities, and the earlier failed
 browser run are reported on PR #224 rather than treating a prior passing run as
 proof of this corrected integration.
+
+## Materializable history descriptors
+
+The follow-up review found that `type: input` descriptors were accepted as
+terminal outputs even though `Studio.output_path()` supports only `output` and
+`temp`. The mixed-history parser now follows that same materialization contract.
+An unsupported input descriptor keeps the known receipt observing and the whole
+batch uncertain; no partial list is published and existing outputs remain intact.
+A later explicit observation can recover a corrected history after restart with
+no new prompt POST. A positive temporary-output control verifies actual file and
+Workspace bytes. This does not add input-directory access or change submission
+permissions. The failing descriptor test and passing controls are retained with
+the PR's final verification evidence.
