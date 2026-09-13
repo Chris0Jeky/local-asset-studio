@@ -1,0 +1,53 @@
+name: Publish tested setup lineage patch
+on:
+  push:
+    branches: [codex/setup-lineage-qa-transport]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 06bd93aed2f019cb978eb5795e9f116cfb7ff749
+          path: candidate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Decode exact tested patch
+        run: |
+          python - <<'PY'
+          import base64, hashlib, lzma
+          from pathlib import Path
+          patch=lzma.decompress(base64.b64decode(Path('transport-source/transport/setup-lineage.b64').read_text(),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='8c774f143960edd1aa887eb3f3c1fb5295dab5ad99c771eb78ba5d58ab38c2f2'
+          Path('lineage.patch').write_bytes(patch)
+          PY
+      - name: Apply and check the feature branch
+        working-directory: candidate
+        run: |
+          test "$(git rev-parse HEAD)" = 06bd93aed2f019cb978eb5795e9f116cfb7ff749
+          git switch -c codex/saved-setup-lineage
+          git apply --check --unidiff-zero ../lineage.patch
+          git apply --unidiff-zero ../lineage.patch
+          git diff --check
+          node tests/frontend_handoffs.cjs
+          python scripts/validate-repo.py
+      - name: Publish only product changes
+        working-directory: candidate
+        run: |
+          git config user.name 'Studio QA'
+          git config user.email 'studio-qa@users.noreply.github.com'
+          git add app docs tests
+          git commit -m 'Guard named setup lineage after unavailable reference checks'
+          git push origin HEAD:refs/heads/codex/saved-setup-lineage
+          git rev-parse HEAD HEAD^{tree}
