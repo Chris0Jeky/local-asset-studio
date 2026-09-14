@@ -80,7 +80,7 @@
   function position(id, index) { return doc.positions[id] || [30 + (index % 3) * 285, 28 + Math.floor(index / 3) * 130]; }
   const NODE_W = 245, NODE_H = 82, ZOOM_MIN = 0.4, ZOOM_MAX = 2.5, PAD = 44;
   let camera = null, bounds = null;
-  const zoomClamp = value => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value)), tidy = n => Math.round(n * 100) / 100;
+  const zoomClamp = (value, floor = ZOOM_MIN) => Math.min(ZOOM_MAX, Math.max(floor, value)), tidy = n => Math.round(n * 100) / 100;
   function canvasBox() { const rect = $('#workflowCanvas').getBoundingClientRect(); return [Math.max(1, rect.width), Math.max(1, rect.height)]; }
   function applyCamera() {
     if (!camera) return;
@@ -91,7 +91,7 @@
   function fitCanvas() {
     if (!bounds) return;
     const [w, h] = canvasBox(), bw = bounds[2] - bounds[0] + PAD * 2, bh = bounds[3] - bounds[1] + PAD * 2;
-    const scale = zoomClamp(Math.min(w / bw, h / bh));
+    const scale = zoomClamp(Math.min(w / bw, h / bh), 0.01); // Fit must frame every node, so it may go below the interactive floor.
     camera = {scale, x: (bounds[0] + bounds[2]) / 2 - w / scale / 2, y: (bounds[1] + bounds[3]) / 2 - h / scale / 2}; applyCamera();
   }
   function resetCanvas() { if (!bounds) return; camera = {scale: 1, x: bounds[0] - PAD, y: bounds[1] - PAD}; applyCamera(); }
@@ -138,7 +138,7 @@
       if (!e.ctrlKey || !camera) return; // A plain wheel keeps scrolling the page, exactly as before.
       e.preventDefault();
       const rect = svg.getBoundingClientRect(), fx = e.clientX - rect.left, fy = e.clientY - rect.top;
-      const wx = camera.x + fx * perPixel(), wy = camera.y + fy * perPixel(), scale = zoomClamp(camera.scale * Math.exp(-e.deltaY * 0.0018));
+      const wx = camera.x + fx * perPixel(), wy = camera.y + fy * perPixel(), scale = zoomClamp(camera.scale * Math.exp(-e.deltaY * 0.0018), Math.min(ZOOM_MIN, camera.scale));
       camera = {scale, x: wx - fx / scale, y: wy - fy / scale}; applyCamera();
     }, {passive: false});
     if (window.ResizeObserver) new ResizeObserver(() => applyCamera()).observe(svg);
@@ -196,6 +196,7 @@
     }
     expander.title.textContent = 'Edit ' + name; expander.area.value = typeof value === 'string' ? value : '';
     expander.dialog.onclose = () => { if (expander.dialog.returnValue === 'apply') accept(expander.area.value); };
+    expander.dialog.returnValue = ''; // Only newer engines clear this on an Escape cancel; never inherit the previous Apply.
     expander.dialog.showModal(); expander.area.focus();
   }
   function fieldEditor(host, id, node, spec) {

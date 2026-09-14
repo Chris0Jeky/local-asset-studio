@@ -68,6 +68,14 @@ def canvas_navigation(page):
     assert panned.split()[2:] == before.split()[2:], 'Panning must not change the zoom'
     assert page.locator('#documentStats').inner_text() == revision, 'Panning must not edit the draft'
     # Dragging a node still moves the node and writes its X/Y, and must not pan the camera.
+    page.locator('#workflowNodeSelect').select_option('1')
+    page.get_by_label('X', exact=True).fill('7000'); page.get_by_label('X', exact=True).press('Tab')
+    page.wait_for_function("() => WorkflowStudio.snapshot().positions['1'][0] === 7000")
+    page.locator('#canvasFit').click()
+    assert float(page.evaluate(VIEW_BOX).split()[2]) > box['w'] / 0.4, 'Fit may zoom out past the interactive floor to frame everything'
+    assert page.evaluate(FRAMED), 'Fit must frame every node even when the graph is wider than 0.4x allows'
+    page.get_by_label('X', exact=True).fill('30'); page.get_by_label('X', exact=True).press('Tab')
+    page.wait_for_function("() => WorkflowStudio.snapshot().positions['1'][0] === 30")
     page.locator('#canvasFit').click(); framed = page.evaluate(VIEW_BOX)
     page.locator('#workflowNodeSelect').select_option('1')
     start = page.get_by_label('X', exact=True).input_value()
@@ -98,6 +106,11 @@ def text_inputs(page):
     assert dialog.locator('textarea').evaluate('n => n.clientHeight') > grown / 2
     dialog.locator('textarea').fill('expanded prompt text'); dialog.get_by_role('button', name='Apply', exact=True).click()
     page.wait_for_function("() => WorkflowStudio.snapshot().nodes['4'].inputs.text === 'expanded prompt text'")
+    # Escape immediately after an Apply: the reused dialog must not carry the previous 'apply' result.
+    page.locator('#nodeInspector .wf-expand-open').click()
+    dialog.locator('textarea').fill('escaped'); page.keyboard.press('Escape')
+    page.wait_for_function("() => !document.querySelector('dialog.wf-expand').open")
+    assert page.evaluate("WorkflowStudio.snapshot().nodes['4'].inputs.text") == 'expanded prompt text', 'Escape must discard even after an earlier Apply'
     page.locator('#nodeInspector .wf-expand-open').click()
     dialog.locator('textarea').fill('discarded'); dialog.get_by_role('button', name='Cancel', exact=True).click()
     assert page.evaluate("WorkflowStudio.snapshot().nodes['4'].inputs.text") == 'expanded prompt text', 'Cancel must discard the edit'

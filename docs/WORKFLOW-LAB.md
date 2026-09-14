@@ -182,9 +182,10 @@ automatically replace your currently open user graph.
 In **Workflow Studio → Connections** the diagram is a camera over the graph, not a
 fixed-size picture. Drag the empty background to pan. Hold Ctrl and use the wheel
 (or pinch on a trackpad) to zoom between 0.4x and 2.5x around the pointer; a plain
-wheel is left alone and still scrolls the page. **Fit** frames every node and **100%**
-returns to one diagram unit per screen pixel — the readout beside them shows the
-current zoom. Dragging a node still moves that node and writes its X/Y fields, which
+wheel is left alone and still scrolls the page. **Fit** frames every node — on a graph
+too wide for 0.4x it zooms out past that floor rather than leaving nodes off-screen —
+and **100%** returns to one diagram unit per screen pixel; the readout beside them
+shows the current zoom. Dragging a node still moves that node and writes its X/Y fields, which
 are the values saved with the document; panning and zooming are view-only and never
 change the draft or its revision. Below the canvas, **Jump to node** selects a node
 without hunting for it in the diagram.
