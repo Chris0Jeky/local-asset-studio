@@ -9,6 +9,8 @@ on:
       - 'tests/test_asset_workspace*'
       - 'tests/asset_metadata*'
       - 'tests/test_asset_metadata*'
+      - 'tests/asset_grid*'
+      - 'tests/test_asset_grid*'
       - 'tests/asset_library*'
       - 'tests/test_asset_library*'
       - 'tests/asset_detail*'
@@ -60,6 +62,11 @@ jobs:
         run: |
           node tests/asset_library_contracts.cjs
           python tests/asset_library_browser.py --out .runtime/asset-library-proof
+      - name: Stable grid focus and preview lifecycle
+        if: matrix.response-delay-ms == 0
+        run: |
+          node tests/asset_grid_contracts.cjs
+          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -70,5 +77,6 @@ jobs:
             .runtime/asset-metadata-proof/
             .runtime/asset-workspace-proof/
             .runtime/asset-library-proof/
+            .runtime/asset-grid-proof/
           if-no-files-found: ignore
           retention-days: 7

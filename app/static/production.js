@@ -82,6 +82,7 @@ async function openComparison(parent=null){
   $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
   plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerBlock();renderPlanner();
   if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
+  sizeBudgetToCandidates();
   renderPlannerSummary();
   if(!axes.length)productionMessage('This recipe has no single numeric axis; plan its documented settings instead.');
   $('#experimentDialog').showModal();
@@ -120,7 +121,7 @@ function renderPlanner(){
   $('#clearPlanned').hidden=!planned.length;
   $('#experimentValues').required=!planned.length;$('#experimentValues').disabled=!!planned.length;
   $('#experimentAxis').disabled=!!planned.length||!$('#experimentAxis').value;
-  if(planned.length&&!comparisonParent)$('#experimentBudget').value=Math.max(Number($('#experimentBudget').value)||0,planned.length);
+  if(planned.length&&!comparisonParent)sizeBudgetToCandidates();
   $('#prepareExperiment').disabled=!planned.length&&!$('#experimentAxis').value;
   if(planned.length&&$('#plannerAdvanced'))$('#plannerAdvanced').open=true;
   renderPlannerSummary();
@@ -152,7 +153,7 @@ function renderPlannerSummary(){
   // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
   if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
   if(note){
-    note.textContent=candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
+    note.textContent=candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved. At least '+candidates+' must be reserved to prepare this study.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
     note.classList.toggle('error',!!candidates&&reserved<candidates);
   }
   $('#experimentBudget').setCustomValidity?.(candidates&&reserved<candidates?'Reserve at least '+candidates+' graph runs for '+candidates+' candidates.':'');
@@ -171,7 +172,11 @@ async function requestPlan(mode){
   }catch(err){plannedVariants=null;renderPlanner();$('#experimentStatus').textContent=err.message;}
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}
-$('#experimentAxis').onchange=()=>{suggestComparisonValues();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
+// The planner must not propose candidates it then refuses to run: the allowance follows its own
+// proposal. It only ever rises, so a total the operator raised is never reduced, and a branch that
+// shares its parent's budget (a disabled allowance) is left alone (#278 friction 5).
+function sizeBudgetToCandidates(){const field=$('#experimentBudget');if(!field||field.disabled)return;const need=(plannedVariants||[]).length||plannedValues().length;if(need>(Number(field.value)||0))field.value=need;}
+$('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
 $('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=renderPlannerSummary;
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));

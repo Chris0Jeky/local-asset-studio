@@ -192,11 +192,18 @@ async function loadAtelier() {
   try { knowledge = await api('/api/knowledge'); } catch (e) { knowledge = null; }
   try { atelierRecipes = (await api('/api/recipes')).recipes || []; } catch (e) { atelierRecipes = []; }
 }
+const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
+function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
+function rememberNegativeCollapse(open) { try { sessionStorage.setItem(NEGATIVE_COLLAPSE_KEY, open ? '0' : '1'); } catch (e) {} }
+$('#negativeWrap')?.addEventListener('toggle', () => rememberNegativeCollapse($('#negativeWrap').open));
 function renderSelected() {
   if (!selected) return;
   $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.description) + '</p><small>' + esc(selected.commercial_note) + '</small>';
   $('#positiveWrap').hidden = !selected.positive;
   $('#positive').value = selected.defaults?.positive || ''; $('#negative').value = selected.defaults?.negative || ''; $('#negativeWrap').hidden = !selected.negative;
+  // What to avoid is part of the brief, not an advanced setting: open it whenever the recipe binds it,
+  // and keep it collapsible. A manual collapse is remembered for this tab only (#278 friction 3).
+  if (selected.negative) $('#negativeWrap').open = !negativeCollapsed();
   $('#pipeline').innerHTML = (selected.stages || ['Load model','Conditioning','Sample','Decode','Save output']).map(s => '<span>' + esc(s) + '</span>').join('');
   const variants = selected.variants || [{name:'3-seed audition',batch_count:3}];
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '"><b>' + esc(v.name) + '</b>' + (selected.reference && typeof StudioContinuation !== 'undefined' ? '<small>' + esc(StudioContinuation.variantHelp(selected,v)) + '</small>' : '') + '</button>').join('');

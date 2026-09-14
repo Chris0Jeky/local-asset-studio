@@ -43,3 +43,6 @@
 .pl-coverage{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 5px;font-size:12px;line-height:1.5;border-bottom:1px solid #2c3a39;padding-bottom:5px}
 .pl-coverage b{font-weight:550}
 .pl-coverage span:last-child{color:var(--muted,#aac0ba)}
+
+/* #278 friction 1: the sources heading now carries two buttons on text-only recipes; let the row wrap so wider font metrics (CI Linux at 200% zoom) never push it past the viewport. */
+.ux-section-heading{flex-wrap:wrap}.ux-section-heading h3{min-width:120px}

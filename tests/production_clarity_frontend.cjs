@@ -87,4 +87,19 @@ assert.match(run(`planDisplayName({name:'Portrait seed 12345678',kind:'native'})
 assert.equal(JSON.stringify(run(`variantChanges({label:'steps=10',controls:{steps:1,cfg:4}},{steps:20,cfg:4})`)),'["steps=1"]','steps=10 does not state steps=1');
 assert.equal(JSON.stringify(run(`variantChanges({label:'steps=1 · cfg=3',controls:{steps:1,cfg:3}},{steps:20,cfg:4})`)),'[]');
 
+// 9 · The planner never proposes candidates it would then refuse to run: choosing an axis sizes the
+// allowance to its own proposal, only ever upward, and the note states the required total either way.
+run(`comparisonRecipe={preset_id:'anima-portrait',controls:{...${JSON.stringify(base)}}};plannedVariants=null;`);
+$('#experimentBudget').value='1';$('#experimentBudget').disabled=false;$('#experimentAxis').value='steps';
+run(`$('#experimentAxis').onchange();`);
+assert.equal($('#experimentValues').value,'18, 20, 22','The axis proposal is unchanged');
+assert.equal($('#experimentBudget').value,3,'An allowance below the proposal follows it');
+assert.match($('#experimentBudgetNote').textContent,/At least 3 must be reserved/,'The required total is stated before any refusal');
+assert.doesNotMatch($('#experimentBudgetNote').textContent,/Raise the total/,'A sized allowance is not also scolded');
+$('#experimentBudget').value='9';run(`$('#experimentAxis').onchange();`);
+assert.equal($('#experimentBudget').value,'9','A total the operator raised is never lowered');
+$('#experimentBudget').disabled=true;$('#experimentBudget').value='2';run(`$('#experimentAxis').onchange();`);
+assert.equal($('#experimentBudget').value,'2','A branch sharing its parent budget is left alone');
+$('#experimentBudget').disabled=false;
+
 console.log('Experiments planner cards state each fact once; plan names, empty state and comparison arithmetic read clearly.');
