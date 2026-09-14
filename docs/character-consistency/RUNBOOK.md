@@ -68,6 +68,35 @@ python scripts/character_study.py handoff --plan experiments/runs/character-pilo
 
 The brief conforms to the existing game-assets v1 route. The handoff pins the **current** real catalog entry and raw graph and lists reference uploads/roles in order. It supplies positive text and seed proposals only. It deliberately supplies no armed Studio submission payload. Complete actual upload, live nodes/models, resize/crop, batch-size-one and shared-budget preflight before normal Studio Prepare/Generate. Do not POST this handoff as a graph.
 
+### Import the case in Studio
+
+Open **Runs & review → Import character case**. Select the approved study plan JSON
+and that case's handoff JSON, then **Read case**. This reads local files only. Check
+the case, seed, proposed prompt and declared study allowance, then select the
+original image for each displayed reference slot. The allowance is shared across
+the study; it is not a new balance for each imported case.
+
+**Import planned case** checks every selected image's bytes before uploading any,
+then uses the existing Production import and live preflight. The original JSON is
+preserved in the request so Python's contract digests retain numeric distinctions
+such as `1.0` versus `1`. The server remains authoritative for the canon, case,
+catalog, template and reference checks. A stale or unsupported handoff is rejected.
+Each image must be PNG/JPEG/WebP under 20 MiB; the complete import must fit Studio's
+existing 1 MiB JSON request limit. Nothing is resized or cropped by this importer.
+
+An existing case opens its saved project without another upload or import. A lost
+import response triggers a read of that same deterministic case identity. **Check
+saved case** only reads; it does not repeat the import. If nothing is visible,
+retain the files and inspect the reported failure before loading corrected files.
+Confirmed uploads remain local files if a later import fails.
+
+The case remains planned until its separate **Start comparison** action. Import
+does not create a model job, reserve an attempt, increase the shared allowance or
+approve an output. Keep the originals for the
+[saved-results collector](PRODUCTION-RESULTS.md). Canon drafting, character-specific
+review and creative acceptance retain their existing explicit contracts; this
+importer does not make a generic keeper into an accepted character result.
+
 ### Optional v2 portrait prompt scope
 
 The v1 pilot and every retained v1 plan, brief and handoff remain byte-for-byte legacy artifacts. A new request with `schema_version: 2` may give a task a `prompt_scope` object. Each selected section is one of `identity`, `costume`, `representation` or `style`, with exactly a boolean `description` and an `invariant_indexes` list. A selected section must include its description or at least one zero-based invariant index. Unknown sections and fields, boolean indexes, duplicate indexes, out-of-range indexes and empty selections are rejected.

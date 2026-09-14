@@ -26,3 +26,12 @@
 .planner-advanced .production-actions{margin:12px 0 0}
 .candidate-review{display:flex;gap:8px;margin:8px 0 0}
 .candidate-review button{flex:1 1 auto;padding:6px 10px;font-size:12px}
+#characterImportInputs{border:1px solid var(--line);border-radius:10px;min-width:0;padding:12px}
+#characterImportDialog{width:min(740px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
+#characterImportInputs .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#characterImportInputs .controls>label{min-width:0;flex:1 1 220px;overflow-wrap:anywhere}
+#characterImportInputs input{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+#characterImportInputs #characterReferenceFiles{grid-template-columns:1fr}
+#characterCasePrompt{white-space:pre-wrap;overflow-wrap:anywhere}
+#characterCaseSummary,#characterImportStatus{overflow-wrap:anywhere}
+@media(max-width:560px){#characterImportInputs .controls{grid-template-columns:1fr}}
