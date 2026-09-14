@@ -27,12 +27,28 @@ class MixedBatchHTTPTests(unittest.TestCase):
     def request(self,path,payload=None,method='POST'):
         connection=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:
-            connection.request(method,path,json.dumps(payload),{'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json'})
+            body=None if method == 'GET' and payload is None else json.dumps(payload)
+            connection.request(method,path,body,{'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json'})
             if connection.sock:
                 try:connection.sock.shutdown(socket.SHUT_WR)
                 except OSError:pass
             response=connection.getresponse();return response.status,json.loads(response.read())
         finally:connection.close()
+    def test_get_fixture_sends_no_request_body(self):
+        wire=bytearray();real_create_connection=socket.create_connection
+        class ObservedSocket:
+            def __init__(self,real):self.real=real
+            def sendall(self,data,*args,**kwargs):wire.extend(data);return self.real.sendall(data,*args,**kwargs)
+            def __getattr__(self,name):return getattr(self.real,name)
+        def observe(address,*args,**kwargs):return ObservedSocket(real_create_connection(address,*args,**kwargs))
+        socket.create_connection=observe
+        try:
+            status,_=self.request('/api/jobs',method='GET')
+        finally:socket.create_connection=real_create_connection
+        self.assertEqual(status,200)
+        headers,body=bytes(wire).split(b'\r\n\r\n',1)
+        self.assertEqual(body,b'')
+        self.assertNotRegex(headers.lower(),rb'\r\ncontent-length: [1-9]')
     def test_get_and_observe_are_read_only_until_explicit_request_then_dispose_is_idempotent(self):
         before=self.case.files();calls=list(self.studio.requests)
         status,jobs=self.request('/api/jobs',method='GET')
