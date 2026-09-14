@@ -14,6 +14,14 @@ setup diffs, expected-draft concurrency, explicit staging/apply and persisted
 undo/reload remain unimplemented in that slice. Neither the original #118/#123
 workstreams nor #232 are complete. The historical reconciliation below is retained.
 
+## Reviewed setup proposal continuation — 14 September 2026
+
+[SETUP-PROPOSALS.md](SETUP-PROPOSALS.md) adds complete read-only setup diffs over
+the ordered advice service, shared with SDK/CLI/read-MCP. Its captured browser
+draft identity is not server CAS. Explicit staging/apply, shared expected-draft
+concurrency, partial-failure recovery and persisted undo/reload remain #232 work.
+The source was integrated over main `ff6c0f4`, including merged #237/#258.
+
 ## Issue disposition and existing ownership
 
 | Workstream | Existing implementation to preserve | Remaining acceptance / next increment |

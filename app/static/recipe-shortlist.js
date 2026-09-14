@@ -99,7 +99,7 @@
       need(response.ok,typeof value?.error==='string'?value.error:'Recipe inspection is unavailable.');return value;
     },event=>{
       check.disabled=event.busy;panel.setAttribute('aria-busy',String(event.busy));last=null;result.replaceChildren();
-      if(event.report){last=event.report;render(last);}else status.textContent=event.message;
+      if(event.report){last=event.report;render(last);}else{status.textContent=event.message;d.dispatchEvent(new Event('studio:shortlist-invalidated'));}
     });
     function currentQuery(offset=0,expected){const q={goal:goal.value,reference_count:Number(count.value),limit:6,offset};if(expected)q.expected_snapshot=expected;if(ordered)q.sources=ordered.map(x=>({asset_id:x.asset_id,sha256:x.sha256,role:x.role}));if(source)Object.assign(q,{source_asset_id:source.asset_id,source_sha256:source.sha256,source_role:role.value});return q;}
     clear.onclick=()=>{source=null;ordered=null;sourceList.replaceChildren();count.disabled=false;rl.hidden=false;role.hidden=false;role.disabled=true;clear.hidden=true;sourceNote.textContent='No advice source selected. The reference count is only a declaration.';session.invalidate('Advice source cleared. Your Create attachments are unchanged.');};
@@ -171,6 +171,9 @@
         const attention=row.checks.find(c=>c.state==='blocked')||row.checks.find(c=>c.state==='unknown');
         card.append(el('p',attention?.message||'Listed prerequisites were observed. Select this recipe, review the settings and use the normal preparation checks.'));
         const find=el('button','Find in recipe library');find.type='button';find.onclick=()=>findPreset(row);card.append(find);
+        const wanted=ordered?ordered.map(({asset_id,sha256,role})=>({asset_id,sha256,role})):(source?[{asset_id:source.asset_id,sha256:source.sha256,role:role.value}]:null);
+        if(wanted&&wanted.length===row.reference_count){const preview=el('button','Preview proposed setup');preview.type='button';preview.dataset.setupProposal=row.preset_id;
+          preview.onclick=()=>{if(!last)return;d.dispatchEvent(new CustomEvent('studio:setup-proposal',{detail:{goal:last.goal,preset_id:row.preset_id,expected_template_sha256:row.template_sha256,sources:wanted}}));};card.append(preview);}
         const detail=el('details');detail.append(el('summary','How it works and what it needs'),el('p',row.description),el('p',row.operation+' · '+row.reference_count+' reference image(s) · '+row.backend_id,'muted'));
         if(row.source_assignment){const a=row.source_assignment;detail.append(el('p','Selected source → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; assign and review inputs in Create.'));}
         for(const a of row.source_assignments||[])detail.append(el('p','Picture '+a.slot+' → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; nothing was applied.'));
