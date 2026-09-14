@@ -1,5 +1,25 @@
 # Current state — 14 September 2026
 
+## Restyle a picture: the look the owner asked for — 14 September 2026 (evening)
+
+The owner ran *Continue with this → Restyle* on the throne witch with their own style picture and reported the result
+was not good (flat cel, throne gone, crude eyes), then supplied a target render: soft, high-key, light-novel finish with
+the costume and throne kept. Twenty-three research renders straight against ComfyUI (tabled with prompt IDs and hashes in
+`experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`) found: an empty latent keeps only the skeleton,
+img2img from the picture (denoise 0.85) keeps the throne and costume; the look came from WAI v17 + the Mishima Kurone
+light-novel LoRA + soft-light prompt terms at CFG 4.5, not from the style picture, whose IP-Adapter board tinted the
+costume at every weight from 0.2 to 0.6 and went neon at 1.0; a FaceDetailer pass with the styled model fixed the eyes;
+`K+mean(V)` scaling adds glitter. Shipped as **`restyle-wai` — Restyle a picture (WAI v17 + light-novel look)**
+(`workflows/api/restyle-wai-api.json`): 1024×1536 canvas, board off by default with touch/strong variants, finish terms
+appended through `StringConcatenate` so a copied source description still gets them, Momoko as a variant. The Restyle
+route lists it first (`continuation_capability.keeps_picture`, new); the handoff guidance says what is kept. Proving run
+through the page, every control at default: job `0c13590c-d204-4634-b045-cc03d5a3f2e3`, prompt `5b9c2049…`, 86 s,
+`Restyle/WAI_00001_.png` (sheet `examples/style-pose/restyle-picture-proving.jpg`): pose, costume and throne kept, soft
+finish, clean face; darker background than the target. Fixture use case `restyle-recent-output-with-a-look` re-run: PASS.
+Not verified: Nova through this shape (its checkpoint swap failed twice in ComfyUI, issue #350: the first checkpoint swap of
+a session dies in `free_memory`, one retry succeeds), other boards, three-picture boards, art acceptance (HUMAN_TODO q-27,
+rewritten). Follow-ups in #351 (optional board, Nova twin, denoise sweep). Studio restarted on the branch (`.runtime/server.pid`).
+
 ## Continue with this → Restyle; the Studio was unstartable from main — 14 September 2026 (afternoon)
 
 The owner tried to give a liked output a different look: *Continue with this → Refine → SDXL • stronger

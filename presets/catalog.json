@@ -5993,7 +5993,8 @@
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
       "graph": "workflows/api/restyle-wai-api.json",
-      "verified": false,
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 through Studio job 0c13590c-d204-4634-b045-cc03d5a3f2e3 (ComfyUI prompt 5b9c2049-6586-47dd-ae4f-3d590972cb3b), 86 s on the primary backend, every control at its authored default (Style weight 0, Denoise 0.85, CFG 4.5, 1024x1536, Mishima Kurone 0.8, seed 2026091407), driven through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d...) with the owner's style picture on Picture 1; output WAI_00001_.png inspected: pose, costume and throne kept, soft light-novel finish, clean face (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-picture-proving.jpg). One run, not art acceptance; the look is HUMAN_TODO q-27.",
       "modality": "image",
       "commercial_note": "WAI hashes do not authenticate its creator and its commercial terms are unresolved; the Mishima Kurone and Momoko LoRAs declare Image/RentCivit/Rent/Sell on civitai (recorded in models/library.json); IP-Adapter and ControlNet weights are apache-2.0; every board and source picture keeps its own terms. A successful render is not legal clearance.",
       "positive": [
