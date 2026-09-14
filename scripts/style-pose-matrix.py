@@ -66,6 +66,7 @@ def main():
     for recipe in plan["recipes"]:
         for lora in plan["loras"]:
             for pose in plan["poses"]:
+                if lora.get("poses") and pose["id"] not in lora["poses"]: continue  # a LoRA setting may run on a subset of poses
                 positive = recipe.get("prefix", "") + plan["subject"] + ", " + pose["tags"] + recipe.get("suffix", "")
                 if lora.get("tag"): positive += ", " + lora["tag"]
                 controls = dict(plan.get("controls", {}), positive=positive, reference=plan["style"], last_reference=pose["file"], **lora.get("controls", {}))
