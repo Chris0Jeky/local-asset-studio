@@ -99,7 +99,8 @@ Ranked by dead ends, then clicks.
    picker and carries the line "This recipe takes no reference image. Choose a reference recipe (Qwen
    Atelier 1–3 references, Krea refine) to keep a source." — which is also `#uxPullAsset`'s
    `aria-describedby` reason, so anything that reads the control finds it — plus a *Show reference
-   recipes* button that runs the existing `edit` intent filter. Pressing *Pull from library* on such a
+   recipes* button that runs the existing `edit` intent filter (which selects the first reference recipe and
+   resets the prompt, so a typed brief is asked about first). Pressing *Pull from library* on such a
    recipe answers with that same line rather than doing nothing; it is deliberately not `disabled`,
    because a disabled button dispatches no click and so can never explain itself to the person pressing
    it. Dead ends 2 → 0, clicks 3 → 4: the wrong-turn click now lands.
@@ -193,8 +194,9 @@ Three numbers moved in a direction that needs saying out loud:
   dead ends were traded for 47 words. Fixing 5 properly (standing explanations behind "Why?"
   disclosures next to the control) would pay all of it back and more.
 
-The allowance fix is not visible in this table, because the driver still performs the step that raises
-it by hand; that fill is simply a no-op now. `#experimentBudget` holds 3 before the driver types 3.
+The allowance fix is not visible in this table, because the driver still performs the step that sets
+the total by hand: the planner opens at its default of 4, choosing three values keeps 4 (the sizing only
+ever raises), and the driver then types 3, which the planner accepts because 3 candidates fit.
 `tests/production_clarity_frontend.cjs` proves it directly: choosing an axis sizes the allowance to the
 proposal, never lowers a total the operator raised, and leaves a branch that shares its parent's budget
 alone; the note states the required total before any refusal.

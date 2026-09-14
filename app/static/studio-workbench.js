@@ -32,7 +32,8 @@
   const NO_SOURCE_SLOT='This recipe takes no reference image. Choose a reference recipe (Qwen Atelier 1–3 references, Krea refine) to keep a source.';
   const takesSource=()=>!!selected?.reference||!!selected?.reference_slots?.length;
   q('#uxPullAsset').setAttribute('aria-describedby','uxSourceNote');
-  q('#uxFindReferenceRecipes').onclick=()=>chooseIntent('edit');
+  // Switching intent selects the first reference recipe, which resets the prompt; a typed brief is asked about first.
+  q('#uxFindReferenceRecipes').onclick=()=>{const typed=q('#positive')?.value.trim();if(typed&&typed!==(selected?.defaults?.positive||'')&&!confirm('Showing reference recipes selects the first one and resets the prompt and variation count in Create. Continue?'))return;chooseIntent('edit');};
   const advanced=element('details','ux-parameters');advanced.innerHTML='<summary>Parameters & adapter stack <small>Seed, size, sampling and model controls</small></summary>';q('#controls').before(advanced);advanced.append(q('#controls'),q('#loraSlots'));advanced.open=false;
   const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div id="uxBlockers"></div><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
   q('#generate').setAttribute('aria-describedby','uxRunSummary uxBlockers');q('.dependencies').open=false;
