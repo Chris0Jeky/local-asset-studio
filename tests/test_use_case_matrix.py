@@ -169,6 +169,11 @@ class LiveGuard(unittest.TestCase):
         for action in ('read', 'goto', 'fill', 'type'):
             self.assertEqual(runner.live_allows(action, False, 'positive', 'Describe the result'), '')
 
+    def test_reading_a_denied_control_is_still_measured(self):
+        self.assertEqual(runner.live_allows('read', False, 'generate', 'Generate'), '',
+                         'measuring a control must never be blocked; only doing is')
+        self.assertTrue(runner.deny_reason('generate', 'Generate'), 'the deny list itself still names it')
+
     def test_deny_list_beats_navigation(self):
         self.assertIn('deny-list', runner.live_allows('click', True, 'generate', 'Generate'))
 

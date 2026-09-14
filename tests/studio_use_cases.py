@@ -117,10 +117,16 @@ def deny_reason(control_id='', label='', attributes=(), submits=False):
 
 
 def live_allows(action, navigation, control_id='', label='', attributes=(), submits=False):
-    """Live mode default: read-only navigation and typing. Returns '' when allowed."""
+    """Live mode default: read-only navigation and typing. Returns '' when allowed.
+
+    Reading a control touches nothing, so the deny list never blocks a measurement —
+    it blocks doing. Everything else is denied first, then allowed only for typing
+    and for clicks the driver declared as navigation.
+    """
+    if action == 'read': return ''
     reason = deny_reason(control_id, label, attributes, submits)
     if reason: return reason
-    if action in ('read', 'goto', 'fill', 'type'): return ''
+    if action in ('goto', 'fill', 'type'): return ''
     if action in CLICK_ACTIONS and navigation: return ''
     return 'live mode is read-only: ' + action + ' is not navigation or typing'
 
@@ -588,6 +594,13 @@ def _native_export(c):
 # --------------------------------------------------------------------------------------
 # Runner
 # --------------------------------------------------------------------------------------
+def repo_path(path):
+    """Report a path relative to the repository when it lives there, else absolutely."""
+    path = Path(path).resolve()
+    try: return str(path.relative_to(ROOT)).replace(os.sep, '/')
+    except ValueError: return str(path).replace(os.sep, '/')
+
+
 def load_cases(path=CASES_PATH):
     return json.loads(Path(path).read_text(encoding='utf-8'))
 
@@ -631,6 +644,7 @@ def main(argv=None):
     cases = [case for case in data['cases'] if not args.case or case['id'] in args.case]
     missing = [case['id'] for case in cases if case['id'] not in DRIVERS]
     if missing: raise SystemExit('No driver registered for: ' + ', '.join(missing))
+    args.out = args.out.resolve(); args.screenshots = args.screenshots.resolve()
     args.screenshots.mkdir(parents=True, exist_ok=True)
 
     from playwright.sync_api import sync_playwright
