@@ -1,0 +1,28 @@
+name: Maintenance pass 6 integration source
+on:
+  push:
+    branches: [codex/maintenance-pass6-transport-20260914]
+    paths: [.github/workflows/maintenance-pass6-delta.yml]
+permissions:
+  contents: read
+jobs:
+  delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a016e7dc9d289598fd32897a40c3e0585a634a00
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned tracked changes without runtime data
+        run: |
+          git diff --binary 20c46dd45044a6f9193b3e562df5bee4e5fc8912 HEAD > "$RUNNER_TEMP/main-delta.patch"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass6-main-delta
+          path: |
+            ${{ runner.temp }}/main-delta.patch
+            ${{ runner.temp }}/identity.txt
+          retention-days: 1
