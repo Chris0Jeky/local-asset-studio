@@ -60,6 +60,28 @@ behaviour beyond the existing lanes; any art or licence judgement. Follow-ups fi
 (addressable-figure primitive, the G3 gap), #253 (unbounded pre-submit queue wait), #254
 (anime-detail-fix hand-pass denoise), #255 (pixel-lora square export).
 
+## Reconcile a retained character Start — 14 September 2026
+
+The character edit bridge now offers explicit `reconcile-start` for a local
+`start_pending` receipt. It observes the known project using GET requests,
+checks its original provenance and exact per-project reservation, and records
+that Start was accepted without repeating Start or Resume. Another revision's
+campaign reservation alone is insufficient. Successful comparisons waiting for
+review, and already reviewed comparisons, are recognized as accepted Starts;
+this does not infer successful inference or creative acceptance.
+
+The integrated focused bridge suite passed 59 tests with one skip, and all
+12 inert real-HTTP campaign integration tests passed. They cover accepted and
+unaccepted lost replies, retained reservations after reopen, changed provenance,
+and terminal comparison states. A fresh review identified the missing terminal
+states; its regression failed before the fix and passed afterwards. The second
+scoped review found that blocker resolved with no new HIGH/CRITICAL finding.
+
+No real project was started or resumed, no allowance was added, and no runtime
+was restarted. Full local and hosted qualification are recorded on the PR after
+they run. Shared repair allocation and accepted neural repairs remain open under
+#65 and #71. See [the bridge runbook](docs/character-consistency/STUDIO-BRIDGE.md).
+
 ## Shared allowance for character edit revisions — 13 September 2026
 
 An offline campaign receipt and explicit Production registration now let v2

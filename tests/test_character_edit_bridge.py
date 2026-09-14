@@ -91,7 +91,7 @@ class InertStudio:
         if path.startswith('/api/production/'):
             pid=path.split('/')[3];project=self.projects[pid]
             if method=='POST' and path.endswith('/start'):
-                project['budget']['reserved']=len(project['stages']);project['state']['status']='queued'
+                project['budget']['reserved']=len(project['stages']);project['state'].update(status='queued',reserved=len(project['stages']))
                 if self.lost_start:raise TimeoutError('Start response lost')
             return copy.deepcopy(project)
         if path=='/api/workspace':return {'assets':copy.deepcopy(self.assets)}
@@ -184,6 +184,28 @@ class BridgeProtocol(unittest.TestCase):
         with self.assertRaises(ValueError):self.bridge.start()
         self.http.finish(pid);self.assertFalse(self.bridge.collect(0)['semantic_approval'])
         self.assertEqual(1,self.http.count('POST','/api/production/'+pid+'/start'))
+    def test_legacy_start_response_loss_reconciles_only_the_retained_start(self):
+        pid=self.staged();self.http.lost_start=True
+        with self.assertRaises(TimeoutError):self.bridge.start()
+        before=len(self.http.calls);result=self.bridge.reconcile_start()
+        calls=self.http.calls[before:]
+        self.assertEqual('started',self.bridge.state()['phase'])
+        self.assertEqual({'status':'queued','reserved':2}, {k:result['observation'][k] for k in ('status','reserved')})
+        self.assertIsInstance(result['observation']['checked_at'],float)
+        self.assertFalse(result['generation_submitted']);self.assertEqual(0,result['mutating_http_requests'])
+        self.assertTrue(calls and all(method=='GET' for method,_,_,_ in calls))
+        self.assertEqual(1,self.http.count('POST','/api/production/'+pid+'/start'))
+        with self.assertRaises(ValueError):self.bridge.start()
+    def test_terminal_review_states_reconcile_without_another_start(self):
+        for status in ('awaiting_review','reviewed'):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);_,template=handoff(root);http=InertStudio(template);client=b.Bridge(root,'handoff.json',http)
+                pid=client.stage()['project']['id'];http.lost_start=True
+                with self.assertRaises(TimeoutError):client.start()
+                http.finish(pid);http.projects[pid]['state']['status']=status;before=len(http.calls)
+                result=client.reconcile_start();calls=http.calls[before:]
+                self.assertEqual(status,result['observation']['status']);self.assertEqual('started',client.state()['phase'])
+                self.assertTrue(calls and all(method=='GET' for method,_,_,_ in calls));self.assertEqual(1,http.count('POST','/api/production/'+pid+'/start'))
     def test_preexisting_named_project_prevents_fresh_budget(self):
         self.http.projects['a'*32]={'name':self.bridge.name}
         with self.assertRaisesRegex(ValueError,'already exists'):self.bridge.stage()

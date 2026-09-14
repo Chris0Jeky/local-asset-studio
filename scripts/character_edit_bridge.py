@@ -232,6 +232,22 @@ class Bridge:
             state.update(project_id=project['id'],project_sha256=project['plan']['sha256'],phase='staged')
             self.write_state(state); return {'project':project,'mutating_http_requests':0}
 
+    def reconcile_start(self):
+        """Record a retained accepted Start without retrying it or continuing work."""
+        with self.locked():
+            self.inputs(); state=self.state(); self.identity(state)
+            require(state['phase']=='start_pending', 'Only an uncertain Start needs observation; use status for known starts')
+            project=self.project(state); plan=project['plan']; current=project['state']; count=len(plan['stages'])
+            reserved=current.get('reserved'); root_reserved=project['budget'].get('reserved')
+            require(type(reserved) is int and count>0 and reserved==count and type(root_reserved) is int and root_reserved>=count,
+                    'The retained project does not prove this Start reserved its exact comparison stages')
+            require(current.get('status') in ('queued','running','observing','interrupted','uncertain','stopped','completed','failed','awaiting_review','reviewed'),
+                    'The retained project does not prove this Start was accepted; leave it pending and inspect Studio')
+            observation={'status':current['status'],'reserved':reserved,'checked_at':time.time()}
+            state.update(phase='started',start_observation=observation);self.write_state(state)
+            return {'project':project,'observation':observation,'mutating_http_requests':0,'generation_submitted':False,
+                    'note':'Observed an accepted Start from retained Production state. This does not prove inference succeeded or authorize Resume.'}
+
     def start(self):
         with self.locked():
             self.inputs(); state=self.state(); require(state['phase']=='staged', 'Start already requested or not staged; inspect the known project, do not retry')
@@ -311,7 +327,7 @@ def main():
     for name in ('register-campaign','campaign-status'):
         p=sub.add_parser(name); p.add_argument('--workspace',required=True); p.add_argument('--campaign',required=True)
         p.add_argument('--studio-port',type=int,default=8191)
-    for name in ('stage','start','status','reconcile','collect','compose'):
+    for name in ('stage','start','status','reconcile','reconcile-start','collect','compose'):
         p=sub.add_parser(name); p.add_argument('--workspace',required=True); p.add_argument('--handoff',required=True)
         p.add_argument('--studio-port',type=int,default=8191)
         if name=='stage':p.add_argument('--resume-uploads',action='store_true')
@@ -327,6 +343,7 @@ def main():
             if args.command=='stage':value=bridge.stage(resume_uploads=args.resume_uploads)
             elif args.command=='collect':value=bridge.collect(args.index)
             elif args.command=='compose':value=bridge.compose(args.index,args.current_document,args.out)
+            elif args.command=='reconcile-start':value=bridge.reconcile_start()
             else:value=getattr(bridge,args.command)()
         print(json.dumps(value,indent=2,ensure_ascii=False,allow_nan=False)); return 0
     except (ValueError,KeyError,TypeError,OSError,http.client.HTTPException) as exc:
