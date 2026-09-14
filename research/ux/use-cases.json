@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "refs": "#278",
+  "brief": "docs/FANTASY-CHARACTER-BRIEF.md",
+  "purpose": "Owner-shaped end-to-end journeys through the Studio UI, written as intents so the measured matrix reports the pipeline rather than the selectors. Executed by tests/studio_use_cases.py.",
+  "starting_views": ["home", "create", "assets", "production", "models", "learn", "prompt-lab", "workflow-studio", "review", "av"],
+  "cases": [
+    {
+      "id": "first-image-from-brief",
+      "goal": "Turn a written character brief into a ready-to-run illustration recipe without generating anything by accident.",
+      "starting_view": "home",
+      "success_condition": "A recipe is chosen, the brief wording is in the recipe, and the run control reports ready while zero generation requests have been sent.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the overview and see where a new piece of work starts", "expect": "the overview names a starting point for making something"},
+        {"intent": "move to the place where recipes are chosen", "expect": "the recipe workspace opens with a list of recipes"},
+        {"intent": "search for a recipe by the kind of picture wanted, an anime character portrait", "expect": "the recipe list narrows to matching recipes"},
+        {"intent": "choose an illustration recipe from the narrowed list", "expect": "a recipe is selected and its controls appear"},
+        {"intent": "describe the character in the brief's own words", "expect": "the description is held by the recipe"},
+        {"intent": "state what the picture must avoid", "expect": "the avoid wording is held by the recipe"},
+        {"intent": "check the recipe reports itself ready to run, without running it", "expect": "the run control is enabled and nothing has been submitted"}
+      ]
+    },
+    {
+      "id": "reference-edit-one-source",
+      "goal": "Edit an existing character picture with one reference, after first trying it on a recipe that cannot take a reference at all.",
+      "starting_view": "create",
+      "success_condition": "The wrong turn is recorded with whatever the screen said about it, then a one-reference recipe holds an attached source and reports ready.",
+      "wrong_turn": true,
+      "steps": [
+        {"intent": "choose a text-only illustration recipe as the starting point", "expect": "a recipe with no reference slot is selected"},
+        {"intent": "try to bring a saved picture into that text-only recipe", "expect": "the screen explains that this recipe cannot take a reference"},
+        {"intent": "read whatever the screen now says about sources for this recipe", "expect": "an explanation names the missing reference slot"},
+        {"intent": "search for a recipe that accepts a reference image", "expect": "the recipe list narrows to reference-edit recipes"},
+        {"intent": "choose the recipe that takes one reference picture", "expect": "a recipe with a reference slot is selected"},
+        {"intent": "pull a saved character picture from the library into the reference slot", "expect": "the picture is attached as the source and the original stays in the library"},
+        {"intent": "write what changes and what must stay the same", "expect": "both the change and the invariants are held by the recipe"},
+        {"intent": "check the edit reports itself ready to run", "expect": "the run control is enabled and nothing has been submitted"}
+      ]
+    },
+    {
+      "id": "three-reference-identity-pose-style",
+      "goal": "Preserve a character's identity while changing pose and style by giving three references explicit roles.",
+      "starting_view": "create",
+      "success_condition": "Three reference slots each hold a picture with a distinct role, and the recipe reports ready without submitting.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "choose the reference-edit recipe that takes three pictures", "expect": "three reference slots appear"},
+        {"intent": "say the first picture supplies the character's identity", "expect": "the first slot records the identity role"},
+        {"intent": "attach a saved picture to the first slot", "expect": "the first slot shows an attached picture"},
+        {"intent": "say the second picture supplies the pose", "expect": "the second slot records the pose role"},
+        {"intent": "attach a saved picture to the second slot", "expect": "the second slot shows an attached picture"},
+        {"intent": "say the third picture supplies the style", "expect": "the third slot records the style role"},
+        {"intent": "attach a saved picture to the third slot", "expect": "the third slot shows an attached picture"},
+        {"intent": "write what the identity picture must contribute", "expect": "the contribution note is held for that slot"},
+        {"intent": "write the change and the invariants for the whole edit", "expect": "the wording is held by the recipe"},
+        {"intent": "check the three-reference edit reports itself ready", "expect": "the run control is enabled and nothing has been submitted"}
+      ]
+    },
+    {
+      "id": "compare-settings-from-recipe",
+      "goal": "Ask one settings question about a chosen recipe and get a bounded comparison prepared, not started.",
+      "starting_view": "create",
+      "success_condition": "A comparison is prepared with an explicit setting, explicit candidate values and a run allowance, and it appears in Runs & review as prepared.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "choose the recipe whose settings are in question", "expect": "the recipe is selected with its controls"},
+        {"intent": "fix the brief so only one thing will change between candidates", "expect": "the brief wording is held by the recipe"},
+        {"intent": "open the comparison planner from the recipe", "expect": "a planner asks which single setting to vary"},
+        {"intent": "choose the guidance setting as the one thing to vary", "expect": "the planner accepts that setting"},
+        {"intent": "read the candidate values the planner proposes", "expect": "explicit candidate values are shown and editable"},
+        {"intent": "set how many graph runs this study may spend", "expect": "the allowance is recorded"},
+        {"intent": "prepare the comparison without starting it", "expect": "the planner prepares a study and says preparing is not starting"},
+        {"intent": "check the prepared study is listed in Runs & review", "expect": "the study appears with a not-started state"}
+      ]
+    },
+    {
+      "id": "review-and-keep-winner",
+      "goal": "Look at a finished comparison, decide which candidate is the keeper and record why.",
+      "starting_view": "production",
+      "success_condition": "A candidate is chosen with review notes, and the choice is recorded against the study.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the place where finished runs are reviewed", "expect": "the list of studies is shown"},
+        {"intent": "choose the comparison that is waiting for a decision", "expect": "its candidates are shown"},
+        {"intent": "reveal which settings produced each candidate", "expect": "each candidate's setting is labelled"},
+        {"intent": "open one candidate at full size to judge it", "expect": "the candidate opens large enough to judge"},
+        {"intent": "write why this candidate is the keeper", "expect": "the note is held against the study"},
+        {"intent": "keep the winning candidate", "expect": "the choice is recorded as a creative preference"},
+        {"intent": "check the decision was recorded rather than started another run", "expect": "the study records the choice and no generation was submitted"}
+      ]
+    },
+    {
+      "id": "reuse-keeper-as-reference",
+      "goal": "Take a kept picture out of the library and make it the reference for the next edit, carrying its source record.",
+      "starting_view": "assets",
+      "success_condition": "A library picture is prepared as the source of a reference-edit recipe with its lineage intact, and the new recipe reports ready.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the library of saved pictures", "expect": "saved pictures are listed"},
+        {"intent": "open the kept picture to look at it", "expect": "the picture's details open"},
+        {"intent": "start a continuation from this picture", "expect": "a handoff asks where the picture should go next"},
+        {"intent": "choose a reference-edit recipe as the destination", "expect": "the destination recipe is selected in the handoff"},
+        {"intent": "prepare the handoff without running it", "expect": "the new recipe opens with the picture attached as its source"},
+        {"intent": "check the source picture and its origin travelled with it", "expect": "the new recipe names the source picture it came from"},
+        {"intent": "write the new change for this edit", "expect": "the wording is held by the new recipe"},
+        {"intent": "check the prepared edit reports itself ready", "expect": "the run control is enabled and nothing has been submitted"}
+      ]
+    },
+    {
+      "id": "prompt-lab-to-create",
+      "goal": "Shape the wording for a character in Prompt Lab and hand the reviewed text to a recipe in Create.",
+      "starting_view": "prompt-lab",
+      "success_condition": "Compiled wording reaches the recipe's brief field only after an explicit review and apply, with no generation.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the place where wording is shaped before a run", "expect": "a brief form with prompt profiles is shown"},
+        {"intent": "choose a prompt profile that matches making an image", "expect": "the profile is selected"},
+        {"intent": "state the character brief in plain words", "expect": "the brief is held"},
+        {"intent": "name the subject facet of the brief", "expect": "the subject facet is held"},
+        {"intent": "compile the brief into proposed wording", "expect": "proposed positive and negative wording is shown for review"},
+        {"intent": "send the reviewed wording over to Create", "expect": "Create opens holding the transferred text, not yet applied"},
+        {"intent": "inspect the transferred wording before applying it", "expect": "the text is previewed before it changes any recipe"},
+        {"intent": "apply the wording into the recipe", "expect": "the recipe's brief field now holds the wording"}
+      ]
+    },
+    {
+      "id": "guided-edit-or-preserve-character",
+      "goal": "Follow the guided 'Edit or preserve a character' path from the first stage to the last and end on a real control each time.",
+      "starting_view": "workflow-studio",
+      "success_condition": "Every stage of the guided path is reached, each lands on a real control, and no generation is submitted.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the guided paths", "expect": "the guided paths are listed with their step counts"},
+        {"intent": "start the path for editing or preserving a character", "expect": "the first stage opens on a real control with its coaching text"},
+        {"intent": "advance to the stage about assigning what each picture contributes", "expect": "the stage opens on the reference controls"},
+        {"intent": "advance to the stage about writing the change and the invariants", "expect": "the stage opens on the brief field"},
+        {"intent": "advance to the stage about checking readiness before spending a run", "expect": "the stage opens on the requirements panel"},
+        {"intent": "advance to the stage about generating only when you choose", "expect": "the stage opens on the run control without pressing it"},
+        {"intent": "advance to the final stage about reviewing, keeping and reusing", "expect": "the stage opens on the library"},
+        {"intent": "check the whole path never submitted a generation", "expect": "no generation requests were sent"}
+      ]
+    },
+    {
+      "id": "build-and-prepare-node-workflow",
+      "goal": "Build a small node workflow from the installed nodes, check it and get as far as preparing a run without executing one.",
+      "starting_view": "workflow-studio",
+      "success_condition": "A graph is loaded and checked, the export becomes available, and the save/prepare controls are reached and recorded with whatever they report.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the workflow builder", "expect": "the builder is shown with its node catalog empty"},
+        {"intent": "load the node catalog from the local runtime", "expect": "the installed node count is reported"},
+        {"intent": "start from a registered recipe rather than an empty canvas", "expect": "a graph with nodes is loaded into the builder"},
+        {"intent": "check the graph before doing anything with it", "expect": "the check reports a result and no graph was run"},
+        {"intent": "confirm the checked graph can now be exported", "expect": "the export control is available"},
+        {"intent": "save the workflow so it can be reused later", "expect": "the save control reports what it needs"},
+        {"intent": "look for the control that prepares a run from a saved revision", "expect": "either a prepare control is present or its absence is recorded"},
+        {"intent": "check nothing was submitted to the runtime", "expect": "no run requests were sent"}
+      ]
+    },
+    {
+      "id": "frames-to-native-export",
+      "goal": "Pick a set of frames out of the library and get a native sprite export prepared for the engine.",
+      "starting_view": "assets",
+      "success_condition": "Two or more image frames are selected, the native export dialog is configured, and an export is prepared and listed in Runs & review.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "open the library of saved pictures", "expect": "saved pictures are listed"},
+        {"intent": "narrow the library to still images only", "expect": "only images remain listed"},
+        {"intent": "select the first frame for the export", "expect": "the selection count shows one"},
+        {"intent": "select a second frame for the export", "expect": "the selection count shows two"},
+        {"intent": "open the native export controls for the selected frames", "expect": "an export dialog opens with the chosen frames"},
+        {"intent": "choose a sprite atlas as the export kind", "expect": "the export kind is recorded"},
+        {"intent": "set how long each frame should show", "expect": "the frame timing is recorded"},
+        {"intent": "prepare the export without starting it", "expect": "the export is prepared and preparing is not starting"},
+        {"intent": "check the prepared export is listed in Runs & review", "expect": "the export appears in the studies list"}
+      ]
+    }
+  ]
+}
