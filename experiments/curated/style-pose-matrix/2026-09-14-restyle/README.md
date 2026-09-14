@@ -109,7 +109,8 @@ The owner asked to keep improving the result and lifted the non-commercial const
 larger downloads ran (Z-Image fp8, Klein 9B, AniEdit; see `research/style-pose/restyle-model-strategy-2026-09-14.md`), eleven
 research prompts went straight to the primary ComfyUI on the already-installed `flux-2-klein-4b-fp8` (Qwen3 4B encoder, FLUX.2
 VAE, Euler on the Flux2 schedule, CFG 1, seed 2026091407 unless noted), the throne witch as the reference (scaled to 1 MP),
-canvas 1024×1536 unless noted. Graphs and PNGs in the session scratchpad (`next-exp/`).
+canvas 1024×1536 unless noted. The exact submitted graphs (full prompts, references, sampler settings) are committed in
+`klein-4b-graphs/<name>.graph.json`; the PNGs stay in the session scratchpad and are identified by the hashes below.
 
 | # | References | Prompt | Steps | Time | sha256 (16) | Reading |
 |---|---|---|---|---|---|---|

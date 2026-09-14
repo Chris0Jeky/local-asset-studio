@@ -37,15 +37,20 @@
     const template=preset?.continuation_prompt;
     if(typeof template!=='string'||!template.trim())return null;
     const described=source?.prompt_origin==='submitted-output'&&typeof source.positive==='string'&&source.positive.trim();
-    return template.replace('{source}',described?' The picture shows: '+source.positive.trim().replace(/[\s.]+$/,'')+'.':'');
+    // A function replacement keeps `$&`-style patterns in a description literal; a description that would push the
+    // wording past the server's 8000-character prompt limit is left out rather than blocking Generate later.
+    const text=template.replace('{source}',()=>described?' The picture shows: '+source.positive.trim().replace(/[\s.]+$/,'')+'.':'');
+    return text.length>8000?template.replace('{source}',''):text;
   }
   // A restyle that keeps the picture draws it at the source's own aspect ratio (~1.5 megapixels, multiples of the recipe grid).
   function canvasFor(source,preset){
     const cap=preset?.continuation_capability;
     if(cap?.operation!=='restyle'||!cap.keeps_picture||!preset.width||!preset.height||!(source?.width>0&&source?.height>0))return null;
     const grid=preset.dimension_multiple||16,limit=preset.dimension_limits?.[1]||1536,aspect=source.width/source.height,pixels=1.5*1024*1024;
+    // Scale both axes together when the long edge would pass the recipe limit, so the aspect ratio survives the clamp.
+    let width=Math.sqrt(pixels*aspect),height=Math.sqrt(pixels/aspect);const scale=Math.min(1,limit/Math.max(width,height));width*=scale;height*=scale;
     const fit=v=>Math.min(limit,Math.max(grid*4,Math.round(v/grid)*grid));
-    return{width:fit(Math.sqrt(pixels*aspect)),height:fit(Math.sqrt(pixels/aspect))};
+    return{width:fit(width),height:fit(height)};
   }
   function settings(preset,overrides,current){
     const protectedKeys=new Set(['positive','negative','reference','last_reference']);
