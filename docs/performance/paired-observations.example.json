@@ -1,0 +1,20 @@
+{
+  "schema": "studio.resource-comparison-plan/v1",
+  "generation_allowance": 0,
+  "pairs": [
+    {
+      "id": "example-pair",
+      "condition": "unspecified",
+      "baseline": {
+        "directory": "baseline-observation",
+        "result_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "job_id": "replace-baseline-job-id"
+      },
+      "candidate": {
+        "directory": "candidate-observation",
+        "result_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "job_id": "replace-candidate-job-id"
+      }
+    }
+  ]
+}
