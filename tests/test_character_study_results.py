@@ -1,5 +1,6 @@
 """Collect real saved Production/Workspace fixtures without a runtime or inference."""
 import copy
+from io import BytesIO
 import json
 from pathlib import Path
 import sqlite3
@@ -7,7 +8,7 @@ import subprocess
 import sys
 import unittest
 from unittest.mock import patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 import test_character_handoff_import as fixtures
 from scripts import character_study as study
@@ -90,6 +91,30 @@ class CollectionTests(unittest.TestCase):
         self.assertEqual(report['cases'][0]['disposition'], 'not_submitted')
         self.assertEqual(report['production_budget'], {'allowance': 2, 'reserved': 1})
         self.assertIsNotNone(report['cases'][0]['execution_evidence'])
+
+    def test_preflight_failure_and_explicit_request_rejection_keep_reservations_without_image_attempts(self):
+        project = self.project(); self.studio.production.start(project['id'])
+        stage = self.studio.production._get(project['id'])['plan']['stages'][0]
+        job_id = results.job_identity(project['id'])
+        self.studio.production._attempt(project['id'], 0, job_id=job_id)
+        self.studio.create_job(stage['request'], enqueue=False, job_id=job_id)
+        job = self.studio.jobs[job_id]; job['project_id'] = project['id']
+        self.studio.record_job_failure(job, ValueError('Synthetic local preflight failure'))
+        self.assertTrue(job['message'].startswith('Generation failed before submission:'))
+        rejected = self.project(1)
+        self.studio.replies = iter([{'queue_running': [], 'queue_pending': []},
+            HTTPError('http://127.0.0.1:1/prompt', 400, 'Synthetic rejection', {}, BytesIO(b'{"error":"fixture"}'))])
+        self.studio.production.start(rejected['id']); self.studio.production.run(rejected['id'])
+        self.assertEqual(sum(args[0] == '/prompt' for args, _ in self.studio.requests), 1)
+        self.assertTrue(all(j['status'] == 'failed' and not j['prompt_ids'] for j in self.studio.jobs.values()))
+        report = self.collect()
+        self.assertEqual(study.read_json(self.destination/'records.json'), [])
+        self.assertEqual(study.read_json(self.destination/'summary.json')['attempts_used'], 0)
+        self.assertEqual(report['production_budget'], {'allowance': 2, 'reserved': 2})
+        self.assertEqual({item['disposition'] for item in report['cases']}, {'failed_without_prompt'})
+        for item in report['cases']:
+            evidence = study.read_json(study.verify_artifact(self.workspace, item['execution_evidence']))
+            self.assertEqual(evidence['job']['status'], 'failed')
 
     def test_rehashed_stage_cannot_change_approved_case_seed(self):
         project = self.project(); stored = self.studio.production._get(project['id']); plan = stored['plan']

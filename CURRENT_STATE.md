@@ -10,13 +10,19 @@ Unknown outcomes retain their pending evidence. Never-submitted reservations sta
 spent and separate from the summary's record count. Generic selections produce no
 character review or human acceptance; no executor or allowance is added.
 
-Executed: all 16 focused synthetic tests pass without ResourceWarning, including
+Executed: all 17 focused synthetic tests pass without ResourceWarning, including
 real Production/Workspace persistence and a subprocess CLI check. A retained
 8-by-8-pixel fixture collection contains one completed candidate and one uncertain
 submission, with two reservations used, zero human acceptances and no runtime
 contact. Missing/torn evidence, wrong ownership, changed bytes, hidden generic
-branches, copy-time changes and incorrect budget records are rejected. Broader
-integration and independent review are recorded on the change's PR.
+branches, copy-time changes and incorrect budget records are rejected. At initial
+head `8b4dc83`, the strict Windows/Python 3.14 suite passed 2,264 tests (2,199 passed,
+65 skipped) in 302.645 seconds without ResourceWarning. Independent review then
+identified a no-prompt failure miscount. A regression reproduced it for both local
+preflight failure and explicit request rejection; the collector now retains those
+failures and reservations without image-attempt records. The final focused pass
+and hosted integration are recorded on the change's PR; the earlier full local
+result remains scoped to the initial head.
 
 Not verified: collection of the owner's real pilot, running Studio adoption, new
 generation, complete runtime/model identity, benchmark performance, art acceptance

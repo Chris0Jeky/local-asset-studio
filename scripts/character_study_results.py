@@ -180,12 +180,17 @@ def _case(experiments, project, plan, watched):
     evidence = {'schema_version': 1, 'kind': 'character_production_evidence', 'project': project, 'job': dict(job, graph=graph)}
     if submission_evidence.never_submitted(job):
         item['disposition'] = 'not_submitted'; return item, evidence, None
+    if job['status'] == 'failed' and not ids and not outputs and 'pending_submission' not in job and 'abandonment' not in job and not job.get('tracking_disposition'):
+        # Both local preflight failures and explicit request rejections can have
+        # this shape. Preserve the failure/reservation without counting an image
+        # attempt or claiming that an HTTP request was never sent.
+        item['disposition'] = 'failed_without_prompt'; return item, evidence, None
     asset = None
     if job['status'] == 'completed':
         require('pending_submission' not in job and len(ids) == 1 and receipts[0].get('status') == 'completed'
                 and len(outputs) == 1 and outputs[0].get('media_type') == 'image' and outputs[0].get('prompt_id') == ids[0], 'Completed case needs one completed prompt and its one image')
         asset = _asset(experiments, job, outputs[0]); evidence['asset'] = asset; disposition = 'completed'
-    elif submission_evidence.terminal_failure(job) or (job['status'] == 'failed' and not ids and not outputs and 'pending_submission' not in job):
+    elif submission_evidence.terminal_failure(job):
         disposition = 'failed'
     else:
         # A queue label, abandoned observation, partial result or active request

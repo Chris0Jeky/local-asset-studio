@@ -41,6 +41,11 @@ return, replenish or grant an allowance. Failed attempts keep their prompt IDs;
 unknown, active or abandoned observations remain `submission_uncertain`. Collection
 does not reconcile them or permit another submission.
 
+A local preflight failure or explicit request rejection with no recorded prompt,
+output or pending submission is `failed_without_prompt`. Its evidence and
+reservation remain, but it creates no image-attempt record. That disposition does
+not assert that no HTTP request was sent and never authorizes a retry.
+
 Each imported primary case must retain one bound Production stage. The collector
 checks its plan, case seed, prompt/reference bindings, deterministic job and asset
 ownership, saved submission graph and output bytes. Generic branches sharing the
