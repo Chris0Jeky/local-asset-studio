@@ -38,3 +38,21 @@ def changed_mask(a: Image.Image, b: Image.Image) -> Image.Image:
         return result
     except BaseException:
         result.close(); raise
+
+
+def same_pixels(a: Image.Image, b: Image.Image) -> bool:
+    """Preserve raw AND converted-RGBA equality without full-image byte strings.
+
+    A palette or tRNS change can leave raw bytes equal but change RGBA. Different
+    palette indices can render identically yet fail the original raw contract.
+    ICC comparison remains the caller's separate responsibility.
+    """
+    if a.mode != b.mode or a.size != b.size: return False
+    for y in range(0, a.height, _TILE_EDGE):
+        for x in range(0, a.width, _TILE_EDGE):
+            box = (x, y, min(x + _TILE_EDGE, a.width), min(y + _TILE_EDGE, a.height))
+            with closing(a.crop(box)) as left, closing(b.crop(box)) as right:
+                if left.tobytes() != right.tobytes(): return False
+                with closing(left.convert('RGBA')) as left_rgba, closing(right.convert('RGBA')) as right_rgba:
+                    if left_rgba.tobytes() != right_rgba.tobytes(): return False
+    return True

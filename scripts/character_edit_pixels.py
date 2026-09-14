@@ -5,7 +5,7 @@
 """
 from __future__ import annotations
 import argparse
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import hashlib
 import json
 from pathlib import Path
@@ -19,7 +19,7 @@ if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 from scripts.character_study import (canonical, file_sha, inside, keys, read_json,
     relative, require, sha, verify_artifact, write_json)
 from scripts.character_edit import check_plan, digest
-from scripts.pixel_diff import changed_mask as _bounded_changed_mask
+from scripts.pixel_diff import changed_mask as _bounded_changed_mask, same_pixels
 
 
 def png(path: Path) -> Image.Image:
@@ -154,11 +154,9 @@ def _verify_bundle(root: Path, plan: dict, folder: str, patches: dict, transform
     keys(bundle['files'], set(patches))
     for name, expected in patches.items():
         record = bundle['files'][name]; require(record.get('path') == name, 'Unexpected bundle member path')
-        actual = png(verify_artifact(receipt_path.parent, record))
-        require(actual.mode == expected.mode and actual.size == expected.size
-                and actual.tobytes() == expected.tobytes()
-                and actual.convert('RGBA').tobytes() == expected.convert('RGBA').tobytes()
-                and actual.info.get('icc_profile') == expected.info.get('icc_profile'), 'Bundle pixels/profile changed')
+        with closing(png(verify_artifact(receipt_path.parent, record))) as actual:
+            require(same_pixels(actual, expected)
+                    and actual.info.get('icc_profile') == expected.info.get('icc_profile'), 'Bundle pixels/profile changed')
     return bundle
 
 
