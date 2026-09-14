@@ -109,7 +109,7 @@
         0
       ],
       "weight": 0.8,
-      "weight_type": "style transfer",
+      "weight_type": "linear",
       "combine_embeds": "concat",
       "start_at": 0.0,
       "end_at": 0.9,
