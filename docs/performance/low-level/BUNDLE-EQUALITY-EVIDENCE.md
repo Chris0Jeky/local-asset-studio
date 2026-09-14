@@ -18,7 +18,7 @@ alpha are still checked. ICC equality remains separate and caller-owned.
 
 The helper compares at most 512x512 tiles, stops on the first mismatch and
 allocates no full-size difference mask. Every owned crop/conversion closes on
-success, early exit and exception. The verifier also closes its decoded candidate
+success, early exit and exception. The verifier also closes its decoded bundle-member
 image on success/refusal. Caller-owned expected pixels remain live.
 
 Inputs, decoding, file hashing and other preparation/composition costs remain
