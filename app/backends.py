@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
+from urllib.error import HTTPError
 from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness
 
 
@@ -59,10 +60,14 @@ class BackendManager:
     def request(profile, route, timeout=2):
         loopback_port(profile['url'])
         # Never send a local control request through environment proxies or redirects.
-        with build_opener(ProxyHandler({}),_NoRedirect()).open(profile['url']+route,timeout=timeout) as response:
-            payload=response.read(1024*1024+1)
-            if len(payload)>1024*1024:raise ValueError('Backend response exceeds the observation limit')
-            return json.loads(payload)
+        try:
+            with build_opener(ProxyHandler({}),_NoRedirect()).open(profile['url']+route,timeout=timeout) as response:
+                payload=response.read(1024*1024+1)
+                if len(payload)>1024*1024:raise ValueError('Backend response exceeds the observation limit')
+                return json.loads(payload)
+        except HTTPError as exc:
+            exc.close()
+            raise
 
     def readiness(self, profile):
         return readiness(profile,self.studio.root)

@@ -18,6 +18,7 @@ from pathlib import Path
 import sys
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
+from urllib.error import HTTPError
 
 import game_asset_pipeline as pipeline
 
@@ -49,8 +50,12 @@ def load_schema(path=None, comfy_url='http://127.0.0.1:8188', *, include_raw=Fal
         with Path(path).open('rb') as stream: return read_schema(stream, include_raw=include_raw)
     loopback_port(comfy_url)
     # Explicit local discovery only: no proxy, redirect, retry or /prompt validation.
-    with build_opener(ProxyHandler({}), NoRedirect()).open(comfy_url.rstrip('/')+'/object_info', timeout=30) as stream:
-        return read_schema(stream, include_raw=include_raw)
+    try:
+        with build_opener(ProxyHandler({}), NoRedirect()).open(comfy_url.rstrip('/')+'/object_info', timeout=30) as stream:
+            return read_schema(stream, include_raw=include_raw)
+    except HTTPError as exc:
+        exc.close()
+        raise
 
 
 def select_presets(presets, *, collection=None, backend=None, preset_ids=()):
