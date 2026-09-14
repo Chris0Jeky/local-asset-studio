@@ -115,7 +115,7 @@
         "22",
         0
       ],
-      "weight": 0.3,
+      "weight": 0.0,
       "weight_type": "style transfer",
       "start_at": 0.0,
       "end_at": 0.9,
