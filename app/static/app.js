@@ -442,9 +442,11 @@ function continuationBlockerItems(){
 }
 function continuationBlockers(){return continuationBlockerItems().map(item=>item.message);}
 // Put the continuation source into the input its recipe reads it from: the pose picture of a style board, else the reference.
-function attachContinuationSource(result){
-  if(StudioContinuation.sourceInput(selected?.continuation_capability)==='last_reference'){lastUploaded=result.file;uploaded=null;setHandoffParent('lastReference',result.context.asset_id);$('#lastReference').value='';return;}
-  uploaded=result.file;setHandoffParent('reference',result.context.asset_id);
+// A fresh handoff resets lineage to the source; putting the source back keeps whatever else is attached.
+function attachContinuationSource(result,fresh=true){
+  const claim=fresh?setHandoffParent:claimInputParent;
+  if(StudioContinuation.sourceInput(selected?.continuation_capability)==='last_reference'){lastUploaded=result.file;uploaded=null;claim('lastReference',result.context.asset_id);$('#lastReference').value='';return;}
+  uploaded=result.file;claim('reference',result.context.asset_id);
   if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
   $('#reference').value='';
 }
