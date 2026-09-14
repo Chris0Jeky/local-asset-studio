@@ -155,3 +155,55 @@ class ReferenceTests(unittest.TestCase):
             graph=json.loads((ROOT/f'workflows/api/qwen-{count}ref-api.json').read_text(encoding='utf-8'))
             shipped=json.loads((ROOT/f'workflows/comfyui/{49+count} - {title}.json').read_text(encoding='utf-8'))
             self.assertEqual(shipped,expansion.visual(graph,title,info))
+
+
+def board_graph():
+    """Three style loaders, one encoder each, combined into one embed for IPAdapterEmbeds."""
+    g={'12':{'class_type':'IPAdapterModelLoader','inputs':{'ipadapter_file':'x'}},'13':{'class_type':'CLIPVisionLoader','inputs':{'clip_name':'y'}},
+       '22':{'class_type':'IPAdapterCombineEmbeds','inputs':{'embed1':['19',0],'embed2':['20',0],'embed3':['21',0],'method':'concat'}},
+       '14':{'class_type':'IPAdapterEmbeds','inputs':{'model':['9',0],'ipadapter':['12',0],'pos_embed':['22',0],'weight':0.8}},
+       '2':{'class_type':'CLIPTextEncode','inputs':{'text':'a witch'}}}
+    for loader,encoder in (('10','19'),('30','20'),('31','21')):
+        g[loader]={'class_type':'LoadImage','inputs':{'image':'example.png'}}
+        g[encoder]={'class_type':'IPAdapterEncoder','inputs':{'ipadapter':['12',0],'image':[loader,0],'weight':1.0,'clip_vision':['13',0]}}
+    return g
+
+
+class StyleBoardTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        for name in ('a.png','b.png','c.png'): Image.new('RGB',(300,400),'teal').save(self.root/name)
+        self.preset={'positive':['2','text'],'reference_board':{'min':1},
+                     'reference_slots':[{'role':'style','binding':['10','image']},{'role':'style','binding':['30','image']},{'role':'style','binding':['31','image']}]}
+    def tearDown(self):self.temp.cleanup()
+
+    def test_full_board_binds_every_loader_and_writes_no_prompt_guidance(self):
+        g=board_graph()
+        records=ref.compile_references(self.preset,g,[{'role':'style','file':'a.png'},{'role':'style','file':'b.png'},{'role':'style','file':'c.png'}],self.root)
+        self.assertEqual([g['10']['inputs']['image'],g['30']['inputs']['image'],g['31']['inputs']['image']],['a.png','b.png','c.png'])
+        self.assertEqual(g['2']['inputs']['text'],'a witch'); self.assertEqual([r['slot'] for r in records],[1,2,3])
+        self.assertEqual(records[0]['transform']['policy'],'native IP-Adapter CLIP-vision preprocessing (224 px centre crop)')
+
+    def test_empty_middle_slot_prunes_its_loader_and_encoder_and_drops_the_combiner_input(self):
+        g=board_graph()
+        records=ref.compile_references(self.preset,g,[{'role':'style','file':'a.png'},{},{'role':'style','file':'c.png'}],self.root)
+        self.assertNotIn('30',g); self.assertNotIn('20',g)
+        self.assertEqual(g['22']['inputs'],{'embed1':['19',0],'embed3':['21',0],'method':'concat'})
+        self.assertEqual([r['file'] for r in records],['a.png','c.png']); self.assertEqual([r['slot'] for r in records],[1,3])
+
+    def test_only_the_last_slot_filled_slides_into_the_combiner_first_input(self):
+        g=board_graph()
+        ref.compile_references(self.preset,g,[{},{},{'role':'style','file':'c.png'}],self.root)
+        self.assertEqual(g['22']['inputs'],{'embed1':['21',0],'method':'concat'}); self.assertEqual(g['31']['inputs']['image'],'c.png')
+        for gone in ('10','19','30','20'): self.assertNotIn(gone,g)
+        # Nothing else was touched: the embed consumer and the loaders it needs are intact.
+        self.assertEqual(g['14']['inputs']['pos_embed'],['22',0]); self.assertIn('12',g); self.assertIn('13',g)
+
+    def test_short_or_empty_payloads_are_padded_and_the_minimum_is_enforced(self):
+        g=board_graph()
+        ref.compile_references(self.preset,g,[{'role':'style','file':'b.png'}],self.root)
+        self.assertEqual(g['22']['inputs'],{'embed1':['19',0],'method':'concat'}); self.assertEqual(g['10']['inputs']['image'],'b.png')
+        with self.assertRaisesRegex(ValueError,'at least 1 picture'): ref.compile_references(self.preset,board_graph(),[],self.root)
+        with self.assertRaisesRegex(ValueError,'at least 1 picture'): ref.compile_references(self.preset,board_graph(),None,self.root)
+        with self.assertRaisesRegex(ValueError,'3 board slots'): ref.compile_references(self.preset,board_graph(),[{}]*4,self.root)
+        with self.assertRaisesRegex(ValueError,'supported role'): ref.compile_references(self.preset,board_graph(),[{'role':'vibe','file':'a.png'}],self.root)

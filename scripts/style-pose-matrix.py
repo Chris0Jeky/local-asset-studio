@@ -69,8 +69,13 @@ def main():
                 if lora.get("poses") and pose["id"] not in lora["poses"]: continue  # a LoRA setting may run on a subset of poses
                 positive = recipe.get("prefix", "") + plan["subject"] + ", " + pose["tags"] + recipe.get("suffix", "")
                 if lora.get("tag"): positive += ", " + lora["tag"]
-                controls = dict(plan.get("controls", {}), positive=positive, reference=plan["style"], last_reference=pose["file"], **lora.get("controls", {}))
-                cells.append({"recipe": recipe["preset_id"], "lora": lora["id"], "pose": pose["id"], "controls": controls})
+                controls = dict(plan.get("controls", {}), positive=positive, last_reference=pose["file"], **lora.get("controls", {}))
+                # "style" is one upload bound to the single reference input; "styles" is a board of up to
+                # three uploads sent as role-assigned reference slots (empty slots are pruned server-side).
+                cell = {"recipe": recipe["preset_id"], "lora": lora["id"], "pose": pose["id"], "controls": controls}
+                if plan.get("styles"): cell["references"] = [{"role": "style", "file": f} for f in plan["styles"]]
+                else: controls["reference"] = plan["style"]
+                cells.append(cell)
     manifest_path = out / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {"plan": plan, "cells": []}
     done = {(c["recipe"], c["lora"], c["pose"]) for c in manifest["cells"] if c.get("status") in TERMINAL}
@@ -90,7 +95,7 @@ def main():
         if key in pending:
             job = {"id": pending[key]["job_id"]}; manifest["cells"].remove(pending[key])
         else:
-            try: job = api("/api/jobs", {"preset_id": cell["recipe"], "controls": cell["controls"], "batch_count": 1})
+            try: job = api("/api/jobs", {"preset_id": cell["recipe"], "controls": cell["controls"], "batch_count": 1, "references": cell.get("references", [])})
             except Exception as exc:  # the cell is recorded, never retried
                 manifest["cells"].append(dict(cell, status="submit-failed", error=str(exc)[:300], commit_before=commit)); manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8"); continue
         job = wait(job["id"], args.timeout)
