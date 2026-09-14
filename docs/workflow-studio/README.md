@@ -10,6 +10,10 @@ For an outcome-based shortlist of current default routes and their prerequisites
 use **Create → Recipe library → Help me choose a recipe**. The same read-only
 [recipe shortlist](RECIPE-SHORTLIST.md) is available to CLI, SDK and MCP clients.
 
+For one to three actual images in a deliberate order, use the library's
+**Find recipes for selected images** action and [ordered source advice](ORDERED-SOURCES.md).
+It checks every chosen source and proposed slot without staging or applying anything.
+
 ## What you can use now
 
 Open **Guided workflows** in the Studio navigation.
@@ -96,3 +100,6 @@ The native browser command requires test-only Playwright and permission for loca
 HTTP navigation. CI provides its isolated browser environment. Unit contracts with
 synthetic DOM/HTTP seams are not native rendering evidence. Neither kind of test
 proves a model produces useful artwork on the owner's machine.
+
+Selected-source route advice: [Find recipes for an image](SOURCE-AWARE-SHORTLIST.md)
+checks one primary Workspace identity and proposed role without modifying Create.

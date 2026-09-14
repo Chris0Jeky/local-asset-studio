@@ -1,0 +1,44 @@
+{
+  "schema": "studio.repair-programme-index/v0",
+  "kind": "architecture-index",
+  "executable": false,
+  "authority": "none",
+  "research_date": "2026-09-14",
+  "source_baseline": "be14fa4104890401360cbb707d48132bd64c688e",
+  "epic": 243,
+  "entry_document": "docs/repair-studio/README.md",
+  "research_document": "docs/repair-studio/RESEARCH.md",
+  "source_count": 18,
+  "example_status": "Synthetic declarations only; no associated source images or approved canon.",
+  "milestones": [
+    {"id": "R0", "goal": "Reviewed architecture and non-executing contract scaffold", "issues": [243]},
+    {"id": "R1", "goal": "One real accepted scoped repair", "issues": [244, 245, 248, 251, 257]},
+    {"id": "R2", "goal": "Difficult crops, visibility and geometry", "issues": [246, 248, 257]},
+    {"id": "R3", "goal": "Repeated instances, sheets and contacts", "issues": [244, 249, 256, 257]},
+    {"id": "R4", "goal": "Bounded strategy changes and agent parity", "issues": [250, 251, 257]},
+    {"id": "R5", "goal": "Qualified finishing and delivery", "issues": [256, 257]}
+  ],
+  "requirements": [
+    {"id": "R-SOURCE", "issues": [244]},
+    {"id": "R-SCOPE", "issues": [245]},
+    {"id": "R-MASK", "issues": [245, 246]},
+    {"id": "R-GEOMETRY", "issues": [245, 248]},
+    {"id": "R-INSTANCE", "issues": [249]},
+    {"id": "R-CONTACT", "issues": [249]},
+    {"id": "R-OWNER", "issues": [250, 65]},
+    {"id": "R-UNKNOWN", "issues": [250, 123]},
+    {"id": "R-BUDGET", "issues": [250, 178]},
+    {"id": "R-REVISION", "issues": [251, 71, 225]},
+    {"id": "R-READ", "issues": [251]},
+    {"id": "R-QUALITY", "issues": [257, 66, 72]},
+    {"id": "R-EXPORT", "issues": [256]}
+  ],
+  "reuse": [14, 21, 22, 23, 24, 35, 65, 66, 71, 72, 118, 120, 123, 144, 178, 225, 232],
+  "next_issue": 244,
+  "notes": [
+    "This is a navigation and traceability index, not a scheduler, model registry or authority record.",
+    "Milestones are evidence gates, not promised dates or native GitHub milestone objects.",
+    "The existing 40-attempt study and all prior allowances remain unchanged.",
+    "No field in this index authorizes runtime changes, generation, downloads or publication of private artwork."
+  ]
+}

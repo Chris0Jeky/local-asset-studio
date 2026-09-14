@@ -102,7 +102,7 @@
     }
     const blocked = !!state.pending || state.busy, has = !!W.snapshot();
     stateLabel.textContent = state.pending ? 'Save pending · retain this request' : state.binding ? `Workspace r${state.binding.revision} · ${state.binding.conflict ? 'conflict — local draft retained' : state.dirty(W.snapshot()) ? 'unsaved local changes' : 'saved'}` : 'Local draft · not attached to a saved workflow';
-    $('#saveSharedWorkflow').disabled = blocked || !has || !!state.binding?.conflict;
+    $('#saveSharedWorkflow').disabled = blocked || !has || !!state.binding?.conflict || (!!state.binding && !state.dirty(W.snapshot()));
     $('#copySharedWorkflow').disabled = blocked || !has;
     $('#openSharedWorkflow').disabled = blocked;
     $('#retrySharedWorkflow').disabled = !state.pending || state.busy;

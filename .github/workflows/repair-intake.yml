@@ -1,0 +1,28 @@
+name: Repair intake contracts
+on:
+  pull_request:
+    paths:
+      - 'scripts/repair_*.py'
+      - 'tests/test_repair_*.py'
+      - 'docs/repair-studio/**'
+      - '.github/workflows/repair-intake.yml'
+      - 'research/game-assets/requirements-media.txt'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p "test_repair_*.py" -v
+      - run: python scripts/validate-repo.py

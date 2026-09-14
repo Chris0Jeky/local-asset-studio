@@ -34,7 +34,7 @@ stacked on the target pair, a fal watercolor style alone, and `er_sde` in place 
 That single number sets the economics of the whole Krea lane: a 15-step portrait is a commitment, a sweep is
 not affordable at that size, and auditions belong at 512x768, at 4 steps with the distill LoRA, or both. The
 recipe `krea-witch-nijisis` in `presets/recipes.json` reproduces it exactly, including the prompt text; it is
-the only recipe with `status: executed`. Note what it does *not* prove: the `@NIJISIS` trigger was never in
+one of the nine recipes carrying `status: executed` on 13 September 2026 (the first to do so). Note what it does *not* prove: the `@NIJISIS` trigger was never in
 that prompt, so the trigger itself is untested here.
 
 ## Krea 2 Turbo
@@ -148,9 +148,9 @@ The knowledge base keys families by the exact `family` strings used in `presets/
 
 ## Recipes and wildcards
 
-`presets/recipes.json` holds 14 saved control sets, served at `GET /api/recipes` with `available` and
+`presets/recipes.json` holds 30 saved control sets (13 September 2026), served at `GET /api/recipes` with `available` and
 `missing` annotations computed from the installed LoRA list. Each carries `status` (`executed` or
-`unverified`), `notes`, `sources`, and - for the one executed recipe - an `evidence` block with the prompt ID
+`unverified`), `notes`, `sources`, and - for each executed recipe (nine on 13 September 2026) - an `evidence` block with the prompt ID
 and wall time. Applying a recipe is exactly like applying a variant: it writes the controls, nothing else.
 
 `presets/wildcards/*.txt` are the prompt lists: `medium`, `lighting`, `palette`, `composition`,
@@ -173,7 +173,7 @@ Model and adapter cards:
 - [TextFusion refusal reduction (civitai 2775340)](https://civitai.com/models/2775340)
 - [Niji Sweet Spot (civitai 2554999)](https://civitai.com/models/2554999)
 - [NIJISIS (civitai 2863875, version 3302337)](https://civitai.com/models/2863875?modelVersionId=3302337)
-- [koukouya style, not installed (civitai 2844656)](https://civitai.com/models/2844656)
+- [koukouya style, installed 12 September 2026 with a hash receipt (civitai 2844656)](https://civitai.com/models/2844656)
 - [Animagine XL 4.0](https://huggingface.co/cagliostrolab/animagine-xl-4.0)
 - [NoobAI-XL 1.1](https://huggingface.co/Laxhar/noobai-XL-1.1)
 - [WAI v17 mirror](https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170) and

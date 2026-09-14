@@ -53,7 +53,8 @@ class SchemaContracts(unittest.TestCase):
         self.assertEqual(schema['nodes']['Node']['inputs'][0]['options']['options'], [1, True, '1'])
 
     def test_native_behaviours_keep_data_and_require_adapters(self):
-        descriptors = [['DYNAMIC_COMBO', {'options': [{'key': 'mp4'}]}], ['DYNAMIC_AUTOGROW', {}],
+        # The installed spellings, recorded from ComfyUI 0.35.0 /object_info (SaveVideo.format, BatchImagesNode, ImpactSwitch).
+        descriptors = [['COMFY_DYNAMICCOMBO_V3', {'options': [{'key': 'mp4', 'inputs': {}}]}], ['COMFY_AUTOGROW_V3', {}], ['COMFY_MATCHTYPE_V3', {}],
                        ['COLOR', {'socketless': True, 'default': '#000000'}],
                        ['INT', {'remote': {'route': '/choices'}}], ['IMAGE', {'rawLink': True}]]
         for descriptor in descriptors:

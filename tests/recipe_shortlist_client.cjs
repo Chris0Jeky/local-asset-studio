@@ -35,3 +35,38 @@ test('invalid responses preserve no actionable stale report',async()=>{
  const events=[];const s=new C.Session(async()=>({...report(),goal:'edit-image'}),e=>events.push(e));await s.load(query);
  assert.equal(events.filter(e=>e.report).length,0);assert.match(events.at(-1).message,/context/);
 });
+const sourceQuery={goal:'edit-image',reference_count:1,limit:6,offset:0,source_asset_id:'asset-0',source_sha256:'b'.repeat(64),source_role:'pose'};
+const sourceReport=()=>({...report(),goal:'edit-image',reference_count:1,source:{asset_id:'asset-0',sha256:'b'.repeat(64),role:'pose',title:'My image',width:32,height:48,bytes_verified:true,staged:false}});
+test('binds an exact primary source without treating it as attached',()=>{assert.deepEqual(C.validate(sourceReport(),sourceQuery),sourceReport())});
+test('refuses missing substituted or staged source observations',()=>{
+ for(const source of [undefined,null,{...sourceReport().source,asset_id:'other'},{...sourceReport().source,sha256:'c'.repeat(64)},{...sourceReport().source,role:'identity'},{...sourceReport().source,bytes_verified:false},{...sourceReport().source,staged:true},{...sourceReport().source,width:0}])assert.throws(()=>C.validate({...sourceReport(),source},sourceQuery));
+ assert.throws(()=>C.validate({...report(),source:sourceReport().source},query));
+});
+test('changing advice source discards a delayed source-bound reply',async()=>{
+ const pending=deferred(),events=[];const s=new C.Session(()=>pending.promise,e=>events.push(e));const work=s.load(sourceQuery);
+ s.invalidate('Source changed');pending.resolve(sourceReport());await work;
+ assert.equal(events.filter(e=>e.report).length,0);
+});
+const orderedQuery={goal:'edit-image',reference_count:2,limit:6,offset:0,sources:[
+  {asset_id:'asset-0',sha256:'b'.repeat(64),role:'identity'},
+  {asset_id:'asset-1',sha256:'c'.repeat(64),role:'pose'}]};
+const orderedReport=()=>({...report(),goal:'edit-image',reference_count:2,source:null,
+  sources:orderedQuery.sources.map((x,i)=>({...x,slot:i+1,title:'Picture '+(i+1),width:32,height:48,bytes_verified:true,staged:false})),
+  total:1,counts:{observed:0,unknown:1,needs_setup:0},candidates:[{preset_id:'roles',name:'Roles',description:'Fixture',backend_id:'primary',operation:'instruction-edit',prompt_role:'instruction',reference_count:2,template_sha256:'d'.repeat(64),status:'unknown',checks:[],requirements:[],
+  source_assignments:orderedQuery.sources.map((x,i)=>({...x,slot:i+1,binding:[String(i+1),'image'],role_mode:'prompt-guidance'}))}]});
+test('ordered observations bind every image, proposed role and exact position',()=>{assert.equal(C.validate(orderedReport(),orderedQuery).sources.length,2)});
+test('ordered report cannot omit swap stage or substitute a source',()=>{
+ const edits=[r=>delete r.sources,r=>r.sources.reverse(),r=>r.sources[1].role='identity',r=>r.sources[1].staged=true,r=>r.sources[1].bytes_verified=false,r=>r.sources[0].slot=true,r=>r.source=r.sources[0]];
+ for(const edit of edits){const r=orderedReport();edit(r);assert.throws(()=>C.validate(r,orderedQuery));}
+ assert.throws(()=>C.validate({...report(),sources:orderedReport().sources},query));
+});
+test('ordered candidate assignments cannot be omitted compressed reordered or misbound',()=>{
+ const edits=[r=>delete r.candidates[0].source_assignments,r=>r.candidates[0].source_assignments.pop(),r=>r.candidates[0].source_assignments.reverse(),r=>r.candidates[0].source_assignments[1].asset_id='other',r=>r.candidates[0].source_assignments[1].binding=['2','mask']];
+ for(const edit of edits){const r=orderedReport();edit(r);assert.throws(()=>C.validate(r,orderedQuery));}
+});
+test('in-flight request keeps a value snapshot of nested source intent',async()=>{
+ const q=structuredClone(orderedQuery),gate=deferred(),events=[];let sent;
+ const s=new C.Session(x=>{sent=x;return gate.promise},e=>events.push(e));const work=s.load(q);
+ q.sources[1].role='style';q.sources.reverse();assert.deepEqual(sent.sources,orderedQuery.sources);
+ gate.resolve(orderedReport());await work;assert.equal(events.filter(e=>e.report).length,1);
+});

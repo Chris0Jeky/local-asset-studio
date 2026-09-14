@@ -5,6 +5,15 @@ All six original issues remain open for real residual acceptance. Their foundati
 paragraphs predate several merged implementations; do not use those paragraphs as
 instructions to build another store, SDK, MCP bridge or saved-run journal.
 
+## Ordered-source continuation
+
+The chooser now checks one to three ordered Workspace images and proposed roles;
+see [ORDERED-SOURCES.md](ORDERED-SOURCES.md). This advances the observation portion
+of #232 and preserves legacy single-source/count-only requests. Complete reviewed
+setup diffs, expected-draft concurrency, explicit staging/apply and persisted
+undo/reload remain unimplemented in that slice. Neither the original #118/#123
+workstreams nor #232 are complete. The historical reconciliation below is retained.
+
 ## Issue disposition and existing ownership
 
 | Workstream | Existing implementation to preserve | Remaining acceptance / next increment |
@@ -98,3 +107,12 @@ distinguish node descriptions (`/object_info`) from prompt validation/submission
 (`POST /prompt`). This supports keeping schema-driven authoring separate from
 execution admission. It does not establish the installed version's widget or
 subgraph support. Existing `RESEARCH.md` retains the broader native-format research.
+
+## Source-aware guidance continuation, 13 September 2026
+
+Merged #217 supplies count-based default-recipe advice. The next source adapter
+checks one actual primary Workspace image and an explicitly proposed role through
+the same UI/HTTP/SDK/CLI/read-MCP service. See
+[SOURCE-AWARE-SHORTLIST.md](SOURCE-AWARE-SHORTLIST.md) for delivered boundaries and
+the ordered multi-source, reviewed reversible-handoff acceptance still remaining
+in #232 under #118/#21/#123. This adds no native round-trip or arbitrary execution support.

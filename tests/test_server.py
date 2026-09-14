@@ -3,6 +3,7 @@ import io
 import json
 import tempfile
 import threading
+import sqlite3
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -717,5 +718,97 @@ class ServerTests(unittest.TestCase):
         s=self.studio();s.config['runtime_blocks']={'test-family':'Observed incompatible runtime'}
         with self.assertRaisesRegex(server.StudioError,'Observed incompatible'):s.create_job({'preset_id':'demo'})
         self.assertEqual(s.jobs,{})
+
+    # Queue-aware observation: a prompt gone from ComfyUI is declared quickly, a listed prompt is never timed out early,
+    # Stop tracking ends the loop, and terminal receipts reconcile without a ComfyUI request.
+    def _sleepless(self): return patch.object(server.time,'sleep',lambda *_:None)
+
+    def test_prompt_absent_from_queue_and_history_is_declared_gone_after_three_queue_reads(self):
+        replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'gone'}]
+        for _ in range(3): replies+=[{}]*server.HISTORY_QUEUE_CHECK_EVERY+[{'queue_running':[],'queue_pending':[]}]
+        studio=FakeStudio(self.root,replies)
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'uncertain');self.assertIn('no longer lists this prompt',job['message']);self.assertEqual(job['prompt_ids'],['gone'])
+        paths=[args[0] for args,_ in studio.requests if args]
+        self.assertEqual(paths.count('/history/gone'),3*server.HISTORY_QUEUE_CHECK_EVERY);self.assertEqual(paths.count('/queue'),4);self.assertEqual(paths.count('/prompt'),1)
+
+    def test_prompt_still_listed_is_observed_well_beyond_the_old_720_poll_cap(self):
+        polls=730;replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'slow'}]
+        for i in range(1,polls+1):
+            replies.append({})
+            if i%server.HISTORY_QUEUE_CHECK_EVERY==0: replies.append({'queue_running':[[1,'slow',{},{},[]]],'queue_pending':[]})
+        replies.append({'slow':{'status':{'status_str':'success'},'outputs':{}}})
+        studio=FakeStudio(self.root,replies)
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in studio.requests if args].count('/history/slow'),polls+1)
+
+    def test_unreadable_queue_never_counts_as_gone(self):
+        replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]
+        for _ in range(3): replies+=[{}]*server.HISTORY_QUEUE_CHECK_EVERY+[URLError('down')]
+        replies.append({'p':{'status':{'status_str':'success'},'outputs':{}}})
+        studio=FakeStudio(self.root,replies)
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed')
+
+    def test_stop_tracking_inside_the_loop_ends_observation_without_relabelling(self):
+        class Stopping(FakeStudio):
+            def _request(self,*args,**kwargs):
+                response=super()._request(*args,**kwargs)
+                if len([a for a,_ in self.requests if a and a[0].startswith('/history/')])==2:
+                    for job in self.jobs.values(): job['tracking_disposition']={'status':'stopped','reason':'operator','recorded_at':1.0,'event_id':'e1'}
+                return response
+        studio=Stopping(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},{},{},{}])
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args].count('/history/p'),2)
+        self.assertEqual(job['status'],'running');self.assertEqual(job['prompt_ids'],['p'])
+
+    def test_terminal_receipts_reconcile_from_the_gallery_without_any_comfy_request(self):
+        for batch,expected in ((3,'partial'),(1,'completed')):
+            with self.subTest(batch=batch):
+                studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+                job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':batch},enqueue=False)['id']]
+                job.update(status='uncertain',message='Local processing failed; remote outcome requires inspection.',prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}],outputs=[{'filename':'demo_00001_.png','subfolder':'Studio','type':'output','prompt_id':'p0'}])
+                public=studio.resume_job(job['id']);self.assertEqual(public['status'],'queued');self.assertEqual(studio.queue.get(),('observe',job['id']))
+                with patch.object(studio,'index_outputs',wraps=studio.index_outputs) as indexed: studio._resume(job)
+                self.assertEqual(job['status'],expected);self.assertEqual([args[0] for args,_ in studio.requests if args],[]);indexed.assert_called_once()
+                self.assertTrue(job['message'].startswith('Reconciled from retained receipts'))
+                if expected=='partial': self.assertIn('Remaining images were not submitted',job['message'])
+
+    def test_reconciling_an_unchanged_partial_keeps_the_recorded_gate_reason(self):
+        studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+        job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':3},enqueue=False)['id']]
+        reason='Host commit headroom 20.0 GiB is below the required 32 GiB. No prompt was submitted for output 2.'
+        job.update(status='partial',message=reason,prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}])
+        studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
+        self.assertEqual(job['status'],'partial');self.assertEqual(job['message'],reason);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+
+    def test_an_unrecognized_queue_entry_shape_counts_as_listed(self):
+        replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]
+        for _ in range(3): replies+=[{}]*server.HISTORY_QUEUE_CHECK_EVERY+[{'queue_running':[{'prompt_id':'p'}],'queue_pending':[]}]
+        replies.append({'p':{'status':{'status_str':'success'},'outputs':{}}})
+        studio=FakeStudio(self.root,replies)
+        with self._sleepless():
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed')
+
+    def test_an_active_job_cannot_be_queued_for_observation_twice(self):
+        studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+        job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        job.update(status='running',prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'observing'}])
+        with self.assertRaisesRegex(server.StudioError,'already queued or being observed'): studio.resume_job(job['id'])
+        self.assertEqual(studio.queue.qsize(),0)
+        job['status']='completed';job['submissions'][0]['status']='completed'
+        with self.assertRaisesRegex(server.StudioError,'No known prompt IDs'): studio.resume_job(job['id'])
+
+    def test_storage_fault_while_indexing_outputs_keeps_the_completed_outcome(self):
+        history={'p':{'status':{'status_str':'success'},'outputs':{'9':{'images':[{'filename':'demo_00001_.png','subfolder':'Studio','type':'output'}]}}}}
+        studio=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'},history])
+        with self._sleepless(),patch.object(studio.assets,'register',side_effect=sqlite3.OperationalError('database is locked')):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['outputs'][0]['filename'],'demo_00001_.png');self.assertIn('locked',job['outputs'][0]['snapshot_error'])
 
 if __name__ == "__main__": unittest.main()

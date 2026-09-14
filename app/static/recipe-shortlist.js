@@ -5,13 +5,23 @@
 })(typeof window!=='undefined'?window:null,function(){
   'use strict';
   const goals={'new-image':'Create a new image','edit-image':'Change an existing image','reference-image':'Create with pose or identity references','upscale-image':'Upscale an image','masked-repair':'Repair a selected region','animate-image':'Animate an image','image-to-3d':'Build 3D from an image'};
+  const sourceRoles={source:'Whole image / first frame',identity:'Identity guidance',pose:'Pose guidance',style:'Style guidance',costume:'Costume guidance',composition:'Composition guidance'};
   const statuses={observed:'Listed prerequisites observed',unknown:'Some checks are unknown',needs_setup:'Needs attention before preparation'};
   const plain=x=>!!x&&typeof x==='object'&&!Array.isArray(x),integer=(x,lo,hi)=>Number.isSafeInteger(x)&&x>=lo&&x<=hi;
   const hash=x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x),text=(x,max)=>typeof x==='string'&&x.length<=max;
   function need(ok,message){if(!ok)throw Error(message);}
+  function sourceMatches(x,want){return plain(x)&&x.asset_id===want.asset_id&&x.sha256===want.sha256&&x.role===want.role&&x.bytes_verified===true&&x.staged===false&&text(x.title,160)&&integer(x.width,1,Number.MAX_SAFE_INTEGER)&&integer(x.height,1,Number.MAX_SAFE_INTEGER);}
+  function assignmentMatches(a,want,slot){return plain(a)&&a.asset_id===want.asset_id&&a.sha256===want.sha256&&a.role===want.role&&a.slot===slot&&['whole-image','prompt-guidance','unsupported'].includes(a.role_mode)&&(a.binding===null||Array.isArray(a.binding)&&a.binding.length===2&&text(a.binding[0],96)&&a.binding[1]==='image');}
   function validate(r,q){
     const message='Shortlist response does not match this request context. Check again.';
     need(plain(r)&&r.format==='studio.recipe-shortlist/v1'&&r.goal===q.goal&&r.reference_count===q.reference_count,message);
+    if(q.source_asset_id){
+      const x=r.source;need(plain(x)&&x.asset_id===q.source_asset_id&&x.sha256===q.source_sha256&&x.role===q.source_role&&x.bytes_verified===true&&x.staged===false&&text(x.title,160)&&integer(x.width,1,Number.MAX_SAFE_INTEGER)&&integer(x.height,1,Number.MAX_SAFE_INTEGER),message);
+    }else need(r.source===undefined||r.source===null,message);
+    if(q.sources!==undefined){
+      need(!q.source_asset_id&&Array.isArray(q.sources)&&q.sources.length>=1&&q.sources.length<=3&&Array.isArray(r.sources)&&r.sources.length===q.sources.length,message);
+      need(r.sources.every((x,i)=>sourceMatches(x,q.sources[i])&&x.slot===i+1),message);
+    }else need(r.sources===undefined||r.sources===null,message);
     need(r.generation_submitted===false&&r.execution_authorized===false&&hash(r.snapshot_sha256),message);
     need(!q.expected_snapshot||q.expected_snapshot===r.snapshot_sha256,message);
     need(integer(r.total,0,256)&&r.offset===q.offset&&Array.isArray(r.candidates)&&r.candidates.length<=q.limit&&r.candidates.length<=12,message);
@@ -24,6 +34,12 @@
       need(plain(c)&&text(c.preset_id,96)&&/^[A-Za-z0-9_.-]+$/.test(c.preset_id)&&!seen.has(c.preset_id)&&Object.hasOwn(statuses,c.status),message);seen.add(c.preset_id);
       need(text(c.name,160)&&text(c.description,800)&&text(c.backend_id,96)&&text(c.operation,96)&&text(c.prompt_role,96)&&integer(c.reference_count,0,3),message);
       need(c.template_sha256===null||c.template_sha256===undefined||hash(c.template_sha256),message);
+      if(c.source_assignment!==undefined){
+        const a=c.source_assignment;need(q.source_asset_id&&plain(a)&&a.asset_id===q.source_asset_id&&a.sha256===q.source_sha256&&a.role===q.source_role&&a.slot===1&&['whole-image','prompt-guidance','unsupported'].includes(a.role_mode)&&(a.binding===null||Array.isArray(a.binding)&&a.binding.length===2&&text(a.binding[0],96)&&a.binding[1]==='image'),message);
+      }
+      if(q.sources!==undefined){
+        need(c.source_assignment===undefined&&Array.isArray(c.source_assignments)&&c.source_assignments.length===q.sources.length&&c.source_assignments.every((a,i)=>assignmentMatches(a,q.sources[i],i+1)),message);
+      }else need(c.source_assignments===undefined,message);
       need(Array.isArray(c.checks)&&c.checks.length<=32&&c.checks.every(x=>plain(x)&&text(x.code,96)&&['observed','unknown','blocked'].includes(x.state)&&text(x.message,800)),message);
       need(Array.isArray(c.requirements)&&c.requirements.length<=128&&c.requirements.every(x=>plain(x)&&Object.values(x).every(v=>v===null||typeof v==='boolean'||text(v,500))),message);
     }
@@ -38,7 +54,7 @@
       this.emit({busy:false,message});
     }
     async load(query){
-      if(this.busy)return;const q={...query},epoch=++this.epoch,controller=new AbortController();
+      if(this.busy)return;const q={...query,...(Array.isArray(query.sources)?{sources:query.sources.map(x=>({...x}))}:{})},epoch=++this.epoch,controller=new AbortController();
       const active={controller,timer:null};this.current=active;this.busy=true;this.emit({busy:true,message:'Checking starting recipes…'});
       active.timer=this.timers.set(()=>{if(this.current===active)this.invalidate('The check timed out. No result was accepted. Check again explicitly.');});
       try{
@@ -64,11 +80,18 @@
     const gl=el('label','What are you making?');gl.htmlFor=goal.id;
     const cl=el('label','Reference images I plan to attach');cl.htmlFor=count.id;
     const check=el('button','Check starting recipes');check.id='checkStartingRecipes';check.type='submit';
-    form.append(gl,goal,cl,count,check);panel.append(form);
-    const note=el('p','The image count is a declaration, not an upload. Checking never changes settings or starts generation.');note.className='muted';panel.append(note);
+    const role=el('select');role.id='shortlistSourceRole';role.disabled=true;
+    for(const [value,label] of Object.entries(sourceRoles)){const option=el('option',label);option.value=value;role.append(option);}
+    const rl=el('label','Use the selected image for');rl.htmlFor=role.id;
+    const sourceNote=el('p','To check a saved source, open an image in Asset library and choose Find recipes for this image.','muted');sourceNote.id='shortlistSourceStatus';
+    const clear=el('button','Clear advice source');clear.type='button';clear.id='clearShortlistSource';clear.hidden=true;
+    const sourceList=el('div');sourceList.id='shortlistSourceList';
+    const choose=el('button','Choose images in library');choose.type='button';choose.id='shortlistChooseImages';choose.onclick=()=>{if(typeof showView==='function')showView('assets');};
+    form.append(gl,goal,cl,count,sourceNote,choose,rl,role,sourceList,clear,check);panel.append(form);
+    const note=el('p','Selected advice images are byte-checked only on request. A count alone is a declaration, not an upload. Checking never changes settings or starts generation.');note.className='muted';panel.append(note);
     const status=el('p','Choose an outcome, then check.','shortlist-status');status.id='shortlistStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const result=el('div');result.id='shortlistResults';panel.append(status,result);list.before(panel);
-    let last=null;
+    let last=null,source=null,ordered=null;
     const session=new Session(async(q,signal)=>{
       const response=await w.fetch('/api/workflow-studio/shortlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q),signal});
       const raw=await response.text();need(raw.length<=1024*1024,'Shortlist response exceeds the browser limit.');
@@ -78,7 +101,46 @@
       check.disabled=event.busy;panel.setAttribute('aria-busy',String(event.busy));last=null;result.replaceChildren();
       if(event.report){last=event.report;render(last);}else status.textContent=event.message;
     });
-    function currentQuery(offset=0,expected){const q={goal:goal.value,reference_count:Number(count.value),limit:6,offset};if(expected)q.expected_snapshot=expected;return q;}
+    function currentQuery(offset=0,expected){const q={goal:goal.value,reference_count:Number(count.value),limit:6,offset};if(expected)q.expected_snapshot=expected;if(ordered)q.sources=ordered.map(x=>({asset_id:x.asset_id,sha256:x.sha256,role:x.role}));if(source)Object.assign(q,{source_asset_id:source.asset_id,source_sha256:source.sha256,source_role:role.value});return q;}
+    clear.onclick=()=>{source=null;ordered=null;sourceList.replaceChildren();count.disabled=false;rl.hidden=false;role.hidden=false;role.disabled=true;clear.hidden=true;sourceNote.textContent='No advice source selected. The reference count is only a declaration.';session.invalidate('Advice source cleared. Your Create attachments are unchanged.');};
+    d.addEventListener('studio:shortlist-source',e=>{
+      const x=e.detail;if(!plain(x)||!text(x.asset_id,96)||! /^[A-Za-z0-9_.-]+$/.test(x.asset_id)||!hash(x.sha256))return;
+      session.invalidate('Source selected for advice. Check explicitly; nothing was attached or applied.');
+      ordered=null;sourceList.replaceChildren();count.disabled=false;rl.hidden=false;role.hidden=false;
+      source={asset_id:x.asset_id,sha256:x.sha256};goal.value='edit-image';count.value='1';role.value='source';role.disabled=false;clear.hidden=false;
+      sourceNote.textContent='Advice source: '+(text(x.title,160)?x.title:x.asset_id)+'. Bytes will be checked when requested; this does not attach the image.';
+      panel.open=true;const drawer=panel.closest('.ux-recipe-drawer');if(drawer)drawer.open=true;check.focus();panel.scrollIntoView({block:'nearest',behavior:'auto'});
+    });
+    function renderSources(focusSlot){
+      sourceList.replaceChildren();count.value=String(ordered.length);count.disabled=true;
+      role.disabled=true;role.hidden=true;rl.hidden=true;clear.hidden=false;
+      sourceNote.textContent=ordered.length+' advice image(s), in Picture order. Every selected file will be checked. Nothing is attached or applied.';
+      ordered.forEach((item,index)=>{
+        const box=el('fieldset',undefined,'shortlist-source-row');box.dataset.slot=String(index+1);
+        box.append(el('legend','Picture '+(index+1)+' · '+item.title));
+        const label=el('label','Intended role'),choice=el('select');choice.id='shortlistRole'+(index+1);label.htmlFor=choice.id;
+        for(const [value,name] of Object.entries(sourceRoles)){const option=el('option',name);option.value=value;choice.append(option);}choice.value=item.role;
+        choice.onchange=()=>{item.role=choice.value;session.invalidate('Picture roles changed. Check again; nothing was applied.');};
+        box.append(label,choice);const buttons=el('div',undefined,'shortlist-pages');
+        for(const [delta,title] of [[-1,'Move earlier'],[1,'Move later']]){
+          const button=el('button',delta<0?'↑':'↓');button.type='button';button.dataset.move=String(delta);button.title=title;
+          button.setAttribute('aria-label',title+': Picture '+(index+1));button.disabled=index+delta<0||index+delta>=ordered.length;
+          button.onclick=()=>{[ordered[index],ordered[index+delta]]=[ordered[index+delta],ordered[index]];session.invalidate('Picture order changed. Review each role and check again.');renderSources(index+delta+1);};buttons.append(button);
+        }
+        const remove=el('button','Remove');remove.type='button';remove.dataset.remove=String(index+1);remove.setAttribute('aria-label','Remove Picture '+(index+1)+' from advice');
+        remove.onclick=()=>{ordered.splice(index,1);session.invalidate('Advice image removed. Create attachments are unchanged.');if(ordered.length)renderSources(Math.min(index+1,ordered.length));else{clear.onclick();count.value='0';check.focus();}};
+        buttons.append(remove);box.append(buttons);sourceList.append(box);
+      });
+      if(focusSlot)$('#shortlistRole'+focusSlot)?.focus();
+    }
+    d.addEventListener('studio:shortlist-sources',e=>{
+      const items=e.detail;
+      if(!Array.isArray(items)||items.length<1||items.length>3||!items.every(x=>plain(x)&&text(x.asset_id,96)&&/^[A-Za-z0-9_.-]+$/.test(x.asset_id)&&hash(x.sha256)&&(x.role===undefined||Object.hasOwn(sourceRoles,x.role)))){session.invalidate('Choose one to three available library images. No existing advice sources were replaced.');return;}
+      session.invalidate('Images selected for advice. Review their order and roles, then check explicitly.');source=null;
+      ordered=items.map(x=>({asset_id:x.asset_id,sha256:x.sha256,title:text(x.title,160)?x.title:x.asset_id,role:Object.hasOwn(sourceRoles,x.role)?x.role:'source'}));
+      goal.value='reference-image';renderSources();panel.open=true;const drawer=panel.closest('.ux-recipe-drawer');if(drawer)drawer.open=true;
+      check.focus();panel.scrollIntoView({block:'nearest',behavior:'auto'});
+    });
     function findPreset(row){
       try{
         need(last&&(!last.backend_id||typeof backendActive==='undefined'||backendActive===null||last.backend_id===backendActive)&&!(typeof backendSwitching!=='undefined'&&backendSwitching),'The environment changed. Check starting recipes again.');
@@ -100,6 +162,8 @@
       result.append(el('p','Default graphs · '+new Date(report.checked_at*1000).toLocaleTimeString()+'. This is not permission to run.','muted'));
       const scope=el('details');scope.append(el('summary','What this check covers'),el('p',report.scope));
       if(report.source_semantics)scope.append(el('p',report.source_semantics));result.append(scope);
+      if(report.source){const x=report.source;result.append(el('p','Source checked: '+x.title+' · '+x.width+' × '+x.height+' · '+sourceRoles[x.role]+'. Not attached.','shortlist-source'));}
+      for(const x of report.sources||[])result.append(el('p','Picture '+x.slot+' checked: '+x.title+' · '+x.width+' × '+x.height+' · '+sourceRoles[x.role]+'. Not attached.','shortlist-source'));
       if(!report.total)result.append(el('p','No registered default route matches this outcome. Try another outcome or inspect the existing workflow builder; no substitute was selected.'));
       for(const row of report.candidates){
         const card=el('article',undefined,'shortlist-card');card.dataset.presetId=row.preset_id;card.dataset.state=row.status;
@@ -108,6 +172,8 @@
         card.append(el('p',attention?.message||'Listed prerequisites were observed. Select this recipe, review the settings and use the normal preparation checks.'));
         const find=el('button','Find in recipe library');find.type='button';find.onclick=()=>findPreset(row);card.append(find);
         const detail=el('details');detail.append(el('summary','How it works and what it needs'),el('p',row.description),el('p',row.operation+' · '+row.reference_count+' reference image(s) · '+row.backend_id,'muted'));
+        if(row.source_assignment){const a=row.source_assignment;detail.append(el('p','Selected source → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; assign and review inputs in Create.'));}
+        for(const a of row.source_assignments||[])detail.append(el('p','Picture '+a.slot+' → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; nothing was applied.'));
         const wording={description:'Describe the result you want to see.',instruction:'Describe the change to make and what must stay the same.',motion:'Describe the motion you want, not just the still image.',none:'This route has no authored text-prompt control.'};
         detail.append(el('p',wording[row.prompt_role]||'Inspect the recipe for its wording controls.'));
         const checks=el('ul');for(const c of row.checks)checks.append(el('li',c.message));detail.append(checks);

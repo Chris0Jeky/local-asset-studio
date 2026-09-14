@@ -7,12 +7,17 @@ PREFIX = '/api/workflow-studio/documents'
 
 
 class WorkflowClient(Client):
-    def shortlist(self, goal: str, *, reference_count: int = 0, limit: int = 6,
-                  offset: int = 0, expected_snapshot: str | None = None) -> dict:
+    def shortlist(self, goal: str, *, reference_count: int | None = None, limit: int = 6,
+                  offset: int = 0, expected_snapshot: str | None = None, source_asset_id: str | None = None,
+                  source_sha256: str | None = None, source_role: str | None = None, sources: list[dict] | None = None) -> dict:
         """Observe starting-preset options; never prepares or dispatches a job."""
         from .shortlist import observe
-        value = {'goal': goal, 'reference_count': reference_count, 'limit': limit, 'offset': offset}
+        value = {'goal': goal, 'limit': limit, 'offset': offset}
+        if reference_count is not None: value['reference_count'] = reference_count
+        if sources is not None: value['sources'] = sources
         if expected_snapshot is not None: value['expected_snapshot'] = expected_snapshot
+        for key, item in [('source_asset_id',source_asset_id),('source_sha256',source_sha256),('source_role',source_role)]:
+            if item is not None: value[key] = item
         return observe(self.request, value)
 
     def documents(self) -> dict:
