@@ -11,7 +11,7 @@ import io
 import warnings
 from PIL import Image, UnidentifiedImageError
 from .reference_analysis import draft, review_template, validate_report
-from .schema import canonical, digest, fields, need, validate
+from .schema import canonical, decode, digest, fields, need, text, validate
 
 HTTP_LIMIT = 48 * 1024 * 1024
 IMAGE_LIMIT = 8 * 1024 * 1024
@@ -27,8 +27,14 @@ def _report(value):
 
 
 def inspect(value):
-    fields(value, ('analysis',))
-    report = _report(value['analysis'])
+    fields(value, (), ('analysis', 'analysis_json'))
+    need(len(value) == 1, 'Supply exactly one analysis object or JSON text')
+    analysis = value.get('analysis')
+    if 'analysis_json' in value:
+        raw = value['analysis_json']
+        need(type(raw) is str and len(raw.encode('utf-8')) <= 128 * 1024, 'Analysis file exceeds 128 KiB')
+        analysis = decode(raw.encode('utf-8'))
+    report = _report(analysis)
     return {'format': 'studio.reference-review/v1', 'analysis': report, 'review': review_template(report),
             'inference_submitted': False, 'generation_submitted': False, 'execution_authorized': False}
 
@@ -63,6 +69,7 @@ def _current(value, adopt_brief):
     need(type(adopt_brief) is bool, 'adopt_brief must be an explicit boolean')
     need(type(value) is dict, 'Expected the current CreativeIntent')
     check = copy.deepcopy(value)
+    text(check.get('brief'), 4000, empty=adopt_brief)
     # An empty editor can explicitly adopt the reviewed interpretation. All other
     # current fields still pass the same CreativeIntent validator.
     if adopt_brief and type(check.get('brief')) is str and not check['brief'].strip():
@@ -81,7 +88,7 @@ def preview(value):
     if value['adopt_brief']: result['brief'] = incoming['brief']
     result['references'] = copy.deepcopy(incoming['references'])
     result['facets'].update(incoming['facets'])
-    result['tags'] = list(dict.fromkeys(current['tags'] + incoming['tags']))
+    result['tags'] = current['tags'] + [tag for tag in incoming['tags'] if tag not in current['tags']]
     changes = []
     for field in ('brief', 'references', 'tags', *('facets.' + key for key in incoming['facets'])):
         before = current['facets'].get(field[7:]) if field.startswith('facets.') else current[field]
@@ -90,7 +97,7 @@ def preview(value):
         need(not any(field == lock or field.startswith(lock + '.') for lock in current['locked']), 'Locked field: ' + field)
         changes.append({'field': field, 'before': copy.deepcopy(before), 'after': copy.deepcopy(after)})
     validate(result)
-    envelope = {'format': 'studio.reference-transfer-preview/v1', 'base_sha256': digest(current),
+    envelope = {'format': 'studio.reference-transfer-preview/v1', 'base_sha256': digest(current), 'base_intent': current,
                 'intent': result, 'intent_sha256': digest(result), 'reference_draft': source,
                 'changes': changes, 'source_bytes_verified': True, 'inference_submitted': False,
                 'generation_submitted': False, 'execution_authorized': False,
