@@ -660,7 +660,7 @@ class Studio:
             if elapsed <= 0: continue
             sample_preset = next((p for p in presets if p.get("id") == job.get("preset_id")), None)
             if not sample_preset: continue
-            sample = self._estimate_features(sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), len(job.get("references") or []))
+            sample = self._estimate_features(sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")))
             sample["seconds"] = elapsed; samples.append(sample)
 
         if samples:
