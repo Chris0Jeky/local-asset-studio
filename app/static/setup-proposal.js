@@ -82,7 +82,7 @@
       if(r.intent.compiled_positive!==null){const detail=el('details');detail.append(el('summary','Exact primary prompt after role guidance'),el('pre',r.intent.compiled_positive),el('p','This uses the existing reference compiler. Any other positive bindings receive the unprefixed desired-result text.'));output.append(detail);}
       const holds=el('details');holds.append(el('summary','Prerequisites and remaining checks'));for(const item of r.observation.candidate.checks)holds.append(el('p',item.message));output.append(holds);
       const boundaries=el('details');boundaries.append(el('summary','Side effects and limits'));for(const note of [...r.side_effects,...r.limits])boundaries.append(el('p',note,'muted'));output.append(boundaries);
-      const identity=el('details');identity.append(el('summary','Proposal identity and draft boundary'),el('code',r.proposal_sha256),el('p',r.precondition.scope));output.append(identity);dialog.scrollTop=0;resultTitle.focus({preventScroll:true});
+      const identity=el('details');identity.append(el('summary','Proposal identity and draft boundary'),el('code',r.proposal_sha256),el('p',r.precondition.scope));output.append(identity);const apply=w.StudioSetupApply?.offer?.(r,()=>dialog.open&&report===r&&matches());if(apply)output.append(apply);dialog.scrollTop=0;resultTitle.focus({preventScroll:true});
     }
     function open(event){
       try{
@@ -100,7 +100,7 @@
     form.onsubmit=e=>{e.preventDefault();try{need(matches(),'The draft or recipe advice changed. Close this preview and check again.');need(!w.StudioSetupDraft.busy(),'A reference attachment is in progress. Reopen after it settles.');session.load({...context,draft:before,positive:positive.value,negative:negative.value,guidance:fields.map(x=>({contribution:x.contribution.value,avoid:x.avoid.value}))});}catch(error){invalidate(error.message,true);}};
     form.addEventListener('input',()=>invalidate('Wording or contributions changed. Build a new proposal.'));
     download.onclick=()=>{try{need(report&&matches(),'The draft changed; this proposal cannot be exported as current.');const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=el('a');link.href=url;link.download='setup-proposal-'+report.proposal_sha256.slice(0,12)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){invalidate(error.message,true);}};
-    close.onclick=()=>dialog.close();dialog.addEventListener('close',()=>{session.invalidate('Preview closed. Nothing was applied.');if(opener?.isConnected)opener.focus();else $('#checkStartingRecipes')?.focus();});
+    close.onclick=()=>dialog.close();dialog.addEventListener('close',()=>{session.invalidate('Preview closed. Any explicit setup operation is reported in Shared setup & recovery.');if(opener?.isConnected)opener.focus();else $('#checkStartingRecipes')?.focus();});
     d.addEventListener('studio:setup-proposal',open);
     d.addEventListener('studio:shortlist-invalidated',()=>invalidate('Recipe advice changed. Close this preview and check again.',true));
     d.addEventListener('studio:recipe',()=>invalidate('The Create setup changed. Close this preview and check again.',true));
