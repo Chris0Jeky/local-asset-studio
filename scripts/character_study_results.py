@@ -17,7 +17,7 @@ import uuid
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 from scripts import character_study as study
-from app import project_storage, submission_evidence, references
+from app import project_storage, submission_evidence, references, character_review
 
 JSON_LIMIT = 16 * 1024**2
 IMAGE_LIMIT = 20 * 1024**2
@@ -57,12 +57,22 @@ def _projects(experiments, root_id):
         budget = db.execute('SELECT allowance,reserved FROM budgets WHERE id=?', (root_id,)).fetchone()
         require(budget is not None, 'Study has no saved Production budget')
         rows = []; size = 0
+        has_reviews = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='comparison_reviews'").fetchone() is not None
         for row in db.execute('SELECT id,root_id,plan,state,created FROM projects WHERE root_id=? ORDER BY created,id LIMIT 257', (root_id,)):
             size += len(row['plan'].encode('utf-8'))+len(row['state'].encode('utf-8'))
-            require(size <= TOTAL_LIMIT, 'Study metadata exceeds collection limit'); rows.append(row)
+            require(size <= TOTAL_LIMIT, 'Study metadata exceeds collection limit')
+            item = dict(id=row['id'], root_id=row['root_id'], plan=_decode(row['plan']), state=_decode(row['state']), created_at=row['created'], review_desk=None)
+            review = db.execute('SELECT revision,document FROM comparison_reviews WHERE project_id=?', (row['id'],)).fetchone() if has_reviews else None
+            if review:
+                size += len(review['document'].encode('utf-8')); require(size <= TOTAL_LIMIT, 'Study reviews exceed collection limit')
+                document = _decode(review['document']); receipt = document.get('character_review'); event = None
+                if receipt:
+                    event = db.execute('SELECT event FROM comparison_review_events WHERE project_id=? AND revision=?', (row['id'], receipt.get('review_revision'))).fetchone()
+                    if event:size += len(event['event'].encode('utf-8')); require(size <= TOTAL_LIMIT, 'Study review events exceed collection limit')
+                item['review_desk'] = {'revision': review['revision'], 'document': document, 'finalization_event': _decode(event['event']) if event else None}
+            rows.append(item)
     require(0 < len(rows) <= 256, 'Expected 1..256 saved study projects')
-    return {'budget': dict(budget), 'projects': [dict(id=r['id'], root_id=r['root_id'],
-        plan=_decode(r['plan']), state=_decode(r['state']), created_at=r['created']) for r in rows]}
+    return {'budget': dict(budget), 'projects': rows}
 
 
 def _read_saved(experiments, name, watched):
@@ -218,6 +228,15 @@ def collect(plan, workspace, experiments, out):
     watched = {}; cases = []; artifacts = []
     for project in snapshot['projects']:
         item, evidence, asset = _case(experiments, project, plan, watched)
+        if evidence and asset:
+            evidence['character_review'] = character_review.collected_review(project, asset, evidence['job'])
+            if evidence['character_review']:
+                candidate = project['review_desk']['document']['candidates'][0]
+                relative = candidate['source_path']; study.relative(relative)
+                require(relative.startswith('reviews/'), 'Character review snapshot escaped its review directory')
+                name = f"projects/{project['id']}/"+relative; path = study.inside(experiments, name)
+                require(path.stat().st_size == asset['bytes'] and study.file_sha(path) == asset['sha256'], 'Character review snapshot bytes changed')
+                watched[name] = asset['sha256']
         cases.append(item); artifacts.append((item, evidence, asset))
     require(len({item['case_id'] for item in cases}) == len(cases), 'Duplicate primary case')
     require(sum(bool(item['record_id']) for item in cases) <= budget['reserved'], 'Attempt records exceed saved reservations')
@@ -250,7 +269,7 @@ def collect(plan, workspace, experiments, out):
             'kind': 'primary', 'state': item['disposition'], 'parent_attempt_id': None,
             'prompt_id': job['prompt_ids'][0] if job['prompt_ids'] else None, 'output': output,
             'execution_evidence': item['execution_evidence'],
-            'elapsed_seconds': elapsed, 'cleanup_seconds': None, 'review': None})
+            'elapsed_seconds': elapsed, 'cleanup_seconds': None, 'review': evidence.get('character_review')})
     require(_projects(experiments, root_id) == snapshot, 'Production changed during collection; retained snapshot is incomplete')
     for name, digest in watched.items():
         require(study.file_sha(study.inside(experiments, name)) == digest, 'Saved evidence changed during collection; retained snapshot is incomplete')

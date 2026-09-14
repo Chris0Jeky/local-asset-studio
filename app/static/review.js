@@ -21,12 +21,12 @@
   if(typeof module!=='undefined'&&module.exports)module.exports={cropFromPercent,cropPixels,optionalInteger,artifactPath};
   if(typeof document==='undefined')return;
   const $=s=>document.querySelector(s), project=new URLSearchParams(location.search).get('project');
-  let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null;
+  let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null,characterDecisionDraft=null;
   const drafts=new Map(),images=new Map();
   const cropIds=['cropLeft','cropTop','cropRight','cropBottom'];
   const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
   function message(text,error=false){$('#message').textContent=text;$('#message').classList.toggle('error',error);}
-  function dirty(){return drafts.size>0||viewDraft!==null||summaryDraft!==null||selectionDraft!==null;}
+  function dirty(){return drafts.size>0||viewDraft!==null||summaryDraft!==null||selectionDraft!==null||characterDecisionDraft!==null;}
   function controls(){
     for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;
     $('#export').disabled=busy||!state?.finalized||dirty();
@@ -35,6 +35,8 @@
     $('#saveDraft').hidden=!dirty();$('#open').disabled=busy||!project||!/^[a-f0-9]{32}$/.test(project);
     $('#viewStatus').textContent=viewDraft?'Unsaved crop':'Saved crop';
     $('#assessmentStatus').textContent=drafts.has($('#candidate').value)?'Unsaved assessment':'Saved';
+    const characterSelected=!!state?.character_context&&!!$('#selected').value;
+    $('#characterDecisionLabel').hidden=!characterSelected;$('#summary').required=characterSelected;
   }
   async function request(action,extra={}) {
     const payload={action,...extra};
@@ -59,16 +61,23 @@
     return {verdict:$('#verdict').value,observations:Object.fromEntries(Object.keys(CHECKS).map(key=>[key,$('#check-'+key).value])),
             notes:$('#notes').value,cleanup_seconds:optionalInteger($('#cleanup').value,0,86400),preference:optionalInteger($('#preference').value,1,5)};
   }
+  function characterValues(){return Object.fromEntries(Object.keys(state?.character_context?.required_checks||{}).map(key=>[key,$('#character-check-'+key).value]));}
   function assessmentDraft(){
     // Keep even temporarily invalid numeric input as a draft; validate only on Save.
     return {verdict:$('#verdict').value,observations:Object.fromEntries(Object.keys(CHECKS).map(key=>[key,$('#check-'+key).value])),
-            notes:$('#notes').value,cleanup_seconds:$('#cleanup').value,preference:$('#preference').value};
+            notes:$('#notes').value,cleanup_seconds:$('#cleanup').value,preference:$('#preference').value,character_checks:characterValues()};
   }
   function fillAssessment(){
     const candidate=state?.candidates.find(c=>c.alias===$('#candidate').value);if(!candidate)return;
     const value=drafts.get(candidate.alias)||candidate.assessment;
     $('#verdict').value=value.verdict;$('#notes').value=value.notes;$('#cleanup').value=value.cleanup_seconds??'';$('#preference').value=value.preference??'';
     for(const key of Object.keys(CHECKS))$('#check-'+key).value=value.observations[key];
+    const scope=state.character_context;$('#characterAssessment').hidden=!scope;
+    $('#characterChecks').replaceChildren(...Object.entries(scope?.required_checks||{}).map(([key,description])=>{
+      const label=el('label',description),select=el('select');select.id='character-check-'+key;
+      for(const [value,title] of [['uncertain','Uncertain'],['not_visible','Not visible'],['pass','Pass'],['fail','Fail']]){const option=el('option',title);option.value=value;select.append(option);}
+      select.value=(value.character_checks||candidate.character_checks||{})[key]||'uncertain';label.append(select);return label;
+    }));
     $('#candidateSource').hidden=!state.revealed;
     $('#candidateSource').textContent=candidate.source?`${candidate.source.filename} · stage ${candidate.source.stage+1} · ${candidate.source.transform.oriented_size.join(' × ')} · SHA-256 ${candidate.source.sha256}`:'';
     controls();
@@ -83,6 +92,9 @@
     fillAssessment();$('#progress').replaceChildren(...state.candidates.map(c=>{const row=el('div');row.className='progress-row';row.append(el('b','Candidate '+c.alias),el('span',c.assessment.verdict.replaceAll('_',' ')));return row;}));
     $('#decision').hidden=!state.revealed;$('#provenance').hidden=!state.revealed;$('#evidence').textContent=state.revealed?JSON.stringify(state.evidence,null,2):'';
     selectOptions($('#selected'),[['','None should progress'],...options],state.selected||'');$('#selected').value=selectionDraft??state.selected??'';$('#summary').value=summaryDraft??state.notes;
+    $('#characterDecision').value=characterDecisionDraft??state.character_review?.review?.decision??'selected';
+    $('#characterDecisionStatus').hidden=!state.character_context;
+    $('#characterDecisionStatus').textContent=state.character_review?`${state.character_review.review.decision==='accepted'?'Accepted':'Selected'} for this case by ${state.character_review.review.reviewer} at review revision ${state.character_review.review_revision}. Rights and engine acceptance remain separate.`:'Character acceptance has not been recorded. Every character requirement must pass before selection or acceptance.';
     $('#history').replaceChildren(...state.history.slice(0,40).map(e=>el('li',`r${e.revision} · ${e.action}${e.alias?' · '+e.alias:''} · ${e.reviewer}`)));
     selectOptions($('#restoreRevision'),[['','Choose an earlier assessment'],...state.history.filter(e=>e.action==='rate').map(e=>[String(e.revision),`r${e.revision} · ${e.alias} · ${e.assessment.verdict}`])],'');
     $('#downloads').replaceChildren();
@@ -114,11 +126,11 @@
   $('#open').onclick=()=>operation('open');
   $('#reload').onclick=()=>{
     if(dirty()&&!confirm('Discard unsaved local notes and reload the saved revision? Download the unsaved notes first to keep a copy.'))return;
-    operation('inspect',{},()=>{drafts.clear();viewDraft=summaryDraft=selectionDraft=null;});
+    operation('inspect',{},()=>{drafts.clear();viewDraft=summaryDraft=selectionDraft=characterDecisionDraft=null;});
   };
   $('#candidate').onchange=fillAssessment;
   $('#assessmentForm').oninput=event=>{if(event.target.id==='candidate')return;drafts.set($('#candidate').value,assessmentDraft());controls();};
-  $('#assessmentForm').onsubmit=event=>{event.preventDefault();try{const alias=$('#candidate').value;operation('rate',{alias,assessment:assessmentValues()},()=>drafts.delete(alias));}catch(error){message(error.message,true);}};
+  $('#assessmentForm').onsubmit=event=>{event.preventDefault();try{const alias=$('#candidate').value,extra=state.character_context?{character_checks:characterValues()}:{};operation('rate',{alias,assessment:assessmentValues(),...extra},()=>drafts.delete(alias));}catch(error){message(error.message,true);}};
   $('#cropForm').oninput=()=>{try{viewDraft={crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value};draw().catch(error=>message(error.message,true));}catch(error){viewDraft={crop:state.crop,background:$('#background').value};message(error.message,true);}controls();};
   $('#cropForm').onsubmit=event=>{event.preventDefault();try{operation('view',{crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value},()=>{viewDraft=null;});}catch(error){message(error.message,true);}};
   for(const button of document.querySelectorAll('[data-crop]'))button.onclick=()=>{const crop={whole:[0,0,10000,10000],centre:[2500,2500,7500,7500],upper:[0,0,10000,5000]}[button.dataset.crop];cropIds.forEach((id,i)=>{$('#'+id).value=crop[i]/100;});$('#cropForm').oninput();};
@@ -126,11 +138,12 @@
   $('#swap').onclick=()=>{const left=$('#left').value;$('#left').value=$('#right').value;$('#right').value=left;draw().catch(error=>message(error.message,true));};
   $('#reveal').onclick=()=>{if(confirm('Reveal recipe settings and source identities? This is recorded and cannot be undone as a blind review.'))operation('reveal');};
   $('#summary').oninput=()=>{summaryDraft=$('#summary').value;controls();};$('#selected').onchange=()=>{selectionDraft=$('#selected').value;controls();};
-  $('#decisionForm').onsubmit=event=>{event.preventDefault();if(drafts.size||viewDraft){message('Save candidate assessments and the shared crop before recording the decision.',true);return;}operation('finalize',{selected:$('#selected').value||null,notes:$('#summary').value},()=>{summaryDraft=selectionDraft=null;});};
+  $('#characterDecision').onchange=()=>{characterDecisionDraft=$('#characterDecision').value;controls();};
+  $('#decisionForm').onsubmit=event=>{event.preventDefault();if(drafts.size||viewDraft){message('Save candidate assessments and the shared crop before recording the decision.',true);return;}const selected=$('#selected').value||null,extra=state.character_context&&selected?{character_decision:$('#characterDecision').value,reviewer:'local-user'}:{};operation('finalize',{selected,notes:$('#summary').value,...extra},()=>{summaryDraft=selectionDraft=characterDecisionDraft=null;});};
   $('#export').onclick=()=>operation('export');$('#restoreRevision').onchange=controls;
   $('#restore').onclick=()=>{if(dirty()){message('Save or download your local drafts before restoring an earlier assessment.',true);return;}operation('restore',{source_revision:Number($('#restoreRevision').value)});};
   $('#saveDraft').onclick=()=>{
-    const blob=new Blob([JSON.stringify({kind:'unsaved-review-notes',project_id:project,base_revision:state?.revision,assessments:Object.fromEntries(drafts),view:viewDraft,notes:summaryDraft,selected:selectionDraft},null,2)],{type:'application/json'});
+    const blob=new Blob([JSON.stringify({kind:'unsaved-review-notes',project_id:project,base_revision:state?.revision,assessments:Object.fromEntries(drafts),view:viewDraft,notes:summaryDraft,selected:selectionDraft,character_decision:characterDecisionDraft},null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob),link=el('a');link.href=url;link.download='unsaved-review-notes.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   };
   window.addEventListener('beforeunload',event=>{if(dirty()){event.preventDefault();event.returnValue='';}});
