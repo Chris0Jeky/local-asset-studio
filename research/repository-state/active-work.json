@@ -3,7 +3,10 @@
   "captured_at": "2026-09-14T14:05:00Z",
   "repository": {
     "head_sha": "b7f3ab39a3bc6506afbb57a1b87529047a61f3e4",
-    "default_branch": "main"
+    "default_branch": "main",
+    "facts_sha": "b7f3ab39a3bc6506afbb57a1b87529047a61f3e4",
+    "catalog_blob_sha": "20ba63428109cb1918da5394c5841000476ca5ca",
+    "human_todo_blob_sha": "21114e4f1f741b536ca11fb02d426b6eed201d88"
   },
   "pull_requests": [
     {
