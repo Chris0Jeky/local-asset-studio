@@ -1737,7 +1737,7 @@
       },
       "backend_id": "primary",
       "source": "https://github.com/ltdrdata/ComfyUI-Impact-Pack",
-      "description": "Two Impact Pack FaceDetailer stages detect and repaint faces, then hands, with WAI v17. Denoise is face-only: the face defaults to 0.40 and the hand pass stays fixed at 0.45. The positive prompt also steers the face; hands retain their authored prompt. Lighter/Stronger face variants do not change hand strength. Check detected regions and both results; lower face strength is not a hand-preservation setting. For adjustable hand strength, edit node 13 in the original ComfyUI graph as a separate workflow. The changed Studio control mapping has not been rerun; historical results are retained separately.",
+      "description": "Two Impact Pack FaceDetailer stages detect and repaint faces, then hands, with WAI v17. Denoise is face-only: the face defaults to 0.40 and the hand pass stays fixed at 0.45. The positive prompt also steers the face; hands retain their authored prompt. Lighter/Stronger face variants do not change hand strength. Check detected regions and both results; lower face strength is not a hand-preservation setting. For adjustable hand strength, select WAI Auto Hand Detail (anime-hand) or open its shipped visual workflow: 27 - WAI Auto Hand Detail. This is a separate hand-only pass, not the combined face/hand recipe. The changed Studio control mapping has not been rerun; historical results are retained separately.",
       "stages": [
         "Reference image",
         "YOLO face boxes",

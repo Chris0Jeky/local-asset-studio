@@ -253,7 +253,10 @@ press **Generate** explicitly. Opening either action does not start a render or 
   **Lighter face (face 0.30 / hand 0.45)** and **Stronger face (face 0.55 / hand 0.45)**
   name both strengths. Neither new face-only variant has been rerun. Changing face Denoise to zero
   does not disable hand repainting; use a different workflow when hands must remain unchanged.
-  To adjust hand strength independently, edit node 13 in the original ComfyUI graph as a separate workflow.
+  To adjust hand strength independently, select **WAI Auto Hand Detail** (`anime-hand`) in Studio,
+  or open the shipped [27 - WAI Auto Hand Detail](../workflows/comfyui/27%20-%20WAI%20Auto%20Hand%20Detail.json)
+  in ComfyUI and adjust its `FaceDetailer` denoise. This is a separate **hand-only** pass, not the combined
+  face/hand recipe; it does not inherit the combined repair's quality evidence.
   The earlier **Gentle (0.3 for both)** trial is historical, not the current Lighter face variant:
   it sharpened the face but left the extra digit (job `e4e49006`, 42.3 s,
   `target_defect_fixed: false`). Old coupled recipes keep their embedded graphs; Studio's exact-recipe

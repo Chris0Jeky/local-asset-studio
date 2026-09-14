@@ -39,8 +39,13 @@ The description explicitly calls Denoise **face-only** and the stage labels name
 both scopes. Rename the variants to **Lighter face (face 0.30 / hand 0.45)** and
 **Stronger face (face 0.55 / hand 0.45)**. Neither claims a measured quality win.
 A face value of zero still leaves hand repainting at 0.45: this is not a way to
-preserve hands. A different hand value needs an explicitly separate workflow
-editing node 13 in ComfyUI; do not silently mutate an old saved recipe.
+preserve hands. For adjustable hands, select **WAI Auto Hand Detail** (`anime-hand`)
+in Studio, or open [27 - WAI Auto Hand Detail](../../workflows/comfyui/27%20-%20WAI%20Auto%20Hand%20Detail.json)
+in ComfyUI and adjust its `FaceDetailer` denoise. This shipped route is a separate
+**hand-only** pass, not the combined face/hand recipe, and carries its own
+experimental status. The combined preset has only an API graph and no catalog
+`visual` entry; do not advertise it as a shipped visual workflow or silently
+mutate a saved recipe to obtain independent control.
 
 Seed, steps, CFG, sampler and scheduler still fan out to both passes. Batch seed
 expansion stays synchronized. The hand prompt stays authored; source/reference,
@@ -98,3 +103,12 @@ native/creative acceptance stays open. #253 is this pass's first execution fix;
 #254 is the next scoped older atelier defect. HUMAN_TODO is untouched: the
 already-supplied q5/q6 decisions belong to #277/#278. Rollback is a scoped catalog
 and copy revert, never deletion or rewriting of historical recipes.
+
+## Review correction: reachable hand-only handoff
+
+The first independent review identified that the original hand-strength advice
+pointed to an unavailable combined visual workflow. The catalog and both runbooks
+now name and link the shipped `anime-hand` workflow instead. A seventh test checks
+the actual catalog target, visual file and `FaceDetailer` node, plus the hand-only
+scope in all three guidance surfaces. It failed against the first PR head, then
+passed with the correction. No visual graph or generated output changed.

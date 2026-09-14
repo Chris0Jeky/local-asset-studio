@@ -86,3 +86,19 @@ class DetailDenoiseBindingTests(unittest.TestCase):
         for node in ('12', '13'): self.assertEqual(batch[node]['inputs']['seed'], 33)
         self.assertEqual(batch['12']['inputs']['denoise'], .3); self.assertEqual(batch['13']['inputs']['denoise'], .45)
         self.assertEqual(graph['12']['inputs']['seed'], 31)
+
+    def test_hand_adjustment_handoff_names_the_shipped_hand_only_workflow(self):
+        catalog = json.loads((ROOT/'presets/catalog.json').read_bytes())
+        hand = next(p for p in catalog['presets'] if p['id'] == 'anime-hand')
+        visual = hand['visual']
+        self.assertEqual(visual, 'workflows/comfyui/27 - WAI Auto Hand Detail.json')
+        self.assertTrue((ROOT/visual).is_file())
+        nodes = json.loads((ROOT/visual).read_bytes())['nodes']
+        self.assertTrue(any(n['type'] == 'FaceDetailer' for n in nodes))
+        self.assertIn(hand['name'], self.preset['description'])
+        self.assertIn('hand-only', self.preset['description'])
+        self.assertNotIn('edit node 13 in the original ComfyUI graph', self.preset['description'])
+        for path in ('docs/ANIME-FANTASY-ATELIER.md', 'docs/reconciliation/2026-09-14-detail-denoise.md'):
+            text = (ROOT/path).read_text(encoding='utf-8')
+            self.assertIn('27%20-%20WAI%20Auto%20Hand%20Detail.json', text)
+            self.assertIn('hand-only', text)
