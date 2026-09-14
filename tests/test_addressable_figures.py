@@ -165,7 +165,7 @@ class AddressableFigureHTTPTests(unittest.TestCase):
         self.record = self.store.get(self.parent)
         self.workspace_id = self.store.snapshot()["workspace_id"]
 
-        class Handler(server.Handler):
+        class Handler(server.extend_handler(server.Handler)):
             studio = SimpleNamespace(assets=self.store)
 
         self.http = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
