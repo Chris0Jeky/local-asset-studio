@@ -133,14 +133,15 @@ def _read_parent(workspace, asset_id, expected_sha256):
         raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
         with Image.open(io.BytesIO(raw)) as opened:
-            if getattr(opened, "n_frames", 1) != 1:
-                raise _error(workspace, "Animated images cannot be split into figure children")
-            oriented = ImageOps.exif_transpose(opened)
-            oriented.load()
-            width, height = oriented.size
+            width, height = opened.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
-            mode = "RGBA" if "A" in oriented.getbands() else "RGB"
+            if getattr(opened, "n_frames", 1) != 1:
+                raise _error(workspace, "Animated images cannot be split into figure children")
+            has_transparency = "A" in opened.getbands() or "transparency" in opened.info
+            oriented = ImageOps.exif_transpose(opened)
+            oriented.load()
+            mode = "RGBA" if has_transparency or "A" in oriented.getbands() or "transparency" in oriented.info else "RGB"
             canvas = oriented.convert(mode)
             if oriented is not opened:
                 oriented.close()
