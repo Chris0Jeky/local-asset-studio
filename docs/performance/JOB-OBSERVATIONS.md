@@ -47,8 +47,10 @@ does bounded event projection and locking; background I/O has no completion join
 
 ## Retained evidence
 
-Files live under the configured experiments root, defaulting to
-`experiments/resource-observations/observation-00/`. The allocator exclusively
+Files live at `.runtime/job-resource-observations/observation-00/` under the Studio
+repository root. This directory is already ignored and rejected by the repository's
+operational-output guard, including when someone forces a file into the index.
+The allocator exclusively
 reserves one of 32 fixed slots. It refuses new observation when full, preserves
 existing files and rejects unknown entries or linked directories at the slot root.
 Move whole receipts explicitly when making space; there is no automatic deletion.
@@ -73,7 +75,7 @@ To inspect the raw profile independently, use the existing command with the actu
 slot path:
 
 ```powershell
-python scripts/summarize-resources.py experiments/resource-observations/observation-00/profile.jsonl
+python scripts/summarize-resources.py .runtime/job-resource-observations/observation-00/profile.jsonl
 ```
 
 An early exit can leave a valid profile with zero or fewer-than-requested samples.

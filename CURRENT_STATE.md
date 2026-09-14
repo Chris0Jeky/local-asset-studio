@@ -23,6 +23,13 @@ are recorded on this change's PR. The full offline suite passed: 2,235 total,
 blocking defect. Existing fixture warnings, including an unclosed socket warning,
 remain in the retained log; this does not resolve #227.
 
+The review fix places receipts under `.runtime/job-resource-observations/`, covered
+by both Git ignore and the existing operational-payload guard. All 22 focused
+tests pass after that change. A synthetic disposable-index comparison confirmed
+the previous directory was unignored and accepted by the validator; the protected
+directory is ignored and a force-staged receipt is rejected. The real index was
+unchanged. The earlier full-suite result remains scoped to the initial implementation.
+
 Not verified: running Studio adoption, real resource overhead or performance,
 complete loaded-code/model/input identity, actual geometry/precision, cold/warm
 state, phase timing, finite benchmark execution and an authorised real baseline.

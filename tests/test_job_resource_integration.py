@@ -154,7 +154,7 @@ class JobResourceIntegrationTests(unittest.TestCase):
             return thread
         studio = fixtures.FakeStudio(self.fixture.root, [{'queue_running': [], 'queue_pending': []},
                     {'prompt_id': 'once'}, {'once': {'status': {'status_str': 'success'}, 'outputs': {}}}])
-        manager = fixtures.server.job_resources.JobResourceObservations(studio.root, studio.experiments, studio.backends,
+        manager = fixtures.server.job_resources.JobResourceObservations(studio.root, studio.backends,
                     samples=3, sampler_factory=sampler, source_reader=lambda _: {'fixture': True}, thread_factory=thread_factory)
         studio.resource_observations = manager
         job = studio.jobs[studio.create_job({'preset_id': 'demo'}, enqueue=False)['id']]

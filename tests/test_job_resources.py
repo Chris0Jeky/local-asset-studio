@@ -4,6 +4,8 @@ from contextlib import nullcontext
 import hashlib
 import io
 import json
+import shutil
+import subprocess
 from pathlib import Path
 import tempfile
 import threading
@@ -49,7 +51,7 @@ class ObservationTests(unittest.TestCase):
         options = dict(samples=1, interval=1, sampler_factory=SyntheticSampler,
                        source_reader=lambda _: {'fixture': True, 'loaded_code_matches_commit': None})
         options.update(kwargs)
-        result = resources.JobResourceObservations(self.root, self.root, NS(profiles={}), **options)
+        result = resources.JobResourceObservations(self.root, NS(profiles={}), **options)
         self.managers.append(result); return result
 
     def wait_samples(self, manager, count):
@@ -167,6 +169,15 @@ class ObservationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'unknown entry'): resources.allocate_directory(bad)
         with patch.object(resources, '_plain_directory', return_value=False):
             with self.assertRaisesRegex(ValueError, 'plain directory'): resources.allocate_directory(self.root / 'reparse')
+
+    @unittest.skipUnless(shutil.which('git'), 'Git is required for the operational-payload boundary')
+    def test_default_receipt_path_is_excluded_by_actual_git_rules(self):
+        manager = self.manager()
+        path = (manager.base / 'observation-00' / 'context.json').relative_to(manager.root).as_posix()
+        result = subprocess.run(['git', 'check-ignore', '--no-index', '--', path],
+                                cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), path)
 
     def test_byte_event_and_wall_limits_are_finite(self):
         stream = io.BytesIO(); writer = resources._ProfileWriter(stream, lambda: None)

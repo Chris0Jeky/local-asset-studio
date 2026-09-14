@@ -133,6 +133,8 @@ def _plain_directory(path):
 
 def allocate_directory(base):
     """Fixed exclusive slots cap retention even with competing observer instances."""
+    base.parent.mkdir(exist_ok=True)
+    if not _plain_directory(base.parent): raise ValueError('Observation parent is not a plain directory')
     base.mkdir(exist_ok=True)
     if not _plain_directory(base): raise ValueError('Observation root is not a plain directory')
     names = {f'observation-{index:02d}' for index in range(MAX_RECEIPTS)}
@@ -190,12 +192,12 @@ class _ProfileWriter:
 
 
 class JobResourceObservations:
-    def __init__(self, root, experiments, backends, *, samples=120, interval=5,
+    def __init__(self, root, backends, *, samples=120, interval=5,
                  sampler_factory=BoundRuntimeSampler, source_reader=source_identity,
                  thread_factory=threading.Thread):
         if type(samples) is not int or not 1 <= samples <= 120: raise ValueError('Invalid observation sample limit')
         if resource_probe.counter(interval) is None or not 1 <= interval <= 60: raise ValueError('Invalid observation interval')
-        self.root, self.base, self.backends = root, experiments / 'resource-observations', backends
+        self.root, self.base, self.backends = root, root / '.runtime' / 'job-resource-observations', backends
         self.samples, self.interval = samples, interval
         self.sampler_factory, self.source_reader, self.thread_factory = sampler_factory, source_reader, thread_factory
         self.lock = threading.Lock(); self.active = None; self.thread = None; self.last = None
@@ -319,7 +321,7 @@ class JobResourceObservations:
 def from_config(studio):
     if studio.config.get('observe_job_resources') is not True: return None
     try:
-        return JobResourceObservations(studio.root, studio.experiments, studio.backends,
+        return JobResourceObservations(studio.root, studio.backends,
                                        samples=studio.config.get('resource_observation_samples', 120),
                                        interval=studio.config.get('resource_observation_interval_seconds', 5))
     except Exception: return None
