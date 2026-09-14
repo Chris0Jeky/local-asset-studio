@@ -856,7 +856,8 @@ class Production:
             self._attempt(identifier,index,finished_at=time.time(),status=job['status'],prompt_ids=job.get('prompt_ids',[]))
             if not self._tracking_continuation_allowed(identifier):return
             if job['status']!='completed':
-                self._mutate(identifier,status='uncertain' if job['status']=='uncertain' else 'failed',message=job['message']);return
+                status='interrupted' if job['status']=='not_submitted' and submission_evidence.never_submitted(job) else 'uncertain' if job['status']=='uncertain' else 'failed'
+                self._mutate(identifier,status=status,message=job['message']);return
         artifacts=self.contact_sheet(identifier)
         self._mutate(identifier,status='awaiting_review',finished_at=time.time(),artifacts=artifacts,message='Comparison finished. Review candidates and record your choice.')
 
