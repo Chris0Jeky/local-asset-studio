@@ -4,7 +4,7 @@ const safeUrl = url => { try { const u = new URL(url); return ['http:','https:']
 const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
-const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','sampler','scheduler'];
+const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
@@ -97,7 +97,7 @@ function scheduleTimeEstimate() {
     finally { if (estimateAbort === controller) estimateAbort = null; }
   }, 180);
 }
-const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.";
+const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : (selected?.reference_hint || "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.");
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
 // Lineage is attributed per attachment point. A slot-less input records its source in parentByInput;
 // a role slot records it on the reference record itself (parent_asset, supplied by
@@ -208,7 +208,7 @@ function renderSelected() {
   const variants = selected.variants || [{name:'3-seed audition',batch_count:3}];
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '"><b>' + esc(v.name) + '</b>' + (selected.reference && typeof StudioContinuation !== 'undefined' ? '<small>' + esc(StudioContinuation.variantHelp(selected,v)) + '</small>' : '') + '</button>').join('');
   const i2vModeControl = selected.i2v_modes?.length ? '<label>I2V mode<select id="i2vMode" data-key="mode">' + selected.i2v_modes.map(spec => '<option value="' + esc(spec.id) + '">' + esc(spec.name || spec.id) + '</option>').join('') + '</select><small id="i2vModeNote"></small></label>' : '';
-  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
+  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['style_weight','Style weight','number','min="0" max="2" step="0.05"'],['pose_strength','Pose strength','number','min="0" max="2" step="0.05"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
   const inStack = new Set(activeLoraSlots().flatMap(k => [k, loraNameKey(k)]));
   $('#controls').innerHTML = i2vModeControl + specs.filter(([k]) => (selected[k] || selected.bindings_extra?.[k]) && !inStack.has(k)).map(([key,label,type,attrs]) => {
     if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
@@ -220,7 +220,7 @@ function renderSelected() {
   controlKeys.forEach(k => { const input=getControl(k); if (input) input.value=selected.defaults?.[k] ?? ''; });
   if (selected.i2v_modes?.length) applyI2VMode(selected.i2v_default_mode || selected.i2v_modes[0].id, false);
   updateLoraHints(); renderRecipeChoices();
-  $('#referenceWrap').hidden = !selected.reference; $('#lastReferenceWrap').hidden = !selected.last_reference; $('#referenceHint').textContent = referenceHint();
+  $('#referenceWrap').hidden = !selected.reference; $('#lastReferenceWrap').hidden = !selected.last_reference; $('#referenceHint').textContent = referenceHint(); $('#referenceLabel').textContent = selected.reference_label || 'Reference / first frame'; $('#lastReferenceLabel').textContent = selected.last_reference_label || 'Last frame'; $('#lastReferenceHint').textContent = selected.last_reference_hint || 'Use the same image at both ends for a loop experiment.';
   if(typeof renderReferenceSlots==='function')renderReferenceSlots();
   $('#workflow').href = '/api/workflows/' + encodeURIComponent(selected.id);
   $('#visualWorkflow').hidden = !selected.visual; $('#visualWorkflow').href = $('#workflow').href + '?visual';
@@ -489,7 +489,7 @@ $('#gallery').onclick=async e=>{
 // that uncertainty in the draft, but do not persist it as unattributed setup lineage.
 function checkedSetupControls() {
   const controls=values();
-  const inputs=[['reference','reference','Reference / first frame'],['lastReference','last_reference','Last frame']];
+  const inputs=[['reference','reference',selected?.reference_label||'Reference / first frame'],['lastReference','last_reference',selected?.last_reference_label||'Last frame']];
   const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
   if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
     ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');

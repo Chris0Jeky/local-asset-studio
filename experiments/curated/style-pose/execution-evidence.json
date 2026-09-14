@@ -1,0 +1,40 @@
+{
+  "topic": "style-pose",
+  "date": "2026-09-14",
+  "preset_id": "style-pose-wai",
+  "studio_job_id": "88026ea3-c950-48bd-9529-3d02e81bf1e4",
+  "comfy_prompt_id": "82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8",
+  "backend": "primary (127.0.0.1:8188, ComfyUI 0.35.0, torch 2.9.1+rocm7.2.1, RX 9070 XT)",
+  "submitted_via": "POST /api/jobs with empty controls (authored defaults), batch_count 1",
+  "wall_time_seconds": 283.05,
+  "cold_loads": "first run of the checkpoint, ViT-H CLIP vision, IP-Adapter Plus, Xinsir OpenPose and the OpenPose annotators in this ComfyUI process; host commit rose from 57% to 74% during loading",
+  "graph_sha256": "6d4023f6216f58d7fadd9e927b53cf24d109038ebb46d71e127cd96b1c1078bd",
+  "graph_path": "workflows/api/style-pose-wai-api.json",
+  "submitted_workflow": "studio-job-88026ea3-workflow.json (15 nodes: both LoRA slots pruned at strength 0)",
+  "references": {
+    "style": {
+      "file": "examples/references/style-reference-example.png",
+      "sha256": "00d7d09fe24d5bf39a6ae7a5ecb935909018a4765ab8e5aeea4b4988b2dd567b",
+      "origin": "examples/workflow-lab/krea.png (Krea 2 retro-anime output)"
+    },
+    "pose": {
+      "file": "examples/references/pose-reference-example.png",
+      "sha256": "66b36d7cffed535ba6effe741e934b3be88034066d94d1eb3eb7f105b8b8c7ff",
+      "origin": "examples/gallery/wai.png (WAI v17 lantern keeper, full body)"
+    }
+  },
+  "output": {
+    "comfy_file": "output/Style-Pose/WAI_00001_.png",
+    "sha256": "c1fa0af7a05e5293f9c550605728912ffd6cb7b56013803b88ac33bf673fe171",
+    "size": [
+      832,
+      1216
+    ],
+    "seed": 2026091401,
+    "asset_id": "db687fa50c1b529c8ef724600fadf103",
+    "jpeg_copy": "examples/style-pose/wai-proving-run.jpg"
+  },
+  "inspection": "Opened the PNG. Full-body standing figure facing the viewer with the left arm extended holding a glowing lantern, right arm down, feet planted: the same stance as the pose picture. Rendering took the style picture's palette and look: flat cel shading, hard outlines, neon cyan/magenta/blue lighting, teal cloak and green boots on a dark blue gradient; nothing of the style picture's subject (umbrella, street, neon signs) leaked in. Not copied from the pose picture: blonde hair became light blue, the green cloak became cyan, the belt pouches and second lantern are gone. Hands are plausible; the lantern handle grip is slightly simplified. No text, no extra limbs.",
+  "not_verified": "Animagine XL 4 variant not run; no timing of a warm run; no comparison across style_weight/pose_strength; not art acceptance; not licence clearance for WAI v17 (creator unauthenticated) or the two example pictures.",
+  "status": "executed"
+}
