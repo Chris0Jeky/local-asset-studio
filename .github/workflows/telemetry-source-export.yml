@@ -1,0 +1,31 @@
+name: Temporary telemetry source export
+on:
+  push:
+    branches: [codex/job-telemetry-source-export]
+    paths: [.github/workflows/telemetry-source-export.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8282efa93f15a18e25a1192717fbef1edbbc355a
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned tracked history only
+        run: |
+          mkdir -p "$RUNNER_TEMP/telemetry-source"
+          git branch telemetry-source HEAD
+          git bundle create "$RUNNER_TEMP/telemetry-source/source.bundle" telemetry-source
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/telemetry-source/identity.txt"
+          cd "$RUNNER_TEMP/telemetry-source"
+          sha256sum source.bundle > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: telemetry-source-8282efa
+          path: ${{ runner.temp }}/telemetry-source/
+          retention-days: 1
+          if-no-files-found: error
