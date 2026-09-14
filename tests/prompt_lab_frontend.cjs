@@ -137,6 +137,61 @@ async function avoidTermsAreParkedNotDeleted() {
   assert.equal(run('intent.constraints.length'), 0);
 }
 
+// A long avoid list is split across bounded notes, never sliced to fit one (PR #288 review).
+async function longAvoidListsAreSplitNotTruncated() {
+  const {element, run} = harness({compile: compiled({
+    errors: [{code: 'NEGATIVE_REWRITE_REQUIRED', message: 'This profile has no negative channel'}],
+  })});
+  await new Promise(resolve => setImmediate(resolve));
+  const terms = Array.from({length: 12}, (_, i) => ('term' + i).padEnd(120, 'x'));
+  element('avoid').value = terms.join(', ');
+  run('build();');
+  await new Promise(resolve => setImmediate(resolve));
+  element('diagnostics').children[0].children.find(c => c.tag === 'button').listeners.click();
+  await new Promise(resolve => setImmediate(resolve));
+  const kept = JSON.parse(run('JSON.stringify(intent.constraints)'));
+  assert.ok(kept.length > 1, 'A list too long for one note becomes several, not a slice');
+  assert.ok(kept.every(c => c.text.length <= 500 && c.mechanism === 'verify' && c.priority === 'soft'));
+  assert.deepEqual(kept.flatMap(c => c.text.replace(/^Avoid: /, '').split(',').map(t => t.trim())), terms,
+    'Every word survives the move, in order');
+  assert.match(element('status').textContent, /Every word is kept in the brief/);
+  // A term that cannot fit any note refuses the repair instead of cutting it.
+  run("intent.constraints.length=0;");
+  element('avoid').value = 'z'.repeat(600);
+  run('build();');
+  await new Promise(resolve => setImmediate(resolve));
+  element('diagnostics').children[0].children.find(c => c.tag === 'button').listeners.click();
+  assert.equal(run('intent.constraints.length'), 0, 'Nothing is written when nothing fits');
+  assert.equal(element('avoid').value, 'z'.repeat(600), 'The text stays exactly where the user typed it');
+  assert.match(element('status').textContent, /Nothing was moved or deleted/);
+}
+
+// `description` is one ledger word for three fields; the readable trace must not claim the wrong one.
+async function coverageNamesTheFieldThisDialectFills() {
+  for (const [id, expected] of [['qwen3-voice-design-v1', /performance direction/], ['ace15-music-v1', /caption/], ['sdxl-prose-v1', /positive prompt/]]) {
+    const {element, run} = harness({compile: compiled()});
+    await new Promise(resolve => setImmediate(resolve));
+    run("document.getElementById('profile').value=" + JSON.stringify(id) + ";build();");
+    await new Promise(resolve => setImmediate(resolve));
+    assert.match(element('coverage').children[0].text, expected, id);
+  }
+}
+
+// An imported brief brings its own profile; the explanation under the picker has to follow it.
+async function importedBriefRefreshesItsExplanation() {
+  const {element} = harness({compile: compiled()});
+  await new Promise(resolve => setImmediate(resolve));
+  const before = element('profile-summary').textContent;
+  assert.match(before, /reference images/);
+  const brief = {schema_version: 1, id: 'creative-brief', task: 'voice', brief: 'A tired keeper speaks.', facets: {},
+    tags: [], avoid: [], constraints: [], references: [], verbatim: {text: 'Hello.'}, parameters: {}, locked: ['verbatim']};
+  await element('brief-file').listeners.change({target: {files: [{size: 400, text: async () => JSON.stringify(brief)}]}});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(element('profile').value, 'qwen3-voice-design-v1');
+  assert.notEqual(element('profile-summary').textContent, before, 'A stale profile explanation would describe the wrong model');
+  assert.match(element('profile-summary').textContent, /byte-for-byte/);
+}
+
 async function metadataResponses() {
   const elements = new Map(), pending = [], requests = [];
   function element(id) {
@@ -181,6 +236,7 @@ async function metadataResponses() {
 }
 // Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
 startup(true).then(() => startup(false)).then(blockedBuildExplainsItself).then(repairsAreOfferedOnlyWhenTheyFit)
-  .then(avoidTermsAreParkedNotDeleted).then(metadataResponses)
+  .then(avoidTermsAreParkedNotDeleted).then(longAvoidListsAreSplitNotTruncated)
+  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses)
   .then(() => console.log('Prompt Lab frontend contracts passed: profile startup, live build, plain-language blockers, HTTP failure reporting and metadata selection.'))
   .catch(error => { console.error(error); process.exitCode = 1; });

@@ -35,13 +35,18 @@ function alternative(code){const count=intent.references.length,current=registry
   if(code==='TAGS_REQUIRED')return fits(p=>p.dialect==='prose')||null;
   return null;}
 function choose(id){const p=registry.find(x=>x.id===id);if(!p)return;$('profile').value=id;collect();intent.task=p.tasks[0];words();summary();rebuild('Switched to '+p.name+'. Nothing you typed was changed.');}
-// Moves the avoid terms into a soft review note. The words are kept verbatim and can be moved back.
-function park(){collect();if(!intent.avoid.length)return;const terms=intent.avoid.join(', ');
-  if(intent.constraints.length>=24){$('status').textContent='Twenty-four review notes maximum. Remove one before keeping another.';return;}
-  let n=1;while(intent.constraints.some(c=>c.id==='avoid-note-'+n))n++;
-  intent.constraints.push({id:'avoid-note-'+n,text:('Avoid: '+terms).slice(0,500),mechanism:'verify',priority:'soft'});
+// Moves the avoid terms into soft review notes. The words are kept verbatim, split across as many
+// bounded notes as they need rather than truncated, and every note can be moved back in one click.
+const noteText=terms=>'Avoid: '+terms.join(', ');
+function park(){collect();if(!intent.avoid.length)return;const terms=intent.avoid.join(', '),groups=[];let current=[];
+  for(const term of intent.avoid){const next=[...current,term];if(noteText(next).length>500&&current.length){groups.push(current);current=[term];}else current=next;}
+  if(current.length)groups.push(current);
+  if(groups.some(g=>noteText(g).length>500)){$('status').textContent='One avoidance term is too long to keep as a review note. Nothing was moved or deleted; shorten that term first.';return;}
+  if(intent.constraints.length+groups.length>24){$('status').textContent='These terms need '+groups.length+' review notes and only '+(24-intent.constraints.length)+' fit. Nothing was moved or deleted; remove a note first.';return;}
+  let n=1;
+  for(const group of groups){while(intent.constraints.some(c=>c.id==='avoid-note-'+n))n++;intent.constraints.push({id:'avoid-note-'+n,text:noteText(group),mechanism:'verify',priority:'soft'});}
   intent.avoid=[];$('avoid').value='';notes();
-  rebuild('Moved “'+terms+'” out of Things to avoid and into a review note. The words stay in the brief; this profile simply has nowhere to send them.');}
+  rebuild('Moved “'+terms+'” out of Things to avoid and into '+(groups.length===1?'a review note':groups.length+' review notes')+'. Every word is kept in the brief; this profile simply has nowhere to send them.');}
 function unpark(note){intent.constraints=intent.constraints.filter(x=>x.id!==note.id);
   const terms=note.text.replace(/^Avoid: /,'').split(',').map(x=>x.trim()).filter(Boolean);
   intent.avoid=[...new Set([...intent.avoid,...terms])];$('avoid').value=intent.avoid.join(', ');notes();rebuild('Returned “'+terms.join(', ')+'” to Things to avoid.');}
@@ -53,7 +58,11 @@ function notes(){$('notes-list').replaceChildren();$('notes-section').hidden=!in
 function summary(){const p=registry.find(x=>x.id===$('profile').value);$('profile-summary').textContent=!p?'':[p.summary||'',p.max_refs?'Reads '+p.min_refs+' to '+p.max_refs+' reference images.':'Reads no reference images.',p.negative?'':'No negative prompt.'].filter(Boolean).join(' ');}
 // The trace as sentences: what you wrote, and where this profile actually put it.
 const SOURCES={brief:'Your brief',tags:'Tags',avoid:'Things to avoid'};
-const DESTINATIONS={description:'positive prompt',positive:'positive prompt',negative:'negative prompt',reference_map:'reference map (roles only; no upload happens here)',lyrics:'lyrics','text: byte-preserving':'spoken words, byte for byte','verbatim.lyrics':'lyrics, byte for byte'};
+const DESTINATIONS={positive:'positive prompt',negative:'negative prompt',reference_map:'reference map (roles only; no upload happens here)','text: byte-preserving':'the spoken words, byte for byte','lyrics: byte-preserving':'the lyrics, byte for byte','review: positive rewrite':'nowhere yet — it needs a positive rewrite you approve',timesignature:'time signature',keyscale:'key','workflow parameter handoff':'a recipe setting in Create, not the prompt','preserved / unbound':'kept in the brief, with no output channel','description + acceptance':'positive prompt, and a thing you check by looking','required_stage + acceptance':'an extra stage (mask, guide or check), not the prompt'};
+// `description` is one ledger word for three different fields; name the one this dialect fills.
+function destination(value){if(value!=='description')return DESTINATIONS[value]||value.replaceAll('_',' ');
+  const dialect=result.profile&&result.profile.dialect;
+  return dialect==='voice'?'performance direction (the instruct field, never the spoken words)':dialect==='music'?'caption':'positive prompt';}
 function readable(source){const b=result.intent;if(SOURCES[source])return SOURCES[source];
   let m=/^facets\.(.+)$/.exec(source);if(m)return m[1][0].toUpperCase()+m[1].slice(1);
   m=/^references\[(\d+)\]$/.exec(source);if(m){const r=b.references[+m[1]];return 'Reference '+(+m[1]+1)+(r?' ('+r.role+')':'');}
@@ -64,10 +73,10 @@ function readable(source){const b=result.intent;if(SOURCES[source])return SOURCE
 function coverage(){$('coverage').replaceChildren();
   $('identity').textContent='This exact brief is fingerprinted '+String(result.intent_sha256||'').slice(0,12)+'… Change any word and the fingerprint changes. The profile record is '+String(result.profile_sha256||'').slice(0,12)+'…';
   for(const row of result.coverage||[]){const line=document.createElement('p');line.className='pl-coverage';
-    line.append(node('b',readable(row.source)),node('span',' → '),node('span',DESTINATIONS[row.destination]||row.destination.replaceAll('_',' ')));$('coverage').append(line);}
+    line.append(node('b',readable(row.source)),node('span',' → '),node('span',destination(row.destination)));$('coverage').append(line);}
   if(!(result.coverage||[]).length)$('coverage').append(node('p','This profile recorded no field mapping.'));}
 $('export-brief').addEventListener('click',()=>{collect();download(intent,'creative-brief.json');});$('export-result').addEventListener('click',()=>{if(result)download(result,'compiled-intent.json');});
-$('brief-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a brief smaller than 64 KiB');const data=JSON.parse(await file.text());const compatible=registry.find(p=>p.tasks.includes(data.task));if(!compatible)throw Error('Unsupported task');await api('/api/prompt/compile',{intent:data,profile_id:compatible.id});intent=data;$('profile').value=compatible.id;show();invalidate();$('status').textContent='Imported the full brief. Nothing generated.';}catch(err){$('status').textContent=err.message;}});
+$('brief-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a brief smaller than 64 KiB');const data=JSON.parse(await file.text());const compatible=registry.find(p=>p.tasks.includes(data.task));if(!compatible)throw Error('Unsupported task');await api('/api/prompt/compile',{intent:data,profile_id:compatible.id});intent=data;$('profile').value=compatible.id;show();summary();invalidate();$('status').textContent='Imported the full brief. Nothing generated.';}catch(err){$('status').textContent=err.message;}});
 $('proposal-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a small proposal JSON');const data=JSON.parse(await file.text());proposed=data.proposal||data;collect();await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields:[]});$('proposal-list').replaceChildren();for(const c of proposed.changes){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=c.field;input.disabled=intent.locked.some(x=>c.field===x||c.field.startsWith(x+'.'));label.append(input,document.createTextNode(c.field+': '+JSON.stringify(c.value)+' â€” '+c.reason));$('proposal-list').append(label);}$('accept').disabled=false;$('status').textContent='Suggestions loaded; none applied.';}catch(err){$('accept').disabled=true;$('status').textContent=err.message;}});
 $('accept').addEventListener('click',async()=>{try{collect();const ticket=draftVersion;const accepted_fields=Array.from($('proposal-list').querySelectorAll('input:checked')).map(x=>x.value);const revision=await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields});if(ticket!==draftVersion){$('status').textContent='Draft changed while applying. Stale result discarded.';return;}intent=revision.intent;show();invalidate();$('accept').disabled=true;$('status').textContent='Selected suggestions applied to a new draft. Original proposal remains separate.';}catch(e){$('status').textContent=e.message;}});
 let metadataRequest=0;
