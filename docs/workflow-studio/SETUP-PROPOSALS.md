@@ -1,5 +1,8 @@
 # Review a proposed setup before changing Create
 
+[Reviewed setup application and recovery](SETUP-APPLICATION.md) extends the preview with explicit shared revisions, copy-only Apply, Undo and original-request inspection. Preview remains read-only; see that guide for supported routes and remaining #232 limits.
+
+
 This extends [ordered source advice](ORDERED-SOURCES.md) with a complete **review-only
 setup proposal**. It does not implement the staging/apply/undo portions of #232.
 The current Create draft, local file selection, attachments and lineage remain intact.
