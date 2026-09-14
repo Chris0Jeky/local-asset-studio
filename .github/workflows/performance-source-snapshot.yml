@@ -1,0 +1,30 @@
+name: Temporary performance source snapshot
+on:
+  push:
+    branches: [codex/performance-source-snapshot]
+    paths: [.github/workflows/performance-source-snapshot.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: b9998270995bacd3c24d7b64715f8f2df5b3b49a
+          persist-credentials: false
+      - name: Export only pinned tracked files
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/las-source"
+          git archive --format=tar HEAD | gzip -n > "$RUNNER_TEMP/las-source/source.tar.gz"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/las-source/identity.txt"
+          cd "$RUNNER_TEMP/las-source"
+          sha256sum source.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: las-performance-source-b999827
+          path: ${{ runner.temp }}/las-source/
+          retention-days: 1
+          if-no-files-found: error
