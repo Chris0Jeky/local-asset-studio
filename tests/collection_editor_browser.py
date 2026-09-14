@@ -27,7 +27,8 @@ ROOT=Path(__file__).resolve().parents[1]
 async def exercise(args):
     args.out.mkdir(parents=True,exist_ok=True)
     checks=[];errors=[];writes=[];failure=None;gate=threading.Event();gate.set()
-    flags={'reject':False,'lose':False};dialogs=[];consent={'yes':False}
+    flags={'reject':False,'lose':False,'hold_read':False,'read_captured':False};dialogs=[];consent={'yes':False}
+    read_gate=threading.Event();read_gate.set()
     def check(id,text,value):
         checks.append({'id':id,'expectation':text,'passed':bool(value)})
         print(id,bool(value),flush=True)
@@ -43,6 +44,10 @@ async def exercise(args):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def do_GET(self):
+                if self.path=='/api/workspace' and flags['hold_read']:
+                    flags['hold_read']=False;snapshot=self.studio.assets.snapshot();flags['read_captured']=True
+                    if not read_gate.wait(8):return self._json(503,{'error':'Held-read fixture deadline'})
+                    return self._json(200,snapshot)
                 if self.path=='/api/workspace' or self.path.startswith('/api/assets/'):return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
@@ -71,8 +76,8 @@ async def exercise(args):
                 page.on('dialog',confirm)
                 if args.inert:await inert_page(page,8191)
                 else:await page.goto('http://127.0.0.1:8191/#assets')
-                await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
-                await page.evaluate("""()=>{showView('assets');window.studioReadPoller?.pause();window.collectionQaInFlight=0;const original=api;api=async(path,options)=>{if(path!=='/api/collections')return original(path,options);collectionQaInFlight++;try{return await original(path,options);}finally{collectionQaInFlight--;}};}""")
+                await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id && !!window.StudioReadPoller')
+                await page.evaluate("""()=>{showView('assets');const poller=window.StudioReadPoller;poller.started=false;for(const lane of poller.lanes.values()){if(lane.timer!==null)poller.clearTimeout(lane.timer);lane.timer=null;}window.collectionQaInFlight=0;const original=api;api=async(path,options)=>{if(path!=='/api/collections')return original(path,options);collectionQaInFlight++;try{return await original(path,options);}finally{collectionQaInFlight--;}};}""")
                 async def refresh():
                     await page.wait_for_function('!assetRefreshing');await page.evaluate('refreshAssets(true)');await page.wait_for_function('!assetRefreshing')
                 async def opened(id=None):
@@ -147,6 +152,32 @@ async def exercise(args):
                 if await page.locator('#removeCollection').count():await page.click('#removeCollection');await settled()
                 else:await page.evaluate('id=>{assetScope="collection:"+id;}',removed['id']);await page.evaluate('document.querySelector("#deleteCollection").onclick()')
                 check('COL-22','Confirmed removal removes grouping, never original assets',not any(c['id']==removed['id'] for c in store.snapshot()['collections']) and len(store.snapshot()['assets'])==1 and hashlib.sha256(file.read_bytes()).hexdigest()==original_hash)
+                # A post-write refresh must follow the captured older read, never run alongside it.
+                await opened(a['id']);await page.fill('#collectionName','Post-refresh rename')
+                read_gate.clear();flags.update(hold_read=True,read_captured=False)
+                await page.evaluate('void refreshAssets(true)')
+                for _ in range(100):
+                    if flags['read_captured']:break
+                    await asyncio.sleep(.02)
+                assert flags['read_captured'],'Read fixture never captured the old snapshot'
+                await submit();await settled();
+                assert await page.evaluate('!!window.StudioReadPoller.lanes.get("assets").queued'),'Post-save read was not queued behind the captured snapshot'
+                read_gate.set()
+                await page.wait_for_function('!assetRefreshing && !window.StudioReadPoller.lanes.get("assets").inFlight && !window.StudioReadPoller.lanes.get("assets").queued')
+                check('COL-27','A confirmed rename refreshes after an older held library read',await page.evaluate('id=>assetState.collections.find(c=>c.id===id)?.name',a['id'])=='Post-refresh rename')
+                remove_late=store.collection({'name':'Delete behind old refresh'})
+                await opened(remove_late['id']);await page.evaluate('id=>{assetScope="collection:"+id;renderAssets();}',remove_late['id'])
+                read_gate.clear();flags.update(hold_read=True,read_captured=False)
+                await page.evaluate('void refreshAssets(true)')
+                for _ in range(100):
+                    if flags['read_captured']:break
+                    await asyncio.sleep(.02)
+                assert flags['read_captured'],'Delete fixture never captured the old snapshot'
+                await page.click('#removeCollection');await settled();
+                assert await page.evaluate('!!window.StudioReadPoller.lanes.get("assets").queued'),'Post-delete read was not queued behind the captured snapshot'
+                read_gate.set()
+                await page.wait_for_function('!assetRefreshing && !window.StudioReadPoller.lanes.get("assets").inFlight && !window.StudioReadPoller.lanes.get("assets").queued')
+                check('COL-28','Confirmed removal clears the obsolete view after an older held read',await page.evaluate('id=>assetScope==="all" && !assetState.collections.some(c=>c.id===id)',remove_late['id']) and await page.locator('#assetScopeTitle').inner_text()=='All assets')
                 consent['yes']=False;await opened(a['id']);await page.fill('#collectionDescription','A description to keep while browsing')
                 await page.set_viewport_size({'width':390,'height':1000})
                 check('COL-23','The collection editor fits a 390px viewport',await page.evaluate('document.querySelector("#collectionDialog").getBoundingClientRect().right<=innerWidth && document.documentElement.scrollWidth<=innerWidth'))
@@ -158,13 +189,13 @@ async def exercise(args):
                 await browser.close()
         except Exception as e:failure=type(e).__name__+': '+str(e)
         finally:
-            gate.set();http.shutdown();http.server_close()
+            gate.set();read_gate.set();http.shutdown();http.server_close()
     report={'mode':'inert storage/transport; actual collection HTTP/SQLite' if args.inert else 'native HTTP/browser; actual collection SQLite','checks':checks,'pass':sum(c['passed'] for c in checks),'fail':sum(not c['passed'] for c in checks),'errors':errors,'execution_error':failure,'writes':writes,'fixture_posts':fixture.POSTS,'hashes':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['app/static/workspace.js','app/static/index.html','app/workspace.py']}}
     module=ROOT/'app/static/collection-editor.js'
     if module.exists():report['hashes']['app/static/collection-editor.js']=hashlib.sha256(module.read_bytes()).hexdigest()
     (args.out/'receipt.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps({k:report[k] for k in ['mode','pass','fail','errors','execution_error']},indent=2))
-    if failure or errors or len(checks)!=26 or (report['fail'] and not args.baseline):raise SystemExit(1)
+    if failure or errors or len(checks)!=28 or (report['fail'] and not args.baseline):raise SystemExit(1)
 
 class _nothing:
     async def __aenter__(self):return self
