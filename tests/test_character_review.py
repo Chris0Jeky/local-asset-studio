@@ -18,6 +18,9 @@ class CharacterReviewTests(unittest.TestCase):
 
     def setUp(self):
         fixtures.CollectionTests.setUp(self)
+        request = copy.deepcopy(self.plan['request'])
+        for task in request['tasks']: task['required_checks'] = ['identity', 'costume']
+        self.plan = study.make_plan(self.plan['canon'], request)
         self.project_id = self.project()['id']
         self.job = self.execute({'id': self.project_id})
         self.state = self.command('open')
@@ -93,7 +96,7 @@ class CharacterReviewTests(unittest.TestCase):
     def test_nonpassing_or_unobserved_checks_cannot_be_selected_or_accepted(self):
         self.command('reveal')
         for observation in ('fail', 'not_visible', 'uncertain'):
-            self.rate(character_checks={key: observation for key in self.checks})
+            self.rate(character_checks=dict(self.checks, costume=observation))
             for decision in ('selected', 'accepted'):
                 with self.subTest(observation=observation, decision=decision), self.assertRaisesRegex(ValueError, 'pass'):
                     self.command('finalize', selected=self.alias, notes='Not all checks passed.', character_decision=decision, reviewer='local-user')
@@ -127,6 +130,14 @@ class CharacterReviewTests(unittest.TestCase):
             event = json.loads(db.execute('SELECT event FROM comparison_review_events WHERE project_id=? AND revision=?',
                                          (self.project_id, accepted_revision)).fetchone()['event'])
         self.assertEqual(event['details']['character_review']['review']['decision'], 'accepted')
+
+    def test_export_keeps_the_character_receipt_and_its_original_event(self):
+        self.finalize(); receipt = copy.deepcopy(self.state['character_review'])
+        result = self.studio.production.review(self.project_id, {'action': 'export', 'expected_revision': self.state['revision']})
+        report = next(item for item in result['artifacts'] if item['path'].endswith('/review.json'))
+        saved = json.loads(self.studio.production.file(self.project_id, report['path']).read_text(encoding='utf-8'))
+        self.assertEqual(saved['review']['character_review'], receipt)
+        self.assertEqual(saved['history'][-1]['details']['character_review'], receipt)
 
     def test_changed_output_bytes_or_retained_review_source_cannot_be_collected(self):
         self.finalize()

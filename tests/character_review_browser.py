@@ -86,7 +86,8 @@ def run(out, chromium=None):
 
             def do_POST(self):
                 path = urlsplit(self.path).path
-                posts.append({"path": path, "body": None})
+                self.review_post = {"path": path, "body": None}
+                posts.append(self.review_post)
                 # Any write other than the review route is forbidden.  The
                 # generation deny-list is explicit so a future page regression
                 # cannot silently start or resume model work in this proof.
@@ -94,18 +95,12 @@ def run(out, chromium=None):
                     return self._json(403, {"error": "Generation is forbidden in this fixture"})
                 if path != "/api/production/" + identifier + "/review":
                     return self._json(403, {"error": "Only the review route is allowed in this fixture"})
-                size = int(self.headers.get("Content-Length", "0"))
-                raw = self.rfile.read(size)
-                try:
-                    posts[-1]["body"] = json.loads(raw)
-                except (TypeError, ValueError):
-                    posts[-1]["body"] = None
-                # Reconstruct a body for Handler._body_json without changing the
-                # actual request semantics or bypassing its Origin/Host checks.
-                from io import BytesIO
-                self.rfile = BytesIO(raw)
-                self.headers["Content-Length"] = str(len(raw))
                 return server.Handler.do_POST(self)
+
+            def _body_json(self):
+                payload = server.Handler._body_json(self)
+                self.review_post["body"] = copy.deepcopy(payload)
+                return payload
 
         # CollectionTests patches Thread.start to keep its worker stopped.  Stop
         # only that first owned patch before starting the HTTP listener.
@@ -119,7 +114,7 @@ def run(out, chromium=None):
             browser = playwright.chromium.launch(
                 headless=True,
                 executable_path=chromium or os.environ.get("CHROMIUM_PATH") or shutil.which("chromium") or None,
-                args=["--no-sandbox", "--disable-gpu"],
+                args=["--disable-gpu"],
             )
             browser_version = browser.version
             context = browser.new_context(viewport={"width": 1440, "height": 980}, reduced_motion="reduce")
@@ -155,17 +150,17 @@ def run(out, chromium=None):
             page.locator("#notes").fill("Explicit character review fixture; exact required check passed.")
             page.locator("#saveAssessment").focus()
             page.locator("#saveAssessment").press("Enter")
-            page.locator("#assessmentStatus").filter(has_text="Saved").wait_for()
+            page.locator("#assessmentStatus").filter(has_text=re.compile(r"^Saved$")).wait_for()
             rate_payload = posts[-1]["body"]
             assert rate_payload["action"] == "rate"
             assert rate_payload.get("reviewer", "local-user") == "local-user"
-            assert rate_payload["assessment"]["character_checks"] == character_checks
+            assert rate_payload["character_checks"] == character_checks
 
             page.locator("#reveal").click()
             page.locator("#phase").filter(has_text="Settings revealed").wait_for()
             assert dialogs and "Reveal" in dialogs[-1]
-            page.locator("#characterDecision").wait_for(state="visible")
             page.locator("#selected").select_option("A")
+            page.locator("#characterDecision").wait_for(state="visible")
             page.locator("#characterDecision").select_option("accepted")
             page.locator("#summary").fill("The exact required character check passes; accept this retained output.")
             page.locator("#finalize").click()
@@ -180,11 +175,11 @@ def run(out, chromium=None):
             accepted_saved = fixture.studio.production.reviews.inspect(identifier)
             assert accepted_saved["finalized"] is True
             assert accepted_saved["candidates"][0]["character_checks"] == character_checks
-            context = accepted_saved["character_context"]
-            assert context["schema_version"] == 1
-            assert context["plan_sha256"] == fixture.plan["plan_sha256"]
-            assert context["case_id"] == fixture.plan["cases"][0]["id"]
-            assert set(context["required_checks"]) == set(character_checks)
+            character_context = accepted_saved["character_context"]
+            assert character_context["schema_version"] == 1
+            assert character_context["plan_sha256"] == fixture.plan["plan_sha256"]
+            assert character_context["case_id"] == fixture.plan["cases"][0]["id"]
+            assert set(character_context["required_checks"]) == set(character_checks)
             accepted_history_length = len(accepted_saved["history"])
             assert accepted_saved["character_review"]["review"]["decision"] == "accepted"
             assert accepted_saved["character_review"]["review"]["reviewer"] == "local-user"
@@ -231,10 +226,18 @@ def run(out, chromium=None):
             page.wait_for_function("document.querySelector('#characterDecisionStatus').textContent.toLowerCase().includes('accepted')")
             assert all(page.locator("#characterChecks select").nth(index).input_value() == "pass"
                        for index in range(page.locator("#characterChecks select").count()))
+            mobile_revision = fixture.studio.production.reviews.inspect(identifier)["revision"] + 1
+            page.locator("#characterDecision").select_option("accepted")
+            page.locator("#summary").fill("Explicit mobile character acceptance of the same unchanged fixture.")
+            page.locator("#finalize").focus()
+            page.locator("#finalize").press("Enter")
+            page.locator("#revision").filter(has_text=re.compile(r"^Revision " + str(mobile_revision) + r" ·")).wait_for()
+            assert fixture.studio.production.reviews.inspect(identifier)["character_review"]["review_revision"] == mobile_revision
+            page.locator("#decision").screenshot(path=str(out / "review-mobile-decision-390.png"))
             page.locator("#notes").fill("Changed assessment: retain the original event, clear acceptance.")
             page.locator("#saveAssessment").focus()
             page.locator("#saveAssessment").press("Enter")
-            page.locator("#assessmentStatus").filter(has_text="Saved").wait_for()
+            page.locator("#assessmentStatus").filter(has_text=re.compile(r"^Saved$")).wait_for()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "Horizontal overflow at 390px"
             page.screenshot(path=str(out / "review-mobile-390.png"), full_page=True)
 
@@ -286,7 +289,7 @@ def run(out, chromium=None):
             "collection_v1": {"human_accepted_cases": first_summary["human_accepted_cases"], "output_sha256": first_records[0]["output"]["sha256"]},
             "collection_v2": {"human_accepted_cases": second_summary["human_accepted_cases"]},
             "checks": ["keyboard exact-check save", "explicit reveal dialog", "local-user accepted decision payload",
-                        "390px no horizontal overflow", "changed assessment clears acceptance", "collector hash binding",
+                        "390px keyboard acceptance and no horizontal overflow", "changed assessment clears acceptance", "collector hash binding",
                         "no generation/start/resume POST", "no jobs/reservations/runtime request increase"],
         }
         (out / "result.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
