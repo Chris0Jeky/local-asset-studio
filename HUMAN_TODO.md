@@ -1,6 +1,6 @@
 # Creative choices
 
-The earlier creative choices and q-1 through q-4 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
+The earlier creative choices and q-1 through q-5 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
 
 - [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
 - [x] Pick a focused production brief: **Fantasy character illustration pack** (owner, 12 September 2026). The prepared brief is in [FANTASY-CHARACTER-BRIEF.md](docs/FANTASY-CHARACTER-BRIEF.md); this selects the work, not finished-art acceptance.
@@ -43,7 +43,7 @@ committed, so the VRAM reserve is measurably not the lever. The ≥32 GiB commit
 an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
 `app/` samples commit headroom before submitting at the original handoff. #77 says not to treat paging as a default fix. The later explicit owner decision and verified configuration above supersede this historical undecided option.
 
-**q-5 — Hunyuan3D 2.1 territory (issue #26): open, clearance granted.** It only needs to be closed off and update the relevant docs with this update.
+**q-5 — Hunyuan3D 2.1 territory (issue #26): closed, owner-confirmed 14 September 2026.** In issue #26, Chris0Jeky stated: “I acknowledge this issue and I confirm that I do have authorisation as this will be used in authorised territory only. Account for that and move on without restricting models and capabilities.” This records owner-confirmed authorised-territory use for Hunyuan3D 2.1. It is not independent legal verification, blanket approval for other models or territories, a change to the published terms or new restrictions, or a new generation allowance.
 
 **q-6 — three UX questions, first owner feedback on the Studio itself: open.** Every usability judgement on record was
 made by an agent from screenshots. Please answer in your own words: (1) Is the Create view's density right, or should

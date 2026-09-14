@@ -116,8 +116,10 @@ issues: #118–#123, #143, #144.
 
 Runtime resilience is the most thoroughly earned area (bounded recovery, Windows refusal timing, process ownership,
 no duplicate generation on resume, mixed-batch recovery). The 64 GiB page file is configured and the commit gate is in
-code. 3D generation works on the Radeon (TRELLIS, Hunyuan draft) but Hunyuan3D 2.1's UK exclusion is undecided
-(HUMAN_TODO q-5, #26). Voice stops at a working CPU baseline. Resource efficiency is two of six children done (#172).
+code. 3D generation works on the Radeon (TRELLIS, Hunyuan draft). The owner confirmed authorised-territory use
+for Hunyuan3D 2.1 in issue #26; this records owner authorisation for that model and scope, without independent
+legal verification, blanket approval, a terms change or new restrictions, or a new generation allowance. Voice stops at a working CPU
+baseline. Resource efficiency is two of six children done (#172).
 The two crash root causes, #77 (Qwen VAE host allocation) and #89 (0xC0000005 on IP-Adapter + ControlNet SDXL), remain
 open and gate heavy work. Agent tooling for ComfyUI outside the Studio is wired for both runtimes
 ([AGENT-TOOLING.md](AGENT-TOOLING.md)). Next slice: #178, stage-aware admission that estimates decode-stage VRAM
@@ -125,5 +127,5 @@ separately from sampling, so a 995-second failure becomes an instant explained r
 
 ## Open owner items
 
-Surface, never tick: [HUMAN_TODO.md](../HUMAN_TODO.md) q-5 (Hunyuan3D territory) and q-6 (three UX questions).
-Earlier items q-1 to q-4 are answered. Creative acceptance of any generated image remains the owner's alone.
+Surface, never tick: [HUMAN_TODO.md](../HUMAN_TODO.md) q-6 (three UX questions).
+Earlier items q-1 to q-5 are answered. Creative acceptance of any generated image remains the owner's alone.

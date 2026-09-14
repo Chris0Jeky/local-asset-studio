@@ -12,9 +12,9 @@ The exact Seed Hunter 1.6 graph is now preserved under that branch's `workflows/
 
 H3 remains locally blocked after two text-encoder access-violation crashes. [Issue #18](https://github.com/Chris0Jeky/local-asset-studio/issues/18) owns this compatibility work. Do not bypass the runtime block or automatically retry those jobs. Game-asset production can continue through the working image, Wan and Blender paths.
 
-## Licence review is a separate unresolved gate
+## Licence review and owner confirmation
 
-The branch reports a Hunyuan3D 2.1 draft run. That is execution evidence, not an applicable licence. The [standard Hunyuan3D 2.1 licence](https://raw.githubusercontent.com/Tencent-Hunyuan/Hunyuan3D-2.1/main/LICENSE) excludes the UK, EU and South Korea; clause 5(c) also restricts outputs outside the territory. Confirm whether separate authorization exists before further UK use or distributing those outputs. Do not assume approval for H3 in the local notes also covers Hunyuan3D or HY-Motion. This research does not revoke or overwrite the user's recorded choices; it flags the exact model-specific terms that need resolution.
+The branch reports a Hunyuan3D 2.1 draft run. That is execution evidence, separate from the applicable licence terms. The [standard Hunyuan3D 2.1 licence](https://raw.githubusercontent.com/Tencent-Hunyuan/Hunyuan3D-2.1/main/LICENSE) excludes the UK, EU and South Korea; clause 5(c) also restricts outputs outside the territory. On 14 September 2026, the owner confirmed authorised-territory use in issue #26. This records owner authorisation for Hunyuan3D 2.1 in that scope; it is not independent legal verification, blanket approval, a change to the published terms or new restrictions, coverage for other models or territories, or a new generation allowance. Output acceptance and downstream rights remain separate. Historical execution and source-term findings below are retained.
 
 ## What stays new in the game-asset PR
 
