@@ -55,6 +55,15 @@ class ProcessObservation:
         except Exception as error:
             self.unavailable = 'Initial process identity unavailable: ' + type(error).__name__
 
+    def _matches(self, process):
+        created = counter(process.create_time())
+        if created is None: raise ValueError('Invalid process identity')
+        if created != self.created:
+            self.previous = None
+            self.unavailable = 'PID identity changed; this observer will not rebind'
+            return False
+        return True
+
     def read(self):
         record = {'pid': self.pid, 'created_at': self.created, 'working_set_bytes': None, 'peak_working_set_bytes': None,
                   'private_bytes': None, 'cpu_seconds': None, 'cpu_one_core_percent': None,
@@ -62,10 +71,13 @@ class ProcessObservation:
         if self.unavailable: return record
         try:
             process = self.provider.Process(self.pid)
-            if process.create_time() != self.created:
-                self.unavailable = 'PID identity changed; this observer will not rebind'
+            if not self._matches(process):
                 return dict(record, unknown_reason=self.unavailable)
             memory = process.memory_info(); cpu = process.cpu_times(); now = self.clock()
+            # create_time() is cached on a psutil Process. A fresh handle must
+            # verify identity after the PID-addressed counter reads as well.
+            if not self._matches(self.provider.Process(self.pid)):
+                return dict(record, unknown_reason=self.unavailable)
             total = counter(cpu.user + cpu.system)
             record.update(working_set_bytes=counter(memory.rss), peak_working_set_bytes=counter(getattr(memory, 'peak_wset', None)),
                           private_bytes=counter(getattr(memory, 'private', None)), cpu_seconds=total)
