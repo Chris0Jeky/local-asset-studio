@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from PIL import Image, ImageDraw
 
 from http_refusal_transport import atomic_json_post
+from studio_workflow.addressable_figures import split_figures
 from test_server import server
 
 
@@ -44,6 +45,9 @@ class AddressableFigureTests(unittest.TestCase):
         self.parent_record = self.store.get(self.parent)
         self.workspace_id = self.store.snapshot()["workspace_id"]
 
+    def split(self, payload):
+        return split_figures(self.store, payload)
+
     def payload(self, **changes):
         value = {
             "workspace_id": self.workspace_id,
@@ -62,7 +66,7 @@ class AddressableFigureTests(unittest.TestCase):
     def test_split_creates_ordered_ordinary_children_with_direct_lineage(self):
         before_bytes = self.store.file(self.parent).read_bytes()
         before_revision = self.store.get(self.parent)["metadata_revision"]
-        result = self.store.split_figures(self.payload(request_id="addressable-figures-0001"))
+        result = self.split(self.payload(request_id="addressable-figures-0001"))
 
         self.assertEqual(result["status"], "created")
         self.assertEqual(result["action"], "split_figures")
@@ -100,20 +104,20 @@ class AddressableFigureTests(unittest.TestCase):
 
     def test_exact_retry_is_idempotent_and_changed_request_identity_is_rejected(self):
         payload = self.payload(request_id="addressable-figures-0002")
-        first = self.store.split_figures(payload)
-        replay = self.store.split_figures(copy.deepcopy(payload))
+        first = self.split(payload)
+        replay = self.split(copy.deepcopy(payload))
         self.assertEqual(replay, first)
         self.assertEqual(len(self.store.snapshot()["assets"]), 3)
         changed = copy.deepcopy(payload)
         changed["rectangles"][0]["width"] = 4000
         with self.assertRaises(server.WorkspaceError) as raised:
-            self.store.split_figures(changed)
+            self.split(changed)
         self.assertEqual(raised.exception.code, "asset_request_reused")
         self.assertEqual(len(self.store.snapshot()["assets"]), 3)
 
     def test_receipt_is_read_only_and_retains_every_child_identity(self):
         payload = self.payload(request_id="addressable-figures-0003")
-        first = self.store.split_figures(payload)
+        first = self.split(payload)
         observed = self.store.command_status(payload["request_id"], self.workspace_id)
         self.assertEqual(observed["created"], first["created"])
         self.assertEqual(observed["figures"], first["figures"])
@@ -131,18 +135,18 @@ class AddressableFigureTests(unittest.TestCase):
         ]
         for index, rectangles in enumerate(bad_rectangles):
             with self.subTest(rectangles=rectangles), self.assertRaises(server.WorkspaceError):
-                self.store.split_figures(self.payload(request_id=f"addressable-invalid-{index:04d}", rectangles=rectangles))
+                self.split(self.payload(request_id=f"addressable-invalid-{index:04d}", rectangles=rectangles))
         overlap = [
             {"x": 0, "y": 0, "width": 6000, "height": 10000},
             {"x": 5000, "y": 0, "width": 5000, "height": 10000},
         ]
         with self.assertRaisesRegex(server.WorkspaceError, "overlap"):
-            self.store.split_figures(self.payload(request_id="addressable-overlap-001", rectangles=overlap))
+            self.split(self.payload(request_id="addressable-overlap-001", rectangles=overlap))
         with self.assertRaises(server.WorkspaceError) as scope:
-            self.store.split_figures(self.payload(request_id="addressable-scope-00001", workspace_id="b" * 32))
+            self.split(self.payload(request_id="addressable-scope-00001", workspace_id="b" * 32))
         self.assertEqual(scope.exception.code, "asset_workspace_conflict")
         with self.assertRaisesRegex(server.WorkspaceError, "changed|hash|source"):
-            self.store.split_figures(self.payload(request_id="addressable-hash-000001", parent_sha256="a" * 64))
+            self.split(self.payload(request_id="addressable-hash-000001", parent_sha256="a" * 64))
 
         self.store.update({
             "workspace_id": self.workspace_id,
@@ -152,7 +156,7 @@ class AddressableFigureTests(unittest.TestCase):
             "expected_revisions": {self.parent: 0},
         })
         with self.assertRaisesRegex(server.WorkspaceError, "Restore|trashed"):
-            self.store.split_figures(self.payload(request_id="addressable-trash-00001"))
+            self.split(self.payload(request_id="addressable-trash-00001"))
         self.assertEqual(len(self.store.snapshot()["assets"]), 1)
 
 
