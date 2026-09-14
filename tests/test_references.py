@@ -189,12 +189,15 @@ class StyleBoardTests(unittest.TestCase):
         records=ref.compile_references(self.preset,g,[{'role':'style','file':'a.png'},{},{'role':'style','file':'c.png'}],self.root)
         self.assertNotIn('30',g); self.assertNotIn('20',g)
         self.assertEqual(g['22']['inputs'],{'embed1':['19',0],'embed3':['21',0],'method':'concat'})
-        self.assertEqual([r['file'] for r in records],['a.png','c.png']); self.assertEqual([r['slot'] for r in records],[1,3])
+        self.assertEqual([r['file'] for r in records],['a.png',None,'c.png']); self.assertEqual([r['slot'] for r in records],[1,2,3])
+        self.assertEqual(records[1],{'slot':2,'role':'style','file':None,'pruned':True,'contribution':'','avoid':''})
 
     def test_only_the_last_slot_filled_slides_into_the_combiner_first_input(self):
         g=board_graph()
-        ref.compile_references(self.preset,g,[{},{},{'role':'style','file':'c.png'}],self.root)
+        records=ref.compile_references(self.preset,g,[{},{},{'role':'style','file':'c.png'}],self.root)
         self.assertEqual(g['22']['inputs'],{'embed1':['21',0],'method':'concat'}); self.assertEqual(g['31']['inputs']['image'],'c.png')
+        # Three records come back so a saved recipe restores the picture into slot 3, not slot 1.
+        self.assertEqual([(r['slot'],r['file']) for r in records],[(1,None),(2,None),(3,'c.png')])
         for gone in ('10','19','30','20'): self.assertNotIn(gone,g)
         # Nothing else was touched: the embed consumer and the loaders it needs are intact.
         self.assertEqual(g['14']['inputs']['pos_embed'],['22',0]); self.assertIn('12',g); self.assertIn('13',g)
