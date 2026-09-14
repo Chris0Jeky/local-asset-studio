@@ -1,0 +1,56 @@
+name: UX use cases
+on:
+  pull_request:
+    paths:
+      - 'app/static/**'
+      - 'presets/catalog.json'
+      - 'research/ux/use-cases.json'
+      - 'tests/studio_use_cases.py'
+      - 'tests/test_use_case_matrix.py'
+      - 'tests/studio_browser_smoke.py'
+      - 'studio_workflow/guides.py'
+      - '.github/workflows/ux-use-cases.yml'
+permissions:
+  contents: read
+jobs:
+  use-cases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline gate (cases and scoring; no browser)
+        run: python -m unittest discover -s tests -p test_use_case_matrix.py -v
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Measure every use case against the local fixture (never ComfyUI)
+        run: python -u tests/studio_use_cases.py
+      - name: Fail if any use case missed its success condition
+        run: |
+          python - <<'PY'
+          import json, sys
+          matrix = json.load(open('research/ux/use-case-matrix.json', encoding='utf-8'))
+          failed = [row['id'] for row in matrix['rows'] if not row['passed']]
+          assert matrix['generation_submissions'] == 0, 'a use case submitted a generation'
+          assert not matrix['page_errors'], 'the page raised exceptions: %r' % (matrix['page_errors'],)
+          print('mode=%s cases=%d passed=%d' % (matrix['mode'], matrix['cases'], matrix['passed']))
+          if failed:
+              print('Use cases that did not reach their success condition: ' + ', '.join(failed))
+              sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ux-use-case-evidence
+          path: |
+            .runtime/ux-use-cases/
+            research/ux/use-case-matrix.json
+          if-no-files-found: ignore
+          retention-days: 7
