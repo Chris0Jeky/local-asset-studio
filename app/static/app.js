@@ -434,11 +434,21 @@ function applySaved(s){
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
-function continuationBlockers(){
+function continuationBlockerItems(){
   if(!continuationState)return[];
   const controls=values();
   if(selected?.last_reference&&!controls.last_reference&&$('#lastReference').files?.length)controls.last_reference='pending-local-upload';
-  return StudioContinuation.blockers(continuationState,selected,controls,parentAssets,attachedReferencePayload());
+  return StudioContinuation.blockerItems(continuationState,selected,controls,parentAssets,attachedReferencePayload());
+}
+function continuationBlockers(){return continuationBlockerItems().map(item=>item.message);}
+// Put the continuation source into the input its recipe reads it from: the pose picture of a style board, else the reference.
+// A fresh handoff resets lineage to the source; putting the source back keeps whatever else is attached.
+function attachContinuationSource(result,fresh=true){
+  const claim=fresh?setHandoffParent:claimInputParent;
+  if(StudioContinuation.sourceInput(selected?.continuation_capability)==='last_reference'){lastUploaded=result.file;uploaded=null;claim('lastReference',result.context.asset_id);$('#lastReference').value='';return;}
+  uploaded=result.file;claim('reference',result.context.asset_id);
+  if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
+  $('#reference').value='';
 }
 function beginContinuation(result,presetId,intent='edit'){
   const target=catalog.presets.find(p=>p.id===presetId);
@@ -448,9 +458,8 @@ function beginContinuation(result,presetId,intent='edit'){
   if(submitting)throw Error('Wait for the current submission before changing its source.');
   selectPreset(target.id,true,true);
   continuationState=prepared.claim;continuationSource=result.context;
-  uploaded=result.file;setHandoffParent('reference',result.context.asset_id);
-  if(selected.reference_slots?.length){Object.assign(referenceRecords[0],result,{missing:false});renderReferenceSlots();}
-  $('#reference').value='';$('#positive').value=prepared.positive;if(selected.negative)$('#negative').value=prepared.negative;
+  attachContinuationSource(result);
+  $('#positive').value=prepared.positive;if(selected.negative)$('#negative').value=prepared.negative;
   $('#batch').value=1;updateReady();
 }
 function leaveContinuation(){

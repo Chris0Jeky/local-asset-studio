@@ -16,6 +16,7 @@ INSTRUCTION_NODES = {"TextEncodeQwenImageEditPlus", "HiDreamO1Conditioning", "Re
 ROUTES = {
     "edit": {"image-to-image", "instruction-edit", "localized-detail", "upscale"},
     "repair": {"image-to-image", "localized-detail", "upscale", "masked-repair"},
+    "restyle": {"restyle"},
     "animate": {"image-to-video"},
     "mesh": {"image-to-3d"},
 }
@@ -64,11 +65,19 @@ def prompt_role(graph, has_positive=True, modality="image"):
 
 def capability(preset, graph):
     bindings = reference_bindings(preset)
-    consumed = bool(bindings) and all(consumes_reference(graph, binding) for binding in bindings)
+    # A compiled style board has its empty slots pruned; those absent loaders do not break consumption.
+    board_nodes = {str(slot["binding"][0]) for slot in preset.get("reference_slots") or []
+                   if preset.get("reference_board") and isinstance(slot, dict) and isinstance(slot.get("binding"), (list, tuple)) and len(slot["binding"]) == 2}
+    active = [binding for binding in bindings if not (str(binding[0]) in board_nodes and str(binding[0]) not in graph)]
+    consumed = bool(active) and all(consumes_reference(graph, binding) for binding in active)
     role = prompt_role(graph, bool(preset.get("positive")), preset.get("modality", "image"))
     kinds = {node.get("class_type") for node in graph.values()}
+    # A style board with its own pose picture: the continuation source becomes the pose picture, and the
+    # board (one to three optional pictures) carries the look. Only then does the source live on last_reference.
+    restyle = bool(preset.get("reference_board")) and bool(preset.get("last_reference"))
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
     elif preset.get("requires_rgba_mask"): operation = "masked-repair"
+    elif restyle: operation = "restyle"
     elif role == "motion": operation = "image-to-video"
     elif preset.get("modality") == "3d": operation = "image-to-3d"
     elif "FaceDetailer" in kinds: operation = "localized-detail"
@@ -89,6 +98,8 @@ def capability(preset, graph):
         "prompt_role": role,
         "requires_mask": bool(preset.get("requires_rgba_mask")),
         "reference_count": len(bindings) if consumed else 0,
+        "source_input": "last_reference" if consumed and restyle else "reference",
+        "board_min": int((preset.get("reference_board") or {}).get("min", 1)) if consumed and restyle else 0,
         "scope": "Static registered graph wiring; not a guarantee of visual preservation.",
     }
 
@@ -173,6 +184,8 @@ def validate(studio, payload, preset, graph, check_runtime=False):
     if not isinstance(parents, list) or claim["source_asset_id"] not in parents:
         raise ValueError("Continuation source is missing from lineage.")
     controls = payload.get("controls") or {}
+    board = preset.get("reference_board") if cap["operation"] == "restyle" else None
+    # (binding, file name, recorded hash, optional): a style-board slot is optional and pruned when empty.
     declared = []
     if preset.get("reference_slots"):
         supplied = payload.get("references")
@@ -180,14 +193,22 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         if not isinstance(supplied, list) or len(supplied) != len(slots):
             raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
         declared = [(slot.get("binding"), record.get("file") if isinstance(record, dict) else None,
-                     record.get("sha256") if isinstance(record, dict) else None) for slot, record in zip(slots, supplied)]
+                     record.get("sha256") if isinstance(record, dict) else None, board is not None) for slot, record in zip(slots, supplied)]
+        if preset.get("last_reference"): declared.append((preset["last_reference"], controls.get("last_reference"), None, False))
     else:
-        declared = [(preset.get(key), controls.get(key), None) for key in ("reference", "last_reference") if preset.get(key)]
-    if not declared or declared[0][1] != claim["reference_file"]:
+        declared = [(preset.get(key), controls.get(key), None, False) for key in ("reference", "last_reference") if preset.get(key)]
+    source_index = len(declared) - 1 if cap["source_input"] == "last_reference" else 0
+    if not declared or declared[source_index][1] != claim["reference_file"]:
         raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
+    if board is not None and sum(1 for entry in declared if entry[3] and isinstance(entry[1], str) and entry[1]) < cap["board_min"]:
+        raise ValueError("Add at least %d picture%s whose look you want to the style board." % (cap["board_min"], "" if cap["board_min"] == 1 else "s"))
     upload_root = studio.experiments / "uploads"
     runtime_root = Path(payload.get("comfy_root", studio.comfy_root)) / "input"
-    for index, (binding, name, recorded_hash) in enumerate(declared):
+    for index, (binding, name, recorded_hash, optional) in enumerate(declared):
+        if optional and name is None:
+            # An empty board slot must be gone from the graph, not left on the authored example picture.
+            if str(binding[0]) in graph: raise ValueError("An empty style-board slot still carries the recipe example; reattach the board.")
+            continue
         try:
             node, field = binding
             bound = graph[str(node)]["inputs"][str(field)]
@@ -199,7 +220,7 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         if upload.is_symlink() or not upload.is_file() or upload.stat().st_size > 20 * 1024 * 1024:
             raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
         upload_hash = hashlib.sha256(upload.read_bytes()).hexdigest()
-        expected = source["sha256"] if index == 0 else recorded_hash or upload_hash
+        expected = source["sha256"] if index == source_index else recorded_hash or upload_hash
         if upload_hash != expected:
             raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
         if check_runtime:

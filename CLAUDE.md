@@ -76,14 +76,14 @@ is a separate offline planner and receipt checker: plans are hash-identified and
   prompt ID and the full recipe; a lost prompt ID is evidence lost, not a reason to run again.
 - A completed render is neither art acceptance nor licence clearance. Hunyuan3D 2.1 and HY-Motion 1.0 exclude
   UK use; NoobAI excludes commercial products; WAI hashes do not authenticate its creator. Record, never infer.
-- Never edit installed ComfyUI or upgrade packages in the shared Torch/ROCm runtime; local patches go to
-  `runtime-patches/` with before/after hashes. Backend switches are explicit and never package upgrades. The same
-  bar applies to comfy-mcp's update/install/download/launch/stop tools: read-only use only (`docs/AGENT-TOOLING.md`).
+- Never edit installed ComfyUI or upgrade packages in the shared Torch/ROCm runtime; local patches go to `runtime-patches/`
+  with before/after hashes. Backend switches are explicit, never package upgrades; comfy-mcp's update/install/download/launch/stop tools are read-only use only (`docs/AGENT-TOOLING.md`).
 - Form values serialize as strings: validate with `number()` (Decimal, finite, range) — a `100 ms` bug shipped once.
 - `.runtime/` is gitignored evidence (logs, pidfiles, probes, review JSON). Read it; do not commit it.
 - Stop only Studio-owned PIDs, and only after confirming no queued, running or partial Studio work.
 - Code style is dense (one-line `if ...: return`, semicolon-joined statements). Match the file; do not reformat.
 - A second, stale checkout (at PR #7) exists under the user's `source/` folder. Work only in this one.
+- Import `app/` siblings by bare name, never `from app import x`: under the launcher's embedded Python, ComfyUI's own regular `app` package shadows this directory whatever the path order, and the Studio does not start (PR #341).
 
 ## Repo-local skills and rules
 
