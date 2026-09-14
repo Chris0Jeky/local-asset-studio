@@ -416,8 +416,9 @@ async function assetQueueDecide(review) {
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   await saveAssetDetails();
-  // An unconfirmed or conflicted save keeps this asset on screen; auto-advance would hide the evidence.
+  // Only a confirmed save advances: an unconfirmed, conflicted or refused save keeps this asset and its reason on screen.
   if(assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
+  if(assetState.assets.find(a=>a.id===target)?.review!==review)return false;
   return assetQueueStep(1);
 }
 function assetTagList(){return $('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean);}
@@ -456,13 +457,14 @@ async function bulkReviewSelected(review) {
       const id=queue.shift(),record=assetState.assets.find(a=>a.id===id);
       try {
         const command=assetCommand({ids:[id],action:'edit',review},[record],record?.workspace_id||assetState.workspace_id);
-        const result=await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command)});
+        const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+        let result;try{result=await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
         validateAssetReceipt(result,command);
         if(record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
         done++;
       } catch(error) {
         const refused=error.status>=400 && error.status<500 && error.data?.code!=='asset_workspace_conflict';
-        failures.push((record?.title||id)+' — '+(refused?'not applied. ':'not confirmed. ')+error.message);
+        failures.push((record?.title||id)+' — '+(refused?'not applied. ':'not confirmed. ')+(error.name==='AbortError'?'The request timed out after 15 s.':error.message));
       }
       status('Marking '+(done+failures.length)+' of '+ids.length+' as '+label+'…');
     }
