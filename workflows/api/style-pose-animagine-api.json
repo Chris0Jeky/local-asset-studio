@@ -90,7 +90,7 @@
     }
   },
   "14": {
-    "class_type": "IPAdapterAdvanced",
+    "class_type": "IPAdapterEmbeds",
     "inputs": {
       "model": [
         "9",
@@ -100,20 +100,19 @@
         "12",
         0
       ],
-      "image": [
-        "10",
-        0
-      ],
-      "clip_vision": [
-        "13",
+      "pos_embed": [
+        "22",
         0
       ],
       "weight": 0.8,
       "weight_type": "linear",
-      "combine_embeds": "concat",
       "start_at": 0.0,
       "end_at": 0.9,
-      "embeds_scaling": "V only"
+      "embeds_scaling": "V only",
+      "clip_vision": [
+        "13",
+        0
+      ]
     }
   },
   "15": {
@@ -212,6 +211,90 @@
         0
       ],
       "filename_prefix": "Style-Pose/Animagine"
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "style-reference-example.png"
+    }
+  },
+  "31": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "style-reference-example.png"
+    }
+  },
+  "19": {
+    "class_type": "IPAdapterEncoder",
+    "inputs": {
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "image": [
+        "10",
+        0
+      ],
+      "weight": 1.0,
+      "clip_vision": [
+        "13",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "IPAdapterEncoder",
+    "inputs": {
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "image": [
+        "30",
+        0
+      ],
+      "weight": 1.0,
+      "clip_vision": [
+        "13",
+        0
+      ]
+    }
+  },
+  "21": {
+    "class_type": "IPAdapterEncoder",
+    "inputs": {
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "image": [
+        "31",
+        0
+      ],
+      "weight": 1.0,
+      "clip_vision": [
+        "13",
+        0
+      ]
+    }
+  },
+  "22": {
+    "class_type": "IPAdapterCombineEmbeds",
+    "inputs": {
+      "embed1": [
+        "19",
+        0
+      ],
+      "embed2": [
+        "20",
+        0
+      ],
+      "embed3": [
+        "21",
+        0
+      ],
+      "method": "concat"
     }
   }
 }

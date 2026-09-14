@@ -1,0 +1,1110 @@
+{
+  "plan": {
+    "style": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+    "style_source": "library asset 6152a06a425656adbb975df1aede29af (character sheet, 1448x1086, sha256 3d8d5372...)",
+    "poses": [
+      {
+        "id": "throne",
+        "file": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "source": "library asset f44ac333401c5a3d8c831bf58e0644a5 (849x1200)",
+        "tags": "sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below"
+      },
+      {
+        "id": "beach",
+        "file": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "source": "library asset b43e7da926885ec7a1398db988f837e6 (253x430 screenshot)",
+        "tags": "standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight"
+      }
+    ],
+    "subject": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body",
+    "recipes": [
+      {
+        "preset_id": "style-pose-wai",
+        "suffix": ", masterpiece, best quality, amazing quality"
+      },
+      {
+        "preset_id": "style-pose-animagine",
+        "suffix": ", masterpiece, high score, great score, absurdres"
+      },
+      {
+        "preset_id": "style-pose-cstati",
+        "suffix": ", masterpiece, best quality, amazing quality"
+      },
+      {
+        "preset_id": "style-pose-yumeflux",
+        "suffix": ", masterpiece, best quality, amazing quality"
+      },
+      {
+        "preset_id": "style-pose-pony",
+        "prefix": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, "
+      },
+      {
+        "preset_id": "style-pose-noob",
+        "prefix": "masterpiece, best quality, newest, absurdres, highres, safe, "
+      }
+    ],
+    "loras": [
+      {
+        "id": "none"
+      },
+      {
+        "id": "cine050",
+        "controls": {
+          "lora": 0.5,
+          "lora_name": "cinematic lighting.safetensors"
+        },
+        "tag": "cinematic lighting",
+        "poses": [
+          "throne"
+        ]
+      },
+      {
+        "id": "ink060",
+        "controls": {
+          "lora2": 0.6,
+          "lora2_name": "manga-ink-screentone.safetensors"
+        },
+        "tag": "m4ng41nk, monochrome, screentone"
+      }
+    ],
+    "controls": {
+      "width": 832,
+      "height": 1216,
+      "seed": 2026091410,
+      "style_weight": 0.8,
+      "pose_strength": 0.9
+    }
+  },
+  "cells": [
+    {
+      "recipe": "style-pose-wai",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "8d1c7f71-3a76-491d-88ce-1976f57b190a",
+      "status": "completed",
+      "prompt_ids": [
+        "1683b7d8-ae57-4a17-8c4a-49ae982df3a2"
+      ],
+      "failure": null,
+      "wall_seconds": 375.9,
+      "elapsed_seconds": 372.42057704925537,
+      "commit_before": 57,
+      "outputs": [
+        {
+          "file": "style-pose-wai__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00007_.png",
+          "seed": 2026091410,
+          "asset_id": "22fcd25b21be56a481503a010e23acff"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "4fcdbfa9-d3de-49ce-a4c1-4ee025679f1b",
+      "status": "completed",
+      "prompt_ids": [
+        "0a0fca62-f4b1-41f2-b135-7ed81c7d9137"
+      ],
+      "failure": null,
+      "wall_seconds": 115.2,
+      "elapsed_seconds": 112.68297052383423,
+      "commit_before": 62,
+      "outputs": [
+        {
+          "file": "style-pose-wai__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00008_.png",
+          "seed": 2026091410,
+          "asset_id": "eeac2ed7efbe51259ccca991294b40a3"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "9ea880b3-99c5-4db7-aed8-acad3bb8c9e7",
+      "status": "completed",
+      "prompt_ids": [
+        "5c3b5d4f-ecc6-4992-b81d-58e789fdd212"
+      ],
+      "failure": null,
+      "wall_seconds": 0.0,
+      "elapsed_seconds": 315.5931830406189,
+      "commit_before": 62,
+      "outputs": [
+        {
+          "file": "style-pose-wai__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00009_.png",
+          "seed": 2026091410,
+          "asset_id": "74d876dc865d545dbf93fa8e38f1723a"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "cine050",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "342b39a6-3782-4b04-812f-efc3ae96cee9",
+      "status": "completed",
+      "prompt_ids": [
+        "91c9fdcc-d00e-4060-80cb-bac2e9324851"
+      ],
+      "failure": null,
+      "wall_seconds": 320.8,
+      "elapsed_seconds": 318.53269386291504,
+      "commit_before": 62,
+      "outputs": [
+        {
+          "file": "style-pose-wai__cine050__beach.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00010_.png",
+          "seed": 2026091410,
+          "asset_id": "2f0418e80ae65dde96fc2f18291e2e0f"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "b8c37064-4371-4c59-ac92-7b6e8a30b3ba",
+      "status": "completed",
+      "prompt_ids": [
+        "364d6cc8-f2d3-4ab2-8c2d-b5537c328bb2"
+      ],
+      "failure": null,
+      "wall_seconds": 185.6,
+      "elapsed_seconds": 183.25809693336487,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-wai__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00011_.png",
+          "seed": 2026091410,
+          "asset_id": "8ba5645361c959e4b9019f8c97956117"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "3a008386-23cf-47fa-bde3-02724059f59f",
+      "status": "completed",
+      "prompt_ids": [
+        "ddf84f45-1c0a-43a4-82ee-0b442f0c1d33"
+      ],
+      "failure": null,
+      "wall_seconds": 90.2,
+      "elapsed_seconds": 199.10272240638733,
+      "commit_before": 66,
+      "outputs": [
+        {
+          "file": "style-pose-wai__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00012_.png",
+          "seed": 2026091410,
+          "asset_id": "8586cf242de85bc58e4a29511fcbd19d"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-animagine",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, high score, great score, absurdres",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "33c8ec10-2f89-40f1-8535-d89508afbcab",
+      "status": "completed",
+      "prompt_ids": [
+        "db14afd5-5107-49a0-b2de-3709839fa6c0"
+      ],
+      "failure": null,
+      "wall_seconds": 155.4,
+      "elapsed_seconds": 152.27349162101746,
+      "commit_before": 53,
+      "outputs": [
+        {
+          "file": "style-pose-animagine__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\Animagine_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "ccc55bdc9f685764bf9d20061cb26ba3"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-animagine",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, high score, great score, absurdres",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "6e88afeb-13c4-45ad-9e6b-6a31595be4df",
+      "status": "completed",
+      "prompt_ids": [
+        "8a6da314-1e23-47f4-b952-04d8f525dc2f"
+      ],
+      "failure": null,
+      "wall_seconds": 115.3,
+      "elapsed_seconds": 111.14050316810608,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-animagine__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\Animagine_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "937f7acfa3a85abf82cf9fed62ad421a"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-animagine",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, high score, great score, absurdres, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "233c4164-e407-422b-a1a5-d4d644630850",
+      "status": "completed",
+      "prompt_ids": [
+        "a314e452-17fa-42c2-814f-8e3513848082"
+      ],
+      "failure": null,
+      "wall_seconds": 190.3,
+      "elapsed_seconds": 186.84512853622437,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-animagine__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\Animagine_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "ba7f98051643505dbd906e56aed73f5b"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-animagine",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, high score, great score, absurdres, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "62295421-2df5-4d78-8b18-83216cdac73b",
+      "status": "completed",
+      "prompt_ids": [
+        "9642adee-47cf-4eb7-ab4d-7cd252885bcb"
+      ],
+      "failure": null,
+      "wall_seconds": 130.2,
+      "elapsed_seconds": 126.96933841705322,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-animagine__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\Animagine_00004_.png",
+          "seed": 2026091410,
+          "asset_id": "292f3a04802c549f936c2d760f349a73"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-animagine",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, high score, great score, absurdres, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "d879863d-ccb9-4954-9225-98c96cade756",
+      "status": "completed",
+      "prompt_ids": [
+        "20b7cb07-6d25-4355-a66c-bff5894dfd91"
+      ],
+      "failure": null,
+      "wall_seconds": 200.4,
+      "elapsed_seconds": 198.91447138786316,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-animagine__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\Animagine_00005_.png",
+          "seed": 2026091410,
+          "asset_id": "fe7b8c2c77c35475bb6651ab3f536ba7"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-cstati",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "a44e9d76-c68d-4bae-b067-c33d56a757f2",
+      "status": "completed",
+      "prompt_ids": [
+        "738e29ee-b088-4517-90f4-5551d5201741"
+      ],
+      "failure": null,
+      "wall_seconds": 65.2,
+      "elapsed_seconds": 62.29099631309509,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-cstati__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\CSTati_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "d5d9ec6d3c76548786a8f32a38769071"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-cstati",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "88001260-cbaa-47a3-aaef-23cd91b64b50",
+      "status": "completed",
+      "prompt_ids": [
+        "a248ae27-2754-48ae-b1b6-f0839b9d3b71"
+      ],
+      "failure": null,
+      "wall_seconds": 110.2,
+      "elapsed_seconds": 106.58836245536804,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-cstati__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\CSTati_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "b6a6a31e187951b297e93cf077a26157"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-cstati",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "7bdb5705-8efe-4622-b1c9-9706cb5dc876",
+      "status": "completed",
+      "prompt_ids": [
+        "ff9146bb-fdfe-4af7-a689-64a2ce3fcb1a"
+      ],
+      "failure": null,
+      "wall_seconds": 175.4,
+      "elapsed_seconds": 170.80943727493286,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-cstati__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\CSTati_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "5e5a514ff4de58b591d9e1eb003a6899"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-cstati",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "357649fe-e6c2-4c07-87fe-d3211c604ca5",
+      "status": "completed",
+      "prompt_ids": [
+        "21ca7eda-f1c3-402c-ac80-ced42bde6170"
+      ],
+      "failure": null,
+      "wall_seconds": 210.4,
+      "elapsed_seconds": 206.903968334198,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-cstati__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\CSTati_00004_.png",
+          "seed": 2026091410,
+          "asset_id": "6c886b1d14325488a04bee14b3bb9a9f"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-cstati",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "8e4da003-5e01-4661-8410-3883bcd41ed9",
+      "status": "completed",
+      "prompt_ids": [
+        "05737531-6603-4b68-8f35-72478550df09"
+      ],
+      "failure": null,
+      "wall_seconds": 130.3,
+      "elapsed_seconds": 125.41223192214966,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-cstati__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\CSTati_00005_.png",
+          "seed": 2026091410,
+          "asset_id": "3446905cd1ba5345879133512a2e857a"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-yumeflux",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "2d631b8e-e895-4cd3-8990-9cdb08ec9281",
+      "status": "completed",
+      "prompt_ids": [
+        "ff91afab-c011-46bd-a54c-4f4ce524167c"
+      ],
+      "failure": null,
+      "wall_seconds": 110.2,
+      "elapsed_seconds": 108.55346465110779,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-yumeflux__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\YumeFlux_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "7f591c96c0a05787bbac690085afb915"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-yumeflux",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "6e33976b-52b3-41c9-b495-1c835f9389f9",
+      "status": "completed",
+      "prompt_ids": [
+        "dafc9f1e-7675-4b96-9fd0-a2440d156416"
+      ],
+      "failure": null,
+      "wall_seconds": 105.2,
+      "elapsed_seconds": 100.49559903144836,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-yumeflux__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\YumeFlux_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "728a917db32350d39368024f3cdbaf62"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-yumeflux",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "9d883b74-477d-4031-8e5d-44b9e84a65ba",
+      "status": "completed",
+      "prompt_ids": [
+        "f4558ed2-20bd-417c-8143-bbb9dccb2e7c"
+      ],
+      "failure": null,
+      "wall_seconds": 170.3,
+      "elapsed_seconds": 168.94168710708618,
+      "commit_before": 54,
+      "outputs": [
+        {
+          "file": "style-pose-yumeflux__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\YumeFlux_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "dc0963aa22be51bca6422fe0fbd4215a"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-yumeflux",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "2d2bced3-9377-469a-a03e-3d1f7544d20e",
+      "status": "completed",
+      "prompt_ids": [
+        "4d8d4504-3544-4964-8d00-cddfe039f771"
+      ],
+      "failure": null,
+      "wall_seconds": 210.4,
+      "elapsed_seconds": 206.86235523223877,
+      "commit_before": 53,
+      "outputs": [
+        {
+          "file": "style-pose-yumeflux__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\YumeFlux_00004_.png",
+          "seed": 2026091410,
+          "asset_id": "4568070076205f1ea8ada3a8fe19ec7b"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-yumeflux",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, masterpiece, best quality, amazing quality, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "411c9592-36b1-415b-a57b-4d6a11722c43",
+      "status": "completed",
+      "prompt_ids": [
+        "80f4566b-639b-4ae9-aee2-56b4d8ba968f"
+      ],
+      "failure": null,
+      "wall_seconds": 110.3,
+      "elapsed_seconds": 106.55264592170715,
+      "commit_before": 54,
+      "outputs": [
+        {
+          "file": "style-pose-yumeflux__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\YumeFlux_00005_.png",
+          "seed": 2026091410,
+          "asset_id": "d348ed6f14de575a8c772a69abe7188e"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-pony",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "995afe87-1828-4c35-af0f-782a6ad01306",
+      "status": "completed",
+      "prompt_ids": [
+        "65bac508-2914-489a-a2b1-693327815579"
+      ],
+      "failure": null,
+      "wall_seconds": 65.2,
+      "elapsed_seconds": 62.31720995903015,
+      "commit_before": 54,
+      "outputs": [
+        {
+          "file": "style-pose-pony__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\Pony_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "ddeb751a0e065030a82b98e6de07afcf"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-pony",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "815f6759-4c46-49dd-9065-d775f62a254a",
+      "status": "completed",
+      "prompt_ids": [
+        "6ef60d43-bdad-49eb-8571-8311f1bf37c3"
+      ],
+      "failure": null,
+      "wall_seconds": 260.4,
+      "elapsed_seconds": 260.03636384010315,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-pony__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\Pony_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "67fcc3bdff815507adca10b0baba93e4"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-pony",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "e515462c-98b3-4016-a7f3-dd1d41dd0ea6",
+      "status": "completed",
+      "prompt_ids": [
+        "14a652e9-be17-4dc4-a2ef-8718dc2da1a7"
+      ],
+      "failure": null,
+      "wall_seconds": 85.2,
+      "elapsed_seconds": 80.36415386199951,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-pony__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\Pony_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "57bee80258c258dd955ab6cbb9b0aea7"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-pony",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "b855fded-3a30-4ecd-b314-8e3d9ebc98c4",
+      "status": "completed",
+      "prompt_ids": [
+        "47a393c4-e141-4e00-9ad0-149317f4aec7"
+      ],
+      "failure": null,
+      "wall_seconds": 80.2,
+      "elapsed_seconds": 78.28543210029602,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-pony__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\Pony_00004_.png",
+          "seed": 2026091410,
+          "asset_id": "dc7d1bf96c1f5d55bff621e7f9bef497"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-pony",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "844bbb77-6766-4b08-a673-8e1ca9afd4a4",
+      "status": "completed",
+      "prompt_ids": [
+        "50692beb-60c4-44a9-a22b-bfd4440e804b"
+      ],
+      "failure": null,
+      "wall_seconds": 285.6,
+      "elapsed_seconds": 281.1407051086426,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-pony__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\Pony_00005_.png",
+          "seed": 2026091410,
+          "asset_id": "ec8313a462b357caa23e485d63a02d72"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-noob",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "job_id": "505edf27-f09e-42f1-87af-5a3f7e1d8c37",
+      "status": "completed",
+      "prompt_ids": [
+        "dd9b6a9b-49e8-416f-b782-678260efca13"
+      ],
+      "failure": null,
+      "wall_seconds": 115.2,
+      "elapsed_seconds": 110.55825185775757,
+      "commit_before": 56,
+      "outputs": [
+        {
+          "file": "style-pose-noob__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\NoobAI_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "7a5360574c2e5624b75f46492f48ae5b"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-noob",
+      "lora": "none",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png"
+      },
+      "job_id": "4e23403e-0679-4f46-970f-b64757838945",
+      "status": "completed",
+      "prompt_ids": [
+        "72378a30-828d-4b78-b36b-e65c9c73684a"
+      ],
+      "failure": null,
+      "wall_seconds": 325.5,
+      "elapsed_seconds": 324.70758414268494,
+      "commit_before": 61,
+      "outputs": [
+        {
+          "file": "style-pose-noob__none__beach.png",
+          "comfy_file": "output\\Style-Pose\\NoobAI_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "c4ebaf9f665f5ad186775666d91f4123"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-noob",
+      "lora": "cine050",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, cinematic lighting",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "job_id": "36683b20-73f6-4b40-abac-6c7174c7859e",
+      "status": "completed",
+      "prompt_ids": [
+        "49b9e0b3-54e8-4199-9ea9-809b13f5b14e"
+      ],
+      "failure": null,
+      "wall_seconds": 85.2,
+      "elapsed_seconds": 84.5663411617279,
+      "commit_before": 61,
+      "outputs": [
+        {
+          "file": "style-pose-noob__cine050__throne.png",
+          "comfy_file": "output\\Style-Pose\\NoobAI_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "79e2153c52df59b5b830fc20206311ce"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-noob",
+      "lora": "ink060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "6646b25c-51e5-40fe-b29e-62de47b36d4c",
+      "status": "completed",
+      "prompt_ids": [
+        "10269ce9-c03d-4cb7-a9a9-596e49990da1"
+      ],
+      "failure": null,
+      "wall_seconds": 105.2,
+      "elapsed_seconds": 104.58094334602356,
+      "commit_before": 54,
+      "outputs": [
+        {
+          "file": "style-pose-noob__ink060__throne.png",
+          "comfy_file": "output\\Style-Pose\\NoobAI_00004_.png",
+          "seed": 2026091410,
+          "asset_id": "f8686601e3175546b463e72c36c74727"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-noob",
+      "lora": "ink060",
+      "pose": "beach",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight, m4ng41nk, monochrome, screentone",
+        "reference": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+        "last_reference": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "job_id": "7a639a5e-1086-46e2-9962-3e1ed5645f53",
+      "status": "completed",
+      "prompt_ids": [
+        "05017ad7-eb55-4c9d-a5b9-5dbf41914611"
+      ],
+      "failure": null,
+      "wall_seconds": 70.1,
+      "elapsed_seconds": 68.31045866012573,
+      "commit_before": 63,
+      "outputs": [
+        {
+          "file": "style-pose-noob__ink060__beach.png",
+          "comfy_file": "output\\Style-Pose\\NoobAI_00005_.png",
+          "seed": 2026091410,
+          "asset_id": "cecb7c3e7789535c9bf3201844c092b4"
+        }
+      ]
+    }
+  ]
+}
