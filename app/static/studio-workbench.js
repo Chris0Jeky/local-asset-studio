@@ -6,6 +6,7 @@
   'use strict';
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
+  let sharedAdoptionError='';
   let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
@@ -48,7 +49,7 @@
   const originalRenderPresets=renderPresets;renderPresets=function(){originalRenderPresets();if(!catalog)return;const id=q('#uxIntent').value;if(id==='all')return;const allowed=new Set(U.recipesFor(id,catalog.presets).map(p=>p.id));let count=0;for(const button of q('#presetList').querySelectorAll('[data-id]')){button.hidden=!allowed.has(button.dataset.id);if(!button.hidden)count++;}q('#filteredCount').textContent=count;if(!count)q('#presetList').append(element('p','muted','No recipes match this task and the current filters. Clear search or choose Every recipe.'));};
   function chooseIntent(id){if(!catalog){announce('The recipe catalog is still loading.');return;}intentId=id;q('#uxIntent').value=id;q('#presetSearch').value='';q('#categorySelect').value='All';mode='all';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='all'));const recipes=U.recipesFor(id,catalog.presets);if(recipes.length)selectPreset(recipes[0].id);renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===id)?.hint||'Choose by outcome.';showView('create');}
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
-  after('selectPreset',()=>{selectionEpoch++;draftDirty=false;pendingInputs.clear();syncCreate();renderDraftNotice();});
+  after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   after('renderSelected',syncCreate);after('updateReady',syncReady);
@@ -56,7 +57,7 @@
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
-  function syncReady(){if(!q('#uxRunSummary'))return;const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));const state=U.readiness({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});const modeBlock=i2vModeBlocker();if(modeBlock)state.blockers.push(modeBlock);state.blockers.push(...continuationBlockers());if(continuationState&&!continuationSource)state.blockers.push(sourceReadError||'Checking the retained source metadata…');q('#generate').disabled=state.blockers.length>0;syncContinuation();q('#uxBlockers').innerHTML=state.blockers.map(text=>'<p class="ux-blocker">'+escape(text)+'</p>').join('');q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:uploaded?1:0;q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';}
+  function syncReady(){if(!q('#uxRunSummary'))return;const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));const state=U.readiness({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});const modeBlock=i2vModeBlocker();if(modeBlock)state.blockers.push(modeBlock);state.blockers.push(...continuationBlockers());if(sharedAdoptionError)state.blockers.push(sharedAdoptionError);if(continuationState&&!continuationSource)state.blockers.push(sourceReadError||'Checking the retained source metadata…');q('#generate').disabled=state.blockers.length>0;syncContinuation();q('#uxBlockers').innerHTML=state.blockers.map(text=>'<p class="ux-blocker">'+escape(text)+'</p>').join('');q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:uploaded?1:0;q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';}
   const contextPanel=element('section','ux-continuation');contextPanel.id='uxContinuation';contextPanel.hidden=true;
   contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording. They reset sampling and adapters to that setup’s complete defaults; inspect Parameters before running. Historical example runs do not verify this pass.</p></div>';
   q('#selectedPreset').before(contextPanel);
@@ -171,9 +172,42 @@
   picker.addEventListener('cancel',e=>{if(pickerBusy)e.preventDefault();});picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pickerBusy)picker.close();}});
   // Drafts are data only, scoped to the server's workspace identity. No File bytes.
   function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
-  // Read-only declaration for setup review; persistence remains with this draft owner.
-  window.StudioSetupDraft={capture(){const value=snapshot();if(!value)return null;value.updatedAt=0;value.recipe.parent_by_input=value.recipe.parent_by_input||{};return JSON.parse(JSON.stringify(value));},
-    stamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending]);},busy(){return !!referencePending||!!pickerBusy||!!restoring;}};
+  // This remains the sole owner of Create mutation; commands persist before adoption.
+  function setupStamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending,selectionEpoch,recipeTemplateHash,parentByInput,typeof backendActive==='undefined'?null:backendActive]);}
+  function setupBusy(){return !!referencePending||!!pickerBusy||!!restoring||!!submitting||!!handoffBusy||typeof backendSwitching!=='undefined'&&!!backendSwitching;}
+  function adoptSharedSetup(value,expectedStamp,backendId){
+    if(setupBusy()||expectedStamp!==setupStamp())throw Error('Create changed before loading the shared revision. Current inputs were preserved.');
+    const draft=U.normalizeDraft(JSON.parse(JSON.stringify(value))),target=catalog?.presets.find(p=>p.id===draft?.recipe.preset);
+    if(!draft||draft.pendingInputs.length||!target)throw Error('The shared revision cannot be represented by this editor. Export and inspect it first.');
+    if(typeof backendActive==='undefined'||backendId!==backendActive)throw Error('The active backend changed before loading this revision.');
+    const controls=draft.recipe.controls,slots=target.reference_slots||[];
+    if(draft.templateHash&&target.continuation_capability?.template_sha256!==draft.templateHash)throw Error('The browser catalog has a different graph. Refresh and review before loading.');
+    for(const key of Object.keys(controls)){
+      const bound=['positive','negative','reference','last_reference'].includes(key)?target[key]:key==='mode'?target.i2v_modes?.some(m=>m.id===controls[key]):controlKeys.includes(key)&&(target[key]||key.endsWith('_name')&&target[key.slice(0,-5)]);
+      if(!bound)throw Error('This editor cannot retain control '+key+'. No settings were changed.');
+    }
+    if(draft.recipe.references.length&&draft.recipe.references.length!==slots.length)throw Error('The saved reference slots do not match this recipe.');
+    if(slots.length&&draft.recipe.references.some(r=>!referenceRoles.includes(r.role)))throw Error('The saved reference role is not available in this editor.');
+    restoring=true;sharedAdoptionError='';
+    try{
+      selectPreset(target.id,true,true);
+      for(const key of controlKeys){const input=getControl(key);if(input)input.value=Object.hasOwn(controls,key)?controls[key]:'';}
+      for(const key of ['positive','negative'])q('#'+key).value=controls[key]||'';
+      if(controls.mode)q('#i2vMode').value=controls.mode;
+      uploaded=controls.reference||null;lastUploaded=controls.last_reference||null;
+      if(slots.length&&draft.recipe.references.length)referenceRecords=draft.recipe.references.map(r=>({...r}));
+      parentAssets=[...draft.recipe.parent_assets];parentByInput={...(draft.recipe.parent_by_input||{})};
+      continuationState=draft.recipe.continuation?StudioContinuation.normalize(draft.recipe.continuation):null;continuationSource=null;sourceReadError='';
+      recipeTemplateHash=draft.templateHash;pendingInputs.clear();q('#batch').value=String(draft.recipe.batch);
+      renderReferenceSlots();updateLoraHints();syncCreate();
+      const actual=values();for(const key of Object.keys(controls))if(String(actual[key]??'')!==String(controls[key]))throw Error('The editor could not retain control '+key+'. Inspect the Workspace revision and browser backup.');
+      draftDirty=true;recipeChanged();
+    }catch(error){sharedAdoptionError='Shared setup loading was incomplete. Generate is held; inspect the saved revision and browser backup. '+error.message;throw error;}
+    finally{restoring=false;syncReady();}
+    saveDraft();if(continuationState)hydrateContinuation();
+  }
+  window.StudioSetupDraft={capture(){const value=snapshot();if(!value)return null;value.updatedAt=0;value.recipe.parent_by_input=value.recipe.parent_by_input||{};return JSON.parse(JSON.stringify(value));},stamp:setupStamp,busy:setupBusy,adopt:adoptSharedSetup};
+  document.dispatchEvent(new Event('studio:setup-draft-ready'));
   function draftKey(){return draftPrefix&&selected?draftPrefix+selected.id:null;}
   function readDraft(key=draftKey()){if(!key)return null;try{const value=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(value)knownDrafts.set(key,value.updatedAt);return value;}catch(_){return null;}}
   function saveDraft(){if(restoring||draftPaused||!draftDirty||!draftPrefix||!selected)return;const key=draftKey(),draft=snapshot();if(!draft)return;try{const current=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(current&&knownDrafts.has(key)&&knownDrafts.get(key)!==current.updatedAt){draftPaused=true;renderDraftNotice();return;}if(current&&JSON.stringify({...current,updatedAt:0})===JSON.stringify({...draft,updatedAt:0}))return;localStorage.setItem(key,JSON.stringify(draft));knownDrafts.set(key,draft.updatedAt);q('#uxDraftStatus').textContent='Draft saved in this browser · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){q('#uxDraftStatus').textContent='Browser storage is unavailable. Export this draft or save a named setup.';}}

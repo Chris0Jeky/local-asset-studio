@@ -61,7 +61,13 @@ def query(value):
     for row in q['guidance']:
         need(type(row) is dict and set(row)=={'contribution','avoid'} and all(_text(x,1500) for x in row.values()),
              'Reference guidance must contain contribution and avoid text up to 1500 characters')
-    draft=q['draft']
+    q['draft']=validate_draft(q['draft'])
+    return q
+
+
+def validate_draft(value):
+    """Shared normalized Create data; no persistence or staging authority."""
+    draft=_exact_json(value)
     need(type(draft) is dict and set(draft)=={'version','updatedAt','recipe','pendingInputs','templateHash'}
          and type(draft['version']) is int and draft['version']==1 and type(draft['updatedAt']) is int and draft['updatedAt']==0,
          'Supply a complete normalized browser draft with updatedAt=0')
@@ -81,7 +87,7 @@ def query(value):
     need(type(recipe['parent_by_input']) is dict and set(recipe['parent_by_input'])<={'reference','lastReference'}
          and all(type(x) is str and x in recipe['parent_assets'] for x in recipe['parent_by_input'].values()), 'Invalid draft input lineage')
     need('continuation' not in recipe or recipe['continuation'] is None or type(recipe['continuation']) is dict, 'Invalid draft continuation')
-    return q
+    return draft
 
 
 def _capture(studio, items):
