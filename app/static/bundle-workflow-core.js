@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.BundleWorkflowCore=api;})(globalThis,function(){
   'use strict';
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
-  const KEYS=['positive','negative','width','height','seed','steps','cfg','denoise','sampler','scheduler',...SLOTS,...SLOTS.map(k=>k+'_name')];
+  const KEYS=['positive','negative','width','height','seed','steps','cfg','denoise','style_weight','pose_strength','sampler','scheduler',...SLOTS,...SLOTS.map(k=>k+'_name')];
   const RESERVED=new Set(['__proto__','constructor','prototype']);
   const ID=/^[A-Za-z0-9_.-]{1,96}$/;
   const own=(o,k)=>!!o&&Object.hasOwn(o,k);
@@ -24,10 +24,10 @@
     const pairs=[...(p[key]?[p[key]]:[]),...extra];
     return pairs.map(pair=>{need(Array.isArray(pair)&&pair.length===2&&pair.every(v=>typeof v==='string'&&v.length>0&&!RESERVED.has(v)),'Invalid binding: '+key);return [...pair];});
   }
-  function label(key){const slot=SLOTS.findIndex(k=>key===k||key===k+'_name');return slot>=0?'Adapter '+(slot+1)+(key.endsWith('_name')?' file':' strength'):({positive:'Describe the result',negative:'What to avoid',cfg:'Guidance (CFG)',seed:'Seed',steps:'Sampling steps',width:'Canvas width',height:'Canvas height',denoise:'Denoise',sampler:'Sampler',scheduler:'Schedule'})[key]||key;}
+  function label(key){const slot=SLOTS.findIndex(k=>key===k||key===k+'_name');return slot>=0?'Adapter '+(slot+1)+(key.endsWith('_name')?' file':' strength'):({positive:'Describe the result',negative:'What to avoid',cfg:'Guidance (CFG)',seed:'Seed',steps:'Sampling steps',width:'Canvas width',height:'Canvas height',denoise:'Denoise',style_weight:'Style weight',pose_strength:'Pose strength',sampler:'Sampler',scheduler:'Schedule'})[key]||key;}
   function groupFor(keys,node,outputs,id){
     if(keys.some(k=>['positive','negative'].includes(k)))return 'idea';
-    if(keys.some(k=>SLOTS.some(s=>k===s||k===s+'_name')))return 'appearance';
+    if(keys.some(k=>['style_weight','pose_strength'].includes(k)||SLOTS.some(s=>k===s||k===s+'_name')))return 'appearance';
     if(keys.length)return 'sampling';
     if(outputs.includes(id)||['VAEDecode','VAEDecodeTiled'].includes(node.class_type))return 'output';
     if(['CheckpointLoaderSimple','UNETLoader','CLIPLoader','DualCLIPLoader','TripleCLIPLoader','VAELoader'].includes(node.class_type))return 'resources';

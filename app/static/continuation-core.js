@@ -55,11 +55,23 @@
     if(preset.runtime_block)text.push(preset.runtime_block);
     return text.filter(Boolean);
   }
+  function variantLabel(key){
+    return({cfg:'Guidance (CFG)',seed:'Seed',width:'Canvas width',height:'Canvas height',frames:'Frames',fps:'FPS',style_weight:'Style weight',pose_strength:'Pose strength'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
+  }
   function variantHelp(preset,variant){
-    const values=settings(preset,variant.controls,{}),parts=[];
+    const authored=variant?.controls&&typeof variant.controls==='object'&&!Array.isArray(variant.controls)?variant.controls:{};
+    const values=settings(preset,authored,{}),parts=[];
     if(values.denoise!=null){const n=Number(values.denoise);parts.push('Denoise '+values.denoise+': '+(n<=0.3?'less resampling noise; generally closer to the source':n<1?'more repainting freedom; identity and scenery may change':'full-noise resampling; not a preservation pass')+'.');}
     if(values.steps!=null)parts.push(values.steps+' sampling steps.');
-    for(let i=1;i<=6;i++){const slot='lora'+(i===1?'':i),name=preset.defaults?.[slot+'_name'];if(name&&Number(values[slot])===0&&Number(preset.defaults?.[slot])!==0)parts.push('Switches off adapter '+i+' ('+name+').');}
+    for(const [key,value]of Object.entries(authored)){
+      if(['denoise','steps'].includes(key)||typeof value!=='number'||!Number.isFinite(value))continue;
+      const index=['lora','lora2','lora3','lora4','lora5','lora6'].indexOf(key);
+      if(index>=0){
+        const name=preset.defaults?.[key+'_name'],prior=Number(preset.defaults?.[key]);
+        if(value===0&&Number.isFinite(prior)&&prior!==0)parts.push('Switches off adapter '+(index+1)+(name?' ('+name+')':'')+'.');
+        else parts.push('Adapter '+(index+1)+' strength '+value+(name?' ('+name+')':'')+'.');
+      }else parts.push(variantLabel(key)+' '+value+'.');
+    }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
   return{normalize,initial,settings,blockers,guidance,variantHelp,destinations};
