@@ -149,24 +149,45 @@ def render_html(views, summary, identities):
     cards = []
     for name, title, legend in (
         (VIEW_NAMES[0], 'Final write area on the source', 'Red: effective write support. Blue: protected pixels.'),
-        (VIEW_NAMES[1], 'Support changed by resampling', 'Green: added support. Amber: removed support. Counts also include fractional coverage changes.'),
+        (VIEW_NAMES[1], 'Support changed by resampling', 'Green: added support. Amber: removed support.'),
         (VIEW_NAMES[2], 'Working context and sampler mask', 'Red: sampler coverage. Blue: protection, including padding.')):
         data = base64.b64encode(views[name]).decode('ascii')
         cards.append(f'<section><h2>{title}</h2><p>{legend}</p><img alt="{title}" src="data:image/png;base64,{data}"></section>')
+    metrics = []
+    for key, label, value in (
+        ('effective_support', 'Pixels in final write area', summary['effective']['support_pixels']),
+        ('added_support', 'Pixels added to the area', summary['added_support_pixels']),
+        ('removed_support', 'Pixels removed from the area', summary['removed_support_pixels']),
+        ('coverage_changed', 'Pixels with changed coverage', summary['coverage_changed_pixels'])):
+        require(type(value) is int and value >= 0, 'Scope counts must be nonnegative integers')
+        metrics.append(f'<div data-stat="{key}"><dt>{label}</dt><dd>{value:,}</dd></div>')
     payload = escape(json.dumps({'identities': identities, 'scope': summary}, indent=2, ensure_ascii=True, allow_nan=False))
+    mask_pin = escape(str(identities.get('expected_effective_write_sha256', 'Not provided')))
     body = '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>Repair scope review</title><style>
-body{font:16px/1.5 system-ui,sans-serif;margin:auto;padding:24px;max-width:1120px;background:#f6f7f8;color:#18222c}
-h1{line-height:1.2}section{margin:24px 0;padding:18px;background:white;border:1px solid #bac5ce;border-radius:8px}
+*{box-sizing:border-box}body{font:16px/1.5 system-ui,sans-serif;margin:auto;padding:24px;max-width:1120px;background:#f6f7f8;color:#18222c}
+h1{line-height:1.2;margin-bottom:8px}section,details{margin:0;padding:18px;background:white;border:1px solid #bac5ce;border-radius:8px}
+.views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.metrics div{padding:12px;background:#e8edf2;border-radius:8px}dt{font-size:14px}dd{margin:4px 0 0;font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
 img{max-width:100%;height:auto;display:block}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
-code{overflow-wrap:anywhere}h2{font-size:20px}p{max-width:90ch}@media(max-width:500px){body{padding:12px}section{padding:12px}}
+code{overflow-wrap:anywhere}h2{font-size:19px;margin:0 0 8px}p{max-width:90ch}summary{cursor:pointer;font-weight:600}
+textarea{display:block;width:100%;resize:vertical;padding:10px;font:14px/1.5 ui-monospace,monospace;margin-top:8px;border:1px solid #8798a8;border-radius:4px}
+textarea:focus,summary:focus{outline:3px solid #2165aa;outline-offset:3px}.handoff{margin:18px 0}.status{font-size:14px;font-weight:600}
+@media(max-width:650px){body{padding:12px}.views{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}section,details{padding:12px}}
 </style><h1>Repair scope review</h1>
-<p><strong>This is not accepted artwork or permission to generate.</strong> No model was called. Matching a mask or canvas does not prove anatomy, identity or candidate alignment.</p>
-<p>Views are reduced diagnostic overlays, not colour managed. Thin regions can disappear in a reduced view; inspect the full-resolution L masks alongside the pixel counts below.</p>
-<p><code>context.png</code> is the image context. <code>comfy-mask.png</code> is a separate mask carrier: use only its LoadImage <strong>MASK</strong> output. Never use its black RGB output as the context, and never use the context's transparent background as editing permission. Do not invert the exported MASK a second time.</p>
+<p class="status">Review required · No generation submitted</p>
+<p>Check the proposed write area and any changes introduced by scaling. Red marks where edits may be written; it does not mean those pixels are already repaired.</p>
 '''
-    return (body + ''.join(cards) + '<section><h2>Exact identities and full-resolution counts</h2><pre>' + payload + '</pre></section></html>').encode('utf-8')
+    limits = '''<p>These are diagnostic previews, not accepted artwork. Thumbnails are not colour managed and can hide thin regions. The full-resolution L masks are included; their exact counts are shown above.</p>
+<details><summary>ComfyUI mask handoff: keep context and mask separate</summary>
+<p><code>context.png</code> is the image context. <code>comfy-mask.png</code> is a separate mask carrier: use only its LoadImage <strong>MASK</strong> output. Never use its black RGB output as the context, and never use the context's transparent background as editing permission. Do not invert the exported MASK a second time.</p>
+<p>Matching a mask or canvas does not prove anatomy, identity, candidate alignment or native-model compatibility. A model route still needs its own qualification and explicit Start.</p></details>
+'''
+    handoff = '<section class="handoff"><h2>Retain the reviewed mask identity</h2><p>After reviewing the full-resolution masks, use this exact value for the separate Apply step. This page does not approve or apply a result.</p><label for="effective-mask-digest">Effective write-mask SHA-256</label><textarea id="effective-mask-digest" readonly rows="2" spellcheck="false">' + mask_pin + '</textarea></section>'
+    return (body + '<dl class="metrics">' + ''.join(metrics) + '</dl><div class="views">' + ''.join(cards)
+            + '</div>' + limits + handoff + '<details id="raw-evidence"><summary>Technical evidence and file identities</summary><pre>'
+            + payload + '</pre></details></html>').encode('utf-8')
 
 
 def _build(root, plan, request, bundle):
@@ -188,7 +209,7 @@ def _build(root, plan, request, bundle):
             exported = _png(carrier)
         files = {**artifacts, **views, 'comfy-mask.png': exported,
                  'scope-review.html': render_html(views, summary, identities)}
-        report = {'schema': SCHEMA, 'renderer_version': 'scope-diagnostic/v1', **identities, 'scope': summary, 'geometry': prepared['geometry'],
+        report = {'schema': SCHEMA, 'renderer_version': 'scope-diagnostic/v2', **identities, 'scope': summary, 'geometry': prepared['geometry'],
                   'mask_adapter': MASK_ADAPTER, 'mask_polarity': 'alpha=255-work-write; LoadImage MASK=1-alpha/255',
                   'model_compatibility': 'not_qualified', 'neural_inference': False, 'semantic_approval': False,
                   'review_state': 'unreviewed', 'files': {name: {'sha256': rp.rs.digest(raw), 'bytes': len(raw)} for name, raw in files.items()}}

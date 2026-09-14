@@ -148,3 +148,39 @@ work. #251 owns the in-Studio interactive mask editor and shared user/agent
 commands; this static review is a directly usable intermediate, not that UI.
 No extra generation credit, source-art publication or HUMAN_TODO decision is
 introduced by this implementation.
+
+## Display review and reproducible browser probe
+
+The viewer puts four plain-language pixel counts above the comparison views,
+uses side-by-side source/change views on wide screens, and keeps raw technical
+records in a collapsed disclosure. The exact effective-mask digest is a labelled
+read-only field that can be selected without introducing an Apply button or
+JavaScript. Mask handoff instructions remain available in a separate disclosure.
+This renderer is `scope-diagnostic/v2`; older generated reviews stay intact but
+need an explicit new rendering to match the current exact review contract.
+
+Two presentation regressions were written first and failed before adding the
+visible counts, collapsed evidence and escaped read-only digest. The local
+scope suite then ran 34 cases: 20 passed, 14 full-repository cases skipped in the
+partial checkout. Hosted results must establish those integration cases.
+
+An optional reproducible probe uses the same pure synthetic image/mask fixture:
+
+```console
+python tests/check_repair_scope_browser.py --browser PATH_TO_EXISTING_CHROMIUM --out experiments/runs/scope-browser-001
+```
+
+It requires the optional Playwright package and an already installed Chromium
+binary; it installs nothing. The isolated development container additionally
+requires `--no-sandbox`; do not use that flag for ordinary workstation browsing.
+The probe supplies authored HTML through `set_content`, blocks outgoing network
+requests and records screenshots plus JSON results. It checks all three images,
+all four statistics, a read-only digest, keyboard disclosure, no horizontal
+overflow and no external requests at 1280px and 390px. It is not automatically
+added to the normal suite or represented as Studio-origin/native integration.
+
+The probe passed locally in Chromium 144.0.7559.96 and both screenshots were
+inspected. Initial file-URL navigation was blocked by the container browser
+policy; no policy was changed. The successful evidence is rendered-content and
+keyboard behaviour, not successful local-file navigation, actual 200% browser
+zoom, full accessibility certification, model execution or artwork acceptance.

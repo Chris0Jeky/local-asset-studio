@@ -138,6 +138,27 @@ class ScopeReviewTests(unittest.TestCase):
         self.assertIn('comfy-mask.png', html)
         self.assertNotIn('https://', html)
 
+    def test_html_puts_scope_counts_before_views_and_collapses_raw_evidence(self):
+        original, images, geometry = fixture(); views, summary = review.scope_views(original, images, geometry)
+        html = review.render_html(views, summary, {'expected_effective_write_sha256': 'a' * 64}).decode('utf-8')
+        self.assertIn('data-stat="effective_support"', html)
+        self.assertIn('data-stat="added_support"', html)
+        self.assertIn('data-stat="removed_support"', html)
+        self.assertIn('data-stat="coverage_changed"', html)
+        self.assertLess(html.index('data-stat="effective_support"'), html.index('<img'))
+        self.assertIn('<details id="raw-evidence">', html)
+        self.assertIn('<summary>Technical evidence and file identities</summary>', html)
+        self.assertIn('for="effective-mask-digest"', html)
+        self.assertIn('readonly', html)
+
+    def test_readonly_digest_cannot_inject_markup(self):
+        original, images, geometry = fixture(); views, summary = review.scope_views(original, images, geometry)
+        digest = '</textarea><script>bad()</script>'
+        html = review.render_html(views, summary, {'expected_effective_write_sha256': digest}).decode('utf-8')
+        self.assertNotIn('<script', html.lower())
+        self.assertIn('id="effective-mask-digest"', html)
+        self.assertIn('&lt;/textarea&gt;', html)
+
     def test_views_are_bounded_diagnostic_derivatives(self):
         original, images, geometry = fixture(); views, _ = review.scope_views(original, images, geometry)
         for raw in views.values():
