@@ -8,6 +8,14 @@ The earlier creative choices and q-1 through q-6 below are answered. The configu
 
 The live repository visibility was observed as **PUBLIC** on 13 September 2026. This records the observed state; it does not infer owner approval or a visibility change.
 
+## Style + Pose recipes — open item
+
+**q-25 — creative review of the Style + Pose proving image (open).** One WAI v17 run with the authored example pictures
+is at `examples/style-pose/wai-proving-run.jpg` (evidence in `experiments/curated/style-pose/`). Decide whether the
+style transfer and pose fidelity are good enough to use these recipes for the fantasy character pack, and whether the
+defaults (style weight 0.8, pose strength 0.9) should change. Suggested action: run the *3-seed audition* variant with
+your own style and pose pictures, then mark keeper / needs-work in the library. Agents do not tick this.
+
 ## Anime & fantasy atelier — open items
 
 **q-1 — koukouya Krea 2 style LoRA: done, 12 September 2026.** The owner supplied a civitai API key; it is stored

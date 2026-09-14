@@ -488,6 +488,24 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(bound['1']['inputs']['frames'],22)
         self.assertEqual(bound['1']['inputs']['last_reference'],upload)
 
+    def test_style_weight_and_pose_strength_bind_through_the_catalog(self):
+        """The Style + Pose recipes expose IP-Adapter weight and ControlNet strength as plain 0-2 controls."""
+        preset=dict(PRESET, style_weight=["1","style_weight"], pose_strength=["2","pose_strength"], last_reference=["2","last_reference"])
+        graph=json.loads(json.dumps(GRAPH)); graph['1']['inputs']['style_weight']=0.8; graph['2']['inputs'].update(pose_strength=0.9,last_reference='pose.png')
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        defaults=next(p for p in s.catalog()['presets'] if p['id']=='demo')['defaults']
+        self.assertEqual((defaults['style_weight'],defaults['pose_strength']),(0.8,0.9))
+        for key in ('style_weight','pose_strength'):
+            with self.assertRaisesRegex(server.StudioError,'between 0 and 2'): s.prepare({'preset_id':'demo','controls':{key:2.5}})
+            with self.assertRaisesRegex(server.StudioError,'must be a number'): s.prepare({'preset_id':'demo','controls':{key:'strong'}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'style_weight':'0.55','pose_strength':1.2}})
+        self.assertEqual(bound['1']['inputs']['style_weight'],0.55); self.assertEqual(bound['2']['inputs']['pose_strength'],1.2)
+        # An unbound control on another preset is still refused: the catalog stays the allow-list.
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
+        with self.assertRaises(server.StudioError): self.studio().prepare({'preset_id':'demo','controls':{'style_weight':0.5}})
+
     def test_flux_presets_declare_the_latent_node_floor_of_16(self):
         """EmptyFlux2LatentImage computes width//16, so the server default of 8 would accept a width
         the node silently floors: 1032 would render as 1024 while the recipe recorded 1032. Driven

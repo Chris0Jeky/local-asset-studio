@@ -48,7 +48,7 @@ from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
@@ -382,7 +382,7 @@ class Studio:
             # strength 0, so refuse it here while the inventory is known.
             if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
             self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False)):
+        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -571,7 +571,7 @@ class Studio:
     def _estimate_graph(self, preset, controls):
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
-        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", *LORA_SLOTS}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", *LORA_SLOTS}
         integer = {"seed", "steps", "width", "height", "frames", "fps"}
         extras = preset.get("bindings_extra") or {}
         for key, raw in controls.items():
