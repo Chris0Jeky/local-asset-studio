@@ -1939,6 +1939,125 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "st-mishima-kurone-0r",
+      "name": "ST_Mishima_Kurone_0R.safetensors",
+      "file": "loras/ST_Mishima_Kurone_0R.safetensors",
+      "source": "https://civitai.com/models/1523528?modelVersionId=1723753",
+      "url": "https://civitai.com/api/download/models/1723753",
+      "bytes": 202694828,
+      "sha256": "d1e424d0afda65a495ea238fa1db9cc4184ac6c4937f0a8b06e4fc92211d98b3",
+      "license": "",
+      "terms": "civitai model 1523528 flags read 2026-09-14: allowCommercialUse Image/RentCivit/Rent/Sell, derivatives yes, differentLicense yes, noCredit yes. Artist-style LoRA (Mishima Kurone light-novel art): the artist did not license the training; record, never infer. civitai version 1723753 of model 1523528: the version payload carries no permission flags; read https://civitai.com/models/1523528 (or /api/v1/models/1523528) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "mishimakurone",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "glossy-anime-style-illustriousxl-000011",
+      "name": "glossy_anime_style_illustriousXL-000011.safetensors",
+      "file": "loras/glossy_anime_style_illustriousXL-000011.safetensors",
+      "source": "https://civitai.com/models/1364837?modelVersionId=1541970",
+      "url": "https://civitai.com/api/download/models/1541970",
+      "bytes": 228464188,
+      "sha256": "c71fb57c4409dd7646c9602ff2d797c53eec4e030b56562a3e9d9a1e964037e9",
+      "license": "",
+      "terms": "civitai model 1364837 flags read 2026-09-14: allowCommercialUse Rent/RentCivit/Image (no Sell), derivatives yes, differentLicense yes, noCredit yes. Creator strength 1.0. civitai version 1541970 of model 1364837: the version payload carries no permission flags; read https://civitai.com/models/1364837 (or /api/v1/models/1364837) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "glossy_anime_style",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "konosuba-fantastic-days-v2-0",
+      "name": "Konosuba_Fantastic_Days_v2.0.safetensors",
+      "file": "loras/Konosuba_Fantastic_Days_v2.0.safetensors",
+      "source": "https://civitai.com/models/1610833?modelVersionId=1824928",
+      "url": "https://civitai.com/api/download/models/1824928",
+      "bytes": 456521740,
+      "sha256": "6d20e168091d40417138b4f9c47b903a30c85346cf0edc54cfe447b06dd65175",
+      "license": "",
+      "terms": "civitai model 1610833 flags read 2026-09-14: allowCommercialUse Image/RentCivit/Rent (no Sell), derivatives yes, differentLicense yes, noCredit yes. Trained on KonoSuba Fantastic Days game art; strength 1.0, 0.9 with the trigger. civitai version 1824928 of model 1610833: the version payload carries no permission flags; read https://civitai.com/models/1610833 (or /api/v1/models/1610833) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "KonosubaFantasticDays-Liver020",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "konosuba-illustrious-sd8",
+      "name": "Konosuba_Illustrious_SD8.safetensors",
+      "file": "loras/Konosuba_Illustrious_SD8.safetensors",
+      "source": "https://civitai.com/models/663943?modelVersionId=1369394",
+      "url": "https://civitai.com/api/download/models/1369394",
+      "bytes": 170639476,
+      "sha256": "b2fecb129da4909131d6e688cd0e422eb9f34baa5b0e0770bf491c1586d143e4",
+      "license": "",
+      "terms": "civitai model 663943 flags read 2026-09-14: allowCommercialUse Image/RentCivit/Rent/Sell, derivatives yes, differentLicense yes, noCredit yes. KonoSuba style; no trigger word. civitai version 1369394 of model 663943: the version payload carries no permission flags; read https://civitai.com/models/663943 (or /api/v1/models/663943) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "detail-enhancer-il-v2",
+      "name": "Detail_enhancer_IL_v2.safetensors",
+      "file": "loras/Detail_enhancer_IL_v2.safetensors",
+      "source": "https://civitai.com/models/1450571?modelVersionId=1983243",
+      "url": "https://civitai.com/api/download/models/1983243",
+      "bytes": 228492876,
+      "sha256": "54a203f0a909fdc9b1d74f29fd5a16e33387a824d7d2161322f4db3ea250455e",
+      "license": "",
+      "terms": "civitai model 1450571 flags read 2026-09-14: allowCommercialUse RentCivit/Image/Rent (no Sell), derivatives yes, differentLicense yes, noCredit yes. Style-neutral detail booster; stack under a style LoRA. civitai version 1983243 of model 1450571: the version payload carries no permission flags; read https://civitai.com/models/1450571 (or /api/v1/models/1450571) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "st-momoko-roshidere-0r",
+      "name": "ST_Momoko_Roshidere_0R.safetensors",
+      "file": "loras/ST_Momoko_Roshidere_0R.safetensors",
+      "source": "https://civitai.com/models/1516990?modelVersionId=1716323",
+      "url": "https://civitai.com/api/download/models/1716323",
+      "bytes": 202694260,
+      "sha256": "d80eb6f9dcdcadbee801237cf6a639137211504f6159329722575f0f3e3aff28",
+      "license": "",
+      "terms": "civitai model 1516990 flags read 2026-09-14: allowCommercialUse Image/RentCivit/Rent/Sell, derivatives yes, differentLicense yes, noCredit yes. Artist-style LoRA (Momoko, Roshidere light-novel art). civitai version 1716323 of model 1516990: the version payload carries no permission flags; read https://civitai.com/models/1516990 (or /api/v1/models/1516990) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "momokoroshidere",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "shiny-nai-ilxl-goofy-remade",
+      "name": "shiny_nai_ilxl_goofy_remade.safetensors",
+      "file": "loras/shiny_nai_ilxl_goofy_remade.safetensors",
+      "source": "https://civitai.com/models/618752?modelVersionId=2786889",
+      "url": "https://civitai.com/api/download/models/2786889",
+      "bytes": 114428780,
+      "sha256": "f6186b476517899a7836896a8eaa3b3e39c75dedf6f4fbc41ce56b2ec054b87a",
+      "license": "",
+      "terms": "civitai model 618752 flags read 2026-09-14: allowCommercialUse RentCivit/Rent (no Image, no Sell), derivatives yes, differentLicense yes, noCredit yes. Creator strength 0.7-1.0; trigger 'shiny skin, sweat'. civitai version 2786889 of model 618752: the version payload carries no permission flags; read https://civitai.com/models/618752 (or /api/v1/models/618752) before any commercial use. Base model 'Illustrious'.",
+      "family": "Illustrious XL",
+      "trigger": "shiny skin",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [

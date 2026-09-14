@@ -5189,16 +5189,10 @@
           ]
         ]
       },
-      "reference": [
-        "10",
-        "image"
-      ],
       "last_reference": [
         "11",
         "image"
       ],
-      "reference_label": "Style picture",
-      "reference_hint": "Any illustration or photo whose look you want: linework, shading, palette. IP-Adapter copies the style, not the subject. PNG, JPG or WebP up to 20 MiB; the recipe's example is used until replaced.",
       "last_reference_label": "Pose picture",
       "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
       "style_weight": [
@@ -5212,7 +5206,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style transfer from the style picture",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
@@ -5221,14 +5215,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5243,8 +5237,41 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
-      "execution_note": "Executed 2026-09-14 through Studio job 88026ea3-c950-48bd-9529-3d02e81bf1e4 (ComfyUI prompt 82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8), authored defaults, 283 s including every cold load on the primary backend; graph sha256 6d4023f6...1078bd; output inspected: pose followed the pose picture and the style picture's cel-shaded neon look transferred without its subject (experiments/curated/style-pose/). One run, not a benchmark, not art acceptance."
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "10",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "30",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "31",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      },
+      "execution_note": "Executed 2026-09-14 through Studio job 12be1c70-cd3b-456c-ae47-371e4b58f1ce (ComfyUI prompt a0e13d48-d073-4313-9451-e96646e4aec5), 121 s on the primary backend, graph sha256 0c195298454bb58e\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output WAI_00023_.png (sha256 cfa9450ad62a1e66\u2026, JPEG examples/style-pose/board-verify-wai.jpg) inspected: seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. One run, not a benchmark, not art acceptance."
     },
     {
       "id": "style-pose-animagine",
@@ -5341,16 +5368,10 @@
           ]
         ]
       },
-      "reference": [
-        "10",
-        "image"
-      ],
       "last_reference": [
         "11",
         "image"
       ],
-      "reference_label": "Style picture",
-      "reference_hint": "Any illustration or photo whose look you want: linework, shading, palette. IP-Adapter copies the style, not the subject. PNG, JPG or WebP up to 20 MiB; the recipe's example is used until replaced.",
       "last_reference_label": "Pose picture",
       "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
       "style_weight": [
@@ -5364,7 +5385,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style transfer from the style picture",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
@@ -5373,14 +5394,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5395,7 +5416,397 @@
         }
       ],
       "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail)."
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail).",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "10",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "30",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "31",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      }
+    },
+    {
+      "id": "style-pose-cstati",
+      "name": "Style + Pose (CSTati v3)",
+      "category": "Characters",
+      "family": "CSTati v3 (SDXL)",
+      "graph": "workflows/api/style-pose-cstati-api.json",
+      "verified": false,
+      "modality": "image",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "last_reference": [
+        "11",
+        "image"
+      ],
+      "last_reference_label": "Pose picture",
+      "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
+      "style_weight": [
+        "14",
+        "weight"
+      ],
+      "pose_strength": [
+        "17",
+        "strength"
+      ],
+      "stages": [
+        "SDXL checkpoint",
+        "2 optional LoRA slots",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
+        "OpenPose skeleton from the pose picture \u2192 ControlNet",
+        "30-step render",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Style lighter, pose looser",
+          "controls": {
+            "style_weight": 0.5,
+            "pose_strength": 0.7
+          }
+        },
+        {
+          "name": "Style stronger",
+          "controls": {
+            "style_weight": 0.9
+          }
+        },
+        {
+          "name": "Pose exact",
+          "controls": {
+            "pose_strength": 1.2
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://civitai.com/models/1113979",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. CSTati v3 base at CFG 4 / Karras as in its baseline recipe.",
+      "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance.",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "10",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "30",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "31",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      }
+    },
+    {
+      "id": "style-pose-yumeflux",
+      "name": "Style + Pose (YumeFlux ILv1)",
+      "category": "Characters",
+      "family": "YumeFlux ILv1 (SDXL)",
+      "graph": "workflows/api/style-pose-yumeflux-api.json",
+      "verified": true,
+      "modality": "image",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "last_reference": [
+        "11",
+        "image"
+      ],
+      "last_reference_label": "Pose picture",
+      "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
+      "style_weight": [
+        "14",
+        "weight"
+      ],
+      "pose_strength": [
+        "17",
+        "strength"
+      ],
+      "stages": [
+        "SDXL checkpoint",
+        "2 optional LoRA slots",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
+        "OpenPose skeleton from the pose picture \u2192 ControlNet",
+        "30-step render",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Style lighter, pose looser",
+          "controls": {
+            "style_weight": 0.5,
+            "pose_strength": 0.7
+          }
+        },
+        {
+          "name": "Style stronger",
+          "controls": {
+            "style_weight": 0.9
+          }
+        },
+        {
+          "name": "Pose exact",
+          "controls": {
+            "pose_strength": 1.2
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://civitai.com/models/1153434",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. YumeFlux ILv1 base at CFG 4 / Karras as in its baseline recipe.",
+      "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance.",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "10",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "30",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "31",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      },
+      "execution_note": "Executed 2026-09-14 through Studio job 1a07713c-a1b6-4c56-ab22-29743658e3de (ComfyUI prompt c020c7f5-9124-4cb3-ab1e-18fdd2342574), 275 s on the primary backend, graph sha256 dcbe2fbba1deb9cb\u2026: three-picture style board (character sheet, KonoSuba group art, bodysuit study; averaged at the authored 0.7), throne pose picture, Mishima Kurone 0.8 + Glossy 0.6, seed 2026091410, 832x1216. Output YumeFlux_00009_.png (sha256 5bc313b446b335b9\u2026, JPEG examples/style-pose/board-verify-yumeflux.jpg) inspected: same pose held; the throne is fully drawn in red and gold, the costume is glossier and more saturated, the background a blue energy swirl; face and hands clean. One run, not a benchmark, not art acceptance."
     }
   ]
 }

@@ -1,5 +1,33 @@
 # Current state — 14 September 2026
 
+## Style boards, the checkpoint × LoRA matrix and seven new Illustrious LoRAs — 14 September 2026 (later)
+
+The Style + Pose recipes now take a **style board** of one to three pictures (`reference_board` on the preset: optional
+slots pruned before submission, no prompt guidance, `IPAdapterEncoder` → `IPAdapterCombineEmbeds` averaged →
+`IPAdapterEmbeds`), keep the pose picture as its own input, and exist for WAI v17, YumeFlux ILv1, Animagine XL 4.0 and
+CSTati v3. `scripts/style-pose-matrix.py` runs a plan of recipes × LoRA settings × poses as serial Studio jobs, resumes
+by job id, and builds a contact sheet.
+
+Executed on this PC with the owner's own pictures: a 30-cell checkpoint × LoRA × pose matrix
+([experiments/curated/style-pose-matrix/2026-09-14](experiments/curated/style-pose-matrix/2026-09-14/README.md)):
+WAI v17 and YumeFlux best, Animagine darker, CSTati soft, **Pony V6 and NoobAI produced no figure with IP-Adapter Plus
+ViT-H and their recipes were removed**. Five direct probes isolated the IP-Adapter `weight_type`: `style transfer`
+260 s per run against `linear` 80 s with ControlNet on this ROCm build. A 13-cell LoRA sweep on the three-picture board
+plus five combine probes ([2026-09-14-board-loras](experiments/curated/style-pose-matrix/2026-09-14-board-loras/README.md)):
+concatenating three pictures at 0.8 over-drives saturation, averaging at 0.6–0.8 keeps the palette; Mishima Kurone
+0.7–0.8 with Glossy 0.5–0.6 read closest to the target. Verifying jobs on the shipped defaults: WAI
+`12be1c70-cd3b-456c-ae47-371e4b58f1ce` (121 s) and YumeFlux `1a07713c-a1b6-4c56-ab22-29743658e3de` (275 s), both
+inspected; those two recipes are `verified: true`. Seven civitai LoRAs were installed through `scripts/civitai-fetch.py`
+with SHA-verified receipts and pinned with their permission flags (`models/library.json`, `models/README.md`,
+`presets/settings-kb.json`); the shortlist and the adapters not installed are in
+[research/style-pose/](research/style-pose/adapters-and-loras-2026-09-14.md). Cell times ranged 62–372 s with no
+relation to the graph: ComfyUI reloads models from paged host RAM between jobs; 129 orphaned MCP node processes were
+reclaimed mid-run with `~/.claude/tools/mcp-hygiene.ps1 -Clean`.
+
+Not verified: Nova Anime XL IL v19 was still downloading at the time of writing (no recipe yet); Animagine and CSTati
+boards not re-run; one seed everywhere; the beach pose not run on the board; no warm, RAM-quiet timing; no licence
+judgement; art acceptance stays with the owner (HUMAN_TODO q-25, q-26).
+
 ## Collect saved primary character-study results — 14 September 2026
 
 The offline [Production result collector](docs/character-consistency/PRODUCTION-RESULTS.md)

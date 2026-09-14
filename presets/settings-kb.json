@@ -1968,6 +1968,146 @@
     },
     "BunnyMid_Ani_v1.safetensors": {
       "family": "JANIMA v1 (Anima)", "label": "BunnyMid Ani v1", "trigger": "@m1d", "trigger_position": "anywhere", "strength": [0.0, 1.0], "default": 0.0, "role": "style", "source": "https://civitai.com/models/2833471?modelVersionId=3197565", "sha256": "a2a83ae3298163e2c66170fd38609c8dcbca95efe58b58ce91cef68e18c95808", "bytes": 138663746, "licence": "Source pinned; installation must be verified separately; licence terms unverified.", "notes": ["JANIMA slot 4. Disabled until a deliberate stack recipe is selected."]
+    },
+    "ST_Mishima_Kurone_0R.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Mishima Kurone light-novel style",
+      "trigger": "mishimakurone",
+      "trigger_position": "start of prompt",
+      "strength": [
+        0.6,
+        0.9
+      ],
+      "default": 0.8,
+      "role": "style",
+      "source": "https://civitai.com/models/1523528",
+      "sha256": "d1e424d0afda65a495ea238fa1db9cc4184ac6c4937f0a8b06e4fc92211d98b3",
+      "bytes": 202694828,
+      "licence": "civitai flags Image/RentCivit/Rent/Sell; artist did not license the training",
+      "notes": [
+        "KonoSuba light-novel art; no creator strength stated",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "glossy_anime_style_illustriousXL-000011.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Glossy anime style",
+      "trigger": "glossy_anime_style",
+      "trigger_position": "anywhere",
+      "strength": [
+        0.8,
+        1.0
+      ],
+      "default": 1.0,
+      "role": "style",
+      "source": "https://civitai.com/models/1364837",
+      "sha256": "c71fb57c4409dd7646c9602ff2d797c53eec4e030b56562a3e9d9a1e964037e9",
+      "bytes": 228464188,
+      "licence": "civitai flags Rent/RentCivit/Image (no Sell)",
+      "notes": [
+        "creator: best weight 1.0",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "Konosuba_Fantastic_Days_v2.0.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "KonoSuba Fantastic Days splash-art style",
+      "trigger": "KonosubaFantasticDays-Liver020",
+      "trigger_position": "start of prompt",
+      "strength": [
+        0.9,
+        1.0
+      ],
+      "default": 0.9,
+      "role": "style",
+      "source": "https://civitai.com/models/1610833",
+      "sha256": "6d20e168091d40417138b4f9c47b903a30c85346cf0edc54cfe447b06dd65175",
+      "bytes": 456521740,
+      "licence": "civitai flags Image/RentCivit/Rent (no Sell)",
+      "notes": [
+        "1.0 without the trigger, 0.9 with it; creator adds 'rays light, particles of light, dynamic pose, cinematic lighting, high contrast'",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "Konosuba_Illustrious_SD8.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "KonoSuba style (Synthdark8)",
+      "trigger": "",
+      "trigger_position": "anywhere",
+      "strength": [
+        0.6,
+        0.9
+      ],
+      "default": 0.8,
+      "role": "style",
+      "source": "https://civitai.com/models/663943",
+      "sha256": "b2fecb129da4909131d6e688cd0e422eb9f34baa5b0e0770bf491c1586d143e4",
+      "bytes": 170639476,
+      "licence": "civitai flags Image/RentCivit/Rent/Sell",
+      "notes": [
+        "no trigger word; a Pony build exists as version 743036",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "Detail_enhancer_IL_v2.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Detail enhancer IL v2",
+      "trigger": "",
+      "trigger_position": "anywhere",
+      "strength": [
+        0.5,
+        0.8
+      ],
+      "default": 0.7,
+      "role": "detail",
+      "source": "https://civitai.com/models/1450571",
+      "sha256": "54a203f0a909fdc9b1d74f29fd5a16e33387a824d7d2161322f4db3ea250455e",
+      "bytes": 228492876,
+      "licence": "civitai flags RentCivit/Image/Rent (no Sell)",
+      "notes": [
+        "style-neutral detail booster; stack under a style LoRA",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "ST_Momoko_Roshidere_0R.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Momoko light-novel style",
+      "trigger": "momokoroshidere",
+      "trigger_position": "start of prompt",
+      "strength": [
+        0.6,
+        0.9
+      ],
+      "default": 0.8,
+      "role": "style",
+      "source": "https://civitai.com/models/1516990",
+      "sha256": "d80eb6f9dcdcadbee801237cf6a639137211504f6159329722575f0f3e3aff28",
+      "bytes": 202694260,
+      "licence": "civitai flags Image/RentCivit/Rent/Sell",
+      "notes": [
+        "Roshidere light-novel art; same trainer as the Mishima Kurone LoRA",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
+    },
+    "shiny_nai_ilxl_goofy_remade.safetensors": {
+      "family": "WAI v17 (Illustrious)",
+      "label": "Shiny skin (Goofy AI remade)",
+      "trigger": "shiny skin, sweat",
+      "trigger_position": "anywhere",
+      "strength": [
+        0.7,
+        1.0
+      ],
+      "default": 0.8,
+      "role": "skin",
+      "source": "https://civitai.com/models/618752",
+      "sha256": "f6186b476517899a7836896a8eaa3b3e39c75dedf6f4fbc41ce56b2ec054b87a",
+      "bytes": 114428780,
+      "licence": "civitai flags RentCivit/Rent (no Image, no Sell)",
+      "notes": [
+        "creator strength 0.7-1.0",
+        "installed 2026-09-14 through scripts/civitai-fetch.py with a SHA-verified receipt; Illustrious-base LoRA, filed under the WAI v17 family the Style + Pose recipes use"
+      ]
     }
   },
   "guidance": {

@@ -2,7 +2,7 @@
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
-      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+      "ckpt_name": "cstatiANIMEV30XL_v30.safetensors"
     }
   },
   "8": {
@@ -44,7 +44,7 @@
         "9",
         1
       ],
-      "text": "1girl, solo, adult woman, full body, standing, holding lantern, cloak, boots, simple background, masterpiece, best quality, amazing quality"
+      "text": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, red and black robe with gold trim, full body, simple background, masterpiece, best quality, amazing quality"
     }
   },
   "3": {
@@ -54,7 +54,7 @@
         "9",
         1
       ],
-      "text": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark"
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, multiple views"
     }
   },
   "4": {
@@ -170,11 +170,11 @@
         "14",
         0
       ],
-      "seed": 2026091401,
+      "seed": 2026091403,
       "steps": 30,
-      "cfg": 5.0,
+      "cfg": 4.0,
       "sampler_name": "euler_ancestral",
-      "scheduler": "normal",
+      "scheduler": "karras",
       "positive": [
         "17",
         0
@@ -210,7 +210,7 @@
         "6",
         0
       ],
-      "filename_prefix": "Style-Pose/WAI"
+      "filename_prefix": "Style-Pose/CSTati"
     }
   },
   "30": {

@@ -1,0 +1,134 @@
+{
+  "styles": [
+    "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+    "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png",
+    "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+  ],
+  "styles_source": "character sheet 6152a06a\u2026, KonoSuba group art 914e0409\u2026, braided bodysuit study b8691da8\u2026",
+  "poses": [
+    {
+      "id": "throne",
+      "file": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+      "source": "library asset f44ac333401c5a3d8c831bf58e0644a5 (849x1200)",
+      "tags": "sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below"
+    }
+  ],
+  "subject": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body",
+  "recipes": [
+    {
+      "preset_id": "style-pose-wai",
+      "suffix": ", masterpiece, best quality, amazing quality"
+    },
+    {
+      "preset_id": "style-pose-yumeflux",
+      "suffix": ", masterpiece, best quality, amazing quality"
+    }
+  ],
+  "loras": [
+    {
+      "id": "none"
+    },
+    {
+      "id": "mishima080",
+      "controls": {
+        "lora": 0.8,
+        "lora_name": "ST_Mishima_Kurone_0R.safetensors"
+      },
+      "tag": "mishimakurone"
+    },
+    {
+      "id": "glossy100",
+      "controls": {
+        "lora": 1.0,
+        "lora_name": "glossy_anime_style_illustriousXL-000011.safetensors"
+      },
+      "tag": "glossy_anime_style"
+    },
+    {
+      "id": "fantastic090",
+      "controls": {
+        "lora": 0.9,
+        "lora_name": "Konosuba_Fantastic_Days_v2.0.safetensors"
+      },
+      "tag": "KonosubaFantasticDays-Liver020, rays light, particles of light, cinematic lighting",
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "konosd8080",
+      "controls": {
+        "lora": 0.8,
+        "lora_name": "Konosuba_Illustrious_SD8.safetensors"
+      },
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "detail070",
+      "controls": {
+        "lora": 0.7,
+        "lora_name": "Detail_enhancer_IL_v2.safetensors"
+      },
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "momoko080",
+      "controls": {
+        "lora": 0.8,
+        "lora_name": "ST_Momoko_Roshidere_0R.safetensors"
+      },
+      "tag": "momokoroshidere",
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "shiny080",
+      "controls": {
+        "lora": 0.8,
+        "lora_name": "shiny_nai_ilxl_goofy_remade.safetensors"
+      },
+      "tag": "shiny skin",
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "mishima070+glossy060",
+      "controls": {
+        "lora": 0.7,
+        "lora_name": "ST_Mishima_Kurone_0R.safetensors",
+        "lora2": 0.6,
+        "lora2_name": "glossy_anime_style_illustriousXL-000011.safetensors"
+      },
+      "tag": "mishimakurone, glossy_anime_style",
+      "recipes": [
+        "style-pose-wai"
+      ]
+    },
+    {
+      "id": "mishima070+detail060",
+      "controls": {
+        "lora": 0.7,
+        "lora_name": "ST_Mishima_Kurone_0R.safetensors",
+        "lora2": 0.6,
+        "lora2_name": "Detail_enhancer_IL_v2.safetensors"
+      },
+      "tag": "mishimakurone",
+      "recipes": [
+        "style-pose-wai"
+      ]
+    }
+  ],
+  "controls": {
+    "width": 832,
+    "height": 1216,
+    "seed": 2026091410,
+    "style_weight": 0.8,
+    "pose_strength": 0.9
+  }
+}
