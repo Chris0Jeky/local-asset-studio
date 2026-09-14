@@ -18,6 +18,7 @@ import sys
 
 ALLOWED_TYPES = ("epic", "slice", "defect", "experiment", "decision", "research")
 ALLOWED_READINESS = ("blocked", "ready", "active", "review", "owner-run", "parked")
+WIP_LIMITS = {"independent_lines": 3, "stacks": 1, "owner_run_lines": 1}
 MAX_INPUT_BYTES = 1024 * 1024
 MAX_ITEMS = 1000
 _SHA = re.compile(r"[0-9a-f]{40}")
@@ -305,7 +306,9 @@ def build_snapshot(root: Path, source, test_receipt=None, validation_receipt=Non
             stack_map.setdefault(row["stack_parent"], []).append(row["number"])
     stacks = [{"parent": parent, "children": sorted(children)} for parent, children in sorted(stack_map.items())]
     issues = sorted(source["issues"], key=lambda row: row["number"])
-    within = len(independent) <= 3 and len(stacks) <= 1 and len(owner_runs) <= 1
+    within = (len(independent) <= WIP_LIMITS["independent_lines"] and
+              len(stacks) <= WIP_LIMITS["stacks"] and
+              len(owner_runs) <= WIP_LIMITS["owner_run_lines"])
     return {
         "schema_version": 1,
         "generated_by": "scripts/repository_snapshot.py",
@@ -314,7 +317,7 @@ def build_snapshot(root: Path, source, test_receipt=None, validation_receipt=Non
         "catalog": catalog_facts(root, repository["catalog_blob_sha"]),
         "human_todo": human_todo_facts(root, repository["human_todo_blob_sha"]),
         "work": {
-            "wip_limits": {"independent_lines": 3, "stacks": 1, "owner_run_lines": 1},
+            "wip_limits": dict(WIP_LIMITS),
             "open_pull_requests": len(prs),
             "independent_lines": len(independent),
             "stack_count": len(stacks),
@@ -342,11 +345,14 @@ def _measurement_text(value, kind):
     if value["status"] == "unavailable":
         return "Measurements are unavailable; no receipt was supplied."
     prefix = "Current" if value["status"] == "current" else "Stale"
+    provenance = f" Measured `{value['source_sha']}` at `{value['run_at']}`"
     if kind == "tests":
         return (f"{prefix}: {value['total']} total, {value['passed']} passed, {value['skipped']} skipped, "
-                f"{value['failures']} failures, {value['errors']} errors ({value['environment']}).")
+                f"{value['failures']} failures, {value['errors']} errors ({value['environment']})."
+                f"{provenance} with `{value['command']}`.")
     return (f"{prefix}: validator {value['result']}; {value['graphs']} graphs, {value['pins']} pins, "
-            f"{value['tracked_paths']} tracked paths, {value['loras']} LoRA names.")
+            f"{value['tracked_paths']} tracked paths, {value['loras']} LoRA names."
+            f"{provenance}.")
 
 
 def render_markdown(value):
@@ -370,12 +376,16 @@ def render_markdown(value):
                 else "owner-run" if row["owner_run"] else "independent")
         lines.append(f"| #{row['number']} | {row['type']} | {row['readiness']} | {line} | {row['title']} |")
     work = value["work"]
+    limits = work["wip_limits"]
     verdict = "within" if work["within_wip_limit"] else "over"
-    lines += ["", (f"WIP is **{verdict} the declared limit**: {work['independent_lines']}/3 independent lines, "
-                  f"{work['stack_count']}/1 stack and {work['owner_run_lines']}/1 owner-run lanes.")]
+    lines += ["", (f"WIP is **{verdict} the declared limit**: "
+                  f"{work['independent_lines']}/{limits['independent_lines']} independent lines, "
+                  f"{work['stack_count']}/{limits['stacks']} stack and "
+                  f"{work['owner_run_lines']}/{limits['owner_run_lines']} owner-run lanes.")]
     if work["stacks"]:
         lines += ["", "Stacks: " + "; ".join(f"#{row['parent']} → " + ", ".join(f"#{child}" for child in row["children"]) for row in work["stacks"]) + "."]
-    lines += ["", "## Next ready", ""]
+    lines += ["", "## Captured next-ready selection", "",
+              "This ordering was authored in the bounded active-work capture; validation proves only that each listed issue is currently marked ready and unblocked, not that the generator chose its priority.", ""]
     issue_map = {row["number"]: row for row in value["issues"]["items"]}
     if work["next_ready"]:
         lines += ["| Issue | Type | Title |", "| --- | --- | --- |"]
