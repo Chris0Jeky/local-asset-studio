@@ -11,8 +11,8 @@ the art), licensed (the terms allow the use). Update this page when a goal's sta
 | G1 Workflows that genuinely work and are elaborated | ~65 % | Image lanes proven on this PC (63 of 66 graphs live-valid, 39 presets with completed jobs); video lane executes but fails inspection; per-backend validation missing |
 | G2 Chosen images at baseline quality | ~55 % | All six baseline families executed with retained IDs; zero accepted images; hands and feet unresolved; AniFox never ran |
 | G3 Character sheets → figures, poses, in-betweens | ~25 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
-| G4 UX that reflects the real work | ~65 % | Workflow-first IA is real and wired to ComfyUI; no task family for sheet/figure/sprite work; review loop barely used (108 of 111 assets unreviewed) |
-| G5 UI that works and feels good | ~50 % | 79 synthetic journeys pass; no native-browser default lane; no owner usability statement on record (HUMAN_TODO q-6 asks) |
+| G4 UX that reflects the real work | ~70 % | Workflow-first IA is real and wired to ComfyUI; the owner's 14 Sep verdict ("pretty much unusable") drove seven merged UX PRs under #278; review loop now has a queue, shortcuts and bulk review but is still unused by the owner; no task family for sheet/figure/sprite work |
+| G5 UI that works and feels good | ~55 % | 79 synthetic journeys pass; ten agent-driven use cases measured (fixture 10/10, live read-only 4/10, 4 dead ends ranked in UX-USE-CASE-MATRIX.md); the owner's first-hand statement is on record (UX-AUDIT-2026-09-14.md) and the next pass is the verdict (q-7) |
 | G6 Modular workflow editing in the Studio | ~55 % | Revisioned documents, Steps, bundles, agent parity exist; edited graphs are not runnable by design (#122); dynamic ComfyUI inputs were mis-read (fixed in PR #262) |
 | G7 Everything else | ~40 % | Runtime resilience strongest; video/Wan and voice weakest; #77/#89 crash root causes still open |
 
@@ -86,8 +86,10 @@ and worker; guardrails derive from measured failures (source-bound continuation,
 hold, timing estimates from 35 completed local samples).
 
 **Gaps.** The five task families (idea, change, refine, motion, 3D draft) contain no lane for sheet/figure/sprite work.
-The review surface that the whole architecture funnels into has processed 3 of 111 assets. No owner-facing UX
-feedback has ever been recorded; HUMAN_TODO q-6 now asks three concrete questions.
+The review surface that the whole architecture funnels into has processed 3 of 115 assets; PR #291 added the review
+queue, shortcuts, bulk review and grouping the owner asked for, unused so far. The owner's first-hand verdict of
+14 September is recorded in [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md) (#278); seven PRs answered it the same
+night and the owner's next pass decides whether they land (HUMAN_TODO q-7).
 
 **Next slice.** Add the sixth task family ("work on one figure / build a sprite sequence") once #252 exists. Open
 issues: #16, #36, #37, #38, #204.

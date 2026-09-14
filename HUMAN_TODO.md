@@ -47,6 +47,13 @@ an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by cod
 
 **q-6 — three UX questions: answered by the owner, 14 September 2026.** The owner gave a first-hand statement in free text instead of the three questions; it is recorded and mapped to root causes in [docs/UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md) and tracked as #278. In short: the Studio still feels unusable for the real goal; guided paths are wordy and advisory; Plan comparison and Runs & review are unexplained; the review loop lacks automation; Prompt Lab's locked buttons never say what is missing and its Create handoff never unlocked; the workflow builder's canvas and prompt field are clunky. Nothing here is a creative or licensing approval; the owner's next first-hand pass after the fixes is the verdict.
 
+**q-7 — first-hand pass over the merged UX wave: open.** Seven PRs answered the 14 September statement (#278;
+[docs/UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md) lists what changed where). The Studio on 8191 already serves
+them. Please try, in your own words: (1) Prompt Lab with a reference or an avoid term on the default profile, then
+"Open Create with this prompt"; (2) Guided workflows → Edit or preserve a character; (3) Plan a comparison from a
+recipe and read the summary line; (4) Asset library → Review next, with K / W / X / S; (5) the node builder's canvas
+and a prompt field. Say what still feels wrong. Nothing here is a creative or licensing approval.
+
 ## Recorded owner decisions
 
 **New WAI baseline, 13 September 2026:** the owner answered **"Keep only as an experiment"** for the teal-coat lanternkeeper, job `2607afc1-84e8-4f46-ae43-a8042b1c6ae7`, output `WAI-Illustration_00013_.png`. It remains outside the promising shortlist; successful execution is not creative acceptance.

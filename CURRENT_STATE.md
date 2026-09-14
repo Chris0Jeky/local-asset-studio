@@ -1,5 +1,32 @@
 # Current state — 14 September 2026
 
+## UX wave from the owner's first-hand feedback — 14 September 2026
+
+The owner's first first-hand usability statement (recorded in [UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md),
+umbrella #278, answers HUMAN_TODO q-6) drove seven merged PRs the same night, each with a fresh-context adversarial
+review and Codex triage: #280 (audit, Qwen Atelier expectation copy), #283 (Runs & review orientation and state
+legend, planner dedupe and live summary, keeper/needs-work on candidate cards), #286 (guided paths rewritten to a
+copy budget, auto-checked on mount, step list, "Choose <recipe>"), #287 (builder canvas pan/zoom/fit, growing
+prompt textareas with an Expand editor), #288 (Prompt Lab: reasons beside every disabled control, one-click
+repairs, live rebuild, handoff that names matching recipes), #291 (Asset library review queue with K/W/X/S
+shortcuts, bulk review, group-by, reason chips), #296 (`tests/studio_use_cases.py`: ten agent-driven use cases
+measured through Chromium, matrix in [UX-USE-CASE-MATRIX.md](docs/UX-USE-CASE-MATRIX.md), path-filtered CI lane).
+
+Executed on this PC: every PR's proving lanes locally plus hosted CI green at each merged head; the fixture-mode
+matrix (10 of 10 journeys complete, 34 browser POSTs, 0 generation submissions); the live read-only matrix
+against the real Studio on 8191 after the restart (4 of 10 complete on navigation and typing alone, 24 browser
+POSTs, 0 generation submissions, and no job, plan or asset created — checked against `/api/jobs`,
+`/api/production`, `/api/workspace`). The Studio (PID 10288) was stopped on an idle queue with no active job
+or plan and restarted through `scripts/Start-Studio.ps1 -NoBrowser` (PID 41932); it serves the merged guide
+copy and the Prompt Lab blocked path renders the plain-language reason with its one-click repair (observed in a
+browser, FLUX profile plus avoid terms). Two review-time facts: a worktree removed before its reviewer finished
+truncates the review (happened twice; the later reviews kept the tree), and wave workers sharing one session
+scratchpad overwrote each other's PR bodies once (caught and restored).
+
+Not verified: no generation was run; nothing here is art acceptance or a licence judgement; the owner's own
+first-hand pass over the merged Studio is still owed (HUMAN_TODO q-7); the five friction points the matrix
+ranked are a follow-up PR in flight (`ux/matrix-friction-fixes`).
+
 ## Owner gate update — Hunyuan3D 2.1 — 14 September 2026
 
 The owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2026 in the [issue #26
