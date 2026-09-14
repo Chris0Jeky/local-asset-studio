@@ -295,6 +295,121 @@
       ],
       "licence_note": "Installed from a Hugging Face mirror; two mirrors advertise the same SHA-256. Mirror agreement is not creator authentication and the original commercial terms are unresolved. The civitai listing returned HTTP 451 from this machine (docs/research/Workflow-Library-and-Strategy.md)."
     },
+    "Nova Anime XL IL v19 (Illustrious)": {
+      "prompt": {
+        "style": "danbooru tag list: subject count and character, appearance, clothing, action or pose, setting, lighting and composition tags, quality tail last",
+        "prefix": "",
+        "suffix": "masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor",
+        "notes": [
+          "the quality tail goes at the END for this family, unlike NoobAI's prefix",
+          "keep the negative short; long negatives fight the Illustrious tag space",
+          "a 1.5x hires pass at denoise 0.35-0.5 is the documented fix for broken limbs, not more steps",
+          "below 1024 on the short side the model loses anatomy"
+        ]
+      },
+      "defaults": {
+        "sampler": "euler_ancestral",
+        "scheduler": "normal",
+        "steps": 28,
+        "cfg": 6.0,
+        "width": 832,
+        "height": 1216
+      },
+      "resolutions": [
+        [
+          832,
+          1216
+        ],
+        [
+          1024,
+          1344
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1216,
+          832
+        ],
+        [
+          1344,
+          1024
+        ]
+      ],
+      "axes": [
+        {
+          "id": "steps",
+          "control": "steps",
+          "values": [
+            15,
+            22,
+            30
+          ],
+          "rationale": "the WAI listing quotes 15-30 steps; 15 is an audition, 30 is the authored value in workflows/api/wai-api.json.",
+          "sources": [
+            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+            "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
+          ]
+        },
+        {
+          "id": "cfg",
+          "control": "cfg",
+          "values": [
+            5.0,
+            6.0,
+            7.0
+          ],
+          "rationale": "cfg 5-7 is the quoted band; above 7 Illustrious checkpoints burn colour, below 5 they lose the tag prompt.",
+          "sources": [
+            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"
+          ]
+        },
+        {
+          "id": "sampler",
+          "control": "sampler",
+          "values": [
+            "euler_ancestral",
+            "dpmpp_2m",
+            "dpmpp_2m_sde"
+          ],
+          "rationale": "euler_ancestral is the family default; the dpmpp_2m pair is the usual deterministic comparison for SDXL-derived checkpoints.",
+          "sources": [
+            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"
+          ]
+        },
+        {
+          "id": "scheduler",
+          "control": "scheduler",
+          "values": [
+            "normal",
+            "karras"
+          ],
+          "rationale": "eps-prediction SDXL checkpoints accept the karras schedule; normal is what the authored graph uses.",
+          "sources": [
+            "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
+          ]
+        }
+      ],
+      "lora_rules": {
+        "max_active": 2,
+        "warn_total_strength": 1.6,
+        "ladder": [
+          0.8,
+          0.6,
+          0.4
+        ],
+        "notes": [
+          "Illustrious LoRAs are not interchangeable with Pony or SDXL-base LoRAs",
+          "style sliders such as cinematic lighting work at 0.4-0.8; above 1.0 they dominate"
+        ]
+      },
+      "sources": [
+        "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card: Euler a, Steps 20-30, CFG 5-7, Clip skip 1-2; read 2026-09-14)"
+      ],
+      "licence_note": "civitai flags RentCivit/Image/Rent (no Sell); derivatives allowed. Installed 2026-09-14 with a SHA-verified receipt."
+    },
     "NoobAI XL 1.1": {
       "prompt": {
         "style": "danbooru tag list after the quality prefix: subject, appearance, clothing, pose, setting, lighting and composition tags",
