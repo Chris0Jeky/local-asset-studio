@@ -27,6 +27,9 @@ page as a first-time user (library → witch → Continue with this → Combine 
 Picture 1 → replace the two fills → Generate): job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`, output
 `Combine/Klein_00001_.png`, sheet `examples/style-pose/combine-klein-proving.jpg`; the use-case matrix gained
 `combine-character-with-another-pose` (9 intended / 10 taken / 5 clicks / 0 dead ends, fixture mode, 12/12 cases pass).
+The renamed edit recipe was proved the same way (*Continue with this → Edit*, fill replaced with "replace her witch hat
+with a red Santa hat …"): job `1004f972-e1d9-489e-bbda-60182bd18216`, 35.3 s, hat replaced, the rest kept. After the
+Codex review the bracketed fills are refused on every route (server and readiness list), not only a continuation.
 Not verified: art acceptance (HUMAN_TODO q-27 e), the look recipe through the page, Klein 9B and AniEdit 9B (downloads
 still running through the VPN), a third board picture with explicit "take only … from image 3" wording.
 
@@ -91,7 +94,8 @@ scrolled to the source panel. Three things changed, all driven through the page 
   generic *Attach every required reference* line no longer repeats a continuation condition.
 - **A second picture on a one-slot recipe asks, it does not block**: *Use its look → Restyle the source* (opens
   the handoff at Restyle, prepares, and puts that picture on Picture 1), *Start from this picture instead*,
-  *Keep the source, drop this picture*. The library picker takes the same path instead of a wall message.
+  *Keep the source, drop this picture*. The library picker takes the same path instead of a wall message. (Late the
+  same night the panel gained *Use its pose → Combine* as its leading button; see the entry above.)
 
 Executed on this PC: two Studio jobs through the new route on the throne witch with one imported picture on the
 board, Nova, seed 2026091407 — `2f34fdc8-743e-4d3b-807f-6ffb2a7a3966` (style weight 0.7, 64 s, ComfyUI prompt

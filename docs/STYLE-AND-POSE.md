@@ -99,9 +99,10 @@ instead of blocking.
 3. Board recipes only: drop the style picture on Picture 1 or use **Pull from library** (it opens on Picture 1 and closes
    itself once the board holds one picture). Generate reads **Restyle source →**.
 4. If you were already continuing on a one-slot recipe and add a second picture (file or library pull), Create
-   no longer blocks: a panel asks what the picture is for — *Use its look → Restyle the source* (opens the
-   handoff at Restyle, prepares, and puts that picture on Picture 1), *Start from this picture instead*
-   (ends the continuation), or *Keep the source, drop this picture*.
+   no longer blocks: a panel asks what the picture is for — *Use its pose → Combine* (the leading button since the
+   Combine route exists: opens the handoff at Combine, prepares, and puts that picture on Picture 1), *Use its look →
+   Restyle the source* (the same at Restyle), *Start from this picture instead* (ends the continuation), or *Keep the
+   source, drop this picture*.
 5. If the pose picture ever goes missing, the condition says *Pose picture no longer holds the picture you chose
    to continue* and its button **Put the source back** re-attaches the same asset (verified by hash) without
    reopening anything.
