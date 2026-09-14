@@ -238,13 +238,17 @@ def prepare(root, plan, request, output):
     return rs.publish_packet(destination, artifacts, receipt)
 
 
-def apply(root, plan, request, bundle, candidate, output, *, expected_effective_write_sha256):
-    """Reconstruct a packet from external authority, then compose a supplied image."""
-    destination = _folder(root, output, new=True)
-    digest(expected_effective_write_sha256)
+def verify_prepared(root, plan, request, bundle, *, expected_effective_write_sha256=None):
+    """Read/reconstruct a prepared bundle; return captured buffers, never authority.
+
+    Scope review has no accepted mask yet. Apply still requires its caller's
+    explicit effective-mask pin. Both consumers use this same verification path.
+    """
+    if expected_effective_write_sha256 is not None: digest(expected_effective_write_sha256)
     expected_files, expected_receipt, inputs = _prepare(root, plan, request)
-    require(expected_effective_write_sha256 == expected_receipt['files']['effective-write.png']['sha256'],
-            'Effective write coverage differs from the caller expected digest')
+    if expected_effective_write_sha256 is not None:
+        require(expected_effective_write_sha256 == expected_receipt['files']['effective-write.png']['sha256'],
+                'Effective write coverage differs from the caller expected digest')
     folder = _folder(root, bundle)
     rs.check_packet_members(folder, {*expected_files, 'receipt.json'})
     raw_receipt = rs.read_bounded(folder / 'receipt.json', rs.MAX_METADATA_BYTES, reject_symlink=True)
@@ -254,6 +258,15 @@ def apply(root, plan, request, bundle, candidate, output, *, expected_effective_
     for name, expected in expected_files.items():
         actual = rs.read_bounded(folder / name, remaining, reject_symlink=True); remaining -= len(actual)
         require(actual == expected, 'Prepared artifact does not reconstruct: ' + name)
+    return expected_files, receipt, inputs, raw_receipt
+
+
+def apply(root, plan, request, bundle, candidate, output, *, expected_effective_write_sha256):
+    """Reconstruct a packet from external authority, then compose a supplied image."""
+    destination = _folder(root, output, new=True)
+    digest(expected_effective_write_sha256)
+    _, receipt, inputs, raw_receipt = verify_prepared(root, plan, request, bundle,
+        expected_effective_write_sha256=expected_effective_write_sha256)
     source, write, protect, colours = inputs
     raw_candidate = _captured_artifact(root, candidate)
     patch, _ = _decode(raw_candidate, colours=colours)
