@@ -409,6 +409,8 @@ function assetQueueStep(delta) {
 }
 async function assetQueueDecide(review) {
   if(!assetQueue || !activeAsset || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
+  // A shortcut must never re-send an unrelated unconfirmed command as if it were this decision.
+  if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording a queue decision.',true);return false;}
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   await saveAssetDetails();
