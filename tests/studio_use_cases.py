@@ -380,6 +380,21 @@ class CaseRun:
         try: return self.page.locator('#generate').is_enabled()
         except Exception: return False
 
+    def wait_for_studies(self, timeout=10000):
+        """Wait for Runs & review to actually render a study.
+
+        Preparing posts, switches view and refreshes; a fixed sleep is a flake on a
+        slower machine (hosted CI, 14 Sep 2026). Returns the rendered study count.
+        """
+        try: self.page.wait_for_function("document.querySelectorAll('#productionList [data-project]').length > 0", timeout=timeout)
+        except Exception: pass
+        return self.page.locator('#productionList [data-project]').count()
+
+    def dialog_status(self, selector):
+        """Whatever a prepare dialog last reported, so a failure explains itself."""
+        try: return ' '.join(self.page.locator(selector).inner_text().split())[:120]
+        except Exception: return ''
+
 
 # --------------------------------------------------------------------------------------
 # Drivers. One per case id; the call order must match the intents in use-cases.json.
@@ -459,17 +474,16 @@ def _compare(c):
     c.act('#experimentValues', 'read', note='proposed candidate values')
     c.act('#experimentBudget', 'fill', typed='2')
     c.act('#prepareExperiment')
-    c.page.wait_for_timeout(700)
-    listed = c.page.locator('#productionList [data-project]').count()
-    c.act('#productionList', 'read', note='%d studies listed' % listed)
-    return listed > 0, '%d studies listed after preparing' % listed
+    listed = c.wait_for_studies()
+    status = c.dialog_status('#experimentStatus')
+    c.act('#productionList', 'read', note='%d studies listed%s' % (listed, '; planner said: ' + status if status else ''))
+    return listed > 0, '%d studies listed after preparing%s' % (listed, '; planner said: ' + status if status else '')
 
 
 @driver('review-and-keep-winner')
 def _review(c):
     c.boot('#production')
-    c.page.wait_for_timeout(600)
-    c.act('#productionList', 'read', note='studies listed')
+    c.act('#productionList', 'read', note='%d studies listed' % c.wait_for_studies())
     c.act('#productionList [data-project="%s"]' % ('c' * 32), note='the finished comparison')
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
@@ -585,10 +599,10 @@ def _native_export(c):
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
     c.act('#prepareNative')
-    c.page.wait_for_timeout(700)
-    listed = c.page.locator('#productionList [data-project]').count()
-    c.act('#productionList', 'read', note='%d studies listed' % listed)
-    return listed > 0, '%d studies listed after preparing the export' % listed
+    listed = c.wait_for_studies()
+    status = c.dialog_status('#nativeStatus')
+    c.act('#productionList', 'read', note='%d studies listed%s' % (listed, '; export dialog said: ' + status if status else ''))
+    return listed > 0, '%d studies listed after preparing the export%s' % (listed, '; export dialog said: ' + status if status else '')
 
 
 # --------------------------------------------------------------------------------------

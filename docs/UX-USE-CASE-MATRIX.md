@@ -149,6 +149,11 @@ the fixture measurement on every PR that touches `app/static/**`, `presets/catal
 `studio_workflow/guides.py`, the case file or the runner, and fails when a case misses its success
 condition. The matrix JSON and the per-step screenshots are uploaded as a CI artifact.
 
+Timing: the runner waits for the interface to render rather than sleeping a fixed interval. The first
+hosted-CI run of this lane failed `compare-settings-from-recipe` for exactly that reason — preparing a
+study posts, switches view and refreshes, which took longer than the 700 ms sleep the runner then used.
+Prefer `wait_for_studies()` and friends over `wait_for_timeout` in any new driver.
+
 Adding a case: add its intents to `research/ux/use-cases.json` and register a driver of the same id in
 `tests/studio_use_cases.py`. The driver must take exactly one recorded action per intent —
 `tests/test_use_case_matrix.py` checks that every case has a driver, and a mismatch shows up in the
