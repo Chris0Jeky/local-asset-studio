@@ -1,0 +1,33 @@
+name: Maintenance pass 6 source
+on:
+  push:
+    branches: [codex/maintenance-pass6-transport-20260914]
+    paths: [.github/workflows/maintenance-pass6-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 20c46dd45044a6f9193b3e562df5bee4e5fc8912
+          persist-credentials: false
+      - name: Export tracked files and reconciliation index
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git archive --format=tar HEAD > "$RUNNER_TEMP/source.tar"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/identity.txt"
+          gh api --paginate 'repos/Chris0Jeky/local-asset-studio/issues?state=open&per_page=100' --slurp > "$RUNNER_TEMP/issues.json"
+          gh api 'repos/Chris0Jeky/local-asset-studio/pulls?state=open&per_page=100' > "$RUNNER_TEMP/pulls.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-pass6-source
+          path: |
+            ${{ runner.temp }}/source.tar
+            ${{ runner.temp }}/identity.txt
+            ${{ runner.temp }}/issues.json
+            ${{ runner.temp }}/pulls.json
+          retention-days: 1
