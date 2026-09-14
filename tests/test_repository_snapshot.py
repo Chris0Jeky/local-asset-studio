@@ -25,8 +25,15 @@ CATALOG_TEXT = json.dumps(CATALOG_DATA)
 TODO_TEXT = ("# Decisions\n\n**q-25 — review the style results (open).** Choose a direction.\n\n"
              "**q-26 — choose permitted LoRAs (open).** Decide intended use.\n\n"
              "**q-6 — answered.** Historical text.\n- [ ] An unnumbered owner check\n- [x] Finished\n")
-CATALOG_SHA256 = hashlib.sha256(CATALOG_TEXT.encode("utf-8")).hexdigest()
-TODO_SHA256 = hashlib.sha256(TODO_TEXT.encode("utf-8")).hexdigest()
+
+
+def git_blob_sha(text: str):
+    raw = text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw).hexdigest()
+
+
+CATALOG_BLOB_SHA = git_blob_sha(CATALOG_TEXT)
+TODO_BLOB_SHA = git_blob_sha(TODO_TEXT)
 
 
 def source(**changes):
@@ -37,8 +44,8 @@ def source(**changes):
             "head_sha": HEAD,
             "default_branch": "main",
             "facts_sha": HEAD,
-            "catalog_sha256": CATALOG_SHA256,
-            "human_todo_sha256": TODO_SHA256,
+            "catalog_blob_sha": CATALOG_BLOB_SHA,
+            "human_todo_blob_sha": TODO_BLOB_SHA,
         },
         "pull_requests": [
             {"number": 333, "title": "Reference study", "head": "research/reference-intelligence",
@@ -87,8 +94,8 @@ class RepositorySnapshotTests(unittest.TestCase):
             "head_sha": HEAD,
             "default_branch": "main",
             "facts_sha": HEAD,
-            "catalog_sha256": CATALOG_SHA256,
-            "human_todo_sha256": TODO_SHA256,
+            "catalog_blob_sha": CATALOG_BLOB_SHA,
+            "human_todo_blob_sha": TODO_BLOB_SHA,
         })
         self.assertEqual(result["catalog"], {"presets": 3, "unique_graphs": 2,
                                              "verified_presets": 2, "visual_workflows": 1})
@@ -109,7 +116,7 @@ class RepositorySnapshotTests(unittest.TestCase):
         self.assertEqual(result["subjective_fields"],
                          ["artistic acceptance", "product percentages", "priority judgement", "licensing approval"])
 
-    def test_local_facts_are_digest_bound_and_measurements_use_their_revision(self):
+    def test_local_facts_are_blob_bound_and_measurements_use_their_revision(self):
         test_receipt = {"schema_version": 1, "source_sha": FACTS_HEAD, "run_at": CAPTURED,
                         "command": "python -m unittest discover -s tests", "total": 100,
                         "passed": 90, "skipped": 10, "failures": 0, "errors": 0,
@@ -123,7 +130,7 @@ class RepositorySnapshotTests(unittest.TestCase):
             root = Path(tmp); write_repo(root)
             result = snapshot.build_snapshot(root, value, test_receipt, validation)
             (root / "presets/catalog.json").write_text(json.dumps({"presets": []}), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "catalog.*SHA-256"):
+            with self.assertRaisesRegex(ValueError, "catalog.*Git blob"):
                 snapshot.build_snapshot(root, value)
         self.assertEqual(result["repository"]["head_sha"], HEAD)
         self.assertEqual(result["repository"]["facts_sha"], FACTS_HEAD)
