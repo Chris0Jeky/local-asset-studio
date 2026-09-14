@@ -74,6 +74,10 @@ test('restyle puts the source on the pose picture and needs one board picture',(
   assert.throws(()=>C.initial(source,board,'edit',file));assert.throws(()=>C.initial(source,p,'restyle',file));
   assert.deepEqual(C.destinations('restyle',[p,board,{...board,id:'other',name:'Other'}],source).map(x=>x.id),['style-pose-nova','other']);
   assert.match(C.guidance(board,source).join(' '),/pose picture/i);assert.doesNotMatch(C.guidance(board,source).join(' '),/Picture 1 only/);
+  const keeps={...board,id:'restyle-nova',last_reference_label:'Picture to restyle',continuation_capability:{...boardCap,keeps_picture:true}};
+  assert.match(C.guidance(keeps,source).join(' '),/Keeps this picture \(layout, pose, costume, colours/);assert.match(C.guidance(keeps,source).join(' '),/picture to restyle/);assert.match(C.guidance(keeps,source).join(' '),/face pass/);assert.doesNotMatch(C.guidance(keeps,source).join(' '),/Restyle a picture recipe/);
+  assert.match(C.guidance(board,source).join(' '),/paints a new image/);assert.match(C.guidance(board,source).join(' '),/choose a Restyle a picture recipe/);
+  assert.deepEqual(C.destinations('restyle',[p,board,keeps],source).map(x=>x.id),['restyle-nova','style-pose-nova']);
 });
 test('family matching never resurrects a text-only graph as a refinement',()=>{
   const same={...p,id:'same',family:'Anima'},different={...p,id:'different',family:'Krea'};
