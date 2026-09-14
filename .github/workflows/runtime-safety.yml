@@ -5,7 +5,7 @@ on:
       - 'app/**'
       - 'studio_prompt/http_extension.py'
       - 'studio_workflow/addressable_figures.py'
-      - 'tests/test_addressable_figures.py'
+      - 'tests/test_addressable_figures*.py'
       - 'tests/test_reference*.py'
       - 'tests/test_native_export*.py'
       - 'tests/test_backend*.py'
@@ -25,7 +25,7 @@ on:
       - 'app/**'
       - 'studio_prompt/http_extension.py'
       - 'studio_workflow/addressable_figures.py'
-      - 'tests/test_addressable_figures.py'
+      - 'tests/test_addressable_figures*.py'
       - 'tests/test_reference*.py'
       - 'tests/test_native_export*.py'
       - 'tests/test_backend*.py'
@@ -59,7 +59,7 @@ jobs:
       - name: AV client fixture lifetime
         run: python -m unittest discover -s tests -p 'test_av_client*.py' -v
       - name: Addressable figure storage
-        run: python -m unittest discover -s tests -p test_addressable_figures.py -v
+        run: python -m unittest discover -s tests -p 'test_addressable_figures*.py' -v
       - run: python -m unittest discover -s tests -p test_backend_safety.py -v
       - run: python -m unittest discover -s tests -p test_backend_startup_interlock.py -v
       - run: python -m unittest discover -s tests -p test_model_install_safety.py -v
