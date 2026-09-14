@@ -12,8 +12,8 @@ def compile_brief(b, profile_id):
     need(b['task'] in p['tasks'], 'Task does not match model/profile')
     refs = b['references']
     if not p['min_refs'] <= len(refs) <= p['max_refs']:
-        issue('REFERENCE_COUNT', f"Profile requires {p['min_refs']}..{p['max_refs']} references; none were silently discarded", True)
-    if any(r['kind'] not in p['reference_kinds'] for r in refs): issue('REFERENCE_KIND', 'Unsupported reference kind', True)
+        issue('REFERENCE_COUNT', f"This profile reads {p['min_refs']}..{p['max_refs']} reference images and {len(refs)} are attached; none were silently discarded", True)
+    if any(r['kind'] not in p['reference_kinds'] for r in refs): issue('REFERENCE_KIND', f"This profile reads only {', '.join(p['reference_kinds']) or 'no'} references; the attached kind stays in the brief", True)
     for i, r in enumerate(refs): record(f'references[{i}]', 'reference_map')
     prose = [b['brief']] + [f'{k.capitalize()}: {b["facets"][k]}' for k in FACETS if k in b['facets']]
     record('brief', 'description')
@@ -26,7 +26,7 @@ def compile_brief(b, profile_id):
             issue('STRUCTURAL_CONTROL_REQUIRED', f"{c['id']}: {c['mechanism']} cannot be delivered by prompt text alone", c['priority'] == 'hard')
     dialect = p['dialect']
     if dialect == 'tags':
-        if not b['tags']: issue('TAGS_REQUIRED', 'Translate/review the brief into approved tags before compiling this profile', True)
+        if not b['tags']: issue('TAGS_REQUIRED', 'This profile emits only approved tags and none were supplied; the brief is never translated into tags automatically', True)
         out['positive'] = ', '.join(b['tags']); out['negative'] = ', '.join(b['avoid'])
         issue('TAG_COVERAGE_REVIEW', 'Only approved tags are emitted. Review semantic coverage against the preserved brief and constraints.')
         for x in ledger:
@@ -42,7 +42,7 @@ def compile_brief(b, profile_id):
             issue('MOTION_UNSPECIFIED', 'Specify subject movement, camera movement and what stays fixed; no motion invented.')
         out['positive'] = '\n'.join(prose)
         if p['negative']: out['negative'] = ', '.join(b['avoid'])
-        elif b['avoid']: issue('NEGATIVE_REWRITE_REQUIRED', 'This profile has no negative channel. Approve positive replacements; exclusions remain in the intent.', True)
+        elif b['avoid']: issue('NEGATIVE_REWRITE_REQUIRED', 'This profile has no negative channel, so avoidance terms cannot be sent. Approve positive replacements or keep them as a review note; the words remain in the intent.', True)
         record('tags', 'positive'); record('avoid', 'negative' if p['negative'] else 'review: positive rewrite')
     elif dialect == 'voice':
         out = {'text': b['verbatim'].get('text', ''), 'instruct': '\n'.join(prose), 'language': b['parameters'].get('language', 'Auto')}
@@ -75,11 +75,11 @@ def compile_brief(b, profile_id):
         if (dialect, k) not in (('voice', 'text'), ('music', 'lyrics')):
             record('verbatim.' + k, 'preserved / unbound'); issue('VERBATIM_UNBOUND', f'No output channel for verbatim.{k}', True)
     if dialect in ('voice', 'music', 'image_input'):
-        if b['avoid']: issue('NEGATIVE_UNBOUND', 'Avoidance terms need an explicit supported treatment', True)
-        if b['tags']: issue('TAGS_UNBOUND', 'Tags are preserved but not used by this profile', True)
+        if b['avoid']: issue('NEGATIVE_UNBOUND', 'This profile has no channel for avoidance terms; they need an explicit supported treatment and were not dropped', True)
+        if b['tags']: issue('TAGS_UNBOUND', 'This profile does not read tags; yours are preserved in the intent but unused', True)
     for key, value in out.items():
         cap = p.get('field_limits', {}).get(key, p['max_chars'])
-        if isinstance(value, str) and len(value) > cap: issue('PROMPT_TOO_LONG', f'{key} exceeds reviewed {cap}-character budget; no truncation applied', True)
+        if isinstance(value, str) and len(value) > cap: issue('PROMPT_TOO_LONG', f'{key} is {len(value)} characters against a reviewed {cap}-character budget; no truncation applied', True)
     if any(c['priority'] == 'hard' for c in b['constraints']):
         issue('ACCEPTANCE_REQUIRED', 'Hard requirements remain acceptance checks; syntactically valid prompting cannot guarantee them.')
     # The complete intent is retained even when the backend cannot consume a field.
