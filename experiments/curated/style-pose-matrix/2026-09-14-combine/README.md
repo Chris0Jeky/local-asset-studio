@@ -55,6 +55,32 @@ loading another model); a warm run is 14–46 s.
   ground and is what ships.
 - **The edit recipe works and should lead the Edit route** (it did not: the 11-minute Qwen recipe greeted the user).
 
+## The owner's first run and the wording fix
+
+Job `aebf406f…` (22:54, through the page): image 1 = picture B (the "SHARK" crop-top), pose picture = a newly imported
+bent-over maid fan picture (`6895e9e0…_yande.re_1250070…`), fills "Ellen Joe in pink shorts and top with attractive silhouette"
+and "leaning forwards, seen from the back, one hand on the hip moving the shorts slightly", plus "not include the tail",
+seeds 2026091411–14, 148.5 s for four. Sheet `examples/style-pose/combine-klein-owner-run.jpg`. Every seed wore a cap the
+source does not have (the shipped keep sentence said "her hat") and seed 2026091414 drew two figures.
+
+Fix rendered against ComfyUI with the catalog graph, same pictures, seeds and fills, keep sentence "Keep the face, the
+hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture." and
+"Leave out the tail." appended:
+
+| Seed | Prompt ID | s | Result |
+| --- | --- | --- | --- |
+| 2026091411 | `a20e6df1-fa86-46cf-9113-bf0b836285d2` (`Research/combine-fix_00001_.png`) | 54.8 (model load) | single figure, no cap, tail gone, from behind, hands on hips |
+| 2026091412 | `39e6ce34-c09d-4b26-8595-0ac148233985` (`Research/combine-fix_00002_.png`) | 21.0 | same |
+| 2026091413 | `f73b9c0b-56fc-46f9-bbeb-91e5d8e08e7b` (`Research/combine-fix_00003_.png`) | 21.0 | same; the source's "?" speech bubble kept |
+| 2026091414 | `a27ae00d-cf23-40b8-8e9a-ce328fa26a76` (`Research/combine-fix_00004_.png`) | 21.1 | same; speech bubble kept |
+
+Sheet `examples/style-pose/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
+"leaning forwards". Stronger words, same pictures and seeds (`bent forward at the waist, seen from behind, both hands on
+the hips, looking back over her shoulder`; prompts `9c2635a7-a13b-48c5-83c4-114ee7333eeb`, `4241c6f4-c9d5-43d0-a847-5a45e1acb2d1`,
+`Research/combine-bend_0000[12]_.png`, sheet `examples/style-pose/combine-klein-owner-bend.jpg`): the look-back and the
+hands were honoured, the deep waist bend of the pose picture still was not. The words decide what moves; an extreme
+bend is beyond what 6 steps of the 4B model reproduced here.
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).

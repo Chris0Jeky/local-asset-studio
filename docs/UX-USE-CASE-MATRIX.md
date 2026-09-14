@@ -295,7 +295,7 @@ wording (who is in image 1; the pose in a few words) are replaced.
 
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 966 | 793 | PASS |
+| `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 945 | 772 | PASS |
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness

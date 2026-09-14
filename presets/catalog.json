@@ -6338,7 +6338,7 @@
         "image"
       ],
       "last_reference_label": "Picture to keep (image 1)",
-      "last_reference_hint": "The character you keep: face, hair, hat, clothing, colours and rendering style all come from this picture. Continue with this -> Combine puts it here.",
+      "last_reference_hint": "The character you keep: face, hair, outfit, colours and rendering style all come from this picture. Continue with this -> Combine puts it here.",
       "reference_slots": [
         {
           "role": "pose",
@@ -6364,9 +6364,9 @@
         "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
       },
       "reference_board_label": "Pose picture (image 2)",
-      "reference_board_hint": "A picture of anyone in the pose you want. Only the pose is taken; the person, clothing and colours are not copied. A third picture leaked its costume in our test, so use one picture unless the wording says exactly what to take from image 3.",
+      "reference_board_hint": "A picture of anyone in the pose you want. Only the pose is taken; the person, clothing and colours are not copied. The picture guides and the words decide: say which way the figure faces, how far it bends and what each hand does (a mild 'leaning forwards' gave only a mild lean in our test; a look-back and hands on hips were honoured, a deep waist bend was not). A third picture leaked its costume in our test, so use one picture unless the wording says exactly what to take from image 3.",
       "continuation_operation": "combine",
-      "continuation_prompt": "Redraw [who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat] from image 1 in the pose of the person in image 2: [the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]. Keep her face, her hair, her hat, her clothing and its colours, and image 1's rendering style. Do not copy the person from image 2, their clothing or their colours.",
+      "continuation_prompt": "Redraw [who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat] from image 1 in the pose of the person in image 2: [the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]. Keep the face, the hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture. Do not copy the person from image 2, their clothing or their colours.",
       "continuation_placeholder": [
         "[who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat]",
         "[the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]"

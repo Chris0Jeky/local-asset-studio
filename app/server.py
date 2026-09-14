@@ -425,6 +425,12 @@ class Studio:
             self._bind_control(graph, preset, key, upload.name)
         if preset.get("requires_rgba_mask") and "reference" not in controls:
             raise StudioError((preset.get("name") or preset.get("id") or "This recipe") + " requires a real RGBA PNG upload; the authored example cannot be queued")
+        # A recipe that transforms a picture (a board with a picture to keep, or a declared restyle/combine) needs that
+        # picture on every route: the plain Create route would otherwise submit the authored example picture literally.
+        source_key = "last_reference" if preset.get("last_reference") else "reference" if preset.get("reference") else None
+        if source_key and payload.get("continuation") is None and (preset.get("reference_board") and preset.get("last_reference") or preset.get("continuation_operation")) and source_key not in controls:
+            label = preset.get(source_key + "_label") or ("Picture to keep (image 1)" if source_key == "last_reference" else "the picture")
+            raise StudioError((preset.get("name") or preset.get("id") or "This recipe") + " needs your picture on " + label + "; the authored example picture cannot be queued")
         if preset.get("max_pixels"):
             actual = {key: graph[str(preset[key][0])]["inputs"][str(preset[key][1])] for key in ("width", "height")}
             if actual["width"] * actual["height"] > preset["max_pixels"]: raise StudioError("Resolution exceeds this workflow's pixel budget")

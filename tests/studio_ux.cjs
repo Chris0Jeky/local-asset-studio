@@ -32,6 +32,11 @@ test('bracketed fills left in the wording block readiness on every route and nam
   assert.deepEqual(U.readinessItems(base),[]);
   const items=U.readinessItems({...base,unfilled:['[who]','[the pose]']});
   assert.deepEqual(items.map(i=>[i.code,i.action]),[['wording','fills']]);assert.match(items[0].message,/replace “\[who\]” and “\[the pose\]” in the prompt/);
+  // A recipe that transforms a picture blocks on the missing picture you keep, named by the recipe's own label, before anything else.
+  const source=U.readinessItems({...base,preset:{id:'combine-klein',last_reference_label:'Picture to keep (image 1)'},sourceMissing:true,unfilled:['[who]']});
+  assert.deepEqual(source.map(i=>[i.code,i.action]),[['source','source'],['wording','fills']]);assert.equal(source[0].message,'Add your picture to Picture to keep (image 1); the authored example picture is never run.');
+  // A pose picture is not kept, so the line names the slot by the recipe's own label rather than promising to keep it.
+  assert.equal(U.readinessItems({...base,preset:{id:'style-pose-wai',last_reference_label:'Pose picture'},sourceMissing:true})[0].message,'Add your picture to Pose picture; the authored example picture is never run.');
 });
 test('combine offers only declared combine boards and restyle never offers them', () => {
   const combine=U.recipesFor('combine',catalog);assert.ok(combine.length&&combine.every(p=>p.continuation_operation==='combine'&&p.reference_board&&p.last_reference));

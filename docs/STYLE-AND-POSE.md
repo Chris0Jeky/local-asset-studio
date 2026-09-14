@@ -57,6 +57,22 @@ plainer picture. About 30–45 s warm. Research table and the exact graphs:
 `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`; sheet `examples/style-pose/combine-klein-research.jpg`;
 proving run through the page in `CURRENT_STATE.md` and the catalog's `execution_note`.
 
+The owner's first run through this route (job `aebf406f…`, 22:54 the same night: the "SHARK" crop-top picture on image 1, a
+bent-over fan picture as the pose, four seeds; sheet `examples/style-pose/combine-klein-owner-run.jpg`) showed two faults
+in the prepared wording, not in the route: the keep sentence had been written for the witch and said "her hat", so
+every seed invented a cap, and one seed drew two figures. The sentence is now subject-neutral ("Keep the face, the hair,
+the outfit and its colours") and asks for one figure; the same four seeds re-rendered with the owner's own fills gave
+four single figures, no hats, tail left out, seen from behind with hands on hips
+(`examples/style-pose/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s each
+warm). The lean stayed mild because the fill said "leaning forwards": the picture guides, the words decide, so say how
+far the figure bends and what each hand does; the board hint now says so. A test keeps the sentence free of `her`, `his`,
+`hat`, `robe` and `witch` outside the fills. Starting from the *Combine two pictures* card instead of *Continue with this*
+now blocks until you choose the picture you keep (the server refuses to queue the authored example picture), and the
+board describes itself as a pose picture rather than a style board. Stronger pose words ("bent forward at the waist,
+seen from behind, both hands on the hips, looking back over her shoulder") moved the look-back and the hands but not the
+deep waist bend (`examples/style-pose/combine-klein-owner-bend.jpg`): say what should move, and expect a mild pose from
+the 4B model when the pose picture is extreme.
+
 **Change one thing (FLUX.2 Klein 4B, keeps the rest)** now leads *Continue with this → Edit* (it was the 11-minute Qwen
 recipe). The prepared wording is "Change one thing: [say what changes]. Keep everything else exactly as it is: …" plus the
 source's description; the bracketed fill blocks Generate until replaced. Measured: "replace her hat with a red Santa hat"
