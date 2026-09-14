@@ -17,7 +17,8 @@ function setup(options={}) {
       showModal(){this.open=true;},close(){this.open=false;this.emit('close');},focus(){},scrollIntoView(){}});
     return elements.get(id);
   };
-  const context=vm.createContext({console,AbortController,Set,JSON,Date,crypto:require("node:crypto").webcrypto,sessionStorage:storage,
+  const context=vm.createContext({console,AbortController,Set,JSON,Date,
+    StudioAssetGrid:{render(grid,assets,options){grid.innerHTML=assets.length?assets.map(options.cardHTML).join(''):options.emptyHTML;}},crypto:require("node:crypto").webcrypto,sessionStorage:storage,
     $:el,esc:value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),window:{confirm(){requests++;return approve;}},
     document:{querySelectorAll:()=>[],addEventListener(name,fn,capture){handlers.push({name,fn,capture});}},
     setTimeout(fn){timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);},

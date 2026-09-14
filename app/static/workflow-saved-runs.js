@@ -8,6 +8,9 @@
   const panel = el('section', null, {id: 'workflowSavedRuns', class: 'wf-panel wf-saved-runs', 'aria-labelledby': 'savedRunsTitle'});
   const summary = el('p', '', {id: 'savedRunDraftState'}), message = el('p', 'No run requested. Load history or prepare a saved revision.', {id: 'savedRunMessage', role: 'status'});
   const prepareActions = el('div', null, {class: 'wf-toolbar'}), historyActions = el('div', null, {class: 'wf-toolbar'}), runActions = el('div', null, {class: 'wf-toolbar'});
+  // A disabled control must name the precondition it is waiting on, from the same state its disabled
+  // logic reads. Described by the button itself so a screen reader reaches it too (#278 friction 2).
+  const prepareState = el('p', '', {id: 'prepareSavedRunState', role: 'status'});
   const history = el('select', null, {id: 'savedRunHistory', 'aria-label': 'Prepared runs for the open workflow'});
   const pending = el('select', null, {id: 'savedRunPending', 'aria-label': 'Retained preparation requests'});
   const requestId = el('input', null, {id: 'savedRunRequest', maxlength: '96', 'aria-label': 'Original preparation request ID', placeholder: 'Original preparation ID'});
@@ -16,7 +19,7 @@
   identifiers.append(el('summary', 'Source IDs and fingerprints'), fingerprints);
   const details = el('details'), fullTicket = el('pre', '', {id: 'savedRunExactTicket'}), jobInfo = el('pre', '', {id: 'savedRunObservation'});
   details.append(el('summary', 'Exact ticket, including fixed recipe identity'), fullTicket);
-  panel.append(el('h3', 'Saved runs · recover across tabs and agents', {id: 'savedRunsTitle'}), summary, prepareActions,
+  panel.append(el('h3', 'Saved runs · recover across tabs and agents', {id: 'savedRunsTitle'}), summary, prepareActions, prepareState,
     el('p', 'Preparation uses the saved revision only. Save local edits explicitly first; preparation never starts a generation.'),
     historyActions, metadata, runActions, message, el('h4', 'Projected control changes'), controls, identifiers, details, jobInfo,
     el('p', 'Existing tab-local tickets are separate. Loading a saved run does not replace your draft. A missing job is not proof that it never ran.'));
@@ -125,6 +128,7 @@
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   action(prepareActions, 'prepareSavedRun', 'Prepare saved revision', () => prepare());
+  buttons.prepareSavedRun.setAttribute('aria-describedby', 'prepareSavedRunState');
   prepareActions.append(pending);
   action(prepareActions, 'recoverSavedPreparation', 'Recover preparation', () => {
     const value = journal.list().find(x => x.request_id === pending.value); if (!value) throw Error('Select a retained preparation'); return prepare(value);
@@ -143,11 +147,23 @@
   action(runActions, 'downloadSavedRecord', 'Download source record', () => download('saved-run-record.json', packet.record_json));
   history.onchange = () => { requestId.value = history.value; packet = null; sync(); };
   requestId.oninput = () => { packet = null; viewToken++; sync(); }; pending.onchange = () => sync();
+  function prepareBlocker(p) {
+    if (busy) return 'A saved-run request is in progress. Wait for it to report before preparing another.';
+    if (!journal) return 'Browser retention is unavailable, so a preparation ID could not be kept. Use the headless saved-run client.';
+    if (!p.id) return 'No saved document yet: save this workflow to the Workspace before a revision can be prepared.';
+    if (p.blocked) return 'The last save is unresolved: settle it before preparing this revision.';
+    if (p.conflict) return 'This draft conflicts with the stored revision: reopen the current revision before preparing.';
+    if (p.dirty) return 'Unsaved edits are open: preparation uses the saved revision only, so save first.';
+    if (!preset.value) return 'No registered recipe is chosen: pick one so the prepared run has a recipe identity.';
+    return '';
+  }
   function sync() {
     const p = P.snapshot(), key = bindingKey();
     if (key !== projectKey) { projectKey = key; viewToken++; before = null; historyOwner = null; history.replaceChildren(el('option', 'Load history for the open workflow', {value: ''})); }
     summary.textContent = !p.id ? 'Open or save a Workspace workflow to prepare a persisted run.' : `Workspace r${p.revision} · ${p.blocked ? 'save unresolved' : p.conflict ? 'conflict; reopen current' : p.dirty ? 'unsaved edits — save first' : 'saved revision ready for preparation'}`;
+    const blocker = prepareBlocker(p);
     buttons.prepareSavedRun.disabled = busy || !journal || !currentReady();
+    prepareState.textContent = blocker || `Ready: prepares saved revision r${p.revision} of ${preset.value}. Preparing never starts a generation.`;
     pending.hidden = buttons.recoverSavedPreparation.hidden = buttons.removePreparationNote.hidden = !pending.value;
     buttons.recoverSavedPreparation.disabled = buttons.removePreparationNote.disabled = busy || !journal || !pending.value;
     buttons.loadSavedRuns.disabled = busy || !p.id; buttons.moreSavedRuns.disabled = busy || !before || historyOwner !== key;

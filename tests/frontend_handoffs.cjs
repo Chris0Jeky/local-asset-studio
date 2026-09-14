@@ -50,7 +50,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
   const context = vm.createContext({
     document: {querySelector: element, querySelectorAll: () => [], addEventListener(name, handler) {if (name === 'click') clickHandler = handler;}},
     URL, Blob, StudioContinuation, StudioAssetRecovery,
-    sessionStorage: {getItem(){return null;},setItem(){},removeItem(){}},
+    sessionStorage: (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map()),
     window: {confirm: () => true}, location: {hash: ''}, setInterval() {},
     fetch: async (url, options = {}) => {
       if (url === '/api/catalog') return new Promise(() => {}); // Hold page startup.
@@ -72,6 +72,25 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
     jobs=[{id:'source-job',outputs:[{asset_id:'source-asset'}]}];
     refresh=async()=>{}; loadSetups=async()=>{};`);
   return {element, requests, context, run, click: target => clickHandler({target}), parents: () => JSON.parse(run('JSON.stringify(parentAssets)'))};
+}
+
+// The brief's "what to avoid" is part of the brief, not an advanced setting: the disclosure opens
+// whenever the recipe binds a negative prompt, stays collapsible, and remembers a manual collapse
+// for this tab only (#278 friction 3). A recipe that binds nothing keeps the field hidden.
+async function avoidWordingIsVisibleWhenTheRecipeBindsIt() {
+  const {element, context, run} = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
+  run(`catalog.presets.push({id:'binds-avoid',name:'binds-avoid',modality:'image',positive:['1','text'],negative:['2','text'],defaults:{negative:'blurry'}},
+                            {id:'no-avoid',name:'no-avoid',modality:'image',positive:['1','text'],defaults:{}});
+       selectPreset('binds-avoid');`);
+  assert.equal(element('#negativeWrap').hidden, false, 'A bound negative prompt is shown');
+  assert.equal(element('#negativeWrap').open, true, 'A bound negative prompt is open by default');
+  assert.equal(element('#negative').value, 'blurry');
+  context.sessionStorage.setItem('studio-negative-collapsed', '1');
+  run(`selectPreset('binds-avoid');`);
+  assert.equal(element('#negativeWrap').open, false, 'A manual collapse is remembered for this tab');
+  context.sessionStorage.removeItem('studio-negative-collapsed');
+  run(`selectPreset('no-avoid');`);
+  assert.equal(element('#negativeWrap').hidden, true, 'A recipe that binds no negative prompt still hides the field');
 }
 
 const localFile = (name = 'unrelated.png') => ({name, size: 2048, type: 'image/png'});
@@ -444,5 +463,6 @@ async function recipeSwapDuringUploadNeverSubmits() {
   await pullingIntoASlotReplacesItsSource();
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
+  await avoidWordingIsVisibleWhenTheRecipeBindsIt();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
