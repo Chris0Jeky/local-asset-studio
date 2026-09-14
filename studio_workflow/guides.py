@@ -17,55 +17,63 @@ STAGES = {
     'workflow': [('nodes', 'schema'), ('connections', 'manual'), ('check', 'graph_check'), ('save', 'saved'), ('run', 'manual')],
     'agents': [('service', 'manual'), ('prepare', 'manual'), ('approve', 'manual'), ('observe', 'manual')],
 }
+# Catalog IDs offered as a one-click recipe choice on a recipe/reference_recipe step.
+# The coach selects through the existing Create picker; it never generates. Validated
+# against presets/catalog.json by tests/test_studio_guide.py.
+RECOMMENDED = {
+    'first-image': ['anima-portrait', 'flux'],
+    'reference-edit': ['qwen-1ref', 'qwen-3ref'],
+    'compare': ['anima-portrait', 'flux'],
+}
 
 
 def guides():
     common = [
-        step('Check readiness before spending a run', 'Read the recipe’s model and environment requirements. A connected backend is not proof that this recipe fits memory or has every dependency.', '/#create', '#dependencies'),
-        step('Generate only when you choose', 'Review your references, dimensions and variation count. Click Generate yourself when ready. The guide never starts generation or installs models.', '/#create', '#generate'),
-        step('Review, keep and reuse', 'Compare at the final intended size. Save a useful result in the Asset library, record what needs work, then reuse it as a reference or export source. Completed is not the same as accepted.', '/#assets', '#assetGrid'),
+        step('Check readiness before running', 'Read this recipe’s model and environment requirements. A connected backend is not proof that it fits memory or has every dependency.', '/#create', '#dependencies'),
+        step('Generate, then pick the run', 'Press Generate yourself when the settings look right, then choose that run below to inspect its outputs.', '/#create', '#generate'),
+        step('Review, keep and reuse', 'Compare at the final intended size, then save what works to the Asset library and record what needs work. A finished render is not acceptance.', '/#assets', '#assetGrid'),
     ]
     items = [
         dict(id='first-image', title='Make my first image', summary='Idea → recipe → settings → a reviewed image.', steps=[
-            step('Start with a recipe, not a model list', 'Open Create and search by the result you need: illustration, portrait, pixel art or product. Choose a recipe in the active environment; do not assume all models share the same settings.', '/#create', '#presetList'),
-            step('Describe the result', 'State the subject, action, setting and composition. Use Prompt Lab for a wording proposal; keep your own intent and inspect the proposal before applying it.', '/#create', '#positive'),
-            step('Adjust a few meaningful controls', 'Begin with authored defaults. Change size, seed or one family-specific setting at a time. Save a named setup when you find a useful combination.', '/#create', '#controls'),
+            step('Start from a recipe', 'Search Create by the result you want: illustration, portrait, pixel art or product. Recipes carry their own settings; model names do not.', '/#create', '#presetList'),
+            step('Describe the result', 'State subject, action, setting and composition in the prompt field. Prompt Lab can propose wording; read it before you apply it.', '/#create', '#positive'),
+            step('Change one control at a time', 'Start from the authored defaults and adjust size, seed or one family setting. Save a named setup once a combination works.', '/#create', '#controls'),
         ] + common),
         dict(id='reference-edit', title='Edit or preserve a character', summary='References with roles → scoped change → comparison.', steps=[
-            step('Choose the editing mechanism', 'Use a reference-edit recipe for semantic changes, or an actual mask/inpaint recipe for a localized repair. A sentence about a pose is not geometric pose control.', '/#create', '#presetSearch'),
-            step('Assign what each image contributes', 'On Qwen Atelier recipes, give references identity, pose or style roles. Other recipes expose first/last frame or a single source instead. Keep the original source unchanged.', '/#create', '#roleReferences'),
-            step('Write both the change and the invariants', 'Describe what changes and what must remain. For masks, inspect the recipe’s alpha convention; empty or inverted masks do not become correct through prompting.', '/#create', '#positive'),
+            step('Pick a reference recipe', 'Qwen Atelier 1-3 References keeps identity, pose or style from your images. Text-only recipes cannot preserve a source.', '/#create', '#presetSearch'),
+            step('Assign each image a role', 'Give every reference its identity, pose or style role, or attach the single source the recipe asks for. Leave the original file unchanged.', '/#create', '#roleReferences'),
+            step('Write the change and invariants', 'Describe what changes and what must stay the same. For mask recipes, check the alpha convention; prompting cannot fix an inverted mask.', '/#create', '#positive'),
         ] + common),
         dict(id='compare', title='Find better settings', summary='One question → bounded comparison → keep a winner.', steps=[
-            step('Establish the baseline', 'Choose a recipe, references and a fixed brief in Create. Avoid changing model, prompt and sampling settings together when testing one hypothesis.', '/#create', '#selectedPreset'),
-            step('Plan a bounded comparison', 'Choose Plan comparison. Select one setting and explicit candidate values, then check the total graph-run allowance and time limit. Preparing is not starting.', '/#create', '#planComparison'),
-            step('Start and inspect the plan', 'Open Runs & review, inspect the stages, then explicitly start. Unknown submission outcomes must be reconciled, never blindly retried. Time limits apply between stages.', '/#production', '#productionDetail'),
-            step('Make a creative decision', 'Compare candidates and record why a result is useful. A new repair is a deliberate branch with a budget, not an automatic rerun.', '/#production', '#productionDetail'),
+            step('Set the baseline', 'Choose the recipe, references and brief you will test against in Create. Vary one thing later, not model, prompt and sampler together.', '/#create', '#selectedPreset'),
+            step('Plan a bounded comparison', 'Open Plan comparison, pick one setting and its candidate values, then set the run allowance and time limit. Preparing is not starting.', '/#create', '#planComparison'),
+            step('Start and inspect the plan', 'Open Runs & review, read the stages, then start the plan yourself. Reconcile an uncertain submission; never retry it blindly.', '/#production', '#productionDetail'),
+            step('Choose a winner', 'Compare the candidates and record why one is useful. A repair is a deliberate new branch with its own budget, not an automatic rerun.', '/#production', '#productionDetail'),
         ]),
         dict(id='scene', title='Assemble a scene or dialogue', summary='Accepted assets → scene editor → preview → native handoff.', steps=[
-            step('Collect your source assets', 'Select the images, clips and audio you actually want to use. Preserve originals; a scene edit should not regenerate unrelated source artwork.', '/#assets', '#assetGrid'),
-            step('Open the Scene editor', 'Build a scene using the supported clip, timing and audio controls. Preview rendering is separate from model generation. Unsupported native-editor effects need a disclosed handoff.', '/av.html'),
-            step('Prepare voice takes separately', 'The Voice baseline is a bounded starting point, not a promise of every voice model or expressive control. Audition and review the take before assembling it.', '/voice.html'),
-            step('Review the resulting media', 'Check duration, audio alignment, legibility and transitions in the actual preview. Export editable sources alongside delivery files when the adapter supports them.', '/av.html'),
+            step('Select your source assets', 'Pick the images, clips and audio you actually want in the scene. Keep the originals; a scene edit should not regenerate artwork.', '/#assets', '#assetGrid'),
+            step('Build the scene', 'Assemble clips, timing and audio in the Scene editor. Preview rendering is not model generation, and unsupported effects need a native handoff.', '/av.html'),
+            step('Record voice takes separately', 'Audition a take in Voice baseline before you place it. The baseline is a starting point, not every voice model or expressive control.', '/voice.html'),
+            step('Review the finished media', 'Play the preview and check duration, audio alignment, legibility and transitions. Export editable sources beside delivery files where supported.', '/av.html'),
         ]),
         dict(id='game-assets', title='Build an exportable game asset', summary='Target constraints → approved sources → native export.', steps=[
-            step('Choose the target first', 'Decide canvas, anchor, filtering, timing and target engine. For 3D also decide units, pivot, geometry budget and materials. A beautiful preview is not an engine acceptance test.', '/#create', '#presetSearch'),
-            step('Select a consistent source set', 'Use the Asset library to select matching frames or a reviewed mesh. Sprite frames need a common canvas and anchor; do not trim them independently.', '/#assets', '#assetGrid'),
-            step('Prepare the native export', 'Use the selected-assets export controls for an atlas, layered ORA/Krita source or Godot project. Inspect unsupported features rather than assuming lossless interchange.', '/#assets', '#nativeExport'),
-            step('Inspect the actual engine result', 'Use Runs & review for export evidence. Check playback, pivots, alpha and timing in the target application before accepting a production pack.', '/#production', '#productionDetail'),
+            step('Decide the target constraints', 'Fix canvas, anchor, filtering, timing and engine first; for 3D also units, pivot, budget and materials. A good preview is not an engine test.', '/#create', '#presetSearch'),
+            step('Select a consistent source set', 'Choose matching frames or a reviewed mesh in the Asset library. Sprite frames need one shared canvas and anchor, so do not trim them separately.', '/#assets', '#assetGrid'),
+            step('Prepare the native export', 'Use the selected-asset export controls for an atlas, layered source or Godot project. Read the unsupported-feature notes before relying on it.', '/#assets', '#nativeExport'),
+            step('Test it in the engine', 'Open Runs & review for the export evidence, then check playback, pivots, alpha and timing in the target application itself.', '/#production', '#productionDetail'),
         ]),
         dict(id='workflow', title='Build my own node workflow', summary='Installed nodes → Steps or Nodes → save → review a compatible run.', steps=[
-            step('Load the installed node catalog', 'Workflow Studio reads the active backend’s node definitions. Search and add nodes, or import an API-format graph. Loading a catalog never runs a graph.', '/workflow-studio.html#builder', '#nodeSearch'),
-            step('Connect and configure', 'Select a node to edit values and connect compatible outputs. Optional inputs have explicit toggles. Disabling a node does not invent a bypass: define a supported passthrough or disconnect its branch.', '/workflow-studio.html#builder', '#nodeInspector'),
-            step('Select outputs and check the graph', 'Compilation includes only selected output closures, retaining disconnected drafts in the document. Errors identify nodes and inputs. This is structural checking, not ComfyUI runtime validation.', '/workflow-studio.html#builder', '#compileWorkflow'),
-            step('Save the exact workflow', 'Use Save to Workspace to share a revision with agents. Resolve pending saves or unsaved edits before preparing a run. Exporting an API graph does not authorize execution.', '/workflow-studio.html#builder', '#saveSharedWorkflow'),
-            step('Prepare, review and run separately', 'For a supported registered image recipe, use Prepare saved revision and review its exact source and controls. Run / recover original uses that saved ticket, not later edits. History is shared with agents. References and arbitrary rewiring still need later execution adapters.', '/workflow-studio.html#builder', '#prepareSavedRun'),
+            step('Load the installed nodes', 'Workflow Studio reads the active backend’s node definitions. Search and add nodes, or import an API-format graph; loading never runs one.', '/workflow-studio.html#builder', '#nodeSearch'),
+            step('Connect and configure nodes', 'Select a node to edit its values and wire compatible outputs. Disabling a node is not a bypass: add a supported passthrough or disconnect the branch.', '/workflow-studio.html#builder', '#nodeInspector'),
+            step('Check the graph', 'Select your outputs and run Check connections; errors name the node and input. This is structural checking, not ComfyUI runtime validation.', '/workflow-studio.html#builder', '#compileWorkflow'),
+            step('Save the exact workflow', 'Use Save to Workspace to share a revision with agents. Clear pending saves and unsaved edits before you prepare a run.', '/workflow-studio.html#builder', '#saveSharedWorkflow'),
+            step('Prepare, review, then run', 'Prepare a saved revision for a registered image recipe and read its exact source and controls. Run / recover uses that ticket, not your later edits.', '/workflow-studio.html#builder', '#prepareSavedRun'),
         ]),
         dict(id='agents', title='Run a recipe without a browser', summary='Discover → prepare a pinned ticket → approve once → observe.', steps=[
-            step('Start the existing Studio server', 'Use python app/server.py --repo-root . on the configured machine. This starts the existing local service without opening a browser; keep its single worker and configured environments.', '/workflow-studio.html#agents', '#agentCommands'),
-            step('Discover and prepare', 'Use python -m studio_workflow capabilities and documents list. The runs prepare command takes a saved document ID, expected revision, preset and retained request ID. Alternatively prepare a registered recipe file. Neither path executes it.', '/workflow-studio.html#agents', '#agentCommands'),
-            step('Approve the exact ticket', 'Use runs review PREPARATION_ID, then runs run with the approved record and ticket hashes and --approve. This keeps exact tickets on the server. MCP exposes the same operations. A new preparation is not recovery from an uncertain job.', '/workflow-studio.html#agents', '#agentCommands'),
-            step('Observe; never blindly retry', 'Use status JOB_ID or wait JOB_ID. Transport failure after submission means unknown, not failed. Inspect the same ticket/job and retain evidence. Existing recovery and resource limitations remain visible.', '/workflow-studio.html#agents', '#agentCommands'),
+            step('Start the Studio server', 'Run python app/server.py --repo-root . on the configured machine. This starts the existing local service without opening a browser.', '/workflow-studio.html#agents', '#agentCommands'),
+            step('Discover, then prepare a ticket', 'Run python -m studio_workflow capabilities and documents list. Then runs prepare with a document ID, revision, preset and request ID; preparing never executes.', '/workflow-studio.html#agents', '#agentCommands'),
+            step('Approve the exact ticket', 'Run runs review PREPARATION_ID, then runs run with the approved record, ticket hashes and --approve. A new preparation is not recovery.', '/workflow-studio.html#agents', '#agentCommands'),
+            step('Observe; never blindly retry', 'Use status JOB_ID or wait JOB_ID and keep the evidence. Transport failure after submission means unknown, not failed.', '/workflow-studio.html#agents', '#agentCommands'),
         ]),
     ]
     for guide in items:
@@ -73,6 +81,7 @@ def guides():
         # common steps are shared above; copy before assigning per-guide stages.
         guide['steps'] = [dict(item, id=stage_id, check=check) for item, (stage_id, check)
                           in zip(guide['steps'], STAGES[guide['id']])]
+        if guide['id'] in RECOMMENDED: guide['recommended'] = list(RECOMMENDED[guide['id']])
     next(g for g in items if g['id'] == 'reference-edit')['steps'][1]['alternatives'] = ['#referenceWrap', '#lastReferenceWrap']
     return {'version': 2, 'guides': items, 'generation_submitted': False,
             'progress_semantics': 'Navigation progress is self-reported, not evidence that a task completed.'}

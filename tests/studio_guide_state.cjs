@@ -4,6 +4,7 @@ const C=require('../app/static/studio-guide-state.js');
 const recipe={id:'image',backend_id:'primary'};
 const ready=()=>({recipe,backend:'primary',health:{online:true,worker_alive:true,schema_available:true,missing_models:{},comfy_url:'http://127.0.0.1:8188'},backend_report:{active:'primary',busy:false,profiles:[{id:'primary',url:'http://127.0.0.1:8188'}]}});
 const state=(check,s)=>C.evaluate(check,s).state;
+test('the default unknown message describes automatic reading, not a button press',()=>{assert.doesNotMatch(C.unknown().message,/Check this step/);assert.match(C.unknown().message,/reading current evidence/i);});
 test('navigation and unknown checks never report success',()=>{assert.equal(state('manual'),'manual');assert.equal(state('unimplemented'),'unknown');assert.equal(state('recipe'),'blocked');});
 test('recipe selection is not readiness',()=>{assert.equal(state('recipe',{recipe}),'met');assert.equal(state('readiness',{recipe}),'unknown');});
 test('wording requires actual text and never claims suitability',()=>{assert.equal(state('prompt',{recipe}),'blocked');assert.equal(state('prompt',{recipe,prompt_present:true}),'met');});
