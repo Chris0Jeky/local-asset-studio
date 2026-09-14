@@ -13,7 +13,7 @@ from resource_receipts import EvidenceError, read_evidence_file
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument('trace', type=Path)
     parser.add_argument('--sha256', help='Expected hash of the exact saved trace bytes')
     args = parser.parse_args()
