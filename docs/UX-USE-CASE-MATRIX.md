@@ -38,15 +38,15 @@ words on screen at any one step.
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `first-image-from-brief` | 7 | 7 | 2 | 1 | 1 | 0 | 451 | 378 | PASS |
-| `reference-edit-one-source` (wrong turn) | 8 | 8 | 3 | 2 | 2 | 0 | 833 | 467 | PASS |
-| `three-reference-identity-pose-style` | 10 | 10 | 7 | 6 | 0 | 0 | 1956 | 483 | PASS |
-| `compare-settings-from-recipe` | 8 | 8 | 4 | 2 | 0 | 0 | 489 | 362 | PASS |
-| `review-and-keep-winner` | 7 | 7 | 4 | 2 | 0 | 0 | 215 | 105 | PASS |
-| `reuse-keeper-as-reference` | 8 | 8 | 4 | 2 | 0 | 0 | 651 | 566 | PASS |
+| `reference-edit-one-source` (wrong turn) | 8 | 8 | 3 | 2 | 2 | 0 | 380 | 467 | PASS |
+| `three-reference-identity-pose-style` | 10 | 10 | 7 | 6 | 0 | 0 | 501 | 483 | PASS |
+| `compare-settings-from-recipe` | 8 | 8 | 4 | 2 | 0 | 0 | 429 | 362 | PASS |
+| `review-and-keep-winner` | 7 | 7 | 4 | 2 | 0 | 0 | 110 | 105 | PASS |
+| `reuse-keeper-as-reference` | 8 | 8 | 4 | 2 | 0 | 0 | 85 | 566 | PASS |
 | `prompt-lab-to-create` | 8 | 8 | 4 | 1 | 0 | 0 | 521 | 378 | PASS |
 | `guided-edit-or-preserve-character` | 9 | 9 | 6 | 1 | 0 | 0 | 1002 | 589 | PASS |
 | `build-and-prepare-node-workflow` | 9 | 9 | 3 | 0 | 1 | 1 | 589 | 604 | PASS |
-| `frames-to-native-export` | 9 | 9 | 6 | 2 | 0 | 0 | 136 | 64 | PASS |
+| `frames-to-native-export` | 9 | 9 | 6 | 2 | 0 | 0 | 99 | 64 | PASS |
 
 Every case reached its success condition, and every case took exactly the number of steps it intended.
 PASS means the journey completed in the interface — not that the result would be worth keeping.
@@ -64,7 +64,7 @@ PASS means the journey completed in the interface — not that the result would 
   values and an allowance sized to them, and a *new* study appeared in Runs & review as `planned`.
   Not started. The allowance has to be raised by hand to match the planner's own proposal (below).
 - **`review-and-keep-winner`** — settings revealed, a candidate opened, a note written, winner kept,
-  the study recorded as `reviewed`. Lowest reading load of the suite (215 words).
+  the study recorded as `reviewed`. Among the lowest reading loads of the suite (110 words).
 - **`reuse-keeper-as-reference`** — a library picture was prepared as the source of a one-reference
   recipe with its lineage (`parentAssets[0] == asset-1`) intact.
 - **`prompt-lab-to-create`** — compiled wording reached the recipe's brief field only after an

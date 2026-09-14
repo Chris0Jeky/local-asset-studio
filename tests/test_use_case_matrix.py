@@ -123,8 +123,17 @@ class Totals(unittest.TestCase):
         self.assertEqual(totals['dead_ends'], 2)
         self.assertEqual(totals['unexplained_disabled'], 1)
         self.assertEqual(totals['instruction_words'], 31, 'a panel is charged once, when it first comes up')
+
+    def test_peak_and_skips(self):
+        totals = runner.case_totals(self.rows())
         self.assertEqual(totals['instruction_words_peak'], 20)
         self.assertEqual(totals['skipped_live'], 1)
+
+    def test_every_generation_capable_route_counts_as_a_submission(self):
+        for path in ('/api/jobs', '/api/production/abc/start', '/api/production/abc/resume', '/api/jobs/abc/resume', '/api/workflow-studio/document-runs/abc/run', '/api/av/projects/abc/render'):
+            self.assertTrue(runner.GENERATION_ROUTE.search(path), path)
+        for path in ('/api/production', '/api/workspace', '/api/prompt/compile', '/api/estimate'):
+            self.assertFalse(runner.GENERATION_ROUTE.search(path), path)
 
     def test_empty_case(self):
         empty = runner.case_totals([])
@@ -132,10 +141,10 @@ class Totals(unittest.TestCase):
         self.assertEqual(empty['instruction_words'], 0)
         self.assertEqual(empty['instruction_words_peak'], 0)
 
-    def test_revisiting_a_panel_is_charged_again(self):
+    def test_revisiting_a_panel_is_not_charged_again(self):
         rows = [{'page': '/', 'panel': 'a', 'instruction_words': 4}, {'page': '/', 'panel': 'b', 'instruction_words': 3},
                 {'page': '/', 'panel': 'a', 'instruction_words': 4}]
-        self.assertEqual(runner.case_totals(rows)['instruction_words'], 11)
+        self.assertEqual(runner.case_totals(rows)['instruction_words'], 7, 'a panel is charged once per case, however often it is revisited')
 
     def test_friction_ranks_dead_ends_before_clicks_then_id(self):
         rows = [{'id': 'b', 'dead_ends': 0, 'clicks': 9}, {'id': 'a', 'dead_ends': 2, 'clicks': 1},

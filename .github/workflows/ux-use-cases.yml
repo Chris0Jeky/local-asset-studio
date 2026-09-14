@@ -39,6 +39,7 @@ jobs:
           matrix = json.load(open('research/ux/use-case-matrix.json', encoding='utf-8'))
           failed = [row['id'] for row in matrix['rows'] if not row['passed']]
           assert matrix['generation_submissions'] == 0, 'a use case submitted a generation'
+          assert not matrix['page_errors'], 'the page raised exceptions: %r' % (matrix['page_errors'],)
           print('mode=%s cases=%d passed=%d' % (matrix['mode'], matrix['cases'], matrix['passed']))
           if failed:
               print('Use cases that did not reach their success condition: ' + ', '.join(failed))

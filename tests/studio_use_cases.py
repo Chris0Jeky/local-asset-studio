@@ -58,6 +58,11 @@ def dead_end(record):
     return None
 
 
+# Any route that can start or resume engine work, not only direct job creation: comparison
+# start/resume, job resume, saved-workflow runs, scene and voice renders.
+GENERATION_ROUTE = re.compile(r'^/api/jobs$|^/api/[a-z0-9_/-]+/(start|resume|run|render|generate)$')
+
+
 def case_totals(records):
     """Roll one case's step records up into the matrix row counters.
 
@@ -67,14 +72,13 @@ def case_totals(records):
     dead = [r for r in records if r.get('dead_end')]
     unexplained = [r for r in records if r.get('dead_end') == 'unexplained-disabled']
     clicks = len([r for r in records if r.get('action') in CLICK_ACTIONS and r.get('performed')])
-    switches, words, previous, panels = 0, 0, None, None
+    switches, words, previous, charged = 0, 0, None, set()
     for record in records:
         where = (record.get('page'), record.get('view'))
         if previous is not None and where != previous: switches += 1
         previous = where
         panel = (record.get('page'), record.get('panel'))
-        if panel != panels: words += int(record.get('instruction_words') or 0)
-        panels = panel
+        if panel not in charged: words += int(record.get('instruction_words') or 0); charged.add(panel)
     return {'steps_taken': len(records), 'clicks': clicks, 'page_switches': switches,
             'dead_ends': len(dead), 'unexplained_disabled': len(unexplained),
             'instruction_words': words,
@@ -716,7 +720,7 @@ def main(argv=None):
         if server: server.shutdown(); server.server_close()
         if thread: thread.join(timeout=5)
 
-    submitted = [post['path'] for post in (fixture.POSTS if fixture else []) if post['path'] == '/api/jobs']
+    submitted = [post['path'] for post in (fixture.POSTS if fixture else []) if GENERATION_ROUTE.search(post['path'])]
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
               'cases': len(rows), 'passed': len([row for row in rows if row['passed']]),
