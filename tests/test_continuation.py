@@ -236,6 +236,39 @@ class ContinuationTests(unittest.TestCase):
             self.assertEqual(request("POST", "/api/jobs", self.payload)[0], 201); self.assertEqual(self.studio.queue.qsize(), 1)
         finally: http.shutdown(); http.server_close(); thread.join(3)
 
+    def test_declared_restyle_continuation_pins_the_source_to_the_reference_without_a_board(self):
+        """Continue with this → Restyle on the shipped Klein recipe: the source must sit on `reference`, the authored
+        example is refused, no board is asked for, and the claim survives dispatch rechecks."""
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        klein = next(preset for preset in catalog["presets"] if preset["id"] == "restyle-klein")
+        graph_path = self.root / klein["graph"]; shutil.copyfile(ROOT / klein["graph"], graph_path)
+        data = json.loads((self.root / "presets/catalog.json").read_text()); data["presets"].append(klein)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        cap = next(preset for preset in self.studio.catalog()["presets"] if preset["id"] == "restyle-klein")["continuation_capability"]
+        self.assertEqual((cap["operation"], cap["source_input"], cap["board_min"], cap["keeps_picture"], cap["prompt_role"]), ("restyle", "reference", 0, True, "instruction"))
+        claim = dict(self.claim, intent="restyle", preset_id="restyle-klein", template_sha256=hashlib.sha256(graph_path.read_bytes()).hexdigest())
+        wording = klein["continuation_prompt"].replace("{source}", " The picture shows: " + self.attachment["context"]["positive"].rstrip(".") + ".")
+        payload = dict(preset_id="restyle-klein", controls={"positive": wording, "reference": self.attachment["file"], "width": 1040, "height": 1520}, parent_assets=[self.asset_id], continuation=claim)
+        preview = self.studio.preview(payload); workflow = preview["workflow"]
+        self.assertFalse(preview["submitted"])
+        self.assertEqual(workflow["14"]["inputs"]["image"], self.attachment["file"]); self.assertEqual(workflow["4"]["inputs"]["text"], wording)
+        self.assertEqual((workflow["10"]["inputs"]["width"], workflow["10"]["inputs"]["height"], workflow["9"]["inputs"]["width"], workflow["9"]["inputs"]["height"]), (1040, 1520, 1040, 1520))
+        authored = copy.deepcopy(payload); authored["controls"]["reference"] = "pose-reference-example.png"
+        # The authored example name is refused before continuation validation even sees it (upload-name check), which is fine.
+        with self.assertRaisesRegex(Exception, "declared source input|upload is invalid"): self.studio.prepare(authored)
+        missing = copy.deepcopy(payload); missing["controls"].pop("reference")
+        with self.assertRaisesRegex(ValueError, "declared source input"): self.studio.prepare(missing)
+        wrong_intent = copy.deepcopy(payload); wrong_intent["continuation"]["intent"] = "edit"
+        with self.assertRaisesRegex(ValueError, "does not support"): self.studio.prepare(wrong_intent)
+        blank = copy.deepcopy(payload); blank["controls"]["positive"] = "  "
+        with self.assertRaisesRegex(ValueError, "Describe"): self.studio.prepare(blank)
+        job = self.studio.jobs[self.studio.create_job(payload, enqueue=False)["id"]]
+        self.assertEqual(job["continuation"], claim)
+        preset = self.studio.preset("restyle-klein")
+        self.assertEqual(continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True), claim)
+        (self.studio.comfy_root / "input" / self.attachment["file"]).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "bytes changed"): continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True)
+
     @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
     def test_client_policy_and_draft_roundtrip(self):
         result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_core.cjs")], capture_output=True, text=True, timeout=15)
@@ -262,7 +295,8 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 self.assertEqual((result["operation"], result["source_input"], result["board_min"], result["prompt_role"], result["reference_count"]), ("restyle", "reference", 0, "instruction", 1))
                 self.assertEqual(graph["6"]["inputs"]["positive"][0], "17"); self.assertEqual(graph["17"]["class_type"], "ReferenceLatent"); self.assertEqual(graph["17"]["inputs"]["latent"][0], "16")
                 self.assertEqual(graph["16"]["inputs"]["pixels"][0], "15"); self.assertEqual(graph["15"]["inputs"]["image"][0], str(preset["reference"][0]))
-                self.assertIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"].replace("{source}", ""), graph["4"]["inputs"]["text"])
+                # promptFor substitutes the first placeholder only, so the authored wording carries exactly one.
+                self.assertEqual(preset["continuation_prompt"].count("{source}"), 1); self.assertEqual(preset["continuation_prompt"].replace("{source}", ""), graph["4"]["inputs"]["text"])
                 self.assertEqual((graph["6"]["inputs"]["cfg"], graph["9"]["inputs"]["steps"], graph["9"]["inputs"]["width"], graph["10"]["inputs"]["height"]), (1.0, 6, 1024, 1536))
             elif preset["id"].startswith("restyle-"):
                 self.assertEqual(graph["5"]["inputs"]["latent_image"][0], "41"); self.assertEqual(graph["41"]["inputs"]["pixels"][0], "4"); self.assertEqual(graph["4"]["inputs"]["image"][0], str(preset["last_reference"][0]))
@@ -302,8 +336,8 @@ class DeclaredRestyleTests(unittest.TestCase):
         result = continuation.capability(dict(wai, continuation_operation="restyle"), graph)
         self.assertEqual((result["operation"], result["source_input"], result["board_min"]), ("restyle", "last_reference", 1))
 
-    def test_declared_restyle_validates_the_source_on_reference(self):
-        graph = copy.deepcopy(self.EDIT); graph["4"]["inputs"]["image"] = "a" * 32 + "_source.png"
+    def test_declared_restyle_needs_a_consumed_reference(self):
+        graph = copy.deepcopy(self.EDIT); graph["9"]["inputs"]["images"] = ["3", 0]  # the saved output no longer descends from the picture
         preset = dict(id="restyle-x", reference=["4", "image"], positive=["1", "text"], continuation_operation="restyle")
         cap = continuation.capability(preset, graph)
-        self.assertEqual(continuation.ROUTES["restyle"], {"restyle"}); self.assertIn(cap["operation"], continuation.ROUTES["restyle"])
+        self.assertEqual((cap["operation"], cap["consumes_source"], cap["keeps_picture"]), ("unsupported-reference", False, False))

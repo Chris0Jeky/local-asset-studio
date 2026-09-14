@@ -178,7 +178,7 @@
   function offerSecondPicture(item){
     secondPicture=item;const dest=StudioContinuation.destinations('restyle',catalog?.presets||[],continuationSource).find(p=>p.continuation_capability?.board_min>0);
     q('#uxSecondText').textContent=StudioContinuation.sourceLabel(selected)+' already holds the picture you are continuing. What is “'+secondName(item)+'” for?';
-    q('#uxSecondRestyle').disabled=!dest;q('#uxSecondRestyle').title=dest?'':'No restyle recipe is installed.';
+    q('#uxSecondRestyle').disabled=!dest;q('#uxSecondRestyle').title=dest?'':'No style-board restyle recipe is available.';
     q('#uxSecondHint').textContent=dest?(dest.continuation_capability?.keeps_picture?'Restyle keeps the source and repaints it in the recipe’s finish ('+dest.name+'); the new picture goes on the style board, which adds its palette only as far as Style weight says (0 = off).':'Restyle keeps the source’s pose and paints it in the look of the new picture ('+dest.name+').')+' Starting from the new picture ends this continuation; the original stays in your library.':'No restyle recipe is available; start from the new picture, or keep the source.';
     secondPanel.hidden=false;syncReady();focusReadinessTarget(q('#uxSecondRestyle').disabled?q('#uxSecondReplace'):q('#uxSecondRestyle'));
   }
@@ -242,7 +242,7 @@
       beginContinuation(result,preset,handoffIntent);sourceReadError='';const style=pendingStyle;pendingStyle=null;
       const restyle=StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference';
       q(restyle?'#lastReferenceHint':'#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
-      if(!restyle){announce('Source attached. Check the prompt, then press Generate.');contextPanel.scrollIntoView({block:'center'});}
+      if(!restyle){announce(style?'Source attached. This recipe has no style board, so the second picture was not attached; the prepared wording carries the look. Check it, then press Generate.':'Source attached. Check the prompt, then press Generate.');contextPanel.scrollIntoView({block:'center'});}
       else{const label=StudioContinuation.sourceLabel(selected).toLowerCase(),board=selected.continuation_capability?.keeps_picture?'the style board (off until you raise Style weight)':'the style board';
         if(style?.file){announce('Source attached as the '+label+'; your picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
         else if(style?.asset){announce('Source attached as the '+label+'; your picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
