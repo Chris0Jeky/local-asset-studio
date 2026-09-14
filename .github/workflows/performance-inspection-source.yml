@@ -1,0 +1,31 @@
+name: Temporary performance inspection source
+on:
+  push:
+    branches: [codex/performance-inspection-source-1217]
+    paths: [.github/workflows/performance-inspection-source.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4789e0a56c99226d5b2b2cb061ec52478ffde3eb
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned tracked source only
+        run: |
+          mkdir -p "$RUNNER_TEMP/performance-source"
+          git branch performance-source HEAD
+          git bundle create "$RUNNER_TEMP/performance-source/source.bundle" performance-source
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/performance-source/identity.txt"
+          cd "$RUNNER_TEMP/performance-source"
+          sha256sum source.bundle > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: performance-source-4789e0a
+          path: ${{ runner.temp }}/performance-source/
+          retention-days: 1
+          if-no-files-found: error
