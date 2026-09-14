@@ -126,3 +126,10 @@ it is not evidence for native origin, browser retention, real SQLite, a running
 Studio, generation, backend behavior, artwork, licensing or owner acceptance.
 This per-tab/origin proof **Refs #204** and does not close its workspace-identity,
 native-browser, real-SQLite or server-restart acceptance cases.
+
+## Actionable Create readiness
+
+[CREATE-READINESS.md](CREATE-READINESS.md) connects existing blockers to the relevant
+controls without applying fixes, and binds required-file success/failure to its current
+inspection request. [CREATE-READINESS-RESULTS.json](CREATE-READINESS-RESULTS.json) records
+matched local before/after scenarios; hosted native results are a separate checkpoint.
