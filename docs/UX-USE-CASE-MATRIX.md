@@ -201,6 +201,27 @@ ever raises), and the driver then types 3, which the planner accepts because 3 c
 proposal, never lowers a total the operator raised, and leaves a branch that shares its parent's budget
 alone; the note states the required total before any refusal.
 
+## The eleventh journey: restyle a recent output — 14 Sep 2026 (later)
+
+The owner's own report the same afternoon: a liked output, a second picture with the look they wanted, and no
+idea which recipe does that. *Continue with this → Refine → SDXL • stronger variation* was the closest offer;
+attaching the style picture into its single slot produced two blockers whose button only scrolled back up.
+`restyle-recent-output-with-a-look` (`research/ux/use-cases.json`, driver in `tests/studio_use_cases.py`) is
+that journey after the fix: the fifth Continue route, **Restyle**, plus the one-slot question panel.
+
+| Case | int | took | clk | sw | dead | unexp | words | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `restyle-recent-output-with-a-look` | 8 | 8 | 5 | 3 | 0 | 0 | 1000 | PASS |
+
+Fixture mode, `python tests/studio_use_cases.py --case restyle-recent-output-with-a-look`, zero generation
+requests, zero page errors. The source lands on the pose picture, the readiness list carries exactly one
+condition (*Add at least 1 picture whose look you want to the style board (Picture 1)* with *Show the empty
+slot*), the picker opens on Picture 1 and closes itself when the board minimum is met, and the run control
+enables. The five clicks are Continue, Restyle, Prepare, Pull from library, the picture. The word count is the
+Create view's standing load (friction point 5 above), not new text: the route added one sentence to the
+handoff and removed the two unactionable blockers. The same journey on the live Studio produced two real
+runs, recorded in `docs/STYLE-AND-POSE.md` and `experiments/curated/style-pose-matrix/2026-09-14-restyle/`.
+
 ## Live mode, and what it refuses
 
 `--base-url http://127.0.0.1:8191` drives a running Studio instead of the fixture. It is read-only

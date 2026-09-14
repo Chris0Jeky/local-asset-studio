@@ -76,8 +76,53 @@ class ContinuationTests(unittest.TestCase):
         preset = {key: value for key, value in PRESET.items() if key != "reference"}
         preset.update(reference_slots=[{"role": "style", "binding": ["4", "image"]}], reference_board={"min": 1}, last_reference=["9", "image"])
         result = continuation.capability(preset, graph)
-        self.assertEqual((result["operation"], result["reference_count"], result["consumes_source"]), ("reference-guided-generation", 2, True))
+        self.assertEqual((result["operation"], result["reference_count"], result["consumes_source"]), ("restyle", 2, True))
+        self.assertEqual((result["source_input"], result["board_min"]), ("last_reference", 1))
         self.assertEqual(continuation.reference_bindings(preset), [["4", "image"], ["9", "image"]])
+        # A board without its own pose picture is not a restyle route: the source would have nowhere to go.
+        no_pose = {key: value for key, value in preset.items() if key != "last_reference"}
+        self.assertEqual(continuation.capability(no_pose, graph)["operation"], "reference-guided-generation")
+        self.assertEqual(continuation.capability(no_pose, graph)["source_input"], "reference")
+
+    def test_restyle_continuation_binds_source_to_pose_and_prunes_empty_board_slots(self):
+        """Continue with this → Restyle on the shipped Nova board: the source becomes the pose picture, one style
+        picture fills Picture 1, the two empty board slots are pruned, and the claim survives dispatch rechecks."""
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        nova = next(preset for preset in catalog["presets"] if preset["id"] == "style-pose-nova")
+        graph_path = self.root / nova["graph"]; shutil.copyfile(ROOT / nova["graph"], graph_path)
+        data = json.loads((self.root / "presets/catalog.json").read_text()); data["presets"].append(nova)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        cap = next(preset for preset in self.studio.catalog()["presets"] if preset["id"] == "style-pose-nova")["continuation_capability"]
+        self.assertEqual((cap["operation"], cap["source_input"], cap["board_min"], cap["reference_count"]), ("restyle", "last_reference", 1, 4))
+        import io; from PIL import Image
+        stream = io.BytesIO(); Image.new("RGB", (8, 12), "green").save(stream, "PNG")
+        style = self.studio.upload("style.png", "image/png", stream.getvalue())
+        claim = dict(self.claim, intent="restyle", preset_id="style-pose-nova", template_sha256=hashlib.sha256(graph_path.read_bytes()).hexdigest())
+        board = lambda first: [dict(role="style", file=first["file"], sha256=first["sha256"]) if first else dict(role="style", file=None), dict(role="style", file=None), dict(role="style", file=None)]
+        payload = dict(preset_id="style-pose-nova", controls={"positive": self.attachment["context"]["positive"], "last_reference": self.attachment["file"]},
+                       parent_assets=[self.asset_id], references=board(style), continuation=claim)
+        preview = self.studio.preview(payload); workflow = preview["workflow"]
+        self.assertFalse(preview["submitted"])
+        self.assertEqual(workflow["11"]["inputs"]["image"], self.attachment["file"])
+        self.assertEqual(workflow["10"]["inputs"]["image"], style["file"])
+        self.assertNotIn("30", workflow); self.assertNotIn("31", workflow)
+        self.assertEqual(set(workflow["22"]["inputs"]) & {"embed1", "embed2", "embed3"}, {"embed1"})
+        self.assertEqual(workflow["2"]["inputs"]["text"], "An adult traveller at the station.")
+        # The source must sit on the pose picture, not on a board slot; the board must hold at least one picture.
+        moved = copy.deepcopy(payload); moved["controls"].pop("last_reference"); moved["references"] = board(self.attachment)
+        with self.assertRaisesRegex(ValueError, "declared source input"): self.studio.prepare(moved)
+        empty = copy.deepcopy(payload); empty["references"] = board(None)
+        with self.assertRaises(ValueError): self.studio.prepare(empty)
+        wrong_intent = copy.deepcopy(payload); wrong_intent["continuation"]["intent"] = "edit"
+        with self.assertRaisesRegex(ValueError, "does not support"): self.studio.prepare(wrong_intent)
+        swapped = copy.deepcopy(payload); swapped["controls"]["last_reference"] = style["file"]; swapped["references"] = board(self.attachment)
+        with self.assertRaisesRegex(ValueError, "declared source input"): self.studio.prepare(swapped)
+        job = self.studio.jobs[self.studio.create_job(payload, enqueue=False)["id"]]
+        self.assertEqual(job["continuation"], claim)
+        preset = self.studio.preset("style-pose-nova"); preset["_prepared_references"] = job["references"]
+        self.assertEqual(continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True), claim)
+        (self.studio.comfy_root / "input" / self.attachment["file"]).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "bytes changed"): continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True)
 
     def test_output_prompt_is_matched_by_prompt_id_not_template_or_batch_index(self):
         self.assertEqual(self.attachment["context"]["positive"], "An adult traveller at the station.")
@@ -208,7 +253,8 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
         for preset in catalog:
             graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
             result = continuation.capability(preset, graph)
-            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation"}, preset["id"])
+            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle"}, preset["id"])
+            if preset.get("reference_board") and preset.get("last_reference"): self.assertEqual((result["operation"], result["source_input"]), ("restyle", "last_reference"), preset["id"])
             for key in keys:
                 binding = preset.get(key)
                 if binding: self.assertIn(str(binding[1]), graph[str(binding[0])]["inputs"], (preset["id"], key))

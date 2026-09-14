@@ -1,5 +1,46 @@
 # Current state — 14 September 2026
 
+## Continue with this → Restyle; the Studio was unstartable from main — 14 September 2026 (afternoon)
+
+The owner tried to give a liked output a different look: *Continue with this → Refine → SDXL • stronger
+variation*, then the style picture into the recipe's single slot, and got two blockers (*The source attachment
+changed or is missing…*, *Attach every source input explicitly…*) whose *Review this continuation* button only
+scrolled to the source panel. Three things changed, all driven through the page as the owner would:
+
+- **Restyle is the fifth Continue route** (Home card *Borrow a look*, handoff button *Restyle*). It lists the
+  five Style + Pose boards and attaches the source as the **pose picture** (`continuation_capability.source_input
+  = last_reference`, operation `restyle`); the board takes one to three pictures whose look you want; empty
+  board slots are pruned and the server refuses an unpruned example or an empty board. The source's submitted
+  prompt is copied. `continuation.validate` checks the claim against the pose input, not slot 1.
+- **Blockers name the control and carry the repair.** *Pose picture no longer holds the picture you chose to
+  continue* → **Put the source back** re-attaches the same asset by hash without reopening the handoff, keeping
+  the board's lineage; an empty slot → **Show the empty slot**; missing wording → **Write the description**. The
+  generic *Attach every required reference* line no longer repeats a continuation condition.
+- **A second picture on a one-slot recipe asks, it does not block**: *Use its look → Restyle the source* (opens
+  the handoff at Restyle, prepares, and puts that picture on Picture 1), *Start from this picture instead*,
+  *Keep the source, drop this picture*. The library picker takes the same path instead of a wall message.
+
+Executed on this PC: two Studio jobs through the new route on the throne witch with one imported picture on the
+board, Nova, seed 2026091407 — `2f34fdc8-743e-4d3b-807f-6ffb2a7a3966` (style weight 0.7, 64 s, ComfyUI prompt
+`486c1c75-0224-4410-b242-6c459a01f585`) and `f69c524c-eb0d-4ac0-b8f2-6b51ed2f2ac2` (*Style stronger* 0.9, 28 s warm, prompt `6b38f2fe-d79f-4718-83a8-e5b59478ae47`); the pose
+held in both, the look became a flat, heavier-lined cel rendering rather than the style picture's soft one
+(sheet `examples/style-pose/restyle-continue-nova.jpg`, evidence
+`experiments/curated/style-pose-matrix/2026-09-14-restyle/`, creative call HUMAN_TODO q-27). The one-slot
+question panel and *Put the source back* were exercised live on the same page without generating. Use case
+`restyle-recent-output-with-a-look` passes in fixture mode (8/8 steps, 5 clicks, 0 dead ends). Focused suites:
+`test_continuation` (15, including the shipped Nova board through prepare and dispatch recheck),
+`continuation_core.cjs` (14), `test_use_case_matrix`, `test_frontend_handoffs`, `test_server`.
+
+Found on the way: `main` could not start the Studio on this PC after #331 — `from app import character_review`
+resolves to ComfyUI's own `app` package under the embedded Python (`python312._pth` puts `../ComfyUI` first, and a
+regular package beats a namespace directory whatever the path order). The running Studio predated that merge.
+Fixed with sibling imports in PR #341 and merged into this branch; the Studio was restarted from it (PID in
+`.runtime/server.pid`).
+
+Not verified: the other four boards or a three-picture board through Restyle; any owner judgement of the look
+(q-27); the full offline suite on the final head (the run that finished during this slice predated the
+`character_review` import fix and failed only that collector test, which passes alone on the merged tree).
+
 ## Review imported characters and collect their decisions — 14 September 2026
 
 Review Desk now shows the exact canon checks saved with an imported primary
