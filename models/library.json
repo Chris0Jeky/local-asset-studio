@@ -2058,6 +2058,23 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "novaanimexl-ilv190",
+      "name": "novaAnimeXL_ilV190.safetensors",
+      "file": "checkpoints/novaAnimeXL_ilV190.safetensors",
+      "source": "https://civitai.com/models/376130?modelVersionId=2940478",
+      "url": "https://civitai.com/api/download/models/2940478",
+      "bytes": 6939105596,
+      "sha256": "fa486caafc330f133605d3c18b418d183812f14946631c6544bfb28730db6d6f",
+      "license": "",
+      "terms": "civitai model 376130 flags read 2026-09-14: allowCommercialUse RentCivit/Image/Rent (no Sell), derivatives yes, differentLicense yes, noCredit yes. Author: NoobAI EPS v1.1 + Illustrious v2.0-stable + ChenkinNoob v0.5 DARE merge; Euler a, 20-30 steps, CFG 5-7, clip skip 1-2. civitai version 2940478 of model 376130: the version payload carries no permission flags; read https://civitai.com/models/376130 (or /api/v1/models/376130) before any commercial use. Base model 'Illustrious'.",
+      "family": "Nova Anime XL IL v19 (Illustrious)",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [

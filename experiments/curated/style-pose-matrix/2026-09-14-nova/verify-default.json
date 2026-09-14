@@ -1,0 +1,22 @@
+{
+  "job": "bb8efa52-9634-4f43-9246-2c1955ac50a0",
+  "status": "completed",
+  "prompt": "1f3b64ba-1f8c-491b-abb8-8661a540cc19",
+  "elapsed": 99,
+  "outputs": [
+    {
+      "filename": "Nova_00004_.png",
+      "subfolder": "Style-Pose",
+      "type": "output",
+      "seed": 2026091407,
+      "prompt_id": "1f3b64ba-1f8c-491b-abb8-8661a540cc19",
+      "media_type": "image",
+      "asset_id": "9f2fca4d91ab59bba39f6e3606d10917"
+    }
+  ],
+  "failure": null,
+  "controls": {
+    "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+    "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+  }
+}
