@@ -218,3 +218,43 @@ class StyleBoardTests(unittest.TestCase):
             first=board_graph(); records=ref.compile_references(self.preset,first,supplied,self.root)
             second=board_graph(); ref.compile_references(self.preset,second,records,self.root)
             self.assertEqual(second,first); self.assertEqual(len(records),3)
+
+
+def klein_board_graph():
+    """A FLUX.2 Klein board: the source's reference latent, then one per board slot, chained into the guider."""
+    g={'4':{'class_type':'CLIPTextEncode','inputs':{'text':'Redraw image 1 in the pose of image 2.'}},
+       '6':{'class_type':'CFGGuider','inputs':{'positive':['27',0],'cfg':1.0}},'13':{'class_type':'SaveImage','inputs':{'images':['6',0]}}}
+    cond=['4',0]
+    for loader,latent in (('14','17'),('20','23'),('24','27')):
+        scale=str(int(loader)+1); encode=str(int(loader)+2)
+        g[loader]={'class_type':'LoadImage','inputs':{'image':'example.png'}}
+        g[scale]={'class_type':'ImageScaleToTotalPixels','inputs':{'image':[loader,0],'megapixels':1.0,'resolution_steps':1}}
+        g[encode]={'class_type':'VAEEncode','inputs':{'pixels':[scale,0]}}
+        g[latent]={'class_type':'ReferenceLatent','inputs':{'conditioning':cond,'latent':[encode,0]}}; cond=[latent,0]
+    return g
+
+
+class KleinBoardTests(unittest.TestCase):
+    """An empty slot's ReferenceLatent is bypassed so the chain closes up; the guider never loses its conditioning."""
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
+        for name in ('a.png','c.png'): Image.new('RGB',(300,400),'teal').save(self.root/name)
+        self.preset={'positive':['4','text'],'last_reference':['14','image'],'reference_board':{'min':1,'policy':'FLUX.2 Klein reference latents'},
+                     'reference_slots':[{'role':'pose','binding':['20','image']},{'role':'pose','binding':['24','image']}]}
+    def tearDown(self):self.temp.cleanup()
+
+    def test_empty_last_slot_is_bypassed_and_the_guider_reads_the_surviving_latent(self):
+        g=klein_board_graph(); records=ref.compile_references(self.preset,g,[{'role':'pose','file':'a.png'},{}],self.root)
+        for node in ('24','25','26','27'): self.assertNotIn(node,g)
+        self.assertEqual(g['6']['inputs']['positive'],['23',0]); self.assertEqual(g['20']['inputs']['image'],'a.png'); self.assertEqual(g['23']['inputs']['conditioning'],['17',0])
+        self.assertEqual([(r['slot'],r['file']) for r in records],[(1,'a.png'),(2,None)]); self.assertIn('13',g)
+
+    def test_empty_first_slot_is_bypassed_and_the_next_latent_reads_the_source_latent(self):
+        g=klein_board_graph(); ref.compile_references(self.preset,g,[{},{'role':'pose','file':'c.png'}],self.root)
+        for node in ('20','21','22','23'): self.assertNotIn(node,g)
+        self.assertEqual(g['27']['inputs']['conditioning'],['17',0]); self.assertEqual(g['6']['inputs']['positive'],['27',0]); self.assertEqual(g['24']['inputs']['image'],'c.png')
+
+    def test_a_full_board_keeps_the_whole_chain(self):
+        g=klein_board_graph(); ref.compile_references(self.preset,g,[{'role':'pose','file':'a.png'},{'role':'pose','file':'c.png'}],self.root)
+        self.assertEqual((g['6']['inputs']['positive'],g['27']['inputs']['conditioning'],g['23']['inputs']['conditioning']),(['27',0],['23',0],['17',0]))
+        self.assertEqual((g['20']['inputs']['image'],g['24']['inputs']['image']),('a.png','c.png'))

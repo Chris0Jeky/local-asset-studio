@@ -64,7 +64,9 @@ def prune_missing_slot(graph, node):
 
     An IPAdapterCombineEmbeds input that pointed at a removed encoder is dropped (its embed2..5 are
     optional); when embed1 goes, the next present embed slides into its place so the combiner still
-    has a first input. Anything else that consumed a removed node is removed in turn.
+    has a first input. A ReferenceLatent whose latent is gone is bypassed: whatever consumed it now
+    consumes its conditioning input, so a chain of reference latents (FLUX.2 Klein boards) closes up
+    around the empty slot. Anything else that consumed a removed node is removed in turn.
     """
     removed={str(node)}; graph.pop(str(node),None); changed=True
     while changed:
@@ -79,6 +81,12 @@ def prune_missing_slot(graph, node):
                         rest=[f for f in ('embed2','embed3','embed4','embed5') if f in inputs]
                         if not rest: raise ValueError('The style board needs at least one picture')
                         inputs['embed1']=inputs.pop(rest[0])
+                elif item.get('class_type')=='ReferenceLatent' and field=='latent' and isinstance(inputs.get('conditioning'),list):
+                    upstream=list(inputs['conditioning']); graph.pop(key); removed.add(key)
+                    for other in graph.values():
+                        for name,link in list((other.get('inputs') or {}).items()):
+                            if isinstance(link,list) and len(link)==2 and str(link[0])==key: other['inputs'][name]=list(upstream)
+                    changed=True
                 else: graph.pop(key); removed.add(key); changed=True
                 break
             if changed: break

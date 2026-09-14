@@ -17,6 +17,7 @@ ROUTES = {
     "edit": {"image-to-image", "instruction-edit", "localized-detail", "upscale"},
     "repair": {"image-to-image", "localized-detail", "upscale", "masked-repair"},
     "restyle": {"restyle"},
+    "combine": {"combine"},
     "animate": {"image-to-video"},
     "mesh": {"image-to-3d"},
 }
@@ -78,7 +79,10 @@ def capability(preset, graph):
     # A reference edit may declare itself a Restyle destination: the picture is the model's own reference
     # (ReferenceLatent) and the prepared wording carries the look, so there is no style board to fill.
     restyle_declared = preset.get("continuation_operation") == "restyle" and role == "instruction" and not restyle_board
-    restyle = restyle_board or restyle_declared
+    # A board may instead declare itself a Combine destination: the source stays image 1 and the board pictures
+    # lend it something else (a pose). Same wiring as a board restyle; a different promise, so a different route.
+    combine_board = restyle_board and preset.get("continuation_operation") == "combine"
+    restyle = (restyle_board or restyle_declared) and not combine_board
     # A sampler whose starting latent descends from a bound picture keeps that picture's layout (img2img).
     latent_from_reference = any(
         node.get("class_type") == "KSampler"
@@ -88,6 +92,7 @@ def capability(preset, graph):
     )
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
     elif preset.get("requires_rgba_mask"): operation = "masked-repair"
+    elif combine_board: operation = "combine"
     elif restyle: operation = "restyle"
     elif role == "motion": operation = "image-to-video"
     elif preset.get("modality") == "3d": operation = "image-to-3d"
@@ -105,7 +110,9 @@ def capability(preset, graph):
         "reference_count": len(bindings) if consumed else 0,
         "source_input": "last_reference" if consumed and restyle_board else "reference",
         "board_min": int((preset.get("reference_board") or {}).get("min", 1)) if consumed and restyle_board else 0,
-        "keeps_picture": bool(consumed and (restyle_board and latent_from_reference or restyle_declared)),
+        # A board keeps the picture when the sampler resamples it (img2img) or when the recipe declares the board a
+        # Restyle destination (the source is the model's own reference latent). A Combine board changes the pose.
+        "keeps_picture": bool(consumed and (restyle_board and (latent_from_reference or preset.get("continuation_operation") == "restyle") or restyle_declared)),
         "scope": "Static registered graph wiring; not a guarantee of visual preservation.",
     }
 
@@ -190,7 +197,7 @@ def validate(studio, payload, preset, graph, check_runtime=False):
     if not isinstance(parents, list) or claim["source_asset_id"] not in parents:
         raise ValueError("Continuation source is missing from lineage.")
     controls = payload.get("controls") or {}
-    board = preset.get("reference_board") if cap["operation"] == "restyle" else None
+    board = preset.get("reference_board") if cap["operation"] in ("restyle", "combine") else None
     # (binding, file name, recorded hash, optional): a style-board slot is optional and pruned when empty.
     declared = []
     if preset.get("reference_slots"):
@@ -237,4 +244,10 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         text = controls.get("positive")
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Describe the desired result or the requested change before running this continuation.")
+        # A recipe whose prepared wording carries bracketed placeholders (one string or a list) refuses to run until
+        # every one of them is replaced.
+        declared = preset.get("continuation_placeholder")
+        left = [item for item in (declared if isinstance(declared, list) else [declared]) if isinstance(item, str) and item and item in text]
+        if left:
+            raise ValueError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
     return dict(claim)

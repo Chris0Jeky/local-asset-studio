@@ -581,6 +581,44 @@ def _restyle(c):
     return done, 'source attached=%s, board recipe=%s, %d board picture(s), %d prepared words, run control enabled=%s' % (attached, board, filled, words, c.ready())
 
 
+@driver('combine-character-with-another-pose')
+def _combine(c):
+    """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
+    c.boot('#create')
+    c.page.wait_for_timeout(600)
+    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
+    c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
+    try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
+    except Exception: pass
+    c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass: image 1, image 2, two bracketed fills')
+    c.act('#uxPrepareHandoff')
+    c.page.wait_for_timeout(800)
+    c.act('#uxBlockers', 'read', note='what is still missing after preparing: Picture 1 and the fills')
+    c.act('#uxPullAsset', note='add the picture whose pose is wanted')
+    if c.page.locator('#uxSourcePicker[open]').count():
+        try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
+        except Exception: pass
+        c.act('[data-ux-pull="asset-1"]', note='live mode never pulls: it writes server state' if c.live else 'a saved picture for Picture 1')
+        if c.page.locator('#uxSourcePicker[open]').count():
+            try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
+            except Exception: pass
+    else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
+    wording = c.page.evaluate('(document.querySelector("#positive").value || "")')
+    filled_wording = wording
+    for fill, words in (('who is in image 1', 'the witch in the black and red robe'), ('the pose in a few words', 'leaning forward, one hand on her hip, the other held out')):
+        start = filled_wording.find('['); end = filled_wording.find(']', start)
+        if start >= 0 and end > start and fill in filled_wording[start:end]: filled_wording = filled_wording[:start] + words + filled_wording[end + 1:]
+    c.act('#positive', 'fill', typed=filled_wording)
+    c.page.wait_for_timeout(400)
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    attached = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded')
+    filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0')
+    brackets = c.page.evaluate('((document.querySelector("#positive").value || "").match(/\\[/g) || []).length')
+    done = c.ready() and attached and filled >= 1 and brackets == 0 and 'image 2' in filled_wording
+    return done, 'source attached=%s, %d board picture(s), %d bracket(s) left, run control enabled=%s' % (attached, filled, brackets, c.ready())
+
+
 @driver('prompt-lab-to-create')
 def _prompt_lab(c):
     c.goto('/prompt-lab.html', note='wording workspace')

@@ -31,6 +31,37 @@ and a 2-megapixel canvas changed the hair, so the recipe takes one picture. Prov
 `db25b173-e39c-4656-96bf-b377ded6bf80`, 65.9 s including the load; sheet `examples/style-pose/restyle-klein-proving.jpg`;
 the eleven research renders are tabled in `experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`.
 
+**Restyle a picture in another picture's look (FLUX.2 Klein 4B)** is the route's second destination (late night, 14
+September 2026): the same Klein graph with a two-slot board, image 1 = the picture you keep, image 2 = a picture drawn the
+way you want; the wording tells the model to copy how image 2 is drawn, not what it shows, and carries one bracketed fill,
+*Image 1's colours: […]*. It is a compromise, measured on the throne witch with a crisp flat-cel fan picture: with no
+colour anchor the look transfers strongly and the palette drifts (purple hair, orange throne); with the full source
+description the look is lost; a short colour sentence holds the colours with a moderate look shift. Use it when the look
+is easier to show than to say; **Restyle a picture (keeps everything)** holds colours better whenever the look can be
+said in words.
+
+## From a finished picture: Continue with this → Combine
+
+**Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
+what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
+handoff puts it there), image 2 goes on Picture 1 of the board (*Pull from library* or drop a file); both are scaled to
+about one megapixel and chained as reference latents. The prepared wording carries two bracketed fills the page refuses
+to run until you replace them: *who is in image 1* (name the subject and costume: "the witch in the black and red robe
+with gold trim and the wide-brimmed witch hat") and *the pose in a few words*. That is not ceremony: with abstract
+wording ("the character from image 1") the 4B model either left the witch on her throne or kept the *second* picture's
+person and added a witch hat (three renders); with the subject named it moved her every time (four renders across two
+pose pictures). Do not append the source description: it names the source's pose and the model obeyed it. One pose
+picture: a third leaked its shorts and lettering; the second slot exists so you can try, and the hint says so. The pose
+picture's clothing can still leak a detail ("SHARK" lettering appeared on the robe once), so say "no lettering" or pick a
+plainer picture. About 30–45 s warm. Research table and the exact graphs:
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`; sheet `examples/style-pose/combine-klein-research.jpg`;
+proving run through the page in `CURRENT_STATE.md` and the catalog's `execution_note`.
+
+**Change one thing (FLUX.2 Klein 4B, keeps the rest)** now leads *Continue with this → Edit* (it was the 11-minute Qwen
+recipe). The prepared wording is "Change one thing: [say what changes]. Keep everything else exactly as it is: …" plus the
+source's description; the bracketed fill blocks Generate until replaced. Measured: "replace her hat with a red Santa hat"
+kept pose, face, robe and throne (the whole picture warmed towards red, so name the colours you keep).
+
 **Restyle a picture (WAI v17 + light-novel look)** was the route's first destination from the evening of 14 September
 2026, after the owner's first Restyle result (a Style + Pose board with a single style picture) came out flat, garish and
 without the throne, and they supplied a target render. It keeps the picture instead of only its skeleton: the picture to

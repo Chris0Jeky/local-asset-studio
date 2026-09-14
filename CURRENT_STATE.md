@@ -1,5 +1,35 @@
 # Current state — 14 September 2026
 
+## Combine two pictures with FLUX.2 Klein 4B; the Edit route leads with the 20-second edit — 14 September 2026 (late night)
+
+The owner reported the Studio "keeps not working and redirecting" and that a Flux.2 edit "regenerates the same exact
+image" when the prompt changes; they wanted to use two library pictures with the throne witch. Their job records showed
+what happened: *Continue with this → Restyle* on a Klein restyle output, "have the pose of the second image, the face and
+expression of the third image" typed into the keep sentence of a one-picture recipe, the same seed twice (jobs
+`3ad01f31…`, `35b548fd…`; mean pixel difference 2.3 between the runs). Two more defects were found by walking the page:
+the Edit route greeted the user with the 11-minute Qwen recipe, and restyling a Klein output appended the previous
+instruction as "The picture shows: …", compounding the wording. Fifteen research renders (tabled in
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`, sheet
+`examples/style-pose/combine-klein-research.jpg`) found that Klein 4B moves a character into another picture's pose in
+30–45 s **when the wording names the subject and the pose** (abstract "the character from image 1" left her where she
+was or swapped the base picture), that appending the source description undoes the pose, that a third picture leaks its
+costume, and that borrowing a look from a picture trades colour drift against look strength.
+
+Shipped: a **Combine** route (*Continue with this → Combine*) with **Put this character in another picture's pose
+(FLUX.2 Klein 4B)**: source on image 1, the pose picture on Picture 1 of a two-slot board, wording with two bracketed
+fills (who is in image 1; the pose) that the page and the server refuse to run unreplaced; **Restyle a picture in another
+picture's look (FLUX.2 Klein 4B)** second on the Restyle route with a colour-sentence fill; **Change one thing (FLUX.2
+Klein 4B, keeps the rest)** (renamed `flux-edit`) first on the Edit route with prepared wording and a fill; an empty
+board slot on a reference-latent chain is bypassed rather than breaking the chain; the handoff no longer appends an
+instruction-role source prompt as a description; restyling a picture with the recipe it came from says that the same
+wording and seed give the same picture; the second-picture panel offers *Use its pose → Combine*. Proving run through the
+page as a first-time user (library → witch → Continue with this → Combine → Prepare → Pull the owner's Santa picture into
+Picture 1 → replace the two fills → Generate): job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`, output
+`Combine/Klein_00001_.png`, sheet `examples/style-pose/combine-klein-proving.jpg`; the use-case matrix gained
+`combine-character-with-another-pose` (9 intended / 10 taken / 5 clicks / 0 dead ends, fixture mode, 12/12 cases pass).
+Not verified: art acceptance (HUMAN_TODO q-27 e), the look recipe through the page, Klein 9B and AniEdit 9B (downloads
+still running through the VPN), a third board picture with explicit "take only … from image 3" wording.
+
 ## Restyle a picture with FLUX.2 Klein 4B: keeps everything, no board, 20 s — 14 September 2026 (night)
 
 The owner asked to keep improving restyle quality, whether FLUX.2 Klein 9B is really a 24 GB model, and said the

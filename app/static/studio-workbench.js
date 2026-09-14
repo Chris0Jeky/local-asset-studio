@@ -142,7 +142,7 @@
     q('#uxContinuationRecord').textContent=source?'Prompt '+(source.prompt_id||'unavailable')+' · source SHA-256 '+source.sha256:'Reading the retained source; no new model request.';
     q('#uxRestoreSourcePrompt').disabled=!reusable||cap?.prompt_role!=='description'||submitting;
     q('#uxChangeRoute').disabled=submitting;q('#uxLeaveContinuation').disabled=submitting;
-    q('#generate').textContent=cap?.operation==='upscale'?'Upscale source →':cap?.operation==='restyle'?'Restyle source →':cap?.prompt_role==='motion'?'Animate source →':'Generate source-based pass →';
+    q('#generate').textContent=cap?.operation==='upscale'?'Upscale source →':cap?.operation==='restyle'?'Restyle source →':cap?.operation==='combine'?'Combine pictures →':cap?.prompt_role==='motion'?'Animate source →':'Generate source-based pass →';
   }
   async function readSource(id){return api('/api/assets/'+encodeURIComponent(id)+'/context',{signal:AbortSignal.timeout(30000)});}
   async function hydrateContinuation(){
@@ -172,15 +172,17 @@
   // One slot, two pictures: the second picture is a question, not a silent replacement (owner report, 14 Sep 2026).
   let secondPicture=null,pendingStyle=null;
   const secondPanel=element('div','ux-second-picture callout');secondPanel.id='uxSecondPicture';secondPanel.hidden=true;secondPanel.setAttribute('role','group');secondPanel.setAttribute('aria-labelledby','uxSecondTitle');
-  secondPanel.innerHTML='<b id="uxSecondTitle">One slot, two pictures.</b><p id="uxSecondText"></p><div class="ux-context-actions"><button type="button" id="uxSecondRestyle" class="primary">Use its look → Restyle the source</button><button type="button" id="uxSecondReplace">Start from this picture instead</button><button type="button" id="uxSecondKeep">Keep the source, drop this picture</button></div><p id="uxSecondHint" class="muted"></p>';
+  secondPanel.innerHTML='<b id="uxSecondTitle">One slot, two pictures.</b><p id="uxSecondText"></p><div class="ux-context-actions"><button type="button" id="uxSecondCombine" class="primary">Use its pose → Combine</button><button type="button" id="uxSecondRestyle">Use its look → Restyle the source</button><button type="button" id="uxSecondReplace">Start from this picture instead</button><button type="button" id="uxSecondKeep">Keep the source, drop this picture</button></div><p id="uxSecondHint" class="muted"></p>';
   q('#createView .references').after(secondPanel);
   function secondName(item){return item?.file?item.file.name:item?.asset?.title||'this picture';}
+  const boardDestination=intent=>StudioContinuation.destinations(intent,catalog?.presets||[],continuationSource).find(p=>p.continuation_capability?.board_min>0);
   function offerSecondPicture(item){
-    secondPicture=item;const dest=StudioContinuation.destinations('restyle',catalog?.presets||[],continuationSource).find(p=>p.continuation_capability?.board_min>0);
+    secondPicture=item;const dest=boardDestination('restyle'),pose=boardDestination('combine');
     q('#uxSecondText').textContent=StudioContinuation.sourceLabel(selected)+' already holds the picture you are continuing. What is “'+secondName(item)+'” for?';
+    q('#uxSecondCombine').disabled=!pose;q('#uxSecondCombine').title=pose?'':'No combine recipe is available.';
     q('#uxSecondRestyle').disabled=!dest;q('#uxSecondRestyle').title=dest?'':'No style-board restyle recipe is available.';
-    q('#uxSecondHint').textContent=dest?(dest.continuation_capability?.keeps_picture?'Restyle keeps the source and repaints it in the recipe’s finish ('+dest.name+'); the new picture goes on the style board, which adds its palette only as far as Style weight says (0 = off).':'Restyle keeps the source’s pose and paints it in the look of the new picture ('+dest.name+').')+' Starting from the new picture ends this continuation; the original stays in your library.':'No restyle recipe is available; start from the new picture, or keep the source.';
-    secondPanel.hidden=false;syncReady();focusReadinessTarget(q('#uxSecondRestyle').disabled?q('#uxSecondReplace'):q('#uxSecondRestyle'));
+    q('#uxSecondHint').textContent=(pose?'Combine keeps the source character and draws it in the new picture’s pose ('+pose.name+'). ':'')+(dest?(dest.continuation_capability?.keeps_picture?'Restyle keeps the source and repaints it '+(dest.continuation_capability?.prompt_role==='instruction'?'the way the new picture is drawn ('+dest.name+').':'in the recipe’s finish ('+dest.name+'); the new picture goes on the style board, which adds its palette only as far as Style weight says (0 = off).'):'Restyle keeps the source’s pose and paints it in the look of the new picture ('+dest.name+').')+' ':'No restyle recipe is available. ')+'Starting from the new picture ends this continuation; the original stays in your library.';
+    secondPanel.hidden=false;syncReady();focusReadinessTarget(pose?q('#uxSecondCombine'):dest?q('#uxSecondRestyle'):q('#uxSecondReplace'));
   }
   function dismissSecondPicture(){secondPicture=null;secondPanel.hidden=true;}
   const legacyReferenceChange=q('#reference').onchange;
@@ -190,11 +192,12 @@
     dismissSecondPicture();return legacyReferenceChange?.call(this,e);
   };
   q('#uxSecondKeep').onclick=()=>{dismissSecondPicture();q('#reference').value='';syncReady();announce('Kept the source. The extra picture was not attached.');};
-  q('#uxSecondRestyle').onclick=()=>{
-    const item=secondPicture,dest=StudioContinuation.destinations('restyle',catalog?.presets||[],continuationSource).find(p=>p.continuation_capability?.board_min>0);if(!item||!dest||!continuationState)return;
+  const useSecondPicture=intent=>()=>{
+    const item=secondPicture,dest=boardDestination(intent);if(!item||!dest||!continuationState)return;
     dismissSecondPicture();q('#reference').value='';pendingStyle=item;syncReady();
-    openHandoff(continuationState.source_asset_id,dest.id,undefined,'restyle');
+    openHandoff(continuationState.source_asset_id,dest.id,undefined,intent);
   };
+  q('#uxSecondRestyle').onclick=useSecondPicture('restyle');q('#uxSecondCombine').onclick=useSecondPicture('combine');
   q('#uxSecondReplace').onclick=async()=>{
     const item=secondPicture;if(!item||!continuationState)return;
     if(!window.confirm('Start from this picture instead? The continuation ends and Create resets to the recipe defaults. The original stays in your library.'))return;
@@ -224,7 +227,7 @@
     if(assetDetailsDirty()){warnUnsavedAsset();return;}if(!catalog){announce('Recipes are still loading.');return;}
     const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return;}
     handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
-    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
+    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/^combine-/.test(preferred||'')?'combine':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(a.review||'unreviewed')+'</small>';
     q('#uxHandoffStatus').textContent='Reading this output’s exact submitted prompt…';handoffRecipes(preferred);handoff.showModal();
     readSource(id).then(source=>{if(request!==handoffEpoch||!handoff.open)return;if(source?.version!==1||source.asset_id!==id||source.sha256!==a.sha256)throw Error('Source identity changed; refresh the library.');sourceContext=source;q('#uxHandoffStatus').textContent=source.warning||'Source and output-specific wording found. Preparing remains separate from running.';const current=q('#uxDestination').value;handoffRecipes(preferred||current);}).catch(error=>{if(request===handoffEpoch&&handoff.open){q('#uxHandoffStatus').textContent='Could not read source context: '+error.message;sourceContext=null;destinationDetails();}});
@@ -243,7 +246,7 @@
       const restyle=StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference';
       q(restyle?'#lastReferenceHint':'#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
       if(!restyle){announce(style?'Source attached. This recipe has no style board, so the second picture was not attached; the prepared wording carries the look. Check it, then press Generate.':'Source attached. Check the prompt, then press Generate.');contextPanel.scrollIntoView({block:'center'});}
-      else{const label=StudioContinuation.sourceLabel(selected).toLowerCase(),board=selected.continuation_capability?.keeps_picture?'the style board (off until you raise Style weight)':'the style board';
+      else{const label=StudioContinuation.sourceLabel(selected).toLowerCase(),op=selected.continuation_capability?.operation,board=op==='combine'?'Picture 1 (the picture whose pose you want)':selected.continuation_capability?.keeps_picture&&selected.style_weight?'the style board (off until you raise Style weight)':selected.continuation_capability?.prompt_role==='instruction'?'Picture 1 (the picture drawn the way you want)':'the style board';
         if(style?.file){announce('Source attached as the '+label+'; your picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
         else if(style?.asset){announce('Source attached as the '+label+'; your picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
         else{announce('Source attached as the '+label+'. Now add a picture to Picture 1 of '+board+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}

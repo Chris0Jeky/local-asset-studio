@@ -478,6 +478,51 @@
           "expect": "the run control is enabled and nothing has been submitted"
         }
       ]
+    },
+    {
+      "id": "combine-character-with-another-pose",
+      "goal": "Take a character I like and draw it in the pose of another picture from my library, without knowing which recipe does that (the owner's 14 September 2026 attempt typed 'the pose of the second image' into a one-picture recipe and got the same picture back).",
+      "starting_view": "create",
+      "success_condition": "The character is attached as the picture to keep (image 1), the pose picture sits on Picture 1 of the board, the prepared wording names the subject and the pose, and the run control reports ready while zero generation requests have been sent.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "continue with a recent output from the runs list",
+          "expect": "a dialog asks where the picture should go next"
+        },
+        {
+          "intent": "choose the route that combines two pictures",
+          "expect": "the Combine route is selected and lists the Klein board recipe"
+        },
+        {
+          "intent": "read what the route will do with this picture",
+          "expect": "the dialog says the character is kept and the pose comes from the picture put on Picture 1"
+        },
+        {
+          "intent": "open the wording prepared for this pass",
+          "expect": "the wording names image 1 and image 2 and carries two bracketed fills: who is in image 1 and the pose"
+        },
+        {
+          "intent": "prepare it in Create",
+          "expect": "Create opens with the picture attached as the picture to keep"
+        },
+        {
+          "intent": "read what is still missing",
+          "expect": "the blockers name Picture 1 (the pose picture) and the bracketed fills, nothing else"
+        },
+        {
+          "intent": "add the pose picture to Picture 1",
+          "expect": "a saved picture fills Picture 1"
+        },
+        {
+          "intent": "fill in the wording",
+          "expect": "replacing the two bracketed fills clears the wording blocker"
+        },
+        {
+          "intent": "read the run control",
+          "expect": "the run control is enabled and nothing has been submitted"
+        }
+      ]
     }
   ]
 }
