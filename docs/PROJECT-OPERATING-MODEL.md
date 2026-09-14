@@ -49,6 +49,8 @@ The default limit is:
 
 A stack child does not consume another independent line. Research in review does consume a line when it has an open PR. A new line starts only after another merges, closes, or is deliberately parked. The owner may override this explicitly. A maintenance defect may bypass the limit only when it blocks an active line, and the reason belongs in the PR.
 
+In `active-work.json`, `stack_parent` names the **root PR of the whole chain**, while `base` retains the immediate branch dependency. Every descendant of `#333 → #336 → #346 → #349`, for example, records `stack_parent: 333`. This keeps one nested merge chain equal to one stack instead of counting each intermediate parent as another stack.
+
 The limit controls integration cost, not personal activity. It does not prohibit reading, issue triage or preparing an owner decision.
 
 ## Integration rules
@@ -110,7 +112,7 @@ Receipts name the source commit they measured. When that SHA differs from the ca
 1. Read live open PRs and relevant issues.
 2. Record only the active queue and immediate ready work; do not copy the entire historical issue list.
 3. Preserve the exact capture time and default-branch SHA.
-4. Identify every stack parent and child.
+4. Record each child’s immediate branch in `base`, but set every descendant’s `stack_parent` to the chain’s root PR.
 5. Mark owner-run work explicitly.
 6. Regenerate the snapshot and run its drift check.
 7. Review any WIP-limit warning; do not edit the generated verdict.
