@@ -14,7 +14,7 @@ H3 remains locally blocked after two text-encoder access-violation crashes. [Iss
 
 ## Licence review and owner confirmation
 
-The branch reports a Hunyuan3D 2.1 draft run. That is execution evidence, separate from the applicable licence terms. The [standard Hunyuan3D 2.1 licence](https://raw.githubusercontent.com/Tencent-Hunyuan/Hunyuan3D-2.1/main/LICENSE) excludes the UK, EU and South Korea; clause 5(c) also restricts outputs outside the territory. On 14 September 2026, the owner confirmed authorised-territory use in issue #26. This records owner authorisation for Hunyuan3D 2.1 in that scope; it is not independent legal verification, blanket approval, a change to the published terms or new restrictions, coverage for other models or territories, or a new generation allowance. Output acceptance and downstream rights remain separate. Historical execution and source-term findings below are retained.
+The branch reports a Hunyuan3D 2.1 draft run. That is execution evidence, separate from the applicable licence terms. The [standard Hunyuan3D 2.1 licence](https://raw.githubusercontent.com/Tencent-Hunyuan/Hunyuan3D-2.1/main/LICENSE) excludes the UK, EU and South Korea; clause 5(c) also restricts outputs outside the territory. The owner confirmed authorised-territory use on 11 September 2026 in the [issue #26 owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899), and this scope was reconciled on 14 September 2026. This records the supplied authorisation for Hunyuan3D 2.1; it does not extend to other models. Output acceptance and downstream rights remain separate. Historical execution and source-term findings below are retained.
 
 ## What stays new in the game-asset PR
 

@@ -2951,7 +2951,7 @@
       "graph": "workflows/api/hunyuan-draft-api.json",
       "visual": "workflows/comfyui/40 - Hunyuan3D 2.1 - Draft.json",
       "verified": true,
-      "commercial_note": "Standard Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26). On 14 September 2026, the owner confirmed authorised-territory use in issue #26; this is owner authorisation only, not independent legal verification, blanket approval, a terms change or new restrictions, coverage for other models or territories, or a new generation allowance.",
+      "commercial_note": "Standard Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26). Owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2026 (issue #26); recorded scope reconciled in HUMAN_TODO.md on 14 September.",
       "reference": [
         "2",
         "image"
@@ -2995,7 +2995,7 @@
       "graph": "workflows/api/hunyuan-detail-api.json",
       "visual": "workflows/comfyui/41 - Hunyuan3D 2.1 - Detail.json",
       "verified": false,
-      "commercial_note": "Standard Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26). On 14 September 2026, the owner confirmed authorised-territory use in issue #26; this is owner authorisation only, not independent legal verification, blanket approval, a terms change or new restrictions, coverage for other models or territories, or a new generation allowance.",
+      "commercial_note": "Standard Hunyuan3D 2.1 terms exclude the UK, EU and South Korea and restrict outputs outside the territory (issue #26). Owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2026 (issue #26); recorded scope reconciled in HUMAN_TODO.md on 14 September.",
       "reference": [
         "2",
         "image"

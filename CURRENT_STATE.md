@@ -1,5 +1,14 @@
 # Current state — 14 September 2026
 
+## Owner gate update — Hunyuan3D 2.1 — 14 September 2026
+
+The owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2026 in the [issue #26
+owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899); this
+scope was reconciled on 14 September 2026. This records the supplied authorisation for that model and
+scope; it does not independently verify the licence or extend to other models. Output acceptance and
+downstream rights remain separate. q-5 is closed in [HUMAN_TODO.md](HUMAN_TODO.md); q-6 remains open.
+Historical execution, source-term and output records below remain unchanged.
+
 ## Full assessment, recovery exits and agent tooling — 13/14 September 2026
 
 A coordinator plus 34 read-only subagents assessed the two-day burst of merged work at `main`
@@ -11,14 +20,6 @@ backend), 94 Studio jobs with 80 completed across 39 presets, Workspace 111 asse
 unreviewed and none accepted. The full record is
 [STUDIO-REVIEW-2026-09-13.md](docs/STUDIO-REVIEW-2026-09-13.md); the goal view is
 [STATUS.md](docs/STATUS.md). No generation was submitted by the assessment.
-
-## Owner gate update — Hunyuan3D 2.1 — 14 September 2026
-
-In issue #26, the owner confirmed authorised-territory use for Hunyuan3D 2.1. This records owner
-authorisation for that model and scope; it does not independently verify the licence, change the
-published terms, add new restrictions, grant blanket approval, cover other models or territories, or add a generation
-allowance. q-5 is closed in [HUMAN_TODO.md](HUMAN_TODO.md); q-6 remains open. Historical execution,
-source-term and output records below remain unchanged.
 
 Confirmed and fixed in PR #262: a job whose retained submissions were all terminal could never
 leave `uncertain`/`partial` from the Gallery and kept refusing backend switches; resuming a prompt
