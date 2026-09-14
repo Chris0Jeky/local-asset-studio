@@ -23,6 +23,8 @@ and a tested Godot sprite project. See [Workspace](docs/WORKSPACE.md),
 
 Start with the [first-image walkthrough](docs/START-HERE.md), then read [experiments and native finishing](docs/EXPERIMENTS.md) for bounded comparisons and export plans. [Status by goal](docs/STATUS.md) says where each owner goal stands; the [documentation index](docs/README.md) names every page; the [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
 
+For the cross-cutting product and engineering judgement—what the Studio is becoming, what to prioritise, what to stop expanding and which evidence gates should govern the next phase—read the [strategic consolidation bundle](docs/strategy/README.md).
+
 ## What is here
 
 | Folder | Purpose |
