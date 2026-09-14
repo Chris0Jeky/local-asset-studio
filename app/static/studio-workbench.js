@@ -223,7 +223,7 @@
     if(assetDetailsDirty()){warnUnsavedAsset();return;}if(!catalog){announce('Recipes are still loading.');return;}
     const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return;}
     handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
-    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/style-pose/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
+    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(a.review||'unreviewed')+'</small>';
     q('#uxHandoffStatus').textContent='Reading this output’s exact submitted prompt…';handoffRecipes(preferred);handoff.showModal();
     readSource(id).then(source=>{if(request!==handoffEpoch||!handoff.open)return;if(source?.version!==1||source.asset_id!==id||source.sha256!==a.sha256)throw Error('Source identity changed; refresh the library.');sourceContext=source;q('#uxHandoffStatus').textContent=source.warning||'Source and output-specific wording found. Preparing remains separate from running.';const current=q('#uxDestination').value;handoffRecipes(preferred||current);}).catch(error=>{if(request===handoffEpoch&&handoff.open){q('#uxHandoffStatus').textContent='Could not read source context: '+error.message;sourceContext=null;destinationDetails();}});
