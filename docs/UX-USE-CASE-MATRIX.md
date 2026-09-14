@@ -126,8 +126,10 @@ Save to Workspace, Prepare saved revision, Export graph, imports, downloads, Mov
 label (`generate`, `start comparison`, `render`, `save to workspace`, `move to trash`, `switch backend`,
 `download`, `install`, `delete`, `prepare`, `submit`, `run`, `resume`, `stop`, `choose <letter>`),
 by attribute (`data-project-action`, `data-choose-candidate`, `data-bulk`, `download`) and for any
-button that would submit a form. Reading a control is never blocked — only doing is. ComfyUI is never
-contacted in either mode, and the base URL must be loopback.
+button that would submit a form. Reading a control is never blocked — only doing is. Fixture mode never contacts ComfyUI; live mode
+reaches only the loopback Studio (whose own health probe reads ComfyUI system stats), and the base URL
+must be loopback. Generation submissions are counted from the POSTs the browser itself sent, in both
+modes, against every route that can start or resume engine work.
 
 Proven 14 Sep 2026 by pointing live mode at a standalone copy of the fixture server:
 **43 actions were refused, 3 of the 10 cases still completed on navigation and typing alone, and zero

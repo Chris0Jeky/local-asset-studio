@@ -1,4 +1,5 @@
-"""Owner-shaped end-to-end UX use cases, measured in a real browser. Never contacts ComfyUI.
+"""Owner-shaped end-to-end UX use cases, measured in a real browser. Fixture mode never contacts ComfyUI;
+live mode only reaches the loopback Studio, whose own health probe reads ComfyUI system stats.
 
     python tests/studio_use_cases.py                      # fixture mode (default), full run
     python tests/studio_use_cases.py --case first-image-from-brief
@@ -42,7 +43,7 @@ CLICK_ACTIONS = ('click', 'check', 'select')
 
 
 def count_words(text):
-    """Instruction words a reader actually has to read. Punctuation and digits-only runs count as one word each."""
+    """Instruction words a reader actually has to read. Punctuation and digits-only runs are not words."""
     return len(WORD.findall(text or ''))
 
 
@@ -60,6 +61,7 @@ def dead_end(record):
 
 # Any route that can start or resume engine work, not only direct job creation: comparison
 # start/resume, job resume, saved-workflow runs, scene and voice renders.
+OBSERVED_POSTS = []  # every POST the browser sent, both modes; the fixture's own log is not available live
 GENERATION_ROUTE = re.compile(r'^/api/jobs$|^/api/[a-z0-9_/-]+/(start|resume|run|render|generate)$')
 
 
@@ -271,6 +273,7 @@ class CaseRun:
     def __init__(self, spec, page, origin, live, screenshots):
         self.spec, self.page, self.origin, self.live = spec, page, origin, live
         self.dir = screenshots / spec['id']
+        if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,63}', spec['id']): raise ValueError('Unsafe case id: %r' % (spec['id'],))
         if self.dir.exists(): shutil.rmtree(self.dir)
         self.dir.mkdir(parents=True, exist_ok=True)
         self.records, self.cursor, self.notes = [], 0, []
@@ -452,8 +455,10 @@ def _one_reference(c):
     c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')
     c.act('#uxPullAsset')
     if c.page.locator('#uxSourcePicker[open]').count():
-        try: c.page.click('[data-ux-pull="asset-0"]', timeout=4000); c.page.wait_for_timeout(500)
-        except Exception: pass
+        if c.live: c.act('[data-ux-pull="asset-0"]', 'read', note='live mode: pulling a reference writes server state; not clicked')
+        else:
+            try: c.page.click('[data-ux-pull="asset-0"]', timeout=4000); c.page.wait_for_timeout(500)
+            except Exception: pass
     c.act('#positive', 'fill', typed='Change the cloak to deep blue. Keep the face, hair and lantern exactly as they are.')
     c.act('#generate', 'read', note='readiness only; never pressed')
     return c.ready(), 'run control enabled=%s' % c.ready()
@@ -467,7 +472,8 @@ def _three_references(c):
         c.act('[data-ref-role="%d"]' % index, 'select', typed=role)
         c.act('#uxPullAsset', note='attach picture %d' % (index + 1))
         picked = False
-        if c.page.locator('#uxSourcePicker[open]').count():
+        if c.page.locator('#uxSourcePicker[open]') .count() and c.live: c.act('[data-ux-pull="%s"]' % asset, 'read', note='live mode: pulling a reference writes server state; not clicked')
+        elif c.page.locator('#uxSourcePicker[open]').count():
             try:
                 c.page.select_option('#uxSourceSlot', str(index), timeout=3000)
                 c.page.click('[data-ux-pull="%s"]' % asset, timeout=4000); c.page.wait_for_timeout(600); picked = True
@@ -576,8 +582,7 @@ def _guided(c):
         c.act('.studio-guide-panel button:has-text("Next step")', navigation=True, note='stage=%s' % stage)
     final = c.page.evaluate("new URLSearchParams(location.search).get('stage')")
     reached.append(final)
-    import studio_browser_smoke as fixture
-    submitted = [post for post in fixture.POSTS if post['path'] == '/api/jobs']
+    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
     c.act('body', 'read', note='stages reached: %s; generation posts: %d' % (','.join(str(x) for x in reached), len(submitted)))
     complete = len([x for x in reached if x]) >= 6 and not submitted
     return complete, 'stages reached=%s, start href=%s, generation posts=%d' % (reached, href, len(submitted))
@@ -603,8 +608,7 @@ def _workflow(c):
     c.act('#exportGraph', 'read', note='export availability after the check')
     c.act('#saveSharedWorkflow', 'read', note='save to Workspace')
     c.act('#prepareSavedRun', 'read', note='prepare a run from a saved revision')
-    import studio_browser_smoke as fixture
-    runs = [post for post in fixture.POSTS if post['path'].endswith('/run') or post['path'] == '/api/jobs']
+    runs = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
     c.act('#workflowStatus', 'read', note='%d run requests sent' % len(runs))
     exportable = c.page.locator('#exportGraph').count() and not c.page.locator('#exportGraph').is_disabled()
     return bool(exportable) and not runs, 'export available=%s, run requests=%d' % (bool(exportable), len(runs))
@@ -711,6 +715,7 @@ def main(argv=None):
                 page = context.new_page()
                 page.set_default_timeout(6000)
                 page.on('pageerror', lambda error, case=spec['id']: errors.append(case + ': ' + str(error)[:200]))
+                page.on('request', lambda request: OBSERVED_POSTS.append(urlsplit(request.url).path) if request.method == 'POST' else None)
                 print('--- ' + spec['id'], flush=True)
                 rows.append(run_case(spec, page, origin, live, args.screenshots))
                 print(('PASS ' if rows[-1]['passed'] else 'FAIL ') + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
@@ -720,11 +725,11 @@ def main(argv=None):
         if server: server.shutdown(); server.server_close()
         if thread: thread.join(timeout=5)
 
-    submitted = [post['path'] for post in (fixture.POSTS if fixture else []) if GENERATION_ROUTE.search(post['path'])]
+    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
               'cases': len(rows), 'passed': len([row for row in rows if row['passed']]),
-              'generation_submissions': len(submitted), 'page_errors': errors,
+              'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS), 'page_errors': errors,
               'screenshots': str(args.screenshots.relative_to(ROOT)).replace('\\', '/') if args.screenshots.is_relative_to(ROOT) else str(args.screenshots),
               'rows': rows}
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -736,7 +741,7 @@ def main(argv=None):
     for row in friction_points(rows)[:5]:
         print('  %-34s dead=%d clicks=%d unexplained=%d words=%d' % (row['id'], row['dead_ends'], row['clicks'], row['unexplained_disabled'], row['instruction_words']))
     print()
-    print('mode=%s cases=%d passed=%d generation submissions=%d page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(errors)))
+    print('mode=%s cases=%d passed=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
     print('matrix -> ' + str(args.out))
     if submitted: raise SystemExit('A use case submitted a generation; that must never happen.')
     return 0
