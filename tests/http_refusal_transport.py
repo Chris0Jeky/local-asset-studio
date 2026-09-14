@@ -3,8 +3,8 @@ import json
 import socket
 
 
-def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://127.0.0.1:8191', timeout=5, response_details=False):
-    """Send one nonempty JSON POST atomically and decode its JSON response."""
+def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://127.0.0.1:8191', content_type='application/json', timeout=5, response_details=False):
+    """Send one nonempty POST atomically with the requested content type and decode its JSON response."""
     if not isinstance(body, bytes) or not body:
         raise ValueError('Early-refusal checks require the original nonempty body bytes')
     if not isinstance(path, str) or not path.startswith('/'):
@@ -13,7 +13,7 @@ def atomic_json_post(port, path, body, *, host='127.0.0.1:8191', origin='http://
         f'POST {path} HTTP/1.1\r\n'
         f'Host: {host}\r\n'
         f'Origin: {origin}\r\n'
-        'Content-Type: application/json\r\n'
+        f'Content-Type: {content_type}\r\n'
         f'Content-Length: {len(body)}\r\n'
         'Connection: close\r\n\r\n'
     ).encode('ascii')
