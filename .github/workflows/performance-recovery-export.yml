@@ -1,0 +1,30 @@
+name: Temporary performance recovery export
+on:
+  push:
+    branches: [codex/performance-recovery-export]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export pinned main and recover source-only patch without execution
+        run: |
+          mkdir -p "$RUNNER_TEMP/performance-recovery"
+          git branch recovery-base 368886191434433eb5205d54688ce0093a4adb7f
+          git bundle create "$RUNNER_TEMP/performance-recovery/source.bundle" recovery-base
+          base64 --decode recovered-telemetry-patch.b64 | gzip -d > "$RUNNER_TEMP/performance-recovery/recovered.patch"
+          git rev-parse recovery-base recovery-base^{tree} > "$RUNNER_TEMP/performance-recovery/identity.txt"
+          cd "$RUNNER_TEMP/performance-recovery"
+          sha256sum source.bundle recovered.patch > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: performance-recovery-3688861
+          path: ${{ runner.temp }}/performance-recovery/
+          retention-days: 1
+          if-no-files-found: error
