@@ -100,7 +100,10 @@ issues: #16, #36, #37, #38, #204.
 read polling is bounded and visibility-aware; the frontend reviewer found no dangling handlers, no missing endpoints,
 no page-load submission and no double-submit path. Two real defects were found and fixed in PR #262: a recipe
 swap during a reference upload could submit the wrong recipe, and a mid-upload slot change discarded the upload
-silently. **Unmeasured.** Native-browser default lane; owner's own usability opinion. No open issue owns UI quality.
+silently. **Owner's verdict, 14 September.** Recorded first-hand in [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md)
+and owned by #278: seven UX PRs merged the same night, and `tests/studio_use_cases.py` now measures ten agent-driven
+journeys (fixture 10/10; live read-only 4/10 with 4 dead ends ranked in [UX-USE-CASE-MATRIX.md](UX-USE-CASE-MATRIX.md)).
+**Unmeasured.** Native-browser default lane; whether the merged wave changes the owner's verdict (HUMAN_TODO q-7).
 
 ## G6 — Modular workflow editing
 

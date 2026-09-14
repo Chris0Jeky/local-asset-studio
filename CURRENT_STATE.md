@@ -26,6 +26,29 @@ scratchpad overwrote each other's PR bodies once (caught and restored).
 Not verified: no generation was run; nothing here is art acceptance or a licence judgement; the owner's own
 first-hand pass over the merged Studio is still owed (HUMAN_TODO q-7); the five friction points the matrix
 ranked are a follow-up PR in flight (`ux/matrix-friction-fixes`).
+## Actual scaled repair pixels and reconstructed packets — 14 September 2026
+
+The offline [pixel transform command](docs/repair-studio/PIXEL-TRANSFORMS.md) now
+prepares scaled RGBA context and explicit work/source masks from a checked edit
+plan and normalized source packet. Apply reconstructs the packet from the external
+request before compositing a supplied candidate. Effective coverage is checked
+again against protection, context, contacts and non-target actors; prepared padding
+cannot write source pixels. Apply requires the caller's expected effective-mask
+digest, binding expanded coverage separately from the initial outline. The new schemas do not enter legacy native/bridge
+adapters, and legacy edit behavior remains unchanged.
+
+Executed locally: 27 new transform/packet tests pass; legacy character edit checks
+have 229 total, 225 passed and four optional skips; source intake has 30 total,
+29 passed and one optional skip. The synthetic CLI example at
+`C:/AI/character-lab/scaled-repair-proof-20260914-a` changed 4,292 pixels with zero
+changes outside effective write coverage and zero protected changes. Its comparison
+was visually inspected: the other character is retained. This is CPU fixture
+evidence, not model execution, performance proof, anatomy quality or art acceptance.
+Full integration and independent review are recorded separately on the change's PR.
+Issue #245's mechanical transform slice advances; #243, native/model registration
+(#248), guided use (#251), repair allocation and a real accepted repair remain open.
+No runtime, generation allowance, model, installed application or human decision
+was changed by this implementation.
 
 ## Owner gate update — Hunyuan3D 2.1 — 14 September 2026
 
