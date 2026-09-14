@@ -213,7 +213,8 @@ def load_packet(folder: Path) -> tuple[bytes, dict, bytes]:
     if set(receipt) != {'schema','normalization','neural_inference','review_state'} or receipt['schema'] != SCHEMA:
         raise ValueError('Unsupported repair-source packet')
     original = read_bounded(folder/'source.png',MAX_SOURCE_BYTES,reject_symlink=True)
-    actual = read_bounded(folder/'normalized.png',MAX_OUTPUT_BYTES,reject_symlink=True)
+    if len(original) > MAX_OUTPUT_BYTES: raise ValueError('Packet exceeds aggregate artifact byte limit')
+    actual = read_bounded(folder/'normalized.png',MAX_OUTPUT_BYTES-len(original),reject_symlink=True)
     expected, details = normalize_repair_png(original)
     actual_chunks = scan_png(actual)
     if any(k not in (*COLOUR,b'IHDR',b'IDAT',b'IEND') for k,_ in actual_chunks):
