@@ -14,7 +14,7 @@ The live repository visibility was observed as **PUBLIC** on 13 September 2026. 
 
 **q-25 — creative review of the Style + Pose results (open).** Three sheets: the six-checkpoint matrix
 (`examples/style-pose/matrix/assessment-sheet.jpg`), the board LoRA sweep (`board-lora-sweep-wai.jpg`,
-`board-lora-sweep-yumeflux.jpg`, `board-combine-probes.jpg`) and the two verifying runs (`examples/style-pose/board-verify-*.jpg`),
+`board-lora-sweep-yumeflux.jpg`, `board-combine-probes.jpg`) the two verifying runs (`examples/style-pose/board-verify-*.jpg`) and the Nova comparison (`examples/style-pose/matrix/nova-vs-wai.jpg`),
 evidence under `experiments/curated/style-pose-matrix/`. My reading: WAI v17 or YumeFlux, the board averaged at the
 shipped 0.7, pose strength 0.9, Mishima Kurone 0.8 + Glossy 0.6. Decide whether that direction is right for the fantasy
 character pack and whether the shipped defaults (style weight 0.7, pose strength 0.9) should change. Suggested action:

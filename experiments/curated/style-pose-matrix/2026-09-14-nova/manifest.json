@@ -1,0 +1,253 @@
+{
+  "plan": {
+    "styles": [
+      "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+      "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png",
+      "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+    ],
+    "styles_source": "character sheet 6152a06a\u2026, KonoSuba group art 914e0409\u2026, braided bodysuit study b8691da8\u2026",
+    "poses": [
+      {
+        "id": "throne",
+        "file": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "source": "library asset f44ac333401c5a3d8c831bf58e0644a5 (849x1200)",
+        "tags": "sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below"
+      }
+    ],
+    "subject": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body",
+    "recipes": [
+      {
+        "preset_id": "style-pose-nova",
+        "suffix": ", masterpiece, best quality, amazing quality"
+      },
+      {
+        "preset_id": "style-pose-wai",
+        "suffix": ", masterpiece, best quality, amazing quality"
+      }
+    ],
+    "loras": [
+      {
+        "id": "none"
+      },
+      {
+        "id": "mishima080",
+        "controls": {
+          "lora": 0.8,
+          "lora_name": "ST_Mishima_Kurone_0R.safetensors"
+        },
+        "tag": "mishimakurone",
+        "recipes": [
+          "style-pose-nova"
+        ]
+      },
+      {
+        "id": "mishima070+glossy060",
+        "controls": {
+          "lora": 0.7,
+          "lora_name": "ST_Mishima_Kurone_0R.safetensors",
+          "lora2": 0.6,
+          "lora2_name": "glossy_anime_style_illustriousXL-000011.safetensors"
+        },
+        "tag": "mishimakurone, glossy_anime_style",
+        "recipes": [
+          "style-pose-nova"
+        ]
+      }
+    ],
+    "controls": {
+      "width": 832,
+      "height": 1216,
+      "seed": 2026091410,
+      "style_weight": 0.8,
+      "pose_strength": 0.9
+    }
+  },
+  "cells": [
+    {
+      "recipe": "style-pose-nova",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "references": [
+        {
+          "role": "style",
+          "file": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png"
+        },
+        {
+          "role": "style",
+          "file": "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png"
+        },
+        {
+          "role": "style",
+          "file": "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+        }
+      ],
+      "job_id": "82bcf8e6-8978-4189-af8f-9ef271985b3e",
+      "status": "completed",
+      "prompt_ids": [
+        "0270a7d6-f2bd-44ee-be32-d85bbb0b4df7"
+      ],
+      "failure": null,
+      "wall_seconds": 205.4,
+      "elapsed_seconds": 201.04238629341125,
+      "commit_before": 52,
+      "outputs": [
+        {
+          "file": "style-pose-nova__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\Nova_00001_.png",
+          "seed": 2026091410,
+          "asset_id": "37223394390256efbb76cca0b1842a1e"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-nova",
+      "lora": "mishima080",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, mishimakurone",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.8,
+        "lora_name": "ST_Mishima_Kurone_0R.safetensors"
+      },
+      "references": [
+        {
+          "role": "style",
+          "file": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png"
+        },
+        {
+          "role": "style",
+          "file": "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png"
+        },
+        {
+          "role": "style",
+          "file": "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+        }
+      ],
+      "job_id": "e7bab2d1-3fee-4dd3-a2a1-14583031fe1f",
+      "status": "completed",
+      "prompt_ids": [
+        "5e58ac32-1b45-4262-aa0c-1a3536e684dc"
+      ],
+      "failure": null,
+      "wall_seconds": 215.4,
+      "elapsed_seconds": 211.36935210227966,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-nova__mishima080__throne.png",
+          "comfy_file": "output\\Style-Pose\\Nova_00002_.png",
+          "seed": 2026091410,
+          "asset_id": "8169d7b8922a53f884565b3f39abd183"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-nova",
+      "lora": "mishima070+glossy060",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality, mishimakurone, glossy_anime_style",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+        "lora": 0.7,
+        "lora_name": "ST_Mishima_Kurone_0R.safetensors",
+        "lora2": 0.6,
+        "lora2_name": "glossy_anime_style_illustriousXL-000011.safetensors"
+      },
+      "references": [
+        {
+          "role": "style",
+          "file": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png"
+        },
+        {
+          "role": "style",
+          "file": "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png"
+        },
+        {
+          "role": "style",
+          "file": "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+        }
+      ],
+      "job_id": "c2630b11-03bd-4bf1-b40f-919893a851ac",
+      "status": "completed",
+      "prompt_ids": [
+        "136f5ee0-1989-4c36-b4bf-dac444b8450d"
+      ],
+      "failure": null,
+      "wall_seconds": 215.4,
+      "elapsed_seconds": 212.9550507068634,
+      "commit_before": 55,
+      "outputs": [
+        {
+          "file": "style-pose-nova__mishima070+glossy060__throne.png",
+          "comfy_file": "output\\Style-Pose\\Nova_00003_.png",
+          "seed": 2026091410,
+          "asset_id": "767f69dadb6c501aa7f58ddfda5daf0d"
+        }
+      ]
+    },
+    {
+      "recipe": "style-pose-wai",
+      "lora": "none",
+      "pose": "throne",
+      "controls": {
+        "width": 832,
+        "height": 1216,
+        "seed": 2026091410,
+        "style_weight": 0.8,
+        "pose_strength": 0.9,
+        "positive": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below, masterpiece, best quality, amazing quality",
+        "last_reference": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg"
+      },
+      "references": [
+        {
+          "role": "style",
+          "file": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png"
+        },
+        {
+          "role": "style",
+          "file": "27b39447a39c4d87a6e2320e3ec7d1b4_e7ebe0fd-bd40-4251-b82f-3bca6dbadf6a.png.png"
+        },
+        {
+          "role": "style",
+          "file": "afdee7fa2c5d4bbd9b51cf55bca87fd3_ae0ef19a-73a3-4867-99a2-37e7ef18a514.png.png"
+        }
+      ],
+      "job_id": "3ee79f97-4051-4615-a73e-02ffd3c22881",
+      "status": "completed",
+      "prompt_ids": [
+        "1fd7f263-36ad-4dac-b27e-4e7e105cd619"
+      ],
+      "failure": null,
+      "wall_seconds": 290.6,
+      "elapsed_seconds": 287.28922629356384,
+      "commit_before": 52,
+      "outputs": [
+        {
+          "file": "style-pose-wai__none__throne.png",
+          "comfy_file": "output\\Style-Pose\\WAI_00024_.png",
+          "seed": 2026091410,
+          "asset_id": "484e6f4f37415fe69891610a1d3afebe"
+        }
+      ]
+    }
+  ]
+}

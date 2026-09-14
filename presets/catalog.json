@@ -5814,7 +5814,7 @@
       "category": "Characters",
       "family": "Nova Anime XL IL v19 (Illustrious)",
       "graph": "workflows/api/style-pose-nova-api.json",
-      "verified": false,
+      "verified": true,
       "modality": "image",
       "commercial_note": "Nova Anime XL's civitai flags allow Image/Rent/RentCivit but not Sell; check them, the IP-Adapter/ControlNet weights (apache-2.0) and every board and pose picture's terms before publishing; a successful render is not legal clearance.",
       "positive": [
@@ -5984,7 +5984,8 @@
       "reference_board": {
         "min": 1,
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
-      }
+      },
+      "execution_note": "Executed 2026-09-14 through Studio job 82bcf8e6-8978-4189-af8f-9ef271985b3e (ComfyUI prompt 0270a7d6\u2026), 201 s including the checkpoint's first load, graph sha256 a478818e5d7bab82\u2026: averaged three-picture style board with the owner's pictures, throne pose picture, no LoRA; output inspected: pose held, magenta-red high-contrast palette with the sheet's diamond trim (experiments/curated/style-pose-matrix/2026-09-14-nova/). One run, not art acceptance."
     }
   ]
 }
