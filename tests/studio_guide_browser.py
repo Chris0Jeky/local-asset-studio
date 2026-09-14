@@ -119,7 +119,9 @@ def run(out):
             page.click('#checkGuideStep');page.fill('#positive','Changed while checking')
             page.wait_for_function('!document.querySelector("#checkGuideStep").disabled')
             check('discarded' in page.locator('#guideEvidence').inner_text(),'late readiness cannot certify a changed draft');HEALTH_DELAY=0
-            visit('first-image','output');page.click('#checkGuideStep');page.wait_for_selector('#guideObservedRun option[value="fixture-job"]',state='attached')
+            visit('first-image','output');page.wait_for_selector('.studio-guide-target')
+            check(page.evaluate('document.activeElement !== document.querySelector("#generate")') and page.locator('#generate').evaluate('n=>n.classList.contains("studio-guide-target")'),'arriving at the Generate step highlights the button without focusing it')
+            page.click('#checkGuideStep');page.wait_for_selector('#guideObservedRun option[value="fixture-job"]',state='attached')
             check(page.locator('#guideObservedRun').input_value()=='' and page.locator('#guideEvidence').get_attribute('data-state')=='unknown','latest run is never selected by inference')
             page.select_option('#guideObservedRun','fixture-job');page.click('#checkGuideStep');page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"')
             check('output records' in page.locator('#guideEvidence').inner_text(),'specific recorded outputs are distinguished from acceptance')
@@ -148,7 +150,10 @@ def run(out):
             visit('reference-edit','mechanism');page.evaluate("selectPreset('pixel-lora')")
             page.wait_for_selector('#chooseGuideRecipe')
             check('Qwen Atelier' in page.locator('#chooseGuideRecipe').inner_text(),'the recommended reference recipe is named on the button')
-            page.click('#chooseGuideRecipe');page.wait_for_function('selected.id === "qwen-1ref"')
+            # A drafted prompt is asked about first; declining keeps the draft and the current recipe.
+            page.fill('#positive','Draft to keep');page.once('dialog',lambda d:d.dismiss());page.click('#chooseGuideRecipe')
+            check(page.evaluate('selected.id')=='pixel-lora' and page.locator('#positive').input_value()=='Draft to keep','declining the recipe switch keeps the draft and recipe')
+            page.once('dialog',lambda d:d.accept());page.click('#chooseGuideRecipe');page.wait_for_function('selected.id === "qwen-1ref"')
             page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"',timeout=15000)
             check(page.evaluate('selected.id')=='qwen-1ref','the coach selects the recommended recipe through the existing Create picker')
             visit('workflow','check');page.click('#loadNodes');page.wait_for_function('!!WorkflowStudio.schema()')

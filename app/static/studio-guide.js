@@ -102,7 +102,9 @@
       if (!reveal) return;
       target.scrollIntoView({block:'center', behavior:'auto'});
       const idle = show || !document.activeElement || document.activeElement === document.body || panel.contains(document.activeElement);
-      if (idle) {
+      // An automatic reveal never focuses an action control: a Space or Enter meant for scrolling
+      // must not press Generate, Save or Prepare. Only the explicit Show the control button may.
+      if (idle && (show || !target.matches('button,a,[type=submit],input[type=file]'))) {
         if (!target.matches('button,input,select,textarea,a,[tabindex]')) target.setAttribute('tabindex','-1');
         target.focus({preventScroll:true});
       }
@@ -117,6 +119,10 @@
     function chooseRecipe() {
       const pick = recommendedPreset(); if (!pick.id) return;
       if (typeof selectPreset === 'function') {
+        const current = typeof selected !== 'undefined' ? selected : null;
+        if (current?.id === pick.id) { targetNote.textContent = pick.name + ' is already selected in Create. Nothing was generated.'; return; }
+        const drafted = !!document.getElementById('positive')?.value.trim() || !!document.querySelector('#roleReferences input[type=file], #reference')?.files?.length;
+        if (drafted && !confirm('Choosing ' + pick.name + ' resets the prompt, references and variation count in Create. Continue?')) { targetNote.textContent = 'Kept your current draft. Choose the recipe from the list when ready.'; return; }
         try { selectPreset(pick.id); targetNote.textContent = 'Selected ' + pick.name + ' through the Create recipe list. Nothing was generated.'; return; }
         catch (error) { targetNote.textContent = error.message + ' The guide changed nothing.'; return; }
       }
@@ -177,7 +183,7 @@
           if (!s.job_id) {
             const jobs = await get('/api/jobs');
             if (!Array.isArray(jobs)) throw Error('Run list is unavailable.');
-            if (!stopped && token === epoch && JSON.stringify(snapshot()) === fingerprint) {
+            if (!stopped && token === epoch && document.activeElement !== run && JSON.stringify(snapshot()) === fingerprint) {
               run.replaceChildren(make('option',jobs.length > 200 ? 'Choose a run (200 most recent shown)' : 'Choose a specific run',{value:''}));
               for (const j of jobs.slice(0,200)) if (typeof j?.id === 'string' && /^[A-Za-z0-9_-]{1,96}$/.test(j.id))
                 run.append(make('option', `${j.preset_name || j.preset_id || 'Run'} · ${j.status} · ${j.id}`, {value:j.id}));
