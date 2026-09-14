@@ -78,7 +78,10 @@ def compile_board(preset, graph, supplied, uploads):
     for index,(slot,reference) in enumerate(zip(slots,supplied)):
         node,field=slot['binding']
         if not isinstance(reference,dict) or not reference.get('file'):
-            prune_missing_slot(graph,node); continue
+            # Keep the slot's position in the persisted record: a saved recipe restores by index, so a
+            # two-picture board must still come back as three slots with the empty one marked.
+            prune_missing_slot(graph,node)
+            records.append({'slot':index+1,'role':slot.get('role','style'),'file':None,'pruned':True,'contribution':'','avoid':''}); continue
         if reference.get('role',slot.get('role')) not in ROLES: raise ValueError('Every reference needs an explicit supported role')
         name=reference['file']
         if not isinstance(name,str) or name!=Path(name).name: raise ValueError('Choose an uploaded image for every reference slot')
