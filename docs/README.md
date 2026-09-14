@@ -24,6 +24,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | [RUNTIME-PRECONDITIONS.md](RUNTIME-PRECONDITIONS.md) | Host-commit headroom gate, VRAM reserve, what to check before heavy jobs |
 | [RUNTIME-INSTALL-SAFETY.md](RUNTIME-INSTALL-SAFETY.md) | Backend switching and pinned-install safety |
 | [RESOURCE-EFFICIENCY.md](RESOURCE-EFFICIENCY.md) | Generation-first runtime and bounded observation programme (#172) |
+| [performance/](performance/README.md) | RX 9070 XT report reconciliation, architecture, benchmarks and delivery plan |
 | [MODEL-REQUIREMENTS.md](MODEL-REQUIREMENTS.md) | How presets declare model needs and how installs are offered |
 | [MODEL-INTAKE.md](MODEL-INTAKE.md) | Browser model intake with independent copies and recoverable publication |
 | [GRAPH-VALIDATION.md](GRAPH-VALIDATION.md) | One rule set for repo and live graph checks |
