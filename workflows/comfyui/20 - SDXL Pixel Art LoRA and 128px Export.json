@@ -342,7 +342,7 @@
     },
     {
       "id": 9,
-      "type": "ImageScale",
+      "type": "ImageScaleBy",
       "pos": [
         0,
         680
@@ -371,13 +371,11 @@
         }
       ],
       "properties": {
-        "Node name for S&R": "ImageScale"
+        "Node name for S&R": "ImageScaleBy"
       },
       "widgets_values": [
         "nearest-exact",
-        128,
-        128,
-        "disabled"
+        0.125
       ]
     },
     {
@@ -412,7 +410,7 @@
         "Node name for S&R": "SaveImage"
       },
       "widgets_values": [
-        "Studio/Pixel-LoRA-128"
+        "Studio/Pixel-LoRA-Export"
       ]
     }
   ],

@@ -2,11 +2,11 @@
   "presets": [
     {
       "id": "pixel-lora",
-      "name": "Pixel art \u2022 128px prop",
+      "name": "Pixel art \u2022 aspect-preserving prop",
       "category": "Pixel art",
-      "description": "Start here. Generates a detailed concept plus a nearest-neighbour 128px export. Background and pixel cleanup may be needed.",
+      "description": "Generates a detailed concept plus a nearest-neighbour export at 1/8 of the chosen width and height. The 1024\u00d71024 default exports 128\u00d7128; 832\u00d71216 exports 104\u00d7152 without stretching. Background and pixel cleanup may be needed.",
       "graph": "workflows/api/pixel-lora-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -53,7 +53,7 @@
         ]
       },
       "modality": "image",
-      "execution_note": "Executed 2026-09-11 in the initial batch: success, 20.173 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 20.173 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance. That observation used the former fixed-square export. The 2026-09-14 aspect-preserving scale-by revision is unexecuted; current native validation and an inspected run remain required.",
       "visual": "workflows/comfyui/20 - SDXL Pixel Art LoRA and 128px Export.json"
     },
     {
