@@ -55,7 +55,7 @@
     for (const spec of kind.inputs) if (spec.required && !spec.hidden && spec.widget !== 'unsupported' && spec.widget !== 'socket') {
       const value = defaultValue(spec); if (value !== undefined) inputs[spec.name] = value;
     }
-    edit(next => { next.nodes[selected] = {class_type: kind.class_type, inputs}; if (kind.output_node) next.outputs.push(selected); });
+    reveal = selected; edit(next => { next.nodes[selected] = {class_type: kind.class_type, inputs}; if (kind.output_node) next.outputs.push(selected); });
   }
   function nodeCatalog() {
     const host = $('#nodeCatalog'); host.replaceChildren();
@@ -79,9 +79,10 @@
   }
   function position(id, index) { return doc.positions[id] || [30 + (index % 3) * 285, 28 + Math.floor(index / 3) * 130]; }
   const NODE_W = 245, NODE_H = 82, ZOOM_MIN = 0.4, ZOOM_MAX = 2.5, PAD = 44;
-  let camera = null, bounds = null;
+  let camera = null, bounds = null, reveal = null;
   const zoomClamp = (value, floor = ZOOM_MIN) => Math.min(ZOOM_MAX, Math.max(floor, value)), tidy = n => Math.round(n * 100) / 100;
-  function canvasBox() { const rect = $('#workflowCanvas').getBoundingClientRect(); return [Math.max(1, rect.width), Math.max(1, rect.height)]; }
+  // A hidden canvas (Steps view) measures 0×0; framing against that would shrink the graph to 1%.
+  function canvasBox() { const rect = $('#workflowCanvas').getBoundingClientRect(); return rect.width < 40 || rect.height < 40 ? [900, 560] : [rect.width, rect.height]; }
   function applyCamera() {
     if (!camera) return;
     const [w, h] = canvasBox();
@@ -127,6 +128,10 @@
       svg.append(group);
     }
     if (camera) applyCamera(); else fitCanvas();
+    // A node added outside the preserved view is panned into it; the zoom stays as the user set it.
+    if (reveal && camera && positions[reveal]) { const [nx, ny] = positions[reveal], [w, h] = canvasBox(), vw = w / camera.scale, vh = h / camera.scale;
+      if (nx < camera.x || ny < camera.y || nx + NODE_W > camera.x + vw || ny + NODE_H > camera.y + vh) { camera = {scale: camera.scale, x: nx + NODE_W / 2 - vw / 2, y: ny + NODE_H / 2 - vh / 2}; applyCamera(); } }
+    reveal = null;
   }
   function canvasNavigation() {
     const svg = $('#workflowCanvas'); let pan = null;
@@ -238,7 +243,8 @@
           }
           input.value = present && !isLink(value) ? value : '';
           input.onchange = () => { try { const v = spec.type === 'STRING' ? input.value : input.valueAsNumber; safeNumbers(v); if (!input.checkValidity() || (spec.type === 'INT' && !Number.isInteger(v))) throw Error('Use a value inside the declared range. Integer fields require whole numbers.'); setValue(v); } catch (error) { status(error.message); renderInspector(); } };
-          if (wide) { control.append(input); const wider = button('Expand', () => expand(spec.name, input.value, next => { input.value = next; grow(input); setValue(next); })); wider.className = 'wf-expand-open'; control.append(wider); requestAnimationFrame(() => grow(input)); return; }
+          if (wide) { control.append(input); const wider = button('Expand', () => expand(spec.name, input.value, next => { input.value = next; grow(input); setValue(next); })); wider.className = 'wf-expand-open';
+            wider.onpointerdown = e => e.preventDefault(); /* Keep the textarea focused so its change event cannot re-render the inspector under this click. */ control.append(wider); requestAnimationFrame(() => grow(input)); return; }
         }
         control.append(input);
         if (['INT', 'FLOAT'].includes(spec.type) && Number.isFinite(spec.options.min) && Number.isFinite(spec.options.max) && spec.options.max <= 10000 && spec.options.min >= -10000) {
