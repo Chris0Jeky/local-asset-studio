@@ -7,10 +7,11 @@ prepares scaled RGBA context and explicit work/source masks from a checked edit
 plan and normalized source packet. Apply reconstructs the packet from the external
 request before compositing a supplied candidate. Effective coverage is checked
 again against protection, context, contacts and non-target actors; prepared padding
-cannot write source pixels. The new schemas do not enter legacy native/bridge
+cannot write source pixels. Apply requires the caller's expected effective-mask
+digest, binding expanded coverage separately from the initial outline. The new schemas do not enter legacy native/bridge
 adapters, and legacy edit behavior remains unchanged.
 
-Executed locally: 26 new transform/packet tests pass; legacy character edit checks
+Executed locally: 27 new transform/packet tests pass; legacy character edit checks
 have 229 total, 225 passed and four optional skips; source intake has 30 total,
 29 passed and one optional skip. The synthetic CLI example at
 `C:/AI/character-lab/scaled-repair-proof-20260914-a` changed 4,292 pixels with zero

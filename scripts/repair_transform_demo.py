@@ -35,7 +35,8 @@ def create(root):
     candidate = Image.new('RGBA', tuple(bundle['geometry']['work_size']), (211, 35, 79, 127))
     candidate.save(root / 'scaled-candidate.png')
     result = pixels.apply(root, plan, request, 'scaled-context',
-        {'path': 'scaled-candidate.png', 'sha256': file_sha(root / 'scaled-candidate.png')}, 'scaled-result')
+        {'path': 'scaled-candidate.png', 'sha256': file_sha(root / 'scaled-candidate.png')}, 'scaled-result',
+        expected_effective_write_sha256=bundle['files']['effective-write.png']['sha256'])
     proof = Image.new('RGB', (1160, 286), 'white'); draw = ImageDraw.Draw(proof)
     for x, name, label in ((0, 'normalized-source/normalized.png', 'Original synthetic source'),
                             (390, 'scaled-context/context.png', 'Prepared context'),

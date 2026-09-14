@@ -45,14 +45,18 @@ class TransformPackets(unittest.TestCase):
         self.plan['intent']['document_sha256'] = sha(self.plan['document'])
         self.plan = ed.make_plan(self.plan['document'], self.plan['intent'], self.plan['catalog'])
 
-    def prepare(self): return rp.prepare(self.root, self.plan, self.request, 'transformed')
+    def prepare(self):
+        receipt = rp.prepare(self.root, self.plan, self.request, 'transformed')
+        self.expected_effective = receipt['files']['effective-write.png']['sha256']
+        return receipt
 
     def candidate(self, receipt):
         Image.new('RGBA', tuple(receipt['geometry']['work_size']), (211, 35, 79, 127)).save(self.root / 'repair.png')
         return self.ref('repair.png')
 
     def apply(self, candidate, output='composite'):
-        return rp.apply(self.root, self.plan, self.request, 'transformed', candidate, output)
+        return rp.apply(self.root, self.plan, self.request, 'transformed', candidate, output,
+                        expected_effective_write_sha256=self.expected_effective)
 
     def test_prepare_apply_prove_actual_pixels_and_retain_identity(self):
         before = file_sha(self.root / 'source-packet/normalized.png')
@@ -60,6 +64,7 @@ class TransformPackets(unittest.TestCase):
         self.assertEqual('studio.repair-transform-bundle/v1', bundle['schema'])
         self.assertEqual('studio.repair-transform-result/v1', result['schema'])
         self.assertEqual(sha(self.request), bundle['request_sha256'])
+        self.assertEqual(self.expected_effective, result['expected_effective_write_sha256'])
         self.assertEqual(self.request, bundle['request'])
         self.assertEqual(self.source_receipt['normalization'], bundle['source_normalization'])
         self.assertGreater(result['changed_pixels'], 0)
@@ -134,6 +139,13 @@ class TransformPackets(unittest.TestCase):
                 self.request = before
         self.request['source_packet']['receipt_sha256'] = '0' * 64
         with self.assertRaises(ValueError): self.prepare()
+
+    def test_apply_requires_the_expected_effective_mask_from_the_caller(self):
+        bundle = self.prepare(); candidate = self.candidate(bundle)
+        with self.assertRaisesRegex(ValueError, '[Ee]ffective'):
+            rp.apply(self.root, self.plan, self.request, 'transformed', candidate, 'unconfirmed',
+                     expected_effective_write_sha256='0' * 64)
+        self.assertFalse((self.root / 'unconfirmed').exists())
 
     def test_changed_canon_and_mask_are_refused_before_publication(self):
         for name in ('amber-design.json', 'violet-reference.png', 'edit-mask.png'):
@@ -239,7 +251,8 @@ class TransformPackets(unittest.TestCase):
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         bundle = json.loads(proc.stdout); candidate = self.candidate(bundle)
         proc = run('apply', ['--bundle', 'transformed', '--candidate', candidate['path'],
-                            '--candidate-sha256', candidate['sha256'], '--out', 'cli-result'])
+                            '--candidate-sha256', candidate['sha256'], '--out', 'cli-result',
+                            '--expected-effective-write-sha256', bundle['files']['effective-write.png']['sha256']])
         self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
         self.assertGreater(json.loads(proc.stdout)['changed_pixels'], 0)
         request_path.write_text('{}', encoding='utf-8')

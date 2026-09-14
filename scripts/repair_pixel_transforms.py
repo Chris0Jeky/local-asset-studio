@@ -238,10 +238,13 @@ def prepare(root, plan, request, output):
     return rs.publish_packet(destination, artifacts, receipt)
 
 
-def apply(root, plan, request, bundle, candidate, output):
+def apply(root, plan, request, bundle, candidate, output, *, expected_effective_write_sha256):
     """Reconstruct a packet from external authority, then compose a supplied image."""
     destination = _folder(root, output, new=True)
+    digest(expected_effective_write_sha256)
     expected_files, expected_receipt, inputs = _prepare(root, plan, request)
+    require(expected_effective_write_sha256 == expected_receipt['files']['effective-write.png']['sha256'],
+            'Effective write coverage differs from the caller expected digest')
     folder = _folder(root, bundle)
     rs.check_packet_members(folder, {*expected_files, 'receipt.json'})
     raw_receipt = rs.read_bounded(folder / 'receipt.json', rs.MAX_METADATA_BYTES, reject_symlink=True)
@@ -259,6 +262,7 @@ def apply(root, plan, request, bundle, candidate, output):
     for name, image in (('result.png', rendered['result']), ('changed-pixels.png', rendered['delta'])):
         data = _encode(image, colours); artifacts[name] = data; files[name] = _facts(data, image)
     result = {'schema': RESULT_SCHEMA, 'request_sha256': sha(request), 'request': request,
+              'expected_effective_write_sha256': expected_effective_write_sha256,
               'bundle_receipt_sha256': rs.digest(raw_receipt), 'source_normalization': receipt['source_normalization'],
               'candidate': {**candidate, **_facts(raw_candidate, patch)}, 'geometry': rendered['geometry'], 'files': files,
               'changed_pixels': rendered['delta'].histogram()[255],
@@ -286,6 +290,7 @@ def main(argv=None):
             sub.add_argument('--bundle', required=True)
             sub.add_argument('--candidate', required=True)
             sub.add_argument('--candidate-sha256', required=True)
+            sub.add_argument('--expected-effective-write-sha256', required=True)
     args = parser.parse_args(argv)
     try:
         digest(args.request_sha256)
@@ -295,7 +300,8 @@ def main(argv=None):
         plan = rs.strict_json(rs.read_bounded(args.plan, 4 * rs.MAX_METADATA_BYTES))
         if args.command == 'prepare': result = prepare(args.workspace, plan, request, args.out)
         else: result = apply(args.workspace, plan, request, args.bundle,
-                             {'path': args.candidate, 'sha256': args.candidate_sha256}, args.out)
+                             {'path': args.candidate, 'sha256': args.candidate_sha256}, args.out,
+                             expected_effective_write_sha256=args.expected_effective_write_sha256)
         print(json.dumps(result, ensure_ascii=True, allow_nan=False, indent=2)); return 0
     except (ValueError, OSError, KeyError, TypeError, RecursionError) as exc:
         print(json.dumps({'error': str(exc), 'neural_inference': False, 'semantic_approval': False})); return 2

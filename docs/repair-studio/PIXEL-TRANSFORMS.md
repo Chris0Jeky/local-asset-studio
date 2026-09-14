@@ -76,12 +76,18 @@ $repairRoot = 'C:/AI/character-lab/scaled-repair-demo'
 $repairRequest = "$repairRoot/transform-request.json"
 $repairHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $repairRequest).Hash.ToLowerInvariant()
 python scripts/repair_pixel_transforms.py prepare --workspace $repairRoot --plan "$repairRoot/transform-plan.json" --request $repairRequest --request-sha256 $repairHash --out prepared-again
+$effectiveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath "$repairRoot/prepared-again/effective-write.png").Hash.ToLowerInvariant()
 $candidateHash = (Get-FileHash -Algorithm SHA256 -LiteralPath "$repairRoot/scaled-candidate.png").Hash.ToLowerInvariant()
-python scripts/repair_pixel_transforms.py apply --workspace $repairRoot --plan "$repairRoot/transform-plan.json" --request $repairRequest --request-sha256 $repairHash --bundle prepared-again --candidate scaled-candidate.png --candidate-sha256 $candidateHash --out composed-again
+python scripts/repair_pixel_transforms.py apply --workspace $repairRoot --plan "$repairRoot/transform-plan.json" --request $repairRequest --request-sha256 $repairHash --bundle prepared-again --expected-effective-write-sha256 $effectiveHash --candidate scaled-candidate.png --candidate-sha256 $candidateHash --out composed-again
 ```
 
 Keep the external request and its expected hash together. Editing only a bundle's
 recorded request, mask or file digest cannot replace this external authority.
+Inspect `effective-write.png` against the original before applying a real repair:
+it includes resampling support beyond the authored outline. Apply requires the
+caller's expected digest of that exact effective mask and refuses a mismatch.
+The digest binds the selected pixels; it does not authenticate a human review or
+approve the resulting art. The synthetic example selects its own test mask.
 Preparation never submits the resulting context to a model. Supplying a candidate
 does not establish where it came from or authorize a new generation.
 
