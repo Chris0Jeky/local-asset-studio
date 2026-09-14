@@ -1,0 +1,294 @@
+{
+  "schema": "studio.ux-create-readiness/v1",
+  "date": "2026-09-13",
+  "base_commit": "28cfe3b54e221ce0f18b5dd8615dfc82dd6b49d3",
+  "base_tree": "5e920817385cf6c6d4aef2154267eb6c0d0c4511",
+  "scope": "Real Studio HTML/JS/CSS, synthetic read-only readiness APIs; no ComfyUI, installation or inference.",
+  "mode": "inert storage/transport",
+  "before": {
+    "passed": 10,
+    "failed": 17,
+    "source_sha256": {
+      "app.js": "1425982e5df4d106f5f8657791bbce53855d73c736fd0c75925f9c000c04da12",
+      "studio-core.js": "6df725bc5434d21491bc3aece248952798cc49293ca54c7a607a83793540cb8a",
+      "studio-workbench.js": "fff6ba205c1a5d39a2a451e5f97157d3aa64cff47244f7213822ba803fbb282a",
+      "studio.css": "8544c014cd0b08c65212e83cd86fef4901f93efb43fe5db346d65241bef31ab8"
+    }
+  },
+  "after": {
+    "passed": 27,
+    "failed": 0,
+    "source_sha256": {
+      "app.js": "3be7b0fad39c254574d81f13f9040fe1adf4a316670ed938529c412f6300b024",
+      "studio-core.js": "ff49a80803597f835f77d65074f2e702b0a5c3df0dd2c227ba61528c305a0625",
+      "studio-workbench.js": "33d4784082d046d4e5b568ded85b8ffbb5a9426f40942b79f82d4e4c60f7b391",
+      "studio.css": "71df1032b8dab11869147c122f7054d50aa91a29e81c47b38dd1babfcdb1671b"
+    },
+    "page_errors": [],
+    "execution_error": null
+  },
+  "checks": [
+    {
+      "id": "READY-01",
+      "expectation": "Required-reference blocker has a direct action",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-02",
+      "expectation": "Keyboard action focuses Picture 1 input without opening/uploading a file",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-03",
+      "expectation": "Input navigation preserves wording, settings and attachments",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-04",
+      "expectation": "Action resolves the next missing slot from current state",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-05",
+      "expectation": "Unavailable target has visible feedback rather than guessed fallback",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-06",
+      "expectation": "Missing-file action opens and focuses the existing dependency disclosure",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-07",
+      "expectation": "Dependency navigation preserves the Create draft",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-08",
+      "expectation": "Failed inspection has no obsolete presence count",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-09",
+      "expectation": "Failed inspection exposes a read-only retry",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-10",
+      "expectation": "Explicit dependency retry performs exactly one inspect GET",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-11",
+      "expectation": "Inspection does not override the missing-model Generate hold",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-12",
+      "expectation": "Identical readiness refresh preserves keyboard focus on the action",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-13",
+      "expectation": "Offline action opens Models and focuses its environment control",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-14",
+      "expectation": "Models navigation does not change selected backend or Create draft",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-15",
+      "expectation": "Recheck connection is an explicit health GET",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-16",
+      "expectation": "Connection recovery leaves the required-reference hold in place",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-17",
+      "expectation": "A polite atomic summary describes changing blockers",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-26",
+      "expectation": "Hung connection check releases its UI with an honest timeout",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-27",
+      "expectation": "Repeated activation while checking coalesces and never retries automatically",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-18",
+      "expectation": "Unblocked summary keeps server validation explicit",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-19",
+      "expectation": "Motion hold opens Parameters and focuses the mode selector",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-20",
+      "expectation": "Motion guidance never auto-applies smaller settings",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-21",
+      "expectation": "Source note counts both first and last staged inputs",
+      "passed": true,
+      "before": false
+    },
+    {
+      "id": "READY-22",
+      "expectation": "1440px readiness controls fit the viewport",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-23",
+      "expectation": "390px readiness controls fit the viewport",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-24",
+      "expectation": "All helper actions cause zero generation/install/switch/reference-upload calls",
+      "passed": true,
+      "before": true
+    },
+    {
+      "id": "READY-25",
+      "expectation": "No JavaScript exceptions in the complete shell",
+      "passed": true,
+      "before": true
+    }
+  ],
+  "actual_script_contracts": {
+    "baseline_pass": 2,
+    "baseline_fail": 10,
+    "after_pass": 12,
+    "unittest_wrappers": 1
+  },
+  "full_offline_suite": {
+    "command": "python -m unittest discover -s tests",
+    "run": 1675,
+    "passed": 1659,
+    "skipped": 16,
+    "failures": 0,
+    "seconds": 118.457,
+    "warnings": [
+      "Pillow Image.getdata deprecation",
+      "exit-time unclosed test-socket ResourceWarning",
+      "deliberate fault-injection diagnostic output"
+    ]
+  },
+  "browser_gets": [
+    "/api/catalog",
+    "/api/backends",
+    "/api/production",
+    "/api/jobs",
+    "/api/identity",
+    "/api/workspace",
+    "/api/options",
+    "/api/knowledge",
+    "/api/recipes",
+    "/api/inspect/anima-portrait",
+    "/api/setups",
+    "/api/identity",
+    "/api/setups",
+    "/api/health",
+    "/api/jobs",
+    "/api/workspace",
+    "/api/library",
+    "/api/inspect/qwen-3ref",
+    "/api/health",
+    "/api/inspect/qwen-3ref",
+    "/api/inspect/qwen-3ref",
+    "/api/health",
+    "/api/library",
+    "/api/health",
+    "/api/inspect/anima-portrait",
+    "/api/inspect/wan22-i2v",
+    "/api/inspect/h3-first-last",
+    "/api/inspect/qwen-3ref"
+  ],
+  "browser_posts": [
+    {
+      "path": "/api/estimate",
+      "data": {
+        "preset_id": "qwen-3ref",
+        "controls": {
+          "positive": "Keep my precise wording, style and composition.",
+          "negative": "",
+          "seed": "2026091101",
+          "steps": "4",
+          "cfg": "1",
+          "width": "832",
+          "height": "1248"
+        },
+        "batch_count": 1,
+        "reference_count": 1
+      }
+    },
+    {
+      "path": "/api/estimate",
+      "data": {
+        "preset_id": "qwen-3ref",
+        "controls": {
+          "positive": "Use the character identity and costume from Picture 1. Use only the pose from Picture 2, not its identity or clothes. Use only the rendering style and palette from Picture 3. Create a non-explicit fantasy portrait. Preserve the approved character design.",
+          "negative": "",
+          "seed": "2026091101",
+          "steps": "4",
+          "cfg": "1",
+          "width": "832",
+          "height": "1248"
+        },
+        "batch_count": 1,
+        "reference_count": 0
+      }
+    }
+  ],
+  "generation_install_switch_upload_calls": 0,
+  "limitations": [
+    "Local native navigation was policy-blocked; hosted native results must be recorded separately.",
+    "Readiness APIs are synthetic; no ComfyUI, owner data, model execution or media decoding.",
+    "UI watchdog case accelerates a controlled clock/held shared observation, not a network timeout.",
+    "No screen-reader or actual 200% zoom acceptance.",
+    "Inspection request ownership is not an execution gate, persisted freshness or a runtime lease."
+  ],
+  "repository_validation": {
+    "passed": true,
+    "graphs_and_bindings": 66,
+    "pinned_assets": 121,
+    "lora_names": 86,
+    "tracked_paths": 1136
+  }
+}
