@@ -20,7 +20,7 @@ MAX_INPUT_BYTES = 1024 * 1024
 MAX_ITEMS = 1000
 _SHA = re.compile(r"[0-9a-f]{40}")
 _CAPTURED = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
-_Q_OPEN = re.compile(r"^\*\*(q-\d+)\s+—\s+(.+?)\s+\(open\)\.\*\*\s*$", re.IGNORECASE)
+_Q_OPEN = re.compile(r"^\*\*(q-\d+)\s+—\s+(.+?)\s+\(open\)\.\*\*(?:\s|$)", re.IGNORECASE)
 _UNCHECKED = re.compile(r"^\s*-\s*\[\s\]\s+(.+?)\s*$")
 
 
