@@ -18,7 +18,7 @@ import time
 import uuid
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 
 DEFAULT_SAMPLE_FRAMES = (0, 1, 4, 8, 16, 32, 48, 64, 80)
@@ -113,12 +113,12 @@ def render_preprocessed(source: Path, target: Path, width: int, height: int):
     states this explicitly: the crop box and dimensions match ComfyUI exactly,
     while byte-for-byte pixel parity with PyTorch is not claimed.
     """
-    with Image.open(source) as image:
+    with Image.open(source) as encoded, ImageOps.exif_transpose(encoded) as image:
         plan = centered_crop_plan(*image.size, width, height)
-        image = image.convert("RGB").crop(tuple(plan["crop_box"]))
-        image = image.resize((width, height), Image.Resampling.BILINEAR)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        image.save(target, "PNG")
+        with image.convert("RGB") as rgb, rgb.crop(tuple(plan["crop_box"])) as cropped:
+            with cropped.resize((width, height), Image.Resampling.BILINEAR) as preview:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                preview.save(target, "PNG")
     return plan
 
 
@@ -153,9 +153,13 @@ def locate_source(studio, name):
 
 def image_metadata(path: Path):
     with Image.open(path) as image:
-        image.load()
-        width, height = image.size
+        orientation = image.getexif().get(274, 1)
+        # Only transposed orientations swap axes. Do not decode/copy a JPEG's
+        # full canvas just to read its displayed dimensions.
+        width, height = reversed(image.size) if orientation in (5, 6, 7, 8) else image.size
         return {
+            "encoded_dimensions": list(image.size),
+            "exif_orientation": orientation,
             "width": width,
             "height": height,
             "dimensions": [width, height],

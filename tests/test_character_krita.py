@@ -300,8 +300,10 @@ class CharacterKrita(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exit code alone"):
                 ck.execute(self.root, "native-package", config)
         command = run.call_args.args[0]
+        self.assertEqual(6, len(command))
         self.assertEqual([config["kritarunner"], "-s", "studio_native_edit_" + ck.native_edit.digest(ck.MODULE.read_bytes()),
-                          "-f", "run", str(self.native_plan)], command)
+                          "-f", "run"], command[:5])
+        self.assertTrue(Path(command[5]).samefile(self.native_plan))
         kwargs = run.call_args.kwargs
         self.assertFalse(kwargs["shell"])
         self.assertEqual(ck.TIMEOUT, kwargs["timeout"])

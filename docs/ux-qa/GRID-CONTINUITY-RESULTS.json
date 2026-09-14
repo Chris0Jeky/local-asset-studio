@@ -1,0 +1,277 @@
+{
+  "schema": "studio.ux-qa-checkpoint/v1",
+  "date": "2026-09-14",
+  "base_commit": "2f91421ecbe0e014cceef1074f4d79e4c57051df",
+  "base_tree": "25da90c8445bc5e94cc73fd814964563c256f102",
+  "mode": "inert browser storage/transport",
+  "scope": "Actual shell, production Workspace reads and temporary SQLite; synthetic images. Video case proves DOM release only, not decoding/performance.",
+  "baseline": {
+    "pass": 13,
+    "fail": 18,
+    "errors": [],
+    "execution_error": null,
+    "source_sha256": {
+      "app/static/workspace.js": "bd19bf52fb0903f61e828d5c9ea9bb17789ef9393e3a69cd622e8aa94a9ef490"
+    }
+  },
+  "after": {
+    "pass": 31,
+    "fail": 0,
+    "errors": [],
+    "execution_error": null,
+    "source_sha256": {
+      "app/static/workspace.js": "c413c8bc588a54d92fd2a75a017b9ed5a202bb2ee0eb2f376a9af9d1412e1708",
+      "app/static/asset-grid.js": "5818b55b5dcf3089856111ab39c474c8491921f736d255deab54073d9e4e04f6"
+    }
+  },
+  "driver_sha256": "bea894b21bd04c8d15e28aa4ee8526b1518821185e6249f4f1dc3ce22ff75064",
+  "checks": [
+    {
+      "id": "GRID-01",
+      "expectation": "An unchanged forced refresh reuses the card",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-02",
+      "expectation": "An unchanged forced refresh reuses the image",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-03",
+      "expectation": "A focused checkbox survives the refresh",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-04",
+      "expectation": "Another asset changing leaves this card and focus intact",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-05",
+      "expectation": "Metadata updates do not replace the unchanged source image",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-06",
+      "expectation": "Labels, tags and saved review update as text",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-07",
+      "expectation": "Metadata updates retain the original favorite control",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-08",
+      "expectation": "Checkbox and selected styling match the owned selection",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-09",
+      "expectation": "Insertions preserve existing card, image and focused control",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-10",
+      "expectation": "Rendered order follows the current library order",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-11",
+      "expectation": "Reordering preserves node identity and keyboard focus",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-12",
+      "expectation": "Reordering still matches the selected sort",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-13",
+      "expectation": "A removed focused card moves focus to the next surviving checkbox",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-14",
+      "expectation": "A removed card leaves no stale grid node",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-15",
+      "expectation": "Unchanged empty view retains its focused recovery action",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-16",
+      "expectation": "No surviving cards returns grid focus to Search",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-17",
+      "expectation": "A refresh does not steal focus from another control",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-18",
+      "expectation": "A changed source replaces only the preview, not card controls",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-19",
+      "expectation": "A different Workspace never reuses coincident card identities",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-20",
+      "expectation": "A removed video is paused and detached from its source",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-21",
+      "expectation": "Refreshing beneath a dialog preserves focused unsaved notes",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-22",
+      "expectation": "Reused controls retain their delegated selection behavior",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-27",
+      "expectation": "Clear selection immediately after a checkbox click clears its visual state",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-28",
+      "expectation": "An unchanged refresh makes no grid DOM mutations",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-29",
+      "expectation": "The insertBefore fallback retains the focused control on reorder",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-30",
+      "expectation": "The fallback preserves source element identity on reorder",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-31",
+      "expectation": "Changed source hash at the same URL invalidates only its media",
+      "before": "fail",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-23",
+      "expectation": "1440px layout remains within the viewport",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-24",
+      "expectation": "390px layout remains within the viewport",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-25",
+      "expectation": "Browsing and refresh make no mutation or generation request",
+      "before": "pass",
+      "after": "pass"
+    },
+    {
+      "id": "GRID-26",
+      "expectation": "Complete shell has no JavaScript exceptions",
+      "before": "pass",
+      "after": "pass"
+    }
+  ],
+  "state_contracts": {
+    "passed": 9,
+    "unittest_wrappers": 1,
+    "command": "node tests/asset_grid_contracts.cjs",
+    "boundary": "Identity/focus pure functions only; actual DOM is tested by the browser driver."
+  },
+  "retained_script_contracts": {
+    "asset_detail": 17,
+    "asset_library": 14,
+    "boundary": "Existing inert DOM harness uses a markup renderer substitute; policy coverage, not real DOM evidence."
+  },
+  "full_offline_suite": {
+    "command": "python -m unittest discover -s tests",
+    "run": 1739,
+    "passed": 1723,
+    "skipped": 16,
+    "failures": 0,
+    "seconds": 169.826,
+    "exit_code": 0,
+    "python": "3.13.5",
+    "node": "v22.16.0",
+    "warnings": [
+      "Existing Pillow Image.getdata deprecation",
+      "Exit-time unclosed socket ResourceWarning",
+      "Expected fault-injection diagnostics are retained in the raw log"
+    ]
+  },
+  "repository_validation": {
+    "command": "python scripts/validate-repo.py",
+    "passed": true,
+    "graphs_and_bindings": 66,
+    "pinned_assets": 121,
+    "lora_names": 86
+  },
+  "introduced_regression": {
+    "id": "GRID-27",
+    "observed": "A direct checkbox event changed the live DOM without updating the earlier render signature. Clear selection incorrectly left it checked.",
+    "before_fix": "The added expectation failed before live checkbox/class synchronization.",
+    "after_fix": "The current browser scenario passes. Main already passes this scenario; it is not a main defect."
+  },
+  "browser_requests": {
+    "page_metadata_writes": 0,
+    "page_generation_install_switch_uploads": 0,
+    "observed_paths": [
+      "/api/estimate"
+    ],
+    "other_client": "Setup-side writes affect only a temporary SQLite fixture to simulate other-client metadata changes."
+  },
+  "native_local_attempt": {
+    "passed": false,
+    "reason": "Page.goto failed with net::ERR_BLOCKED_BY_ADMINISTRATOR",
+    "checks_completed": 0
+  },
+  "hosted_native": "Pending actual current-head CI receipt at publication; record its identity separately, do not relabel this local checkpoint.",
+  "limits": [
+    "The number of rendered cards and Workspace payload remain unbounded; no paging, thumbnail or 1000/10000-record benchmark.",
+    "No measured heap, network-transfer, GPU, decoder-state or codec/playback benefit is inferred.",
+    "The video test is synthetic DOM release; insertBefore fallback preserves element identity and focus, not promised uninterrupted playback.",
+    "No owner-PC, installed runtime, screen-reader, actual zoom, native-editor, licensing or artwork acceptance.",
+    "Sidebar and collection-control focus are separate owners and are not certified here."
+  ]
+}

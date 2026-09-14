@@ -3,12 +3,16 @@ on:
   pull_request:
     paths:
       - 'app/static/**'
+      - 'tests/collection_editor*'
+      - 'tests/test_collection*'
       - 'app/workspace.py'
       - 'app/server.py'
       - 'tests/asset_workspace*'
       - 'tests/test_asset_workspace*'
       - 'tests/asset_metadata*'
       - 'tests/test_asset_metadata*'
+      - 'tests/asset_grid*'
+      - 'tests/test_asset_grid*'
       - 'tests/asset_library*'
       - 'tests/test_asset_library*'
       - 'tests/asset_detail*'
@@ -60,6 +64,16 @@ jobs:
         run: |
           node tests/asset_library_contracts.cjs
           python tests/asset_library_browser.py --out .runtime/asset-library-proof
+      - name: Stable grid focus and preview lifecycle
+        if: matrix.response-delay-ms == 0
+        run: |
+          node tests/asset_grid_contracts.cjs
+          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
+      - name: Collection editing with actual Workspace storage
+        if: matrix.response-delay-ms == 0
+        run: |
+          python -m unittest discover -s tests -p 'test_collection*.py' -v
+          python tests/collection_editor_browser.py --out .runtime/collection-editor-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -70,5 +84,7 @@ jobs:
             .runtime/asset-metadata-proof/
             .runtime/asset-workspace-proof/
             .runtime/asset-library-proof/
+            .runtime/asset-grid-proof/
+            .runtime/collection-editor-proof/
           if-no-files-found: ignore
           retention-days: 7

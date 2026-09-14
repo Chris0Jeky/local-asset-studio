@@ -1,5 +1,13 @@
 # Studio UX QA — 13 September 2026
 
+## Collection editor sessions — 14 September 2026
+
+[Collection editor](COLLECTION-EDITOR.md) protects an open collection draft, makes save outcomes visible and validates Workspace scope. [Checkpoint](COLLECTION-EDITOR-RESULTS.json). Durable collection revisions/receipts remain #282.
+
+## Stable library refresh
+
+[Grid continuity](GRID-CONTINUITY.md) documents retained card/preview identity, keyboard focus through refresh and reorder, deliberate media disposal, the existing selection contract and the matched browser scenarios. This advances #177 without claiming pagination or measured decoder/memory savings.
+
 ## Library selection and filtered views
 
 [Library context](LIBRARY-CONTEXT.md) records hidden-selection consent, scope-aware empty states, the visible batch limit, preserved newer selections and the browser comparison. It builds on the merged recovery work below; it is not #177 pagination or another journal.

@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'app/wan_capacity.py'
+      - 'app/i2v_diagnostics.py'
+      - 'tests/test_i2v*.py'
       - 'tests/test_wan*.py'
       - 'tests/wan*.cjs'
       - 'tests/wan_capacity_browser.py'
@@ -22,6 +24,8 @@ on:
     branches: [main]
     paths:
       - 'app/wan_capacity.py'
+      - 'app/i2v_diagnostics.py'
+      - 'tests/test_i2v*.py'
       - 'tests/test_wan*.py'
       - 'tests/wan*.cjs'
       - 'tests/wan_capacity_browser.py'
@@ -63,6 +67,7 @@ jobs:
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p 'test_preset_model*.py' -v
       - run: python -m unittest discover -s tests -p 'test_wan*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_i2v*.py' -v
       - run: python -m unittest discover -s tests -p test_server.py -v
       - run: python -m unittest discover -s tests -p test_model_library.py -v
   browser:
