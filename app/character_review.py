@@ -5,7 +5,11 @@ Local reviewer names are declarations, not authenticated human identities.
 import copy
 
 from scripts import character_study as study
-from review_media import digest
+# Imported two ways: as a sibling inside the server (app/ on sys.path) and as app.character_review by the
+# offline collector script (repository root on sys.path). The package spelling alone shadows under the
+# ComfyUI embedded Python, whose own regular `app` package wins over this directory whatever the path order.
+try: from review_media import digest
+except ImportError: from app.review_media import digest
 
 require = study.require
 
