@@ -1,0 +1,55 @@
+{
+  "schema": "studio.performance-experiment-plan/v1",
+  "kind": "non_executable_worksheet",
+  "generation_allowance": 0,
+  "identity": {
+    "studio_commit": null,
+    "graph_sha256": null,
+    "input_sha256": [],
+    "model_sha256": [],
+    "runtime_manifest_sha256": null
+  },
+  "baseline": {
+    "profile_label": "primary-stable",
+    "evidence_binding": null
+  },
+  "candidate": {
+    "profile_label": "primary-next",
+    "evidence_binding": null,
+    "compatibility_verified": false
+  },
+  "case_design": [
+    {
+      "family": "sdxl",
+      "condition": "cold_first_generation"
+    },
+    {
+      "family": "sdxl",
+      "condition": "warm_same_model"
+    },
+    {
+      "family": "qwen-image-edit",
+      "condition": "cold_first_generation"
+    },
+    {
+      "family": "qwen-image-edit",
+      "condition": "warm_same_model"
+    },
+    {
+      "family": "sdxl-to-qwen",
+      "condition": "model_switch"
+    }
+  ],
+  "stop_on": [
+    "oom",
+    "native_crash",
+    "uncertain_submission",
+    "unexpected_queue_work",
+    "ownership_change"
+  ],
+  "notes": [
+    "No installed versions, safe thresholds, recipe identity or execution approval are inferred.",
+    "Bind through the existing Studio executor and allowance owners before execution.",
+    "Preserve stable runtime, raw receipts and all failure outcomes."
+  ]
+}

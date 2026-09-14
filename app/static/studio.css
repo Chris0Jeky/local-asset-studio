@@ -46,3 +46,12 @@
 
 /* #278 friction 1: the sources heading now carries two buttons on text-only recipes; let the row wrap so wider font metrics (CI Linux at 200% zoom) never push it past the viewport. */
 .ux-section-heading{flex-wrap:wrap}.ux-section-heading h3{min-width:120px}
+
+/* Current blockers point to existing controls; they never apply or run a suggested change. */
+.ux-readiness-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:12px 0}
+.ux-readiness-heading p{margin:0;font-size:12px;line-height:1.6}.ux-readiness-heading button{flex:none;font-size:11px;min-height:40px}
+#uxBlockers .ux-blocker{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;padding:12px}
+#uxBlockers .ux-blocker p{margin:0;overflow-wrap:anywhere;line-height:1.6;min-width:0}
+#uxBlockers .ux-blocker button{flex:none;max-width:100%;font-size:11px;min-height:40px}
+#uxReadinessActionStatus:empty{display:none}
+@media(max-width:700px){.ux-readiness-heading,#uxBlockers .ux-blocker{align-items:stretch;flex-direction:column}.ux-readiness-heading button,#uxBlockers .ux-blocker button{min-height:44px}}
