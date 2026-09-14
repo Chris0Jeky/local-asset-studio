@@ -207,7 +207,8 @@
       if (tool === observedTool) return;
       observedTool = tool; stale();
     }
-    const listeners = ['input','change','studio:recipe','workflow:render','workflow:project'];
+    // Clicks cover button-driven state (Select visible, Clear selection, reference removal) that fires no input event.
+    const listeners = ['input','change','click','studio:recipe','workflow:render','workflow:project'];
     listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', toolChanged); window.addEventListener('popstate', restorePosition);
     run.onchange = () => { epoch++; persist(); display(C.unknown('Run selection changed. Reading that run.')); schedule(); };
     const checkButton = add('Re-check', () => runCheck(), 'checkGuideStep');
