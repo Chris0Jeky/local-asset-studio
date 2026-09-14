@@ -304,8 +304,8 @@
         "notes": [
           "the quality tail goes at the END for this family, unlike NoobAI's prefix",
           "keep the negative short; long negatives fight the Illustrious tag space",
-          "a 1.5x hires pass at denoise 0.35-0.5 is the documented fix for broken limbs, not more steps",
-          "below 1024 on the short side the model loses anatomy"
+          "the card recommends clip skip 1-2; the Style + Pose graph leaves clip skip at 1",
+          "the card lists Euler a, 20-30 steps, CFG 5-7"
         ]
       },
       "defaults": {
@@ -343,14 +343,14 @@
           "id": "steps",
           "control": "steps",
           "values": [
-            15,
-            22,
+            20,
+            24,
+            28,
             30
           ],
-          "rationale": "the WAI listing quotes 15-30 steps; 15 is an audition, 30 is the authored value in workflows/api/wai-api.json.",
+          "rationale": "the Nova card quotes 20-30 steps; 28 is the authored value in workflows/api/style-pose-nova-api.json, 20 the fastest in-range audition.",
           "sources": [
-            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-            "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
+            "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card, read 2026-09-14)"
           ]
         },
         {
@@ -361,9 +361,9 @@
             6.0,
             7.0
           ],
-          "rationale": "cfg 5-7 is the quoted band; above 7 Illustrious checkpoints burn colour, below 5 they lose the tag prompt.",
+          "rationale": "cfg 5-7 is the card's band; 6 is authored.",
           "sources": [
-            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"
+            "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card, read 2026-09-14)"
           ]
         },
         {
@@ -371,12 +371,11 @@
           "control": "sampler",
           "values": [
             "euler_ancestral",
-            "dpmpp_2m",
-            "dpmpp_2m_sde"
+            "euler"
           ],
-          "rationale": "euler_ancestral is the family default; the dpmpp_2m pair is the usual deterministic comparison for SDXL-derived checkpoints.",
+          "rationale": "the card names Euler a; plain euler is the deterministic comparison it also lists.",
           "sources": [
-            "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170"
+            "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card, read 2026-09-14)"
           ]
         },
         {
@@ -386,8 +385,9 @@
             "normal",
             "karras"
           ],
-          "rationale": "eps-prediction SDXL checkpoints accept the karras schedule; normal is what the authored graph uses.",
+          "rationale": "eps-prediction Illustrious merge: normal is authored, karras is the usual alternative for SDXL-derived checkpoints.",
           "sources": [
+            "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card, read 2026-09-14)",
             "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0"
           ]
         }
@@ -406,7 +406,7 @@
         ]
       },
       "sources": [
-        "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card: Euler a, Steps 20-30, CFG 5-7, Clip skip 1-2; read 2026-09-14)"
+        "https://civitai.com/models/376130 (Nova Anime XL, IL v19.0 card, read 2026-09-14)"
       ],
       "licence_note": "civitai flags RentCivit/Image/Rent (no Sell); derivatives allowed. Installed 2026-09-14 with a SHA-verified receipt."
     },

@@ -5985,7 +5985,7 @@
         "min": 1,
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       },
-      "execution_note": "Executed 2026-09-14 through Studio job 82bcf8e6-8978-4189-af8f-9ef271985b3e (ComfyUI prompt 0270a7d6\u2026), 201 s including the checkpoint's first load, graph sha256 a478818e5d7bab82\u2026: averaged three-picture style board with the owner's pictures, throne pose picture, no LoRA; output inspected: pose held, magenta-red high-contrast palette with the sheet's diamond trim (experiments/curated/style-pose-matrix/2026-09-14-nova/). One run, not art acceptance."
+      "execution_note": "Executed 2026-09-14 through Studio job bb8efa52-9634-4f43-9246-2c1955ac50a0 (ComfyUI prompt 1f3b64ba-1f8c-491b-abb8-8661a540cc19), 99 s on the primary backend, graph sha256 a478818e5d7bab82\u2026, every control at its authored default (style weight 0.7, pose strength 0.9, seed 2026091407): averaged three-picture style board with the owner's pictures, throne pose picture, no LoRA; output inspected: pose held, calmer magenta-and-gold palette with the sheet's trim, clean lineart (experiments/curated/style-pose-matrix/2026-09-14-nova/, JPEG examples/style-pose/board-verify-nova.jpg). The three earlier Nova cells in that folder ran at style weight 0.8. One run, not art acceptance."
     }
   ]
 }
