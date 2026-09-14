@@ -1,0 +1,42 @@
+{
+  "schema": "studio.repair-proposal/v0",
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "size": [640, 480]
+  },
+  "mode": "localized",
+  "context": {
+    "box": [100, 80, 220, 240],
+    "scale": [4, 1],
+    "padding": [0, 0, 0, 0],
+    "alignment": 16
+  },
+  "instances": [
+    {"id": "actor-a", "kind": "character"},
+    {"id": "staff-a", "kind": "prop"}
+  ],
+  "targets": ["actor-a", "staff-a"],
+  "references": [
+    {"instance_id": "actor-a", "role": "identity", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+    {"instance_id": "actor-a", "role": "geometry", "sha256": "1111111111111111111111111111111111111111111111111111111111111111"}
+  ],
+  "contacts": [
+    {"participants": ["actor-a", "staff-a"], "box": [100, 90, 150, 180]}
+  ],
+  "masks": {
+    "encoding": "source-L-coverage-v1",
+    "edit": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "write": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "protect": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "subject": null
+  },
+  "intent": {
+    "kind": "contact",
+    "visibility": "visible",
+    "synthesize_unseen": false,
+    "description": "Repair the hand grip while retaining the staff and other protected pixels."
+  },
+  "limits": {"max_candidates": 2, "max_analysis_calls": 1},
+  "strategies": ["geometry", "instruction", "native"]
+}

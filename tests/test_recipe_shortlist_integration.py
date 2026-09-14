@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,7 @@ from test_recipe_shortlist import make_studio
 from studio_workflow.agent_bridge import AgentBridge
 from studio_workflow.sdk import WorkflowClient
 from studio_workflow.shortlist import request, GOALS, PREFIX
+from http_refusal_transport import atomic_json_post
 from test_server import server
 
 
@@ -36,11 +38,14 @@ class ShortlistHTTPTests(unittest.TestCase):
         self.transport_patch=patch('studio_workflow.client.Request',side_effect=wire);self.transport_patch.start();self.addCleanup(self.transport_patch.stop)
     def tearDown(self):self.http.shutdown();self.http.server_close();self.thread.join(5);self.temp.cleanup()
     def send(self,value=None,origin=None,content_type='application/json',host=None):
+        body=json.dumps(value or {'goal':'new-image'}).encode('utf-8')
+        host=host or '127.0.0.1:8191';origin=origin or 'http://127.0.0.1:8191'
+        if content_type=='application/json' and (host!='127.0.0.1:8191' or origin!='http://127.0.0.1:8191'):
+            return atomic_json_post(self.http.server_port,PREFIX,body,host=host,origin=origin)
         conn=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:
-            headers={'Host':host or '127.0.0.1:8191','Origin':origin or 'http://127.0.0.1:8191','Content-Type':content_type}
-            if host:headers['Host']=host
-            conn.request('POST',PREFIX,json.dumps(value or {'goal':'new-image'}),headers)
+            headers={'Host':host,'Origin':origin,'Content-Type':content_type}
+            conn.request('POST',PREFIX,body,headers)
             r=conn.getresponse();return r.status,json.loads(r.read())
         finally:conn.close()
     def test_ui_http_sdk_and_read_agent_share_snapshot_and_no_execution_access(self):
@@ -58,6 +63,23 @@ class ShortlistHTTPTests(unittest.TestCase):
         for kwargs,expected in [({'origin':'https://other.invalid'},403),({'host':'other.invalid'},403),({'content_type':'text/plain'},400),({'value':{'goal':'new-image','run':True}},400)]:
             with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],expected)
         self.assertEqual(self.s.calls,[])
+    def test_host_and_origin_refusals_send_the_complete_payload_before_reading_reply(self):
+        writes=[]; connect=socket.create_connection
+        class RecordingSocket:
+            def __init__(self, connection):self.connection=connection
+            def __getattr__(self, name):return getattr(self.connection,name)
+            def __enter__(self):return self
+            def __exit__(self,*args):return self.connection.__exit__(*args)
+            def sendall(self,data):writes.append(bytes(data));return self.connection.sendall(data)
+        with patch('socket.create_connection',side_effect=lambda *a,**k:RecordingSocket(connect(*a,**k))):
+            for kwargs in ({'origin':'https://other.invalid'},{'host':'other.invalid'}):
+                with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],403)
+        self.assertEqual(len(writes),2)
+        for wire in writes:
+            headers,body=wire.split(b'\r\n\r\n',1)
+            self.assertTrue(headers.startswith(('POST '+PREFIX+' HTTP/').encode()))
+            self.assertIn(('Content-Length: '+str(len(body))).encode(),headers)
+            self.assertEqual(json.loads(body),{'goal':'new-image'})
     def test_sdk_and_agent_reject_invalid_options_before_http(self):
         with patch.object(self.client,'request',side_effect=AssertionError('No request expected')):
             for value in [True,4,-1]:
