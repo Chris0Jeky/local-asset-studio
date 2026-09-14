@@ -45,12 +45,7 @@ an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by cod
 
 **q-5 — Hunyuan3D 2.1 territory (issue #26): closed, owner-confirmed 11 September 2026; recorded 14 September 2026.** In the [issue #26 owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899), Chris0Jeky stated: “I acknowledge this issue and I confirm that I do have authorisation as this will be used in authorised territory only. Account for that and move on without restricting models and capabilities.” This records owner-confirmed authorised-territory use for Hunyuan3D 2.1. It is not independent legal verification, blanket approval for other models or territories, a change to the published terms or new restrictions, or a new generation allowance.
 
-**q-6 — three UX questions, first owner feedback on the Studio itself: open.** Every usability judgement on record was
-made by an agent from screenshots. Please answer in your own words: (1) Is the Create view's density right, or should
-advanced controls stay hidden until asked for? (2) Is "Continue with this" on a gallery output clear about what it will
-and will not do? (3) Does the review flow (unreviewed, needs work, selected, collections) match how you actually
-curate, and what are the three most annoying things about using the Studio today? Free text is fine; nothing here is a
-creative or licensing approval.
+**q-6 — three UX questions: answered by the owner, 14 September 2026.** The owner gave a first-hand statement in free text instead of the three questions; it is recorded and mapped to root causes in [docs/UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md) and tracked as #278. In short: the Studio still feels unusable for the real goal; guided paths are wordy and advisory; Plan comparison and Runs & review are unexplained; the review loop lacks automation; Prompt Lab's locked buttons never say what is missing and its Create handoff never unlocked; the workflow builder's canvas and prompt field are clunky. Nothing here is a creative or licensing approval; the owner's next first-hand pass after the fixes is the verdict.
 
 ## Recorded owner decisions
 
