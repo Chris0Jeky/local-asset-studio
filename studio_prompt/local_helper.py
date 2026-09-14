@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import time
 import warnings
-from .core import validate, need, file_bytes, decode, digest, proposal, EDITABLE, read_json, write_new
+from .schema import validate, need, file_bytes, decode, digest, EDITABLE, read_json, write_new
 
 RESPONSE_SCHEMA = {
  'type':'object','additionalProperties':False,'required':['changes','observations','unknowns'],
@@ -73,46 +73,72 @@ def http_json(port, method, path, payload=None, timeout=90):
     finally: connection.close()
 
 
-def _run_local(b, model, port=11434, root=None, include_images=False, idle_confirmed=False, cache=False):
+def _run_local(b, model, port=11434, root=None, include_images=False, idle_confirmed=False, cache=False, operation='brief'):
     need(idle_confirmed is True,'Confirm the GPU queue is idle, or use a separately configured CPU helper')
-    payload=request_payload(b,model,root,include_images)
+    need(operation in ('brief','references'),'Unknown helper operation')
+    if operation == 'references':
+        need(include_images is True,'Reference analysis requires the actual images')
+        from .reference_vision import request_payload as reference_payload
+        from .reference_analysis import make_report, validate_report
+        payload, analysis_inputs = reference_payload(b,model,root)
+        result_key = 'analysis'
+        def interpret(value): return make_report(b,value,analysis_inputs)
+        def check_cached(value):
+            checked = validate_report(value)
+            need(checked == interpret(checked['answer']), 'Invalid cached reference context')
+    else:
+        from .review import proposal
+        payload=request_payload(b,model,root,include_images)
+        result_key = 'proposal'
+        def interpret(value):
+            need(isinstance(value,dict) and set(value)=={'changes','observations','unknowns'},'Unexpected helper result fields')
+            result=proposal(b,value['changes'],value['observations'],value['unknowns'])
+            if not include_images:
+                need(not value['observations'],'Pixel observations returned without images')
+                need(all(c.get('source')=='brief' for c in value['changes']),'Reference-sourced change returned without reference images')
+            return result
+        def check_cached(value):
+            need(value==interpret({k:value[k] for k in ('changes','observations','unknowns')}), 'Invalid cached proposal')
     listing=http_json(port,'GET','/api/tags')
     matches=[x for x in listing.get('models',[]) if x.get('name')==model or x.get('model')==model]
     need(len(matches)==1 and matches[0].get('digest'),'Model must already be installed with a reported digest; no pull attempted')
     need(not matches[0].get('remote_host') and not matches[0].get('remote_model'),'Remote model rejected')
-    cache_key=digest({'request':payload,'model_digest':matches[0]['digest'],'adapter_version':1})
+    cache_identity={'request':payload,'model_digest':matches[0]['digest'],'adapter_version':1}
+    if operation == 'references':
+        # Paths are absent from model input but retained in a report's source context.
+        cache_identity.update(adapter_version=2,operation=operation,input_revision=digest(b))
+    cache_key=digest(cache_identity)
     cachedir = Path(root)/'.runtime/prompt-cache' if root else None
     if cache:
         need(cachedir is not None,'Cache needs a workspace'); cachedir.mkdir(parents=True,exist_ok=True)
         need(cachedir.resolve().is_relative_to(Path(root).resolve()),'Cache escapes workspace')
         cached=cachedir/(cache_key+'.json')
         if cached.exists():
-            result=read_json(cached); prop=result['proposal']
-            need(prop==proposal(b,prop['changes'],prop['observations'],prop['unknowns']), 'Invalid cached proposal')
+            result=read_json(cached); check_cached(result[result_key])
             need(result['helper_evidence']['request_sha256']==digest(payload) and result['helper_evidence']['model_digest']==matches[0]['digest'],'Invalid cache key')
-            result['helper_evidence']['cache_hit']=True; return result
+            result['helper_evidence']['cache_hit']=True
+            if operation == 'references':
+                result['helper_evidence']['inference_calls_this_request']=0
+                result['note']='Reused a validated local analysis; no new inference or asset generation in this call.'
+            return result
         need(len(list(cachedir.glob('*.json')))<64,'Cache full; review/evict old entries explicitly')
     started=time.monotonic(); answer=http_json(port,'POST','/api/chat',payload); elapsed=time.monotonic()-started
     need(answer.get('done') is True,'Incomplete helper response')
     content=answer.get('message',{}).get('content'); need(isinstance(content,str),'Missing structured helper content')
-    value=decode(content.encode('utf-8'))
-    need(isinstance(value,dict) and set(value)=={'changes','observations','unknowns'},'Unexpected helper result fields')
-    result=proposal(b,value['changes'],value['observations'],value['unknowns'])
-    if not include_images:
-        need(not value['observations'],'Pixel observations returned without images')
-        need(all(c.get('source')=='brief' for c in value['changes']),'Reference-sourced change returned without reference images')
-    envelope = {'proposal':result,'helper_evidence':{'provider':'ollama-loopback','model':model,'model_digest':matches[0]['digest'],
+    result=interpret(decode(content.encode('utf-8')))
+    envelope = {result_key:result,'helper_evidence':{'provider':'ollama-loopback','model':model,'model_digest':matches[0]['digest'],
         'request_sha256':digest(payload),'elapsed_seconds':elapsed,'image_count':len(payload['messages'][1].get('images',[])),
         'cache_hit':False,'schema_constrained':True,'semantic_correctness':'requires review','generation_submitted':False},
         'note':'One helper inference occurred; no asset generation. Local transport cannot prove the server itself has no external integrations.'}
-
+    if operation == 'references': envelope['helper_evidence']['inference_calls_this_request']=1
     if cache: write_new(cached,envelope)
     return envelope
 
 
-def run_local(b, model, port=11434, root=None, include_images=False, idle_confirmed=False, cache=False):
+def run_local(b, model, port=11434, root=None, include_images=False, idle_confirmed=False, cache=False, operation='brief'):
     # An isolated job workspace is mandatory for actual inference. The lock prevents
     # overlapping helper calls in this workspace; it is NOT a global Comfy GPU lock.
+    need(operation in ('brief','references'),'Unknown helper operation')
     need(root is not None and Path(root).is_dir(),'Actual helper calls require a job workspace')
     folder=Path(root).resolve()/'.runtime'; folder.mkdir(exist_ok=True)
     need(folder.resolve().is_relative_to(Path(root).resolve()),'Runtime path escapes workspace')
@@ -120,7 +146,7 @@ def run_local(b, model, port=11434, root=None, include_images=False, idle_confir
     fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
     try:
         identity=os.fstat(fd); os.write(fd,str(os.getpid()).encode())
-        return _run_local(b,model,port,root,include_images,idle_confirmed,cache)
+        return _run_local(b,model,port,root,include_images,idle_confirmed,cache,operation)
     finally:
         os.close(fd)
         if lock.exists() and (lock.stat().st_dev,lock.stat().st_ino)==(identity.st_dev,identity.st_ino):lock.unlink()
