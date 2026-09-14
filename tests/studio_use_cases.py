@@ -552,23 +552,29 @@ def _restyle(c):
     c.act('#gallery .reference-output', note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
     c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
+    c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass')
     c.act('#uxPrepareHandoff')
     c.page.wait_for_timeout(800)
     c.act('#uxBlockers', 'read', note='what is still missing after preparing')
-    c.act('#uxPullAsset', note='add the picture whose look is wanted')
-    if c.page.locator('#uxSourcePicker[open]').count():
-        try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
-        except Exception: pass
-        c.act('[data-ux-pull="asset-4"]', note='live mode never pulls: it writes server state' if c.live else 'a saved picture for Picture 1')
+    board = c.page.evaluate('typeof selected !== "undefined" && !!(selected.continuation_capability && selected.continuation_capability.board_min)')
+    if board:
+        c.act('#uxPullAsset', note='add the picture whose look is wanted')
         if c.page.locator('#uxSourcePicker[open]').count():
-            try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
+            try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
             except Exception: pass
-    else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
+            c.act('[data-ux-pull="asset-4"]', note='live mode never pulls: it writes server state' if c.live else 'a saved picture for Picture 1')
+            if c.page.locator('#uxSourcePicker[open]').count():
+                try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
+                except Exception: pass
+        else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
+    else: c.act('#positive', 'read', note='the prepared wording: the finish, what to keep, the source description; no board to fill')
     c.page.wait_for_timeout(400)
     c.act('#generate', 'read', note='readiness only; never pressed')
-    pose = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded')
-    filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0')
-    return c.ready() and pose and filled >= 1, 'pose picture attached=%s, %d board picture(s), run control enabled=%s' % (pose, filled, c.ready())
+    attached = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded' if board else 'typeof uploaded !== "undefined" && !!uploaded')
+    filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0') if board else 0
+    words = c.page.evaluate('(document.querySelector("#positive").value || "").trim().split(/\\s+/).filter(Boolean).length')
+    done = c.ready() and attached and (filled >= 1 if board else words >= 20)
+    return done, 'source attached=%s, board recipe=%s, %d board picture(s), %d prepared words, run control enabled=%s' % (attached, board, filled, words, c.ready())
 
 
 @driver('prompt-lab-to-create')

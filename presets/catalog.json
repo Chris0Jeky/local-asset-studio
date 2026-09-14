@@ -6194,6 +6194,91 @@
         "min": 1,
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       }
+    },
+    {
+      "id": "restyle-klein",
+      "name": "Restyle a picture (FLUX.2 Klein 4B, keeps everything)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 4B",
+      "graph": "workflows/api/restyle-klein-api.json",
+      "verified": false,
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; the picture you restyle keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "reference": [
+        "14",
+        "image"
+      ],
+      "reference_label": "Picture to restyle",
+      "reference_hint": "The picture you want to keep. It is scaled to about one megapixel and given to the model as its reference; the wording says which look to draw it in and what to keep. Continue with this -> Restyle sets the canvas to the picture's own aspect ratio at about 1.5 megapixels.",
+      "continuation_operation": "restyle",
+      "continuation_prompt": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style.{source}",
+      "stages": [
+        "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
+        "Picture to restyle: scaled to ~1 megapixel, VAE-encoded, attached to the prompt as a reference latent",
+        "Wording: the finish to draw, then what to keep; Continue with this adds the source's submitted description",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
+        "1024x1536 canvas by default (Continue with this fits the source's aspect ratio at ~1.5 megapixels)",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Faster (4 steps)",
+          "controls": {
+            "steps": 4
+          }
+        },
+        {
+          "name": "More finish (8 steps)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
+      "description": "Give a finished picture another look while keeping everything else, in about 20 seconds. Measured 14 September 2026 on the owner's throne witch against their own target render: FLUX.2 Klein 4B reads the picture as its reference and redraws it as the wording says (the light-novel finish is the default; edit the first sentence for another look, keep the second), and the pose, costume, throne, wink and colours survived where the SDXL boards drifted. Adding the style picture as a second reference washed the result out and larger canvases changed the hair, so the recipe takes one picture and a ~1.5-megapixel canvas. Naming what the picture shows helps: Continue with this appends the source's submitted description for you."
     }
   ]
 }
