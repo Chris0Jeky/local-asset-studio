@@ -19,6 +19,7 @@ Codex through `~/.codex/AGENTS.md`. This file carries only the Codex-runtime del
 - Preserve full recipes and known prompt IDs; never repeat an uncertain submission.
 - Successful generation, art acceptance and model licensing are three separate states. Record, never infer.
 - Models and installed applications live outside Git; never edit installed ComfyUI or upgrade its packages.
+  comfy-mcp (`comfy-local`) is read-only here: no update/install/download/launch/stop tools (`docs/AGENT-TOOLING.md`).
 - Run `python -m unittest discover -s tests` and `python scripts/validate-repo.py` for app or catalog changes.
 
 ## Codex-specific facts

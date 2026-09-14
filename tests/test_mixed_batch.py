@@ -289,6 +289,7 @@ class MixedBatchTests(unittest.TestCase):
     def test_project_requires_disposition_for_every_mixed_stage(self):
         identifier=self.owning_project();lab=self.studio.production
         other=copy.deepcopy(self.job);other['id']='d'*32;self.studio.jobs[other['id']]=other
+        other['graph']=copy.deepcopy(lab._get(identifier)['plan']['stages'][1]['graph'])
         lab._mutate(identifier,attempts={'0':{'job_id':self.job['id'],'status':'uncertain'},
                                         '1':{'job_id':other['id'],'status':'uncertain'}})
         self.command('dispose',self.payload(reason='Preserve first',acknowledge_unknown=True))

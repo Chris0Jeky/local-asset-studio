@@ -86,12 +86,13 @@ This writes a new file, not an accepted asset and not a change to an open Krita 
 |---|---|
 | Upload/preflight | Rerun Stage with `--resume-uploads` explicitly. Known uploads are read back, not uploaded again. An upload whose response was lost may leave an orphan file and be copied again; this is non-generative and spends no model allowance. No existing file is deleted. |
 | Production creation | `reconcile` is GET-only. It adopts exactly one matching project only after checking its graph, reference hashes, budget and ownership. Zero or several matches stay unresolved. It does not repeat creation. |
-| Start | Use `status` and inspect the known project in Studio. A lost response remains `start_pending`; the client will not issue another Start. A completed result can still be collected. Studio owns any execution recovery. |
+| Start | Use `reconcile-start` only for a retained `start_pending` receipt after a lost response. It rechecks the original inputs, Studio identity and exact project provenance with GET requests, then records `started` only when Production retained the same project's exact stage reservation and an allowed post-Start state. It never repeats Start or Resume, changes a reservation, queues work, or treats inference as successful. A planned/mismatched/unknown project stays pending for Studio inspection. A completed result can still be collected. Studio owns execution recovery. |
 | Client process killed | A command lock can remain. First confirm that its PID is no longer running and no bridge writer is active, then remove only that lock. Preserve state, events and all outputs. This client never kills processes or steals a lock. |
 | Existing candidate/output | Inspect and retain it. Choose a new composition output for another review; do not erase receipts to gain another generation budget. |
 
 ```console
 python scripts/character_edit_bridge.py reconcile --workspace C:/AI/character-lab/my-edit --handoff handoff-v1/handoff.json
+python scripts/character_edit_bridge.py reconcile-start --workspace C:/AI/character-lab/my-edit --handoff handoff-v1/handoff.json
 ```
 
 State replacement is atomic in the local filesystem, with fsynced file contents and retained intent phases. It is not a distributed transaction, an exactly-once guarantee or a power-loss guarantee for every filesystem. The Production database-commit/plan-file recovery gap remains owned by #65; this client leaves such an uncertain result visible instead of creating a replacement.
