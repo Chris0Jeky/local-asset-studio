@@ -6,6 +6,12 @@ let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending =
 const assetFormIds = {title:'assetTitle',tags:'assetTags',review:'assetReview',notes:'assetNotes'};
 const assetRecovery = StudioAssetRecovery.create(()=>sessionStorage);
 let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError = '', assetRetainedSelection = null;
+// Queue, grouping and reason chips are projections over the same saved review states; the server schema is unchanged.
+let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false;
+const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
+const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Keeper',needs_work:'Needs work',rejected:'Rejected'};
+const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
+const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
 function recoveryScopeMessage(scope) {
   if(!StudioAssetRecovery.workspace(scope))return 'This retained record has no verified Workspace identity. Its text is available for inspection, but it cannot safely be restored or retried here. Inspect or copy its text before discarding the local record.';
   if(!StudioAssetRecovery.workspace(assetState.workspace_id))return 'Workspace identity is unavailable. Refresh the library before using this recovery.';
@@ -134,7 +140,7 @@ async function performAssetSave(operation, observe=false) {
     if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return;}
     validateAssetReceipt(result,command);
     applyAssetSaveReceipt(operation,result);
-    void refreshAssets(true);
+    syncAssetAfterSave(operation,result);
   } catch(error) {
     if(!current())return;
     if(error.data?.code==='asset_workspace_conflict'){
@@ -150,6 +156,13 @@ async function performAssetSave(operation, observe=false) {
     clearTimeout(timer);assetDetailBusy=false;assetDetailDiscarding=false;assetDetailControls();renderAssetSaveRecovery();
     if(current())retainAssetDraft();
   }
+}
+// A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
+function syncAssetAfterSave(operation,result) {
+  const record=assetState.assets.find(a=>a.id===operation.id),revision=result.revisions[operation.id];
+  if(!record || record.workspace_id!==operation.command.workspace_id || record.metadata_revision!==operation.command.expected_revisions[operation.id])return void refreshAssets(true);
+  Object.assign(record,result.applied,{metadata_revision:revision});
+  if(operation.kind==='trash')renderAssets();else updateAssetCard(record.id);
 }
 function applyAssetSaveReceipt(operation,result) {
   const unchanged=JSON.stringify(assetDetailValues())===JSON.stringify(operation.snapshot);
@@ -198,7 +211,7 @@ async function writeAssetDetails(payload, kind) {
 }
 async function checkAssetSave(){if(assetDetailPending)return performAssetSave(assetDetailPending,true);}
 for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
-  const changed=()=>{if(!retainAssetDraft())return;if(assetDetailConflict){renderAssetConflict();return;}assetDetailStatus(assetDetailBusy?'Saving the earlier snapshot. Any newer edits remain unsaved.':assetDetailPending?'The earlier save is unconfirmed. Newer edits remain local.':assetDetailDirty()?'Unsaved changes. This tab retains your draft across reloads.':'No unsaved changes.');};
+  const changed=()=>{if(id==='assetTags')renderAssetReasons();if(!retainAssetDraft())return;if(assetDetailConflict){renderAssetConflict();return;}assetDetailStatus(assetDetailBusy?'Saving the earlier snapshot. Any newer edits remain unsaved.':assetDetailPending?'The earlier save is unconfirmed. Newer edits remain local.':assetDetailDirty()?'Unsaved changes. This tab retains your draft across reloads.':'No unsaved changes.');};
   $('#'+id).addEventListener('input',changed);$('#'+id).addEventListener('change',changed);
 }
 // Existing continuation/scene/recipe guards still own their handoffs. Do not leave during a write.
@@ -253,6 +266,26 @@ function visibleAssets() {
   const sort=$('#assetSort').value;
   return list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='oldest'?a.created_at-b.created_at:b.created_at-a.created_at);
 }
+// Pure projection: the same assets and mode always give the same sections, in first-seen order.
+function assetGroupOf(asset, mode) {
+  if(mode==='recipe')return {key:'recipe:'+(asset.preset_name||''),label:asset.preset_name||'No recipe recorded'};
+  if(mode==='run')return {key:'run:'+(asset.job_id||''),label:asset.job_id?'Run '+String(asset.job_id).slice(0,10)+(asset.preset_name?' · '+asset.preset_name:''):'No run recorded'};
+  if(mode==='day'){
+    const at=Number(asset.created_at);
+    if(!Number.isFinite(at))return {key:'day:',label:'No date recorded'};
+    const when=new Date(at*1000),pad=n=>String(n).padStart(2,'0');
+    const day=when.getFullYear()+'-'+pad(when.getMonth()+1)+'-'+pad(when.getDate());
+    return {key:'day:'+day,label:day};
+  }
+  return {key:'',label:''};
+}
+function assetGroups(assets, mode) {
+  if(!assetGroupModes.includes(mode))return [{key:'',label:'',assets:[...assets]}];
+  const sections=new Map();
+  for(const asset of assets){const group=assetGroupOf(asset,mode);if(!sections.has(group.key))sections.set(group.key,{...group,assets:[]});sections.get(group.key).assets.push(asset);}
+  return [...sections.values()];
+}
+function assetUnreviewed(list){return list.filter(a=>(a.review||'unreviewed')==='unreviewed');}
 function assetSelectionInfo(visible=visibleAssets()) {
   const records=new Map(assetState.assets.map(a=>[a.id,a])),shown=new Set(visible.map(a=>a.id));
   const entries=[...assetSelection].map(id=>({id,asset:records.get(id),visible:shown.has(id)}));
@@ -294,10 +327,10 @@ function assetSelectionCanProceed(action) {
   if(selection.missing){assetMessage(selection.missing+(selection.missing===1?' selected asset is unavailable.':' selected assets are unavailable.')+' Review the selection or keep only visible assets before continuing.',true);return false;}
   if(assetSelection.size>assetSelectionLimit){assetMessage('Choose at most '+assetSelectionLimit+' assets per action. The current selection has not been changed.',true);return false;}
   if(selection.entries.some(e=>e.asset.workspace_id && e.asset.workspace_id!==assetState.workspace_id)){assetMessage('Selected assets belong to a different Workspace. Refresh the library before continuing.',true);return false;}
-  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Mark as keeper',add_collection:'Add to collection',remove_collection:'Remove from collection',export:'Export pack',scene:'Create scene',native:'Create native export'};
+  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Mark as keeper',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',export:'Export pack',scene:'Create scene',native:'Create native export'};
   return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
 }
-function clearAssetFilters() {$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
+function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
   if(asset.media_type==='image')return '<img loading="lazy" src="'+url+'" alt="'+alt+'">';
@@ -319,7 +352,24 @@ function renderAssets() {
   const destination=$('#bulkCollection').value;
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   if(assetState.collections.some(c=>c.id===destination))$('#bulkCollection').value=destination;
-  $('#assetGrid').innerHTML=assets.map(a=>'<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>').join('')||assetEmptyState();
+  const pending=assetUnreviewed(assets);
+  $('#reviewNext').textContent='Review next ('+pending.length+' unreviewed)';
+  $('#reviewNext').disabled=!pending.length;
+  const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
+  $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
+  $('#assetGrid').innerHTML=(grouped?groups.map(g=>'<section class="asset-group"><h4>'+esc(g.label)+'<small>'+g.assets.length+'</small></h4><div class="asset-group-items">'+g.assets.map(assetCardHTML).join('')+'</div></section>').join('')
+    :assets.map(assetCardHTML).join(''))||assetEmptyState();
+  renderAssetSelection();
+}
+function assetCardHTML(a) {
+  return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';
+}
+// One saved review repaints one card. Membership changes (scope, trash, filters) still re-read the whole projection.
+function updateAssetCard(id) {
+  if(!/^[\w.:-]+$/.test(id||''))return renderAssets();
+  const asset=assetState.assets.find(a=>a.id===id),node=document.querySelector?.('[data-asset-card="'+id+'"]');
+  if(!node || !asset || !visibleAssets().some(a=>a.id===id))return renderAssets();
+  node.outerHTML=assetCardHTML(asset);
   renderAssetSelection();
 }
 function renderAssetSelection() {
@@ -332,6 +382,93 @@ function renderAssetSelection() {
   $('#createScene').href='/av.html?asset_ids='+encodeURIComponent([...assetSelection].join(','));
   document.querySelectorAll('[data-bulk="restore"]').forEach(b=>b.hidden=assetScope!=='trash');
   document.querySelectorAll('[data-bulk="trash"]').forEach(b=>b.hidden=assetScope==='trash');
+}
+function renderAssetQueue() {
+  const panel=$('#assetQueue');
+  panel.hidden=!assetQueue;
+  if(!assetQueue){panel.innerHTML='';return;}
+  panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
+    '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keeper <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Rejected <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
+    '<small class="asset-queue-legend">K keeper · W needs work · X rejected · S skip without saving · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
+}
+function startReviewQueue() {
+  const pending=assetUnreviewed(visibleAssets()).slice().sort((a,b)=>(b.created_at||0)-(a.created_at||0));
+  if(!pending.length){assetMessage('No unreviewed assets match this view. Change the scope or filters to review more.');return false;}
+  assetQueue={ids:pending.map(a=>a.id),index:0};
+  if(!openAsset(assetQueue.ids[0])){assetQueue=null;renderAssetQueue();return false;}
+  renderAssetQueue();assetMessage('Review queue: '+pending.length+' unreviewed assets in this view. Nothing is saved until you choose.');return true;
+}
+function assetQueueStep(delta) {
+  if(!assetQueue)return false;
+  const next=assetQueue.index+delta;
+  if(next<0){assetDetailStatus('This is the first asset in the queue.');return false;}
+  if(next>=assetQueue.ids.length){assetQueue=null;renderAssetQueue();$('#assetDialog').close();assetMessage('Review queue finished. Reopen it for anything still unreviewed.');return false;}
+  const previous=assetQueue.index;assetQueue.index=next;
+  if(!openAsset(assetQueue.ids[next])){if(assetQueue)assetQueue.index=previous;renderAssetQueue();return false;}
+  return true;
+}
+async function assetQueueDecide(review) {
+  if(!assetQueue || !activeAsset || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
+  $('#assetReview').value=review;renderAssetReasons();
+  const target=activeAsset.id;
+  await saveAssetDetails();
+  // An unconfirmed or conflicted save keeps this asset on screen; auto-advance would hide the evidence.
+  if(assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
+  return assetQueueStep(1);
+}
+function assetTagList(){return $('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean);}
+function renderAssetReasons() {
+  const chosen=new Set(assetTagList().map(t=>t.toLowerCase()));
+  $('#assetReviewReasons').innerHTML=assetReasonTags.map(reason=>'<button type="button" class="asset-reason'+(chosen.has(reason)?' is-on':'')+'" data-review-reason="'+esc(reason)+'" aria-pressed="'+(chosen.has(reason)?'true':'false')+'">'+esc(reason)+'</button>').join('');
+}
+function toggleAssetReason(reason) {
+  if(!assetReasonTags.includes(reason) || assetDetailBusy)return;
+  const tags=assetTagList(),at=tags.findIndex(t=>t.toLowerCase()===reason);
+  if(at>=0)tags.splice(at,1);else tags.push(reason);
+  $('#assetTags').value=tags.join(', ');renderAssetReasons();
+  if(!retainAssetDraft())return;
+  assetDetailStatus(assetDetailDirty()?'Unsaved changes. Reason tags are saved with Save details or a queue decision.':'No unsaved changes.');
+}
+function renderAssetSiblings(asset) {
+  const panel=$('#assetSameRun');
+  const siblings=asset&&asset.job_id?assetState.assets.filter(a=>a.job_id===asset.job_id&&!a.trashed_at):[];
+  panel.hidden=siblings.length<2;
+  panel.innerHTML=siblings.length<2?'':'<h3>Same run</h3><div class="asset-sibling-strip">'+siblings.map(s=>'<button type="button" class="asset-sibling'+(s.id===asset.id?' is-current':'')+'" data-asset-open="'+esc(s.id)+'" aria-current="'+(s.id===asset.id?'true':'false')+'">'+assetPreview(s)+'<small>'+esc(s.title)+'</small></button>').join('')+'</div><small>'+siblings.length+' outputs from this job. Opening one keeps your unsaved draft rules.</small>';
+}
+function assetBulkReviewControls(){document.querySelectorAll('[data-review-bulk]').forEach(b=>{b.disabled=assetBulkReviewBusy;});}
+// Bulk review sends the ordinary single-asset save per asset, three at a time; no failure is dropped.
+async function bulkReviewSelected(review) {
+  if(assetBulkReviewBusy || !assetReviewLabels[review] || review==='unreviewed')return;
+  if(assetLibraryPending || assetLibraryBusy){assetMessage('Resolve the earlier library update before marking reviews.',true);return;}
+  if(assetDetailBusy || assetDetailPending || assetDetailConflict){assetMessage('Finish the open asset save before marking the selection.',true);return;}
+  if(!assetSelectionCanProceed('review'))return;
+  const ids=[...assetSelection],label=assetReviewLabels[review],failures=[];
+  let done=0;
+  const status=text=>{$('#assetBulkReviewStatus').textContent=text;};
+  assetBulkReviewBusy=true;assetBulkReviewControls();status('Marking 0 of '+ids.length+' as '+label+'…');
+  const queue=ids.slice();
+  const worker=async()=>{
+    while(queue.length){
+      const id=queue.shift(),record=assetState.assets.find(a=>a.id===id);
+      try {
+        const command=assetCommand({ids:[id],action:'edit',review},[record],record?.workspace_id||assetState.workspace_id);
+        const result=await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command)});
+        validateAssetReceipt(result,command);
+        if(record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.applied,{metadata_revision:result.revisions[id]});
+        done++;
+      } catch(error) {
+        const refused=error.status>=400 && error.status<500 && error.data?.code!=='asset_workspace_conflict';
+        failures.push((record?.title||id)+' — '+(refused?'not applied. ':'not confirmed. ')+error.message);
+      }
+      status('Marking '+(done+failures.length)+' of '+ids.length+' as '+label+'…');
+    }
+  };
+  try{await Promise.all(Array.from({length:Math.max(1,Math.min(3,ids.length))},worker));}
+  finally {
+    assetBulkReviewBusy=false;assetBulkReviewControls();renderAssets();
+    status(failures.length?done+' of '+ids.length+' marked as '+label+'. '+failures.length+' failed and no retry was sent: '+failures.join(' · ')
+      :'Marked '+done+' of '+ids.length+' as '+label+'.');
+  }
 }
 function renderLibraryRecovery() {
   if(assetRetainedSelection && StudioAssetRecovery.workspace(assetLibraryPending?.command.workspace_id) && assetLibraryPending.command.workspace_id===assetState.workspace_id){assetSelection=new Set(assetRetainedSelection);assetRetainedSelection=null;}
@@ -406,7 +543,9 @@ function openAsset(id) {
   const a=activeAsset;
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
-  assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes. Review records your selection, not artistic or licensing approval.');
+  assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
+  if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;}
+  renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p><details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at?'Restore':'Move to Trash';
   $('#assetDownload').href=a.url+'?download';
@@ -418,7 +557,7 @@ function openAsset(id) {
     for(const [key,field] of Object.entries(assetFormIds))$('#'+field).value=retained.draft[key];
     assetDetailPending=retained.operation?{...retained.operation,id,epoch:assetDetailEpoch}:null;assetDetailConflict=retained.conflict;
     $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at?'Restore':'Move to Trash';
-    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
+    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
   }
   if(!$('#assetDialog').open)$('#assetDialog').showModal();
   return true;
@@ -435,7 +574,11 @@ async function handoffAsset(id,presetId) {
   $('#assetDialog').close();showView('create');$('#selectedPreset').scrollIntoView({block:'start',behavior:'smooth'});message('Source asset attached. Adjust your brief, then generate.');
 }
 $('#workspaceRefresh').onclick=()=>refreshAssets(true);
-$('#assetSearch').oninput=renderAssets;$('#assetType').onchange=renderAssets;$('#assetSort').onchange=renderAssets;
+// Typing repaints once the operator pauses; every other control is immediate.
+$('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;renderAssets();},150);};
+$('#assetType').onchange=renderAssets;$('#assetSort').onchange=renderAssets;
+$('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{localStorage.setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};
+$('#reviewNext').onclick=()=>startReviewQueue();
 $('#newCollection').onclick=()=>openCollection();$('#renameCollection').onclick=()=>openCollection(assetScope.slice(11));
 $('#cancelCollection').onclick=()=>$('#collectionDialog').close();
 $('#collectionForm').onsubmit=async e=>{e.preventDefault();try{const col=await post('/api/collections',{action:collectionEditing?'rename':'create',id:collectionEditing,name:$('#collectionName').value,description:$('#collectionDescription').value});$('#collectionDialog').close();assetScope='collection:'+col.id;await refreshAssets(true);}catch(err){assetMessage(err.message,true);}};
@@ -457,17 +600,30 @@ $('#assetDialog').addEventListener('close',()=>{
   if($('#assetDialog').open)return;
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
-  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;
-  $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';
+  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();
+  $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
   renderLibraryRecovery();
 });
-$('#saveAssetDetails').onclick=async()=>{
+// Queue shortcuts never fire while an editor has focus, and never while a decision is in flight.
+document.addEventListener('keydown',e=>{
+  if(!assetQueue || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey)return;
+  const tag=(e.target?.tagName||'').toUpperCase();
+  if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
+  const key=(e.key||'').toLowerCase();
+  if(assetReviewShortcuts[key]){e.preventDefault();void assetQueueDecide(assetReviewShortcuts[key]);return;}
+  if(key==='s'){e.preventDefault();assetDetailStatus('Skipped. No review was saved for this asset.');assetQueueStep(1);return;}
+  if(e.key==='ArrowRight'){e.preventDefault();assetQueueStep(1);return;}
+  if(e.key==='ArrowLeft'){e.preventDefault();assetQueueStep(-1);}
+});
+// Queue decisions and the Save details button share one save path, payload and revision guard.
+async function saveAssetDetails() {
   const snapshot=assetDetailValues();
   const saved={title:snapshot.title.trim(),tags:[...new Set(snapshot.tags.split(',').map(t=>t.trim()).filter(Boolean))],review:snapshot.review,notes:snapshot.notes.trim()};
   const changes=Object.fromEntries(Object.keys(saved).filter(key=>snapshot[key]!==assetDetailBaseline?.[key]).map(key=>[key,saved[key]]));
   if(!Object.keys(changes).length && !assetDetailPending){assetDetailStatus('No unsaved changes.');return;}
   await writeAssetDetails({action:'edit',...changes},'details');
-};
+}
+$('#saveAssetDetails').onclick=saveAssetDetails;
 $('#assetFavorite').onclick=async()=>{
   const favorite=!activeAsset?.favorite;
   await writeAssetDetails({action:'edit',favorite},'favorite');
@@ -506,6 +662,12 @@ document.addEventListener('click',async e=>{
       catch(err){if(current())renderI2VDiagnosticAction(asset,err.message);}
       return;
     }
+    const reason=e.target.closest('[data-review-reason]');if(reason){toggleAssetReason(reason.dataset.reviewReason);return;}
+    const decide=e.target.closest('[data-queue-review]');if(decide){await assetQueueDecide(decide.dataset.queueReview);return;}
+    if(e.target.closest('[data-queue-skip]')){assetDetailStatus('Skipped. No review was saved for this asset.');assetQueueStep(1);return;}
+    const step=e.target.closest('[data-queue-step]');if(step){assetQueueStep(Number(step.dataset.queueStep));return;}
+    if(e.target.closest('[data-queue-exit]')){assetQueue=null;renderAssetQueue();assetMessage('Left the review queue. Saved reviews are unchanged.');return;}
+    const bulkReview=e.target.closest('[data-review-bulk]');if(bulkReview){await bulkReviewSelected(bulkReview.dataset.reviewBulk);return;}
     if(e.target.closest('[data-asset-clear-filters]')){clearAssetFilters();return;}
     if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
     const scope=e.target.closest('[data-scope]');if(scope){if(scope.hasAttribute?.('data-asset-browse-scope')){$('#assetSearch').value='';$('#assetType').value='all';}setAssetScope(scope.dataset.scope);}
@@ -531,4 +693,6 @@ try{
   const library=assetRecovery.read('library');
   if(library){assetLibraryPending={...library.operation,selection:library.selection};assetRetainedSelection=library.selection;}
 }catch(error){assetRecoveryError=assetRecoveryLoadError=error.message;}
-renderLibraryRecovery();
+// Grouping is a local view preference only; losing it never loses an asset or a review.
+try{const stored=localStorage.getItem(assetGroupStorageKey);if(assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
+renderAssetReasons();renderLibraryRecovery();
