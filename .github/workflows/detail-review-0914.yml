@@ -1,0 +1,76 @@
+name: Detail review verification
+on:
+  push:
+    branches: [codex/chronological-source-0914]
+    paths: [.github/workflows/detail-review-0914.yml]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate the reviewed source identities
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/detail-review
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin codex/detail-face-denoise
+          python - <<'PY'
+          import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          sha='3f58bd62afb176d833761ec565023a68c4c96c4b'
+          req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+          with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
+          raw=base64.b64decode(blob['content'])
+          assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+          assert hashlib.sha256(raw).hexdigest()=='b7641c685d45807d2cd40546bfae0cab5eab9310b3f7e1b2ea58f0b6051ea331'
+          package=json.loads(lzma.decompress(raw));head='f006b3a94f23ca3442e5962c53fbf92e83af532d'
+          assert package['head']==head and git('rev-parse','origin/codex/detail-face-denoise')==head, 'PR changed; preserve it'
+          subprocess.run(['git','switch','-C','verified-detail','origin/codex/detail-face-denoise'],check=True)
+          allowed={'presets/catalog.json','tests/test_detail_denoise_binding.py','docs/ANIME-FANTASY-ATELIER.md','docs/reconciliation/2026-09-14-detail-denoise.md'}
+          assert set(package['manifest'])==allowed
+          for path,record in package['manifest'].items():assert git('rev-parse','HEAD:'+path)==record['before_blob'],path
+          root=pathlib.Path('/tmp/detail-review');patch=root/'review.patch';patch.write_text(package['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          assert set(git('diff','--cached','--name-only').splitlines())==allowed
+          for path,record in package['manifest'].items():assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==record['sha256'],path
+          assert git('write-tree')==package['tree']=='ce2a6f367542e93c3939f8ce60d1c60645819ded'
+          (root/'manifest.json').write_text(json.dumps({k:v for k,v in package.items() if k!='patch'},indent=2),encoding='utf-8')
+          PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Verify full suite and repository contracts
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/detail-review/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/detail-review/validation.log
+          git diff --cached --check
+          git diff --exit-code
+      - name: Publish the verified correction
+        run: |
+          git commit -m 'fix: direct hand-strength changes to the shipped hand-only workflow (#254)'
+          git push origin HEAD:codex/detail-face-denoise
+          git rev-parse HEAD > /tmp/detail-review/published-commit.txt
+          git rev-parse HEAD^{tree} > /tmp/detail-review/published-tree.txt
+          git diff --binary d6423443e1cde90f335ad4e8e08ad9f487188194 HEAD > /tmp/detail-review/complete.patch
+          git bundle create /tmp/detail-review/source.bundle f006b3a94f23ca3442e5962c53fbf92e83af532d..HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: detail-review-0914-proof
+          path: /tmp/detail-review/
+          retention-days: 7
