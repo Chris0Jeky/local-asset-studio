@@ -5,6 +5,7 @@ art, inspect licences, evaluate user code, or start Godot.
 """
 from __future__ import annotations
 
+from contextlib import ExitStack
 import hashlib
 import io
 import json
@@ -162,33 +163,38 @@ class NativeExports:
         converted = []
         dimensions = None
         total_pixels = 0
-        for record in records:
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", Image.DecompressionBombWarning)
-                with Image.open(record["source"]) as source:
-                    require(source.format == IMAGE_TYPES[record["media_type"]],
-                            f"Asset media_type does not match bytes: {record['id']}")
-                    source.load()
-                    require(1 <= source.width <= 8192 and 1 <= source.height <= 8192,
-                            "Image dimensions exceed native export limits")
-                    total_pixels += source.width * source.height
-                    require(total_pixels <= MAX_PIXELS, "Total image pixels exceed native export limit")
-                    current = (source.width, source.height)
-                    require(dimensions is None or current == dimensions,
-                            "All images must share one canvas; no individual trimming or resizing occurs")
-                    dimensions = current
-                    profile = source.info.get("icc_profile")
-                    if profile:
-                        try:
-                            image = ImageCms.profileToProfile(
-                                source, ImageCms.ImageCmsProfile(io.BytesIO(profile)),
-                                ImageCms.createProfile("sRGB"), outputMode="RGBA")
-                        except (ImageCms.PyCMSError, OSError, ValueError) as exc:
-                            raise NativeExportError(f"Invalid ICC profile: {record['id']}") from exc
-                    else:
-                        image = source.convert("RGBA")
-                    converted.append((record, image.copy()))
-        return dimensions, total_pixels, converted
+        with ExitStack() as cleanup:
+            for record in records:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", Image.DecompressionBombWarning)
+                    with Image.open(record["source"]) as source:
+                        require(source.format == IMAGE_TYPES[record["media_type"]],
+                                f"Asset media_type does not match bytes: {record['id']}")
+                        require(1 <= source.width <= 8192 and 1 <= source.height <= 8192,
+                                "Image dimensions exceed native export limits")
+                        total_pixels += source.width * source.height
+                        require(total_pixels <= MAX_PIXELS, "Total image pixels exceed native export limit")
+                        current = (source.width, source.height)
+                        require(dimensions is None or current == dimensions,
+                                "All images must share one canvas; no individual trimming or resizing occurs")
+                        dimensions = current
+                        require(getattr(source, "n_frames", 1) == 1,
+                                "Native exports accept still images; extract animation frames explicitly")
+                        source.load()
+                        profile = source.info.get("icc_profile")
+                        if profile:
+                            try:
+                                image = ImageCms.profileToProfile(
+                                    source, ImageCms.ImageCmsProfile(io.BytesIO(profile)),
+                                    ImageCms.createProfile("sRGB"), outputMode="RGBA")
+                            except (ImageCms.PyCMSError, OSError, ValueError) as exc:
+                                raise NativeExportError(f"Invalid ICC profile: {record['id']}") from exc
+                        else:
+                            image = source.convert("RGBA")
+                        cleanup.callback(image.close)
+                        converted.append((record, image))
+            cleanup.pop_all()  # Transfer ownership to the caller only after all images pass.
+            return dimensions, total_pixels, converted
 
     def _options(self, options, records, dimensions):
         count = len(records)
@@ -242,78 +248,81 @@ class NativeExports:
         require(not target.exists(), "output_root must be new")
         records, glb = self._asset_records(kind, assets)
         dimensions, total_pixels, converted = self._images(records)
-        resolved_options = self._options(options, records, dimensions)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.mkdir()
         try:
-            (target / "sources").mkdir()
-            (target / "interchange").mkdir()
-            snapshots = []
-            for index, record in enumerate(records + ([glb] if glb else [])):
-                suffix = Path(record["filename"]).suffix.lower()
-                snapshot = target / "sources" / f"{index:02d}-{record['id']}{suffix}"
-                shutil.copyfile(record["source"], snapshot)
-                require(sha256(snapshot) == record["sha256"], "Source snapshot copy failed")
-                snapshots.append({"id": record["id"], "media_type": record["media_type"],
-                                  "original_filename": record["filename"],
-                                  "source_snapshot": snapshot.relative_to(target).as_posix(),
-                                  "sha256": record["sha256"],
-                                  **{field: record[field] for field in ("recipe", "metadata") if field in record}})
-            frames = []
-            for index, (record, image) in enumerate(converted):
-                interchange = target / "interchange" / f"frame-{index:02d}-{record['id']}.png"
-                image.save(interchange, format="PNG")
-                frames.append({"id": record["id"], "path": interchange.relative_to(target).as_posix(),
-                               "sha256": sha256(interchange), "duration_ms": resolved_options["duration_ms"][index]})
-            frame_manifest = {"schema_version": 1, "clip": resolved_options["clip"],
-                              "canvas": list(dimensions), "anchor": resolved_options["anchor"],
-                              "loop": resolved_options["loop"], "frames": frames}
-            _write_json(target / "frames.json", frame_manifest)
-            recipe = {"schema_version": 1, "kind": kind, "options": resolved_options,
-                      "input_order": [record["id"] for record in records]}
-            _write_json(target / "recipe.json", recipe)
-            output_details = {}
-            if kind in {"atlas", "godot"}:
-                atlas = media.atlas(frame_manifest, target, target / "atlas", columns=resolved_options["columns"])
-                manifest_path = target / "atlas" / "manifest.json"
-                atlas["filter"] = resolved_options["filter"]
-                _write_json(manifest_path, atlas, replace=True)
-                output_details["atlas"] = {"manifest": "atlas/manifest.json", "png": "atlas/atlas.png",
-                                           "frames": len(frames), "dimensions": atlas["dimensions"]}
-            if kind == "ora":
-                layers = {"schema_version": 1, "name": resolved_options["clip"], "canvas": list(dimensions),
-                          "layers": [{"id": frame["id"], "name": resolved_options["layer_names"][index],
-                                      "path": frame["path"], "sha256": frame["sha256"]}
-                                     for index, frame in enumerate(frames)]}
-                _write_json(target / "layers.json", layers)
-                result = media.ora(layers, target, target / "layers.ora")
-                output_details["ora"] = {"path": "layers.ora", "layers": result["layers"]}
-            if kind == "godot":
-                glb_path = None
-                if glb:
-                    glb_path = next(item["source_snapshot"] for item in snapshots if item["id"] == glb["id"])
-                package = godot.package_project(target, "atlas/manifest.json", target / "godot", glb_path)
-                output_details["godot"] = {"project": "godot", "frame_count": package["frame_count"],
-                                           "glb_included": glb is not None,
-                                           "configured_executable": self.godot_path.name if self.godot_path else None,
-                                           "executed": False}
-            limitations = ["No generation was submitted.", "No art acceptance or licensing decision is made.",
-                           "Still images were converted to RGBA sRGB PNG without resizing or individual trimming."]
-            if kind == "ora":
-                limitations.append("ORA preserves flat normal RGBA layers only; it omits animation, rigs, groups, masks, non-normal blend modes, and ICC profiles.")
-            if kind == "godot":
-                limitations.append("Godot packaging uses fixed local templates only; this export does not start Godot or claim engine verification.")
-            metadata = {"schema_version": 1, "kind": kind, "source_provenance": snapshots,
-                        "measurements": {"canvas": list(dimensions), "image_count": len(frames),
-                                         "total_source_pixels": total_pixels, "anchor": resolved_options["anchor"],
-                                         "durations_ms": resolved_options["duration_ms"], "loop": resolved_options["loop"],
-                                         "filter": resolved_options["filter"]}, "outputs": output_details,
-                        "limitations": limitations}
-            _write_json(target / "metadata.json", metadata)
-            self._pack(target)
-            return {"kind": kind, "artifacts": self._artifacts(target), "source_provenance": snapshots,
-                    "measurements": metadata["measurements"], "limitations": limitations}
-        except Exception as exc:
-            # Keep the exclusive attempt directory for diagnosis; never erase partial native sources.
-            _write_json(target/'failure.json',{'status':'failed','message':str(exc)[:1000]})
-            raise
+            resolved_options = self._options(options, records, dimensions)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.mkdir()
+            try:
+                (target / "sources").mkdir()
+                (target / "interchange").mkdir()
+                snapshots = []
+                for index, record in enumerate(records + ([glb] if glb else [])):
+                    suffix = Path(record["filename"]).suffix.lower()
+                    snapshot = target / "sources" / f"{index:02d}-{record['id']}{suffix}"
+                    shutil.copyfile(record["source"], snapshot)
+                    require(sha256(snapshot) == record["sha256"], "Source snapshot copy failed")
+                    snapshots.append({"id": record["id"], "media_type": record["media_type"],
+                                      "original_filename": record["filename"],
+                                      "source_snapshot": snapshot.relative_to(target).as_posix(),
+                                      "sha256": record["sha256"],
+                                      **{field: record[field] for field in ("recipe", "metadata") if field in record}})
+                frames = []
+                for index, (record, image) in enumerate(converted):
+                    interchange = target / "interchange" / f"frame-{index:02d}-{record['id']}.png"
+                    image.save(interchange, format="PNG")
+                    frames.append({"id": record["id"], "path": interchange.relative_to(target).as_posix(),
+                                   "sha256": sha256(interchange), "duration_ms": resolved_options["duration_ms"][index]})
+                frame_manifest = {"schema_version": 1, "clip": resolved_options["clip"],
+                                  "canvas": list(dimensions), "anchor": resolved_options["anchor"],
+                                  "loop": resolved_options["loop"], "frames": frames}
+                _write_json(target / "frames.json", frame_manifest)
+                recipe = {"schema_version": 1, "kind": kind, "options": resolved_options,
+                          "input_order": [record["id"] for record in records]}
+                _write_json(target / "recipe.json", recipe)
+                output_details = {}
+                if kind in {"atlas", "godot"}:
+                    atlas = media.atlas(frame_manifest, target, target / "atlas", columns=resolved_options["columns"])
+                    manifest_path = target / "atlas" / "manifest.json"
+                    atlas["filter"] = resolved_options["filter"]
+                    _write_json(manifest_path, atlas, replace=True)
+                    output_details["atlas"] = {"manifest": "atlas/manifest.json", "png": "atlas/atlas.png",
+                                               "frames": len(frames), "dimensions": atlas["dimensions"]}
+                if kind == "ora":
+                    layers = {"schema_version": 1, "name": resolved_options["clip"], "canvas": list(dimensions),
+                              "layers": [{"id": frame["id"], "name": resolved_options["layer_names"][index],
+                                          "path": frame["path"], "sha256": frame["sha256"]}
+                                         for index, frame in enumerate(frames)]}
+                    _write_json(target / "layers.json", layers)
+                    result = media.ora(layers, target, target / "layers.ora")
+                    output_details["ora"] = {"path": "layers.ora", "layers": result["layers"]}
+                if kind == "godot":
+                    glb_path = None
+                    if glb:
+                        glb_path = next(item["source_snapshot"] for item in snapshots if item["id"] == glb["id"])
+                    package = godot.package_project(target, "atlas/manifest.json", target / "godot", glb_path)
+                    output_details["godot"] = {"project": "godot", "frame_count": package["frame_count"],
+                                               "glb_included": glb is not None,
+                                               "configured_executable": self.godot_path.name if self.godot_path else None,
+                                               "executed": False}
+                limitations = ["No generation was submitted.", "No art acceptance or licensing decision is made.",
+                               "Still images were converted to RGBA sRGB PNG without resizing or individual trimming."]
+                if kind == "ora":
+                    limitations.append("ORA preserves flat normal RGBA layers only; it omits animation, rigs, groups, masks, non-normal blend modes, and ICC profiles.")
+                if kind == "godot":
+                    limitations.append("Godot packaging uses fixed local templates only; this export does not start Godot or claim engine verification.")
+                metadata = {"schema_version": 1, "kind": kind, "source_provenance": snapshots,
+                            "measurements": {"canvas": list(dimensions), "image_count": len(frames),
+                                             "total_source_pixels": total_pixels, "anchor": resolved_options["anchor"],
+                                             "durations_ms": resolved_options["duration_ms"], "loop": resolved_options["loop"],
+                                             "filter": resolved_options["filter"]}, "outputs": output_details,
+                            "limitations": limitations}
+                _write_json(target / "metadata.json", metadata)
+                self._pack(target)
+                return {"kind": kind, "artifacts": self._artifacts(target), "source_provenance": snapshots,
+                        "measurements": metadata["measurements"], "limitations": limitations}
+            except Exception as exc:
+                # Keep the exclusive attempt directory for diagnosis; never erase partial native sources.
+                _write_json(target/'failure.json',{'status':'failed','message':str(exc)[:1000]})
+                raise
+        finally:
+            for _, image in converted: image.close()
