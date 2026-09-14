@@ -10,7 +10,7 @@ function resetBuild(){draftVersion++;result=null;$('export-result').disabled=tru
 function invalidate(){resetBuild();schedule();}
 // An explicit repair rebuilds once and keeps its own explanation; no debounced rebuild follows to wipe it.
 function rebuild(note){resetBuild();build(note);}
-function collect(){intent.brief=$('brief').value;for(const k of ['subject','style','motion']){if($(k).value.trim())intent.facets[k]=$(k).value;else delete intent.facets[k];}intent.tags=$('tags').value.split(',').map(x=>x.trim()).filter(Boolean);intent.avoid=$('avoid').value.split(',').map(x=>x.trim()).filter(Boolean);if(intent.task==='voice')intent.verbatim.text=$('words').value;if(intent.task==='music')intent.verbatim.lyrics=$('words').value;}
+function collect(){intent.brief=$('brief').value;for(const k of ['subject','style','motion']){if($(k).value.trim())intent.facets[k]=$(k).value;else delete intent.facets[k];}for(const k of ['tags','avoid'])if($(k).value!==intent[k].join(', '))intent[k]=$(k).value.split(',').map(x=>x.trim()).filter(Boolean);if(intent.task==='voice')intent.verbatim.text=$('words').value;if(intent.task==='music')intent.verbatim.lyrics=$('words').value;}
 function show(){ $('brief').value=intent.brief;for(const k of ['subject','style','motion'])$(k).value=intent.facets[k]||'';$('tags').value=intent.tags.join(', ');$('avoid').value=intent.avoid.join(', ');words();references();notes();}
 function download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 for(const k of ['brief','subject','style','motion','tags','avoid','words'])$(k).addEventListener('input',invalidate);
@@ -100,3 +100,23 @@ fetch('/api/prompt/profiles').then(async response=>{const data=await response.js
 function words(){const show=['voice','music'].includes(intent.task);$('words-section').hidden=!show;if(show){const key=intent.task==='voice'?'text':'lyrics';$('words-label').textContent=intent.task==='voice'?'Exact words to speak (never rewritten)':'Exact lyrics (never rewritten)';$('words').value=intent.verbatim[key]||'';}}
 function references(){$('reference-list').replaceChildren();for(const r of intent.references){const card=document.createElement('div');card.append(node('p',r.id+' / '+r.path));const label=node('label','Reference role');const select=document.createElement('select');for(const role of ['identity','pose','style','costume','composition','motion','voice','geometry','mask']){const opt=node('option',role);opt.value=role;select.append(opt);}select.value=r.role;select.addEventListener('change',()=>{r.role=select.value;invalidate();});label.append(select);card.append(label);for(const key of ['take','ignore']){const l=node('label',key==='take'?'Take from this image':'Do not transfer');const input=document.createElement('input');input.value=r[key].join('; ');input.addEventListener('change',()=>{r[key]=input.value.split(';').map(x=>x.trim()).filter(Boolean);invalidate();});l.append(input);card.append(l);}const remove=node('button','Remove reference');remove.addEventListener('click',()=>{intent.references=intent.references.filter(x=>x.id!==r.id);references();invalidate();});card.append(remove);$('reference-list').append(card);}}
 $('ref-files').addEventListener('change',async e=>{try{for(const f of e.target.files){if(intent.references.length>=12)throw Error('Twelve reference records maximum');if(f.size>8*1024*1024||/[\\/:]/.test(f.name))throw Error('Use small images with portable filenames');const bytes=await f.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');intent.references.push({id:'ref-'+crypto.randomUUID().slice(0,8),role:'identity',kind:'image',path:f.name,sha256:hash,take:[],ignore:[]});}references();invalidate();$('status').textContent='References recorded by hash. Set each role below; the prompt rebuilds itself.';}catch(err){references();$('status').textContent=err.message;}});
+
+// Reference review is a client of this draft owner, never a second intent store.
+// These guards cover this open editor; they are not shared Workspace revisions.
+globalThis.StudioPromptDraft=(()=>{
+  const clone=value=>JSON.parse(JSON.stringify(value));
+  function capture(){collect();const json=JSON.stringify(intent);return {version:draftVersion,profile:$('profile').value,json,intent:JSON.parse(json)};}
+  function matches(ticket){const now=capture();return !!ticket&&ticket.version===now.version&&ticket.profile===now.profile&&ticket.json===now.json&&JSON.stringify(ticket.intent)===ticket.json;}
+  function apply(ticket,preview){
+    if(!matches(ticket))throw Error('The brief changed. Preview the reference changes again.');
+    if(!preview||preview.format!=='studio.reference-transfer-preview/v1'||['generation_submitted','inference_submitted','execution_authorized'].some(k=>preview[k]!==false)||!preview.intent)throw Error('Expected a non-executing reference preview.');
+    if(JSON.stringify(preview.base_intent)!==ticket.json)throw Error('The preview does not match this brief.');
+    const before=capture();intent=clone(preview.intent);show();invalidate();
+    return {before,after:capture()};
+  }
+  function undo(receipt){
+    if(!receipt||!matches(receipt.after))throw Error('The brief changed after applying. Undo would overwrite newer work; export the receipt to recover earlier values.');
+    intent=JSON.parse(receipt.before.json);$('profile').value=receipt.before.profile;show();summary();invalidate();return capture();
+  }
+  return Object.freeze({capture,matches,apply,undo});
+})();
