@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -63,13 +64,22 @@ class ShortlistHTTPTests(unittest.TestCase):
             with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],expected)
         self.assertEqual(self.s.calls,[])
     def test_host_and_origin_refusals_send_the_complete_payload_before_reading_reply(self):
-        with patch('test_recipe_shortlist_integration.atomic_json_post', wraps=atomic_json_post) as transport:
+        writes=[]; connect=socket.create_connection
+        class RecordingSocket:
+            def __init__(self, connection):self.connection=connection
+            def __getattr__(self, name):return getattr(self.connection,name)
+            def __enter__(self):return self
+            def __exit__(self,*args):return self.connection.__exit__(*args)
+            def sendall(self,data):writes.append(bytes(data));return self.connection.sendall(data)
+        with patch('socket.create_connection',side_effect=lambda *a,**k:RecordingSocket(connect(*a,**k))):
             for kwargs in ({'origin':'https://other.invalid'},{'host':'other.invalid'}):
                 with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],403)
-        self.assertEqual(transport.call_count,2)
-        for call in transport.call_args_list:
-            self.assertEqual(call.args[:2],(self.http.server_port,PREFIX))
-            self.assertEqual(json.loads(call.args[2]),{'goal':'new-image'})
+        self.assertEqual(len(writes),2)
+        for wire in writes:
+            headers,body=wire.split(b'\r\n\r\n',1)
+            self.assertTrue(headers.startswith(('POST '+PREFIX+' HTTP/').encode()))
+            self.assertIn(('Content-Length: '+str(len(body))).encode(),headers)
+            self.assertEqual(json.loads(body),{'goal':'new-image'})
     def test_sdk_and_agent_reject_invalid_options_before_http(self):
         with patch.object(self.client,'request',side_effect=AssertionError('No request expected')):
             for value in [True,4,-1]:
