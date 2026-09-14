@@ -7,6 +7,11 @@ PREFIX = '/api/workflow-studio/documents'
 
 
 class WorkflowClient(Client):
+    def setup_proposal(self, request: dict) -> dict:
+        """Preview a caller-declared draft change; never stages, saves or applies it."""
+        from .setup_proposal import observe
+        return observe(self.request, request)
+
     def shortlist(self, goal: str, *, reference_count: int | None = None, limit: int = 6,
                   offset: int = 0, expected_snapshot: str | None = None, source_asset_id: str | None = None,
                   source_sha256: str | None = None, source_role: str | None = None, sources: list[dict] | None = None) -> dict:
