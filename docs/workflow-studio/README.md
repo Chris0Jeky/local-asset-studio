@@ -16,6 +16,8 @@ use **Create → Recipe library → Help me choose a recipe**. The same read-onl
 For one to three actual images in a deliberate order, use the library's
 **Find recipes for selected images** action and [ordered source advice](ORDERED-SOURCES.md).
 It checks every chosen source and proposed slot without staging or applying anything.
+Visual-only multi-picture routes have separate prompt, slot and recovery semantics;
+see [Style-board setup and recovery](STYLE-BOARDS.md).
 
 For a complete before/after comparison without replacing Create, choose
 **Preview proposed setup** on a source-bound suggestion; see
