@@ -22,7 +22,7 @@ class Element {
   querySelector(){return null;} closest(){return null;} getClientRects(){return this.hidden?[]:[{}];}
   matches(){return true;} focus(){} scrollIntoView(){} addEventListener(){}
 }
-async function page(check='readiness',target=null) {
+async function page(check='readiness',target=null,recommended=null) {
   const document=hub(), window=hub(), main=new Element('main'), controls=new Map(), calls=[], writes=[];
   const node=id=>{if(!controls.has(id)){const e=new Element();e.id=id;controls.set(id,e);}return controls.get(id);};
   const walk=(n,id)=>n.id===id?n:n.children.map(c=>walk(c,id)).find(Boolean);
@@ -38,7 +38,7 @@ async function page(check='readiness',target=null) {
     get location(){return location;},history:{pushState(_s,_t,url){location=new URL(url,location);},replaceState(_s,_t,url){location=new URL(url,location);}},
     fetch:async(url,options={})=>{calls.push([options.method||'GET',url]);if(url==='/api/catalog')return new Promise(()=>{});
       let data;
-      if(url==='/api/workflow-studio/guides')data={guides:[{id:'fixture',title:'Fixture',steps:[
+      if(url==='/api/workflow-studio/guides')data={guides:[{id:'fixture',title:'Fixture',...(recommended?{recommended}:{}),steps:[
         {id:'one',title:'One',detail:'Test',check,route:'/#create',target},
         {id:'two',title:'Two',detail:'Test',check:'manual',route:'/#assets'}]}]};
       else if(url==='/api/backends')data={active:'primary',busy:false,profiles:[{id:'primary',url:'http://127.0.0.1:8188'}]};
@@ -52,7 +52,13 @@ async function page(check='readiness',target=null) {
     var backendActive='primary';renderPresets=()=>{};renderSelected=()=>{};clearReference=()=>{};updateLoraHints=()=>{};scheduleTimeEstimate=()=>{};`);
   vm.runInContext(fs.readFileSync(path.join(root,'studio-guide.js'),'utf8'),context);await flush();
   const evidence=()=>document.getElementById('guideEvidence'), button=()=>document.getElementById('checkGuideStep');
-  return {document,window,node,main,calls,writes,run,context,evidence,button,
+  const panel=()=>main.children.find(n=>n.className==='studio-guide-panel');
+  const steps=()=>panel().children.find(n=>n.className==='studio-guide-steps');
+  const action=label=>panel().children.flatMap(n=>n.children).find(n=>n.textContent===label);
+  return {document,window,node,main,calls,writes,run,context,evidence,button,panel,steps,action,
+    heading:()=>panel().children.find(n=>n.tagName==='h2').textContent,
+    health:()=>calls.filter(x=>x[1]==='/api/health').length,
+    async settle(ms=900){await new Promise(resolve=>setTimeout(resolve,ms));},
     async ready(){await button().onclick();assert.equal(evidence().dataset.state,'met');},
     history(stage,hash){location=new URL('?guide=fixture&stage='+stage+'#'+hash,location);window.dispatchEvent(new Event('popstate'));},
     hash(hash){location.hash=hash;window.dispatchEvent(new Event('hashchange'));}};
@@ -72,10 +78,36 @@ test('invalid preset selection does not claim a transition',async()=>{
   const p=await page();await p.ready();assert.throws(()=>p.run("selectPreset('missing')"),/unavailable/);assert.equal(p.evidence().dataset.state,'met');
 });
 test('A to B to A while checking discards the first recipe evidence',async()=>{
-  const p=await page();let release;p.context.holdHealth=new Promise(resolve=>release=resolve);
+  const p=await page();const before=p.health();let release;p.context.holdHealth=new Promise(resolve=>release=resolve);
   const checking=p.button().onclick();await flush();p.run("selectPreset('b');selectPreset('a')");release();await checking;
   assert.equal(p.evidence().dataset.state,'unknown');assert.match(p.evidence().textContent,/discarded/);
-  assert.equal(p.calls.filter(x=>x[1]==='/api/health').length,1,'no automatic recheck');
+  assert.equal(p.health()-before,1,'the interrupted check is not silently replaced by an immediate one');
+});
+test('the coach reads evidence on mount instead of waiting for a button press',async()=>{
+  const p=await page();assert.equal(p.evidence().dataset.state,'met');assert.equal(p.health(),1);
+  assert.equal(p.button().textContent,'Re-check');assert.ok(p.calls.every(([method])=>method==='GET'));
+});
+test('a settled change triggers exactly one debounced recheck',async()=>{
+  const p=await page();const before=p.health();p.run("selectPreset('b')");
+  assert.equal(p.evidence().dataset.state,'unknown','the change invalidates immediately');
+  await p.settle();assert.equal(p.evidence().dataset.state,'blocked');assert.match(p.evidence().textContent,/Fixture blocked/);
+  assert.equal(p.health()-before,1,'repeated notifications collapse into one check');
+});
+test('the step list marks only the current step and navigates through the same guard',async()=>{
+  const p=await page();const marks=()=>p.steps().children.map(li=>li.children[0].children[0]);
+  assert.equal(p.steps().children.length,2);assert.equal(marks()[0].dataset.state,'met');
+  assert.equal(marks()[1].textContent,'2');assert.equal(marks()[1].dataset.state,undefined);
+  p.steps().children[1].children[0].onclick();assert.equal(p.heading(),'Two');
+  assert.equal(p.main.children.filter(n=>n.className==='studio-guide-panel').length,1);
+});
+test('the recipe shortcut selects through the existing picker and never submits',async()=>{
+  const p=await page('recipe',null,['b']);const choose=p.action('Choose B');
+  assert.ok(choose,'the recommended recipe is named on the button');choose.onclick();
+  assert.equal(p.run('selected.id'),'b');assert.ok(p.calls.every(([method])=>method==='GET'));
+});
+test('the tool button appears only when the user is somewhere else',async()=>{
+  const p=await page();assert.equal(p.action('Open this step’s tool'),undefined);
+  p.history('one','assets');assert.ok(p.action('Open this step’s tool'),'a different tool still offers the jump');
 });
 test('popstate then paired hashchange keeps the restored manual stage',async()=>{
   const p=await page('manual');p.history('two','assets');p.window.dispatchEvent(new Event('hashchange'));

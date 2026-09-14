@@ -38,6 +38,7 @@ controls makes those approvals or spends a generation allowance.
 | Voice takes | Existing local voice plan and recovery controls | Shared navigation, not a new voice engine. The voice tool remains authoritative for availability and execution. |
 | Models & setup | Environment, model availability, installation, storage | Environment switching is explicit here, not an incidental effect of navigation or selecting a destination. |
 | Workflow guide | Recipes, native-tool explanation and operating guidance | Native editing, character canon, masks and export semantics remain in their existing services and documentation. This change does not add a fake painting canvas or a second scene engine. |
+| Guided paths | Seven authored paths: one short imperative step at a time, a numbered step list, and read-only readiness for the current step | The coach re-reads its step on arrival and about 600 ms after a settled change; Re-check is manual repetition, not the only check. It stays GET-only, discards late evidence, and reveals or selects a recommended recipe through the shipped Create picker. It never generates, approves art or clears licences. |
 
 At the source/destination boundary, **reference role** describes what to borrow, **lineage** records the
 source asset, and **write scope** belongs to the actual native edit contract. A style reference is not a
