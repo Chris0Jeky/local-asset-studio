@@ -1,5 +1,5 @@
 """Real prepare, retained-output and HTTP regressions; synthetic pixels, no inference."""
-import copy
+import copy, re
 import hashlib
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
@@ -343,6 +343,10 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
             for placeholder in (declared if isinstance(declared, list) else [declared]) if declared else []:
                 self.assertIn(placeholder, preset["continuation_prompt"], preset["id"])
                 self.assertTrue(placeholder.startswith("[") and placeholder.endswith("]"), preset["id"])
+            if declared and preset.get("reference_board"):
+                # Outside the fills the wording must not assume who is in the picture: "her hat" once put hats on a hatless character.
+                fixed = re.sub(r"\[[^\]]*\]", "", preset["continuation_prompt"]).lower()
+                self.assertFalse(re.search(r"(her|his|hat|robe|witch)", fixed), (preset["id"], fixed))
             if preset["id"] in ("combine-klein", "restyle-klein-picture"):
                 # A Klein board: the source is image 1 (last_reference, first reference latent), the board pictures follow it
                 # as image 2 and 3; an empty slot is bypassed, not left on the authored example (test_references).

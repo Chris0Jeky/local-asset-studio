@@ -30,6 +30,17 @@ Picture 1 → replace the two fills → Generate): job `fb0eb95d-ba3f-4025-a77e-
 The renamed edit recipe was proved the same way (*Continue with this → Edit*, fill replaced with "replace her witch hat
 with a red Santa hat …"): job `1004f972-e1d9-489e-bbda-60182bd18216`, 35.3 s, hat replaced, the rest kept. After the
 Codex review the bracketed fills are refused on every route (server and readiness list), not only a continuation.
+
+The owner's first Combine run (job `aebf406f-ff76-414c-8500-388e02a98fe2`, 22:54: the "SHARK" crop-top picture kept,
+a bent-over fan picture as the pose, four seeds, 148.5 s) worked as a route and exposed the prepared wording: its keep
+sentence said "her hat" (written for the witch), so all four seeds invented a cap, and one seed drew two figures
+(`examples/style-pose/combine-klein-owner-run.jpg`). Fixed: the sentence is subject-neutral and asks for one figure;
+the same four seeds with the owner's fills re-rendered against ComfyUI gave four single, hatless figures from behind
+(`examples/style-pose/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s warm;
+not re-run through the page, the graph is the catalog's with the fills replaced). Two Codex-lane pilot jobs from
+12 September (`0cbaae1b…` flux-edit, `a2908800…` qwen-2ref) that every restart re-marked *uncertain* had their
+tracking stopped with the reason recorded (ComfyUI lists neither prompt; no output after the restart; nothing
+resubmitted).
 Not verified: art acceptance (HUMAN_TODO q-27 e), the look recipe through the page, Klein 9B and AniEdit 9B (downloads
 still running through the VPN), a third board picture with explicit "take only … from image 3" wording.
 

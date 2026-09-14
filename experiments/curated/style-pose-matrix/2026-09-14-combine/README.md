@@ -55,6 +55,28 @@ loading another model); a warm run is 14–46 s.
   ground and is what ships.
 - **The edit recipe works and should lead the Edit route** (it did not: the 11-minute Qwen recipe greeted the user).
 
+## The owner's first run and the wording fix
+
+Job `aebf406f…` (22:54, through the page): image 1 = picture B (the "SHARK" crop-top), pose picture = a newly imported
+bent-over maid fan picture (`6895e9e0…_yande.re_1250070…`), fills "Ellen Joe in pink shorts and top with attractive silhouette"
+and "leaning forwards, seen from the back, one hand on the hip moving the shorts slightly", plus "not include the tail",
+seeds 2026091411–14, 148.5 s for four. Sheet `examples/style-pose/combine-klein-owner-run.jpg`. Every seed wore a cap the
+source does not have (the shipped keep sentence said "her hat") and seed 2026091414 drew two figures.
+
+Fix rendered against ComfyUI with the catalog graph, same pictures, seeds and fills, keep sentence "Keep the face, the
+hair, the outfit and its colours, and image 1's rendering style. One figure only, nobody else in the picture." and
+"Leave out the tail." appended:
+
+| Seed | Prompt ID | s | Result |
+| --- | --- | --- | --- |
+| 2026091411 | a20e6df1 | 54.8 (model load) | single figure, no cap, tail gone, from behind, hands on hips |
+| 2026091412 | 39e6ce34 | 21.0 | same |
+| 2026091413 | f73b9c0b | 21.0 | same; the source's "?" speech bubble kept |
+| 2026091414 | a27ae00d | 21.1 | same; speech bubble kept |
+
+Sheet `examples/style-pose/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
+"leaning forwards": the words decide how far the figure bends.
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
