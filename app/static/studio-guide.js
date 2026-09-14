@@ -3,6 +3,9 @@
   'use strict';
   const C = window.StudioGuideState, params = new URLSearchParams(location.search), id = params.get('guide');
   if (!C || !id || !/^[a-z-]{1,40}$/.test(id)) return;
+  const AUTO_DELAY = 600, PRESET_ID = /^[A-Za-z0-9_-]{1,64}$/;
+  const DOTS = {met:'●', blocked:'▲', unknown:'○', manual:'◆'};
+  const FOOTER = 'The guide checks readiness; it never generates, approves art or clears licences.';
   const make = (tag, text, attrs = {}) => { const n = document.createElement(tag); if (text !== null) n.textContent = text; for (const [k,v] of Object.entries(attrs)) n.setAttribute(k,v); return n; };
   const main = document.querySelector('main'); if (!main) return;
   async function read(path, active = new Set()) {
@@ -16,21 +19,23 @@
     } finally { clearTimeout(timeout); active.delete(controller); }
   }
   function mount(data, params) {
-    let stopped = false, busy = false, epoch = 0;
+    let stopped = false, busy = false, epoch = 0, autoTimer = null, shown = false, lastState = 'unknown';
     const active = new Set(), get = path => read(path, active);
     const guide = data.guides?.find(g => g.id === id); if (!guide) throw Error('Unknown guided path.');
     let index = guide.steps.findIndex(s => s.id === params.get('stage'));
     if (index < 0) index = Number(params.get('step') || 0);
     if (!Number.isInteger(index) || index < 0 || index >= guide.steps.length) index = 0;
     const step = guide.steps[index], targetURL = C.route(step.route, location.origin);
+    const recipeStep = ['recipe','reference_recipe'].includes(step.check) && Array.isArray(guide.recommended) && guide.recommended.some(x => typeof x === 'string' && PRESET_ID.test(x));
     const panel = make('section', null, {class:'studio-guide-panel', 'aria-label':'Guided walkthrough'});
     const heading = make('h2', step.title), progress = make('p', `${guide.title} · step ${index + 1} of ${guide.steps.length}`, {class:'studio-guide-progress'});
     const detail = make('p', step.detail), actions = make('div', null, {class:'studio-guide-actions'});
+    const stepList = make('ol', null, {class:'studio-guide-steps', 'aria-label':'Steps in this guided path'});
     const evidence = make('p', '', {role:'status', id:'guideEvidence', 'aria-live':'polite'});
     const targetNote = make('small', '', {id:'guideTargetStatus'});
     const run = make('select', null, {id:'guideObservedRun', 'aria-label':'Specific run to inspect'});
     const runLabel = make('label', 'Specific run to inspect (no execution)'); runLabel.append(run);
-    run.append(make('option', 'Check this step to load available runs', {value:''}));
+    run.append(make('option', 'Loading available runs', {value:''}));
     runLabel.hidden = !['output','review'].includes(step.check);
     let stored = {};
     try { stored = JSON.parse(localStorage.getItem('studio.guide.' + id)) || {}; } catch (_) {}
@@ -43,7 +48,7 @@
     }
     const add = (label, fn, key) => { const b = make('button', label, {type:'button'}); if (key) b.id = key; b.onclick = fn; actions.append(b); return b; };
     function cleanup() {
-      stopped = true; epoch++; active.forEach(c => c.abort());
+      stopped = true; epoch++; clearTimeout(autoTimer); autoTimer = null; active.forEach(c => c.abort());
       if (highlighted) highlighted.classList.remove('studio-guide-target');
       listeners.forEach(name => document.removeEventListener(name, stale));
       window.removeEventListener('hashchange', toolChanged); window.removeEventListener('popstate', restorePosition);
@@ -72,24 +77,60 @@
       url.searchParams.set('guide', id); url.searchParams.set('step', String(next)); url.searchParams.set('stage', guide.steps[next].id);
       navigate(url);
     }
+    function renderSteps() {
+      stepList.replaceChildren(...guide.steps.map((item, i) => {
+        const li = make('li', null, {}), button = make('button', null, {type:'button', 'aria-label':'Step ' + (i + 1) + ': ' + item.title});
+        const mark = make('span', i === index ? (DOTS[lastState] || DOTS.unknown) : String(i + 1), {class:'studio-guide-dot'});
+        if (i === index) { mark.dataset.state = lastState; li.setAttribute('aria-current', 'step'); }
+        button.append(mark, make('span', item.title, {class:'studio-guide-steplabel'}));
+        button.onclick = () => { if (i !== index) go(i); };
+        li.append(button); return li;
+      }));
+    }
     function correctTool() { return location.pathname === targetURL.pathname && (!targetURL.hash || location.hash === targetURL.hash); }
     let highlighted = null;
     function find(show = false) {
       if (highlighted) highlighted.classList.remove('studio-guide-target'); highlighted = null;
       const target = correctTool() ? C.visibleTarget(step, document) : null;
-      targetNote.textContent = target ? 'Target control is available. Show the control moves focus; it does not activate it.'
-        : step.target ? 'Target is not visible here. Open this step’s tool, choose a matching recipe or asset, then use Show the control again.'
-        : 'This step is reviewed in the tool itself; no single control is highlighted.';
-      if (target && show) {
-        highlighted = target; target.classList.add('studio-guide-target'); target.scrollIntoView({block:'center', behavior:'auto'});
+      targetNote.textContent = target ? 'Target control is available. Show the control moves focus; it never activates it.'
+        : step.target ? 'Target is not visible here. Choose a matching recipe or asset, then use Show the control.'
+        : 'Reviewed in the tool itself; no single control is highlighted.';
+      if (recipeButton) recipeButton.textContent = 'Choose ' + recommendedPreset().name;
+      if (!target) return;
+      // Arriving at a step reveals its control once; later re-checks keep the mark without stealing focus.
+      const reveal = show || !shown; shown = true; highlighted = target; target.classList.add('studio-guide-target');
+      if (!reveal) return;
+      target.scrollIntoView({block:'center', behavior:'auto'});
+      const idle = show || !document.activeElement || document.activeElement === document.body || panel.contains(document.activeElement);
+      if (idle) {
         if (!target.matches('button,input,select,textarea,a,[tabindex]')) target.setAttribute('tabindex','-1');
         target.focus({preventScroll:true});
       }
     }
+    function recommendedPreset() {
+      const ids = (guide.recommended || []).filter(x => typeof x === 'string' && PRESET_ID.test(x));
+      const list = typeof catalog !== 'undefined' && Array.isArray(catalog?.presets) ? catalog.presets : [];
+      for (const value of ids) { const found = list.find(p => p?.id === value); if (found) return {id:value, name:String(found.name || value)}; }
+      return {id:ids[0], name:ids[0]};
+    }
+    // Selection reuses the recipe list's own handler; it never prepares or submits a run.
+    function chooseRecipe() {
+      const pick = recommendedPreset(); if (!pick.id) return;
+      if (typeof selectPreset === 'function') {
+        try { selectPreset(pick.id); targetNote.textContent = 'Selected ' + pick.name + ' through the Create recipe list. Nothing was generated.'; return; }
+        catch (error) { targetNote.textContent = error.message + ' The guide changed nothing.'; return; }
+      }
+      const search = document.getElementById('presetSearch');
+      if (!search) { targetNote.textContent = 'The recipe picker is not on this page. Open Create, then choose ' + pick.name + '.'; return; }
+      search.value = pick.name; search.dispatchEvent(new Event('input', {bubbles:true}));
+      targetNote.textContent = 'Filtered the recipe list to ' + pick.name + '. Click it to select it.';
+      document.getElementById('presetList')?.focus?.();
+    }
     function display(value, timed = false) {
-      evidence.dataset.state = value.state;
+      evidence.dataset.state = lastState = value.state;
       const label = {met:'Observed', blocked:'Needs attention', unknown:'Not known', manual:'Your decision'}[value.state] || 'Not known';
       evidence.textContent = label + ': ' + value.message + (timed ? ' Checked at ' + new Date().toLocaleTimeString() + '.' : '');
+      renderSteps();
     }
     function snapshot() {
       const mainPage = !!document.getElementById('createView');
@@ -117,27 +158,20 @@
         tool:location.pathname + location.hash
       };
     }
+    // Observation is automatic and debounced; it stays GET-only and discards late evidence.
+    function schedule(delay = AUTO_DELAY) { clearTimeout(autoTimer); if (stopped) return; autoTimer = setTimeout(() => { autoTimer = null; runCheck(); }, delay); }
     function stale(event) {
       if (event?.target && panel.contains(event.target)) return;
-      epoch++; display(C.unknown('The tool or input changed. Check this step again; previous observations are not completion evidence.')); find();
+      epoch++; display(C.unknown('The tool or input changed. Rechecking current evidence.')); find(); schedule();
     }
-    // History traversal emits popstate before hashchange. The restored mount
-    // already belongs to the destination; its paired hash event is not an edit.
-    let observedTool = location.pathname + location.hash;
-    function toolChanged() {
-      const tool = location.pathname + location.hash;
-      if (tool === observedTool) return;
-      observedTool = tool; stale();
-    }
-    const listeners = ['input','change','studio:recipe','workflow:render','workflow:project'];
-    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', toolChanged); window.addEventListener('popstate', restorePosition);
-    run.onchange = () => { epoch++; persist(); display(C.unknown('Run selection changed. Check this specific run.')); };
-    const checkButton = add('Check this step', async () => {
-      if (busy || stopped) return; busy = true; checkButton.disabled = true;
+    async function runCheck() {
+      if (stopped) return;
+      if (step.check === 'manual') { display(C.evaluate('manual')); find(); return; }
+      if (busy) { schedule(); return; }
+      busy = true; clearTimeout(autoTimer); autoTimer = null; checkButton.disabled = true;
       const token = ++epoch, s = snapshot(), fingerprint = JSON.stringify(s);
       try {
-        if (!correctTool()) { display(C.unknown('Open this step’s tool before checking its evidence.')); return; }
-        display(C.unknown('Checking the selected step; no job is being submitted.'));
+        if (!correctTool()) { display(C.unknown('Open this step’s tool before its evidence can be read.')); return; }
         if (step.check === 'readiness' && s.recipe) { s.backend_report = await get('/api/backends'); s.health = await get('/api/health'); }
         if (['output','review'].includes(step.check)) {
           if (!s.job_id) {
@@ -158,18 +192,31 @@
         display(C.evaluate(step.check, s), true); find(); persist();
       } catch (error) { if (!stopped && token === epoch) display(C.unknown(error.message + ' No successful check is inferred.')); }
       finally { busy = false; if (!stopped) checkButton.disabled = false; }
-    }, 'checkGuideStep');
+    }
+    // History traversal emits popstate before hashchange. The restored mount
+    // already belongs to the destination; its paired hash event is not an edit.
+    let observedTool = location.pathname + location.hash;
+    function toolChanged() {
+      const tool = location.pathname + location.hash;
+      if (tool === observedTool) return;
+      observedTool = tool; stale();
+    }
+    const listeners = ['input','change','studio:recipe','workflow:render','workflow:project'];
+    listeners.forEach(name => document.addEventListener(name, stale)); window.addEventListener('hashchange', toolChanged); window.addEventListener('popstate', restorePosition);
+    run.onchange = () => { epoch++; persist(); display(C.unknown('Run selection changed. Reading that run.')); schedule(); };
+    const checkButton = add('Re-check', () => runCheck(), 'checkGuideStep');
     add('Show the control', () => find(true), 'showGuideControl');
+    const recipeButton = recipeStep ? add('Choose recipe', chooseRecipe, 'chooseGuideRecipe') : null;
     if (index) add('Back', () => go(index - 1));
-    add('Open this step’s tool', () => go(index));
+    if (!correctTool()) add('Open this step’s tool', () => go(index));
     add(index < guide.steps.length - 1 ? 'Next step' : 'Return to guided paths', () => index < guide.steps.length - 1 ? go(index + 1) : navigate(C.route('/workflow-studio.html#journeys', location.origin)));
     add('Pause guide', () => {
       cleanup(); const url = new URL(location.href); ['guide','step','stage'].forEach(k => url.searchParams.delete(k));
       history.replaceState(null, '', url.pathname + url.search + url.hash);
     });
-    panel.append(progress,heading,detail,runLabel,evidence,actions,targetNote,
-      make('small','Guide position is navigation only. Observed prerequisites, engine results, human review and licensing are separate.'));
-    main.prepend(panel); display(step.check === 'manual' ? C.evaluate('manual') : C.unknown()); find(); persist();
+    panel.append(progress,heading,detail,stepList,runLabel,evidence,actions,targetNote,make('small',FOOTER));
+    main.prepend(panel);
+    display(step.check === 'manual' ? C.evaluate('manual') : C.unknown('Reading current evidence.')); find(); persist(); runCheck();
   }
   read('/api/workflow-studio/guides').then(data => mount(data, params)).catch(error => {
     main.prepend(make('p', 'Guided walkthrough unavailable: ' + error.message + ' Open Guided workflows to choose a path; the Studio remains usable.', {role:'status'}));
