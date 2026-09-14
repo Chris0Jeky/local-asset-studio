@@ -1,0 +1,76 @@
+{
+  "style": "8866b2a77ae14283a60db93c71153ea1_7420552c-511e-461c-9a45-6f91bc9efaf8.png.png",
+  "style_source": "library asset 6152a06a425656adbb975df1aede29af (character sheet, 1448x1086, sha256 3d8d5372...)",
+  "poses": [
+    {
+      "id": "throne",
+      "file": "1ea99c7c129a41a98cdbb74e43d103dd_140800824_p0_master1200.jpg.jpg",
+      "source": "library asset f44ac333401c5a3d8c831bf58e0644a5 (849x1200)",
+      "tags": "sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below"
+    },
+    {
+      "id": "beach",
+      "file": "686143f789474e71b192ac76a8949c03_Screenshot_2026-09-14_012831.png.png",
+      "source": "library asset b43e7da926885ec7a1398db988f837e6 (253x430 screenshot)",
+      "tags": "standing, from behind, looking back at viewer over shoulder, holding a straw hat at her side, beach, ocean, palm trees, daylight"
+    }
+  ],
+  "subject": "1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body",
+  "recipes": [
+    {
+      "preset_id": "style-pose-wai",
+      "suffix": ", masterpiece, best quality, amazing quality"
+    },
+    {
+      "preset_id": "style-pose-animagine",
+      "suffix": ", masterpiece, high score, great score, absurdres"
+    },
+    {
+      "preset_id": "style-pose-cstati",
+      "suffix": ", masterpiece, best quality, amazing quality"
+    },
+    {
+      "preset_id": "style-pose-yumeflux",
+      "suffix": ", masterpiece, best quality, amazing quality"
+    },
+    {
+      "preset_id": "style-pose-pony",
+      "prefix": "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, rating_safe, "
+    },
+    {
+      "preset_id": "style-pose-noob",
+      "prefix": "masterpiece, best quality, newest, absurdres, highres, safe, "
+    }
+  ],
+  "loras": [
+    {
+      "id": "none"
+    },
+    {
+      "id": "cine050",
+      "controls": {
+        "lora": 0.5,
+        "lora_name": "cinematic lighting.safetensors"
+      },
+      "tag": "cinematic lighting",
+      "poses": [
+        "throne"
+      ]
+    },
+    {
+      "id": "ink060",
+      "controls": {
+        "lora2": 0.6,
+        "lora2_name": "manga-ink-screentone.safetensors"
+      },
+      "tag": "m4ng41nk, monochrome, screentone"
+    }
+  ],
+  "controls": {
+    "width": 832,
+    "height": 1216,
+    "seed": 2026091410,
+    "style_weight": 0.8,
+    "pose_strength": 0.9
+  }
+}

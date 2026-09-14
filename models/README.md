@@ -65,6 +65,13 @@ writing a file it cannot verify through the download path. Copy them in by hand.
 | `loras/flux-2-klein-4B-outpaint-lora.safetensors` | 76,038,936 | `b8a5142b40f2` | [fal/flux-2-klein-4B-outpaint-lora](https://huggingface.co/fal/flux-2-klein-4B-outpaint-lora) | apache-2.0 |
 | `loras/pixel-art-xl.safetensors` | 170,543,052 | `4234637cb80c` | [nerijs/pixel-art-xl](https://huggingface.co/nerijs/pixel-art-xl) | creativeml-openrail-m |
 | `loras/qwen-image-edit-2511-multiple-angles-lora.safetensors` | 295,140,688 | `42426ded4e25` | [fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA](https://huggingface.co/fal/Qwen-Image-Edit-2511-Multiple-Angles-LoRA) | apache-2.0 |
+| `loras/ST_Mishima_Kurone_0R.safetensors` | 202,694,828 | `d1e424d0afda` | [civitai model 1523528](https://civitai.com/models/1523528) | civitai flags Image/RentCivit/Rent/Sell · trigger `mishimakurone` |
+| `loras/glossy_anime_style_illustriousXL-000011.safetensors` | 228,464,188 | `c71fb57c4409` | [civitai model 1364837](https://civitai.com/models/1364837) | civitai flags Rent/RentCivit/Image (no Sell) · trigger `glossy_anime_style` |
+| `loras/Konosuba_Fantastic_Days_v2.0.safetensors` | 456,521,740 | `6d20e168091d` | [civitai model 1610833](https://civitai.com/models/1610833) | civitai flags Image/RentCivit/Rent (no Sell) · trigger `KonosubaFantasticDays-Liver020` |
+| `loras/Konosuba_Illustrious_SD8.safetensors` | 170,639,476 | `b2fecb129da4` | [civitai model 663943](https://civitai.com/models/663943) | civitai flags Image/RentCivit/Rent/Sell · trigger `—` |
+| `loras/Detail_enhancer_IL_v2.safetensors` | 228,492,876 | `54a203f0a909` | [civitai model 1450571](https://civitai.com/models/1450571) | civitai flags RentCivit/Image/Rent (no Sell) · trigger `—` |
+| `loras/ST_Momoko_Roshidere_0R.safetensors` | 202,694,260 | `d80eb6f9dcdc` | [civitai model 1516990](https://civitai.com/models/1516990) | civitai flags Image/RentCivit/Rent/Sell · trigger `momokoroshidere` |
+| `loras/shiny_nai_ilxl_goofy_remade.safetensors` | 114,428,780 | `f6186b476517` | [civitai model 618752](https://civitai.com/models/618752) | civitai flags RentCivit/Rent (no Image, no Sell) · trigger `shiny skin` |
 | `text_encoders/Mistral-Small-3.2-24B-Instruct-2506-Q4_K_M.gguf` | 14,333,922,848 | `a3cc56310807` | [unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF](https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF) | apache-2.0 |
 | `text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors` | 9,384,670,680 | `cb5636d852a0` | [Comfy-Org/Qwen-Image_ComfyUI](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI) | apache-2.0 |
 | `text_encoders/qwen_3_4b.safetensors` | 8,044,982,048 | `6c671498573a` | [Comfy-Org/z_image_turbo](https://huggingface.co/Comfy-Org/z_image_turbo) | apache-2.0 |

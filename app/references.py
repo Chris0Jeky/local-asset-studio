@@ -39,6 +39,58 @@ def image_record(root, name, *, strict_pixels=False):
     return {'file':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'width':width,'height':height}
 
 
+def prune_missing_slot(graph, node):
+    """Remove an unfilled board slot's loader and every node that existed only to encode it.
+
+    An IPAdapterCombineEmbeds input that pointed at a removed encoder is dropped (its embed2..5 are
+    optional); when embed1 goes, the next present embed slides into its place so the combiner still
+    has a first input. Anything else that consumed a removed node is removed in turn.
+    """
+    removed={str(node)}; graph.pop(str(node),None); changed=True
+    while changed:
+        changed=False
+        for key,item in list(graph.items()):
+            inputs=item.get('inputs') or {}
+            for field,value in list(inputs.items()):
+                if not (isinstance(value,list) and len(value)==2 and str(value[0]) in removed): continue
+                if item.get('class_type')=='IPAdapterCombineEmbeds':
+                    del inputs[field]
+                    if field=='embed1':
+                        rest=[f for f in ('embed2','embed3','embed4','embed5') if f in inputs]
+                        if not rest: raise ValueError('The style board needs at least one picture')
+                        inputs['embed1']=inputs.pop(rest[0])
+                else: graph.pop(key); removed.add(key); changed=True
+                break
+            if changed: break
+    return graph
+
+
+def compile_board(preset, graph, supplied, uploads):
+    """A style board: every slot is optional, missing slots are pruned, no prompt guidance is written."""
+    slots=preset.get('reference_slots',[]); board=preset.get('reference_board') or {}
+    supplied=[] if supplied is None else supplied
+    if not isinstance(supplied,list) or len(supplied)>len(slots): raise ValueError(f'This recipe has {len(slots)} board slots')
+    supplied=list(supplied)+[{}]*(len(slots)-len(supplied))
+    minimum=board.get('min',1)
+    if sum(1 for r in supplied if isinstance(r,dict) and r.get('file'))<minimum:
+        raise ValueError(f'Attach at least {minimum} picture{"s" if minimum!=1 else ""} to the board, or leave the recipe example in place')
+    records=[]
+    for index,(slot,reference) in enumerate(zip(slots,supplied)):
+        node,field=slot['binding']
+        if not isinstance(reference,dict) or not reference.get('file'):
+            prune_missing_slot(graph,node); continue
+        if reference.get('role',slot.get('role')) not in ROLES: raise ValueError('Every reference needs an explicit supported role')
+        name=reference['file']
+        if not isinstance(name,str) or name!=Path(name).name: raise ValueError('Choose an uploaded image for every reference slot')
+        record=image_record(uploads,name)
+        if reference.get('sha256') and reference['sha256']!=record['sha256']:
+            raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
+        record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',
+                      transform={'policy':board.get('policy','native IP-Adapter CLIP-vision preprocessing (224 px centre crop)')})
+        graph[str(node)]['inputs'][field]=name
+        records.append(record)
+    return records
+
 
 def reference_transform(preset, graph, node, record):
     """Project the same reference resize arithmetic used by compilation; no writes."""
@@ -70,6 +122,7 @@ def guidance_text(records, brief):
 
 
 def compile_references(preset, graph, supplied, uploads):
+    if preset.get('reference_board'): return compile_board(preset, graph, supplied, uploads)
     slots=preset.get('reference_slots',[])
     if not isinstance(supplied,list) or len(supplied)!=len(slots):
         raise ValueError(f'This recipe needs {len(slots)} reference images. Fill the slots or choose a different reference recipe.')

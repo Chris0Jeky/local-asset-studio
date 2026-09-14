@@ -61,6 +61,24 @@ class ContinuationTests(unittest.TestCase):
         self.claim = dict(version=1, intent="repair", preset_id="refine", source_asset_id=self.asset_id, source_sha256=self.attachment["sha256"], reference_file=self.attachment["file"], template_sha256=hashlib.sha256(self.graph_path.read_bytes()).hexdigest())
         self.payload = dict(preset_id="refine", controls={"positive": self.attachment["context"]["positive"], "reference": self.attachment["file"]}, parent_assets=[self.asset_id], continuation=self.claim)
 
+    def test_board_preset_without_a_single_reference_key_still_has_a_capability(self):
+        """A style board declares reference_slots plus a pose picture on last_reference and no `reference` at all;
+        capability() used to raise KeyError there, and Studio.catalog() then silently dropped the recipe's defaults."""
+        graph = copy.deepcopy(GRAPH); graph["6"]["inputs"]["latent_image"] = ["3", 0]
+        graph["9"] = {"class_type": "LoadImage", "inputs": {"image": "pose.png"}}
+        graph["10"] = {"class_type": "OpenposePreprocessor", "inputs": {"image": ["9", 0]}}
+        graph["11"] = {"class_type": "ControlNetApplyAdvanced", "inputs": {"positive": ["1", 0], "negative": ["2", 0], "image": ["10", 0]}}
+        graph["6"]["inputs"]["positive"] = ["11", 0]; graph["6"]["inputs"]["negative"] = ["11", 1]
+        graph["12"] = {"class_type": "IPAdapterEncoder", "inputs": {"image": ["4", 0]}}
+        graph["13"] = {"class_type": "IPAdapterEmbeds", "inputs": {"model": ["14", 0], "pos_embed": ["12", 0]}}
+        graph["14"] = {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "x.safetensors"}}
+        graph["6"]["inputs"]["model"] = ["13", 0]
+        preset = {key: value for key, value in PRESET.items() if key != "reference"}
+        preset.update(reference_slots=[{"role": "style", "binding": ["4", "image"]}], reference_board={"min": 1}, last_reference=["9", "image"])
+        result = continuation.capability(preset, graph)
+        self.assertEqual((result["operation"], result["reference_count"], result["consumes_source"]), ("reference-guided-generation", 2, True))
+        self.assertEqual(continuation.reference_bindings(preset), [["4", "image"], ["9", "image"]])
+
     def test_output_prompt_is_matched_by_prompt_id_not_template_or_batch_index(self):
         self.assertEqual(self.attachment["context"]["positive"], "An adult traveller at the station.")
         second = continuation.source_context(self.studio, self.source_job["outputs"][1]["asset_id"])
@@ -177,3 +195,20 @@ class ContinuationTests(unittest.TestCase):
     def test_client_policy_and_draft_roundtrip(self):
         result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_core.cjs")], capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class ShippedCatalogCapabilityTests(unittest.TestCase):
+    def test_every_shipped_preset_yields_a_capability_and_defaults(self):
+        """Studio.catalog() swallows capability errors into empty defaults, so a preset shape that breaks
+        capability() ships with a blank workbench. Every shipped preset must get through, and every bound
+        control must read a default back from its graph."""
+        root = Path(__file__).resolve().parents[1]
+        catalog = json.loads((root / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
+        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength")
+        for preset in catalog:
+            graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
+            result = continuation.capability(preset, graph)
+            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation"}, preset["id"])
+            for key in keys:
+                binding = preset.get(key)
+                if binding: self.assertIn(str(binding[1]), graph[str(binding[0])]["inputs"], (preset["id"], key))

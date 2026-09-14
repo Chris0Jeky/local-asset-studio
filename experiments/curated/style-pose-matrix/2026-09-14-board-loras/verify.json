@@ -1,0 +1,80 @@
+{
+  "style-pose-wai": {
+    "job": "12be1c70-cd3b-456c-ae47-371e4b58f1ce",
+    "status": "completed",
+    "prompt": "a0e13d48-d073-4313-9451-e96646e4aec5",
+    "elapsed": 121,
+    "outputs": [
+      {
+        "filename": "WAI_00023_.png",
+        "subfolder": "Style-Pose",
+        "type": "output",
+        "seed": 2026091410,
+        "prompt_id": "a0e13d48-d073-4313-9451-e96646e4aec5",
+        "media_type": "image",
+        "asset_id": "7b3277cd4fb6592ab6d826358c4beb12"
+      }
+    ],
+    "failure": null,
+    "references": [
+      [
+        1,
+        "8866b2a77ae1",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ],
+      [
+        2,
+        "27b39447a39c",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ],
+      [
+        3,
+        "afdee7fa2c5d",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ]
+    ],
+    "graph_sha256_prefix": "0c195298454bb58e",
+    "output_sha256_prefix": "cfa9450ad62a1e66",
+    "jpeg": "examples/style-pose/board-verify-wai.jpg",
+    "seen": "seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs."
+  },
+  "style-pose-yumeflux": {
+    "job": "1a07713c-a1b6-4c56-ab22-29743658e3de",
+    "status": "completed",
+    "prompt": "c020c7f5-9124-4cb3-ab1e-18fdd2342574",
+    "elapsed": 275,
+    "outputs": [
+      {
+        "filename": "YumeFlux_00009_.png",
+        "subfolder": "Style-Pose",
+        "type": "output",
+        "seed": 2026091410,
+        "prompt_id": "c020c7f5-9124-4cb3-ab1e-18fdd2342574",
+        "media_type": "image",
+        "asset_id": "b01ef82afe125799ad780c1aad8d9aee"
+      }
+    ],
+    "failure": null,
+    "references": [
+      [
+        1,
+        "8866b2a77ae1",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ],
+      [
+        2,
+        "27b39447a39c",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ],
+      [
+        3,
+        "afdee7fa2c5d",
+        "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      ]
+    ],
+    "graph_sha256_prefix": "dcbe2fbba1deb9cb",
+    "output_sha256_prefix": "5bc313b446b335b9",
+    "jpeg": "examples/style-pose/board-verify-yumeflux.jpg",
+    "seen": "same pose held; the throne is fully drawn in red and gold, the costume is glossier and more saturated, the background a blue energy swirl; face and hands clean."
+  }
+}
