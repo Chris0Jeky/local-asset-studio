@@ -82,20 +82,40 @@
     }
     return unknown('This step has no evidence adapter yet. Continue manually without a completion claim.');
   }
-  function visibleTarget(step, doc) {
-    for (const selector of [step.target, ...(step.alternatives || [])]) {
-      if (typeof selector !== 'string' || !/^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector)) continue;
+  const targetSelectors = step => [step.target, ...(step.alternatives || [])]
+    .filter(selector => typeof selector === 'string' && /^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector));
+  function targetVisible(node, doc) {
+    return !!(node && node.getClientRects().length && !node.closest('[hidden]') &&
+      !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility));
+  }
+  function peekTarget(step, doc) {
+    for (const selector of targetSelectors(step)) {
       const node = doc.getElementById(selector.slice(1));
-      if (node && node.getClientRects().length && !node.closest('[hidden]') &&
-        !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility)) return node;
+      if (targetVisible(node, doc)) return node;
     }
     return null;
+  }
+  function revealTarget(step, doc) {
+    for (const selector of targetSelectors(step)) {
+      const node = doc.getElementById(selector.slice(1));
+      if (!node) continue;
+      let disclosure = node.closest?.('details:not([open])') || null;
+      while (disclosure) {
+        disclosure.open = true;
+        disclosure = disclosure.parentElement?.closest?.('details:not([open])') || null;
+      }
+      if (targetVisible(node, doc)) return node;
+    }
+    return null;
+  }
+  function visibleTarget(step, doc) {
+    return peekTarget(step, doc) || revealTarget(step, doc);
   }
   function route(value, origin) {
     const u = new URL(value, origin);
     if (u.username || u.password || u.origin !== origin || !['/', '/workflow-studio.html', '/av.html', '/voice.html'].includes(u.pathname) || u.search) throw Error('Unsupported guide route');
     return u;
   }
-  const api = {evaluate, unknown, referenceSlots, visibleTarget, route};
+  const api = {evaluate, unknown, referenceSlots, peekTarget, visibleTarget, revealTarget, route};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
 })(globalThis);
