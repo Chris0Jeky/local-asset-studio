@@ -6374,7 +6374,7 @@
       "stages": [
         "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
         "Image 1 (the picture you keep) and image 2 (the pose picture): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
-        "Wording: keep image 1's character and style, take only the pose from image 2; Continue with this appends image 1's submitted description",
+        "Wording: name who is in image 1 and the pose in a few words (two bracketed fills), keep image 1's look, take only the pose from image 2; the source description is not appended (it names the old pose)",
         "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
         "1024x1536 canvas",
         "PNG"
@@ -6473,14 +6473,14 @@
         "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
       },
       "reference_board_label": "Look picture (image 2)",
-      "reference_board_hint": "A picture drawn the way you want. The wording tells the model to copy how it is drawn, not what it shows. Colours drift towards the look picture (a dark-haired witch came out purple-haired in our test); the description Continue with this appends helps hold them, and Restyle a picture (keeps everything) holds them better when the look can be said in words.",
+      "reference_board_hint": "A picture drawn the way you want. The wording tells the model to copy how it is drawn, not what it shows. Colours drift towards the look picture (a dark-haired witch came out purple-haired in our test); the wording asks you to name the colours to keep (a bracketed fill), which held them in our test at the cost of a milder look shift; Restyle a picture (keeps everything) holds them better when the look can be said in words.",
       "continuation_operation": "restyle",
       "continuation_prompt": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: [name the colours to keep, e.g. black hair, a black and red robe with gold trim].",
       "continuation_placeholder": "[name the colours to keep, e.g. black hair, a black and red robe with gold trim]",
       "stages": [
         "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
         "Image 1 (the picture you restyle) and image 2 (the look picture): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
-        "Wording: copy how image 2 is drawn, keep everything image 1 shows; Continue with this appends image 1's submitted description",
+        "Wording: copy how image 2 is drawn, keep everything image 1 shows, name image 1's colours (one bracketed fill); the source description is not appended (it pinned the look)",
         "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
         "1024x1536 canvas by default (Continue with this fits the source's aspect ratio at ~1.5 megapixels)",
         "PNG"

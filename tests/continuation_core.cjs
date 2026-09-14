@@ -152,6 +152,7 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   assert.deepEqual(U.recipesFor('combine',[combine,board,look,p]).map(x=>x.id),['combine-klein']);
   assert.deepEqual(U.recipesFor('restyle',[combine,board,look,klein]).map(x=>x.id),['restyle-klein','restyle-klein-picture','style-pose-nova']);
   assert.equal(U.INTENTS.find(i=>i.id==='combine').verb,'Combine');
+  assert.deepEqual(C.unfilled(combine,combine.continuation_prompt),['[who]','[say the pose]']);assert.deepEqual(C.unfilled(combine,'Redraw the witch: leaning.'),[]);assert.deepEqual(C.unfilled(edit,null),[]);assert.deepEqual(C.unfilled(p,'[anything]'),[],'a recipe without fills has none');
   assert.deepEqual(U.recipesFor('edit',[{...p,id:'qwen-1ref',name:'Qwen',reference:['4','image']},{...edit,reference:['4','image']}]).map(x=>x.id),['flux-edit','qwen-1ref']);
 });
 console.log(count+' continuation client policy checks passed.');

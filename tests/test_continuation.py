@@ -297,6 +297,13 @@ class ContinuationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replace .*who is in image 1.* and .*the pose in a few words"): self.studio.prepare(unreplaced)
         half = copy.deepcopy(payload); half["controls"]["positive"] = combine["continuation_prompt"].replace(who, "the witch")
         with self.assertRaisesRegex(ValueError, "replace .*the pose in a few words"): self.studio.prepare(half)
+        # The plain Create route (no continuation claim) refuses the authored fills just the same (Codex review, #367).
+        plain = dict(preset_id="combine-klein", controls={"positive": combine["continuation_prompt"], "last_reference": self.attachment["file"]}, references=board(pose))
+        with self.assertRaisesRegex(Exception, "Fill in the wording: replace .*who is in image 1"): self.studio.prepare(plain)
+        omitted = dict(plain); omitted["controls"] = {"last_reference": self.attachment["file"]}  # the authored graph text carries the fills too
+        with self.assertRaisesRegex(Exception, "Fill in the wording"): self.studio.prepare(omitted)
+        plain_filled = dict(plain); plain_filled["controls"] = dict(plain["controls"], positive=wording)
+        self.assertFalse(self.studio.preview(plain_filled)["submitted"])
         empty = copy.deepcopy(payload); empty["references"] = board(None)
         with self.assertRaisesRegex(ValueError, "at least 1 picture"): self.studio.prepare(empty)
         moved = copy.deepcopy(payload); moved["controls"].pop("last_reference"); moved["references"] = board(self.attachment)

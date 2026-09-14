@@ -37,8 +37,10 @@
   }
   // The legacy boolean/text projection and actionable UI share exactly one blocker policy.
   // Action tokens are presentation destinations, never installation or execution permissions.
-  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false}){
+  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false,unfilled=[]}){
     const items=[],add=(code,message,action=null)=>items.push({code,message,action});
+    // A recipe's bracketed fills left in the wording block every route (the server refuses them too), not only a continuation.
+    if(Array.isArray(unfilled)&&unfilled.length)add('wording','Fill in the wording: replace '+unfilled.map(text=>'“'+text+'”').join(' and ')+' in the prompt.','fills');
     if(!preset)add('recipe','Choose a recipe.','recipes');
     if(busy)add('busy','An attachment or submission is in progress.');
     if(switching)add('switching','The model environment is switching.','models');

@@ -11,6 +11,8 @@
   }
   const routes={edit:['image-to-image','instruction-edit','localized-detail','upscale'],repair:['image-to-image','localized-detail','upscale','masked-repair'],restyle:['restyle'],combine:['combine'],animate:['image-to-video'],mesh:['image-to-3d']};
   function placeholders(preset){const value=preset?.continuation_placeholder;return(Array.isArray(value)?value:[value]).filter(text=>typeof text==='string'&&text);}
+  // The recipe's bracketed fills still present in the wording; the server refuses to run with any left, on every route.
+  function unfilled(preset,text){const value=typeof text==='string'?text:'';return placeholders(preset).filter(item=>value.includes(item));}
   // Which declared input receives the continuation source. A style board keeps its pose picture on last_reference.
   function sourceInput(cap){return cap?.source_input==='last_reference'?'last_reference':'reference';}
   function sourceLabel(preset){const cap=preset?.continuation_capability;return sourceInput(cap)==='last_reference'?preset.last_reference_label||'Pose picture':preset?.reference_slots?.length?'Picture 1':preset?.reference_label||'Reference';}
@@ -91,7 +93,7 @@
     if(preset?.positive&&!String(controls.positive||'').trim())add('wording',cap?.prompt_role==='motion'?'Describe the motion and camera movement before running.':cap?.prompt_role==='instruction'?'Say what to change and what to keep before running.':'Describe the result before running. No source description was available to copy.');
     else if(preset?.positive){
       // Prepared wording may carry bracketed placeholders (one string or a list); each one left in place is named.
-      const left=placeholders(preset).filter(text=>String(controls.positive||'').includes(text));
+      const left=unfilled(preset,controls.positive);
       if(left.length)add('wording','Fill in the wording: replace '+left.map(text=>'“'+text+'”').join(' and ')+' in the prompt.');
     }
     return items;
@@ -132,5 +134,5 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled};
 });

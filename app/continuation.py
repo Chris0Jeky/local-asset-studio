@@ -117,6 +117,13 @@ def capability(preset, graph):
     }
 
 
+def unfilled(preset, text):
+    """The recipe's bracketed fills (`continuation_placeholder`, one string or a list) still present in the wording."""
+    declared = preset.get("continuation_placeholder")
+    if not isinstance(text, str): return []
+    return [item for item in (declared if isinstance(declared, list) else [declared]) if isinstance(item, str) and item and item in text]
+
+
 def _text(graph, bindings):
     if not isinstance(bindings, list) or not bindings: return None
     values = []
@@ -245,9 +252,8 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Describe the desired result or the requested change before running this continuation.")
         # A recipe whose prepared wording carries bracketed placeholders (one string or a list) refuses to run until
-        # every one of them is replaced.
-        declared = preset.get("continuation_placeholder")
-        left = [item for item in (declared if isinstance(declared, list) else [declared]) if isinstance(item, str) and item and item in text]
+        # every one of them is replaced. Studio.prepare() applies the same rule to every route, claim or not.
+        left = unfilled(preset, text)
         if left:
             raise ValueError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
     return dict(claim)
