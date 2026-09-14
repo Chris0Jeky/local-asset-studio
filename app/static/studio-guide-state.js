@@ -78,7 +78,7 @@
     return !!(node && node.getClientRects().length && !node.closest('[hidden]') &&
       !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility));
   }
-  function visibleTarget(step, doc) {
+  function peekTarget(step, doc) {
     for (const selector of targetSelectors(step)) {
       const node = doc.getElementById(selector.slice(1));
       if (targetVisible(node, doc)) return node;
@@ -98,11 +98,14 @@
     }
     return null;
   }
+  function visibleTarget(step, doc) {
+    return peekTarget(step, doc) || revealTarget(step, doc);
+  }
   function route(value, origin) {
     const u = new URL(value, origin);
     if (u.username || u.password || u.origin !== origin || !['/', '/workflow-studio.html', '/av.html', '/voice.html'].includes(u.pathname) || u.search) throw Error('Unsupported guide route');
     return u;
   }
-  const api = {evaluate, unknown, visibleTarget, revealTarget, route};
+  const api = {evaluate, unknown, peekTarget, visibleTarget, revealTarget, route};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
 })(globalThis);
