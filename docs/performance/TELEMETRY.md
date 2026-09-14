@@ -1,5 +1,10 @@
 # Offline resource receipt summaries
 
+The optional [job observation adapter](JOB-OBSERVATIONS.md) now produces this same
+raw envelope from the existing coordinator. Its separate result receipt binds
+artifact hashes and source events to a job; the standalone raw schema below does
+not acquire job or runtime-epoch authority by itself.
+
 First implementation of [#301](https://github.com/Chris0Jeky/local-asset-studio/issues/301),
 following the report reconciliation in [#300](https://github.com/Chris0Jeky/local-asset-studio/pull/300).
 This consumes the existing [finite profiler](../RESOURCE-EFFICIENCY.md); it does not
