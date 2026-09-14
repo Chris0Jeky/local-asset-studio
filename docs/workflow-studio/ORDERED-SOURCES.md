@@ -1,5 +1,9 @@
 # Check recipes against an ordered set of images
 
+The next [setup proposal](SETUP-PROPOSALS.md) now previews the full settings,
+wording, source transforms and lineage diff without applying or staging it.
+The ordered advice behavior below remains; #232 still owns apply/undo/recovery.
+
 This is the observation part of #232, extending #237's single-source chooser.
 It checks one to three actual Workspace images and explains the proposed slot for
 **each** image. It does not stage sources, generate wording, apply a setup, or

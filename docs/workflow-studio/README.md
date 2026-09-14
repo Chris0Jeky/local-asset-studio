@@ -14,6 +14,10 @@ For one to three actual images in a deliberate order, use the library's
 **Find recipes for selected images** action and [ordered source advice](ORDERED-SOURCES.md).
 It checks every chosen source and proposed slot without staging or applying anything.
 
+For a complete before/after comparison without replacing Create, choose
+**Preview proposed setup** on a source-bound suggestion; see
+[SETUP-PROPOSALS.md](SETUP-PROPOSALS.md). This is review/export only, not Apply.
+
 ## What you can use now
 
 Open **Guided workflows** in the Studio navigation.
