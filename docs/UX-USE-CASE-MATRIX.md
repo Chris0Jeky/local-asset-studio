@@ -211,7 +211,7 @@ that journey after the fix: the fifth Continue route, **Restyle**, plus the one-
 
 | Case | int | took | clk | sw | dead | unexp | words | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `restyle-recent-output-with-a-look` | 8 | 8 | 5 | 3 | 0 | 0 | 1000 | PASS |
+| `restyle-recent-output-with-a-look` | 8 | 8 | 5 | 3 | 0 | 0 | 1147 | PASS |
 
 Fixture mode, `python tests/studio_use_cases.py --case restyle-recent-output-with-a-look`, zero generation
 requests, zero page errors. The source lands on the pose picture, the readiness list carries exactly one
@@ -221,6 +221,10 @@ enables. The five clicks are Continue, Restyle, Prepare, Pull from library, the 
 Create view's standing load (friction point 5 above), not new text: the route added one sentence to the
 handoff and removed the two unactionable blockers. The same journey on the live Studio produced two real
 runs, recorded in `docs/STYLE-AND-POSE.md` and `experiments/curated/style-pose-matrix/2026-09-14-restyle/`.
+
+Re-run the same evening after *Restyle a picture (WAI v17 + light-novel look)* became the route's first destination:
+8/8, same five clicks, zero dead ends, zero generation requests; words 1147 (the new recipe's guidance and stages are
+longer; trimming is listed in #351).
 
 ## Live mode, and what it refuses
 

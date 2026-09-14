@@ -255,6 +255,11 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
             result = continuation.capability(preset, graph)
             self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle"}, preset["id"])
             if preset.get("reference_board") and preset.get("last_reference"): self.assertEqual((result["operation"], result["source_input"]), ("restyle", "last_reference"), preset["id"])
+            # Restyle a picture starts the sampler from the picture itself (img2img); Style + Pose starts from an empty latent.
+            self.assertEqual(result["keeps_picture"], preset["id"].startswith("restyle-"), preset["id"])
+            if preset["id"].startswith("restyle-"):
+                self.assertEqual(graph["5"]["inputs"]["latent_image"][0], "41"); self.assertEqual(graph["41"]["inputs"]["pixels"][0], "4"); self.assertEqual(graph["4"]["inputs"]["image"][0], str(preset["last_reference"][0]))
+                self.assertEqual(graph["14"]["inputs"]["weight_type"], "style transfer"); self.assertEqual(graph["7"]["inputs"]["images"][0], "51"); self.assertEqual(graph["51"]["class_type"], "FaceDetailer")
             for key in keys:
                 binding = preset.get(key)
                 if binding: self.assertIn(str(binding[1]), graph[str(binding[0])]["inputs"], (preset["id"], key))
