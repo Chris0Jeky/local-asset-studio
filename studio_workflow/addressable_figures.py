@@ -317,11 +317,3 @@ def split_figures(workspace, payload):
             (request_id, fingerprint, json.dumps(result, sort_keys=True, separators=(",", ":")), created_at),
         )
         return workspace._observe_receipt(db, result, scope)
-
-
-def install(workspace_type):
-    """Install the bounded primitive on the existing Workspace class at its extension seam."""
-    existing = getattr(workspace_type, "split_figures", None)
-    if existing is not None and existing is not split_figures:
-        raise RuntimeError("AssetWorkspace already has a different split_figures implementation")
-    workspace_type.split_figures = split_figures
