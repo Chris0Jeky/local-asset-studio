@@ -145,12 +145,14 @@
     $('#canvasFit').onclick = fitCanvas; $('#canvasReset').onclick = resetCanvas;
   }
   function renderNodeList() {
+    // One compact selector, not a second copy of the diagram: the canvas is the node list on wide screens.
     const host = $('#workflowNodes'); host.replaceChildren();
-    if (!doc) return;
-    for (const [id, node] of Object.entries(doc.nodes)) {
-      const b = button(`${id} · ${node.class_type}`, () => { selected = id; render(); });
-      b.setAttribute('aria-pressed', String(selected === id)); host.append(b);
-    }
+    if (!doc || !Object.keys(doc.nodes).length) return;
+    const label = el('label', 'Jump to node'), select = el('select', null, {id: 'workflowNodeSelect'});
+    for (const [id, node] of Object.entries(doc.nodes)) select.append(el('option', `${id} · ${node.class_type}`, {value: id}));
+    select.value = selected && doc.nodes[selected] ? selected : '';
+    select.onchange = () => { if (!doc.nodes[select.value]) return; selected = select.value; render(); $('#nodeInspector').scrollIntoView({block: 'nearest'}); };
+    label.append(select); host.append(label);
   }
   function checkbox(text, checkedValue, fn) { const label = el('label', null, {class: 'wf-check'}); const input = el('input', null, {type: 'checkbox'}); input.checked = checkedValue; input.onchange = () => fn(input.checked); label.append(input, document.createTextNode(text)); return label; }
   function renderInspector() {
