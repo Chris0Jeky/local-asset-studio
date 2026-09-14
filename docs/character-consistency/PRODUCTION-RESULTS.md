@@ -53,9 +53,22 @@ budget, missing job evidence, incomplete project creation and mismatches stop
 collection instead of disappearing from the accounting. This command does not
 collect character-edit campaigns, repairs, warmups or manually run legacy jobs.
 
-Every candidate review starts as `null`. A generic Production choice or Workspace
-keeper label does not cover the canon's required checks or establish human art
-acceptance. To assess candidates, retain `records.json`, create a new assessment
+Reviews remain `null` unless the saved Review Desk has a current explicit
+[character decision](../REVIEW-DESK.md#review-an-imported-character-case). The
+collector checks its exact required observations, output/case identity, current
+selection and retained finalization event, including after a view-only revision.
+Both the original Workspace bytes and the review's retained source copy must
+still match. A later assessment edit clears current acceptance; earlier events
+and already collected snapshots remain preserved. Review rows and their matching
+finalization event are included in the saved Production snapshot and rechecked
+before publication.
+
+A generic Production choice or Workspace keeper label does not establish
+character acceptance. An agent's explicit selection can increase selected cases
+but never human-accepted cases. Local reviewer names are declarations, not
+authentication. The collector does not perform an assessment itself.
+
+Manual reviews remain supported: retain `records.json`, create a new assessment
 copy, and add actual reviews using [the review contract](RUNBOOK.md#6-record-attempts-and-reviews).
 Run the ordinary summarizer against that copy and the same canon workspace:
 

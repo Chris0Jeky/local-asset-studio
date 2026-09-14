@@ -119,7 +119,9 @@ Twelve attempts belong to the entire study, not each case brief. No extra image-
 
 For cases imported through Production, [collect saved study results](PRODUCTION-RESULTS.md)
 to produce the records and summary directly from retained jobs and Workspace
-outputs. It performs no generation and leaves reviews empty. The manual record
+outputs. It performs no generation. Explicit [character decisions in Review Desk](../REVIEW-DESK.md#review-an-imported-character-case)
+carry into the summary after their case, output bytes and finalization event are
+rechecked; generic keeper labels leave reviews empty. The manual record
 contract below remains available for explicit assessments and older evidence.
 
 Records are a JSON array. Each record requires `id`, `plan_sha256`, `case_id`, `kind` (primary/repair/warmup), `state` (completed/failed/cancelled/submission_uncertain), `parent_attempt_id`, `prompt_id`, `output`, `execution_evidence`, `elapsed_seconds`, `cleanup_seconds`, and `review`.
