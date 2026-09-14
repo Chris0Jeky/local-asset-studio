@@ -1,0 +1,28 @@
+/* Runs & review clarity: orientation, empty state, planner arithmetic and the
+   per-candidate review row. Loaded after style.css and studio.css, so it only
+   adds rules for the new elements and never restyles existing ones. */
+.production-intro{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 18px;margin:0 0 18px}
+.production-intro>summary{cursor:pointer;font-weight:650;letter-spacing:.01em;color:var(--text)}
+.production-intro>summary::marker{color:var(--accent)}
+.production-intro p{margin:12px 0 0;color:var(--muted);max-width:78ch}
+.production-intro p b{color:var(--text)}
+.production-intro i{font-style:normal;color:var(--text);border-bottom:1px dotted var(--line)}
+.production-states{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:14px 0 0;font-size:12px;color:var(--muted)}
+.production-states dt{color:var(--accent);font-weight:650;white-space:nowrap}
+.production-states dd{margin:0}
+.production-empty{padding:6px 2px}
+.production-empty p{margin:0 0 10px;font-size:12px;color:var(--muted)}
+.production-empty p b{color:var(--text);font-size:13px}
+.experiment-summary{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--panel2);font-size:13px}
+.experiment-summary:empty{display:none}
+.experiment-arithmetic{margin:-4px 0 12px;font-size:12px;color:var(--muted)}
+.experiment-arithmetic:empty{display:none}
+.experiment-arithmetic.error{color:var(--danger)}
+.experiment-values{flex:1 1 22ch;min-width:20ch}
+.experiment-values input{width:100%}
+.planner-advanced{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:14px 0}
+.planner-advanced>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.planner-advanced[open]>summary{color:var(--text)}
+.planner-advanced .production-actions{margin:12px 0 0}
+.candidate-review{display:flex;gap:8px;margin:8px 0 0}
+.candidate-review button{flex:1 1 auto;padding:6px 10px;font-size:12px}
