@@ -1,0 +1,219 @@
+{
+  "schema": "studio.collection-editor-checkpoint/v1",
+  "base_main": "20c46dd45044a6f9193b3e562df5bee4e5fc8912",
+  "parent_grid": "1938177336bca6b09c0c69f06acda9a68c713024",
+  "parent_tree": "98945362e3003a0ab86e2beb0f833afc5b3653d5",
+  "mode": "inert storage/transport; actual collection HTTP/SQLite",
+  "before": {
+    "pass": 8,
+    "fail": 18
+  },
+  "after": {
+    "pass": 26,
+    "fail": 0,
+    "errors": []
+  },
+  "checks": [
+    {
+      "id": "COL-01",
+      "expectation": "The dialog is named by its visible heading",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-02",
+      "expectation": "Cancel retains a dirty draft when discard is declined",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-03",
+      "expectation": "Escape uses the same discard decision",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-04",
+      "expectation": "Reopening the current collection preserves edits",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-05",
+      "expectation": "Opening another collection respects Stay",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-06",
+      "expectation": "A missing collection cannot clear the editor",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-07",
+      "expectation": "Whitespace-only names are refused before HTTP",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-08",
+      "expectation": "Validation failure is visible inside the dialog",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-09",
+      "expectation": "Create keeps the editor open without switching the library",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-10",
+      "expectation": "Create preserves the existing selected IDs",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-11",
+      "expectation": "Only the normalized clicked collection fields are stored",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-12",
+      "expectation": "The confirmed create session becomes an edit session",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-13",
+      "expectation": "The Save button is disabled while its request is pending",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-14",
+      "expectation": "Closing during an in-flight save is held",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-15",
+      "expectation": "Late confirmation leaves newer typing visible and unsaved",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-16",
+      "expectation": "The stored description belongs to the clicked snapshot",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-17",
+      "expectation": "A dropped committed response is unconfirmed, not a safe retry",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-18",
+      "expectation": "Unconfirmed create retains its draft and sends no repeat",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-19",
+      "expectation": "Closing uncertainty explains it cannot cancel a server change",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-20",
+      "expectation": "A server Workspace replacement is refused without foreign writes",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-21",
+      "expectation": "Removal asks about the named collection and keeps originals",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-22",
+      "expectation": "Confirmed removal removes grouping, never original assets",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-23",
+      "expectation": "The collection editor fits a 390px viewport",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-24",
+      "expectation": "Status messages use a polite atomic region",
+      "before": false,
+      "after": true
+    },
+    {
+      "id": "COL-25",
+      "expectation": "Collection operations never imply generation/install/upload",
+      "before": true,
+      "after": true
+    },
+    {
+      "id": "COL-26",
+      "expectation": "The full shell has no JavaScript exceptions",
+      "before": true,
+      "after": true
+    }
+  ],
+  "source_hashes": {
+    "app/static/workspace.js": "1d77f70d80439aa346f48f1c7734a4ef442b155f3b4f9e1a538b384c7faedea9",
+    "app/static/index.html": "babbdc0967c4dbe7deff44f30826df6f220b171821ad6abe720fe1465c55f36f",
+    "app/workspace.py": "56370927f147b618ca7fbcd8491c7c9ce78f6d6d4f11200f14c15b46f5f2c7c4",
+    "app/static/collection-editor.js": "ede6610cedd4edfdf10aedbb06b23d93218ae82fe6772e8767ad3545cfb15d6b"
+  },
+  "script_scenarios": {
+    "before_pass": 0,
+    "before_fail": 16,
+    "after_pass": 16,
+    "unittest_wrappers": 1
+  },
+  "sqlite_scope_methods": 4,
+  "full_suite_main_plus_collection": {
+    "total": 1909,
+    "passed": 1891,
+    "skipped": 18,
+    "seconds": 175.876,
+    "failures": 0
+  },
+  "remaining_gaps": {
+    "same_create_body_produced_two_distinct_ids": true,
+    "collection_count": 2,
+    "newer_description": "Newer client correction",
+    "final_description": "",
+    "scope": "temporary real SQLite, no Studio/GPU/user data"
+  },
+  "limits": [
+    "Collection drafts are transient, not reload recovery.",
+    "No cross-tab collection revisions or idempotent receipts (#282).",
+    "Native browser evidence is recorded separately after CI.",
+    "No real generation, owner media, native editor or accessibility certification."
+  ],
+  "full_suite_integrated_grid_plus_collection": {
+    "total": 1910,
+    "passed": 1892,
+    "skipped": 18,
+    "seconds": 170.711,
+    "failures": 0
+  },
+  "parent_grid_browser_after_integration": {
+    "pass": 31,
+    "fail": 0,
+    "mode": "inert storage/transport"
+  }
+}

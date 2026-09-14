@@ -226,6 +226,8 @@ class AssetWorkspace:
         identifier = payload.get("id")
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            identity = self._check_scope(db, self._validate_scope(payload["workspace_id"]) if "workspace_id" in payload else None)
+            scope = {"workspace_id": identity} if "workspace_id" in payload else {}
             if action in ("rename", "delete"):
                 if not db.execute("SELECT id FROM collections WHERE id=?", (identifier,)).fetchone():
                     raise WorkspaceError("Collection not found")
@@ -236,7 +238,7 @@ class AssetWorkspace:
                     db.execute("UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN "
                                "(SELECT asset_id FROM collection_assets WHERE collection_id=?)", (identifier,))
                     db.execute("DELETE FROM collections WHERE id=?", (identifier,))
-                    return {"id": identifier, "deleted": True}
+                    return {"id": identifier, "deleted": True, **scope}
             elif action == "create":
                 identifier = uuid.uuid4().hex
             else:
@@ -249,7 +251,7 @@ class AssetWorkspace:
                 db.execute("INSERT INTO collections VALUES (?,?,?,?)", (identifier, name, description, time.time()))
             else:
                 db.execute("UPDATE collections SET name=?,description=? WHERE id=?", (name, description, identifier))
-        return {"id": identifier, "name": name, "description": description}
+        return {"id": identifier, "name": name, "description": description, **scope}
 
     @staticmethod
     def request_id(value):
