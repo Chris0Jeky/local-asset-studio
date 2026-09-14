@@ -1,9 +1,11 @@
 # Workflow Lab
 
 Open **Asset Studio** on the desktop, or visit **http://127.0.0.1:8191**.
-The three views are **Create**, **Models & folders**, and **Workflow lab**.
-The catalog now has 49 recipes, including 20 additions for manga, modern anime,
-video, geometry, and textured 3D. Each addition has an editable native ComfyUI graph.
+The five in-page views are **Create**, **Workspace**, **Experiments**, **Models & folders** and **Workflow lab**;
+the header also links the separately served **Scene editor**, **Voice baseline**, **Prompt Lab**, **Review desk** and
+**Workflow Studio** pages. The catalog has 66 presets across 14 categories (13 September 2026), including the 20
+Workflow Lab additions for manga, modern anime, video, geometry and textured 3D; each addition has an editable native
+ComfyUI graph, and `presets/recipes.json` separately holds 30 named starting points.
 
 ## Start with these routes
 

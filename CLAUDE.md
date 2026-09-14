@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
 Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter.
 
@@ -15,16 +13,15 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 865 tests, about a minute, offline; budget a minute, not seconds
+python -m unittest discover -s tests          # 1674 tests, 2-3 minutes, offline; budget minutes, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
 
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
-package manager: Python 3.12 + Pillow/psutil; plain JS in `app/static/` with a vendored model-viewer.
-The skip count is environment-dependent — 37 measured on the default shell, fewer where FFmpeg, Godot and
-Node are on `PATH`, more without Windows symlink privilege. A differing skip count is not a regression.
+package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
+with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`).
 
 ## Proving checks (narrowest command per seam)
 
@@ -38,15 +35,17 @@ Node are on `PATH`, more without Windows symlink privilege. A differing skip cou
 | `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
-Use the `discover -s tests -p` form by default: 12 of 52 test modules import a sibling unqualified, so
-`python -m unittest tests.<name>` dies on import for `test_production`, `test_backends`, `test_review_desk`,
-`test_av_projects`, `test_engine_*`, `test_review_http`, `test_failed_job_timing`, `test_voice_baseline` and
-the three `test_character_*` integration modules. Four `app/` modules have no same-named test file:
-`articulated.py` → `test_articulated_operation` (+ `test_production`), `backend_contracts.py` →
-`test_backend_safety`, `download_contracts.py` → `test_model_install_safety` and `test_model_redirects`,
-`review_media.py` → `test_review_desk`.
+Use the `discover -s tests -p` form by default: any module that imports a sibling test or fixture unqualified
+(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`; measured
+14 Sep 2026 that is 49 of 130 modules, including `test_production`, `test_backends`, `test_review_desk`,
+`test_voice_baseline`, `test_failed_job_timing` and part of each `test_workflow_*`/`test_character_*` family. Eight `app/` modules have no same-named test file:
+`articulated.py` → `test_articulated_operation`, `backend_contracts.py` → `test_backend_safety`, `download_contracts.py` →
+`test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
+`model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI (`.github/workflows/check.yml`) runs the full suite plus `validate-repo.py` on every push and PR.
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 19 further
+path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
+only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 
 ## Architecture
 
@@ -78,7 +77,8 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 - A completed render is neither art acceptance nor licence clearance. Hunyuan3D 2.1 and HY-Motion 1.0 exclude
   UK use; NoobAI excludes commercial products; WAI hashes do not authenticate its creator. Record, never infer.
 - Never edit installed ComfyUI or upgrade packages in the shared Torch/ROCm runtime; local patches go to
-  `runtime-patches/` with before/after hashes. Backend switches are explicit and never package upgrades.
+  `runtime-patches/` with before/after hashes. Backend switches are explicit and never package upgrades. The same
+  bar applies to comfy-mcp's update/install/download/launch/stop tools: read-only use only (`docs/AGENT-TOOLING.md`).
 - Form values serialize as strings: validate with `number()` (Decimal, finite, range) — a `100 ms` bug shipped once.
 - `.runtime/` is gitignored evidence (logs, pidfiles, probes, review JSON). Read it; do not commit it.
 - Stop only Studio-owned PIDs, and only after confirming no queued, running or partial Studio work.

@@ -27,7 +27,8 @@ file you do not have installed.
 
 Three things worth knowing before you spend a long render:
 
-- **LoRA slots.** The Krea presets have four adapter slots. Strength `0` means off, and the adapter is
+- **LoRA slots.** How many a preset has varies (`krea-anime-atelier` and `krea-refine` four, `krea-style-lab`
+  three, the retro-anime Krea pair one, the Anima stacks up to six). Strength `0` means off, and the adapter is
   removed from the graph entirely. Turn one on by giving it a strength (usually `1.0`) — and use its
   trigger word, because most style adapters do nothing without it.
 - **Wildcards.** In any prompt, `{misty|stormy|golden}` picks one option and `__lighting__` picks a
@@ -62,4 +63,4 @@ Follow the picture-making chain: **load model → encode prompt → sample → d
 - Named browser presets are convenience copies. Export a recipe for a durable backup.
 - GitHub receives curated experiments only when deliberately copied into `experiments/curated/` and committed. It does not auto-upload every generation.
 
-Next: [five guided experiments](EXPERIMENTS.md).
+Next: [experiments and native finishing](EXPERIMENTS.md).

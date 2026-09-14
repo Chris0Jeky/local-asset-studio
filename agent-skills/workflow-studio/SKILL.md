@@ -1,3 +1,7 @@
+---
+name: workflow-studio
+description: Guided workflow discovery, API-graph authoring, compile-only inspection and explicitly approved registered-recipe execution through the Workflow Studio agent commands; read docs/workflow-studio first.
+---
 # Workflow Studio agent contract
 
 Use for guided workflow discovery, API-graph authoring, compile-only inspection and explicitly approved registered-recipe execution. Read `docs/workflow-studio/README.md`, `AGENT-QUICKSTART.md` and `ROADMAP.md` first; repository authority and HUMAN_TODO remain authoritative.
