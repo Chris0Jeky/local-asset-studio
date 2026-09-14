@@ -1,0 +1,44 @@
+name: Reconciled grid objects
+on:
+  push:
+    branches: ['codex/ux-collection-session-transfer']
+    paths: ['.github/workflows/ux-grid-reconcile.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 8f9a5fc559aaa8c3b8bd1d97f5d100c8f2e63e8e
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reconstruct and verify merge without changing any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --no-tags origin 20c46dd45044a6f9193b3e562df5bee4e5fc8912
+          git -c user.name='UX integration' -c user.email='noreply@github.com' merge --no-commit --no-ff 20c46dd45044a6f9193b3e562df5bee4e5fc8912
+          python - <<'PY'
+          import base64,json,os,subprocess,urllib.request
+          from pathlib import Path
+          tree=subprocess.check_output(['git','write-tree']).decode().strip()
+          assert tree=='98945362e3003a0ab86e2beb0f833afc5b3653d5',tree
+          paths=subprocess.check_output(['git','diff','--cached','20c46dd45044a6f9193b3e562df5bee4e5fc8912','--name-only']).decode().splitlines()
+          entries=[]
+          for path in paths:
+              raw=Path(path).read_bytes();expected=subprocess.check_output(['git','rev-parse',':'+path]).decode().strip()
+              request=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs',data=json.dumps({'encoding':'base64','content':base64.b64encode(raw).decode()}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(request,timeout=30) as response:result=json.load(response)
+              assert result['sha']==expected,path
+              entries.append({'path':path,'sha':expected,'type':'blob','mode':'100644'})
+          Path('/tmp/grid-merge.json').write_text(json.dumps({'tree':tree,'files':entries},indent=2))
+          print(tree)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grid-merge-objects
+          path: /tmp/grid-merge.json
+          retention-days: 1
