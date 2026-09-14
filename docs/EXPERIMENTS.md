@@ -14,8 +14,16 @@ nodes, selected model files and input images. It records the actual graph,
 reference roles, model hashes, runtime information and a plan hash. It submits
 nothing until **Start comparison** is pressed.
 
-Two buttons in that dialog plan several documented settings at once, through
-`POST /api/experiments/plan`. **Plan from settings library** reads the family
+A live summary at the top of that dialog states the question in one line -
+which setting, which values, on which recipe, how many graph runs and roughly
+how long, reusing the measured per-run time Create already shows. Under the
+fields, the arithmetic is spelled out (`3 values x 1 seed = 3 runs; 8
+reserved`) and a total below the candidate count is refused before the plan is
+prepared. The estimate is a reading of Create's measurement, never a second
+estimator: with no measured history the summary says so instead of guessing.
+
+Two buttons under **Advanced: plan several settings from the library** plan
+several documented settings at once, through `POST /api/experiments/plan`. **Plan from settings library** reads the family
 entry for this recipe in `presets/settings-kb.json` and offers a grid of the
 axes the recipe can actually change — steps, sampler, scheduler, LoRA strengths
 — with the first axis varying slowest and at most eight candidates. **Remix
@@ -30,7 +38,11 @@ the same dialog and **Prepare plan** validates every one of them exactly as it
 validates a single-axis comparison. Remove a variant with ✕ to fit the
 generation budget. Two variants that resolve to the same graph are refused:
 different labels are not different work. Candidate cards show the variant label
-instead of an axis value, and still hide it while comparing blind.
+instead of an axis value, and still hide it while comparing blind. Each card
+states every fact once: the label, then only the settings the variant moves off
+the open recipe, then its rationale and sources. The `description` field of the
+plan response remains the full one-line summary (label, settings and rationale)
+for non-browser readers; the browser composes its own card from the parts.
 
 Studio uses its existing serial worker. Manual ComfyUI jobs finish first. Each
 stage gets a durable identity before its job is created, and submission intent is
