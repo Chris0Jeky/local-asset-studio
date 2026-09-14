@@ -1,0 +1,49 @@
+name: Chronological source 0914
+on:
+  push:
+    branches: [codex/chronological-source-0914]
+    paths: [.github/workflows/chronological-source-0914.yml]
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preserve tracked source and issue evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/studio-source
+          git bundle create /tmp/studio-source/source.bundle --all
+          python - <<'PY'
+          import datetime,json,os,pathlib,urllib.request
+          base='https://api.github.com/repos/Chris0Jeky/local-asset-studio'
+          def get(path):
+              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
+          def pages(path):
+              result=[]
+              for n in range(1,11):
+                  batch=get(path+('&' if '?' in path else '?')+'per_page=100&page='+str(n));result.extend(batch)
+                  if len(batch)<100:return result
+              raise RuntimeError('Pagination bound exceeded')
+          issues=[i for i in pages('/issues?state=open&sort=created&direction=asc') if 'pull_request' not in i]
+          opened=pages('/pulls?state=open')
+          keys=('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
+          compact=lambda x:{k:x.get(k) for k in keys}
+          data={'captured_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'main':get('/commits/main')['sha'],'issues':[compact(i) for i in issues],'pulls':[dict(compact(p),head=p['head']['sha'],branch=p['head']['ref']) for p in get('/pulls?state=all&sort=updated&direction=desc&per_page=45')],'open_pr_files':{str(p['number']):[f['filename'] for f in pages('/pulls/'+str(p['number'])+'/files')] for p in opened},'comments':{str(n):pages('/issues/'+str(n)+'/comments') for n in (2,3,9,10,11,12,13,14,97,238,239)}}
+          pathlib.Path('/tmp/studio-source/evidence.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
+          print('Main:',data['main']);print('Oldest:',[(i['number'],i['title']) for i in issues[:15]])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chronological-source-0914
+          path: /tmp/studio-source/
+          retention-days: 3
