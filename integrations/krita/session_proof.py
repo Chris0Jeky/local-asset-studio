@@ -52,7 +52,7 @@ def run(args):
         package = root/'package'; package.mkdir()
         buffers = {'native-source.kra': ds.read_file(root/'capture/source.kra'), 'source.bgra':bytes(source),
                    'result.bgra':bytes(result), 'overlay.bgra':bytes(overlay)}
-        plan = {'schema_version':1,'operation':'character.krita-layer.v1','canvas':[width,height],
+        plan = {'schema_version':1,'operation':'character.krita-layer.v1', 'live_dependencies': [],'canvas':[width,height],
                 'profile':native.PROFILE,'edit_plan_sha256':native.digest(bytes(overlay)),
                 'changed_pixels':48*84,'semantic_approval':False,'neural_inference':False,
                 'files':{name:{'bytes':len(raw),'sha256':native.digest(raw)} for name,raw in buffers.items()}}
