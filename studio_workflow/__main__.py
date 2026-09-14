@@ -10,7 +10,8 @@ import sys
 import time
 from urllib.parse import quote
 from urllib.error import HTTPError, URLError
-from .core import decode, canonical, need
+from .core import canonical, need
+from .file_input import read_document
 from .client import Client, ClientError, NoRedirect
 from . import document_cli, run_cli
 
@@ -79,10 +80,10 @@ def main(argv=None):
             result = client.request('/api/catalog' if command == 'catalog' else PREFIX + '/' + command)
         elif command == 'prepare-document':
             result = client.request(PREFIX + '/prepare-document',
-                                    {'document': decode(args.document.read_bytes()), 'preset_id': args.preset})
+                                    {'document': read_document(args.document), 'preset_id': args.preset})
         elif command in ('prepare', 'run', 'compile', 'import'):
             key = {'prepare': 'recipe', 'run': 'ticket', 'compile': 'document', 'import': 'graph'}[command]
-            value = decode(getattr(args, key).read_bytes())
+            value = read_document(getattr(args, key))
             body = {key: value}
             if command == 'run':
                 need(args.approve, 'run requires --approve; preparation never approves execution')

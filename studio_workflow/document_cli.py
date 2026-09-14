@@ -1,6 +1,6 @@
 """CLI projections of shared authoring commands; request keys are explicit."""
 from pathlib import Path
-from .core import decode
+from .file_input import read_document
 from .sdk import WorkflowClient
 
 
@@ -27,11 +27,11 @@ def execute(args):
     if command == 'get': return client.get_document(args.document_id, args.revision)
     if command == 'history': return client.history(args.document_id)
     if command == 'create':
-        return client.create_document(decode(args.document.read_bytes()), request_id=args.request_id)
+        return client.create_document(read_document(args.document), request_id=args.request_id)
     if command in ('apply', 'preview'):
         kwargs = {'expected_revision': args.expected_revision}
         if command == 'apply': kwargs['request_id'] = args.request_id
-        return getattr(client, command)(args.document_id, decode(args.commands.read_bytes()), **kwargs)
+        return getattr(client, command)(args.document_id, read_document(args.commands), **kwargs)
     if command == 'restore':
         return client.restore(args.document_id, args.revision, expected_revision=args.expected_revision, request_id=args.request_id)
     if command == 'fork':
