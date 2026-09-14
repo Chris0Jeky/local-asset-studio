@@ -40,6 +40,7 @@ import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
+import job_resources
 import continuation
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -123,6 +124,7 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
 
@@ -1313,6 +1315,17 @@ class Studio:
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
+        try: return self._run_generation(job)
+        finally: self._resource_observation_event('finish', job)
+
+    def _resource_observation_event(self, kind, job, **details):
+        observer = getattr(self, 'resource_observations', None)
+        if observer is None: return
+        # Optional evidence cannot mutate the job or become submission/save authority.
+        try: getattr(observer, kind)(job_resources.event_snapshot(kind, job, **details))
+        except Exception: pass
+
+    def _run_generation(self, job):
         try: self._wait_for_queue(job.get('comfy_url'))
         except QueueWaitUnavailable as exc:
             with self.lock:
@@ -1334,6 +1347,7 @@ class Studio:
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
                 if exc.code == 400:
@@ -1352,6 +1366,7 @@ class Studio:
             prompt_id = response.get("prompt_id") if isinstance(response, dict) else None
             if not isinstance(response, dict) or not isinstance(prompt_id, str) or not prompt_id.strip():
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
+            self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return

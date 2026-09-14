@@ -1,5 +1,42 @@
 # Current state — 14 September 2026
 
+## Optional job resource receipts — 14 September 2026
+
+The existing generation coordinator now has a default-disabled resource observer
+([operator guide](docs/performance/JOB-OBSERVATIONS.md), first slice of #302).
+It records exact expanded graph hashes after the pending save, validated response
+facts and coordinator exit snapshots in bounded sidecars. One background helper
+reuses the finite sampler and offline reducer; completion signals stop without
+waiting for telemetry I/O. The result hashes bind context, events, raw samples and
+summary to the job. Listener PID/create-time/command brackets never rebind after a
+gap. Fixed exclusive slots retain at most 32 observations without deleting old work.
+
+Executed locally: 21 CPU-only synthetic tests pass, covering coordinator success,
+dropped replies, failed core/telemetry saves, batch graph identity, blocked sampling,
+partial receipts, resource limits and epoch changes. Independent injected-sampler
+smokes retained a complete 2/2 profile and a valid interrupted 0/3 profile; both raw
+hashes matched their reducer summaries. These are fixture results, with no live
+process/HTTP/GPU observation or generation. Broader integration and review evidence
+are recorded on this change's PR. The full offline suite passed: 2,235 total,
+2,170 passed and 65 optional skips in 267.542 seconds; the validator passed with
+68 graphs, 121 pins, 1,301 paths and 90 LoRA names. The independent review found no
+blocking defect. Existing fixture warnings, including an unclosed socket warning,
+remain in the retained log; this does not resolve #227.
+
+The review fix places receipts under `.runtime/job-resource-observations/`, covered
+by both Git ignore and the existing operational-payload guard. All 22 focused
+tests pass after that change. A synthetic disposable-index comparison confirmed
+the previous directory was unignored and accepted by the validator; the protected
+directory is ignored and a force-staged receipt is rejected. The real index was
+unchanged. The earlier full-suite result remains scoped to the initial implementation.
+
+Not verified: running Studio adoption, real resource overhead or performance,
+complete loaded-code/model/input identity, actual geometry/precision, cold/warm
+state, phase timing, finite benchmark execution and an authorised real baseline.
+Those remain open under #302; #175 retains public attachment ownership. No live
+configuration, process, allowance or human decision changed. HUMAN_TODO q-7 and
+q-25 remain open; successful generation, art acceptance and licensing stay separate.
+
 ## Style + Pose without Qwen — 14 September 2026
 
 Two new SDXL recipes, **Style + Pose (WAI v17)** and **Style + Pose (Animagine XL 4)**, take the look of one picture and
