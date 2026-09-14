@@ -11,7 +11,19 @@
   const hash=x=>typeof x==='string'&&/^[0-9a-f]{64}$/.test(x),text=(x,max)=>typeof x==='string'&&x.length<=max;
   function need(ok,message){if(!ok)throw Error(message);}
   function sourceMatches(x,want){return plain(x)&&x.asset_id===want.asset_id&&x.sha256===want.sha256&&x.role===want.role&&x.bytes_verified===true&&x.staged===false&&text(x.title,160)&&integer(x.width,1,Number.MAX_SAFE_INTEGER)&&integer(x.height,1,Number.MAX_SAFE_INTEGER);}
-  function assignmentMatches(a,want,slot){return plain(a)&&a.asset_id===want.asset_id&&a.sha256===want.sha256&&a.role===want.role&&a.slot===slot&&['whole-image','prompt-guidance','unsupported'].includes(a.role_mode)&&(a.binding===null||Array.isArray(a.binding)&&a.binding.length===2&&text(a.binding[0],96)&&a.binding[1]==='image');}
+  function boardShape(candidate){
+    const board=candidate?.reference_board;
+    return plain(board)&&Object.keys(board).sort().join(',')==='minimum,slot_count,source_input'
+      &&candidate.operation==='restyle'&&integer(board.minimum,1,3)&&integer(board.slot_count,board.minimum,3)
+      &&board.source_input==='last_reference'&&candidate.reference_count===board.slot_count+1?board:null;
+  }
+  function assignmentMatches(a,want,slot,board){
+    const modes=board?['style-board','unsupported']:['whole-image','prompt-guidance','unsupported'];
+    const binding=a?.binding;
+    return plain(a)&&a.asset_id===want.asset_id&&a.sha256===want.sha256&&a.role===want.role&&a.slot===slot
+      &&modes.includes(a.role_mode)&&(binding===null||Array.isArray(binding)&&binding.length===2&&text(binding[0],96)&&binding[1]==='image')
+      &&(!board||a.role_mode!=='style-board'||binding!==null);
+  }
   function validate(r,q){
     const message='Shortlist response does not match this request context. Check again.';
     need(plain(r)&&r.format==='studio.recipe-shortlist/v1'&&r.goal===q.goal&&r.reference_count===q.reference_count,message);
@@ -32,13 +44,14 @@
     const seen=new Set();
     for(const c of r.candidates){
       need(plain(c)&&text(c.preset_id,96)&&/^[A-Za-z0-9_.-]+$/.test(c.preset_id)&&!seen.has(c.preset_id)&&Object.hasOwn(statuses,c.status),message);seen.add(c.preset_id);
-      need(text(c.name,160)&&text(c.description,800)&&text(c.backend_id,96)&&text(c.operation,96)&&text(c.prompt_role,96)&&integer(c.reference_count,0,3),message);
+      const board=boardShape(c),ordinary=c.reference_board===undefined&&integer(c.reference_count,0,3);
+      need(text(c.name,160)&&text(c.description,800)&&text(c.backend_id,96)&&text(c.operation,96)&&text(c.prompt_role,96)&&(ordinary||!!board),message);
       need(c.template_sha256===null||c.template_sha256===undefined||hash(c.template_sha256),message);
       if(c.source_assignment!==undefined){
-        const a=c.source_assignment;need(q.source_asset_id&&plain(a)&&a.asset_id===q.source_asset_id&&a.sha256===q.source_sha256&&a.role===q.source_role&&a.slot===1&&['whole-image','prompt-guidance','unsupported'].includes(a.role_mode)&&(a.binding===null||Array.isArray(a.binding)&&a.binding.length===2&&text(a.binding[0],96)&&a.binding[1]==='image'),message);
+        const a=c.source_assignment;need(q.source_asset_id&&assignmentMatches(a,{asset_id:q.source_asset_id,sha256:q.source_sha256,role:q.source_role},1,board),message);
       }
       if(q.sources!==undefined){
-        need(c.source_assignment===undefined&&Array.isArray(c.source_assignments)&&c.source_assignments.length===q.sources.length&&c.source_assignments.every((a,i)=>assignmentMatches(a,q.sources[i],i+1)),message);
+        need(c.source_assignment===undefined&&Array.isArray(c.source_assignments)&&c.source_assignments.length===q.sources.length&&c.source_assignments.every((a,i)=>assignmentMatches(a,q.sources[i],i+1,board)),message);
       }else need(c.source_assignments===undefined,message);
       need(Array.isArray(c.checks)&&c.checks.length<=32&&c.checks.every(x=>plain(x)&&text(x.code,96)&&['observed','unknown','blocked'].includes(x.state)&&text(x.message,800)),message);
       need(Array.isArray(c.requirements)&&c.requirements.length<=128&&c.requirements.every(x=>plain(x)&&Object.values(x).every(v=>v===null||typeof v==='boolean'||text(v,500))),message);
@@ -172,9 +185,14 @@
         card.append(el('p',attention?.message||'Listed prerequisites were observed. Select this recipe, review the settings and use the normal preparation checks.'));
         const find=el('button','Find in recipe library');find.type='button';find.onclick=()=>findPreset(row);card.append(find);
         const wanted=ordered?ordered.map(({asset_id,sha256,role})=>({asset_id,sha256,role})):(source?[{asset_id:source.asset_id,sha256:source.sha256,role:role.value}]:null);
-        if(wanted&&wanted.length===row.reference_count){const preview=el('button','Preview proposed setup');preview.type='button';preview.dataset.setupProposal=row.preset_id;
+        const board=row.reference_board,boardReady=board&&wanted&&wanted.length>=board.minimum&&wanted.length<=board.slot_count
+          &&Array.isArray(row.source_assignments)&&row.source_assignments.every(a=>a.role_mode==='style-board');
+        if(wanted&&(boardReady||!board&&wanted.length===row.reference_count)){const preview=el('button','Preview proposed setup');preview.type='button';preview.dataset.setupProposal=row.preset_id;
           preview.onclick=()=>{if(!last)return;d.dispatchEvent(new CustomEvent('studio:setup-proposal',{detail:{goal:last.goal,preset_id:row.preset_id,expected_template_sha256:row.template_sha256,sources:wanted}}));};card.append(preview);}
-        const detail=el('details');detail.append(el('summary','How it works and what it needs'),el('p',row.description),el('p',row.operation+' · '+row.reference_count+' reference image(s) · '+row.backend_id,'muted'));
+        const routeSummary=board
+          ?row.operation+' · style board '+board.minimum+'–'+board.slot_count+' picture(s) + separate pose/continuation source · '+row.backend_id
+          :row.operation+' · '+row.reference_count+' reference image(s) · '+row.backend_id;
+        const detail=el('details');detail.append(el('summary','How it works and what it needs'),el('p',row.description),el('p',routeSummary,'muted'));
         if(row.source_assignment){const a=row.source_assignment;detail.append(el('p','Selected source → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; assign and review inputs in Create.'));}
         for(const a of row.source_assignments||[])detail.append(el('p','Picture '+a.slot+' → '+(a.binding?'node '+a.binding[0]+'.'+a.binding[1]:'no supported binding')+' · '+sourceRoles[a.role]+' · '+a.role_mode+'. Advice only; nothing was applied.'));
         const wording={description:'Describe the result you want to see.',instruction:'Describe the change to make and what must stay the same.',motion:'Describe the motion you want, not just the still image.',none:'This route has no authored text-prompt control.'};
