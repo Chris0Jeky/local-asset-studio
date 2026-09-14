@@ -372,12 +372,6 @@ async function mutateAssets(payload) {
   return performLibraryCommand(assetLibraryPending);
 }
 function setAssetScope(scope){assetScope=scope;assetSelection.clear();renderAssets();assetMessage(scope==='trash'?'Trash is recoverable. Original files and recipes remain on disk.':'');}
-function openCollection(id=null) {
-  collectionEditing=id; const col=assetState.collections.find(c=>c.id===id);
-  $('#collectionDialogTitle').textContent=id?'Edit collection':'New collection';
-  $('#collectionName').value=col?.name||'';$('#collectionDescription').value=col?.description||'';
-  $('#collectionDialog').showModal();$('#collectionName').focus();
-}
 function diagnosticArtifact(record, label) {
   return record?.present && record.url ? '<a href="' + esc(record.url) + '" target="_blank" rel="noreferrer">' + esc(label) + '</a>' : '<span class="muted">' + esc(label) + ' unavailable</span>';
 }
@@ -437,10 +431,6 @@ async function handoffAsset(id,presetId) {
 }
 $('#workspaceRefresh').onclick=()=>refreshAssets(true);
 $('#assetSearch').oninput=renderAssets;$('#assetType').onchange=renderAssets;$('#assetSort').onchange=renderAssets;
-$('#newCollection').onclick=()=>openCollection();$('#renameCollection').onclick=()=>openCollection(assetScope.slice(11));
-$('#cancelCollection').onclick=()=>$('#collectionDialog').close();
-$('#collectionForm').onsubmit=async e=>{e.preventDefault();try{const col=await post('/api/collections',{action:collectionEditing?'rename':'create',id:collectionEditing,name:$('#collectionName').value,description:$('#collectionDescription').value});$('#collectionDialog').close();assetScope='collection:'+col.id;await refreshAssets(true);}catch(err){assetMessage(err.message,true);}};
-$('#deleteCollection').onclick=async()=>{try{await post('/api/collections',{action:'delete',id:assetScope.slice(11)});assetScope='all';await refreshAssets(true);assetMessage('Collection removed. Its assets are still in your workspace.');}catch(e){assetMessage(e.message,true);}};
 $('#selectVisible').onclick=()=>{const assets=visibleAssets();assetSelection=new Set(assets.slice(0,assetSelectionLimit).map(a=>a.id));renderAssets();assetMessage(assets.length>assetSelectionLimit?'Selected the first '+assetSelectionLimit+' of '+assets.length+' matching assets in the current sort order. Choose smaller groups for the rest.':'Selected '+assets.length+' visible assets. Any earlier selection was replaced.');};
 $('#clearAssetFilters').onclick=clearAssetFilters;
 $('#keepVisibleSelection').onclick=()=>{const visible=new Set(visibleAssets().map(a=>a.id));assetSelection=new Set([...assetSelection].filter(id=>visible.has(id)));renderAssets();$('#assetSearch').focus();assetMessage('Selection now contains only visible assets. Any earlier unconfirmed command is unchanged.');};

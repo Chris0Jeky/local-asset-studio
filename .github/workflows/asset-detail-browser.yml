@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'app/static/**'
+      - 'tests/collection_editor*'
+      - 'tests/test_collection*'
       - 'app/workspace.py'
       - 'app/server.py'
       - 'tests/asset_workspace*'
@@ -67,6 +69,11 @@ jobs:
         run: |
           node tests/asset_grid_contracts.cjs
           python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
+      - name: Collection editing with actual Workspace storage
+        if: matrix.response-delay-ms == 0
+        run: |
+          python -m unittest discover -s tests -p 'test_collection*.py' -v
+          python tests/collection_editor_browser.py --out .runtime/collection-editor-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -78,5 +85,6 @@ jobs:
             .runtime/asset-workspace-proof/
             .runtime/asset-library-proof/
             .runtime/asset-grid-proof/
+            .runtime/collection-editor-proof/
           if-no-files-found: ignore
           retention-days: 7

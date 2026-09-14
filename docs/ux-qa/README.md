@@ -1,5 +1,9 @@
 # Studio UX QA — 13 September 2026
 
+## Collection editor sessions — 14 September 2026
+
+[Collection editor](COLLECTION-EDITOR.md) protects an open collection draft, makes save outcomes visible and validates Workspace scope. [Checkpoint](COLLECTION-EDITOR-RESULTS.json). Durable collection revisions/receipts remain #282.
+
 ## Stable library refresh
 
 [Grid continuity](GRID-CONTINUITY.md) documents retained card/preview identity, keyboard focus through refresh and reorder, deliberate media disposal, the existing selection contract and the matched browser scenarios. This advances #177 without claiming pagination or measured decoder/memory savings.
