@@ -51,9 +51,18 @@ class ReferenceReviewFrontendTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('single-flight guards passed', result.stdout)
 
+    def test_panel_html_read_is_independent_of_windows_default_encoding(self):
+        from unittest.mock import patch
+        original = Path.read_text
+        def windows_default(path, *args, **kwargs):
+            kwargs.setdefault('encoding', 'cp1252')
+            return original(path, *args, **kwargs)
+        with patch.object(Path, 'read_text', windows_default):
+            self.test_review_panel_is_loaded_with_the_existing_prompt_lab()
+
     def test_review_panel_is_loaded_with_the_existing_prompt_lab(self):
         root = Path(__file__).resolve().parents[1] / 'app/static'
-        page = (root / 'prompt-lab.html').read_text()
+        page = (root / 'prompt-lab.html').read_text(encoding='utf-8')
         self.assertIn('id="reference-review"', page)
         self.assertIn('src="/reference-review.js"', page)
         self.assertLess(page.index('src="/prompt-lab.js"'), page.index('src="/reference-review.js"'))
