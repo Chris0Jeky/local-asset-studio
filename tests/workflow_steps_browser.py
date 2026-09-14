@@ -48,7 +48,7 @@ def main():
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('dialog', lambda dialog: dialog.accept('Refine copy') if dialog.type == 'prompt' else dialog.accept())
         page.expose_function('fixtureRequest', request)
-        html = re.sub(r'<script\b[^>]*>.*?</script>|<link\b[^>]*>', '', (static / 'workflow-studio.html').read_text(), flags=re.S)
+        html = re.sub(r'<script\b[^>]*>.*?</script>|<link\b[^>]*>', '', (static / 'workflow-studio.html').read_text(encoding='utf-8'), flags=re.S)
         page.set_content(html)
         page.evaluate('''() => {
           if (!crypto.randomUUID) { let id=0; Object.defineProperty(crypto,'randomUUID',{value:()=> 'fixture-' + (++id)}); }
@@ -57,8 +57,8 @@ def main():
           }
           window.fetch = async (path,options={}) => { const r=await window.fixtureRequest(String(path),options.body?JSON.parse(options.body):null);return {ok:r.status>=200&&r.status<300,status:r.status,json:async()=>r.body}; };
         }''')
-        for name in ('workflow-studio.css', 'workflow-projects.css'): page.add_style_tag(content=(static / name).read_text())
-        for name in ('workflow-studio.js', 'workflow-project-state.js', 'workflow-projects.js'): page.add_script_tag(content=(static / name).read_text())
+        for name in ('workflow-studio.css', 'workflow-projects.css'): page.add_style_tag(content=(static / name).read_text(encoding='utf-8'))
+        for name in ('workflow-studio.js', 'workflow-project-state.js', 'workflow-projects.js'): page.add_script_tag(content=(static / name).read_text(encoding='utf-8'))
         page.wait_for_selector('#presetChoice option[value=example]', state='attached')
         assert not any(body is not None for _, body in seen), 'Startup mutated something'
         page.select_option('#presetChoice', 'example'); page.click('#loadPreset')
