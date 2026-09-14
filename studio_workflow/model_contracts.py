@@ -24,6 +24,7 @@ MODEL_INPUT_FOLDERS = {
     ('UnetLoaderGGUF', 'unet_name'): 'diffusion_models',
     ('CLIPLoader', 'clip_name'): 'text_encoders',
     ('CLIPVisionLoader', 'clip_name'): 'clip_vision',
+    ('IPAdapterModelLoader', 'ipadapter_file'): 'ipadapter',
     ('VAELoader', 'vae_name'): 'vae',
     ('LoraLoader', 'lora_name'): 'loras',
     ('LoraLoaderModelOnly', 'lora_name'): 'loras',
