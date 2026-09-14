@@ -35,7 +35,7 @@
     persist(); render();
   }
   function edit(action) { const next = clone(doc); action(next); changed(next); }
-  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
+  function replace(next) { safeNumbers(next); document.dispatchEvent(new Event('workflow:replace')); undo = []; redo = []; doc = null; selected = null; camera = null; changed(next, false); status('Draft loaded. Check connections before exporting. Nothing was queued.'); }
   function discard() { return !doc || window.confirm('Replace the current draft? Save a document file first to keep it.'); }
   function download(name, value) { const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + '\n'], {type: 'application/json'})); const a = el('a', '', {href: url, download: name}); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function defaultValue(spec) {
@@ -78,34 +78,71 @@
     status(doc && doc.schema_sha256 !== schema.schema_sha256 ? 'Node definitions changed. Review the draft and explicitly accept the refreshed schema; compilation remains blocked until then.' : 'Installed nodes loaded. No model job was submitted.');
   }
   function position(id, index) { return doc.positions[id] || [30 + (index % 3) * 285, 28 + Math.floor(index / 3) * 130]; }
+  const NODE_W = 245, NODE_H = 82, ZOOM_MIN = 0.4, ZOOM_MAX = 2.5, PAD = 44;
+  let camera = null, bounds = null;
+  const zoomClamp = value => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value)), tidy = n => Math.round(n * 100) / 100;
+  function canvasBox() { const rect = $('#workflowCanvas').getBoundingClientRect(); return [Math.max(1, rect.width), Math.max(1, rect.height)]; }
+  function applyCamera() {
+    if (!camera) return;
+    const [w, h] = canvasBox();
+    $('#workflowCanvas').setAttribute('viewBox', `${tidy(camera.x)} ${tidy(camera.y)} ${tidy(w / camera.scale)} ${tidy(h / camera.scale)}`);
+    $('#canvasZoom').textContent = Math.round(camera.scale * 100) + '%';
+  }
+  function fitCanvas() {
+    if (!bounds) return;
+    const [w, h] = canvasBox(), bw = bounds[2] - bounds[0] + PAD * 2, bh = bounds[3] - bounds[1] + PAD * 2;
+    const scale = zoomClamp(Math.min(w / bw, h / bh));
+    camera = {scale, x: (bounds[0] + bounds[2]) / 2 - w / scale / 2, y: (bounds[1] + bounds[3]) / 2 - h / scale / 2}; applyCamera();
+  }
+  function resetCanvas() { if (!bounds) return; camera = {scale: 1, x: bounds[0] - PAD, y: bounds[1] - PAD}; applyCamera(); }
+  function perPixel() { return camera ? 1 / camera.scale : 1; }
   function diagram() {
     const svg = $('#workflowCanvas'); svg.replaceChildren();
     const ns = 'http://www.w3.org/2000/svg';
     const se = (tag, attrs, text) => { const n = document.createElementNS(ns, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); if (text !== undefined) n.textContent = text; return n; };
-    if (!doc) return;
+    if (!doc) { bounds = null; return; }
     const ids = Object.keys(doc.nodes), positions = Object.fromEntries(ids.map((id, i) => [id, position(id, i)]));
-    const width = Math.max(900, ...Object.values(positions).map(p => p[0] + 290)), height = Math.max(560, ...Object.values(positions).map(p => p[1] + 120));
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.style.height = `${Math.min(2500, height)}px`; svg.style.width = `${Math.min(5000, width)}px`;
+    const spots = Object.values(positions);
+    bounds = spots.length ? [Math.min(...spots.map(p => p[0])), Math.min(...spots.map(p => p[1])), Math.max(...spots.map(p => p[0])) + NODE_W, Math.max(...spots.map(p => p[1])) + NODE_H] : [0, 0, 900, 560];
+    const curve = (a, b) => `M${a[0] + NODE_W},${a[1] + 40} C${a[0] + NODE_W + 40},${a[1] + 40} ${b[0] - 35},${b[1] + 40} ${b[0]},${b[1] + 40}`;
+    const edges = [];
     for (const [id, node] of Object.entries(doc.nodes)) for (const [field, value] of Object.entries(node.inputs)) if (isLink(value) && positions[value[0]]) {
-      const [x1, y1] = positions[value[0]], [x2, y2] = positions[id];
-      const line = se('path', {d: `M${x1 + 245},${y1 + 40} C${x1 + 285},${y1 + 40} ${x2 - 35},${y2 + 40} ${x2},${y2 + 40}`, class: 'wf-edge'});
-      line.append(se('title', {}, `${value[0]}:${value[1]} → ${id}.${field}`)); svg.append(line);
+      const line = se('path', {d: curve(positions[value[0]], positions[id]), class: 'wf-edge'});
+      line.append(se('title', {}, `${value[0]}:${value[1]} → ${id}.${field}`)); edges.push([line, value[0], id]); svg.append(line);
     }
     for (const id of ids) {
       const node = doc.nodes[id], [x, y] = positions[id];
       const group = se('g', {transform: `translate(${x},${y})`, tabindex: '0', role: 'button', 'aria-label': `Edit node ${id}: ${node.class_type}`});
-      group.append(se('rect', {width: '245', height: '82', rx: '10', fill: doc.disabled.includes(id) ? '#252831' : '#1b3030', stroke: selected === id ? '#baffb9' : '#4a6572', 'stroke-width': selected === id ? '3' : '1'}));
+      group.append(se('rect', {width: String(NODE_W), height: String(NODE_H), rx: '10', fill: doc.disabled.includes(id) ? '#252831' : '#1b3030', stroke: selected === id ? 'var(--wf-accent)' : '#4a6572', 'stroke-width': selected === id ? '3' : '1'}));
       group.append(se('text', {x: '13', y: '29'}, `${id} · ${node.class_type.slice(0, 26)}`));
       group.append(se('text', {x: '13', y: '56', opacity: '.7'}, doc.disabled.includes(id) ? 'Disabled · explicit bypass only' : doc.outputs.includes(id) ? 'Selected output' : 'Configure inputs →'));
-      const choose = () => { selected = id; render(); };
+      const choose = () => { selected = id; render(); if (matchMedia('(max-width:1350px)').matches) $('#nodeInspector').scrollIntoView({block: 'nearest'}); };
       group.onclick = choose; group.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } };
+      const redraw = (nx, ny) => { for (const [line, from, to] of edges) if (from === id || to === id) line.setAttribute('d', curve(from === id ? [nx, ny] : positions[from], to === id ? [nx, ny] : positions[to])); };
       let drag = null;
-      group.onpointerdown = e => { if (e.button !== 0) return; drag = [e.clientX, e.clientY]; group.setPointerCapture(e.pointerId); };
-      group.onpointermove = e => { if (!drag) return; const scale = width / svg.getBoundingClientRect().width; group.setAttribute('transform', `translate(${Math.max(0, x + (e.clientX - drag[0]) * scale)},${Math.max(0, y + (e.clientY - drag[1]) * scale)})`); };
-      group.onpointerup = e => { if (!drag) return; const start = drag; drag = null; if (Math.abs(e.clientX - start[0]) + Math.abs(e.clientY - start[1]) < 5) return choose(); const scale = width / svg.getBoundingClientRect().width; selected = id; edit(next => { next.positions[id] = [Math.min(100000, Math.max(0, Math.round(x + (e.clientX - start[0]) * scale))), Math.min(100000, Math.max(0, Math.round(y + (e.clientY - start[1]) * scale)))]; }); };
-      group.onpointercancel = () => { drag = null; group.setAttribute('transform', `translate(${x},${y})`); };
+      group.onpointerdown = e => { if (e.button !== 0) return; drag = [e.clientX, e.clientY]; group.setPointerCapture(e.pointerId); e.stopPropagation(); };
+      group.onpointermove = e => { if (!drag) return; const per = perPixel(), nx = Math.max(0, x + (e.clientX - drag[0]) * per), ny = Math.max(0, y + (e.clientY - drag[1]) * per); group.setAttribute('transform', `translate(${nx},${ny})`); redraw(nx, ny); };
+      group.onpointerup = e => { if (!drag) return; const start = drag; drag = null; if (Math.abs(e.clientX - start[0]) + Math.abs(e.clientY - start[1]) < 5) return choose(); const per = perPixel(); selected = id; edit(next => { next.positions[id] = [Math.min(100000, Math.max(0, Math.round(x + (e.clientX - start[0]) * per))), Math.min(100000, Math.max(0, Math.round(y + (e.clientY - start[1]) * per)))]; }); };
+      group.onpointercancel = () => { drag = null; group.setAttribute('transform', `translate(${x},${y})`); redraw(x, y); };
       svg.append(group);
     }
+    if (camera) applyCamera(); else fitCanvas();
+  }
+  function canvasNavigation() {
+    const svg = $('#workflowCanvas'); let pan = null;
+    svg.addEventListener('pointerdown', e => { if (e.button !== 0 || !camera || e.target.closest('g')) return; pan = [e.clientX, e.clientY, camera.x, camera.y]; svg.setPointerCapture(e.pointerId); svg.classList.add('wf-panning'); });
+    svg.addEventListener('pointermove', e => { if (!pan || !camera) return; const per = perPixel(); camera = {scale: camera.scale, x: pan[2] - (e.clientX - pan[0]) * per, y: pan[3] - (e.clientY - pan[1]) * per}; applyCamera(); });
+    const stop = () => { pan = null; svg.classList.remove('wf-panning'); };
+    svg.addEventListener('pointerup', stop); svg.addEventListener('pointercancel', stop);
+    svg.addEventListener('wheel', e => {
+      if (!e.ctrlKey || !camera) return; // A plain wheel keeps scrolling the page, exactly as before.
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect(), fx = e.clientX - rect.left, fy = e.clientY - rect.top;
+      const wx = camera.x + fx * perPixel(), wy = camera.y + fy * perPixel(), scale = zoomClamp(camera.scale * Math.exp(-e.deltaY * 0.0018));
+      camera = {scale, x: wx - fx / scale, y: wy - fy / scale}; applyCamera();
+    }, {passive: false});
+    if (window.ResizeObserver) new ResizeObserver(() => applyCamera()).observe(svg);
+    $('#canvasFit').onclick = fitCanvas; $('#canvasReset').onclick = resetCanvas;
   }
   function renderNodeList() {
     const host = $('#workflowNodes'); host.replaceChildren();
@@ -192,6 +229,7 @@
     for (const id of ['saveWorkflow', 'compileWorkflow']) $('#' + id).disabled = !doc || (id === 'compileWorkflow' && !schema);
     $('#rebaseWorkflow').disabled = !doc || !schema || (doc.schema_sha256 === schema.schema_sha256 && doc.backend_id === schema.backend_id);
     $('#exportGraph').disabled = !checked?.valid;
+    for (const id of ['canvasFit', 'canvasReset']) $('#' + id).disabled = !doc || !Object.keys(doc.nodes).length;
     $('#documentStats').textContent = doc ? `${Object.keys(doc.nodes).length} nodes · revision ${doc.revision}` : 'No draft';
     if (!checked) $('#workflowDiagnostics').replaceChildren();
     diagram(); renderNodeList(); renderInspector();
@@ -207,6 +245,7 @@
       host.append(card);
     });
   }
+  canvasNavigation();
   $('#loadNodes').onclick = guard(() => loadSchema(true));
   $('#nodeSearch').oninput = nodeCatalog;
   $('#loadPreset').onclick = guard(async () => { const id = $('#presetChoice').value; if (!id) throw Error('Choose a registered recipe first.'); if (!discard()) return; const token = ++epoch; if (!schema) await loadSchema(); const result = await api('/presets/' + encodeURIComponent(id)); if (token !== epoch) return status('Import ignored because the draft changed while loading.'); replace(result.document); });
