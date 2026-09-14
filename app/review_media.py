@@ -54,8 +54,13 @@ def decode(data):
                 raise ValueError('Review needs an 8-bit RGB/greyscale image; convert a copy explicitly')
             orientation = source.getexif().get(274, 1)
             original_size = list(source.size)
-            with ImageOps.exif_transpose(source) as oriented:
-                image = oriented.convert('RGBA')
+            # exif_transpose copies the entire source even for a no-op. Keep
+            # that intermediate only when an orientation actually needs it.
+            if orientation in (2, 3, 4, 5, 6, 7, 8):
+                with ImageOps.exif_transpose(source) as oriented:
+                    image = oriented.convert('RGBA')
+            else:
+                image = source.convert('RGBA')
             # No prompts, workflow text, EXIF or producer fields in blind derivatives.
             image.info.clear()
             return image, {'encoded_size': original_size, 'oriented_size': list(image.size),
