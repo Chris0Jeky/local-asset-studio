@@ -74,6 +74,11 @@ test('restyle puts the source on the pose picture and needs one board picture',(
   assert.throws(()=>C.initial(source,board,'edit',file));assert.throws(()=>C.initial(source,p,'restyle',file));
   assert.deepEqual(C.destinations('restyle',[p,board,{...board,id:'other',name:'Other'}],source).map(x=>x.id),['style-pose-nova','other']);
   assert.match(C.guidance(board,source).join(' '),/pose picture/i);assert.doesNotMatch(C.guidance(board,source).join(' '),/Picture 1 only/);
+  const keeps={...board,id:'restyle-wai',last_reference_label:'Picture to restyle',continuation_capability:{...boardCap,keeps_picture:true}};
+  assert.match(C.guidance(keeps,source).join(' '),/Keeps this picture \(layout, pose, costume, colours/);assert.match(C.guidance(keeps,source).join(' '),/Style weight says \(0 = off\)/);assert.match(C.guidance(keeps,source).join(' '),/picture to restyle/);assert.match(C.guidance(keeps,source).join(' '),/face pass/);assert.doesNotMatch(C.guidance(keeps,source).join(' '),/Restyle a picture recipe/);
+  assert.match(C.guidance(board,source).join(' '),/paints a new image/);assert.match(C.guidance(board,source).join(' '),/choose a Restyle a picture recipe/);
+  assert.deepEqual(C.destinations('restyle',[p,board,keeps],source).map(x=>x.id),['restyle-wai','style-pose-nova']);
+  assert.deepEqual(C.destinations('restyle',[board,{...keeps,family:'Other'}],{...source,preset_id:'style-pose-nova'}).map(x=>x.id),['restyle-wai','style-pose-nova'],'keeps_picture outranks the source family');
 });
 test('family matching never resurrects a text-only graph as a refinement',()=>{
   const same={...p,id:'same',family:'Anima'},different={...p,id:'different',family:'Krea'};
@@ -88,5 +93,28 @@ test('draft roundtrip keeps the guard rather than downgrading to a normal recipe
 });
 test('dead worker cannot be masked by enhanced run presentation',()=>{
   assert.equal(U.readiness({preset:p,online:true,schemaAvailable:true,workerAlive:false}).ready,false);
+});
+test('a declared restyle keeps the picture without a board, prepares its own wording and fits the canvas',()=>{
+  const klein={id:'restyle-klein',name:'Restyle a picture (Klein)',modality:'image',reference:['14','image'],reference_label:'Picture to restyle',positive:['4','text'],width:['10','width'],height:['10','height'],dimension_multiple:16,defaults:{},continuation_operation:'restyle',continuation_prompt:'Redraw this image as a soft look. Keep everything else.{source}',continuation_capability:{...cap,operation:'restyle',prompt_role:'instruction',reference_count:1,source_input:'reference',board_min:0,keeps_picture:true}};
+  const keeps={...board,id:'restyle-wai',last_reference_label:'Picture to restyle',continuation_capability:{...boardCap,keeps_picture:true}};
+  const prepared=C.initial(source,klein,'restyle',file);
+  assert.equal(prepared.claim.intent,'restyle');assert.equal(prepared.positive,'Redraw this image as a soft look. Keep everything else. The picture shows: An adult traveller at the station.');
+  assert.equal(C.promptFor(klein,{...source,prompt_origin:'unavailable',positive:null}),'Redraw this image as a soft look. Keep everything else.');
+  assert.equal(C.promptFor(keeps,source),null,'recipes without authored continuation wording keep the copy rule');
+  assert.deepEqual(C.destinations('restyle',[board,keeps,klein],source).map(x=>x.id),['restyle-klein','restyle-wai','style-pose-nova']);
+  assert.deepEqual(C.blockers(prepared.claim,klein,{positive:prepared.positive,reference:file},['source-asset']),[]);
+  assert.match(C.blockers(prepared.claim,klein,{positive:prepared.positive,reference:'other.png'},['source-asset']).join(),/Picture to restyle no longer holds/);
+  const text=C.guidance(klein,source).join(' ');
+  assert.match(text,/no style board/i);assert.match(text,/Picture to restyle/);assert.doesNotMatch(text,/Style weight/);assert.doesNotMatch(text,/add one to three pictures/);
+  assert.deepEqual(C.canvasFor({...source,width:832,height:1216},klein),{width:1040,height:1520});
+  assert.deepEqual(C.canvasFor({...source,width:1216,height:832},klein),{width:1520,height:1040});
+  assert.deepEqual(C.canvasFor({...source,width:4000,height:4000},klein),{width:1248,height:1248});
+  assert.deepEqual(C.canvasFor({...source,width:1920,height:1080},klein),{width:1536,height:864},'the long edge hits the limit and the short edge follows');
+  assert.deepEqual(C.canvasFor({...source,width:1080,height:1920},klein),{width:864,height:1536});
+  assert.equal(C.promptFor(klein,{...source,positive:'A $& witch with $1 gold'}),'Redraw this image as a soft look. Keep everything else. The picture shows: A $& witch with $1 gold.','replacement patterns stay literal');
+  assert.equal(C.promptFor(klein,{...source,positive:'x'.repeat(7990)}),'Redraw this image as a soft look. Keep everything else.','a description that would pass the 8000-character prompt limit is left out');
+  assert.equal(C.canvasFor({...source,width:832,height:1216},keeps),null,'a board restyle keeps its own canvas rule');
+  assert.equal(C.canvasFor({...source,width:832,height:1216},p),null);
+  assert.deepEqual(U.recipesFor('restyle',[klein,board,p]).map(x=>x.id),['restyle-klein','style-pose-nova']);
 });
 console.log(count+' continuation client policy checks passed.');

@@ -74,7 +74,18 @@ def capability(preset, graph):
     kinds = {node.get("class_type") for node in graph.values()}
     # A style board with its own pose picture: the continuation source becomes the pose picture, and the
     # board (one to three optional pictures) carries the look. Only then does the source live on last_reference.
-    restyle = bool(preset.get("reference_board")) and bool(preset.get("last_reference"))
+    restyle_board = bool(preset.get("reference_board")) and bool(preset.get("last_reference"))
+    # A reference edit may declare itself a Restyle destination: the picture is the model's own reference
+    # (ReferenceLatent) and the prepared wording carries the look, so there is no style board to fill.
+    restyle_declared = preset.get("continuation_operation") == "restyle" and role == "instruction" and not restyle_board
+    restyle = restyle_board or restyle_declared
+    # A sampler whose starting latent descends from a bound picture keeps that picture's layout (img2img).
+    latent_from_reference = any(
+        node.get("class_type") == "KSampler"
+        and isinstance((node.get("inputs") or {}).get("latent_image"), list)
+        and any(str(binding[0]) in ancestors(graph, node["inputs"]["latent_image"][0]) for binding in bindings)
+        for node in graph.values()
+    )
     if not consumed: operation = "new-image" if not preset.get("reference") else "unsupported-reference"
     elif preset.get("requires_rgba_mask"): operation = "masked-repair"
     elif restyle: operation = "restyle"
@@ -83,13 +94,7 @@ def capability(preset, graph):
     elif "FaceDetailer" in kinds: operation = "localized-detail"
     elif role == "instruction": operation = "instruction-edit"
     elif not preset.get("positive"): operation = "upscale"
-    elif any(
-        node.get("class_type") == "KSampler"
-        and isinstance((node.get("inputs") or {}).get("latent_image"), list)
-        and any(str(binding[0]) in ancestors(graph, node["inputs"]["latent_image"][0]) for binding in bindings)
-        for node in graph.values()
-    ):
-        operation = "image-to-image"
+    elif latent_from_reference: operation = "image-to-image"
     else: operation = "reference-guided-generation"
     return {
         "version": 1,
@@ -98,8 +103,9 @@ def capability(preset, graph):
         "prompt_role": role,
         "requires_mask": bool(preset.get("requires_rgba_mask")),
         "reference_count": len(bindings) if consumed else 0,
-        "source_input": "last_reference" if consumed and restyle else "reference",
-        "board_min": int((preset.get("reference_board") or {}).get("min", 1)) if consumed and restyle else 0,
+        "source_input": "last_reference" if consumed and restyle_board else "reference",
+        "board_min": int((preset.get("reference_board") or {}).get("min", 1)) if consumed and restyle_board else 0,
+        "keeps_picture": bool(consumed and (restyle_board and latent_from_reference or restyle_declared)),
         "scope": "Static registered graph wiring; not a guarantee of visual preservation.",
     }
 

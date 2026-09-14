@@ -49,8 +49,9 @@ def digest(value):
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
-def decode(raw):
-    need(len(raw) <= LIMIT, 'JSON exceeds 1 MiB')
+def decode(raw, *, limit=LIMIT):
+    need(type(limit) is int and 0 < limit <= 48 * LIMIT, 'Invalid JSON byte limit')
+    need(len(raw) <= limit, 'JSON exceeds byte limit' if limit != LIMIT else 'JSON exceeds 1 MiB')
     def pairs(items):
         result = {}
         for key, value in items:

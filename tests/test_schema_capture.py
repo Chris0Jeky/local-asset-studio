@@ -14,6 +14,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
+from loopback_transport_audit import LoopbackTransportAudit
 import test_validate_live as fixtures
 
 validator=fixtures.validator
@@ -22,7 +23,7 @@ validator=fixtures.validator
 class SchemaCaptureTests(unittest.TestCase):
     def setUp(self):
         self.fixture=fixtures.CatalogValidationTests();self.fixture.setUp();self.addCleanup(self.fixture.doCleanups)
-        self.root=self.fixture.root;self.output=self.root/'capture.json';self.routes=[]
+        self.root=self.fixture.root;self.output=self.root/'capture.json';self.routes=[];self.route_audit=None
         self.raw=json.dumps(fixtures.SCHEMA,indent=2).encode()+b'\n'
         case=self
         class Handler(BaseHTTPRequestHandler):
@@ -47,6 +48,9 @@ class SchemaCaptureTests(unittest.TestCase):
     def capture(self,*args):
         result=self.cli('--backend','primary','--comfy-url',self.url,'--capture-schema',str(self.output),*args)
         self.assertIn(result[0],(0,1),result[2]);return result
+
+    def route_diagnostic(self):
+        return self.route_audit.describe(self.routes) if self.route_audit is not None else None
 
     def test_one_get_captures_exact_bytes_and_all_matching_backend_graphs(self):
         code,out,err=self.capture();report=json.loads(out);saved=json.loads(self.output.read_text())
@@ -172,7 +176,6 @@ class SchemaCaptureTests(unittest.TestCase):
 
     def test_historical_success_counts_are_not_authority_on_replay(self):
         self.capture();saved=json.loads(self.output.read_bytes());history=saved['capture_results']
-        # A structurally valid historical failure must not determine replay.
         history['results'][0]={**saved['bindings'][0],'status':'invalid','error':'Earlier checker rejected this graph'}
         history.update(passed=2,failed=1)
         saved['sha256']=validator.pipeline.sha({k:v for k,v in saved.items() if k!='sha256'})
@@ -185,11 +188,11 @@ class SchemaCaptureTests(unittest.TestCase):
         self.output.write_text(json.dumps(saved))
 
     def assert_rehashed_refused(self, saved):
-        self.rehashed(saved);before=self.output.read_bytes()
+        self.rehashed(saved);before=self.output.read_bytes();diagnostic=self.route_diagnostic()
         with patch.object(validator,'build_opener',side_effect=AssertionError('No replay transport')):
             code,out,err=self.cli('--schema-snapshot',str(self.output))
         self.assertEqual(code,2,err or out);self.assertEqual(out,'')
-        self.assertEqual(self.output.read_bytes(),before);self.assertEqual(len(self.routes),1)
+        self.assertEqual(self.output.read_bytes(),before);self.assertEqual(len(self.routes),1,diagnostic)
 
     def test_replay_requires_provenance_and_historical_report_even_after_rehash(self):
         self.capture();original=json.loads(self.output.read_bytes())
@@ -235,13 +238,33 @@ class SchemaCaptureTests(unittest.TestCase):
                 self.assert_rehashed_refused(saved)
 
     def test_historical_report_requires_all_contract_fields_and_valid_shape(self):
-        self.capture();original=json.loads(self.output.read_bytes())
-        for field in original['capture_results']:
-            with self.subTest(missing=field):
-                saved=copy.deepcopy(original);saved['capture_results'].pop(field);self.assert_rehashed_refused(saved)
-        for field,value in (('selected',True),('passed','3'),('passed',999),('failed',-1),('catalog_total',False),('results',{})):
-            with self.subTest(field=field,value=value):
-                saved=copy.deepcopy(original);saved['capture_results'][field]=value;self.assert_rehashed_refused(saved)
+        audit=LoopbackTransportAudit(host='127.0.0.1',port=self.http.server_port,max_calls=16,max_frames=16)
+        with audit:
+            self.route_audit=audit
+            try:
+                self.capture();original=json.loads(self.output.read_bytes())
+                for field in original['capture_results']:
+                    with self.subTest(missing=field):
+                        saved=copy.deepcopy(original);saved['capture_results'].pop(field);self.assert_rehashed_refused(saved)
+                for field,value in (('selected',True),('passed','3'),('passed',999),('failed',-1),('catalog_total',False),('results',{})):
+                    with self.subTest(field=field,value=value):
+                        saved=copy.deepcopy(original);saved['capture_results'][field]=value;self.assert_rehashed_refused(saved)
+            finally:self.route_audit=None
+
+    def test_historical_report_extra_connection_names_same_execution_caller(self):
+        from urllib.request import urlopen
+        audit=LoopbackTransportAudit(host='127.0.0.1',port=self.http.server_port,max_calls=16,max_frames=16)
+        with audit:
+            self.route_audit=audit
+            try:
+                self.capture()
+                with urlopen(self.url+'/object_info',timeout=2) as response:response.read()
+                saved=json.loads(self.output.read_bytes());saved['capture_results'].pop('selected')
+                with self.assertRaises(AssertionError) as caught:self.assert_rehashed_refused(saved)
+            finally:self.route_audit=None
+        message=str(caught.exception)
+        self.assertIn('"observed":2',message)
+        self.assertIn('test_historical_report_extra_connection_names_same_execution_caller',message)
 
     def test_duplicate_identity_and_verification_claims_must_agree(self):
         self.capture();original=json.loads(self.output.read_bytes())

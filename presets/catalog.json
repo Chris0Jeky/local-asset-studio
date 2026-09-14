@@ -5986,6 +5986,300 @@
         "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       },
       "execution_note": "Executed 2026-09-14 through Studio job bb8efa52-9634-4f43-9246-2c1955ac50a0 (ComfyUI prompt 1f3b64ba-1f8c-491b-abb8-8661a540cc19), 99 s on the primary backend, graph sha256 a478818e5d7bab82\u2026, every control at its authored default (style weight 0.7, pose strength 0.9, seed 2026091407): averaged three-picture style board with the owner's pictures, throne pose picture, no LoRA; output inspected: pose held, calmer magenta-and-gold palette with the sheet's trim, clean lineart (experiments/curated/style-pose-matrix/2026-09-14-nova/, JPEG examples/style-pose/board-verify-nova.jpg). The three earlier Nova cells in that folder ran at style weight 0.8. One run, not art acceptance."
+    },
+    {
+      "id": "restyle-wai",
+      "name": "Restyle a picture (WAI v17 + light-novel look)",
+      "category": "Characters",
+      "family": "WAI v17 (Illustrious)",
+      "graph": "workflows/api/restyle-wai-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 twice through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d...) with the owner's style picture on Picture 1, every control at its authored default (Style weight 0, Denoise 0.85, CFG 4.5, 30 steps, Mishima Kurone 0.8): job 0c13590c-d204-4634-b045-cc03d5a3f2e3 (prompt 5b9c2049-6586-47dd-ae4f-3d590972cb3b, 86 s, 1024x1536 on the earlier fixed canvas, seed 2026091407 carried over from the source run because the handoff keeps the form seed) and, after the canvas became aspect-preserving, job f2361234-53ab-4026-8647-7092a8aa83e1 (prompt 1165fb28-1741-4a90-9d16-7076a6700866, 93 s, 1040x1520, recipe seed 2026091401); outputs WAI_00001_.png and WAI_00002_.png inspected: pose, costume and throne kept, soft light-novel finish, clean face (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-picture-proving.jpg). Two runs, not art acceptance; the look is HUMAN_TODO q-27.",
+      "modality": "image",
+      "commercial_note": "WAI hashes do not authenticate its creator and its commercial terms are unresolved; the Mishima Kurone and Momoko LoRAs declare Image/RentCivit/Rent/Sell on civitai (recorded in models/library.json); IP-Adapter and ControlNet weights are apache-2.0; every board and source picture keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "42",
+        "string_a"
+      ],
+      "negative": [
+        "43",
+        "string_a"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ],
+        "seed": [
+          [
+            "51",
+            "seed"
+          ]
+        ],
+        "cfg": [
+          [
+            "51",
+            "cfg"
+          ]
+        ],
+        "sampler": [
+          [
+            "51",
+            "sampler_name"
+          ]
+        ],
+        "scheduler": [
+          [
+            "51",
+            "scheduler"
+          ]
+        ]
+      },
+      "last_reference": [
+        "11",
+        "image"
+      ],
+      "last_reference_label": "Picture to restyle",
+      "last_reference_hint": "The picture you want to keep. Its layout, pose and colours are the starting point (Denoise says how much may change: 0.75 keeps more, 0.85 is the default, 0.95 repaints almost everything) and its OpenPose skeleton holds the pose. The look comes from the light-novel LoRA and the fixed finish terms; the style board is off at Style weight 0 and borrows the picture's palette as you raise it (0.3 light, 0.6 strong).",
+      "style_weight": [
+        "14",
+        "weight"
+      ],
+      "pose_strength": [
+        "17",
+        "strength"
+      ],
+      "stages": [
+        "WAI v17 + Mishima Kurone light-novel LoRA (0.8; Momoko in slot 2, off)",
+        "Finish terms appended to your prompt: soft lighting, pastel colours, light background, delicate lineart",
+        "Style board: 1-3 pictures, style-transfer weighting, Style weight 0.0 (off) by default",
+        "Picture to restyle: scaled to ~1.5 megapixels at its own aspect ratio (832x1216 becomes 1040x1520), VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
+        "30-step re-sample at Denoise 0.85, CFG 4.5",
+        "Face pass with the same styled model (denoise 0.4)",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Keep more of the picture (denoise 0.75)",
+          "controls": {
+            "denoise": 0.75
+          }
+        },
+        {
+          "name": "Repaint almost everything (denoise 0.95)",
+          "controls": {
+            "denoise": 0.95
+          }
+        },
+        {
+          "name": "Board touch (0.3): a little of the style picture's palette",
+          "controls": {
+            "style_weight": 0.3
+          }
+        },
+        {
+          "name": "Board strong (0.6): takes the style picture's palette",
+          "controls": {
+            "style_weight": 0.6
+          }
+        },
+        {
+          "name": "Momoko look instead of Mishima",
+          "controls": {
+            "lora": 0,
+            "lora2": 0.8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "description": "Give a finished picture a soft light-novel finish while keeping the picture. Measured 14 September 2026 on the owner's throne witch against their own target render: the picture to restyle is both the starting latent (re-sampled at Denoise 0.85 on a ~1.5-megapixel canvas at the picture's own aspect ratio, so layout, costume and colours survive) and the pose source (OpenPose skeleton -> Xinsir ControlNet); WAI v17 with the Mishima Kurone light-novel LoRA at 0.8 and fixed finish terms (soft lighting, pastel colours, light background, delicate lineart; negative: dark, high contrast, oversaturated, neon) produced the closest match, with the style board OFF. The board therefore ships OFF (Style weight 0.0): at 0.2-0.6 it tints the costume towards the style picture's palette (blue-grey from a white-background picture), and at 1.0, or at CFG 6, it over-drives the palette into neon stripes; raise Style weight when you want that palette. A board picture is still required by the recipe (the adapter chain needs one), so attach the picture whose look you mean and choose how much of it to take. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; the finish terms and the LoRA trigger are appended to whatever you write, continuation copies included. Not a pixel copy of any picture; a completed render is neither art acceptance nor licence clearance (WAI terms unresolved; the LoRAs' civitai flags are in models/library.json).",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "10",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "30",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "31",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
+      }
+    },
+    {
+      "id": "restyle-klein",
+      "name": "Restyle a picture (FLUX.2 Klein 4B, keeps everything)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 4B",
+      "graph": "workflows/api/restyle-klein-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d..., source of the earlier Style + Pose runs), every control as prepared: the wording prepared by the handoff (finish, keep clause, the source's submitted tag description), canvas fitted to the source at 1040x1520, 6 steps, CFG 1.0, seed 2026091401: job db25b173-e39c-4656-96bf-b377ded6bf80 (prompt 7a205e07-8375-4f41-9f1e-99cba8e788cf, 65.9 s in ComfyUI including the model load; the same graph ran in 16-20 s warm during research), output Restyle/Klein_00001_.png (sha256 6248d7c07a987780...) inspected: pose, wink, hat, red-and-black robe with gold trim and the throne kept, soft high-key finish, clean detailed eyes (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-klein-proving.jpg). One run, not art acceptance; the look is HUMAN_TODO q-27.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; the picture you restyle keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "reference": [
+        "14",
+        "image"
+      ],
+      "reference_label": "Picture to restyle",
+      "reference_hint": "The picture you want to keep. It is scaled to about one megapixel and given to the model as its reference; the wording says which look to draw it in and what to keep. Continue with this -> Restyle sets the canvas to the picture's own aspect ratio at about 1.5 megapixels.",
+      "continuation_operation": "restyle",
+      "continuation_prompt": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style.{source}",
+      "stages": [
+        "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
+        "Picture to restyle: scaled to ~1 megapixel, VAE-encoded, attached to the prompt as a reference latent",
+        "Wording: the finish to draw, then what to keep; Continue with this adds the source's submitted description",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
+        "1024x1536 canvas by default (Continue with this fits the source's aspect ratio at ~1.5 megapixels)",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Faster (4 steps)",
+          "controls": {
+            "steps": 4
+          }
+        },
+        {
+          "name": "More finish (8 steps)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
+      "description": "Give a finished picture another look while keeping everything else, in about 20 seconds. Measured 14 September 2026 on the owner's throne witch against their own target render: FLUX.2 Klein 4B reads the picture as its reference and redraws it as the wording says (the light-novel finish is the default; edit the first sentence for another look, keep the second), and the pose, costume, throne, wink and colours survived where the SDXL boards drifted. Adding the style picture as a second reference washed the result out and larger canvases changed the hair, so the recipe takes one picture and a ~1.5-megapixel canvas. Naming what the picture shows helps: Continue with this appends the source's submitted description for you."
     }
   ]
 }

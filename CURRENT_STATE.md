@@ -1,5 +1,48 @@
 # Current state — 14 September 2026
 
+## Restyle a picture with FLUX.2 Klein 4B: keeps everything, no board, 20 s — 14 September 2026 (night)
+
+The owner asked to keep improving restyle quality, whether FLUX.2 Klein 9B is really a 24 GB model, and said the
+non-commercial terms do not matter for their own experiments; they authorised downloads and pipeline changes. Facts: the
+9B fits this card only as fp8 (8.8 GB) plus the 8.1 GB fp8 Qwen3-8B encoder in host RAM; the official fp8 repository is
+gated (HTTP 401), the unsloth GGUF mirror is not; Z-Image Turbo has a 5.7 GB fp8 build. Those downloads (Z-Image fp8,
+Qwen3-8B fp8, Klein 9B Q6_K, AniEdit 4B/9B v2, four Z-Image anime LoRAs) are running at 0.25–0.5 MB/s through the VPN
+and were not finished when this entry was written (receipts land in `.runtime/downloads/`; library entries follow).
+Meanwhile eleven research renders of the throne witch on the installed **Klein 4B fp8** (tabled in
+`experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`) found the best restyle route on this PC so far:
+the picture as the model's single reference, the finish described in words, a keep sentence, and the source's own
+description, six steps at CFG 1 on a ~1.5-megapixel canvas, 16–20 s warm. It kept pose, wink, hat, robe and throne
+where the SDXL boards drifted; the style picture as a second reference washed the result out and a 2-megapixel canvas
+changed the hair. Shipped as **`restyle-klein` — Restyle a picture (FLUX.2 Klein 4B, keeps everything)**
+(`workflows/api/restyle-klein-api.json`), listed first on the Restyle route through a new declaration
+(`continuation_operation: restyle`, honoured only on a reference-edit graph): no style board, the handoff prepares the
+wording (`continuation_prompt`, `{source}` = the submitted description) and fits the canvas to the source's aspect
+ratio. Proving run through the page: job `db25b173-e39c-4656-96bf-b377ded6bf80`, prompt `7a205e07…`, 65.9 s with the
+model load, 1040×1520 (sheet `examples/style-pose/restyle-klein-proving.jpg`). Use case
+`restyle-recent-output-with-a-look` re-run: 8/8, three clicks, zero dead ends. Not verified: the Klein 9B, AniEdit and
+Z-Image fp8 routes (files still downloading); art acceptance (HUMAN_TODO q-27, which now also asks which of the two
+Restyle recipes should lead). Studio restarted on the branch (`.runtime/server.pid`).
+
+## Restyle a picture: the look the owner asked for — 14 September 2026 (evening)
+
+The owner ran *Continue with this → Restyle* on the throne witch with their own style picture and reported the result
+was not good (flat cel, throne gone, crude eyes), then supplied a target render: soft, high-key, light-novel finish with
+the costume and throne kept. Twenty-three research renders straight against ComfyUI (tabled with prompt IDs and hashes in
+`experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`) found: an empty latent keeps only the skeleton,
+img2img from the picture (denoise 0.85) keeps the throne and costume; the look came from WAI v17 + the Mishima Kurone
+light-novel LoRA + soft-light prompt terms at CFG 4.5, not from the style picture, whose IP-Adapter board tinted the
+costume at every weight from 0.2 to 0.6 and went neon at 1.0; a FaceDetailer pass with the styled model fixed the eyes;
+`K+mean(V)` scaling adds glitter. Shipped as **`restyle-wai` — Restyle a picture (WAI v17 + light-novel look)**
+(`workflows/api/restyle-wai-api.json`): ~1.5-megapixel canvas at the picture's own aspect ratio, board off by default with touch/strong variants, finish terms
+appended through `StringConcatenate` so a copied source description still gets them, Momoko as a variant. The Restyle
+route lists it first (`continuation_capability.keeps_picture`, new); the handoff guidance says what is kept. Proving run
+through the page, every control at default: job `0c13590c-d204-4634-b045-cc03d5a3f2e3`, prompt `5b9c2049…`, 86 s,
+`Restyle/WAI_00001_.png` (sheet `examples/style-pose/restyle-picture-proving.jpg`): pose, costume and throne kept, soft
+finish, clean face; darker background than the target. Fixture use case `restyle-recent-output-with-a-look` re-run: PASS.
+Not verified: Nova through this shape (its checkpoint swap failed twice in ComfyUI, issue #350: the first checkpoint swap of
+a session dies in `free_memory`, one retry succeeds), other boards, three-picture boards, art acceptance (HUMAN_TODO q-27,
+rewritten). Follow-ups in #351 (optional board, Nova twin, denoise sweep). Studio restarted on the branch (`.runtime/server.pid`).
+
 ## Continue with this → Restyle; the Studio was unstartable from main — 14 September 2026 (afternoon)
 
 The owner tried to give a liked output a different look: *Continue with this → Refine → SDXL • stronger

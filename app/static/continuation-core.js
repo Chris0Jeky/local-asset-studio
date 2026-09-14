@@ -15,8 +15,9 @@
   function sourceLabel(preset){const cap=preset?.continuation_capability;return sourceInput(cap)==='last_reference'?preset.last_reference_label||'Pose picture':preset?.reference_slots?.length?'Picture 1':preset?.reference_label||'Reference';}
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
-    const prefer={edit:['qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['style-pose-wai','style-pose-nova','style-pose-yumeflux'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
-    const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(family&&p.family===family?-100:0)+(prefer.includes(p.id)?prefer.indexOf(p.id):100);
+    const prefer={edit:['qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    // For Restyle, a recipe that keeps the picture (img2img) outranks the source's own Style + Pose family.
+    const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(intent==='restyle'&&p.continuation_capability.keeps_picture?-300:0)+(family&&p.family===family?-100:0)+(prefer.includes(p.id)?prefer.indexOf(p.id):100);
     return presets.filter(p=>p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
   }
   function initial(source,preset,intent,file){
@@ -27,7 +28,29 @@
     const claim=normalize({version:1,intent,preset_id:preset.id,reference_file:file,source_asset_id:source.asset_id,source_sha256:source.sha256,template_sha256:cap.template_sha256});
     if(!claim)throw Error('The source attachment could not be verified. Reopen the handoff.');
     const copy=cap.prompt_role==='description'&&source.prompt_role==='description'&&source.prompt_origin==='submitted-output';
-    return{claim,positive:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
+    const prepared=promptFor(preset,source);
+    return{claim,positive:prepared!=null?prepared:copy&&typeof source.positive==='string'?source.positive:'',negative:copy&&typeof source.negative==='string'?source.negative:''};
+  }
+  // A recipe may author the wording of a continuation: its `continuation_prompt` is used verbatim, with `{source}`
+  // standing for the source's own submitted description (or nothing when no exact description is retained).
+  function promptFor(preset,source){
+    const template=preset?.continuation_prompt;
+    if(typeof template!=='string'||!template.trim())return null;
+    const described=source?.prompt_origin==='submitted-output'&&typeof source.positive==='string'&&source.positive.trim();
+    // A function replacement keeps `$&`-style patterns in a description literal; a description that would push the
+    // wording past the server's 8000-character prompt limit is left out rather than blocking Generate later.
+    const text=template.replace('{source}',()=>described?' The picture shows: '+source.positive.trim().replace(/[\s.]+$/,'')+'.':'');
+    return text.length>8000?template.replace('{source}',''):text;
+  }
+  // A restyle that keeps the picture draws it at the source's own aspect ratio (~1.5 megapixels, multiples of the recipe grid).
+  function canvasFor(source,preset){
+    const cap=preset?.continuation_capability;
+    if(cap?.operation!=='restyle'||!cap.keeps_picture||!preset.width||!preset.height||!(source?.width>0&&source?.height>0))return null;
+    const grid=preset.dimension_multiple||16,limit=preset.dimension_limits?.[1]||1536,aspect=source.width/source.height,pixels=1.5*1024*1024;
+    // Scale both axes together when the long edge would pass the recipe limit, so the aspect ratio survives the clamp.
+    let width=Math.sqrt(pixels*aspect),height=Math.sqrt(pixels/aspect);const scale=Math.min(1,limit/Math.max(width,height));width*=scale;height*=scale;
+    const fit=v=>Math.min(limit,Math.max(grid*4,Math.round(v/grid)*grid));
+    return{width:fit(width),height:fit(height)};
   }
   function settings(preset,overrides,current){
     const protectedKeys=new Set(['positive','negative','reference','last_reference']);
@@ -67,10 +90,11 @@
   function guidance(preset,source){
     const cap=preset?.continuation_capability;
     if(!cap?.consumes_source)return['This recipe does not have a verified source-to-output connection.'];
-    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','restyle':'Keeps this picture’s pose and paints a new image in the look of the pictures you put on the style board. Its colours, costume and background are not copied; the prompt says who the character is.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
+    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','restyle':cap.keeps_picture&&!cap.board_min?'Keeps this picture (layout, pose, costume, colours) and redraws it in the look the wording describes: the picture is the model’s own reference and there is no style board, so your words carry the look. Edit the first sentence to try another look; keep the “Keep …” sentence.':cap.keeps_picture?'Keeps this picture (layout, pose, costume, colours; Denoise says how much may change) and repaints it in the recipe’s finish. The style board’s pictures add their palette only as far as Style weight says (0 = off). The prompt says who the character is.':'Keeps this picture’s pose and paints a new image in the look of the pictures you put on the style board. Its colours, costume and background are not copied; the prompt says who the character is.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
     if(cap.prompt_role==='description')text.push(source?.prompt_role==='description'&&source?.positive?'Copies this output’s actual submitted description. You may refine the description without changing the source.':'No reusable image description is available. Write one; recipe example text will stay out of the prompt.');
     if(source?.preset_id&&source.preset_id!==preset.id&&cap.prompt_role!=='none')text.push('Different source recipe: '+(source.preset_name||source.preset_id)+'. Source sampling settings, seed and adapters are not copied. Check destination style triggers; low denoise does not guarantee the same look.');
-    if(cap.operation==='restyle')text.push('Your picture becomes the '+(preset.last_reference_label||'pose picture').toLowerCase()+'. After preparing, add one to three pictures whose look you want to the style board.');
+    if(cap.operation==='restyle'&&!cap.board_min)text.push('Your picture goes on '+sourceLabel(preset)+'. The wording is prepared for you: the finish to draw, what to keep, and this output’s submitted description when one exists. There is no style board to fill.');
+    else if(cap.operation==='restyle')text.push('Your picture becomes the '+(preset.last_reference_label||'pose picture').toLowerCase()+'. After preparing, add one to three pictures whose look you want to the style board.'+(cap.keeps_picture?' The finish terms and the light-novel LoRA are added to your prompt for you; eyes and lashes get a face pass with the same styled model.':' To keep the costume and background as well, choose a Restyle a picture recipe.'));
     else if(cap.reference_count>1)text.push('This attaches Picture 1 only. Add '+(cap.reference_count-1)+' more required reference(s).');
     if(preset.runtime_block)text.push(preset.runtime_block);
     return text.filter(Boolean);
@@ -94,5 +118,5 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor};
 });

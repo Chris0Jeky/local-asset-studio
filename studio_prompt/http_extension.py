@@ -1,12 +1,27 @@
 """Opt-in routes on the existing Studio handler; no second port, queue or model worker."""
 import base64
 import hashlib
+import sqlite3
 from urllib.parse import urlparse
+
+from studio_workflow.addressable_figures import split_figures
+try:
+    from workspace import WorkspaceError
+except ModuleNotFoundError as error:
+    if error.name != 'workspace':
+        raise
+    from app.workspace import WorkspaceError
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
 
 
 def dispatch(path, value, studio=None):
+    if path == '/api/prompt/reference-review/inspect':
+        from .reference_review import inspect
+        return inspect(value)
+    if path == '/api/prompt/reference-review/preview':
+        from .reference_review import preview
+        return preview(value)
     if path == '/api/prompt/compile':
         fields(value, ('intent','profile_id')); return compile_brief(value['intent'],value['profile_id'])
     if path == '/api/prompt/apply':
@@ -46,13 +61,38 @@ def extend_handler(base):
             return self._json(200,{'profiles':list(profiles().values()),'generation_submitted':False})
 
         def do_POST(self):
-            if not urlparse(self.path).path.startswith('/api/prompt/'): return super().do_POST()
+            path = urlparse(self.path).path
+            if path == '/api/assets/split-figures':
+                if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
+                try:
+                    need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
+                    body=self.rfile.read(self._content_length(1024*1024))
+                    return self._json(201,split_figures(self.studio.assets,decode(body)))
+                except WorkspaceError as exc:
+                    return self._json(exc.status,exc.response())
+                except sqlite3.Error:
+                    return self._json(503,{
+                        'error':'Asset storage could not confirm this request. Check its receipt before retrying the exact command.',
+                        'code':'asset_storage_unconfirmed',
+                        'generation_submitted':False,
+                    })
+                except OSError as exc:
+                    return self._json(500,{'error':'Local figure split failed: '+str(exc)[:200],
+                                           'generation_submitted':False})
+                except (ValueError,KeyError,TypeError,IndexError,RecursionError) as exc:
+                    return self._json(400,{'error':str(exc),'generation_submitted':False})
+            if not path.startswith('/api/prompt/'): return super().do_POST()
             if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
             try:
                 need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
-                # Strict decoder and tighter cap; metadata endpoint accepts small media only.
-                body=self.rfile.read(self._content_length(1024*1024))
-                result=dispatch(self.path,decode(body),self.studio)
+                # Only reference review accepts four original images; every source
+                # has its own byte/pixel cap and no input is persisted or executed.
+                limit = 1024*1024
+                if self.path == '/api/prompt/reference-review/preview':
+                    from .reference_review import HTTP_LIMIT
+                    limit = HTTP_LIMIT
+                body=self.rfile.read(self._content_length(limit))
+                result=dispatch(self.path,decode(body, limit=limit),self.studio)
                 return self._json(200,result)
             except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
