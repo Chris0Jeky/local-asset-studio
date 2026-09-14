@@ -75,11 +75,19 @@ def assignment(preset, graph, source, slot=1, ordered=False):
     if not consumes_reference(graph, binding):
         return result, ('source_binding_unavailable', 'blocked',
                         'The selected image has no verified image input path to every supported saved output. No assignment was guessed.')
+    slots = preset.get('reference_slots') or []
+    if preset.get('reference_board') and len(slots) >= slot and isinstance(slots[slot-1], dict) and slots[slot-1].get('binding') == binding:
+        expected = slots[slot-1].get('role', 'style')
+        if source['role'] != expected:
+            return result, ('source_board_role_mismatch', 'blocked',
+                            f'This style-board position expects the {expected} role. No role or prompt wording was applied.')
+        result['role_mode'] = 'style-board'
+        return result, ('source_board_proposed', 'unknown',
+                        f'Picture {slot} can occupy this visual style-board slot. It remains unstaged and contributes no per-picture prompt wording.')
     if source['role'] == 'source':
         result['role_mode'] = 'whole-image'
         return result, ('source_wiring_observed', 'observed',
                         'The image input reaches the saved outputs. This is whole-image wiring, not a promise to preserve identity or pixels.')
-    slots = preset.get('reference_slots') or []
     # The existing compiler supports explicit roles only through reference_slots.
     if len(slots) >= slot and isinstance(slots[slot-1], dict) and slots[slot-1].get('binding') == binding and preset.get('positive'):
         result['role_mode'] = 'prompt-guidance'
@@ -148,7 +156,7 @@ def validate_source_reply(result, query, message):
         need(source is not None and type(a) is dict and a.get('asset_id') == query['source_asset_id']
              and a.get('sha256') == query['source_sha256'] and a.get('role') == query['source_role']
              and type(a.get('slot')) is int and a['slot'] == 1
-             and a.get('role_mode') in ('whole-image', 'prompt-guidance', 'unsupported'), message)
+             and a.get('role_mode') in ('whole-image', 'prompt-guidance', 'style-board', 'unsupported'), message)
         binding = a.get('binding')
         need(binding is None or type(binding) is list and len(binding) == 2
              and type(binding[0]) is str and len(binding[0]) <= 96 and binding[1] == 'image', message)

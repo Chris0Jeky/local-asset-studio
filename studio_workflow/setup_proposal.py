@@ -159,33 +159,46 @@ def request(value, studio):
     captured=_capture(studio,q['sources'])
     report=shortlist_request({'goal':q['goal'],'sources':q['sources'],'limit':1},studio,preset_id=q['preset_id'])
     need(len(report['candidates'])==1 and report['total']==1, 'The target recipe does not match this goal')
-    candidate=report['candidates'][0]
-    assignments=candidate.get('source_assignments',[])
-    need(len(assignments)==len(captured) and candidate['reference_count']==len(captured), 'Every Picture needs a distinct target slot')
+    candidate=report['candidates'][0];assignments=candidate.get('source_assignments',[])
+    from app.references import reference_transform, guidance_text, board_spec, board_transform, ROLES
+    named=preset.get('reference_slots') or [];board=board_spec(preset) if preset.get('reference_board') else None
+    if board:
+        need(board['minimum']<=len(captured)<=board['slot_count'],
+             f'This style board needs {board["minimum"]}-{board["slot_count"]} ordered Picture sources')
+        need(len(assignments)==len(captured), 'Every supplied board Picture needs a distinct target slot')
+    else:
+        need(len(assignments)==len(captured) and candidate['reference_count']==len(captured), 'Every Picture needs a distinct target slot')
     need(not preset.get('requires_rgba_mask') and not preset.get('continuation_capability',{}).get('requires_mask'), 'Mask routes need a reviewed mask; setup proposal does not validate masks')
     # Motion modes and native transforms require a separate complete proposed-state contract.
     need(not preset.get('i2v_modes'), 'Motion-mode proposals are not supported yet; use the existing animation controls')
     controls,bindings=_controls(preset,graph,q['positive'],q['negative'])
-    from app.references import reference_transform, guidance_text, ROLES
-    named=preset.get('reference_slots') or []
     source_intents=[]
     for index,(source,assignment,guidance) in enumerate(zip(captured,assignments,q['guidance'])):
-        need(assignment.get('binding') is not None and assignment.get('role_mode') in ('whole-image','prompt-guidance'), f'Picture {index+1} has no supported distinct binding/role')
-        if named:
-            need(source['role'] in ROLES and assignment['role_mode']=='prompt-guidance', f'Picture {index+1}: choose a named reference role before previewing wording')
-            transform=reference_transform(preset,graph,assignment['binding'][0],source)
+        need(assignment.get('binding') is not None, f'Picture {index+1} has no distinct target binding')
+        if board:
+            need(not guidance['contribution'] and not guidance['avoid'],
+                 f'Picture {index+1}: style-board images are visual-only; per-Picture prompt guidance is not compiled')
+            need(source['role']==board['roles'][index], f'Picture {index+1}: choose the {board["roles"][index]} board role before previewing')
+            role_mode='style-board';transform=board_transform(preset);binding=copy.deepcopy(named[index]['binding'])
+        elif named:
+            need(source['role'] in ROLES and assignment.get('role_mode')=='prompt-guidance', f'Picture {index+1}: choose a named reference role before previewing wording')
+            role_mode=assignment['role_mode'];binding=assignment['binding']
+            transform=reference_transform(preset,graph,binding[0],source)
         else:
+            need(assignment.get('role_mode')=='whole-image', f'Picture {index+1} has no supported whole-image binding')
             need(not guidance['contribution'] and not guidance['avoid'], 'This whole-image route does not compile per-Picture guidance; review the main wording instead')
+            role_mode=assignment['role_mode'];binding=assignment['binding']
             transform={'policy':'native graph preprocessing; not projected by this adapter'}
-        source_intents.append({**source,**{k:v.strip() for k,v in guidance.items()},'binding':assignment['binding'],
-                               'role_mode':assignment['role_mode'],'transform':transform})
-    compiled=guidance_text(source_intents,q['positive']) if named else controls.get('positive')
+        source_intents.append({**source,**{k:v.strip() for k,v in guidance.items()},'binding':binding,
+                               'role_mode':role_mode,'transform':transform})
+    compiled=controls.get('positive') if board or not named else guidance_text(source_intents,q['positive'])
+    by_input={} if board else {'reference':captured[0]['asset_id']}
     intent={'preset_id':q['preset_id'],'template_sha256':q['expected_template_sha256'],'backend_id':candidate['backend_id'],
             'controls':controls,'control_bindings':bindings,'batch':1,'sources':source_intents,'compiled_positive':compiled,
             'compiled_positive_binding':preset.get('positive'),
-            'lineage':{'parents':list(dict.fromkeys(x['asset_id'] for x in captured)),
-                       'by_input':{'reference':captured[0]['asset_id']},
+            'lineage':{'parents':list(dict.fromkeys(x['asset_id'] for x in captured)),'by_input':by_input,
                        'source_slots':[{'slot':x['slot'],'asset_id':x['asset_id'],'role':x['role']} for x in captured]}}
+    if board:intent['reference_board']={k:board[k] for k in ('minimum','slot_count','roles')}
     if not named and len(captured)==2 and assignments[1]['binding']==preset.get('last_reference'):
         intent['lineage']['by_input']['lastReference']=captured[1]['asset_id']
     # These are observations; no leases, mutations or preflight/worker calls occur.
@@ -224,6 +237,14 @@ def validate_reply(result, value):
     for index,(item,expected) in enumerate(zip(intent['sources'],q['sources'])):
         need(type(item) is dict and all(item.get(k)==v for k,v in expected.items()) and type(item.get('slot')) is int and item['slot']==index+1 and item.get('staged') is False,message)
         need(all(item.get(k)==v.strip() for k,v in q['guidance'][index].items()),message)
+        need(item.get('role_mode') in ('whole-image','prompt-guidance','style-board') and type(item.get('binding')) is list,message)
+    board=intent.get('reference_board')
+    if board is not None:
+        need(type(board) is dict and set(board)=={'minimum','slot_count','roles'} and type(board['minimum']) is int
+             and type(board['slot_count']) is int and 1<=board['minimum']<=len(intent['sources'])<=board['slot_count']
+             and type(board['roles']) is list and len(board['roles'])==board['slot_count'],message)
+        need(intent.get('compiled_positive')==intent['controls'].get('positive') and intent.get('lineage',{}).get('by_input')=={}
+             and all(x.get('role_mode')=='style-board' and not x.get('contribution') and not x.get('avoid') for x in intent['sources']),message)
     need(result.get('diff')==_diff(q['draft'],intent),message)
     return result
 

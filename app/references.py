@@ -7,6 +7,26 @@ from pathlib import Path
 MAX_REFERENCE_BYTES=20*1024*1024
 
 ROLES={'identity','pose','style','costume','composition','geometry','motion','mask'}
+BOARD_POLICY='native IP-Adapter CLIP-vision preprocessing (224 px centre crop)'
+
+
+def board_spec(preset):
+    """Return one validated description shared by board review and compilation."""
+    slots=preset.get('reference_slots') or [];board=preset.get('reference_board')
+    if not isinstance(board,dict) or not slots:raise ValueError('This recipe has no reference board')
+    minimum=board.get('min',1);policy=board.get('policy',BOARD_POLICY)
+    if type(minimum) is not int or not 1<=minimum<=len(slots):raise ValueError('Reference-board minimum must fit its declared slots')
+    if not isinstance(policy,str) or not policy or len(policy)>500:raise ValueError('Reference-board preprocessing policy is invalid')
+    roles=[]
+    for slot in slots:
+        role=slot.get('role','style') if isinstance(slot,dict) else None
+        if role not in ROLES:raise ValueError('Every board slot needs a supported role')
+        roles.append(role)
+    return {'minimum':minimum,'slot_count':len(slots),'roles':roles,'policy':policy}
+
+
+def board_transform(preset):
+    return {'policy':board_spec(preset)['policy']}
 
 
 def scale_node(graph, node):
@@ -67,11 +87,11 @@ def prune_missing_slot(graph, node):
 
 def compile_board(preset, graph, supplied, uploads):
     """A style board: every slot is optional, missing slots are pruned, no prompt guidance is written."""
-    slots=preset.get('reference_slots',[]); board=preset.get('reference_board') or {}
+    slots=preset.get('reference_slots',[]);spec=board_spec(preset);transform=board_transform(preset)
     supplied=[] if supplied is None else supplied
     if not isinstance(supplied,list) or len(supplied)>len(slots): raise ValueError(f'This recipe has {len(slots)} board slots')
     supplied=list(supplied)+[{}]*(len(slots)-len(supplied))
-    minimum=board.get('min',1)
+    minimum=spec['minimum']
     if sum(1 for r in supplied if isinstance(r,dict) and r.get('file'))<minimum:
         raise ValueError(f'Attach at least {minimum} picture{"s" if minimum!=1 else ""} to the board, or leave the recipe example in place')
     records=[]
@@ -81,15 +101,14 @@ def compile_board(preset, graph, supplied, uploads):
             # Keep the slot's position in the persisted record: a saved recipe restores by index, so a
             # two-picture board must still come back as three slots with the empty one marked.
             prune_missing_slot(graph,node)
-            records.append({'slot':index+1,'role':slot.get('role','style'),'file':None,'pruned':True,'contribution':'','avoid':''}); continue
+            records.append({'slot':index+1,'role':spec['roles'][index],'file':None,'pruned':True,'contribution':'','avoid':''}); continue
         if reference.get('role',slot.get('role')) not in ROLES: raise ValueError('Every reference needs an explicit supported role')
         name=reference['file']
         if not isinstance(name,str) or name!=Path(name).name: raise ValueError('Choose an uploaded image for every reference slot')
         record=image_record(uploads,name)
         if reference.get('sha256') and reference['sha256']!=record['sha256']:
             raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
-        record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',
-                      transform={'policy':board.get('policy','native IP-Adapter CLIP-vision preprocessing (224 px centre crop)')})
+        record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',transform=transform)
         graph[str(node)]['inputs'][field]=name
         records.append(record)
     return records
