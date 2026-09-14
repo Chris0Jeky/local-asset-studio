@@ -67,5 +67,66 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const winner=await Promise.race([p.then(()=>true),new Promise(resolve=>setTimeout(()=>resolve(false),50))]);
     assert.equal(winner,true);assert.equal(s.run('assetState.assets[0].favorite'),true);
   });
+  const library=()=>{const s=setup({autoOpen:false});s.el('#assetType').value='all';s.el('#assetSort').value='newest';
+    s.run("assetState.assets.forEach((a,i)=>{a.created_at=i;a.collections=[];a.preset_name='Recipe '+a.id;});renderAssets()");return s;};
+  const sample="[{id:'1',preset_name:'Anima',job_id:'j1',created_at:0},{id:'2',preset_name:'Krea',job_id:'j1',created_at:0},{id:'3',preset_name:'Anima',job_id:'j2',created_at:0}]";
+  await check('Grouping is a pure projection with first-seen sections',()=>{
+    const s=setup({autoOpen:false});
+    const group=(mode,field='key')=>JSON.parse(s.run(`JSON.stringify(assetGroups(${sample},'${mode}').map(g=>[g.${field},g.assets.map(a=>a.id)]))`));
+    assert.deepEqual(group('recipe'),[['recipe:Anima',['1','3']],['recipe:Krea',['2']]]);
+    assert.deepEqual(group('run'),[['run:j1',['1','2']],['run:j2',['3']]]);
+    assert.deepEqual(group('none'),[['',['1','2','3']]]);
+    assert.deepEqual(group('recipe','label')[0][0],'Anima');
+    // The same input twice gives the same sections; grouping never reorders or drops an asset.
+    assert.deepEqual(group('recipe'),group('recipe'));
+  });
+  await check('Day grouping keys on the local calendar date and names missing dates',()=>{
+    const s=setup({autoOpen:false});
+    assert.match(s.run("assetGroupOf({created_at:1789228800},'day').key"),/^day:\d{4}-\d{2}-\d{2}$/);
+    assert.equal(s.run("assetGroupOf({created_at:1789228800},'day').key"),s.run("assetGroupOf({created_at:1789228800+60},'day').key"));
+    assert.deepEqual(s.run("assetGroupOf({},'day').label"),'No date recorded');
+    assert.deepEqual(s.run("assetGroupOf({job_id:''},'run').label"),'No run recorded');
+  });
+  await check('A queue decision uses the ordinary edit save and then advances',async()=>{
+    const s=library();
+    assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
+    s.run('startReviewQueue()');
+    assert.equal(s.run('activeAsset.id'),'b');assert.match(s.el('#assetQueue').innerHTML,/1 of 2/);
+    const p=s.run("assetQueueDecide('needs_work')");
+    assert.equal(s.writes.length,1);assert.deepEqual(s.metadata(0),{ids:['b'],action:'edit',review:'needs_work'});
+    s.accept(0);await p;
+    assert.equal(s.run('activeAsset.id'),'a');assert.match(s.el('#assetQueue').innerHTML,/2 of 2/);
+    assert.equal(s.run("assetState.assets.find(a=>a.id==='b').review"),'needs_work');
+  });
+  await check('An unconfirmed queue decision never advances past its evidence',async()=>{
+    const s=library();s.run('startReviewQueue()');
+    const p=s.run("assetQueueDecide('selected')");s.writes[0].reject(Error('response lost'));await p;
+    assert.equal(s.run('activeAsset.id'),'b');assert.match(s.el('#assetDetailStatus').textContent,/not confirmed/);
+  });
+  await check('Reason chips toggle tags without typing and save nothing on their own',()=>{
+    const s=setup();
+    s.run("toggleAssetReason('hands')");
+    assert.equal(s.el('#assetTags').value,'tag, hands');assert.match(s.el('#assetReviewReasons').innerHTML,/aria-pressed="true"/);
+    s.run("toggleAssetReason('hands')");
+    assert.equal(s.el('#assetTags').value,'tag');assert.equal(s.writes.length,0);
+  });
+  await check('A confirmed single review updates the loaded record without refetching the workspace',async()=>{
+    const s=setup();s.run('globalThis.__refetches=0;refreshAssets=async()=>{globalThis.__refetches++;};');
+    s.el('#assetReview').value='selected';const p=s.el('#saveAssetDetails').onclick();s.accept(0);await p;
+    assert.equal(s.run('globalThis.__refetches'),0);
+    assert.equal(s.run("assetState.assets.find(a=>a.id==='a').review"),'selected');
+  });
+  await check('Bulk review saves each selected asset once and lists every failure',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a','b']);renderAssets()");
+    const p=s.run("bulkReviewSelected('rejected')");
+    assert.equal(s.writes.length,2);assert.deepEqual(s.payload(0).ids,['a']);assert.deepEqual(s.payload(1).ids,['b']);
+    assert.equal(s.payload(0).review,'rejected');assert.deepEqual(s.payload(0).expected_revisions,{a:0});
+    s.accept(0);s.writes[1].reject(Error('Workspace unavailable'));await p;
+    assert.equal(s.run("assetState.assets.find(a=>a.id==='a').review"),'rejected');
+    assert.equal(s.run("assetState.assets.find(a=>a.id==='b').review"),'unreviewed');
+    assert.match(s.el('#assetBulkReviewStatus').textContent,/1 of 2 marked as Rejected/);
+    assert.match(s.el('#assetBulkReviewStatus').textContent,/1 failed and no retry was sent/);
+    assert.match(s.el('#assetBulkReviewStatus').textContent,/not confirmed/);
+  });
   console.log('Asset metadata frontend contracts passed:',count);
 })().catch(e=>{console.error(e);process.exitCode=1;});
