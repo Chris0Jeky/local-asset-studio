@@ -43,11 +43,7 @@ committed, so the VRAM reserve is measurably not the lever. The ≥32 GiB commit
 an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
 `app/` samples commit headroom before submitting at the original handoff. #77 says not to treat paging as a default fix. The later explicit owner decision and verified configuration above supersede this historical undecided option.
 
-**q-5 — Hunyuan3D 2.1 territory (issue #26): open, needs the owner.** `hunyuan-draft` has a completed job (36.88 s) and
-`hunyuan-detail` is registered, but the repository's own research records that the Hunyuan3D 2.1 licence excludes the
-UK, EU and South Korea and restricts outputs outside the territory. Execution is not clearance. Please decide one of:
-keep both presets as experiment-only with no output reuse; retire them; or record a clearance you have established
-independently (with its basis). Until then the catalog notes state the exclusion and nothing infers approval.
+**q-5 — Hunyuan3D 2.1 territory (issue #26): open, clearance granted.** It only needs to be closed off and update the relevant docs with this update.
 
 **q-6 — three UX questions, first owner feedback on the Studio itself: open.** Every usability judgement on record was
 made by an agent from screenshots. Please answer in your own words: (1) Is the Create view's density right, or should
