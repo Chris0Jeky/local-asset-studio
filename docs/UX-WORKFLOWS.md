@@ -100,7 +100,7 @@ not revision history. They are not encrypted, and clearing site data removes the
 
 ### Move compiled text between tools
 
-Prompt Lab exposes **Review text in Create** after a usable compilation. A workspace-scoped,
+Prompt Lab exposes **Open Create with this prompt** after a usable compilation. A workspace-scoped,
 time-limited sessionStorage message carries only text. Create shows a second explicit apply step.
 Positive and negative text are previewed; negative text is applied only to a recipe that supports that
 field, otherwise the user is told it was not applied. References and sampling controls are never

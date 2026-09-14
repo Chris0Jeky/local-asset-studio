@@ -20,10 +20,11 @@ function makeNode(tag = 'div') {
   };
 }
 
-function harness({profiles = PROFILES, compile = null, ok = true} = {}) {
+function harness({profiles = PROFILES, compile = null, ok = true, timers = false} = {}) {
   const elements = new Map(), requests = [];
   const element = id => { if (!elements.has(id)) elements.set(id, makeNode()); return elements.get(id); };
   const context = vm.createContext({
+    ...(timers ? {setTimeout, clearTimeout} : {}),
     StudioUX,
     document: {getElementById: element, createElement: makeNode},
     btoa: s => Buffer.from(s, 'binary').toString('base64'),
@@ -234,9 +235,18 @@ async function metadataResponses() {
   assert.deepEqual(requests.map(r => r.url), ['/api/prompt/profiles', ...Array(3).fill('/api/prompt/metadata')]);
   assert.equal(pending.length, 3, 'Oversize selection must not upload');
 }
+async function liveBuildIsDebounced() {
+  const {requests, run} = harness({timers: true, compile: () => ({state: 'review_required', fields: {positive: 'x'}, errors: [], diagnostics: [], coverage: [], intent: {}, profile: PROFILES[0], profile_sha256: 'p', intent_sha256: 'i'})});
+  await new Promise(resolve => setTimeout(resolve, 600));
+  const before = requests.filter(r => r.url === '/api/prompt/compile').length;
+  for (let i = 0; i < 5; i++) run('invalidate()');
+  assert.equal(requests.filter(r => r.url === '/api/prompt/compile').length, before, 'A keystroke burst sends nothing while the debounce is pending');
+  await new Promise(resolve => setTimeout(resolve, 700));
+  assert.equal(requests.filter(r => r.url === '/api/prompt/compile').length, before + 1, 'Five edits inside 400 ms build once');
+}
 // Terminal line: its absence is how the Python wrapper tells a stalled chain from a completed run.
 startup(true).then(() => startup(false)).then(blockedBuildExplainsItself).then(repairsAreOfferedOnlyWhenTheyFit)
   .then(avoidTermsAreParkedNotDeleted).then(longAvoidListsAreSplitNotTruncated)
-  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses)
+  .then(coverageNamesTheFieldThisDialectFills).then(importedBriefRefreshesItsExplanation).then(metadataResponses).then(liveBuildIsDebounced)
   .then(() => console.log('Prompt Lab frontend contracts passed: profile startup, live build, plain-language blockers, HTTP failure reporting and metadata selection.'))
   .catch(error => { console.error(error); process.exitCode = 1; });
