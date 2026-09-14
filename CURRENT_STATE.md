@@ -1,5 +1,29 @@
 # Current state — 14 September 2026
 
+## Collect saved primary character-study results — 14 September 2026
+
+The offline [Production result collector](docs/character-consistency/PRODUCTION-RESULTS.md)
+now turns bound primary-study projects into the existing attempt records and
+summary. It reads saved SQLite rows and job files, checks case/control/reference,
+prompt/graph and Workspace asset ownership, and copies verified candidate bytes.
+Unknown outcomes retain their pending evidence. Never-submitted reservations stay
+spent and separate from the summary's record count. Generic selections produce no
+character review or human acceptance; no executor or allowance is added.
+
+Executed: all 16 focused synthetic tests pass without ResourceWarning, including
+real Production/Workspace persistence and a subprocess CLI check. A retained
+8-by-8-pixel fixture collection contains one completed candidate and one uncertain
+submission, with two reservations used, zero human acceptances and no runtime
+contact. Missing/torn evidence, wrong ownership, changed bytes, hidden generic
+branches, copy-time changes and incorrect budget records are rejected. Broader
+integration and independent review are recorded on the change's PR.
+
+Not verified: collection of the owner's real pilot, running Studio adoption, new
+generation, complete runtime/model identity, benchmark performance, art acceptance
+or licensing. Character-edit campaigns and manually run legacy jobs use their
+existing collectors. Issues #3, #14 and #302 retain their broader acceptance
+requirements. HUMAN_TODO q-7 and q-25 remain open; no live service was changed.
+
 ## HTTP resource lifetime — 14 September 2026
 
 The AV fixture now closes its listener and checks that the serving thread ends.
