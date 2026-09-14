@@ -57,7 +57,9 @@ with SHA-verified receipts and pinned with their permission flags (`models/libra
 relation to the graph: ComfyUI reloads models from paged host RAM between jobs; 129 orphaned MCP node processes were
 reclaimed mid-run with `~/.claude/tools/mcp-hygiene.ps1 -Clean`.
 
-Not verified: Nova Anime XL IL v19 was still downloading at the time of writing (no recipe yet); Animagine and CSTati
+Later the same day Nova Anime XL IL v19 finished downloading (SHA-verified receipt), was pinned, and got a fifth Style + Pose board recipe; four Studio jobs (three Nova cells and a WAI baseline, [2026-09-14-nova](experiments/curated/style-pose-matrix/2026-09-14-nova/README.md)) held the pose and showed a punchier, higher-contrast palette than WAI, so Nova is `verified: true` as a second choice and WAI stays the default.
+
+Not verified: Animagine and CSTati
 boards not re-run; one seed everywhere; the beach pose not run on the board; no warm, RAM-quiet timing; no licence
 judgement; art acceptance stays with the owner (HUMAN_TODO q-25, q-26).
 

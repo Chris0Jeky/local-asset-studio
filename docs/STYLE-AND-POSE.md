@@ -1,7 +1,8 @@
 # Style of one picture, pose of another — without Qwen
 
-Four recipes in the Create view do this in one SDXL run: **Style + Pose (WAI v17)**, **(YumeFlux ILv1)**,
-**(Animagine XL 4)** and **(CSTati v3)**, in that order of measured quality (see the matrix below). Pony V6 and
+Five recipes in the Create view do this in one SDXL run: **Style + Pose (WAI v17)**, **(Nova Anime XL v19)**,
+**(YumeFlux ILv1)**, **(Animagine XL 4)** and **(CSTati v3)**. WAI is the calm default; Nova (installed 14 September
+2026) is the punchier, higher-contrast alternative; see the matrices below for the rest. Pony V6 and
 NoobAI XL were tried and removed: with this adapter they lose the figure entirely. All four use weights and
 custom nodes that were already installed on this PC:
 
@@ -61,3 +62,5 @@ of them by filename.
 A completed render is neither art acceptance nor licence clearance for the checkpoint, the adapters, the LoRAs or the
 reference pictures; the flags civitai declares for each LoRA are recorded in `models/library.json`.
 
+Nova Anime XL IL v19 was added afterwards and compared on the same board (`experiments/curated/style-pose-matrix/2026-09-14-nova/`,
+sheet `examples/style-pose/matrix/nova-vs-wai.jpg`): pose held, stronger colour and contrast than WAI; a second choice, not a replacement.

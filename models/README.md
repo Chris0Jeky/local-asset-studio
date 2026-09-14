@@ -48,6 +48,7 @@ writing a file it cannot verify through the download path. Copy them in by hand.
 | `checkpoints/pony-diffusion-v6.safetensors` | 6,938,041,050 | `67ab2fd8ec43` | [AstraliteHeart/pony-diffusion-v6](https://huggingface.co/AstraliteHeart/pony-diffusion-v6) | creativeml-openrail-m |
 | `checkpoints/sd_xl_base_1.0.safetensors` | 6,938,078,334 | `31e35c80fc48` | [stabilityai/stable-diffusion-xl-base-1.0](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0) | openrail++ |
 | `checkpoints/waiIllustriousSDXL_v170.safetensors` | 6,938,040,682 | `f116b0c78ff4` | [frankjoshua/waiIllustriousSDXL_v170](https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170) | none declared |
+| `checkpoints/novaAnimeXL_ilV190.safetensors` | 6,939,105,596 | `fa486caafc33` | [civitai model 376130](https://civitai.com/models/376130) | civitai flags RentCivit/Image/Rent (no Sell) |
 | `clip_vision/clip-vision_vit-h.safetensors` | 2,528,373,448 | `6ca9667da1ca` | [h94/IP-Adapter](https://huggingface.co/h94/IP-Adapter) | apache-2.0 |
 | `controlnet/xinsir-openpose-sdxl.safetensors` | 2,502,139,104 | `b8524e557a7d` | [xinsir/controlnet-openpose-sdxl-1.0](https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0) | apache-2.0 |
 | `controlnet/xinsir-union-sdxl-1.0.safetensors` | 2,512,030,408 | `a9e13fd61f31` | [xinsir/controlnet-union-sdxl-1.0](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0) | apache-2.0 |
