@@ -33,3 +33,15 @@ WAI v17 or YumeFlux, board `average` at 0.6–0.7, Mishima Kurone 0.7–0.8 (tri
 the second slot, Fantastic Days 0.9 as the alternative first slot for splash-art sparkle. Not verified: any seed other
 than 2026091410, the beach pose on the board, strengths other than the ones above, licence terms (recorded in
 `models/library.json`, never inferred).
+
+## Verifying runs on the averaged board (defaults as shipped)
+
+| Recipe | Studio job | Prompt | Seconds | Seen |
+|---|---|---|---|---|
+| wai | `12be1c70-cd3b-456c-ae47-371e4b58f1ce` | `a0e13d48-d073-4313-9451-e96646e4aec5` | 121 | seated with the knee raised, one eye closed and the hand on the throne arm as in the pose picture; clean light-novel lineart with glossy skin highlights, the sheet's brown-black-gold witch costume with diamond trim, a starry dark-blue sky borrowed from the board's group art; no text, no extra limbs. |
+| yumeflux | `1a07713c-a1b6-4c56-ab22-29743658e3de` | `c020c7f5-9124-4cb3-ab1e-18fdd2342574` | 275 | same pose held; the throne is fully drawn in red and gold, the costume is glossier and more saturated, the background a blue energy swirl; face and hands clean. |
+
+Board: the same three pictures, averaged at the authored 0.7; throne pose; Mishima Kurone 0.8 + Glossy 0.6; seed
+2026091410. JPEG copies: `examples/style-pose/board-verify-wai.jpg`, `board-verify-yumeflux.jpg`; hashes in
+[`verify.json`](verify.json). These two runs are what `verified: true` on the WAI and YumeFlux recipes refers to; the
+Animagine and CSTati boards stay unverified.

@@ -10,7 +10,9 @@ The live repository visibility was observed as **PUBLIC** on 13 September 2026. 
 
 ## Style + Pose recipes — open item
 
-**q-25 — creative review of the Style + Pose proving image (open).** One WAI v17 run with the authored example pictures
+**q-26 — which of the seven new Illustrious LoRAs may the character pack use (open).** civitai's flags differ per file and are recorded in `models/library.json`: Mishima Kurone, Momoko and Konosuba SD8 allow Image/Rent/Sell; Glossy, Fantastic Days and Detail enhancer allow Image and Rent but not Sell; Shiny Nai allows Rent only (no Image, no Sell). The Mishima Kurone and Momoko files are artist-style LoRAs the artists did not license. Decide which are acceptable for the pack's intended use; the recipes accept any of them by filename. Agents do not tick this.
+
+**q-25 — creative review of the Style + Pose results (open).** Now three sheets: the six-checkpoint matrix (`examples/style-pose/matrix/assessment-sheet.jpg`), the board LoRA sweep (`board-lora-sweep-wai.jpg`, `board-lora-sweep-yumeflux.jpg`, `board-combine-probes.jpg`) and the two verifying runs (`examples/style-pose/board-verify-*.jpg`). My reading: WAI or YumeFlux, board averaged at 0.7, Mishima Kurone 0.8 + Glossy 0.6. Decide whether that direction is right and mark keeper / needs-work in the library. Agents do not tick this. One WAI v17 run with the authored example pictures
 is at `examples/style-pose/wai-proving-run.jpg` (evidence in `experiments/curated/style-pose/`). Decide whether the
 style transfer and pose fidelity are good enough to use these recipes for the fantasy character pack, and whether the
 defaults (style weight 0.8, pose strength 0.9) should change. Suggested action: run the *3-seed audition* variant with
