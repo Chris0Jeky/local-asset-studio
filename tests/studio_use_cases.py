@@ -380,6 +380,20 @@ class CaseRun:
         try: return self.page.locator('#generate').is_enabled()
         except Exception: return False
 
+    def studies(self):
+        """Ids currently listed in Runs & review, so 'a study appeared' means a NEW one."""
+        try: return set(self.page.eval_on_selector_all('#productionList [data-project]', 'nodes => nodes.map(n => n.dataset.project)'))
+        except Exception: return set()
+
+    def wait_for_new_study(self, before, timeout=10000):
+        """Wait until Runs & review lists a study that was not there before the prepare."""
+        deadline = time.time() + timeout / 1000
+        while time.time() < deadline:
+            fresh = self.studies() - before
+            if fresh: return fresh
+            self.page.wait_for_timeout(250)
+        return self.studies() - before
+
     def wait_for_studies(self, timeout=10000):
         """Wait for Runs & review to actually render a study.
 
@@ -472,12 +486,17 @@ def _compare(c):
     c.act('#planComparison')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
-    c.act('#experimentBudget', 'fill', typed='2')
+    # The planner proposes the candidate values but does not size the allowance to them:
+    # a person has to read the proposal and raise the total by hand, or preparing is refused.
+    proposed = len([v for v in (c.page.locator('#experimentValues').input_value() or '').split(',') if v.strip()])
+    before = c.studies()
+    c.act('#experimentBudget', 'fill', typed=str(max(proposed, 1)), note='%d proposed values need at least %d runs' % (proposed, proposed))
     c.act('#prepareExperiment')
-    listed = c.wait_for_studies()
+    fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#experimentStatus')
-    c.act('#productionList', 'read', note='%d studies listed%s' % (listed, '; planner said: ' + status if status else ''))
-    return listed > 0, '%d studies listed after preparing%s' % (listed, '; planner said: ' + status if status else '')
+    detail = '%d new study listed (allowance %d for %d values)%s' % (len(fresh), max(proposed, 1), proposed, '; planner said: ' + status if status else '')
+    c.act('#productionList', 'read', note=detail)
+    return bool(fresh), detail
 
 
 @driver('review-and-keep-winner')
@@ -598,11 +617,13 @@ def _native_export(c):
     c.act('#nativeExport')
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
+    before = c.studies()
     c.act('#prepareNative')
-    listed = c.wait_for_studies()
+    fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#nativeStatus')
-    c.act('#productionList', 'read', note='%d studies listed%s' % (listed, '; export dialog said: ' + status if status else ''))
-    return listed > 0, '%d studies listed after preparing the export%s' % (listed, '; export dialog said: ' + status if status else '')
+    detail = '%d new study listed%s' % (len(fresh), '; export dialog said: ' + status if status else '')
+    c.act('#productionList', 'read', note=detail)
+    return bool(fresh), detail
 
 
 # --------------------------------------------------------------------------------------

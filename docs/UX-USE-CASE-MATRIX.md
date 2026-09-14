@@ -61,7 +61,8 @@ PASS means the journey completed in the interface — not that the result would 
 - **`three-reference-identity-pose-style`** — all three slots filled with distinct roles (identity,
   pose, style) and the run control enabled. Highest click and switch count in the suite.
 - **`compare-settings-from-recipe`** — a study was prepared on guidance with explicit candidate
-  values and an allowance, and it appeared in Runs & review as `planned`. Not started.
+  values and an allowance sized to them, and a *new* study appeared in Runs & review as `planned`.
+  Not started. The allowance has to be raised by hand to match the planner's own proposal (below).
 - **`review-and-keep-winner`** — settings revealed, a candidate opened, a note written, winner kept,
   the study recorded as `reviewed`. Lowest reading load of the suite (215 words).
 - **`reuse-keeper-as-reference`** — a library picture was prepared as the source of a one-reference
@@ -149,10 +150,15 @@ the fixture measurement on every PR that touches `app/static/**`, `presets/catal
 `studio_workflow/guides.py`, the case file or the runner, and fails when a case misses its success
 condition. The matrix JSON and the per-step screenshots are uploaded as a CI artifact.
 
-Timing: the runner waits for the interface to render rather than sleeping a fixed interval. The first
-hosted-CI run of this lane failed `compare-settings-from-recipe` for exactly that reason — preparing a
-study posts, switches view and refreshes, which took longer than the 700 ms sleep the runner then used.
-Prefer `wait_for_studies()` and friends over `wait_for_timeout` in any new driver.
+Two lessons from this suite's own first hosted-CI runs, worth keeping if you add a case:
+
+- **Wait for the interface, never sleep.** Preparing a study posts, switches view and refreshes, which
+  took longer than the 700 ms the runner first slept for. Use `wait_for_new_study()` / `wait_for_studies()`
+  rather than `wait_for_timeout`.
+- **Assert on something new, not on something present.** The first version of the comparison case
+  checked that Runs & review listed *any* study, and passed locally on plans earlier cases had left
+  behind, while the prepare it was supposed to measure was being refused. It now requires a study id
+  that was not listed before the prepare. CI caught this; the local run did not.
 
 Adding a case: add its intents to `research/ux/use-cases.json` and register a driver of the same id in
 `tests/studio_use_cases.py`. The driver must take exactly one recorded action per intent —
