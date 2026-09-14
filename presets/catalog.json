@@ -4031,7 +4031,7 @@
         "image"
       ],
       "verified": false,
-      "description": "Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "description": "Heavy 20B edit: one run of this recipe measured 672 s (about 11 min) on this PC on 14 September 2026; expect a similar wait per image and group these jobs. An identity reference carries who the character is, not how it is drawn: add a style reference (the 3-reference recipe) or name the art style in the brief, otherwise the result takes Qwen's own rendering. Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
       "reference_slots": [
         {
           "role": "identity",
@@ -4130,7 +4130,7 @@
         "image"
       ],
       "verified": false,
-      "description": "Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "description": "Heavy 20B edit: no run of this recipe has been timed; the 1-reference recipe measured 672 s (about 11 min) on this PC on 14 September 2026 and each extra reference adds encoding work, so expect longer and group these jobs. An identity reference carries who the character is, not how it is drawn: add a style reference (the 3-reference recipe) or name the art style in the brief, otherwise the result takes Qwen's own rendering. Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
       "reference_slots": [
         {
           "role": "identity",
@@ -4238,7 +4238,7 @@
         "image"
       ],
       "verified": false,
-      "description": "Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
+      "description": "Heavy 20B edit: no run of this recipe has been timed; the 1-reference recipe measured 672 s (about 11 min) on this PC on 14 September 2026 and each extra reference adds encoding work, so expect longer and group these jobs. An identity reference carries who the character is, not how it is drawn: add a style reference (the 3-reference recipe) or name the art style in the brief, otherwise the result takes Qwen's own rendering. Assign identity, pose and style separately. Every reference is scaled to 1.0 MP with its aspect preserved; the canvas is set on its own and no longer follows a reference. Role guidance is compiled into the editable brief. Semantic guidance does not guarantee exact pose or protected pixels.",
       "reference_slots": [
         {
           "role": "identity",
