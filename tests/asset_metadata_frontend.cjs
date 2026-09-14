@@ -103,6 +103,13 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const p=s.run("assetQueueDecide('selected')");s.writes[0].reject(Error('response lost'));await p;
     assert.equal(s.run('activeAsset.id'),'b');assert.match(s.el('#assetDetailStatus').textContent,/not confirmed/);
   });
+  await check('Opening an asset outside the queue leaves queue mode instead of skipping one',()=>{
+    const s=library();s.run("assetState.assets.push({...assetState.assets[0],id:'c',title:'c',job_id:'job-b',review:'selected',metadata_revision:0});renderAssets();startReviewQueue()");
+    assert.equal(s.run('assetQueue.ids.length'),2);assert.equal(s.run('activeAsset.id'),'b');
+    s.run("openAsset('c')");
+    assert.equal(s.run('activeAsset.id'),'c');assert.equal(s.run('assetQueue'),null);
+    assert.equal(s.el('#assetQueue').hidden,true);assert.match(s.el('#assetMessage').textContent,/Left the review queue/);
+  });
   await check('The end of the queue still asks before discarding unsaved typing',()=>{
     const s=library();s.run('startReviewQueue()');
     s.run('assetQueue.index=assetQueue.ids.length-1');s.el('#assetNotes').value='unsaved thought';

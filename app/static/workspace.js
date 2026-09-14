@@ -412,6 +412,7 @@ async function assetQueueDecide(review) {
   if(!assetQueue || !activeAsset || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
   // A shortcut must never re-send an unrelated unconfirmed command as if it were this decision.
   if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording a queue decision.',true);return false;}
+  if(assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   await saveAssetDetails();
@@ -547,7 +548,9 @@ function openAsset(id) {
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
   assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
-  if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;}
+  // Opening something outside the queue (a Same run sibling, lineage, the library) ends queue mode:
+  // a position that no longer describes what is on screen would skip a queued asset on the next decision.
+  if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;else{assetQueue=null;assetMessage('Left the review queue to open an asset outside it. Review next starts a fresh queue.');}}
   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p><details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at?'Restore':'Move to Trash';
