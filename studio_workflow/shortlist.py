@@ -22,7 +22,7 @@ FORMAT = 'studio.recipe-shortlist/v1'
 GOALS = {
     'new-image': ('Create a new image', 'image', {'new-image'}),
     'edit-image': ('Change an existing image', 'image', {'image-to-image', 'instruction-edit', 'localized-detail'}),
-    'reference-image': ('Create with pose or identity references', 'image', {'reference-guided-generation', 'instruction-edit'}),
+    'reference-image': ('Create with pose or identity references', 'image', {'reference-guided-generation', 'instruction-edit', 'restyle'}),
     'upscale-image': ('Upscale an image', 'image', {'upscale'}),
     'masked-repair': ('Repair a selected region', 'image', {'masked-repair'}),
     'animate-image': ('Animate an image', 'video', {'image-to-video'}),
@@ -67,14 +67,36 @@ def _status(checks):
         'unknown' if any(c['state'] == 'unknown' for c in checks) else 'observed')
 
 
+def _restyle_board(preset, cap):
+    """Project only the shipped shape: 1–3 board slots plus a separate pose source."""
+    if not (isinstance(cap, dict) and cap.get('operation') == 'restyle'
+            and cap.get('source_input') == 'last_reference'):
+        return None
+    slots = preset.get('reference_slots')
+    board = preset.get('reference_board')
+    if not (type(slots) is list and 1 <= len(slots) <= 3 and type(board) is dict
+            and isinstance(preset.get('last_reference'), (list, tuple))):
+        return None
+    minimum = board.get('min', 1)
+    if type(minimum) is not int or not 1 <= minimum <= len(slots):
+        return None
+    if cap.get('reference_count') != len(slots) + 1:
+        return None
+    return {'minimum': minimum, 'slot_count': len(slots),
+            'source_input': 'last_reference'}
+
+
 def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observations, source=None, sources=None):
     cap = preset['continuation_capability']; key = preset['id']; checks = []
+    board = _restyle_board(preset, cap)
     row = {'preset_id': key, 'name': _text(preset.get('name'), 160) or key,
            'description': _text(preset.get('description')), 'backend_id': preset.get('backend_id', 'primary'),
            'operation': cap['operation'], 'prompt_role': cap.get('prompt_role', 'unknown'),
            'reference_count': cap['reference_count'], 'template_sha256': cap.get('template_sha256'),
            'basis': 'Registered preset default graph, not a tuned recipe or your current draft.',
            'checks': checks, 'requirements': []}
+    if board:
+        row['reference_board'] = copy.deepcopy(board)
     if sources is not None: row['source_assignments'] = unassigned_sources(sources)
     if runtime['switching']:
         _check(checks, 'backend_switching', 'blocked', 'An environment change is in progress. Check again when it finishes.')
@@ -87,7 +109,20 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
         _check(checks, 'worker_unavailable', 'blocked' if worker_alive is False else 'unknown',
                'The Studio worker is unavailable.' if worker_alive is False else 'Studio worker liveness is unknown.')
     count = cap['reference_count']
-    if q['reference_count'] < count:
+    if board:
+        declared = q['reference_count']
+        if declared < board['minimum']:
+            _check(checks, 'references_missing', 'blocked',
+                   f'This style board needs at least {board["minimum"]} ordered style picture(s); you declared {declared}.')
+        elif declared > board['slot_count']:
+            _check(checks, 'unused_references', 'blocked',
+                   f'This style board has {board["slot_count"]} picture slot(s), not {declared}. Extra images will not be silently dropped.')
+        elif declared and not source and not sources:
+            _check(checks, 'references_unchecked', 'unknown',
+                   'Your style-board count is a declaration. Files, order, roles, staging and bytes have not been checked.')
+        _check(checks, 'restyle_source_separate', 'unknown',
+               'This check covers style-board pictures only. The separate pose/continuation source is not selected, staged or invented here.')
+    elif q['reference_count'] < count:
         _check(checks, 'references_missing', 'blocked', f'This route needs {count} reference image(s); you declared {q["reference_count"]}. Attach them in Create.')
     elif q['reference_count'] > count:
         _check(checks, 'unused_references', 'blocked', f'This route consumes {count} reference image(s), not {q["reference_count"]}. Extra images will not be silently dropped.')
@@ -181,8 +216,10 @@ def request(value, studio, *, preset_id=None):
     for preset in presets:
         if preset_id is not None and preset['id'] != preset_id: continue
         cap = preset.get('continuation_capability')
+        board = _restyle_board(preset, cap)
         if not (isinstance(cap, dict) and type(cap.get('version')) is int and cap['version'] == 1
-                and type(cap.get('reference_count')) is int and 0 <= cap['reference_count'] <= 3
+                and type(cap.get('reference_count')) is int
+                and (0 <= cap['reference_count'] <= 3 or board is not None)
                 and type(cap.get('operation')) is str and type(cap.get('consumes_source')) is bool):
             diagnostics.append({'preset_id': preset['id'], 'message': 'Operation evidence unavailable; no route was guessed.'});continue
         if preset.get('modality', 'image') != modality or cap['operation'] not in operations: continue
