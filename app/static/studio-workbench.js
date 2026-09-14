@@ -58,7 +58,7 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose the picture you keep'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
@@ -67,7 +67,8 @@
     const unfilled=!continuationState&&selected&&typeof StudioContinuation!=='undefined'?StudioContinuation.unfilled(selected,q('#positive')?.value):[];
     // A recipe that transforms a picture (a board with a picture to keep, or a declared restyle/combine) needs it on every route.
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
-    const sourceMissing=!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
+    // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
+    const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring,unfilled,sourceMissing});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
@@ -91,7 +92,7 @@
     q('#uxRecheckReadiness').disabled=readinessChecking;
     q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';
     const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length+(selected.last_reference&&lastUploaded?1:0):(uploaded?1:0)+(lastUploaded?1:0);
-    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'The continuation source is not attached. Use Put the source back, or reopen Continue with this asset.':'No personal source attached. This recipe may use its authored example until replaced.';
+    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'The continuation source is not attached. Use Put the source back, or reopen Continue with this asset.':(selected?.reference_board&&selected?.last_reference||selected?.continuation_operation?'No personal source attached. Choose your picture; this recipe never runs the authored example picture.':'No personal source attached. This recipe may use its authored example until replaced.');
   }
   function focusReadinessTarget(target){
     if(!target||target.closest('[hidden]')||target.disabled)return false;

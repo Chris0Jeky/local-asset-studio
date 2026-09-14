@@ -40,7 +40,7 @@
   function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false,unfilled=[],sourceMissing=false}){
     const items=[],add=(code,message,action=null)=>items.push({code,message,action});
     // A recipe that transforms a picture needs that picture on every route (the server refuses the authored example too).
-    if(sourceMissing)add('source','Add the picture you keep to '+(preset?.last_reference_label||preset?.reference_label||'Picture to keep (image 1)')+'.','source');
+    if(sourceMissing)add('source','Add your picture to '+(preset?.last_reference_label||preset?.reference_label||'Picture to keep (image 1)')+'; the authored example picture is never run.','source');
     // A recipe's bracketed fills left in the wording block every route (the server refuses them too), not only a continuation.
     if(Array.isArray(unfilled)&&unfilled.length)add('wording','Fill in the wording: replace '+unfilled.map(text=>'“'+text+'”').join(' and ')+' in the prompt.','fills');
     if(!preset)add('recipe','Choose a recipe.','recipes');

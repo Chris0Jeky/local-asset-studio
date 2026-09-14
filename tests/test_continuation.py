@@ -269,6 +269,25 @@ class ContinuationTests(unittest.TestCase):
         (self.studio.comfy_root / "input" / self.attachment["file"]).write_bytes(b"changed")
         with self.assertRaisesRegex(ValueError, "bytes changed"): continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True)
 
+    def test_every_shipped_recipe_that_transforms_a_picture_refuses_the_plain_route_without_its_source(self):
+        # A board with a picture to keep, or a declared restyle/combine, would otherwise submit the authored example
+        # picture (pose-reference-example.png) literally from the plain Create route (PR #372).
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        shipped = [p for p in catalog["presets"] if (p.get("reference_board") and p.get("last_reference")) or p.get("continuation_operation")]
+        self.assertGreaterEqual(len(shipped), 9, [p["id"] for p in shipped])
+        data = json.loads((self.root / "presets/catalog.json").read_text())
+        for preset in shipped:
+            graph_path = self.root / preset["graph"]; graph_path.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(ROOT / preset["graph"], graph_path); data["presets"].append(preset)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        for preset in shipped:
+            key = "last_reference" if preset.get("last_reference") else "reference"
+            label = preset.get(key + "_label") or "Picture to keep (image 1)"
+            wording = preset.get("continuation_prompt") or "a witch"
+            for fill in (preset.get("continuation_placeholder") or []) if isinstance(preset.get("continuation_placeholder"), list) else [preset.get("continuation_placeholder")]:
+                if fill: wording = wording.replace(fill, "the witch")
+            with self.assertRaisesRegex(Exception, re.escape(preset["name"] + " needs your picture on " + label + "; the authored example picture cannot be queued"), msg=preset["id"]):
+                self.studio.prepare(dict(preset_id=preset["id"], controls={"positive": wording.replace("{source}", "")}))
+
     def test_combine_continuation_keeps_the_source_as_image_one_and_refuses_the_unreplaced_placeholder(self):
         """Continue with this → Combine on the shipped Klein board: the source sits on last_reference (image 1), the pose
         picture on Picture 1 (image 2), the empty second slot is bypassed so the guider reads the surviving reference
