@@ -104,6 +104,23 @@ class Raster(unittest.TestCase):
         self.assertIsNotNone(projected.getbbox())
         for y in range(8): self.assertEqual(255, projected.getpixel((6, y)))
 
+    def test_every_positive_bilinear_footprint_retains_protected_source_samples(self):
+        # Independent centre/triangle support oracle, including clamped edges,
+        # odd ratios and upsampling. Conservative extra protection is permitted.
+        width, height = 9, 7
+        for out_width, out_height in ((3, 2), (5, 4), (14, 11), (36, 28)):
+            sx, sy = Fraction(width, out_width), Fraction(height, out_height)
+            for py in range(height):
+                for px in range(width):
+                    protection = Image.new('L', (width, height)); protection.putpixel((px, py), 255)
+                    actual = rp._work_protection(protection, (0, 0, width, height), (out_width, out_height))
+                    xs = [x for x in range(out_width)
+                          if abs(Fraction(2*x+1, 2)*sx - Fraction(1, 2) - px) < max(1, sx)]
+                    ys = [y for y in range(out_height)
+                          if abs(Fraction(2*y+1, 2)*sy - Fraction(1, 2) - py) < max(1, sy)]
+                    for y in ys:
+                        for x in xs: self.assertEqual(255, actual.getpixel((x, y)))
+
     def test_partial_coverage_and_invisible_source_rgb_remain_authoritative(self):
         original = source(); write, protect = masks()
         for index, value in enumerate((1, 127, 128, 254)): write.putpixel((6 + index, 6), value)

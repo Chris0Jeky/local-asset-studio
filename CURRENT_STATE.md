@@ -1,5 +1,28 @@
 # Current state — 14 September 2026
 
+## Actual scaled repair pixels and reconstructed packets — 14 September 2026
+
+The offline [pixel transform command](docs/repair-studio/PIXEL-TRANSFORMS.md) now
+prepares scaled RGBA context and explicit work/source masks from a checked edit
+plan and normalized source packet. Apply reconstructs the packet from the external
+request before compositing a supplied candidate. Effective coverage is checked
+again against protection, context, contacts and non-target actors; prepared padding
+cannot write source pixels. The new schemas do not enter legacy native/bridge
+adapters, and legacy edit behavior remains unchanged.
+
+Executed locally: 26 new transform/packet tests pass; legacy character edit checks
+have 229 total, 225 passed and four optional skips; source intake has 30 total,
+29 passed and one optional skip. The synthetic CLI example at
+`C:/AI/character-lab/scaled-repair-proof-20260914-a` changed 4,292 pixels with zero
+changes outside effective write coverage and zero protected changes. Its comparison
+was visually inspected: the other character is retained. This is CPU fixture
+evidence, not model execution, performance proof, anatomy quality or art acceptance.
+Full integration and independent review are recorded separately on the change's PR.
+Issue #245's mechanical transform slice advances; #243, native/model registration
+(#248), guided use (#251), repair allocation and a real accepted repair remain open.
+No runtime, generation allowance, model, installed application or human decision
+was changed by this implementation.
+
 ## Full assessment, recovery exits and agent tooling — 13/14 September 2026
 
 A coordinator plus 34 read-only subagents assessed the two-day burst of merged work at `main`

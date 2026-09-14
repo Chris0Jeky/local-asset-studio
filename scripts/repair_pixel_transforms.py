@@ -5,16 +5,33 @@ sample preservation, not candidate registration, artistic quality or permission.
 """
 from __future__ import annotations
 
+import argparse
 from fractions import Fraction
+from io import BytesIO
+import json
 from math import ceil
+from pathlib import Path
+import sys
 
 from PIL import Image, ImageChops, ImageFilter
 
-from scripts.character_edit_pixels import changed_mask
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+
+from scripts.character_edit import check_plan, digest
+from scripts.character_edit_pixels import changed_mask, validate_coverage, verify_references
 from scripts.repair_proposal import transform
+from scripts import repair_source as rs
+from scripts.character_study import artifact, canonical, inside, keys, relative, sha
 
 VERSION = 'straight-rgba-bilinear-v1'
 MAX_PIXELS = 24_000_000
+REQUEST_SCHEMA = 'studio.repair-transform-request/v1'
+BUNDLE_SCHEMA = 'studio.repair-transform-bundle/v1'
+RESULT_SCHEMA = 'studio.repair-transform-result/v1'
+PREPARED_FILES = {'context': 'context.png', 'work_write': 'work-write.png',
+                  'work_protect': 'work-protect.png', 'authored_write': 'authored-write.png',
+                  'effective_write': 'effective-write.png', 'source_protect': 'source-protect.png'}
 
 
 def require(condition, message):
@@ -130,3 +147,158 @@ def render_pixels(source, authored_write, protect, spec, candidate):
     return {'result': result, 'delta': delta, 'effective_write': images['effective_write'],
             'geometry': geometry, 'outside_changes': outside, 'protected_changes': protected,
             'no_op': delta.getbbox() is None, 'neural_inference': False, 'semantic_approval': False}
+
+
+def _folder(root, name, *, new=False):
+    relative(name); base = Path(root).resolve(strict=True); path = base / name
+    require(path.parent.resolve().is_relative_to(base), 'Packet parent escapes workspace')
+    if not new:
+        require(path.resolve(strict=True).is_relative_to(base) and path.is_dir(), 'Expected packet directory inside workspace')
+    return path
+
+
+def _captured_artifact(root, record):
+    artifact(record)
+    data = rs.read_bounded(inside(root, record['path']), rs.MAX_OUTPUT_BYTES, reject_symlink=True)
+    require(rs.digest(data) == record['sha256'], 'Changed artifact: ' + record['path'])
+    return data
+
+
+def _decode(data, *, mask=False, colours=None):
+    chunks = rs.scan_png(data, grayscale=mask)
+    allowed = (b'IHDR', b'IDAT', b'IEND') if mask else (*rs.COLOUR, b'IHDR', b'IDAT', b'IEND')
+    require(all(kind in allowed for kind, _ in chunks), 'Undeclared PNG metadata; normalize explicitly')
+    actual_colours = [(kind, value) for kind, value in chunks if kind in rs.COLOUR]
+    if colours is not None: require(actual_colours == colours, 'Candidate/source colour chunks differ')
+    with BytesIO(data) as buffer, Image.open(buffer) as image:
+        require(image.format == 'PNG' and image.mode == ('L' if mask else 'RGBA'), 'Unexpected decoded PNG mode')
+        image.load(); return image.copy(), actual_colours
+
+
+def _encode(image, colours=()):
+    if image.mode == 'RGBA': return rs.encode_rgba(image, colours)
+    with BytesIO() as buffer, Image.frombytes('L', image.size, image.tobytes()) as clean:
+        clean.save(buffer, format='PNG'); return buffer.getvalue()
+
+
+def _facts(data, image):
+    return {'sha256': rs.digest(data), 'bytes': len(data), 'size': list(image.size),
+            'mode': image.mode, 'pixel_sha256': rs.digest(image.tobytes())}
+
+
+def _prepare(root, plan, request):
+    check_plan(plan)
+    keys(request, {'schema', 'plan_sha256', 'source_packet', 'authored_write', 'protection', 'transform'})
+    require(request['schema'] == REQUEST_SCHEMA and request['plan_sha256'] == plan['plan_sha256'],
+            'Transform request belongs to another plan or version')
+    binding = request['source_packet']; keys(binding, {'path', 'receipt_sha256', 'normalized_sha256'})
+    digest(binding['receipt_sha256']); digest(binding['normalized_sha256'])
+    require(canonical(request['authored_write']) == canonical(plan['intent']['edit_mask'])
+            and canonical(request['protection']) == canonical(plan['intent']['protect_mask']),
+            'Transform masks must match the checked edit plan')
+    geometry = compile_transform(plan['document']['canvas'], request['transform'])
+    require(geometry['context_box'] == plan['intent']['context_box'], 'Transform context differs from checked plan')
+    folder = _folder(root, binding['path'])
+    normalized, source_receipt, raw_receipt = rs.load_packet(folder)
+    require(rs.digest(raw_receipt) == binding['receipt_sha256'], 'Source packet receipt changed')
+    require(rs.digest(normalized) == binding['normalized_sha256'] == plan['document']['source']['sha256'],
+            'Normalized source differs from request or plan')
+    # Resolve identity without reopening the normalized file after verification:
+    # the captured bytes above are the exact buffer decoded and used below.
+    require(inside(root, plan['document']['source']['path']) == (folder / 'normalized.png').resolve(strict=True),
+            'Plan source must name this normalized packet member')
+    source, colours = _decode(normalized)
+    require(list(source.size) == plan['document']['canvas'], 'Normalized source dimensions differ from plan')
+    verify_references(root, plan)
+    write, _ = _decode(_captured_artifact(root, request['authored_write']), mask=True)
+    protect = Image.new('L', source.size, 0)
+    if request['protection'] is not None:
+        protect, _ = _decode(_captured_artifact(root, request['protection']), mask=True)
+    require(write.size == protect.size == source.size, 'Coverage and protection dimensions differ from source')
+    require(sum(protect.histogram()[1:255]) == 0, 'Protection must be binary')
+    validate_coverage(plan, write, protect)
+    prepared = prepare_pixels(source, write, protect, request['transform'])
+    validate_coverage(plan, prepared['images']['effective_write'], protect)
+    artifacts, files = {}, {}
+    for key, name in PREPARED_FILES.items():
+        image = prepared['images'][key]; data = _encode(image, colours)
+        artifacts[name] = data; files[name] = _facts(data, image)
+    receipt = {'schema': BUNDLE_SCHEMA, 'request_sha256': sha(request), 'request': request,
+               'source_normalization': source_receipt['normalization'], 'geometry': prepared['geometry'],
+               'files': files, 'mask_convention': 'write:0=preserve,1..255=coverage; protection:255=forbid',
+               'neural_inference': False, 'semantic_approval': False, 'review_state': 'unreviewed',
+               'candidate_registration': 'not_proven_by_matching_canvas'}
+    return artifacts, receipt, (source, write, protect, colours)
+
+
+def prepare(root, plan, request, output):
+    """Publish explicit work images and reconstructed effective source coverage."""
+    destination = _folder(root, output, new=True)
+    artifacts, receipt, _ = _prepare(root, plan, request)
+    return rs.publish_packet(destination, artifacts, receipt)
+
+
+def apply(root, plan, request, bundle, candidate, output):
+    """Reconstruct a packet from external authority, then compose a supplied image."""
+    destination = _folder(root, output, new=True)
+    expected_files, expected_receipt, inputs = _prepare(root, plan, request)
+    folder = _folder(root, bundle)
+    rs.check_packet_members(folder, {*expected_files, 'receipt.json'})
+    raw_receipt = rs.read_bounded(folder / 'receipt.json', rs.MAX_METADATA_BYTES, reject_symlink=True)
+    receipt = rs.strict_json(raw_receipt)
+    require(canonical(receipt) == canonical(expected_receipt), 'Prepared receipt does not reconstruct from request')
+    remaining = rs.MAX_OUTPUT_BYTES
+    for name, expected in expected_files.items():
+        actual = rs.read_bounded(folder / name, remaining, reject_symlink=True); remaining -= len(actual)
+        require(actual == expected, 'Prepared artifact does not reconstruct: ' + name)
+    source, write, protect, colours = inputs
+    raw_candidate = _captured_artifact(root, candidate)
+    patch, _ = _decode(raw_candidate, colours=colours)
+    rendered = render_pixels(source, write, protect, request['transform'], patch)
+    artifacts, files = {}, {}
+    for name, image in (('result.png', rendered['result']), ('changed-pixels.png', rendered['delta'])):
+        data = _encode(image, colours); artifacts[name] = data; files[name] = _facts(data, image)
+    result = {'schema': RESULT_SCHEMA, 'request_sha256': sha(request), 'request': request,
+              'bundle_receipt_sha256': rs.digest(raw_receipt), 'source_normalization': receipt['source_normalization'],
+              'candidate': {**candidate, **_facts(raw_candidate, patch)}, 'geometry': rendered['geometry'], 'files': files,
+              'changed_pixels': rendered['delta'].histogram()[255],
+              'outside_mask_changed_pixels': rendered['outside_changes'], 'protected_changed_pixels': rendered['protected_changes'],
+              'exactly_preserved_pixels': source.width * source.height - rendered['delta'].histogram()[255],
+              'effective_write': receipt['files']['effective-write.png'], 'no_op': rendered['no_op'],
+              'neural_inference': False, 'semantic_approval': False, 'review_state': 'unreviewed',
+              'candidate_origin': 'supplied_separately_not_verified_by_this_command',
+              'candidate_registration': 'not_proven_by_matching_canvas',
+              'warnings': ['No pixel change detected; do not call this a successful correction'] if rendered['no_op'] else []}
+    return rs.publish_packet(destination, artifacts, result)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest='command', required=True)
+    for command in ('prepare', 'apply'):
+        sub = commands.add_parser(command)
+        sub.add_argument('--workspace', type=Path, required=True)
+        sub.add_argument('--plan', type=Path, required=True)
+        sub.add_argument('--request', type=Path, required=True)
+        sub.add_argument('--request-sha256', required=True)
+        sub.add_argument('--out', required=True)
+        if command == 'apply':
+            sub.add_argument('--bundle', required=True)
+            sub.add_argument('--candidate', required=True)
+            sub.add_argument('--candidate-sha256', required=True)
+    args = parser.parse_args(argv)
+    try:
+        digest(args.request_sha256)
+        raw_request = rs.read_bounded(args.request, rs.MAX_METADATA_BYTES)
+        require(rs.digest(raw_request) == args.request_sha256, 'External request file changed')
+        request = rs.strict_json(raw_request)
+        plan = rs.strict_json(rs.read_bounded(args.plan, 4 * rs.MAX_METADATA_BYTES))
+        if args.command == 'prepare': result = prepare(args.workspace, plan, request, args.out)
+        else: result = apply(args.workspace, plan, request, args.bundle,
+                             {'path': args.candidate, 'sha256': args.candidate_sha256}, args.out)
+        print(json.dumps(result, ensure_ascii=True, allow_nan=False, indent=2)); return 0
+    except (ValueError, OSError, KeyError, TypeError, RecursionError) as exc:
+        print(json.dumps({'error': str(exc), 'neural_inference': False, 'semantic_approval': False})); return 2
+
+
+if __name__ == '__main__': raise SystemExit(main())
