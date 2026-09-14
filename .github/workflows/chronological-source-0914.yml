@@ -4,46 +4,91 @@ on:
     branches: [codex/chronological-source-0914]
     paths: [.github/workflows/chronological-source-0914.yml]
 permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+  contents: write
 jobs:
-  snapshot:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        slice: [wait, detail]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      SLICE: ${{ matrix.slice }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Preserve tracked source and issue evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact patch and merge current main without overwriting concurrent work
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p /tmp/studio-source
-          git bundle create /tmp/studio-source/source.bundle --all
+          mkdir -p /tmp/verified-slice
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main codex/bounded-pre-submit-wait codex/detail-face-denoise
           python - <<'PY'
-          import datetime,json,os,pathlib,urllib.request
-          base='https://api.github.com/repos/Chris0Jeky/local-asset-studio'
-          def get(path):
-              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
-          def pages(path):
-              result=[]
-              for n in range(1,11):
-                  batch=get(path+('&' if '?' in path else '?')+'per_page=100&page='+str(n));result.extend(batch)
-                  if len(batch)<100:return result
-              raise RuntimeError('Pagination bound exceeded')
-          issues=[i for i in pages('/issues?state=open&sort=created&direction=asc') if 'pull_request' not in i]
-          opened=pages('/pulls?state=open')
-          keys=('number','title','body','html_url','state','created_at','updated_at','closed_at','merged_at','merge_commit_sha')
-          compact=lambda x:{k:x.get(k) for k in keys}
-          data={'captured_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'main':get('/commits/main')['sha'],'issues':[compact(i) for i in issues],'pulls':[dict(compact(p),head=p['head']['sha'],branch=p['head']['ref']) for p in get('/pulls?state=all&sort=updated&direction=desc&per_page=45')],'open_pr_files':{str(p['number']):[f['filename'] for f in pages('/pulls/'+str(p['number'])+'/files')] for p in opened},'comments':{str(n):pages('/issues/'+str(n)+'/comments') for n in (2,3,9,10,11,12,13,14,97,238,239)}}
-          pathlib.Path('/tmp/studio-source/evidence.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
-          print('Main:',data['main']);print('Oldest:',[(i['number'],i['title']) for i in issues[:15]])
+          import base64,hashlib,json,lzma,os,pathlib,subprocess,urllib.request
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          blobs=['6a29c58e6c4779bf154fb797ba309b7168a76173','fbb7366b93e10b3b24ea31ec1e647532206c1847','6c26548e3ef4fc60b2fa2ecfedac5638eafafee4']
+          chunks=[]
+          for sha in blobs:
+              req=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=30) as response:blob=json.load(response)
+              raw=base64.b64decode(blob['content'])
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+              chunks.append(raw)
+          raw=b''.join(chunks)
+          assert hashlib.sha256(raw).hexdigest()=='ff3433a6dc9a6b63c98154602f521bf739124121ddd9fcc6ae2531ad716daa20'
+          package=json.loads(lzma.decompress(raw));key=os.environ['SLICE'];item=package['slices'][key]
+          base='20c46dd45044a6f9193b3e562df5bee4e5fc8912';assert package['base']==base
+          branch={'wait':'codex/bounded-pre-submit-wait','detail':'codex/detail-face-denoise'}[key]
+          assert git('rev-parse','origin/'+branch)==base, 'Branch changed; preserve it'
+          subprocess.run(['git','switch','-C','verified-slice','origin/'+branch],check=True)
+          allowed={'wait':{'app/server.py','app/production.py','.github/workflows/production-storage.yml','tests/test_pre_submit_wait.py','docs/reconciliation/2026-09-14-pre-submit-wait.md'},'detail':{'presets/catalog.json','tests/test_detail_denoise_binding.py','docs/ANIME-FANTASY-ATELIER.md','docs/reconciliation/2026-09-14-detail-denoise.md'}}[key]
+          assert set(item['manifest'])==allowed
+          for path,record in item['manifest'].items():
+              if record['before_blob'] is None:assert not pathlib.Path(path).exists(),path
+              else:assert git('rev-parse','HEAD:'+path)==record['before_blob'],path
+          root=pathlib.Path('/tmp/verified-slice');patch=root/'source.patch';patch.write_text(item['patch'],encoding='utf-8')
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          assert set(git('diff','--cached','--name-only').splitlines())==allowed
+          for path,record in item['manifest'].items():assert hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()==record['sha256'],path
+          message={'wait':'fix: bound pre-submit queue waits without replaying work (#253)','detail':'fix: preserve authored hand strength in face-only detail controls (#254)'}[key]
+          subprocess.run(['git','commit','-m',message],check=True)
+          subprocess.run(['git','merge','--no-edit','origin/main'],check=True)
+          assert set(git('diff','--name-only','origin/main','HEAD').splitlines())==allowed, 'Unexpected integration diff; inspect before publishing'
+          manifest={'slice':key,'base':base,'branch':branch,'integrated_main':git('rev-parse','origin/main'),'tested_tree':git('rev-parse','HEAD^{tree}'),'files':{p:hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest() for p in allowed}}
+          (root/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print('Verified',key,'against current main',manifest['integrated_main'])
           PY
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Full suite and repository contracts before publication
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests 2>&1 | tee /tmp/verified-slice/full-suite.log
+          python scripts/validate-repo.py 2>&1 | tee /tmp/verified-slice/validation.log
+          git diff --check
+          git diff --exit-code
+      - name: Publish only verified source
+        run: |
+          if [ "$SLICE" = wait ]; then branch=codex/bounded-pre-submit-wait; else branch=codex/detail-face-denoise; fi
+          git push origin HEAD:"$branch"
+          git rev-parse HEAD > /tmp/verified-slice/published-commit.txt
+          git rev-parse HEAD^{tree} > /tmp/verified-slice/published-tree.txt
+          git diff --binary origin/main HEAD > /tmp/verified-slice/complete.patch
+          git bundle create /tmp/verified-slice/source.bundle 20c46dd45044a6f9193b3e562df5bee4e5fc8912..HEAD
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: chronological-source-0914
-          path: /tmp/studio-source/
-          retention-days: 3
+          name: chronological-0914-${{ matrix.slice }}-proof
+          path: /tmp/verified-slice/
+          retention-days: 7
