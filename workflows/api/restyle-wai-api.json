@@ -64,16 +64,15 @@
     }
   },
   "4": {
-    "class_type": "ImageScale",
+    "class_type": "ImageScaleToTotalPixels",
     "inputs": {
       "image": [
         "11",
         0
       ],
       "upscale_method": "lanczos",
-      "width": 1024,
-      "height": 1536,
-      "crop": "center"
+      "megapixels": 1.5,
+      "resolution_steps": 16
     }
   },
   "10": {

@@ -88,3 +88,15 @@ Sheet: [`examples/style-pose/restyle-picture-proving.jpg`](../../../../examples/
 Not verified: Nova through the new shape (its checkpoint swap failed twice in ComfyUI); the other four boards;
 a three-picture board on this recipe; any denoise other than 0.75/0.85; whether the owner accepts the look
 (HUMAN_TODO q-27); licence clearance for WAI, the LoRAs or the style picture.
+
+### Aside: Z-Image Turbo timing on this card (same session)
+
+Asked whether Z-Image Turbo, FLUX.1 dev or FLUX.2 Klein 9B would serve this task better, two research prompts ran the
+shipped `zimage` graph (`z_image_turbo_bf16.safetensors` 11.7 GB + `qwen_3_4b` encoder, 8 steps, `res_multistep`/simple,
+CFG 1) at 1024×1536 after `/free` unloaded the SDXL models: cold **306.6 s** (22.8 s/it), warm **178.1 s** (15.3 s/it);
+ComfyUI reported the model "loaded completely; 13102.84 MB usable, 11739.54 MB loaded", i.e. about 1.3 GB of headroom on
+the 16 GB card, against 1.7-2.1 it/s for SDXL on the same card minutes earlier. The picture itself was clean and followed
+a one-sentence natural-language prompt closely (throne, hat, crossed legs). Reading: on this card the bf16 file is
+memory-starved; the "few seconds per image" reports use the fp8 (≈6 GB) or GGUF builds with headroom, which are not
+installed. No conclusion about quality for restyling: Z-Image has no img2img/edit recipe here and Z-Image-Edit is unreleased.
+

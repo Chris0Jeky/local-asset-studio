@@ -21,7 +21,7 @@ recipes take the character from the prompt, not from a picture.
 **Restyle a picture (WAI v17 + light-novel look)** is the route's first destination since the evening of 14 September
 2026, after the owner's first Restyle result (a Style + Pose board with a single style picture) came out flat, garish and
 without the throne, and they supplied a target render. It keeps the picture instead of only its skeleton: the picture to
-restyle is scaled to a 1024×1536 canvas and VAE-encoded as the starting latent (Denoise 0.85; *Keep more* 0.75, *Repaint
+restyle is scaled to about 1.5 megapixels at its own aspect ratio (832×1216 becomes 1024×1504) and VAE-encoded as the starting latent (Denoise 0.85; *Keep more* 0.75, *Repaint
 almost everything* 0.95) and its OpenPose skeleton drives the ControlNet; WAI v17 with the Mishima Kurone light-novel LoRA
 at 0.8 (Momoko in slot 2 as a variant) and finish terms appended inside the graph (soft lighting, pastel colours, light
 background, delicate lineart; negative: dark, high contrast, oversaturated, neon) give the look at CFG 4.5; a FaceDetailer
@@ -41,8 +41,9 @@ instead of blocking.
 
 1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. *Restyle a picture*
    is listed first, then the five Style + Pose boards (the source's own family first among those).
-   The dialog says what will happen: the picture keeps its pose, the look comes from the board, the prompt says
-   who the character is, and the source's submitted description is copied into the prompt.
+   The dialog says what will happen: *Restyle a picture* keeps the picture and repaints it in the recipe's finish (the
+   board adds palette only by Style weight); a Style + Pose board keeps the pose and takes the look from the board; either
+   way the prompt says who the character is and the source's submitted description is copied into the prompt.
 2. **Prepare in Create** attaches the source as the **Picture to restyle** (*Pose picture* on a Style + Pose board; not on
    the board either way) and puts the cursor on
    *Picture 1*. The one remaining condition reads *Add at least 1 picture whose look you want to the style

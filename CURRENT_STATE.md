@@ -10,7 +10,7 @@ img2img from the picture (denoise 0.85) keeps the throne and costume; the look c
 light-novel LoRA + soft-light prompt terms at CFG 4.5, not from the style picture, whose IP-Adapter board tinted the
 costume at every weight from 0.2 to 0.6 and went neon at 1.0; a FaceDetailer pass with the styled model fixed the eyes;
 `K+mean(V)` scaling adds glitter. Shipped as **`restyle-wai` — Restyle a picture (WAI v17 + light-novel look)**
-(`workflows/api/restyle-wai-api.json`): 1024×1536 canvas, board off by default with touch/strong variants, finish terms
+(`workflows/api/restyle-wai-api.json`): ~1.5-megapixel canvas at the picture's own aspect ratio, board off by default with touch/strong variants, finish terms
 appended through `StringConcatenate` so a copied source description still gets them, Momoko as a variant. The Restyle
 route lists it first (`continuation_capability.keeps_picture`, new); the handoff guidance says what is kept. Proving run
 through the page, every control at default: job `0c13590c-d204-4634-b045-cc03d5a3f2e3`, prompt `5b9c2049…`, 86 s,

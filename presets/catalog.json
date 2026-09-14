@@ -5993,8 +5993,8 @@
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
       "graph": "workflows/api/restyle-wai-api.json",
-      "verified": true,
-      "execution_note": "Executed 2026-09-14 through Studio job 0c13590c-d204-4634-b045-cc03d5a3f2e3 (ComfyUI prompt 5b9c2049-6586-47dd-ae4f-3d590972cb3b), 86 s on the primary backend, every control at its authored default (Style weight 0, Denoise 0.85, CFG 4.5, 1024x1536, Mishima Kurone 0.8, seed 2026091407), driven through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d...) with the owner's style picture on Picture 1; output WAI_00001_.png inspected: pose, costume and throne kept, soft light-novel finish, clean face (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-picture-proving.jpg). One run, not art acceptance; the look is HUMAN_TODO q-27.",
+      "verified": false,
+      "execution_note": "Re-proof pending: the canvas node changed after the 14 Sep 2026 proving run (job 0c13590c-d204-4634-b045-cc03d5a3f2e3).",
       "modality": "image",
       "commercial_note": "WAI hashes do not authenticate its creator and its commercial terms are unresolved; the Mishima Kurone and Momoko LoRAs declare Image/RentCivit/Rent/Sell on civitai (recorded in models/library.json); IP-Adapter and ControlNet weights are apache-2.0; every board and source picture keeps its own terms. A successful render is not legal clearance.",
       "positive": [
@@ -6004,14 +6004,6 @@
       "negative": [
         "43",
         "string_a"
-      ],
-      "width": [
-        "4",
-        "width"
-      ],
-      "height": [
-        "4",
-        "height"
       ],
       "seed": [
         "5",
@@ -6125,7 +6117,7 @@
         "WAI v17 + Mishima Kurone light-novel LoRA (0.8; Momoko in slot 2, off)",
         "Finish terms appended to your prompt: soft lighting, pastel colours, light background, delicate lineart",
         "Style board: 1-3 pictures, style-transfer weighting, Style weight 0.0 (off) by default",
-        "Picture to restyle: scaled to the 1024x1536 canvas, VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
+        "Picture to restyle: scaled to ~1.5 megapixels at its own aspect ratio (832x1216 becomes 1024x1504), VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
         "30-step re-sample at Denoise 0.85, CFG 4.5",
         "Face pass with the same styled model (denoise 0.4)",
         "PNG"
@@ -6168,7 +6160,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Give a finished picture a soft light-novel finish while keeping the picture. Measured 14 September 2026 on the owner's throne witch against their own target render: the picture to restyle is both the starting latent (re-sampled at Denoise 0.85 on a 1024x1536 canvas, so layout, costume and colours survive) and the pose source (OpenPose skeleton -> Xinsir ControlNet); WAI v17 with the Mishima Kurone light-novel LoRA at 0.8 and fixed finish terms (soft lighting, pastel colours, light background, delicate lineart; negative: dark, high contrast, oversaturated, neon) produced the closest match, with the style board OFF. The board therefore ships OFF (Style weight 0.0): at 0.2-0.6 it tints the costume towards the style picture's palette (blue-grey from a white-background picture), and at 1.0, or at CFG 6, it over-drives the palette into neon stripes; raise Style weight when you want that palette. A board picture is still required by the recipe (the adapter chain needs one), so attach the picture whose look you mean and choose how much of it to take. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; the finish terms and the LoRA trigger are appended to whatever you write, continuation copies included. Not a pixel copy of any picture; a completed render is neither art acceptance nor licence clearance (WAI terms unresolved; the LoRAs' civitai flags are in models/library.json).",
+      "description": "Give a finished picture a soft light-novel finish while keeping the picture. Measured 14 September 2026 on the owner's throne witch against their own target render: the picture to restyle is both the starting latent (re-sampled at Denoise 0.85 on a ~1.5-megapixel canvas at the picture's own aspect ratio, so layout, costume and colours survive) and the pose source (OpenPose skeleton -> Xinsir ControlNet); WAI v17 with the Mishima Kurone light-novel LoRA at 0.8 and fixed finish terms (soft lighting, pastel colours, light background, delicate lineart; negative: dark, high contrast, oversaturated, neon) produced the closest match, with the style board OFF. The board therefore ships OFF (Style weight 0.0): at 0.2-0.6 it tints the costume towards the style picture's palette (blue-grey from a white-background picture), and at 1.0, or at CFG 6, it over-drives the palette into neon stripes; raise Style weight when you want that palette. A board picture is still required by the recipe (the adapter chain needs one), so attach the picture whose look you mean and choose how much of it to take. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; the finish terms and the LoRA trigger are appended to whatever you write, continuation copies included. Not a pixel copy of any picture; a completed render is neither art acceptance nor licence clearance (WAI terms unresolved; the LoRAs' civitai flags are in models/library.json).",
       "reference_slots": [
         {
           "role": "style",
