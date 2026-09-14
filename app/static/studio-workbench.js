@@ -6,6 +6,7 @@
   'use strict';
   if(!document.querySelector('#createView'))return;
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
+  let sharedAdoptionError='';
   let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='';
   let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,handoffEpoch=0;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
@@ -35,8 +36,8 @@
   // Switching intent selects the first reference recipe, which resets the prompt; a typed brief is asked about first.
   q('#uxFindReferenceRecipes').onclick=()=>{const typed=q('#positive')?.value.trim();if(typed&&typed!==(selected?.defaults?.positive||'')&&!confirm('Showing reference recipes selects the first one and resets the prompt and variation count in Create. Continue?'))return;chooseIntent('edit');};
   const advanced=element('details','ux-parameters');advanced.innerHTML='<summary>Parameters & adapter stack <small>Seed, size, sampling and model controls</small></summary>';q('#controls').before(advanced);advanced.append(q('#controls'),q('#loraSlots'));advanced.open=false;
-  const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div id="uxBlockers"></div><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
-  q('#generate').setAttribute('aria-describedby','uxRunSummary uxBlockers');q('.dependencies').open=false;
+  const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div class="ux-readiness-heading"><p id="uxReadinessSummary" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" id="uxRecheckReadiness">Recheck connection</button></div><div id="uxBlockers"></div><p id="uxReadinessActionStatus" class="muted" role="status" aria-live="polite"></p><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
+  q('#generate').setAttribute('aria-describedby','uxRunSummary uxReadinessSummary uxBlockers');q('.dependencies').open=false;
   q('.gallery-panel .section-title h2').textContent='Recent runs';q('.gallery-panel .muted').textContent='Compare results, inspect recipes, or continue with a saved output.';
   q('#assetsView .view-heading h2').textContent='A library, not a dead end.';
   q('#productionView .view-heading h2').textContent='Run with a question. Leave with a decision.';
@@ -48,7 +49,7 @@
   const originalRenderPresets=renderPresets;renderPresets=function(){originalRenderPresets();if(!catalog)return;const id=q('#uxIntent').value;if(id==='all')return;const allowed=new Set(U.recipesFor(id,catalog.presets).map(p=>p.id));let count=0;for(const button of q('#presetList').querySelectorAll('[data-id]')){button.hidden=!allowed.has(button.dataset.id);if(!button.hidden)count++;}q('#filteredCount').textContent=count;if(!count)q('#presetList').append(element('p','muted','No recipes match this task and the current filters. Clear search or choose Every recipe.'));};
   function chooseIntent(id){if(!catalog){announce('The recipe catalog is still loading.');return;}intentId=id;q('#uxIntent').value=id;q('#presetSearch').value='';q('#categorySelect').value='All';mode='all';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='all'));const recipes=U.recipesFor(id,catalog.presets);if(recipes.length)selectPreset(recipes[0].id);renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===id)?.hint||'Choose by outcome.';showView('create');}
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
-  after('selectPreset',()=>{selectionEpoch++;draftDirty=false;pendingInputs.clear();syncCreate();renderDraftNotice();});
+  after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   after('renderSelected',syncCreate);after('updateReady',syncReady);
@@ -56,7 +57,64 @@
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
-  function syncReady(){if(!q('#uxRunSummary'))return;const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));const state=U.readiness({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});const modeBlock=i2vModeBlocker();if(modeBlock)state.blockers.push(modeBlock);state.blockers.push(...continuationBlockers());if(continuationState&&!continuationSource)state.blockers.push(sourceReadError||'Checking the retained source metadata…');q('#generate').disabled=state.blockers.length>0;syncContinuation();q('#uxBlockers').innerHTML=state.blockers.map(text=>'<p class="ux-blocker">'+escape(text)+'</p>').join('');q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:uploaded?1:0;q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';}
+  let readinessMarkup='',readinessChecking=false;
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Review required inputs',parameters:'Review motion settings',continuation:'Review this continuation'};
+  function readinessItems(){
+    const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});
+    const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
+    items.push(...continuationBlockers().map(message=>({code:'continuation',message,action:'continuation'})));
+    if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
+    if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    return{items,required};
+  }
+  function syncReady(){
+    if(!q('#uxRunSummary'))return;
+    const {items,required}=readinessItems();
+    q('#generate').disabled=items.length>0;syncContinuation();
+    const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
+    // Polling identical evidence must not replace a focused action or announce the same status again.
+    if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
+    const summary=items.length?items.length+' condition'+(items.length===1?' needs':'s need')+' attention. Your draft remains editable.':'No blockers reported by the current checks. Generate still validates the request on the server.';
+    if(q('#uxReadinessSummary').textContent!==summary)q('#uxReadinessSummary').textContent=summary;
+    q('#uxRecheckReadiness').disabled=readinessChecking;
+    q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';
+    const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:(uploaded?1:0)+(lastUploaded?1:0);
+    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';
+  }
+  function focusReadinessTarget(target){
+    if(!target||target.closest('[hidden]')||target.disabled)return false;
+    for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;
+    if(!target.getClientRects().length)return false;
+    if(!target.matches('button,input,select,textarea,a[href],summary,[tabindex]'))target.setAttribute('tabindex','-1');
+    target.focus({preventScroll:true});target.scrollIntoView({block:'center',behavior:'instant'});return true;
+  }
+  function resolveReadiness(action){
+    // Resolve against live state: a detached/stale action is not a saved instruction.
+    if(!readinessItems().items.some(item=>item.action===action))return;
+    let target=null;
+    if(action==='recipes')target=q('#presetSearch');
+    if(action==='dependencies')target=q('.dependencies > summary');
+    if(action==='models'){showView('models');target=q('#backendChoice')||q('#refreshModels');}
+    if(action==='references'){
+      if(selected?.reference_slots?.length){const index=referenceRecords.findIndex(r=>!r.file||r.missing);target=index>=0?q('[data-ref-file="'+index+'"]'):q('#referenceSummary');}
+      else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||q('#reference');
+    }
+    if(action==='parameters')target=q('#i2vMode')||getControl('frames');
+    if(action==='continuation')target=selected?.positive&&!q('#positive').value.trim()?q('#positive'):q('#uxContinuation');
+    if(!focusReadinessTarget(target))q('#uxReadinessActionStatus').textContent='That control is not available in the current view. Recheck the recipe before continuing.';
+    else q('#uxReadinessActionStatus').textContent='Shown for review. No settings, attachments or execution permissions were changed.';
+  }
+  q('#uxBlockers').onclick=e=>{const button=e.target.closest('[data-ux-resolve]');if(button)resolveReadiness(button.dataset.uxResolve);};
+  q('#uxRecheckReadiness').onclick=async()=>{
+    if(readinessChecking)return;readinessChecking=true;q('#uxRecheckReadiness').disabled=true;
+    q('#uxReadinessActionStatus').textContent='Reading connection and node readiness. No generation or installation is requested.';
+    let deadline=null;
+    try{await Promise.race([health(),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Connection check timed out; the shared read may still finish. Your draft is unchanged.')),15000);})]);q('#uxReadinessActionStatus').textContent=healthError?'Connection could not be checked. Your draft is unchanged.':'Connection check finished. Review any remaining conditions; no generation was requested.';}
+    catch(error){q('#uxReadinessActionStatus').textContent='Connection check unavailable: '+error.message;}
+    finally{clearTimeout(deadline);readinessChecking=false;syncReady();}
+  };
+
   const contextPanel=element('section','ux-continuation');contextPanel.id='uxContinuation';contextPanel.hidden=true;
   contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording. They reset sampling and adapters to that setup’s complete defaults; inspect Parameters before running. Historical example runs do not verify this pass.</p></div>';
   q('#selectedPreset').before(contextPanel);
@@ -171,9 +229,42 @@
   picker.addEventListener('cancel',e=>{if(pickerBusy)e.preventDefault();});picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pickerBusy)picker.close();}});
   // Drafts are data only, scoped to the server's workspace identity. No File bytes.
   function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
-  // Read-only declaration for setup review; persistence remains with this draft owner.
-  window.StudioSetupDraft={capture(){const value=snapshot();if(!value)return null;value.updatedAt=0;value.recipe.parent_by_input=value.recipe.parent_by_input||{};return JSON.parse(JSON.stringify(value));},
-    stamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending]);},busy(){return !!referencePending||!!pickerBusy||!!restoring;}};
+  // This remains the sole owner of Create mutation; commands persist before adoption.
+  function setupStamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending,selectionEpoch,recipeTemplateHash,parentByInput,typeof backendActive==='undefined'?null:backendActive]);}
+  function setupBusy(){return !!referencePending||!!pickerBusy||!!restoring||!!submitting||!!handoffBusy||typeof backendSwitching!=='undefined'&&!!backendSwitching;}
+  function adoptSharedSetup(value,expectedStamp,backendId){
+    if(setupBusy()||expectedStamp!==setupStamp())throw Error('Create changed before loading the shared revision. Current inputs were preserved.');
+    const draft=U.normalizeDraft(JSON.parse(JSON.stringify(value))),target=catalog?.presets.find(p=>p.id===draft?.recipe.preset);
+    if(!draft||draft.pendingInputs.length||!target)throw Error('The shared revision cannot be represented by this editor. Export and inspect it first.');
+    if(typeof backendActive==='undefined'||backendId!==backendActive)throw Error('The active backend changed before loading this revision.');
+    const controls=draft.recipe.controls,slots=target.reference_slots||[];
+    if(draft.templateHash&&target.continuation_capability?.template_sha256!==draft.templateHash)throw Error('The browser catalog has a different graph. Refresh and review before loading.');
+    for(const key of Object.keys(controls)){
+      const bound=['positive','negative','reference','last_reference'].includes(key)?target[key]:key==='mode'?target.i2v_modes?.some(m=>m.id===controls[key]):controlKeys.includes(key)&&(target[key]||key.endsWith('_name')&&target[key.slice(0,-5)]);
+      if(!bound)throw Error('This editor cannot retain control '+key+'. No settings were changed.');
+    }
+    if(draft.recipe.references.length&&draft.recipe.references.length!==slots.length)throw Error('The saved reference slots do not match this recipe.');
+    if(slots.length&&draft.recipe.references.some(r=>!referenceRoles.includes(r.role)))throw Error('The saved reference role is not available in this editor.');
+    restoring=true;sharedAdoptionError='';
+    try{
+      selectPreset(target.id,true,true);
+      for(const key of controlKeys){const input=getControl(key);if(input)input.value=Object.hasOwn(controls,key)?controls[key]:'';}
+      for(const key of ['positive','negative'])q('#'+key).value=controls[key]||'';
+      if(controls.mode)q('#i2vMode').value=controls.mode;
+      uploaded=controls.reference||null;lastUploaded=controls.last_reference||null;
+      if(slots.length&&draft.recipe.references.length)referenceRecords=draft.recipe.references.map(r=>({...r}));
+      parentAssets=[...draft.recipe.parent_assets];parentByInput={...(draft.recipe.parent_by_input||{})};
+      continuationState=draft.recipe.continuation?StudioContinuation.normalize(draft.recipe.continuation):null;continuationSource=null;sourceReadError='';
+      recipeTemplateHash=draft.templateHash;pendingInputs.clear();q('#batch').value=String(draft.recipe.batch);
+      renderReferenceSlots();updateLoraHints();syncCreate();
+      const actual=values();for(const key of Object.keys(controls))if(String(actual[key]??'')!==String(controls[key]))throw Error('The editor could not retain control '+key+'. Inspect the Workspace revision and browser backup.');
+      draftDirty=true;recipeChanged();
+    }catch(error){sharedAdoptionError='Shared setup loading was incomplete. Generate is held; inspect the saved revision and browser backup. '+error.message;throw error;}
+    finally{restoring=false;syncReady();}
+    saveDraft();if(continuationState)hydrateContinuation();
+  }
+  window.StudioSetupDraft={capture(){const value=snapshot();if(!value)return null;value.updatedAt=0;value.recipe.parent_by_input=value.recipe.parent_by_input||{};return JSON.parse(JSON.stringify(value));},stamp:setupStamp,busy:setupBusy,adopt:adoptSharedSetup};
+  document.dispatchEvent(new Event('studio:setup-draft-ready'));
   function draftKey(){return draftPrefix&&selected?draftPrefix+selected.id:null;}
   function readDraft(key=draftKey()){if(!key)return null;try{const value=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(value)knownDrafts.set(key,value.updatedAt);return value;}catch(_){return null;}}
   function saveDraft(){if(restoring||draftPaused||!draftDirty||!draftPrefix||!selected)return;const key=draftKey(),draft=snapshot();if(!draft)return;try{const current=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(current&&knownDrafts.has(key)&&knownDrafts.get(key)!==current.updatedAt){draftPaused=true;renderDraftNotice();return;}if(current&&JSON.stringify({...current,updatedAt:0})===JSON.stringify({...draft,updatedAt:0}))return;localStorage.setItem(key,JSON.stringify(draft));knownDrafts.set(key,draft.updatedAt);q('#uxDraftStatus').textContent='Draft saved in this browser · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){q('#uxDraftStatus').textContent='Browser storage is unavailable. Export this draft or save a named setup.';}}

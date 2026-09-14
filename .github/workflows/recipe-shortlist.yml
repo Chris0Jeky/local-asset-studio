@@ -9,6 +9,7 @@ on:
       - 'app/continuation.py'
       - 'app/wan_capacity.py'
       - 'tests/*recipe_shortlist*'
+      - 'tests/setup_apply*'
       - 'tests/studio_browser_smoke.py'
       - 'tests/asset_detail_browser.py'
       - '.github/workflows/recipe-shortlist.yml'
@@ -49,6 +50,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Native HTTP and actual Studio shell, synthetic dependencies
         run: python tests/recipe_shortlist_browser.py --out .runtime/shortlist-native
+      - name: Explicit setup application and recovery, no model execution
+        run: python tests/setup_apply_browser.py --out .runtime/shortlist-native/setup-apply
       - uses: actions/upload-artifact@v4
         if: always()
         with:

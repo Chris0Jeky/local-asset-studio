@@ -1,5 +1,8 @@
 # Workflow Studio
 
+[Reviewed setup application and recovery](SETUP-APPLICATION.md) extends the preview with explicit shared revisions, copy-only Apply, Undo and original-request inspection. Preview remains read-only; see that guide for supported routes and remaining #232 limits.
+
+
 Current entry point, reconciled on **13 September 2026** against main
 `06bd93aed2f019cb978eb5795e9f116cfb7ff749`. Historical implementation notes below
 retain their original verification dates; use this page and [ROADMAP.md](ROADMAP.md)

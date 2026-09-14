@@ -33,7 +33,25 @@
     }
     return null;
   }
-  function readiness({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false}){const blockers=[];if(!preset)blockers.push('Choose a recipe.');if(busy)blockers.push('An attachment or submission is in progress.');if(switching)blockers.push('The model environment is switching.');if(!workerAlive)blockers.push('Studio worker is unavailable. Restart Studio; no generation can be queued safely.');if(online==null)blockers.push('ComfyUI readiness is not yet confirmed. Check Models & setup if the health response stays unavailable.');else if(!online)blockers.push('ComfyUI is offline. Start it with the Studio launcher.');else if(!schemaAvailable)blockers.push('Node readiness is not available yet.');if(preset?.runtime_block)blockers.push(preset.runtime_block);if(backend&&preset&&(preset.backend_id||'primary')!==backend)blockers.push('Switch explicitly to '+(preset.backend_id||'primary')+' in Models & setup.');if(missing.length)blockers.push('Missing requirements: '+missing.join(', '));if(!referencesReady)blockers.push('Attach every required reference before starting.');return{ready:!blockers.length,blockers};}
+  // The legacy boolean/text projection and actionable UI share exactly one blocker policy.
+  // Action tokens are presentation destinations, never installation or execution permissions.
+  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false}){
+    const items=[],add=(code,message,action=null)=>items.push({code,message,action});
+    if(!preset)add('recipe','Choose a recipe.','recipes');
+    if(busy)add('busy','An attachment or submission is in progress.');
+    if(switching)add('switching','The model environment is switching.','models');
+    if(!workerAlive)add('worker','Studio worker is unavailable. Restart Studio; no generation can be queued safely.','models');
+    if(online==null)add('health','ComfyUI readiness is not yet confirmed. Check Models & setup if the health response stays unavailable.','models');
+    else if(!online)add('offline','ComfyUI is offline. Start it with the Studio launcher.','models');
+    else if(!schemaAvailable)add('schema','Node readiness is not available yet.','dependencies');
+    if(preset?.runtime_block)add('runtime',preset.runtime_block,'dependencies');
+    if(backend&&preset&&(preset.backend_id||'primary')!==backend)add('backend','Switch explicitly to '+(preset.backend_id||'primary')+' in Models & setup.','models');
+    if(missing.length)add('models','Missing requirements: '+missing.join(', '),'dependencies');
+    if(!referencesReady)add('references','Attach every required reference before starting.','references');
+    return items;
+  }
+  function readiness(options){const items=readinessItems(options);return{ready:!items.length,blockers:items.map(item=>item.message)};}
+
   function sceneEligibility(assets){if(!assets.length)return{ok:false,reason:'Select a PNG image or MP4 video to begin.'};if(assets.some(a=>a.trashed_at||!{image:/\.png$/i,video:/\.mp4$/i,audio:/\.wav$/i}[a.media_type]?.test(a.filename||'')))return{ok:false,reason:'Scenes accept PNG, MP4 and WAV sources. Convert other formats first.'};const visuals=assets.filter(a=>['image','video'].includes(a.media_type)).length;if(!visuals)return{ok:false,reason:'Add a PNG or MP4 in the scene picker; audio needs a visual source.'};if(visuals>16||assets.filter(a=>a.media_type==='audio').length>32)return{ok:false,reason:'Use at most 16 visuals and 32 audio sources per scene.'};return{ok:true,reason:'Timing is chosen next. The Scene editor validates source bytes and WAV format.'};}
   function normalizeDraft(value){
     if(!value||value.version!==1||!Number.isFinite(value.updatedAt)||!value.recipe||typeof value.recipe.preset!=='string'||!value.recipe.preset||value.recipe.preset.length>120)return null;
@@ -101,5 +119,5 @@
   }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
   function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer};
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,readinessItems,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer};
 });
