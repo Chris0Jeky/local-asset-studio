@@ -1,0 +1,29 @@
+name: Reference source transfer (temporary)
+on:
+  push:
+    branches: [codex/reference-source-transfer-20260915]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 85dc151ea89fa730967dcee4920750411f0c14cd
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Bundle pinned public source history only
+        run: |
+          git bundle create source.bundle HEAD
+          git rev-parse HEAD > source-identity.txt
+          sha256sum source.bundle >> source-identity.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-source-85dc151
+          path: |
+            source.bundle
+            source-identity.txt
+          retention-days: 1
+          if-no-files-found: error
