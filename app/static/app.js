@@ -460,6 +460,8 @@ function beginContinuation(result,presetId,intent='edit'){
   continuationState=prepared.claim;continuationSource=result.context;
   attachContinuationSource(result);
   $('#positive').value=prepared.positive;if(selected.negative)$('#negative').value=prepared.negative;
+  // A restyle that keeps the picture draws it at its own aspect ratio; other routes keep the recipe canvas.
+  const canvas=StudioContinuation.canvasFor(result.context,target);if(canvas)for(const key of ['width','height']){const input=getControl(key);if(input)input.value=canvas[key];}
   $('#batch').value=1;updateReady();
 }
 function leaveContinuation(){

@@ -440,9 +440,9 @@
     },
     {
       "id": "restyle-recent-output-with-a-look",
-      "goal": "Take a recent output I like and paint it in the look of another picture, keeping its pose, without knowing which recipe does that.",
+      "goal": "Take a recent output I like and paint it in another look, keeping the picture, without knowing which recipe does that.",
       "starting_view": "create",
-      "success_condition": "The recent output is attached as the pose picture, one saved picture sits on the style board, and the run control reports ready while zero generation requests have been sent.",
+      "success_condition": "The recent output is attached as the picture to restyle, the prepared wording (the finish, what to keep, the source description) is in the prompt, and the run control reports ready while zero generation requests have been sent.",
       "wrong_turn": false,
       "steps": [
         {
@@ -450,28 +450,28 @@
           "expect": "a dialog asks where the picture should go next"
         },
         {
-          "intent": "choose the route that borrows a look from another picture",
-          "expect": "the Restyle route is selected and names a style-and-pose recipe"
+          "intent": "choose the route that borrows a look",
+          "expect": "the Restyle route is selected and lists a recipe that keeps the picture first"
         },
         {
           "intent": "read what the route will do with this picture",
-          "expect": "the dialog says the picture keeps its pose and the look comes from a board of pictures"
+          "expect": "the dialog says the picture is kept and the wording carries the look"
+        },
+        {
+          "intent": "open the wording prepared for this pass",
+          "expect": "the finish, the keep clause and the source description are shown before preparing"
         },
         {
           "intent": "prepare it in Create",
-          "expect": "Create opens with the picture attached as the pose picture"
+          "expect": "Create opens with the picture attached as the picture to restyle"
         },
         {
-          "intent": "read what is still missing before running",
-          "expect": "the readiness list asks for a style picture and offers to show the empty slot"
+          "intent": "read the source panel",
+          "expect": "the continuation names the source; nothing is missing (a board recipe would list its empty slot here)"
         },
         {
-          "intent": "open the library picker to add the picture whose look is wanted",
-          "expect": "the picker opens on the first board slot"
-        },
-        {
-          "intent": "pick a saved picture for the board",
-          "expect": "Picture 1 shows the chosen picture"
+          "intent": "read the prepared wording",
+          "expect": "the prompt holds the finish, the keep clause and the source description, ready to edit"
         },
         {
           "intent": "read the run control",

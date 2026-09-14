@@ -18,7 +18,20 @@ recipes take the character from the prompt, not from a picture.
 
 ## From a finished picture: Continue with this → Restyle
 
-**Restyle a picture (WAI v17 + light-novel look)** is the route's first destination since the evening of 14 September
+**Restyle a picture (FLUX.2 Klein 4B, keeps everything)** is the route's first destination since the night of 14 September
+2026. It keeps everything: FLUX.2 Klein 4B reads the picture as its own reference latent (no style board, no ControlNet, no
+LoRA) and redraws it as the wording says. The handoff prepares that wording for you: a finish sentence (the light-novel
+look by default; edit it for another look), a keep sentence (character, pose, face, hair colour, clothing and its
+colours, props, background layout), and *The picture shows: …* with the source's submitted description, which is what
+held the colours in research (without a description the robe drifted green on one seed). Six Euler steps at CFG 1 on a
+canvas fitted to the source's aspect ratio at about 1.5 megapixels (832×1216 becomes 1040×1520); 16–20 s warm, about a
+minute with the model load. Measured against the owner's target render on the throne witch: pose, wink, hat, red-and-black
+robe and throne kept with the soft high-key finish; adding the style picture as a second reference washed the result out,
+and a 2-megapixel canvas changed the hair, so the recipe takes one picture. Proving run through the page: job
+`db25b173-e39c-4656-96bf-b377ded6bf80`, 65.9 s including the load; sheet `examples/style-pose/restyle-klein-proving.jpg`;
+the eleven research renders are tabled in `experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`.
+
+**Restyle a picture (WAI v17 + light-novel look)** was the route's first destination from the evening of 14 September
 2026, after the owner's first Restyle result (a Style + Pose board with a single style picture) came out flat, garish and
 without the throne, and they supplied a target render. It keeps the picture instead of only its skeleton: the picture to
 restyle is scaled to about 1.5 megapixels at its own aspect ratio (832×1216 becomes 1024×1504) and VAE-encoded as the starting latent (Denoise 0.85; *Keep more* 0.75, *Repaint
@@ -32,24 +45,28 @@ variants for when you do want that palette. One board picture is still required 
 through the page: job `0c13590c-d204-4634-b045-cc03d5a3f2e3`, 86 s; sheets `examples/style-pose/restyle-picture-proving.jpg`
 and `restyle-picture-research.jpg`; the twenty-three research renders behind the defaults are tabled in
 `experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`. The five Style + Pose boards remain listed after it
-for the original behaviour (skeleton only, look from the board).
+for the original behaviour (skeleton only, look from the board). Since the Klein recipe took the lead it is listed second.
 
 Added 14 September 2026 after the owner tried to give a liked output a different look, chose *Refine → SDXL •
 stronger variation* (the closest thing on offer), attached the style picture into its single slot and got two
 blockers nobody could act on. The Continue handoff now has a fifth route, **Restyle**, and the one-slot case asks
 instead of blocking.
 
-1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. *Restyle a picture*
-   is listed first, then the five Style + Pose boards (the source's own family first among those).
-   The dialog says what will happen: *Restyle a picture* keeps the picture and repaints it in the recipe's finish (the
-   board adds palette only by Style weight); a Style + Pose board keeps the pose and takes the look from the board; either
-   way the prompt says who the character is and the source's submitted description is copied into the prompt.
+1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. *Restyle a picture
+   (FLUX.2 Klein 4B, keeps everything)* is listed first, then *Restyle a picture (WAI v17 + light-novel look)*, then the
+   five Style + Pose boards (the source's own family first among those).
+   The dialog says what will happen: the Klein recipe keeps the picture and redraws it in the look the wording describes
+   (the prepared wording is shown under *Wording prepared for this pass*); the WAI recipe keeps the picture and repaints
+   it in its finish (the board adds palette only by Style weight); a Style + Pose board keeps the pose and takes the look
+   from the board. On the WAI recipe and the boards the source's submitted description is copied into the prompt; on the
+   Klein recipe it is appended to the prepared wording.
 2. **Prepare in Create** attaches the source as the **Picture to restyle** (*Pose picture* on a Style + Pose board; not on
-   the board either way) and puts the cursor on
-   *Picture 1*. The one remaining condition reads *Add at least 1 picture whose look you want to the style
-   board (Picture 1)* with a *Show the empty slot* button.
-3. Drop the style picture on Picture 1 or use **Pull from library** (it opens on Picture 1 and closes itself once
-   the board holds one picture). Generate reads **Restyle source →**.
+   the board either way). On the Klein recipe nothing is missing: the canvas is fitted to the source, the wording is in
+   the prompt, and Generate reads **Restyle source →**. On the WAI recipe and the boards the cursor goes to *Picture 1*
+   and the one remaining condition reads *Add at least 1 picture whose look you want to the style board (Picture 1)*
+   with a *Show the empty slot* button.
+3. Board recipes only: drop the style picture on Picture 1 or use **Pull from library** (it opens on Picture 1 and closes
+   itself once the board holds one picture). Generate reads **Restyle source →**.
 4. If you were already continuing on a one-slot recipe and add a second picture (file or library pull), Create
    no longer blocks: a panel asks what the picture is for — *Use its look → Restyle the source* (opens the
    handoff at Restyle, prepares, and puts that picture on Picture 1), *Start from this picture instead*

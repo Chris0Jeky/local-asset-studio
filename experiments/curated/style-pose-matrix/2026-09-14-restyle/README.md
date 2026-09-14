@@ -102,3 +102,45 @@ a one-sentence natural-language prompt closely (throne, hat, crossed legs). Read
 memory-starved; the "few seconds per image" reports use the fp8 (≈6 GB) or GGUF builds with headroom, which are not
 installed. No conclusion about quality for restyling: Z-Image has no img2img/edit recipe here and Z-Image-Edit is unreleased.
 
+
+## Restyle a picture (FLUX.2 Klein 4B, keeps everything) — 14 September 2026 (night)
+
+The owner asked to keep improving the result and lifted the non-commercial constraint for their own experiments. While the
+larger downloads ran (Z-Image fp8, Klein 9B, AniEdit; see `research/style-pose/restyle-model-strategy-2026-09-14.md`), eleven
+research prompts went straight to the primary ComfyUI on the already-installed `flux-2-klein-4b-fp8` (Qwen3 4B encoder, FLUX.2
+VAE, Euler on the Flux2 schedule, CFG 1, seed 2026091407 unless noted), the throne witch as the reference (scaled to 1 MP),
+canvas 1024×1536 unless noted. The exact submitted graphs (full prompts, references, sampler settings) are committed in
+`klein-4b-graphs/<name>.graph.json`; the PNGs stay in the session scratchpad and are identified by the hashes below.
+
+| # | References | Prompt | Steps | Time | sha256 (16) | Reading |
+|---|---|---|---|---|---|---|
+| k4-plain-2ref (`ce56ae01`) | source + style picture | "Redraw the first image in the art style of the second image. Keep …" | 4 | 56 s (cold) | `1804aeac93b4222a` | picture kept exactly; style ignored, flat cel, purple wall |
+| k4-plain-srconly-text (`42e13e66`) | source | finish in words (soft pastel light-novel, high-key, airy) + keep hat/robe/throne | 6 | 20 s | `57c84a8a34e412e1` | **close to the target**: soft high-key, gold throne, clean face; slightly washed |
+| k4-text-s8 (`e8ceee08`) | source | same | 8 | 16 s | `46a30e9690b0c88a` | as above; paper grain |
+| **k4-text2-s6 (`ba6054b9`)** | source | richer finish (throne-room curtains, glossy hair, blue eyes, black robe with gold trim) | 6 | 20 s | `b651e982aa79c209` | **closest to the owner's target** (curtains, gold, purple hair, blue eyes) |
+| k4-text-2ref-s6 (`e53afd1f`) | source + style picture | finish in words, "in the art style of the second image" | 6 | 26 s | `ba913c2b290cf320` | washed out, pinker: the style picture hurts |
+| k4-text-s6-2mp (`306de151`) | source (1.5 MP) | finish in words | 6 | 38 s | `8d026aa3bd5113ea` | 1216×1824: hair turned silver; larger canvas drifts identity |
+| k4-generic-s6 (`73386f5d`) | source | generic keep clause, no costume names | 6 | 44 s | `dc1cb4c74bd9b46e` | robe drifted green |
+| k4-generic-s4 (`d0826148`) | source | same | 4 | 10 s | `28515e59bb46eb54` | as above, softer |
+| k4-generic-s6-seed2 (`142ba6db`) | source | same, seed 2026091402 | 6 | 16 s | `c43f5f3cfcc4eb58` | both eyes open (wink lost), robe green |
+| k4-generic-tags (`37b66ed0`) | source | generic keep + "The picture shows: <source tag list>" | 6 | 20 s | `8de8921a870cdf04` | robe red-and-black kept; eyes yellowish |
+| **k4-generic-desc (`d995a176`)** | source | generic keep + "The picture shows <natural description>" | 6 | 20 s | `6ff516b4e7097d8f` | **most faithful**: red throne, robe, wink and blue-grey eyes kept, soft finish |
+
+What decided the recipe: (1) Klein keeps the picture through its reference latent alone; no img2img, ControlNet or LoRA is
+needed; (2) the look must be *described*, the style picture as a second reference washes the result out (the IP-Adapter
+finding again, on a different family); (3) naming what the picture shows holds the colours, so the handoff appends the
+source's submitted description; (4) six steps at ~1.5 MP; a 2 MP canvas changed the hair.
+
+### The shipped recipe through the Studio
+
+`restyle-klein` (*Restyle a picture (FLUX.2 Klein 4B, keeps everything)*), driven through the page as the owner would:
+*Continue with this →* on the throne witch (job `bb8efa52…`, asset `9f2fca4d…`), *Restyle* (the recipe is listed first, the
+dialog shows the prepared wording), *Prepare in Create* (canvas fitted to 1040×1520, nothing missing), *Restyle source →*.
+Job `db25b173-e39c-4656-96bf-b377ded6bf80`, prompt `7a205e07-8375-4f41-9f1e-99cba8e788cf`, **65.9 s** in ComfyUI including
+the model load (16–20 s warm above), output `Restyle/Klein_00001_.png`, sha256 `6248d7c07a987780…`, asset
+`841d3fcb8530533d84c1a8c06f3c617c`: pose, wink, hat, red-and-black robe with gold trim and the throne kept, warm high-key
+finish, clean detailed eyes. Sheet: [`examples/style-pose/restyle-klein-proving.jpg`](../../../../examples/style-pose/restyle-klein-proving.jpg)
+(source, style-picture-as-reference, finish in words, richer finish, generic keep + description, the shipped run).
+
+Not verified: Klein 9B (Q6_K GGUF), AniEdit 4B/9B and Z-Image Turbo fp8 on this task (downloads in progress at 0.25–0.5 MB/s);
+other seeds through the page; landscape sources; whether the owner accepts the look (HUMAN_TODO q-27).
