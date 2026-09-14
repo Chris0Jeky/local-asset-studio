@@ -90,10 +90,11 @@ def atlas(manifest, root, output, columns=8, padding=2, extrude=1):
         sheet.paste(im, (x, y))  # Copy RGBA bytes, not alpha-composite twice.
         if extrude:
             e = extrude
-            sheet.paste(im.crop((0, 0, w, 1)).resize((w, e)), (x, y-e))
-            sheet.paste(im.crop((0, h-1, w, h)).resize((w, e)), (x, y+h))
-            sheet.paste(im.crop((0, 0, 1, h)).resize((e, h)), (x-e, y))
-            sheet.paste(im.crop((w-1, 0, w, h)).resize((e, h)), (x+w, y))
+            # Extrusion duplicates edge bytes, not an interpolated/premultiplied colour.
+            sheet.paste(im.crop((0, 0, w, 1)).resize((w, e), Image.Resampling.NEAREST), (x, y-e))
+            sheet.paste(im.crop((0, h-1, w, h)).resize((w, e), Image.Resampling.NEAREST), (x, y+h))
+            sheet.paste(im.crop((0, 0, 1, h)).resize((e, h), Image.Resampling.NEAREST), (x-e, y))
+            sheet.paste(im.crop((w-1, 0, w, h)).resize((e, h), Image.Resampling.NEAREST), (x+w, y))
             for sx, sy, dx, dy in ((0, 0, x-e, y-e), (w-1, 0, x+w, y-e),
                                   (0, h-1, x-e, y+h), (w-1, h-1, x+w, y+h)):
                 sheet.paste(Image.new('RGBA', (e,e), im.getpixel((sx,sy))), (dx,dy))
