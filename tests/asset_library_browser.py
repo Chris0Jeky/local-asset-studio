@@ -89,12 +89,16 @@ async def exercise(args):
                 async def text(selector):
                     node = page.locator(selector)
                     return await node.inner_text() if await node.count() else ''
+                async def search(value):
+                    # Typing is debounced in the product; wait for the pending repaint, never a fixed sleep.
+                    await page.fill('#assetSearch', value)
+                    await page.wait_for_function('!assetSearchTimer')
                 async def select_two():
-                    await page.fill('#assetSearch', '')
+                    await search('')
                     await page.evaluate("setAssetScope('all')")
                     for identifier in ids[:2]:
                         await page.locator(f'[data-asset-check="{identifier}"]').check()
-                    await page.fill('#assetSearch', 'Study 0')
+                    await search('Study 0')
                 await select_two()
                 check('LIB-01', 'Filtering preserves both selected IDs', await page.evaluate('assetSelection.size') == 2)
                 check('LIB-02', 'Matching and total counts are separate', '1 of 3' in await text('#assetVisibleCount'))
@@ -146,7 +150,7 @@ async def exercise(args):
                 await page.evaluate('refreshAssets(true)')
                 await page.wait_for_function('id=>assetState.assets.some(a=>a.id===id&&a.trashed_at)', arg=ids[2])
                 await page.click('#assetScopes [data-scope="trash"]')
-                await page.fill('#assetSearch', 'absent query')
+                await search('absent query')
                 check('LIB-15', 'Populated Trash with no matches is described as filtered', 'No matching assets' in await text('#assetGrid') and 'Trash is empty' not in await text('#assetGrid'))
                 reset = page.locator('[data-asset-clear-filters]')
                 if await reset.count():
@@ -166,9 +170,25 @@ async def exercise(args):
                 await page.wait_for_function('!assetLibraryBusy && !assetLibraryPending')
                 check('LIB-29', 'A late bulk success does not erase a selection changed while waiting', await page.evaluate('assetSelection.size') == 2)
                 await page.click('#assetScopes [data-scope="unreviewed"]')
-                await page.fill('#assetSearch', 'Study 0')
+                await search('Study 0')
                 check('LIB-30', 'Awaiting review counts only its own unreviewed active assets', '0 of 1' in await text('#assetVisibleCount'))
-                await page.fill('#assetSearch', '')
+                await search('')
+                # Organisation and bulk review over the same real records.
+                await page.evaluate("setAssetScope('all')")
+                await page.select_option('#assetGroup', 'run')
+                check('LIB-32', 'Group by run gives each job its own section without losing a card', await page.locator('#assetGrid .asset-group').count() == 2 and await page.locator('#assetGrid .asset-card').count() == 2)
+                check('LIB-33', 'Review next counts only unreviewed assets in this view', '(1 unreviewed)' in await text('#reviewNext'))
+                await page.select_option('#assetGroup', 'none')
+                check('LIB-34', 'Ungrouping restores the flat grid', await page.locator('#assetGrid .asset-group').count() == 0 and await page.locator('#assetGrid .asset-card').count() == 2)
+                before = len(writes)
+                await page.evaluate('ids=>{assetSelection=new Set(ids);renderAssets();}', ids[:2])
+                await page.click('[data-review-bulk="needs_work"]')
+                await page.wait_for_function('!assetBulkReviewBusy')
+                sent = writes[before:]
+                check('LIB-35', 'Bulk review sends one ordinary single-asset command per selection', len(sent) == 2 and all(len(w['ids']) == 1 and w['action'] == 'edit' and w['review'] == 'needs_work' and w['expected_revisions'] for w in sent) and {w['ids'][0] for w in sent} == set(ids[:2]))
+                saved = {a['id']: a['review'] for a in store.snapshot()['assets']}
+                check('LIB-36', 'Bulk review reports its outcome and the stored reviews agree', 'Marked 2 of 2' in await text('#assetBulkReviewStatus') and all(saved[identifier] == 'needs_work' for identifier in ids[:2]))
+                await page.evaluate('assetSelection.clear();renderAssets()')
                 # Oversized gallery is a UI fixture only: no writes or large real-media claim.
                 await page.evaluate("refreshAssets=async()=>{};setAssetScope('all');assetState.assets=Array.from({length:205},(_,i)=>({...assetState.assets[0],id:'large-'+i,title:'Large '+i,trashed_at:null,collections:[]}));renderAssets();")
                 check('LIB-19', 'Select visible discloses the bounded batch size first', '200 of 205' in await text('#selectVisible'))

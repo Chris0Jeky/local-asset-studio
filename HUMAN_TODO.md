@@ -1,6 +1,6 @@
 # Creative choices
 
-The earlier creative choices and q-1 through q-4 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
+The earlier creative choices and q-1 through q-6 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
 
 - [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
 - [x] Pick a focused production brief: **Fantasy character illustration pack** (owner, 12 September 2026). The prepared brief is in [FANTASY-CHARACTER-BRIEF.md](docs/FANTASY-CHARACTER-BRIEF.md); this selects the work, not finished-art acceptance.
@@ -43,9 +43,16 @@ committed, so the VRAM reserve is measurably not the lever. The ≥32 GiB commit
 an operator rule in `docs/RUNTIME-PRECONDITIONS.md`; it is **not enforced by code** — nothing in
 `app/` samples commit headroom before submitting at the original handoff. #77 says not to treat paging as a default fix. The later explicit owner decision and verified configuration above supersede this historical undecided option.
 
-**q-5 — Hunyuan3D 2.1 territory (issue #26): open, clearance granted.** It only needs to be closed off and update the relevant docs with this update.
+**q-5 — Hunyuan3D 2.1 territory (issue #26): closed, owner-confirmed 11 September 2026; recorded 14 September 2026.** In the [issue #26 owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899), Chris0Jeky stated: “I acknowledge this issue and I confirm that I do have authorisation as this will be used in authorised territory only. Account for that and move on without restricting models and capabilities.” This records owner-confirmed authorised-territory use for Hunyuan3D 2.1. It is not independent legal verification, blanket approval for other models or territories, a change to the published terms or new restrictions, or a new generation allowance.
 
 **q-6 — three UX questions: answered by the owner, 14 September 2026.** The owner gave a first-hand statement in free text instead of the three questions; it is recorded and mapped to root causes in [docs/UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md) and tracked as #278. In short: the Studio still feels unusable for the real goal; guided paths are wordy and advisory; Plan comparison and Runs & review are unexplained; the review loop lacks automation; Prompt Lab's locked buttons never say what is missing and its Create handoff never unlocked; the workflow builder's canvas and prompt field are clunky. Nothing here is a creative or licensing approval; the owner's next first-hand pass after the fixes is the verdict.
+
+**q-7 — first-hand pass over the merged UX wave: open.** Seven PRs answered the 14 September statement (#278;
+[docs/UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md) lists what changed where). The Studio on 8191 already serves
+them. Please try, in your own words: (1) Prompt Lab with a reference or an avoid term on the default profile, then
+"Open Create with this prompt"; (2) Guided workflows → Edit or preserve a character; (3) Plan a comparison from a
+recipe and read the summary line; (4) Asset library → Review next, with K / W / X / S; (5) the node builder's canvas
+and a prompt field. Say what still feels wrong. Nothing here is a creative or licensing approval.
 
 ## Recorded owner decisions
 

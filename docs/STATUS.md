@@ -11,8 +11,8 @@ the art), licensed (the terms allow the use). Update this page when a goal's sta
 | G1 Workflows that genuinely work and are elaborated | ~65 % | Image lanes proven on this PC (63 of 66 graphs live-valid, 39 presets with completed jobs); video lane executes but fails inspection; per-backend validation missing |
 | G2 Chosen images at baseline quality | ~55 % | All six baseline families executed with retained IDs; zero accepted images; hands and feet unresolved; AniFox never ran |
 | G3 Character sheets → figures, poses, in-betweens | ~25 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
-| G4 UX that reflects the real work | ~65 % | Workflow-first IA is real and wired to ComfyUI; no task family for sheet/figure/sprite work; review loop barely used (108 of 111 assets unreviewed) |
-| G5 UI that works and feels good | ~50 % | 79 synthetic journeys pass; no native-browser default lane; no owner usability statement on record (HUMAN_TODO q-6 asks) |
+| G4 UX that reflects the real work | ~70 % | Workflow-first IA is real and wired to ComfyUI; the owner's 14 Sep verdict ("pretty much unusable") drove seven merged UX PRs under #278; review loop now has a queue, shortcuts and bulk review but is still unused by the owner; no task family for sheet/figure/sprite work |
+| G5 UI that works and feels good | ~55 % | 79 synthetic journeys pass; ten agent-driven use cases measured (fixture 10/10, live read-only 4/10, 4 dead ends ranked in UX-USE-CASE-MATRIX.md); the owner's first-hand statement is on record (UX-AUDIT-2026-09-14.md) and the next pass is the verdict (q-7) |
 | G6 Modular workflow editing in the Studio | ~55 % | Revisioned documents, Steps, bundles, agent parity exist; edited graphs are not runnable by design (#122); dynamic ComfyUI inputs were mis-read (fixed in PR #262) |
 | G7 Everything else | ~40 % | Runtime resilience strongest; video/Wan and voice weakest; #77/#89 crash root causes still open |
 
@@ -86,8 +86,10 @@ and worker; guardrails derive from measured failures (source-bound continuation,
 hold, timing estimates from 35 completed local samples).
 
 **Gaps.** The five task families (idea, change, refine, motion, 3D draft) contain no lane for sheet/figure/sprite work.
-The review surface that the whole architecture funnels into has processed 3 of 111 assets. No owner-facing UX
-feedback has ever been recorded; HUMAN_TODO q-6 now asks three concrete questions.
+The review surface that the whole architecture funnels into has processed 3 of 115 assets; PR #291 added the review
+queue, shortcuts, bulk review and grouping the owner asked for, unused so far. The owner's first-hand verdict of
+14 September is recorded in [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md) (#278); seven PRs answered it the same
+night and the owner's next pass decides whether they land (HUMAN_TODO q-7).
 
 **Next slice.** Add the sixth task family ("work on one figure / build a sprite sequence") once #252 exists. Open
 issues: #16, #36, #37, #38, #204.
@@ -98,7 +100,10 @@ issues: #16, #36, #37, #38, #204.
 read polling is bounded and visibility-aware; the frontend reviewer found no dangling handlers, no missing endpoints,
 no page-load submission and no double-submit path. Two real defects were found and fixed in PR #262: a recipe
 swap during a reference upload could submit the wrong recipe, and a mid-upload slot change discarded the upload
-silently. **Unmeasured.** Native-browser default lane; owner's own usability opinion. No open issue owns UI quality.
+silently. **Owner's verdict, 14 September.** Recorded first-hand in [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md)
+and owned by #278: seven UX PRs merged the same night, and `tests/studio_use_cases.py` now measures ten agent-driven
+journeys (fixture 10/10; live read-only 4/10 with 4 dead ends ranked in [UX-USE-CASE-MATRIX.md](UX-USE-CASE-MATRIX.md)).
+**Unmeasured.** Native-browser default lane; whether the merged wave changes the owner's verdict (HUMAN_TODO q-7).
 
 ## G6 — Modular workflow editing
 
@@ -116,8 +121,10 @@ issues: #118–#123, #143, #144.
 
 Runtime resilience is the most thoroughly earned area (bounded recovery, Windows refusal timing, process ownership,
 no duplicate generation on resume, mixed-batch recovery). The 64 GiB page file is configured and the commit gate is in
-code. 3D generation works on the Radeon (TRELLIS, Hunyuan draft) but Hunyuan3D 2.1's UK exclusion is undecided
-(HUMAN_TODO q-5, #26). Voice stops at a working CPU baseline. Resource efficiency is two of six children done (#172).
+code. 3D generation works on the Radeon (TRELLIS, Hunyuan draft). The owner confirmed authorised-territory use
+for Hunyuan3D 2.1 in issue #26; this records owner authorisation for that model and scope, without independent
+legal verification, blanket approval, a terms change or new restrictions, or a new generation allowance. Voice stops at a working CPU
+baseline. Resource efficiency is two of six children done (#172).
 The two crash root causes, #77 (Qwen VAE host allocation) and #89 (0xC0000005 on IP-Adapter + ControlNet SDXL), remain
 open and gate heavy work. Agent tooling for ComfyUI outside the Studio is wired for both runtimes
 ([AGENT-TOOLING.md](AGENT-TOOLING.md)). Next slice: #178, stage-aware admission that estimates decode-stage VRAM
@@ -125,5 +132,6 @@ separately from sampling, so a 995-second failure becomes an instant explained r
 
 ## Open owner items
 
-Surface, never tick: [HUMAN_TODO.md](../HUMAN_TODO.md) q-5 (Hunyuan3D territory) and q-6 (three UX questions).
-Earlier items q-1 to q-4 are answered. Creative acceptance of any generated image remains the owner's alone.
+Items q-1 to q-6 in [HUMAN_TODO.md](../HUMAN_TODO.md) are answered. The owner's q-6 feedback is recorded
+in the [UX audit](UX-AUDIT-2026-09-14.md); improvements and the owner's subsequent verdict remain under #278.
+Creative acceptance of any generated image remains the owner's alone.

@@ -29,7 +29,7 @@ with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026
 | --- | --- |
 | `app/<module>.py` | `python -m unittest discover -s tests -p "test_<module>.py"` (`test_server` covers routing; `FakeStudio` fakes ComfyUI) |
 | `presets/**`, `workflows/**`, `models/library.json` | `python scripts/validate-repo.py`; graph nodes against a running ComfyUI: `python scripts/validate-live.py` |
-| `app/static/*.js` | `node --check app/static/app.js` then `python -m unittest tests.test_frontend_handoffs` (skips without Node) |
+| `app/static/*.js` | `node --check app/static/app.js` then `python -m unittest tests.test_frontend_handoffs` (skips without Node); when clicks or steps move, `python tests/studio_use_cases.py` (Playwright, ~40 s) and compare with `docs/UX-USE-CASE-MATRIX.md` |
 | `scripts/game_asset_*.py`, `research/game-assets/**` | `python -m unittest discover -s tests -p "test_game_asset_*.py"` (own CI lane) |
 | `scripts/krita_roundtrip.py`, `godot_asset_adapter.py`, `articulated_prop.py` | `tests.test_krita_roundtrip`, `tests.test_godot_asset_adapter`, `tests.test_articulated_*` |
 | `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |

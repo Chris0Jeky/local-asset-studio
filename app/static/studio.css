@@ -23,3 +23,26 @@
 /* In the two-/one-column layout the picker shares the Gallery's columns.
    Keep it in document flow: stacking either panel above the other hides controls. */
 @media(max-width:1480px){.studio-main .setup{position:static}}
+
+/* Prompt Lab clarity (#278): no bare disabled control, and no raw error code
+   without the sentence that explains it. `pl-` rules are scoped to the page's
+   own classes so nothing here reaches the Create workbench. */
+.pl-issue{border:1px solid var(--line,#455b56);border-left:3px solid #7d8f86;border-radius:8px;padding:11px 13px;margin:10px 0;background:var(--panel,#1b2525)}
+.pl-issue.pl-blocking{border-left-color:#d9a05b;background:#2c2820}
+.pl-issue p{margin:0 0 6px;font-size:13px;line-height:1.5}
+.pl-issue .pl-action{color:var(--muted,#aac0ba);font-size:12px}
+.pl-issue button{font-size:12px;padding:7px 11px;min-height:36px;margin:2px 6px 6px 0}
+.pl-issue small{display:block;font-size:10px;line-height:1.45;color:#8fa49e;overflow-wrap:anywhere}
+.pl-reason{margin:6px 0 0;font-size:12px;line-height:1.5;color:#e6ceb4;min-height:1em}
+.pl-tool{border-top:1px solid var(--line,#455b56);padding:12px 0 4px}
+.pl-tool small{display:block;margin:6px 0;font-size:11px;line-height:1.5;color:var(--muted,#aac0ba)}
+.pl-tool label{margin-top:0}
+.pl-notes-title{margin:14px 0 6px;font-size:12px;color:var(--muted,#aac0ba)}
+.pl-note{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border:1px dashed #576d5d;border-radius:7px;padding:9px 11px;margin:6px 0;font-size:12px}
+.pl-note button{font-size:11px;padding:5px 9px;min-height:32px}
+.pl-coverage{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 5px;font-size:12px;line-height:1.5;border-bottom:1px solid #2c3a39;padding-bottom:5px}
+.pl-coverage b{font-weight:550}
+.pl-coverage span:last-child{color:var(--muted,#aac0ba)}
+
+/* #278 friction 1: the sources heading now carries two buttons on text-only recipes; let the row wrap so wider font metrics (CI Linux at 200% zoom) never push it past the viewport. */
+.ux-section-heading{flex-wrap:wrap}.ux-section-heading h3{min-width:120px}

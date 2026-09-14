@@ -54,7 +54,52 @@
     const continuation=value.recipe.continuation;if(continuation!=null&&(typeof StudioContinuation==='undefined'||!StudioContinuation.normalize(continuation)||continuation.preset_id!==value.recipe.preset))return null;
     return{version:1,updatedAt:value.updatedAt,recipe:{preset:value.recipe.preset,controls,batch,...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
+  // Named recipes are a reading aid, never a selection: bounded, catalog-shaped ids only.
+  function promptRecipes(value){const out=[];for(const id of Array.isArray(value)?value:[]){if(out.length>=8)break;if(typeof id==='string'&&/^[a-z0-9-]{1,60}$/.test(id)&&!out.includes(id))out.push(id);}return out;}
+  // Why a compilation cannot be used yet, in the words the person typing actually needs.
+  // Pure: no DOM, no network, no mutation. Returns [{code,message,action,detail,fix,blocking}].
+  // `blocking` marks the entries that stop a transfer; `fix` names a repair the page may offer in one click.
+  function promptBlockers(compilation){
+    if(!compilation)return[{code:'NOT_COMPILED',message:'The prompt has not been built yet.',action:'Edit any field, or press Build the prompt.',detail:'',fix:'',blocking:true}];
+    const profile=compilation.profile||{},name=profile.name||'this',intent=compilation.intent||{};
+    const refs=(compilation.reference_map||intent.references||[]).length,avoid=(intent.avoid||[]).join(', ');
+    const plural=(n,word)=>n+' '+word+(n===1?'':'s');
+    const say={
+      REFERENCE_COUNT:()=>profile.max_refs===0
+        ?{message:'The '+name+' profile reads no reference images, and '+plural(refs,'reference')+' '+(refs===1?'is':'are')+' attached.',action:'Remove the reference, or switch to a profile that reads reference images.',fix:'switch-profile'}
+        :refs<(profile.min_refs||0)
+          ?{message:name+' needs at least '+plural(profile.min_refs,'reference image')+'; '+refs+' attached.',action:'Attach a reference under "Reference images and their roles".',fix:''}
+          :{message:name+' accepts at most '+plural(profile.max_refs,'reference image')+'; '+refs+' attached.',action:'Remove the extra references, or switch to a profile that accepts '+refs+'.',fix:'switch-profile'},
+      REFERENCE_KIND:()=>({message:'One of your references is not a kind this profile can read.',action:'Remove it, or switch to a profile that accepts that kind.',fix:''}),
+      NEGATIVE_REWRITE_REQUIRED:()=>({message:'The '+name+' profile has no negative prompt, so "Things to avoid" cannot be sent'+(avoid?' ('+avoid+')':'')+'.',action:'Keep the words as a review note, describe the opposite in positive words, or switch to a profile that has a negative prompt.',fix:'avoid-to-note'}),
+      TAGS_REQUIRED:()=>({message:'This profile reads comma-separated tags and "Approved tags" is empty. Your description is never turned into tags for you.',action:'Add the tags you approve, or switch to a description-based profile.',fix:'switch-profile'}),
+      PROMPT_TOO_LONG:()=>({message:'The compiled text is longer than the reviewed character budget for this profile. Nothing was shortened for you.',action:'Trim the brief, subject or style, then build again.',fix:''}),
+      STRUCTURAL_CONTROL_REQUIRED:()=>({message:'A hard requirement needs a mask, guide or check — prompt text alone cannot deliver it.',action:'Make it a soft review note, or plan the extra stage in Create.',fix:''}),
+      VERBATIM_UNBOUND:()=>({message:'Exact words are recorded but this profile has nowhere to put them.',action:'Switch to the voice or music profile, or clear the exact words.',fix:''}),
+      NEGATIVE_UNBOUND:()=>({message:'This profile has no place for "Things to avoid".',action:'Keep them as a review note, or clear the field.',fix:'avoid-to-note'}),
+      TAGS_UNBOUND:()=>({message:'This profile does not read tags; yours are kept but unused.',action:'Clear the tags, or switch to a tag-based profile.',fix:''}),
+      SPEECH_TEXT_REQUIRED:()=>({message:'A voice take needs the exact words to speak, separate from the performance direction.',action:'Fill "Exact words to speak".',fix:''}),
+      VOICE_LANGUAGE_UNSUPPORTED:()=>({message:'That language is outside this voice profile.',action:'Choose one of the languages this profile lists.',fix:''}),
+      LYRICS_CONFLICT:()=>({message:'This is marked instrumental but lyrics are present. Nothing was deleted.',action:'Clear the instrumental flag, or move the lyrics out yourself.',fix:''}),
+      METER_UNSUPPORTED:()=>({message:'That time signature has no reviewed mapping yet.',action:'Use 2/4, 3/4, 4/4 or 6/8.',fix:''}),
+      MOTION_UNSPECIFIED:()=>({message:'No movement is described, and none is invented for you.',action:'Say what the subject does, what the camera does and what stays fixed.',fix:''}),
+      TAG_COVERAGE_REVIEW:()=>({message:'Only your approved tags are sent. Whatever the description says beyond them is not.',action:'Compare the tags against your brief before using this.',fix:''}),
+      NO_TEXT_CONDITIONING:()=>({message:'This route reads an image, not a prompt. The text you wrote is not used.',action:'Approve the input image first, or pick a text-based profile.',fix:''}),
+      PARAMETER_HANDOFF:()=>({message:'A parameter you set is not part of any text prompt; the recipe in Create owns it.',action:'Set it in Create after the handoff.',fix:''}),
+      ACCEPTANCE_REQUIRED:()=>({message:'A hard requirement stays a thing you check by looking; no prompt can guarantee it.',action:'Keep it on your review list.',fix:''}),
+    };
+    const out=[];
+    for(const [list,blocking] of [[compilation.errors||[],true],[compilation.diagnostics||[],false]])
+      for(const entry of list){const phrase=say[entry.code]?.()||{message:entry.message||'This profile reported an unresolved requirement.',action:'Read the compiler detail below.',fix:''};out.push({code:entry.code,message:phrase.message,action:phrase.action,detail:entry.message||'',fix:phrase.fix,blocking});}
+    if(compilation.state!=='blocked'&&!promptTransfer(compilation)){
+      const fields=compilation.fields||{},positive=fields.positive||fields.prompt;
+      out.push(typeof positive!=='string'||!positive.trim()
+        ?{code:'NO_PROMPT_TEXT',message:'This profile produces no prompt text to carry into Create.',action:'Use Export compilation instead, or choose a text-based profile.',detail:'',fix:'',blocking:true}
+        :{code:'TRANSFER_TOO_LONG',message:'The compiled text is longer than the 8000-character handoff limit.',action:'Shorten the brief, then build the prompt again.',detail:'',fix:'',blocking:true});
+    }
+    return out;
+  }
   // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
-  function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
-  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,sceneEligibility,normalizeDraft,promptTransfer};
+  function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
+  return{VIEWS,ACTIVE,ATTENTION,INTENTS,normalizeView,recipesFor,summarize,failureDetails,readiness,sceneEligibility,normalizeDraft,promptBlockers,promptTransfer};
 });

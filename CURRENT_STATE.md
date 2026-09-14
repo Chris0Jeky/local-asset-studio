@@ -1,5 +1,65 @@
 # Current state — 14 September 2026
 
+## UX wave from the owner's first-hand feedback — 14 September 2026
+
+The owner's first first-hand usability statement (recorded in [UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md),
+umbrella #278, answers HUMAN_TODO q-6) drove seven merged PRs the same night, each with a fresh-context adversarial
+review and Codex triage: #280 (audit, Qwen Atelier expectation copy), #283 (Runs & review orientation and state
+legend, planner dedupe and live summary, keeper/needs-work on candidate cards), #286 (guided paths rewritten to a
+copy budget, auto-checked on mount, step list, "Choose <recipe>"), #287 (builder canvas pan/zoom/fit, growing
+prompt textareas with an Expand editor), #288 (Prompt Lab: reasons beside every disabled control, one-click
+repairs, live rebuild, handoff that names matching recipes), #291 (Asset library review queue with K/W/X/S
+shortcuts, bulk review, group-by, reason chips), #296 (`tests/studio_use_cases.py`: ten agent-driven use cases
+measured through Chromium, matrix in [UX-USE-CASE-MATRIX.md](docs/UX-USE-CASE-MATRIX.md), path-filtered CI lane).
+
+Executed on this PC: every PR's proving lanes locally plus hosted CI green at each merged head; the fixture-mode
+matrix (10 of 10 journeys complete, 34 browser POSTs, 0 generation submissions); the live read-only matrix
+against the real Studio on 8191 after the restart (4 of 10 complete on navigation and typing alone, 24 browser
+POSTs, 0 generation submissions, and no job, plan or asset created — checked against `/api/jobs`,
+`/api/production`, `/api/workspace`). The Studio (PID 10288) was stopped on an idle queue with no active job
+or plan and restarted through `scripts/Start-Studio.ps1 -NoBrowser` (PID 41932); it serves the merged guide
+copy and the Prompt Lab blocked path renders the plain-language reason with its one-click repair (observed in a
+browser, FLUX profile plus avoid terms). Two review-time facts: a worktree removed before its reviewer finished
+truncates the review (happened twice; the later reviews kept the tree), and wave workers sharing one session
+scratchpad overwrote each other's PR bodies once (caught and restored).
+
+Not verified: no generation was run; nothing here is art acceptance or a licence judgement; the owner's own
+first-hand pass over the merged Studio is still owed (HUMAN_TODO q-7); the five friction points the matrix
+ranked are a follow-up PR in flight (`ux/matrix-friction-fixes`).
+## Actual scaled repair pixels and reconstructed packets — 14 September 2026
+
+The offline [pixel transform command](docs/repair-studio/PIXEL-TRANSFORMS.md) now
+prepares scaled RGBA context and explicit work/source masks from a checked edit
+plan and normalized source packet. Apply reconstructs the packet from the external
+request before compositing a supplied candidate. Effective coverage is checked
+again against protection, context, contacts and non-target actors; prepared padding
+cannot write source pixels. Apply requires the caller's expected effective-mask
+digest, binding expanded coverage separately from the initial outline. The new schemas do not enter legacy native/bridge
+adapters, and legacy edit behavior remains unchanged.
+
+Executed locally: 27 new transform/packet tests pass; legacy character edit checks
+have 229 total, 225 passed and four optional skips; source intake has 30 total,
+29 passed and one optional skip. The synthetic CLI example at
+`C:/AI/character-lab/scaled-repair-proof-20260914-a` changed 4,292 pixels with zero
+changes outside effective write coverage and zero protected changes. Its comparison
+was visually inspected: the other character is retained. This is CPU fixture
+evidence, not model execution, performance proof, anatomy quality or art acceptance.
+Full integration and independent review are recorded separately on the change's PR.
+Issue #245's mechanical transform slice advances; #243, native/model registration
+(#248), guided use (#251), repair allocation and a real accepted repair remain open.
+No runtime, generation allowance, model, installed application or human decision
+was changed by this implementation.
+
+## Owner gate update — Hunyuan3D 2.1 — 14 September 2026
+
+The owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2026 in the [issue #26
+owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899); this
+scope was reconciled on 14 September 2026. This records the supplied authorisation for that model and
+scope; it does not independently verify the licence or extend to other models. Output acceptance and
+downstream rights remain separate. q-5 is closed in [HUMAN_TODO.md](HUMAN_TODO.md). The owner's q-6
+UX feedback is now recorded by PR #280; follow-up improvements and owner validation remain under #278.
+Historical execution, source-term and output records below remain unchanged.
+
 ## Full assessment, recovery exits and agent tooling — 13/14 September 2026
 
 A coordinator plus 34 read-only subagents assessed the two-day burst of merged work at `main`

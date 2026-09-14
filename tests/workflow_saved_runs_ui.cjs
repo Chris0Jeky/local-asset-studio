@@ -44,6 +44,19 @@ test('startup and restored references never contact the service',async()=>{
 test('dirty, detached, conflicting or unresolved saves block new preparation',async()=>{
   for(const p of [{dirty:true},{id:null},{conflict:true},{blocked:true}]){const f=fixture();f.project(p);await f.click('prepareSavedRun');assert.equal(f.calls.length,0);}
 });
+test('a blocked prepare control names the precondition it is waiting on',async()=>{
+  // A disabled control with no adjacent reason was the only unexplained-disabled in the UX matrix (#278).
+  for(const [state,pattern] of [[{id:null},/save this workflow to the Workspace/],[{blocked:true},/last save is unresolved/],
+                                [{conflict:true},/reopen the current revision/],[{dirty:true},/Unsaved edits/]]){
+    const f=fixture();f.project(state);
+    assert.equal(f.ids.get('prepareSavedRun').disabled,true);
+    assert.match(f.ids.get('prepareSavedRunState').textContent,pattern,JSON.stringify(state));
+    assert.equal(f.ids.get('prepareSavedRun')['aria-describedby'],'prepareSavedRunState');
+  }
+  const ready=fixture();ready.project({id:'document-a',revision:1,dirty:false,blocked:false,conflict:false});
+  assert.equal(ready.ids.get('prepareSavedRun').disabled,false);
+  assert.match(ready.ids.get('prepareSavedRunState').textContent,/Ready: prepares saved revision r1 of example\. Preparing never starts a generation\./);
+});
 test('prepare retains request before POST, verifies review and does not run',async()=>{
   const f=fixture();let checked=false;
   f.setReply(async(url,options)=>{if(options.body){const v=JSON.parse(options.body);assert.equal(new C.Journal(f.storage).list()[0].request_id,v.request_id);checked=true;f.p=packetFixture(v.request_id);return {}; }return f.p;});

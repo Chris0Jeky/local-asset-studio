@@ -67,7 +67,7 @@ def _metadata_size(kind: bytes, data: bytes, remaining: int) -> int:
     return len(data)
 
 
-def scan_png(encoded: bytes, limit: int = MAX_OUTPUT_BYTES) -> list[tuple[bytes, bytes]]:
+def scan_png(encoded: bytes, limit: int = MAX_OUTPUT_BYTES, *, grayscale: bool = False) -> list[tuple[bytes, bytes]]:
     """Validate framing/limits and supported sample representation before decode."""
     if type(encoded) is not bytes or len(encoded) > limit or not encoded.startswith(SIGNATURE):
         raise ValueError('Expected a bounded PNG byte capture')
@@ -93,7 +93,8 @@ def scan_png(encoded: bytes, limit: int = MAX_OUTPUT_BYTES) -> list[tuple[bytes,
             width, height, depth, colour, compression, filtering, interlace = struct.unpack('>IIBBBBB', data)
             if not (0 < width <= MAX_PIXELS and 0 < height <= MAX_PIXELS and width * height <= MAX_PIXELS):
                 raise ValueError('PNG exceeds the decoded pixel limit')
-            if depth != 8 or colour not in (2, 6): raise ValueError('Only 8-bit true-colour RGB/RGBA PNG is supported')
+            if depth != 8 or colour not in ((0,) if grayscale else (2, 6)):
+                raise ValueError('Only 8-bit grayscale PNG is supported' if grayscale else 'Only 8-bit true-colour RGB/RGBA PNG is supported')
             if compression or filtering or interlace not in (0,1): raise ValueError('Unsupported PNG encoding')
         if kind in (*COLOUR, b'PLTE', b'tRNS') and b'IDAT' in seen:
             raise ValueError('PNG colour/palette/transparency chunk follows image data')
