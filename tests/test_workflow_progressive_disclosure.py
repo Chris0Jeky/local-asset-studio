@@ -60,11 +60,15 @@ class WorkflowProgressiveDisclosureTests(unittest.TestCase):
         self.assert_closed_details('canvasHelp')
         self.assertIn('canvasHelp', self.node('canvasHint')['ancestors'])
 
-    def test_agent_manual_is_collapsed_but_the_tab_opens_it(self):
+    def test_agent_manual_is_collapsed_discoverable_and_the_tab_opens_it(self):
         self.assert_closed_details('agentGuide')
         self.assertIn('agents', self.node('agentGuide')['ancestors'])
         self.assertIn('agentGuide', self.node('agentGuideBody')['ancestors'])
-        self.assertEqual(self.node('agentTitle')['tag'], 'summary')
+        title = self.node('agentTitle')
+        self.assertEqual(title['tag'], 'span')
+        self.assertEqual(title['attrs'].get('role'), 'heading')
+        self.assertEqual(title['attrs'].get('aria-level'), '2')
+        self.assertIn('agentGuide', title['ancestors'])
         self.assertIn("a[href=\"#agents\"]", self.source)
         self.assertIn("agentGuide.open = true", self.source)
         self.assertIn("location.hash === '#agents'", self.source)
