@@ -177,6 +177,24 @@ Select **Download visual workflow** in Studio and open that JSON in ComfyUI if
 using another machine. The **Open ComfyUI** link opens its editor; it does not
 automatically replace your currently open user graph.
 
+### Moving around the builder canvas
+
+In **Workflow Studio → Connections** the diagram is a camera over the graph, not a
+fixed-size picture. Drag the empty background to pan. Hold Ctrl and use the wheel
+(or pinch on a trackpad) to zoom between 0.4x and 2.5x around the pointer; a plain
+wheel is left alone and still scrolls the page. **Fit** frames every node and **100%**
+returns to one diagram unit per screen pixel — the readout beside them shows the
+current zoom. Dragging a node still moves that node and writes its X/Y fields, which
+are the values saved with the document; panning and zooming are view-only and never
+change the draft or its revision. Below the canvas, **Jump to node** selects a node
+without hunting for it in the diagram.
+
+Text inputs that hold prose — anything the node declares as multiline, or named
+`text`, `prompt`, `positive`, `negative`, or already holding a newline or more than
+60 characters — open as a textarea of at least four rows that grows with the content
+up to about 40% of the window height. **Expand** beside it opens a full-size editor;
+**Apply** writes the text back to the draft and **Cancel** (or Escape) discards it.
+
 For a community JSON, use **Workflow lab → Inspect workflow JSON** first. This
 reports saved model filenames and missing node classes without executing the graph
 or installing code. Bypassed nodes are included; dynamic selections may be absent.
