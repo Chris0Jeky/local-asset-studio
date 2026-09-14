@@ -176,6 +176,26 @@
     }
     host.append(button('Remove node', () => { if (!confirm('Remove this node? Connections to it will remain visible as errors until repaired.')) return; edit(next => { for (const step of next.steps || []) { step.nodes = step.nodes.filter(x => x !== id); step.controls = step.controls.filter(c => c.node !== id); } delete next.nodes[id]; delete next.positions[id]; delete next.bypass[id]; next.disabled = next.disabled.filter(x => x !== id); next.outputs = next.outputs.filter(x => x !== id); }); }));
   }
+  const WIDE_NAMES = ['text', 'prompt', 'positive', 'negative'];
+  function wideText(spec, value) {
+    if (spec.options?.multiline === true) return true;
+    if (WIDE_NAMES.some(name => spec.name.toLowerCase().includes(name))) return true;
+    return typeof value === 'string' && (value.includes('\n') || value.length > 60);
+  }
+  function grow(area) { area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight + 2, Math.round(window.innerHeight * 0.4)) + 'px'; }
+  let expander = null;
+  function expand(name, value, accept) {
+    if (!expander) {
+      const dialog = el('dialog', null, {class: 'wf-expand', 'aria-labelledby': 'wfExpandTitle'}), title = el('h3', 'Edit text', {id: 'wfExpandTitle'});
+      const area = el('textarea', null, {'aria-label': 'Expanded text', wrap: 'soft', spellcheck: 'false'});
+      const actions = el('div', null, {class: 'wf-expand-actions'});
+      actions.append(button('Cancel', () => dialog.close('cancel')), button('Apply', () => dialog.close('apply')));
+      dialog.append(title, area, actions); document.body.append(dialog); expander = {dialog, title, area};
+    }
+    expander.title.textContent = 'Edit ' + name; expander.area.value = typeof value === 'string' ? value : '';
+    expander.dialog.onclose = () => { if (expander.dialog.returnValue === 'apply') accept(expander.area.value); };
+    expander.dialog.showModal(); expander.area.focus();
+  }
   function fieldEditor(host, id, node, spec) {
     const field = el('div', null, {class: 'wf-field'}), present = Object.hasOwn(node.inputs, spec.name), value = node.inputs[spec.name];
     field.append(el('strong', spec.name + (spec.required ? ' *' : '')), el('code', spec.type));
@@ -205,13 +225,17 @@
         } else if (spec.type === 'BOOLEAN') {
           input = checkbox('On / off', value === true, setValue); input.querySelector('input').setAttribute('aria-label', spec.name);
         } else {
-          input = el(spec.type === 'STRING' ? 'textarea' : 'input', null, {'aria-label': spec.name});
-          if (spec.type !== 'STRING') {
+          const wide = spec.type === 'STRING' && wideText(spec, value);
+          input = el(wide ? 'textarea' : 'input', null, {'aria-label': spec.name});
+          if (wide) { input.rows = 4; input.className = 'wf-text'; input.oninput = () => grow(input); }
+          else if (spec.type === 'STRING') input.type = 'text';
+          else {
             input.type = 'number'; input.step = spec.type === 'INT' ? '1' : 'any';
             input.min = Math.max(-MAX, spec.options.min ?? -MAX); input.max = Math.min(MAX, spec.options.max ?? MAX);
           }
           input.value = present && !isLink(value) ? value : '';
           input.onchange = () => { try { const v = spec.type === 'STRING' ? input.value : input.valueAsNumber; safeNumbers(v); if (!input.checkValidity() || (spec.type === 'INT' && !Number.isInteger(v))) throw Error('Use a value inside the declared range. Integer fields require whole numbers.'); setValue(v); } catch (error) { status(error.message); renderInspector(); } };
+          if (wide) { control.append(input); const wider = button('Expand', () => expand(spec.name, input.value, next => { input.value = next; grow(input); setValue(next); })); wider.className = 'wf-expand-open'; control.append(wider); requestAnimationFrame(() => grow(input)); return; }
         }
         control.append(input);
         if (['INT', 'FLOAT'].includes(spec.type) && Number.isFinite(spec.options.min) && Number.isFinite(spec.options.max) && spec.options.max <= 10000 && spec.options.min >= -10000) {
