@@ -16,6 +16,12 @@ from .recipe_intake import inspect_media
 
 
 def dispatch(path, value, studio=None):
+    if path == '/api/prompt/reference-review/inspect':
+        from .reference_review import inspect
+        return inspect(value)
+    if path == '/api/prompt/reference-review/preview':
+        from .reference_review import preview
+        return preview(value)
     if path == '/api/prompt/compile':
         fields(value, ('intent','profile_id')); return compile_brief(value['intent'],value['profile_id'])
     if path == '/api/prompt/apply':
@@ -79,9 +85,14 @@ def extend_handler(base):
             if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
             try:
                 need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
-                # Strict decoder and tighter cap; metadata endpoint accepts small media only.
-                body=self.rfile.read(self._content_length(1024*1024))
-                result=dispatch(self.path,decode(body),self.studio)
+                # Only reference review accepts four original images; every source
+                # has its own byte/pixel cap and no input is persisted or executed.
+                limit = 1024*1024
+                if self.path == '/api/prompt/reference-review/preview':
+                    from .reference_review import HTTP_LIMIT
+                    limit = HTTP_LIMIT
+                body=self.rfile.read(self._content_length(limit))
+                result=dispatch(self.path,decode(body, limit=limit),self.studio)
                 return self._json(200,result)
             except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
