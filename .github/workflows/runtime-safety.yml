@@ -11,6 +11,8 @@ on:
       - 'tests/test_mixed_batch_http.py'
       - 'tests/check_mixed_batch_lifetime.py'
       - 'tests/test_performance_history.py'
+      - 'tests/test_resource_receipts.py'
+      - 'scripts/inspect-resource-observation.py'
       - 'tests/test_resource_probe*.py'
       - 'scripts/profile-resources.py'
       - 'scripts/summarize-resources.py'
@@ -28,6 +30,8 @@ on:
       - 'tests/test_mixed_batch_http.py'
       - 'tests/check_mixed_batch_lifetime.py'
       - 'tests/test_performance_history.py'
+      - 'tests/test_resource_receipts.py'
+      - 'scripts/inspect-resource-observation.py'
       - 'tests/test_resource_probe*.py'
       - 'scripts/profile-resources.py'
       - 'scripts/summarize-resources.py'
@@ -60,3 +64,4 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_native_export*.py' -v
       - run: python -m unittest discover -s tests -p 'test_resource_probe*.py' -v
       - run: python -m unittest discover -s tests -p test_performance_history.py -v
+      - run: python -m unittest discover -s tests -p test_resource_receipts.py -v
