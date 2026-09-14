@@ -50,12 +50,30 @@ test('variant explanations show effective schedule not an implied full redraw',(
 test('actionable blockers distinguish missing source from missing wording',()=>{
   assert.deepEqual(C.blockers(claim,p,{positive:source.positive,reference:file},['source-asset']),[]);
   assert.match(C.blockers(claim,p,{positive:'',reference:file},['source-asset']).join(),/Describe/);
-  assert.match(C.blockers(claim,p,{positive:'yes',reference:'other.png'},['source-asset']).join(),/attachment changed/);
+  assert.match(C.blockers(claim,p,{positive:'yes',reference:'other.png'},['source-asset']).join(),/Reference no longer holds the picture you chose/);
+  assert.deepEqual(C.blockerItems(claim,p,{positive:'',reference:'other.png'},['source-asset']).map(i=>i.code),['source','wording']);
 });
 test('multi-input continuation cannot retain an authored last frame',()=>{
-  const multi={...p,last_reference:['7','image'],continuation_capability:{...cap,reference_count:2}};
-  assert.match(C.blockers(claim,multi,{positive:source.positive,reference:file},['source-asset']).join(),/every source input/);
+  const multi={...p,last_reference:['7','image'],last_reference_label:'Last frame',continuation_capability:{...cap,reference_count:2}};
+  assert.match(C.blockers(claim,multi,{positive:source.positive,reference:file},['source-asset']).join(),/Last frame is empty/);
   assert.deepEqual(C.blockers(claim,multi,{positive:source.positive,reference:file,last_reference:'b'.repeat(32)+'_last.png'},['source-asset']),[]);
+});
+const boardCap={...cap,operation:'restyle',reference_count:4,source_input:'last_reference',board_min:1};
+const board={id:'style-pose-nova',name:'Style + Pose (Nova)',family:'Nova',positive:['2','text'],reference_slots:[{role:'style',binding:['10','image']},{role:'style',binding:['30','image']},{role:'style',binding:['31','image']}],reference_board:{min:1},last_reference:['11','image'],last_reference_label:'Pose picture',continuation_capability:boardCap};
+const styleFile='c'.repeat(32)+'_style.png';
+test('restyle puts the source on the pose picture and needs one board picture',()=>{
+  const prepared=C.initial(source,board,'restyle',file);assert.equal(prepared.claim.intent,'restyle');assert.equal(prepared.positive,source.positive);
+  assert.equal(C.sourceInput(boardCap),'last_reference');assert.equal(C.sourceLabel(board),'Pose picture');
+  const empty=[{role:'style',file:null},{role:'style',file:null},{role:'style',file:null}];
+  assert.deepEqual(C.blockerItems(prepared.claim,board,{positive:source.positive,last_reference:file},['source-asset'],empty).map(i=>i.code),['board']);
+  assert.match(C.blockers(prepared.claim,board,{positive:source.positive,last_reference:file},['source-asset'],empty).join(),/Picture 1/);
+  const one=[{role:'style',file:styleFile},{role:'style',file:null},{role:'style',file:null}];
+  assert.deepEqual(C.blockers(prepared.claim,board,{positive:source.positive,last_reference:file},['source-asset'],one),[]);
+  assert.match(C.blockers(prepared.claim,board,{positive:source.positive,last_reference:'other.png'},['source-asset'],one).join(),/Pose picture no longer holds/);
+  assert.match(C.blockers(prepared.claim,board,{positive:source.positive,last_reference:file},['source-asset'],[{role:'style',file:styleFile,missing:true},{role:'style',file:null},{role:'style',file:null}]).join(),/board picture is missing/);
+  assert.throws(()=>C.initial(source,board,'edit',file));assert.throws(()=>C.initial(source,p,'restyle',file));
+  assert.deepEqual(C.destinations('restyle',[p,board,{...board,id:'other',name:'Other'}],source).map(x=>x.id),['style-pose-nova','other']);
+  assert.match(C.guidance(board,source).join(' '),/pose picture/i);assert.doesNotMatch(C.guidance(board,source).join(' '),/Picture 1 only/);
 });
 test('family matching never resurrects a text-only graph as a refinement',()=>{
   const same={...p,id:'same',family:'Anima'},different={...p,id:'different',family:'Krea'};

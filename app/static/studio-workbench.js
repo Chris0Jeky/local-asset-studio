@@ -49,7 +49,7 @@
   const originalRenderPresets=renderPresets;renderPresets=function(){originalRenderPresets();if(!catalog)return;const id=q('#uxIntent').value;if(id==='all')return;const allowed=new Set(U.recipesFor(id,catalog.presets).map(p=>p.id));let count=0;for(const button of q('#presetList').querySelectorAll('[data-id]')){button.hidden=!allowed.has(button.dataset.id);if(!button.hidden)count++;}q('#filteredCount').textContent=count;if(!count)q('#presetList').append(element('p','muted','No recipes match this task and the current filters. Clear search or choose Every recipe.'));};
   function chooseIntent(id){if(!catalog){announce('The recipe catalog is still loading.');return;}intentId=id;q('#uxIntent').value=id;q('#presetSearch').value='';q('#categorySelect').value='All';mode='all';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode==='all'));const recipes=U.recipesFor(id,catalog.presets);if(recipes.length)selectPreset(recipes[0].id);renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===id)?.hint||'Choose by outcome.';showView('create');}
   q('#uxIntent').onchange=()=>{intentId=q('#uxIntent').value;renderPresets();q('#uxIntentHint').textContent=U.INTENTS.find(i=>i.id===intentId)?.hint||'Every installed and planned recipe. Readiness is checked separately.';};
-  after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();syncCreate();renderDraftNotice();});
+  after('selectPreset',()=>{sharedAdoptionError='';selectionEpoch++;draftDirty=false;pendingInputs.clear();if(typeof dismissSecondPicture==='function')dismissSecondPicture();syncCreate();renderDraftNotice();});
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   after('renderSelected',syncCreate);after('updateReady',syncReady);
@@ -58,12 +58,15 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Review required inputs',parameters:'Review motion settings',continuation:'Review this continuation'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',second:'Decide about this picture'};
+  // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
+  const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
     const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
-    items.push(...continuationBlockers().map(message=>({code:'continuation',message,action:'continuation'})));
+    items.push(...continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'})));
+    if(secondPicture)items.push({code:'second',message:'You added a second picture, but this recipe reads one. Say what it is for.',action:'second'});
     if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
     if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
     return{items,required};
@@ -79,8 +82,8 @@
     if(q('#uxReadinessSummary').textContent!==summary)q('#uxReadinessSummary').textContent=summary;
     q('#uxRecheckReadiness').disabled=readinessChecking;
     q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';
-    const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:(uploaded?1:0)+(lastUploaded?1:0);
-    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';
+    const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length+(selected.last_reference&&lastUploaded?1:0):(uploaded?1:0)+(lastUploaded?1:0);
+    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'The continuation source is not attached. Use Put the source back, or reopen Continue with this asset.':'No personal source attached. This recipe may use its authored example until replaced.';
   }
   function focusReadinessTarget(target){
     if(!target||target.closest('[hidden]')||target.disabled)return false;
@@ -97,10 +100,14 @@
     if(action==='dependencies')target=q('.dependencies > summary');
     if(action==='models'){showView('models');target=q('#backendChoice')||q('#refreshModels');}
     if(action==='references'){
-      if(selected?.reference_slots?.length){const index=referenceRecords.findIndex(r=>!r.file||r.missing);target=index>=0?q('[data-ref-file="'+index+'"]'):q('#referenceSummary');}
-      else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||q('#reference');
+      const lastMissing=selected?.last_reference&&!lastUploaded&&!q('#lastReference').files.length;
+      if(selected?.reference_slots?.length){const index=referenceRecords.findIndex(r=>!r.file||r.missing);target=index>=0?q('[data-ref-file="'+index+'"]'):lastMissing?q('#lastReference'):q('#referenceSummary');}
+      else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||(lastMissing&&uploaded?q('#lastReference'):q('#reference'));
     }
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
+    if(action==='wording')target=q('#positive');
+    if(action==='second')target=q('#uxSecondPicture');
+    if(action==='source-back'){void reattachSource();return;}
     if(action==='continuation')target=selected?.positive&&!q('#positive').value.trim()?q('#positive'):q('#uxContinuation');
     if(!focusReadinessTarget(target))q('#uxReadinessActionStatus').textContent='That control is not available in the current view. Recheck the recipe before continuing.';
     else q('#uxReadinessActionStatus').textContent='Shown for review. No settings, attachments or execution permissions were changed.';
@@ -116,7 +123,7 @@
   };
 
   const contextPanel=element('section','ux-continuation');contextPanel.id='uxContinuation';contextPanel.hidden=true;
-  contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording. They reset sampling and adapters to that setup’s complete defaults; inspect Parameters before running. Historical example runs do not verify this pass.</p></div>';
+  contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording; they reset sampling and adapters to their defaults. Check Parameters before running.</p></div>';
   q('#selectedPreset').before(contextPanel);
   function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   function syncContinuation(){
@@ -132,7 +139,7 @@
     q('#uxContinuationRecord').textContent=source?'Prompt '+(source.prompt_id||'unavailable')+' · source SHA-256 '+source.sha256:'Reading the retained source; no new model request.';
     q('#uxRestoreSourcePrompt').disabled=!reusable||cap?.prompt_role!=='description'||submitting;
     q('#uxChangeRoute').disabled=submitting;q('#uxLeaveContinuation').disabled=submitting;
-    q('#generate').textContent=cap?.operation==='upscale'?'Upscale source →':cap?.prompt_role==='motion'?'Animate source →':'Generate source-based pass →';
+    q('#generate').textContent=cap?.operation==='upscale'?'Upscale source →':cap?.operation==='restyle'?'Restyle source →':cap?.prompt_role==='motion'?'Animate source →':'Generate source-based pass →';
   }
   async function readSource(id){return api('/api/assets/'+encodeURIComponent(id)+'/context',{signal:AbortSignal.timeout(30000)});}
   async function hydrateContinuation(){
@@ -144,8 +151,59 @@
   q('#uxRestoreSourcePrompt').onclick=()=>{const source=continuationSource;if(!source||q('#uxRestoreSourcePrompt').disabled)return;if(q('#positive').value!==source.positive&&!window.confirm('Replace your current wording with this output’s submitted description?'))return;q('#positive').value=source.positive;if(selected.negative)q('#negative').value=source.negative||'';draftDirty=true;saveDraft();syncReady();};
   q('#uxChangeRoute').onclick=()=>openHandoff(continuationState.source_asset_id,selected.id);
   q('#uxLeaveContinuation').onclick=leaveContinuation;
+  async function reattachSource(){
+    if(!continuationState||pickerBusy||handoffBusy||submitting||restoring)return;
+    const claim=continuationState,stamp=JSON.stringify(claim);pickerBusy=true;syncReady();
+    try{
+      const result=await post('/api/assets/reference',{id:claim.source_asset_id});
+      if(stamp!==JSON.stringify(continuationState))throw Error('The task changed while the source was being put back. Nothing was attached.');
+      if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
+      // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
+      const renamed=StudioContinuation.normalize({...claim,reference_file:result.file});if(!renamed)throw Error('The staged copy could not be verified. Reopen Continue with this asset.');
+      continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
+      attachContinuationSource(result);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
+      draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
+    }catch(error){announce(error.message,true);}
+    finally{pickerBusy=false;syncReady();}
+  }
+  // One slot, two pictures: the second picture is a question, not a silent replacement (owner report, 14 Sep 2026).
+  let secondPicture=null,pendingStyle=null;
+  const secondPanel=element('div','ux-second-picture callout');secondPanel.id='uxSecondPicture';secondPanel.hidden=true;secondPanel.setAttribute('role','group');secondPanel.setAttribute('aria-labelledby','uxSecondTitle');
+  secondPanel.innerHTML='<b id="uxSecondTitle">One slot, two pictures.</b><p id="uxSecondText"></p><div class="ux-context-actions"><button type="button" id="uxSecondRestyle" class="primary">Use its look → Restyle the source</button><button type="button" id="uxSecondReplace">Start from this picture instead</button><button type="button" id="uxSecondKeep">Keep the source, drop this picture</button></div><p id="uxSecondHint" class="muted"></p>';
+  q('#createView .references').after(secondPanel);
+  function secondName(item){return item?.file?item.file.name:item?.asset?.title||'this picture';}
+  function offerSecondPicture(item){
+    secondPicture=item;const dest=StudioContinuation.destinations('restyle',catalog?.presets||[],continuationSource)[0];
+    q('#uxSecondText').textContent=StudioContinuation.sourceLabel(selected)+' already holds the picture you are continuing. What is “'+secondName(item)+'” for?';
+    q('#uxSecondRestyle').disabled=!dest;q('#uxSecondRestyle').title=dest?'':'No restyle recipe is installed.';
+    q('#uxSecondHint').textContent=dest?'Restyle keeps the source’s pose and paints it in the look of the new picture ('+dest.name+'). Starting from the new picture ends this continuation; the original stays in your library.':'No restyle recipe is available; start from the new picture, or keep the source.';
+    secondPanel.hidden=false;syncReady();focusReadinessTarget(q('#uxSecondRestyle').disabled?q('#uxSecondReplace'):q('#uxSecondRestyle'));
+  }
+  function dismissSecondPicture(){secondPicture=null;secondPanel.hidden=true;}
+  const legacyReferenceChange=q('#reference').onchange;
+  q('#reference').onchange=function(e){
+    const file=q('#reference').files?.[0];
+    if(continuationState&&file&&!selected?.reference_slots?.length&&StudioContinuation.sourceInput(selected?.continuation_capability)==='reference'){offerSecondPicture({file});return;}
+    dismissSecondPicture();return legacyReferenceChange?.call(this,e);
+  };
+  q('#uxSecondKeep').onclick=()=>{dismissSecondPicture();q('#reference').value='';syncReady();announce('Kept the source. The extra picture was not attached.');};
+  q('#uxSecondRestyle').onclick=()=>{
+    const item=secondPicture,dest=StudioContinuation.destinations('restyle',catalog?.presets||[],continuationSource)[0];if(!item||!dest||!continuationState)return;
+    dismissSecondPicture();q('#reference').value='';pendingStyle=item;syncReady();
+    openHandoff(continuationState.source_asset_id,dest.id,undefined,'restyle');
+  };
+  q('#uxSecondReplace').onclick=async()=>{
+    const item=secondPicture;if(!item||!continuationState)return;
+    if(!window.confirm('Start from this picture instead? The continuation ends and Create resets to the recipe defaults. The original stays in your library.'))return;
+    dismissSecondPicture();selectPreset(selected.id,true,true);
+    try{
+      if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
+      else{const result=await post('/api/assets/reference',{id:item.asset.id});uploaded=result.file;q('#reference').value='';replaceParentAsset('reference',null,item.asset.id);}
+      draftDirty=true;saveDraft();syncCreate();announce('Continuation ended. '+secondName(item)+' is now the reference; the prompt is the recipe default.');
+    }catch(error){announce(error.message,true);}
+  };
   // A modal handoff carries IDs, not paths; selecting a destination never runs it.
-  const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepares editable settings and attaches a copy. It does not generate, approve an output, or switch environments.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button></div></div>';document.body.append(handoff);
+  const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepare attaches a copy and fills the settings. Nothing runs until you press Generate.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button></div></div>';document.body.append(handoff);
   function destinationDetails(){
     const p=catalog?.presets.find(p=>p.id===q('#uxDestination').value),cap=p?.continuation_capability;
     q('#uxHandoffDetails').innerHTML=p?StudioContinuation.guidance(p,sourceContext).map(text=>'<p>'+escape(text)+'</p>').join(''):'No supported source-consuming recipe is available for this task.';
@@ -157,12 +215,12 @@
   function assetDetailsDirty(){return q('#assetDialog').open&&activeAsset&&(q('#assetTitle').value!==activeAsset.title||q('#assetNotes').value!==activeAsset.notes||q('#assetTags').value!==activeAsset.tags.join(', ')||q('#assetReview').value!==activeAsset.review);}
   function warnUnsavedAsset(){let notice=q('#uxAssetUnsaved');if(!notice){notice=element('p','callout');notice.id='uxAssetUnsaved';notice.setAttribute('role','status');q('#assetHandoffs').before(notice);}notice.textContent='Save your asset details before continuing. Your changes are still here.';q('#saveAssetDetails').focus();}
   document.addEventListener('click',e=>{if(e.target.closest('.ux-scene-link,#assetRecipe')&&assetDetailsDirty()){e.preventDefault();e.stopImmediatePropagation();warnUnsavedAsset();}},true);
-  function openHandoff(id,preferred,epoch){
+  function openHandoff(id,preferred,epoch,intent){
     if(epoch!=null&&epoch!==handoffEpoch)return;const request=++handoffEpoch;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}if(!catalog){announce('Recipes are still loading.');return;}
     const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return;}
     handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
-    handoffIntent=/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit';
+    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/style-pose/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(a.review||'unreviewed')+'</small>';
     q('#uxHandoffStatus').textContent='Reading this output’s exact submitted prompt…';handoffRecipes(preferred);handoff.showModal();
     readSource(id).then(source=>{if(request!==handoffEpoch||!handoff.open)return;if(source?.version!==1||source.asset_id!==id||source.sha256!==a.sha256)throw Error('Source identity changed; refresh the library.');sourceContext=source;q('#uxHandoffStatus').textContent=source.warning||'Source and output-specific wording found. Preparing remains separate from running.';const current=q('#uxDestination').value;handoffRecipes(preferred||current);}).catch(error=>{if(request===handoffEpoch&&handoff.open){q('#uxHandoffStatus').textContent='Could not read source context: '+error.message;sourceContext=null;destinationDetails();}});
@@ -177,13 +235,17 @@
       const result=await api('/api/assets/reference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id}),signal:AbortSignal.timeout(30000)});
       if(epoch!==handoffEpoch||!handoff.open||preset!==q('#uxDestination').value||handoffBaseline!==workbenchStamp())throw Error('The task changed during attachment. The copy was staged but not applied; reopen the handoff.');
       if(result.context?.sha256!==source.sha256||result.context?.asset_id!==id||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The source record changed during attachment. Reopen the handoff before applying it.');
-      beginContinuation(result,preset,handoffIntent);sourceReadError='';
-      q('#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
-      announce('Source and context prepared. Review the task panel and any missing inputs, then run explicitly.');contextPanel.scrollIntoView({block:'center'});
+      beginContinuation(result,preset,handoffIntent);sourceReadError='';const style=pendingStyle;pendingStyle=null;
+      const restyle=StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference';
+      q(restyle?'#lastReferenceHint':'#referenceHint').textContent='Attached source · '+result.width+' × '+result.height;q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
+      if(!restyle){announce('Source attached. Check the prompt, then press Generate.');contextPanel.scrollIntoView({block:'center'});}
+      else if(style?.file){announce('Source attached as the pose picture; your style picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
+      else if(style?.asset){announce('Source attached as the pose picture; your style picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
+      else{announce('Source attached as the pose picture. Now add the picture whose look you want to Picture 1, then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}
     }catch(error){q('#uxHandoffStatus').textContent=error.message;}
     finally{handoffBusy=false;destinationDetails();syncReady();}
   };
-  handoff.addEventListener('close',()=>{if(!handoff.open){handoffEpoch++;sourceContext=null;}});
+  handoff.addEventListener('close',()=>{if(!handoff.open){handoffEpoch++;sourceContext=null;pendingStyle=null;}});
   handoff.addEventListener('cancel',e=>{if(handoffBusy)e.preventDefault();});
   // Capture the old action before its old handler can perform an immediate transfer.
   async function openGalleryHandoff(id,preferred){const epoch=++handoffEpoch;if(!id){announce('This output has no saved asset identity. Refresh the workspace before attaching it.',true);return;}let asset=assetState.assets.find(a=>a.id===id);if(!asset)try{const data=await api('/api/workspace');if(epoch!==handoffEpoch)return;if(!data||!Array.isArray(data.assets))throw Error('Workspace assets are unavailable.');assetState=data;renderAssets();asset=assetState.assets.find(a=>a.id===id);}catch(err){if(epoch===handoffEpoch)announce('Could not refresh this output. '+err.message,true);return;}if(epoch!==handoffEpoch)return;openHandoff(id,preferred,epoch);}
@@ -222,7 +284,12 @@
   q('#uxPullAsset').onclick=async()=>{if(!takesSource()){announce(NO_SOURCE_SLOT);return;}const epoch=selectionEpoch;await refreshAssets();if(epoch!==selectionEpoch||view!=='create')return;q('#uxSourceSearch').value='';q('#uxPickerStatus').textContent='Attach a copy. The original stays in your library.';q('#uxSourceSlot').innerHTML=sourceSlotOptions();const first=nextEmptySlot();if(first>=0)q('#uxSourceSlot').value=String(first);renderSources();picker.showModal();};
   q('#uxSourceSearch').oninput=renderSources;
   after('selectPreset',()=>{if(picker.open)picker.close();});
-  q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;if(continuationState&&(slot==='reference'||slot==='0'))throw Error('Use Change route or Continue with the new asset to replace this task’s source.');const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');let previous=null;if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else if(selected.reference_slots?.length){previous=referenceRecords[Number(slot)].parent_asset;Object.assign(referenceRecords[Number(slot)],result,{missing:false});if(Number(slot)===0)uploaded=result.file;renderReferenceSlots();}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',previous,id);draftDirty=true;saveDraft();syncCreate();
+  async function pullIntoSlot(index,id){const result=await post('/api/assets/reference',{id});const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],result,{missing:false});if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();}
+  q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
+      if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
+        if(isSource&&!selected.reference_slots?.length){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
+        if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
+      const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');let previous=null;if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else if(selected.reference_slots?.length){previous=referenceRecords[Number(slot)].parent_asset;Object.assign(referenceRecords[Number(slot)],result,{missing:false});if(Number(slot)===0)uploaded=result.file;renderReferenceSlots();}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',previous,id);draftDirty=true;saveDraft();syncCreate();
       const filled=referenceRecords.filter(r=>r.file&&!r.missing).length,boardDone=!!selected.reference_board&&filled>=(selected.reference_board.min??1);
       const remaining=boardDone?-1:nextEmptySlot();
       if(remaining<0){picker.close();announce('Saved source attached. No generation submitted.');}
