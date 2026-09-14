@@ -207,7 +207,24 @@ def capture(image: Path, output: Path) -> dict:
     return publish_packet(output, {'source.png':original,'normalized.png':normalized}, receipt)
 
 
+def check_packet_members(folder: Path, expected: set[str]) -> None:
+    """Require the complete fixed artifact inventory, without following links.
+
+    Enumeration stops at the first unexpected name; it cannot scan an unbounded
+    directory and call only the known subset a verified packet. No file is removed.
+    """
+    if len(expected) > 69: raise ValueError('Packet member count exceeds its bound')
+    found = set()
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            if entry.name not in expected or not entry.is_file(follow_symlinks=False):
+                raise ValueError('Packet contains an undeclared or non-regular member')
+            found.add(entry.name)
+    if found != expected: raise ValueError('Packet is missing a required artifact')
+
+
 def load_packet(folder: Path) -> tuple[bytes, dict, bytes]:
+    check_packet_members(folder, {'source.png', 'normalized.png', 'receipt.json'})
     raw_receipt = read_bounded(folder/'receipt.json', MAX_METADATA_BYTES, reject_symlink=True)
     receipt = strict_json(raw_receipt)
     if set(receipt) != {'schema','normalization','neural_inference','review_state'} or receipt['schema'] != SCHEMA:
