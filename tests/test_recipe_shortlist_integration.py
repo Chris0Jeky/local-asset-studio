@@ -20,6 +20,7 @@ from test_recipe_shortlist import make_studio
 from studio_workflow.agent_bridge import AgentBridge
 from studio_workflow.sdk import WorkflowClient
 from studio_workflow.shortlist import request, GOALS, PREFIX
+from http_refusal_transport import atomic_json_post
 from test_server import server
 
 
@@ -36,11 +37,14 @@ class ShortlistHTTPTests(unittest.TestCase):
         self.transport_patch=patch('studio_workflow.client.Request',side_effect=wire);self.transport_patch.start();self.addCleanup(self.transport_patch.stop)
     def tearDown(self):self.http.shutdown();self.http.server_close();self.thread.join(5);self.temp.cleanup()
     def send(self,value=None,origin=None,content_type='application/json',host=None):
+        body=json.dumps(value or {'goal':'new-image'}).encode('utf-8')
+        host=host or '127.0.0.1:8191';origin=origin or 'http://127.0.0.1:8191'
+        if content_type=='application/json' and (host!='127.0.0.1:8191' or origin!='http://127.0.0.1:8191'):
+            return atomic_json_post(self.http.server_port,PREFIX,body,host=host,origin=origin)
         conn=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:
-            headers={'Host':host or '127.0.0.1:8191','Origin':origin or 'http://127.0.0.1:8191','Content-Type':content_type}
-            if host:headers['Host']=host
-            conn.request('POST',PREFIX,json.dumps(value or {'goal':'new-image'}),headers)
+            headers={'Host':host,'Origin':origin,'Content-Type':content_type}
+            conn.request('POST',PREFIX,body,headers)
             r=conn.getresponse();return r.status,json.loads(r.read())
         finally:conn.close()
     def test_ui_http_sdk_and_read_agent_share_snapshot_and_no_execution_access(self):
@@ -58,6 +62,14 @@ class ShortlistHTTPTests(unittest.TestCase):
         for kwargs,expected in [({'origin':'https://other.invalid'},403),({'host':'other.invalid'},403),({'content_type':'text/plain'},400),({'value':{'goal':'new-image','run':True}},400)]:
             with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],expected)
         self.assertEqual(self.s.calls,[])
+    def test_host_and_origin_refusals_send_the_complete_payload_before_reading_reply(self):
+        with patch('test_recipe_shortlist_integration.atomic_json_post', wraps=atomic_json_post) as transport:
+            for kwargs in ({'origin':'https://other.invalid'},{'host':'other.invalid'}):
+                with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],403)
+        self.assertEqual(transport.call_count,2)
+        for call in transport.call_args_list:
+            self.assertEqual(call.args[:2],(self.http.server_port,PREFIX))
+            self.assertEqual(json.loads(call.args[2]),{'goal':'new-image'})
     def test_sdk_and_agent_reject_invalid_options_before_http(self):
         with patch.object(self.client,'request',side_effect=AssertionError('No request expected')):
             for value in [True,4,-1]:
