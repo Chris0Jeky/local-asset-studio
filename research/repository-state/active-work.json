@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-09-14T12:50:00Z",
+  "repository": {
+    "head_sha": "1217f1307d24b963a90f448590884551c6dfca74",
+    "default_branch": "main"
+  },
+  "pull_requests": [
+    {
+      "number": 333,
+      "title": "Reference intelligence: four-image analysis, editable trait review and architecture",
+      "head": "codex/reference-intelligence-contract",
+      "base": "main",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 334,
+      "title": "Reduce Workflow Studio reading load with progressive disclosure",
+      "head": "ux/workflow-progressive-disclosure",
+      "base": "main",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 337,
+      "title": "Make Create explanations opt-in without changing their owners",
+      "head": "ux/create-progressive-disclosure",
+      "base": "ux/workflow-progressive-disclosure",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": 334,
+      "owner_run": false
+    },
+    {
+      "number": 340,
+      "title": "Add a deterministic repository operating snapshot and work taxonomy",
+      "head": "ops/repository-operating-model",
+      "base": "main",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": null,
+      "owner_run": false
+    }
+  ],
+  "issues": [
+    {
+      "number": 313,
+      "title": "Convergence milestone: prove the accepted-asset loop before expanding scope",
+      "type": "epic",
+      "readiness": "owner-run",
+      "blocked_by": []
+    },
+    {
+      "number": 314,
+      "title": "Extract a shared revisioned-command and durable-receipt toolkit",
+      "type": "research",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 315,
+      "title": "Adopt a repository operating model: issue taxonomy, WIP limits and generated state",
+      "type": "slice",
+      "readiness": "active",
+      "blocked_by": []
+    },
+    {
+      "number": 252,
+      "title": "Add an addressable-figure primitive: split a multi-figure image into child assets with lineage",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 97,
+      "title": "Unify graph validation and complete per-backend schema evidence",
+      "type": "defect",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 178,
+      "title": "Extend stage-aware resource admission through the existing generation coordinator",
+      "type": "slice",
+      "readiness": "blocked",
+      "blocked_by": [77, 89]
+    }
+  ],
+  "next_ready": [97, 252, 314]
+}
