@@ -6,6 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE = ROOT / 'app' / 'static' / 'workflow-studio.html'
+STYLE = ROOT / 'app' / 'static' / 'workflow-progressive-disclosure.css'
 
 
 class Structure(HTMLParser):
@@ -41,6 +42,7 @@ class WorkflowProgressiveDisclosureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.source = PAGE.read_text(encoding='utf-8')
+        cls.style = STYLE.read_text(encoding='utf-8')
         cls.structure = Structure(cls.source)
 
     def node(self, identifier):
@@ -71,6 +73,11 @@ class WorkflowProgressiveDisclosureTests(unittest.TestCase):
         self.assertIn('Use Steps for focused controls or Nodes for the full supported graph.', self.source)
         self.assertIn('What can this builder run?', self.source)
         self.assertIn('Move, zoom and connect', self.source)
+
+    def test_closed_help_is_removed_from_layout_for_measurement_and_accessibility(self):
+        self.assertIn('.wf-context-help:not([open])>:not(summary)', self.style)
+        self.assertIn('.wf-agents:not([open])>:not(summary)', self.style)
+        self.assertIn('display:none!important', self.style)
 
 
 if __name__ == '__main__':

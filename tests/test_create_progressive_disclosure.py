@@ -5,6 +5,7 @@ import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+STYLE = ROOT / 'app/static/create-progressive-disclosure.css'
 
 
 class CreateProgressiveDisclosureTests(unittest.TestCase):
@@ -22,6 +23,11 @@ class CreateProgressiveDisclosureTests(unittest.TestCase):
                                 text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('contracts passed', result.stdout)
+
+    def test_closed_create_help_is_removed_from_layout(self):
+        style = STYLE.read_text(encoding='utf-8')
+        self.assertIn('.create-context-help:not([open])>:not(summary)', style)
+        self.assertIn('display:none!important', style)
 
 
 if __name__ == '__main__':
