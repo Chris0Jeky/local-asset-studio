@@ -1,7 +1,16 @@
 """Opt-in routes on the existing Studio handler; no second port, queue or model worker."""
 import base64
 import hashlib
+import sqlite3
 from urllib.parse import urlparse
+
+from studio_workflow.addressable_figures import split_figures
+try:
+    from workspace import WorkspaceError
+except ModuleNotFoundError as error:
+    if error.name != 'workspace':
+        raise
+    from app.workspace import WorkspaceError
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
 
@@ -46,7 +55,27 @@ def extend_handler(base):
             return self._json(200,{'profiles':list(profiles().values()),'generation_submitted':False})
 
         def do_POST(self):
-            if not urlparse(self.path).path.startswith('/api/prompt/'): return super().do_POST()
+            path = urlparse(self.path).path
+            if path == '/api/assets/split-figures':
+                if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
+                try:
+                    need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
+                    body=self.rfile.read(self._content_length(1024*1024))
+                    return self._json(201,split_figures(self.studio.assets,decode(body)))
+                except WorkspaceError as exc:
+                    return self._json(exc.status,exc.response())
+                except sqlite3.Error:
+                    return self._json(503,{
+                        'error':'Asset storage could not confirm this request. Check its receipt before retrying the exact command.',
+                        'code':'asset_storage_unconfirmed',
+                        'generation_submitted':False,
+                    })
+                except OSError as exc:
+                    return self._json(500,{'error':'Local figure split failed: '+str(exc)[:200],
+                                           'generation_submitted':False})
+                except (ValueError,KeyError,TypeError,IndexError,RecursionError) as exc:
+                    return self._json(400,{'error':str(exc),'generation_submitted':False})
+            if not path.startswith('/api/prompt/'): return super().do_POST()
             if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
             try:
                 need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
