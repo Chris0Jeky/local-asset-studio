@@ -1,5 +1,38 @@
 # Current state — 14 September 2026
 
+## Import character study cases from Runs & review — 14 September 2026
+
+Runs & review now accepts an approved character study plan, its case handoff and
+ordered original reference images through **Import character case**. Reading the
+files stays local. Import hashes every selected reference before any upload, then
+uses the existing upload and Production commands. Production retains canonical
+plan/handoff, live preflight, deterministic case identity and shared-budget checks.
+The original JSON values are sent intact: a direct regression showed that normal
+JavaScript serialization changed `1.0` to `1` and broke Python's handoff digest.
+
+Existing cases open without another upload/import. After an unconfirmed import,
+reconciliation only reads the saved case; no request is automatically repeated.
+Import leaves the case planned, with zero jobs and zero reservations. Start remains
+separate; generic keeper labels still do not establish character acceptance.
+The [runbook](docs/character-consistency/RUNBOOK.md#import-the-case-in-studio)
+documents limits, recovery and collection of saved results.
+
+Executed at integrated source head `ff286254bdb0300e69ae79afa5fe4b062bd65257`:
+strict Windows 11 / Python 3.14.3 full suite passed 2,278 total tests (2,213 passed,
+65 skipped) in 310.602 seconds, without ResourceWarning or an aborted connection.
+The real frontend handlers also passed through inert Studio HTTP routes. A real
+browser at 1440px and 390px imported/reopened one case by keyboard with one upload,
+one project, no horizontal overflow, no page errors, zero jobs and zero reserved
+attempts. Existing comparison and review journeys passed with zero generation
+requests. Validator: 70 graphs, 128 pins, 1,349 paths and 94 LoRA names. One fresh
+independent review found no blocking or additional findings. Logs and screenshots
+remain outside Git under `.runtime/goal-20260913/`.
+
+Not verified: adoption by the owner's running Studio, importing the owner's real
+study, actual model execution or the complete accepted-character loop. These were
+CPU-only synthetic fixtures with a stopped generation worker and inert preflight.
+Issues #65, #313, #3 and #14 retain their broader acceptance requirements.
+HUMAN_TODO q-7, q-25 and q-26 remain open; no live runtime or queue was touched.
 ## Style boards, the checkpoint × LoRA matrix and seven new Illustrious LoRAs — 14 September 2026 (later)
 
 The Style + Pose recipes now take a **style board** of one to three pictures (`reference_board` on the preset: optional
