@@ -41,7 +41,7 @@ def main():
         if result.returncode!=expected_exit:
             raise RuntimeError(f'{case}: expected exit {expected_exit}, got {result.returncode}; inspect {args.out}')
         receipt=json.loads((directory/'receipt.json').read_text(encoding='utf-8'))
-        if receipt['fail']!=expected_fails or receipt['pass']+receipt['fail']!=30:
+        if receipt['fail']!=expected_fails or receipt['pass']+receipt['fail']!=46:
             raise RuntimeError(f'{case}: incomplete or unexpected scenario failures')
         if bool(receipt['errors'])!=(case=='page-error'):
             raise RuntimeError(f'{case}: JavaScript error evidence does not match the injected fault')
