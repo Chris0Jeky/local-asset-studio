@@ -144,3 +144,11 @@ The independent review also reproduced omitted `commit_at_capture` or
 null remains a valid unknown observation. New causal regressions fail before these
 corrections and pass afterwards. Final native results are recorded on the PR;
 initial Windows failure is retained, not recast as a successful run.
+
+Second review reproduced modification immediately after a guarded artifact read:
+a later lstat could accidentally bind the modified file's signature to the old
+bytes. The internal capture now returns its verified signature **with** those
+bytes; the final recheck compares against that capture, not a later unrelated
+lstat. The public byte-reader API is unchanged. The after-return append regression
+failed before this fix; fault injection now wraps the extracted capture seam,
+with the same mutation timing and unchanged refusal assertion.

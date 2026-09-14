@@ -260,12 +260,22 @@ class ReceiptTests(unittest.TestCase):
         put_events(self.directory, value); self.refuses('event_invalid')
 
     def test_disappearing_capture_is_a_bounded_diagnostic(self):
-        original = self.api.read_evidence_file
+        original = self.api._capture_file
         def capture(path, limit):
             raw = original(path, limit)
             if path.name == 'context.json': path.unlink()
             return raw
-        with patch.object(self.api, 'read_evidence_file', side_effect=capture):
+        with patch.object(self.api, '_capture_file', side_effect=capture):
+            self.refuses('file_changed')
+
+    def test_post_capture_modification_cannot_supply_its_own_signature(self):
+        original = self.api._capture_file
+        def capture(path, limit):
+            value = original(path, limit)
+            if path.name == 'context.json':
+                with path.open('ab') as output: output.write(b' ')
+            return value
+        with patch.object(self.api, '_capture_file', side_effect=capture):
             self.refuses('file_changed')
 
     def test_root_changed_during_inspection_cannot_be_adopted(self):

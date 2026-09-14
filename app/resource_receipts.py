@@ -89,7 +89,7 @@ def _directories(path):
         require(_plain(parent.lstat(), stat.S_ISDIR), 'directory_not_plain')
 
 
-def read_evidence_file(path: Path, limit: int) -> bytes:
+def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
     """Bound the actual read and bracket one regular file with identity checks.
 
     This is not a filesystem lease or an OS sandbox against hostile parent races.
@@ -115,9 +115,14 @@ def read_evidence_file(path: Path, limit: int) -> bytes:
         require(len(data) <= limit, 'artifact_too_large')
         require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
                 and len(data) == before.st_size, 'file_changed')
-        return data
+        return data, _signature(before)
     except FileNotFoundError: raise EvidenceError('artifact_missing', incomplete=True) from None
     except OSError: raise EvidenceError('artifact_unreadable') from None
+
+
+def read_evidence_file(path: Path, limit: int) -> bytes:
+    """Capture one bounded file; the public byte-reader contract stays unchanged."""
+    return _capture_file(path, limit)[0]
 
 
 def _context(value, job_id):
@@ -247,11 +252,10 @@ def inspect_observation(directory: str | Path, *, expected_result_sha256: str | 
         entry = manifest[name]
         require(isinstance(entry, dict) and set(entry) == {'sha256', 'bytes'} and is_hash(entry.get('sha256'))
                 and type(entry.get('bytes')) is int and 0 <= entry['bytes'] <= limit, 'artifact_manifest_invalid')
-        raw = read_evidence_file(directory / name, limit)
+        raw, signature = _capture_file(directory / name, limit)
         require(len(raw) == entry['bytes'] and sha256(raw) == entry['sha256'], 'artifact_hash_mismatch')
         captured[name] = raw
-        try: signatures[name] = _signature((directory / name).lstat())
-        except OSError: raise EvidenceError('file_changed') from None
+        signatures[name] = signature
     context = parse_document(captured['context.json'])
     source = _context(context, job_id)
     submissions, finish, records, warnings = _events(captured['events.jsonl'], context, job_id)
