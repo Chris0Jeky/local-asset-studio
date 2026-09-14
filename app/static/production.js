@@ -1,6 +1,22 @@
 let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false, productionActionPending=false;
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
+// Stored plan names are identity: the plan file, its fingerprint and every
+// receipt keep the name a study was created with.  These helpers only make the
+// list and the detail header readable, and never write a name back.
+const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Create, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
+function planDate(value){
+  const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<=0)return '';
+  try{return new Date(seconds*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch(e){return '';}
+}
+function planDisplayName(p){
+  const stored=String(p?.name||'').trim();
+  const readable=stored.replace(/\b[0-9a-f]{8,}\b/gi,'').replace(/\s{2,}/g,' ').replace(/[\s·\/,-]+$/,'').trim()||stored||'Untitled plan';
+  if(p?.kind!=='comparison')return readable;
+  const values=p.values||[];
+  const change=p.axis==='variants'?(values.length?values.length+' planned variants':''):p.axis&&values.length?p.axis+' = '+values.join(', '):'';
+  return [readable,change,planDate(p.created_at)].filter(Boolean).join(' · ');
+}
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
 async function refreshProduction(force=false){
   if(productionRefreshing)return;productionRefreshing=true;
@@ -10,15 +26,15 @@ async function refreshProduction(force=false){
   }catch(e){productionMessage(e.message,true);}finally{productionRefreshing=false;}
 }
 function renderProduction(){
-  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'"><b>'+esc(p.name)+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>').join('')||'<p class="muted">Your next study starts with a question. Open a recipe and plan a comparison.</p>';
+  $('#productionList').innerHTML=productionPlans.map(p=>'<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(p.state.status.replaceAll('_',' '))+' · '+(p.kind==='comparison'?p.stages.length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+'</small></button>').join('')||PRODUCTION_EMPTY;
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
+    $('#productionDetail').innerHTML='<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>';
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2>'+esc(p.name)+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
@@ -33,6 +49,10 @@ function renderProduction(){
       html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>';
       for(const o of images){const url='/api/assets/'+o.asset_id+'/file';html+=o.media_type==='image'?'<button class="candidate-image" data-candidate-open="'+o.asset_id+'"><img src="'+url+'" alt="Candidate '+esc(s.label)+'"></button>':o.media_type==='video'?'<video src="'+url+'" controls preload="metadata"></video>':'<a href="'+url+'" download>Download '+esc(o.media_type)+'</a>';
         if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<button data-choose-candidate="'+o.asset_id+'">Choose '+esc(s.label)+'</button>';
+        // Workspace review of one image, through the same guarded update the asset
+        // dialog uses.  Blind mode hides settings, never the pictures, so marking a
+        // keeper here reveals nothing about which variant produced it.
+        if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keeper</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
       }
       if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+'<button data-job-recipe="'+j.id+'">Recipe</button></details>';
       html+='</article>';
@@ -62,6 +82,7 @@ async function openComparison(parent=null){
   $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
   plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerBlock();renderPlanner();
   if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
+  renderPlannerSummary();
   if(!axes.length)productionMessage('This recipe has no single numeric axis; plan its documented settings instead.');
   $('#experimentDialog').showModal();
 }
@@ -71,7 +92,7 @@ function plannerBlock(){
   let block=$('#plannerBlock');
   if(!block){
     block=document.createElement('div');block.id='plannerBlock';block.className='planner';
-    block.innerHTML='<div class="production-actions"><button type="button" id="planFromKnowledge">Plan from settings library</button><button type="button" id="planRemix">Remix LoRA weights</button><button type="button" id="clearPlanned" hidden>Clear planned variants</button></div><div id="plannerAxes" class="planner-axes"></div><div id="plannedVariants" class="variants"></div>';
+    block.innerHTML='<details id="plannerAdvanced" class="planner-advanced"><summary>Advanced: plan several settings from the library</summary><p class="muted">The settings library holds values documented for this model family. Planning from it replaces the single-setting comparison above and still reserves nothing until you prepare the plan.</p><div class="production-actions"><button type="button" id="planFromKnowledge">Plan from settings library</button><button type="button" id="planRemix">Remix LoRA weights</button><button type="button" id="clearPlanned" hidden>Clear planned variants</button></div><div id="plannerAxes" class="planner-axes"></div></details><div id="plannedVariants" class="variants"></div>';
     $('#experimentStatus').before(block);
     $('#planFromKnowledge').onclick=()=>requestPlan('grid');
     $('#planRemix').onclick=()=>requestPlan('remix');
@@ -81,15 +102,52 @@ function plannerBlock(){
   }
   return block;
 }
+// /api/experiments/plan returns `description` already shaped as
+// "label · every setting — rationale".  Printing it next to <b>label</b> and the
+// rationale paragraph repeated both, so each card now states every fact once:
+// the label, then only the settings this variant actually moves off the recipe.
+const PLANNER_PROSE=new Set(['positive','negative']);
+function variantChanges(variant,base){
+  const controls=variant?.controls||{},from=base||{},label=String(variant?.label||'');
+  return Object.keys(controls).sort().filter(key=>!PLANNER_PROSE.has(key)&&String(controls[key])!==String(from[key]??'')&&!label.includes(key+'='+controls[key])).map(key=>key+'='+controls[key]);
+}
 function renderPlanner(){
   const planned=plannedVariants||[];
   $('#plannerAxes').innerHTML=plannerAxes.length?'<small>Settings to vary</small>'+plannerAxes.map(a=>'<label class="planner-axis"><input type="checkbox" value="'+esc(a.id)+'" '+(plannerAxisIds.includes(a.id)?'checked':'')+'> '+esc(a.id)+' · '+esc(a.values.join(', '))+'</label>').join(''):'';
-  $('#plannedVariants').innerHTML=planned.map((v,i)=>'<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button><small>'+esc(v.description||Object.entries(v.controls||{}).filter(([k])=>k!=='positive'&&k!=='negative').map(([k,val])=>k+'='+val).join(', '))+'</small>'+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>').join('');
+  $('#plannedVariants').innerHTML=planned.map((v,i)=>{const changes=variantChanges(v,comparisonRecipe?.controls);
+    return '<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button>'+(changes.length?'<small>'+esc(changes.join(', '))+'</small>':'')+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>';}).join('');
   $('#clearPlanned').hidden=!planned.length;
   $('#experimentValues').required=!planned.length;$('#experimentValues').disabled=!!planned.length;
   $('#experimentAxis').disabled=!!planned.length||!$('#experimentAxis').value;
   if(planned.length&&!comparisonParent)$('#experimentBudget').value=Math.max(Number($('#experimentBudget').value)||0,planned.length);
   $('#prepareExperiment').disabled=!planned.length&&!$('#experimentAxis').value;
+  if(planned.length&&$('#plannerAdvanced'))$('#plannerAdvanced').open=true;
+  renderPlannerSummary();
+}
+// The Create view already measures this recipe against completed local runs.
+// Reading its label back keeps one number in the Studio: no second estimator,
+// and no claim at all when Create has not measured this recipe yet.
+function measuredRunSeconds(){
+  const match=/^([0-9]+(?:\.[0-9]+)?)\s*(min|h)$/.exec(String($('#estimateValue')?.textContent||'').trim());
+  if(!match)return null;
+  const value=Number(match[1]);
+  return Number.isFinite(value)&&value>0?value*(match[2]==='h'?3600:60):null;
+}
+function plannedValues(){return String($('#experimentValues').value||'').split(',').map(v=>v.trim()).filter(Boolean);}
+function renderPlannerSummary(){
+  const summary=$('#experimentSummary'),note=$('#experimentBudgetNote');
+  if(!summary)return;
+  const planned=plannedVariants||[],recipe=$('#experimentRecipe').textContent||'this recipe';
+  const axis=$('#experimentAxis').value,values=plannedValues(),candidates=planned.length||values.length;
+  const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
+  const what=planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
+  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at '+(per/60).toFixed(1)+' min per run measured in Create':', no measured time for this recipe yet';
+  summary.textContent=candidates?what+' on '+recipe+' → '+candidates+' graph run'+(candidates===1?'':'s')+time+'.':what+' on '+recipe+'.';
+  if(note){
+    note.textContent=candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
+    note.classList.toggle('error',!!candidates&&reserved<candidates);
+  }
+  $('#experimentBudget').setCustomValidity?.(candidates&&reserved<candidates?'Reserve at least '+candidates+' graph runs for '+candidates+' candidates.':'');
 }
 async function requestPlan(mode){
   if(!comparisonRecipe)return;
@@ -105,7 +163,8 @@ async function requestPlan(mode){
   }catch(err){plannedVariants=null;renderPlanner();$('#experimentStatus').textContent=err.message;}
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}
-$('#experimentAxis').onchange=suggestComparisonValues;$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
+$('#experimentAxis').onchange=()=>{suggestComparisonValues();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
+$('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=renderPlannerSummary;
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));
 $('#refreshProduction').onclick=()=>refreshProduction(true);
@@ -116,8 +175,33 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
   const p=await post('/api/production',intent);
   productionId=p.id;$('#experimentDialog').close();showView('production');await refreshProduction(true);
 }catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
-$('#productionList').onclick=e=>{const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
+// The empty state hands the operator the same route the header button uses:
+// Create, with the recipe that is already open, then the planner. It starts nothing.
+function planFromEmptyState(){
+  try{document.dispatchEvent(new CustomEvent('studio:navigate',{detail:'create'}));}catch(err){showView('create');}
+  if(typeof selected!=='undefined'&&selected)$('#planComparison')?.click?.();
+  else productionMessage('Choose a recipe in Create first, then press Plan comparison.');
+}
+// Remembering the orientation block is a per-browser convenience; a storage that
+// refuses to answer must never stop the view from rendering.
+const PRODUCTION_INTRO_KEY='studio.production.intro';
+function restoreProductionIntro(){
+  const intro=$('#productionIntro');if(!intro)return;
+  try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)!=='closed';}catch(err){}
+  intro.ontoggle=()=>{try{localStorage.setItem(PRODUCTION_INTRO_KEY,intro.open?'open':'closed');}catch(err){}};
+}
+restoreProductionIntro();
+$('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();}};
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
+// Workspace review of a single candidate image: the same revision-guarded
+// /api/assets/update command the asset dialog sends, never a new endpoint. It
+// records a creative preference only; the comparison's own outcome is untouched.
+async function reviewCandidateAsset(id,review){
+  if(!id||!['selected','needs_work'].includes(review))return;
+  await refreshAssets(true);
+  await mutateAssets({ids:[id],action:'edit',review});
+  productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+}
 $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending)return;
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
@@ -126,6 +210,8 @@ $('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[d
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
+  const mark=e.target.closest('[data-candidate-review]');
+  if(mark){await reviewCandidateAsset(mark.dataset.candidateAsset,mark.dataset.candidateReview);return;}
   if(open){await refreshAssets();openAsset(open);return;}if(recipe){await exportRecipe(recipe);return;}
   if(action==='branch'){applySaved({preset:p.recipe.preset_id,controls:p.recipe.controls,references:p.recipe.references,parent_assets:p.recipe.parent_assets});await openComparison(p);return;}
   if(choice||action==='needs_work')await post('/api/production/'+p.id+'/review',{asset_id:choice||null,notes:$('#productionNotes').value,reviewer:'local-user'});
