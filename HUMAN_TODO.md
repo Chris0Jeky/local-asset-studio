@@ -1,6 +1,6 @@
 # Creative choices
 
-The earlier creative choices and q-1 through q-5 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
+The earlier creative choices and q-1 through q-6 below are answered. The configured page-file increase was restarted by the owner and verified at 64 GiB; no restart action remains.
 
 - [x] Choose your preferred pixel-art direction: compass A, seed `2026091103` (owner, 12 September 2026). Both compass originals remain preserved; the two seeds are not a LoRA-on/off comparison and neither is accepted as a finished game asset.
 - [x] Pick a focused production brief: **Fantasy character illustration pack** (owner, 12 September 2026). The prepared brief is in [FANTASY-CHARACTER-BRIEF.md](docs/FANTASY-CHARACTER-BRIEF.md); this selects the work, not finished-art acceptance.

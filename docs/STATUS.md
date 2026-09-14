@@ -127,5 +127,6 @@ separately from sampling, so a 995-second failure becomes an instant explained r
 
 ## Open owner items
 
-Surface, never tick: [HUMAN_TODO.md](../HUMAN_TODO.md) q-6 (three UX questions).
-Earlier items q-1 to q-5 are answered. Creative acceptance of any generated image remains the owner's alone.
+Items q-1 to q-6 in [HUMAN_TODO.md](../HUMAN_TODO.md) are answered. The owner's q-6 feedback is recorded
+in the [UX audit](UX-AUDIT-2026-09-14.md); improvements and the owner's subsequent verdict remain under #278.
+Creative acceptance of any generated image remains the owner's alone.

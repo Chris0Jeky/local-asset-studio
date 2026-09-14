@@ -6,7 +6,8 @@ The owner confirmed authorised-territory use for Hunyuan3D 2.1 on 11 September 2
 owner comment](https://github.com/Chris0Jeky/local-asset-studio/issues/26#issuecomment-5637883899); this
 scope was reconciled on 14 September 2026. This records the supplied authorisation for that model and
 scope; it does not independently verify the licence or extend to other models. Output acceptance and
-downstream rights remain separate. q-5 is closed in [HUMAN_TODO.md](HUMAN_TODO.md); q-6 remains open.
+downstream rights remain separate. q-5 is closed in [HUMAN_TODO.md](HUMAN_TODO.md). The owner's q-6
+UX feedback is now recorded by PR #280; follow-up improvements and owner validation remain under #278.
 Historical execution, source-term and output records below remain unchanged.
 
 ## Full assessment, recovery exits and agent tooling — 13/14 September 2026
