@@ -1,0 +1,38 @@
+{
+  "schema": "studio.research.low-level-audit/v1",
+  "executable": false,
+  "neural_attempt_allowance": 0,
+  "source": {
+    "filename": "Local Asset Studio_ Low-Level Engineering Optimisation Audit and Roadmap.pdf",
+    "pages": 33,
+    "bytes": 304737,
+    "sha256": "caeed6ce6442e8c096598c8b71a1b3217a1f1be2ad7f43bba8e6967b76ce335b",
+    "repository_audit_retained": false,
+    "scope": "graphics asset processing and renderer recommendations"
+  },
+  "repository": {
+    "name": "Chris0Jeky/local-asset-studio",
+    "inspected_commit": "1c9c1f85b69cbb26e5dd0ea6c1f3fa60969eb80a",
+    "parent_issue": 172,
+    "observed_open_prs": [334, 337, 340],
+    "capture_date": "2026-09-14"
+  },
+  "work": [
+    {"id": "LL-CPU-1", "pages": [8, 9, 22], "disposition": "adapt", "issue": 362, "owner": "app/review_media.py:decode", "gate": "exact decode parity and measured no-op copy removal"},
+    {"id": "LL-CPU-2", "pages": [8, 9, 17, 22], "disposition": "adapt", "issue": 363, "owner": "scripts/character_edit_pixels.py:changed_mask", "gate": "all-channel exactness and bounded tile scratch"},
+    {"id": "LL-TRACE", "pages": [13, 14, 15, 16, 17, 18, 30], "disposition": "adapt", "issue": 364, "parents": [302, 176, 307], "gate": "supported operator/transfer trace and measured overhead"},
+    {"id": "LL-MEDIA-CACHE", "pages": [18, 19, 20, 24, 25, 28], "disposition": "existing-owner", "issue": 177, "gate": "complete derivative identity, bounded storage and failure recovery"},
+    {"id": "LL-CONDITIONING", "pages": [18, 19, 20], "disposition": "analogy-not-source-claim", "issues": [11, 35], "gate": "complete deterministic conditioning identity and net reuse benefit"},
+    {"id": "LL-RESIDENCY", "pages": [10, 11, 21, 22, 24, 31], "disposition": "existing-owner", "issues": [178, 305, 306], "gate": "distinct memory domains and actual owner-safe lifetimes"},
+    {"id": "LL-GEOMETRY", "pages": [4, 5, 6, 7, 20, 21, 26], "disposition": "conditional-graphics", "issues": [15, 24], "gate": "validated engine export and fidelity"},
+    {"id": "LL-TEXTURES", "pages": [3, 7, 8, 20, 25, 26], "disposition": "conditional-graphics", "issues": [15, 24, 177], "gate": "actual consumer compressed-format and colour/alpha support"},
+    {"id": "LL-GPU-DRIVEN", "pages": [10, 11, 12, 13, 23, 24, 25, 31], "disposition": "deferred-research", "issues": [15, 24], "gate": "measured submission bottleneck and supported backend fallback"}
+  ],
+  "claims": {
+    "inference_speedup_measured": false,
+    "windows_gpu_profile_collected": false,
+    "renderer_rewrite_proposed": false,
+    "runtime_defaults_changed": false,
+    "source_targets_are_measurements": false
+  }
+}
