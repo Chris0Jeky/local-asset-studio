@@ -5989,20 +5989,20 @@
     },
     {
       "id": "restyle-wai",
-      "name": "Restyle a picture (WAI v17)",
+      "name": "Restyle a picture (WAI v17 + light-novel look)",
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
       "graph": "workflows/api/restyle-wai-api.json",
       "verified": false,
       "modality": "image",
-      "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. WAI's creator is not authenticated by its hashes.",
+      "commercial_note": "WAI hashes do not authenticate its creator and its commercial terms are unresolved; the Mishima Kurone and Momoko LoRAs declare Image/RentCivit/Rent/Sell on civitai (recorded in models/library.json); IP-Adapter and ControlNet weights are apache-2.0; every board and source picture keeps its own terms. A successful render is not legal clearance.",
       "positive": [
-        "2",
-        "text"
+        "42",
+        "string_a"
       ],
       "negative": [
-        "3",
-        "text"
+        "43",
+        "string_a"
       ],
       "width": [
         "4",
@@ -6111,7 +6111,7 @@
         "image"
       ],
       "last_reference_label": "Picture to restyle",
-      "last_reference_hint": "The picture you want to keep. Its layout, pose and colours are the starting point (Denoise says how much may change: 0.5 keeps most of it, 0.8 repaints most of it) and its OpenPose skeleton holds the pose. The look comes from the style board above, not from this picture.",
+      "last_reference_hint": "The picture you want to keep. Its layout, pose and colours are the starting point (Denoise says how much may change: 0.75 keeps more, 0.85 is the default, 0.95 repaints almost everything) and its OpenPose skeleton holds the pose. The look comes from the light-novel LoRA and the fixed finish terms, with the style board as a light touch.",
       "style_weight": [
         "14",
         "weight"
@@ -6121,38 +6121,44 @@
         "strength"
       ],
       "stages": [
-        "SDXL checkpoint",
-        "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and averaged, style-transfer weighting",
-        "Picture to restyle: scaled to the canvas, VAE-encoded as the starting latent; OpenPose skeleton \u2192 ControlNet",
-        "Re-sample at Denoise (default 0.65)",
+        "WAI v17 + Mishima Kurone light-novel LoRA (0.8; Momoko in slot 2, off)",
+        "Finish terms appended to your prompt: soft lighting, pastel colours, light background, delicate lineart",
+        "Style board: 1-3 pictures, style-transfer weighting at a light 0.3",
+        "Picture to restyle: scaled to the 1024x1536 canvas, VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
+        "30-step re-sample at Denoise 0.85, CFG 4.5",
         "Face pass with the same styled model (denoise 0.4)",
         "PNG"
       ],
       "variants": [
         {
-          "name": "Keep more of the picture (denoise 0.5)",
+          "name": "Keep more of the picture (denoise 0.75)",
           "controls": {
-            "denoise": 0.5
+            "denoise": 0.75
           }
         },
         {
-          "name": "Change more (denoise 0.8)",
+          "name": "Repaint almost everything (denoise 0.95)",
           "controls": {
-            "denoise": 0.8
+            "denoise": 0.95
           }
         },
         {
-          "name": "Style stronger (0.8)",
+          "name": "Board off: LoRA finish only",
           "controls": {
-            "style_weight": 0.8
+            "style_weight": 0
           }
         },
         {
-          "name": "Style lighter, pose looser",
+          "name": "Board stronger (0.6): takes the style picture's palette",
           "controls": {
-            "style_weight": 0.45,
-            "pose_strength": 0.7
+            "style_weight": 0.6
+          }
+        },
+        {
+          "name": "Momoko look instead of Mishima",
+          "controls": {
+            "lora": 0,
+            "lora2": 0.8
           }
         },
         {
@@ -6161,216 +6167,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Give a finished picture a different look while keeping the picture: the picture to restyle is both the starting latent (re-sampled at Denoise 0.65, so its layout, costume and colours survive) and the pose source (OpenPose skeleton \u2192 Xinsir ControlNet), while an IP-Adapter Plus style board of one to three pictures supplies the look with the 'style transfer' weighting (the style picture's subject stays out). Guidance 4.5 and style weight 0.6: measured 14 Sep 2026 on the owner's throne witch that weight 1.0 or CFG 6 over-drive the palette into neon stripes whatever the weighting, and that Style + Pose alone (empty latent) loses the throne and costume. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; copy the source's description when continuing. Semantic style transfer is not a pixel copy: expect the finish (linework, shading, palette temperature) to move, not the whole image to become the style picture. WAI v17 base: the calm finish (softer shading, cleaner face) that came closest to a soft style picture in the 14 Sep 2026 comparison.",
-      "reference_slots": [
-        {
-          "role": "style",
-          "contribution": "",
-          "avoid": "",
-          "binding": [
-            "10",
-            "image"
-          ]
-        },
-        {
-          "role": "style",
-          "contribution": "",
-          "avoid": "",
-          "binding": [
-            "30",
-            "image"
-          ]
-        },
-        {
-          "role": "style",
-          "contribution": "",
-          "avoid": "",
-          "binding": [
-            "31",
-            "image"
-          ]
-        }
-      ],
-      "reference_board": {
-        "min": 1,
-        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
-      }
-    },
-    {
-      "id": "restyle-nova",
-      "name": "Restyle a picture (Nova Anime XL v19)",
-      "category": "Characters",
-      "family": "Nova Anime XL IL v19 (Illustrious)",
-      "graph": "workflows/api/restyle-nova-api.json",
-      "verified": false,
-      "modality": "image",
-      "commercial_note": "Nova Anime XL's civitai flags allow Image/Rent/RentCivit but not Sell; check them, the IP-Adapter/ControlNet weights (apache-2.0) and every board and pose picture's terms before publishing; a successful render is not legal clearance.",
-      "positive": [
-        "2",
-        "text"
-      ],
-      "negative": [
-        "3",
-        "text"
-      ],
-      "width": [
-        "4",
-        "width"
-      ],
-      "height": [
-        "4",
-        "height"
-      ],
-      "seed": [
-        "5",
-        "seed"
-      ],
-      "steps": [
-        "5",
-        "steps"
-      ],
-      "cfg": [
-        "5",
-        "cfg"
-      ],
-      "denoise": [
-        "5",
-        "denoise"
-      ],
-      "sampler": [
-        "5",
-        "sampler_name"
-      ],
-      "scheduler": [
-        "5",
-        "scheduler"
-      ],
-      "choices": {
-        "sampler": [
-          "euler_ancestral",
-          "euler",
-          "dpmpp_2m",
-          "dpmpp_2m_sde",
-          "dpmpp_sde"
-        ],
-        "scheduler": [
-          "normal",
-          "karras",
-          "sgm_uniform",
-          "beta",
-          "simple"
-        ]
-      },
-      "lora": [
-        "8",
-        "strength_model"
-      ],
-      "lora_name": [
-        "8",
-        "lora_name"
-      ],
-      "lora2": [
-        "9",
-        "strength_model"
-      ],
-      "lora2_name": [
-        "9",
-        "lora_name"
-      ],
-      "bindings_extra": {
-        "lora": [
-          [
-            "8",
-            "strength_clip"
-          ]
-        ],
-        "lora2": [
-          [
-            "9",
-            "strength_clip"
-          ]
-        ],
-        "seed": [
-          [
-            "51",
-            "seed"
-          ]
-        ],
-        "cfg": [
-          [
-            "51",
-            "cfg"
-          ]
-        ],
-        "sampler": [
-          [
-            "51",
-            "sampler_name"
-          ]
-        ],
-        "scheduler": [
-          [
-            "51",
-            "scheduler"
-          ]
-        ]
-      },
-      "last_reference": [
-        "11",
-        "image"
-      ],
-      "last_reference_label": "Picture to restyle",
-      "last_reference_hint": "The picture you want to keep. Its layout, pose and colours are the starting point (Denoise says how much may change: 0.5 keeps most of it, 0.8 repaints most of it) and its OpenPose skeleton holds the pose. The look comes from the style board above, not from this picture.",
-      "style_weight": [
-        "14",
-        "weight"
-      ],
-      "pose_strength": [
-        "17",
-        "strength"
-      ],
-      "stages": [
-        "SDXL checkpoint",
-        "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and averaged, style-transfer weighting",
-        "Picture to restyle: scaled to the canvas, VAE-encoded as the starting latent; OpenPose skeleton \u2192 ControlNet",
-        "Re-sample at Denoise (default 0.65)",
-        "Face pass with the same styled model (denoise 0.4)",
-        "PNG"
-      ],
-      "variants": [
-        {
-          "name": "Keep more of the picture (denoise 0.5)",
-          "controls": {
-            "denoise": 0.5
-          }
-        },
-        {
-          "name": "Change more (denoise 0.8)",
-          "controls": {
-            "denoise": 0.8
-          }
-        },
-        {
-          "name": "Style stronger (0.8)",
-          "controls": {
-            "style_weight": 0.8
-          }
-        },
-        {
-          "name": "Style lighter, pose looser",
-          "controls": {
-            "style_weight": 0.45,
-            "pose_strength": 0.7
-          }
-        },
-        {
-          "name": "3-seed audition",
-          "batch_count": 3
-        }
-      ],
-      "source": "https://civitai.com/models/376130",
-      "description": "Give a finished picture a different look while keeping the picture: the picture to restyle is both the starting latent (re-sampled at Denoise 0.65, so its layout, costume and colours survive) and the pose source (OpenPose skeleton \u2192 Xinsir ControlNet), while an IP-Adapter Plus style board of one to three pictures supplies the look with the 'style transfer' weighting (the style picture's subject stays out). Guidance 4.5 and style weight 0.6: measured 14 Sep 2026 on the owner's throne witch that weight 1.0 or CFG 6 over-drive the palette into neon stripes whatever the weighting, and that Style + Pose alone (empty latent) loses the throne and costume. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; copy the source's description when continuing. Semantic style transfer is not a pixel copy: expect the finish (linework, shading, palette temperature) to move, not the whole image to become the style picture. Nova Anime XL IL v19 base: punchier colour than WAI; use WAI for a calmer finish.",
+      "description": "Give a finished picture a soft light-novel finish while keeping the picture. Measured 14 September 2026 on the owner's throne witch against their own target render: the picture to restyle is both the starting latent (re-sampled at Denoise 0.85 on a 1024x1536 canvas, so layout, costume and colours survive) and the pose source (OpenPose skeleton -> Xinsir ControlNet); WAI v17 with the Mishima Kurone light-novel LoRA at 0.8 and fixed finish terms (soft lighting, pastel colours, light background, delicate lineart; negative: dark, high contrast, oversaturated, neon) produced the closest match, with the style board OFF. The board therefore defaults to a light style-transfer weight of 0.3: at 0.4-0.6 it recolours the costume to the style picture's palette (grey from a white-background picture) and at 1.0, or at CFG 6, it over-drives the palette into neon stripes. A face pass with the same styled model repaints eyes and lashes at 0.4. Who the character is still comes from the prompt; the finish terms and the LoRA trigger are appended to whatever you write, continuation copies included. Not a pixel copy of any picture; a completed render is neither art acceptance nor licence clearance (WAI terms unresolved; the LoRAs' civitai flags are in models/library.json).",
       "reference_slots": [
         {
           "role": "style",

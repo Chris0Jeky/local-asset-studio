@@ -16,9 +16,9 @@
         "1",
         1
       ],
-      "lora_name": "cinematic lighting.safetensors",
-      "strength_model": 0,
-      "strength_clip": 0
+      "lora_name": "ST_Mishima_Kurone_0R.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.8
     }
   },
   "9": {
@@ -32,7 +32,7 @@
         "8",
         1
       ],
-      "lora_name": "manga-ink-screentone.safetensors",
+      "lora_name": "ST_Momoko_Roshidere_0R.safetensors",
       "strength_model": 0,
       "strength_clip": 0
     }
@@ -44,7 +44,10 @@
         "9",
         1
       ],
-      "text": "1girl, solo, adult woman, full body, standing, holding lantern, cloak, boots, simple background, masterpiece, best quality, amazing quality"
+      "text": [
+        "42",
+        0
+      ]
     }
   },
   "3": {
@@ -54,7 +57,10 @@
         "9",
         1
       ],
-      "text": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark"
+      "text": [
+        "43",
+        0
+      ]
     }
   },
   "4": {
@@ -65,8 +71,8 @@
         0
       ],
       "upscale_method": "lanczos",
-      "width": 832,
-      "height": 1216,
+      "width": 1024,
+      "height": 1536,
       "crop": "center"
     }
   },
@@ -109,7 +115,7 @@
         "22",
         0
       ],
-      "weight": 0.6,
+      "weight": 0.3,
       "weight_type": "style transfer",
       "start_at": 0.0,
       "end_at": 0.9,
@@ -192,7 +198,7 @@
         "41",
         0
       ],
-      "denoise": 0.65
+      "denoise": 0.85
     }
   },
   "6": {
@@ -313,6 +319,22 @@
         "1",
         2
       ]
+    }
+  },
+  "42": {
+    "class_type": "StringConcatenate",
+    "inputs": {
+      "string_a": "1girl, solo, adult woman, full body, standing, holding lantern, cloak, boots, simple background, masterpiece, best quality, amazing quality",
+      "string_b": "mishimakurone, soft lighting, pastel colors, bright, light background, soft shading, delicate lineart",
+      "delimiter": ", "
+    }
+  },
+  "43": {
+    "class_type": "StringConcatenate",
+    "inputs": {
+      "string_a": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark",
+      "string_b": "dark, high contrast, oversaturated, neon, thick outlines",
+      "delimiter": ", "
     }
   },
   "50": {
