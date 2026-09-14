@@ -103,6 +103,13 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const p=s.run("assetQueueDecide('selected')");s.writes[0].reject(Error('response lost'));await p;
     assert.equal(s.run('activeAsset.id'),'b');assert.match(s.el('#assetDetailStatus').textContent,/not confirmed/);
   });
+  await check('The end of the queue still asks before discarding unsaved typing',()=>{
+    const s=library();s.run('startReviewQueue()');
+    s.run('assetQueue.index=assetQueue.ids.length-1');s.el('#assetNotes').value='unsaved thought';
+    s.run('assetQueueStep(1)');
+    assert.equal(s.el('#assetDialog').open,true);assert.equal(s.confirmations(),1);
+    assert.equal(s.el('#assetNotes').value,'unsaved thought');assert.equal(s.writes.length,0);
+  });
   await check('Reason chips toggle tags without typing and save nothing on their own',()=>{
     const s=setup();
     s.run("toggleAssetReason('hands')");
