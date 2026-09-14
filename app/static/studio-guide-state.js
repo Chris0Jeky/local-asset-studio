@@ -4,6 +4,16 @@
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const result = (state, message) => ({state, message});
   const unknown = message => result('unknown', message || 'Not checked yet. The guide is reading current evidence.');
+  function referenceSlots(preset, records) {
+    const slots = Array.isArray(preset?.reference_slots) ? preset.reference_slots : [];
+    const rows = Array.isArray(records) ? records : [];
+    const missing = rows.some(row => row?.missing);
+    if (!slots.length) return {attached:false, missing};
+    const board = object(preset?.reference_board) ? preset.reference_board : null;
+    const minimum = board && Number.isSafeInteger(board.min) ? board.min : slots.length;
+    const filled = rows.filter(row => object(row) && typeof row.file === 'string' && row.file && !row.missing).length;
+    return {attached:rows.length === slots.length && !missing && minimum >= 1 && minimum <= slots.length && filled >= minimum, missing};
+  }
   function evaluate(check, s = {}) {
     const met = text => result('met', text), blocked = text => result('blocked', text);
     if (check === 'manual') return result('manual', 'This step needs your judgment. Next records navigation only.');
@@ -86,6 +96,6 @@
     if (u.username || u.password || u.origin !== origin || !['/', '/workflow-studio.html', '/av.html', '/voice.html'].includes(u.pathname) || u.search) throw Error('Unsupported guide route');
     return u;
   }
-  const api = {evaluate, unknown, visibleTarget, route};
+  const api = {evaluate, unknown, referenceSlots, visibleTarget, route};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
 })(globalThis);
