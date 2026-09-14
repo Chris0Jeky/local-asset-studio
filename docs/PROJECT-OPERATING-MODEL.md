@@ -9,7 +9,7 @@ This guide keeps Local Asset Studio's active queue legible while preserving the 
 | `STATUS.md` | authored current truth | Goal status, product judgement, current gaps and recommended next slice |
 | `CURRENT_STATE.md` | chronological evidence ledger | Executed work, exact receipts, retained failures and dated handoffs |
 | `HUMAN_TODO.md` | owner decisions | Creative, licensing and owner-run acceptance choices; agents never tick them |
-| `docs/generated/REPOSITORY-STATE.md` | generated factual projection | Captured active PRs, selected issue readiness, WIP arithmetic, catalog counts and SHA-bound receipts |
+| `docs/generated/REPOSITORY-STATE.md` | generated factual projection | Captured active PRs, selected issue readiness, WIP arithmetic, blob-bound catalog/owner facts and SHA-bound receipts |
 
 A generated snapshot cannot decide artistic acceptance, product percentages, priority or licensing. A passing check cannot close a broad issue.
 
@@ -45,11 +45,11 @@ The default limit is:
 
 - at most **three independent implementation lines**;
 - plus **one explicit stacked chain** with its merge order stated;
-- plus one separately identified `owner-run` neural or native acceptance lane.
+- plus **one** separately identified `owner-run` neural or native acceptance lane.
 
 A stack child does not consume another independent line. Research in review does consume a line when it has an open PR. A new line starts only after another merges, closes, or is deliberately parked. The owner may override this explicitly. A maintenance defect may bypass the limit only when it blocks an active line, and the reason belongs in the PR.
 
-In `active-work.json`, `stack_parent` names the **root PR of the whole chain**, while `base` retains the immediate branch dependency. Every descendant of `#333 → #336 → #346 → #349`, for example, records `stack_parent: 333`. This keeps one nested merge chain equal to one stack instead of counting each intermediate parent as another stack.
+In `active-work.json`, `stack_parent` names the **root PR of the whole chain**, while `base` retains the immediate branch dependency. Every descendant of `#333 → #336 → #346 → #349`, for example, records `stack_parent: 333`. A non-root parent is rejected rather than counted as a second stack. An owner-run PR cannot simultaneously be a stack child, and the generated verdict fails when more than one owner-run lane is active.
 
 The limit controls integration cost, not personal activity. It does not prohibit reading, issue triage or preparing an owner decision.
 
@@ -89,6 +89,13 @@ The PR body is a decision surface, not the archive.
 
 It never calls GitHub, closes work, changes labels or infers acceptance. The captured GitHub projection under `research/repository-state/` is evidence at one time, not a project-management database.
 
+The snapshot keeps two provenance lines deliberately separate:
+
+- `repository.head_sha` is the revision whose GitHub work queue was captured;
+- `repository.facts_sha` is the revision whose checked-out catalog and `HUMAN_TODO.md` facts are represented.
+
+The capture also records the exact Git blob IDs for `presets/catalog.json` and `HUMAN_TODO.md`. Generation refuses if the checkout bytes do not match those identities. This prevents a later PR from regenerating a mixed-revision report while retaining an older advertised snapshot SHA. Test and validator receipts are current only when their `source_sha` matches `facts_sha`; otherwise they remain visibly stale.
+
 Generate or check the snapshot:
 
 ```console
@@ -105,17 +112,18 @@ python scripts/repository_snapshot.py \
   --format markdown --check docs/generated/REPOSITORY-STATE.md
 ```
 
-Receipts name the source commit they measured. When that SHA differs from the captured repository head, the snapshot displays them as **stale** rather than silently promoting old counts to current facts. Missing receipts are `unavailable`, never zero.
+Missing receipts are `unavailable`, never zero. A stale receipt remains useful historical evidence but is not promoted into a current fact.
 
 ## Updating the active-work capture
 
 1. Read live open PRs and relevant issues.
 2. Record only the active queue and immediate ready work; do not copy the entire historical issue list.
-3. Preserve the exact capture time and default-branch SHA.
-4. Record each child’s immediate branch in `base`, but set every descendant’s `stack_parent` to the chain’s root PR.
-5. Mark owner-run work explicitly.
-6. Regenerate the snapshot and run its drift check.
-7. Review any WIP-limit warning; do not edit the generated verdict.
+3. Preserve the exact capture time and default-branch work-state SHA.
+4. Record the local-facts revision and exact catalog/`HUMAN_TODO.md` Git blob IDs.
+5. Record each child’s immediate branch in `base`, but set every descendant’s `stack_parent` to the chain’s root PR.
+6. Mark owner-run work explicitly; only one active owner-run lane is permitted by default.
+7. Regenerate the snapshot and run its drift check.
+8. Review any WIP-limit warning; do not edit the generated verdict.
 
 ## Evidence retention and archive
 
@@ -129,7 +137,8 @@ Delivered here:
 
 - the taxonomy and WIP contract;
 - a structured issue form and concise-first PR template;
-- an offline deterministic generator with stale-receipt handling;
+- an offline deterministic generator with separate work/fact provenance and stale-receipt handling;
+- root-owned stack validation and a one-owner-run-lane gate;
 - a checked generated snapshot and CI drift gate;
 - a bounded capture of the current active queue.
 
