@@ -328,11 +328,14 @@
     },
     {
       "id": "flux-edit",
-      "name": "FLUX Klein \u2022 reference edit",
+      "name": "Change one thing (FLUX.2 Klein 4B, keeps the rest)",
+      "family": "FLUX.2 Klein 4B",
       "category": "Image editing",
-      "description": "Describe what changes and what stays. Whole-image editing can change unrequested details.",
+      "description": "Change one thing in a picture and keep the rest, in about 20-35 seconds warm. Say the change first, then what stays; the wording Continue with this prepares does that for you. Measured 14 September 2026 on the owner's throne witch: 'replace her hat with a red Santa hat' kept the pose, face, robe and throne (the whole picture warmed towards red, so name the colours you keep). Whole-image editing can change unrequested details.",
       "graph": "workflows/api/flux-edit-api.json",
       "verified": true,
+      "continuation_prompt": "Change one thing: [say what changes, e.g. replace her hat with a red Santa hat]. Keep everything else exactly as it is: the character, the pose, the face and expression, the hair, the clothing and its colours, the background and the rendering style.{source}",
+      "continuation_placeholder": "[say what changes, e.g. replace her hat with a red Santa hat]",
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "4",
@@ -6280,6 +6283,222 @@
       ],
       "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
       "description": "Give a finished picture another look while keeping everything else, in about 20 seconds. Measured 14 September 2026 on the owner's throne witch against their own target render: FLUX.2 Klein 4B reads the picture as its reference and redraws it as the wording says (the light-novel finish is the default; edit the first sentence for another look, keep the second), and the pose, costume, throne, wink and colours survived where the SDXL boards drifted. Adding the style picture as a second reference washed the result out and larger canvases changed the hair, so the recipe takes one picture and a ~1.5-megapixel canvas. Naming what the picture shows helps: Continue with this appends the source's submitted description for you."
+    },
+    {
+      "id": "combine-klein",
+      "name": "Put this character in another picture's pose (FLUX.2 Klein 4B)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 4B",
+      "graph": "workflows/api/combine-klein-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 (late night) through the page as a first-time user: Asset library -> the throne witch (asset 9f2fca4d...) -> Continue with this -> Combine -> Prepare in Create -> Pull from library put the owner's imported Santa-outfit picture on Picture 1 -> the two bracketed fills replaced (the witch in the black and red robe with gold trim and the wide-brimmed witch hat; leaning forward towards the viewer, one hand on her hip, the other hand held out to the side) -> Combine pictures: job fb0eb95d-ba3f-4025-a77e-9c62165d250f (prompt 933c6da8-fda0-4a4d-b27e-6030bb9fd68b, 37.6 s in ComfyUI warm, seed 2026091411, 6 steps, CFG 1.0, 1024x1536; the empty second slot was bypassed so the guider read the pose picture's reference latent), output Combine/Klein_00001_.png (sha256 68491884177b1219...) inspected: the witch leaning forward with one hand on her hip and the other held out, hat, black-and-red robe with gold trim, face and rendering style kept, white background from the pose picture (experiments/curated/style-pose-matrix/2026-09-14-combine/, sheet examples/style-pose/combine-klein-proving.jpg). One run, not art acceptance; HUMAN_TODO q-27 (e).",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "14",
+        "image"
+      ],
+      "last_reference_label": "Picture to keep (image 1)",
+      "last_reference_hint": "The character you keep: face, hair, hat, clothing, colours and rendering style all come from this picture. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "20",
+            "image"
+          ]
+        },
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "24",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
+      },
+      "reference_board_label": "Pose picture (image 2)",
+      "reference_board_hint": "A picture of anyone in the pose you want. Only the pose is taken; the person, clothing and colours are not copied. A third picture leaked its costume in our test, so use one picture unless the wording says exactly what to take from image 3.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Redraw [who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat] from image 1 in the pose of the person in image 2: [the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]. Keep her face, her hair, her hat, her clothing and its colours, and image 1's rendering style. Do not copy the person from image 2, their clothing or their colours.",
+      "continuation_placeholder": [
+        "[who is in image 1, e.g. the witch in the black and red robe with gold trim and the wide-brimmed witch hat]",
+        "[the pose in a few words, e.g. leaning forward, one hand on her hip, the other held out]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
+        "Image 1 (the picture you keep) and image 2 (the pose picture): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
+        "Wording: name who is in image 1 and the pose in a few words (two bracketed fills), keep image 1's look, take only the pose from image 2; the source description is not appended (it names the old pose)",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
+      "description": "Keep a character and put it in the pose of another picture, in about 30 seconds. Measured 14 September 2026 on the owner's throne witch with a fan picture as the pose: FLUX.2 Klein 4B kept the witch's face, hat, robe and rendering style and took only the pose (leaning forward, hand on hip, hand held out); a third picture leaked its shorts and lettering, so the board takes one picture by default. The background follows the pose picture unless the wording says otherwise."
+    },
+    {
+      "id": "restyle-klein-picture",
+      "name": "Restyle a picture in another picture's look (FLUX.2 Klein 4B)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 4B",
+      "graph": "workflows/api/restyle-klein-picture-api.json",
+      "verified": false,
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "14",
+        "image"
+      ],
+      "last_reference_label": "Picture to restyle (image 1)",
+      "last_reference_hint": "The picture you keep: character, pose, costume, props and layout stay. Continue with this -> Restyle puts it here and fits the canvas to its aspect ratio.",
+      "reference_slots": [
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "20",
+            "image"
+          ]
+        },
+        {
+          "role": "style",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "24",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents: every picture is scaled to ~1 megapixel and VAE-encoded; image 1 is the picture you keep, the board pictures follow it as image 2 and image 3"
+      },
+      "reference_board_label": "Look picture (image 2)",
+      "reference_board_hint": "A picture drawn the way you want. The wording tells the model to copy how it is drawn, not what it shows. Colours drift towards the look picture (a dark-haired witch came out purple-haired in our test); the wording asks you to name the colours to keep (a bracketed fill), which held them in our test at the cost of a milder look shift; Restyle a picture (keeps everything) holds them better when the look can be said in words.",
+      "continuation_operation": "restyle",
+      "continuation_prompt": "Redraw image 1 in the art style of image 2: copy how image 2 is drawn (its lineart, shading, colouring and finish), not what it shows. Keep image 1's character, pose, face and expression, hair colour, clothing and its colours, props and background layout exactly as they are; only change the rendering style. Image 1's colours: [name the colours to keep, e.g. black hair, a black and red robe with gold trim].",
+      "continuation_placeholder": "[name the colours to keep, e.g. black hair, a black and red robe with gold trim]",
+      "stages": [
+        "FLUX.2 Klein 4B fp8 (distilled) + Qwen3 4B text encoder + FLUX.2 VAE",
+        "Image 1 (the picture you restyle) and image 2 (the look picture): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
+        "Wording: copy how image 2 is drawn, keep everything image 1 shows, name image 1's colours (one bracketed fill); the source description is not appended (it pinned the look)",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt)",
+        "1024x1536 canvas by default (Continue with this fits the source's aspect ratio at ~1.5 megapixels)",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
+      "description": "Redraw a picture the way another picture is drawn, in about 30 seconds. Measured 14 September 2026 on the owner's throne witch with a crisp flat-cel fan picture as the look: the lineart, flat shading and white background transferred and the pose, wink, hat and throne stayed, but the palette drifted (purple hair, orange throne). Use it when the look is easier to show than to say; when you can say it, Restyle a picture (keeps everything) holds colours better."
     }
   ]
 }

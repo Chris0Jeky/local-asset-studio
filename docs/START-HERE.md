@@ -43,7 +43,7 @@ and the settings planner — is the [anime & fantasy atelier guide](ANIME-FANTAS
 
 ## Edit an existing image
 
-Choose **FLUX Klein • reference edit**. Upload an image, then describe a single change: “Change the teal enamel to purple; keep the brass frame, amber light, viewpoint and background.” Generate one image and compare it with the original.
+Choose **Change one thing (FLUX.2 Klein 4B, keeps the rest)**. Upload an image, then describe a single change (from the library, *Continue with this → Edit* prepares the wording for you): “Change the teal enamel to purple; keep the brass frame, amber light, viewpoint and background.” Generate one image and compare it with the original.
 
 For tighter preservation, try **SDXL • gentle reference variation**. For more complex instruction following, try **Qwen • instructed image edit**. Qwen can take minutes and use most available memory. Neither promises pixel-identical unedited areas; the masked-composite example demonstrates that requirement separately.
 

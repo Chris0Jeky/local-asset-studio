@@ -368,6 +368,11 @@ class Studio:
             if key in controls:
                 if not isinstance(controls[key], str) or len(controls[key]) > 8000: raise StudioError(f"{key} must be text up to 8000 characters")
                 self._bind_control(graph, preset, key, controls[key])
+        # A recipe whose wording carries bracketed fills refuses to run with one left in place on every route, not only a
+        # continuation: the authored example would otherwise be submitted literally from the plain Create route (#367).
+        authored = graph.get(str(preset["positive"][0]), {}).get("inputs", {}).get(str(preset["positive"][1])) if preset.get("positive") else None
+        left = continuation.unfilled(preset, controls.get("positive", authored))
+        if left: raise StudioError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
         for key in LORA_SLOTS:
             if key not in controls: continue
             binding = preset.get(key) or ((preset.get("bindings_extra") or {}).get(key) or [None])[0]

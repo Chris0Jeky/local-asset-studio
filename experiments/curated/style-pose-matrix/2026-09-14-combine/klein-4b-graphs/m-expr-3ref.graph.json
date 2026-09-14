@@ -1,0 +1,269 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "flux-2-klein-4b-fp8.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen_3_4b.safetensors",
+   "type": "flux2",
+   "device": "default"
+  }
+ },
+ "3": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "flux2-vae.safetensors"
+  }
+ },
+ "4": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "Redraw the witch from image 1 in the pose of the girl in image 2 (leaning forward towards the viewer, one hand on her hip, the other hand held out) and with the facial expression of the girl in image 3 (half-lidded eyes, mouth slightly open, a puzzled look). Keep the witch's face, her long dark hair, her wide-brimmed witch hat, her black and red robe with gold trim, and keep image 1's rendering style. Do not copy the girl from image 2, her costume or her hat. Do not copy the girl from image 3 either.",
+   "clip": [
+    "2",
+    0
+   ]
+  }
+ },
+ "5": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "",
+   "clip": [
+    "2",
+    0
+   ]
+  }
+ },
+ "6": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "positive": [
+    "31",
+    0
+   ],
+   "negative": [
+    "5",
+    0
+   ],
+   "cfg": 1.0
+  }
+ },
+ "7": {
+  "class_type": "RandomNoise",
+  "inputs": {
+   "noise_seed": 2026091407
+  }
+ },
+ "8": {
+  "class_type": "KSamplerSelect",
+  "inputs": {
+   "sampler_name": "euler"
+  }
+ },
+ "9": {
+  "class_type": "Flux2Scheduler",
+  "inputs": {
+   "steps": 6,
+   "width": 1024,
+   "height": 1536
+  }
+ },
+ "10": {
+  "class_type": "EmptyFlux2LatentImage",
+  "inputs": {
+   "width": 1024,
+   "height": 1536,
+   "batch_size": 1
+  }
+ },
+ "11": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "7",
+    0
+   ],
+   "guider": [
+    "6",
+    0
+   ],
+   "sampler": [
+    "8",
+    0
+   ],
+   "sigmas": [
+    "9",
+    0
+   ],
+   "latent_image": [
+    "10",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "Research/next-m-expr-3ref",
+   "images": [
+    "12",
+    0
+   ]
+  }
+ },
+ "20": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "e0e988933f3c453099c7086337d32394_Nova_00004_.png.png"
+  }
+ },
+ "21": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "image": [
+    "20",
+    0
+   ],
+   "upscale_method": "lanczos",
+   "megapixels": 1.0,
+   "resolution_steps": 1
+  }
+ },
+ "22": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "21",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "23": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "4",
+    0
+   ],
+   "latent": [
+    "22",
+    0
+   ]
+  }
+ },
+ "24": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "4e25744ec43342139fd6692067e891e2_yande.re_1249734_sample_christmas_detexted_dress_ellen_joe_no_bra_qiandaiyiyu_tail_thighhighs_wet_ze.jpg"
+  }
+ },
+ "25": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "image": [
+    "24",
+    0
+   ],
+   "upscale_method": "lanczos",
+   "megapixels": 1.0,
+   "resolution_steps": 1
+  }
+ },
+ "26": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "25",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "27": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "23",
+    0
+   ],
+   "latent": [
+    "26",
+    0
+   ]
+  }
+ },
+ "28": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "147a3362ab354ad0bbb396d29adc6e97_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+  }
+ },
+ "29": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "image": [
+    "28",
+    0
+   ],
+   "upscale_method": "lanczos",
+   "megapixels": 1.0,
+   "resolution_steps": 1
+  }
+ },
+ "30": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "29",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "31": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "27",
+    0
+   ],
+   "latent": [
+    "30",
+    0
+   ]
+  }
+ }
+}

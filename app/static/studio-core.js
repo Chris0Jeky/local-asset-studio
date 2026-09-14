@@ -6,9 +6,10 @@
   const ATTENTION=['failed','partial','uncertain','interrupted','stopped'];
   const INTENTS=[
     {id:'create',name:'Start with an idea',verb:'Create',hint:'Words → image',description:'Find a look. Audition a small batch.',prefer:['anima-portrait','krea-anime-atelier'],accept:p=>!p.reference&&(p.modality||'image')==='image'},
-    {id:'edit',name:'Change an image',verb:'Edit',hint:'Image → variation',description:'Keep a reference. Describe what changes.',prefer:['qwen-1ref','krea-refine'],accept:p=>!!p.reference&&(p.modality||'image')==='image'},
+    {id:'edit',name:'Change an image',verb:'Edit',hint:'Image → variation',description:'Keep a reference. Describe what changes.',prefer:['flux-edit','qwen-1ref','krea-refine'],accept:p=>!!p.reference&&(p.modality||'image')==='image'},
     {id:'repair',name:'Refine the details',verb:'Refine',hint:'Image → refinement',description:'Revisit faces, hands, finish or resolution.',prefer:['anime-detail-fix','krea-refine','anime-esrgan'],accept:p=>!!p.reference&&(p.modality||'image')==='image'&&/repair|refine|detail|esrgan|upscale/i.test(p.id+' '+p.name)},
-    {id:'restyle',name:'Borrow a look',verb:'Restyle',hint:'Image (+ style picture) → image',description:'Keep this picture, or just its pose. Repaint it in another look.',prefer:['restyle-klein','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],accept:p=>(!!p.reference_board&&!!p.last_reference||p.continuation_operation==='restyle'&&!!p.reference)&&(p.modality||'image')==='image'},
+    {id:'restyle',name:'Borrow a look',verb:'Restyle',hint:'Image (+ style picture) → image',description:'Keep this picture, or just its pose. Repaint it in another look.',prefer:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],accept:p=>(!!p.reference_board&&!!p.last_reference&&p.continuation_operation!=='combine'||p.continuation_operation==='restyle'&&!!p.reference)&&(p.modality||'image')==='image'},
+    {id:'combine',name:'Combine two pictures',verb:'Combine',hint:'Image + image → image',description:'Keep this character. Take the pose from another picture.',prefer:['combine-klein'],accept:p=>p.continuation_operation==='combine'&&!!p.reference_board&&!!p.last_reference&&(p.modality||'image')==='image'},
     {id:'animate',name:'Make it move',verb:'Animate',hint:'Words / image → video',description:'Build a short motion study from a still or text.',prefer:['wan22-i2v','wan22-t2v'],accept:p=>p.modality==='video'},
     {id:'mesh',name:'Explore a 3D draft',verb:'Make 3D',hint:'Image → mesh',description:'Generate a draft to inspect and finish.',prefer:['trellis-auto-cutout'],accept:p=>p.modality==='3d'},
   ];
@@ -36,8 +37,10 @@
   }
   // The legacy boolean/text projection and actionable UI share exactly one blocker policy.
   // Action tokens are presentation destinations, never installation or execution permissions.
-  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false}){
+  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false,unfilled=[]}){
     const items=[],add=(code,message,action=null)=>items.push({code,message,action});
+    // A recipe's bracketed fills left in the wording block every route (the server refuses them too), not only a continuation.
+    if(Array.isArray(unfilled)&&unfilled.length)add('wording','Fill in the wording: replace '+unfilled.map(text=>'“'+text+'”').join(' and ')+' in the prompt.','fills');
     if(!preset)add('recipe','Choose a recipe.','recipes');
     if(busy)add('busy','An attachment or submission is in progress.');
     if(switching)add('switching','The model environment is switching.','models');
