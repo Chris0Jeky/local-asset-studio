@@ -5101,161 +5101,13 @@
       "execution_note": "Catalog, graph and upload contract only. This preset has not been submitted to ComfyUI, visually inspected, or accepted as a correction. Node classes, links and the two inpaint filenames were confirmed against the running ComfyUI's /object_info by scripts/validate-live.py, which is a schema read and never queues work. The denoise values are read from the installed pack, not measured here: 0.7 is its refine example workflow, 1.0 is the value its other four example workflows use and the only value the core VAEEncodeForInpaint route ever permitted, and 0.5 is an interpolation inside the 1-100% range its README documents for the refine workflow."
     },
     {
-      "category": "Characters",
-      "modality": "image",
-      "verified": false,
-      "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. WAI's creator is not authenticated by its hashes.",
-      "positive": [
-        "2",
-        "text"
-      ],
-      "negative": [
-        "3",
-        "text"
-      ],
-      "width": [
-        "4",
-        "width"
-      ],
-      "height": [
-        "4",
-        "height"
-      ],
-      "seed": [
-        "5",
-        "seed"
-      ],
-      "steps": [
-        "5",
-        "steps"
-      ],
-      "cfg": [
-        "5",
-        "cfg"
-      ],
-      "denoise": [
-        "5",
-        "denoise"
-      ],
-      "sampler": [
-        "5",
-        "sampler_name"
-      ],
-      "scheduler": [
-        "5",
-        "scheduler"
-      ],
-      "choices": {
-        "sampler": [
-          "euler_ancestral",
-          "euler",
-          "dpmpp_2m",
-          "dpmpp_2m_sde",
-          "dpmpp_sde"
-        ],
-        "scheduler": [
-          "normal",
-          "karras",
-          "sgm_uniform",
-          "beta",
-          "simple"
-        ]
-      },
-      "lora": [
-        "8",
-        "strength_model"
-      ],
-      "lora_name": [
-        "8",
-        "lora_name"
-      ],
-      "lora2": [
-        "9",
-        "strength_model"
-      ],
-      "lora2_name": [
-        "9",
-        "lora_name"
-      ],
-      "bindings_extra": {
-        "lora": [
-          [
-            "8",
-            "strength_clip"
-          ]
-        ],
-        "lora2": [
-          [
-            "9",
-            "strength_clip"
-          ]
-        ]
-      },
-      "reference": [
-        "10",
-        "image"
-      ],
-      "last_reference": [
-        "11",
-        "image"
-      ],
-      "reference_label": "Style picture",
-      "reference_hint": "Any illustration or photo whose look you want: linework, shading, palette. IP-Adapter copies the style, not the subject. PNG, JPG or WebP up to 20 MiB; the recipe's example is used until replaced.",
-      "last_reference_label": "Pose picture",
-      "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
-      "style_weight": [
-        "14",
-        "weight"
-      ],
-      "pose_strength": [
-        "17",
-        "strength"
-      ],
-      "stages": [
-        "SDXL checkpoint",
-        "2 optional LoRA slots",
-        "IP-Adapter style transfer from the style picture",
-        "OpenPose skeleton from the pose picture \u2192 ControlNet",
-        "30-step render",
-        "PNG"
-      ],
-      "variants": [
-        {
-          "name": "Style lighter, pose looser",
-          "controls": {
-            "style_weight": 0.55,
-            "pose_strength": 0.7
-          }
-        },
-        {
-          "name": "Style stronger",
-          "controls": {
-            "style_weight": 1.1
-          }
-        },
-        {
-          "name": "Pose exact",
-          "controls": {
-            "pose_strength": 1.2
-          }
-        },
-        {
-          "name": "3-seed audition",
-          "batch_count": 3
-        }
-      ],
       "id": "style-pose-wai",
       "name": "Style + Pose (WAI v17)",
-      "graph": "workflows/api/style-pose-wai-api.json",
-      "family": "WAI v17 (Illustrious)",
-      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run of about half a minute on this PC: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt."
-    },
-    {
       "category": "Characters",
-      "modality": "image",
+      "family": "WAI v17 (Illustrious)",
+      "graph": "workflows/api/style-pose-wai-api.json",
       "verified": true,
-      "execution_note": "Executed 2026-09-14 through Studio job 88026ea3-c950-48bd-9529-3d02e81bf1e4 (ComfyUI prompt 82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8), authored defaults, 283 s including every cold load on the primary backend; graph sha256 6d4023f6...1078bd; output inspected: pose followed the pose picture and the style picture's cel-shaded neon look transferred without its subject (experiments/curated/style-pose/). One run, not a benchmark, not art acceptance.",
+      "modality": "image",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. WAI's creator is not authenticated by its hashes.",
       "positive": [
         "2",
@@ -5396,12 +5248,160 @@
           "batch_count": 3
         }
       ],
+      "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "execution_note": "Executed 2026-09-14 through Studio job 88026ea3-c950-48bd-9529-3d02e81bf1e4 (ComfyUI prompt 82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8), authored defaults, 283 s including every cold load on the primary backend; graph sha256 6d4023f6...1078bd; output inspected: pose followed the pose picture and the style picture's cel-shaded neon look transferred without its subject (experiments/curated/style-pose/). One run, not a benchmark, not art acceptance."
+    },
+    {
       "id": "style-pose-animagine",
       "name": "Style + Pose (Animagine XL 4)",
+      "category": "Characters",
+      "family": "Animagine XL 4.0",
       "graph": "workflows/api/style-pose-animagine-api.json",
-      "family": "Animagine XL 4",
+      "verified": false,
+      "modality": "image",
+      "commercial_note": "Animagine XL 4.0 is openrail++ (use-based restrictions); check it, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "width": [
+        "4",
+        "width"
+      ],
+      "height": [
+        "4",
+        "height"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "reference": [
+        "10",
+        "image"
+      ],
+      "last_reference": [
+        "11",
+        "image"
+      ],
+      "reference_label": "Style picture",
+      "reference_hint": "Any illustration or photo whose look you want: linework, shading, palette. IP-Adapter copies the style, not the subject. PNG, JPG or WebP up to 20 MiB; the recipe's example is used until replaced.",
+      "last_reference_label": "Pose picture",
+      "last_reference_hint": "A normal picture of a person in the pose you want. The graph extracts an OpenPose skeleton from it (body, hands, face); the person, costume and style are not copied. Not for skeleton images: use the pose-guide recipes for those.",
+      "style_weight": [
+        "14",
+        "weight"
+      ],
+      "pose_strength": [
+        "17",
+        "strength"
+      ],
+      "stages": [
+        "SDXL checkpoint",
+        "2 optional LoRA slots",
+        "IP-Adapter style transfer from the style picture",
+        "OpenPose skeleton from the pose picture \u2192 ControlNet",
+        "30-step render",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Style lighter, pose looser",
+          "controls": {
+            "style_weight": 0.55,
+            "pose_strength": 0.7
+          }
+        },
+        {
+          "name": "Style stronger",
+          "controls": {
+            "style_weight": 1.1
+          }
+        },
+        {
+          "name": "Pose exact",
+          "controls": {
+            "pose_strength": 1.2
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
       "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
-      "description": "Style of one picture, pose of another, in one SDXL run of about half a minute on this PC: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail)."
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail)."
     }
   ]
 }
