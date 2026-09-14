@@ -406,13 +406,11 @@ def _first_image(c):
 @driver('reference-edit-one-source')
 def _one_reference(c):
     c.boot('#create')
-    c.select_preset('anima-portrait')
-    c.act('#selectedPreset', 'read', note='text-only recipe selected')
+    c.act('#presetList [data-id="anima-portrait"]', note='a text-only illustration recipe')
     c.act('#uxPullAsset', note='deliberate wrong turn: text-only recipe has no reference slot')
     c.act('#uxSourcePicker[open], #referenceHint, #uxNotice', 'read', note='what the screen says after the wrong turn')
     c.act('#presetSearch', 'fill', typed='Atelier')
-    c.select_preset('qwen-1ref')
-    c.act('#roleReferences', 'read', note='reference slot appeared')
+    c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')
     c.act('#uxPullAsset')
     if c.page.locator('#uxSourcePicker[open]').count():
         try: c.page.click('[data-ux-pull="asset-0"]', timeout=4000); c.page.wait_for_timeout(500)
@@ -425,8 +423,7 @@ def _one_reference(c):
 @driver('three-reference-identity-pose-style')
 def _three_references(c):
     c.boot('#create')
-    c.select_preset('qwen-3ref')
-    c.act('#referenceCards article', 'read', note='three reference slots')
+    c.act('#presetList [data-id="qwen-3ref"]', note='the three-reference Qwen Atelier recipe')
     for index, (role, asset) in enumerate([('identity', 'asset-0'), ('pose', 'asset-1'), ('style', 'asset-4')]):
         c.act('[data-ref-role="%d"]' % index, 'select', typed=role)
         c.act('#uxPullAsset', note='attach picture %d' % (index + 1))
@@ -449,8 +446,7 @@ def _three_references(c):
 @driver('compare-settings-from-recipe')
 def _compare(c):
     c.boot('#create')
-    c.select_preset('anima-portrait')
-    c.act('#selectedPreset', 'read', note='baseline recipe')
+    c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
     c.act('#planComparison')
     c.act('#experimentAxis', 'select', typed='cfg')
@@ -477,7 +473,7 @@ def _review(c):
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
     c.act('#productionDetail [data-choose-candidate]', note='keep the winner')
     c.page.wait_for_timeout(600)
-    recorded = 'reviewed' in (c.page.locator('#productionDetail').inner_text() if c.page.locator('#productionDetail').count() else '')
+    recorded = 'reviewed' in (c.page.locator('#productionDetail').inner_text().lower() if c.page.locator('#productionDetail').count() else '')
     c.act('#productionDetail', 'read', note='choice recorded=%s' % recorded)
     return recorded, 'study state shows reviewed=%s' % recorded
 
@@ -549,7 +545,7 @@ def _workflow(c):
     c.goto('/workflow-studio.html#builder', note='workflow builder')
     try: c.page.wait_for_selector('#loadNodes', timeout=8000)
     except Exception: pass
-    c.act('#schemaState', 'read', note='node catalog state before loading')
+    c.act('#schemaState', 'read', note='catalog state before anything is loaded')
     c.act('#loadNodes')
     try: c.page.wait_for_function("document.querySelector('#nodeCount').textContent.includes('installed')", timeout=8000)
     except Exception: pass
@@ -576,7 +572,7 @@ def _native_export(c):
     c.boot('#assets')
     c.page.wait_for_timeout(600)
     c.act('#assetGrid', 'read', note='saved pictures listed')
-    c.act('[data-mode="image"]', note='images only')
+    c.act('#assetType', 'select', typed='image', note='images only')
     c.act('[data-asset-check="asset-0"]', 'check')
     c.act('[data-asset-check="asset-1"]', 'check')
     c.act('#nativeExport')
