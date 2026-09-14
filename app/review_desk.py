@@ -15,6 +15,7 @@ import threading
 import time
 import uuid
 import zipfile
+from app import character_review
 
 from review_media import (FULL_CROP, MAX_CANDIDATES, MAX_TOTAL_BYTES, canonical,
                           checked_bytes, crop_box, digest, make_preview, render_sheet, write_new)
@@ -174,10 +175,13 @@ class ReviewDesk:
         result.update(exists=True, project_id=identifier,
                       scope='Image review only; execution, model terms and engine acceptance are independent',
                       preview_note='Metadata-stripped previews, maximum 1536 px; exported crops use source resolution')
+        scope = character_review.context(document['evidence']['plan'])
+        result.update(character_context=scope, character_review=copy.deepcopy(document.get('character_review')))
         result['candidates'] = []
         for candidate in document['candidates']:
             item = {'alias': candidate['alias'], 'preview_url': self._url(identifier, candidate['preview_path']),
                     'assessment': copy.deepcopy(candidate['assessment'])}
+            if scope:item['character_checks'] = copy.deepcopy(candidate.get('character_checks', character_review.unobserved(scope)))
             if document['revealed']:
                 item['source'] = {k: copy.deepcopy(candidate[k]) for k in
                                   ('asset_id', 'sha256', 'bytes', 'filename', 'stage', 'output_index', 'lineage', 'transform')}
@@ -196,7 +200,8 @@ class ReviewDesk:
         with self.production.connect() as db:
             events = [json.loads(r['event']) for r in db.execute('SELECT event FROM comparison_review_events WHERE project_id=? ORDER BY revision DESC', (identifier,))]
         return [{**{k: e[k] for k in ('revision', 'action', 'reviewer', 'at')},
-                 'alias': e['details'].get('alias'), 'assessment': e['details'].get('assessment')} for e in events]
+                 'alias': e['details'].get('alias'), 'assessment': e['details'].get('assessment'),
+                 'character_checks': e['details'].get('character_checks')} for e in events]
 
     def _storage_budget(self, identifier, extra):
         directory = self.production.root / identifier / 'reviews'
@@ -282,12 +287,16 @@ class ReviewDesk:
         with self.production.lock, self.production.connect() as db:
             db.execute('BEGIN IMMEDIATE');document = self._read(db, identifier)
             self._revision(document, payload);project = self._current(identifier, document, db)
+            scope = character_review.context(document['evidence']['plan'])
+            if 'character_checks' in payload and scope is None:raise ValueError('Character checks require an imported character case')
             if document['revision'] >= MAX_REVISIONS:raise ValueError('Review revision budget reached; preserve evidence and branch the study')
             if action == 'rate':
                 candidate = next((c for c in document['candidates'] if c['alias'] == payload.get('alias')), None)
                 if candidate is None:raise ValueError('Choose a candidate alias from this review')
                 candidate['assessment'] = rating(payload.get('assessment'))
+                if scope:candidate['character_checks'] = character_review.observations(payload.get('character_checks', character_review.unobserved(scope)), scope)
                 document.update(finalized=False, selected=None, finalized_by=None, finalized_at=None)
+                document['character_review'] = None
             elif action == 'restore':
                 source_revision = payload.get('source_revision')
                 if type(source_revision) is not int:raise ValueError('Choose a recorded assessment revision')
@@ -296,7 +305,9 @@ class ReviewDesk:
                 if not event or event['action'] != 'rate':raise ValueError('Only recorded candidate assessments can be restored')
                 candidate = next(c for c in document['candidates'] if c['alias'] == event['details']['alias'])
                 candidate['assessment'] = rating(event['details']['assessment'])
+                if scope:candidate['character_checks'] = character_review.observations(event['details'].get('character_checks', character_review.unobserved(scope)), scope)
                 document.update(finalized=False, selected=None, finalized_by=None, finalized_at=None)
+                document['character_review'] = None
             elif action == 'view':
                 crop = payload.get('crop');crop_box(crop, (1, 1))
                 background = payload.get('background')
@@ -310,6 +321,7 @@ class ReviewDesk:
                 if any(c['assessment']['verdict'] == 'unreviewed' for c in document['candidates']):
                     raise ValueError('Record a verdict for every candidate, including rejected results')
                 selected = payload.get('selected')
+                candidate = None
                 if selected is not None:
                     candidate = next((c for c in document['candidates'] if c['alias'] == selected), None)
                     if not candidate or candidate['assessment']['verdict'] != 'keep':raise ValueError('Only a kept candidate can be selected')
@@ -317,18 +329,24 @@ class ReviewDesk:
                         raise ValueError('Confirm the selected candidate meets the stated constraints before finalizing')
                     if document['evidence']['stages'][candidate['stage']]['status'] != 'completed':
                         raise ValueError('An incomplete execution may be reviewed but cannot become the selected result')
-                document.update(finalized=True, selected=selected, notes=text(payload.get('notes', ''), 'Summary notes', 8000), finalized_by=reviewer, finalized_at=time.time())
+                notes = text(payload.get('notes', ''), 'Summary notes', 8000)
+                if payload.get('character_decision') == 'accepted' and payload.get('reviewer') != 'local-user':
+                    raise ValueError('Character acceptance needs an explicit local-user human declaration')
+                document['character_review'] = character_review.receipt(document, candidate, payload['character_decision'], reviewer, notes) if 'character_decision' in payload else None
+                document.update(finalized=True, selected=selected, notes=notes, finalized_by=reviewer, finalized_at=time.time())
             else:raise ValueError('Unknown review action')
             document['revision'] += 1
             reviewer = self._reviewer(payload)
-            self._save(db, identifier, document, action, reviewer,
-                       {k: v for k, v in payload.items() if k not in ('action', 'expected_revision', 'reviewer')})
+            details = {k: v for k, v in payload.items() if k not in ('action', 'expected_revision', 'reviewer')}
+            if action == 'finalize' and document.get('character_review'):details['character_review'] = copy.deepcopy(document['character_review'])
+            self._save(db, identifier, document, action, reviewer, details)
             # Reuse the current state row, not a stale whole-project copy from the caller.
             state = project['state'];selected = next((c for c in document['candidates'] if c['alias'] == document['selected']), None)
             state['review'] = {'status': ('selected' if selected else 'needs_work') if document['finalized'] else 'in_progress',
                                'asset_id': selected['asset_id'] if selected else None, 'notes': document['notes'],
                                'reviewer': document['finalized_by'] or reviewer, 'revision': document['revision'], 'at': time.time(),
                                'desk_url': '/review.html?project=' + identifier}
+            if document.get('character_review'):state['review']['character_review'] = copy.deepcopy(document['character_review'])
             if state['status'] in ('awaiting_review', 'reviewed'):
                 state['status'] = 'reviewed' if document['finalized'] else 'awaiting_review'
             db.execute('UPDATE projects SET state=? WHERE id=?', (json.dumps(state), identifier))
@@ -401,8 +419,8 @@ class ReviewDesk:
 
     def command(self, identifier, payload):
         action = payload.get('action')
-        options = {'inspect': (), 'open': ('reviewer',), 'rate': ('alias', 'assessment'),
-                   'view': ('crop', 'background'), 'reveal': (), 'finalize': ('selected', 'notes'), 'export': (), 'restore': ('source_revision',)}
+        options = {'inspect': (), 'open': ('reviewer',), 'rate': ('alias', 'assessment', 'character_checks'),
+                   'view': ('crop', 'background'), 'reveal': (), 'finalize': ('selected', 'notes', 'character_decision'), 'export': (), 'restore': ('source_revision',)}
         if not isinstance(action, str) or action not in options:raise ValueError('Unknown review action')
         allowed = {'action', *options[action]}
         if action not in ('inspect', 'open'):allowed.update(('expected_revision', 'reviewer'))
