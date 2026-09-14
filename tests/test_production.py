@@ -2,6 +2,8 @@
 import copy
 import hashlib
 import json
+import shutil
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -308,3 +310,14 @@ class PlannedSweepTests(unittest.TestCase):
         self.assertEqual((project['axis'],project['values'],project['variants'],project['knowledge_sha256']),('seed',[1,2],None,None))
         with self.assertRaisesRegex(ValueError,'values must differ'):
             lab.create({'name':'Seeds','recipe':{'preset_id':'planned','controls':{}},'axis':'seed','values':['1','1.0'],'max_generations':2})
+
+
+class ExperimentsClarityFrontendTests(unittest.TestCase):
+    """The browser rendering of plans and planner cards, in Node, without a browser."""
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_planner_cards_plan_names_and_comparison_arithmetic_read_once(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('production_clarity_frontend.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('state each fact once',result.stdout)
