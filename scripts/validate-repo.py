@@ -48,6 +48,18 @@ for preset in catalog:
         for key in ('width','height'):
             if key in variant.get('controls',{}):
                 value=variant['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],variant['name'],key,value,'outside dimension_limits or off the dimension_multiple grid')
+    if preset.get('verified'):
+        note=preset.get('execution_note') or preset.get('execution_notes')
+        assert isinstance(note,(str,list,dict)) and note, (preset['id'],'verified presets must carry an execution_note or execution_notes recording the run')
+    for mode in preset.get('i2v_modes',[]):
+        controls=mode.get('controls',{}) if isinstance(mode,dict) else {}
+        assert set(controls) <= bound[preset['id']], (preset['id'],'i2v mode',mode.get('id'),'declares controls the preset does not bind',sorted(set(controls)-bound[preset['id']]))
+        for key in ('sampler','scheduler'):
+            if key in controls:assert controls[key] in preset.get('choices',{}).get(key,[]), (preset['id'],'i2v mode',mode.get('id'),key)
+        limits=preset.get('dimension_limits',[64,1536]);multiple=preset.get('dimension_multiple',8)
+        for key in ('width','height'):
+            if key in controls:
+                value=controls[key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],'i2v mode',mode.get('id'),key,value)
     for key in ('lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name'):
         for node,field in ([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[]):
             authored=graph[node]['inputs'][field]

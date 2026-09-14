@@ -39,8 +39,8 @@ Use for `app/backends.py`, `app/model_library.py`, `scripts/Start-Studio.ps1`, `
    route through `ModelLibrary.start_install`; never download inside a test.
 4. For patches: write the `.patch`, the JSON with source hashes, and a README paragraph naming the
    failing prompt ID that motivated it.
-5. Prove offline: `python -m unittest tests.test_backends tests.test_model_library tests.test_h3_loader_header`
-   and `python scripts/validate-repo.py`. A live switch or install is evidence work: run it once,
+5. Prove offline: `python -m unittest discover -s tests -p "test_backends.py"` (the `tests.test_backends` form dies
+   on import), `python -m unittest tests.test_model_library tests.test_h3_loader_header` and `python scripts/validate-repo.py`. A live switch or install is evidence work: run it once,
    capture `.runtime/*.log` and record it via `studio-execution-evidence`.
 6. Update `docs/H3-WINDOWS.md`, `docs/HIDREAM.md` or `docs/OPERATIONS.md` only for what actually ran.
 

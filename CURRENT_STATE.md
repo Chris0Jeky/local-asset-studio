@@ -1,4 +1,64 @@
-# Current state — 13 September 2026
+# Current state — 14 September 2026
+
+## Full assessment, recovery exits and agent tooling — 13/14 September 2026
+
+A coordinator plus 34 read-only subagents assessed the two-day burst of merged work at `main`
+`28cfe3b`: a goal/route/docs map, six adversarial seam reviews and refutation votes on every high
+or medium finding. Measured on this PC: 1674 tests (54 skipped, one transient `WinError 10053`
+error that passes 3/3 in isolation, #227), `validate-repo.py` PASS, `validate-live.py` 66 of 66
+graphs checked with 63 passing (AniFox not downloaded; two HiDream presets live on the idle 8192
+backend), 94 Studio jobs with 80 completed across 39 presets, Workspace 111 assets with 108
+unreviewed and none accepted. The full record is
+[STUDIO-REVIEW-2026-09-13.md](docs/STUDIO-REVIEW-2026-09-13.md); the goal view is
+[STATUS.md](docs/STATUS.md). No generation was submitted by the assessment.
+
+Confirmed and fixed in PR #262: a job whose retained submissions were all terminal could never
+leave `uncertain`/`partial` from the Gallery and kept refusing backend switches; resuming a prompt
+that a restarted ComfyUI no longer lists occupied the single worker for 24 minutes per submission
+(the two uncertain jobs on this machine, `a2908800…` and `0cbaae1b…`, were exactly that shape);
+a `sqlite3.Error` while indexing outputs relabelled a finished generation uncertain; a single-axis
+sweep could spend two reservations on one graph; Workflow Studio mis-read every V3 dynamic input
+(`COMFY_DYNAMICCOMBO_V3`, `COMFY_AUTOGROW_V3`, `COMFY_MATCHTYPE_V3`) as a plain socket; a recipe
+swapped during a reference upload could be submitted in place of the approved one. Refuted after
+measurement: the Workspace identity-column "migration gap" (that schema never existed on `main`'s
+first-parent chain), the authored-example fallback as a silent defect, and the stale-server skew
+as a code defect.
+
+Catalog honesty (PR #263): every verified preset now carries an execution note and the validator
+enforces it; `flux`, `sdxl` and `sdxl-variation` had no recorded run anywhere and are
+`verified: false`; 18 shipped visual workflows that exactly match a preset's API graph are linked;
+wan22-i2v's modes no longer declare an unbound `denoise`. CLAUDE.md now carries the measured test,
+skip and module counts; a proving command that always died on import was corrected in both skill
+trees. New owner items: HUMAN_TODO q-5 (Hunyuan3D 2.1 territory, #26) and q-6 (three UX questions).
+
+Agent tooling: comfy-cli 1.20.0 and comfy-mcp 0.10.0 are installed at `C:\AI\agent-tools\comfy-mcp`;
+Codex already had `comfy-local` and `comfy-cloud`; Claude had no registration and now has
+`comfy-local` at user scope (39 tools, read-only probes `server_info`, `which`, `system_stats`,
+`search_models`, `nodes` all returned `ok`). The comfy-cli default workspace pointed at a
+non-existent `Documents\comfy\ComfyUI` and now points at the portable install; one drifted skill
+copy was re-synced to the packaged version. Rules: [AGENT-TOOLING.md](docs/AGENT-TOOLING.md).
+The Studio's `experiments_root` is `C:/Users/jekyt/source/local-asset-studio/experiments`, inside
+the checkout CLAUDE.md calls stale; the 94 run receipts live there and it must not be deleted.
+The orphaned copy at `.claude/worktrees/scene-interactions` (56 MB, every file present in Git
+history) was removed after archiving its runtime folder under
+`.runtime/archive/scene-interactions-worktree-20260912/`.
+
+The Studio process on 8191 (PID 38000, started 15:43 on 13 September, serving new static files
+against a Python that predated #180 and #216) was stopped on an idle queue with no active job or
+production stage and restarted through `scripts/Start-Studio.ps1 -NoBrowser` at 00:52 on
+14 September (PID 10288). The restarted server reports online, schema available, worker alive,
+recovery healthy and serves the merged code: `wan22-t2v` now carries `wan_decode_capacity` and the
+catalog reflects PR #263's flags. Resume observation on the retained uncertain job `a2908800-7214-
+4caa-ad23-3844527cdf5d` (prompt `f67b09af-08cb-47b6-aaa7-95a348ac57ab`, absent from ComfyUI's
+history) settled in 28.2 seconds to "ComfyUI no longer lists this prompt in its queue or history";
+the prompt ID is retained, nothing was resubmitted, and ComfyUI's queue stayed empty. The second
+uncertain job `0cbaae1b…` was left as it was. The CI-less part of this proof is one live HTTP
+observation, not a generation.
+
+Not verified: no fresh GPU run; the isolated backends were offline and not started; native browser
+behaviour beyond the existing lanes; any art or licence judgement. Follow-ups filed: #252
+(addressable-figure primitive, the G3 gap), #253 (unbounded pre-submit queue wait), #254
+(anime-detail-fix hand-pass denoise), #255 (pixel-lora square export).
 
 ## Shared allowance for character edit revisions — 13 September 2026
 
