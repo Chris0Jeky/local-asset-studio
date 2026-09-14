@@ -4,9 +4,14 @@ import hashlib
 import sqlite3
 from urllib.parse import urlparse
 
-from addressable_figures import install as install_addressable_figures
-from addressable_figures import split_figures
-from workspace import AssetWorkspace, WorkspaceError
+from studio_workflow.addressable_figures import install as install_addressable_figures
+from studio_workflow.addressable_figures import split_figures
+try:
+    from workspace import AssetWorkspace, WorkspaceError
+except ModuleNotFoundError as error:
+    if error.name != 'workspace':
+        raise
+    from app.workspace import AssetWorkspace, WorkspaceError
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
 
