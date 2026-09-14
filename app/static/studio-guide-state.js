@@ -10,7 +10,7 @@
     const missing = rows.some(row => row?.missing);
     if (!slots.length) return {attached:false, missing};
     const board = object(preset?.reference_board) ? preset.reference_board : null;
-    const minimum = board && Number.isSafeInteger(board.min) ? board.min : slots.length;
+    const minimum = board ? (board.min === undefined ? 1 : (Number.isSafeInteger(board.min) ? board.min : 0)) : slots.length;
     const filled = rows.filter(row => object(row) && typeof row.file === 'string' && row.file && !row.missing).length;
     return {attached:rows.length === slots.length && !missing && minimum >= 1 && minimum <= slots.length && filled >= minimum, missing};
   }
