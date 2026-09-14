@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import io
 import json
 import os
@@ -11,13 +12,6 @@ import uuid
 from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
-
-try:
-    from workspace import WorkspaceError
-except ModuleNotFoundError as error:
-    if error.name != "workspace":
-        raise
-    from app.workspace import WorkspaceError
 
 BASIS_POINTS = 10_000
 MAX_FIGURES = 32
@@ -36,28 +30,41 @@ _ALLOWED_FIELDS = {
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
 
 
-def _fingerprint(payload):
+def workspace_error_type(workspace):
+    """Return the error class owned by this concrete Workspace implementation."""
+    module = importlib.import_module(workspace.__class__.__module__)
+    error_type = getattr(module, "WorkspaceError", None)
+    if not isinstance(error_type, type) or not issubclass(error_type, Exception):
+        raise RuntimeError("Workspace implementation does not expose WorkspaceError")
+    return error_type
+
+
+def _error(workspace, message, **fields):
+    return workspace_error_type(workspace)(message, **fields)
+
+
+def _fingerprint(workspace, payload):
     try:
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
     except (TypeError, ValueError) as error:
-        raise WorkspaceError("Figure split command must contain finite JSON values") from error
+        raise _error(workspace, "Figure split command must contain finite JSON values") from error
     if len(raw.encode("utf-8")) > MAX_COMMAND_BYTES:
-        raise WorkspaceError("Figure split command exceeds 128 KiB")
+        raise _error(workspace, "Figure split command exceeds 128 KiB")
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def _rectangles(value, require_non_overlapping):
+def _rectangles(workspace, value, require_non_overlapping):
     if not isinstance(value, list) or not 1 <= len(value) <= MAX_FIGURES:
-        raise WorkspaceError(f"Mark between 1 and {MAX_FIGURES} figure rectangles")
+        raise _error(workspace, f"Mark between 1 and {MAX_FIGURES} figure rectangles")
     result = []
     for rectangle in value:
         if not isinstance(rectangle, dict) or set(rectangle) != _RECTANGLE_FIELDS:
-            raise WorkspaceError("Every figure rectangle needs x, y, width and height basis points")
+            raise _error(workspace, "Every figure rectangle needs x, y, width and height basis points")
         if any(type(rectangle[key]) is not int for key in _RECTANGLE_FIELDS):
-            raise WorkspaceError("Figure rectangle coordinates must be integers")
+            raise _error(workspace, "Figure rectangle coordinates must be integers")
         x, y, width, height = (rectangle[key] for key in ("x", "y", "width", "height"))
         if x < 0 or y < 0 or width < 1 or height < 1 or x + width > BASIS_POINTS or y + height > BASIS_POINTS:
-            raise WorkspaceError("Figure rectangles must be positive and stay inside the 0–10000 basis-point canvas")
+            raise _error(workspace, "Figure rectangles must be positive and stay inside the 0–10000 basis-point canvas")
         result.append({"x": x, "y": y, "width": width, "height": height})
     if require_non_overlapping:
         for index, left in enumerate(result):
@@ -68,43 +75,43 @@ def _rectangles(value, require_non_overlapping):
                     and left["y"] < right["y"] + right["height"]
                     and right["y"] < left["y"] + left["height"]
                 ):
-                    raise WorkspaceError("Figure rectangles overlap; adjust them or allow overlap explicitly")
+                    raise _error(workspace, "Figure rectangles overlap; adjust them or allow overlap explicitly")
     return result
 
 
 def _validate(payload, workspace):
     if not isinstance(payload, dict):
-        raise WorkspaceError("Figure split command must be an object")
+        raise _error(workspace, "Figure split command must be an object")
     if set(payload) - _ALLOWED_FIELDS:
-        raise WorkspaceError("Unknown figure split command fields")
+        raise _error(workspace, "Unknown figure split command fields")
     missing = {"workspace_id", "request_id", "asset_id", "parent_sha256", "rectangles"} - set(payload)
     if missing:
-        raise WorkspaceError("Figure split command is incomplete: " + ", ".join(sorted(missing)))
+        raise _error(workspace, "Figure split command is incomplete: " + ", ".join(sorted(missing)))
     scope = workspace._validate_scope(payload["workspace_id"])
     request_id = workspace.request_id(payload["request_id"])
     asset_id = payload["asset_id"]
     if not isinstance(asset_id, str) or not 1 <= len(asset_id) <= 128:
-        raise WorkspaceError("Choose one existing Workspace image")
+        raise _error(workspace, "Choose one existing Workspace image")
     parent_sha256 = payload["parent_sha256"]
     if not isinstance(parent_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", parent_sha256):
-        raise WorkspaceError("Parent image hash must be 64 lowercase hexadecimal characters")
+        raise _error(workspace, "Parent image hash must be 64 lowercase hexadecimal characters")
     require_non_overlapping = payload.get("require_non_overlapping", False)
     if type(require_non_overlapping) is not bool:
-        raise WorkspaceError("require_non_overlapping must be true or false")
-    rectangles = _rectangles(payload["rectangles"], require_non_overlapping)
-    return scope, request_id, asset_id, parent_sha256, rectangles, _fingerprint(payload)
+        raise _error(workspace, "require_non_overlapping must be true or false")
+    rectangles = _rectangles(workspace, payload["rectangles"], require_non_overlapping)
+    return scope, request_id, asset_id, parent_sha256, rectangles, _fingerprint(workspace, payload)
 
 
 def _parent_row(workspace, db, asset_id, parent_sha256):
     row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
     if row is None:
-        raise WorkspaceError("Parent asset was not found")
+        raise _error(workspace, "Parent asset was not found")
     if row["media_type"] != "image":
-        raise WorkspaceError("Only a Workspace image can be split into figures")
+        raise _error(workspace, "Only a Workspace image can be split into figures")
     if row["trashed_at"] is not None:
-        raise WorkspaceError("Restore the trashed parent image before splitting it")
+        raise _error(workspace, "Restore the trashed parent image before splitting it")
     if row["sha256"] != parent_sha256:
-        raise WorkspaceError("The parent source changed; reopen it before creating figure children")
+        raise _error(workspace, "The parent source changed; reopen it before creating figure children")
     return row
 
 
@@ -114,62 +121,61 @@ def _read_parent(workspace, asset_id, expected_sha256):
         with path.open("rb") as stream:
             raw = stream.read(MAX_PARENT_BYTES + 1)
     except OSError as error:
-        raise WorkspaceError(
+        raise _error(
+            workspace,
             "The parent image snapshot could not be read",
             status=500,
             code="asset_snapshot_unavailable",
         ) from error
     if not raw or len(raw) > MAX_PARENT_BYTES:
-        raise WorkspaceError("Parent image must be nonempty and no larger than 64 MiB")
+        raise _error(workspace, "Parent image must be nonempty and no larger than 64 MiB")
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
-        raise WorkspaceError("The parent image bytes changed; no figure children were created")
+        raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
         with Image.open(io.BytesIO(raw)) as opened:
             if getattr(opened, "n_frames", 1) != 1:
-                raise WorkspaceError("Animated images cannot be split into figure children")
+                raise _error(workspace, "Animated images cannot be split into figure children")
             oriented = ImageOps.exif_transpose(opened)
             oriented.load()
             width, height = oriented.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
-                raise WorkspaceError("Parent image must be at most 40 megapixels")
+                raise _error(workspace, "Parent image must be at most 40 megapixels")
             mode = "RGBA" if "A" in oriented.getbands() else "RGB"
             canvas = oriented.convert(mode)
             if oriented is not opened:
                 oriented.close()
-    except WorkspaceError:
-        raise
     except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as error:
-        raise WorkspaceError("Parent asset is not a complete supported still image") from error
+        raise _error(workspace, "Parent asset is not a complete supported still image") from error
     return canvas
 
 
-def _pixel_box(rectangle, width, height):
+def _pixel_box(workspace, rectangle, width, height):
     left = rectangle["x"] * width // BASIS_POINTS
     top = rectangle["y"] * height // BASIS_POINTS
     right = ((rectangle["x"] + rectangle["width"]) * width + BASIS_POINTS - 1) // BASIS_POINTS
     bottom = ((rectangle["y"] + rectangle["height"]) * height + BASIS_POINTS - 1) // BASIS_POINTS
     right, bottom = min(width, right), min(height, bottom)
     if left >= right or top >= bottom:
-        raise WorkspaceError("A marked figure is smaller than one source pixel")
+        raise _error(workspace, "A marked figure is smaller than one source pixel")
     return {"left": left, "top": top, "right": right, "bottom": bottom}
 
 
-def _encode_crops(canvas, rectangles):
+def _encode_crops(workspace, canvas, rectangles):
     width, height = canvas.size
     encoded = []
     pixels = 0
     try:
         for rectangle in rectangles:
-            box = _pixel_box(rectangle, width, height)
+            box = _pixel_box(workspace, rectangle, width, height)
             pixels += (box["right"] - box["left"]) * (box["bottom"] - box["top"])
             if pixels > MAX_AGGREGATE_CROP_PIXELS:
-                raise WorkspaceError("Figure crops exceed the 80-megapixel aggregate limit")
+                raise _error(workspace, "Figure crops exceed the 80-megapixel aggregate limit")
             with canvas.crop((box["left"], box["top"], box["right"], box["bottom"])) as crop:
                 stream = io.BytesIO()
                 crop.save(stream, format="PNG", optimize=False, compress_level=6)
                 data = stream.getvalue()
             if not data:
-                raise WorkspaceError("A figure crop encoded as an empty image")
+                raise _error(workspace, "A figure crop encoded as an empty image")
             encoded.append((rectangle, box, data))
     finally:
         canvas.close()
@@ -208,7 +214,8 @@ def split_figures(workspace, payload):
         ).fetchone()
         if receipt:
             if receipt["fingerprint"] != fingerprint:
-                raise WorkspaceError(
+                raise _error(
+                    workspace,
                     "That request ID already identifies a different command; nothing changed",
                     status=409,
                     code="asset_request_reused",
@@ -219,7 +226,7 @@ def split_figures(workspace, payload):
         parent_path = parent["path"]
 
     canvas = _read_parent(workspace, asset_id, parent_sha256)
-    source_size, crops = _encode_crops(canvas, rectangles)
+    source_size, crops = _encode_crops(workspace, canvas, rectangles)
     snapshots = [_snapshot_png(workspace, data) for _, _, data in crops]
     child_ids = [
         uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:figure:{identity}:{request_id}:{index}").hex
@@ -235,7 +242,8 @@ def split_figures(workspace, payload):
         ).fetchone()
         if receipt:
             if receipt["fingerprint"] != fingerprint:
-                raise WorkspaceError(
+                raise _error(
+                    workspace,
                     "That request ID already identifies a different command; nothing changed",
                     status=409,
                     code="asset_request_reused",
@@ -244,12 +252,12 @@ def split_figures(workspace, payload):
             return workspace._observe_receipt(db, json.loads(receipt["result"]), scope)
         parent = _parent_row(workspace, db, asset_id, parent_sha256)
         if parent["path"] != parent_path:
-            raise WorkspaceError("The parent asset changed while its figures were being prepared")
+            raise _error(workspace, "The parent asset changed while its figures were being prepared")
         existing = db.execute(
             f"SELECT id FROM assets WHERE id IN ({','.join('?' for _ in child_ids)})", child_ids
         ).fetchall()
         if existing:
-            raise WorkspaceError("Figure child identity already exists without its receipt; no changes were made")
+            raise _error(workspace, "Figure child identity already exists without its receipt; no changes were made")
 
         stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parent["filename"]).stem)[:80] or "figure"
         job_id = "figure-crop:" + request_id
