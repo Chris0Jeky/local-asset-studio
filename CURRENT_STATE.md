@@ -16,10 +16,17 @@ its test caller explicitly closes the returned error. Prompt status, retained
 submission intent, no-retry behavior and range headers are covered by the checks.
 
 All 149 focused tests pass without ResourceWarning, and repository validation
-passes (68 graphs, 121 pins, 1,317 paths, 90 LoRA names). The two consecutive strict
-full-suite runs remain to be completed and recorded on PR #320 before #227's local
-acceptance is claimed. No running Studio, ComfyUI, model or generation was changed;
-HUMAN_TODO q-7 and q-25 remain open.
+passes (68 graphs, 121 pins, 1,317 paths, 90 LoRA names). At source head `84fafe1`,
+two consecutive strict Windows 11 / Python 3.14.3 full-suite runs passed: each ran
+2,248 tests (2,183 passed, 65 skipped), in 347.552 and 298.334 seconds. Neither
+emitted ResourceWarning or an aborted connection. The local acceptance checks
+for #227 are met; the original WinError10053 is not attributed to one exclusive
+cause. Final independent review and hosted qualification are recorded on PR #320.
+
+One hosted mixed-batch child exceeded its 45-second limit without retaining child
+output. An unchanged-head comparison passed; that does not explain the timeout.
+The diagnostic gap and unresolved cause are retained under #323. No running
+Studio, ComfyUI, model or generation was changed; HUMAN_TODO q-7 and q-25 stay open.
 
 ## Optional job resource receipts — 14 September 2026
 
