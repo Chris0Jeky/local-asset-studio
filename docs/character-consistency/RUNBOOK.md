@@ -88,6 +88,11 @@ Twelve attempts belong to the entire study, not each case brief. No extra image-
 
 ## 6. Record attempts and reviews
 
+For cases imported through Production, [collect saved study results](PRODUCTION-RESULTS.md)
+to produce the records and summary directly from retained jobs and Workspace
+outputs. It performs no generation and leaves reviews empty. The manual record
+contract below remains available for explicit assessments and older evidence.
+
 Records are a JSON array. Each record requires `id`, `plan_sha256`, `case_id`, `kind` (primary/repair/warmup), `state` (completed/failed/cancelled/submission_uncertain), `parent_attempt_id`, `prompt_id`, `output`, `execution_evidence`, `elapsed_seconds`, `cleanup_seconds`, and `review`.
 
 Output/evidence references use `{ "path": "workspace-relative-file", "sha256": "actual-64-hex-digest" }`. Evidence is mandatory even for failures. Noncompleted `output` is null; retain partials through the evidence record. A completed neural attempt must keep its actual prompt ID. Measurements are finite nonnegative numbers or null. One record represents one expensive attempt; it is not proof the external executor obeyed the count.
