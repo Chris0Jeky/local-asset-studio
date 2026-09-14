@@ -106,4 +106,59 @@ test('prompt transfer is text only, not executable bindings', () => {
 test('blocked and oversized compilations cannot transfer', () => {
   for(const input of [null,{}, {state:'blocked',fields:{positive:'text'}},{fields:{positive:' '}},{fields:{positive:'x'.repeat(8001)}},{fields:{positive:'text',negative:'x'.repeat(8001)}}]) assert.equal(U.promptTransfer(input),null);
 });
+test('transfer names matching recipes without selecting one', () => {
+  const out=U.promptTransfer({state:'review_required',profile:{id:'p',recipes:['qwen-1ref','qwen-2ref']},fields:{positive:'A lantern'}});
+  assert.deepEqual(out.recipes,['qwen-1ref','qwen-2ref']);
+  assert.deepEqual(U.promptTransfer({state:'review_required',profile:{id:'p'},fields:{positive:'A lantern'}}).recipes,[]);
+  const replayed=U.promptTransfer({fields:out,profile:{id:out.profile},recipes:out.recipes});
+  assert.deepEqual(replayed.recipes,out.recipes,'A stored handoff still names its recipes when Create replays it');
+});
+test('recipe names are bounded and catalog-shaped', () => {
+  const bad=['Qwen 1Ref','../etc','x'.repeat(61),42,null,'ok-one','ok-one','a','b','c','d','e','f','g','h','i'];
+  const out=U.promptTransfer({state:'review_required',profile:{id:'p',recipes:bad},fields:{positive:'A lantern'}});
+  assert.deepEqual(out.recipes,['ok-one','a','b','c','d','e','f','g']);
+  assert.deepEqual(U.promptTransfer({state:'review_required',profile:{id:'p',recipes:'qwen-1ref'},fields:{positive:'A lantern'}}).recipes,[]);
+});
+test('an unbuilt prompt says so instead of going quiet', () => {
+  const [only]=U.promptBlockers(null);
+  assert.equal(only.code,'NOT_COMPILED');assert.equal(only.blocking,true);assert.match(only.action,/Build the prompt/);
+  assert.deepEqual(U.promptBlockers({state:'review_required',fields:{positive:'A lantern'},errors:[],diagnostics:[]}),[]);
+});
+test('every compiler error becomes a sentence, an action and a kept code', () => {
+  const codes=['REFERENCE_COUNT','REFERENCE_KIND','NEGATIVE_REWRITE_REQUIRED','TAGS_REQUIRED','PROMPT_TOO_LONG','STRUCTURAL_CONTROL_REQUIRED','VERBATIM_UNBOUND','NEGATIVE_UNBOUND','TAGS_UNBOUND','SPEECH_TEXT_REQUIRED','VOICE_LANGUAGE_UNSUPPORTED','LYRICS_CONFLICT','METER_UNSUPPORTED','MOTION_UNSPECIFIED','TAG_COVERAGE_REVIEW','NO_TEXT_CONDITIONING','PARAMETER_HANDOFF','ACCEPTANCE_REQUIRED'];
+  for(const code of codes) {
+    const [item]=U.promptBlockers({state:'blocked',profile:{name:'Test profile',min_refs:0,max_refs:0},intent:{references:[],avoid:[]},fields:{},errors:[{code,message:'raw compiler text'}],diagnostics:[]});
+    assert.equal(item.code,code);assert.equal(item.detail,'raw compiler text',code);
+    assert.ok(item.message.length>20&&/[.!]$/.test(item.message),code+' needs a sentence');
+    assert.ok(item.action.length>10&&/[.!]$/.test(item.action),code+' needs an action');
+    assert.notEqual(item.message,item.action,code);
+  }
+});
+test('an unknown future code still explains itself rather than showing bare text', () => {
+  const [item]=U.promptBlockers({state:'blocked',fields:{},errors:[{code:'INVENTED_LATER',message:'raw compiler text'}],diagnostics:[]});
+  assert.equal(item.message,'raw compiler text');assert.match(item.action,/compiler detail/);assert.equal(item.blocking,true);
+});
+test('reference-count wording follows the actual profile and attachment count', () => {
+  const blocked=count=>U.promptBlockers({state:'blocked',profile:{name:'SDXL',min_refs:0,max_refs:0},intent:{references:Array(count).fill({}),avoid:[]},fields:{},errors:[{code:'REFERENCE_COUNT',message:'raw'}],diagnostics:[]})[0];
+  assert.match(blocked(1).message,/reads no reference images, and 1 reference is attached/);
+  assert.match(blocked(2).message,/2 references are attached/);
+  assert.equal(blocked(1).fix,'switch-profile');
+  const short=U.promptBlockers({state:'blocked',profile:{name:'Qwen',min_refs:1,max_refs:3},intent:{references:[],avoid:[]},fields:{},errors:[{code:'REFERENCE_COUNT',message:'raw'}],diagnostics:[]})[0];
+  assert.match(short.message,/needs at least 1 reference image/);assert.equal(short.fix,'','Attaching a file is the fix, not a profile swap');
+});
+test('avoid terms are quoted back and offered a place to go', () => {
+  const [item]=U.promptBlockers({state:'blocked',profile:{name:'FLUX',min_refs:0,max_refs:0},intent:{references:[],avoid:['crowd','watermark']},fields:{},errors:[{code:'NEGATIVE_REWRITE_REQUIRED',message:'raw'}],diagnostics:[]});
+  assert.match(item.message,/\(crowd, watermark\)/);assert.equal(item.fix,'avoid-to-note');
+});
+test('notes are separated from blockers', () => {
+  const list=U.promptBlockers({state:'blocked',profile:{name:'Animagine',min_refs:0,max_refs:0},intent:{references:[],avoid:[]},fields:{},errors:[{code:'TAGS_REQUIRED',message:'raw'}],diagnostics:[{code:'TAG_COVERAGE_REVIEW',message:'raw note'}]});
+  assert.deepEqual(list.map(x=>x.blocking),[true,false]);
+});
+test('an unusable transfer says which limit it hit', () => {
+  const long=U.promptBlockers({state:'review_required',profile:{name:'SDXL'},fields:{positive:'x'.repeat(8001)},errors:[],diagnostics:[]});
+  assert.deepEqual(long.map(x=>x.code),['TRANSFER_TOO_LONG']);
+  const none=U.promptBlockers({state:'review_required',profile:{name:'TRELLIS'},fields:{image_reference_id:'ref-a'},errors:[],diagnostics:[]});
+  assert.deepEqual(none.map(x=>x.code),['NO_PROMPT_TEXT']);
+  assert.ok(none[0].blocking&&long[0].blocking);
+});
 console.log(count+' Studio UX policy checks passed.');
