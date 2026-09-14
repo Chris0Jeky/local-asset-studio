@@ -204,6 +204,10 @@ def main():
                 else:
                     page.set_viewport_size({'width': 390, 'height': 844})
                     page.evaluate('window.scrollTo(0,0)')
+                for width in (1360, 1200, 1000, 760):  # the builder grid collapses at 1350 and 900; no width may overflow sideways
+                    page.set_viewport_size({'width': width, 'height': 900})
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), width
+                page.set_viewport_size({'width': 390, 'height': 844})
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
                 page.locator('#studioNavToggle').click(); assert page.locator('#studioNavToggle').get_attribute('aria-expanded') == 'true'
                 page.keyboard.press('Escape'); assert page.locator('#studioNavToggle').get_attribute('aria-expanded') == 'false'
