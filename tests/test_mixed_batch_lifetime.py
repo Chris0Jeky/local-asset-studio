@@ -46,7 +46,9 @@ class MixedBatchLifetimeTests(unittest.TestCase):
             return child
 
         def synthetic_run(command, **kwargs):
-            return real_run([sys.executable, "-c", child_code], **kwargs)
+            # The fixture uses only sys/time. Exclude site hooks and third-party
+            # startup from its two-second pipe/timeout test; keep tracemalloc.
+            return real_run([sys.executable, "-S", "-c", child_code], **kwargs)
 
         stdout, stderr = io.StringIO(), io.StringIO()
         try:
