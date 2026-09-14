@@ -36,8 +36,8 @@
   // Switching intent selects the first reference recipe, which resets the prompt; a typed brief is asked about first.
   q('#uxFindReferenceRecipes').onclick=()=>{const typed=q('#positive')?.value.trim();if(typed&&typed!==(selected?.defaults?.positive||'')&&!confirm('Showing reference recipes selects the first one and resets the prompt and variation count in Create. Continue?'))return;chooseIntent('edit');};
   const advanced=element('details','ux-parameters');advanced.innerHTML='<summary>Parameters & adapter stack <small>Seed, size, sampling and model controls</small></summary>';q('#controls').before(advanced);advanced.append(q('#controls'),q('#loraSlots'));advanced.open=false;
-  const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div id="uxBlockers"></div><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
-  q('#generate').setAttribute('aria-describedby','uxRunSummary uxBlockers');q('.dependencies').open=false;
+  const runBox=element('div','ux-run-box','<div class="ux-section-heading"><span>03</span><h3>Review, then run</h3></div><p id="uxRunSummary"></p><div class="ux-readiness-heading"><p id="uxReadinessSummary" role="status" aria-live="polite" aria-atomic="true"></p><button type="button" id="uxRecheckReadiness">Recheck connection</button></div><div id="uxBlockers"></div><p id="uxReadinessActionStatus" class="muted" role="status" aria-live="polite"></p><p class="muted">Generate starts this recipe. Plan comparison prepares a budgeted study; Start remains separate.</p>');q('#generate').closest('.actions').before(runBox);runBox.append(q('#generate').closest('.actions'),q('#status'));
+  q('#generate').setAttribute('aria-describedby','uxRunSummary uxReadinessSummary uxBlockers');q('.dependencies').open=false;
   q('.gallery-panel .section-title h2').textContent='Recent runs';q('.gallery-panel .muted').textContent='Compare results, inspect recipes, or continue with a saved output.';
   q('#assetsView .view-heading h2').textContent='A library, not a dead end.';
   q('#productionView .view-heading h2').textContent='Run with a question. Leave with a decision.';
@@ -57,7 +57,64 @@
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
-  function syncReady(){if(!q('#uxRunSummary'))return;const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));const state=U.readiness({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});const modeBlock=i2vModeBlocker();if(modeBlock)state.blockers.push(modeBlock);state.blockers.push(...continuationBlockers());if(sharedAdoptionError)state.blockers.push(sharedAdoptionError);if(continuationState&&!continuationSource)state.blockers.push(sourceReadError||'Checking the retained source metadata…');q('#generate').disabled=state.blockers.length>0;syncContinuation();q('#uxBlockers').innerHTML=state.blockers.map(text=>'<p class="ux-blocker">'+escape(text)+'</p>').join('');q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:uploaded?1:0;q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';}
+  let readinessMarkup='',readinessChecking=false;
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Review required inputs',parameters:'Review motion settings',continuation:'Review this continuation'};
+  function readinessItems(){
+    const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring});
+    const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
+    items.push(...continuationBlockers().map(message=>({code:'continuation',message,action:'continuation'})));
+    if(sharedAdoptionError)items.push({code:'shared-setup',message:sharedAdoptionError,action:null});
+    if(continuationState&&!continuationSource)items.push({code:'source',message:sourceReadError||'Checking the retained source metadata…',action:'continuation'});
+    return{items,required};
+  }
+  function syncReady(){
+    if(!q('#uxRunSummary'))return;
+    const {items,required}=readinessItems();
+    q('#generate').disabled=items.length>0;syncContinuation();
+    const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
+    // Polling identical evidence must not replace a focused action or announce the same status again.
+    if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
+    const summary=items.length?items.length+' condition'+(items.length===1?' needs':'s need')+' attention. Your draft remains editable.':'No blockers reported by the current checks. Generate still validates the request on the server.';
+    if(q('#uxReadinessSummary').textContent!==summary)q('#uxReadinessSummary').textContent=summary;
+    q('#uxRecheckReadiness').disabled=readinessChecking;
+    q('#uxRunSummary').textContent=selected?selected.name+' · '+q('#batch').value+' output(s) · '+(selected.backend_id||'primary')+' environment':'Choose a recipe to prepare your next run.';
+    const refs=selected?.reference_slots?.length?referenceRecords.filter(r=>r.file&&!r.missing).length:(uploaded?1:0)+(lastUploaded?1:0);
+    q('#uxSourceNote').textContent=!takesSource()?NO_SOURCE_SLOT:refs?refs+' attached reference(s) · '+parentAssets.length+' source asset(s) retained in lineage.':required.length?'Saved input is unavailable. Reattach it; no example fallback will be used.':selected?.reference_slots?.length?'Assign a role to each image. Required slots must be filled.':continuationState?'Continuation source is missing. Reopen the handoff; no example will be substituted.':'No personal source attached. This recipe may use its authored example until replaced.';
+  }
+  function focusReadinessTarget(target){
+    if(!target||target.closest('[hidden]')||target.disabled)return false;
+    for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;
+    if(!target.getClientRects().length)return false;
+    if(!target.matches('button,input,select,textarea,a[href],summary,[tabindex]'))target.setAttribute('tabindex','-1');
+    target.focus({preventScroll:true});target.scrollIntoView({block:'center',behavior:'instant'});return true;
+  }
+  function resolveReadiness(action){
+    // Resolve against live state: a detached/stale action is not a saved instruction.
+    if(!readinessItems().items.some(item=>item.action===action))return;
+    let target=null;
+    if(action==='recipes')target=q('#presetSearch');
+    if(action==='dependencies')target=q('.dependencies > summary');
+    if(action==='models'){showView('models');target=q('#backendChoice')||q('#refreshModels');}
+    if(action==='references'){
+      if(selected?.reference_slots?.length){const index=referenceRecords.findIndex(r=>!r.file||r.missing);target=index>=0?q('[data-ref-file="'+index+'"]'):q('#referenceSummary');}
+      else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||q('#reference');
+    }
+    if(action==='parameters')target=q('#i2vMode')||getControl('frames');
+    if(action==='continuation')target=selected?.positive&&!q('#positive').value.trim()?q('#positive'):q('#uxContinuation');
+    if(!focusReadinessTarget(target))q('#uxReadinessActionStatus').textContent='That control is not available in the current view. Recheck the recipe before continuing.';
+    else q('#uxReadinessActionStatus').textContent='Shown for review. No settings, attachments or execution permissions were changed.';
+  }
+  q('#uxBlockers').onclick=e=>{const button=e.target.closest('[data-ux-resolve]');if(button)resolveReadiness(button.dataset.uxResolve);};
+  q('#uxRecheckReadiness').onclick=async()=>{
+    if(readinessChecking)return;readinessChecking=true;q('#uxRecheckReadiness').disabled=true;
+    q('#uxReadinessActionStatus').textContent='Reading connection and node readiness. No generation or installation is requested.';
+    let deadline=null;
+    try{await Promise.race([health(),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Connection check timed out; the shared read may still finish. Your draft is unchanged.')),15000);})]);q('#uxReadinessActionStatus').textContent=healthError?'Connection could not be checked. Your draft is unchanged.':'Connection check finished. Review any remaining conditions; no generation was requested.';}
+    catch(error){q('#uxReadinessActionStatus').textContent='Connection check unavailable: '+error.message;}
+    finally{clearTimeout(deadline);readinessChecking=false;syncReady();}
+  };
+
   const contextPanel=element('section','ux-continuation');contextPanel.id='uxContinuation';contextPanel.hidden=true;
   contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording. They reset sampling and adapters to that setup’s complete defaults; inspect Parameters before running. Historical example runs do not verify this pass.</p></div>';
   q('#selectedPreset').before(contextPanel);
