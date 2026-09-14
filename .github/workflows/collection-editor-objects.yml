@@ -1,0 +1,55 @@
+name: Verified collection editor objects
+on:
+  push:
+    branches: ['codex/ux-collection-session-transfer']
+    paths: ['.github/workflows/collection-editor-objects.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1938177336bca6b09c0c69f06acda9a68c713024
+          persist-credentials: false
+      - name: Verify complete tree before publishing source objects
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,hashlib,json,lzma,os,subprocess,urllib.request
+          from pathlib import Path
+          api='https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/json','Accept':'application/vnd.github+json'}
+          parts=[]
+          for sha in ['508158bc4ba9743a80aaeaac40d64be3b91b5305','24caeab5f1586dd6309ddc093679e18fa59906ac']:
+              with urllib.request.urlopen(urllib.request.Request(api+'/'+sha,headers=headers),timeout=30) as response:data=json.load(response)
+              raw=base64.b64decode(data['content'])
+              assert hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()==sha
+              parts.append(raw)
+          patch=lzma.decompress(base64.b64decode(b''.join(parts)))
+          assert len(patch)==61717
+          assert hashlib.sha256(patch).hexdigest()=='d874b4ec2768f0c7a2a6c579ca919de3d21ec4b33d1f5167bf81cfe537e157e0'
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
+          tree=subprocess.check_output(['git','write-tree']).decode().strip()
+          assert tree=='d6fa8ea64ed8ef4a9caee4583f94d641abe66148',tree
+          paths=subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()
+          assert len(paths)==13
+          entries=[]
+          for path in paths:
+              raw=Path(path).read_bytes();expected=subprocess.check_output(['git','rev-parse',':'+path]).decode().strip()
+              body=json.dumps({'encoding':'base64','content':base64.b64encode(raw).decode()}).encode()
+              with urllib.request.urlopen(urllib.request.Request(api,data=body,headers=headers,method='POST'),timeout=30) as response:result=json.load(response)
+              assert result['sha']==expected,path
+              entries.append({'path':path,'sha':expected,'type':'blob','mode':'100644'})
+          manifest={'base':'1938177336bca6b09c0c69f06acda9a68c713024','tree':tree,'files':entries}
+          Path('/tmp/collection-editor-objects.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+          print(json.dumps(manifest,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: collection-editor-verified-objects
+          path: /tmp/collection-editor-objects.json
+          retention-days: 1
