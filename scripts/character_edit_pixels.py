@@ -39,16 +39,22 @@ def changed_mask(a: Image.Image, b: Image.Image) -> Image.Image:
     return maximum.point(lambda x: 255 if x else 0)
 
 
+def verify_references(root: Path, plan: dict) -> None:
+    """Check the current dependencies of an already checked edit plan."""
+    for actor in plan['document']['actors']:
+        verify_artifact(root, actor['canon'])
+        for reference in actor['references']: verify_artifact(root, reference['image'])
+    request = plan['intent']
+    if request['layout'] is not None:
+        for actor in request['layout']['actors']:
+            if actor['pose_reference'] is not None: verify_artifact(root, actor['pose_reference'])
+
+
 def _inputs(root: Path, plan: dict) -> tuple[Image.Image, Image.Image, Image.Image]:
     check_plan(plan); doc = plan['document']; request = plan['intent']
     source = png(verify_artifact(root, doc['source']))
     require(list(source.size) == doc['canvas'] and source.mode in {'RGB', 'RGBA'}, 'Source dimensions/mode changed')
-    for actor in doc['actors']:
-        verify_artifact(root, actor['canon'])
-        for reference in actor['references']: verify_artifact(root, reference['image'])
-    if request['layout'] is not None:
-        for actor in request['layout']['actors']:
-            if actor['pose_reference'] is not None: verify_artifact(root, actor['pose_reference'])
+    verify_references(root, plan)
     mask = png(verify_artifact(root, request['edit_mask']))
     require(mask.mode == 'L' and mask.size == source.size, 'Edit mask must be same-size grayscale L')
     protect = Image.new('L', source.size, 0)
@@ -56,6 +62,13 @@ def _inputs(root: Path, plan: dict) -> tuple[Image.Image, Image.Image, Image.Ima
         protect = png(verify_artifact(root, request['protect_mask']))
         require(protect.mode == 'L' and protect.size == source.size, 'Protection mask must be same-size grayscale L')
         require(sum(protect.histogram()[1:255]) == 0, 'Protection mask is binary: white forbids editing')
+    validate_coverage(plan, mask, protect)
+    return source, mask, protect
+
+
+def validate_coverage(plan: dict, mask: Image.Image, protect: Image.Image) -> None:
+    """Apply the existing plan exclusions to authored or derived L coverage."""
+    doc = plan['document']; request = plan['intent']
     support = mask.point(lambda x: 255 if x else 0)
     require(support.getbbox() is not None, 'Empty edit mask')
     if request['operation'] != 'scenario':
@@ -74,7 +87,6 @@ def _inputs(root: Path, plan: dict) -> tuple[Image.Image, Image.Image, Image.Ima
         if actor['id'] not in plan['targets']:
             require(support.crop(tuple(actor['bounds'])).getbbox() is None,
                     'Edit overlaps non-target actor: ' + actor['id'])
-    return source, mask, protect
 
 
 def _patches(source: Image.Image, mask: Image.Image, plan: dict) -> tuple[dict, dict]:

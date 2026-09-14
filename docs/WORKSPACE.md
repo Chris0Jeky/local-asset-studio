@@ -14,9 +14,31 @@ Create a collection with **＋**, select assets using their checkboxes, and choo
 **Add to collection**. An asset can belong to multiple collections. Removing a
 collection leaves the assets available in All assets.
 
+**Group by** arranges the grid into sections by recipe, day or run, each with a
+count. The choice is remembered in this browser only; it changes nothing that is
+saved with an asset.
+
 Open an asset to rename it, tag it, record notes or choose a review state.
 **Selected** is your creative selection; it does not certify model licensing,
-anatomy, topology or engine import. Favorites are a separate shortcut.
+anatomy, topology or engine import. Favorites are a separate shortcut. The
+**reason chips** under Review (hands, face, style off, composition, anatomy,
+artifacts, crop) add or remove ordinary tags, so a Needs work decision carries a
+reason without typing; they save with the asset, not on their own. **Same run**
+lists the other outputs of the same job so you can compare them without leaving
+the dialog.
+
+**Review next (n unreviewed)** opens the newest unreviewed asset in the current
+view as a queue. The dialog then shows *k of n* and accepts <kbd>K</kbd> keeper,
+<kbd>W</kbd> needs work, <kbd>X</kbd> rejected, <kbd>S</kbd> skip and the arrow
+keys; shortcuts are ignored while you are typing in a field. Each decision is the
+ordinary Save details write, with the same revision guard, and only a confirmed
+save advances the queue: an unconfirmed or conflicting save keeps that asset on
+screen with its evidence. Skipping saves nothing.
+
+With assets selected, **Mark selected: Keeper / Needs work / Rejected** applies
+the same single-asset save to each one, three at a time, and reports progress.
+Anything that fails is listed with whether it was refused or merely unconfirmed;
+no retry is sent for you. The four review states are unchanged.
 
 **Move to Trash** removes an asset from the regular views. Open Trash and choose
 **Restore** to bring it back with its collections, notes and recipe. Trash is

@@ -25,6 +25,7 @@ Existing protected composition, the Qwen character-edit client, shared campaign 
 | Prove safe mechanics and useful output | [Reliability](RELIABILITY.md), [evaluation](EVALUATION.md) |
 | Pick the next reviewable implementation slice | [Implementation plan](IMPLEMENTATION-PLAN.md) |
 | Run the scaffold and understand its limits | [Runbook](RUNBOOK.md) |
+| Prepare scaled pixels and compose a supplied repair offline | [Pixel transforms](PIXEL-TRANSFORMS.md) |
 
 ## Delivery order
 

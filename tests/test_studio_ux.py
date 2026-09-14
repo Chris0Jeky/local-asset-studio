@@ -34,6 +34,18 @@ class StudioUXTests(unittest.TestCase):
         for legacy in ['app.js', 'workspace.js', 'references.js', 'production.js', 'backends.js']:
             self.assertLess(html.index('/static/' + legacy), html.index('studio-workbench.js'))
 
+    def test_profile_recipes_name_real_catalog_presets(self):
+        import json
+        profiles = json.loads((ROOT / 'research/prompt-studio/profiles.json').read_text(encoding='utf-8'))['profiles']
+        known = {p['id'] for p in json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))['presets']}
+        for profile in profiles:
+            with self.subTest(profile=profile['id']):
+                self.assertTrue(profile['summary'].strip(), 'Every profile explains itself in one sentence')
+                self.assertLessEqual(len(profile['recipes']), 8, 'The transfer carries at most eight recipe names')
+                self.assertEqual(len(set(profile['recipes'])), len(profile['recipes']))
+                for recipe in profile['recipes']:
+                    self.assertIn(recipe, known, 'A named recipe must exist in the catalog')
+
     def test_no_remote_assets_or_executable_storage_in_new_ui(self):
         for file in (ROOT / 'app/static').glob('studio*'):
             source = file.read_text(encoding='utf-8')
