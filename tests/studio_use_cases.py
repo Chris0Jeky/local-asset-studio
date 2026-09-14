@@ -1,0 +1,750 @@
+"""Owner-shaped end-to-end UX use cases, measured in a real browser. Fixture mode never contacts ComfyUI;
+live mode only reaches the loopback Studio, whose own health probe reads ComfyUI system stats.
+
+    python tests/studio_use_cases.py                      # fixture mode (default), full run
+    python tests/studio_use_cases.py --case first-image-from-brief
+    python tests/studio_use_cases.py --base-url http://127.0.0.1:8191   # live, read-only
+
+Fixture mode reuses tests/studio_browser_smoke.py's synthetic API server (imported, not
+copied) and adds only the extra read routes the deeper journeys touch. Live mode is
+read-only navigation and typing: every click is checked against an explicit deny list
+first, and anything that would create server state is recorded as skipped, never pressed.
+
+Intents live in research/ux/use-cases.json (selector-free, owner's words). The selectors
+live here, one driver per case id, so the matrix reports the pipeline, not the markup.
+Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
+"""
+import argparse
+import json
+import os
+import re
+import shutil
+import sys
+import threading
+import time
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+CASES_PATH = ROOT / 'research/ux/use-cases.json'
+MATRIX_PATH = ROOT / 'research/ux/use-case-matrix.json'
+SHOTS_ROOT = ROOT / '.runtime/ux-use-cases'
+
+# --------------------------------------------------------------------------------------
+# Pure scoring helpers. No browser, no network: tests/test_use_case_matrix.py covers these.
+# --------------------------------------------------------------------------------------
+# Letters and digits only: × ÷ — · ✕ and other symbols are not words a reader has to read.
+WORD = re.compile(r"[^\W_]+(?:['’\-][^\W_]+)*", re.UNICODE)
+DEAD_END_KINDS = ('missing-control', 'unexplained-disabled', 'error-status')
+CLICK_ACTIONS = ('click', 'check', 'select')
+
+
+def count_words(text):
+    """Instruction words a reader actually has to read. Punctuation and digits-only runs are not words."""
+    return len(WORD.findall(text or ''))
+
+
+def dead_end(record):
+    """Name the dead end in one step record, or None. Order is the order a user meets them.
+
+    A control that is present in the DOM but not rendered counts as missing: the person
+    looking for it cannot see, scroll to or press it, which is the same dead end.
+    """
+    if record.get('control_missing') or record.get('control_hidden'): return 'missing-control'
+    if record.get('enabled') is False and not str(record.get('disabled_reason') or '').strip(): return 'unexplained-disabled'
+    if str(record.get('error_status') or '').strip(): return 'error-status'
+    return None
+
+
+# Any route that can start or resume engine work, not only direct job creation: comparison
+# start/resume, job resume, saved-workflow runs, scene and voice renders.
+OBSERVED_POSTS = []  # every POST the browser sent, both modes; the fixture's own log is not available live
+GENERATION_ROUTE = re.compile(r'^/api/jobs$|^/api/[a-z0-9_/-]+/(start|resume|run|render|generate)$')
+
+
+def case_totals(records):
+    """Roll one case's step records up into the matrix row counters.
+
+    Instruction words count what the person newly has to read: a panel's words are
+    charged once, when that panel first comes up, not again on every step inside it.
+    """
+    dead = [r for r in records if r.get('dead_end')]
+    unexplained = [r for r in records if r.get('dead_end') == 'unexplained-disabled']
+    clicks = len([r for r in records if r.get('action') in CLICK_ACTIONS and r.get('performed')])
+    switches, words, previous, charged = 0, 0, None, set()
+    for record in records:
+        where = (record.get('page'), record.get('view'))
+        if previous is not None and where != previous: switches += 1
+        previous = where
+        panel = (record.get('page'), record.get('panel'))
+        if panel not in charged: words += int(record.get('instruction_words') or 0); charged.add(panel)
+    return {'steps_taken': len(records), 'clicks': clicks, 'page_switches': switches,
+            'dead_ends': len(dead), 'unexplained_disabled': len(unexplained),
+            'instruction_words': words,
+            'instruction_words_peak': max([int(r.get('instruction_words') or 0) for r in records] or [0]),
+            'skipped_live': len([r for r in records if r.get('skipped_live')])}
+
+
+def friction_points(rows):
+    """Rank cases by dead ends first, then clicks. Stable on id so a rerun prints the same order."""
+    def key(row): return (-row.get('dead_ends', 0), -row.get('clicks', 0), row.get('id', ''))
+    return sorted(rows, key=key)
+
+
+# --------------------------------------------------------------------------------------
+# Live-mode guard. Checked before every click in every mode; enforced in live mode.
+# --------------------------------------------------------------------------------------
+DENY_IDS = {
+    'generate', 'prepareExperiment', 'prepareNative', 'prepareArticulated', 'newExperiment',
+    'planComparison', 'switchBackend', 'importAssets', 'importWorkflow', 'importRecipe',
+    'saveAssetDetails', 'save', 'assetTrash', 'assetDownload', 'nativeExport', 'createScene',
+    'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
+    'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
+    'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
+}
+DENY_LABELS = re.compile(
+    r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
+    r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
+    r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
+DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-bulk', 'download')
+
+
+def deny_reason(control_id='', label='', attributes=(), submits=False):
+    """Why this control must not be clicked against a live Studio. Empty string means allowed."""
+    if control_id and control_id in DENY_IDS: return 'deny-list id: ' + control_id
+    if label and DENY_LABELS.search(label): return 'deny-list label: ' + ' '.join(label.split())[:60]
+    for attribute in attributes:
+        if attribute in DENY_ATTRS: return 'deny-list attribute: ' + attribute
+    if submits: return 'deny-list: form submit would create server state'
+    return ''
+
+
+def live_allows(action, navigation, control_id='', label='', attributes=(), submits=False):
+    """Live mode default: read-only navigation and typing. Returns '' when allowed.
+
+    Reading a control touches nothing, so the deny list never blocks a measurement —
+    it blocks doing. Everything else is denied first, then allowed only for typing
+    and for clicks the driver declared as navigation.
+    """
+    if action == 'read': return ''
+    reason = deny_reason(control_id, label, attributes, submits)
+    if reason: return reason
+    if action in ('goto', 'fill', 'type'): return ''
+    if action in CLICK_ACTIONS and navigation: return ''
+    return 'live mode is read-only: ' + action + ' is not navigation or typing'
+
+
+# --------------------------------------------------------------------------------------
+# Fixture server: studio_browser_smoke's data plus the extra read routes these journeys need.
+# --------------------------------------------------------------------------------------
+def build_handler():
+    import studio_browser_smoke as fixture
+    from studio_workflow.guides import guides
+    from studio_workflow.core import catalog, new_document, compile_document
+
+    info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
+    schema = catalog(info, 'primary')
+    document = new_document({'1': {'class_type': 'Sink', 'inputs': {'text': 'Synthetic use-case fixture', 'seed': 42}}}, schema)
+
+    # One extra comparison plan: the smoke fixture's plans carry no stages, and reviewing a
+    # finished comparison is one of the owner's journeys. Additive; the smoke data is untouched.
+    keeper = dict(id='c' * 32, name='Lantern keeper · finished comparison', kind='comparison',
+                  state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'},
+                  axis='cfg', values=[3.5, 5.0], budget={'allowance': 4, 'reserved': 2},
+                  stages=[{'label': 'A', 'operation': 'generate', 'attempt': {'job_id': 'fixture-job'},
+                           'job': dict(fixture.JOBS[0], id='candidate-a', elapsed_seconds=12.0,
+                                       outputs=[{'filename': 'a.png', 'asset_id': 'asset-0', 'media_type': 'image', 'seed': 42}])},
+                          {'label': 'B', 'operation': 'generate', 'attempt': {'job_id': 'fixture-job'},
+                           'job': dict(fixture.JOBS[0], id='candidate-b', elapsed_seconds=13.0,
+                                       outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
+    if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
+
+    class Handler(fixture.Handler):
+        def do_GET(self):
+            path = urlsplit(self.path).path
+            if path == '/api/workflow-studio/guides': return self.json(guides())
+            if path == '/api/workflow-studio/nodes': return self.json(schema)
+            if path == '/api/workflow-studio/capabilities':
+                return self.json({'version': 1, 'run': {'available': False, 'reason': 'The use-case fixture never executes graphs.'}, 'generation_submitted': False})
+            if path == '/api/workflow-studio/documents': return self.json({'documents': []})
+            if path == '/api/workflow-studio/document-runs': return self.json({'runs': []})
+            if path.startswith('/api/workflow-studio/presets/'):
+                return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
+            if path == '/api/health':
+                return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/jobs/'):
+                return self.json(next((job for job in fixture.JOBS if job['id'] == path.rsplit('/', 1)[-1]), {'error': 'Missing synthetic job'}))
+            return super().do_GET()
+
+        def do_POST(self):
+            path = urlsplit(self.path).path
+            length = int(self.headers.get('Content-Length', '0'))
+            if path in ('/api/workflow-studio/compile', '/api/workflow-studio/nodes/refresh'):
+                raw = json.loads(self.rfile.read(length) or b'{}')
+                fixture.POSTS.append({'path': path, 'data': {}})
+                return self.json(schema if path.endswith('/refresh') else compile_document(raw['document'], schema))
+            if path == '/api/upload':
+                self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
+                return self.json({'file': 'f' * 32 + '_upload.png', 'sha256': 'a' * 64, 'width': 512, 'height': 768})
+            if path == '/api/preview':
+                self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
+                return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
+            if path == '/api/production':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                plan = dict(id='d' * 32, name=data.get('name') or 'Prepared comparison', kind='comparison',
+                            state={'status': 'planned', 'message': 'Prepared in the fixture. Preparing is not starting.'},
+                            axis=data.get('axis') or 'cfg', values=data.get('values') or [], stages=[],
+                            budget={'allowance': int(data.get('max_generations') or 2), 'reserved': 0})
+                fixture.PLANS.insert(0, plan); return self.json(plan)
+            if path == '/api/production-export':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                plan = dict(id='e' * 32, name='Prepared native export', kind='native',
+                            state={'status': 'planned', 'message': 'Export prepared in the fixture. Start it explicitly.'},
+                            stages=[], budget={'allowance': 0, 'reserved': 0})
+                fixture.PLANS.insert(0, plan); return self.json(plan)
+            if path.startswith('/api/production/') and path.endswith('/review'):
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                identifier = path.split('/')[3]
+                for plan in fixture.PLANS:
+                    if plan['id'] == identifier:
+                        plan['state'] = dict(plan['state'], status='reviewed', message='Choice recorded in the fixture.',
+                                             review={'asset_id': data.get('asset_id'), 'notes': data.get('notes'), 'reviewer': data.get('reviewer')})
+                        return self.json(plan)
+                return self.json({'error': 'Unknown fixture study'}, 404)
+            return super().do_POST()
+
+    return Handler, fixture
+
+
+# --------------------------------------------------------------------------------------
+# Browser-side probes.
+# --------------------------------------------------------------------------------------
+PROBE_ELEMENT = """(el) => {
+  const rect = el.getBoundingClientRect(), style = getComputedStyle(el);
+  const shown = rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+  const text = t => (t || '').replace(/\\s+/g, ' ').trim();
+  const name = text(el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || el.getAttribute('placeholder') || el.id);
+  const disabled = el.disabled === true || el.getAttribute('aria-disabled') === 'true';
+  const reasons = [];
+  const described = el.getAttribute('aria-describedby');
+  if (described) for (const id of described.split(/\\s+/)) reasons.push(text(document.getElementById(id)?.textContent));
+  reasons.push(text(el.getAttribute('title')));
+  for (const sibling of [el.previousElementSibling, el.nextElementSibling]) if (sibling && !sibling.matches('button,input,select,textarea,a')) reasons.push(text(sibling.textContent));
+  const holder = el.closest('label,article,section,fieldset,div,dialog,form');
+  if (holder) for (const hint of holder.querySelectorAll('small,.muted,.hint,[role=status],[role=alert],p'))
+    if (!hint.contains(el)) reasons.push(text(hint.textContent));
+  const attributes = [...el.attributes].map(a => a.name);
+  const submits = el.type === 'submit' || (el.form != null && el.tagName === 'BUTTON' && el.type !== 'button');
+  return {shown, name, disabled, attributes, submits,
+    in_viewport: shown && rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth,
+    reason: reasons.filter(Boolean).join(' | ').slice(0, 400)};
+}"""
+
+PROBE_PAGE = """() => {
+  const text = t => (t || '').replace(/\\s+/g, ' ').trim();
+  const dialog = [...document.querySelectorAll('dialog')].find(d => d.open);
+  const views = [...document.querySelectorAll('section.view')].filter(v => !v.hidden && v.getBoundingClientRect().height > 0);
+  const panel = dialog || views[0] || document.querySelector('main') || document.body;
+  const seen = new Set();
+  for (const node of panel.querySelectorAll('p,small,label,legend,summary,figcaption,.muted,.hint,.callout,[role=status],[role=alert]')) {
+    if (!node.offsetParent && node !== panel) continue;
+    const own = [...node.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ');
+    const value = text(own || (node.children.length ? '' : node.textContent));
+    if (value) seen.add(value);
+  }
+  const errors = [];
+  for (const node of document.querySelectorAll('[role=alert], .error')) {
+    if (!node.offsetParent) continue;
+    const value = text(node.textContent);
+    if (value) errors.push(value);
+  }
+  return {view: views[0]?.id || (dialog ? dialog.id : '') || '', dialog: dialog?.id || '',
+    panel: dialog?.id || views[0]?.id || 'page', instructions: [...seen].join(' '),
+    error: errors.join(' | ').slice(0, 400), hash: location.hash, path: location.pathname};
+}"""
+
+
+class CaseRun:
+    """Drives one use case, recording a measurement per intended step."""
+
+    def __init__(self, spec, page, origin, live, screenshots):
+        self.spec, self.page, self.origin, self.live = spec, page, origin, live
+        self.dir = screenshots / spec['id']
+        if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,63}', spec['id']): raise ValueError('Unsafe case id: %r' % (spec['id'],))
+        if self.dir.exists(): shutil.rmtree(self.dir)
+        self.dir.mkdir(parents=True, exist_ok=True)
+        self.records, self.cursor, self.notes = [], 0, []
+
+    # -- step plumbing -----------------------------------------------------------------
+    def _intent(self):
+        steps = self.spec['steps']
+        step = steps[self.cursor] if self.cursor < len(steps) else {'intent': 'unplanned step taken by the driver', 'expect': ''}
+        self.cursor += 1
+        return step
+
+    def _page_state(self):
+        try: return self.page.evaluate(PROBE_PAGE)
+        except Exception as error: return {'view': '', 'dialog': '', 'panel': '', 'instructions': '', 'error': 'probe failed: ' + str(error), 'hash': '', 'path': ''}
+
+    def _shot(self, index):
+        name = '%02d.png' % index
+        try: self.page.screenshot(path=str(self.dir / name))
+        except Exception: return ''
+        return str((self.dir / name).relative_to(ROOT)).replace('\\', '/')
+
+    def _finish(self, record):
+        state = self._page_state()
+        record.update(page=state['path'] or '/', view=state['view'] or state['panel'], panel=state['panel'],
+                      hash=state['hash'], url=self.page.url,
+                      instruction_words=count_words(state['instructions']),
+                      error_status=state['error'] if record.get('performed') else '')
+        record['dead_end'] = dead_end(record)
+        record['screenshot'] = self._shot(len(self.records) + 1)
+        self.records.append(record)
+        return record
+
+    # -- actions -----------------------------------------------------------------------
+    def act(self, selector, action='click', typed=None, navigation=False, note='', timeout=3000, wait=250):
+        step = self._intent()
+        record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
+                  'action': action, 'selector': selector, 'typed': typed, 'note': note,
+                  'control': '', 'control_name': '', 'control_missing': False, 'control_hidden': False,
+                  'enabled': None, 'visible_before_scroll': None, 'disabled_reason': '', 'performed': False,
+                  'skipped_live': '', 'failure': ''}
+        locator = self.page.locator(selector).first
+        try: locator.wait_for(state='attached', timeout=timeout)
+        except Exception:
+            record['control_missing'] = True
+            return self._finish(record)
+        try: probe = locator.evaluate(PROBE_ELEMENT)
+        except Exception as error:
+            record['control_missing'] = True; record['failure'] = str(error)[:200]
+            return self._finish(record)
+        record.update(control=self._identity(selector), control_name=probe['name'],
+                      control_hidden=not probe['shown'],
+                      enabled=not probe['disabled'], visible_before_scroll=bool(probe['in_viewport']),
+                      disabled_reason=probe['reason'] if probe['disabled'] else '')
+        blocked = live_allows(action, navigation, self._identity(selector), probe['name'], probe['attributes'], probe['submits']) if self.live else ''
+        if blocked:
+            record['skipped_live'] = blocked
+            return self._finish(record)
+        if action == 'read' or record['control_hidden']:
+            if record['control_hidden']: record['failure'] = record['failure'] or 'control is present but not rendered'
+            return self._finish(record)
+        try:
+            if action == 'click': locator.click(timeout=timeout)
+            elif action == 'fill': locator.fill(typed or '', timeout=timeout)
+            elif action == 'select': locator.select_option(typed, timeout=timeout)
+            elif action == 'check': locator.check(timeout=timeout)
+            else: raise ValueError('Unknown action: ' + action)
+            record['performed'] = True
+        except Exception as error:
+            record['failure'] = str(error).splitlines()[0][:200]
+        self.page.wait_for_timeout(wait)
+        return self._finish(record)
+
+    def _identity(self, selector):
+        match = re.match(r'^#([A-Za-z0-9_-]+)$', selector.strip())
+        return match.group(1) if match else selector
+
+    def goto(self, url, note='', wait=400):
+        step = self._intent()
+        record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
+                  'action': 'goto', 'selector': url, 'typed': None, 'note': note, 'control': url,
+                  'control_name': url, 'control_missing': False, 'control_hidden': False, 'enabled': True,
+                  'visible_before_scroll': True, 'disabled_reason': '', 'performed': True,
+                  'skipped_live': '', 'failure': ''}
+        try:
+            self.page.goto(url if url.startswith('http') else self.origin + url)
+            self.page.wait_for_timeout(wait)
+        except Exception as error:
+            record['failure'] = str(error).splitlines()[0][:200]; record['performed'] = False
+        return self._finish(record)
+
+    def observe(self, description, ok, detail='', note=''):
+        """A read-only verification step: no control is pressed, the screen is measured."""
+        step = self._intent()
+        record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
+                  'action': 'read', 'selector': description, 'typed': None, 'note': note or detail,
+                  'control': description, 'control_name': description, 'control_missing': not ok,
+                  'control_hidden': False, 'enabled': None, 'visible_before_scroll': None, 'disabled_reason': '',
+                  'performed': True, 'skipped_live': '', 'failure': '' if ok else detail}
+        return self._finish(record)
+
+    # -- helpers used by drivers --------------------------------------------------------
+    def boot(self, route='#home'):
+        self.page.goto(self.origin + '/' + route)
+        self.page.wait_for_function('!!window.selected || !!document.querySelector("#homeView")', timeout=15000)
+        self.page.wait_for_timeout(400)
+
+    def select_preset(self, preset_id):
+        self.page.evaluate('selectPreset("%s")' % preset_id); self.page.wait_for_timeout(250)
+
+    def ready(self):
+        try: return self.page.locator('#generate').is_enabled()
+        except Exception: return False
+
+    def studies(self):
+        """Ids currently listed in Runs & review, so 'a study appeared' means a NEW one."""
+        try: return set(self.page.eval_on_selector_all('#productionList [data-project]', 'nodes => nodes.map(n => n.dataset.project)'))
+        except Exception: return set()
+
+    def wait_for_new_study(self, before, timeout=10000):
+        """Wait until Runs & review lists a study that was not there before the prepare."""
+        deadline = time.time() + timeout / 1000
+        while time.time() < deadline:
+            fresh = self.studies() - before
+            if fresh: return fresh
+            self.page.wait_for_timeout(250)
+        return self.studies() - before
+
+    def wait_for_studies(self, timeout=10000):
+        """Wait for Runs & review to actually render a study.
+
+        Preparing posts, switches view and refreshes; a fixed sleep is a flake on a
+        slower machine (hosted CI, 14 Sep 2026). Returns the rendered study count.
+        """
+        try: self.page.wait_for_function("document.querySelectorAll('#productionList [data-project]').length > 0", timeout=timeout)
+        except Exception: pass
+        return self.page.locator('#productionList [data-project]').count()
+
+    def dialog_status(self, selector):
+        """Whatever a prepare dialog last reported, so a failure explains itself."""
+        try: return ' '.join(self.page.locator(selector).inner_text().split())[:120]
+        except Exception: return ''
+
+
+# --------------------------------------------------------------------------------------
+# Drivers. One per case id; the call order must match the intents in use-cases.json.
+# --------------------------------------------------------------------------------------
+DRIVERS = {}
+
+
+def driver(case_id):
+    def register(function): DRIVERS[case_id] = function; return function
+    return register
+
+
+BRIEF = ('A lanternkeeper of the deep wood: a young elf with silver-grey hair, a patched green '
+         'travelling cloak and a brass lantern, standing among tall pines at dusk.')
+
+
+@driver('first-image-from-brief')
+def _first_image(c):
+    c.boot('#home')
+    c.act('#uxJourneys, #uxRecent', 'read', note='overview starting points')
+    c.act('[data-studio-route="create"]', navigation=True)
+    c.act('#presetSearch', 'fill', typed='anima')
+    c.act('#presetList button.preset', note='first matching recipe')
+    c.act('#positive', 'fill', typed=BRIEF)
+    c.act('#negative', 'fill', typed='blurry, extra fingers, watermark')
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    return c.ready(), 'run control enabled=%s' % c.ready()
+
+
+@driver('reference-edit-one-source')
+def _one_reference(c):
+    c.boot('#create')
+    c.act('#presetList [data-id="anima-portrait"]', note='a text-only illustration recipe')
+    c.act('#uxPullAsset', note='deliberate wrong turn: text-only recipe has no reference slot')
+    c.act('#uxSourcePicker[open], #referenceHint, #uxNotice', 'read', note='what the screen says after the wrong turn')
+    c.act('#presetSearch', 'fill', typed='Atelier')
+    c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')
+    c.act('#uxPullAsset')
+    if c.page.locator('#uxSourcePicker[open]').count():
+        if c.live: c.act('[data-ux-pull="asset-0"]', 'read', note='live mode: pulling a reference writes server state; not clicked')
+        else:
+            try: c.page.click('[data-ux-pull="asset-0"]', timeout=4000); c.page.wait_for_timeout(500)
+            except Exception: pass
+    c.act('#positive', 'fill', typed='Change the cloak to deep blue. Keep the face, hair and lantern exactly as they are.')
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    return c.ready(), 'run control enabled=%s' % c.ready()
+
+
+@driver('three-reference-identity-pose-style')
+def _three_references(c):
+    c.boot('#create')
+    c.act('#presetList [data-id="qwen-3ref"]', note='the three-reference Qwen Atelier recipe')
+    for index, (role, asset) in enumerate([('identity', 'asset-0'), ('pose', 'asset-1'), ('style', 'asset-4')]):
+        c.act('[data-ref-role="%d"]' % index, 'select', typed=role)
+        c.act('#uxPullAsset', note='attach picture %d' % (index + 1))
+        picked = False
+        if c.page.locator('#uxSourcePicker[open]') .count() and c.live: c.act('[data-ux-pull="%s"]' % asset, 'read', note='live mode: pulling a reference writes server state; not clicked')
+        elif c.page.locator('#uxSourcePicker[open]').count():
+            try:
+                c.page.select_option('#uxSourceSlot', str(index), timeout=3000)
+                c.page.click('[data-ux-pull="%s"]' % asset, timeout=4000); c.page.wait_for_timeout(600); picked = True
+            except Exception: pass
+        if not picked and c.page.locator('#uxSourcePicker[open]').count():
+            try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
+            except Exception: pass
+    c.act('[data-ref-contribution="0"]', 'fill', typed='Face, hair colour and the brass lantern.')
+    c.act('#positive', 'fill', typed='Same character, seated and reading. Keep the face and lantern unchanged.')
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    filled = c.page.evaluate('referenceRecords.filter(r=>r.file).length')
+    return c.ready() and filled == 3, '%d/3 slots attached, run control enabled=%s' % (filled, c.ready())
+
+
+@driver('compare-settings-from-recipe')
+def _compare(c):
+    c.boot('#create')
+    c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
+    c.act('#positive', 'fill', typed=BRIEF)
+    c.act('#planComparison')
+    c.act('#experimentAxis', 'select', typed='cfg')
+    c.act('#experimentValues', 'read', note='proposed candidate values')
+    # The planner proposes the candidate values but does not size the allowance to them:
+    # a person has to read the proposal and raise the total by hand, or preparing is refused.
+    proposed = len([v for v in (c.page.locator('#experimentValues').input_value() or '').split(',') if v.strip()])
+    before = c.studies()
+    c.act('#experimentBudget', 'fill', typed=str(max(proposed, 1)), note='%d proposed values need at least %d runs' % (proposed, proposed))
+    c.act('#prepareExperiment')
+    fresh = c.wait_for_new_study(before)
+    status = c.dialog_status('#experimentStatus')
+    detail = '%d new study listed (allowance %d for %d values)%s' % (len(fresh), max(proposed, 1), proposed, '; planner said: ' + status if status else '')
+    c.act('#productionList', 'read', note=detail)
+    return bool(fresh), detail
+
+
+@driver('review-and-keep-winner')
+def _review(c):
+    c.boot('#production')
+    c.act('#productionList', 'read', note='%d studies listed' % c.wait_for_studies())
+    c.act('#productionList [data-project="%s"]' % ('c' * 32), note='the finished comparison')
+    c.act('#blindComparison', note='reveal candidate settings')
+    c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
+    if c.page.locator('#assetDialog[open]').count():
+        try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
+        except Exception: pass
+    c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
+    c.act('#productionDetail [data-choose-candidate]', note='keep the winner')
+    c.page.wait_for_timeout(600)
+    recorded = 'reviewed' in (c.page.locator('#productionDetail').inner_text().lower() if c.page.locator('#productionDetail').count() else '')
+    c.act('#productionDetail', 'read', note='choice recorded=%s' % recorded)
+    return recorded, 'study state shows reviewed=%s' % recorded
+
+
+@driver('reuse-keeper-as-reference')
+def _reuse(c):
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    c.act('#assetGrid', 'read', note='saved pictures listed')
+    c.act('[data-asset-open="asset-1"]', note='open the keeper')
+    c.act('[data-ux-handoff="asset-1"]', note='continue with this picture')
+    c.act('#uxDestination', 'select', typed='qwen-1ref')
+    c.act('#uxPrepareHandoff')
+    c.page.wait_for_timeout(800)
+    lineage = c.page.evaluate('typeof parentAssets !== "undefined" ? parentAssets[0] : null')
+    c.act('#uxContinuation', 'read', note='lineage parent=%s' % lineage)
+    c.act('#positive', 'fill', typed='Same character at dawn. Keep the face, cloak and lantern unchanged.')
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    return lineage == 'asset-1', 'lineage parent=%s, run control enabled=%s' % (lineage, c.ready())
+
+
+@driver('prompt-lab-to-create')
+def _prompt_lab(c):
+    c.goto('/prompt-lab.html', note='wording workspace')
+    try: c.page.wait_for_selector('#profile option', state='attached', timeout=8000)
+    except Exception: pass
+    options = c.page.eval_on_selector_all('#profile option', 'nodes => nodes.map(n => n.value)')
+    c.act('#profile', 'select', typed=options[0] if options else '')
+    c.act('#brief', 'fill', typed=BRIEF)
+    c.act('#subject', 'fill', typed='elf lanternkeeper, silver-grey hair, patched green cloak')
+    c.act('#compile')
+    c.act('#studioSendPrompt', navigation=True)
+    try: c.page.wait_for_selector('#uxTransfer:not([hidden])', timeout=8000)
+    except Exception: pass
+    c.act('#uxTransferPreview', 'read', note='transferred text reviewed before applying')
+    c.act('#uxApplyPrompt')
+    c.page.wait_for_timeout(400)
+    applied = c.page.locator('#positive').input_value() if c.page.locator('#positive').count() else ''
+    return bool(applied.strip()), 'brief field holds %d characters' % len(applied)
+
+
+@driver('guided-edit-or-preserve-character')
+def _guided(c):
+    c.goto('/workflow-studio.html#journeys', note='guided paths')
+    try: c.page.wait_for_selector('.wf-goal', timeout=8000)
+    except Exception: pass
+    c.act('#goalCards', 'read', note='%d paths listed' % c.page.locator('.wf-goal').count())
+    card = c.page.locator('.wf-goal').filter(has_text='Edit or preserve a character')
+    href = card.locator('a').first.get_attribute('href') if card.count() else None
+    c.act('.wf-goal:has-text("Edit or preserve a character") a', navigation=True, note='start the path')
+    reached = []
+    for _ in range(5):
+        try: c.page.wait_for_selector('.studio-guide-panel', timeout=6000)
+        except Exception: pass
+        stage = c.page.evaluate("new URLSearchParams(location.search).get('stage')")
+        reached.append(stage)
+        c.act('.studio-guide-panel button:has-text("Next step")', navigation=True, note='stage=%s' % stage)
+    final = c.page.evaluate("new URLSearchParams(location.search).get('stage')")
+    reached.append(final)
+    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    c.act('body', 'read', note='stages reached: %s; generation posts: %d' % (','.join(str(x) for x in reached), len(submitted)))
+    complete = len([x for x in reached if x]) >= 6 and not submitted
+    return complete, 'stages reached=%s, start href=%s, generation posts=%d' % (reached, href, len(submitted))
+
+
+@driver('build-and-prepare-node-workflow')
+def _workflow(c):
+    c.goto('/workflow-studio.html#builder', note='workflow builder')
+    try: c.page.wait_for_selector('#loadNodes', timeout=8000)
+    except Exception: pass
+    c.act('#schemaState', 'read', note='catalog state before anything is loaded')
+    c.act('#loadNodes')
+    try: c.page.wait_for_function("document.querySelector('#nodeCount').textContent.includes('installed')", timeout=8000)
+    except Exception: pass
+    options = c.page.eval_on_selector_all('#presetChoice option', 'nodes => nodes.map(n => n.value).filter(Boolean)')
+    if options:
+        try: c.page.select_option('#presetChoice', options[0], timeout=3000)
+        except Exception: pass
+    c.act('#loadPreset')
+    c.page.wait_for_timeout(500)
+    c.act('#compileWorkflow')
+    c.page.wait_for_timeout(500)
+    c.act('#exportGraph', 'read', note='export availability after the check')
+    c.act('#saveSharedWorkflow', 'read', note='save to Workspace')
+    c.act('#prepareSavedRun', 'read', note='prepare a run from a saved revision')
+    runs = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    c.act('#workflowStatus', 'read', note='%d run requests sent' % len(runs))
+    exportable = c.page.locator('#exportGraph').count() and not c.page.locator('#exportGraph').is_disabled()
+    return bool(exportable) and not runs, 'export available=%s, run requests=%d' % (bool(exportable), len(runs))
+
+
+@driver('frames-to-native-export')
+def _native_export(c):
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    c.act('#assetGrid', 'read', note='saved pictures listed')
+    c.act('#assetType', 'select', typed='image', note='images only')
+    c.act('[data-asset-check="asset-0"]', 'check')
+    c.act('[data-asset-check="asset-1"]', 'check')
+    c.act('#nativeExport')
+    c.act('#nativeKind', 'select', typed='atlas')
+    c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
+    before = c.studies()
+    c.act('#prepareNative')
+    fresh = c.wait_for_new_study(before)
+    status = c.dialog_status('#nativeStatus')
+    detail = '%d new study listed%s' % (len(fresh), '; export dialog said: ' + status if status else '')
+    c.act('#productionList', 'read', note=detail)
+    return bool(fresh), detail
+
+
+# --------------------------------------------------------------------------------------
+# Runner
+# --------------------------------------------------------------------------------------
+def repo_path(path):
+    """Report a path relative to the repository when it lives there, else absolutely."""
+    path = Path(path).resolve()
+    try: return str(path.relative_to(ROOT)).replace(os.sep, '/')
+    except ValueError: return str(path).replace(os.sep, '/')
+
+
+def load_cases(path=CASES_PATH):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
+
+
+def run_case(spec, page, origin, live, screenshots):
+    run = CaseRun(spec, page, origin, live, screenshots)
+    passed, detail, failure = False, '', ''
+    try: passed, detail = DRIVERS[spec['id']](run)
+    except Exception as error: failure = type(error).__name__ + ': ' + str(error).splitlines()[0][:200]
+    row = {'id': spec['id'], 'goal': spec['goal'], 'starting_view': spec['starting_view'],
+           'success_condition': spec['success_condition'], 'wrong_turn': bool(spec.get('wrong_turn')),
+           'steps_intended': len(spec['steps']), 'passed': bool(passed) and not failure,
+           'detail': detail, 'failure': failure}
+    row.update(case_totals(run.records))
+    row['steps'] = run.records
+    return row
+
+
+def table(rows):
+    header = ['case', 'int', 'took', 'clk', 'sw', 'dead', 'unexp', 'words', 'result']
+    body = [[row['id'][:34], str(row['steps_intended']), str(row['steps_taken']), str(row['clicks']),
+             str(row['page_switches']), str(row['dead_ends']), str(row['unexplained_disabled']),
+             str(row['instruction_words']), 'PASS' if row['passed'] else 'FAIL'] for row in rows]
+    widths = [max(len(header[i]), *(len(line[i]) for line in body)) for i in range(len(header))] if body else [len(h) for h in header]
+    out = ['  '.join(header[i].ljust(widths[i]) for i in range(len(header))),
+           '  '.join('-' * widths[i] for i in range(len(header)))]
+    out += ['  '.join(line[i].ljust(widths[i]) for i in range(len(header))) for line in body]
+    return '\n'.join(out)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--base-url', help='Drive a live Studio instead of the fixture. Read-only: navigation and typing only.')
+    parser.add_argument('--case', action='append', help='Run only these case ids (repeatable).')
+    parser.add_argument('--out', type=Path, default=MATRIX_PATH)
+    parser.add_argument('--screenshots', type=Path, default=SHOTS_ROOT)
+    parser.add_argument('--chromium', help='Chromium executable path.')
+    args = parser.parse_args(argv)
+
+    data = load_cases()
+    cases = [case for case in data['cases'] if not args.case or case['id'] in args.case]
+    missing = [case['id'] for case in cases if case['id'] not in DRIVERS]
+    if missing: raise SystemExit('No driver registered for: ' + ', '.join(missing))
+    args.out = args.out.resolve(); args.screenshots = args.screenshots.resolve()
+    args.screenshots.mkdir(parents=True, exist_ok=True)
+
+    from playwright.sync_api import sync_playwright
+    server = thread = None
+    live = bool(args.base_url)
+    if live:
+        origin = args.base_url.rstrip('/')
+        if not re.match(r'^https?://(127\.0\.0\.1|localhost)(:\d+)?$', origin):
+            raise SystemExit('Live mode is loopback only: pass http://127.0.0.1:<port>')
+        fixture = None
+    else:
+        Handler, fixture = build_handler()
+        server = ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('STUDIO_UX_TEST_PORT', '0'))), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        origin = 'http://127.0.0.1:' + str(server.server_port)
+
+    rows, errors = [], []
+    started = time.time()
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, args=['--no-sandbox'],
+                                                 executable_path=args.chromium or os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None)
+            context = browser.new_context(viewport={'width': 1536, 'height': 1060}, device_scale_factor=1, reduced_motion='reduce')
+            for spec in cases:
+                page = context.new_page()
+                page.set_default_timeout(6000)
+                page.on('pageerror', lambda error, case=spec['id']: errors.append(case + ': ' + str(error)[:200]))
+                page.on('request', lambda request: OBSERVED_POSTS.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                print('--- ' + spec['id'], flush=True)
+                rows.append(run_case(spec, page, origin, live, args.screenshots))
+                print(('PASS ' if rows[-1]['passed'] else 'FAIL ') + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
+                page.close()
+            browser.close()
+    finally:
+        if server: server.shutdown(); server.server_close()
+        if thread: thread.join(timeout=5)
+
+    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
+              'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
+              'cases': len(rows), 'passed': len([row for row in rows if row['passed']]),
+              'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS), 'page_errors': errors,
+              'screenshots': str(args.screenshots.relative_to(ROOT)).replace('\\', '/') if args.screenshots.is_relative_to(ROOT) else str(args.screenshots),
+              'rows': rows}
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(matrix, indent=2) + '\n', encoding='utf-8')
+    print()
+    print(table(rows))
+    print()
+    print('Top friction (dead ends, then clicks):')
+    for row in friction_points(rows)[:5]:
+        print('  %-34s dead=%d clicks=%d unexplained=%d words=%d' % (row['id'], row['dead_ends'], row['clicks'], row['unexplained_disabled'], row['instruction_words']))
+    print()
+    print('mode=%s cases=%d passed=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
+    print('matrix -> ' + str(args.out))
+    if submitted: raise SystemExit('A use case submitted a generation; that must never happen.')
+    return 0
+
+
+if __name__ == '__main__': raise SystemExit(main())
