@@ -27,3 +27,5 @@ The report's priority remains appropriate: prevent unsafe residency/host-memory 
 Saved job receipts can now be checked with the [offline integrity inspector](RECEIPT-INTEGRITY.md) before their sampled values are used. This does not qualify a matched benchmark or change the recorder.
 
 The [paired-observation report](PAIRED-OBSERVATIONS.md) compares explicitly pinned receipts while retaining invalid, incomplete and unresolved rows. It does not submit benchmark trials or qualify causal performance gains.
+
+The separate supplied **Low-Level Engineering Optimisation Audit and Roadmap** is unpacked in [low-level engineering](low-level/README.md): source/page mapping, repository-specific decisions, CPU minimum-copy slices and conditional inference/graphics experiments. Its graphics recommendations are not silently treated as ComfyUI tensor optimisations.
