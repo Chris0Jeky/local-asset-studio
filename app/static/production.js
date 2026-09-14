@@ -11,7 +11,7 @@ function planDate(value){
 }
 function planDisplayName(p){
   const stored=String(p?.name||'').trim();
-  const readable=stored.replace(/\b[0-9a-f]{8,}\b/gi,'').replace(/\s{2,}/g,' ').replace(/[\s·\/,-]+$/,'').trim()||stored||'Untitled plan';
+  const readable=stored.replace(/\b(?=[0-9a-f]*[a-f])[0-9a-f]{8,}\b/gi,'').replace(/\s{2,}/g,' ').replace(/[\s·\/,-]+$/,'').trim()||stored||'Untitled plan';
   if(p?.kind!=='comparison')return readable;
   const values=p.values||[];
   const change=p.axis==='variants'?(values.length?values.length+' planned variants':''):p.axis&&values.length?p.axis+' = '+values.join(', '):'';
@@ -109,7 +109,8 @@ function plannerBlock(){
 const PLANNER_PROSE=new Set(['positive','negative']);
 function variantChanges(variant,base){
   const controls=variant?.controls||{},from=base||{},label=String(variant?.label||'');
-  return Object.keys(controls).sort().filter(key=>!PLANNER_PROSE.has(key)&&String(controls[key])!==String(from[key]??'')&&!label.includes(key+'='+controls[key])).map(key=>key+'='+controls[key]);
+  const stated=key=>new RegExp('(^|[^a-z0-9_])'+String(key+'='+controls[key]).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![0-9.])','i').test(label);
+  return Object.keys(controls).sort().filter(key=>!PLANNER_PROSE.has(key)&&String(controls[key])!==String(from[key]??'')&&!stated(key)).map(key=>key+'='+controls[key]);
 }
 function renderPlanner(){
   const planned=plannedVariants||[];
@@ -127,12 +128,16 @@ function renderPlanner(){
 // The Create view already measures this recipe against completed local runs.
 // Reading its label back keeps one number in the Studio: no second estimator,
 // and no claim at all when Create has not measured this recipe yet.
+// Create's estimate covers its whole variation batch; comparison stages run one output each, so the
+// batch is divided out (a rough share, not a second estimator) and the label says so.
 function measuredRunSeconds(){
-  const match=/^([0-9]+(?:\.[0-9]+)?)\s*(min|h)$/.exec(String($('#estimateValue')?.textContent||'').trim());
+  const match=/^([0-9]+(?:\.[0-9]+)?)\s*(s|min|h)$/.exec(String($('#estimateValue')?.textContent||'').trim());
   if(!match)return null;
-  const value=Number(match[1]);
-  return Number.isFinite(value)&&value>0?value*(match[2]==='h'?3600:60):null;
+  const value=Number(match[1]),batch=Math.max(1,Number($('#batch')?.value)||1);
+  return Number.isFinite(value)&&value>0?value*({s:1,min:60,h:3600}[match[2]])/batch:null;
 }
+function estimatePending(){return /calculating/i.test(String($('#estimateValue')?.textContent||''));}
+let plannerSummaryRetry=0;
 function plannedValues(){return String($('#experimentValues').value||'').split(',').map(v=>v.trim()).filter(Boolean);}
 function renderPlannerSummary(){
   const summary=$('#experimentSummary'),note=$('#experimentBudgetNote');
@@ -141,8 +146,11 @@ function renderPlannerSummary(){
   const axis=$('#experimentAxis').value,values=plannedValues(),candidates=planned.length||values.length;
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
   const what=planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
-  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at '+(per/60).toFixed(1)+' min per run measured in Create':', no measured time for this recipe yet';
+  const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
+  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Create'):pending?', timing still being measured':', no measured time for this recipe yet';
   summary.textContent=candidates?what+' on '+recipe+' → '+candidates+' graph run'+(candidates===1?'':'s')+time+'.':what+' on '+recipe+'.';
+  // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
+  if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
   if(note){
     note.textContent=candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
     note.classList.toggle('error',!!candidates&&reserved<candidates);

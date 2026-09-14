@@ -71,6 +71,20 @@ assert.match($('#experimentBudgetNote').textContent,/3 values × 1 seed = 3 runs
 $('#experimentBudget').value='2';run('renderPlannerSummary();');
 assert.match($('#experimentBudgetNote').textContent,/at least 3/,'A budget below the candidate count is arithmetic, not an opinion');
 $('#estimateValue').textContent='Calculating…';$('#experimentBudget').value='8';run('renderPlannerSummary();');
+assert.match($('#experimentSummary').textContent,/timing still being measured/,'A pending estimate is not a missing one');
+$('#estimateValue').textContent='Unavailable';run('renderPlannerSummary();');
 assert.match($('#experimentSummary').textContent,/no measured time/);
+
+// 7 · Create's estimate covers its whole batch; a comparison stage runs one output, so the share is divided out.
+$('#estimateValue').textContent='42 s';run('renderPlannerSummary();');
+assert.match($('#experimentSummary').textContent,/about 2 min at roughly 0\.7 min per run/,'Second-form estimates count too');
+$('#estimateValue').textContent='20.0 min';$('#batch').value='4';run('renderPlannerSummary();');
+assert.match($('#experimentSummary').textContent,/about 15 min at roughly 5\.0 min per run \(Create’s estimate for 4 outputs, shared out\)/);
+$('#batch').value='';
+
+// 8 · Plain digit runs are names, not hashes; a stated setting is matched whole, not as a prefix.
+assert.match(run(`planDisplayName({name:'Portrait seed 12345678',kind:'native'})`),/12345678/,'A seed is not a content hash');
+assert.equal(JSON.stringify(run(`variantChanges({label:'steps=10',controls:{steps:1,cfg:4}},{steps:20,cfg:4})`)),'["steps=1"]','steps=10 does not state steps=1');
+assert.equal(JSON.stringify(run(`variantChanges({label:'steps=1 · cfg=3',controls:{steps:1,cfg:3}},{steps:20,cfg:4})`)),'[]');
 
 console.log('Experiments planner cards state each fact once; plan names, empty state and comparison arithmetic read clearly.');
