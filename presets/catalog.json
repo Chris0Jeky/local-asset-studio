@@ -5254,7 +5254,8 @@
     {
       "category": "Characters",
       "modality": "image",
-      "verified": false,
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 through Studio job 88026ea3-c950-48bd-9529-3d02e81bf1e4 (ComfyUI prompt 82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8), authored defaults, 283 s including every cold load on the primary backend; graph sha256 6d4023f6...1078bd; output inspected: pose followed the pose picture and the style picture's cel-shaded neon look transferred without its subject (experiments/curated/style-pose/). One run, not a benchmark, not art acceptance.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. WAI's creator is not authenticated by its hashes.",
       "positive": [
         "2",

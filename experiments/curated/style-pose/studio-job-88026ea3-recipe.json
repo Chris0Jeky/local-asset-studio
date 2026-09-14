@@ -1,0 +1,9 @@
+{
+  "preset_id": "style-pose-wai",
+  "controls": {},
+  "batch_count": 1,
+  "graph_path": "workflows\\api\\style-pose-wai-api.json",
+  "created_at": 1789356958.137591,
+  "references": [],
+  "parent_assets": []
+}

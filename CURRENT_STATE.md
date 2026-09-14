@@ -1,5 +1,27 @@
 # Current state — 14 September 2026
 
+## Style + Pose without Qwen — 14 September 2026
+
+Two new SDXL recipes, **Style + Pose (WAI v17)** and **Style + Pose (Animagine XL 4)**, take the look of one picture and
+the body position of another in one run ([STYLE-AND-POSE.md](docs/STYLE-AND-POSE.md)): IP-Adapter Plus ViT-H in
+`style transfer` mode on the style picture, an OpenPose skeleton extracted from the pose picture by `OpenposePreprocessor`
+driving the Xinsir OpenPose ControlNet, two optional LoRA slots, and two new catalog-bound controls, `style_weight` and
+`pose_strength` (0-2). A recipe may now label its two picture inputs (`reference_label`, `last_reference_label` and hints),
+so these read "Style picture" / "Pose picture" instead of "Reference / first frame" / "Last frame". Nothing was downloaded:
+every weight and custom node was already installed; `IPAdapterModelLoader.ipadapter_file` is now mapped to the `ipadapter`
+folder so readiness resolves it.
+
+Executed on this PC: `validate-repo.py` (68 graphs), `validate-live.py` (both new graphs pass the primary schema; the
+three HiDream failures are the isolated backend's nodes, pre-existing), `test_server` (60), `test_preset_model_readiness`
+(22), `test_frontend_handoffs` (7), and one proving job of the WAI recipe with its authored defaults: Studio job
+`88026ea3-c950-48bd-9529-3d02e81bf1e4`, prompt `82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8`, 283 s with every cold load, output
+inspected, the pose matched the pose picture and the neon cel-shaded style transferred without its subject
+([experiments/curated/style-pose/](experiments/curated/style-pose/README.md)). The Studio was restarted twice on an idle
+queue (PIDs 41932, 4316, 12684).
+
+Not verified: the Animagine sibling was not run (`verified: false`); no warm-run timing; no sweep over the two knobs; the
+Playwright use-case matrix was not re-run (no step moved); not art acceptance or licence clearance.
+
 ## UX wave from the owner's first-hand feedback — 14 September 2026
 
 The owner's first first-hand usability statement (recorded in [UX-AUDIT-2026-09-14.md](docs/UX-AUDIT-2026-09-14.md),
