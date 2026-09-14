@@ -20,12 +20,13 @@ from scripts import character_edit_pixels as pixels
 from scripts.character_study import inside, read_json, require, sha, verify_artifact, write_json
 from scripts.krita_roundtrip import inspect_kra
 from integrations.krita import native_edit
+from scripts.character_krita_dependencies import collect
 
 MODULE = ROOT / 'integrations/krita/native_edit.py'
 TIMEOUT = 120
 
 
-def _expected(root, dependencies):
+def _expected(root, dependencies, *, bind_live_dependencies=True):
     plan = read_json(verify_artifact(root, dependencies['plan']))
     current = read_json(verify_artifact(root, dependencies['current_document']))
     require(sha(current) == plan['intent']['document_sha256'], 'Current exported document is stale')
@@ -61,6 +62,8 @@ def _expected(root, dependencies):
                    'limitations':['Saved source file only; unsaved GUI edits are not read or changed.',
                                   'Flat normal non-animated RGBA U8 layers only; native preflight checks the source projection.',
                                   'Candidate execution and semantic success are not inferred by native packaging.']}
+    if bind_live_dependencies:
+        native_plan['live_dependencies'] = collect(root, dependencies)
     return native_plan, buffers
 
 
@@ -144,7 +147,7 @@ def execute(root, package, config):
     plan = read_json(path)
     require(plan.get('workspace') == str(root), 'Native package belongs to another workspace')
     require(status(root, package)['state'] == 'prepared', 'Native attempt already recorded; inspect status and retained artifacts')
-    expected, _ = _expected(root, plan['dependencies'])
+    expected, _ = _expected(root, plan['dependencies'], bind_live_dependencies='live_dependencies' in plan)
     require(plan == expected, 'Native plan changed since preparation')
     native_edit.read_plan(path)
     runtime = install(config)

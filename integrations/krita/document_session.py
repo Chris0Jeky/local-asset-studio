@@ -73,16 +73,19 @@ def png_bytes(raw, width, height, gray=False):
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 0 if gray else 6, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(scan)) + chunk(b'IEND', b'')
 
 
-def prepare_request(snapshot, native_plan, output, dependencies=()):
+def prepare_request(snapshot, native_plan, output, dependencies=None):
     """Bind a validated package to a capture. Production/canon checks stay upstream."""
     snapshot, native_plan = checked_path(snapshot), checked_path(native_plan)
     capture = read_json(snapshot); plan, buffers = native.read_plan(native_plan)
     native.need(capture['schema_version'] == 1 and capture['kind'] == 'krita_document_snapshot', 'Unsupported capture')
     native.need(native.digest(buffers['native-source.kra']) == capture['files']['source.kra']['sha256'], 'Native package has another captured source KRA')
     native.need(native.digest(buffers['source.bgra']) == capture['document']['projection_sha256'], 'Native package has another source projection')
+    bound = native.live_dependencies(plan)
+    if dependencies is not None:
+        native.need(native.dependency_manifest(list(dependencies)) == bound, 'Native request dependencies differ from prepared manifest')
     value = {'schema_version': 1, 'operation': 'character.krita-live-import.v1',
              'snapshot': record(snapshot), 'native_plan': record(native_plan),
-             'dependencies': list(dependencies)}
+             'dependencies': bound}
     for item in value['dependencies']: verified(item)
     publish(output, canonical(value) + b'\n')
     return value
@@ -197,9 +200,10 @@ class Session:
         native_path = checked_path(request['native_plan']['path']); root = native_path.parent
         native.need(not any((root/name).exists() for name in ('live-intent.json','live-result.json','live-failure.json')), 'Native attempt already retained; do not repeat the import')
         verified(request['native_plan'])
-        native.need(isinstance(request['dependencies'],list) and len(request['dependencies']) <= 256, 'Invalid native dependency list')
-        for item in request['dependencies']: verified(item)
         plan, buffers = native.read_plan(native_path)
+        bound = native.live_dependencies(plan)
+        native.need(native.dependency_manifest(request['dependencies']) == bound, 'Native request dependencies differ from prepared manifest')
+        for item in bound: verified(item)
         native.need(native.digest(buffers['native-source.kra']) == snapshot['files']['source.kra']['sha256'], 'Native source KRA differs from capture')
         current, raw, _ = self._snapshot()
         native.need(current['revision_sha256'] == snapshot['revision_sha256'], 'Native document is stale; capture its current unsaved revision')
