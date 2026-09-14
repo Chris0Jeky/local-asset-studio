@@ -261,6 +261,66 @@ async def run(args):
             await page.click('#assetTrash');await settle()
             await check('ASSET-30','Trash error restores editing and retains the unsaved draft',await page.locator('#assetDialog').is_visible() and await page.input_value('#assetNotes')=='Keep this after a Trash error' and not await page.locator('#assetNotes').is_disabled() and 'unavailable' in (await status.inner_text()).lower())
             state.fail_write=False
+            # Review queue, reason chips, grouping and bulk review. Synthetic reviews only; no artistic or licence claim.
+            # The failed Trash above left an unconfirmed command; resolve it explicitly before a clean fixture reset.
+            await page.click('[data-asset-save-retry]');await settle()
+            await page.set_viewport_size({'width':1440,'height':1100})
+            close_dialog="""() => new Promise(resolve=>{const d=document.querySelector('#assetDialog');if(!d.open){resolve();return;}d.addEventListener('close',resolve,{once:true});d.close();})"""
+            await page.evaluate(close_dialog);await settle()
+            for i,asset in enumerate(fixture.ASSETS):
+                asset.update(review='unreviewed',tags=['fixture'],notes='',job_id='run-a' if i<2 else 'run-b',trashed_at=None)
+            await page.evaluate("document.querySelector('#assetSearch').value='';document.querySelector('#assetType').value='all';setAssetScope('all')")
+            await page.evaluate('refreshAssets(true)');await settle()
+            await page.wait_for_function("assetState.assets.every(a=>a.review==='unreviewed')")
+            pending=len(fixture.ASSETS)
+            await check('ASSET-31','Review next names the unreviewed count in this view',f'({pending} unreviewed)' in await page.locator('#reviewNext').inner_text())
+            newest=max(fixture.ASSETS,key=lambda a:a['created_at'])['id']
+            await page.click('#reviewNext');await settle()
+            await check('ASSET-32','The queue opens the newest unreviewed asset and shows k of n',await page.evaluate('activeAsset.id')==newest and f'1 of {pending}' in await page.locator('#assetQueue').inner_text())
+            await check('ASSET-33','The dialog shows the shortcut legend in queue mode','K keeper' in await page.locator('#assetQueue').inner_text())
+            await page.click('[data-review-reason="hands"]')
+            await check('ASSET-34','A reason chip toggles a tag without typing',await page.evaluate("assetTagList().includes('hands')") and await page.locator('[data-review-reason="hands"]').get_attribute('aria-pressed')=='true')
+            writes=len(state.writes)
+            await page.keyboard.press('w')
+            await asyncio.to_thread(state.wait_started,'write',writes+1);await settle()
+            decided=next(a for a in fixture.ASSETS if a['id']==newest)
+            await check('ASSET-35','W saves Needs work with its reason tag through the ordinary save path',
+                        decided['review']=='needs_work' and 'hands' in decided['tags'] and len(state.writes)==writes+1 and state.writes[-1]['ids']==[newest] and 'expected_revisions' in state.writes[-1])
+            await check('ASSET-36','A saved decision advances the queue',await page.evaluate('activeAsset.id')!=newest and f'2 of {pending}' in await page.locator('#assetQueue').inner_text())
+            await page.click('#assetNotes');await page.keyboard.press('k');await settle()
+            await check('ASSET-37','Shortcuts are ignored while typing in a field',await page.input_value('#assetNotes')=='k' and len(state.writes)==writes+1)
+            second=await page.evaluate('activeAsset.id')
+            await page.focus('[data-queue-skip]');await page.keyboard.press('s');await settle()
+            await check('ASSET-38','S advances without saving any review',await page.evaluate('activeAsset.id')!=second and len(state.writes)==writes+1)
+            await page.keyboard.press('ArrowLeft');await settle()
+            await check('ASSET-39','Arrow keys move through the queue without saving',await page.evaluate('activeAsset.id')==second and len(state.writes)==writes+1)
+            await check('ASSET-40','Same run lists the sibling outputs of one job',await page.locator('#assetSameRun .asset-sibling').count()==len([a for a in fixture.ASSETS if a['job_id']==next(x['job_id'] for x in fixture.ASSETS if x['id']==second)]))
+            sibling=next(a['id'] for a in fixture.ASSETS if a['job_id']=='run-b' and a['id']!=second) if next(x['job_id'] for x in fixture.ASSETS if x['id']==second)=='run-b' else next(a['id'] for a in fixture.ASSETS if a['job_id']=='run-a' and a['id']!=second)
+            await page.click(f'#assetSameRun [data-asset-open="{sibling}"]');await settle()
+            await check('ASSET-41','Clicking a sibling thumbnail switches the open asset',await page.evaluate('activeAsset.id')==sibling)
+            await page.evaluate(close_dialog);await settle()
+            await page.select_option('#assetGroup','run')
+            await check('ASSET-42','Group by run renders one section per job',await page.locator('#assetGrid .asset-group').count()==len({a['job_id'] for a in fixture.ASSETS}))
+            remembered=await page.evaluate("(()=>{try{return localStorage.getItem('studio.assets.group');}catch(error){return 'storage unavailable';}})()")
+            await check('ASSET-43','The grouping choice is remembered locally when storage exists',remembered in ('run','storage unavailable'))
+            await page.select_option('#assetGroup','none')
+            marked=[a['id'] for a in fixture.ASSETS[2:5]]
+            await page.evaluate('ids=>{assetSelection=new Set(ids);renderAssets();}',marked)
+            writes=len(state.writes)
+            await page.click('[data-review-bulk="rejected"]')
+            await page.wait_for_function('!assetBulkReviewBusy');await settle()
+            sent=state.writes[len(state.writes)-len(marked):]
+            await check('ASSET-44','Bulk review sends one ordinary single-asset save per selection',
+                        len(state.writes)==writes+len(marked) and all(len(w['ids'])==1 and w['action']=='edit' and w['review']=='rejected' and 'expected_revisions' in w for w in sent) and {w['ids'][0] for w in sent}==set(marked))
+            await check('ASSET-45','Bulk review reports how many were marked',f'Marked {len(marked)} of {len(marked)}' in await page.locator('#assetBulkReviewStatus').inner_text() and all(a['review']=='rejected' for a in fixture.ASSETS if a['id'] in marked))
+            state.fail_write=True;writes=len(state.writes)
+            await page.evaluate('ids=>{assetSelection=new Set(ids);renderAssets();}',marked[:2])
+            await page.click('[data-review-bulk="selected"]')
+            await page.wait_for_function('!assetBulkReviewBusy');await settle()
+            failure_text=await page.locator('#assetBulkReviewStatus').inner_text()
+            await check('ASSET-46','Bulk failures are listed rather than silently dropped','2 failed' in failure_text and 'not confirmed' in failure_text and 'no retry was sent' in failure_text)
+            state.fail_write=False
+            await page.evaluate('assetSelection.clear();renderAssets()')
             await check('ASSET-16','These scenarios never create a generation or switch/install a backend',all(p['path'] in {'/api/estimate','/api/references/check'} for p in fixture.POSTS))
             await check('ASSET-17','No JavaScript exceptions in complete shell',not errors)
             await browser.close();browser=None
