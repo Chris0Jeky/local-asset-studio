@@ -6117,7 +6117,7 @@
         "WAI v17 + Mishima Kurone light-novel LoRA (0.8; Momoko in slot 2, off)",
         "Finish terms appended to your prompt: soft lighting, pastel colours, light background, delicate lineart",
         "Style board: 1-3 pictures, style-transfer weighting, Style weight 0.0 (off) by default",
-        "Picture to restyle: scaled to ~1.5 megapixels at its own aspect ratio (832x1216 becomes 1024x1504), VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
+        "Picture to restyle: scaled to ~1.5 megapixels at its own aspect ratio (832x1216 becomes 1040x1520), VAE-encoded as the starting latent; OpenPose skeleton -> ControlNet",
         "30-step re-sample at Denoise 0.85, CFG 4.5",
         "Face pass with the same styled model (denoise 0.4)",
         "PNG"
