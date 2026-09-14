@@ -15,7 +15,7 @@ import threading
 import time
 import uuid
 import zipfile
-from app import character_review
+import character_review
 
 from review_media import (FULL_CROP, MAX_CANDIDATES, MAX_TOTAL_BYTES, canonical,
                           checked_bytes, crop_box, digest, make_preview, render_sheet, write_new)
