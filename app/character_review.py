@@ -5,7 +5,7 @@ Local reviewer names are declarations, not authenticated human identities.
 import copy
 
 from scripts import character_study as study
-from app.review_media import digest
+from review_media import digest
 
 require = study.require
 
