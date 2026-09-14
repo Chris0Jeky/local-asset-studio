@@ -30,6 +30,11 @@ Two consequences worth stating plainly:
 
 ## The matrix
 
+**This table is the first measurement, taken before the fixes.** The five friction points it ranks
+were fixed in `ux/matrix-friction-fixes` and the suite re-run; the before/after numbers are in
+[Re-measured after fixes](#re-measured-after-fixes) below, and every note in this section describes
+the interface as it was on 14 Sep 2026.
+
 `int` = steps intended, `took` = steps taken, `clk` = clicks actually performed, `sw` = page/view
 switches, `dead` = dead ends, `unexp` = controls disabled with no adjacent reason, `words` =
 instruction words encountered (each panel charged once, when it first comes up), `peak` = the most
@@ -90,12 +95,28 @@ Ranked by dead ends, then clicks.
    "This recipe writes from words only. Choose a Qwen Atelier or reference-edit recipe to bring a
    picture in" — plus a link that runs the recipe search for reference-capable recipes.
 
+   **Fixed 14 Sep 2026.** The section stays on screen for every recipe. On a text-only one it opens no
+   picker and carries the line "This recipe takes no reference image. Choose a reference recipe (Qwen
+   Atelier 1–3 references, Krea refine) to keep a source." — which is also `#uxPullAsset`'s
+   `aria-describedby` reason, so anything that reads the control finds it — plus a *Show reference
+   recipes* button that runs the existing `edit` intent filter (which selects the first reference recipe and
+   resets the prompt, so a typed brief is asked about first). Pressing *Pull from library* on such a
+   recipe answers with that same line rather than doing nothing; it is deliberately not `disabled`,
+   because a disabled button dispatches no click and so can never explain itself to the person pressing
+   it. Dead ends 2 → 0, clicks 3 → 4: the wrong-turn click now lands.
+
 2. **"Prepare saved revision" is disabled with no reason.** `build-and-prepare-node-workflow`,
    step 8, Workflow Studio builder. The only `unexplained-disabled` in the suite: the button is
    present, greyed, and nothing adjacent (title, `aria-describedby`, sibling, or status line) says
    what is missing — a saved revision, a registered recipe, or a runtime.
    *Fix:* give the button an `aria-describedby` status line that names the specific precondition that
    is unmet, in the same sentence shape the readiness panel already uses in Create.
+
+   **Fixed 14 Sep 2026.** `#prepareSavedRun` gained an `aria-describedby` status line
+   (`#prepareSavedRunState`) fed from the same `WorkflowProject.snapshot()` its disabled logic reads.
+   It names exactly one unmet precondition — no saved document, unresolved save, conflicting revision,
+   unsaved edits, no chosen recipe, or a request already in flight — and when the control is live it
+   says what pressing it will do. `unexplained-disabled` 1 → 0.
 
 3. **"What to avoid" is behind a closed disclosure.** `first-image-from-brief`, step 6, Create.
    The recipe does bind a negative prompt; the field simply lives inside a collapsed
@@ -104,11 +125,22 @@ Ranked by dead ends, then clicks.
    *Fix:* open the disclosure by default when the recipe binds a negative prompt, or promote it to a
    second always-visible field under "01 · Describe the result".
 
+   **Fixed 14 Sep 2026.** `#negativeWrap` opens whenever the recipe binds a negative prompt. It stays a
+   `<details>`, and a manual collapse is remembered in `sessionStorage` for that tab only (wrapped in
+   try/catch, so a browser that refuses storage simply gets the default). The step still recorded no
+   dead end on current `main` — the probe's own `shown` heuristic gives a closed `<details>`' textarea
+   a layout box — but the `fill` timed out before and succeeds now.
+
 4. **Attaching three references costs three modal round trips.** `three-reference-identity-pose-style`,
    Create — 7 clicks and 6 view switches, the most of any case, because *Pull from library* opens a
    modal picker that must be reopened once per slot, each time re-choosing the target slot.
    *Fix:* let the picker stay open and fill the next empty slot after each pick (or allow multi-select
    mapped to slots in order), so three references cost one trip instead of three.
+
+   **Fixed 14 Sep 2026.** The picker advances to the next unfilled slot and stays open after each pick,
+   closing itself only when every required slot holds an image. The explicit close button is unchanged,
+   and changing the recipe closes it, because its slots no longer apply. Clicks 7 → 5, view switches
+   6 → 2.
 
 5. **Create carries the heaviest reading load in the product.** Peak 483 words on screen in the
    three-reference case and 604 in the Workflow Studio builder, versus 64–105 in the Asset library
@@ -116,6 +148,58 @@ Ranked by dead ends, then clicks.
    *Fix:* move the standing explanations behind "Why?" disclosures next to the control they explain,
    keeping only the one line a person needs to act on visible by default. Runs & review is the model
    to copy — it is the lightest screen in the suite and the one with no dead ends.
+
+   **Not fixed.** This one was left alone, and the four fixes above made it slightly worse: see the
+   word column below.
+
+## Re-measured after fixes
+
+**Measured 14 Sep 2026 on DESKTOP-IHKOOJS** against `main` at `c3df645`, same machine, same command,
+same fixture, Python 3.14, Playwright 1.62 + Chromium 1234, viewport 1536×1060. `before` is that
+`main` re-measured on this machine minutes earlier, not the 14 Sep table above — `main` has taken
+PRs #288 and #291 since, which moved the word counts. Both runs: **10/10 PASS, zero generation
+requests, zero page exceptions** (38.0 s before, 41.6 s after).
+
+| Case | clk | sw | dead | unexp | words | peak |
+| --- | --- | --- | --- | --- | --- | --- |
+| `first-image-from-brief` | 2 | 1 | 0 | 0 | 451 → 472 | 378 → 399 |
+| `reference-edit-one-source` | 3 → 4 | 2 | **2 → 0** | 0 | 380 → 401 | 533 → 554 |
+| `three-reference-identity-pose-style` | **7 → 5** | **6 → 2** | 0 | 0 | 577 | 559 |
+| `compare-settings-from-recipe` | 4 | 2 | 0 | 0 | 498 → 529 | 362 → 383 |
+| `review-and-keep-winner` | 4 | 2 | 0 | 0 | 154 | 154 |
+| `reuse-keeper-as-reference` | 4 | 2 | 0 | 0 | 80 | 632 |
+| `prompt-lab-to-create` | 4 | 1 | 0 | 0 | 694 → 715 | 378 → 399 |
+| `guided-edit-or-preserve-character` | 6 | 1 | 0 | 0 | 1001 → 1038 | 608 → 624 |
+| `build-and-prepare-node-workflow` | 3 | 0 | **1 → 0** | **1 → 0** | 608 → 624 | 626 → 642 |
+| `frames-to-native-export` | 6 | 2 | 0 | 0 | 99 | 86 |
+
+**Suite totals: dead ends 3 → 0, clicks 43 → 42, view switches 19 → 15.** No case regressed on dead
+ends or switches, and no case lost its success condition.
+
+Three numbers moved in a direction that needs saying out loud:
+
+- **`reference-edit-one-source` clicks 3 → 4.** The wrong-turn press of *Pull from library* used to hit
+  a `display:none` control and was never performed. It is performed now and produces a sentence, so it
+  is counted. Two dead ends became one answered click.
+- **`three-reference-identity-pose-style` clicks 7 → 5 for a reason worth knowing.** The driver still
+  presses *Pull from library* once per slot. The second and third presses now fail — the picker is
+  already open and modal, so nothing outside it can be clicked — and the driver's own fallback picks
+  the next slot inside the open picker. That is the saving being measured: the button a person would
+  have had to press again is unreachable because it is no longer needed. The case still ends with 3/3
+  slots attached and the run control enabled.
+- **Instruction words rose by 21 on every Create case and 16 on the two Workflow Studio ones.** That is
+  exactly the new explanatory text: 21 words for the no-source-slot line that is now always present in
+  Create, 16 for the prepare precondition line, 10 for the allowance total in the comparison planner.
+  Friction point 5 — Create's reading load — was not in scope, and these fixes push against it: four
+  dead ends were traded for 47 words. Fixing 5 properly (standing explanations behind "Why?"
+  disclosures next to the control) would pay all of it back and more.
+
+The allowance fix is not visible in this table, because the driver still performs the step that sets
+the total by hand: the planner opens at its default of 4, choosing three values keeps 4 (the sizing only
+ever raises), and the driver then types 3, which the planner accepts because 3 candidates fit.
+`tests/production_clarity_frontend.cjs` proves it directly: choosing an axis sizes the allowance to the
+proposal, never lowers a total the operator raised, and leaves a branch that shares its parent's budget
+alone; the note states the required total before any refusal.
 
 ## Live mode, and what it refuses
 
