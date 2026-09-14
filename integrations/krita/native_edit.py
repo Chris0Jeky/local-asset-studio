@@ -6,6 +6,7 @@ generation, shell commands, caller code, GUI document lookup or arbitrary output
 import hashlib
 import json
 from pathlib import Path
+import re
 
 PROFILE = 'sRGB-elle-V2-srgbtrc.icc'
 MAX_PIXELS = 16 * 1024 * 1024
@@ -19,6 +20,26 @@ def need(condition, message):
 
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def dependency_manifest(value):
+    """Validate and order exact pins without reading paths or adopting aliases."""
+    need(isinstance(value, list) and len(value) <= 256, 'Invalid native dependency manifest')
+    result = []; seen = set()
+    for item in value:
+        need(isinstance(item, dict) and set(item) == {'path', 'sha256'}, 'Invalid native dependency identity')
+        path, sha256 = item['path'], item['sha256']
+        need(isinstance(path, str) and '\0' not in path and Path(path).is_absolute()
+             and not path.startswith(('\\\\', '//')), 'Native dependencies require absolute local paths')
+        need(isinstance(sha256, str) and re.fullmatch('[0-9a-f]{64}', sha256), 'Invalid native dependency hash')
+        need(path not in seen, 'Duplicate native dependency path')
+        seen.add(path); result.append({'path': path, 'sha256': sha256})
+    return sorted(result, key=lambda item: item['path'])
+
+
+def live_dependencies(plan):
+    need('live_dependencies' in plan, 'Native package has no prepared dependency manifest; prepare a new package for live import')
+    return dependency_manifest(plan['live_dependencies'])
 
 
 def read_plan(path):
