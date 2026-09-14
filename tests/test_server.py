@@ -537,11 +537,23 @@ class ServerTests(unittest.TestCase):
 
     def test_rejected_submission_is_not_uncertain_or_retried(self):
         error=HTTPError('http://localhost/prompt',400,'Bad Request',{},io.BytesIO(json.dumps({'error':{'message':'Required input missing'},'node_errors':{'7':{'errors':[]}}}).encode()))
+        self.addCleanup(error.close)
         s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},error])
         job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']];s._run(job)
         self.assertEqual(job['status'],'failed');self.assertNotIn('pending_submission',job)
         self.assertIn('Required input missing',job['message']);self.assertEqual(job['prompt_ids'],[])
         self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),1)
+        self.assertTrue(error.closed)
+
+    def test_uncertain_http_submission_closes_response_without_retry(self):
+        error=HTTPError('http://localhost/prompt',503,'Unavailable',{},io.BytesIO(b'upstream unavailable'))
+        self.addCleanup(error.close)
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},error])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}})['id']];s._run(job)
+        self.assertEqual(job['status'],'uncertain');self.assertIn('pending_submission',job)
+        self.assertEqual(job['prompt_ids'],[])
+        self.assertEqual(sum(x[0][0]=='/prompt' for x in s.requests),1)
+        self.assertTrue(error.closed)
 
     def test_video_mesh_outputs_and_exact_recipe_export(self):
         video={'filename':'clip.mp4','subfolder':'Studio','type':'output'}
@@ -606,6 +618,24 @@ class ServerTests(unittest.TestCase):
         handler.send_response.assert_called_once_with(206)
         handler.send_header.assert_any_call('Content-Range','bytes 1-150000/200000')
         self.assertEqual(len(handler.wfile.getvalue()),150000)
+
+    def test_media_proxy_closes_consumed_range_error_even_if_client_disconnects(self):
+        for disconnected in (False,True):
+            with self.subTest(disconnected=disconnected):
+                error=HTTPError('http://localhost/view',416,'Range Not Satisfiable',{'Content-Range':'bytes */10'},io.BytesIO())
+                self.addCleanup(error.close)
+                handler=server.Handler.__new__(server.Handler);handler.studio=self.studio()
+                handler.headers={'Range':'bytes=100-'}
+                handler.send_response=Mock();handler.send_header=Mock()
+                handler.end_headers=Mock(side_effect=BrokenPipeError() if disconnected else None)
+                with patch.object(server,'urlopen',side_effect=error):
+                    if disconnected:
+                        with self.assertRaises(BrokenPipeError):handler._media({'filename':'movie.mp4'})
+                    else:handler._media({'filename':'movie.mp4'})
+                handler.send_response.assert_called_once_with(416)
+                handler.send_header.assert_any_call('Content-Range','bytes */10')
+                handler.send_header.assert_any_call('Content-Length','0')
+                self.assertTrue(error.closed)
 
     def lora_stack(self, loader='LoraLoaderModelOnly'):
         """Two stacked LoRA loaders feeding a sampler, plus a text encoder on CLIP."""

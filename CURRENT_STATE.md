@@ -1,5 +1,26 @@
 # Current state — 14 September 2026
 
+## HTTP resource lifetime — 14 September 2026
+
+The AV fixture now closes its listener and checks that the serving thread ends.
+The full-suite subprocess gate rejects ResourceWarnings, including warnings at
+interpreter shutdown; Windows CI also exercises two fresh mixed-batch interpreters.
+
+The first configured Windows 11 / Python 3.14.3 gate ran 2,246 tests (65 skips)
+without assertion failures or an aborted connection, but correctly failed on five
+HTTPError cleanup warnings. The AV listener warning was absent. Direct regressions
+then reproduced six missing-close assertions: consumed prompt errors, a proxied 416
+including client disconnection, and the two no-redirect readers. Those owners now
+close their error responses; the raw workflow-client contract stays readable and
+its test caller explicitly closes the returned error. Prompt status, retained
+submission intent, no-retry behavior and range headers are covered by the checks.
+
+All 149 focused tests pass without ResourceWarning, and repository validation
+passes (68 graphs, 121 pins, 1,317 paths, 90 LoRA names). The two consecutive strict
+full-suite runs remain to be completed and recorded on PR #320 before #227's local
+acceptance is claimed. No running Studio, ComfyUI, model or generation was changed;
+HUMAN_TODO q-7 and q-25 remain open.
+
 ## Optional job resource receipts — 14 September 2026
 
 The existing generation coordinator now has a default-disabled resource observer

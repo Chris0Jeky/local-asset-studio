@@ -234,7 +234,8 @@ class HTTPTests(unittest.TestCase):
                                           host=self.server.expected_host, origin='https://foreign.invalid')[0], 403)
         self.assertEqual(self.studio.calls, 0)
     def test_strict_json_import_has_no_side_effect(self):
-        with self.assertRaises(HTTPError): Client(self.url).request(PREFIX + '/open', {'content': '{"x":1,"x":2}'})
+        with self.assertRaises(HTTPError) as caught: Client(self.url).request(PREFIX + '/open', {'content': '{"x":1,"x":2}'})
+        self.addCleanup(caught.exception.close)
         result = Client(self.url).request(PREFIX + '/open', {'content': json.dumps(GRAPH)})
         self.assertEqual(result['document']['nodes'], GRAPH); self.assertEqual(self.studio.calls, 0)
     def test_cli_prepare_run_replay_roundtrip(self):

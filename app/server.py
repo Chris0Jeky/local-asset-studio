@@ -1350,17 +1350,18 @@ class Studio:
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
-                if exc.code == 400:
-                    try: details = json.loads(exc.read(65536))
-                    except (ValueError, OSError): details = {}
-                    job.pop("pending_submission", None)
-                    job["status"] = "failed"
-                    job["validation_errors"] = details.get("node_errors", {})
-                    error = details.get("error", {})
-                    detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
-                    job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
-                    self._save(job); return
-                job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
+                with exc:
+                    if exc.code == 400:
+                        try: details = json.loads(exc.read(65536))
+                        except (ValueError, OSError): details = {}
+                        job.pop("pending_submission", None)
+                        job["status"] = "failed"
+                        job["validation_errors"] = details.get("node_errors", {})
+                        error = details.get("error", {})
+                        detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
+                        job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
+                        self._save(job); return
+                    job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             prompt_id = response.get("prompt_id") if isinstance(response, dict) else None
@@ -1552,9 +1553,10 @@ class Handler(BaseHTTPRequestHandler):
         try: response = urlopen(request, timeout=30)
         except HTTPError as exc:
             if exc.code != 416: raise
-            self.send_response(416)
-            if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
-            self.send_header("Content-Length", "0"); self.end_headers(); return
+            with exc:
+                self.send_response(416)
+                if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
+                self.send_header("Content-Length", "0"); self.end_headers(); return
         with response:
             self.send_response(response.status)
             for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):
