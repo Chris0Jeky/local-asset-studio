@@ -6,6 +6,10 @@ on:
       - 'tests/test_reference*.py'
       - 'tests/test_backend*.py'
       - 'tests/test_model*.py'
+      - 'tests/test_performance_history.py'
+      - 'tests/test_resource_probe.py'
+      - 'scripts/profile-resources.py'
+      - 'scripts/summarize-resources.py'
       - 'tests/requirements-runtime.txt'
       - '.github/workflows/runtime-safety.yml'
   push:
@@ -15,6 +19,10 @@ on:
       - 'tests/test_reference*.py'
       - 'tests/test_backend*.py'
       - 'tests/test_model*.py'
+      - 'tests/test_performance_history.py'
+      - 'tests/test_resource_probe.py'
+      - 'scripts/profile-resources.py'
+      - 'scripts/summarize-resources.py'
       - 'tests/requirements-runtime.txt'
       - '.github/workflows/runtime-safety.yml'
 permissions:
@@ -37,3 +45,5 @@ jobs:
       - run: python -m unittest discover -s tests -p test_model_install_safety.py -v
       - run: python -m unittest discover -s tests -p test_model_library.py -v
       - run: python -m unittest discover -s tests -p 'test_reference*.py' -v
+      - run: python -m unittest discover -s tests -p test_resource_probe.py -v
+      - run: python -m unittest discover -s tests -p test_performance_history.py -v
