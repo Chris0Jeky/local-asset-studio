@@ -74,6 +74,12 @@ def _signature(info):
     return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
+def _cross_signature(info):
+    # Windows 3.12 path stat can report birth time as ctime while descriptor
+    # stat reports change time. Compare ctime only within the same API domain.
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, getattr(info, 'st_birthtime_ns', None)
+
+
 def _plain(info, kind):
     return kind(info.st_mode) and not (getattr(info, 'st_file_attributes', 0) & 0x400)
 
@@ -99,7 +105,7 @@ def read_evidence_file(path: Path, limit: int) -> bytes:
         fd = os.open(path, flags)
         try:
             opened = os.fstat(fd)
-            require(_plain(opened, stat.S_ISREG) and _signature(opened) == _signature(before), 'file_changed')
+            require(_plain(opened, stat.S_ISREG) and _cross_signature(opened) == _cross_signature(before), 'file_changed')
             stream = os.fdopen(fd, 'rb'); fd = None
             with stream:
                 data = stream.read(limit + 1)
@@ -107,7 +113,7 @@ def read_evidence_file(path: Path, limit: int) -> bytes:
         finally:
             if fd is not None: os.close(fd)
         require(len(data) <= limit, 'artifact_too_large')
-        require(_signature(after) == _signature(before) == _signature(path.lstat())
+        require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
                 and len(data) == before.st_size, 'file_changed')
         return data
     except FileNotFoundError: raise EvidenceError('artifact_missing', incomplete=True) from None
@@ -129,7 +135,7 @@ def _context(value, job_id):
             and type(limits.get('events')) is int and limits['events'] == 9
             and type(limits.get('window_seconds')) is int and limits['window_seconds'] == 14460, 'context_invalid')
     source = value.get('source')
-    require(isinstance(source, dict), 'context_invalid')
+    require(isinstance(source, dict) and {'commit_at_capture', 'tracked_changes'} <= set(source), 'context_invalid')
     commit = source.get('commit_at_capture')
     require(commit is None or isinstance(commit, str) and re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', commit), 'context_invalid')
     require(source.get('tracked_changes') is None or type(source['tracked_changes']) is bool, 'context_invalid')

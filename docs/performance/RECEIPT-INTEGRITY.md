@@ -113,7 +113,7 @@ replacement and no-overwrite/no-live-dependency CLI behavior. CPU fixtures are n
 performance measurements or owner-host acceptance. Exact-head results are recorded on the PR.
 
 ```powershell
-python -m unittest discover -s tests -p "test_resource_receipts.py" -v
+python -m unittest discover -s tests -p "test_resource_receipts*.py" -v
 python -m unittest discover -s tests -p "test_job_resources*.py" -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
@@ -127,3 +127,20 @@ Rollback removes the optional consumer and its CI coverage without touching reta
 Primary references: [Python JSON parsing](https://docs.python.org/3/library/json.html),
 [file descriptors and stat](https://docs.python.org/3/library/os.html), and the existing
 [recorder contract](JOB-OBSERVATIONS.md) and [summary contract](TELEMETRY.md).
+
+## Native Windows and review corrections
+
+The first Windows 3.12.10 run rejected valid captures before semantic validation.
+A native probe using actual recorder output reproduced all three failures: path
+`st_ctime_ns` equalled birth time, while descriptor `st_ctime_ns` equalled change
+time; file identity, size, modification time and birth time agreed. A simpler
+one-write file did not expose that distinction and was not used to dismiss the
+failure. Capture now compares identity/size/mtime/birthtime across the two APIs,
+and still compares the complete ctime-bearing signature before/after **within**
+each API domain. It does not waive identity or modification detection on Windows.
+
+The independent review also reproduced omitted `commit_at_capture` or
+`tracked_changes` being normalized to null. Both keys must now be present; explicit
+null remains a valid unknown observation. New causal regressions fail before these
+corrections and pass afterwards. Final native results are recorded on the PR;
+initial Windows failure is retained, not recast as a successful run.
