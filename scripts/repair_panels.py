@@ -233,6 +233,9 @@ def extract(packet: Path, layout_path: Path, output: Path, reviewed_layout_sha25
 
 def verify_extraction(packet: Path, folder: Path) -> dict:
     raw,receipt,raw_receipt,raw_layout,layout=_load(packet,folder/'layout.json',reject_symlink=True)
+    members={'master.png','layout.json','source-receipt.json','legacy-manifest.json','receipt.json'}
+    members.update('panel-'+entry['id']+'.png' for entry in layout['panels'])
+    source.check_packet_members(folder,members)
     read=lambda name,limit: source.read_bounded(folder/name,limit,reject_symlink=True)
     result=source.strict_json(read('receipt.json',source.MAX_METADATA_BYTES))
     if read('master.png',source.MAX_OUTPUT_BYTES)!=raw or read('source-receipt.json',source.MAX_METADATA_BYTES)!=raw_receipt:

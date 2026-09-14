@@ -97,7 +97,7 @@ The implementation uses small source/panel modules instead of expanding the old 
 
 ## Verification and causal findings
 
-At the local final check, the two implementation slices ran **62 tests: 61 passed, one skipped**. The local skip is the actual legacy-extractor test because the container could not clone the complete repository (GitHub DNS failed). It must run in the full hosted checkout. No local full-repository pass is claimed.
+Before automated review, the two implementation slices ran **62 tests: 61 passed, one skipped**. The local skip is the actual legacy-extractor test because the container could not clone the complete repository (GitHub DNS failed). It must run in the full hosted checkout. No local full-repository pass is claimed.
 
 Additional adversarial tests reproduced and corrected two panel verifier gaps: an externally symlinked layout was followed; and per-file byte limits did not enforce the aggregate completed-packet limit. Both now fail before a false valid result. A related source-packet aggregate verification gap was corrected in parent PR #268 with its own regression. A deliberately altered pixel, rather than identical re-encoded bytes, is used for the changed-master fixture.
 
@@ -110,6 +110,14 @@ python scripts/validate-repo.py
 ```
 
 The existing Repair intake contracts lane runs the focused tests on Linux and Windows; ordinary Check studio runs the full repository suite. Record their actual final-head results in the PR. Skips and synthetic evidence must not be counted as real GPU, owner-art or native application acceptance.
+
+## Completed-packet inventory review
+
+Automated review identified that a verifier could accept all expected artifacts while ignoring an added file or directory. Four new real-filesystem regressions produced nine failing cases before the correction. The shared source helper now enumerates a bounded, exact expected member set and refuses undeclared files, pending receipts, directories and symlinks without following, deleting or reading their content. Both source packets and completed extraction packets use this check; source refusal precedes image reconstruction.
+
+This correction is in the panel PR because it was discovered at the completed-packet boundary; it also tightens the inherited source verifier. A lingering `receipt.pending` after interrupted publication is not accepted as a complete packet. Retain and inspect partial work rather than silently removing it. Directory checks are observations within the cooperative single-writer model, not an atomic filesystem lease against a hostile writer.
+
+After the correction, the local suite ran **66 tests: 65 passed, one legacy-integration skip**. The original reproduction and previous passing runs remain recorded separately. Final hosted results are pinned in the PR; no extra file can be excluded merely to advertise compliance with the aggregate packet limit.
 
 ## Remaining #244 work
 
