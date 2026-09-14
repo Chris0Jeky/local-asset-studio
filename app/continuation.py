@@ -43,10 +43,10 @@ def consumes_reference(graph, binding):
 
 def reference_bindings(preset):
     """Return every declared image input once, in primary-source order."""
-    if preset.get("reference_slots"):
-        values = [slot.get("binding") for slot in preset["reference_slots"] if isinstance(slot, dict)]
-    else:
-        values = [preset.get("reference"), preset.get("last_reference")]
+    # Role slots (Qwen Atelier, style boards) and the plain inputs can coexist: a style board keeps its pose
+    # picture on last_reference. Duplicates collapse below.
+    values = [slot.get("binding") for slot in preset.get("reference_slots") or [] if isinstance(slot, dict)]
+    values += [preset.get("reference"), preset.get("last_reference")]
     result = []
     for value in values:
         if isinstance(value, (list, tuple)) and len(value) == 2 and list(value) not in result:
@@ -77,7 +77,7 @@ def capability(preset, graph):
     elif any(
         node.get("class_type") == "KSampler"
         and isinstance((node.get("inputs") or {}).get("latent_image"), list)
-        and str(preset["reference"][0]) in ancestors(graph, node["inputs"]["latent_image"][0])
+        and any(str(binding[0]) in ancestors(graph, node["inputs"]["latent_image"][0]) for binding in bindings)
         for node in graph.values()
     ):
         operation = "image-to-image"

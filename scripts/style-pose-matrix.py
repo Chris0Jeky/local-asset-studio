@@ -9,7 +9,7 @@ the matrix moves on. Host commit is read before every cell and the run stops whe
 
 plan.json:
 {
-  "style": "<upload file name>", "poses": [{"id": "throne", "file": "<upload>", "tags": "sitting, ..."}, ...],
+  "styles": ["<upload file name>", ...] (1-3 style-board pictures; "style": "<one upload>" is the one-picture shorthand), "poses": [{"id": "throne", "file": "<upload>", "tags": "sitting, ..."}, ...],
   "subject": "...", "recipes": [{"preset_id": "style-pose-wai", "prefix": "", "suffix": ", masterpiece"}, ...],
   "loras": [{"id": "none"}, {"id": "cine", "controls": {"lora": 0.5, "lora_name": "cinematic lighting.safetensors"}, "tag": "cinematic lighting"}],
   "controls": {"width": 832, "height": 1216, "seed": 2026091410}
@@ -71,15 +71,17 @@ def main():
                 positive = recipe.get("prefix", "") + plan["subject"] + ", " + pose["tags"] + recipe.get("suffix", "")
                 if lora.get("tag"): positive += ", " + lora["tag"]
                 controls = dict(plan.get("controls", {}), positive=positive, last_reference=pose["file"], **lora.get("controls", {}))
-                # "style" is one upload bound to the single reference input; "styles" is a board of up to
-                # three uploads sent as role-assigned reference slots (empty slots are pruned server-side).
+                # Style pictures travel as role-assigned board slots (empty slots are pruned server-side);
+                # a plain "style" key is the one-picture shorthand.
                 cell = {"recipe": recipe["preset_id"], "lora": lora["id"], "pose": pose["id"], "controls": controls}
-                if plan.get("styles"): cell["references"] = [{"role": "style", "file": f} for f in plan["styles"]]
-                else: controls["reference"] = plan["style"]
+                styles = plan.get("styles") or [plan["style"]]
+                cell["references"] = [{"role": "style", "file": f} for f in styles]
                 cells.append(cell)
     manifest_path = out / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {"plan": plan, "cells": []}
-    done = {(c["recipe"], c["lora"], c["pose"]) for c in manifest["cells"] if c.get("status") in TERMINAL}
+    # A submit-failed cell is ambiguous (the Studio may have queued it before the client timed out) and is
+    # never resubmitted: clear its record by hand after checking /api/jobs.
+    done = {(c["recipe"], c["lora"], c["pose"]) for c in manifest["cells"] if c.get("status") in TERMINAL or c.get("status") == "submit-failed"}
     # A cell whose job was submitted but not seen to finish is re-waited on its own job id, never resubmitted.
     pending = {(c["recipe"], c["lora"], c["pose"]): c for c in manifest["cells"] if c.get("job_id") and c.get("status") not in TERMINAL}
     print(f"{len(cells)} cells, {len(done)} already finished, {len(pending)} to resume")

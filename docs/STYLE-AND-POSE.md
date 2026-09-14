@@ -7,7 +7,7 @@ custom nodes that were already installed on this PC:
 
 | Part | What it does | File / node |
 |---|---|---|
-| IP-Adapter Plus SDXL (ViT-H), linear weighting, **style board of 1–3 pictures** | Each picture is encoded separately (`IPAdapterEncoder`), the embeddings are concatenated (`IPAdapterCombineEmbeds`) and applied once (`IPAdapterEmbeds`); empty board slots are pruned before submission. Copies linework, shading, medium and palette; ignores the subject as far as the adapter can. (`style transfer` weighting looked the same but took 260 s per run on this ROCm build against 80 s for linear.) | `ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, `clip_vision/clip-vision_vit-h.safetensors`, `IPAdapterAdvanced` (ComfyUI_IPAdapter_plus) |
+| IP-Adapter Plus SDXL (ViT-H), linear weighting, **style board of 1–3 pictures** | Each picture is encoded separately (`IPAdapterEncoder`), the embeddings are averaged (`IPAdapterCombineEmbeds`) and applied once (`IPAdapterEmbeds`); empty board slots are pruned before submission. Copies linework, shading, medium and palette; ignores the subject as far as the adapter can. (`style transfer` weighting looked the same but took 260 s per run on this ROCm build against 80 s for linear.) | `ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, `clip_vision/clip-vision_vit-h.safetensors`, `IPAdapterEncoder` / `IPAdapterCombineEmbeds` / `IPAdapterEmbeds` (ComfyUI_IPAdapter_plus) |
 | OpenPose preprocessor | Extracts a body/hand/face skeleton from the **pose picture**, so an ordinary illustration or photo works as input | `OpenposePreprocessor` (comfyui_controlnet_aux, annotator weights under its `ckpts/`) |
 | Xinsir OpenPose ControlNet | Holds the render to that skeleton | `controlnet/xinsir-openpose-sdxl.safetensors`, `ControlNetApplyAdvanced` |
 | Checkpoint + two optional LoRA slots | Who the character is, plus any style adapter you want to stack | WAI v17 or Animagine XL 4 |
@@ -28,7 +28,7 @@ recipes take the character from the prompt, not from a picture.
    *Animagine — pose guide* / *WAI — pose guide* recipes, which take the skeleton directly.
 4. Write the prompt: subject, costume, setting, and the base model's quality tail. The prompt is the
    only thing that says who the character is. The negative prompt is prefilled.
-5. Two knobs: **Style weight** (IP-Adapter, default 0.8) and **Pose strength** (ControlNet, default
+5. Two knobs: **Style weight** (IP-Adapter, default 0.7) and **Pose strength** (ControlNet, default
    0.9), both 0–2. The variants give quick starting points: *Style lighter, pose looser*, *Style
    stronger*, *Pose exact*, *3-seed audition*.
 6. Width and Height set the canvas (default 832×1216); neither picture sets the output size.

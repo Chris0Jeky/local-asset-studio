@@ -5212,7 +5212,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and concatenated",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
@@ -5391,7 +5391,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and concatenated",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
@@ -5568,7 +5568,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and concatenated",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
@@ -5746,7 +5746,7 @@
       "stages": [
         "SDXL checkpoint",
         "2 optional LoRA slots",
-        "IP-Adapter style board: 1-3 pictures encoded and concatenated",
+        "IP-Adapter style board: 1-3 pictures encoded and averaged",
         "OpenPose skeleton from the pose picture \u2192 ControlNet",
         "30-step render",
         "PNG"
