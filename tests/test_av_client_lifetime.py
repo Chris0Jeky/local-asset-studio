@@ -19,11 +19,11 @@ class ClientFixtureLifetimeTests(unittest.TestCase):
             stopped = not thread.is_alive()
         finally:
             # Keep a failing regression assertion from leaking its own listener.
-            if server.fileno() != -1:
-                server.server_close()
             if thread.is_alive():
                 server.shutdown()
                 thread.join(timeout=5)
+            if server.fileno() != -1:
+                server.server_close()
 
         self.assertTrue(closed, "tearDownClass must close the listening socket")
         self.assertTrue(stopped, "tearDownClass must stop the serving thread")
