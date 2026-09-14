@@ -5106,7 +5106,7 @@
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
       "graph": "workflows/api/style-pose-wai-api.json",
-      "verified": true,
+      "verified": false,
       "modality": "image",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. WAI's creator is not authenticated by its hashes.",
       "positive": [
@@ -5249,8 +5249,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
-      "execution_note": "Executed 2026-09-14 through Studio job 88026ea3-c950-48bd-9529-3d02e81bf1e4 (ComfyUI prompt 82d46bb9-f46f-4a70-b9e3-f72dfbb7c0d8), authored defaults, 283 s including every cold load on the primary backend; graph sha256 6d4023f6...1078bd; output inspected: pose followed the pose picture and the style picture's cel-shaded neon look transferred without its subject (experiments/curated/style-pose/). One run, not a benchmark, not art acceptance."
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt."
     },
     {
       "id": "style-pose-animagine",
@@ -5401,7 +5400,7 @@
         }
       ],
       "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail)."
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail)."
     },
     {
       "id": "style-pose-cstati",
@@ -5551,7 +5550,7 @@
         }
       ],
       "source": "https://civitai.com/models/1113979",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. CSTati v3 base at CFG 4 / Karras as in its baseline recipe.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. CSTati v3 base at CFG 4 / Karras as in its baseline recipe.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance."
     },
     {
@@ -5702,7 +5701,7 @@
         }
       ],
       "source": "https://civitai.com/models/1153434",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. YumeFlux ILv1 base at CFG 4 / Karras as in its baseline recipe.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. YumeFlux ILv1 base at CFG 4 / Karras as in its baseline recipe.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance."
     },
     {
@@ -5853,7 +5852,7 @@
         }
       ],
       "source": "https://civitai.com/models/257749",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Pony V6 base with the score-tag prefix, source/rating tags and clip skip 2 the model card requires; keep the prefix while changing subject and style.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Pony V6 base with the score-tag prefix, source/rating tags and clip skip 2 the model card requires; keep the prefix while changing subject and style.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance."
     },
     {
@@ -6004,7 +6003,7 @@
         }
       ],
       "source": "https://civitai.com/models/833294",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture in 'style transfer' mode, and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. NoobAI-XL v1.1 base with the card's quality prefix. Hobby/research only under the author terms: a comparison column, not a production route.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads the style picture with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. NoobAI-XL v1.1 base with the card's quality prefix. Hobby/research only under the author terms: a comparison column, not a production route.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance. NoobAI excludes commercial products."
     }
   ]

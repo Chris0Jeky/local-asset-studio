@@ -6,7 +6,7 @@ on this PC (nothing new was downloaded for them):
 
 | Part | What it does | File / node |
 |---|---|---|
-| IP-Adapter Plus SDXL (ViT-H) in `style transfer` mode | Copies linework, shading, medium and palette from the **style picture**; ignores its subject as far as the adapter can | `ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, `clip_vision/clip-vision_vit-h.safetensors`, `IPAdapterAdvanced` (ComfyUI_IPAdapter_plus) |
+| IP-Adapter Plus SDXL (ViT-H), linear weighting | Copies linework, shading, medium and palette from the **style picture**; ignores its subject as far as the adapter can. (`style transfer` weighting looked the same but took 260 s per run on this ROCm build against 80 s for linear.) | `ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, `clip_vision/clip-vision_vit-h.safetensors`, `IPAdapterAdvanced` (ComfyUI_IPAdapter_plus) |
 | OpenPose preprocessor | Extracts a body/hand/face skeleton from the **pose picture**, so an ordinary illustration or photo works as input | `OpenposePreprocessor` (comfyui_controlnet_aux, annotator weights under its `ckpts/`) |
 | Xinsir OpenPose ControlNet | Holds the render to that skeleton | `controlnet/xinsir-openpose-sdxl.safetensors`, `ControlNetApplyAdvanced` |
 | Checkpoint + two optional LoRA slots | Who the character is, plus any style adapter you want to stack | WAI v17 or Animagine XL 4 |
