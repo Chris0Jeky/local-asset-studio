@@ -1174,6 +1174,9 @@ class Studio:
     def record_job_failure(self, job, exc):
         """Unexpected local failure cannot certify an unobserved remote outcome."""
         with self.lock:
+            # A failed persistence of the pre-submit queue timeout still proves no POST.
+            if job.get('status') == 'not_submitted' and submission_evidence.never_submitted(job):
+                self._save(job); return
             if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 job['status'] = 'uncertain' if uncertain else 'failed'

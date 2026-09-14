@@ -139,6 +139,22 @@ class PreSubmitWaitTests(unittest.TestCase):
         self.assertEqual(lab.get(project['id'])['budget'], budget); self.assertEqual(len(self.studio.jobs), 2)
         self.assertEqual(self.fixture.post_count(self.studio), 2)
 
+    def test_timeout_state_write_failure_keeps_production_resumable_without_post(self):
+        lab = self.studio.production; project = lab.create(self.fixture.intent()); lab.start(project['id'])
+        budget = copy.deepcopy(lab.get(project['id'])['budget']); save = self.studio._save; failed = [False]
+        def fail_once(value):
+            if value['status'] == 'not_submitted' and not failed[0]:
+                failed[0] = True; raise OSError('fixture: transient state write failure')
+            return save(value)
+        with patch.object(self.studio, '_request', return_value=BUSY), patch.object(self.studio, '_save', side_effect=fail_once):
+            self.dispatch(('production', project['id']))
+        state = lab.get(project['id'])['state']; job_id = state['attempts']['0']['job_id']; job = self.studio.jobs[job_id]
+        self.assertTrue(failed); self.assertEqual(state['status'], 'interrupted'); self.assert_unsent(job)
+        self.assertEqual(lab.get(project['id'])['budget'], budget); self.assertEqual(self.fixture.post_count(self.studio), 0)
+        lab.resume(project['id'])
+        resumed = lab.get(project['id']); self.assertEqual(resumed['state']['status'], 'queued')
+        self.assertEqual(resumed['state']['attempts']['0']['job_id'], job_id); self.assertEqual(resumed['budget'], budget)
+
     def test_expired_wait_does_not_enqueue_an_automatic_retry(self):
         job = self.job(); polls = []
         def request(path, **kwargs): polls.append(path); return BUSY
@@ -157,6 +173,14 @@ class PreSubmitWaitTests(unittest.TestCase):
                 with patch.object(self.studio, '_wait_for_queue') as wait:
                     with self.assertRaises(server.StudioError): self.studio._run(job)
                 wait.assert_not_called(); self.assertEqual(job, original)
+
+    def test_failure_record_keeps_known_or_pending_submission_uncertain(self):
+        for evidence in ({'prompt_ids':['retained']}, {'pending_submission':{}}):
+            with self.subTest(evidence=evidence):
+                job = self.job(); job.update(evidence)
+                self.studio.record_job_failure(job, OSError('fixture failure'))
+                self.assertEqual(job['status'], 'uncertain'); self.assertFalse(submission_evidence.never_submitted(job))
+                self.assertIn('remote outcome requires inspection', job['message'])
 
     def test_real_http_busy_queue_is_read_only_on_retained_backend(self):
         self.fixture.patches[0].stop(); seen = []
