@@ -54,6 +54,41 @@ retained, the final decision is cleared, and previously revealed settings cannot
 be made unseen. Changing a rating also invalidates the decision; changing only
 the shared crop preserves it but requires a new revision-specific export.
 
+## Review an imported character case
+
+For a case imported through **Runs & review → Import character case**, the desk
+also shows the approved case's exact character requirements. Record each as Pass,
+Fail, Not visible or Uncertain. Unobserved details start as Uncertain; generic
+Keep and the broad identity check do not fill these requirements for you.
+
+After revealing provenance, select the candidate and choose **Select for further
+work** or, only after your own review, **I accept this result for this character
+case**. Every character requirement must pass and a decision note is required.
+The saved decision names the case, exact output bytes and original review
+revision. It is a local human declaration, not identity authentication, licensing
+clearance or engine acceptance. Agents may select a candidate but cannot record
+an accepted decision as `local-agent`.
+
+Saving or restoring an assessment clears its final character decision while
+retaining the earlier event. Saving a crop preserves the original acceptance
+revision. Earlier generic reviews remain unaccepted for character purposes; save
+their character checks and make an explicit new decision to opt in.
+
+[Collect saved study results](character-consistency/PRODUCTION-RESULTS.md) to carry
+the current decision into the existing character summary. The collector rechecks
+the case, candidate, source bytes and finalization event. In the Library, the
+selected source still uses the existing **Edit image**, **Refine image** and other
+explicit handoffs; review does not start the next generation or grant attempts.
+
+API callers use the same revisioned `rate` command with an optional top-level
+`character_checks` object keyed by every `character_context.required_checks` ID.
+Omitting it records the generic rating and leaves character checks uncertain.
+`finalize` may additionally name `character_decision` as `selected` or `accepted`.
+An accepted decision requires an explicit `reviewer: "local-user"` declaration
+backed by the actual human decision. Agent commands use `reviewer: "local-agent"`
+and `selected`. Omitting `character_decision` keeps generic finalization, which
+never creates a character acceptance receipt. No project plan is rewritten.
+
 ## Architecture
 
 | Module | Responsibility |

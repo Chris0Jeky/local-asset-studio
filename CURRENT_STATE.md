@@ -1,5 +1,41 @@
 # Current state — 14 September 2026
 
+## Review imported characters and collect their decisions — 14 September 2026
+
+Review Desk now shows the exact canon checks saved with an imported primary
+character case. An explicit selected or accepted decision binds those observations,
+the chosen output hash and the original finalization revision. Every required
+check must pass; acceptance requires an explicit `local-user` declaration and a
+note. This local name is not authentication. Generic Keeper or finalize actions
+still do not establish character acceptance.
+
+The saved-results collector verifies the current decision against the case, job,
+asset, review document and retained finalization event, including both original
+output bytes and the review's source copy. View-only revisions preserve a decision;
+an assessment edit or restore clears the current decision while keeping earlier
+events and collected snapshots. The existing asset handoff retains the output
+hash and parent asset. See [Review Desk](docs/REVIEW-DESK.md#review-an-imported-character-case)
+and [collection instructions](docs/character-consistency/PRODUCTION-RESULTS.md).
+
+Executed at source `5bc8093ce50cf780e860c55ce04cd7fb155f8c2f`: strict Windows /
+Python 3.14 full suite, 2,294 total tests (2,229 passed, 65 skipped), 311.606 seconds,
+without ResourceWarning or an aborted connection. After integrating Nova base
+`4789e0a56c99226d5b2b2cb061ec52478ffde3eb`, source
+`9df20ed8dad91647b16198e353b709db03ce5dd7` passed 137 focused tests (135 passed,
+2 skipped) and the real Review Desk HTTP/browser journey at 1440px and 390px.
+The inert fixture collected one declared human acceptance, then zero after an
+assessment edit; the earlier snapshot remained intact. No page errors, horizontal
+overflow, new generation requests, jobs or reservations occurred. Validator:
+71 graphs, 129 pins, 1,359 tracked paths and 96 LoRA names. One independent review
+and its bounded base-compatibility check found no findings. Logs and browser
+artifacts remain outside Git under `.runtime/goal-20260913/`.
+
+Not verified: the owner's actual assessment, a real accepted-character pack or
+modification, adoption by the running Studio, model execution or licensing.
+The collector rechecks stores but does not create a cross-store transaction.
+Issues #65, #313, #3 and #14 retain their broader acceptance requirements.
+HUMAN_TODO q-7, q-25 and q-26 remain open; no live runtime or queue was touched.
+
 ## Import character study cases from Runs & review — 14 September 2026
 
 Runs & review now accepts an approved character study plan, its case handoff and
