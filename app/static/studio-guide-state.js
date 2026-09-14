@@ -3,7 +3,7 @@
   'use strict';
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const result = (state, message) => ({state, message});
-  const unknown = message => result('unknown', message || 'Not checked. Use Check this step to inspect current evidence.');
+  const unknown = message => result('unknown', message || 'Not checked yet. The guide is reading current evidence.');
   function evaluate(check, s = {}) {
     const met = text => result('met', text), blocked = text => result('blocked', text);
     if (check === 'manual') return result('manual', 'This step needs your judgment. Next records navigation only.');
