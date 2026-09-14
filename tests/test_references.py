@@ -210,3 +210,11 @@ class StyleBoardTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'at least 1 picture'): ref.compile_references(self.preset,board_graph(),None,self.root)
         with self.assertRaisesRegex(ValueError,'3 board slots'): ref.compile_references(self.preset,board_graph(),[{}]*4,self.root)
         with self.assertRaisesRegex(ValueError,'supported role'): ref.compile_references(self.preset,board_graph(),[{'role':'vibe','file':'a.png'}],self.root)
+
+    def test_persisted_records_round_trip_into_the_same_bindings(self):
+        """The placeholders exist so a saved recipe restores by position: feeding the records back must
+        reproduce the same loaders and the same combiner inputs, including an empty first slot."""
+        for supplied in ([{},{'role':'style','file':'b.png'},{'role':'style','file':'c.png'}],[{'role':'style','file':'a.png'},{},{'role':'style','file':'c.png'}]):
+            first=board_graph(); records=ref.compile_references(self.preset,first,supplied,self.root)
+            second=board_graph(); ref.compile_references(self.preset,second,records,self.root)
+            self.assertEqual(second,first); self.assertEqual(len(records),3)
