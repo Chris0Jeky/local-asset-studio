@@ -119,6 +119,12 @@ class StyleBoardSetupTests(unittest.TestCase):
         self.assertNotIn("reference", intent["controls"])
         self.assertFalse(report["generation_submitted"])
 
+    def test_omitted_board_minimum_matches_the_guide_default(self):
+        self.p["reference_board"].pop("min")
+        report = propose(self.q, self.s)
+        self.assertEqual(report["intent"]["reference_board"]["minimum"], 1)
+        self.assertFalse(report["generation_submitted"])
+
     def test_board_guidance_is_rejected_instead_of_silently_dropped(self):
         q = copy.deepcopy(self.q)
         q["guidance"][0]["contribution"] = "face"
