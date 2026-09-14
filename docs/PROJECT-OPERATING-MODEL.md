@@ -41,6 +41,8 @@ The structured issue form records these fields in the issue body. Labels may mir
 
 ## Work-in-progress limit
 
+<!-- repository-snapshot-wip: independent=3 stacks=1 owner-run=1 -->
+
 The default limit is:
 
 - at most **three independent implementation lines**;
@@ -112,7 +114,9 @@ python scripts/repository_snapshot.py \
   --format markdown --check docs/generated/REPOSITORY-STATE.md
 ```
 
-Missing receipts are `unavailable`, never zero. A stale receipt remains useful historical evidence but is not promoted into a current fact.
+Missing receipts are `unavailable`, never zero. A stale receipt remains useful historical evidence but is not promoted into a current fact. The Markdown projection retains each supplied receipt's exact source SHA, timestamp and test command where applicable.
+
+The `next_ready` array is a bounded **authored selection** from the capture. Validation proves that every listed issue is represented as ready and unblocked; it does not claim that the generator chose or objectively ranked those priorities.
 
 ## Updating the active-work capture
 
