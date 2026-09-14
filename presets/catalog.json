@@ -5993,8 +5993,8 @@
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
       "graph": "workflows/api/restyle-wai-api.json",
-      "verified": false,
-      "execution_note": "Re-proof pending: the canvas node changed after the 14 Sep 2026 proving run (job 0c13590c-d204-4634-b045-cc03d5a3f2e3).",
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 twice through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d...) with the owner's style picture on Picture 1, every control at its authored default (Style weight 0, Denoise 0.85, CFG 4.5, 30 steps, Mishima Kurone 0.8): job 0c13590c-d204-4634-b045-cc03d5a3f2e3 (prompt 5b9c2049-6586-47dd-ae4f-3d590972cb3b, 86 s, 1024x1536 on the earlier fixed canvas, seed 2026091407 carried over from the source run because the handoff keeps the form seed) and, after the canvas became aspect-preserving, job f2361234-53ab-4026-8647-7092a8aa83e1 (prompt 1165fb28-1741-4a90-9d16-7076a6700866, 93 s, 1040x1520, recipe seed 2026091401); outputs WAI_00001_.png and WAI_00002_.png inspected: pose, costume and throne kept, soft light-novel finish, clean face (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-picture-proving.jpg). Two runs, not art acceptance; the look is HUMAN_TODO q-27.",
       "modality": "image",
       "commercial_note": "WAI hashes do not authenticate its creator and its commercial terms are unresolved; the Mishima Kurone and Momoko LoRAs declare Image/RentCivit/Rent/Sell on civitai (recorded in models/library.json); IP-Adapter and ControlNet weights are apache-2.0; every board and source picture keeps its own terms. A successful render is not legal clearance.",
       "positive": [

@@ -75,7 +75,7 @@ about; (5) `K+mean(V) w/ C penalty` scaling adds glitter and was dropped.
 *Continue with this →* on the throne witch (job `bb8efa52…`, asset `9f2fca4d…`), *Restyle* (the new recipe is
 listed first), *Prepare in Create*, *Pull from library* → the owner's style picture on Picture 1, *Restyle
 source →*. Every control at its authored default: Style weight 0 (board off), Denoise 0.85, CFG 4.5, 30 steps,
-1024×1536, Mishima Kurone 0.8, Momoko 0, seed 2026091407, pose strength 0.9, the source description copied
+1024×1536 (first run; the canvas later became aspect-preserving), Mishima Kurone 0.8, Momoko 0, seed 2026091407 for the first run (carried over from the source's form: the handoff keeps width/height/seed, so this was not the recipe default 2026091401), pose strength 0.9, the source description copied
 (the finish terms and the LoRA trigger are appended inside the graph by `StringConcatenate`, so the copied prompt
 is unchanged on screen). Continuation intent `restyle`, source on `last_reference`, board slots 2 and 3 pruned.
 
@@ -83,7 +83,9 @@ is unchanged on screen). Continuation intent `restyle`, source on `last_referenc
 |---|---|---|---|---|---|
 | `0c13590c-d204-4634-b045-cc03d5a3f2e3` | `5b9c2049-6586-47dd-ae4f-3d590972cb3b` | 86 s (warm WAI, LoRA and face pass included) | `Restyle/WAI_00001_.png`, 1024×1536, asset `2ae826ea22e35d50910c110ea72958c5` | `68d1dd8d15e90172` | pose held (knee up, one eye closed, hand at the cheek, from below), black-and-gold costume and red-and-gold throne kept, soft light-novel finish, clean face; the background is a darker red-to-blue wash than the owner's target, and the hat gained stars. Submitted graph: nodes 9, 30, 31 pruned (Momoko off, empty slots), `IPAdapterCombineEmbeds` with `embed1` only, Style weight 0 |
 
-Sheet: [`examples/style-pose/restyle-picture-proving.jpg`](../../../../examples/style-pose/restyle-picture-proving.jpg) (source, style picture, owner run, shipped recipe). Job record `experiments/runs/0c13590c…/` outside Git.
+| `f2361234-53ab-4026-8647-7092a8aa83e1` (re-proof after Codex P2: node 4 became `ImageScaleToTotalPixels` 1.5 MP, no crop, width/height unbound) | `1165fb28-1741-4a90-9d16-7076a6700866` | 93 s | `Restyle/WAI_00002_.png`, 1040×1520 (the source's 2:3 kept), asset `2a3b5e613ee0588cbfd9adeaf680a708` | `3e5ab53c1382846b` | recipe seed 2026091401 this time (page reloaded, so no carried form seed); pose, costume and throne kept, soft finish, clean face, lighter background than the first run |
+
+Sheet: [`examples/style-pose/restyle-picture-proving.jpg`](../../../../examples/style-pose/restyle-picture-proving.jpg) (source, style picture, owner run, first proving run, re-proof). Job records `experiments/runs/<job>/` outside Git. A job in between (`168f0bd4…`) was never submitted: the Studio's 60-second pre-submit wait expired while a research prompt held ComfyUI, and it queued nothing, as designed.
 
 Not verified: Nova through the new shape (its checkpoint swap failed twice in ComfyUI); the other four boards;
 a three-picture board on this recipe; any denoise other than 0.75/0.85; whether the owner accepts the look
