@@ -20,11 +20,13 @@ First create a source packet. No changes are made to `original.png`:
 python scripts/repair_source.py capture --image original.png --out experiments/runs/source-001
 ```
 
-Make a grid proposal, with explicit horizontal/vertical gutter widths. A `--region x0 y0 x1 y1` can restrict the grid to one part of the page. Output is ASCII JSON, so shell redirection creates a portable editable file:
+Make a grid proposal, with explicit horizontal/vertical gutter widths. A `--region x0 y0 x1 y1` can restrict the grid to one part of the page. Output is ASCII JSON. Save it as UTF-8/ASCII without a byte-order mark. The following redirection works in Bash, cmd and modern PowerShell:
 
 ```console
 python scripts/repair_panels.py grid --source experiments/runs/source-001 --rows 2 --columns 5 --gutter 4 4 > layout.json
 ```
+
+Windows PowerShell 5.1 uses a different default file encoding. There, replace `> layout.json` with `| Out-File -Encoding ascii layout.json`. Escaped JSON preserves non-ASCII labels without depending on the console code page. See the [official encoding reference](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_character_encoding).
 
 Alternatively, propose rectangles from near-white full-width/full-height separators:
 
