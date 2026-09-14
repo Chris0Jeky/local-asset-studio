@@ -7,6 +7,12 @@ PREFIX = '/api/workflow-studio/documents'
 
 
 class WorkflowClient(Client):
+    @property
+    def setup_drafts(self):
+        """Shared revisions, explicit copy-only apply, and non-replaying recovery."""
+        from .setup_draft_client import SetupDraftClient
+        return SetupDraftClient(self.request)
+
     def setup_proposal(self, request: dict) -> dict:
         """Preview a caller-declared draft change; never stages, saves or applies it."""
         from .setup_proposal import observe
