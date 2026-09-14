@@ -30,7 +30,7 @@ recipes take the character from the prompt, not from a picture.
    0.9), both 0–2. The variants give quick starting points: *Style lighter, pose looser*, *Style
    stronger*, *Pose exact*, *3-seed audition*.
 6. Width and Height set the canvas (default 832×1216); neither picture sets the output size.
-7. Generate. The first run in a ComfyUI session loads five model files and the annotators; the proving run
+7. Generate. The first run in a ComfyUI session loads four model files (checkpoint, CLIP vision, IP-Adapter, ControlNet) and the OpenPose annotators; the proving run
    took 283 s that way. A warm run has not been timed yet.
 8. Review in the library. If the pose was misread, check what the preprocessor could see: an
    occluded, cropped or back-facing figure gives a partial skeleton. If the style is too literal

@@ -37,11 +37,15 @@ def host_commit():
     except (subprocess.SubprocessError, ValueError, OSError): return None
 
 
+TERMINAL = {"completed", "failed", "stopped", "abandoned", "not_submitted", "uncertain"}
+
+
 def wait(job_id, timeout):
+    """Poll until the Studio reports a terminal status; 'waiting', 'submitting' and 'observing' are in flight."""
     start = time.time()
     while time.time() - start < timeout:
         job = api("/api/jobs/" + job_id)
-        if job["status"] not in ("queued", "running"): return job
+        if job["status"] in TERMINAL: return job
         time.sleep(5)
     return api("/api/jobs/" + job_id)
 
@@ -68,8 +72,10 @@ def main():
                 cells.append({"recipe": recipe["preset_id"], "lora": lora["id"], "pose": pose["id"], "controls": controls})
     manifest_path = out / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {"plan": plan, "cells": []}
-    done = {(c["recipe"], c["lora"], c["pose"]) for c in manifest["cells"] if c.get("status") == "completed"}
-    print(f"{len(cells)} cells, {len(done)} already completed")
+    done = {(c["recipe"], c["lora"], c["pose"]) for c in manifest["cells"] if c.get("status") in TERMINAL}
+    # A cell whose job was submitted but not seen to finish is re-waited on its own job id, never resubmitted.
+    pending = {(c["recipe"], c["lora"], c["pose"]): c for c in manifest["cells"] if c.get("job_id") and c.get("status") not in TERMINAL}
+    print(f"{len(cells)} cells, {len(done)} already finished, {len(pending)} to resume")
     if args.dry_run:
         for c in cells: print(c["recipe"], c["lora"], c["pose"], "|", c["controls"]["positive"][:90])
         return 0
@@ -80,9 +86,12 @@ def main():
         if commit is not None and commit > args.max_commit:
             print(f"STOP: host commit {commit}% above {args.max_commit}% before {key}"); break
         t0 = time.time()
-        try: job = api("/api/jobs", {"preset_id": cell["recipe"], "controls": cell["controls"], "batch_count": 1})
-        except Exception as exc:  # the cell is recorded, never retried
-            manifest["cells"].append(dict(cell, status="submit-failed", error=str(exc)[:300], commit_before=commit)); manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8"); continue
+        if key in pending:
+            job = {"id": pending[key]["job_id"]}; manifest["cells"].remove(pending[key])
+        else:
+            try: job = api("/api/jobs", {"preset_id": cell["recipe"], "controls": cell["controls"], "batch_count": 1})
+            except Exception as exc:  # the cell is recorded, never retried
+                manifest["cells"].append(dict(cell, status="submit-failed", error=str(exc)[:300], commit_before=commit)); manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8"); continue
         job = wait(job["id"], args.timeout)
         record = dict(cell, job_id=job["id"], status=job["status"], prompt_ids=job.get("prompt_ids"), failure=job.get("failure"),
                       wall_seconds=round(time.time() - t0, 1), elapsed_seconds=job.get("elapsed_seconds"), commit_before=commit, outputs=[])
