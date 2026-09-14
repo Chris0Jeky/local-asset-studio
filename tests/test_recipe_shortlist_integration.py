@@ -40,8 +40,8 @@ class ShortlistHTTPTests(unittest.TestCase):
     def send(self,value=None,origin=None,content_type='application/json',host=None):
         body=json.dumps(value or {'goal':'new-image'}).encode('utf-8')
         host=host or '127.0.0.1:8191';origin=origin or 'http://127.0.0.1:8191'
-        if content_type=='application/json' and (host!='127.0.0.1:8191' or origin!='http://127.0.0.1:8191'):
-            return atomic_json_post(self.http.server_port,PREFIX,body,host=host,origin=origin)
+        if content_type!='application/json' or host!='127.0.0.1:8191' or origin!='http://127.0.0.1:8191':
+            return atomic_json_post(self.http.server_port,PREFIX,body,host=host,origin=origin,content_type=content_type)
         conn=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
         try:
             headers={'Host':host,'Origin':origin,'Content-Type':content_type}
@@ -63,7 +63,7 @@ class ShortlistHTTPTests(unittest.TestCase):
         for kwargs,expected in [({'origin':'https://other.invalid'},403),({'host':'other.invalid'},403),({'content_type':'text/plain'},400),({'value':{'goal':'new-image','run':True}},400)]:
             with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],expected)
         self.assertEqual(self.s.calls,[])
-    def test_host_and_origin_refusals_send_the_complete_payload_before_reading_reply(self):
+    def test_prebody_refusals_send_the_complete_payload_and_requested_content_type(self):
         writes=[]; connect=socket.create_connection
         class RecordingSocket:
             def __init__(self, connection):self.connection=connection
@@ -72,14 +72,17 @@ class ShortlistHTTPTests(unittest.TestCase):
             def __exit__(self,*args):return self.connection.__exit__(*args)
             def sendall(self,data):writes.append(bytes(data));return self.connection.sendall(data)
         with patch('socket.create_connection',side_effect=lambda *a,**k:RecordingSocket(connect(*a,**k))):
-            for kwargs in ({'origin':'https://other.invalid'},{'host':'other.invalid'}):
-                with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],403)
-        self.assertEqual(len(writes),2)
-        for wire in writes:
+            cases=[({'origin':'https://other.invalid'},403,'application/json'),({'host':'other.invalid'},403,'application/json'),({'content_type':'text/plain'},400,'text/plain')]
+            for kwargs,expected,_ in cases:
+                with self.subTest(kwargs=kwargs):self.assertEqual(self.send(**kwargs)[0],expected)
+        self.assertEqual(len(writes),3)
+        expected_body=json.dumps({'goal':'new-image'}).encode('utf-8')
+        for wire,(_,_,content_type) in zip(writes,cases):
             headers,body=wire.split(b'\r\n\r\n',1)
             self.assertTrue(headers.startswith(('POST '+PREFIX+' HTTP/').encode()))
             self.assertIn(('Content-Length: '+str(len(body))).encode(),headers)
-            self.assertEqual(json.loads(body),{'goal':'new-image'})
+            self.assertIn(('Content-Type: '+content_type).encode(),headers)
+            self.assertEqual(body,expected_body)
     def test_sdk_and_agent_reject_invalid_options_before_http(self):
         with patch.object(self.client,'request',side_effect=AssertionError('No request expected')):
             for value in [True,4,-1]:
