@@ -2,7 +2,7 @@
 (function(root,factory){const core=factory();if(typeof module==='object'&&module.exports)module.exports=core;else root.StudioBundles=core;})(globalThis,function(){
   'use strict';
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
-  const KEYS=['positive','negative','seed','steps','cfg','width','height','denoise','frames','fps','sampler','scheduler',...SLOTS,...SLOTS.map(k=>k+'_name')];
+  const KEYS=['positive','negative','seed','steps','cfg','width','height','denoise','frames','fps','style_weight','pose_strength','sampler','scheduler',...SLOTS,...SLOTS.map(k=>k+'_name')];
   const own=(o,k)=>!!o&&Object.hasOwn(o,k);
   const bound=(p,k)=>own(p,k)&&!!p[k]||!['positive','negative'].includes(k)&&own(p.bindings_extra,k)&&!!p.bindings_extra[k];
   const object=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
@@ -10,7 +10,7 @@
   function canonical(value){if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';if(object(value))return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';return JSON.stringify(value);}
   function links(values){return(Array.isArray(values)?values:[]).filter(u=>{try{const x=new URL(u);return x.protocol==='https:'&&!x.username&&!x.password;}catch{return false;}});}
   function limits(p,k){
-    if(SLOTS.includes(k))return[0,2,0.05];
+    if(SLOTS.includes(k)||['style_weight','pose_strength'].includes(k))return[0,2,0.05];
     if(['width','height'].includes(k))return[p.dimension_limits?.[0]||64,p.dimension_limits?.[1]||1536,p.dimension_multiple||8];
     return({seed:[0,Number.MAX_SAFE_INTEGER,1],steps:[1,150,1],cfg:[0,30,0.1],denoise:[0,1,0.01],frames:[5,365,p.frame_grid||1],fps:[1,60,1]})[k]||null;
   }
@@ -63,14 +63,14 @@
     }
     return rows;
   }
-  function editable(p,key){return bound(p,key)&&(['positive','negative','seed','steps','cfg','width','height'].includes(key)||SLOTS.includes(key));}
+  function editable(p,key){return bound(p,key)&&(['positive','negative','seed','steps','cfg','width','height','style_weight','pose_strength'].includes(key)||SLOTS.includes(key));}
   // Detached tuning only. These revisions are not Workspace/server concurrency tokens.
   const clone=v=>JSON.parse(JSON.stringify(v));
   function freeze(v){if(v&&typeof v==='object'){Object.values(v).forEach(freeze);Object.freeze(v);}return v;}
   function controlLabel(key){
     const slot=SLOTS.findIndex(k=>key===k||key===k+'_name');
     if(slot>=0)return 'Adapter '+(slot+1)+(key.endsWith('_name')?' file':' strength');
-    return ({positive:'Prompt',negative:'Negative prompt',cfg:'Guidance (CFG)',seed:'Seed',steps:'Sampling steps',width:'Canvas width',height:'Canvas height',sampler:'Sampler',scheduler:'Schedule',denoise:'Denoise strength'})[key]||key;
+    return ({positive:'Prompt',negative:'Negative prompt',cfg:'Guidance (CFG)',seed:'Seed',steps:'Sampling steps',width:'Canvas width',height:'Canvas height',style_weight:'Style weight',pose_strength:'Pose strength',sampler:'Sampler',scheduler:'Schedule',denoise:'Denoise strength'})[key]||key;
   }
   function imageRoute(p){return (p.modality||'image')==='image'&&!p.reference&&!p.last_reference&&!p.reference_slots?.length;}
   function tuningSession(p,r){return freeze({revision:0,past:[],present:{controls:resolve(p,r),origin:r.id,originSnapshot:canonical(r)},future:[]});}
@@ -106,7 +106,7 @@
     const before=resolve(p,source,state.present.controls),authored=resolve(p,target),after={...authored};
     const kept=[...(preserve.keepIdea?['positive','negative']:[]),...(preserve.keepSeed?['seed']:[]),...(preserve.keepCanvas?['width','height']:[])];
     for(const k of kept)if(own(before,k))after[k]=before[k];
-    const changes=diff(before,after).map(c=>({...c,group:['positive','negative'].includes(c.key)?'Idea':SLOTS.some(k=>c.key===k||c.key===k+'_name')?'Adapter stack':['width','height','seed'].includes(c.key)?'Composition':'Sampling'}));
+    const changes=diff(before,after).map(c=>({...c,group:['positive','negative'].includes(c.key)?'Idea':SLOTS.some(k=>c.key===k||c.key===k+'_name')||['style_weight','pose_strength'].includes(c.key)?'Adapter stack':['width','height','seed'].includes(c.key)?'Composition':'Sampling'}));
     const claims=adapterClaims(kb,p,after),warnings=[];
     for(const a of claims.filter(a=>a.active)){
       if(a.familyRelation==='different label')warnings.push(a.label+': the stored family label differs; same-preset authoring is not compatibility proof.');
