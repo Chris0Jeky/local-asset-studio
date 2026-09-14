@@ -7,6 +7,7 @@ const C=require('../app/static/studio-guide-state.js');
 assert.equal(typeof C.referenceSlots,'function','the guide needs one pure reference-slot policy');
 const board={reference_slots:[{role:'style'},{role:'style'},{role:'style'}],reference_board:{min:1}};
 assert.deepEqual(C.referenceSlots(board,[{file:'one.png'},{file:null},{file:null}]),{attached:true,missing:false});
+assert.deepEqual(C.referenceSlots({...board,reference_board:{policy:'fixture default'}},[{file:'one.png'},{file:null},{file:null}]),{attached:true,missing:false},'an omitted board minimum defaults to one, matching the compiler');
 assert.deepEqual(C.referenceSlots({...board,reference_board:{min:2}},[{file:'one.png'},{file:null},{file:null}]),{attached:false,missing:false});
 assert.deepEqual(C.referenceSlots(board,[{file:'one.png'},{file:null,missing:true},{file:null}]),{attached:false,missing:true});
 const named={reference_slots:[{role:'identity'},{role:'pose'}]};
