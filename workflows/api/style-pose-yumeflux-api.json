@@ -104,7 +104,7 @@
         "22",
         0
       ],
-      "weight": 0.8,
+      "weight": 0.7,
       "weight_type": "linear",
       "start_at": 0.0,
       "end_at": 0.9,
@@ -294,7 +294,7 @@
         "21",
         0
       ],
-      "method": "concat"
+      "method": "average"
     }
   }
 }

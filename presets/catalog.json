@@ -5221,14 +5221,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5243,7 +5243,7 @@
         }
       ],
       "source": "https://huggingface.co/frankjoshua/waiIllustriousSDXL_v170",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings concatenated) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. WAI v17 base: use its quality tail in the prompt.",
       "reference_slots": [
         {
           "role": "style",
@@ -5275,7 +5275,7 @@
       ],
       "reference_board": {
         "min": 1,
-        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings concatenated)"
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       }
     },
     {
@@ -5399,14 +5399,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5421,7 +5421,7 @@
         }
       ],
       "source": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings concatenated) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail).",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. Animagine XL 4 base: use the author's tag order (subject, character, series, rating, detail, quality tail).",
       "reference_slots": [
         {
           "role": "style",
@@ -5453,7 +5453,7 @@
       ],
       "reference_board": {
         "min": 1,
-        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings concatenated)"
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       }
     },
     {
@@ -5576,14 +5576,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5598,7 +5598,7 @@
         }
       ],
       "source": "https://civitai.com/models/1113979",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings concatenated) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. CSTati v3 base at CFG 4 / Karras as in its baseline recipe.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. CSTati v3 base at CFG 4 / Karras as in its baseline recipe.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance.",
       "reference_slots": [
         {
@@ -5631,7 +5631,7 @@
       ],
       "reference_board": {
         "min": 1,
-        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings concatenated)"
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       }
     },
     {
@@ -5754,14 +5754,14 @@
         {
           "name": "Style lighter, pose looser",
           "controls": {
-            "style_weight": 0.55,
+            "style_weight": 0.5,
             "pose_strength": 0.7
           }
         },
         {
           "name": "Style stronger",
           "controls": {
-            "style_weight": 1.1
+            "style_weight": 0.9
           }
         },
         {
@@ -5776,7 +5776,7 @@
         }
       ],
       "source": "https://civitai.com/models/1153434",
-      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings concatenated) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.8 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. YumeFlux ILv1 base at CFG 4 / Karras as in its baseline recipe.",
+      "description": "Style of one picture, pose of another, in one SDXL run: IP-Adapter Plus (ViT-H) reads a style board of one to three pictures (each encoded separately, embeddings averaged; measured 14 Sep 2026 that concatenating three pictures at 0.8 over-drives saturation while averaging at 0.6-0.8 keeps the palette clean) with linear weighting (measured on this ROCm PC: the 'style transfer' weight type made a full run take 260 s, linear 80 s, at the same style strength), and an OpenPose skeleton extracted from the pose picture drives Xinsir OpenPose ControlNet. Who the character is comes from the prompt and the optional LoRA slots, not from either picture. Style weight and Pose strength are the two knobs; the defaults (0.7 / 0.9) favour the pose. Semantic style transfer is not a pixel copy and pose control follows the detected skeleton, so an occluded or unusual pose can be misread. YumeFlux ILv1 base at CFG 4 / Karras as in its baseline recipe.",
       "commercial_note": "Check the checkpoint, the IP-Adapter/ControlNet weights (apache-2.0) and both reference images' terms before publishing; a successful render is not legal clearance.",
       "reference_slots": [
         {
@@ -5809,7 +5809,7 @@
       ],
       "reference_board": {
         "min": 1,
-        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings concatenated)"
+        "policy": "native IP-Adapter CLIP-vision preprocessing (224 px centre crop per picture; embeddings averaged)"
       }
     }
   ]
