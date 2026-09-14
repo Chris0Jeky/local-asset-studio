@@ -24,6 +24,8 @@ function openCollection(id=null){
   if($('#collectionDialog').open){if(collectionSession?.id===id)return true;if(!collectionCanLeave())return false;}
   const s={id,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},busy:false,uncertain:false};
   collectionSession=s;collectionEditing=id;
+  // A close event from the previous session may still be queued. The new session owns its control state.
+  $('#collectionName').disabled=$('#collectionDescription').disabled=false;
   $('#collectionDialogTitle').textContent=id?'Edit collection':'New collection';
   $('#collectionName').value=s.baseline.name;$('#collectionDescription').value=s.baseline.description;
   collectionStatus('Collections organize existing assets. Saving here does not move files or add the current selection.');collectionControls();
