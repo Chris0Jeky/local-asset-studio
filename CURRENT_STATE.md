@@ -58,6 +58,13 @@ output. An unchanged-head comparison passed; that does not explain the timeout.
 The diagnostic gap and unresolved cause are retained under #323. No running
 Studio, ComfyUI, model or generation was changed; HUMAN_TODO q-7 and q-25 stay open.
 
+The #323 follow-up now retains labeled, bounded stdout/stderr tails on a child
+timeout, including attempt, unchanged 45-second limit and measured elapsed time.
+It exits 124 without retrying. Five focused checks pass, including a real inert
+child whose output survives timeout and whose process and pipes are closed. The
+actual two-interpreter helper also passes without ResourceWarning. This fixes the
+missing diagnostics; the original hosted timeout's cause remains unknown.
+
 ## Optional job resource receipts — 14 September 2026
 
 The existing generation coordinator now has a default-disabled resource observer
