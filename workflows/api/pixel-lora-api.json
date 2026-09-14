@@ -100,16 +100,14 @@
     }
   },
   "9": {
-    "class_type": "ImageScale",
+    "class_type": "ImageScaleBy",
     "inputs": {
       "image": [
         "6",
         0
       ],
       "upscale_method": "nearest-exact",
-      "width": 128,
-      "height": 128,
-      "crop": "disabled"
+      "scale_by": 0.125
     }
   },
   "10": {
@@ -119,7 +117,7 @@
         "9",
         0
       ],
-      "filename_prefix": "Studio/Pixel-LoRA-128"
+      "filename_prefix": "Studio/Pixel-LoRA-Export"
     }
   }
 }
