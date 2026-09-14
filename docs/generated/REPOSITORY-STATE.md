@@ -30,7 +30,9 @@ WIP is **over the declared limit**: 7/3 independent lines, 3/1 stack and 0/1 own
 
 Stacks: #333 → #336, #346, #349; #334 → #337; #338 → #339, #344.
 
-## Next ready
+## Captured next-ready selection
+
+This ordering was authored in the bounded active-work capture; validation proves only that each listed issue is currently marked ready and unblocked, not that the generator chose its priority.
 
 | Issue | Type | Title |
 | --- | --- | --- |
@@ -44,8 +46,8 @@ Stacks: #333 → #336, #346, #349; #334 → #337; #338 → #339, #344.
 | --- | --- |
 | Catalog | 71 presets; 71 unique API graphs; 37 verified presets; 53 visual links |
 | Open owner decisions | 3 |
-| Tests | Stale: 2294 total, 2229 passed, 65 skipped, 0 failures, 0 errors (Windows 11 / Python 3.14 strict full-suite control). |
-| Repository validation | Stale: validator pass; 71 graphs, 129 pins, 1359 tracked paths, 96 LoRA names. |
+| Tests | Stale: 2294 total, 2229 passed, 65 skipped, 0 failures, 0 errors (Windows 11 / Python 3.14 strict full-suite control). Measured `9df20ed8dad91647b16198e353b709db03ce5dd7` at `2026-09-14T12:20:00Z` with `python -m unittest discover -s tests`. |
+| Repository validation | Stale: validator pass; 71 graphs, 129 pins, 1359 tracked paths, 96 LoRA names. Measured `9df20ed8dad91647b16198e353b709db03ce5dd7` at `2026-09-14T12:20:00Z`. |
 
 ## Open owner decisions
 
