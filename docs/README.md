@@ -24,6 +24,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | [RUNTIME-PRECONDITIONS.md](RUNTIME-PRECONDITIONS.md) | Host-commit headroom gate, VRAM reserve, what to check before heavy jobs |
 | [RUNTIME-INSTALL-SAFETY.md](RUNTIME-INSTALL-SAFETY.md) | Backend switching and pinned-install safety |
 | [RESOURCE-EFFICIENCY.md](RESOURCE-EFFICIENCY.md) | Generation-first runtime and bounded observation programme (#172) |
+| [performance/](performance/README.md) | RX 9070 XT report reconciliation, architecture, benchmarks and delivery plan |
 | [MODEL-REQUIREMENTS.md](MODEL-REQUIREMENTS.md) | How presets declare model needs and how installs are offered |
 | [MODEL-INTAKE.md](MODEL-INTAKE.md) | Browser model intake with independent copies and recoverable publication |
 | [GRAPH-VALIDATION.md](GRAPH-VALIDATION.md) | One rule set for repo and live graph checks |
@@ -65,13 +66,16 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 
 | Folder | What it holds |
 | --- | --- |
+| [strategy/](strategy/README.md) | Curated product thesis, system assessment, convergence programme, metrics and opportunity register |
 | [workflow-studio/](workflow-studio/README.md) | Workflow Studio (issues #118–#123): guided creation, documents, Steps, saved runs, MCP agents, roadmap |
 | [bundle-studio/](bundle-studio/README.md) | Creative Bundle Explorer and scoped guidance (#143, #144) |
 | [character-consistency/](character-consistency/README.md) | The character pilot, controlled edits, Krita revisions, research |
+| [repair-studio/](repair-studio/README.md) | Repair Studio: source intake, explicit scope, protected composition, qualification and guided delivery |
 | [prompt-studio/](prompt-studio/README.md) | Prompt Lab: model-aware intent compilation |
 | [av-studio/](av-studio/README.md) | AV projects, Blender assets, renderer, MCP |
 | [game-assets/](game-assets/README.md) | Game Asset Lab planner, agent contract, validation |
 | [ux-qa/](ux-qa/README.md) | Scenario-driven browser QA records and screenshots |
+| [performance/](performance/README.md) | Resource optimisation architecture, profiling, runtime policy and implementation sequence |
 | [research/](research/) | Migrated research notes (frontier models, pipelines) |
 | [reconciliation/](reconciliation/) | Dated per-PR verification records written by the agents; evidence, not guidance |
 
@@ -79,11 +83,13 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 
 | Page | What it is |
 | --- | --- |
+| [strategy/README.md](strategy/README.md) | Cross-cutting strategic assessment and recommended convergence sequence, snapshot 14 September 2026 |
 | [FRONTIER-RESEARCH.md](FRONTIER-RESEARCH.md), [FRONTIER-ARCHITECTURE.md](FRONTIER-ARCHITECTURE.md), [FRONTIER-HANDOFF.md](FRONTIER-HANDOFF.md) | The frontier roadmap (#17) and its architecture |
 | [RESEARCH-UPDATE.md](RESEARCH-UPDATE.md) | Follow-up findings, 11 September 2026 |
 | [REVIEW.md](REVIEW.md) | Initial implementation review |
 | [STUDIO-REVIEW-2026-09-12.md](STUDIO-REVIEW-2026-09-12.md) | Studio review, 12 September 2026 |
 | [STUDIO-REVIEW-2026-09-13.md](STUDIO-REVIEW-2026-09-13.md) | Studio assessment, 13 September 2026: correctness review, proven routes, goal map |
+| [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md), [UX-USE-CASE-MATRIX.md](UX-USE-CASE-MATRIX.md) | Owner UX verdict and agent-driven measured journeys |
 | [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md) | Anima baseline execution record |
 
 Agent-facing contracts also live in [`../agent-skills/`](../agent-skills/) (five SKILL.md contracts:

@@ -2,11 +2,11 @@
   "presets": [
     {
       "id": "pixel-lora",
-      "name": "Pixel art \u2022 128px prop",
+      "name": "Pixel art \u2022 aspect-preserving prop",
       "category": "Pixel art",
-      "description": "Start here. Generates a detailed concept plus a nearest-neighbour 128px export. Background and pixel cleanup may be needed.",
+      "description": "Generates a detailed concept plus a nearest-neighbour export at 1/8 of the chosen width and height. The 1024\u00d71024 default exports 128\u00d7128; 832\u00d71216 exports 104\u00d7152 without stretching. Background and pixel cleanup may be needed.",
       "graph": "workflows/api/pixel-lora-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Check the model and reference-image terms before publishing; a successful render is not legal clearance.",
       "positive": [
         "2",
@@ -53,7 +53,7 @@
         ]
       },
       "modality": "image",
-      "execution_note": "Executed 2026-09-11 in the initial batch: success, 20.173 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance.",
+      "execution_note": "Executed 2026-09-11 in the initial batch: success, 20.173 s (experiments/curated/initial-results.json). No prompt ID or output hash was retained; one observed execution, not a benchmark or art acceptance. That observation used the former fixed-square export. The 2026-09-14 aspect-preserving scale-by revision is unexecuted; current native validation and an inspected run remain required.",
       "visual": "workflows/comfyui/20 - SDXL Pixel Art LoRA and 128px Export.json"
     },
     {
@@ -1647,7 +1647,7 @@
       "category": "Anime quality",
       "collection": "workflow-lab",
       "graph": "workflows/api/anime-detail-fix-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Repaints crops with WAI v17 (Illustrious); WAI hashes do not authenticate its creator and its commercial terms are unresolved. The source image keeps its own terms.",
       "positive": [
         "2",
@@ -1715,12 +1715,6 @@
             "13",
             "scheduler"
           ]
-        ],
-        "denoise": [
-          [
-            "13",
-            "denoise"
-          ]
         ]
       },
       "modality": "image",
@@ -1743,24 +1737,24 @@
       },
       "backend_id": "primary",
       "source": "https://github.com/ltdrdata/ComfyUI-Impact-Pack",
-      "description": "The correction pass for finished anime images from any family: two Impact Pack FaceDetailer stages find faces (face_yolov8s) and then hands (hand_yolov8n) with YOLO, and repaint only those crops with WAI v17 at a low denoise, so the rest of the picture is untouched. The positive text steers the face pass; the hand pass has its own authored text. One denoise control drives both passes (authored 0.4): 0.3 keeps identity, 0.55 redraws a broken hand but also shifts the face.",
+      "description": "Two Impact Pack FaceDetailer stages detect and repaint faces, then hands, with WAI v17. Denoise is face-only: the face defaults to 0.40 and the hand pass stays fixed at 0.45. The positive prompt also steers the face; hands retain their authored prompt. Lighter/Stronger face variants do not change hand strength. Check detected regions and both results; lower face strength is not a hand-preservation setting. For adjustable hand strength, select WAI Auto Hand Detail (anime-hand) or open its shipped visual workflow: 27 - WAI Auto Hand Detail. This is a separate hand-only pass, not the combined face/hand recipe. The changed Studio control mapping has not been rerun; historical results are retained separately.",
       "stages": [
         "Reference image",
         "YOLO face boxes",
-        "WAI repaint at low denoise",
+        "Face repaint: adjustable Denoise (default 0.40)",
         "YOLO hand boxes",
-        "WAI hand repaint",
+        "Hand repaint: fixed Denoise 0.45",
         "PNG"
       ],
       "variants": [
         {
-          "name": "Gentle (denoise 0.3)",
+          "name": "Lighter face (face 0.30 / hand 0.45)",
           "controls": {
             "denoise": 0.3
           }
         },
         {
-          "name": "Strong (denoise 0.55)",
+          "name": "Stronger face (face 0.55 / hand 0.45)",
           "controls": {
             "denoise": 0.55
           }
@@ -1770,7 +1764,7 @@
           "batch_count": 3
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job 14caa4fb-5999-497f-8b73-0bb2562229df (prompt 3eeba334-6161-4f84-bd36-de0c888c0d74) on the authored example image in 36.2 s; both detector passes fired and the output was inspected (evidence in experiments/curated/anime-fantasy-atelier). Not an art approval."
+      "execution_note": "Executed 2026-09-12 through Studio job 14caa4fb-5999-497f-8b73-0bb2562229df (prompt 3eeba334-6161-4f84-bd36-de0c888c0d74) on the authored example image in 36.2 s; both detector passes fired and the output was inspected (evidence in experiments/curated/anime-fantasy-atelier). Not an art approval. Historical authored graph: face 0.40 / hand 0.45, with no denoise control in the retained recipe. On 2026-09-14 the Studio Denoise binding became face-only; this changed mapping and its face-only variants were not rerun."
     },
     {
       "id": "anime-masked-repair",

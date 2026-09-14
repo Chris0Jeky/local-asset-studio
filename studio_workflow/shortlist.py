@@ -153,7 +153,7 @@ def _candidate(studio, preset, q, info, runtime, worker_alive, assets, observati
     return row
 
 
-def request(value, studio):
+def request(value, studio, *, preset_id=None):
     """One explicit observation. Uses existing caches; no new store or polling loop."""
     q = query(value)
     source = inspect_source(studio, q)
@@ -179,6 +179,7 @@ def request(value, studio):
     rows = []; diagnostics = []; observations = {}
     _, modality, operations = GOALS[q['goal']]
     for preset in presets:
+        if preset_id is not None and preset['id'] != preset_id: continue
         cap = preset.get('continuation_capability')
         if not (isinstance(cap, dict) and type(cap.get('version')) is int and cap['version'] == 1
                 and type(cap.get('reference_count')) is int and 0 <= cap['reference_count'] <= 3

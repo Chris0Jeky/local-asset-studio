@@ -1,5 +1,8 @@
 # Workflow Studio: remaining work after reconciliation
 
+[Reviewed setup application and recovery](SETUP-APPLICATION.md) extends the preview with explicit shared revisions, copy-only Apply, Undo and original-request inspection. Preview remains read-only; see that guide for supported routes and remaining #232 limits.
+
+
 **13 September 2026; inspected main `06bd93aed2f019cb978eb5795e9f116cfb7ff749`.**
 All six original issues remain open for real residual acceptance. Their foundation
 paragraphs predate several merged implementations; do not use those paragraphs as
@@ -13,6 +16,14 @@ of #232 and preserves legacy single-source/count-only requests. Complete reviewe
 setup diffs, expected-draft concurrency, explicit staging/apply and persisted
 undo/reload remain unimplemented in that slice. Neither the original #118/#123
 workstreams nor #232 are complete. The historical reconciliation below is retained.
+
+## Reviewed setup proposal continuation — 14 September 2026
+
+[SETUP-PROPOSALS.md](SETUP-PROPOSALS.md) adds complete read-only setup diffs over
+the ordered advice service, shared with SDK/CLI/read-MCP. Its captured browser
+draft identity is not server CAS. Explicit staging/apply, shared expected-draft
+concurrency, partial-failure recovery and persisted undo/reload remain #232 work.
+The source was integrated over main `ff6c0f4`, including merged #237/#258.
 
 ## Issue disposition and existing ownership
 

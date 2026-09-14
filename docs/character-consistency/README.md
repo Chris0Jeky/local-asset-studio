@@ -19,6 +19,7 @@ The companion implementation provides three offline Python commands:
 
 - `scripts/character_archive.py`: verify and restore all 71 members of the original research delivery into a new local evidence directory. It performs no network access and never executes archived code.
 - `scripts/character_study.py`: versioned identity/costume/representation/style canon; deterministic bounded study plans; source/approval preflight; existing game-asset brief projection; native-preset handoff preview; honest attempt/review accounting.
+- `scripts/character_study_results.py`: [collect saved Production primary-study results](PRODUCTION-RESULTS.md), preserving job/prompt/graph/asset identity, uncertain outcomes and reservations; feeds the existing summary without assigning reviews or submitting work.
 - `scripts/character_media.py`: measured PNG intake, pixel-exact rectangular extraction, deterministic review-card assembly and exact decoded-RGBA preservation outside an explicit repair mask.
 
 These commands are offline building blocks. A successful plan, handoff or receipt does not submit a Comfy job, authenticate a reviewer, approve artwork or establish model rights. `handoff` deliberately contains `submission_payload: null`; #65 supplies the trusted runtime connection.

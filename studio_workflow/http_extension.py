@@ -12,7 +12,7 @@ PREFIX = '/api/workflow-studio'
 
 def capabilities():
     return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True,
-            'recipe_shortlist': True, 'recipe_shortlist_source': True, 'recipe_shortlist_ordered_sources': True, 'resource_scoped_guidance': True, 'saved_run_exact_review': True, 'saved_run_hash_dispatch': True,
+            'recipe_setup_proposal': True, 'recipe_setup_apply': True, 'shared_setup_drafts': True, 'setup_request_recovery': True, 'recipe_shortlist': True, 'recipe_shortlist_source': True, 'recipe_shortlist_ordered_sources': True, 'resource_scoped_guidance': True, 'saved_run_exact_review': True, 'saved_run_hash_dispatch': True,
             'registered_recipe_tickets': True, 'preset_document_tickets': True, 'arbitrary_graph_execution': False,
             'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
             'shared_document_commands': True, 'named_steps': True, 'agent_sdk': True, 'mcp': False,
@@ -47,6 +47,9 @@ def get(path, studio):
 
 def post(path, value, studio):
     need(isinstance(value, dict), 'JSON object required')
+    if path == PREFIX + '/setup-proposal':
+        from .setup_proposal import request
+        return request(value, studio)
     if path == PREFIX + '/shortlist':
         from .shortlist import request
         return request(value, studio)
@@ -108,4 +111,5 @@ def extend_handler(base):
                 if not is_run: result['generation_submitted'] = False
                 else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
                 return self._json(400, result)
-    return extend_run_records(extend_documents(WorkflowHandler))
+    from .setup_draft_http import extend_handler as extend_setups
+    return extend_setups(extend_run_records(extend_documents(WorkflowHandler)))

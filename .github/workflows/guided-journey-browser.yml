@@ -5,6 +5,9 @@ on:
       - 'app/static/**'
       - 'studio_workflow/guides.py'
       - 'tests/studio_guide*'
+      - 'tests/create_readiness*'
+      - 'tests/test_create_readiness_frontend.py'
+      - 'tests/asset_detail_browser.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_studio_guide.py'
       - '.github/workflows/guided-journey-browser.yml'
@@ -27,12 +30,17 @@ jobs:
       - run: python -m pip install playwright==1.57.0
       - run: python -m playwright install --with-deps chromium
       - run: python -m unittest discover -s tests -p test_studio_guide.py -v
+      - run: python -m unittest discover -s tests -p test_create_readiness_frontend.py -v
       - name: Actual pages and native HTTP, storage, keyboard and stage navigation
         run: python tests/studio_guide_browser.py --out .runtime/guide-proof
+      - name: Create blockers, focus and read-only dependency retry
+        run: python tests/create_readiness_browser.py --out .runtime/create-readiness-proof
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: guide-browser-proof
-          path: .runtime/guide-proof/
+          path: |
+            .runtime/guide-proof/
+            .runtime/create-readiness-proof/
           if-no-files-found: ignore
           retention-days: 7

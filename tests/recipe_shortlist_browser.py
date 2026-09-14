@@ -24,7 +24,9 @@ import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 from test_recipe_shortlist import make_studio
 from studio_workflow.shortlist import request as shortlist, PREFIX
+from studio_workflow.setup_proposal import request as setup_proposal, PREFIX as PROPOSAL
 
+PROPOSAL_DELAY=0
 CALLS=[];QUERIES=[];EXTRA_MEDIA={};DELAY=0;FAIL=False;MALFORMED=False;ACTIVE=0;MAX_ACTIVE=0
 
 class Handler(fixture.Handler):
@@ -38,6 +40,13 @@ class Handler(fixture.Handler):
     def do_POST(self):
         global ACTIVE,MAX_ACTIVE
         path=urlsplit(self.path).path;CALLS.append(path)
+        if path==PROPOSAL:
+            value=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+            try:
+                report=setup_proposal(value,self.studio)
+                if PROPOSAL_DELAY:time.sleep(PROPOSAL_DELAY)
+                return self.json(report)
+            except ValueError as exc:return self.json({'error':str(exc),'generation_submitted':False},400)
         if path==PREFIX:
             value=json.loads(self.rfile.read(int(self.headers['Content-Length'])));QUERIES.append(copy.deepcopy(value))
             ACTIVE+=1;MAX_ACTIVE=max(MAX_ACTIVE,ACTIVE)
@@ -53,7 +62,7 @@ class Handler(fixture.Handler):
 
 
 async def run(out,inert):
-    global DELAY,FAIL,MALFORMED
+    global DELAY,FAIL,MALFORMED,PROPOSAL_DELAY
     from playwright.async_api import async_playwright
     out.mkdir(parents=True,exist_ok=True);checks=[];errors=[]
     def check(condition,label):
@@ -96,6 +105,10 @@ async def run(out,inert):
                     await inert_page(page,http.server_port)
                     await page.add_style_tag(content=(ROOT/'app/static/recipe-shortlist.css').read_text(encoding='utf-8'))
                     await page.add_script_tag(content=(ROOT/'app/static/recipe-shortlist.js').read_text(encoding='utf-8'))
+                    await page.add_style_tag(content=(ROOT/'app/static/setup-proposal.css').read_text(encoding='utf-8'))
+                    await page.expose_function('__qaProposalHash',lambda text:hashlib.sha256(text.encode('utf-8')).hexdigest())
+                    await page.add_script_tag(content=(ROOT/'app/static/setup-proposal.js').read_text(encoding='utf-8'))
+                    await page.evaluate('StudioSetupProposal.mount(window,{hashText:__qaProposalHash})')
                 else:await page.goto(origin+'/?recipe_goal=new-image#create',timeout=15000)
                 await page.wait_for_function("typeof catalog!=='undefined'&&!!selected&&!!document.querySelector('#recipeShortlist')")
                 await page.evaluate("showView('create');document.querySelector('#recipeShortlist').open=true")
@@ -233,6 +246,58 @@ async def run(out,inert):
                 check(await page.locator('#shortlistResults .shortlist-source').count()==3,'report shows byte-check observations for all three images')
                 await page.locator('#shortlistResults article details > summary').first.click()
                 check('Picture 3 →' in await page.locator('#shortlistResults').inner_text(),'candidate details retain the third source slot instead of dropping it')
+                # Actual source-bound proposal entry, real draft snapshot and shared compiler.
+                await page.wait_for_selector('[data-setup-proposal="qwen-3ref"]')
+                proposal_calls=CALLS.count(PROPOSAL);draft_before=await page.evaluate('StudioSetupDraft.capture()')
+                await page.locator('[data-setup-proposal="qwen-3ref"]').focus();await page.keyboard.press('Enter')
+                await page.wait_for_selector('#setupProposalDialog[open]')
+                check(CALLS.count(PROPOSAL)==proposal_calls,'opening setup review does not issue an automatic proposal or mutate Create')
+                check(await page.locator('#proposalPositive').input_value()==draft_before['recipe']['controls'].get('positive',''),'proposal starts with the current draft wording rather than the target example')
+                check(await page.locator('#exportSetupProposal').is_disabled(),'unbuilt proposal has no current export')
+                await page.fill('#proposalPositive','Keep the selected identity; use the second image pose.')
+                await page.fill('#proposalContribution1','face and costume');await page.fill('#proposalAvoid2','identity')
+                await page.click('#buildSetupProposal')
+                await page.wait_for_function("!document.querySelector('#exportSetupProposal').disabled",timeout=10000)
+                check('would change' in await page.locator('#setupProposalResult').inner_text(),'shared setup review shows the full captured-before and proposed-after diff')
+                check(await page.evaluate('StudioSetupDraft.capture()')==draft_before and await page.evaluate(snapshot)==current_before,'building a proposal preserves actual Create values references and lineage')
+                await page.locator('#setupProposalResult details',has_text='Exact primary prompt').locator('summary').click()
+                check('Picture 1 — identity: use face and costume.' in await page.locator('#setupProposalResult').inner_text(),'exact primary prompt uses reviewed Picture contributions from the existing compiler')
+                async with page.expect_download() as download_event:await page.click('#exportSetupProposal')
+                downloaded=await download_event.value;export_path=out/'exported-proposal.json';await downloaded.save_as(export_path)
+                exported=json.loads(export_path.read_text(encoding='utf-8'))
+                check(exported['can_apply'] is False and len(exported['intent']['sources'])==3 and exported['before']==draft_before,'deliberate exported review retains exact before-state and all three sources without apply authority')
+                check(hashlib.sha256(exported['proposal_json'].encode('utf-8')).hexdigest()==exported['proposal_sha256'],'export identity matches exact server JSON bytes, not a lossy browser reserialization')
+                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await page.screenshot(path=str(out/'proposal-desktop.png'))
+                await page.set_viewport_size({'width':390,'height':844})
+                check(await page.locator('#setupProposalDialog').evaluate('n=>n.scrollWidth<=n.clientWidth'),'setup proposal fits the 390px dialog without horizontal overflow')
+                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await page.screenshot(path=str(out/'proposal-mobile.png'))
+                await page.set_viewport_size({'width':1440,'height':1100});await page.evaluate('document.body.style.zoom="2"')
+                check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'setup review keeps the page in bounds at 200% zoom');await page.evaluate('document.body.style.zoom="1"')
+                await page.locator('#setupProposalInputs > summary').click()
+                await page.evaluate("window.proposalInputEvents=[];document.querySelector('#setupProposalDialog form').addEventListener('input',e=>proposalInputEvents.push({id:e.target.id,value:e.target.value,open:document.querySelector('#setupProposalDialog').open}))")
+                await page.fill('#proposalContribution1','revised identity')
+                (out/'proposal-edit-state.json').write_text(json.dumps(await page.evaluate("({events:proposalInputEvents,open:document.querySelector('#setupProposalDialog').open,status:document.querySelector('#setupProposalStatus').textContent,count:document.querySelectorAll('#setupProposalResult details').length,disabled:document.querySelector('#exportSetupProposal').disabled})"),indent=2))
+                check(await page.locator('#setupProposalResult details').count()==0 and await page.locator('#exportSetupProposal').is_disabled(),'editing proposal wording removes the old report and export')
+                PROPOSAL_DELAY=.7;await page.click('#buildSetupProposal')
+                await page.wait_for_function("document.querySelector('#buildSetupProposal').disabled")
+                await page.fill('#proposalPositive','Another requested result');await asyncio.sleep(.9);PROPOSAL_DELAY=0
+                check(await page.locator('#exportSetupProposal').is_disabled() and await page.locator('#setupProposalResult details').count()==0,'late proposal reply cannot revive a report after its wording changes')
+                await page.click('#buildSetupProposal');await page.wait_for_function("!document.querySelector('#exportSetupProposal').disabled")
+                await page.evaluate("recipeChanged()")
+                check(await page.locator('#exportSetupProposal').is_disabled() and await page.locator('#buildSetupProposal').is_disabled(),'real programmatic recipe notification invalidates review and requires renewed chooser context')
+                await page.evaluate("window.proposalClosed=false;document.querySelector('#setupProposalDialog').addEventListener('close',()=>window.proposalClosed=true,{once:true})")
+                await page.keyboard.press('Escape');await page.wait_for_function("window.proposalClosed&&!document.querySelector('#setupProposalDialog').open")
+                check(await page.evaluate("document.activeElement===document.querySelector('#checkStartingRecipes')"),'Escape returns focus to the chooser when old suggestion buttons disappeared')
+                await page.click('#checkStartingRecipes');await page.wait_for_selector('[data-setup-proposal="qwen-3ref"]')
+                await page.click('[data-setup-proposal="qwen-3ref"]')
+                raw_second=studio.assets.file(ordered_ids[1]).read_bytes()
+                try:
+                    studio.assets.file(ordered_ids[1]).write_bytes(b'changed before proposal')
+                    await page.click('#buildSetupProposal');await page.wait_for_function("!document.querySelector('#buildSetupProposal').disabled")
+                    check('Picture 2' in await page.locator('#setupProposalStatus').inner_text() and await page.locator('#exportSetupProposal').is_disabled(),'changed second-source bytes refuse a proposal without losing the editable review form')
+                finally:studio.assets.file(ordered_ids[1]).write_bytes(raw_second)
+                await page.click('#closeSetupProposal')
+                check(await page.evaluate('StudioSetupDraft.capture()')==draft_before,'closing or failing proposal review leaves the original draft intact')
                 await page.locator('[data-slot="2"] [data-move="-1"]').focus();await page.keyboard.press('Enter')
                 check(await page.locator('#shortlistRole1').input_value()=='pose' and await page.locator('#shortlistRole2').input_value()=='identity' and await page.locator('#shortlistResults article').count()==0,'keyboard reordering keeps roles with images and invalidates the previous report')
                 check(await page.locator('#shortlistRole1').evaluate('x=>x===document.activeElement'),'keyboard focus follows the moved source')
@@ -267,13 +332,13 @@ async def run(out,inert):
                 await page.click('#uxFindSelectedRecipes')
                 check(await page.evaluate("location.hash==='#assets'&&assetSelection.has('missing-fourth')") and CALLS.count(PREFIX)==before_calls,'unavailable selected sources remain visible as a refusal instead of being silently omitted')
                 check(not errors,'no page exceptions')
-                forbidden=[x for x in CALLS if x not in (PREFIX,'/api/estimate')]
+                forbidden=[x for x in CALLS if x not in (PREFIX,PROPOSAL,'/api/estimate')]
                 check(not forbidden,'zero generation/install/switch/asset writes: '+str(forbidden))
                 check(MAX_ACTIVE<=1,'bounded one in-flight read in these scenarios')
                 await browser.close()
         finally:
             receipt={'checks':checks,'passed':sum(c['passed'] for c in checks),'errors':errors,'native_browser_transport':not inert,'synthetic_dependencies':True,'calls':CALLS,
-                     'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/recipe-shortlist.js','app/static/recipe-shortlist.css','app/static/studio-shell.js','app/static/studio-workbench.js','studio_workflow/shortlist.py','studio_workflow/shortlist_source.py')}}
+                     'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/recipe-shortlist.js','app/static/recipe-shortlist.css','app/static/studio-shell.js','app/static/studio-workbench.js','studio_workflow/shortlist.py','studio_workflow/shortlist_source.py','studio_workflow/setup_proposal.py','app/static/setup-proposal.js','app/static/setup-proposal.css','app/references.py')}}
             (out/'result.json').write_text(json.dumps(receipt,indent=2),encoding='utf-8')
             http.shutdown();http.server_close();thread.join(5)
 

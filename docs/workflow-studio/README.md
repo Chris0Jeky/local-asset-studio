@@ -1,5 +1,8 @@
 # Workflow Studio
 
+[Reviewed setup application and recovery](SETUP-APPLICATION.md) extends the preview with explicit shared revisions, copy-only Apply, Undo and original-request inspection. Preview remains read-only; see that guide for supported routes and remaining #232 limits.
+
+
 Current entry point, reconciled on **13 September 2026** against main
 `06bd93aed2f019cb978eb5795e9f116cfb7ff749`. Historical implementation notes below
 retain their original verification dates; use this page and [ROADMAP.md](ROADMAP.md)
@@ -13,6 +16,10 @@ use **Create → Recipe library → Help me choose a recipe**. The same read-onl
 For one to three actual images in a deliberate order, use the library's
 **Find recipes for selected images** action and [ordered source advice](ORDERED-SOURCES.md).
 It checks every chosen source and proposed slot without staging or applying anything.
+
+For a complete before/after comparison without replacing Create, choose
+**Preview proposed setup** on a source-bound suggestion; see
+[SETUP-PROPOSALS.md](SETUP-PROPOSALS.md). This is review/export only, not Apply.
 
 ## What you can use now
 

@@ -40,6 +40,7 @@ import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
+import job_resources
 import continuation
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -51,6 +52,7 @@ IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
+PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit into an unobserved/busy queue
 HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the prompt; Stop tracking ends observation sooner
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
@@ -58,6 +60,8 @@ HOST_COMMIT_MINIMUM = 32 * 1024**3
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 
 class StudioError(ValueError): pass
+
+class QueueWaitUnavailable(StudioError): pass
 
 def combo_options(descriptor):
     """Both ComfyUI combo encodings: legacy [[...], {}] and V3 ['COMBO', {options}]."""
@@ -120,6 +124,7 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
 
@@ -1153,14 +1158,27 @@ class Studio:
                 "note": "Static dependency inspection only. No graph was run or code installed. Bypassed nodes are included; filenames selected dynamically may be absent." if available else "ComfyUI is offline: missing node status is unknown. Model filenames were inspected locally; nothing was run."}
 
     def _wait_for_queue(self, base_url=None):
+        deadline = time.monotonic() + PRE_SUBMIT_QUEUE_WAIT_SECONDS
         while True:
-            data = self._request("/queue", timeout=10, base_url=base_url)
-            if not data.get("queue_running") and not data.get("queue_pending"): return
-            time.sleep(2)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0: raise QueueWaitUnavailable("ComfyUI's queue is still busy or its idle check expired")
+            try: data = self._request("/queue", timeout=min(10, remaining), base_url=base_url)
+            except (URLError, HTTPError, TimeoutError, OSError, ValueError, UnicodeError, HTTPException) as exc:
+                raise QueueWaitUnavailable("Could not inspect ComfyUI's queue: " + str(exc)[:250]) from exc
+            # Missing/invalid collections are not evidence that the queue is idle.
+            if not isinstance(data, dict) or any(type(data.get(key)) is not list for key in ("queue_running", "queue_pending")):
+                raise QueueWaitUnavailable("Could not inspect ComfyUI's queue: invalid queue response")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0: raise QueueWaitUnavailable("ComfyUI's queue idle check expired")
+            if not data["queue_running"] and not data["queue_pending"]: return
+            time.sleep(min(2, remaining))
 
     def record_job_failure(self, job, exc):
         """Unexpected local failure cannot certify an unobserved remote outcome."""
         with self.lock:
+            # A failed persistence of the pre-submit queue timeout still proves no POST.
+            if job.get('status') == 'not_submitted' and submission_evidence.never_submitted(job):
+                self._save(job); return
             if job.get('status') not in ('abandoned', 'completed', 'partial', 'failed'):
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 job['status'] = 'uncertain' if uncertain else 'failed'
@@ -1297,7 +1315,25 @@ class Studio:
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
-        self._wait_for_queue(job.get('comfy_url'))
+        try: return self._run_generation(job)
+        finally: self._resource_observation_event('finish', job)
+
+    def _resource_observation_event(self, kind, job, **details):
+        observer = getattr(self, 'resource_observations', None)
+        if observer is None: return
+        # Optional evidence cannot mutate the job or become submission/save authority.
+        try: getattr(observer, kind)(job_resources.event_snapshot(kind, job, **details))
+        except Exception: pass
+
+    def _run_generation(self, job):
+        try: self._wait_for_queue(job.get('comfy_url'))
+        except QueueWaitUnavailable as exc:
+            with self.lock:
+                job['status'] = 'not_submitted'
+                recovery = 'Resume the owning experiment explicitly after checking the queue, or abandon this local job.' if job.get('project_id') else 'You can abandon this local job; its recipe is retained.'
+                job['message'] = str(exc) + '. Nothing was submitted. No retry was queued. ' + recovery
+                self._save(job)
+            return
         for i in range(job["batch_count"]):
             graph, seed = self._batch_graph(job, i)
             try:
@@ -1311,24 +1347,27 @@ class Studio:
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
-                if exc.code == 400:
-                    try: details = json.loads(exc.read(65536))
-                    except (ValueError, OSError): details = {}
-                    job.pop("pending_submission", None)
-                    job["status"] = "failed"
-                    job["validation_errors"] = details.get("node_errors", {})
-                    error = details.get("error", {})
-                    detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
-                    job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
-                    self._save(job); return
-                job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
+                with exc:
+                    if exc.code == 400:
+                        try: details = json.loads(exc.read(65536))
+                        except (ValueError, OSError): details = {}
+                        job.pop("pending_submission", None)
+                        job["status"] = "failed"
+                        job["validation_errors"] = details.get("node_errors", {})
+                        error = details.get("error", {})
+                        detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
+                        job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400]
+                        self._save(job); return
+                    job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
                 job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
             prompt_id = response.get("prompt_id") if isinstance(response, dict) else None
             if not isinstance(response, dict) or not isinstance(prompt_id, str) or not prompt_id.strip():
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
+            self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
             if not self._wait_history(job, submission): return
@@ -1514,9 +1553,10 @@ class Handler(BaseHTTPRequestHandler):
         try: response = urlopen(request, timeout=30)
         except HTTPError as exc:
             if exc.code != 416: raise
-            self.send_response(416)
-            if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
-            self.send_header("Content-Length", "0"); self.end_headers(); return
+            with exc:
+                self.send_response(416)
+                if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
+                self.send_header("Content-Length", "0"); self.end_headers(); return
         with response:
             self.send_response(response.status)
             for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):

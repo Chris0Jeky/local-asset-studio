@@ -153,7 +153,9 @@ print('imported')
             def log_message(self,*args):pass
         http=ThreadingHTTPServer(('127.0.0.1',0),Handler);worker=threading.Thread(target=http.serve_forever,daemon=True);worker.start()
         try:
-            with self.assertRaises(OSError):validator.load_schema(comfy_url=f'http://127.0.0.1:{http.server_port}')
+            with self.assertRaises(OSError) as caught:validator.load_schema(comfy_url=f'http://127.0.0.1:{http.server_port}')
+            self.addCleanup(caught.exception.close)
+            self.assertTrue(caught.exception.closed)
             self.assertEqual(routes,['/object_info'])
         finally:http.shutdown();http.server_close();worker.join(2)
 

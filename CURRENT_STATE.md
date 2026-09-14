@@ -28,6 +28,101 @@ Not verified: Nova Anime XL IL v19 was still downloading at the time of writing 
 boards not re-run; one seed everywhere; the beach pose not run on the board; no warm, RAM-quiet timing; no licence
 judgement; art acceptance stays with the owner (HUMAN_TODO q-25, q-26).
 
+## Collect saved primary character-study results — 14 September 2026
+
+The offline [Production result collector](docs/character-consistency/PRODUCTION-RESULTS.md)
+now turns bound primary-study projects into the existing attempt records and
+summary. It reads saved SQLite rows and job files, checks case/control/reference,
+prompt/graph and Workspace asset ownership, and copies verified candidate bytes.
+Unknown outcomes retain their pending evidence. Never-submitted reservations stay
+spent and separate from the summary's record count. Generic selections produce no
+character review or human acceptance; no executor or allowance is added.
+
+Executed: all 17 focused synthetic tests pass without ResourceWarning, including
+real Production/Workspace persistence and a subprocess CLI check. A retained
+8-by-8-pixel fixture collection contains one completed candidate and one uncertain
+submission, with two reservations used, zero human acceptances and no runtime
+contact. Missing/torn evidence, wrong ownership, changed bytes, hidden generic
+branches, copy-time changes and incorrect budget records are rejected. At initial
+head `8b4dc83`, the strict Windows/Python 3.14 suite passed 2,264 tests (2,199 passed,
+65 skipped) in 302.645 seconds without ResourceWarning. Independent review then
+identified a no-prompt failure miscount. A regression reproduced it for both local
+preflight failure and explicit request rejection; the collector now retains those
+failures and reservations without image-attempt records. The final focused pass
+and hosted integration are recorded on the change's PR; the earlier full local
+result remains scoped to the initial head.
+
+Not verified: collection of the owner's real pilot, running Studio adoption, new
+generation, complete runtime/model identity, benchmark performance, art acceptance
+or licensing. Character-edit campaigns and manually run legacy jobs use their
+existing collectors. Issues #3, #14 and #302 retain their broader acceptance
+requirements. HUMAN_TODO q-7 and q-25 remain open; no live service was changed.
+
+## HTTP resource lifetime — 14 September 2026
+
+The AV fixture now closes its listener and checks that the serving thread ends.
+The full-suite subprocess gate rejects ResourceWarnings, including warnings at
+interpreter shutdown; Windows CI also exercises two fresh mixed-batch interpreters.
+
+The first configured Windows 11 / Python 3.14.3 gate ran 2,246 tests (65 skips)
+without assertion failures or an aborted connection, but correctly failed on five
+HTTPError cleanup warnings. The AV listener warning was absent. Direct regressions
+then reproduced six missing-close assertions: consumed prompt errors, a proxied 416
+including client disconnection, and the two no-redirect readers. Those owners now
+close their error responses; the raw workflow-client contract stays readable and
+its test caller explicitly closes the returned error. Prompt status, retained
+submission intent, no-retry behavior and range headers are covered by the checks.
+
+All 149 focused tests pass without ResourceWarning, and repository validation
+passes (68 graphs, 121 pins, 1,317 paths, 90 LoRA names). At source head `84fafe1`,
+two consecutive strict Windows 11 / Python 3.14.3 full-suite runs passed: each ran
+2,248 tests (2,183 passed, 65 skipped), in 347.552 and 298.334 seconds. Neither
+emitted ResourceWarning or an aborted connection. The local acceptance checks
+for #227 are met; the original WinError10053 is not attributed to one exclusive
+cause. Final independent review and hosted qualification are recorded on PR #320.
+
+One hosted mixed-batch child exceeded its 45-second limit without retaining child
+output. An unchanged-head comparison passed; that does not explain the timeout.
+The diagnostic gap and unresolved cause are retained under #323. No running
+Studio, ComfyUI, model or generation was changed; HUMAN_TODO q-7 and q-25 stay open.
+
+## Optional job resource receipts — 14 September 2026
+
+The existing generation coordinator now has a default-disabled resource observer
+([operator guide](docs/performance/JOB-OBSERVATIONS.md), first slice of #302).
+It records exact expanded graph hashes after the pending save, validated response
+facts and coordinator exit snapshots in bounded sidecars. One background helper
+reuses the finite sampler and offline reducer; completion signals stop without
+waiting for telemetry I/O. The result hashes bind context, events, raw samples and
+summary to the job. Listener PID/create-time/command brackets never rebind after a
+gap. Fixed exclusive slots retain at most 32 observations without deleting old work.
+
+Executed locally: 21 CPU-only synthetic tests pass, covering coordinator success,
+dropped replies, failed core/telemetry saves, batch graph identity, blocked sampling,
+partial receipts, resource limits and epoch changes. Independent injected-sampler
+smokes retained a complete 2/2 profile and a valid interrupted 0/3 profile; both raw
+hashes matched their reducer summaries. These are fixture results, with no live
+process/HTTP/GPU observation or generation. Broader integration and review evidence
+are recorded on this change's PR. The full offline suite passed: 2,235 total,
+2,170 passed and 65 optional skips in 267.542 seconds; the validator passed with
+68 graphs, 121 pins, 1,301 paths and 90 LoRA names. The independent review found no
+blocking defect. Existing fixture warnings, including an unclosed socket warning,
+remain in the retained log; this does not resolve #227.
+
+The review fix places receipts under `.runtime/job-resource-observations/`, covered
+by both Git ignore and the existing operational-payload guard. All 22 focused
+tests pass after that change. A synthetic disposable-index comparison confirmed
+the previous directory was unignored and accepted by the validator; the protected
+directory is ignored and a force-staged receipt is rejected. The real index was
+unchanged. The earlier full-suite result remains scoped to the initial implementation.
+
+Not verified: running Studio adoption, real resource overhead or performance,
+complete loaded-code/model/input identity, actual geometry/precision, cold/warm
+state, phase timing, finite benchmark execution and an authorised real baseline.
+Those remain open under #302; #175 retains public attachment ownership. No live
+configuration, process, allowance or human decision changed. HUMAN_TODO q-7 and
+q-25 remain open; successful generation, art acceptance and licensing stay separate.
+
 ## Style + Pose without Qwen — 14 September 2026
 
 Two new SDXL recipes, **Style + Pose (WAI v17)** and **Style + Pose (Animagine XL 4)**, take the look of one picture and

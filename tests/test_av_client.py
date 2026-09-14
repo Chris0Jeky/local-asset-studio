@@ -33,7 +33,9 @@ class ClientTests(unittest.TestCase):
     def setUpClass(cls):
         cls.server=ThreadingHTTPServer(('127.0.0.1',0),Fixture);cls.thread=Thread(target=cls.server.serve_forever,daemon=True);cls.thread.start();cls.url='http://127.0.0.1:'+str(cls.server.server_port)
     @classmethod
-    def tearDownClass(cls):cls.server.shutdown();cls.thread.join()
+    def tearDownClass(cls):
+        cls.server.shutdown();cls.server.server_close();cls.thread.join(timeout=5)
+        if cls.thread.is_alive():raise AssertionError('AV client fixture server did not stop')
     def setUp(self):Fixture.calls=[]
     def test_loopback_and_redirect_restrictions(self):
         for url in ('https://127.0.0.1:8191','http://example.invalid','http://127.0.0.1:8191/path','http://user@127.0.0.1:8191'):

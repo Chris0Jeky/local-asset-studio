@@ -255,7 +255,9 @@ class BackendSafetyTests(unittest.TestCase):
         try:
             profile={'url':f'http://127.0.0.1:{http.server_port}'}
             self.assertEqual(self.manager.request(profile,'/queue'),IDLE)
-            with self.assertRaises(OSError):self.manager.request(profile,'/redirect')
+            with self.assertRaises(OSError) as caught:self.manager.request(profile,'/redirect')
+            self.addCleanup(caught.exception.close)
+            self.assertTrue(caught.exception.closed)
             with self.assertRaisesRegex(ValueError,'observation limit'):self.manager.request(profile,'/large')
         finally:http.shutdown();http.server_close();thread.join(2)
 
