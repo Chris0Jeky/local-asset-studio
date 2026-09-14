@@ -544,6 +544,33 @@ def _reuse(c):
     return lineage == 'asset-1', 'lineage parent=%s, run control enabled=%s' % (lineage, c.ready())
 
 
+@driver('restyle-recent-output-with-a-look')
+def _restyle(c):
+    """The owner's 14 Sep 2026 report: a liked output, a second picture with the wanted look, no idea which recipe."""
+    c.boot('#create')
+    c.page.wait_for_timeout(600)
+    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
+    c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
+    c.act('#uxPrepareHandoff')
+    c.page.wait_for_timeout(800)
+    c.act('#uxBlockers', 'read', note='what is still missing after preparing')
+    c.act('#uxPullAsset', note='add the picture whose look is wanted')
+    if c.page.locator('#uxSourcePicker[open]').count():
+        try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
+        except Exception: pass
+        c.act('[data-ux-pull="asset-4"]', note='live mode never pulls: it writes server state' if c.live else 'a saved picture for Picture 1')
+        if c.page.locator('#uxSourcePicker[open]').count():
+            try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
+            except Exception: pass
+    else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
+    c.page.wait_for_timeout(400)
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    pose = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded')
+    filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0')
+    return c.ready() and pose and filled >= 1, 'pose picture attached=%s, %d board picture(s), run control enabled=%s' % (pose, filled, c.ready())
+
+
 @driver('prompt-lab-to-create')
 def _prompt_lab(c):
     c.goto('/prompt-lab.html', note='wording workspace')

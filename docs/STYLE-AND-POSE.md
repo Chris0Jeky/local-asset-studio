@@ -16,6 +16,34 @@ custom nodes that were already installed on this PC:
 The Qwen Atelier recipes remain the route when you also need an **identity** picture; these two
 recipes take the character from the prompt, not from a picture.
 
+## From a finished picture: Continue with this → Restyle
+
+Added 14 September 2026 after the owner tried to give a liked output a different look, chose *Refine → SDXL •
+stronger variation* (the closest thing on offer), attached the style picture into its single slot and got two
+blockers nobody could act on. The Continue handoff now has a fifth route, **Restyle**, and the one-slot case asks
+instead of blocking.
+
+1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. The recipes
+   listed are the five Style + Pose boards; the source's own family is listed first, WAI and Nova otherwise.
+   The dialog says what will happen: the picture keeps its pose, the look comes from the board, the prompt says
+   who the character is, and the source's submitted description is copied into the prompt.
+2. **Prepare in Create** attaches the source as the **Pose picture** (not on the board) and puts the cursor on
+   *Picture 1*. The one remaining condition reads *Add at least 1 picture whose look you want to the style
+   board (Picture 1)* with a *Show the empty slot* button.
+3. Drop the style picture on Picture 1 or use **Pull from library** (it opens on Picture 1 and closes itself once
+   the board holds one picture). Generate reads **Restyle source →**.
+4. If you were already continuing on a one-slot recipe and add a second picture (file or library pull), Create
+   no longer blocks: a panel asks what the picture is for — *Use its look → Restyle the source* (opens the
+   handoff at Restyle, prepares, and puts that picture on Picture 1), *Start from this picture instead*
+   (ends the continuation), or *Keep the source, drop this picture*.
+5. If the pose picture ever goes missing, the condition says *Pose picture no longer holds the picture you chose
+   to continue* and its button **Put the source back** re-attaches the same asset (verified by hash) without
+   reopening anything.
+
+The server checks the same things: the claim's source must sit on the pose input, empty board slots must be
+pruned (no recipe example can stand in), and at least the board minimum must be attached; the Studio job stores
+the `restyle` intent with the source hash. Measured run below under *Restyle from a finished picture*.
+
 ## Step by step
 
 1. Open the Create view and choose **Style + Pose (WAI v17)** (or the Animagine one if you prefer

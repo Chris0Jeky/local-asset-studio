@@ -437,6 +437,47 @@
           "expect": "the export appears in the studies list"
         }
       ]
+    },
+    {
+      "id": "restyle-recent-output-with-a-look",
+      "goal": "Take a recent output I like and paint it in the look of another picture, keeping its pose, without knowing which recipe does that.",
+      "starting_view": "create",
+      "success_condition": "The recent output is attached as the pose picture, one saved picture sits on the style board, and the run control reports ready while zero generation requests have been sent.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "continue with a recent output from the runs list",
+          "expect": "a dialog asks where the picture should go next"
+        },
+        {
+          "intent": "choose the route that borrows a look from another picture",
+          "expect": "the Restyle route is selected and names a style-and-pose recipe"
+        },
+        {
+          "intent": "read what the route will do with this picture",
+          "expect": "the dialog says the picture keeps its pose and the look comes from a board of pictures"
+        },
+        {
+          "intent": "prepare it in Create",
+          "expect": "Create opens with the picture attached as the pose picture"
+        },
+        {
+          "intent": "read what is still missing before running",
+          "expect": "the readiness list asks for a style picture and offers to show the empty slot"
+        },
+        {
+          "intent": "open the library picker to add the picture whose look is wanted",
+          "expect": "the picker opens on the first board slot"
+        },
+        {
+          "intent": "pick a saved picture for the board",
+          "expect": "Picture 1 shows the chosen picture"
+        },
+        {
+          "intent": "read the run control",
+          "expect": "the run control is enabled and nothing has been submitted"
+        }
+      ]
     }
   ]
 }

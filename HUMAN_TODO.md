@@ -8,7 +8,17 @@ The earlier creative choices and q-1 through q-6 below are answered. The configu
 
 The live repository visibility was observed as **PUBLIC** on 13 September 2026. This records the observed state; it does not infer owner approval or a visibility change.
 
-## Style + Pose recipes — open item
+## Style + Pose recipes — open items
+
+**q-27 — creative review of the Restyle route (open).** *Continue with this → Restyle* now sends a finished
+picture to a Style + Pose board as its pose picture. Two runs on 14 September 2026 restyled the throne witch
+(Nova output `Nova_00004_`) with one of your imported pictures (`140800824_p0_master1200.jpg`) on the board:
+style weight 0.7 (the default) and 0.9 (*Style stronger*); sheet `examples/style-pose/restyle-continue-nova.jpg`,
+evidence in `experiments/curated/style-pose-matrix/2026-09-14-restyle/`. The pose held in both; the look moved to
+a flat, heavier-lined cel style that does not read as the soft rendering of the style picture. Decide whether a
+single-picture board is enough for your target look or whether the route should default to your three-picture
+board, and whether *Style stronger* should be the default for Restyle. Agents do not tick this.
+
 
 **q-26 — which of the seven new Illustrious LoRAs may the character pack use (open).** civitai's flags differ per file and are recorded in `models/library.json`: Mishima Kurone, Momoko and Konosuba SD8 allow Image/Rent/Sell; Glossy, Fantastic Days and Detail enhancer allow Image and Rent but not Sell; Shiny Nai allows Rent only (no Image, no Sell). The Mishima Kurone and Momoko files are artist-style LoRAs the artists did not license. Decide which are acceptable for the pack's intended use; the recipes accept any of them by filename. Agents do not tick this.
 

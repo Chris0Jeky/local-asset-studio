@@ -2,16 +2,20 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioContinuation=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const fields=['intent','preset_id','reference_file','source_asset_id','source_sha256','template_sha256','version'];
+  const INTENTS=['edit','repair','restyle','animate','mesh'];
   function normalize(value){
     if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join()!==fields.join()||value.version!==1)return null;
     for(const key of fields.filter(k=>k!=='version'))if(typeof value[key]!=='string'||!value[key]||value[key].length>255)return null;
-    if(!['edit','repair','animate','mesh'].includes(value.intent)||!['source_sha256','template_sha256'].every(k=>/^[a-f0-9]{64}$/.test(value[k]))||!/^[a-f0-9]{32}_[A-Za-z0-9._-]+\.(png|jpg|webp)$/.test(value.reference_file))return null;
+    if(!INTENTS.includes(value.intent)||!['source_sha256','template_sha256'].every(k=>/^[a-f0-9]{64}$/.test(value[k]))||!/^[a-f0-9]{32}_[A-Za-z0-9._-]+\.(png|jpg|webp)$/.test(value.reference_file))return null;
     return Object.fromEntries(fields.map(k=>[k,value[k]]));
   }
-  const routes={edit:['image-to-image','instruction-edit','localized-detail','upscale'],repair:['image-to-image','localized-detail','upscale','masked-repair'],animate:['image-to-video'],mesh:['image-to-3d']};
+  const routes={edit:['image-to-image','instruction-edit','localized-detail','upscale'],repair:['image-to-image','localized-detail','upscale','masked-repair'],restyle:['restyle'],animate:['image-to-video'],mesh:['image-to-3d']};
+  // Which declared input receives the continuation source. A style board keeps its pose picture on last_reference.
+  function sourceInput(cap){return cap?.source_input==='last_reference'?'last_reference':'reference';}
+  function sourceLabel(preset){const cap=preset?.continuation_capability;return sourceInput(cap)==='last_reference'?preset.last_reference_label||'Pose picture':preset?.reference_slots?.length?'Picture 1':preset?.reference_label||'Reference';}
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
-    const prefer={edit:['qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    const prefer={edit:['qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['style-pose-wai','style-pose-nova','style-pose-yumeflux'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
     const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(family&&p.family===family?-100:0)+(prefer.includes(p.id)?prefer.indexOf(p.id):100);
     return presets.filter(p=>p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
   }
@@ -32,26 +36,42 @@
     for(const [key,value]of Object.entries(overrides||{}))if(!protectedKeys.has(key))out[key]=value;
     return out;
   }
-  function blockers(claim,preset,controls,parents,refs=[]){
+  // Each blocker names the control it is about, in the words on screen. `code` lets the page offer the matching repair.
+  function blockerItems(claim,preset,controls,parents,refs=[]){
     if(!claim)return[];
-    if(!normalize(claim))return['Continuation context is invalid. Reopen Continue with this asset.'];
-    const cap=preset?.continuation_capability,reasons=[];
-    if(preset?.id!==claim.preset_id||!cap?.consumes_source)reasons.push('This route cannot consume the selected source. Choose a source-based route or leave continuation explicitly.');
-    if(cap&&(!routes[claim.intent]?.includes(cap.operation)||cap.template_sha256!==claim.template_sha256))reasons.push('The destination operation or graph changed. Reopen the handoff before running.');
-    if(cap?.requires_mask)reasons.push('Prepare the RGBA repair mask in the dedicated repair workflow first.');
-    const files=preset?.reference_slots?.length?refs.map(item=>item?.file):[controls.reference,...(preset?.last_reference?[controls.last_reference]:[])];
-    if(files[0]!==claim.reference_file||!parents?.includes(claim.source_asset_id))reasons.push('The source attachment changed or is missing. Reopen Continue with the intended image. No example fallback is allowed.');
-    if(files.length!==(cap?.reference_count||0)||files.some(file=>typeof file!=='string'||!file))reasons.push('Attach every source input explicitly. An authored example cannot supply a missing continuation frame.');
-    if(preset?.positive&&!String(controls.positive||'').trim())reasons.push(cap?.prompt_role==='motion'?'Describe the motion and camera movement before running.':cap?.prompt_role==='instruction'?'Say what to change and what to keep before running.':'Describe the desired image before running. No source description was available to copy.');
-    return reasons;
+    if(!normalize(claim))return[{code:'invalid',message:'This continuation record is unreadable. Reopen Continue with this asset.'}];
+    const cap=preset?.continuation_capability,items=[],add=(code,message)=>items.push({code,message});
+    if(preset?.id!==claim.preset_id||!cap?.consumes_source)add('route','This recipe cannot read the source picture. Pick a source-based recipe, or leave this continuation.');
+    if(cap&&(!routes[claim.intent]?.includes(cap.operation)||cap.template_sha256!==claim.template_sha256))add('graph','The recipe graph changed since the handoff. Reopen Continue with this asset.');
+    if(cap?.requires_mask)add('mask','This recipe needs a repair mask, not the plain source. Prepare the RGBA mask first.');
+    const filled=file=>typeof file==='string'&&!!file,missing=[];let sourceFile;
+    if(sourceInput(cap)==='last_reference'){
+      sourceFile=controls.last_reference;
+      const pictures=refs.filter(r=>filled(r?.file)&&!r.missing).length,minimum=cap?.board_min||1;
+      if(refs.some(r=>r?.missing))missing.push('A board picture is missing');
+      else if(pictures<minimum)add('board','Add at least '+minimum+' picture'+(minimum===1?'':'s')+' whose look you want to the style board (Picture 1).');
+    }else if(preset?.reference_slots?.length){
+      sourceFile=refs[0]?.file;
+      refs.forEach((r,i)=>{if(i&&(!filled(r?.file)||r.missing))missing.push('Picture '+(i+1)+' is empty');});
+      if(preset.last_reference&&!filled(controls.last_reference))missing.push((preset.last_reference_label||'Last frame')+' is empty');
+    }else{
+      sourceFile=controls.reference;
+      if(preset?.last_reference&&!filled(controls.last_reference))missing.push((preset.last_reference_label||'Last frame')+' is empty');
+    }
+    if(sourceFile!==claim.reference_file||!parents?.includes(claim.source_asset_id))add('source',sourceLabel(preset)+' no longer holds the picture you chose to continue. Put it back, or leave this continuation to start from another picture.');
+    if(missing.length)add('inputs',missing.join('; ')+'. Attach a picture there; the recipe example cannot stand in while continuing.');
+    if(preset?.positive&&!String(controls.positive||'').trim())add('wording',cap?.prompt_role==='motion'?'Describe the motion and camera movement before running.':cap?.prompt_role==='instruction'?'Say what to change and what to keep before running.':'Describe the result before running. No source description was available to copy.');
+    return items;
   }
+  function blockers(claim,preset,controls,parents,refs=[]){return blockerItems(claim,preset,controls,parents,refs).map(item=>item.message);}
   function guidance(preset,source){
     const cap=preset?.continuation_capability;
     if(!cap?.consumes_source)return['This recipe does not have a verified source-to-output connection.'];
-    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
+    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','restyle':'Keeps this picture’s pose and paints a new image in the look of the pictures you put on the style board. Its colours, costume and background are not copied; the prompt says who the character is.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
     if(cap.prompt_role==='description')text.push(source?.prompt_role==='description'&&source?.positive?'Copies this output’s actual submitted description. You may refine the description without changing the source.':'No reusable image description is available. Write one; recipe example text will stay out of the prompt.');
     if(source?.preset_id&&source.preset_id!==preset.id&&cap.prompt_role!=='none')text.push('Different source recipe: '+(source.preset_name||source.preset_id)+'. Source sampling settings, seed and adapters are not copied. Check destination style triggers; low denoise does not guarantee the same look.');
-    if(cap.reference_count>1)text.push('This attaches Picture 1 only. Add '+(cap.reference_count-1)+' more required reference(s).');
+    if(cap.operation==='restyle')text.push('Your picture becomes the '+(preset.last_reference_label||'pose picture').toLowerCase()+'. After preparing, add one to three pictures whose look you want to the style board.');
+    else if(cap.reference_count>1)text.push('This attaches Picture 1 only. Add '+(cap.reference_count-1)+' more required reference(s).');
     if(preset.runtime_block)text.push(preset.runtime_block);
     return text.filter(Boolean);
   }
@@ -74,5 +94,5 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,guidance,variantHelp,destinations};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel};
 });
