@@ -266,12 +266,18 @@ class SetupDrafts:
                 row.update(left);receipt['staged'][-1]=row;receipt['attempting_slot']=None;self._progress(receipt,sha)
             fresh_again=build_proposal(core['request'],self.studio)
             need(fresh_again['proposal_sha256']==fresh['proposal_sha256'] and runtime==self._runtime(),'Source, graph or runtime changed during staging; draft unchanged')
-            controls=copy.deepcopy(intent['controls']);controls['reference']=receipt['staged'][0]['file']
+            controls=copy.deepcopy(intent['controls']);board=intent.get('reference_board')
             named=all(x['role_mode']=='prompt-guidance' for x in intent['sources'])
-            if not named and len(receipt['staged'])==2:controls['last_reference']=receipt['staged'][1]['file']
+            if board:
+                need(all(x['role_mode']=='style-board' for x in intent['sources']),'Mixed board source modes are not supported')
+                references=copy.deepcopy(receipt['staged'])
+                for index in range(len(references),board['slot_count']):
+                    references.append({'slot':index+1,'role':board['roles'][index],'file':None,'pruned':True,'contribution':'','avoid':''})
+            else:
+                controls['reference']=receipt['staged'][0]['file'];references=copy.deepcopy(receipt['staged']) if named else []
+                if not named and len(receipt['staged'])==2:controls['last_reference']=receipt['staged'][1]['file']
             draft={'version':1,'updatedAt':0,'templateHash':intent['template_sha256'],'pendingInputs':[],
-                   'recipe':{'preset':intent['preset_id'],'controls':controls,'batch':1,
-                             'references':copy.deepcopy(receipt['staged']) if named else [],
+                   'recipe':{'preset':intent['preset_id'],'controls':controls,'batch':1,'references':references,
                              'parent_assets':intent['lineage']['parents'],'parent_by_input':intent['lineage']['by_input']}}
             validate_draft(draft)
             record={'draft':draft,'inputs':self._inputs(draft),'runtime':runtime,'graph_sha256':self._graph_identity(draft)}
