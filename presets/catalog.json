@@ -6201,7 +6201,8 @@
       "category": "Characters",
       "family": "FLUX.2 Klein 4B",
       "graph": "workflows/api/restyle-klein-api.json",
-      "verified": false,
+      "verified": true,
+      "execution_note": "Executed 2026-09-14 through the page as a Continue with this -> Restyle continuation of the throne witch (asset 9f2fca4d..., source of the earlier Style + Pose runs), every control as prepared: the wording prepared by the handoff (finish, keep clause, the source's submitted tag description), canvas fitted to the source at 1040x1520, 6 steps, CFG 1.0, seed 2026091401: job db25b173-e39c-4656-96bf-b377ded6bf80 (prompt 7a205e07-8375-4f41-9f1e-99cba8e788cf, 65.9 s in ComfyUI including the model load; the same graph ran in 16-20 s warm during research), output Restyle/Klein_00001_.png (sha256 6248d7c07a987780...) inspected: pose, wink, hat, red-and-black robe with gold trim and the throne kept, soft high-key finish, clean detailed eyes (experiments/curated/style-pose-matrix/2026-09-14-restyle/, sheet examples/style-pose/restyle-klein-proving.jpg). One run, not art acceptance; the look is HUMAN_TODO q-27.",
       "modality": "image",
       "commercial_note": "FLUX.2 Klein 4B is Apache-2.0 (black-forest-labs/FLUX.2-klein-4b-fp8); the Qwen3 4B text encoder and the FLUX.2 VAE follow their own cards; the picture you restyle keeps its own terms. A successful render is not legal clearance.",
       "positive": [

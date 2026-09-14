@@ -552,12 +552,14 @@ def _restyle(c):
     c.act('#gallery .reference-output', note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
     c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
+    try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
+    except Exception: pass
     c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass')
     c.act('#uxPrepareHandoff')
     c.page.wait_for_timeout(800)
-    c.act('#uxBlockers', 'read', note='what is still missing after preparing')
     board = c.page.evaluate('typeof selected !== "undefined" && !!(selected.continuation_capability && selected.continuation_capability.board_min)')
     if board:
+        c.act('#uxBlockers', 'read', note='what is still missing after preparing')
         c.act('#uxPullAsset', note='add the picture whose look is wanted')
         if c.page.locator('#uxSourcePicker[open]').count():
             try: c.page.select_option('#uxSourceSlot', '0', timeout=3000)
@@ -567,7 +569,9 @@ def _restyle(c):
                 try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
                 except Exception: pass
         else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
-    else: c.act('#positive', 'read', note='the prepared wording: the finish, what to keep, the source description; no board to fill')
+    else:
+        c.act('#uxContinuation', 'read', note='the source panel: nothing missing, no board to fill')
+        c.act('#positive', 'read', note='the prepared wording: the finish, what to keep, the source description')
     c.page.wait_for_timeout(400)
     c.act('#generate', 'read', note='readiness only; never pressed')
     attached = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded' if board else 'typeof uploaded !== "undefined" && !!uploaded')
