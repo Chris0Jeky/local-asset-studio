@@ -146,7 +146,7 @@
       const last = mainPage && typeof lastUploaded !== 'undefined' ? lastUploaded : null;
       const roleCount = p?.reference_slots?.length || 0;
       const files = ['reference','lastReference'].flatMap(id => [...(document.getElementById(id)?.files || [])].map(f => [id,f.name,f.size,f.lastModified]));
-      const refs = roleCount ? {attached:roles.length === roleCount && roles.every(r => typeof r.file === 'string' && r.file), missing:roles.some(r => r.missing)}
+      const refs = roleCount ? C.referenceSlots(p, roles)
         : {attached:typeof reference === 'string' && !!reference && (!p?.last_reference || (typeof last === 'string' && !!last)), selected:files.length > 0};
       return {
         recipe:p ? {id:p.id, backend_id:p.backend_id || 'primary', runtime_block:p.runtime_block || null} : null,
