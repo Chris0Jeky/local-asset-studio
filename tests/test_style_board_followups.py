@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from test_continuation import ROOT as REPOSITORY_ROOT, ContinuationTests
 from test_recipe_shortlist import make_studio
 from test_recipe_shortlist_ordered import route, sources
 from studio_workflow.setup_proposal import request as propose
@@ -160,6 +163,66 @@ class StyleBoardSetupTests(unittest.TestCase):
         self.assertEqual(len(compiled), 3)
         self.assertEqual(graph[prompt_node]["inputs"][prompt_field], self.q["positive"])
         self.assertFalse(result["generation_submitted"])
+
+
+class ShippedStyleBoardReachabilityTests(unittest.TestCase):
+    def setUp(self):
+        self.case = ContinuationTests(methodName="test_output_prompt_is_matched_by_prompt_id_not_template_or_batch_index")
+        self.case.setUp()
+        self.addCleanup(self.case.doCleanups)
+        catalog = json.loads((REPOSITORY_ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        self.nova = copy.deepcopy(next(preset for preset in catalog["presets"] if preset["id"] == "style-pose-nova"))
+        self.graph_path = self.case.root / self.nova["graph"]
+        self.graph_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(REPOSITORY_ROOT / self.nova["graph"], self.graph_path)
+        local = json.loads((self.case.root / "presets/catalog.json").read_text(encoding="utf-8"))
+        local["presets"].append(self.nova)
+        (self.case.root / "presets/catalog.json").write_text(json.dumps(local), encoding="utf-8")
+        graph = json.loads(self.graph_path.read_text(encoding="utf-8"))
+        self.schema = {node["class_type"]: {"input": {"required": {}, "optional": {}}} for node in graph.values()}
+
+    def test_real_catalog_nova_reaches_board_proposal_without_inventing_pose_or_reference(self):
+        preset = self.case.studio.preset("style-pose-nova")
+        capability = preset["continuation_capability"]
+        self.assertEqual((capability["operation"], capability["reference_count"]), ("restyle", 4))
+        source = {"asset_id": self.case.asset_id, "sha256": self.case.attachment["sha256"], "role": "style"}
+        draft = {
+            "version": 1,
+            "updatedAt": 0,
+            "templateHash": capability["template_sha256"],
+            "pendingInputs": [],
+            "recipe": {
+                "preset": preset["id"],
+                "controls": {"positive": "Before"},
+                "batch": 1,
+                "references": [],
+                "parent_assets": [],
+                "parent_by_input": {},
+            },
+        }
+        request = {
+            "goal": "reference-image",
+            "preset_id": preset["id"],
+            "expected_template_sha256": capability["template_sha256"],
+            "sources": [source],
+            "draft": draft,
+            "positive": "Keep the composition",
+            "negative": "",
+            "guidance": [{"contribution": "", "avoid": ""}],
+        }
+        with patch.object(self.case.studio, "node_info", return_value=self.schema), \
+             patch.object(self.case.studio.library, "manifest", return_value={"assets": []}), \
+             patch.object(self.case.studio, "preset_requirements", return_value=[]), \
+             patch.object(self.case.studio, "host_commit_preflight", return_value=None):
+            report = propose(request, self.case.studio)
+        intent = report["intent"]
+        self.assertEqual(report["observation"]["candidate"]["operation"], "restyle")
+        self.assertEqual(intent["sources"][0]["role_mode"], "style-board")
+        self.assertEqual(intent["reference_board"]["minimum"], 1)
+        self.assertNotIn("reference", intent["controls"])
+        self.assertNotIn("last_reference", intent["controls"])
+        self.assertEqual(intent["lineage"]["by_input"], {})
+        self.assertFalse(report["generation_submitted"])
 
 
 if __name__ == "__main__":
