@@ -18,16 +18,34 @@ recipes take the character from the prompt, not from a picture.
 
 ## From a finished picture: Continue with this → Restyle
 
+**Restyle a picture (WAI v17 + light-novel look)** is the route's first destination since the evening of 14 September
+2026, after the owner's first Restyle result (a Style + Pose board with a single style picture) came out flat, garish and
+without the throne, and they supplied a target render. It keeps the picture instead of only its skeleton: the picture to
+restyle is scaled to about 1.5 megapixels at its own aspect ratio (832×1216 becomes 1024×1504) and VAE-encoded as the starting latent (Denoise 0.85; *Keep more* 0.75, *Repaint
+almost everything* 0.95) and its OpenPose skeleton drives the ControlNet; WAI v17 with the Mishima Kurone light-novel LoRA
+at 0.8 (Momoko in slot 2 as a variant) and finish terms appended inside the graph (soft lighting, pastel colours, light
+background, delicate lineart; negative: dark, high contrast, oversaturated, neon) give the look at CFG 4.5; a FaceDetailer
+pass with the same styled model repaints eyes and lashes at 0.4. **The style board ships off (Style weight 0)**: measured
+against the owner's own target, the IP-Adapter board tinted the costume towards the style picture's palette at every weight
+from 0.2 to 0.6 and over-drove it to neon at 1.0, whichever weighting; *Board touch (0.3)* and *Board strong (0.6)* are
+variants for when you do want that palette. One board picture is still required by the graph (issue #351). Proving run
+through the page: job `0c13590c-d204-4634-b045-cc03d5a3f2e3`, 86 s; sheets `examples/style-pose/restyle-picture-proving.jpg`
+and `restyle-picture-research.jpg`; the twenty-three research renders behind the defaults are tabled in
+`experiments/curated/style-pose-matrix/2026-09-14-restyle/README.md`. The five Style + Pose boards remain listed after it
+for the original behaviour (skeleton only, look from the board).
+
 Added 14 September 2026 after the owner tried to give a liked output a different look, chose *Refine → SDXL •
 stronger variation* (the closest thing on offer), attached the style picture into its single slot and got two
 blockers nobody could act on. The Continue handoff now has a fifth route, **Restyle**, and the one-slot case asks
 instead of blocking.
 
-1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. The recipes
-   listed are the five Style + Pose boards; the source's own family is listed first, WAI and Nova otherwise.
-   The dialog says what will happen: the picture keeps its pose, the look comes from the board, the prompt says
-   who the character is, and the source's submitted description is copied into the prompt.
-2. **Prepare in Create** attaches the source as the **Pose picture** (not on the board) and puts the cursor on
+1. On a recent run or in the Asset library, press **Continue with this →** and choose **Restyle**. *Restyle a picture*
+   is listed first, then the five Style + Pose boards (the source's own family first among those).
+   The dialog says what will happen: *Restyle a picture* keeps the picture and repaints it in the recipe's finish (the
+   board adds palette only by Style weight); a Style + Pose board keeps the pose and takes the look from the board; either
+   way the prompt says who the character is and the source's submitted description is copied into the prompt.
+2. **Prepare in Create** attaches the source as the **Picture to restyle** (*Pose picture* on a Style + Pose board; not on
+   the board either way) and puts the cursor on
    *Picture 1*. The one remaining condition reads *Add at least 1 picture whose look you want to the style
    board (Picture 1)* with a *Show the empty slot* button.
 3. Drop the style picture on Picture 1 or use **Pull from library** (it opens on Picture 1 and closes itself once
