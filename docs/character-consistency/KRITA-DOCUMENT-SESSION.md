@@ -116,11 +116,15 @@ This is an unresolved native view-binding failure, not a passing GUI proof;
 no further action-probe retry was made. The intended window/action interfaces
 are documented by [Krita's native API](https://api.kde.org/legacy/krita/html/classWindow.html).
 
-Independent review found no HIGH/CRITICAL blockers. It identified the non-blocking
-dependency-manifest gap tracked in [#225](https://github.com/Chris0Jeky/local-asset-studio/issues/225):
-import checks the dependencies listed in the request, but an edited request can
-remove upstream pins without changing the pinned native source/result. Treat
-the request as cooperative local data, not proof against request tampering.
+Independent review of that historical native proof identified the non-blocking
+dependency-manifest gap in [#225](https://github.com/Chris0Jeky/local-asset-studio/issues/225).
+The subsequent [dependency-binding correction](../reconciliation/2026-09-13-krita-dependency-binding.md)
+records the full manifest at protected package preparation and requires a live
+request to match it before import. Old packages must be prepared anew in a new
+output directory for live import; file-based legacy validation is retained.
+The correction has synthetic document/package regression evidence, not a new
+native or menu proof. Local packages remain cooperative inputs, not signed
+authorization against a writer who can replace both package and request.
 
 This proves native API behavior on the stated fixture. The menu/file dialogs,
 keyboard interaction, larger documents, neural repair quality, owner acceptance
