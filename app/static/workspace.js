@@ -338,6 +338,7 @@ function assetPreview(asset, detail=false) {
   if(asset.media_type==='audio')return detail?'<audio controls src="'+url+'"></audio>':'<span class="asset-type-placeholder">♫<small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder">◇<small>3D model</small></span>';
 }
+function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope);
   $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
@@ -357,21 +358,11 @@ function renderAssets() {
   $('#reviewNext').disabled=!pending.length;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
-  $('#assetGrid').innerHTML=(grouped?groups.map(g=>'<section class="asset-group"><h4>'+esc(g.label)+'<small>'+g.assets.length+'</small></h4><div class="asset-group-items">'+g.assets.map(assetCardHTML).join('')+'</div></section>').join('')
-    :assets.map(assetCardHTML).join(''))||assetEmptyState();
+  StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
   renderAssetSelection();
 }
-function assetCardHTML(a) {
-  return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';
-}
-// One saved review repaints one card. Membership changes (scope, trash, filters) still re-read the whole projection.
-function updateAssetCard(id) {
-  if(!/^[\w.:-]+$/.test(id||''))return renderAssets();
-  const asset=assetState.assets.find(a=>a.id===id),node=document.querySelector?.('[data-asset-card="'+id+'"]');
-  if(!node || !asset || !visibleAssets().some(a=>a.id===id))return renderAssets();
-  node.outerHTML=assetCardHTML(asset);
-  renderAssetSelection();
-}
+// Reconcile the saved record without fetching; retain cached nodes and current group membership.
+function updateAssetCard() {renderAssets();}
 function renderAssetSelection() {
   $('#assetBulk').hidden=!assetSelection.size;
   $('#assetSelectionCount').textContent=assetSelection.size+' selected';
