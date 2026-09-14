@@ -66,7 +66,12 @@ four single figures, no hats, tail left out, seen from behind with hands on hips
 (`examples/style-pose/combine-klein-owner-fix.jpg`, prompts `a20e6df1`, `39e6ce34`, `f73b9c0b`, `a27ae00d`, 21 s each
 warm). The lean stayed mild because the fill said "leaning forwards": the picture guides, the words decide, so say how
 far the figure bends and what each hand does; the board hint now says so. A test keeps the sentence free of `her`, `his`,
-`hat`, `robe` and `witch` outside the fills.
+`hat`, `robe` and `witch` outside the fills. Starting from the *Combine two pictures* card instead of *Continue with this*
+now blocks until you choose the picture you keep (the server refuses to queue the authored example picture), and the
+board describes itself as a pose picture rather than a style board. Stronger pose words ("bent forward at the waist,
+seen from behind, both hands on the hips, looking back over her shoulder") moved the look-back and the hands but not the
+deep waist bend (`examples/style-pose/combine-klein-owner-bend.jpg`): say what should move, and expect a mild pose from
+the 4B model when the pose picture is extreme.
 
 **Change one thing (FLUX.2 Klein 4B, keeps the rest)** now leads *Continue with this → Edit* (it was the 11-minute Qwen
 recipe). The prepared wording is "Change one thing: [say what changes]. Keep everything else exactly as it is: …" plus the

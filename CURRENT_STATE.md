@@ -41,6 +41,15 @@ not re-run through the page, the graph is the catalog's with the fills replaced)
 12 September (`0cbaae1b…` flux-edit, `a2908800…` qwen-2ref) that every restart re-marked *uncertain* had their
 tracking stopped with the reason recorded (ComfyUI lists neither prompt; no output after the restart; nothing
 resubmitted).
+
+Walking the same route again from the *Combine two pictures* card found three more faults, all fixed on PR #372: the
+reference board still described itself as style pictures blended by an adapter (the catalog's `reference_board_label`
+and `reference_board_hint` were never rendered; `references.js` now shows them), the image-1 hint and the handoff
+guidance still listed a hat, and the plain Create route submitted the authored example picture as image 1 when nothing
+was attached (`Studio.prepare()` now refuses a board or declared restyle/combine recipe without its source picture, and
+the readiness list says *Add the picture you keep to Picture to keep (image 1)* with a button; the continuation route
+keeps its own refusal). Stronger pose words on the owner's case honoured a look-back and hands on hips but not the deep
+waist bend of the pose picture (`examples/style-pose/combine-klein-owner-bend.jpg`); the hint says so.
 Not verified: art acceptance (HUMAN_TODO q-27 e), the look recipe through the page, Klein 9B and AniEdit 9B (downloads
 still running through the VPN), a third board picture with explicit "take only … from image 3" wording.
 

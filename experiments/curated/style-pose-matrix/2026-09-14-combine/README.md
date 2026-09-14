@@ -75,7 +75,11 @@ hair, the outfit and its colours, and image 1's rendering style. One figure only
 | 2026091414 | `a27ae00d-cf23-40b8-8e9a-ce328fa26a76` (`Research/combine-fix_00004_.png`) | 21.1 | same; speech bubble kept |
 
 Sheet `examples/style-pose/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
-"leaning forwards": the words decide how far the figure bends.
+"leaning forwards". Stronger words, same pictures and seeds (`bent forward at the waist, seen from behind, both hands on
+the hips, looking back over her shoulder`; prompts `9c2635a7-a13b-48c5-83c4-114ee7333eeb`, `4241c6f4-c9d5-43d0-a847-5a45e1acb2d1`,
+`Research/combine-bend_0000[12]_.png`, sheet `examples/style-pose/combine-klein-owner-bend.jpg`): the look-back and the
+hands were honoured, the deep waist bend of the pose picture still was not. The words decide what moves; an extreme
+bend is beyond what 6 steps of the 4B model reproduced here.
 
 ## Through the page
 

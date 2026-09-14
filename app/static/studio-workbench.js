@@ -58,14 +58,17 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose the picture you keep'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
     const required=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded));
     // A continuation's own blockers already name the unreplaced fills; the plain route needs the generic line (#367).
     const unfilled=!continuationState&&selected&&typeof StudioContinuation!=='undefined'?StudioContinuation.unfilled(selected,q('#positive')?.value):[];
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring,unfilled});
+    // A recipe that transforms a picture (a board with a picture to keep, or a declared restyle/combine) needs it on every route.
+    const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
+    const sourceMissing=!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring,unfilled,sourceMissing});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -111,6 +114,7 @@
     }
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
     if(action==='wording'||action==='fills')target=q('#positive');
+    if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
     if(action==='second')target=q('#uxSecondPicture');
     if(action==='source-back'){void reattachSource();return;}
     if(action==='continuation')target=selected?.positive&&!q('#positive').value.trim()?q('#positive'):q('#uxContinuation');

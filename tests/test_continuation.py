@@ -304,6 +304,9 @@ class ContinuationTests(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "Fill in the wording"): self.studio.prepare(omitted)
         plain_filled = dict(plain); plain_filled["controls"] = dict(plain["controls"], positive=wording)
         self.assertFalse(self.studio.preview(plain_filled)["submitted"])
+        # The plain route without the picture you keep would otherwise submit the authored example picture as image 1.
+        no_source = dict(plain_filled); no_source["controls"] = {"positive": wording}
+        with self.assertRaisesRegex(Exception, "needs your picture on Picture to keep \\(image 1\\); the authored example picture cannot be queued"): self.studio.prepare(no_source)
         empty = copy.deepcopy(payload); empty["references"] = board(None)
         with self.assertRaisesRegex(ValueError, "at least 1 picture"): self.studio.prepare(empty)
         moved = copy.deepcopy(payload); moved["controls"].pop("last_reference"); moved["references"] = board(self.attachment)
