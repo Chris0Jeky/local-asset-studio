@@ -249,12 +249,16 @@ press **Generate** explicitly. Opening either action does not start a render or 
   anime faces and hands. Only two settings have actually been measured on this machine. The repair that fixed
   the six-fingered NoobAI hand (job `14caa4fb`, 36.2 s, at the cost of a slight expression shift in the face
   crop) ran the **authored graph values, 0.4 face / 0.45 hand** — its recipe carries no `denoise` control. The
-  Create UI exposes one Denoise control that drives both passes (the catalog fans it to the hand node), so
-  that exact pair is not selectable there; the nearest UI setting is **0.45 for both**, which is unmeasured.
-  "Gentle" (0.3 for both) is the measured-insufficient option: it sharpened the face but left the extra digit
-  in place (job `e4e49006`, 42.3 s, `target_defect_fixed: false`), so reach for it only when the face is what
-  you want touched and the hand is already acceptable. "Strong" (0.55) is unmeasured; it should redraw a hand more
-  aggressively and will repaint the face harder too.
+  Create UI now preserves that pair: **Denoise changes the face only**, while hands stay at **0.45**.
+  **Lighter face (face 0.30 / hand 0.45)** and **Stronger face (face 0.55 / hand 0.45)**
+  name both strengths. Neither new face-only variant has been rerun. Changing face Denoise to zero
+  does not disable hand repainting; use a different workflow when hands must remain unchanged.
+  To adjust hand strength independently, edit node 13 in the original ComfyUI graph as a separate workflow.
+  The earlier **Gentle (0.3 for both)** trial is historical, not the current Lighter face variant:
+  it sharpened the face but left the extra digit (job `e4e49006`, 42.3 s,
+  `target_defect_fixed: false`). Old coupled recipes keep their embedded graphs; Studio's exact-recipe
+  check refuses to silently reinterpret them through the changed binding. See the
+  [binding reconciliation](reconciliation/2026-09-14-detail-denoise.md) for the measured recipe and limits.
 - **`krea-refine`** — a global img2img polish for Krea 2 pictures: Qwen-VAE encode, re-sample at denoise
   0.35 for 4 steps with the distill LoRA and the target-stack adapters, decode. It tightens mushy small
   faces (the foxes) while keeping the composition; "Redraw" at 0.5 changes more.
