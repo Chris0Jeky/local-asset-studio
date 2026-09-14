@@ -155,11 +155,11 @@ class ResourceSampler:
         return record
 
 
-def write_samples(stream, sampler, samples=6, interval=5.0, sleep=time.sleep):
+def profile_metadata(samples=6, interval=5.0):
     if isinstance(samples, bool) or not isinstance(samples, int) or not 1 <= samples <= MAX_SAMPLES:
         raise ValueError('Samples must be an integer between 1 and 120')
     if counter(interval) is None or not 1 <= interval <= 60: raise ValueError('Interval must be between 1 and 60 seconds')
-    metadata = {'type': 'metadata', 'schema': 'studio.resource-profile/v1', 'samples_requested': samples,
+    return {'type': 'metadata', 'schema': 'studio.resource-profile/v1', 'samples_requested': samples,
                 'interval_seconds_after_completion': interval,
                 'sampler_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 'notes': ['Observations are not admission or ownership authority.',
@@ -168,6 +168,10 @@ def write_samples(stream, sampler, samples=6, interval=5.0, sleep=time.sleep):
                           'CPU percentage uses one logical core as 100%; it can exceed 100%.',
                           'ComfyUI VRAM counters are runtime/device observations, not browser attribution.',
                           'Sampling can miss peaks. No inference or crash-reduction claim follows.']}
+
+
+def write_samples(stream, sampler, samples=6, interval=5.0, sleep=time.sleep):
+    metadata = profile_metadata(samples, interval)
     stream.write(json.dumps(metadata, allow_nan=False) + '\n'); stream.flush()
     for index in range(samples):
         stream.write(json.dumps(sampler.sample(), allow_nan=False) + '\n'); stream.flush()

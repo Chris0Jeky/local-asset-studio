@@ -18,5 +18,10 @@
   "asset_python": "C:/AI/asset-tools/venv/Scripts/python.exe",
   "ffmpeg": "C:/AI/asset-tools/ffmpeg/9.0.1/ffmpeg-9.0.1-essentials_build/bin/ffmpeg.exe",
   "voice_baseline_bundle": "",
+  "performance_telemetry": {
+    "enabled": false,
+    "interval_seconds": 5,
+    "max_samples": 120
+  },
   "enforce_host_commit_headroom": false
 }

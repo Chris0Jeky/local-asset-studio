@@ -35,6 +35,7 @@ from references import compile_references, image_record
 from production import Production, fingerprint
 import mixed_batch
 from backends import BackendManager
+import job_resources
 import host_memory
 import wan_capacity
 from runtime_recovery import RuntimeRecovery
@@ -1313,6 +1314,10 @@ class Studio:
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
+        with job_resources.observe(self, job) as telemetry:
+            return self._run_waiting(job, telemetry)
+
+    def _run_waiting(self, job, telemetry=None):
         try: self._wait_for_queue(job.get('comfy_url'))
         except QueueWaitUnavailable as exc:
             with self.lock:
@@ -1321,7 +1326,9 @@ class Studio:
                 job['message'] = str(exc) + '. Nothing was submitted. No retry was queued. ' + recovery
                 self._save(job)
             return
+        job_resources.record(telemetry, "event", "queue_ready")
         for i in range(job["batch_count"]):
+            job_resources.record(telemetry, "sample", "before_admission")
             graph, seed = self._batch_graph(job, i)
             try:
                 try:preset=self.preset(job['preset_id'])
@@ -1334,6 +1341,7 @@ class Studio:
             if reading:
                 job.setdefault('host_commit_readings',[]).append(dict(reading, phase='pre-submit', index=i, recorded_at=time.time()))
             job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+            job_resources.record(telemetry, "event", "submission_intent", index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
                 if exc.code == 400:
@@ -1354,7 +1362,10 @@ class Studio:
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
-            if not self._wait_history(job, submission): return
+            job_resources.record(telemetry, "event", "acknowledged", index=i, prompt_id=prompt_id)
+            observing = (self._wait_history(job, submission, telemetry=telemetry) if telemetry is not None
+                         else self._wait_history(job, submission))
+            if not observing: return
         job["status"] = "completed"; job["message"] = "Complete"
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
 
@@ -1371,12 +1382,13 @@ class Studio:
                 if entry[1] == prompt_id: return True
         return False
 
-    def _wait_history(self, job, submission):
+    def _wait_history(self, job, submission, telemetry=None):
         prompt_id = submission["prompt_id"]
         deadline = time.monotonic() + HISTORY_OBSERVATION_SECONDS; empty_polls = 0; unlisted = 0
         while time.monotonic() < deadline:
             with self.lock:
                 if self._tracking_stopped(job): return False
+            job_resources.record(telemetry, "sample", "history_poll")
             try:
                 response = self._request("/history/" + quote(prompt_id, safe=''), timeout=15, base_url=job.get('comfy_url'))
                 if not isinstance(response, dict): raise ValueError('Invalid history response')
@@ -1388,6 +1400,7 @@ class Studio:
                     job["status"] = "uncertain"; job["message"] = "Could not observe a known ComfyUI prompt. Use Resume observation when ComfyUI is available."; self._save(job)
                 return False
             if history:
+                job_resources.record(telemetry, "history", submission, history)
                 status = history.get("status", {})
                 if status.get("status_str") == "error":
                     errors = [m[1] for m in status.get("messages", []) if isinstance(m, list) and len(m) > 1 and m[0] == "execution_error" and isinstance(m[1], dict)]
@@ -1645,6 +1658,10 @@ class Handler(BaseHTTPRequestHandler):
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs": return self._json(200, [self.studio.public(x) for x in sorted(self.studio.jobs.values(), key=lambda j:j["created_at"], reverse=True)])
+            if path.startswith("/api/jobs/") and path.endswith("/resources") and len(path.split("/")) == 5:
+                job_id = path.split("/")[3]
+                if job_id not in self.studio.jobs: return self._json(404, {"error": "Unknown job"})
+                return self._json(200, job_resources.inspect(self.studio, job_id))
             if path.startswith("/api/jobs/") and path.endswith("/recipe"):
                 job = self.studio.jobs.get(path.split("/")[3]); return self._json(200, self.studio.export_recipe(job)) if job else self._json(404, {"error":"Unknown job"})
             if path.startswith("/api/jobs/") and path.endswith("/i2v-diagnostic"):
