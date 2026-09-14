@@ -346,7 +346,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
             if declared and preset.get("reference_board"):
                 # Outside the fills the wording must not assume who is in the picture: "her hat" once put hats on a hatless character.
                 fixed = re.sub(r"\[[^\]]*\]", "", preset["continuation_prompt"]).lower()
-                self.assertFalse(re.search(r"(her|his|hat|robe|witch)", fixed), (preset["id"], fixed))
+                self.assertFalse(re.search(r"\b(her|his|hat|robe|witch)\b", fixed), (preset["id"], fixed))
             if preset["id"] in ("combine-klein", "restyle-klein-picture"):
                 # A Klein board: the source is image 1 (last_reference, first reference latent), the board pictures follow it
                 # as image 2 and 3; an empty slot is bypassed, not left on the authored example (test_references).

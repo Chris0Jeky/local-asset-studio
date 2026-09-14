@@ -6338,7 +6338,7 @@
         "image"
       ],
       "last_reference_label": "Picture to keep (image 1)",
-      "last_reference_hint": "The character you keep: face, hair, hat, clothing, colours and rendering style all come from this picture. Continue with this -> Combine puts it here.",
+      "last_reference_hint": "The character you keep: face, hair, outfit, colours and rendering style all come from this picture. Continue with this -> Combine puts it here.",
       "reference_slots": [
         {
           "role": "pose",

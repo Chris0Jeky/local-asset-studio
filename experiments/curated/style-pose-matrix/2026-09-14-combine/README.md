@@ -69,10 +69,10 @@ hair, the outfit and its colours, and image 1's rendering style. One figure only
 
 | Seed | Prompt ID | s | Result |
 | --- | --- | --- | --- |
-| 2026091411 | a20e6df1 | 54.8 (model load) | single figure, no cap, tail gone, from behind, hands on hips |
-| 2026091412 | 39e6ce34 | 21.0 | same |
-| 2026091413 | f73b9c0b | 21.0 | same; the source's "?" speech bubble kept |
-| 2026091414 | a27ae00d | 21.1 | same; speech bubble kept |
+| 2026091411 | `a20e6df1-fa86-46cf-9113-bf0b836285d2` (`Research/combine-fix_00001_.png`) | 54.8 (model load) | single figure, no cap, tail gone, from behind, hands on hips |
+| 2026091412 | `39e6ce34-c09d-4b26-8595-0ac148233985` (`Research/combine-fix_00002_.png`) | 21.0 | same |
+| 2026091413 | `f73b9c0b-56fc-46f9-bbeb-91e5d8e08e7b` (`Research/combine-fix_00003_.png`) | 21.0 | same; the source's "?" speech bubble kept |
+| 2026091414 | `a27ae00d-cf23-40b8-8e9a-ce328fa26a76` (`Research/combine-fix_00004_.png`) | 21.1 | same; speech bubble kept |
 
 Sheet `examples/style-pose/combine-klein-owner-fix.jpg`. The lean stayed mild in both runs because the fill said
 "leaning forwards": the words decide how far the figure bends.
