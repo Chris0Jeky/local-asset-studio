@@ -299,7 +299,7 @@ wording (who is in image 1; the pose in a few words) are replaced.
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness
-list after preparing carries exactly two conditions, both actionable: *Add the picture whose pose you want to Picture 1*
+list after preparing carries exactly two conditions, both actionable: *Add the picture whose pose you want to Picture 1 (image 2)*
 (with *Show the empty slot*) and *Fill in the wording: replace "[who is in image 1 …]" and "[the pose in a few words …]"
 in the prompt* (with *Write the description*); filling the two brackets clears the second, the pull clears the first,
 and the run control reads *Combine pictures →*. The same journey on the live Studio produced the proving run recorded in
