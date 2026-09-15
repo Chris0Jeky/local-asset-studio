@@ -1,31 +1,32 @@
 ---
 name: adult-illustration
-description: Plan and implement the adult-only controlled anime illustration programme through static manifests, existing Studio services, finite qualification and explicit authority boundaries.
+description: Plan and implement the adult-only controlled anime illustration programme through static manifests, exact source and prompt intelligence, existing Studio services, finite qualification and explicit authority boundaries.
 ---
 # Controlled adult illustration agent contract
 
-Use this skill when working on #403–#413: model-independent adult illustration intent, exact route qualification, LoRA/control evidence, geometry, role-separated references, benchmarks, genre packs, training plans, finishing or shared agent commands.
+Use this skill when working on #403–#413, #432 or #433: model-independent adult illustration intent, exact route qualification, LoRA/control evidence, geometry, role-separated references, prompt dialects, verified vocabulary, source provenance, benchmarks, genre packs, training plans, finishing or shared agent commands.
 
 Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Library, character consistency, Repair Studio, Krita or Blender. It does not authorize model downloads, package/runtime changes, neural execution, training, paid services, private-media publication, creative acceptance, rights clearance or promotion.
 
 ## Read first
 
 1. `CLAUDE.md`, `AGENTS.md`, `CURRENT_STATE.md` and `HUMAN_TODO.md`.
-2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
-3. `research/adult-illustration/programme.json` and the manifest relevant to the issue.
+2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `SOURCE-INTAKE.md`, `TECHNIQUE-PORTFOLIO.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
+3. `research/adult-illustration/programme.json` and every manifest relevant to the issue.
 4. Live #403 and the child issue being implemented.
 5. Existing owner docs:
    - `docs/prompt-studio/`
    - `docs/workflow-studio/`
    - `docs/character-consistency/`
    - `docs/repair-studio/`
-6. Exact current PRs, installed capability evidence and route files. Never infer installation from a research candidate or filename.
+6. Exact current PRs, installed capability evidence and route files. Never infer installation from a research candidate, provider page or filename.
 
-Run the offline gate before changing a manifest:
+Run both offline gates before changing a manifest:
 
 ```console
 python scripts/validate_adult_illustration.py
-python -m unittest discover -s tests -p "test_adult_illustration.py" -v
+python scripts/validate_adult_illustration_intelligence.py
+python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
 ## Use when / Do NOT use when
@@ -34,6 +35,9 @@ Use for:
 
 - extending the model-independent control vocabulary through existing intent/setup records;
 - adding exact route, adapter or pack evidence;
+- defining and qualifying exact prompt dialects without mixing model-family conventions;
+- adding pinned vocabulary sources, aliases, implications and deprecations;
+- proposing Hugging Face/Civitai source snapshots and reviewed acquisition handoffs;
 - planning finite comparisons with zero initial allowance;
 - implementing inspect/compile/diff/prepare commands over existing shared services;
 - adding synthetic adult-only/non-explicit fixtures and offline validation;
@@ -44,7 +48,10 @@ Do not use for:
 - a new queue, model registry, project store, review database, executor or canvas;
 - direct `/prompt` calls or a browser-clicking agent;
 - automatic Civitai/Hugging Face/custom-node installation;
+- selecting a moving `main`/“latest” source for installation or promotion;
+- executing embedded workflow metadata from a model page or image;
 - visual inference of age, consent, identity, rights or artistic acceptance;
+- allowing a tagger/VLM/LLM to invent accepted vocabulary or reconstruct an alleged original prompt;
 - converting an unsupported geometry/reference/mask control into prompt prose;
 - resubmitting after response loss under a new identity;
 - hiding real candidate count inside a batch or extending an allowance.
@@ -58,8 +65,10 @@ Do not use for:
 - Semantics, geometry, appearance, pixel authority and evidence remain separate.
 - A reference declares roles plus `take`/`ignore`; excess or ambiguous sources refuse.
 - Geometry artifacts never grant pixel-write authority.
+- Prompt profiles bind to exact routes; Anima, Animagine, Illustrious/NoobAI/Pony and instruction-editor conventions do not mix implicitly.
+- A vocabulary entry is not accepted without immutable source provenance and review.
+- Provider claims, file identity, local inventory, graph validation, runtime observation, creative review, rights review and promotion remain distinct.
 - Exact model/configuration evidence never generalizes to a family, quantisation or operating system.
-- Successful execution, visual review, owner acceptance, rights review and promotion remain distinct.
 - Unknown remains unknown. Changed source/model/graph/reference bytes make prior plans stale.
 - Preserve expected revisions and request/ticket/job/prompt identities. Observe uncertain outcomes; do not replay blindly.
 - Keep `HUMAN_TODO.md` decisions open.
@@ -71,11 +80,12 @@ Do not use for:
 3. Inspect existing typed services before creating a file or type.
 4. For behaviour changes, write a failing test and confirm the expected failure.
 5. Implement the smallest independently reviewable slice.
-6. Run the focused test, this programme validator and repository-required checks.
+6. Run the focused test, both programme validators and repository-required checks.
 7. Produce an exact diff/plan showing:
    - intent/control changes;
    - source/reference and geometry identities;
-   - exact route/adapter evidence;
+   - exact route/adapter/dialect evidence;
+   - provider revision, file, hash and terms state where relevant;
    - unsupported and unknown facts;
    - resource/candidate implications;
    - approval boundary.
@@ -96,6 +106,8 @@ Do not use for:
 | LoRA training | #411 with #9/#14/#65 |
 | Repair/upscale/finishing | #412 with #243/#256/#257 |
 | CLI/SDK/MCP projections | #413 with #123 |
+| Prompt dialects/tag vocabulary | #432 with #35/#37/#38 |
+| Hugging Face/Civitai source intake | #433 with #9/#144/#356 |
 | Dispatch/recovery | #10/#22/#122 |
 | Resource admission/telemetry | #178/#302 |
 
@@ -104,14 +116,15 @@ Do not use for:
 A valid dry handoff may:
 
 1. validate the static manifests;
-2. inspect current capabilities and exact route evidence;
-3. load or propose a revisioned intent diff;
-4. bind reviewed source/geometry identities in a non-executing setup proposal;
-5. compile and inspect a finite comparison plan with cap zero;
-6. report missing prerequisites and the exact approval boundary.
+2. inspect current controls, prompt dialects, technique candidates and exact route evidence;
+3. inspect or propose a provider source snapshot without downloading bytes;
+4. load or propose a revisioned intent diff;
+5. bind reviewed source/geometry identities in a non-executing setup proposal;
+6. compile and inspect a finite comparison plan with cap zero;
+7. report missing prerequisites and the exact approval boundary.
 
 It must finish with **zero neural jobs, zero downloads and zero runtime mutation**. A separately authorized execution later uses the existing Production/Workflow ticket path and retained identity; this skill supplies no alternate dispatch mechanism.
 
 ## Stop conditions
 
-Stop and preserve evidence when the work overlaps an active PR; source/version/hash/graph identity is unknown; adult/content declarations are missing; adapter compatibility is guessed; route/resource support is unmeasured; source or expected revision changed; dispatch outcome is uncertain; the same failure persists without a changed hypothesis; or the requested action needs authority not present in the current issue.
+Stop and preserve evidence when the work overlaps an active PR; source/version/hash/graph identity is unknown; a moving provider revision is being treated as immutable; terms or file selection are unresolved; adult/content declarations are missing; adapter compatibility is guessed; route/resource support is unmeasured; source or expected revision changed; dispatch outcome is uncertain; the same failure persists without a changed hypothesis; or the requested action needs authority not present in the current issue.
