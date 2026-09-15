@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: codex/reference-analysis-worker
-      - name: Apply only the tested patch and remove transfer files
+      - name: Verify tested tree, publish non-workflow sources only
         run: |
           python - <<'PY'
           import base64,lzma,pathlib,subprocess
@@ -26,6 +26,11 @@ jobs:
           subprocess.run(['git','add','-A'],check=True)
           tree=subprocess.check_output(['git','write-tree'],text=True).strip()
           assert tree=='d53f060e5a2f10592e635a0db40b6ea825ef4993',tree
+          # GITHUB_TOKEN has contents authority only. The authorized connector
+          # applies the small workflow update and retires this transfer separately.
+          subprocess.run(['git','checkout','HEAD','--','.github/workflows'],check=True)
+          subprocess.run(['git','add','-A'],check=True)
+          print('Published non-workflow tree:',subprocess.check_output(['git','write-tree'],text=True).strip())
           PY
           git config user.name 'Cristian Tcaci'
           git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
