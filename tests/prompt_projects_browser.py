@@ -76,6 +76,7 @@ def run(output):
                         other.locator('#brief').fill('Stale other tab');other.locator('#pp-save').click()
                         expect(other.locator('#pp-status')).to_contain_text('changed on the server');expect(other.locator('#brief')).to_have_value('Stale other tab')
                         assert service.get(scope,key)['document']['intent']['brief']=='Revision two';other.close()
+                        page.locator('#prompt-projects').get_by_text('Earlier revisions',exact=True).click()
                         page.locator('#pp-history').click();expect(page.locator('#pp-revision option[value="1"]')).to_have_count(1)
                         page.locator('#pp-revision').select_option('1');page.locator('#pp-old').click();expect(page.locator('#pp-restore')).to_be_enabled()
                         page.locator('#pp-restore').click();expect(page.locator('#pp-current')).to_contain_text('revision 3')
