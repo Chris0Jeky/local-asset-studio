@@ -1,1 +1,46 @@
-{"schema":"studio.adult-illustration-adapter-qualification/v0","kind":"synthetic-template","executable":false,"authority":"none","research_date":"2026-09-15","source_baseline":"b29205cfc95ca4e64d72ae38d53df30c83968997","issue":406,"adapter":{"id":"example-body-proportion-slider","synthetic":true,"category":"body_proportion","source_url":null,"version":null,"file_sha256":null,"base_route_ids":[],"trigger_tokens":[],"author_recommended_range":null,"tested_weights":[0.0,0.25,0.5,0.75,1.0],"promoted_interval":null,"negative_weight_supported":"unknown","monotonicity":"unmeasured","collateral_checks":["identity","outfit","pose","anatomy","style","camera"],"pairwise_with":[],"evidence_state":"template","promoted":false,"authorized_candidate_cap":0},"notes":["This record demonstrates required fields only and is not a real adapter claim.","A continuous UI slider requires measured ordered response over a bounded promoted interval."]}
+{
+  "schema": "studio.adult-illustration-adapter-qualification/v0",
+  "kind": "synthetic-template",
+  "executable": false,
+  "authority": "none",
+  "research_date": "2026-09-15",
+  "source_baseline": "b29205cfc95ca4e64d72ae38d53df30c83968997",
+  "issue": 406,
+  "adapter": {
+    "id": "example-body-proportion-slider",
+    "synthetic": true,
+    "category": "body_proportion",
+    "source_url": null,
+    "version": null,
+    "file_sha256": null,
+    "base_route_ids": [],
+    "trigger_tokens": [],
+    "author_recommended_range": null,
+    "tested_weights": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "promoted_interval": null,
+    "negative_weight_supported": "unknown",
+    "monotonicity": "unmeasured",
+    "collateral_checks": [
+      "identity",
+      "outfit",
+      "pose",
+      "anatomy",
+      "style",
+      "camera"
+    ],
+    "pairwise_with": [],
+    "evidence_state": "template",
+    "promoted": false,
+    "authorized_candidate_cap": 0
+  },
+  "notes": [
+    "This record demonstrates required fields only and is not a real adapter claim.",
+    "A continuous UI slider requires measured ordered response over a bounded promoted interval."
+  ]
+}
