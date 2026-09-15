@@ -19,24 +19,56 @@ Accessed 15 September 2026. Sources are inputs to reviewed route claims, not ins
 - Black Forest Labs, FLUX.1 Kontext dev: https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev
   - 12B instruction editing, reference/iterative editing and non-commercial model terms.
 - Gazingstars123, Anima 2.9B preview: https://huggingface.co/Gazingstars123/Anima-2.9B
-  - Experimental watchlist derivative; preview and inherited licence status.
+  - Experimental community watchlist derivative; exact origin, preview status and inherited licence require revalidation before use.
 - NewBie Image: pin the exact official model repository before promotion. Discovery/card claims remain unresolved in the route manifest until that identity is reviewed.
 
 ## Conditioning, geometry and masks
 
 - Tencent AI Lab, IP-Adapter: https://github.com/tencent-ailab/IP-Adapter
+- ComfyUI IPAdapter Plus: https://github.com/cubiq/ComfyUI_IPAdapter_plus
+  - Exact IP-Adapter/base/CLIP vision pairing; several FaceID variants require their specific LoRA. Community workflows remain version-specific.
 - IDEA Research, DWPose: https://github.com/IDEA-Research/DWPose
 - ControlNet Auxiliary Preprocessors for ComfyUI: https://github.com/Fannovel16/comfyui_controlnet_aux
 - Meta, SAM 2: https://github.com/facebookresearch/sam2
 - ComfyUI documentation and source: https://docs.comfy.org/ and https://github.com/Comfy-Org/ComfyUI
-- ComfyUI IPAdapter Plus: https://github.com/cubiq/ComfyUI_IPAdapter_plus
 
 These projects describe capabilities, not support in the installed Studio environment. Exact commits, model files, preprocessing and runtime compatibility remain qualification inputs.
+
+## Prompt, tag and caption analysis
+
+- SmilingWolf, WD SwinV2 Tagger v3: https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3
+  - Anime ratings/character/general tag classifier; reviewed pinned tree exposes 10,861 classes plus ONNX, safetensors and `selected_tags.csv`. Scores remain model outputs, not calibrated truth or original-prompt recovery.
+- FancyFeast, Llama JoyCaption beta-one: https://huggingface.co/fancyfeast/llama-joycaption-beta-one-hf-llava
+  - Diffusion-training caption VLM with broad visual-domain coverage. Exact revision, runner, resources and semantic accuracy require qualification.
+- Existing Prompt Lab model-dialect research: `docs/prompt-studio/MODEL-RESEARCH.md`.
+
+## Source-provider provenance
+
+- Hugging Face Hub documentation: https://huggingface.co/docs/huggingface_hub/
+- Civitai developer docs, model versions: https://github.com/civitai/civitai-developer-docs/blob/main/site/reference/model-versions.md
+  - Version lookup by ID and by file hash; provider records can expose model/version/file IDs, AIR and several hashes.
+- Civitai CLI/public API client: https://github.com/civitai/cli
+  - Useful reference for public read endpoints and hash lookup; the Studio should still use bounded provider adapters and existing acquisition authority.
+- Civitai file scanning/hashing implementation notes: https://github.com/civitai/civitai/blob/main/docs/features/model-file-scanning.md
+
+Provider APIs and pages are untrusted external inputs. A returned version or hash match does not establish terms, local compatibility, installation or promotion.
+
+## Identity, style and adapter research watchlist
+
+- WithAnyone, controllable and ID-consistent image generation: https://github.com/Doby-Xu/WithAnyone
+  - ICLR 2026 project with code/checkpoints and community ComfyUI support; exact backbone, terms, anime fit and Radeon resources remain unresolved.
+- AnimeAdapter, pose-aware zero-shot anime character generation: https://arxiv.org/abs/2605.20237
+  - May 2026 paper; the paper states that code, weights and dataset will be released upon acceptance, so this is paper-only watchlist evidence.
+- AnyStyle, image-guided style transfer: https://github.com/Yvan1001/AnyStyle
+  - 2026 research route combining a style LoRA and structural guidance; exact local assets and comparative value remain unresolved.
 
 ## Training and finishing
 
 - OneTrainer: https://github.com/Nerogar/OneTrainer
 - kohya-ss sd-scripts: https://github.com/kohya-ss/sd-scripts
+  - Current repository documents Anima support, Anima LoRA/LLLite work and `torch.compile` improvements. Pin a version and reproduce known validation/precision behavior before use.
+- T-LoRA: https://github.com/ControlGenAI/T-LoRA
+  - AAAI 2026 single-image personalization method with SDXL/FLUX and PEFT/multi-adapter work; official setup is Linux/NVIDIA-oriented and is not an Anima/Radeon result.
 - Concept Sliders: https://arxiv.org/abs/2311.12092
 - Real-ESRGAN: https://github.com/xinntao/Real-ESRGAN
 
@@ -60,6 +92,6 @@ Consult, in order:
 - `docs/character-consistency/`;
 - `docs/repair-studio/`;
 - `experiments/curated/style-pose-matrix/`;
-- live issues #9, #10, #14, #21, #35, #37, #38, #65, #66, #71, #72, #118–#123, #144, #178, #232, #243–#257, #302, #313, #343 and #357.
+- live issues #9, #10, #14, #21, #35, #37, #38, #65, #66, #71, #72, #118–#123, #144, #178, #232, #243–#257, #302, #313, #343, #356, #357, #403–#413, #432 and #433.
 
 Executed local evidence outranks a general source recommendation for the exact installed route. It does not generalise to another version, quantisation or graph.

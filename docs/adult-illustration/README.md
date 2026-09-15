@@ -1,6 +1,6 @@
 # Controlled adult illustration
 
-Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`.
+Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The foundation source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`; the prompt/source-intelligence continuation is based on `d73f67db48257e635def2170b67cefd6a3165098`.
 
 The objective is not a single “best” checkpoint or style LoRA. The Studio should turn a short brief and optional references into an inspectable plan that separates:
 
@@ -27,14 +27,15 @@ It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence,
 
 ## Validate the foundation
 
-Run the standard-library-only offline gate before changing a programme manifest:
+Run the standard-library-only offline gates before changing a programme manifest:
 
 ```console
 python scripts/validate_adult_illustration.py
-python -m unittest discover -s tests -p "test_adult_illustration.py" -v
+python scripts/validate_adult_illustration_intelligence.py
+python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, adapter sweep bounds and duplicate IDs. It does not inspect installed models, call the network or submit generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, adapter sweep bounds and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. Neither inspects installed models, calls a provider, downloads bytes or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -45,20 +46,29 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Product and component boundaries | [Architecture](ARCHITECTURE.md) |
 | Independent creative controls | [Control ontology](CONTROL-ONTOLOGY.md) |
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
+| Prompt dialects, vocabulary and analyzers | [Prompt and tag intelligence](PROMPT-AND-TAG-INTELLIGENCE.md) |
+| Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
+| Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
+| Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
+| Adult intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
 | Delivery order and issue ownership | [Implementation plan](IMPLEMENTATION-PLAN.md) |
 | Primary-source ledger | [Sources](SOURCES.md) |
 | Machine-readable navigation | [`research/adult-illustration/programme.json`](../../research/adult-illustration/programme.json) |
 | Control vocabulary | [`control-ontology.json`](../../research/adult-illustration/control-ontology.json) |
 | Route research candidates | [`route-candidates.json`](../../research/adult-illustration/route-candidates.json) |
+| Prompt dialect candidates | [`prompt-dialects.json`](../../research/adult-illustration/prompt-dialects.json) |
+| Tag-vocabulary contract | [`tag-vocabulary-example.json`](../../research/adult-illustration/tag-vocabulary-example.json) |
+| Technique candidates/watchlist | [`technique-candidates.json`](../../research/adult-illustration/technique-candidates.json) |
+| Source-intake contract examples | [`source-intake-example.json`](../../research/adult-illustration/source-intake-example.json) |
 | Held-out task declarations | [`benchmark-corpus.json`](../../research/adult-illustration/benchmark-corpus.json) |
 | Composable genre starts | [`genre-packs.json`](../../research/adult-illustration/genre-packs.json) |
 | Adapter qualification template | [`lora-qualification-example.json`](../../research/adult-illustration/lora-qualification-example.json) |
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, finite corpus, validator and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, provider/source provenance, prompt dialect/vocabulary contracts, finite corpus, validators and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
@@ -72,6 +82,10 @@ These are evidence gates, not dates.
 
 Every programme intent must declare unambiguous adult subject status through reviewed user/canon metadata. A vision model or visual appearance cannot establish age or consent. Ambiguous or youthful identity is refused instead of “fixed” through negative prompting. Multi-adult intimate test cases additionally require an explicit consent-context declaration. Public fixtures are synthetic and non-explicit; broader content classes remain route-specific reviewed declarations.
 
-## Next useful slice
+## Next useful slices
 
-Map the validated ontology onto the existing `CreativeIntent` and reviewed setup contracts (#404). Do not begin with downloads or a broad model shelf. The first runtime work is a finite comparison of existing routes plus a small Anima/SDXL/Qwen shortlist under #405 and #409, using the existing coordinator and exact evidence rules.
+1. Merge/review the stacked foundation, validator, intent-projection and offline CLI PRs in order.
+2. Add read-only programme/dialect/technique/source discovery and zero-authority comparison-plan commands under #413.
+3. Build a fake-transport provider snapshot adapter under #433; do not download anything.
+4. Pin one taxonomy source and implement one route profile at a time under #432.
+5. Begin runtime work only through a finite comparison of existing routes plus the small Anima/SDXL/Qwen shortlist under #405/#409, using the existing coordinator and exact evidence rules.
