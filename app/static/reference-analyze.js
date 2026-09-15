@@ -20,6 +20,7 @@
     const held=last?.state.resource_hold, settled=last&&!active.has(last.state.status);
     el('ra-start').disabled=busy||!!handle||storageError||!caps?.enabled||!!caps?.busy||!files.length;
     el('ra-check').disabled=busy||!handle;
+    el('ra-retire').disabled=busy||!handle||!!last;
     el('ra-use').disabled=busy||!last?.result?.analysis;
     el('ra-cancel').disabled=busy||last?.state.status!=='queued';
     el('ra-release').disabled=busy||!settled||!held;
@@ -102,14 +103,16 @@
     finally{busy=false;controls();}
   });
   async function command(action){
-    if(busy||!last)return;busy=true;controls();
+    if(busy||!handle||(action!=='retire'&&!last))return;busy=true;controls();
     try{
-      const body={...handle,expected_state_sha256:last.state_sha256};
+      const body={...handle};
+      if(action!=='retire')body.expected_state_sha256=last.state_sha256;
       if(action==='release')body.acknowledge_unknown=el('ra-acknowledge').checked;
       accept(await request(action,body));
     }catch(error){say(error.message+' Check status before another command.');}
     finally{busy=false;controls();schedule();}
   }
+  el('ra-retire').addEventListener('click',()=>command('retire'));
   el('ra-cancel').addEventListener('click',()=>command('cancel'));
   el('ra-release').addEventListener('click',()=>command('release'));
   el('ra-new').addEventListener('click',async()=>{
