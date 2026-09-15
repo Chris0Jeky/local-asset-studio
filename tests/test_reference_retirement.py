@@ -78,6 +78,19 @@ class ReferenceRetirementHttpTests(unittest.TestCase):
         self.assertEqual(self.http.call('create',self.f.payload)[0],400)
         self.assertEqual(self.f.calls,[]);self.assertTrue(self.f.studio_instance.queue.empty())
 
+    def test_decoder_refusal_is_400_then_unknown_until_explicit_retirement(self):
+        import base64
+        import hashlib
+        payload=copy.deepcopy(self.f.payload);raw=b'not an image'
+        payload['request']['references'][0]['sha256']=hashlib.sha256(raw).hexdigest()
+        payload['images'][0]['media_base64']=base64.b64encode(raw).decode()
+        code,result=self.http.call('create',payload)
+        self.assertEqual(code,400)
+        self.assertIn('could not be decoded',result['error'])
+        self.assertEqual(self.http.call(self.http.status_path())[0],404)
+        self.assertTrue(self.http.call('retire',self.command)[1]['state']['retired_without_dispatch'])
+        self.assertEqual(self.f.calls,[]);self.assertTrue(self.f.studio_instance.queue.empty())
+
     def test_retirement_requires_same_origin_and_exact_shape(self):
         self.assertEqual(self.http.call('retire',self.command,{'Origin':'https://elsewhere.invalid'})[0],403)
         self.assertEqual(self.http.call('retire',{**self.command,'forget':True})[0],400)

@@ -119,8 +119,13 @@ def run(output):
                             # A real pre-commit decoder refusal leaves an unknown ID.
                             page.locator('#ra-new').click();expect(page.locator('#ra-start')).to_be_enabled()
                             bad=Path(tmp)/'corrupt.png';bad.write_bytes(b'not an image')
-                            page.locator('#ra-files').set_input_files(str(bad));page.locator('#ra-start').click()
-                            expect(page.locator('#ra-status')).to_contain_text('unconfirmed')
+                            page.locator('#ra-files').set_input_files(str(bad))
+                            with page.expect_response(lambda r:r.url.endswith('/reference-jobs/create') and r.request.method=='POST') as rejection:
+                                page.locator('#ra-start').click()
+                            assert rejection.value.status==400
+                            assert 'could not be decoded' in rejection.value.json()['error']
+                            expect(page.locator('#ra-check')).to_be_enabled();page.locator('#ra-check').click()
+                            expect(page.locator('#ra-status')).to_contain_text('Unknown analysis request')
                             expect(page.locator('#ra-new')).to_be_disabled()
                             page.locator('#ra-recovery summary').click();expect(page.locator('#ra-retire')).to_be_enabled()
                             DROP_RETIRE.set();page.locator('#ra-retire').click()
