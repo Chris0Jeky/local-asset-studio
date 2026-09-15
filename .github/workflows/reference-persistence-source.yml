@@ -1,0 +1,28 @@
+name: Reference persistence source (temporary)
+on:
+  push:
+    branches: [codex/reference-persistence-source-20260915]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1c0c347290ebc5b66336a5b58db17184f5d529c8
+          persist-credentials: false
+      - name: Archive exact public tracked source
+        run: |
+          git rev-parse HEAD HEAD^{tree} > source-identity.txt
+          git archive --format=tar HEAD | gzip > source.tar.gz
+          sha256sum source.tar.gz >> source-identity.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-persistence-source
+          path: |
+            source.tar.gz
+            source-identity.txt
+          retention-days: 1
+          if-no-files-found: error
