@@ -1,8 +1,8 @@
 # Durable reference analysis on the Studio worker
 
 The operation API runs the existing reference assistant through Studio's single
-worker. It is opt-in, local-only and distinct from image generation. The browser
-Analyze integration is the next slice; the operator CLI still works independently.
+worker. It is opt-in, local-only and distinct from image generation. Use the [browser Analyze panel](REFERENCE-ANALYZE-UI.md) for the normal flow.
+The operator CLI still works independently and must not overlap on the same helper.
 
 ## Configure once, after qualifying an installed vision helper
 
