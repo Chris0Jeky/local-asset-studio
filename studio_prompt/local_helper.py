@@ -36,11 +36,20 @@ def request_payload(b, model, root=None, include_images=False):
     user = {'intent': b, 'image_order': []}; images = []
     if include_images:
         need(root is not None and len(b['references']) <= 3, 'Vision helper supports at most three image references')
+        from PIL import Image, ImageOps
         for r in b['references']:
             need(r['kind'] == 'image', 'This helper accepts image references only')
-            encoded, size = prepare_image(file_bytes(root, r, 8*1024*1024))
-            images.append(encoded)
-            user['image_order'].append({'id':r['id'],'role':r['role'],'analysis_size':size,'original_sha256':r['sha256'],'alpha_policy':'white analysis matte'})
+            raw = file_bytes(root, r, 8*1024*1024)
+            with warnings.catch_warnings():
+                warnings.simplefilter('error',Image.DecompressionBombWarning)
+                with Image.open(io.BytesIO(raw)) as image:
+                    need(image.width*image.height <= 16*1024*1024 and getattr(image,'n_frames',1)==1,'Image pixel/frame limit')
+                    oriented = ImageOps.exif_transpose(image).convert('RGBA')
+                    clean = Image.alpha_composite(Image.new('RGBA', oriented.size, (255,255,255,255)), oriented).convert('RGB')
+                    clean.thumbnail((768,768))
+            buffer = io.BytesIO(); clean.save(buffer,format='PNG')
+            images.append(base64.b64encode(buffer.getvalue()).decode('ascii'))
+            user['image_order'].append({'id':r['id'],'role':r['role'],'analysis_size':list(clean.size),'original_sha256':r['sha256'],'alpha_policy':'white analysis matte'})
     # Paths are unnecessary for the model and never interpreted as remote URLs.
     stripped = json.loads(json.dumps(user))
     for r in stripped['intent']['references']: r.pop('path')
@@ -50,24 +59,9 @@ def request_payload(b, model, root=None, include_images=False):
             'stream':False,'think':False,'keep_alive':0,'options':{'temperature':0,'num_ctx':8192,'num_predict':1800}}
 
 
-def prepare_image(raw):
-    """One bounded captured original -> metadata-free analysis derivative, no I/O."""
-    from PIL import Image, ImageOps
-    need(type(raw) is bytes and 0 < len(raw) <= 8*1024*1024, 'Reference size limit exceeded')
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', Image.DecompressionBombWarning)
-        with Image.open(io.BytesIO(raw)) as image:
-            need(image.width*image.height <= 16*1024*1024 and getattr(image,'n_frames',1)==1, 'Image pixel/frame limit')
-            oriented = ImageOps.exif_transpose(image).convert('RGBA')
-            clean = Image.alpha_composite(Image.new('RGBA', oriented.size, (255,255,255,255)), oriented).convert('RGB')
-            clean.thumbnail((768,768))
-    buffer = io.BytesIO(); clean.save(buffer, format='PNG')
-    return base64.b64encode(buffer.getvalue()).decode('ascii'), list(clean.size)
-
-
 def http_json(port, method, path, payload=None, timeout=90):
     need(type(port) is int and 1024 <= port <= 65535,'Invalid loopback port')
-    need((method, path) in (('GET','/api/tags'),('GET','/api/ps'),('POST','/api/chat')), 'Endpoint not permitted')
+    need(path in ('/api/tags','/api/chat'),'Endpoint not permitted')
     body=None if payload is None else json.dumps(payload).encode()
     need(body is None or len(body) <= 16*1024*1024,'Helper request too large')
     connection=http.client.HTTPConnection('127.0.0.1',port,timeout=timeout)

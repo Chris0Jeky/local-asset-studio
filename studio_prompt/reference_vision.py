@@ -6,7 +6,7 @@ model availability check and cache; no independent worker or remote provider.
 import base64
 import hashlib
 import json
-from .schema import canonical, file_bytes, need
+from .schema import canonical, new_brief
 from .reference_analysis import IMAGE_FACETS, ROLE_FACETS, validate_request
 
 SYSTEM = (
@@ -44,22 +44,21 @@ def response_schema(request):
                 'images': {**array(image, len(q['references'])), 'minItems': len(q['references'])}})
 
 
-def request_payload(request, model, root=None, *, source_bytes=None):
-    from .local_helper import prepare_image
-    import re
-    need(type(model) is str and re.fullmatch(r"[A-Za-z0-9_./:-]{1,160}", model) and "cloud" not in model.lower() and "://" not in model, "Use an installed local model identifier")
-    need((root is not None) != (source_bytes is not None), "Supply one workspace or captured originals")
+def request_payload(request, model, root):
+    from .local_helper import request_payload as prepare_image
     q = validate_request(request); images = []; inputs = []
-    if source_bytes is not None:
-        need(type(source_bytes) is dict and set(source_bytes) == {ref['id'] for ref in q['references']}, 'Supply every original exactly once')
     for ref in q['references']:
-        raw = file_bytes(root, ref, 8*1024*1024) if source_bytes is None else source_bytes[ref['id']]
-        need(type(raw) is bytes and hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed')
-        encoded, size = prepare_image(raw)
+        # Reuse only the image decoder/normalizer; no per-image inference occurs.
+        brief = new_brief('Prepare a reference image for analysis.')
+        brief['references'] = [{'id': ref['id'], 'role': 'composition', 'kind': 'image',
+                                'path': ref['path'], 'sha256': ref['sha256'], 'take': [], 'ignore': []}]
+        single = prepare_image(brief, model, root, True)
+        encoded = single['messages'][1]['images'][0]
+        geometry = json.loads(single['messages'][1]['content'])['image_order'][0]
         images.append(encoded)
         inputs.append({'reference_id': ref['id'], 'source_sha256': ref['sha256'],
                        'analysis_sha256': hashlib.sha256(base64.b64decode(encoded)).hexdigest(),
-                       'analysis_size': size})
+                       'analysis_size': geometry['analysis_size']})
     content = {'brief': q['brief'], 'references': [{'id': ref['id'], 'role_hint': ref['role_hint']} for ref in q['references']],
                'image_order': inputs, 'analysis_policy': 'EXIF oriented; white alpha matte; RGB PNG; maximum 768 pixels per side; embedded metadata removed'}
     payload = {'model': model, 'messages': [{'role': 'system', 'content': SYSTEM},

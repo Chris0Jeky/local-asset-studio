@@ -95,7 +95,6 @@ class BackendManager:
         self.studio._schema=None;self.studio._schema_at=0
 
     def _local_work(self):
-        if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
         return any(j.get('status') in ('queued','waiting','submitting','running','uncertain') for j in self.studio.jobs.values()) or any(p['state']['status'] in ('queued','running','observing') for p in self.studio.production.list())
 
     @staticmethod
