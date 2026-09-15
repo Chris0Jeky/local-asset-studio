@@ -2183,7 +2183,7 @@
       "bytes": 9978304800,
       "sha256": "dfa8908dd58c5af6479b944f80558e226ee40a8fe0903729309e8d1b98fe5297",
       "license": "FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B)",
-      "terms": "Downloaded 2026-09-15 with curl -C - resume (scripts/fetch-hf.py refuses .gguf names) and SHA-256 verified against the Hugging Face LFS listing (.runtime/downloads/receipts.json). Same licence as the Q6_K file; the 9.3 GB Q8 quantisation fits the 16 GB card only with the text encoder offloaded. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF).",
+      "terms": "Downloaded 2026-09-15 with curl -C - resume (scripts/fetch-hf.py refuses .gguf names) and SHA-256 verified against the Hugging Face LFS listing (.runtime/downloads/receipts.json). Same licence as the Q6_K file. Measured 2026-09-15 on the 16 GB card (research README, pose round three): the 9.98 GB file loads only partially beside the text encoder's residue ('loaded partially; 9538 MB loaded, 170 MB offloaded'), 40-45 s per step, six minutes per 6-step render against 75-95 s for Q6_K, with figures identical seed for seed; not a lever here. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF).",
       "family": "FLUX.2 Klein 9B"
     }
   ],
