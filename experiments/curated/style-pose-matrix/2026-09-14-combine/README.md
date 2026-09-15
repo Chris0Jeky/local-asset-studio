@@ -178,6 +178,92 @@ route; `combine-klein-9b` (pose picture first, keeps its camera and background, 
 (seeds 13, 14 and the proving run; `POST /free` with `unload_models` did not restore it; VRAM read 15.2 GB free between jobs). Round one saw
 the same swing (the 9B swap-colour seed 1 at 923 s). Not diagnosed tonight; a ComfyUI restart is the next thing to try.
 
+## Pose round three, 15 September 2026 (03:40-05:30): what stands in for the pose picture, and the words that move hands and camera
+
+Same two pictures and seeds 2026091411-13, research renders straight against ComfyUI, scripts next to this file: `pose_sources.py` (a
+different image 1 per variant: the depth map painted, a PIL-drawn skeleton, a PIL-drawn capsule mannequin; hand and camera words; 8 steps;
+the Q8 GGUF), `lora_pose.py` (four civitai LoRAs for Klein 9B, downloaded and SHA-256-verified tonight, pinned in `models/library.json`),
+`restart_probe.py` (the slow state), `twopass.py` (depth Combine then Change one thing as one Studio journey), `sheet_round3.py`. Prepared
+images 1 (`pose3-*.png`) and exact graphs (`pose3-*.graph.json`) are next to the scripts. Sheet: `examples/style-pose/combine-pose-round3.jpg`.
+
+**The slow state is a ComfyUI-process condition that only a restart clears (`restart_probe.json`).** The night's per-prompt log shows a healthy
+Klein 9B render at 6.2-6.6 s/step (87-120 s) and the slow state at 53-63 s/step (377-460 s), with identical model-load lines; two of the three
+Qwen runs were followed by fast Klein renders, the third by slow ones that survived a 20-minute idle gap. `POST /free` (unload_models +
+free_memory) cut the process's private bytes from 17.0 to 6.2 GB and the next render was still 53.3 s/step (prompt `3c3c3ba9`, 377 s);
+`C:/AI/Stop-ComfyUI.ps1` brought the same graph back to 95.2 s (prompt `49e5f4db`) on the process that replaced it. Who relaunched it: the
+Studio's own backend recovery, 15 s after the stop (process 20392, parent = the Studio server, `.runtime/backends/20260915-035844-recovery-*.log`);
+the probe's 45-second check saw no server only because ComfyUI takes longer than that to answer, and `Start-ComfyUI.ps1` then exited 0 on the
+recovered server while its own child died on "Port 8188 is already in use" (`C:/AI/logs/20260915-035917-error.log`). Rule: a Klein render over
+~3 minutes means stop ComfyUI on an idle queue and let the Studio's recovery (or the launcher) bring it back; run Qwen last.
+
+| Variant (image 1) | Seed | Prompt ID | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| depth-feet: the depth map with everything below the ankles painted black (heels, floor band) | 2026091411 | `399c7b94` (cached sampler from the probe render `49e5f4db`, 95 s) | 5.0 | `Research/pose3-depth-feet_00002_.png` | **deep bend, bare feet, no heel shape**; head down, hands at the knees |
+| depth-feet | 2026091412 | `df442f10` | 95.1 | `Research/pose3-depth-feet_00003_.png` | **deep bend, crossed legs, look-back, lettering, bare feet, no heel** |
+| depth-feet | 2026091413 | `96cb2353` | 85.1 | `Research/pose3-depth-feet_00004_.png` | bend with bent knees, bare feet; the "?" speech bubble again |
+| depth-painted: feet plus the tail and the skirt frill painted black | 2026091411 | `20f6383d` | 85.7 | `Research/pose3-depth-painted_00001_.png` | same figure as depth-feet within a few pixels: bend, bare feet |
+| depth-painted | 2026091412 | `c4b86e9b` | 75.3 | `Research/pose3-depth-painted_00002_.png` | same as depth-feet seed 12 |
+| depth-painted | 2026091413 | `90b911f0` | 75.4 | `Research/pose3-depth-painted_00003_.png` | same as depth-feet seed 13, speech bubble |
+| hands-camera: the unpainted map, the pose fill names both hands and adds a camera sentence | 2026091411 | `e16a1a63` | 95.2 | `Research/pose3-hands-camera_00001_.png` | **lollipop hand at the lips, low camera from behind**, deep bend, bare feet, no heel |
+| hands-camera | 2026091412 | `534a141d` | 95.4 | `Research/pose3-hands-camera_00002_.png` | **lollipop at the lips, other hand on the hip, low camera**, bend, crossed legs, bare feet |
+| hands-camera | 2026091413 | `e0d5db92` | 96.6 | `Research/pose3-hands-camera_00003_.png` | **lollipop at the lips, hand on the hip, look-back**, bend, bare feet; speech bubble |
+| skeleton-drawn: an OpenPose-style stick figure drawn with PIL from 17 hand-estimated keypoints (`pose3-skeleton-drawn.png`), shipped 9B graph, no depth node | 2026091411 | `64dd730c` | 75.8 | `Research/pose3-skeleton-drawn_00001_.png` | **the drawn pose: deep bend, legs as drawn (one straight, one crossing), the arm I drew raised is raised**, look-back, bare feet, lettering partial |
+| skeleton-drawn | 2026091412 | `7c6d7971` | 75.3 | `Research/pose3-skeleton-drawn_00002_.png` | **same pose from the skeleton**, arms folded at the chest, look-back, bare feet |
+| skeleton-drawn | 2026091413 | `3daae932` | 75.2 | `Research/pose3-skeleton-drawn_00003_.png` | **same pose**, hand behind the head as drawn, lettering intact, speech bubble |
+| mannequin-drawn: grey capsule limbs and a ball head drawn with PIL from the same keypoints (`pose3-mannequin-drawn.png`), no depth node | 2026091411 | `b64ca00a` | 75.4 | `Research/pose3-mannequin-drawn_00001_.png` | body in the pose, but **the ball head is drawn as a blank sphere, no face, no hair**: identity lost |
+| mannequin-drawn | 2026091412 | `514f1d1e` | 75.4 | `Research/pose3-mannequin-drawn_00002_.png` | same: grey sphere head and grey capsule arm drawn literally; a stray foot |
+| mannequin-drawn | 2026091413 | `9ee8a5e4` | 75.4 | `Research/pose3-mannequin-drawn_00003_.png` | same: sphere head, grey arm, speech bubble |
+| depth-8steps: the shipped depth graph (unpainted map) at 8 steps | 2026091411 | `a12392e3` | 105.6 | `Research/pose3-depth-8steps_00001_.png` | the 6-step figure again; a small heel shape on one foot |
+| depth-8steps | 2026091412 | `de42d7f0` | 105.3 | `Research/pose3-depth-8steps_00002_.png` | the 6-step figure again, clean feet |
+| depth-8steps | 2026091413 | `6554b1d9` | 100.3 | `Research/pose3-depth-8steps_00003_.png` | the 6-step figure again, speech bubble |
+| copypose: **Copy Pose LoRA** (`KleinBase9B_PoseTransfer`, 1.0), character = image 1, pose picture = image 2, trigger + clothes named (`lora_pose.py`) | 2026091411 | `5d1d1179` | 75.1 | `Research/pose3-copypose_00001_.png` | **deep bend from behind, crossed legs, look-back; identity, lettering and the character's own white background kept; bare feet, no tights, no heels, no tail**; speech bubble kept |
+| copypose | 2026091412 | `f9a7db6f` | 80.3 | `Research/pose3-copypose_00002_.png` | **same: the pose picture's bend with nothing of it leaking** |
+| copypose | 2026091413 | `a7c311f6` | 80.4 | `Research/pose3-copypose_00003_.png` | same; speech bubble kept |
+| copypose-depth: the same LoRA with the depth map as image 2 | 2026091411 | `f1481c1c` | 75.9 | `Research/pose3-copypose-depth_00001_.png` | bend followed, but **the map's black ground and a grey ghost figure are copied and a heel is drawn**: worse than the picture |
+| copypose-depth | 2026091412 | `fb187a7b` | 75.2 | `Research/pose3-copypose-depth_00002_.png` | same: black ground, grey ghost |
+| copypose-depth | 2026091413 | `efad6ab7` | 75.6 | `Research/pose3-copypose-depth_00003_.png` | same: black ground, grey ghost, speech bubble |
+| replacechar: **replace-character LoRA** (`replace_character_v1_klein`, 1.0), pose picture = image 1, character = image 2, the author's prompt + clothes named | 2026091411 | `62ef11ee` | 80.1 | `Research/pose3-replacechar_00001_.png` | **the pose picture's exact pose, camera and framing**, face, hair and choker swapped in, lettering, pink shorts; **but image 1's shaded semi-realistic finish, its ground and its shark tail come along** |
+| replacechar | 2026091412 | `8e383703` | 75.1 | `Research/pose3-replacechar_00002_.png` | same pose and camera; **image 1's black skirt kept** (the LoRA is trained to keep image 1's outfit), tail in the background |
+| replacechar | 2026091413 | `41eb0f2e` | 75.2 | `Research/pose3-replacechar_00003_.png` | same pose and camera, pink shorts, tail and ground from image 1 |
+| refcontrol-skel: **RefControl LoRA** (`refcontrol_v2_poses`, 1.0), the drawn skeleton = image 1, character = image 2, trigger + the skeleton wording | 2026091411 | `d542ed7b` | 75.3 | `Research/pose3-refcontrol-skel_00001_.png` | the skeleton's pose, as without the LoRA; lettering partial |
+| refcontrol-skel | 2026091412 | `c271436b` | 75.2 | `Research/pose3-refcontrol-skel_00002_.png` | **indistinguishable from the no-LoRA skeleton render of the same seed** |
+| refcontrol-skel | 2026091413 | `f25bd5d4` | 75.1 | `Research/pose3-refcontrol-skel_00003_.png` | same pose; lettering garbled, speech bubble |
+| refcontrol-depth: the same LoRA with the depth map as image 1 | 2026091411 | `1ea84cd4` | 75.1 | `Research/pose3-refcontrol-depth_00001_.png` | the depth route's figure, hand behind the head; no visible gain over no LoRA |
+| refcontrol-depth | 2026091412 | `5cbb69f4` | 75.4 | `Research/pose3-refcontrol-depth_00002_.png` | same; **the heel shape is back on one foot** (unpainted map) |
+| refcontrol-depth | 2026091413 | `f0805e97` | 75.2 | `Research/pose3-refcontrol-depth_00003_.png` | same, speech bubble |
+| mannequin-gen: **Mannequin LoRA** (`Mannequin_V1_F29B`, 1.0), the pose picture as the only reference, the author's prompt, 8 steps | 2026091411 | `ddd51f9c` | 68.2 | `Research/pose3-mannequin-gen_00001_.png` | **a clean white CGI mannequin in the exact pose: deep bend, look-back, hand on the hip, crossed legs, no clothes, no tail, no hair, black ground**; the feet keep the heeled shape |
+| mannequin-combine: that mannequin picture as the pose picture of the shipped depth recipe (no LoRA) | 2026091411 | `aa98f658` | 90.1 | `Research/pose3-mannequin-combine_00001_.png` | **deep bend, look-back, hand on the hip (the mannequin carried it), identity kept**; heel-shaped foot (the mannequin's) |
+| mannequin-combine | 2026091412 | `55fab498` | 85.8 | `Research/pose3-mannequin-combine_00002_.png` | same, hand on the hip; heel-shaped foot, a faint tail line |
+| mannequin-combine | 2026091413 | `2bf5fcfe` | 86.0 | `Research/pose3-mannequin-combine_00003_.png` | same, hand on the hip; heel-shaped foot, speech bubble |
+
+| depth-q8: the shipped depth graph with **`flux-2-klein-9b-Q8_0.gguf`** (9.98 GB, downloaded and SHA-256-verified tonight) | 2026091411 | `88c5c1c8` | 342.3 (first load) | `Research/pose3-depth-q8_00001_.png` | the Q6 figure again; **"loaded partially; 9538 MB loaded, 170 MB offloaded" beside the text encoder's 5171 MB residue, 40-45 s/step** |
+| depth-q8 | 2026091412 | `99a2bd93` | 365.6 | `Research/pose3-depth-q8_00002_.png` | 6 steps in 3:58: **six minutes per render, not usable on 16 GB** |
+| depth-q8 | 2026091413 | `d1edaa07` | 365.7 | `Research/pose3-depth-q8_00003_.png` | same |
+| control: Q6_K again, fresh seed, straight after the Q8 runs (feet painted out) | 2026091414 | `0e72710a` | 85.1 | `Research/pose3-depth-feet_00005_.png` | 85 s: the process is healthy; the Q8 time is the model's VRAM fit, not the slow state |
+| **Studio proving run, `combine-klein-9b-skeleton`** (`prove_skeleton.py`: POST /api/upload for the drawn skeleton, POST /api/jobs) | 2026091461 | job `26448d58-c1bb-41a5-a49f-74c4db4fec89`, prompt `977e450f-46ba-485f-a0f4-9a0a45204dc2` | 68.7 | `Combine/Klein-9B-skeleton_00001_.png` | **the drawn pose: deep bend, the raised arm, one leg straight and one crossing, look-back**, bare feet, face and hair kept; lettering garbled on this seed |
+
+| **Studio two-pass journey, pass 1: `combine-klein-9b-depth`** with the hands-and-camera fill (`twopass.py`, POST /api/jobs) | 2026091451 | job `c31e7777-cf02-401e-8fda-aacd7fe13644`, prompt `503277a9-b692-47f6-944e-7a0a7058ce24` | 88.8 | `Combine/Klein-9B-depth_00002_.png` | **lollipop at the lips, hand on the knee, low camera from behind, deep bend**, lettering; one heel-shaped foot |
+| **pass 2: `flux-edit` (Change one thing, Klein 4B) on pass 1's output**, staged through POST /api/assets/reference as Continue with this does; fill "redraw both feet as plain bare feet flat on the ground, with no high heel and no shoe shape" | 2026091451 | job `b92dae0c-e3b3-4586-909a-8f3f96b671f2`, prompt `b33b69f6-d4a4-4fe7-806f-00854674106c` | 44.3 | `Verified/FLUX-Edit_00009_.png` | **the heel became a bare foot; face, lollipop, lettering, shorts and pose unchanged**. Whole journey 135.7 s wall |
+
+**The four LoRAs, in one line each.** *Copy Pose* (character = image 1, pose picture = image 2) is the second strong route: the character keeps
+her own framing and background and takes the picture's pose with nothing of the picture leaking (3/3), but only with the real picture, not
+a depth map. *replace-character* (pose picture kept as image 1) gives the most exact pose and camera and the best identity swap of the
+pose-first family, at the price of image 1's finish, ground, tail and sometimes outfit: it is what the pose-first recipe should carry when the
+pose picture's camera must stay. *RefControl* adds nothing visible over the base model with either a drawn skeleton or a depth map. The
+*Mannequin* LoRA turns any pose picture into a clean mannequin in 68 s, and that mannequin works as the pose picture of the depth recipe
+with the hand position carried (3/3); its heeled feet still need the ankle cut.
+
+What decided it so far: **cutting the depth map at the ankles removes the heel-shaped foot (3 of 3 seeds, #427)**, and painting the tail
+and skirt out as well changes nothing visible, so the minimal edit is the one worth wiring (a crop or a painted band below the ankles, not
+a subject mask). **Hand and camera words move the hands and the camera on the depth route** (3 of 3: the lollipop hand, the hand on the hip,
+the low camera from behind), which round two's blank-canvas test never managed for the bend: the depth map carries the body, the words carry
+what the map does not fix. The hands-camera fill is now the wording the depth recipe's pose field suggests. **A drawn stick figure carries the
+pose (3 of 3, arms included), a drawn capsule mannequin is copied literally**: thin lines are read as a pose, solid crude shapes as content;
+shipped as `combine-klein-9b-skeleton` and proved through the Studio (job `26448d58`). **8 steps and the Q8_0 GGUF change nothing visible**
+(the Q8 figures match the Q6 ones seed for seed) and Q8 costs six minutes a render because it only partially fits beside the text encoder.
+**The two-pass journey works in the Studio as it stands** (136 s: depth Combine, then Change one thing on the output), which is the repair
+loop the owner asked for until the ankle crop is a control.
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
