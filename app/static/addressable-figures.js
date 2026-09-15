@@ -10,7 +10,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const BASIS=10000,MAX_FIGURES=32,MIN_POINTER_DRAG=4,PENDING_KEY='studio.addressable-figures.pending.v1';
+  const BASIS=10000,MAX_FIGURES=32,MIN_POINTER_DRAG=4,REFRESH_ATTEMPTS=2,REFRESH_IDLE_TIMEOUT_MS=15000,REFRESH_POLL_MS=20,PENDING_KEY='studio.addressable-figures.pending.v1';
   const fields=['x','y','width','height'];
   function copyRect(rect){return Object.fromEntries(fields.map(key=>[key,rect[key]]));}
   function integer(value,label){
@@ -110,12 +110,26 @@
       },
       async refresh(expectedIds=[]){
         if(typeof globalThis.refreshAssets!=='function')return {ok:false,error:'Workspace refresh is unavailable.'};
-        const outcome=await globalThis.refreshAssets(true);
-        if(outcome?.ok===false)return {ok:false,error:outcome.error||'Workspace refresh failed.'};
-        try{
-          const records=typeof assetState==='object'&&Array.isArray(assetState.assets)?assetState.assets:[];
-          return expectedIds.every(id=>records.some(asset=>asset?.id===id))?{ok:true}:{ok:false,error:'The refreshed Workspace does not contain the new child assets yet.'};
-        }catch(error){return {ok:false,error:'The refreshed Workspace could not be verified.'};}
+        const visible=()=>{
+          try{const records=typeof assetState==='object'&&Array.isArray(assetState.assets)?assetState.assets:[];return expectedIds.every(id=>records.some(asset=>asset?.id===id));}
+          catch(error){return false;}
+        };
+        const busy=()=>{try{return typeof assetRefreshing==='boolean'&&assetRefreshing;}catch(error){return false;}};
+        const waitForIdle=async()=>{
+          const deadline=Date.now()+REFRESH_IDLE_TIMEOUT_MS;
+          while(busy()){
+            if(Date.now()>=deadline)return false;
+            await new Promise(resolve=>setTimeout(resolve,REFRESH_POLL_MS));
+          }
+          return true;
+        };
+        for(let attempt=0;attempt<REFRESH_ATTEMPTS;attempt++){
+          const outcome=await globalThis.refreshAssets(true);
+          if(outcome?.ok===false)return {ok:false,error:outcome.error||'Workspace refresh failed.'};
+          if(!await waitForIdle())return {ok:false,error:'Workspace refresh is still in progress. Refresh the library before opening the children.'};
+          if(visible())return {ok:true};
+        }
+        return {ok:false,error:'The refreshed Workspace does not contain the new child assets yet.'};
       },
       open(id){if(typeof globalThis.openAsset==='function')return globalThis.openAsset(id);return false;},
       message(text,error=false){if(typeof globalThis.assetMessage==='function')globalThis.assetMessage(text,error);}
@@ -283,5 +297,5 @@
     stage.addEventListener('pointercancel',()=>{drag=null;renderOverlay();});
     syncAction();return true;
   }
-  return {BASIS,MAX_FIGURES,MIN_POINTER_DRAG,fromPixels,validateRectangles,createHistory,createRequest,restoreRequest,validateReceipt,failureKind,randomId,requestMatchesAsset,install};
+  return {BASIS,MAX_FIGURES,MIN_POINTER_DRAG,REFRESH_ATTEMPTS,fromPixels,validateRectangles,createHistory,createRequest,restoreRequest,validateReceipt,failureKind,randomId,requestMatchesAsset,install};
 });
