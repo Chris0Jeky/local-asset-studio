@@ -6396,7 +6396,7 @@
     },
     {
       "id": "combine-klein-9b-depth",
-      "name": "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose, nothing leaks)",
+      "name": "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)",
       "category": "Characters",
       "family": "FLUX.2 Klein 9B",
       "graph": "workflows/api/combine-klein-9b-depth-api.json",
@@ -6464,7 +6464,7 @@
         "min": 1,
         "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
       },
-      "reference_board_label": "Pose picture, read as a depth map (image 1)",
+      "reference_board_label": "Depth map of the pose picture (image 1)",
       "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a skirt, a tail or a heel becomes a shape unless the wording says what the figure wears instead.",
       "continuation_operation": "combine",
       "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -6475,7 +6475,7 @@
       ],
       "stages": [
         "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
-        "Image 1: the pose picture's Depth Anything V2 depth map (vitl, 1024 px), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
+        "Image 1: the pose picture's Depth Anything V2 depth map (vitl, 1024 px; the 1.3 GB weights are fetched by the comfyui_controlnet_aux node into its own folder on first use, which readiness cannot see), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
         "Wording: the depth map gives the body position, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
         "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 100-200 s warm on the 9070 XT",
         "1024x1536 canvas",

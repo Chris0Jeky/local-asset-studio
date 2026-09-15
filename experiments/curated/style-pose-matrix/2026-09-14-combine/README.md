@@ -149,10 +149,16 @@ dequantised every step with 1-3 GB of VRAM headroom), not in the reference token
 by a wrong skeleton as well. Depth Anything V2 Large (`probe-depth_00001_.png`, downloaded tonight, cc-by-nc-4.0) gives the whole silhouette:
 bend, crossed legs, heels, skirt, tail.
 
+`s` is ComfyUI's own execution time for the prompt (`execution_start` to `execution_success` in `/history`, the same basis as the tables
+above, including any model reload and the annotator); `round2_history.json` next to the scripts holds that number, the status, the
+outputs and the exact submitted graph for every prompt below, read back from `/history`. The per-script JSONs (`qwen_pose2.json`,
+`klein_skeleton.json`) record the script's own wait, which includes queueing behind other prompts, and two scripts running at once
+overwrote each other's file, so they are partial; the history file is the record.
+
 | Variant | Seed | Prompt ID | s | Output | Result |
 | --- | --- | --- | --- | --- | --- |
-| qwen ref05 (identity first, refs 0.5 MP) | 2026091411 | `8d71b5e4` | 775.9 | `Research/qwen2-ref05_00001_.png` | deeper bend than round one, face kept, lettering garbled; **the maid's tights and the tail leaked** |
-| qwen skel05 (failed OpenPose skeleton as picture 2) | 2026091411 | `ace2a0bf-ec6f-480c-9264-f4d8b5e138f4` | 1126.6 (incl. 6.5 min reload) | `Research/qwen2-skel05_00001_.png` | clean identity, no leak, mild bend only (the skeleton carried nothing) |
+| qwen ref05 (identity first, refs 0.5 MP) | 2026091411 | `8d71b5e4` | 772.7 | `Research/qwen2-ref05_00001_.png` | deeper bend than round one, face kept, lettering garbled; **the maid's tights and the tail leaked** |
+| qwen skel05 (failed OpenPose skeleton as picture 2) | 2026091411 | `ace2a0bf-ec6f-480c-9264-f4d8b5e138f4` | 1121.7 (incl. 6.5 min reload) | `Research/qwen2-skel05_00001_.png` | clean identity, no leak, mild bend only (the skeleton carried nothing) |
 | qwen depth05 (depth map as picture 2) | 2026091411 | `1233cf2b-f052-4459-9b3d-d0f73612315d` | 640 (10:40) | `Research/qwen2-depth05_00001_.png` | **the exact pose**, but every shape in the silhouette drawn: pink heels, a frilled skirt, the tail; face and lettering distorted |
 | klein 9b-skel-first (failed skeleton as image 1) | 2026091411 | `4cce14a5-f46c-4453-bcd1-56b316cc1f70` | 99.4 | `Research/klein-9b-skel-first_00001_.png` | deep bend, bare feet, no tights, no tail, face and top kept; hands behind the back (the words did it: image 1 had no competing figure) |
 | klein 9b-blank-first (black canvas as image 1) | 2026091411 | `7fc87b50-e96a-4c18-8a90-743abcbead57` | 90.0 | `Research/klein-9b-blank-first_00001_.png` | perfect identity, lettering and colours, hand on hip, look-back; **mild lean only** |
@@ -161,7 +167,7 @@ bend, crossed legs, heels, skirt, tail.
 | **klein 9b-depth-first** | 2026091412 | `83c2046a-fda0-4864-a2d1-9a00e05a7825` | 113.9 | `Research/klein-9b-depth-first_00002_.png` | **deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare legs**; one foot shaped like a heel (the silhouette's heel) |
 | klein 9b-depth-first | 2026091413 | `190422c8` | 440.0 (6.5 min of sampling straight after the Qwen run; seeds 11-12 sampled in ~1 min) | `Research/klein-9b-depth-first_00003_.png` | **moderate bend only**, bare feet, no leak, lettering lost, the character picture's "?" speech bubble came back |
 | **klein 9b-depth-first** | 2026091414 | `5da5f797` | 460.4 (same slow state) | `Research/klein-9b-depth-first_00004_.png` | **deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare legs**; one foot heel-shaped |
-| **Studio proving run, `combine-klein-9b-depth`** (`prove_depth.py`, POST /api/jobs) | 2026091441 | job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe` | 448.7 (slow state) | `Combine/Klein-9B-depth_00001_.png` | **deep bend, crossed legs, look-back, lettering intact, pink shorts, bare feet**; one foot heel-shaped |
+| **Studio proving run, `combine-klein-9b-depth`** (`prove_depth.py`, POST /api/jobs) | 2026091441 | job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe` | 446.6 (slow state; the Studio job's own elapsed time was 448.7 s) | `Combine/Klein-9B-depth_00001_.png` | **deep bend, crossed legs, look-back, lettering intact, pink shorts, bare feet**; one foot heel-shaped |
 
 What decided it: **the structural image carries the pose, the words carry everything that must not leak.** A depth map of the pose picture as
 image 1 gives Klein 9B the body position without the pose picture's clothes, and the character as image 2 with the clothes and colours named

@@ -42,7 +42,7 @@ said in words.
 
 ## From a finished picture: Continue with this → Combine
 
-**Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose, nothing leaks)** leads the
+**Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** leads the
 route since 15 September 2026 (later that night). The graph turns the pose picture into a Depth Anything V2 depth map and
 that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
 picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
