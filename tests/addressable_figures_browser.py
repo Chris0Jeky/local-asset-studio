@@ -29,7 +29,7 @@ Object.defineProperty(window,'sessionStorage',{configurable:true,value:{
 }});
 function source(id,sha,title){return {id,sha256:sha,workspace_id:'11111111111111111111111111111111',url:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="100"/%3E',title,media_type:'image',trashed_at:null};}
 let activeAsset=source('asset-a','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','Sheet A');
-let calls=[],messages=[],opened=[],refreshed=0,mode='success',failRefresh=false,deferredResolve=null,postCount=0;
+let assetState={assets:[activeAsset]},calls=[],messages=[],opened=[],refreshed=0,mode='success',failRefresh=false,deferredResolve=null,postCount=0,lastCreated=[];
 window.confirm=()=>true;
 function receipt(body){return {status:'created',action:'split_figures',workspace_id:body.workspace_id,parent_asset_id:body.asset_id,request_id:body.request_id,generation_submitted:false,created:body.rectangles.map((_,i)=>(i+1).toString(16).padStart(32,'0')),figures:body.rectangles.map((_,i)=>({index:i+1,asset_id:(i+1).toString(16).padStart(32,'0')}))};}
 async function api(path,options={}){
@@ -37,10 +37,15 @@ async function api(path,options={}){
   if(path.startsWith('/api/assets/commands/'))return {status:'unknown',request_id:path.split('/').pop().split('?')[0]};
   postCount++;
   if(mode==='ambiguous'&&postCount===1){const error=Error('gateway unavailable');error.status=503;throw error;}
-  if(mode==='deferred')return await new Promise(resolve=>{deferredResolve=()=>resolve(receipt(body));});
-  return receipt(body);
+  if(mode==='deferred')return await new Promise(resolve=>{deferredResolve=()=>{const result=receipt(body);lastCreated=result.created;resolve(result);};});
+  const result=receipt(body);lastCreated=result.created;return result;
 }
-async function refreshAssets(){refreshed++;if(failRefresh)throw Error('library refresh failed');}
+async function refreshAssets(){
+  refreshed++;
+  if(failRefresh)return {ok:false,error:'library refresh failed'};
+  for(const id of lastCreated)if(!assetState.assets.some(asset=>asset.id===id))assetState.assets.push({id});
+  return {ok:true};
+}
 function openAsset(id){opened.push(id);}
 function assetMessage(text,error=false){messages.push({text,error});}
 </script></body></html>'''
@@ -70,6 +75,8 @@ async def scenario_success(browser):
     posts = await page.evaluate("calls.filter(c=>c.method==='POST')")
     assert len(posts) == 1 and len(json.loads(posts[0]["body"])["rectangles"]) == 2, posts
     assert await page.locator("[data-figure-child]").count() == 2
+    assert await page.locator("#figureSplitList li").count() == 0
+    assert await page.locator("#figureSplitCreate").is_disabled()
     assert "parent is unchanged" in (await page.text_content("#figureSplitChildren")).lower()
     assert not errors, errors
     await page.close()
@@ -144,6 +151,25 @@ async def scenario_late_response_binding(browser):
     await page.close()
     return {"stale_children_rendered": 0, "origin_message": True}
 
+
+async def scenario_pointer_threshold(browser):
+    page, errors = await page_for(browser)
+    await page.click("[data-figure-split-open]")
+    stage = await page.locator("#figureSplitStage").bounding_box()
+    assert stage, "figure stage unavailable"
+    x, y = stage["x"] + stage["width"] / 2, stage["y"] + stage["height"] / 2
+    await page.mouse.click(x, y)
+    assert await page.locator("#figureSplitList li").count() == 0
+    assert "drag at least" in (await page.text_content("#figureSplitStatus")).lower()
+    await page.mouse.move(stage["x"] + 12, stage["y"] + 12)
+    await page.mouse.down()
+    await page.mouse.move(stage["x"] + 90, stage["y"] + 60)
+    await page.mouse.up()
+    assert await page.locator("#figureSplitList li").count() == 1
+    assert not errors, errors
+    await page.close()
+    return {"click_ignored": True, "drag_added": 1}
+
 async def scenario_refresh_failure(browser):
     page, errors = await page_for(browser)
     await page.evaluate("failRefresh=true")
@@ -179,6 +205,7 @@ async def main():
                 "storage_failure": await scenario_storage_failure(browser),
                 "cross_source_guard": await scenario_cross_source_guard(browser),
                 "late_response_binding": await scenario_late_response_binding(browser),
+                "pointer_threshold": await scenario_pointer_threshold(browser),
                 "refresh_failure": await scenario_refresh_failure(browser),
             }
         finally:

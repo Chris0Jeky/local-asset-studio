@@ -10,7 +10,7 @@
   }
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const BASIS=10000,MAX_FIGURES=32,PENDING_KEY='studio.addressable-figures.pending.v1';
+  const BASIS=10000,MAX_FIGURES=32,MIN_POINTER_DRAG=4,PENDING_KEY='studio.addressable-figures.pending.v1';
   const fields=['x','y','width','height'];
   function copyRect(rect){return Object.fromEntries(fields.map(key=>[key,rect[key]]));}
   function integer(value,label){
@@ -108,7 +108,15 @@
         if(typeof globalThis.api==='function')return globalThis.api(path,options);
         const response=await fetch(path,options),data=await response.json();if(!response.ok){const error=Error(data.error||response.statusText);error.status=response.status;error.data=data;throw error;}return data;
       },
-      async refresh(){if(typeof globalThis.refreshAssets==='function')await globalThis.refreshAssets(true);},
+      async refresh(expectedIds=[]){
+        if(typeof globalThis.refreshAssets!=='function')return {ok:false,error:'Workspace refresh is unavailable.'};
+        const outcome=await globalThis.refreshAssets(true);
+        if(outcome?.ok===false)return {ok:false,error:outcome.error||'Workspace refresh failed.'};
+        try{
+          const records=typeof assetState==='object'&&Array.isArray(assetState.assets)?assetState.assets:[];
+          return expectedIds.every(id=>records.some(asset=>asset?.id===id))?{ok:true}:{ok:false,error:'The refreshed Workspace does not contain the new child assets yet.'};
+        }catch(error){return {ok:false,error:'The refreshed Workspace could not be verified.'};}
+      },
       open(id){if(typeof globalThis.openAsset==='function')return globalThis.openAsset(id);return false;},
       message(text,error=false){if(typeof globalThis.assetMessage==='function')globalThis.assetMessage(text,error);}
     };
@@ -150,10 +158,10 @@
     function render(keepStatus=false){
       if(!session)return;
       const rectangles=values();list.innerHTML=rectangles.map((rect,index)=>'<li data-figure-row="'+index+'"><b>Figure '+(index+1)+'</b><div class="figure-split-row-fields">'+fields.map(key=>rowInput(rect,index,key)).join('')+'</div><div><button type="button" data-figure-move="-1" data-figure-index="'+index+'" '+(index===0?'disabled':'')+'>Move earlier</button><button type="button" data-figure-move="1" data-figure-index="'+index+'" '+(index===rectangles.length-1?'disabled':'')+'>Move later</button><button type="button" data-figure-remove data-figure-index="'+index+'">Remove</button></div></li>').join('');
-      renderOverlay();panel.querySelector('[data-figure-undo]').disabled=!session.history.canUndo() || busy || !!session.pending;
+      renderOverlay();if(!keepStatus)setStatus(reviewMessage());renderRecovery();
+      panel.querySelector('[data-figure-undo]').disabled=!session.history.canUndo() || busy || !!session.pending;
       panel.querySelector('[data-figure-clear]').disabled=!rectangles.length || busy || !!session.pending;
       panel.querySelector('#figureSplitCreate').disabled=!rectangles.length || busy || !!session.pending;
-      if(!keepStatus)setStatus(reviewMessage());renderRecovery();
     }
     function renderRecovery(){
       const pending=session?.pending;recovery.hidden=!pending;
@@ -189,9 +197,9 @@
           if(current())setStatus('The split is still unconfirmed. No new request was sent.',true);
           return;
         }
-        validateReceipt(result,request);clearPending(request);operation.pending=null;operation.receipt=result;
+        validateReceipt(result,request);clearPending(request);operation.pending=null;operation.receipt=result;operation.history=createHistory([]);
         let refreshError=null;
-        try{await globals.refresh();}catch(error){refreshError=error;}
+        try{const refreshed=await globals.refresh(result.created);if(!refreshed?.ok)refreshError=Error(refreshed?.error||'Workspace refresh failed.');}catch(error){refreshError=error;}
         if(!current()){
           globals.message('Figure split confirmed for '+operation.asset.title+'. Reopen that source to inspect its '+result.created.length+' child asset'+(result.created.length===1?'':'s')+'.'+(refreshError?' The Workspace refresh failed: '+refreshError.message:''),!!refreshError);
           return;
@@ -267,9 +275,13 @@
       drag={start:{x:event.clientX,y:event.clientY},bounds};stage.setPointerCapture?.(event.pointerId);event.preventDefault();
     });
     stage.addEventListener('pointermove',event=>{if(!drag)return;try{renderOverlay(fromPixels(drag.start,{x:event.clientX,y:event.clientY},drag.bounds));}catch(error){}});
-    stage.addEventListener('pointerup',event=>{if(!drag)return;const pending=drag;drag=null;try{add(fromPixels(pending.start,{x:event.clientX,y:event.clientY},pending.bounds));}catch(error){setStatus(error.message,true);}event.preventDefault();});
+    stage.addEventListener('pointerup',event=>{
+      if(!drag)return;const pending=drag;drag=null;
+      if(Math.abs(event.clientX-pending.start.x)<MIN_POINTER_DRAG || Math.abs(event.clientY-pending.start.y)<MIN_POINTER_DRAG){renderOverlay();setStatus('Drag at least '+MIN_POINTER_DRAG+' pixels in both directions to add a rectangle. Use exact coordinates for smaller crops.',true);event.preventDefault();return;}
+      try{add(fromPixels(pending.start,{x:event.clientX,y:event.clientY},pending.bounds));}catch(error){setStatus(error.message,true);}event.preventDefault();
+    });
     stage.addEventListener('pointercancel',()=>{drag=null;renderOverlay();});
     syncAction();return true;
   }
-  return {BASIS,MAX_FIGURES,fromPixels,validateRectangles,createHistory,createRequest,restoreRequest,validateReceipt,failureKind,randomId,requestMatchesAsset,install};
+  return {BASIS,MAX_FIGURES,MIN_POINTER_DRAG,fromPixels,validateRectangles,createHistory,createRequest,restoreRequest,validateReceipt,failureKind,randomId,requestMatchesAsset,install};
 });
