@@ -17,7 +17,7 @@ jobs:
         with:
           ref: 1c0c347290ebc5b66336a5b58db17184f5d529c8
           path: source
-      - name: Apply only the hash-pinned patch and publish a new branch
+      - name: Apply the pinned product patch without workflow changes
         working-directory: source
         shell: python
         run: |
@@ -32,6 +32,8 @@ jobs:
           assert hashlib.sha256(patch).hexdigest() == 'ef66151223afe711e28a5db2ade3f41e4eedb1a75dc119e8d29a6ad92418e87a'
           subprocess.run(['git', 'apply', '--index', '-'], input=patch, check=True)
           assert git('write-tree') == '696341f3b0d1b42e298038a12836492d24da5360'
+          # This token has no workflows permission. CI edits use the authorized connector separately.
+          git('restore', '--source=HEAD', '--staged', '--worktree', '.github/workflows/prompt-studio.yml')
           git('config', 'user.name', 'OpenAI')
           git('config', 'user.email', 'noreply@openai.com')
           git('commit', '-m', 'feat(prompt): persist revisioned reference briefs with durable commands')
