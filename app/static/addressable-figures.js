@@ -180,20 +180,42 @@
     }
     async function sendPending(observe=false){
       if(!session?.pending || busy)return;
-      const request=session.pending;busy=true;setLocked(true);setStatus(observe?'Checking the retained split receipt…':'Submitting the exact retained split…');
+      const operation=session,request=operation.pending,current=()=>session===operation;
+      busy=true;setLocked(true);setStatus(observe?'Checking the retained split receipt…':'Submitting the exact retained split…');
       try{
         const path=observe?'/api/assets/commands/'+encodeURIComponent(request.request_id)+'?workspace_id='+encodeURIComponent(request.workspace_id):'/api/assets/split-figures';
         const result=await globals.request(path,observe?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
-        if(observe && result?.status==='unknown'){setStatus('The split is still unconfirmed. No new request was sent.',true);return;}
-        validateReceipt(result,request);clearPending(request);session.pending=null;session.receipt=result;
-        await globals.refresh();
+        if(observe && result?.status==='unknown'){
+          if(current())setStatus('The split is still unconfirmed. No new request was sent.',true);
+          return;
+        }
+        validateReceipt(result,request);clearPending(request);operation.pending=null;operation.receipt=result;
+        let refreshError=null;
+        try{await globals.refresh();}catch(error){refreshError=error;}
+        if(!current()){
+          globals.message('Figure split confirmed for '+operation.asset.title+'. Reopen that source to inspect its '+result.created.length+' child asset'+(result.created.length===1?'':'s')+'.'+(refreshError?' The Workspace refresh failed: '+refreshError.message:''),!!refreshError);
+          return;
+        }
+        if(refreshError){
+          children.innerHTML='<p><b>'+result.created.length+' child asset'+(result.created.length===1?'':'s')+' created.</b> The parent is unchanged, but the Workspace could not refresh. Refresh the library before opening the children.</p>';
+          setStatus('Split confirmed, but the Workspace refresh failed: '+refreshError.message+' Refresh the library before opening the children.',true);
+          globals.message('Figure split confirmed, but the Workspace refresh failed. Refresh the library before opening the children.',true);
+          return;
+        }
         const buttons=result.created.map((id,index)=>'<button type="button" data-figure-child="'+id+'">Open child '+(index+1)+'</button>').join('');
         children.innerHTML='<p><b>'+result.created.length+' child asset'+(result.created.length===1?'':'s')+' created.</b> The parent is unchanged; generation and artistic review remain separate.</p><div class="asset-detail-actions">'+buttons+'</div>';
         setStatus('Split confirmed. The new children are ordinary Workspace images and can use Continue with this.');globals.message('Created '+result.created.length+' local figure child asset'+(result.created.length===1?'':'s')+'.');
       }catch(error){
-        if(!observe && failureKind(error)==='refused'){clearPending(session.pending);session.pending=null;setStatus('Split was not applied. '+error.message+' Review the source and rectangles before creating a new request.',true);}
-        else setStatus((observe?'Split status not confirmed. ':'Split not confirmed. ')+error.message+' No automatic retry or new request was sent.',true);
-      }finally{busy=false;render(true);}
+        if(!observe && failureKind(error)==='refused'){
+          clearPending(request);operation.pending=null;
+          if(current())setStatus('Split was not applied. '+error.message+' Review the source and rectangles before creating a new request.',true);
+          else globals.message('The retained split for '+operation.asset.title+' was refused. Reopen that source before trying again.',true);
+        }else if(current())setStatus((observe?'Split status not confirmed. ':'Split not confirmed. ')+error.message+' No automatic retry or new request was sent.',true);
+        else globals.message('The retained split for '+operation.asset.title+' remains unconfirmed. Reopen that source to check or retry the exact request.',true);
+      }finally{
+        busy=false;
+        if(session)render(true);
+      }
     }
     async function createChildren(){
       if(!session || busy || session.pending)return;
