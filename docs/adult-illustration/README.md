@@ -48,6 +48,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
 | Prompt dialects, vocabulary and analyzers | [Prompt and tag intelligence](PROMPT-AND-TAG-INTELLIGENCE.md) |
 | Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
+| Bounded provider-response snapshot adapters | [Source snapshots](SOURCE-SNAPSHOTS.md) |
 | Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
 | Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
