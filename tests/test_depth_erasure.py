@@ -2,11 +2,14 @@
 import hashlib
 import io
 import json
+import binascii
 from pathlib import Path
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+import zlib
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +26,19 @@ def picture(mode='L', fmt='PNG', size=(16, 12)):
         with io.BytesIO() as out:
             image.save(out, format=fmt)
             return out.getvalue()
+
+
+def png_chunk(kind, payload):
+    return (struct.pack('>I', len(payload)) + kind + payload +
+            struct.pack('>I', binascii.crc32(kind + payload) & 0xffffffff))
+
+
+def png_header(width, height, bit_depth=8, color_type=2, scanline=None):
+    header = struct.pack('>IIBBBBB', width, height, bit_depth, color_type, 0, 0, 0)
+    chunks = [png_chunk(b'IHDR', header)]
+    if scanline is not None: chunks.append(png_chunk(b'IDAT', zlib.compress(scanline)))
+    chunks.append(png_chunk(b'IEND', b''))
+    return b'\x89PNG\r\n\x1a\n' + b''.join(chunks)
 
 
 class DepthErasureTests(unittest.TestCase):
@@ -113,6 +129,26 @@ class DepthErasureTests(unittest.TestCase):
             image.save(out, format='PNG', transparency=(255, 255, 255))
             raw = out.getvalue()
         with self.assertRaises(ValueError): self.erase(raw)
+
+    def test_refuses_non_8_bit_png_before_pillow_mode_normalizes_it(self):
+        rgb16 = png_header(1, 1, 16, 2, b'\0' + struct.pack('>HHH', 0x1234, 0x5678, 0x9abc))
+        gray2 = png_header(4, 1, 2, 0, b'\0\x00')
+        for raw in (rgb16, gray2):
+            with self.subTest(raw=raw[:32]), self.assertRaises(ValueError):
+                self.erase(raw, [[0, 0, 1, 1]])
+
+    def test_cli_oversized_header_returns_parseable_json_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); source = root / 'huge.png'; boxes = root / 'boxes.json'; out = root / 'erased.png'
+            raw = png_header(10000, 10000)
+            source.write_bytes(raw); boxes.write_text('[]')
+            sha = hashlib.sha256(raw).hexdigest()
+            result = self.cli(source, '--expected-sha256', sha, '--rectangles', boxes, '--out', out)
+            self.assertEqual(result.returncode, 2)
+            error = json.loads(result.stderr)
+            self.assertIn('canvas', error['error'])
+            self.assertNotIn('DecompressionBombWarning', result.stderr)
+            self.assertFalse(out.exists())
 
     def test_deterministic_operation_and_canonical_rectangles(self):
         raw = picture(); a, ra = self.erase(raw, [[2, 2, 4, 4], [0, 0, 1, 1]])
