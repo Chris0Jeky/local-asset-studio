@@ -118,5 +118,12 @@ globalThis.StudioPromptDraft=(()=>{
     if(!receipt||!matches(receipt.after))throw Error('The brief changed after applying. Undo would overwrite newer work; export the receipt to recover earlier values.');
     intent=JSON.parse(receipt.before.json);$('profile').value=receipt.before.profile;show();summary();invalidate();return capture();
   }
-  return Object.freeze({capture,matches,apply,undo});
+  function openSaved(ticket,document){
+    if(!matches(ticket))throw Error('The brief changed. Preview the saved revision again.');
+    const profile=registry.find(p=>p.id===document.profile_id);
+    if(!profile||!profile.tasks.includes(document.intent.task))throw Error('The saved profile is unavailable or does not support this task. Export the document instead.');
+    intent=clone(document.intent);$('profile').value=profile.id;proposed=null;$('accept').disabled=true;$('proposal-list').replaceChildren();
+    show();summary();invalidate();return capture();
+  }
+  return Object.freeze({capture,matches,apply,undo,openSaved});
 })();
