@@ -1,0 +1,491 @@
+{
+  "schema": "studio.adult-illustration-benchmark-corpus/v0",
+  "kind": "non-executing-corpus",
+  "executable": false,
+  "authority": "none",
+  "research_date": "2026-09-15",
+  "source_baseline": "b29205cfc95ca4e64d72ae38d53df30c83968997",
+  "issue": 409,
+  "cases": [
+    {
+      "id": "adult-original-text",
+      "kind": "text_to_image",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "body.silhouette",
+        "camera.composition",
+        "wardrobe.coverage",
+        "scene.environment",
+        "style.rendering"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-canon-new-outfit",
+      "kind": "identity_outfit",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "wardrobe.coverage",
+        "reference.transfer"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-canon-new-pose",
+      "kind": "identity_pose",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "pose.action",
+        "body.silhouette",
+        "camera.composition"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-character-plus-pose",
+      "kind": "multi_reference",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "pose.action",
+        "reference.transfer"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-character-outfit-style",
+      "kind": "multi_reference",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "style.rendering",
+        "reference.transfer"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-silhouette-sweep",
+      "kind": "control_sweep",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "body.silhouette",
+        "wardrobe.coverage"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-foreshortened-camera",
+      "kind": "geometry",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "pose.action",
+        "camera.composition",
+        "body.silhouette"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-material-lighting",
+      "kind": "appearance",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "material.surface",
+        "lighting.palette",
+        "wardrobe.coverage"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-editorial-pinup",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "pose.action",
+        "camera.composition",
+        "expression.gaze",
+        "wardrobe.coverage"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-swim-hot-spring",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "wardrobe.coverage",
+        "material.surface",
+        "scene.environment",
+        "lighting.palette"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-fantasy-glamour",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "scene.environment",
+        "style.rendering"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-scifi-cyber",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "material.surface",
+        "lighting.palette",
+        "scene.environment"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-action-fanservice",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "pose.action",
+        "camera.composition",
+        "wardrobe.coverage"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "two-adult-shared-prop",
+      "kind": "multi_subject",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        },
+        {
+          "id": "adult-b",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "required",
+      "required_controls": [
+        "subject.adult_assertion",
+        "contact.relationship",
+        "pose.action",
+        "reference.transfer",
+        "wardrobe.coverage"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-three-pose-sheet",
+      "kind": "character_sheet",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "pose.action",
+        "camera.composition",
+        "style.rendering"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-local-wardrobe-edit",
+      "kind": "scoped_edit",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "edit.write_scope"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-local-contact-repair",
+      "kind": "scoped_repair",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "contact.relationship",
+        "edit.write_scope"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-conflicting-references",
+      "kind": "adversarial_reference",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "reference.transfer",
+        "lighting.palette",
+        "style.rendering"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-already-correct-anatomy",
+      "kind": "no_op_guard",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "edit.write_scope"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
+      "id": "adult-legitimate-occlusion",
+      "kind": "visibility",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "required_controls": [
+        "subject.adult_assertion",
+        "pose.action",
+        "contact.relationship"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    }
+  ],
+  "measures": [
+    "hard_constraints",
+    "adult_content_envelope",
+    "identity_per_subject",
+    "body_silhouette",
+    "outfit_coverage_material",
+    "pose_camera_contact",
+    "reference_transfer",
+    "reference_leakage",
+    "expression_gaze",
+    "scene_palette_lighting_style",
+    "anatomy_visibility",
+    "outside_mask_pixel_preservation",
+    "final_size_quality",
+    "accepted_distinct_task",
+    "attempts",
+    "interactions",
+    "wait_seconds",
+    "cleanup_minutes",
+    "cold_warm_timing",
+    "peak_vram",
+    "peak_host_ram",
+    "windows_commit",
+    "failure_class"
+  ],
+  "notes": [
+    "Real references, prompts, media and owner review remain outside Git in approved Workspace/run evidence.",
+    "Every authorized candidate cap is zero until a separate Production campaign is approved.",
+    "Cases split by identity/costume/source for held-out evaluation; adjacent crops are not independent."
+  ]
+}
