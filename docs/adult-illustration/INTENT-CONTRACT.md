@@ -73,6 +73,18 @@ None of these states means generated, accepted, rights-cleared or promoted.
 
 `examples/adult-illustration/hot-spring-study.json` is a synthetic, non-executing example with three role-separated source declarations. The placeholder source paths and hashes prove the contract only; no image bytes are included or treated as present. Projection returns `requires_binding` and zero generation.
 
+## Offline CLI
+
+The stacked CLI slice exposes the pure operations without importing model, graph or runtime services:
+
+```console
+python scripts/studio_adult_illustration.py validate-intent examples/adult-illustration/hot-spring-study.json
+python scripts/studio_adult_illustration.py project examples/adult-illustration/hot-spring-study.json --out experiments/runs/hot-spring-projection.json
+python scripts/studio_adult_illustration.py validate-projection experiments/runs/hot-spring-projection.json
+```
+
+`--out` uses exclusive creation and never overwrites evidence. Validation errors are JSON on stderr with `execution_authorized: false` and `generation_submitted: false`. A structurally valid `blocked` projection exits successfully because it is an inspectable planning result, not a generation failure.
+
 ## Next integration
 
-The next slice should expose validate/project through an exclusive-create CLI, then map the projection onto existing revisioned Prompt/Setup commands. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.
+Map the projection onto existing revisioned Prompt/Setup commands, then bind exact route capabilities. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.
