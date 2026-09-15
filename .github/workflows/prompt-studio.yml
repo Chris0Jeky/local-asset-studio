@@ -1,10 +1,10 @@
 name: Prompt Studio
 on:
   pull_request:
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'tests/test_studio_prompt*.py', 'tests/test_prompt_projects*.py', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'tests/test_studio_prompt*.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
   push:
     branches: [main]
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'tests/test_studio_prompt*.py', 'tests/test_prompt_projects*.py', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'tests/test_studio_prompt*.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
 permissions:
   contents: read
 jobs:
@@ -37,6 +37,7 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: python tests/reference_review_browser.py --output .runtime/reference-review/browser
       - run: python tests/reference_analyze_browser.py --output .runtime/reference-review/browser/analyze
+      - run: python tests/prompt_projects_browser.py --output .runtime/reference-review/browser/projects
       - uses: actions/upload-artifact@v4
         if: always()
         with:
