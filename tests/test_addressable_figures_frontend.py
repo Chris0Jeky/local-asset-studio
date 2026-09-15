@@ -14,7 +14,7 @@ class AddressableFiguresFrontend(unittest.TestCase):
             timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Addressable figure frontend contracts: 8 passed', result.stdout)
+        self.assertIn('Addressable figure frontend contracts: 10 passed', result.stdout)
 
 
 if __name__ == '__main__':
