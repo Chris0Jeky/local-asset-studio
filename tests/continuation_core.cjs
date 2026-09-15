@@ -169,8 +169,10 @@ test('bracketed fills become labelled fields and the answers write the prepared 
   const depth={id:'combine-klein-9b-depth',continuation_prompt:'Image 1 is a depth map: [image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.',
     continuation_placeholder:['[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]','[image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]','[image 2\'s clothes and colours, e.g. a black crop top, pink shorts]']};
   const spec=C.fills(depth);
-  assert.deepEqual(spec.map(f=>f.label),['Who is in image 2','Image 1\'s pose in a few words','Image 2\'s clothes and colours'],'the label is the text before the example');
+  assert.deepEqual(spec.map(f=>f.label),['Who is in image 2','Image 1\'s pose in a few words','Image 2\'s clothes and colours'],'the label is the text before the example; catalog order without a template');
   assert.deepEqual(spec.map(f=>f.example),['Ellen Joe, a girl with short black hair with red tips','bent forward at the waist, hands on hips','a black crop top, pink shorts']);
+  assert.deepEqual(C.fills(depth,depth.continuation_prompt).map(f=>f.label),['Image 1\'s pose in a few words','Who is in image 2','Image 2\'s clothes and colours'],'with the wording, the fields follow the order it reads them');
+  assert.equal(C.assemble(depth.continuation_prompt,{[spec[0].placeholder]:'quoting '+spec[0].placeholder+' itself'}),depth.continuation_prompt,'an answer that quotes its own bracket is left out');
   assert.deepEqual(C.fills({continuation_placeholder:'[who]'}),[{placeholder:'[who]',label:'Who',example:''}],'a fill without an example has an empty example');
   assert.deepEqual(C.fills({}),[]);
   const values={[spec[0].placeholder]:'Ellen Joe, red-tipped black hair',[spec[1].placeholder]:'  bent double, legs crossed ',[spec[2].placeholder]:''};

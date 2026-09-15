@@ -29,7 +29,7 @@
   // A recipe's bracketed fills (who, the pose, the clothes) are short fields that write the prepared wording for you; the
   // paragraph stays visible and editable underneath, and a hand edit stops the fields from rewriting it (#422 slice A).
   const fillsBlock=element('div','ux-fills');fillsBlock.id='uxFills';fillsBlock.hidden=true;q('#positiveWrap').before(fillsBlock);
-  let fillsPreset=null,fillsTemplate='',fillsAssembled=null;
+  let fillsPreset=null,fillsSource=null,fillsTemplate='',fillsAssembled=null;
   const fillInputs=()=>[...fillsBlock.querySelectorAll('[data-ux-fill]')];
   function fillValues(){return Object.fromEntries(fillInputs().map(input=>[input.dataset.uxFill,input.value]));}
   function fillsKey(){return continuationState?'studio-fills:'+continuationState.source_asset_id:null;}
@@ -40,13 +40,15 @@
     if(q('#positive').value!==text){q('#positive').value=text;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof updateReady==='function')updateReady();}
   }
   function syncFills(){
-    const spec=selected&&typeof StudioContinuation!=='undefined'?StudioContinuation.fills(selected):[];
-    if(!spec.length){fillsBlock.hidden=true;fillsPreset=null;return;}
-    const current=q('#positive').value,carries=spec.every(f=>current.includes(f.placeholder));
-    if(fillsPreset!==selected.id||(carries&&current!==fillsTemplate)){
+    const spec=selected&&typeof StudioContinuation!=='undefined'?StudioContinuation.fills(selected,selected.continuation_prompt):[];
+    if(!spec.length){fillsBlock.hidden=true;fillsPreset=null;fillsSource=null;return;}
+    const current=q('#positive').value,carries=spec.every(f=>current.includes(f.placeholder)),source=continuationState?.source_asset_id||null;
+    // The block belongs to one recipe and one source picture: another source (or leaving the continuation) starts from that
+    // source's remembered answers, never from the previous character's.
+    if(fillsPreset!==selected.id||fillsSource!==source||(carries&&current!==fillsTemplate)){
       // The template is the prepared wording: the textarea while it still carries every fill, otherwise the recipe's continuation
       // wording with `{source}` resolved the way Continue with this resolves it (the literal token must never reach the model).
-      fillsPreset=selected.id;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered=rememberedFills();
+      fillsPreset=selected.id;fillsSource=source;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered=rememberedFills();
       fillsBlock.innerHTML='<p class="muted">Answer these in a few words; they write the wording below for you. The paragraph stays editable.</p>'+spec.map(f=>'<label>'+escape(f.label)+'<input data-ux-fill="'+escape(f.placeholder)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(remembered[f.placeholder]||'')+'" autocomplete="off"></label>').join('')+'<p id="uxFillsNote" class="muted" hidden>The wording below is not what the fields would write (restored, or edited by hand), so they leave it alone. <button type="button" id="uxRebuildFills">Rebuild it from the fields</button></p>';
     }
     fillsBlock.hidden=!fillsTemplate;if(fillsBlock.hidden)return;

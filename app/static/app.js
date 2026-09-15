@@ -202,7 +202,7 @@ function recipeCard(preset) {
   const description = String(preset.description || ''), note = String(preset.commercial_note || '');
   const cut = description.length > 260 ? description.search(/\.\s(?=[A-Z])/) : -1;
   if (cut < 40) return '<p>' + esc(description) + '</p><small>' + esc(note) + '</small>';
-  const fills = typeof StudioContinuation !== 'undefined' ? StudioContinuation.fills(preset) : [];
+  const fills = typeof StudioContinuation !== 'undefined' ? StudioContinuation.fills(preset, preset.continuation_prompt) : [];
   const typing = fills.length ? '<p class="recipe-typing">You fill in: ' + esc(fills.map(f => f.label.toLowerCase()).join(' · ')) + '.</p>' : '';
   return '<p>' + esc(description.slice(0, cut + 1)) + '</p>' + typing + '<details class="create-context-help recipe-more"><summary>More about this recipe</summary><p>' + esc(description.slice(cut + 1).trim()) + '</p><small>' + esc(note) + '</small></details>';
 }
