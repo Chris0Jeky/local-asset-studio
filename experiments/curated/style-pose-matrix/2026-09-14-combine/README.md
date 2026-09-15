@@ -85,7 +85,9 @@ bend is beyond what 6 steps of the 4B model reproduced here.
 
 The owner called the 4B results "incredibly bad" and asked for a baseline that proves the workflow. Same two pictures (image A = the
 "SHARK" crop-top character, image B = the bent-over maid picture), research renders straight against ComfyUI, seeds 2026091411+,
-exact wordings in `matrix.py`/`structural.py` in the session scratch (copied into the table's variants). Sheets:
+exact wordings, graph edits and seeds in `research-scripts/matrix.py` (Klein variants), `structural.py` (OpenPose + IP-Adapter),
+`qwen_pose.py`, `prove_fix.py` and `prove_bend.py` next to this file (they run straight against ComfyUI on 8188 from the repo's
+graphs; the input file names are the owner's uploads). Sheets:
 `examples/style-pose/combine-klein4b-matrix.jpg`, `combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`,
 `combine-openpose-ipadapter.jpg`.
 
