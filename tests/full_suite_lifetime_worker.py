@@ -41,6 +41,7 @@ class TrackingTextResult(unittest.TextTestResult):
 
     def startTest(self, test):
         identifier = test.id()
+        self._active_identifier = identifier
         set_current_test(identifier)
         self.stream.writeln(f"START {identifier}")
         self.stream.flush()
@@ -48,7 +49,7 @@ class TrackingTextResult(unittest.TextTestResult):
 
     def stopTest(self, test):
         super().stopTest(test)
-        identifier = test.id()
+        identifier = self._active_identifier
         self.stream.writeln(f"END {identifier}")
         self.stream.flush()
         set_current_test("<between tests>")

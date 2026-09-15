@@ -42,6 +42,7 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
 
                     class HangsBriefly(unittest.TestCase):
                         def test_wait(self):
+                            self.id = "fixture-status"
                             self.assertTrue(callable(split_figures))
                             time.sleep(0.15)
                     """
