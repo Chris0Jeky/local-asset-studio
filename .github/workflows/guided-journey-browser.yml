@@ -4,6 +4,10 @@ on:
     paths:
       - 'app/static/**'
       - 'studio_workflow/guides.py'
+      - 'studio_workflow/control*.py'
+      - 'studio_workflow/core.py'
+      - 'tests/workflow_control_preview_browser.py'
+      - 'tests/test_workflow_control*.py'
       - 'tests/studio_guide*'
       - 'tests/create_readiness*'
       - 'tests/test_create_readiness_frontend.py'
@@ -35,6 +39,10 @@ jobs:
         run: python tests/studio_guide_browser.py --out .runtime/guide-proof
       - name: Native disclosure layout and keyboard ownership on isolated coach fixture
         run: python tests/studio_guide_disclosure_browser.py --out .runtime/guide-disclosure-proof -v
+      - name: Shared control contracts and real-DOM preview journey
+        run: |
+          python -m unittest discover -s tests -p 'test_workflow_control*.py' -v
+          python tests/workflow_control_preview_browser.py --out .runtime/control-preview-proof -v
       - name: Create blockers, focus and read-only dependency retry
         run: python tests/create_readiness_browser.py --out .runtime/create-readiness-proof
       - uses: actions/upload-artifact@v4
@@ -44,6 +52,7 @@ jobs:
           path: |
             .runtime/guide-proof/
             .runtime/guide-disclosure-proof/
+            .runtime/control-preview-proof/
             .runtime/create-readiness-proof/
           if-no-files-found: ignore
           retention-days: 7
