@@ -1,9 +1,8 @@
 # Review reference descriptions without editing JSON
 
 Open **Prompt Lab → Review your references**. This is the browser review half of
-#333/#336's local reference assistant. It accepts saved analysis JSON or a completed operation from the
-[Analyze pictures panel](REFERENCE-ANALYZE-UI.md). The latter uses the existing
-Studio worker and needs the documented local helper configuration.
+#333/#336's local reference assistant. It consumes the saved analysis JSON from
+that assistant; **it does not yet run Analyze from the browser**.
 
 ## Use
 

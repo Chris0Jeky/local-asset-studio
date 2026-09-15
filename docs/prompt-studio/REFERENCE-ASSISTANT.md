@@ -1,9 +1,5 @@
 # Run the local reference assistant
 
-For the browser path, use [Analyze pictures in Prompt Lab](REFERENCE-ANALYZE-UI.md).
-This CLI remains independent of Studio scheduling; do not run it concurrently
-against the same helper.
-
 This is the operator/agent entry point for the
 [reference-intelligence design](REFERENCE-INTELLIGENCE.md). It describes up to
 four images in one local vision call, preserves metadata separately and creates
