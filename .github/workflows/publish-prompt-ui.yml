@@ -15,27 +15,24 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 542878bae0d7b79594c4799d1ba6665b599c5ab4
+          ref: 828e9bde73b2b8506153292aeed7b94619cfac2c
           path: source
-      - name: Apply the pinned UI patch without workflow changes
+      - name: Publish the exact tested import-race correction
         working-directory: source
         shell: python
         run: |
           import base64, hashlib, lzma, pathlib, subprocess
           def git(*args):
               return subprocess.check_output(['git', *args], text=True).strip()
-          assert git('rev-parse', 'HEAD') == '542878bae0d7b79594c4799d1ba6665b599c5ab4'
-          encoded = ''.join((pathlib.Path('../transfer/.handoff') / f'ui-{i}.b64').read_text() for i in range(5))
+          assert git('rev-parse', 'HEAD') == '828e9bde73b2b8506153292aeed7b94619cfac2c'
           decoder = lzma.LZMADecompressor()
-          patch = decoder.decompress(base64.b64decode(encoded, validate=True), max_length=1048576)
+          patch = decoder.decompress(base64.b64decode(pathlib.Path('../transfer/.handoff/correction.b64').read_text(), validate=True), max_length=1048576)
           assert decoder.eof and not decoder.unused_data
-          assert hashlib.sha256(patch).hexdigest() == '77f0810893dbacb6ca4911270b88dd1a66ddad6de52efb9631db43da19994f9b'
+          assert hashlib.sha256(patch).hexdigest() == 'e70a419303e11a031bf146a9dbc71447159b24c80dd88c07db7419c502c6e650'
           subprocess.run(['git', 'apply', '--index', '-'], input=patch, check=True)
-          assert git('write-tree') == '1a99d6058c342e98f53c00d9c1607b52ddc23f7c'
-          # CI edits are published separately through the authorized connector.
-          git('restore', '--source=HEAD', '--staged', '--worktree', '.github/workflows/prompt-studio.yml')
+          assert git('write-tree') == '6ce92857909da6dc8429d82787a812ada0373123'
           git('config', 'user.name', 'OpenAI')
           git('config', 'user.email', 'noreply@openai.com')
-          git('commit', '-m', 'feat(prompt): save and reopen reference briefs in Prompt Lab')
-          subprocess.run(['git', 'push', '--force-with-lease=refs/heads/codex/prompt-project-ui:', 'origin', 'HEAD:refs/heads/codex/prompt-project-ui'], check=True)
+          git('commit', '-m', 'fix(prompt): reject stale file imports after opening a saved brief')
+          subprocess.run(['git', 'push', '--force-with-lease=refs/heads/codex/prompt-project-ui:828e9bde73b2b8506153292aeed7b94619cfac2c', 'origin', 'HEAD:refs/heads/codex/prompt-project-ui'], check=True)
           print(git('rev-parse', 'HEAD', 'HEAD^{tree}'))
