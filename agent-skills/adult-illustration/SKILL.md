@@ -4,14 +4,14 @@ description: Plan and implement the adult-only controlled anime illustration pro
 ---
 # Controlled adult illustration agent contract
 
-Use this skill when working on #403–#413, #432, #433 or #435: model-independent adult illustration intent, exact route qualification, LoRA/control evidence, geometry, role-separated references, prompt dialects, verified vocabulary, source provenance, benchmarks, genre packs, training plans, finishing or shared agent commands.
+Use this skill when working on #403–#413 or #432–#440: model-independent adult illustration intent, exact route qualification, LoRA/control evidence, geometry, role-separated references, prompt dialects, verified vocabulary, source provenance, benchmarks, genre packs, training plans, finishing or shared agent commands.
 
 Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Library, character consistency, Repair Studio, Krita or Blender. It does not authorize model downloads, package/runtime changes, neural execution, training, paid services, private-media publication, creative acceptance, rights clearance or promotion.
 
 ## Read first
 
 1. `CLAUDE.md`, `AGENTS.md`, `CURRENT_STATE.md` and `HUMAN_TODO.md`.
-2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `SOURCE-INTAKE.md`, `TECHNIQUE-PORTFOLIO.md`, `RESEARCH-DISCOVERY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
+2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `SOURCE-INTAKE.md`, `SOURCE-SNAPSHOTS.md`, `TECHNIQUE-PORTFOLIO.md`, `RESEARCH-DISCOVERY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
 3. `research/adult-illustration/programme.json` and every manifest relevant to the issue.
 4. Live #403 and the child issue being implemented.
 5. Existing owner docs:
@@ -109,6 +109,7 @@ Do not use for:
 | Repair/upscale/finishing | #412 with #243/#256/#257 |
 | CLI/SDK/MCP projections | #413 with #123 |
 | Read-only research discovery and comparison plans | #435 with #413/#432/#433 |
+| Provider-response snapshots and diffs | #438 with #433/#356/#9 |
 | Prompt dialects/tag vocabulary | #432 with #35/#37/#38 |
 | Hugging Face/Civitai source intake | #433 with #9/#144/#356 |
 | Dispatch/recovery | #10/#22/#122 |
