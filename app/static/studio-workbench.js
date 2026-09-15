@@ -256,7 +256,7 @@
       else{const label=StudioContinuation.sourceLabel(selected).toLowerCase(),op=selected.continuation_capability?.operation,board=op==='combine'?'Picture 1 (the picture whose pose you want)':selected.continuation_capability?.keeps_picture&&selected.style_weight?'the style board (off until you raise Style weight)':selected.continuation_capability?.prompt_role==='instruction'?'Picture 1 (the picture drawn the way you want)':'the style board';
         if(style?.file){announce('Source attached as the '+label+'; your picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
         else if(style?.asset){announce('Source attached as the '+label+'; your picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
-        else{announce('Source attached as the '+label+'. Now add a picture to Picture 1 of '+board+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}
+        else{announce('Source attached as the '+label+'. Now add '+(op==='combine'?'the picture whose pose you want to Picture 1':'a picture to Picture 1 of '+board)+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}
     }catch(error){q('#uxHandoffStatus').textContent=error.message;}
     finally{handoffBusy=false;destinationDetails();syncReady();}
   };
