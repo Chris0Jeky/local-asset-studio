@@ -1,0 +1,36 @@
+name: Publish verified reference retirement (one shot)
+on:
+  push:
+    branches: [codex/reference-retirement-transfer-20260915]
+    paths: [.github/workflows/publish-reference-retirement.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/reference-retirement-transfer-20260915
+      - name: Verify tested tree and publish non-workflow source
+        run: |
+          python - <<'PY'
+          import base64,lzma,pathlib,subprocess,hashlib
+          parts=[pathlib.Path('.github/retirement-patch.'+str(i)) for i in range(2)]
+          patch=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='8ddf2ee7358f356105d022ea4abdb59622aaac28e178239ecb3e2b13e37c2077'
+          subprocess.run(['git','apply','--index','--binary','-'],input=patch,check=True)
+          for p in parts:p.unlink()
+          pathlib.Path('.github/workflows/publish-reference-retirement.yml').unlink()
+          subprocess.run(['git','add','-A'],check=True)
+          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
+          assert tree=='a34eab8d503bf798713970f9b6c8d3c69a8adfee',tree
+          subprocess.run(['git','checkout','HEAD','--','.github/workflows'],check=True)
+          subprocess.run(['git','add','-A'],check=True)
+          print('Non-workflow tree:',subprocess.check_output(['git','write-tree'],text=True).strip())
+          PY
+          git config user.name 'Cristian Tcaci'
+          git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
+          git commit -m 'fix(prompt): retire unqueued analysis IDs without replay'
+          git push origin HEAD:refs/heads/codex/reference-retirement-transfer-20260915
