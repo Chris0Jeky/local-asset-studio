@@ -20,7 +20,10 @@ selections reopen with their description overrides; their original images must
 be reselected before another validated reference transfer. Saved observations may
 be historical or unapplied, not necessarily descriptions of the current brief.
 
-The current-revision line distinguishes unsaved editor changes. An acknowledged
+The current-revision line distinguishes unsaved editor changes. Pending file imports
+and original-image hashing are tied to the draft that started them; completion
+cannot overwrite a newly opened brief or attach old pictures to it. Reference
+batches are applied together only after every file succeeds. An acknowledged
 save never copies its older submitted words over newer typing. If another tab or
 agent saved first, the stale save is rejected. Nothing silently merges, rebases,
 unlocks a field or overwrites the other writer. Preview the current server version,

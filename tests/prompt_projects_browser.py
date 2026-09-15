@@ -101,10 +101,10 @@ def run(output):
                         expect(page.locator('#pp-current')).to_contain_text('unsaved')
                         # Storage failure sends zero saves, preserving the user's current input.
                         before=POSTS.count('/api/prompt/projects/save')
-                        page.evaluate("window.savedSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw Error('quota fixture')}")
+                        page.evaluate("() => {window.savedSet=Storage.prototype.setItem;Storage.prototype.setItem=function(){throw Error('quota fixture')};}")
                         page.locator('#pp-save').click();expect(page.locator('#pp-status')).to_contain_text('retained')
                         assert POSTS.count('/api/prompt/projects/save')==before
-                        page.evaluate('Storage.prototype.setItem=window.savedSet')
+                        page.evaluate('() => {Storage.prototype.setItem=window.savedSet;}')
                         page.screenshot(path=str(output/f'briefs-{width}.png'),full_page=True)
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                         assert not errors,errors

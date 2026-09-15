@@ -76,7 +76,19 @@ function coverage(){$('coverage').replaceChildren();
     line.append(node('b',readable(row.source)),node('span',' → '),node('span',destination(row.destination)));$('coverage').append(line);}
   if(!(result.coverage||[]).length)$('coverage').append(node('p','This profile recorded no field mapping.'));}
 $('export-brief').addEventListener('click',()=>{collect();download(intent,'creative-brief.json');});$('export-result').addEventListener('click',()=>{if(result)download(result,'compiled-intent.json');});
-$('brief-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a brief smaller than 64 KiB');const data=JSON.parse(await file.text());const compatible=registry.find(p=>p.tasks.includes(data.task));if(!compatible)throw Error('Unsupported task');await api('/api/prompt/compile',{intent:data,profile_id:compatible.id});intent=data;$('profile').value=compatible.id;show();summary();invalidate();$('status').textContent='Imported the full brief. Nothing generated.';}catch(err){$('status').textContent=err.message;}});
+let briefImportRequest=0,referenceImportRequest=0;
+$('brief-file').addEventListener('change',async e=>{
+  const operation=++briefImportRequest,ticket=globalThis.StudioPromptDraft.capture();
+  const current=()=>operation===briefImportRequest&&globalThis.StudioPromptDraft.matches(ticket);
+  try{
+    const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a brief smaller than 64 KiB');
+    const raw=await file.text();if(!current())throw Error('The draft changed while importing. The older file was not applied.');
+    const data=JSON.parse(raw),compatible=registry.find(p=>p.tasks.includes(data.task));if(!compatible)throw Error('Unsupported task');
+    await api('/api/prompt/compile',{intent:data,profile_id:compatible.id});
+    if(!current())throw Error('The draft changed while validating the import. The older file was not applied.');
+    intent=data;$('profile').value=compatible.id;show();summary();invalidate();$('status').textContent='Imported the full brief. Nothing generated.';
+  }catch(err){if(operation===briefImportRequest)$('status').textContent=err.message;}
+});
 $('proposal-file').addEventListener('change',async e=>{try{const file=e.target.files[0];if(!file||file.size>65536)throw Error('Choose a small proposal JSON');const data=JSON.parse(await file.text());proposed=data.proposal||data;collect();await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields:[]});$('proposal-list').replaceChildren();for(const c of proposed.changes){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=c.field;input.disabled=intent.locked.some(x=>c.field===x||c.field.startsWith(x+'.'));label.append(input,document.createTextNode(c.field+': '+JSON.stringify(c.value)+' â€” '+c.reason));$('proposal-list').append(label);}$('accept').disabled=false;$('status').textContent='Suggestions loaded; none applied.';}catch(err){$('accept').disabled=true;$('status').textContent=err.message;}});
 $('accept').addEventListener('click',async()=>{try{collect();const ticket=draftVersion;const accepted_fields=Array.from($('proposal-list').querySelectorAll('input:checked')).map(x=>x.value);const revision=await api('/api/prompt/apply',{intent,proposal:proposed,accepted_fields});if(ticket!==draftVersion){$('status').textContent='Draft changed while applying. Stale result discarded.';return;}intent=revision.intent;show();invalidate();$('accept').disabled=true;$('status').textContent='Selected suggestions applied to a new draft. Original proposal remains separate.';}catch(e){$('status').textContent=e.message;}});
 let metadataRequest=0;
@@ -99,7 +111,23 @@ fetch('/api/prompt/profiles').then(async response=>{const data=await response.js
 
 function words(){const show=['voice','music'].includes(intent.task);$('words-section').hidden=!show;if(show){const key=intent.task==='voice'?'text':'lyrics';$('words-label').textContent=intent.task==='voice'?'Exact words to speak (never rewritten)':'Exact lyrics (never rewritten)';$('words').value=intent.verbatim[key]||'';}}
 function references(){$('reference-list').replaceChildren();for(const r of intent.references){const card=document.createElement('div');card.append(node('p',r.id+' / '+r.path));const label=node('label','Reference role');const select=document.createElement('select');for(const role of ['identity','pose','style','costume','composition','motion','voice','geometry','mask']){const opt=node('option',role);opt.value=role;select.append(opt);}select.value=r.role;select.addEventListener('change',()=>{r.role=select.value;invalidate();});label.append(select);card.append(label);for(const key of ['take','ignore']){const l=node('label',key==='take'?'Take from this image':'Do not transfer');const input=document.createElement('input');input.value=r[key].join('; ');input.addEventListener('change',()=>{r[key]=input.value.split(';').map(x=>x.trim()).filter(Boolean);invalidate();});l.append(input);card.append(l);}const remove=node('button','Remove reference');remove.addEventListener('click',()=>{intent.references=intent.references.filter(x=>x.id!==r.id);references();invalidate();});card.append(remove);$('reference-list').append(card);}}
-$('ref-files').addEventListener('change',async e=>{try{for(const f of e.target.files){if(intent.references.length>=12)throw Error('Twelve reference records maximum');if(f.size>8*1024*1024||/[\\/:]/.test(f.name))throw Error('Use small images with portable filenames');const bytes=await f.arrayBuffer();const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');intent.references.push({id:'ref-'+crypto.randomUUID().slice(0,8),role:'identity',kind:'image',path:f.name,sha256:hash,take:[],ignore:[]});}references();invalidate();$('status').textContent='References recorded by hash. Set each role below; the prompt rebuilds itself.';}catch(err){references();$('status').textContent=err.message;}});
+$('ref-files').addEventListener('change',async e=>{
+  const operation=++referenceImportRequest,ticket=globalThis.StudioPromptDraft.capture();
+  const current=()=>operation===referenceImportRequest&&globalThis.StudioPromptDraft.matches(ticket);
+  try{
+    const files=Array.from(e.target.files),added=[];
+    if(ticket.intent.references.length+files.length>12)throw Error('Twelve reference records maximum; no pictures were attached.');
+    for(const f of files)if(f.size>8*1024*1024||/[\\/:]/.test(f.name))throw Error('Use small images with portable filenames; no pictures were attached.');
+    for(const f of files){
+      const bytes=await f.arrayBuffer();if(!current())throw Error('The draft changed while reading references. No pictures were attached.');
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
+      if(!current())throw Error('The draft changed while hashing references. No pictures were attached.');
+      added.push({id:'ref-'+crypto.randomUUID().slice(0,8),role:'identity',kind:'image',path:f.name,sha256:hash,take:[],ignore:[]});
+    }
+    if(!current())throw Error('The reference selection changed. No pictures were attached.');
+    intent.references.push(...added);references();invalidate();$('status').textContent='References recorded by hash. Set each role below; the prompt rebuilds itself.';
+  }catch(err){if(operation===referenceImportRequest)$('status').textContent=err.message;}
+});
 
 // Reference review is a client of this draft owner, never a second intent store.
 // These guards cover this open editor; they are not shared Workspace revisions.

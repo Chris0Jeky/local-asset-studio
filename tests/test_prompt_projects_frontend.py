@@ -12,6 +12,10 @@ class PromptProjectFrontendTests(unittest.TestCase):
     def test_panel_journals_before_dispatch_and_preserves_newer_edits(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('prompt_projects_panel.cjs'))],capture_output=True,text=True,timeout=15)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+    @unittest.skipUnless(shutil.which('node'),'Node.js required')
+    def test_pending_imports_cannot_overwrite_an_opened_saved_brief(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('prompt_import_races.cjs'))],capture_output=True,text=True,timeout=15)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
     def test_project_panel_loads_after_its_draft_owners(self):
         page=(Path(__file__).resolve().parents[1]/'app/static/prompt-lab.html').read_text(encoding='utf-8')
         self.assertIn('id="prompt-projects"',page)
