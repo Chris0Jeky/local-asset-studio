@@ -36,9 +36,13 @@ def wait_idle(limit=2400):
         except Exception: pass
         time.sleep(5)
     return False
+ACTIVE = ("pending", "preparing", "waiting", "submitting", "queued", "running", "submitted", "partial")   # every pre-submit and in-flight Studio state
 def studio_idle():
     jobs = get(STUDIO + "/api/jobs", 10); jobs = jobs.get("jobs", jobs) if isinstance(jobs, dict) else jobs
-    return not [j for j in jobs if j.get("status") in ("queued", "running", "submitted", "partial")]
+    if [j for j in jobs if j.get("status") in ACTIVE]: return False
+    try: plans = get(STUDIO + "/api/production", 10); plans = plans.get("plans", plans) if isinstance(plans, dict) else plans
+    except Exception: return False
+    return not [p for p in (plans if isinstance(plans, list) else []) if isinstance(p, dict) and p.get("status") in ("queued", "running")]
 def step_rate():
     tail = open(LOG, "rb").read()[-6000:].decode("utf-8", "replace").replace("\r", "\n")
     rates = re.findall(r"(\d+)/(\d+) \[(\d\d:\d\d)<[^\]]*, *([\d.]+)(s/it|it/s)\]", tail)
@@ -77,7 +81,9 @@ def restart():
     except Exception as e: note(label="studio health after restart", error=str(e))
     return True
 if __name__ == "__main__":
-    note(label="waiting for the queue"); wait_idle(); mem("idle before /free")
+    note(label="waiting for the queue")
+    if not wait_idle() or not studio_idle(): note(label="aborted", reason="the ComfyUI queue or the Studio never went idle; nothing freed, nothing submitted"); sys.exit(1)
+    mem("idle before /free")
     urllib.request.urlopen(urllib.request.Request(COMFY + "/free", json.dumps({"unload_models": True, "free_memory": True}).encode(), {"Content-Type": "application/json"}), timeout=60).read()
     time.sleep(15); mem("after /free")
     rate = render("afterfree"); mem("after render 1")
