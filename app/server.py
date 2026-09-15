@@ -126,6 +126,8 @@ class Studio:
         self.backends.activate(self.backends.active)
         from studio_prompt.reference_jobs import ReferenceJobs
         self.reference_jobs = ReferenceJobs(self)
+        from studio_prompt.projects import PromptProjects
+        self.prompt_projects = PromptProjects(self.assets)
         self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
