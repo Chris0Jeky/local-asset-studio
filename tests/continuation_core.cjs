@@ -165,4 +165,19 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   assert.deepEqual(C.unfilled(combine,combine.continuation_prompt),['[who]','[say the pose]']);assert.deepEqual(C.unfilled(combine,'Redraw the witch: leaning.'),[]);assert.deepEqual(C.unfilled(edit,null),[]);assert.deepEqual(C.unfilled(p,'[anything]'),[],'a recipe without fills has none');
   assert.deepEqual(U.recipesFor('edit',[{...p,id:'qwen-1ref',name:'Qwen',reference:['4','image']},{...edit,reference:['4','image']}]).map(x=>x.id),['flux-edit','qwen-1ref']);
 });
+test('bracketed fills become labelled fields and the answers write the prepared wording (#422 slice A)',()=>{
+  const depth={id:'combine-klein-9b-depth',continuation_prompt:'Image 1 is a depth map: [image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.',
+    continuation_placeholder:['[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]','[image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]','[image 2\'s clothes and colours, e.g. a black crop top, pink shorts]']};
+  const spec=C.fills(depth);
+  assert.deepEqual(spec.map(f=>f.label),['Who is in image 2','Image 1\'s pose in a few words','Image 2\'s clothes and colours'],'the label is the text before the example');
+  assert.deepEqual(spec.map(f=>f.example),['Ellen Joe, a girl with short black hair with red tips','bent forward at the waist, hands on hips','a black crop top, pink shorts']);
+  assert.deepEqual(C.fills({continuation_placeholder:'[who]'}),[{placeholder:'[who]',label:'Who',example:''}],'a fill without an example has an empty example');
+  assert.deepEqual(C.fills({}),[]);
+  const values={[spec[0].placeholder]:'Ellen Joe, red-tipped black hair',[spec[1].placeholder]:'  bent double, legs crossed ',[spec[2].placeholder]:''};
+  const text=C.assemble(depth.continuation_prompt,values);
+  assert.equal(text,'Image 1 is a depth map: bent double, legs crossed. Draw Ellen Joe, red-tipped black hair from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.','answers are trimmed and an empty answer keeps its bracket');
+  assert.deepEqual(C.unfilled(depth,text),[spec[2].placeholder],'the readiness list still names the one fill left');
+  assert.equal(C.assemble(depth.continuation_prompt,{...values,[spec[2].placeholder]:'a black crop top, pink shorts, bare feet'}).includes('['),false);
+  assert.equal(C.assemble(null,values),'');assert.equal(C.assemble('plain wording',null),'plain wording');
+});
 console.log(count+' continuation client policy checks passed.');

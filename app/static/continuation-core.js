@@ -136,5 +136,19 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled};
+  // A bracketed fill such as "[who is in image 2, e.g. Ellen Joe, a girl with short black hair]" is one short field on the page:
+  // the words before ", e.g. " are its label, the words after it its example (#422 slice A).
+  function fills(preset){
+    return placeholders(preset).map(placeholder=>{
+      const inner=placeholder.replace(/^\[|\]$/g,'').trim(),at=inner.indexOf(', e.g. '),label=(at>=0?inner.slice(0,at):inner).trim();
+      return{placeholder,label:label.charAt(0).toUpperCase()+label.slice(1),example:at>=0?inner.slice(at+7).trim():''};
+    });
+  }
+  // The prepared wording with each answered fill written in; an empty answer keeps its bracket so the readiness list still names it.
+  function assemble(template,values){
+    let text=typeof template==='string'?template:'';
+    for(const [placeholder,value]of Object.entries(values||{})){const words=String(value==null?'':value).trim();if(words&&placeholder)text=text.split(placeholder).join(words);}
+    return text;
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble};
 });
