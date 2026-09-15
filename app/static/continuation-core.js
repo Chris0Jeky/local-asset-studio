@@ -57,11 +57,31 @@
   function canvasFor(source,preset){
     const cap=preset?.continuation_capability;
     if(cap?.operation!=='restyle'||!cap.keeps_picture||!preset.width||!preset.height||!(source?.width>0&&source?.height>0))return null;
-    const grid=preset.dimension_multiple||16,limit=preset.dimension_limits?.[1]||1536,aspect=source.width/source.height,pixels=1.5*1024*1024;
+    const grid=Number.isSafeInteger(preset.dimension_multiple)&&preset.dimension_multiple>0?preset.dimension_multiple:16;
+    const declared=Array.isArray(preset.dimension_limits)?preset.dimension_limits:[];
+    const lowerValue=Number(declared[0]),upperValue=Number(declared[1]);
+    const lower=Math.ceil(Math.max(grid*4,Number.isFinite(lowerValue)&&lowerValue>0?lowerValue:0)/grid)*grid;
+    const upper=Math.floor((Number.isFinite(upperValue)&&upperValue>0?upperValue:1536)/grid)*grid;
+    const declaredPixels=Number(preset.max_pixels),hardPixels=Number.isFinite(declaredPixels)&&declaredPixels>0?declaredPixels:Infinity;
+    const targetPixels=Math.min(1.5*1024*1024,hardPixels);
+    if(upper<lower||hardPixels<lower*lower)return null;
+    const aspect=source.width/source.height;
     // Scale both axes together when the long edge would pass the recipe limit, so the aspect ratio survives the clamp.
-    let width=Math.sqrt(pixels*aspect),height=Math.sqrt(pixels/aspect);const scale=Math.min(1,limit/Math.max(width,height));width*=scale;height*=scale;
-    const fit=v=>Math.min(limit,Math.max(grid*4,Math.round(v/grid)*grid));
-    return{width:fit(width),height:fit(height)};
+    let width=Math.sqrt(targetPixels*aspect),height=Math.sqrt(targetPixels/aspect);const scale=Math.min(1,upper/Math.max(width,height));width*=scale;height*=scale;
+    const fit=v=>Math.min(upper,Math.max(lower,Math.round(v/grid)*grid));
+    width=fit(width);height=fit(height);
+    // Rounding to the nearest grid may cross a declared pixel ceiling. Remove one grid step at a time from the
+    // dimension that keeps the source aspect closest; never step below the declared minimum.
+    const error=(w,h)=>Math.abs(Math.log((w/h)/aspect));
+    for(let step=0;width*height>hardPixels&&step<4096;step++){
+      const candidates=[];
+      if(width-grid>=lower)candidates.push([width-grid,height]);
+      if(height-grid>=lower)candidates.push([width,height-grid]);
+      if(!candidates.length)return null;
+      candidates.sort((a,b)=>error(a[0],a[1])-error(b[0],b[1])||b[0]*b[1]-a[0]*a[1]);
+      [width,height]=candidates[0];
+    }
+    return width*height<=hardPixels?{width,height}:null;
   }
   function settings(preset,overrides,current){
     const protectedKeys=new Set(['positive','negative','reference','last_reference']);
