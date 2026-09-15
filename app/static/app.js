@@ -196,9 +196,19 @@ const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
 function rememberNegativeCollapse(open) { try { sessionStorage.setItem(NEGATIVE_COLLAPSE_KEY, open ? '0' : '1'); } catch (e) {} }
 $('#negativeWrap')?.addEventListener('toggle', () => rememberNegativeCollapse($('#negativeWrap').open));
+// A long recipe description is a research report above step 01: the card shows its first sentence and what the recipe
+// asks you to type; the measurements and the licence paragraph stay one disclosure away (#422 slice A).
+function recipeCard(preset) {
+  const description = String(preset.description || ''), note = String(preset.commercial_note || '');
+  const cut = description.length > 260 ? description.search(/\.\s(?=[A-Z])/) : -1;
+  if (cut < 40) return '<p>' + esc(description) + '</p><small>' + esc(note) + '</small>';
+  const fills = typeof StudioContinuation !== 'undefined' ? StudioContinuation.fills(preset, preset.continuation_prompt) : [];
+  const typing = fills.length ? '<p class="recipe-typing">You fill in: ' + esc(fills.map(f => f.label.toLowerCase()).join(' · ')) + '.</p>' : '';
+  return '<p>' + esc(description.slice(0, cut + 1)) + '</p>' + typing + '<details class="create-context-help recipe-more"><summary>More about this recipe</summary><p>' + esc(description.slice(cut + 1).trim()) + '</p><small>' + esc(note) + '</small></details>';
+}
 function renderSelected() {
   if (!selected) return;
-  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.description) + '</p><small>' + esc(selected.commercial_note) + '</small>';
+  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2>' + recipeCard(selected);
   $('#positiveWrap').hidden = !selected.positive;
   $('#positive').value = selected.defaults?.positive || ''; $('#negative').value = selected.defaults?.negative || ''; $('#negativeWrap').hidden = !selected.negative;
   // What to avoid is part of the brief, not an advanced setting: open it whenever the recipe binds it,

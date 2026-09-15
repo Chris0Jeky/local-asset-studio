@@ -1,5 +1,93 @@
 # Current state — 15 September 2026
 
+## Pose round three: the slow state is a restart, the words move the hands, a drawn skeleton carries the pose, four LoRAs measured — 15 September 2026 (03:40-05:30)
+
+Same two pictures, seeds 2026091411-13, every render tabled with prompt IDs in
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` (section "Pose round three"), scripts next to it
+(`pose_sources.py`, `lora_pose.py`, `restart_probe.py`, `twopass.py`, `prove_skeleton.py`, `sheet_round3.py`), sheet
+`examples/style-pose/combine-pose-round3.jpg`.
+
+- **The slow state (Klein 9B at 53-63 s/step instead of 6.5) is a ComfyUI-process condition that only a restart clears.** Two of the
+  night's three Qwen runs were followed by fast Klein renders, the third by slow ones that survived a 20-minute idle gap; `POST /free`
+  released 11 GB of host memory and changed nothing (377 s); stopping ComfyUI (`Stop-ComfyUI.ps1`) brought the same graph back to 95 s
+  on the replacement process (`restart_probe.json`), which the Studio's own backend recovery launched 15 s after the stop
+  (`.runtime/backends/20260915-035844-recovery-*.log`; the launcher run afterwards exited 0 on it while its own child died on the port
+  clash). Rule: a Klein render over ~3 minutes means stop ComfyUI on an idle queue and let it come back; run Qwen last.
+- **Cutting the depth map below the ankles removes the heel-shaped foot (3 of 3 seeds, #427)**; painting the tail and skirt out too
+  changes nothing. The depth recipe's hint now says to crop the pose picture above the ankles when a shoe shape appears; the control that
+  does it in the graph is specified on #427.
+- **Hand and camera words move the hands and the camera on the depth route (3 of 3):** the lollipop hand at the lips, a hand on the hip,
+  a low camera from behind, with the bend kept. The depth recipe's pose fill now asks for the hands and the camera.
+- **A crude PIL-drawn OpenPose stick figure as image 1 carries the pose on 3 of 3 seeds, including an arm drawn in the wrong place**;
+  a PIL capsule mannequin with a ball head is drawn literally (faceless sphere, grey limbs). Thin lines carry a pose, solid crude shapes
+  are copied. Shipped: **Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)**
+  (`combine-klein-9b-skeleton`, the 9B graph with skeleton wording, third on the Combine route), proved through the Studio
+  (`prove_skeleton.py`: POST /api/upload, POST /api/jobs; job `26448d58-c1bb-41a5-a49f-74c4db4fec89`, 68.7 s, the drawn pose with the
+  raised arm; lettering garbled on that seed). A keypoint pose editor is now worth wiring.
+- **Four civitai LoRAs for Klein 9B** (downloaded, SHA-256-verified, pinned in `models/library.json`): *Copy Pose* (character = image 1,
+  pose picture = image 2) is a second strong route, 3 of 3 with nothing leaking and the character's own background kept, but fails with a
+  depth map; *replace-character* (pose picture kept as image 1) gives the most exact pose and camera and the best identity swap, at the
+  price of image 1's finish, ground, tail and sometimes outfit; *RefControl* adds nothing visible over the base model; the *Mannequin*
+  LoRA turns a pose picture into a clean CGI mannequin in 68 s that works as the depth recipe's pose picture with the hand on the hip
+  carried (3 of 3), heeled feet aside. 8 steps changes nothing. **The Q8_0 GGUF of Klein 9B (downloaded, verified, pinned) does not fit the 16 GB card beside the text encoder's
+  5 GB residue: "loaded partially" (9.5 of 9.7 GB), 40-45 s per step, 6 minutes per render** against 75-95 s for Q6_K in the same process;
+  not a lever here.
+- **Two passes as one Studio journey, 136 s:** the depth Combine with the hands-and-camera fill (job `c31e7777…`, 88.8 s) then Change one
+  thing (Klein 4B) on its output staged as Continue with this does (job `b92dae0c…`, 44.3 s): the heel became a bare foot, everything
+  else unchanged (`twopass.json`).
+
+Studio side: **slice A of #422 merged (PR #430)**: the two pictures side by side in the model's reading order, three named fields that
+write the prepared wording (the paragraph stays editable, a hand edit is preserved until *Rebuild*), no disabled role select on fixed
+boards, the recipe card cut to its first sentence plus a disclosure; the Combine journey re-measured at the same 5 clicks with 955 words
+on screen (from 1082). Two Codex P2s and the fresh-context review's findings were fixed in the same PR (fills keyed on recipe and source
+picture; `{source}` resolved on the plain route). Slices B, C and D remain (#422).
+
+Not verified: the skeleton recipe by clicking through the page (the API run uses the same prepare and worker path); any pose or character
+other than the owner's; the ankle crop as a Studio control (specified on #427, not built); art acceptance (HUMAN_TODO q-28).
+
+## Combine gets its second baseline: the depth map carries the pose (FLUX.2 Klein 9B) — 15 September 2026 (02:00-03:25)
+
+The owner's verdict on the pose-first result: "so so", a much bigger step but not the complete pose change they meant; of the round-one
+renders the Qwen one most resembled the objective, at 14.5 minutes; and the Studio's workflow itself is in doubt for this kind of experimenting.
+Round two, same two pictures, every render tabled with prompt IDs in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`
+(section "Pose round two"), sheet `examples/style-pose/combine-pose-round2.jpg`, scripts next to the README (`qwen_pose2.py`,
+`klein_skeleton.py`, `sheet_round2.py`, `prove_depth.py`):
+
+- **Qwen's time is the model's weight path, not the references.** The log shows 65 s of loading and 10-13 min of four Lightning steps;
+  halving both references saved one minute (14:29 -> 12:52). With a depth map as picture 2 Qwen followed the pose exactly but drew every
+  shape in the silhouette (heels, frill, tail) and distorted the face, in 10:40. Not a lever on this GPU.
+- **Both 2D skeleton detectors fail on the pose picture** (OpenPose at 1024 and 1536, DWPose downloaded tonight): scrambled fragments,
+  which also means round one's "structural" route ran on a wrong skeleton. **Depth Anything V2 Large gives the whole silhouette.**
+- **A blank canvas as image 1 gives perfect identity and lettering but never the deep bend** (2 seeds): the words do not carry an extreme
+  pose, the structural image does.
+- **Depth map as image 1, character as image 2, on FLUX.2 Klein 9B: 3 of 4 seeds held the deep bend and crossed legs** with face, hair,
+  crop top, lettering and pink shorts kept, bare feet, no tights and no tail, 90-115 s warm (seeds 11, 12, 14; seed 13 bent moderately
+  and brought the source's speech bubble back). Residual: a heel in the silhouette can shape a foot.
+
+Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** (named "…, nothing leaks" when merged in #424; renamed after the late review because a heel or skirt in the silhouette still shapes the figure, #427)
+(`combine-klein-9b-depth`, graph `workflows/api/combine-klein-9b-depth-api.json`: the shipped 9B graph with a `DepthAnythingV2Preprocessor`
+between the board picture and its reference latent) now leads *Continue with this -> Combine*; the pose-first 9B recipe is second, the 4B
+third. Annotator checkpoints (fetched by comfyui_controlnet_aux into its own folder) are excluded from model readiness through
+`ANNOTATOR_SELECTIONS` in `studio_workflow/model_contracts.py`. Proving run through the Studio's own path (POST /api/jobs, the page's
+prepare/worker path): job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe`, seed 2026091441, output
+`Combine/Klein-9B-depth_00001_.png`: deep bend, crossed legs, look-back, lettering intact, bare feet, one heel-shaped foot. 448.7 s: after the
+night's Qwen run every Klein render (seeds 13, 14, the proving run) sampled in 6-7 minutes instead of about one; `POST /free` with
+`unload_models` did not restore it and VRAM read 15.2 GB free between jobs. Not diagnosed; a ComfyUI restart is the next thing to try.
+
+Two copy defects found by walking the page as a first-time user and fixed: the board summary stated the 4B reference order on the 9B
+recipe (`references.js` `boardSummaryLabel` now reads the order from the labels' "(image N)" parentheticals, Node test added) and the attach
+message read "Picture 1 of Picture 1". What the walk found about *experimenting* on the page (sources never side by side, three facts as
+bracketed spans in a paragraph, a disabled role select, a research-report recipe card, results in a flat list with old engine errors, an
+engine switch that restarts the journey) is issue #422 with a four-slice proposal. Not verified: the depth recipe by clicking through the
+page (the API run uses the same prepare and worker path); any pose or character other than the owner's; a 3D-mannequin render as the
+pose source (proposed, untested); art acceptance (HUMAN_TODO q-28).
+
+Late review of #424 (after the merge): no CRITICAL or HIGH; the guidance projection now honours `ANNOTATOR_SELECTIONS` too, the recipe name and board label were tightened, the shared Combine guidance sentence is recipe-aware, the round-two timing basis is stated (`round2_history.json` is the record), q-26 is narrowed to the owner's words.
+
+Owner decisions recorded tonight (HUMAN_TODO): the Klein 9B non-commercial licence "is not an issue"; later, "disregard the licenses
+issues for now, we're just experimenting and plus there is no commercial plans to begin with" (recorded as the owner's statement about
+this private experimental use; the licence facts in `models/library.json` and the catalog notes stay as recorded).
+
 ## Combine gets a baseline: pose first on FLUX.2 Klein 9B — 15 September 2026 (early hours)
 
 The owner ran the Combine route on their own pictures (the "SHARK" crop-top character, a bent-over fan picture as the

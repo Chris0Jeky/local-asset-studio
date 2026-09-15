@@ -388,6 +388,21 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
                 self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
                 self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+            elif preset["id"] == "combine-klein-9b-depth":
+                # Depth first: the board slot (node 14) feeds a Depth Anything V2 map (node 30) that is image 1; the character stays
+                # last_reference on image 2 (node 20); loaders, chain and wording identity as on the 9B pose-first recipe.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["30"]["class_type"], graph["30"]["inputs"]["image"], graph["15"]["inputs"]["image"], graph["21"]["inputs"]["image"]), ("DepthAnythingV2Preprocessor", ["14", 0], ["30", 0], ["20", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("depth map", preset["continuation_prompt"]); self.assertIn("cc-by-nc-4.0", preset["commercial_note"])
+            elif preset["id"] == "combine-klein-9b-skeleton":
+                # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
+                # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("pose skeleton", preset["continuation_prompt"]); self.assertIn("skeleton", preset["reference_board_label"].lower()); self.assertNotIn("30", graph)
             elif preset["id"] == "flux-edit":
                 self.assertEqual((result["operation"], preset["continuation_prompt"].count("{source}")), ("instruction-edit", 1))
             elif preset["id"] == "restyle-klein":

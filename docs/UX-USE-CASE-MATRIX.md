@@ -289,14 +289,27 @@ The owner took a Klein restyle output, opened *Continue with this → Restyle* a
 second image, the face and expression of the third image" into the keep sentence (jobs `3ad01f31…`, `35b548fd…`, same
 seed). That recipe carries one picture and its wording says to keep everything, so the renders were the input again,
 read as "the prompt makes no difference". `combine-character-with-another-pose` (`research/ux/use-cases.json`, driver in
-`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**. Since 15 September the route leads with the FLUX.2
-Klein 9B recipe, which keeps the pose picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
-until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced; the 4B recipe
-(source on image 1, two fills) is second. The row below was measured with the 9B recipe leading.
+`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**. Since 15 September the route leads with a FLUX.2
+Klein 9B recipe that keeps the board picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
+until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced: first the depth-map
+variant (`combine-klein-9b-depth`, later that day), then the pose-first one, then the 4B recipe (source on image 1, two fills). The
+row below was measured with the pose-first 9B recipe leading; the depth variant has the same slots and fills, and the driver
+matches the fills by their wording, so the journey is the same length (not re-measured by hand; the `ux-use-cases` lane re-runs it).
 
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 997 | 824 | PASS |
+| `combine-character-with-another-pose` (15 Sep, slice A of #422) | 9 | 13 | 5 | 3 | 0 | 0 | 955 | 782 | PASS |
+
+**Slice A of #422 (15 September 2026, second row):** the Combine workbench now shows the two pictures side by side above the
+recipe card, in the order the model reads them and with the recipe's own labels (an empty tile offers *Pull it from the
+library* / *Choose your picture*); the three bracketed fills are three short named fields (*Who is in image 2*, *Image 1's
+pose in a few words*, *Image 2's clothes and colours*) that write the prepared wording, which stays visible and editable
+underneath (a hand edit stops the fields from rewriting it until *Rebuild it from the fields*); the disabled *Role for
+Picture 1* select is gone from fixed boards; and a long recipe description shows its first sentence and *You fill in: …*,
+the measurements and licence paragraph behind *More about this recipe*. Same five clicks. The three extra steps are the three
+short fields typed in place of one 630-character paragraph edit, and one read of the side-by-side pictures; the wording on screen
+fell from 997 to 955 words. Measured in fixture mode (12/12 cases pass) before and after the change in the same session.
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness
