@@ -6400,7 +6400,8 @@
       "category": "Characters",
       "family": "FLUX.2 Klein 9B",
       "graph": "workflows/api/combine-klein-9b-depth-api.json",
-      "verified": false,
+      "verified": true,
+      "execution_note": "Executed 2026-09-15 03:16 through the Studio (POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_depth.py): the owner's bent-over fan picture on Pose picture (image 1, read as a depth map), the SHARK crop-top character on Picture to keep (image 2), the three bracketed fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091441: job 22ff6394-11ad-490a-bfea-6304e53f5d24 (prompt 9047dc60-a99e-4eb5-94f8-4615de1b90fe, 448.7 s in the slow state ComfyUI was in after the night's Qwen run; the same graph sampled in 90-115 s before it), output Combine/Klein-9B-depth_00001_.png: deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare feet, one foot heel-shaped. Research before it: 3 of 4 seeds held the deep bend (README round two). Not run by clicking through the page yet; not art acceptance.",
       "modality": "image",
       "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. The depth map comes from Depth Anything V2 Large (depth-anything/Depth-Anything-V2-Large, licence cc-by-nc-4.0 read from the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node on first use). A successful render is not legal clearance.",
       "positive": [
@@ -6493,7 +6494,7 @@
         }
       ],
       "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
-      "description": "Put your character into another picture's pose with nothing of that picture leaking: the graph turns the pose picture into a depth map first, so only the body position reaches the model. Measured 15 September 2026 on the owner's Ellen Joe pictures (research, straight against ComfyUI): FLUX.2 Klein 9B held the deep waist bend and crossed legs of the pose picture on 2 of 2 seeds with the face, hair, crop top, lettering and pink shorts kept, bare feet, no tights and no tail, in about 115 s warm; the pose-first recipe let a shoe or stocking ghost in on 3 of 4 seeds. Both 2D skeleton detectors (OpenPose, DWPose) failed on that pose picture; the depth map did not. A heel in the silhouette can still shape a foot; audition three seeds."
+      "description": "Put your character into another picture's pose with nothing of that picture leaking: the graph turns the pose picture into a depth map first, so only the body position reaches the model. Measured 15 September 2026 on the owner's Ellen Joe pictures (research, straight against ComfyUI): FLUX.2 Klein 9B held the deep waist bend and crossed legs of the pose picture on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept, bare feet, no tights and no tail, in 90-115 s warm (the fourth seed bent only moderately); the pose-first recipe let a shoe or stocking ghost in on 3 of 4 seeds. Both 2D skeleton detectors (OpenPose, DWPose) failed on that pose picture; the depth map did not. A heel in the silhouette can still shape a foot; audition three seeds."
     },
     {
       "id": "combine-klein-9b",

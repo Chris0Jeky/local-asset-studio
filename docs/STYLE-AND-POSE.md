@@ -46,8 +46,9 @@ said in words.
 route since 15 September 2026 (later that night). The graph turns the pose picture into a Depth Anything V2 depth map and
 that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
 picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
-the deep waist bend and the crossed legs on 2 of 2 seeds with the face, hair, crop top, lettering and pink shorts kept,
-bare feet, no tights and no tail, in about 115 s warm (`examples/style-pose/combine-pose-round2.jpg`). Two things the
+the deep waist bend and the crossed legs on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept,
+bare feet, no tights and no tail, in 90-115 s warm (`examples/style-pose/combine-pose-round2.jpg`; the fourth seed bent
+only moderately). Proved through the Studio's own path: job `22ff6394…`, output `Combine/Klein-9B-depth_00001_.png`. Two things the
 research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
 blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
 wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
