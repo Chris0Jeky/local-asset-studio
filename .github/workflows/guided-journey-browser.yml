@@ -6,7 +6,7 @@ on:
       - 'studio_workflow/guides.py'
       - 'studio_workflow/control*.py'
       - 'studio_workflow/core.py'
-      - 'tests/workflow_control_preview_browser.py'
+      - 'tests/workflow_control*_browser.py'
       - 'tests/test_workflow_control*.py'
       - 'tests/studio_guide*'
       - 'tests/create_readiness*'
@@ -43,6 +43,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_workflow_control*.py' -v
           python tests/workflow_control_preview_browser.py --out .runtime/control-preview-proof -v
+          python tests/workflow_control_precision_browser.py --out .runtime/control-precision-proof -v
       - name: Create blockers, focus and read-only dependency retry
         run: python tests/create_readiness_browser.py --out .runtime/create-readiness-proof
       - uses: actions/upload-artifact@v4
@@ -53,6 +54,7 @@ jobs:
             .runtime/guide-proof/
             .runtime/guide-disclosure-proof/
             .runtime/control-preview-proof/
+            .runtime/control-precision-proof/
             .runtime/create-readiness-proof/
           if-no-files-found: ignore
           retention-days: 7

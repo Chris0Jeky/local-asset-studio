@@ -38,6 +38,11 @@ The browser explicitly refuses values outside its safe-integer range, including
 wide numeric choices and returned metadata. It does not display rounded enum digits
 as exact values. Python SDK clients retain wide integers. This is a conservative
 browser limitation, not a claim of lossless browser int64 editing under #119.
+Integer-valued numeric COMBO choices also require the SDK: native JSON parsing
+cannot retain the distinction between an option authored as 1 and one authored as
+1.0. The browser labels that ambiguity and refuses before transport rather than
+proposing a different literal type. String/boolean and fractional choices remain
+available; a typed scalar wire contract remains #119 work.
 
 ## Async and resource contract
 
@@ -73,6 +78,7 @@ attempted editor mutation; it makes no model or Workspace calls.
 ```bash
 python -m unittest discover -s tests -p 'test_workflow_control*.py' -v
 python tests/workflow_control_preview_browser.py --out .runtime/control-preview-proof -v
+python tests/workflow_control_precision_browser.py --out .runtime/control-precision-proof -v
 ```
 
 Use `--browser-path /path/to/chromium` for an already installed browser. The existing

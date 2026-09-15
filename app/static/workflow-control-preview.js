@@ -76,7 +76,8 @@
       try { safe(spec.options.options); }
       catch (error) { valueHost.append(el('p',error.message)); submit.disabled = true; return; }
       valueInput = el('select', null, {id:'controlProposedValue'}); valueChoices = clone(spec.options.options);
-      for (const [i, value] of valueChoices.entries()) valueInput.append(el('option', JSON.stringify(value), {value:String(i)}));
+      for (const [i, value] of valueChoices.entries()) valueInput.append(el('option',
+        typeof value === 'number' && Number.isInteger(value) ? 'Numeric choice (use SDK to preserve its type)' : JSON.stringify(value), {value:String(i)}));
     } else if (valueType === 'STRING') valueInput = el('textarea', null, {id:'controlProposedValue', rows:'4', maxlength:'65536'});
     else if (['INT','FLOAT'].includes(valueType)) valueInput = el('input', null, {id:'controlProposedValue', type:'text', inputmode:'decimal'});
     else { valueHost.append(el('p', 'This input needs a native or custom adapter. Choose a supported scalar input for a shared value.')); submit.disabled = true; return; }
@@ -112,6 +113,8 @@
     if (valueType === 'COMBO') {
       if (valueInput.value === '') throw Error('Choose a proposed value.');
       const value = valueChoices[Number(valueInput.value)]; safe(value);
+      if (typeof value === 'number' && Number.isInteger(value))
+        throw Error('Integral numeric choices cannot preserve int versus float in this browser. Use the Python SDK for that choice.');
       if (!['string','boolean','number'].includes(typeof value)) throw Error('Custom choices need a native adapter.');
       return value;
     }
