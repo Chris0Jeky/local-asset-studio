@@ -136,5 +136,22 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled};
+  // A bracketed fill such as "[who is in image 2, e.g. Ellen Joe, a girl with short black hair]" is one short field on the page:
+  // the words before ", e.g. " are its label, the words after it its example (#422 slice A).
+  // Given the wording, the fields follow the order in which it reads them (the catalog lists them in another order).
+  function fills(preset,template){
+    const text=typeof template==='string'?template:'',at=p=>{const i=text.indexOf(p);return i<0?Number.MAX_SAFE_INTEGER:i;};
+    return placeholders(preset).map(placeholder=>{
+      const inner=placeholder.replace(/^\[|\]$/g,'').trim(),eg=inner.indexOf(', e.g. '),label=(eg>=0?inner.slice(0,eg):inner).trim();
+      return{placeholder,label:label.charAt(0).toUpperCase()+label.slice(1),example:eg>=0?inner.slice(eg+7).trim():''};
+    }).sort((a,b)=>at(a.placeholder)-at(b.placeholder));
+  }
+  // The prepared wording with each answered fill written in; an empty answer keeps its bracket so the readiness list still names it,
+  // and an answer that quotes its own bracket is left out rather than re-inserting it.
+  function assemble(template,values){
+    let text=typeof template==='string'?template:'';
+    for(const [placeholder,value]of Object.entries(values||{})){const words=String(value==null?'':value).trim();if(words&&placeholder&&!words.includes(placeholder))text=text.split(placeholder).join(words);}
+    return text;
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble};
 });

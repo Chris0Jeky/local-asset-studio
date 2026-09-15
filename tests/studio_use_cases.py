@@ -604,17 +604,27 @@ def _combine(c):
             try: c.page.click('[data-ux-close="uxSourcePicker"]', timeout=2000)
             except Exception: pass
     else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
+    c.act('#uxPair', 'read', note='the two pictures side by side, in the order the model reads them')
     wording = c.page.evaluate('(document.querySelector("#positive").value || "")')
     filled_wording = wording
     # Every bracketed fill the leading Combine recipe carries (who, the pose, the clothes and colours), whichever recipe leads.
     answers = (('who is in image', 'the witch in the black and red robe'), ('pose', 'leaning forward, one hand on her hip, the other held out'), ('clothes', 'a black and red robe with gold trim, a wide-brimmed black hat'))
-    for _ in range(6):
-        start = filled_wording.find('['); end = filled_wording.find(']', start)
-        if start < 0 or end < start: break
-        words = next((words for key, words in answers if key in filled_wording[start:end]), 'the witch')
-        filled_wording = filled_wording[:start] + words + filled_wording[end + 1:]
-    c.act('#positive', 'fill', typed=filled_wording)
-    c.page.wait_for_timeout(400)
+    fields = c.page.evaluate('[...document.querySelectorAll("#uxFills:not([hidden]) [data-ux-fill]")].map(i => i.dataset.uxFill)')
+    if fields:
+        # Slice A of #422: three short named fields write the wording; the paragraph is read, not edited.
+        for index, placeholder in enumerate(fields):
+            words = next((words for key, words in answers if key in placeholder), 'the witch')
+            c.act('[data-ux-fill="%s"]' % placeholder.replace('"', '\\"'), 'fill', typed=words, note='field %d of %d' % (index + 1, len(fields)))
+        c.page.wait_for_timeout(400)
+        filled_wording = c.page.evaluate('(document.querySelector("#positive").value || "")')
+    else:
+        for _ in range(6):
+            start = filled_wording.find('['); end = filled_wording.find(']', start)
+            if start < 0 or end < start: break
+            words = next((words for key, words in answers if key in filled_wording[start:end]), 'the witch')
+            filled_wording = filled_wording[:start] + words + filled_wording[end + 1:]
+        c.act('#positive', 'fill', typed=filled_wording)
+        c.page.wait_for_timeout(400)
     c.act('#generate', 'read', note='readiness only; never pressed')
     attached = c.page.evaluate('typeof lastUploaded !== "undefined" && !!lastUploaded')
     filled = c.page.evaluate('typeof referenceRecords !== "undefined" ? referenceRecords.filter(r=>r.file).length : 0')

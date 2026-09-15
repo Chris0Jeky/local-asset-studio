@@ -299,6 +299,17 @@ matches the fills by their wording, so the journey is the same length (not re-me
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 997 | 824 | PASS |
+| `combine-character-with-another-pose` (15 Sep, slice A of #422) | 9 | 13 | 5 | 3 | 0 | 0 | 955 | 782 | PASS |
+
+**Slice A of #422 (15 September 2026, second row):** the Combine workbench now shows the two pictures side by side above the
+recipe card, in the order the model reads them and with the recipe's own labels (an empty tile offers *Pull it from the
+library* / *Choose your picture*); the three bracketed fills are three short named fields (*Who is in image 2*, *Image 1's
+pose in a few words*, *Image 2's clothes and colours*) that write the prepared wording, which stays visible and editable
+underneath (a hand edit stops the fields from rewriting it until *Rebuild it from the fields*); the disabled *Role for
+Picture 1* select is gone from fixed boards; and a long recipe description shows its first sentence and *You fill in: …*,
+the measurements and licence paragraph behind *More about this recipe*. Same five clicks. The three extra steps are the three
+short fields typed in place of one 630-character paragraph edit, and one read of the side-by-side pictures; the wording on screen
+fell from 997 to 955 words. Measured in fixture mode (12/12 cases pass) before and after the change in the same session.
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness
