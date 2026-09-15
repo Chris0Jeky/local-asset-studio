@@ -44,12 +44,17 @@
     if(!spec.length){fillsBlock.hidden=true;fillsPreset=null;return;}
     const current=q('#positive').value,carries=spec.every(f=>current.includes(f.placeholder));
     if(fillsPreset!==selected.id||(carries&&current!==fillsTemplate)){
-      fillsPreset=selected.id;fillsTemplate=carries?current:String(selected.continuation_prompt||'');fillsAssembled=null;const remembered=rememberedFills();
-      fillsBlock.innerHTML='<p class="muted">Answer these in a few words; they write the wording below for you. The paragraph stays editable.</p>'+spec.map(f=>'<label>'+escape(f.label)+'<input data-ux-fill="'+escape(f.placeholder)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(remembered[f.placeholder]||'')+'" autocomplete="off"></label>').join('')+'<p id="uxFillsNote" class="muted" hidden>The wording below was edited by hand, so the fields no longer rewrite it. <button type="button" id="uxRebuildFills">Rebuild it from the fields</button></p>';
+      // The template is the prepared wording: the textarea while it still carries every fill, otherwise the recipe's continuation
+      // wording with `{source}` resolved the way Continue with this resolves it (the literal token must never reach the model).
+      fillsPreset=selected.id;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered=rememberedFills();
+      fillsBlock.innerHTML='<p class="muted">Answer these in a few words; they write the wording below for you. The paragraph stays editable.</p>'+spec.map(f=>'<label>'+escape(f.label)+'<input data-ux-fill="'+escape(f.placeholder)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(remembered[f.placeholder]||'')+'" autocomplete="off"></label>').join('')+'<p id="uxFillsNote" class="muted" hidden>The wording below is not what the fields would write (restored, or edited by hand), so they leave it alone. <button type="button" id="uxRebuildFills">Rebuild it from the fields</button></p>';
     }
     fillsBlock.hidden=!fillsTemplate;if(fillsBlock.hidden)return;
     if(carries&&Object.values(fillValues()).some(v=>String(v).trim()))assembleFills();
-    const note=q('#uxFillsNote');if(note)note.hidden=!(fillsAssembled!=null&&!carries&&q('#positive').value!==fillsAssembled);
+    // Wording the fields did not write (a restored draft, a bracket answered in the paragraph, a hand edit) stays until Rebuild is
+    // pressed; an empty box, the template itself and the recipe's own example text are not hand edits.
+    const text=q('#positive').value,detached=!carries&&!!text.trim()&&text!==fillsAssembled&&text!==String(selected.defaults?.positive||'');
+    const note=q('#uxFillsNote');if(note)note.hidden=!detached;
   }
   fillsBlock.addEventListener('input',e=>{if(!e.target.matches('[data-ux-fill]'))return;const note=q('#uxFillsNote');if(note&&!note.hidden)return;assembleFills();});
   fillsBlock.addEventListener('click',e=>{if(e.target.closest('#uxRebuildFills'))assembleFills();});
