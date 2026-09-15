@@ -30,7 +30,7 @@ have their own count. Malformed recognized spans invalidate the input instead
 of quietly disappearing from a plausible result.
 
 Bounds are 1 MiB input, 4096 events, 64 category/process/thread lanes, 128
-category/name identities, 32 displayed operator rows, 32 JSON levels and 64 KiB
+category/name identities, 32 displayed operator rows, 32 nested object/array levels (including the root) and 64 KiB
 encoded report. The report states the number of omitted operator rows. Oversized
 input/cardinality is refused without a partial success report; the source stays
 intact. The parser materializes one **bounded** document; it is not a streaming
@@ -53,13 +53,22 @@ identity is stable within the same input identity values; no raw IDs are echoed.
 | `inclusive_duration_ns` | Sum of recognized spans; may include nested/overlapping work | Wall time or self time |
 | `active_union_ns` | Union of spans within that one lane | Device-wide utilisation or total GPU time |
 | `span_ns` | First recognized start to last recognized finish on that lane | Complete capture window or job duration |
-| Operator rows | Counts, inclusive totals and longest span for that category/name | Critical-path ranking or a kernel recommendation |
+| Operator rows | Category/name totals **across lanes**, distinct `lane_count`, and longest single span | Wall time, self time, critical-path ranking or a kernel recommendation |
 | `device_timing` | Device-category spans observed, otherwise unavailable | Hardware identity, valid coverage, or zero GPU work |
 
 Do not add lanes together. Host dispatch is not device completion; different
 streams and categories can overlap. Clock alignment, dropped-event detection and
 capture completeness remain unverified. Missing device events are **unavailable**,
 not zero. A real zero-length device span remains an observed zero-length span.
+
+The output schema is now `studio.inference-trace-summary/v2`. The former `format`
+field is replaced by `reader_format`, which names this reader's interpretation,
+not an authenticated producer. `producer_identity` remains `unverified`, including
+when a file carries PyTorch-like metadata. Consumers expecting the v1 `format`
+field must explicitly adopt v2; old saved reports are not rewritten. Each operator
+row declares `aggregation: category_and_name_across_lanes` and `lane_count`.
+`max_duration_ns` is the longest single span, not a sum; inclusive totals can add
+simultaneous work from different threads or streams.
 
 Every report is `observed_subset` or `no_supported_events`, `job_binding: unbound`,
 `job_wall_time_ns: null`, and `causal_speedup_qualified: false`. Trace content hashes
@@ -97,8 +106,37 @@ not observer-overhead measurement, inference performance or Windows/HIP support.
 
 Local checkout acquisition failed DNS resolution. Local tests therefore cover the
 new isolated reducer; complete-repository CLI, existing-reader, full-suite and
-validator evidence must come from the actual hosted PR tree. Do not call the
-partial local workspace a full repository test run.
+validator evidence came from [run 34900799622](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/34900799622)
+on #369 merge-test `d23006c7fd485357d17bc84c6073206ac54fdb53`: 2,509 tests,
+42 skips, validator passed. [Windows runtime safety](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/34900799213)
+also passed. These are historical #369 results, not verification of the v2 changes.
+Do not call the partial local workspace a full repository test run.
+
+## Review follow-up #374 (15 September 2026)
+
+The v2 contract has five new tests, four of which fail on the merged v1 reader
+(producer attribution, cross-lane disclosure, and the empty-container depth edge).
+The original 25 reducer contracts still pass. The CLI now disables abbreviated
+options; its real-file tests remain in the complete repository suite.
+
+`tests/fixtures/inference_trace_cpu.json` is a redacted derivative of a **newly
+recorded** Torch 2.10.0+cpu 16x16 matmul/clone trace, not the earlier 21-event trace.
+It retains the producer's 19-event structure: eight CPU spans, metadata arguments,
+`deviceProperties`, `baseTimeNanoseconds`, the trace window, and `Record Window End`.
+Redaction replaces trace UUID/path, numeric process/thread IDs and sorting metadata,
+sets base time to zero and shifts timestamps by a common origin. Durations remain
+unchanged. Original SHA-256:
+`369839f1008f412da1163b6912f2f5799b8ebb66a7cbbca6b0ad0cbe2eb5fa89`.
+Fixture SHA-256:
+`97e563a40e509288d9a61e617a9d98d698e0e47ba74e9ab10ead71cf3974fe67`.
+It contains no GPU events. Flow edges and device-metadata canaries are added only
+by a separate synthetic test and are not presented as real GPU-producer evidence.
+
+The 128-operator cap remains a deliberate restriction of this small-window reader,
+not a claim to accept a complete diffusion trace. Do not silently lift it or drop
+excess identities to produce a plausible report. Actual workload sizing, bounded
+streaming/chunk capture and overflow evidence remain under #364. No host/GPU
+profiling support, job binding, completeness or inference speed is inferred here.
 
 ## Source versus adaptation
 
