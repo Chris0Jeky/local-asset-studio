@@ -93,7 +93,7 @@ class _BoundedRead:
     """Non-seekable consumer view; byte count and real EOF belong to the reader."""
     def __init__(self, stream, limit):
         self.stream, self.limit = stream, limit
-        self.count, self.eof = 0, False
+        self.count, self.eof, self.after = 0, False, None
 
     def read(self, count):
         require(type(count) is int and 0 <= count <= 65536, 'stream_read_invalid')
@@ -102,6 +102,13 @@ class _BoundedRead:
         self.count += len(data)
         require(self.count <= self.limit, 'artifact_too_large')
         self.eof = not data
+        if self.eof:
+            # A consumer may perform a replacement after it has parsed the
+            # complete source. Close the descriptor at verified EOF so that
+            # Windows can complete that rename; retain the descriptor stat
+            # for the identity bracket below.
+            self.after = os.fstat(self.stream.fileno())
+            self.stream.close()
         return data
 
 
@@ -132,7 +139,9 @@ def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
                     data = consume(reader)
                     require(reader.eof, 'artifact_not_consumed')
                     count = reader.count
-                after = os.fstat(stream.fileno())
+                    after = reader.after
+                if consume is None:
+                    after = os.fstat(stream.fileno())
         finally:
             if fd is not None: os.close(fd)
         require(count <= limit, 'artifact_too_large')
