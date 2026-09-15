@@ -11,7 +11,7 @@ Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Libra
 ## Read first
 
 1. `CLAUDE.md`, `AGENTS.md`, `CURRENT_STATE.md` and `HUMAN_TODO.md`.
-2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `SOURCE-INTAKE.md`, `SOURCE-SNAPSHOTS.md`, `TECHNIQUE-PORTFOLIO.md`, `RESEARCH-DISCOVERY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
+2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `CONTROLLED-ART-DIRECTION.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `PROMPT-PROFILES.md`, `SOURCE-INTAKE.md`, `SOURCE-SNAPSHOTS.md`, `TECHNIQUE-PORTFOLIO.md`, `RESEARCH-DISCOVERY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
 3. `research/adult-illustration/programme.json` and every manifest relevant to the issue.
 4. Live #403 and the child issue being implemented.
 5. Existing owner docs:
@@ -21,13 +21,14 @@ Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Libra
    - `docs/repair-studio/`
 6. Exact current PRs, installed capability evidence and route files. Never infer installation from a research candidate, provider page or filename.
 
-Run both offline gates before changing a manifest:
+Run the offline gates before changing a manifest or prompt profile:
 
 ```console
 python scripts/validate_adult_illustration.py
 python scripts/validate_adult_illustration_intelligence.py
 python scripts/studio_adult_illustration_research.py programme-status
 python scripts/studio_adult_illustration_research.py catalogs
+python scripts/studio_adult_illustration_prompt.py profiles
 python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
@@ -82,7 +83,7 @@ Do not use for:
 3. Inspect existing typed services before creating a file or type.
 4. For behaviour changes, write a failing test and confirm the expected failure.
 5. Implement the smallest independently reviewable slice.
-6. Run the focused test, both programme validators and repository-required checks.
+6. Run focused tests, both programme validators and repository-required checks.
 7. Produce an exact diff/plan showing:
    - intent/control changes;
    - source/reference and geometry identities;
@@ -94,13 +95,30 @@ Do not use for:
 8. Retain failure and stop on overlap, stale identity, unsupported capability, uncertain dispatch or exhausted cap.
 9. Open a ready-for-review `codex/<topic>` PR. Use `Refs #N` unless the complete live issue acceptance is proven.
 
+## Prompt-profile commands
+
+Given a reviewed adult-illustration projection:
+
+```console
+python scripts/studio_adult_illustration_prompt.py profiles
+python scripts/studio_adult_illustration_prompt.py compile \
+  path/to/source-projection.json \
+  --profile anima-aesthetic-hybrid-v1 \
+  --out path/to/new-prompt-projection.json
+python scripts/studio_adult_illustration_prompt.py validate \
+  path/to/new-prompt-projection.json \
+  --source path/to/source-projection.json
+```
+
+These commands compile text only. They do not bind reference bytes, geometry, adapters, masks, models or graph inputs. Diagnostics for those controls are requirements, not permission to discard them.
+
 ## Issue routing
 
 | Work | Primary issue and existing owner |
 | --- | --- |
 | Intent/content/control ontology | #404 with #38/#120 |
 | Exact generation/edit route | #405 with #9/#144/#302 |
-| LoRA/slider qualification | #406 with #14/#144 |
+| LoRA/slider qualification | #406/#440 with #14/#144 |
 | Pose/silhouette/depth/regions | #407 with #248/#120 |
 | Multi-reference/multi-adult | #408 with #21/#232/#249 |
 | Corpus and acceptance evidence | #409 with #10/#37/#72/#313 |
@@ -110,8 +128,10 @@ Do not use for:
 | CLI/SDK/MCP projections | #413 with #123 |
 | Read-only research discovery and comparison plans | #435 with #413/#432/#433 |
 | Provider-response snapshots and diffs | #438 with #433/#356/#9 |
-| Prompt dialects/tag vocabulary | #432 with #35/#37/#38 |
+| Prompt dialect/tag research | #432 with #35/#37/#38 |
+| First pinned vocabulary and deterministic profiles | #437 with #432/#37/#409 |
 | Hugging Face/Civitai source intake | #433 with #9/#144/#356 |
+| First workstation route campaign | #439 with #405/#10/#178/#302 |
 | Dispatch/recovery | #10/#22/#122 |
 | Resource admission/telemetry | #178/#302 |
 
@@ -123,9 +143,11 @@ A valid dry handoff may:
 2. inspect current controls, prompt dialects, technique candidates and exact route evidence;
 3. inspect or propose a provider source snapshot without downloading bytes;
 4. load or propose a revisioned intent diff;
-5. bind reviewed source/geometry identities in a non-executing setup proposal;
-6. compile and inspect a finite comparison plan with cap zero;
-7. report missing prerequisites and the exact approval boundary.
+5. project reviewed intent into existing `CreativeIntent` semantics;
+6. compile and validate one exact deterministic prompt profile;
+7. bind reviewed source/geometry identities in a non-executing setup proposal;
+8. compile and inspect a finite comparison plan with cap zero;
+9. report missing prerequisites and the exact approval boundary.
 
 It must finish with **zero neural jobs, zero downloads and zero runtime mutation**. A separately authorized execution later uses the existing Production/Workflow ticket path and retained identity; this skill supplies no alternate dispatch mechanism.
 
