@@ -12,8 +12,13 @@ class ReferenceAnalyzeFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'),'Node.js required')
     def test_explicit_analysis_and_recovery_no_replay(self):
         import test_reference_jobs as fixtures
-        fixture=fixtures.ReferenceJobTests();fixture.setUp()
+        fixture=fixtures.ReferenceJobTests();fixture.setUp();fixture.start.stop()
         try:
+            # Windows subprocess pipes use reader threads. Fixture worker blocking
+            # must not suppress those threads (POSIX selectors hid this failure).
+            import threading
+            ran=threading.Event();reader=threading.Thread(target=ran.set);reader.start();reader.join(2)
+            self.assertTrue(ran.is_set(),'Subprocess reader threads must be able to start')
             caps=fixture.service.capabilities();fixture.create();fixture.run_one()
             with tempfile.TemporaryDirectory() as tmp:
                 path=Path(tmp)/'fixture.json'
