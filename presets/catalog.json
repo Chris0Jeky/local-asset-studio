@@ -6465,18 +6465,18 @@
         "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
       },
       "reference_board_label": "Depth map of the pose picture (image 1)",
-      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a skirt, a tail or a heel becomes a shape unless the wording says what the figure wears instead.",
+      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Measured 15 September 2026: the depth map painted black below the ankles gave bare feet on 3 of 3 seeds; cropping the pose picture itself above the ankles before attaching it is the same idea from your side of the page but was not measured as a crop, so audition it. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
       "continuation_operation": "combine",
-      "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
       "continuation_placeholder": [
         "[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]",
-        "[image 1's pose in a few words, e.g. bent forward at the waist, hands on hips]",
+        "[image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]",
         "[image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]"
       ],
       "stages": [
         "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
         "Image 1: the pose picture's Depth Anything V2 depth map (vitl, 1024 px; the 1.3 GB weights are fetched by the comfyui_controlnet_aux node into its own folder on first use, which readiness cannot see), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
-        "Wording: the depth map gives the body position, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
+        "Wording: the depth map gives the body position, the pose fill names the hands and the camera, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
         "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 100-200 s warm on the 9070 XT",
         "1024x1536 canvas",
         "PNG"
@@ -6597,6 +6597,108 @@
       ],
       "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
       "description": "Put your character into another picture's pose, including a strong pose the 4B recipe cannot follow, in about 2-3 minutes. Measured 15 September 2026 on the owner's Ellen Joe pictures: with the pose picture first (kept) and the character swapped in, FLUX.2 Klein 9B held a deep waist bend on 4 of 4 seeds, kept the hair, face, crop top and pink shorts and dropped the tail once the wording named the clothes and colours; without the colours named, image 1's black shorts and heels leaked. Lettering can garble and a shoe or stocking from image 1 can ghost in; audition three seeds."
+    },
+    {
+      "id": "combine-klein-9b-skeleton",
+      "name": "Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-skeleton-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-15 05:06 through the Studio (POST /api/upload for the drawn skeleton, then POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_skeleton.py): the hand-drawn 17-keypoint stick figure on Pose skeleton (image 1), the SHARK crop-top character on Picture to keep (image 2), the three fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, one arm raised behind the head, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091461: job 26448d58-c1bb-41a5-a49f-74c4db4fec89 (prompt 977e450f-46ba-485f-a0f4-9a0a45204dc2, 68.7 s), output Combine/Klein-9B-skeleton_00001_.png: the drawn pose (deep bend, the raised arm, one leg straight and one crossing, look-back), bare feet, face and hair kept, pink shorts; the lettering came out garbled on this seed. Research before it: 3 of 3 seeds followed the drawing straight against ComfyUI (README table, pose round three). Not run by clicking through the page yet.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "20",
+        "image"
+      ],
+      "last_reference_label": "Picture to keep (image 2)",
+      "last_reference_hint": "Your character: face, hair, outfit, colours and rendering style come from this picture. It is image 2 here on purpose: the 9B model keeps image 1's structure, and image 1 is the drawn skeleton. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "14",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents: the drawn skeleton is image 1 (its body position is followed), your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Pose skeleton (image 1)",
+      "reference_board_hint": "A stick figure on black: an OpenPose-style drawing from any pose editor (coloured limbs on a black canvas, as ComfyUI's openpose editor or a hand-drawn one exports it). Thin lines carry the body position and nothing else is copied: measured 15 September 2026, a crude 17-keypoint drawing put the character into its pose on 3 of 3 seeds, including an arm drawn in the wrong place. A solid mannequin or a photo is drawn literally (a ball head became a faceless sphere): for pictures use the depth-map recipe.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward at the waist, one hand on the hip, looking back over the shoulder]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]",
+        "[image 1's pose, the hands and the camera in a few words, e.g. bent forward at the waist, one hand on the hip, looking back over the shoulder]",
+        "[image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1: a drawn pose skeleton (a stick figure on black), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
+        "Wording: the skeleton gives the body position, the pose fill names the hands and the camera, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 75-100 s warm on the 9070 XT",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "description": "Put your character into a pose you drew: a stick figure on black (any OpenPose-style pose editor, or a hand drawing) is image 1 and the model follows it without copying anything else. Measured 15 September 2026 on the owner's Ellen Joe picture (research, straight against ComfyUI, research-scripts/pose_sources.py): a crude 17-keypoint drawing gave the deep bend, the crossed legs, the look-back and even a wrongly drawn raised arm on 3 of 3 seeds, with the face, crop top and pink shorts kept and bare feet, in 75 s warm. 2D skeleton detectors fail on extreme anime poses, so draw or edit the skeleton yourself; a solid mannequin drawing is copied literally and is not a substitute."
     },
     {
       "id": "restyle-klein-picture",
