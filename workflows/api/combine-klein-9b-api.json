@@ -22,7 +22,7 @@
   "4": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "Keep image 1 exactly as it is: the same [image 1's pose in a few words, e.g. bent forward at the waist, hands on hips] pose, camera angle, framing and background. Replace the person in image 1 with [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2, drawn in image 2's clean rendering style. She wears image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs]. Nothing of image 1's clothing, shoes, accessories or colours remains. One figure only, nobody else in the picture.",
+      "text": "Keep image 1 exactly as it is: the same [image 1's pose in a few words, e.g. bent forward at the waist, hands on hips] pose, camera angle, framing and background. Replace the person in image 1 with [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2, drawn in image 2's clean rendering style. The figure wears image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs]. Nothing of image 1's clothing, shoes, accessories or colours remains. One figure only, nobody else in the picture.",
       "clip": [
         "2",
         0
