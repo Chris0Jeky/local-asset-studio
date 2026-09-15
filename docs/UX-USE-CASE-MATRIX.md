@@ -1,5 +1,26 @@
 # UX use-case matrix
 
+## Combine experiment loop — 16 September 2026
+
+The same source pair now has a result strip with seed tiles, Workspace keeper/needs-work decisions,
+and explicit **Prepare same seed** / **Prepare new seed** actions. Both actions load a checked saved
+recipe; Generate still requires a separate click. Failed and uncertain history sits under **Problems**;
+its observation and recovery controls remain available when expanded.
+
+The compatible Combine recipes switch on the same screen in **one click**, retaining the character,
+pose picture and named answers. Image numbers and graph identity follow the destination recipe.
+Edited wording stays with its original recipe and returns when switching back. Skeleton and RGB
+picture routes are not interchangeable; excess board pictures and missing references block a switch.
+Each choice shows its last completed local timing when available, or says there is no timing yet.
+
+`python tests/studio_use_cases.py --out .runtime/combine-all-use-cases.json` passed **13/13** journeys
+in 69.2 s on Windows/Python 3.14, with **zero generation submissions and zero page errors**. The new
+`combine-same-pair-second-engine` journey checks source/graph identity, cross-recipe results, preserved
+hand edits, two independent review decisions and both seed preparations. It takes 11 clicks in total:
+five to prepare the pair, two recipe switches, two reviews and two seed preparations. These are
+synthetic browser fixtures, not model-quality or owner-acceptance evidence. Geometry editing and
+native guide routing remain separate work under #444/#445; broader #422 stays open.
+
 Ten owner-shaped journeys through the Studio, driven by an agent in a real Chromium and measured
 step by step. The intents live in `research/ux/use-cases.json` (selector-free, in the owner's words);
 the selectors live in `tests/studio_use_cases.py`, one driver per case. Refs #278.

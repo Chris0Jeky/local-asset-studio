@@ -15,6 +15,7 @@ live here, one driver per case id, so the matrix reports the pipeline, not the m
 Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
 """
 import argparse
+import copy
 import json
 import os
 import re
@@ -109,7 +110,7 @@ DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
-DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-bulk', 'download')
+DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-bulk', 'data-ux-review', 'data-ux-rerun', 'download')
 
 
 def deny_reason(control_id='', label='', attributes=(), submits=False):
@@ -175,6 +176,11 @@ def build_handler():
                 return self.json({'document': dict(document, source={'preset_id': path.rsplit('/', 1)[-1], 'authoring_only': True}), 'generation_submitted': False})
             if path == '/api/health':
                 return self.json({'online': True, 'worker_alive': True, 'schema_available': True, 'missing_models': {}, 'devices': [], 'comfy_url': 'fixture://none'})
+            if path.startswith('/api/jobs/') and path.endswith('/recipe'):
+                job = next(j for j in fixture.JOBS if j['id'] == path.split('/')[3])
+                return self.json(dict(version=2, preset_id=job['preset_id'], controls=job['controls'],
+                                      continuation=job.get('continuation'), references=job.get('references', []),
+                                      parent_assets=job.get('parent_assets', []), batch_count=1))
             if path.startswith('/api/jobs/'):
                 return self.json(next((job for job in fixture.JOBS if job['id'] == path.rsplit('/', 1)[-1]), {'error': 'Missing synthetic job'}))
             return super().do_GET()
@@ -189,6 +195,21 @@ def build_handler():
             if path == '/api/upload':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'file': 'f' * 32 + '_upload.png', 'sha256': 'a' * 64, 'width': 512, 'height': 768})
+            if path == '/api/recipe-check':
+                data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
+                preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
+                return self.json({'template_sha256': preset['continuation_capability']['template_sha256']})
+            if path == '/api/assets/update':
+                data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
+                if data.get('action') != 'edit' or set(data) != {'action', 'ids', 'review', 'workspace_id', 'expected_revisions', 'request_id'}:
+                    return self.json({'error': 'Only explicit tile review is supported by this fixture'}, 400)
+                assets = [next(a for a in fixture.ASSETS if a['id'] == identifier) for identifier in data['ids']]
+                if any(a['metadata_revision'] != data['expected_revisions'][a['id']] for a in assets):
+                    return self.json({'error': 'Synthetic metadata conflict'}, 409)
+                for asset in assets: asset.update(review=data['review'], metadata_revision=asset['metadata_revision'] + 1)
+                return self.json(dict(status='applied', workspace_id=data['workspace_id'], request_id=data['request_id'],
+                                      action='edit', updated=data['ids'], revisions={a['id']: a['metadata_revision'] for a in assets},
+                                      applied={'review': data['review']}, current=copy.deepcopy(assets)))
             if path == '/api/preview':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'graph': {'note': 'Synthetic resolved recipe; no generation submitted.'}})
@@ -631,6 +652,68 @@ def _combine(c):
     brackets = c.page.evaluate('((document.querySelector("#positive").value || "").match(/\\[/g) || []).length')
     done = c.ready() and attached and filled >= 1 and brackets == 0 and 'image 2' in filled_wording
     return done, 'source attached=%s, %d board picture(s), %d bracket(s) left, run control enabled=%s' % (attached, filled, brackets, c.ready())
+
+
+@driver('combine-same-pair-second-engine')
+def _combine_loop(c):
+    """Real page controls over synthetic completed jobs; recipe switches and reruns never submit."""
+    ready, detail = _combine(c)
+    if not ready or c.live: return False, 'Needs the prepared fixture pair; live attachment is deliberately skipped. ' + detail
+    import studio_browser_smoke as fixture
+    initial = c.page.evaluate('({preset_id:selected.id,controls:values(),continuation:continuationState,references:attachedReferencePayload(),parent_assets:parentAssets})')
+    preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == initial['preset_id'])
+    added = []
+    for index, status in enumerate(('completed', 'completed', 'uncertain')):
+        job = dict(copy.deepcopy(initial), id='combine-loop-' + str(index), status=status,
+                   preset_name=preset['name'], elapsed_seconds=80 + index, batch_count=1,
+                   message='Synthetic ' + status + ' receipt; no model ran.',
+                   outputs=[dict(filename='fixture.png', asset_id='asset-' + str(index + 2), media_type='image', seed=42 + index)])
+        added.append(job)
+    unrelated = copy.deepcopy(added[0]); unrelated['id'] = 'combine-other-pair'
+    unrelated['references'][0]['sha256'] = 'b' * 64
+    fixture.JOBS[:0] = [unrelated] + added
+    try:
+        c.page.evaluate('refreshJobs()')
+        c.page.wait_for_selector('#uxPairResults .ux-result-tile')
+        c.act('#uxPairResults', 'read', note='three matching outputs; the changed pose bytes are excluded')
+        assert c.page.locator('#uxPairResults .ux-result-tile').count() == 3
+        assert c.page.locator('[data-ux-rerun][data-job="combine-loop-2"]:disabled').count() == 2
+        assert c.page.locator('#jobProblems').evaluate('(el) => !el.open')
+        assert c.page.locator('[data-ux-engine="combine-klein-9b-skeleton"]').is_disabled()
+        custom = c.page.locator('#positive').input_value() + ' Keep the red ribbon.'
+        c.act('#positive', 'fill', typed=custom, note='a hand edit stays with its recipe')
+        before_attach = len([p for p in fixture.POSTS if p['path'] == '/api/assets/reference'])
+        c.act('[data-ux-engine="combine-klein"]', note='same-screen second engine; no reattachment or fill entry')
+        c.page.wait_for_function('selected.id === "combine-klein"')
+        state = c.page.evaluate('({preset:selected.id,claim:continuationState,refs:attachedReferencePayload(),parents:parentAssets,controls:values(),hash:selected.continuation_capability.template_sha256})')
+        assert state['claim']['template_sha256'] == state['hash']
+        assert state['claim']['reference_file'] == initial['continuation']['reference_file']
+        assert state['refs'][0]['file'] == initial['references'][0]['file']
+        assert state['parents'] == initial['parent_assets']
+        assert 'leaning forward' in state['controls']['positive'] and 'gold trim' in state['controls']['positive']
+        assert not c.page.locator('#uxFillsNote').is_visible()
+        assert c.ready()
+        c.act('#uxPairResults', 'read', note='results stay grouped across the recipe switch')
+        assert c.page.locator('#uxPairResults .ux-result-tile').count() == 3
+        c.act('[data-ux-engine="%s"]' % initial['preset_id'], note='return to the previous recipe and its exact edited wording')
+        assert c.page.locator('#positive').input_value() == custom
+        assert len([p for p in fixture.POSTS if p['path'] == '/api/assets/reference']) == before_attach
+        c.act('[data-ux-review="selected"][data-asset="asset-2"]', note='record a review through Workspace revisions')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
+        c.act('[data-ux-review="needs_work"][data-asset="asset-3"]', note='independent review for the other seed')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-3").review === "needs_work"')
+        c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
+        c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
+        assert c.page.locator('#positive').input_value() == initial['controls']['positive']
+        c.act('[data-ux-rerun="new"][data-job="combine-loop-0"]', note='stage another seed while retaining the same pair and recipe')
+        c.page.wait_for_function('getControl("seed").value !== "42" && !referencePending')
+        assert c.page.evaluate('lastUploaded') == initial['controls']['last_reference']
+        assert c.page.evaluate('referenceRecords[0].file') == initial['references'][0]['file']
+        assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+        c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
+        return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
+    finally:
+        fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair'))]
 
 
 @driver('prompt-lab-to-create')

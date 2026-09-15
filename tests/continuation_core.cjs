@@ -165,6 +165,31 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   assert.deepEqual(C.unfilled(combine,combine.continuation_prompt),['[who]','[say the pose]']);assert.deepEqual(C.unfilled(combine,'Redraw the witch: leaning.'),[]);assert.deepEqual(C.unfilled(edit,null),[]);assert.deepEqual(C.unfilled(p,'[anything]'),[],'a recipe without fills has none');
   assert.deepEqual(U.recipesFor('edit',[{...p,id:'qwen-1ref',name:'Qwen',reference:['4','image']},{...edit,reference:['4','image']}]).map(x=>x.id),['flux-edit','qwen-1ref']);
 });
+test('Combine results follow the exact pictures across engines, not filenames, roles or unrelated runs',()=>{
+  const preset=id=>({id,reference_board:{min:1},reference_slots:[{role:'pose'}],last_reference:['20','image'],reference_board_label:'Pose picture (image 1)',continuation_capability:{operation:'combine',source_input:'last_reference'}});
+  const presets=[preset('depth'),preset('rgb'),{...preset('skeleton'),reference_board_label:'Pose skeleton (image 1)'}];
+  const current={preset_id:'depth',controls:{last_reference:'keep.png'},continuation:{source_sha256:'a'.repeat(64)},references:[{file:'pose.png',sha256:'b'.repeat(64)}]};
+  const other={...current,preset_id:'rgb',controls:{last_reference:'restaged.png'},references:[{file:'restaged-pose.png',sha256:'b'.repeat(64)}]};
+  assert.equal(C.sameCombinePair(current,other,presets),true,'verified bytes, not staging names, identify the pair');
+  assert.equal(C.sameCombinePair(current,{...other,continuation:{source_sha256:'c'.repeat(64)}},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[{file:'pose.png',sha256:'d'.repeat(64)}]},presets),false,'a reused filename cannot mask changed bytes');
+  assert.equal(C.sameCombinePair(current,{...other,preset_id:'skeleton'},presets),false,'a skeleton and a picture have different input contracts');
+  assert.equal(C.sameCombinePair(current,{...other,references:[...other.references,{file:'third.png'}]},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[]},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[{...other.references[0],missing:true}]},presets),false);
+});
+test('engine changes carry character, pose and clothes by meaning and never reuse the old graph binding',()=>{
+  const four={id:'four',reference_board:{min:1},reference_slots:[{role:'pose'},{role:'pose'}],last_reference:['14','image'],reference_board_label:'Pose picture (image 2)',continuation_capability:{operation:'combine',source_input:'last_reference'},continuation_placeholder:['[who is in image 1, e.g. a witch]','[the pose in a few words, e.g. leaning]']};
+  const nine={...four,id:'nine',reference_slots:[{role:'pose'}],reference_board_label:'Pose picture (image 1)',continuation_placeholder:['[who is in image 2, e.g. a witch]',"[image 1's pose, e.g. leaning]","[image 2's clothes and colours, e.g. a robe]"]};
+  const answers={who:'a witch',pose:'leaning forward',clothes:'a red robe'};
+  assert.deepEqual(Object.values(C.combineFillValues(nine,answers)),['a witch','leaning forward','a red robe']);
+  assert.match(C.combineFillValues(four,answers)[four.continuation_placeholder[0]],/a witch.*a red robe/,'a two-field recipe still carries the third fact');
+  const refs=[{file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset',slot:1,transform:{old:'graph'}},{file:null}];
+  assert.equal(C.combineSwitchReason(four,nine,refs),'');
+  assert.deepEqual(C.combineReferences(nine,refs),[{role:'pose',contribution:'',avoid:'',file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset'}]);
+  assert.match(C.combineSwitchReason(four,nine,[...refs.slice(0,1),{file:'third.png'}]),/pictures/);
+  assert.match(C.combineSwitchReason(nine,{...nine,reference_board_label:'Pose skeleton (image 1)'},refs),/skeleton/i);
+});
 test('bracketed fills become labelled fields and the answers write the prepared wording (#422 slice A)',()=>{
   const depth={id:'combine-klein-9b-depth',continuation_prompt:'Image 1 is a depth map: [image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.',
     continuation_placeholder:['[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]','[image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]','[image 2\'s clothes and colours, e.g. a black crop top, pink shorts]']};
