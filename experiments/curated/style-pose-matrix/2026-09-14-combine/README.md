@@ -149,6 +149,12 @@ dequantised every step with 1-3 GB of VRAM headroom), not in the reference token
 by a wrong skeleton as well. Depth Anything V2 Large (`probe-depth_00001_.png`, downloaded tonight, cc-by-nc-4.0) gives the whole silhouette:
 bend, crossed legs, heels, skirt, tail.
 
+`s` is ComfyUI's own execution time for the prompt (`execution_start` to `execution_success` in `/history`, the same basis as the tables
+above, including any model reload and the annotator); `round2_history.json` next to the scripts holds that number, the status, the
+outputs and the exact submitted graph for every prompt below, read back from `/history`. The per-script JSONs (`qwen_pose2.json`,
+`klein_skeleton.json`) record the script's own wait, which includes queueing behind other prompts, and two scripts running at once
+overwrote each other's file, so they are partial; the history file is the record.
+
 | Variant | Seed | Prompt ID | s | Output | Result |
 | --- | --- | --- | --- | --- | --- |
 | qwen ref05 (identity first, refs 0.5 MP) | 2026091411 | `8d71b5e4` | 775.9 | `Research/qwen2-ref05_00001_.png` | deeper bend than round one, face kept, lettering garbled; **the maid's tights and the tail leaked** |

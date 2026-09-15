@@ -19,7 +19,7 @@ Round two, same two pictures, every render tabled with prompt IDs in `experiment
   crop top, lettering and pink shorts kept, bare feet, no tights and no tail, 90-115 s warm (seeds 11, 12, 14; seed 13 bent moderately
   and brought the source's speech bubble back). Residual: a heel in the silhouette can shape a foot.
 
-Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose, nothing leaks)**
+Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** (named "…, nothing leaks" when merged in #424; renamed after the late review because a heel or skirt in the silhouette still shapes the figure, #427)
 (`combine-klein-9b-depth`, graph `workflows/api/combine-klein-9b-depth-api.json`: the shipped 9B graph with a `DepthAnythingV2Preprocessor`
 between the board picture and its reference latent) now leads *Continue with this -> Combine*; the pose-first 9B recipe is second, the 4B
 third. Annotator checkpoints (fetched by comfyui_controlnet_aux into its own folder) are excluded from model readiness through
@@ -36,6 +36,8 @@ bracketed spans in a paragraph, a disabled role select, a research-report recipe
 engine switch that restarts the journey) is issue #422 with a four-slice proposal. Not verified: the depth recipe by clicking through the
 page (the API run uses the same prepare and worker path); any pose or character other than the owner's; a 3D-mannequin render as the
 pose source (proposed, untested); art acceptance (HUMAN_TODO q-28).
+
+Late review of #424 (after the merge): no CRITICAL or HIGH; the guidance projection now honours `ANNOTATOR_SELECTIONS` too, the recipe name and board label were tightened, the shared Combine guidance sentence is recipe-aware, the round-two timing basis is stated (`round2_history.json` is the record), q-26 is narrowed to the owner's words.
 
 Owner decisions recorded tonight (HUMAN_TODO): the Klein 9B non-commercial licence "is not an issue"; later, "disregard the licenses
 issues for now, we're just experimenting and plus there is no commercial plans to begin with" (recorded as the owner's statement about

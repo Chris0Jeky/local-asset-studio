@@ -140,9 +140,11 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   const nineText=C.guidance(nine,source).join(' ');assert.match(nineText,/Picture to keep \(image 2\)/);assert.match(nineText,/whose pose you want to Picture 1 \(image 1\)/);assert.doesNotMatch(nineText,/image 3/);assert.match(nineText,/clothes and colours/);
   assert.match(C.blockers(prepared.claim,nine,{positive:prepared.positive,last_reference:file},['source-asset'],empty).join(),/whose pose you want to Picture 1 \(image 1\)/);
   // The depth-map recipe leads the Combine route (nothing of the pose picture leaks), then pose-first 9B, then 4B.
-  const depth={...nine,id:'combine-klein-9b-depth',reference_board_label:'Pose picture, read as a depth map (image 1)'};
+  const depth={...nine,id:'combine-klein-9b-depth',reference_board_label:'Depth map of the pose picture (image 1)'};
   assert.deepEqual(C.destinations('combine',[p,combine,board,nine,depth,look],source).map(x=>x.id),['combine-klein-9b-depth','combine-klein-9b','combine-klein']);
   assert.match(C.guidance(depth,source).join(' '),/whose pose you want to Picture 1 \(image 1\)/);
+  assert.match(C.guidance(depth,source).join(' '),/read as a depth map: only the silhouette reaches the model/);assert.doesNotMatch(C.guidance(depth,source).join(' '),/background follows the pose picture/);
+  assert.match(nineText,/shoe or stocking from it can ghost in/);
   const lookText=C.guidance(look,source).join(' ');
   assert.match(lookText,/copy how image 2 is drawn/);assert.match(lookText,/Colours can drift/);assert.doesNotMatch(lookText,/Style weight/);assert.doesNotMatch(lookText,/add one to three pictures/);
   assert.equal(C.promptFor(look,source),'Copy how image 2 is drawn. Image 1 shows: An adult traveller at the station.','a board recipe numbers its source');

@@ -16,7 +16,7 @@ import re
 from urllib.parse import urlsplit
 
 from .core import canonical, decode, digest, need
-from .model_contracts import FOLDERS, MODEL_INPUT_FOLDERS
+from .model_contracts import ANNOTATOR_SELECTIONS, FOLDERS, MODEL_INPUT_FOLDERS
 from .preset_adapter import CONTROLS, equivalent, graph_inputs
 
 FORMAT = 'studio.settings-guidance/v1'
@@ -211,6 +211,7 @@ def resource_context(graph, manifest, preset):
 
     for node, data in graph.items():
         for field, name in data.get('inputs', {}).items():
+            if (data.get('class_type'), field) in ANNOTATOR_SELECTIONS: continue  # fetched by the node into its own folder, never a library file
             folder = MODEL_INPUT_FOLDERS.get((data.get('class_type'), field), FILE_FIELDS.get(field))
             if folder is None or not isinstance(name, str) or not name: continue
             try: path = file_key(folder + '/' + name.replace('\\', '/'))
