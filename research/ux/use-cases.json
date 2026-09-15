@@ -500,7 +500,7 @@
         },
         {
           "intent": "open the wording prepared for this pass",
-          "expect": "the wording names image 1 and image 2 and carries two bracketed fills: who is in image 1 and the pose"
+          "expect": "the wording names image 1 and image 2 and carries bracketed fills: who the character is, the pose, and (on the 9B recipe) the clothes and colours"
         },
         {
           "intent": "prepare it in Create",
@@ -516,7 +516,7 @@
         },
         {
           "intent": "fill in the wording",
-          "expect": "replacing the two bracketed fills clears the wording blocker"
+          "expect": "replacing every bracketed fill clears the wording blocker"
         },
         {
           "intent": "read the run control",

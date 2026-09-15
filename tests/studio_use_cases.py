@@ -606,9 +606,13 @@ def _combine(c):
     else: c.act('#referenceCards', 'read', note='the picker did not open; board state as found')
     wording = c.page.evaluate('(document.querySelector("#positive").value || "")')
     filled_wording = wording
-    for fill, words in (('who is in image 1', 'the witch in the black and red robe'), ('the pose in a few words', 'leaning forward, one hand on her hip, the other held out')):
+    # Every bracketed fill the leading Combine recipe carries (who, the pose, the clothes and colours), whichever recipe leads.
+    answers = (('who is in image', 'the witch in the black and red robe'), ('pose', 'leaning forward, one hand on her hip, the other held out'), ('clothes', 'a black and red robe with gold trim, a wide-brimmed black hat'))
+    for _ in range(6):
         start = filled_wording.find('['); end = filled_wording.find(']', start)
-        if start >= 0 and end > start and fill in filled_wording[start:end]: filled_wording = filled_wording[:start] + words + filled_wording[end + 1:]
+        if start < 0 or end < start: break
+        words = next((words for key, words in answers if key in filled_wording[start:end]), 'the witch')
+        filled_wording = filled_wording[:start] + words + filled_wording[end + 1:]
     c.act('#positive', 'fill', typed=filled_wording)
     c.page.wait_for_timeout(400)
     c.act('#generate', 'read', note='readiness only; never pressed')

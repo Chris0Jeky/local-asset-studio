@@ -6400,8 +6400,8 @@
       "category": "Characters",
       "family": "FLUX.2 Klein 9B",
       "graph": "workflows/api/combine-klein-9b-api.json",
-      "verified": false,
-      "execution_note": "Research renders 15 September 2026 against ComfyUI (experiments/curated/style-pose-matrix/2026-09-14-combine/README.md): the pose picture first and the character swapped in kept a deep waist bend on 3 of 3 seeds where every FLUX.2 Klein 4B wording, order, step count and LoRA had failed. Not yet run through the page.",
+      "verified": true,
+      "execution_note": "Executed 2026-09-15 01:45 through the Studio (plain Create route via /api/jobs, the same prepare/worker path the page uses): the owner's bent-over fan picture on Picture 1 (image 1), the SHARK crop-top character on Picture to keep (image 2), the three bracketed fills replaced (Ellen Joe, a girl with short black hair with red tips and red eyes; bent forward at the waist, hands on hips, looking back over her shoulder; a black long-sleeved crop top with red SHARK lettering on the front, bright pink shorts, bare legs and bare feet), seed 2026091431: job 09cdf30b-9d2d-4e94-9dbd-c77c2a0d8af8 (prompt ed9430a0-5108-494c-8893-e75ac58bf45c, 93 s), output Combine/Klein-9B_00001_.png, sheet examples/style-pose/combine-klein9b-proving.jpg. Research before it: 4 of 4 seeds held the bend against ComfyUI (README table). Not run by clicking through the page yet.",
       "modality": "image",
       "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
       "positive": [
