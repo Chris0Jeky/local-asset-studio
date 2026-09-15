@@ -9,8 +9,9 @@ Codex through `~/.codex/AGENTS.md`. This file carries only the Codex-runtime del
 1. `CLAUDE.md` — repo facts, proving checks, architecture, pitfalls.
 2. `CURRENT_STATE.md` head — executed evidence versus plans; reconcile claims against code and `.runtime/`.
 3. `HUMAN_TODO.md` — human-only creative choices; surface open items in every summary, never tick them.
-4. `.codex/README.md` and `.codex/memories/00_ACTIVE.md` — Codex routing and the active gate.
-5. Authority: `.agent-harness/tier.json` (T2, push free, merge free). Read it live; never infer it from prose.
+4. `docs/PROJECT-OPERATING-MODEL.md` — issue type/readiness, three-line WIP limit, stack order and evidence placement.
+5. `.codex/README.md` and `.codex/memories/00_ACTIVE.md` — Codex routing and the active gate.
+6. Authority: `.agent-harness/tier.json` (T2, push free, merge free). Read it live; never infer it from prose.
 
 ## Hard rules (also in CLAUDE.md; listed here because Codex sessions submit generations)
 

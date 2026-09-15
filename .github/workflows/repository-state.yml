@@ -1,0 +1,50 @@
+name: Repository state
+
+on:
+  push:
+    paths:
+      - 'scripts/repository_snapshot.py'
+      - 'research/repository-state/**'
+      - 'docs/generated/REPOSITORY-STATE.md'
+      - 'docs/PROJECT-OPERATING-MODEL.md'
+      - 'presets/catalog.json'
+      - 'HUMAN_TODO.md'
+      - 'tests/test_repository_snapshot*.py'
+      - '.github/workflows/repository-state.yml'
+  pull_request:
+    paths:
+      - 'scripts/repository_snapshot.py'
+      - 'research/repository-state/**'
+      - 'docs/generated/REPOSITORY-STATE.md'
+      - 'docs/PROJECT-OPERATING-MODEL.md'
+      - 'presets/catalog.json'
+      - 'HUMAN_TODO.md'
+      - 'tests/test_repository_snapshot*.py'
+      - '.github/workflows/repository-state.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run focused contracts
+        run: python -m unittest discover -s tests -p 'test_repository_snapshot*.py'
+      - name: Verify committed factual projection
+        run: |
+          python scripts/repository_snapshot.py \
+            --source research/repository-state/active-work.json \
+            --test-receipt research/repository-state/test-receipt.json \
+            --validation-receipt research/repository-state/validation-receipt.json \
+            --format markdown --check docs/generated/REPOSITORY-STATE.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-state
+          path: docs/generated/REPOSITORY-STATE.md
+          if-no-files-found: error
+          retention-days: 7

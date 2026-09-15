@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-09-14T14:05:00Z",
+  "repository": {
+    "head_sha": "b7f3ab39a3bc6506afbb57a1b87529047a61f3e4",
+    "default_branch": "main",
+    "facts_sha": "b7f3ab39a3bc6506afbb57a1b87529047a61f3e4",
+    "catalog_blob_sha": "20ba63428109cb1918da5394c5841000476ca5ca",
+    "human_todo_blob_sha": "21114e4f1f741b536ca11fb02d426b6eed201d88"
+  },
+  "pull_requests": [
+    {
+      "number": 333,
+      "title": "Reference intelligence: four-image analysis, editable trait review and architecture",
+      "head": "codex/reference-intelligence-contract",
+      "base": "main",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 336,
+      "title": "Run the reference assistant: one local multi-image call, metadata and editable drafts",
+      "head": "codex/reference-assistant-local",
+      "base": "codex/reference-intelligence-contract",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 333,
+      "owner_run": false
+    },
+    {
+      "number": 346,
+      "title": "Preview reviewed reference traits against exact originals and the current brief",
+      "head": "codex/reference-review-api",
+      "base": "codex/reference-assistant-local",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 333,
+      "owner_run": false
+    },
+    {
+      "number": 349,
+      "title": "Review image descriptions in Prompt Lab with guarded apply, undo and browser coverage",
+      "head": "codex/reference-review-ui",
+      "base": "codex/reference-review-api",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 333,
+      "owner_run": false
+    },
+    {
+      "number": 334,
+      "title": "Reduce Workflow Studio reading load with progressive disclosure",
+      "head": "ux/workflow-progressive-disclosure",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 337,
+      "title": "Make Create explanations opt-in without changing their owners",
+      "head": "ux/create-progressive-disclosure",
+      "base": "ux/workflow-progressive-disclosure",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 334,
+      "owner_run": false
+    },
+    {
+      "number": 335,
+      "title": "Make guides and shared setup drafts style-board aware",
+      "head": "codex/style-board-followups-328",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 338,
+      "title": "Keep the timed pipe fixture independent of Python site startup",
+      "head": "codex/lifetime-child-isolation",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 339,
+      "title": "Verify saved job-resource receipts before using their metrics",
+      "head": "codex/resource-observation-inspector",
+      "base": "codex/lifetime-child-isolation",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 338,
+      "owner_run": false
+    },
+    {
+      "number": 344,
+      "title": "Compare paired resource observations without dropping failed evidence",
+      "head": "codex/paired-resource-observations",
+      "base": "codex/resource-observation-inspector",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": 338,
+      "owner_run": false
+    },
+    {
+      "number": 340,
+      "title": "Add a deterministic repository operating snapshot and work taxonomy",
+      "head": "ops/repository-operating-model",
+      "base": "main",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 347,
+      "title": "Attribute unexpected schema-fixture loopback connections",
+      "head": "codex/schema-route-audit-297",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 348,
+      "title": "Exercise Restyle continuation validation branches directly",
+      "head": "codex/restyle-validation-followups-345",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    }
+  ],
+  "issues": [
+    {
+      "number": 313,
+      "title": "Convergence milestone: prove the accepted-asset loop before expanding scope",
+      "type": "epic",
+      "readiness": "owner-run",
+      "blocked_by": []
+    },
+    {
+      "number": 314,
+      "title": "Extract a shared revisioned-command and durable-receipt toolkit",
+      "type": "research",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 315,
+      "title": "Adopt a repository operating model: issue taxonomy, WIP limits and generated state",
+      "type": "slice",
+      "readiness": "active",
+      "blocked_by": []
+    },
+    {
+      "number": 252,
+      "title": "Add an addressable-figure primitive: split a multi-figure image into child assets with lineage",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 97,
+      "title": "Unify graph validation and complete per-backend schema evidence",
+      "type": "defect",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 178,
+      "title": "Extend stage-aware resource admission through the existing generation coordinator",
+      "type": "slice",
+      "readiness": "blocked",
+      "blocked_by": [77, 89]
+    }
+  ],
+  "next_ready": [97, 252, 314]
+}
