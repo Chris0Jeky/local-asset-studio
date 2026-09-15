@@ -30,6 +30,7 @@ Object.defineProperty(window,'sessionStorage',{configurable:true,value:{
 function source(id,sha,title){return {id,sha256:sha,workspace_id:'11111111111111111111111111111111',url:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="100"/%3E',title,media_type:'image',trashed_at:null};}
 let activeAsset=source('asset-a','aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa','Sheet A');
 let assetState={assets:[activeAsset]},calls=[],messages=[],opened=[],refreshed=0,mode='success',failRefresh=false,deferredResolve=null,postCount=0,lastCreated=[];
+let assetRefreshing=false,holdRefresh=false,refreshResolve=null;
 window.confirm=()=>true;
 function receipt(body){return {status:'created',action:'split_figures',workspace_id:body.workspace_id,parent_asset_id:body.asset_id,request_id:body.request_id,generation_submitted:false,created:body.rectangles.map((_,i)=>(i+1).toString(16).padStart(32,'0')),figures:body.rectangles.map((_,i)=>({index:i+1,asset_id:(i+1).toString(16).padStart(32,'0')}))};}
 async function api(path,options={}){
@@ -41,10 +42,15 @@ async function api(path,options={}){
   const result=receipt(body);lastCreated=result.created;return result;
 }
 async function refreshAssets(){
-  refreshed++;
-  if(failRefresh)return {ok:false,error:'library refresh failed'};
-  for(const id of lastCreated)if(!assetState.assets.some(asset=>asset.id===id))assetState.assets.push({id});
-  return {ok:true};
+  if(assetRefreshing)return;
+  assetRefreshing=true;refreshed++;
+  const snapshot=lastCreated.slice();
+  try{
+    if(holdRefresh)await new Promise(resolve=>{refreshResolve=resolve;});
+    if(failRefresh)return {ok:false,error:'library refresh failed'};
+    for(const id of snapshot)if(!assetState.assets.some(asset=>asset.id===id))assetState.assets.push({id});
+    return {ok:true};
+  }finally{assetRefreshing=false;}
 }
 function openAsset(id){opened.push(id);}
 function assetMessage(text,error=false){messages.push({text,error});}
@@ -170,6 +176,25 @@ async def scenario_pointer_threshold(browser):
     await page.close()
     return {"click_ignored": True, "drag_added": 1}
 
+async def scenario_coalesced_refresh(browser):
+    page, errors = await page_for(browser)
+    await page.evaluate("holdRefresh=true;void refreshAssets()")
+    await page.wait_for_function("assetRefreshing===true && refreshed===1")
+    await add_default(page)
+    await page.click("#figureSplitCreate")
+    await page.wait_for_function("calls.some(c=>c.method==='POST')")
+    # The already-running read captured the pre-split state. Releasing it must
+    # cause the splitter to wait for idle and issue one fresh forced read.
+    await page.evaluate("holdRefresh=false;refreshResolve()")
+    await page.wait_for_function("refreshed===2")
+    await page.wait_for_selector("[data-figure-child]")
+    assert await page.locator("[data-figure-child]").count() == 1
+    assert "refresh failed" not in (await page.text_content("#figureSplitStatus")).lower()
+    assert not errors, errors
+    await page.close()
+    return {"joined_inflight": True, "refreshes": 2, "children": 1}
+
+
 async def scenario_refresh_failure(browser):
     page, errors = await page_for(browser)
     await page.evaluate("failRefresh=true")
@@ -206,6 +231,7 @@ async def main():
                 "cross_source_guard": await scenario_cross_source_guard(browser),
                 "late_response_binding": await scenario_late_response_binding(browser),
                 "pointer_threshold": await scenario_pointer_threshold(browser),
+                "coalesced_refresh": await scenario_coalesced_refresh(browser),
                 "refresh_failure": await scenario_refresh_failure(browser),
             }
         finally:
