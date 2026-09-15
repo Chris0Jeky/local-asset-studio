@@ -15,6 +15,8 @@ import threading
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 _CURRENT_TEST = "<not started>"
 _CURRENT_LOCK = threading.Lock()
 
@@ -75,12 +77,6 @@ class LifetimeDiagnostics:
             exit=False,
         )
 
-    def cancel(self) -> None:
-        if self.marker is not None:
-            self.marker.cancel()
-        faulthandler.cancel_dump_traceback_later()
-
-
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Run the offline suite with lifetime diagnostics.")
     parser.add_argument("--start-dir", default=str(ROOT / "tests"))
@@ -95,14 +91,13 @@ def main(argv=None) -> int:
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
     diagnostics = LifetimeDiagnostics(args.traceback_after)
     diagnostics.arm()
-    try:
-        result = unittest.TextTestRunner(
-            stream=sys.stderr,
-            verbosity=1,
-            resultclass=TrackingTextResult,
-        ).run(suite)
-    finally:
-        diagnostics.cancel()
+    # Keep both diagnostics armed while interpreter shutdown waits for leaked
+    # non-daemon threads; the parent owns the hard lifetime budget.
+    result = unittest.TextTestRunner(
+        stream=sys.stderr,
+        verbosity=1,
+        resultclass=TrackingTextResult,
+    ).run(suite)
     return 0 if result.wasSuccessful() else 1
 
 

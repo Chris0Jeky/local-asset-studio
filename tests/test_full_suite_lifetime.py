@@ -38,8 +38,11 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                     import time
                     import unittest
 
+                    from studio_workflow.addressable_figures import split_figures
+
                     class HangsBriefly(unittest.TestCase):
                         def test_wait(self):
+                            self.assertTrue(callable(split_figures))
                             time.sleep(0.15)
                     """
                 ),
@@ -70,6 +73,59 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         )
         self.assertIn("Thread ", output)
         self.assertIn("END test_hang.HangsBriefly.test_wait", output)
+
+    def test_worker_keeps_shutdown_watchdog_armed_for_leaked_thread(self):
+        worker = HERE / "full_suite_lifetime_worker.py"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "test_leak.py"
+            path.write_text(
+                textwrap.dedent(
+                    """
+                    import threading
+                    import unittest
+
+                    leaked = threading.Event()
+
+                    class LeaksNonDaemon(unittest.TestCase):
+                        def test_returns_with_live_thread(self):
+                            thread = threading.Thread(target=leaked.wait, name="leaked-non-daemon")
+                            thread.daemon = False
+                            thread.start()
+                    """
+                ),
+                encoding="utf-8",
+            )
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-u",
+                    str(worker),
+                    "--start-dir",
+                    directory,
+                    "--pattern",
+                    "test_leak.py",
+                    "--traceback-after",
+                    "0.15",
+                ],
+                cwd=HERE.parent,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                stdout, stderr = process.communicate(timeout=0.8)
+                self.fail(f"worker exited despite the leaked non-daemon thread:\n{stdout}\n{stderr}")
+            except subprocess.TimeoutExpired as exc:
+                stdout = exc.stdout or ""
+                stderr = exc.stderr or ""
+                process.kill()
+                tail_stdout, tail_stderr = process.communicate(timeout=5)
+                def text(value):
+                    return value.decode(errors="replace") if isinstance(value, bytes) else value
+                output = text(stdout) + text(stderr) + text(tail_stdout) + text(tail_stderr)
+        self.assertIn("END test_leak.LeaksNonDaemon.test_returns_with_live_thread", output)
+        self.assertIn("LIFETIME WATCHDOG CURRENT TEST:", output)
+        self.assertIn("Thread ", output)
 
 
 if __name__ == "__main__":
