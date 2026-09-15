@@ -139,6 +139,10 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   const nine={...combine,id:'combine-klein-9b',reference_slots:[{role:'pose',binding:['14','image']}],last_reference:['20','image'],last_reference_label:'Picture to keep (image 2)',reference_board_label:'Pose picture (image 1)'};
   const nineText=C.guidance(nine,source).join(' ');assert.match(nineText,/Picture to keep \(image 2\)/);assert.match(nineText,/whose pose you want to Picture 1 \(image 1\)/);assert.doesNotMatch(nineText,/image 3/);assert.match(nineText,/clothes and colours/);
   assert.match(C.blockers(prepared.claim,nine,{positive:prepared.positive,last_reference:file},['source-asset'],empty).join(),/whose pose you want to Picture 1 \(image 1\)/);
+  // The depth-map recipe leads the Combine route (nothing of the pose picture leaks), then pose-first 9B, then 4B.
+  const depth={...nine,id:'combine-klein-9b-depth',reference_board_label:'Pose picture, read as a depth map (image 1)'};
+  assert.deepEqual(C.destinations('combine',[p,combine,board,nine,depth,look],source).map(x=>x.id),['combine-klein-9b-depth','combine-klein-9b','combine-klein']);
+  assert.match(C.guidance(depth,source).join(' '),/whose pose you want to Picture 1 \(image 1\)/);
   const lookText=C.guidance(look,source).join(' ');
   assert.match(lookText,/copy how image 2 is drawn/);assert.match(lookText,/Colours can drift/);assert.doesNotMatch(lookText,/Style weight/);assert.doesNotMatch(lookText,/add one to three pictures/);
   assert.equal(C.promptFor(look,source),'Copy how image 2 is drawn. Image 1 shows: An adult traveller at the station.','a board recipe numbers its source');

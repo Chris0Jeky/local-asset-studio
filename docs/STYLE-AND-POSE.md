@@ -42,8 +42,20 @@ said in words.
 
 ## From a finished picture: Continue with this → Combine
 
-**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** leads the route since 15 September
-2026 and is the recipe to reach for when the pose is strong (a deep bend, a crouch, a lean seen from an angle). It works
+**Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose, nothing leaks)** leads the
+route since 15 September 2026 (later that night). The graph turns the pose picture into a Depth Anything V2 depth map and
+that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
+picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
+the deep waist bend and the crossed legs on 2 of 2 seeds with the face, hair, crop top, lettering and pink shorts kept,
+bare feet, no tights and no tail, in about 115 s warm (`examples/style-pose/combine-pose-round2.jpg`). Two things the
+research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
+blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
+wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
+heel can still shape a foot; audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** is second on the route and is the
+recipe to reach for when the pose picture's camera, framing and background should be kept as well as the pose (the depth
+recipe keeps only the body position). It is the recipe for a strong pose (a deep bend, a crouch, a lean seen from an angle). It works
 the other way round from the 4B recipe: the **pose picture is image 1** and is kept (pose, camera, framing, background),
 and **your character is image 2** and is swapped into it. Three bracketed fills: who is in image 2, image 1's pose in a
 few words, and your character's clothes and colours. The last one is not optional: without it image 1's black shorts and
