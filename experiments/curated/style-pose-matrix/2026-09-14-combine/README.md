@@ -81,6 +81,54 @@ the hips, looking back over her shoulder`; prompts `9c2635a7-a13b-48c5-83c4-114e
 hands were honoured, the deep waist bend of the pose picture still was not. The words decide what moves; an extreme
 bend is beyond what 6 steps of the 4B model reproduced here.
 
+## Strategy change, 15 September 2026 (01:00-01:30): pose first on FLUX.2 Klein 9B
+
+The owner called the 4B results "incredibly bad" and asked for a baseline that proves the workflow. Same two pictures (image A = the
+"SHARK" crop-top character, image B = the bent-over maid picture), research renders straight against ComfyUI, seeds 2026091411+,
+exact wordings, graph edits and seeds in `research-scripts/matrix.py` (Klein variants), `structural.py` (OpenPose + IP-Adapter),
+`qwen_pose.py`, `prove_fix.py` and `prove_bend.py` next to this file (they run straight against ComfyUI on 8188 from the repo's
+graphs; the input file names are the owner's uploads). Sheets:
+`examples/style-pose/combine-klein4b-matrix.jpg`, `combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`,
+`combine-openpose-ipadapter.jpg`.
+
+| Variant | Seed | Prompt ID | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| 4b-swap | 2026091411 | `103dd463-3db5-4a1b-a96b-cd660f346ae7` | 48.1 | `Research/matrix-4b-swap_00001_.png` | character's own pose came back (image 2 dominated) |
+| 4b-swap | 2026091412 | `46bae6ce-b2ce-4b33-b824-d0ceb6a6a8d7` | 48.1 | `Research/matrix-4b-swap_00002_.png` | character's own pose came back (image 2 dominated) |
+| 4b-8steps | 2026091411 | `1257fa75-e506-4e01-a3e7-95c1f1d49f7a` | 45.1 | `Research/matrix-4b-8steps_00001_.png` | mild lean from behind, as at 6 steps |
+| 4b-8steps | 2026091412 | `9a6b0876-2bdd-4fac-9bdc-81bb4cb1d427` | 45.1 | `Research/matrix-4b-8steps_00002_.png` | mild lean from behind, as at 6 steps |
+| 4b-aniedit | 2026091411 | `c6b91708-5715-4269-92dc-ad601ecbaedb` | 42.2 | `Research/matrix-4b-aniedit_00001_.png` | mild lean, cleaner finish |
+| 4b-aniedit | 2026091412 | `d9c4eaa2-a937-45a1-a57b-5fee848bf634` | 39.4 | `Research/matrix-4b-aniedit_00002_.png` | mild lean, cleaner finish |
+| 4b-swap-aniedit | 2026091411 | `5604b352-021e-4ba1-8cf1-188c0c22df5d` | 48.6 | `Research/matrix-4b-swap-aniedit_00001_.png` | character's own pose came back |
+| 4b-swap-aniedit | 2026091412 | `1c49e50d-fdf2-4201-8db8-4d6ee3db246d` | 42.1 | `Research/matrix-4b-swap-aniedit_00002_.png` | character's own pose came back |
+| 9b-normal | 2026091411 | `92ccd805-e735-4bd9-8974-4ece1c9bb754` | 102.5 | `Research/matrix-9b-normal_00001_.png` | look-back and hands on hips, no deep bend; lettering moved to the back |
+| 9b-normal | 2026091412 | `92d70035-909f-4dfc-a407-c63e0335a059` | 123.2 | `Research/matrix-9b-normal_00002_.png` | look-back and hands on hips, no deep bend; lettering moved to the back |
+| 9b-swap | 2026091411 | `7d1f9352-5728-4d3f-b17b-b3f124a083c5` | 109.1 | `Research/matrix-9b-swap_00001_.png` | seed 1 standing in heels; seed 2 **deep bend kept**, black shorts and heels leaked from image 1 |
+| 9b-swap | 2026091412 | `01521153-3cea-43e5-90f7-6d6efee18cfb` | 110.1 | `Research/matrix-9b-swap_00002_.png` | seed 1 standing in heels; seed 2 **deep bend kept**, black shorts and heels leaked from image 1 |
+| 9b-swap-anime | 2026091411 | `be351666-db63-46c8-aa61-3d38236f2463` | 157.1 | `Research/matrix-9b-swap-anime_00001_.png` | character's own pose came back (LoRA weakened the swap) |
+| 9b-swap-anime | 2026091412 | `bea5137b-f1c2-4e42-a293-d41095b4e748` | 145.4 | `Research/matrix-9b-swap-anime_00002_.png` | character's own pose came back (LoRA weakened the swap) |
+| 9b-swap-colour | 2026091411 | `9d15369a-81eb-4fdd-8ed4-0d3865453f43` | 923.6 | `Research/matrix-9b-swap-colour_00001_.png` | **deep bend, face, hair, SHARK top and pink shorts kept; tail gone** (4/4); a shoe or stocking from image 1 ghosts in on 3 of 4 |
+| 9b-swap-colour | 2026091412 | `8858a542-8204-49c9-9543-d6a562817c2d` | 210.3 | `Research/matrix-9b-swap-colour_00002_.png` | **deep bend, face, hair, SHARK top and pink shorts kept; tail gone** (4/4); a shoe or stocking from image 1 ghosts in on 3 of 4 |
+| 9b-swap-colour | 2026091413 | `a03e893a-57c1-4d92-be72-83fd8469acff` | 183.4 | `Research/matrix-9b-swap-colour_00003_.png` | **deep bend, face, hair, SHARK top and pink shorts kept; tail gone** (4/4); a shoe or stocking from image 1 ghosts in on 3 of 4 |
+| 9b-swap-colour | 2026091414 | `02475ec4-c076-4b83-bcf9-7deab721a664` | 132.7 | `Research/matrix-9b-swap-colour_00004_.png` | **deep bend, face, hair, SHARK top and pink shorts kept; tail gone** (4/4); a shoe or stocking from image 1 ghosts in on 3 of 4 |
+| qwen-2ref (Q4_K_M, Lightning 4 steps, 832x1248) | 2026091411 | `659e4504-c868-4413-9a5e-d3c6e002cbf1` | 871.2 | `Research/qwen-pose_00001_.png` | bent forward, look-back, hands on hips, identity kept; not the deep bend; 14.5 min |
+| structural cn-plus07 (OpenPose ControlNet + IP-Adapter Plus on WAI v17) | 2026091411 | `ba6d060f-49df-4a46-9157-aee0b5828da6` | 1002.6 | `Research/structural-cn-plus07_00001_.png` | pose followed by the skeleton, identity and finish are WAI's, the tail came back (adapter copied it); 0.5 weight lost the face |
+| structural cn-plus05 (OpenPose ControlNet + IP-Adapter Plus on WAI v17) | 2026091411 | `1af983bf-6918-431f-a6b9-06892a9f9ac4` | 199.0 | `Research/structural-cn-plus05_00001_.png` | pose followed by the skeleton, identity and finish are WAI's, the tail came back (adapter copied it); 0.5 weight lost the face |
+| structural cn-plus07-face (OpenPose ControlNet + IP-Adapter Plus on WAI v17) | 2026091411 | `60c329d9-0420-42e0-926e-1a7bcdc47f4b` | 128.2 | `Research/error: IPAdapter model not present in the pipeline. Please load the` | error: IPAdapter node needs the unified loader; not retried |
+
+What decided it: the Klein models keep **image 1's structure**. Asking for the pose in words while the character is image 1 gives a mild
+pose at best (4B and 9B alike); putting the **pose picture first** and swapping the character in keeps the pose, and on 9B the swap holds
+once the wording names the character's clothes and colours (without them image 1's black shorts and heels leaked). 4B cannot do the
+swap (image 2's pose wins). Qwen Image Edit 2511 follows the pose better than Klein-normal but not the deep bend, at 14.5 minutes. The
+structural route (OpenPose skeleton + IP-Adapter) follows the pose exactly but the identity and finish are the SDXL checkpoint's and the
+adapter copied the tail; it is the fallback when a pose is too extreme even for the 9B swap. What GPT-class image models do
+"effortlessly" is this composition inside one large multimodal model; locally it is structure (the pose picture as image 1, or a skeleton)
+plus explicit words for everything that must not leak.
+
+Shipped as `combine-klein-9b` (**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)**): the pose picture on
+Picture 1 (image 1), your character on Picture to keep (image 2), three bracketed fills (who, the pose, the clothes and colours). The 9B
+model is non-commercial (HUMAN_TODO q-27 (f)).
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).

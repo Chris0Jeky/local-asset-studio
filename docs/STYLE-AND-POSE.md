@@ -42,6 +42,18 @@ said in words.
 
 ## From a finished picture: Continue with this → Combine
 
+**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** leads the route since 15 September
+2026 and is the recipe to reach for when the pose is strong (a deep bend, a crouch, a lean seen from an angle). It works
+the other way round from the 4B recipe: the **pose picture is image 1** and is kept (pose, camera, framing, background),
+and **your character is image 2** and is swapped into it. Three bracketed fills: who is in image 2, image 1's pose in a
+few words, and your character's clothes and colours. The last one is not optional: without it image 1's black shorts and
+heels leaked in our test; with it FLUX.2 Klein 9B held a deep waist bend on 4 of 4 seeds on the owner's own pictures
+(`examples/style-pose/combine-klein9b-pose-first.jpg`). A shoe or stocking from image 1 can still ghost in, lettering
+can garble; audition three seeds. About 100-200 s warm; the 9B model is non-commercial (private experiments only). Why
+this order: the Klein models keep image 1's structure, so the 4B recipe below (character first, pose in words) can only
+give a mild pose, and putting the pose picture first on 4B just brings the character's own pose back; the research table
+in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows all 22 renders.
+
 **Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
 what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
 handoff puts it there), image 2 goes on Picture 1 of the board (*Pull from library* or drop a file); both are scaled to

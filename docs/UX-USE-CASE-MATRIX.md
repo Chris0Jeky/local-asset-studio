@@ -289,18 +289,19 @@ The owner took a Klein restyle output, opened *Continue with this → Restyle* a
 second image, the face and expression of the third image" into the keep sentence (jobs `3ad01f31…`, `35b548fd…`, same
 seed). That recipe carries one picture and its wording says to keep everything, so the renders were the input again,
 read as "the prompt makes no difference". `combine-character-with-another-pose` (`research/ux/use-cases.json`, driver in
-`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**, whose recipe puts the
-source on image 1, a library picture on Picture 1 (image 2), and refuses to run until the two bracketed fills in the
-wording (who is in image 1; the pose in a few words) are replaced.
+`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**. Since 15 September the route leads with the FLUX.2
+Klein 9B recipe, which keeps the pose picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
+until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced; the 4B recipe
+(source on image 1, two fills) is second. The row below was measured with the 9B recipe leading.
 
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 945 | 772 | PASS |
+| `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 997 | 824 | PASS |
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness
-list after preparing carries exactly two conditions, both actionable: *Add the picture whose pose you want to Picture 1*
-(with *Show the empty slot*) and *Fill in the wording: replace "[who is in image 1 …]" and "[the pose in a few words …]"
+list after preparing carries exactly two conditions, both actionable: *Add the picture whose pose you want to Picture 1 (image 1)*
+(with *Show the empty slot*) and *Fill in the wording: replace "[who is in image 2 …]", "[image 1's pose …]" and "[image 2's clothes …]"
 in the prompt* (with *Write the description*); filling the two brackets clears the second, the pull clears the first,
 and the run control reads *Combine pictures →*. The same journey on the live Studio produced the proving run recorded in
 `CURRENT_STATE.md` (job `fb0eb95d…`, 37.6 s). In the same change the Edit route now leads with the 20-second Klein edit

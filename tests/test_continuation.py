@@ -368,7 +368,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
             if declared and preset.get("reference_board"):
                 # Outside the fills the wording must not assume who is in the picture: "her hat" once put hats on a hatless character.
                 fixed = re.sub(r"\[[^\]]*\]", "", preset["continuation_prompt"]).lower()
-                self.assertFalse(re.search(r"\b(her|his|hat|robe|witch)\b", fixed), (preset["id"], fixed))
+                self.assertFalse(re.search(r"\b(she|he|her|his|hat|robe|witch)\b", fixed), (preset["id"], fixed))
             if preset["id"] in ("combine-klein", "restyle-klein-picture"):
                 # A Klein board: the source is image 1 (last_reference, first reference latent), the board pictures follow it
                 # as image 2 and 3; an empty slot is bypassed, not left on the authored example (test_references).
@@ -383,6 +383,11 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 # carries a bracketed placeholder instead, which the handoff refuses to run unreplaced.
                 self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"])
                 self.assertEqual((graph["6"]["inputs"]["cfg"], graph["9"]["inputs"]["steps"], graph["9"]["inputs"]["width"], graph["10"]["inputs"]["height"]), (1.0, 6, 1024, 1536))
+            elif preset["id"] == "combine-klein-9b":
+                # Pose first: the board slot is image 1 (node 14, kept), the character is last_reference on image 2 (node 20).
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
             elif preset["id"] == "flux-edit":
                 self.assertEqual((result["operation"], preset["continuation_prompt"].count("{source}")), ("instruction-edit", 1))
             elif preset["id"] == "restyle-klein":
