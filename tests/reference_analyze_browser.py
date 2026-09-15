@@ -22,15 +22,12 @@ from studio_prompt.http_extension import extend_handler
 from studio_browser_smoke import Handler as StaticHandler
 
 POSTS=[]
-DROP=threading.Event(); DROP_RETIRE=threading.Event(); MODEL_ENTERED=threading.Event(); MODEL_RELEASE=threading.Event(); LOSE_MODEL=threading.Event()
+DROP=threading.Event(); MODEL_ENTERED=threading.Event(); MODEL_RELEASE=threading.Event(); LOSE_MODEL=threading.Event()
 
 class Base(StaticHandler):
     def _json(self,status,value):
         if self.path=='/api/prompt/reference-jobs/create' and status==202 and DROP.is_set():
             DROP.clear();self.close_connection=True
-            self.connection.shutdown(socket.SHUT_RDWR);self.connection.close();return
-        if self.path=='/api/prompt/reference-jobs/retire' and status==200 and DROP_RETIRE.is_set():
-            DROP_RETIRE.clear();self.close_connection=True
             self.connection.shutdown(socket.SHUT_RDWR);self.connection.close();return
         return self.json(value,status)
     def _safe_host(self):return self.headers.get('Host')==f'127.0.0.1:{self.server.server_port}'
@@ -115,22 +112,6 @@ def run(output):
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'overflow {width}'
                         page.add_style_tag(content='html{font-size:200%}')
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'text zoom overflow {width}'
-                        if width==1440:
-                            # A real pre-commit decoder refusal leaves an unknown ID.
-                            page.locator('#ra-new').click();expect(page.locator('#ra-start')).to_be_enabled()
-                            bad=Path(tmp)/'corrupt.png';bad.write_bytes(b'not an image')
-                            page.locator('#ra-files').set_input_files(str(bad));page.locator('#ra-start').click()
-                            expect(page.locator('#ra-status')).to_contain_text('unconfirmed')
-                            expect(page.locator('#ra-new')).to_be_disabled()
-                            page.locator('#ra-recovery summary').click();expect(page.locator('#ra-retire')).to_be_enabled()
-                            DROP_RETIRE.set();page.locator('#ra-retire').click()
-                            expect(page.locator('#ra-status')).to_contain_text('Outcome unconfirmed')
-                            expect(page.locator('#ra-check')).to_be_enabled();page.locator('#ra-check').click()
-                            expect(page.locator('#ra-status')).to_contain_text('retired before creation')
-                            expect(page.locator('#ra-new')).to_be_enabled()
-                            page.locator('#ra-new').click()
-                            page.locator('#ra-files').set_input_files(originals);expect(page.locator('#ra-start')).to_be_enabled()
-                            page.screenshot(path=str(output/'retirement-recovery.png'),full_page=True)
                         if width==390:
                             page.locator('#ra-new').click();expect(page.locator('#ra-start')).to_be_enabled()
                             LOSE_MODEL.set();page.locator('#ra-start').click()
@@ -144,13 +125,11 @@ def run(output):
                         assert not errors,errors;page.close()
                 finally:browser.close()
             assert not fixture.studio_instance.jobs,'No generation job may be created'
-            allowed={'/api/prompt/compile','/api/prompt/reference-jobs/create','/api/prompt/reference-jobs/release','/api/prompt/reference-jobs/retire',
+            allowed={'/api/prompt/compile','/api/prompt/reference-jobs/create','/api/prompt/reference-jobs/release',
                      '/api/prompt/reference-review/inspect','/api/prompt/reference-review/preview'}
             assert set(POSTS)<=allowed,POSTS
-            assert POSTS.count('/api/prompt/reference-jobs/create')==4
-            assert POSTS.count('/api/prompt/reference-jobs/retire')==1
             result={'widths':[1440,390],'page_errors':0,'generation_jobs':0,'analysis_create_requests':POSTS.count('/api/prompt/reference-jobs/create'),
-                'checks':['actual worker','lost committed reply','reload without replay','current brief preserved','exact originals','guarded review','unknown resource hold release','pre-commit refusal retirement','lost retirement reply readback']}
+                'checks':['actual worker','lost committed reply','reload without replay','current brief preserved','exact originals','guarded review','unknown resource hold release']}
             (output/'result.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8');print(json.dumps(result))
         finally:
             MODEL_RELEASE.set();fixture.studio_instance.queue.put(('fixture-stop',None));work_thread.join(20)

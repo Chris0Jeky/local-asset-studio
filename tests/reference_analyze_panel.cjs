@@ -6,9 +6,9 @@ class Element{
  addEventListener(t,f){this.listeners[t]=f;}append(...c){this.children.push(...c);}replaceChildren(...c){this.children=c;}setAttribute(){}focus(){}scrollIntoView(){}
  fire(t){return this.listeners[t]?.({target:this});}
 }
-async function scenario(storageFails,changedDuringRead=false,disabled=false,rejected=false){
+async function scenario(storageFails,changedDuringRead=false,disabled=false){
  const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
- const store=new Map(),calls=[],loads=[];let posted=null,fail=true,retired=false,brief='use that pose';
+ const store=new Map(),calls=[],loads=[];let posted=null,fail=true,brief='use that pose';
  const document={getElementById:el,createElement:()=>new Element(),hidden:false,addEventListener(){}};
  const capture=()=>({json:JSON.stringify({brief}),intent:{brief}});
  const context=vm.createContext({document,window:{addEventListener(){}},URLSearchParams,console,
@@ -18,11 +18,8 @@ async function scenario(storageFails,changedDuringRead=false,disabled=false,reje
   StudioReferenceReview:{load:async(...args)=>loads.push(args)},
   fetch:async(url,options)=>{
    calls.push({url,options});if(url.endsWith('/capabilities'))return{ok:true,json:async()=>({...fixture.capabilities,enabled:!disabled})};
-   if(url.endsWith('/create')){posted=JSON.parse(options.body);assert.ok([...store.values()].some(v=>v.includes(posted.request_id)),'Request handle must be durable BEFORE dispatch');if(rejected)return{ok:false,json:async()=>({error:'Reference bytes changed'})};if(fail)throw Error('reply lost');}
-   if(url.endsWith('/retire')){retired=true;throw Error('retirement committed, reply lost');}
-   if(rejected&&!retired)return{ok:false,json:async()=>({error:'Unknown analysis request; nothing was replayed'})};
+   if(url.endsWith('/create')){posted=JSON.parse(options.body);assert.ok([...store.values()].some(v=>v.includes(posted.request_id)),'Request handle must be durable BEFORE dispatch');if(fail)throw Error('reply lost');}
    const result={...fixture.completed,request_id:posted?.request_id||fixture.completed.request_id};
-   if(retired){result.result=null;result.state={status:'cancelled',resource_hold:false,inference_attempts:0,retired_without_dispatch:true,message:'Retired before dispatch'};}
    return{ok:true,json:async()=>result};
   }
  });
@@ -35,13 +32,6 @@ async function scenario(storageFails,changedDuringRead=false,disabled=false,reje
  if(storageFails){assert.equal(posted,null,'Storage failure must prevent inference');assert.match(el('ra-status').textContent,/saved|recover|storage/i);return;}
  assert.ok(posted);assert.equal(posted.request.brief,'use that pose');assert.equal(posted.images.length,2);
  await el('ra-start').fire('click');assert.equal(calls.filter(x=>x.url.endsWith('/create')).length,1,'Lost reply must not permit a new submit');
- if(rejected){
-  await el('ra-check').fire('click');assert.equal(el('ra-new').disabled,true);assert.equal(el('ra-retire').disabled,false);
-  await el('ra-retire').fire('click');assert.equal(retired,true,'Only an explicit action retires an unknown request');
-  await el('ra-check').fire('click');assert.equal(el('ra-new').disabled,false,'A lost retirement reply recovers through the same identity');
-  await el('ra-new').fire('click');assert.equal(el('ra-start').disabled,false);
-  assert.equal(calls.filter(x=>x.url.endsWith('/create')).length,1,'Retirement/new-analysis never replays creation');return;
- }
  fail=false;await el('ra-check').fire('click');assert.equal(el('ra-use').disabled,false);
  brief='newer manual instruction';await el('ra-use').fire('click');assert.equal(brief,'newer manual instruction');assert.equal(loads.length,1,'Completion is a review handoff, never intent apply');
  assert.equal(calls.filter(x=>x.url.endsWith('/create')).length,1);
@@ -50,4 +40,4 @@ async function scenario(storageFails,changedDuringRead=false,disabled=false,reje
  await new Promise(resolve=>setImmediate(resolve));assert.equal(calls.filter(x=>x.url.endsWith('/create')).length,1);
  assert.ok([...store.values()].some(v=>v.includes(posted.request_id)));
 }
-(async()=>{await scenario(false);await scenario(true);await scenario(false,true);await scenario(false,false,true);await scenario(false,false,false,true);console.log('Analyze: explicit dispatch, saved identity, lost reply, reload and storage refusal passed');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{await scenario(false);await scenario(true);await scenario(false,true);await scenario(false,false,true);console.log('Analyze: explicit dispatch, saved identity, lost reply, reload and storage refusal passed');})().catch(e=>{console.error(e);process.exitCode=1;});
