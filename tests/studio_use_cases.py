@@ -591,7 +591,7 @@ def _combine(c):
     c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
     try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
     except Exception: pass
-    c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass: image 1, image 2, two bracketed fills')
+    c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass: image 1, image 2, the bracketed fills')
     c.act('#uxPrepareHandoff')
     c.page.wait_for_timeout(800)
     c.act('#uxBlockers', 'read', note='what is still missing after preparing: Picture 1 and the fills')
