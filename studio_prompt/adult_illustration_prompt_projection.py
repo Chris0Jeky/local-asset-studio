@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .adult_illustration_projection import validate_projection
 from .adult_illustration_prompt_catalog import load_catalog
 from .adult_illustration_prompt_common import AUTHORITY, FORMAT, MAX_DIAGNOSTICS, _normalise_term
 
@@ -41,25 +42,18 @@ def _strings(value: Any, label: str, *, maximum: int = MAX_ITEMS, allow_empty: b
 
 
 def _validate_source_projection(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise ValueError("Adult illustration projection must be an object")
-    if value.get("format") != "studio.adult-illustration.projection/v1":
-        raise ValueError("Unsupported adult illustration projection format")
-    if value.get("execution_authorized") is not False or value.get("generation_submitted") is not False:
-        raise ValueError("Source projection must not authorize execution or submit generation")
-    if value.get("state") == "blocked" or not isinstance(value.get("creative_intent"), dict):
+    try:
+        source = validate_projection(value)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid adult illustration source projection: {exc}") from exc
+    if source.get("state") == "blocked" or not isinstance(source.get("creative_intent"), dict):
         raise ValueError("Blocked adult illustration projection cannot compile a prompt")
-    intent = value.get("intent")
-    if not isinstance(intent, dict):
-        raise ValueError("Source projection is missing reviewed intent")
-    content = intent.get("content")
-    if not isinstance(content, dict):
-        raise ValueError("Source projection is missing reviewed content envelope")
+    content = source["intent"]["content"]
     if content.get("adult_assertion") != "reviewed_owner_or_canon":
         raise ValueError("Prompt projection requires reviewed adult owner or canon metadata")
     if content.get("class") != "sensual_non_explicit":
         raise ValueError("This prompt profile slice supports only the sensual non-explicit content envelope")
-    creative = value["creative_intent"]
+    creative = source["creative_intent"]
     required = {"brief", "facets", "tags", "avoid", "constraints", "references"}
     if not required <= creative.keys():
         raise ValueError("CreativeIntent projection is missing required fields")
@@ -75,7 +69,7 @@ def _validate_source_projection(value: Any) -> dict[str, Any]:
         raise ValueError("CreativeIntent constraints must be a bounded array")
     if not isinstance(creative["references"], list) or len(creative["references"]) > 12:
         raise ValueError("CreativeIntent references must be a bounded array")
-    return copy.deepcopy(value)
+    return copy.deepcopy(source)
 
 
 def _diag(diagnostics: list[dict[str, Any]], code: str, severity: str, message: str, **fields: Any) -> None:
