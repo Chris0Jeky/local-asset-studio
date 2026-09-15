@@ -1,5 +1,46 @@
 # Current state — 15 September 2026
 
+## Combine gets its second baseline: the depth map carries the pose (FLUX.2 Klein 9B) — 15 September 2026 (02:00-03:25)
+
+The owner's verdict on the pose-first result: "so so", a much bigger step but not the complete pose change they meant; of the round-one
+renders the Qwen one most resembled the objective, at 14.5 minutes; and the Studio's workflow itself is in doubt for this kind of experimenting.
+Round two, same two pictures, every render tabled with prompt IDs in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`
+(section "Pose round two"), sheet `examples/style-pose/combine-pose-round2.jpg`, scripts next to the README (`qwen_pose2.py`,
+`klein_skeleton.py`, `sheet_round2.py`, `prove_depth.py`):
+
+- **Qwen's time is the model's weight path, not the references.** The log shows 65 s of loading and 10-13 min of four Lightning steps;
+  halving both references saved one minute (14:29 -> 12:52). With a depth map as picture 2 Qwen followed the pose exactly but drew every
+  shape in the silhouette (heels, frill, tail) and distorted the face, in 10:40. Not a lever on this GPU.
+- **Both 2D skeleton detectors fail on the pose picture** (OpenPose at 1024 and 1536, DWPose downloaded tonight): scrambled fragments,
+  which also means round one's "structural" route ran on a wrong skeleton. **Depth Anything V2 Large gives the whole silhouette.**
+- **A blank canvas as image 1 gives perfect identity and lettering but never the deep bend** (2 seeds): the words do not carry an extreme
+  pose, the structural image does.
+- **Depth map as image 1, character as image 2, on FLUX.2 Klein 9B: 3 of 4 seeds held the deep bend and crossed legs** with face, hair,
+  crop top, lettering and pink shorts kept, bare feet, no tights and no tail, 90-115 s warm (seeds 11, 12, 14; seed 13 bent moderately
+  and brought the source's speech bubble back). Residual: a heel in the silhouette can shape a foot.
+
+Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose, nothing leaks)**
+(`combine-klein-9b-depth`, graph `workflows/api/combine-klein-9b-depth-api.json`: the shipped 9B graph with a `DepthAnythingV2Preprocessor`
+between the board picture and its reference latent) now leads *Continue with this -> Combine*; the pose-first 9B recipe is second, the 4B
+third. Annotator checkpoints (fetched by comfyui_controlnet_aux into its own folder) are excluded from model readiness through
+`ANNOTATOR_SELECTIONS` in `studio_workflow/model_contracts.py`. Proving run through the Studio's own path (POST /api/jobs, the page's
+prepare/worker path): job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe`, seed 2026091441, output
+`Combine/Klein-9B-depth_00001_.png`: deep bend, crossed legs, look-back, lettering intact, bare feet, one heel-shaped foot. 448.7 s: after the
+night's Qwen run every Klein render (seeds 13, 14, the proving run) sampled in 6-7 minutes instead of about one; `POST /free` with
+`unload_models` did not restore it and VRAM read 15.2 GB free between jobs. Not diagnosed; a ComfyUI restart is the next thing to try.
+
+Two copy defects found by walking the page as a first-time user and fixed: the board summary stated the 4B reference order on the 9B
+recipe (`references.js` `boardSummaryLabel` now reads the order from the labels' "(image N)" parentheticals, Node test added) and the attach
+message read "Picture 1 of Picture 1". What the walk found about *experimenting* on the page (sources never side by side, three facts as
+bracketed spans in a paragraph, a disabled role select, a research-report recipe card, results in a flat list with old engine errors, an
+engine switch that restarts the journey) is issue #422 with a four-slice proposal. Not verified: the depth recipe by clicking through the
+page (the API run uses the same prepare and worker path); any pose or character other than the owner's; a 3D-mannequin render as the
+pose source (proposed, untested); art acceptance (HUMAN_TODO q-28).
+
+Owner decisions recorded tonight (HUMAN_TODO): the Klein 9B non-commercial licence "is not an issue"; later, "disregard the licenses
+issues for now, we're just experimenting and plus there is no commercial plans to begin with" (recorded as the owner's statement about
+this private experimental use; the licence facts in `models/library.json` and the catalog notes stay as recorded).
+
 ## Combine gets a baseline: pose first on FLUX.2 Klein 9B — 15 September 2026 (early hours)
 
 The owner ran the Combine route on their own pictures (the "SHARK" crop-top character, a bent-over fan picture as the

@@ -129,6 +129,49 @@ Shipped as `combine-klein-9b` (**Put this character into another picture's pose 
 Picture 1 (image 1), your character on Picture to keep (image 2), three bracketed fills (who, the pose, the clothes and colours). The 9B
 model is non-commercial (HUMAN_TODO q-27 (f)).
 
+
+## Pose round two, 15 September 2026 (02:00-03:10): the depth map carries the pose
+
+The owner's verdict on the pose-first result: "so so" — a much bigger step, but not the complete pose change they meant; of all the
+renders the first Qwen one (`qwen-pose_00001_.png`, above) most resembled the objective, and 14.5 minutes is too slow. Scripts next to this
+file: `qwen_pose2.py` (Qwen Image Edit 2511 Q4_K_M + Lightning, references appended as `ReferenceLatent` at a chosen size), `klein_skeleton.py`
+(FLUX.2 Klein 9B, the shipped 9B graph with an annotator or a blank canvas as image 1), `sheet_round2.py`, `prove_depth.py` (the Studio proving
+run). Same two pictures, seeds 2026091411+. Sheet: `examples/style-pose/combine-pose-round2.jpg`.
+
+**Why Qwen is slow here, measured.** The ComfyUI log for the first Qwen run shows the model fully loaded in 65 s and the four Lightning steps
+taking 13 min. Halving both references (the stock `TextEncodeQwenImageEditPlus` node rescales every reference to ~1 MP for its latents, so
+the script appends them itself) cut the run only from 14:29 to 12:52; the time is in the 20B model's weight path on this GPU (Q4_K GGUF
+dequantised every step with 1-3 GB of VRAM headroom), not in the reference tokens. No Qwen render here took under 10 minutes.
+
+**Both 2D skeleton detectors fail on this pose picture; the depth map does not.** OpenPose (body/hand/face, 1024 and 1536) and DWPose
+(yolox_l + dw-ll_ucoco_384, downloaded tonight) both returned a scrambled fragment for the bent-over, foreshortened maid picture
+(`qwen2-skeleton_00001_.png`, `probe-dwpose_00001_.png`, `probe-openpose1536_00001_.png`), so the "structural" route of round one was driven
+by a wrong skeleton as well. Depth Anything V2 Large (`probe-depth_00001_.png`, downloaded tonight, cc-by-nc-4.0) gives the whole silhouette:
+bend, crossed legs, heels, skirt, tail.
+
+| Variant | Seed | Prompt ID | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| qwen ref05 (identity first, refs 0.5 MP) | 2026091411 | `8d71b5e4` | 775.9 | `Research/qwen2-ref05_00001_.png` | deeper bend than round one, face kept, lettering garbled; **the maid's tights and the tail leaked** |
+| qwen skel05 (failed OpenPose skeleton as picture 2) | 2026091411 | `ace2a0bf-ec6f-480c-9264-f4d8b5e138f4` | 1126.6 (incl. 6.5 min reload) | `Research/qwen2-skel05_00001_.png` | clean identity, no leak, mild bend only (the skeleton carried nothing) |
+| qwen depth05 (depth map as picture 2) | 2026091411 | `1233cf2b-f052-4459-9b3d-d0f73612315d` | 640 (10:40) | `Research/qwen2-depth05_00001_.png` | **the exact pose**, but every shape in the silhouette drawn: pink heels, a frilled skirt, the tail; face and lettering distorted |
+| klein 9b-skel-first (failed skeleton as image 1) | 2026091411 | `4cce14a5-f46c-4453-bcd1-56b316cc1f70` | 99.4 | `Research/klein-9b-skel-first_00001_.png` | deep bend, bare feet, no tights, no tail, face and top kept; hands behind the back (the words did it: image 1 had no competing figure) |
+| klein 9b-blank-first (black canvas as image 1) | 2026091411 | `7fc87b50-e96a-4c18-8a90-743abcbead57` | 90.0 | `Research/klein-9b-blank-first_00001_.png` | perfect identity, lettering and colours, hand on hip, look-back; **mild lean only** |
+| klein 9b-blank-first | 2026091412 | `e6b5d737-8dcd-4930-982f-9b9cca5f5729` | 87.1 | `Research/klein-9b-blank-first_00002_.png` | same: standing, hands on hips; the words never bend her |
+| **klein 9b-depth-first** (depth map as image 1) | 2026091411 | `185101f3-0f41-4db2-943d-4727a496787e` | 115.4 | `Research/klein-9b-depth-first_00001_.png` | **deep bend, crossed legs, bare feet, no tights, no tail, face and hair kept**, lettering partial, hands between the knees |
+| **klein 9b-depth-first** | 2026091412 | `83c2046a-fda0-4864-a2d1-9a00e05a7825` | 113.9 | `Research/klein-9b-depth-first_00002_.png` | **deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare legs**; one foot shaped like a heel (the silhouette's heel) |
+| klein 9b-depth-first | 2026091413 | `190422c8` | 440.0 (6.5 min of sampling straight after the Qwen run; seeds 11-12 sampled in ~1 min) | `Research/klein-9b-depth-first_00003_.png` | **moderate bend only**, bare feet, no leak, lettering lost, the character picture's "?" speech bubble came back |
+| **klein 9b-depth-first** | 2026091414 | `5da5f797` | 460.4 (same slow state) | `Research/klein-9b-depth-first_00004_.png` | **deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare legs**; one foot heel-shaped |
+| **Studio proving run, `combine-klein-9b-depth`** (`prove_depth.py`, POST /api/jobs) | 2026091441 | job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe` | 448.7 (slow state) | `Combine/Klein-9B-depth_00001_.png` | **deep bend, crossed legs, look-back, lettering intact, pink shorts, bare feet**; one foot heel-shaped |
+
+What decided it: **the structural image carries the pose, the words carry everything that must not leak.** A depth map of the pose picture as
+image 1 gives Klein 9B the body position without the pose picture's clothes, and the character as image 2 with the clothes and colours named
+gives the identity: 3 of 4 research seeds plus the proving run held the deep bend. Shipped as `combine-klein-9b-depth`, first on the Combine
+route; `combine-klein-9b` (pose picture first, keeps its camera and background, shoes can ghost) is second; the 4B recipe third.
+
+**A slow state to know about:** after the 10-minute Qwen run, every Klein 9B render sampled in 6-7 minutes instead of about one
+(seeds 13, 14 and the proving run; `POST /free` with `unload_models` did not restore it; VRAM read 15.2 GB free between jobs). Round one saw
+the same swing (the 9B swap-colour seed 1 at 923 s). Not diagnosed tonight; a ComfyUI restart is the next thing to try.
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
