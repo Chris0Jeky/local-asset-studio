@@ -58,6 +58,7 @@
     };
     return api;
   }
+  function requestMatchesAsset(request,asset){return !!request && !!asset && request.workspace_id===asset.workspace_id && request.asset_id===asset.id && request.parent_sha256===asset.sha256;}
   function createRequest({workspaceId,asset,rectangles,requestId,requireNonOverlapping=true}){
     if(!/^[0-9a-f]{32}$/.test(workspaceId||''))throw Error('Reload the Workspace before splitting figures.');
     if(!asset || typeof asset.id!=='string' || !/^[0-9a-f]{64}$/.test(asset.sha256||''))throw Error('The parent asset identity is unavailable.');
@@ -65,11 +66,19 @@
     return {workspace_id:workspaceId,request_id:requestId,asset_id:asset.id,parent_sha256:asset.sha256,
       rectangles:validateRectangles(rectangles,requireNonOverlapping),require_non_overlapping:!!requireNonOverlapping};
   }
+  function restoreRequest(value){
+    try{
+      if(!value || typeof value!=='object' || Array.isArray(value) || !/^[0-9a-f]{32}$/.test(value.request_id||''))throw Error('invalid retained request');
+      const canonical=createRequest({workspaceId:value.workspace_id,asset:{id:value.asset_id,sha256:value.parent_sha256},rectangles:value.rectangles,requestId:value.request_id,requireNonOverlapping:value.require_non_overlapping});
+      if(JSON.stringify(canonical)!==JSON.stringify(value))throw Error('retained request bytes are not canonical');
+      return canonical;
+    }catch(error){throw Error('The retained figure split request is invalid.');}
+  }
   function validateReceipt(receipt,request){
     const created=receipt?.created,figures=receipt?.figures;
     if(receipt?.status!=='created' || receipt.action!=='split_figures' || receipt.workspace_id!==request.workspace_id ||
-       receipt.parent_asset_id!==request.asset_id || (receipt.request_id!=null && receipt.request_id!==request.request_id) ||
-       receipt.generation_submitted!==false || !Array.isArray(created) || created.length!==request.rectangles.length ||
+       receipt.parent_asset_id!==request.asset_id || receipt.request_id!==request.request_id ||
+       receipt.generation_submitted!==false || !Array.isArray(created) || created.length!==request.rectangles.length || created.some(id=>typeof id!=='string' || !/^[0-9a-f]{32}$/.test(id)) ||
        !Array.isArray(figures) || figures.length!==created.length || figures.some((figure,index)=>figure?.index!==index+1 || figure.asset_id!==created[index]))
       throw Error('The server returned an invalid figure-split receipt. Keep the exact request for recovery.');
     return receipt;
@@ -96,19 +105,24 @@
     const globals={
       asset(){try{return typeof activeAsset==='object'?activeAsset:null;}catch(error){return null;}},
       async request(path,options){
-        try{if(typeof api==='function')return await api(path,options);}catch(error){throw error;}
+        if(typeof globalThis.api==='function')return globalThis.api(path,options);
         const response=await fetch(path,options),data=await response.json();if(!response.ok){const error=Error(data.error||response.statusText);error.status=response.status;error.data=data;throw error;}return data;
       },
-      async refresh(){try{if(typeof refreshAssets==='function')await refreshAssets(true);}catch(error){}},
-      open(id){try{if(typeof openAsset==='function')openAsset(id);}catch(error){}},
-      message(text,error=false){try{if(typeof assetMessage==='function')assetMessage(text,error);}catch(ignore){}}
+      async refresh(){if(typeof globalThis.refreshAssets==='function')await globalThis.refreshAssets(true);},
+      open(id){if(typeof globalThis.openAsset==='function')return globalThis.openAsset(id);return false;},
+      message(text,error=false){if(typeof globalThis.assetMessage==='function')globalThis.assetMessage(text,error);}
     };
     function storage(){try{return sessionStorage;}catch(error){return null;}}
-    function readPending(asset){
+    function readPending(){
       const store=storage();if(!store)return null;
-      try{const value=JSON.parse(store.getItem(PENDING_KEY));return value?.version===1 && value.request?.workspace_id===asset.workspace_id && value.request?.asset_id===asset.id && value.request?.parent_sha256===asset.sha256?value.request:null;}catch(error){return null;}
+      try{const raw=store.getItem(PENDING_KEY);if(raw==null)return null;const value=JSON.parse(raw);if(value?.version!==1)throw Error('unsupported retained record');return restoreRequest(value.request);}catch(error){return {invalid:true};}
     }
-    function writePending(request){const store=storage();if(store)try{store.setItem(PENDING_KEY,JSON.stringify({version:1,request}));}catch(error){} }
+    function writePending(request){
+      const store=storage(),record=JSON.stringify({version:1,request});
+      if(!store)throw Error('This browser cannot retain the exact split request. No request was sent.');
+      try{store.setItem(PENDING_KEY,record);if(store.getItem(PENDING_KEY)!==record)throw Error('retained bytes did not match');}
+      catch(error){throw Error('The exact split request could not be retained in this tab. No request was sent.');}
+    }
     function clearPending(request){const store=storage();if(!store)return;try{const saved=JSON.parse(store.getItem(PENDING_KEY));if(!request || saved?.request?.request_id===request.request_id)store.removeItem(PENDING_KEY);}catch(error){} }
     function current(){const asset=globals.asset();return asset?.media_type==='image' && !asset.trashed_at?asset:null;}
     function setStatus(text,error=false){status.textContent=text;status.classList.toggle('error',error);}
@@ -149,7 +163,9 @@
     function openEditor(){
       const asset=current();if(!asset){globals.message('Only active, non-trashed images can be split into figure children.',true);return;}
       if(!session || session.asset.id!==asset.id || session.asset.sha256!==asset.sha256 || session.asset.workspace_id!==asset.workspace_id){
-        const pending=readPending(asset);session={asset:{id:asset.id,sha256:asset.sha256,workspace_id:asset.workspace_id,url:asset.url,title:asset.title},history:createHistory(pending?.rectangles||[]),pending,receipt:null};
+        const pending=readPending();
+        if(pending && !requestMatchesAsset(pending,asset)){const identity=pending.invalid?'an invalid retained record':'request '+pending.request_id+' for source '+pending.asset_id;globals.message('An unconfirmed figure split belongs to '+identity+'. Reopen that source and resolve it before starting another split in this tab. If it is unavailable, record the request ID before closing the tab.',true);return;}
+        session={asset:{id:asset.id,sha256:asset.sha256,workspace_id:asset.workspace_id,url:asset.url,title:asset.title},history:createHistory(pending?.rectangles||[]),pending,receipt:null};
       }
       image.src=asset.url;image.alt='Split figures from '+asset.title;panel.querySelector('#figureSplitSource').textContent=asset.title+' · '+asset.sha256.slice(0,12)+'… · coordinates are retained as basis points';
       panel.hidden=false;children.innerHTML='';render();panel.scrollIntoView({block:'start',behavior:'smooth'});
@@ -175,8 +191,8 @@
         children.innerHTML='<p><b>'+result.created.length+' child asset'+(result.created.length===1?'':'s')+' created.</b> The parent is unchanged; generation and artistic review remain separate.</p><div class="asset-detail-actions">'+buttons+'</div>';
         setStatus('Split confirmed. The new children are ordinary Workspace images and can use Continue with this.');globals.message('Created '+result.created.length+' local figure child asset'+(result.created.length===1?'':'s')+'.');
       }catch(error){
-        if(failureKind(error)==='refused'){clearPending(session.pending);session.pending=null;setStatus('Split was not applied. '+error.message+' Review the source and rectangles before creating a new request.',true);}
-        else setStatus('Split not confirmed. '+error.message+' No automatic retry or new request was sent.',true);
+        if(!observe && failureKind(error)==='refused'){clearPending(session.pending);session.pending=null;setStatus('Split was not applied. '+error.message+' Review the source and rectangles before creating a new request.',true);}
+        else setStatus((observe?'Split status not confirmed. ':'Split not confirmed. ')+error.message+' No automatic retry or new request was sent.',true);
       }finally{busy=false;render(true);}
     }
     async function createChildren(){
@@ -185,7 +201,8 @@
       try{request=createRequest({workspaceId:session.asset.workspace_id,asset:session.asset,rectangles:values(),requestId:randomId(globalThis.crypto),requireNonOverlapping:panel.querySelector('#figureSplitNoOverlap').checked});}
       catch(error){setStatus(error.message,true);return;}
       if(!globalThis.confirm('Create '+request.rectangles.length+' child asset'+(request.rectangles.length===1?'':'s')+' from these exact rectangles? The parent stays unchanged and no model job runs.'))return;
-      session.pending=request;writePending(request);renderRecovery();await sendPending(false);
+      try{writePending(request);}catch(error){setStatus(error.message,true);return;}
+      session.pending=request;renderRecovery();await sendPending(false);
     }
     function syncAction(){
       const asset=current(),existing=handoffs.querySelector('[data-figure-split-open]');
@@ -229,7 +246,8 @@
     });
     stage.addEventListener('pointermove',event=>{if(!drag)return;try{renderOverlay(fromPixels(drag.start,{x:event.clientX,y:event.clientY},drag.bounds));}catch(error){}});
     stage.addEventListener('pointerup',event=>{if(!drag)return;const pending=drag;drag=null;try{add(fromPixels(pending.start,{x:event.clientX,y:event.clientY},pending.bounds));}catch(error){setStatus(error.message,true);}event.preventDefault();});
+    stage.addEventListener('pointercancel',()=>{drag=null;renderOverlay();});
     syncAction();return true;
   }
-  return {BASIS,MAX_FIGURES,fromPixels,validateRectangles,createHistory,createRequest,validateReceipt,failureKind,randomId,install};
+  return {BASIS,MAX_FIGURES,fromPixels,validateRectangles,createHistory,createRequest,restoreRequest,validateReceipt,failureKind,randomId,requestMatchesAsset,install};
 });
