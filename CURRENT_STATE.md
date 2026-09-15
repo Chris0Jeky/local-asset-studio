@@ -1,4 +1,27 @@
-# Current state — 14 September 2026
+# Current state — 15 September 2026
+
+## Combine gets a baseline: pose first on FLUX.2 Klein 9B — 15 September 2026 (early hours)
+
+The owner ran the Combine route on their own pictures (the "SHARK" crop-top character, a bent-over fan picture as the
+pose), called the results "incredibly bad" and asked for a baseline that proves the workflow and a Studio that can
+reproduce it. Twenty-two research renders on that pair (table with every prompt ID in
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`, sheets `examples/style-pose/combine-klein4b-matrix.jpg`,
+`combine-klein9b-matrix.jpg`, `combine-klein9b-pose-first.jpg`, `combine-qwen-2ref.jpg`, `combine-openpose-ipadapter.jpg`)
+showed why: the Klein models keep image 1's structure, so asking for a pose in words while the character is image 1
+gives a mild pose at best on 4B and 9B alike (steps, the AniEdit LoRA and reference order changed nothing on 4B). With
+the **pose picture first and the character swapped in, FLUX.2 Klein 9B (Q6_K GGUF + Qwen3 8B fp8, downloaded and
+verified tonight once the owner's connection change lifted the throttle) kept the deep waist bend, face, hair, crop top
+and pink shorts on 4 of 4 seeds** once the wording named the clothes and colours (without them image 1's black shorts
+and heels leaked); 4B cannot do the swap. Qwen Image Edit 2511 with two references followed the pose better than
+Klein-normal but not the bend, at 14.5 minutes; an OpenPose skeleton + IP-Adapter on WAI v17 followed the pose exactly
+but with the checkpoint's identity and the tail copied back.
+
+Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** (`combine-klein-9b`,
+graph `workflows/api/combine-klein-9b-api.json`) leads *Continue with this → Combine*: the pose picture on Picture 1
+(image 1), your character on Picture to keep (image 2), three bracketed fills (who is in image 2, image 1's pose in a
+few words, the clothes and colours), 6 steps, about 100-200 s warm. Model pins for the two 9B files are in
+`models/library.json` (licence recorded as non-commercial, not re-read: HUMAN_TODO q-27 (f)). Proving run through the
+Studio: see below.
 
 ## Combine two pictures with FLUX.2 Klein 4B; the Edit route leads with the 20-second edit — 14 September 2026 (late night)
 

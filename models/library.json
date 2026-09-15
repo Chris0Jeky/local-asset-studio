@@ -2075,6 +2075,34 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "flux2-klein-9b-q6k",
+      "name": "FLUX.2 Klein 9B / Q6_K GGUF",
+      "file": "diffusion_models/flux-2-klein-9b-Q6_K.gguf",
+      "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+      "revision": "main",
+      "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "url": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF/resolve/main/flux-2-klein-9b-Q6_K.gguf",
+      "bytes": 7865424160,
+      "sha256": "1cd667293607431e79c9e7e01ecf5c602bd00539c2c0f49d4817a62998b5fe98",
+      "license": "FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B)",
+      "terms": "Downloaded 2026-09-15 with curl -C - resume and SHA-256 verified against the installed file (.runtime/downloads/receipts.json). Non-commercial per the upstream FLUX.2 Klein 9B card as recorded on 14 Sep 2026; the licence text was not re-read for this entry. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF).",
+      "family": "FLUX.2 Klein 9B"
+    },
+    {
+      "id": "qwen3-8b-fp8mixed",
+      "name": "FLUX.2 Klein 9B / Qwen3 8B text encoder (fp8 mixed)",
+      "file": "text_encoders/qwen_3_8b_fp8mixed.safetensors",
+      "repo": "Comfy-Org/flux2-klein-9B",
+      "revision": "main",
+      "source": "https://huggingface.co/Comfy-Org/flux2-klein-9B",
+      "url": "https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors",
+      "bytes": 8664848742,
+      "sha256": "abad16806e0cbabc54e0325d6565847443fe396d5f0be38bb3cd3fe75a1201d6",
+      "license": "Apache-2.0 (Qwen3 8B, per the Qwen3 model card as recorded; the Comfy-Org repackaging card was not re-read)",
+      "terms": "Downloaded 2026-09-15 with curl -C - resume and SHA-256 verified against the installed file (.runtime/downloads/receipts.json).",
+      "family": "FLUX.2 Klein 9B"
     }
   ],
   "collections": [
