@@ -264,7 +264,7 @@ shipped as `combine-klein-9b-skeleton` and proved through the Studio (job `26448
 **The two-pass journey works in the Studio as it stands** (136 s: depth Combine, then Change one thing on the output), which is the repair
 loop the owner asked for until the ankle crop is a control.
 
-## The ankle cut as a Studio control, 16 September 2026 (02:50-03:00)
+## The ankle cut as a Studio control, 16 September 2026 (02:00-02:05)
 
 `combine-klein-9b-depth` now carries the round-three edit inside the graph: **Cut the depth map below (%)** (`depth_cut`, PR #453) composites
 a black source through a 100-row mask band starting at that row (SolidMask + MaskComposite + ImageCompositeMasked with `resize_source`,
