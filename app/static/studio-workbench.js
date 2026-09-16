@@ -117,8 +117,10 @@
   }
   function syncReady(){
     if(!q('#uxRunSummary'))return;
+    // Resize/refresh the pose canvas before readiness so a typed draft is not a stale blocker for one tick.
+    syncContinuation();syncFills();syncCombinePair();syncPoseEditor();
     const {items,required}=readinessItems();
-    q('#generate').disabled=items.length>0;syncContinuation();syncFills();syncCombinePair();syncPoseEditor();
+    q('#generate').disabled=items.length>0;
     const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
     // Polling identical evidence must not replace a focused action or announce the same status again.
     if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
@@ -356,7 +358,11 @@
       const point=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),next=StudioPoseEditor.move(posePoints,poseJoint,point.x,point.y,poseCanvas);
       if(JSON.stringify(StudioPoseEditor.serialize(next,poseCanvas))===JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas))){posePositionSignature='';syncReady();poseStatus('The joint is already at that position.');return;}
       pushPose();poseEdit(next);syncReady();poseStatus(StudioPoseEditor.LABELS[poseJoint]+' moved. Undo steps back this change.');
-    }catch(error){q('#uxPoseX').setAttribute('aria-invalid','true');q('#uxPoseY').setAttribute('aria-invalid','true');poseStatus(error.message);}
+    }catch(error){
+      if(error.axis!=='y')q('#uxPoseX').setAttribute('aria-invalid','true');
+      if(error.axis!=='x')q('#uxPoseY').setAttribute('aria-invalid','true');
+      poseStatus(error.message);
+    }
   }
   q('#uxPosePositionApply').onclick=applyPosePosition;
   q('#uxPosePositionReset').onclick=()=>{if(poseBusy)return;posePositionSignature='';syncReady();poseStatus('Typed coordinates reset to the drawing.');};

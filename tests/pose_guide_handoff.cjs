@@ -44,9 +44,13 @@ test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>
   assert.equal(typeof P.positionInput,'function');
   assert.deepEqual(P.positionInput('0','1536',{width:1024,height:1536}),{x:0,y:1536});
   assert.deepEqual(P.positionInput(' 123.25 ','4.50',{width:1024,height:1536}),{x:123.25,y:4.5});
+  assert.deepEqual(P.positionInput('1e3','1E2',{width:1024,height:1536}),{x:1000,y:100});
   for(const bad of ['', ' ', '0x10', 'NaN', 'Infinity', '-1', '1025', true, null, [], {}])
     assert.throws(()=>P.positionInput(bad,'5',{width:1024,height:1536}));
-  assert.throws(()=>P.positionInput('1','1537',{width:1024,height:1536}));
+  try{P.positionInput('1e4','5',{width:1024,height:1536});assert.fail('1e4 must stay out of range');}
+  catch(error){assert.equal(error.axis,'x');}
+  try{P.positionInput('1','1537',{width:1024,height:1536});assert.fail('Y overflow must name axis y');}
+  catch(error){assert.equal(error.axis,'y');}
   assert.throws(()=>P.positionInput('1','2',{width:0,height:1536}));
 });
 test('replacing a pose picture with a drawing clears only the pose answer in the shared switch path',()=>{
@@ -62,6 +66,10 @@ test('typed drafts have an actionable generation hold and use the existing undo 
   assert.match(code,/code:'pose-position',message:.*action:'pose-position'/);
   assert.match(code,/if\(action==='pose-position'\)target=q\('#uxPoseX'\)/);
   assert.match(code,/pushPose\(\);poseEdit\(next\)/);
+  const ready=code.indexOf('function syncReady(){'),pose=code.indexOf('syncPoseEditor();',ready),items=code.indexOf('readinessItems()',ready);
+  assert.ok(ready>=0&&pose>=0&&items>pose,'Canvas refresh must run before the pose-position readiness check');
+  assert.match(code,/if\(error\.axis!=='y'\)q\('#uxPoseX'\)\.setAttribute\('aria-invalid','true'\)/);
+  assert.match(code,/if\(error\.axis!=='x'\)q\('#uxPoseY'\)\.setAttribute\('aria-invalid','true'\)/);
 });
 test('actual arrow handler nudges only the canvas and joint buttons',()=>{
   const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');

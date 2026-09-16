@@ -73,12 +73,13 @@
   }
   // Typed values are not pointer drags: refuse invalid/out-of-range input instead of clamping it.
   function positionInput(x,y,canvas){
-    const c=canvasOf(canvas),read=value=>{
-      if(typeof value!=='number'&&(typeof value!=='string'||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())))
-        throw Error('Enter X and Y as decimal pixel coordinates.');
-      const result=Number(value);if(!Number.isFinite(result))throw Error('Coordinates must be finite.');return result;
-    },point={x:read(x),y:read(y)};
-    if(point.x<0||point.x>c.width||point.y<0||point.y>c.height)throw Error('X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
+    const c=canvasOf(canvas),fail=(axis,message)=>{const error=Error(message);error.axis=axis;throw error;},read=(value,axis)=>{
+      if(typeof value!=='number'&&(typeof value!=='string'||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$/.test(value.trim())))
+        fail(axis,'Enter X and Y as decimal pixel coordinates.');
+      const result=Number(value);if(!Number.isFinite(result))fail(axis,'Coordinates must be finite.');return result;
+    },point={x:read(x,'x'),y:read(y,'y')};
+    if(point.x<0||point.x>c.width)fail('x','X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
+    if(point.y<0||point.y>c.height)fail('y','X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
     return point;
   }
   // Treat rendering as a response to this exact canvas; never spread untrusted attachment metadata into a slot.
