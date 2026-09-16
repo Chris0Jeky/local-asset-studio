@@ -168,7 +168,8 @@ def run(group, image1, image2, seed, *, results_path=RESULTS, graph_dir=GRAPH_DI
 
 def has_unrecorded(group, seeds, path=RESULTS):
     records = load_records(path)
-    return any(find_record(records, group, seed) is None for seed in seeds)
+    existing = [find_record(records, group, seed) for seed in seeds]
+    return any(record is None for record in existing)
 
 
 if __name__ == "__main__":
