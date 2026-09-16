@@ -25,15 +25,15 @@ an HTTP request. The helper requests unload after the response; actual resource
 release still needs workstation observation. Four-image semantic quality and
 Windows/9070 XT memory/latency have not been measured by these software tests.
 
-Examples below use a portable workspace named `reference-session` under the
-repository root, containing `refs/style.png` and `refs/pose.png`. Run from the
-repository root; replace `INSTALLED_VISION_MODEL` with the exact installed local
-model name. Output files must not already exist. In PowerShell, bind the workspace
-once so the same commands work regardless of the repository's drive or parent
-folder:
+Examples below use a disposable workspace at `.runtime/reference-session`
+(gitignored with the rest of `.runtime/`), containing `refs/style.png` and
+`refs/pose.png`. Run from the repository root; replace `INSTALLED_VISION_MODEL`
+with the exact installed local model name. Output files must not already exist.
+In PowerShell, bind the workspace once so the same commands work regardless of
+the repository's drive or parent folder:
 
 ```powershell
-$Workspace = Join-Path (Get-Location) 'reference-session'
+$Workspace = Join-Path (Get-Location) '.runtime/reference-session'
 ```
 
 ## Minimal path
@@ -104,7 +104,7 @@ from pathlib import Path
 from studio_prompt.schema import read_json, write_new
 from studio_prompt.compiler import compile_brief
 
-workspace = Path('reference-session')
+workspace = Path('.runtime/reference-session')
 reviewed = read_json(workspace / 'draft.json')
 # This profile formats text; it is NOT a reference-binding or generation action.
 compiled = compile_brief(reviewed['intent'], 'sdxl-prose-v1')
