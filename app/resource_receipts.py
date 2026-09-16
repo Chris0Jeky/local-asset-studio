@@ -94,6 +94,7 @@ class _BoundedRead:
     def __init__(self, stream, limit):
         self.stream, self.limit = stream, limit
         self.count, self.eof, self.after = 0, False, None
+        self.digest = hashlib.sha256()
 
     def read(self, count):
         require(type(count) is int and 0 <= count <= 65536, 'stream_read_invalid')
@@ -101,6 +102,7 @@ class _BoundedRead:
         data = self.stream.read(min(count, self.limit - self.count + 1))
         self.count += len(data)
         require(self.count <= self.limit, 'artifact_too_large')
+        self.digest.update(data)
         self.eof = not data
         if self.eof:
             # A consumer may perform a replacement after it has parsed the
@@ -110,6 +112,34 @@ class _BoundedRead:
             self.after = os.fstat(self.stream.fileno())
             self.stream.close()
         return data
+
+
+def _content_fingerprint(path: Path, limit: int) -> tuple[int, str]:
+    """Re-read one bounded plain file without retaining its bytes."""
+    try:
+        _directories(path.parent)
+        before = path.lstat()
+        require(_plain(before, stat.S_ISREG) and before.st_size <= limit, 'file_changed')
+        flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0)
+        fd = os.open(path, flags)
+        try:
+            opened = os.fstat(fd)
+            require(_plain(opened, stat.S_ISREG) and _cross_signature(opened) == _cross_signature(before), 'file_changed')
+            digest, count = hashlib.sha256(), 0
+            while True:
+                data = os.read(fd, min(65536, limit - count + 1))
+                if not data: break
+                count += len(data)
+                require(count <= limit, 'file_changed')
+                digest.update(data)
+            after = os.fstat(fd)
+        finally:
+            os.close(fd)
+        require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
+                and count == before.st_size, 'file_changed')
+        return count, digest.hexdigest()
+    except (EvidenceError, FileNotFoundError, OSError):
+        raise EvidenceError('file_changed') from None
 
 
 def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
@@ -134,11 +164,13 @@ def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
                 if consume is None:
                     data = stream.read(limit + 1)
                     count = len(data)
+                    source_digest = sha256(data)
                 else:
                     reader = _BoundedRead(stream, limit)
                     data = consume(reader)
                     require(reader.eof, 'artifact_not_consumed')
                     count = reader.count
+                    source_digest = reader.digest.hexdigest()
                     after = reader.after
                 if consume is None:
                     after = os.fstat(stream.fileno())
@@ -147,6 +179,8 @@ def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
         require(count <= limit, 'artifact_too_large')
         require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
                 and count == before.st_size, 'file_changed')
+        verified_count, verified_digest = _content_fingerprint(path, limit)
+        require((verified_count, verified_digest) == (count, source_digest), 'file_changed')
         return data, _signature(before)
     except FileNotFoundError: raise EvidenceError('artifact_missing', incomplete=True) from None
     except OSError: raise EvidenceError('artifact_unreadable') from None
