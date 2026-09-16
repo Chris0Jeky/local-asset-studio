@@ -60,11 +60,14 @@ def retained_evidence(adapter):
 
 
 class RevisionConsistencyRetainedEvidenceTests(unittest.TestCase):
+    def subject(self, factory):
+        root = tempfile.TemporaryDirectory()
+        self.addCleanup(root.cleanup)
+        return factory(Path(root.name))
+
     def subjects(self):
         for factory in ADAPTERS:
-            root = tempfile.TemporaryDirectory()
-            self.addCleanup(root.cleanup)
-            yield factory(Path(root.name))
+            yield self.subject(factory)
 
     def test_existing_fact_counts_do_not_hide_same_shape_storage_changes(self):
         for adapter in self.subjects():
@@ -77,8 +80,9 @@ class RevisionConsistencyRetainedEvidenceTests(unittest.TestCase):
                 self.assertNotEqual(retained_evidence(adapter), evidence)
 
     def test_failed_integrity_reads_do_not_repair_or_replace_corrupted_rows(self):
-        for adapter in self.subjects():
+        for factory in ADAPTERS:
             for fault in ("json", "digest"):
+                adapter = self.subject(factory)
                 with self.subTest(domain=adapter.domain, fault=fault):
                     adapter.create()
                     adapter.corrupt(fault)
