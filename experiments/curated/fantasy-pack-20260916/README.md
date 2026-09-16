@@ -85,6 +85,48 @@ The Studio recipe built from this run is **`combine-klein-9b-replace`** (`workfl
 catalog entry): the same graph, with "Picture to put them in (image 1)" as the board slot, "Character to keep (image 2)" as the
 picture you continue from, and three bracketed fills (image 1's pose and camera, who is in image 2, image 1's outfit and its colours).
 
+## The chain: pose route, then face route (16 September 2026, from 03:37), and another character
+
+Second research batch straight against ComfyUI (`pack_replacechar_chain.py`, results `pack_replacechar_chain.json`, graphs under `research-graphs/`),
+same graph and LoRA as above, 832x1216, one image per seed. **Chain**: image 1 is slice B's own output - the depth Combine render that carried
+the pose and costume but lost the face (job `18a4f441…`, Workspace asset `7a8a5d27…`, staged through POST /api/assets/reference the way
+*Continue with this* does) - and image 2 the portrait; the wording as above with "clean rendering and its plain light background".
+**Cross**: image 1 the pack's full-body render, image 2 the owner's anime SHARK character (short black hair with red tips, red eyes, a black
+choker), to see whether identity crosses styles and whether image 1's clothes hold. Sheets `examples/fantasy-pack/pose-then-face.jpg` and
+`replace-cross-style.jpg`.
+
+| Group / seed | Prompt | s | Output | Inspected (agent's reading, not acceptance) |
+| --- | --- | --- | --- | --- |
+| 2026091311 | `d92d1844-cb65-432c-b0ed-4cc90c341935` | 257.1 | `Research/pack-replacechar-chain_00001_.png` | the portrait's fringe, brown eyes and gold earrings on the posed full body with a slight smile; the blank face of the depth output gone; plain light background, coat, belt, satchel, lantern and boots exactly as image 1 |
+| 2026091312 | `ae1a53bb-07ac-46ac-9a47-54cd4871a3e8` | 353.4 | `Research/pack-replacechar-chain_00002_.png` | the same transfer, the face calmer and the eyes more open; costume, pose and background unchanged from image 1 |
+| 2026091313 | `fe84f3d6-8991-485a-9f4d-6e713ab5bb2d` | 88.2 | `Research/pack-replacechar-chain_00003_.png` | the same again with a neutral calm face; nothing of image 1 but the person changed |
+| 2026091321 | `252560e8-0585-4754-a142-8014a2c06e2f` | 201.0 | `Research/pack-replacechar-cross_00001_.png` | Ellen Joe's short black hair with red tips, red eyes and hair clip on the pack's platform in image 1's coat, teal scarf, satchel and lantern, drawn in image 1's painterly rendering; the choker is hidden by the scarf; one stray red '?' glyph at the bottom right of the platform (an artifact, not in either picture) |
+| 2026091322 | `f398e988-22c5-4c29-a537-f934c610ffdd` | 76.1 | `Research/pack-replacechar-cross_00002_.png` | the same transfer at the second seed: red eyes, black hair with red tips and the hair clip on the platform in image 1's coat, scarf, satchel and lantern; no stray glyph this time; the choker again hidden by the scarf |
+
+**What held:** the chain restores the face on **3 of 3** seeds - the portrait's fringe, eyes and earrings on the posed full body, with the
+depth output's plain background and costume untouched - so the pack's posed full body is *pose route, then face route*, and identity no
+longer depends on the seed. The cross probe carried the anime character's face, hair and eyes into the painterly scene on 2 of 2 seeds while
+image 1 kept its clothes, platform and rendering. The first two chain renders took 257 s and 353 s because three test suites saturated the CPU
+at the time (the third took 88 s); that is contention, not the slow state that needs a ComfyUI restart.
+
+**What this does NOT establish:** the choker (hidden by the scarf) and any accessory the wording names but image 1's clothes cover; the stray
+glyph on the cross seed 2026091321 platform; anything at portrait fidelity; art acceptance (HUMAN_TODO q-30).
+
+### Through the Studio: the recipe verified (16 September 2026, 03:53-03:51)
+
+`combine-klein-9b-replace` on the Studio's own path (POST /api/jobs, `prove_replace.py` in the style-pose research folder's sibling scratch,
+exported recipes `recipes/7-replace-7051b297.json` and `8-replace-2752190c.json`): the portrait as *Character to keep* (image 2), the full-body render on
+the board (image 1, slot role `composition`), the three fills replaced.
+
+| Job / prompt | Seed / canvas | s | Output | Inspected |
+| --- | --- | --- | --- | --- |
+| `7051b297-a569-4dba-9a88-558bc867a5df` / `5bb9f587-6e37-492f-b712-b4afe36f6e38` | 2026091301, 832x1216 (= research seed 1) | 104.9 | `Combine/Klein-9B-replace_00002_.png` | the same transfer as the research render at this seed: the fringe, a gold earring and the calm face on the full-body scene with coat, scarf, satchel, lantern, boots and platform kept; not pixel-identical to the research render because the recipe's template words the sentences differently, but the same picture |
+| `2752190c-3681-4130-a5d2-6f96ec63d5fb` / `bc74e671-d71d-45e1-840d-0d2fc92acdd5` | 2026091302, 1024x1536 (the recipe's default canvas) | 624.2 | `Combine/Klein-9B-replace_00001_.png` | at the default 1024x1536 canvas the transfer holds: the portrait's face with a slight smile, the fringe and earrings, the framing a little wider than image 1 (more platform on the left), the pose and scene the same; the 624 s elapsed includes this job's wait behind a research render in ComfyUI's queue and the CPU contention of three concurrent test suites, not a render time |
+
+Sheet `examples/fantasy-pack/replace-through-the-studio.jpg` (research seed 1 beside the two Studio jobs). An earlier Studio job for seed 1
+(`02d7c0e4…`) was never submitted: the Studio's own guard found ComfyUI busy with the research batch and gave up, as designed; it was
+abandoned from the page, not resubmitted.
+
 ## Next slices this points at
 
 1. Identity across prompts needs a reference, not a seed: done for the expression (A above, kept) and now for the full body - the
