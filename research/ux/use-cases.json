@@ -500,7 +500,7 @@
         },
         {
           "intent": "open the wording prepared for this pass",
-          "expect": "the wording names image 1 and image 2 and carries two bracketed fills: who is in image 1 and the pose"
+          "expect": "the wording names image 1 and image 2 and carries bracketed fills: who the character is, the pose, and (on the 9B recipe) the clothes and colours"
         },
         {
           "intent": "prepare it in Create",
@@ -516,12 +516,30 @@
         },
         {
           "intent": "fill in the wording",
-          "expect": "replacing the two bracketed fills clears the wording blocker"
+          "expect": "replacing every bracketed fill clears the wording blocker"
         },
         {
           "intent": "read the run control",
           "expect": "the run control is enabled and nothing has been submitted"
         }
+      ]
+    },
+    {
+      "id": "combine-same-pair-second-engine",
+      "goal": "Try the same character and pose on another Combine engine, compare their seeds and prepare the next attempt without rebuilding the source pair.",
+      "starting_view": "create",
+      "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and stages same or new seeds without submitting a generation.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
+        {"intent": "choose a pose picture and describe the result", "expect": "both source images and the named answers are retained"},
+        {"intent": "read the runs for these pictures", "expect": "unrelated results and collapsed historical problems do not obscure the pair"},
+        {"intent": "edit the prepared wording", "expect": "the edit belongs to this recipe"},
+        {"intent": "switch to another engine on the same screen", "expect": "one click keeps the inputs and answers and updates their image order"},
+        {"intent": "return to the previous engine", "expect": "its edited wording is restored"},
+        {"intent": "mark one seed as a keeper and another as needing work", "expect": "each decision is saved through the existing library"},
+        {"intent": "prepare the same seed and then a new seed", "expect": "the recorded recipe and source pair are loaded without generating"},
+        {"intent": "read the run control", "expect": "the next generation still needs an explicit click"}
       ]
     }
   ]

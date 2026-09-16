@@ -48,8 +48,9 @@ def _constant(value):
     raise TraceError('trace_json_invalid')
 
 
-def _bounded(value, depth=0):
-    _require(depth <= 32, 'trace_json_invalid')
+def _bounded(value, depth=1):
+    if isinstance(value, (dict, list)):
+        _require(depth <= 32, 'trace_json_invalid')
     if isinstance(value, dict):
         for key, child in value.items():
             _bounded(key, depth + 1); _bounded(child, depth + 1)
@@ -119,13 +120,22 @@ def summarize_trace(raw: bytes, *, expected_sha256: str | None = None) -> dict:
              'trace_format_unsupported')
     events = document['traceEvents']
     _require(len(events) <= MAX_EVENTS, 'trace_events_exceeded')
-    lanes = {}; operators = {}; ignored = 0; unsupported = 0; recognized = 0
+    return _summarize_events(events, {'sha256': identity, 'bytes': len(raw)},
+                             event_limit=MAX_EVENTS, operator_limit=MAX_OPERATORS)
+
+
+def _summarize_events(events, source, *, event_limit, operator_limit):
+    """Shared exact aggregation; an iterator must validate EOF before exhaustion."""
+    lanes = {}; operators = {}; ignored = 0; unsupported = 0; recognized = 0; total = 0
     for event in events:
+        total += 1
+        _require(total <= event_limit, 'trace_events_exceeded')
         _require(isinstance(event, dict) and isinstance(event.get('ph'), str), 'trace_event_invalid')
         category = event.get('cat'); phase = event['ph']
         if not isinstance(category, str) or category not in CATEGORIES or phase != 'X':
             ignored += 1
             if phase in ('X', 'B', 'E', 'b', 'e'): unsupported += 1
+            del event
             continue
         name = event.get('name')
         _require(isinstance(name, str) and 0 < len(name) <= 4096, 'trace_name_invalid')
@@ -139,15 +149,16 @@ def summarize_trace(raw: bytes, *, expected_sha256: str | None = None) -> dict:
             _require(len(lanes) < MAX_LANES, 'trace_lanes_exceeded')
             lanes[lane_key] = {'category': category, 'spans': []}
         if operator_key not in operators:
-            _require(len(operators) < MAX_OPERATORS, 'trace_operators_exceeded')
+            _require(len(operators) < operator_limit, 'trace_operators_exceeded')
             operators[operator_key] = {'identity_sha256': operator_key, 'category': category,
                 'label': name if category == 'cpu_op' and name in SAFE_NAMES else 'redacted',
-                'events': 0, 'inclusive_duration_ns': 0, 'max_duration_ns': 0}
+                'events': 0, 'inclusive_duration_ns': 0, 'max_duration_ns': 0, '_lanes': set()}
         lanes[lane_key]['spans'].append((start, start + duration))
-        row = operators[operator_key]; row['events'] += 1
+        row = operators[operator_key]; row['events'] += 1; row['_lanes'].add(lane_key)
         row['inclusive_duration_ns'] += duration
         row['max_duration_ns'] = max(row['max_duration_ns'], duration)
         recognized += 1
+        del event
     lane_rows = []
     for key, lane in sorted(lanes.items()):
         spans = lane['spans']
@@ -156,18 +167,23 @@ def summarize_trace(raw: bytes, *, expected_sha256: str | None = None) -> dict:
             'inclusive_duration_ns': sum(stop-start for start, stop in spans),
             'active_union_ns': _union(spans),
             'span_ns': max(stop for _, stop in spans) - min(start for start, _ in spans)})
+    for row in operators.values():
+        row['lane_count'] = len(row.pop('_lanes'))
+        row['aggregation'] = 'category_and_name_across_lanes'
     rows = sorted(operators.values(), key=lambda row: (-row['inclusive_duration_ns'], row['identity_sha256']))
     device = any(row['kind'].startswith('device_') for row in lane_rows)
-    result = {'schema': 'studio.inference-trace-summary/v1', 'input_sha256': identity,
-        'input_bytes': len(raw), 'format': 'pytorch-kineto-chrome-x/v1',
+    result = {'schema': 'studio.inference-trace-summary/v2', 'input_sha256': source['sha256'],
+        'input_bytes': source['bytes'], 'reader_format': 'pytorch-kineto-chrome-x/v1',
+        'producer_identity': 'unverified',
         'status': 'observed_subset' if recognized else 'no_supported_events',
-        'input_events': len(events), 'recognized_events': recognized, 'ignored_events': ignored,
+        'input_events': total, 'recognized_events': recognized, 'ignored_events': ignored,
         'unsupported_duration_events': unsupported, 'lanes': lane_rows, 'operators': rows[:32],
         'omitted_operator_rows': max(0, len(rows)-32),
         'device_timing': {'status': 'observed' if device else 'unavailable', 'coverage': None,
                           'reason': 'supported_spans_only' if device else 'no_supported_device_spans'},
         'job_binding': 'unbound', 'job_wall_time_ns': None, 'causal_speedup_qualified': False,
         'limitations': ['inclusive_durations_can_overlap', 'lanes_are_not_additive_wall_time',
+                       'operator_totals_aggregate_across_lanes',
                        'capture_completeness_and_clock_alignment_unverified',
                        'no_job_runtime_or_model_identity_inferred', 'unknown_labels_redacted']}
     _require(len(json.dumps(result, sort_keys=True, indent=2).encode('utf-8')) + 1 <= MAX_REPORT_BYTES,
