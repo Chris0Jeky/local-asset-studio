@@ -21,11 +21,11 @@
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
     // Edit leads with the 20-second Klein edit; the 11-minute Qwen edit stays available but no longer greets the user.
-    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-depth','combine-klein-9b','combine-klein-9b-skeleton','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-depth','combine-klein-9b-copypose','combine-klein-9b','combine-klein-9b-skeleton','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
     // For Restyle, a recipe that keeps the picture (img2img) outranks the source's own Style + Pose family.
     const rank=p=>prefer.includes(p.id)?prefer.indexOf(p.id):100;
     // Combine's declared 9B leads follow a strong pose and must outrank a 4B source-family match; hard runtime/mask blockers still win.
-    const lead=p=>intent==='combine'&&['combine-klein-9b-depth','combine-klein-9b'].includes(p.id)?-200:0;
+    const lead=p=>intent==='combine'&&['combine-klein-9b-depth','combine-klein-9b-copypose','combine-klein-9b'].includes(p.id)?-200:0;
     const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(intent==='restyle'&&p.continuation_capability.keeps_picture?-300:0)+lead(p)+(family&&p.family===family?-100:0)+rank(p);
     return presets.filter(p=>p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
   }
