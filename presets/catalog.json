@@ -6469,7 +6469,7 @@
         "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
       },
       "reference_board_label": "Depth map of the pose picture (image 1)",
-      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Cut the depth map below (%) paints the map black below that fraction of its height, from the top: 100 keeps all of it, 86 removed the heels and the floor band on the owner's full-body picture and gave bare feet on 3 of 3 seeds (15 September 2026); the variant sets it. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
+      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Cut the depth map below (%) paints the map black below that fraction of its height, from the top: 100 keeps all of it; on the owner's full-body picture 80, 86 and 92 all removed the heels and gave bare feet (16 September 2026, same seed as the uncut run with its heel), and 92 loses the least of the figure, so try 86-92; the variant sets 86. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
       "continuation_operation": "combine",
       "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
       "continuation_placeholder": [
@@ -6607,6 +6607,116 @@
       ],
       "source": "https://civitai.com/models/2380153?modelVersionId=2701726",
       "description": "Put your character into another picture's pose while keeping the character's own picture: its background, framing and rendering stay, only the body moves. Measured 15 September 2026 on the owner's Ellen Joe pictures (research renders, README pose round three): with the Copy Pose LoRA, character as image 1 and the pose picture as image 2, 3 of 3 seeds held the deep waist bend, crossed legs and look-back with the face, lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking. The depth-map recipe gives the pose picture's framing instead; this one gives your character's. Audition three seeds.",
+      "lora": [
+        "40",
+        "strength_model"
+      ],
+      "lora_name": [
+        "40",
+        "lora_name"
+      ]
+    },
+    {
+      "id": "combine-klein-9b-replace",
+      "name": "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-replace-api.json",
+      "verified": true,
+      "execution_note": "Verified 2026-09-16 through the Studio (POST /api/jobs): job 7051b297-a569-4dba-9a88-558bc867a5df, seed 2026091301 at 832x1216, prompt 5bb9f587-6e37-492f-b712-b4afe36f6e38, 104.9 s, output Combine/Klein-9B-replace_00002_.png; job 2752190c-3681-4130-a5d2-6f96ec63d5fb, seed 2026091302 at the default 1024x1536 canvas, prompt bc74e671-d71d-45e1-840d-0d2fc92acdd5, 624.2 s, output Combine/Klein-9B-replace_00001_.png; the fantasy pack's portrait as the character (image 2) and its full-body render on the board (image 1): the same transfer as the research render at this seed: the fringe, a gold earring and the calm face on the full-body scene with coat, scarf, satchel, lantern, boots and platform kept; not pixel-identical to the research render because the recipe's template words the sentences differently, but the same picture. Research first (POST /prompt straight against ComfyUI, experiments/curated/fantasy-pack-20260916/pack_replacechar.py and pack_replacechar_chain.py): 3 of 3 seeds on that pair, 3 of 3 restoring the face on the depth Combine's own output (pose route then face route), 2 of 2 carrying an anime character into the painterly scene; sheets examples/fantasy-pack/full-body-keeps-face.jpg, pose-then-face.jpg, replace-cross-style.jpg, replace-through-the-studio.jpg.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The replace-character LoRA (civitai model 2829085, '[klein 9b] replace character' by iDvDi) carries civitai per-file flags read on 2026-09-15: allowCommercialUse Image/RentCivit/Rent, no Sell, derivatives yes, no credit required; the version payload (3192138) carries no flags of its own, so read the model page before any commercial use (models/library.json). Every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "20",
+        "image"
+      ],
+      "last_reference_label": "Character to keep (image 2)",
+      "last_reference_hint": "Your character: the face, hair and expression in this picture are what the recipe keeps. Its clothes, background and framing are not - those come from image 1. It is image 2 here on purpose: the 9B model keeps image 1's structure, and image 1 is the picture you are putting this character into. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "composition",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "14",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents with the replace-character LoRA at 1.0: the picture to put the character into is image 1 (its pose, action, camera, composition, background, lighting and clothes all stay, only the person in it changes), your character follows as image 2 and only its face, hair and expression are taken, each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Picture to put them in (image 1)",
+      "reference_board_hint": "The picture you want to keep, as image 1: its pose, action, camera angle, composition, background, lighting and clothes all stay and only the person in it is replaced. Measured 16 September 2026 on the fantasy pack's own pair (research, straight against ComfyUI): the portrait's centre-parted fringe, gold earrings, face shape and calm expression arrived in the full-body scene on 3 of 3 seeds with image 1's navy coat, teal scarf, satchel, lantern, boots, platform and evening light kept, 116-132 s at 832x1216. Name image 1's outfit and its colours in the wording: they are what the figure goes on wearing. Audition three seeds.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting ([image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]). The character in image 2 is [who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: [image 1's outfit and its colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]",
+        "[who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]",
+        "[image 1's outfit and its colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + replace-character LoRA (replace_character_v1_klein, strength 1.0, model only) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1 (the picture to keep: its pose, camera, composition, background, lighting and clothes) and image 2 (the character whose face, hair and expression go in): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
+        "Wording: replace image 1's person while keeping everything else about image 1, naming image 1's pose and camera, who is in image 2, and image 1's outfit and its colours (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); 116-132 s at 832x1216 in research on the 9070 XT",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://civitai.com/models/2829085?modelVersionId=3192138",
+      "description": "Put your character's face into a picture you already have and change nothing else about that picture: image 1 keeps its pose, action, camera angle, composition, background, lighting and clothes, and only the person in it becomes the character from image 2. Measured 16 September 2026 on the fantasy pack's own pair (research renders, straight against ComfyUI, pack_replacechar.py): with the pack's full-body render as image 1 and its portrait as image 2, 3 of 3 seeds carried the portrait's centre-parted fringe, gold earrings, face shape and calm expression into the full-body scene with the navy coat, teal scarf, satchel, lantern, boots, platform and evening light of image 1 kept, in 116-132 s at 832x1216. This is the route the depth Combine could not give: at full-body scale it lost the face. Choose it when the picture is right and the face is wrong; choose the depth or Copy Pose recipes when the pose is what you are after. Audition three seeds.",
       "lora": [
         "40",
         "strength_model"

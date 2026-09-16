@@ -1,113 +1,194 @@
 # Local Asset Studio
 
-Your personal workshop for anime and manga, images, video, textured 3D, reference editing, and reproducible creative experiments.
+**A local-first creative workflow studio for generative images, video, 3D, references, model research, and reproducible experiments.**
 
-**On the configured PC: double-click the `Asset Studio` desktop shortcut.** Pick a preset, change the description, and press **Generate**. The launcher starts ComfyUI and opens the simpler studio interface. You do not need to learn nodes first.
+Local Asset Studio sits above ComfyUI and a set of isolated model environments. It is designed to make powerful local creative pipelines understandable without hiding what they do: choose a creative goal, add references, inspect the planned route, generate deliberately, review the evidence, and keep the result together with the settings that produced it.
+
+On the configured Windows PC, double-click the **Asset Studio** desktop shortcut. Pick a recipe or preset, describe the result, add references when needed, and press **Generate**. Advanced ComfyUI remains available for node-level work, but learning its graph editor is not a prerequisite for the guided Studio paths.
 
 ![Three Lanternkeeper skins](examples/lanternkeeper/contact-sheet.png)
 
-Explore the [Workflow Lab guide](docs/WORKFLOW-LAB.md) for the new models, folder map, variants, and image-to-video/3D paths.
+[Start here](docs/START-HERE.md) ·
+[Product direction](docs/PRODUCT_DIRECTION.md) ·
+[Status by goal](docs/STATUS.md) ·
+[Workflow Lab](docs/WORKFLOW-LAB.md) ·
+[Anime & fantasy atelier](docs/ANIME-FANTASY-ATELIER.md) ·
+[Documentation index](docs/README.md)
 
-For anime and fantasy work, the [anime & fantasy atelier guide](docs/ANIME-FANTASY-ATELIER.md) is the
-one page to read: which recipe produces which look, every installed LoRA with its trigger and terms,
-the settings each model family wants, prompt wildcards, the settings planner, and honest timings
-(Krea 2 at 768×1152 and 15 steps measured 986 s; the same family at 512×768 and 8 steps, 189 s;
-SDXL anime portraits at 512×768, 20–35 s).
+## What the Studio is becoming
 
-Use **Workspace** to collect, tag, favorite, compare and restore your outputs.
-**Experiments** keeps bounded comparisons and native finishing plans together.
-You can assign identity/pose/style references, switch to the isolated HiDream
-environment, build an authored hinged prop, or export selected images to Krita
-and a tested Godot sprite project. See [Workspace](docs/WORKSPACE.md),
-[reference editing](docs/REFERENCE-ATELIER.md) and [native exports](docs/NATIVE-EXPORTS.md).
+The repository began as a friendly launcher and preset catalogue. It is now developing into a governed local creative operating layer with five connected surfaces:
 
-Start with the [first-image walkthrough](docs/START-HERE.md), then read [experiments and native finishing](docs/EXPERIMENTS.md) for bounded comparisons and export plans. [Status by goal](docs/STATUS.md) says where each owner goal stands; the [documentation index](docs/README.md) names every page; the [current state](CURRENT_STATE.md) distinguishes completed tests from plans.
+1. **Create and continue** — goal-led recipes for images, animation, edits, 3D drafts, refinement, and native finishing.
+2. **Reference Atelier** — assign identity, pose, style, outfit, composition, or source roles to one or more images and inspect how a route will use them.
+3. **Workflow Studio** — build, compare, and eventually pilot ComfyUI workflows from a clearer interface while keeping the underlying graph and controls visible.
+4. **Experiments and qualification** — run bounded comparisons, record source/model/node compatibility, retain uncertain outcomes, and promote routes only when their evidence supports the claim.
+5. **Workspace and export** — collect, tag, compare, restore, refine, and hand accepted assets to Krita, Godot, Blender, or another explicit destination.
 
-For the cross-cutting product and engineering judgement—what the Studio is becoming, what to prioritise, what to stop expanding and which evidence gates should govern the next phase—read the [strategic consolidation bundle](docs/strategy/README.md).
+The long-term goal is not a black-box “make art” button. It is a studio in which a person or an authorized agent can understand the inputs, route, environment, model/LoRA terms, resource cost, output identity, and evidence state of every consequential operation.
 
-## What is here
+## What works today
 
-| Folder | Purpose |
-|---|---|
-| `app/` | Local browser interface; Python standard library server; local model-viewer bundle; no build toolchain |
-| `presets/` | Preset names and controls mapped to graph inputs; `recipes.json`, `settings-kb.json` and `wildcards/` |
-| `workflows/api/` | API graphs, one per Studio preset plus a helper graph |
-| `workflows/comfyui/` | Matching visual node graphs for learning and deeper changes |
-| `scripts/` | Launcher, batch generation, asset finishing, validation |
-| `examples/lanternkeeper/` | Playable example, editable Blender files, GLBs, sprites, promotional artwork |
-| `examples/gallery/` | Small, curated model samples for comparison |
-| `examples/references/` | Starter lantern and pose guide |
-| `experiments/curated/` | Selected findings and scorecard template |
-| `experiments/runs/` | Your local recipes and results; deliberately ignored by Git |
-| `models/` | Model checksums, provenance, and future candidates; no weights |
-| `docs/` | Beginner instructions, operations, strategy, and migrated research |
+### Guided creation
 
-## Models and starting points
+- goal-led recipes and presets for pixel concepts, abstract art, realistic imagery, anime/fantasy characters, manga studies, refinement, reference edits, short animation, and 3D drafts;
+- a simpler local browser interface backed by a Python standard-library server;
+- prompt recipes, wildcard expansion, settings knowledge, LoRA slots, parameter controls, seed reuse, and saved output metadata;
+- explicit model-environment switching for isolated routes such as HiDream O1 and MiniMax H3;
+- local job submission, progress, output validation, bounded receipts, and an explicit local disposition for an uncertain job (which records the outcome as unknown and does not cancel remote work; cancellation itself exists only for AV/Production operations).
 
-| You want | Start here | Try next |
-|---|---|---|
-| Pixel item concepts | SDXL + Pixel Art XL LoRA | Compare LoRA strength with the same seed |
-| Realistic promotional art | RealVisXL | FLUX Klein, Z-Image Turbo |
-| Abstract website art | SDXL abstract preset | Change composition and colour vocabulary |
-| Stylized characters | WAI / Animagine | Pony; pose-control variants; [atelier guide](docs/ANIME-FANTASY-ATELIER.md) |
-| Manga and anime studies | LineAni / Anima Aesthetic | Screentone, cinematic lighting, Krea 2 style lab |
-| Animate a finished image | Wan 2.2 Animate Image | Short motion study, then longer shots |
-| Generate a 3D draft | TRELLIS textured draft | Authored Blender parts, pivot and motion |
-| Small reference changes | FLUX Klein edit | SDXL gentle variation, Qwen edit |
-| Combine reference roles | Qwen Atelier | Identity, pose and style in separate slots |
-| Native 2K anime concepts | HiDream O1 isolated environment | Reference restyle, then compare seeds |
-| Exact repeated views and motion | Blender example | Render, reduce palette, pack atlas |
+### Reference work
 
-NoobAI is retained for hobby experiments; its author terms exclude commercial generated products. WAI came from a Hugging Face mirror; matching hashes do not authenticate the creator or establish commercial rights. See [model notes](models/README.md).
+- single and multiple image references with declared roles;
+- identity, pose, style, composition, and editing routes where the underlying architecture supports them;
+- Qwen Atelier and Combine-style workbenches for separating reference intent instead of treating every image as an undifferentiated prompt;
+- pose skeleton and depth control routes with recorded execution evidence;
+- gentle variation, targeted edits, masked repair, and controlled continuation paths.
 
-The local graphs do not call hosted moderation services. Local execution, model capability, and usage rights are separate questions.
+Reference fidelity remains model- and route-dependent. A completed job proves execution, not that identity, anatomy, pose, costume, or artistic intent was accepted. Complex foreshortening, unusual contact poses, occlusion, multi-character interaction, and exact pose transfer remain active qualification areas rather than solved product promises.
 
-See the [new local execution samples](experiments/curated/workflow-lab/README.md)
-for three image styles, a short video and a geometry GLB with their exact recipes.
-MiniMax H3 now generates through the isolated loader: the tested quick audition
-produced 1.625 seconds of 512×320 video with stereo audio in 6 minutes 38 seconds.
-See [the working H3 setup](docs/H3-WINDOWS.md). Larger shots and Seed Hunter remain
-experimental.
+### Experiment and evidence workflows
 
-**HiDream O1 is in the Studio picker:** [both concept and reference-edit recipes](docs/HIDREAM.md)
-produced 2048-square images on the Radeon. Use **Model environment → HiDream O1 →
-Switch environment** before starting either recipe.
+- bounded settings grids and LoRA-weight comparisons;
+- curated run records and reusable scorecard templates;
+- route/model/source compatibility notes with `verified`, `unverified`, `blocked`, and uncertainty-aware states;
+- output hashes, prompt IDs, submitted chains, timings, and reviewer notes for selected qualified routes;
+- benchmark and profiling seams that preserve failed, partial, and inconclusive trials instead of reporting only winners.
+
+### Workspace and native finishing
+
+- collect, tag, favorite, compare, restore, and continue from generated outputs;
+- create finishing plans rather than silently altering accepted assets;
+- export selected images to Krita and a tested Godot sprite-project path;
+- Blender-authored assets, textured GLBs, sprite packing, and playable Lanternkeeper examples;
+- local asset gallery and model samples for informed route selection.
+
+## Model and route portfolio
+
+The Studio uses a role-based portfolio rather than pretending one model is best at everything.
+
+| Creative goal | Current starting point | Typical next step |
+| --- | --- | --- |
+| Pixel item concepts | SDXL + Pixel Art XL LoRA | compare strength with the same seed |
+| Realistic promotional art | RealVisXL | evaluate FLUX Klein or Z-Image routes |
+| Abstract website art | SDXL abstract recipes | vary composition and colour vocabulary |
+| Anime/fantasy characters | WAI or Animagine | Pony, Krea 2, pose/depth controls, refinement |
+| Manga/anime studies | LineAni or Anima Aesthetic | screentone, cinematic lighting, style studies |
+| Multi-reference composition | Qwen Atelier / qualified Combine routes | separate identity, pose, style, outfit, and scene roles |
+| Scoped reference editing | FLUX Klein edit or Qwen edit | mask/repair, gentle variation, compare retained traits |
+| Native high-resolution concepts | isolated HiDream O1 | restyle, compare seeds, refine |
+| Short image animation | Wan 2.2 or isolated MiniMax H3 | audition motion before longer shots |
+| Textured 3D draft | TRELLIS | authored Blender parts, pivots, motion, and QA |
+| Exact repeated views/motion | Blender-authored pipeline | render, reduce palette, pack atlas |
+
+Read [models/README.md](models/README.md) before using a checkpoint or LoRA commercially. Matching hashes help with reproducibility; they do not authenticate a publisher or create usage rights. NoobAI is retained for hobby experiments under its author terms. WAI mirror provenance and every stacked LoRA’s individual terms remain separate clearance questions.
+
+Local graphs do not call hosted moderation services. Local execution, capability, content policy, and licence suitability are distinct questions.
+
+## Operating principles
+
+### Local first, explicit authority
+
+The Studio should never treat discovery as permission. Research can identify a model, node, workflow, or source; it cannot silently download, install, execute, generate, train, publish, or change an environment. Consequential actions need an explicit operator or reviewed agent capability.
+
+### Evidence before promotion
+
+A route moves from candidate to qualified only through the relevant checks: source/provenance, environment compatibility, graph validation, bounded execution, output integrity, visual review, resource behavior, and licence/terms notes. “Ran successfully” and “produced the desired art” are different states.
+
+### Reproducible, not frozen
+
+Jobs should retain enough information to repeat or explain them: route, environment, graph/input mapping, model and adapter identities, prompts/settings, references, seed, timing, output hashes, and review notes. The Studio can evolve without erasing how an earlier result was made.
+
+### Legible power
+
+Advanced controls should be available through progressive disclosure. A beginner starts from a goal and recipe; an experienced user can inspect or modify the node-level workflow, build reusable graphs, and run headlessly without maintaining a second undocumented system.
+
+## Direction
+
+### Now: reliable reference composition
+
+- consolidate identity/pose/style/outfit/composition roles into one inspectable reference plan;
+- make ambiguity visible and ask only the questions that materially affect the route;
+- qualify pose skeleton, depth, segmentation, dense correspondence, edit, and hybrid routes against difficult pose families;
+- keep character, costume, style, and scene consistency scored separately;
+- add repair/retry strategies that know whether a failure is geometry, identity, anatomy, conditioning conflict, or finishing quality.
+
+### Next: Workflow Studio and headless parity
+
+- represent workflows as versioned, inspectable Studio documents;
+- expose available ComfyUI nodes, ports, controls, validation, preview, and connections through the Studio interface;
+- preserve the original graph and generated API graph relationship;
+- make every safe UI workflow addressable through a bounded headless/agent contract;
+- keep install, environment mutation, model acquisition, and execution as separate capabilities.
+
+### Next: route and model intelligence
+
+- maintain immutable source snapshots and reviewed compatibility records;
+- compare exact model versions, prompt grammars, schedulers, resolutions, controls, adapters, and VRAM/runtime behavior;
+- build a small role-based qualified portfolio instead of an uncurated model warehouse;
+- retain failed and inconclusive trials so future agents do not repeat the same dead ends.
+
+### Later: a complete local asset pipeline
+
+- stronger character sheets and multi-view consistency;
+- deliberate two-character interaction and unusual-pose workflows;
+- scoped costume/anatomy editing with accepted-region protection;
+- animation continuation and in-between planning;
+- audio/voice and Blender automation under the same evidence model;
+- project-ready asset packs with provenance, QA, native-tool handoff, and reversible refinement histories.
+
+The detailed priorities, non-goals, and promotion gates live in [docs/PRODUCT_DIRECTION.md](docs/PRODUCT_DIRECTION.md) and the [strategy bundle](docs/strategy/README.md).
 
 ## Run and develop
 
-On the configured Windows PC, use `Start Studio.cmd` or the desktop shortcut. The app is at `http://127.0.0.1:8191`; advanced ComfyUI is at `http://127.0.0.1:8188`.
+On the configured Windows PC, use `Start Studio.cmd` or the desktop shortcut.
 
-On another computer, copy `config/example.json` to `config/local.json`, point it to an installed ComfyUI and Python, install the required models/nodes separately, then run `python app/server.py`. The app needs Python 3.12+, Pillow for image validation/finishing and psutil for explicit environment switches. The configured ComfyUI runtime already contains these packages. This repository is not a complete installer for a fresh machine.
+- Studio: `http://127.0.0.1:8191`
+- Advanced ComfyUI: `http://127.0.0.1:8188`
+
+On another computer, copy `config/example.json` to `config/local.json`, point it to installed Python and ComfyUI runtimes, and install required nodes/models separately. The repository is **not** a complete fresh-machine installer.
 
 ```console
+python app/server.py
 python -m unittest discover -s tests
 python scripts/validate-repo.py
 ```
 
-See [operations](docs/OPERATIONS.md) for troubleshooting, backup, and adding presets. [HUMAN_TODO.md](HUMAN_TODO.md) contains optional creative choices, not setup blockers.
+Python 3.12+ is required. Pillow supports validation/finishing and psutil supports explicit environment switches. See [operations](docs/OPERATIONS.md) for backup, troubleshooting, environment setup, and adding presets.
 
-### Anime quality quick start
+## Repository map
 
-Open the **Anime quality** category for WAI and Animagine portraits or a 1.5x refinement pass. ComfyUI workflow 24 adds manual masked repair. Read the [parameter and anatomy guide](docs/ANIME-QUALITY.md) before turning up steps or resolution. These new presets were schema-checked; no generation was submitted by the agent for this slice.
+| Path | Purpose |
+| --- | --- |
+| `app/` | local Studio UI and Python server; local viewer bundle; no frontend build toolchain |
+| `presets/` | recipe catalogue, controls, settings knowledge, wildcards, and graph-input mappings |
+| `workflows/api/` | executable API graphs used by Studio routes |
+| `workflows/comfyui/` | matching visual graphs for inspection and deeper changes |
+| `scripts/` | launch, generate, validate, benchmark, profile, finish, and export tooling |
+| `experiments/curated/` | selected evidence, findings, and scorecards |
+| `experiments/runs/` | local recipes/results; intentionally ignored by Git |
+| `examples/` | Lanternkeeper, gallery, references, native exports, and learning artifacts |
+| `models/` | checksums, provenance, compatibility notes, and candidates; no weights |
+| `docs/` | product, workflow, model, operations, research, and strategy documentation |
 
-The [anime detailing guide](docs/ANIME-DETAILING.md) covers installed ESRGAN, automatic face crops, optional hand crops and the combined finishing workflow.
+## Documentation paths
 
-### Anime & fantasy atelier
+- [First image walkthrough](docs/START-HERE.md)
+- [Workspace](docs/WORKSPACE.md)
+- [Reference Atelier](docs/REFERENCE-ATELIER.md)
+- [Experiments and native finishing](docs/EXPERIMENTS.md)
+- [Workflow Lab](docs/WORKFLOW-LAB.md)
+- [Anime & fantasy atelier](docs/ANIME-FANTASY-ATELIER.md)
+- [Anime quality and anatomy](docs/ANIME-QUALITY.md)
+- [Anime detailing](docs/ANIME-DETAILING.md)
+- [HiDream O1](docs/HIDREAM.md)
+- [MiniMax H3 on Windows](docs/H3-WINDOWS.md)
+- [Native exports](docs/NATIVE-EXPORTS.md)
+- [Current state](CURRENT_STATE.md)
+- [Owner choices](HUMAN_TODO.md)
 
-The **Anime flagship** category now carries Krea 2 Turbo presets with LoRA slots (four on `krea-anime-atelier` and `krea-refine`, three on `krea-style-lab`, one on the retro-anime pair; the SDXL anime presets carry two and the Anima/JANIMA stacks up to six). A slot set
-to strength 0 is removed from the submitted graph, so the same preset covers a plain render, a single
-style adapter, or a stacked look. **Recipes** in the create view apply a complete named starting point
-(preset, prompt, settings and LoRA stack) in one click; prompts accept `{a|b|c}` and `__wildcard__`
-expansions; **Experiments** can plan a settings grid or a LoRA-weight remix from a sourced knowledge
-base instead of a single numeric axis. Read [the atelier guide](docs/ANIME-FANTASY-ATELIER.md) first —
-Krea 2 is minutes per image on this machine, not seconds.
+## Status and limitations
 
-**Correction (12 September 2026).** This section previously said the presets were "marked unverified; no
-generation was submitted by the agent for this slice". That is wrong for the two Krea atelier presets:
-`krea-anime-atelier` and `krea-style-lab` are `verified: true` in `presets/catalog.json` against recorded
-Studio jobs — `db02f6b1` (197.0 s, 4-step audition), `7d589f47` (827.6 s, full target stack with koukouya)
-and `f373ba3b` (207.1 s, `krea-style-lab` 4-step audition). Prompt IDs, submitted LoRA chains, output
-SHA-256s and the reviewer's own inspection notes are in
-[experiments/curated/anime-fantasy-atelier/execution-evidence.json](experiments/curated/anime-fantasy-atelier/execution-evidence.json).
-`krea-environment` and the recipes marked `unverified` remain unverified. A completed job is generation
-only: it is neither art acceptance nor licence clearance, and each stacked LoRA keeps its own terms.
+This is an actively developed personal/local studio, not a hosted generation service. The configured AMD Radeon workflow, installed nodes, isolated environments, model files, and measured timings are machine-specific evidence—not universal performance claims. Several routes are verified only for bounded executions; artistic acceptance and commercial clearance remain separate.
+
+The project intentionally keeps uncertainty visible. Candidate research, planned Workflow Studio features, adult-illustration discovery contracts, source registries, pose experiments, and low-level optimisation work do not become shipped capability merely because an issue, document, or draft PR exists.
