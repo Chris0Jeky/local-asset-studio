@@ -21,9 +21,12 @@
   function destinations(intent,presets,source){
     const family=presets.find(p=>p.id===source?.preset_id)?.family;
     // Edit leads with the 20-second Klein edit; the 11-minute Qwen edit stays available but no longer greets the user.
-    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
+    const prefer={edit:['flux-edit','qwen-1ref','krea-refine'],repair:['anime-detail-fix','krea-refine','anime-esrgan-2x'],restyle:['restyle-klein','restyle-klein-picture','restyle-wai','style-pose-wai','style-pose-nova','style-pose-yumeflux'],combine:['combine-klein-9b-depth','combine-klein-9b-copypose','combine-klein-9b','combine-klein-9b-skeleton','combine-klein'],animate:['wan22-i2v'],mesh:['trellis-auto-cutout']}[intent]||[];
     // For Restyle, a recipe that keeps the picture (img2img) outranks the source's own Style + Pose family.
-    const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(intent==='restyle'&&p.continuation_capability.keeps_picture?-300:0)+(family&&p.family===family?-100:0)+(prefer.includes(p.id)?prefer.indexOf(p.id):100);
+    const rank=p=>prefer.includes(p.id)?prefer.indexOf(p.id):100;
+    // Combine's declared 9B leads follow a strong pose and must outrank a 4B source-family match; hard runtime/mask blockers still win.
+    const lead=p=>intent==='combine'&&['combine-klein-9b-depth','combine-klein-9b-copypose','combine-klein-9b'].includes(p.id)?-200:0;
+    const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(intent==='restyle'&&p.continuation_capability.keeps_picture?-300:0)+lead(p)+(family&&p.family===family?-100:0)+rank(p);
     return presets.filter(p=>p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
   }
   function initial(source,preset,intent,file){
@@ -104,7 +107,7 @@
   function guidance(preset,source){
     const cap=preset?.continuation_capability;
     if(!cap?.consumes_source)return['This recipe does not have a verified source-to-output connection.'];
-    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','restyle':cap.keeps_picture&&!cap.board_min?'Keeps this picture (layout, pose, costume, colours) and redraws it in the look the wording describes: the picture is the model’s own reference and there is no style board, so your words carry the look. Edit the first sentence to try another look; keep the “Keep …” sentence.':cap.keeps_picture&&cap.prompt_role==='instruction'?'Keeps this picture (layout, pose, costume) and redraws it the way the picture on the board is drawn: the wording tells the model to copy how image 2 is drawn, not what it shows. Colours can drift towards image 2; name the ones to keep.':cap.keeps_picture?'Keeps this picture (layout, pose, costume, colours; Denoise says how much may change) and repaints it in the recipe’s finish. The style board’s pictures add their palette only as far as Style weight says (0 = off). The prompt says who the character is.':'Keeps this picture’s pose and paints a new image in the look of the pictures you put on the style board. Its colours, costume and background are not copied; the prompt says who the character is.','combine':'Keeps this character (face, hair, outfit, colours, rendering style) and draws it in the pose of the picture you put on the board. Only the pose is taken from that picture; its person, clothing and colours are not. The background follows the pose picture unless the wording says otherwise.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
+    const text=[{'image-to-image':'Resamples the attached image, rather than starting with an empty image. Identity, style and background can still drift.','localized-detail':'Detects and repaints local regions. Detection can miss a face or hand; inspect the output before accepting it.','instruction-edit':'Uses the source as visual context. Write the change you want and what should stay the same.','upscale':'Enlarges the source without a text prompt. This does not repair pose or guarantee identical fine detail.','masked-repair':'Needs a prepared RGBA PNG: transparent alpha identifies the repair region. A plain source copy is not enough.','restyle':cap.keeps_picture&&!cap.board_min?'Keeps this picture (layout, pose, costume, colours) and redraws it in the look the wording describes: the picture is the model’s own reference and there is no style board, so your words carry the look. Edit the first sentence to try another look; keep the “Keep …” sentence.':cap.keeps_picture&&cap.prompt_role==='instruction'?'Keeps this picture (layout, pose, costume) and redraws it the way the picture on the board is drawn: the wording tells the model to copy how image 2 is drawn, not what it shows. Colours can drift towards image 2; name the ones to keep.':cap.keeps_picture?'Keeps this picture (layout, pose, costume, colours; Denoise says how much may change) and repaints it in the recipe’s finish. The style board’s pictures add their palette only as far as Style weight says (0 = off). The prompt says who the character is.':'Keeps this picture’s pose and paints a new image in the look of the pictures you put on the style board. Its colours, costume and background are not copied; the prompt says who the character is.','combine':/skeleton/i.test(preset.reference_board_label||'')?'Keeps this character (face, hair, outfit, colours, rendering style) and draws it in the body position of the stick figure you put on the board: thin lines carry the pose and nothing else is copied, and the black canvas is replaced. A solid mannequin or a photo on this board is drawn literally; use the depth-map recipe for pictures. Audition three seeds.':/depth map/i.test(preset.reference_board_label||'')?'Keeps this character (face, hair, outfit, colours, rendering style) and draws it in the body position of the picture you put on the board, read as a depth map: only the silhouette reaches the model, so that picture’s person, clothing, colours and background do not. A heel or a skirt in the silhouette can still shape the figure; audition three seeds.':/copy pose/i.test(preset.reference_board?.policy||'')?'Keeps this character as it is, its own background and framing included, and re-poses it to the body position of the picture you put on the board (image 2): the Copy Pose adapter takes only the pose from that picture, not its person, clothes, colours or background. Put a real picture there, not a depth map. Audition three seeds.':'Keeps this character (face, hair, outfit, colours, rendering style) and draws it in the pose of the picture you put on the board. The pose is taken from that picture, not its person or colours, though a shoe or stocking from it can ghost in. The background follows the pose picture unless the wording says otherwise.','image-to-video':'Uses the source as a visual input. Describe motion, timing and camera movement; an image caption alone is not a motion brief.','image-to-3d':'Uses the source for reconstruction. Hidden surfaces are inferred; inspect the mesh and materials.'}[cap.operation]||cap.scope];
     if(cap.prompt_role==='description')text.push(source?.prompt_role==='description'&&source?.positive?'Copies this output’s actual submitted description. You may refine the description without changing the source.':'No reusable image description is available. Write one; recipe example text will stay out of the prompt.');
     if(source?.preset_id&&source.preset_id!==preset.id&&cap.prompt_role!=='none')text.push('Different source recipe: '+(source.preset_name||source.preset_id)+'. Source sampling settings, seed and adapters are not copied. Check destination style triggers; low denoise does not guarantee the same look.');
     // The owner's report (14 Sep 2026): restyling a restyle with the same wording and seed gave "the same exact image".
@@ -118,7 +121,7 @@
     return text.filter(Boolean);
   }
   function variantLabel(key){
-    return({cfg:'Guidance (CFG)',seed:'Seed',width:'Canvas width',height:'Canvas height',frames:'Frames',fps:'FPS',style_weight:'Style weight',pose_strength:'Pose strength'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
+    return({cfg:'Guidance (CFG)',seed:'Seed',width:'Canvas width',height:'Canvas height',frames:'Frames',fps:'FPS',style_weight:'Style weight',pose_strength:'Pose strength',depth_cut:'Cut the depth map below (%)'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
   }
   function variantHelp(preset,variant){
     const authored=variant?.controls&&typeof variant.controls==='object'&&!Array.isArray(variant.controls)?variant.controls:{};
@@ -136,5 +139,60 @@
     }
     return parts.join(' ')||'Applies the listed settings; inspect parameters before running.';
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled};
+  // A bracketed fill such as "[who is in image 2, e.g. Ellen Joe, a girl with short black hair]" is one short field on the page:
+  // the words before ", e.g. " are its label, the words after it its example (#422 slice A).
+  // Given the wording, the fields follow the order in which it reads them (the catalog lists them in another order).
+  function fills(preset,template){
+    const text=typeof template==='string'?template:'',at=p=>{const i=text.indexOf(p);return i<0?Number.MAX_SAFE_INTEGER:i;};
+    return placeholders(preset).map(placeholder=>{
+      const inner=placeholder.replace(/^\[|\]$/g,'').trim(),eg=inner.indexOf(', e.g. '),label=(eg>=0?inner.slice(0,eg):inner).trim();
+      return{placeholder,label:label.charAt(0).toUpperCase()+label.slice(1),example:eg>=0?inner.slice(eg+7).trim():''};
+    }).sort((a,b)=>at(a.placeholder)-at(b.placeholder));
+  }
+  // The prepared wording with each answered fill written in; an empty answer keeps its bracket so the readiness list still names it,
+  // and an answer that quotes its own bracket is left out rather than re-inserting it.
+  function assemble(template,values){
+    let text=typeof template==='string'?template:'';
+    for(const [placeholder,value]of Object.entries(values||{})){const words=String(value==null?'':value).trim();if(words&&placeholder&&!words.includes(placeholder))text=text.split(placeholder).join(words);}
+    return text;
+  }
+  function combineKind(preset){
+    if(preset?.continuation_capability?.operation!=='combine'||sourceInput(preset.continuation_capability)!=='last_reference'||!preset.reference_board||!preset.last_reference)return null;
+    return /skeleton/i.test(preset.reference_board_label||'')?'skeleton':'picture';
+  }
+  function fillMeaning(placeholder){
+    const label=String(placeholder).split(', e.g. ')[0].toLowerCase();
+    return /who/.test(label)?'who':/clothes|colours/.test(label)?'clothes':/pose/.test(label)?'pose':null;
+  }
+  function combineFillValues(preset,answers){
+    const hasClothes=placeholders(preset).some(p=>fillMeaning(p)==='clothes');
+    return Object.fromEntries(placeholders(preset).map(p=>{
+      const meaning=fillMeaning(p);let value=String(answers[meaning]||'');
+      if(meaning==='who'&&!hasClothes&&answers.clothes&&!value.includes(answers.clothes))value+=(value?', wearing ':'')+answers.clothes;
+      return[p,value];
+    }));
+  }
+  function combineSwitchReason(from,to,refs=[]){
+    if(!combineKind(from)||!combineKind(to))return 'This recipe uses a different source layout. Choose it through Change route.';
+    if(combineKind(from)!==combineKind(to))return 'A pose skeleton and a pose picture are different inputs. Choose that route with the matching source.';
+    if(refs.filter(r=>r?.file).length>(to.reference_slots?.length||0))return 'This recipe takes fewer pictures. Remove the extra board picture before switching.';
+    if(refs.some(r=>r?.missing))return 'Reattach the missing picture before switching.';
+    return '';
+  }
+  function combineReferences(preset,refs){
+    const filled=refs.filter(r=>r?.file);
+    if(filled.length>preset.reference_slots.length)throw Error('The destination cannot keep every attached picture.');
+    return preset.reference_slots.map((slot,i)=>({role:slot.role,contribution:'',avoid:'',file:null,...Object.fromEntries(Object.entries(filled[i]||{}).filter(([key])=>['file','sha256','bytes','width','height','parent_asset','missing'].includes(key)))}));
+  }
+  function sameCombinePair(current,job,presets){
+    const first=presets.find(p=>p.id===current?.preset_id),second=presets.find(p=>p.id===job?.preset_id),kind=combineKind(first);
+    if(!kind||kind!==combineKind(second))return false;
+    const same=(a,b)=>/^[a-f0-9]{64}$/.test(a.sha256||'')&&/^[a-f0-9]{64}$/.test(b.sha256||'')?a.sha256===b.sha256:!!a.file&&a.file===b.file;
+    const keep=record=>({file:record.controls?.last_reference,sha256:record.continuation?.source_sha256});
+    if(!same(keep(current),keep(job)))return false;
+    const refs=record=>(record.references||[]).filter(r=>r?.file);
+    const a=refs(current),b=refs(job);
+    return a.length>0&&a.length===b.length&&!a.concat(b).some(r=>r.missing)&&a.every((ref,i)=>same(ref,b[i]));
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineSwitchReason,combineReferences,sameCombinePair};
 });
