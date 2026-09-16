@@ -6401,7 +6401,7 @@
       "family": "FLUX.2 Klein 9B",
       "graph": "workflows/api/combine-klein-9b-depth-api.json",
       "verified": true,
-      "execution_note": "Executed 2026-09-15 03:16 through the Studio (POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_depth.py): the owner's bent-over fan picture on Pose picture (image 1, read as a depth map), the SHARK crop-top character on Picture to keep (image 2), the three bracketed fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091441: job 22ff6394-11ad-490a-bfea-6304e53f5d24 (prompt 9047dc60-a99e-4eb5-94f8-4615de1b90fe, 448.7 s in the slow state ComfyUI was in after the night's Qwen run; the same graph sampled in 90-115 s before it), output Combine/Klein-9B-depth_00001_.png: deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare feet, one foot heel-shaped. Research before it: 3 of 4 seeds held the deep bend (README round two). Not run by clicking through the page yet; not art acceptance.",
+      "execution_note": "Executed 2026-09-15 03:16 through the Studio (POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_depth.py): the owner's bent-over fan picture on Pose picture (image 1, read as a depth map), the SHARK crop-top character on Picture to keep (image 2), the three bracketed fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091441: job 22ff6394-11ad-490a-bfea-6304e53f5d24 (prompt 9047dc60-a99e-4eb5-94f8-4615de1b90fe, 448.7 s in the slow state ComfyUI was in after the night's Qwen run; the same graph sampled in 90-115 s before it), output Combine/Klein-9B-depth_00001_.png: deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare feet, one foot heel-shaped. Research before it: 3 of 4 seeds held the deep bend (README round two). Not run by clicking through the page yet; not art acceptance. Cut control proved 2026-09-16 02:57 through the same path (research-scripts/prove_depthcut.py): same pair, fills and seed 2026091441 with depth_cut 86 (the 'Cut below the ankles (86 %)' variant): job b57c6f3f-0d12-430d-863e-02e0bd0ebaa0 (prompt 7769c72d-602d-49cc-b4f0-41238d09fd03, 122.9 s including the model load on a fresh ComfyUI), output Combine/Klein-9B-depth_00003_.png, submitted graph node 33 y = 86: the same deep bend, crossed legs and look-back, both feet bare on tiptoe where the uncut run of the same seed had one heel-shaped foot; face, hair, SHARK lettering and pink shorts kept; sheet examples/style-pose/combine-depth-cut-control.jpg.",
       "modality": "image",
       "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. The depth map comes from Depth Anything V2 Large (depth-anything/Depth-Anything-V2-Large, licence cc-by-nc-4.0 read from the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node on first use). A successful render is not legal clearance.",
       "positive": [
@@ -6419,6 +6419,10 @@
       "cfg": [
         "6",
         "cfg"
+      ],
+      "depth_cut": [
+        "33",
+        "y"
       ],
       "width": [
         "10",
@@ -6465,7 +6469,7 @@
         "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
       },
       "reference_board_label": "Depth map of the pose picture (image 1)",
-      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Measured 15 September 2026: the depth map painted black below the ankles gave bare feet on 3 of 3 seeds; cropping the pose picture itself above the ankles before attaching it is the same idea from your side of the page but was not measured as a crop, so audition it. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
+      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Cut the depth map below (%) paints the map black below that fraction of its height, from the top: 100 keeps all of it, 86 removed the heels and the floor band on the owner's full-body picture and gave bare feet on 3 of 3 seeds (15 September 2026); the variant sets it. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
       "continuation_operation": "combine",
       "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
       "continuation_placeholder": [
@@ -6482,6 +6486,12 @@
         "PNG"
       ],
       "variants": [
+        {
+          "name": "Cut below the ankles (86 %)",
+          "controls": {
+            "depth_cut": 86
+          }
+        },
         {
           "name": "More steps (8)",
           "controls": {
