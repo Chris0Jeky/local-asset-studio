@@ -1,5 +1,47 @@
 # Current state — 16 September 2026
 
+## Combine: Copy Pose is a recipe, the ankle cut is a control, a pose editor on the page; the Codex stacks landed — 16 September 2026 (from 01:40)
+
+Every generation below went through the Studio's own path (POST /api/jobs: prepare -> worker -> ComfyUI) on the owner's pair; receipts in the
+receipts root, exact recipes committed beside the scripts, sheets in `examples/style-pose/`.
+
+- **Copy Pose is a recipe (PR #452):** `combine-klein-9b-copypose`, second on the Combine route: the shipped 9B graph with the civitai Copy Pose LoRA
+  at 1.0 (strength and file as Studio controls), the order turned round (the character is image 1 and keeps its own background and framing; the
+  pose picture is image 2). Proving run job `61dd5375…` (prompt `1fbea73e…`, 58.5 s warm, seed 2026091471): the deep bend, crossed legs and look-back
+  with the character's light background kept, bare feet, no tights, heels or tail; the lettering partly hidden by the bend. The three fills carry
+  across recipes by meaning (who / clothes / pose) although this recipe's reading order differs; the engine switch offers it as *Klein 9B · Copy
+  Pose*; the Combine guidance names what it keeps (a review finding fixed in the same PR).
+- **The ankle cut is a control (PR #453, #427):** *Cut the depth map below (%)* on `combine-klein-9b-depth` paints the map black below that fraction
+  of its height inside the graph (SolidMask band -> MaskComposite -> ImageCompositeMasked on the ~1 MP map, no reframe, no re-estimation); 100 keeps
+  all, the variant *Cut below the ankles (86 %)* is the round-three edit. Proving run job `b57c6f3f…` (122.9 s on a fresh ComfyUI, seed 2026091441,
+  cut 86): both feet bare where the uncut run of the same seed (`22ff6394…`) had a heel; the default (100) run `216239b8…` reproduced the uncut
+  output byte for byte, so the added nodes change nothing until the control is set. `depth_cut` is a new 0-100 whole-number control key (server,
+  validator, page, bundle key lists).
+- **Pose editor (PR #466, #444 minimal slice, by a worker):** *Draw the pose* on the Combine screen: COCO-18 joints dragged with mouse, touch or
+  keyboard, a per-joint unknown toggle, two starting figures (standing; the round-three bent-forward one), mirror, undo; *Use this pose* renders the
+  guide on the server (`POST /api/pose/render` -> `studio_workflow.pose_raster`, stored like an upload, every joint manual with no detector
+  confidence) and puts it on Picture 1 of `combine-klein-9b-skeleton` through the engine-switch path. Proved: a guide rendered by that
+  endpoint from the bent-forward starting figure gave the drawn pose through the skeleton recipe (job `8b571dd4…`, 66.5 s, the same figure and
+  seed as the hand-drawn run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`): thin 8 px strokes carry the pose as well as the
+  14 px research figure. The worker filed #467 (a Windows clock-tick dependency in a trace-stream test).
+- **Failed jobs say when a retry is safe (PR #465, #350):** an IndexError whose traceback names ComfyUI's `free_memory` (the first load of a different
+  model family in a session) is recorded as `model_swap_fault` with the action *run the same job again with the same seed*; nothing is retried
+  automatically; a loader's own IndexError stays a plain execution error.
+- **The fantasy pack's four steps exist** (separate entry below; HUMAN_TODO q-30).
+- **The RAM the owner saw is ComfyUI's model cache, not a leak (measured between the 02:48 pose-editor run and the 02:57 night audition):** with an idle queue ComfyUI's process held 25.8 GB committed
+  (11.4 GB working set; 1.1 GB physical free of 31.7) after a night of Klein 9B, Qwen3 8B, Anima and Klein 4B runs, the Studio server 40 MB;
+  one `POST /free` (`unload_models` + `free_memory`) on the idle queue took ComfyUI to 5.7 GB committed / 0.44 GB working set and physical
+  free RAM to 16.7 GB (commit 51.9 -> 32 GB of 95.7). PR #470 makes the Studio send that release once per idle stretch
+  (`idle_cache_release_minutes`, default 10) and reports it in `/api/health`.
+- **Operations:** a merge-queue worker reviewed and merged the Codex feature stacks that had waited since 15 September (its report lists them);
+  the Codex "controlled adult illustration programme" stack (#416…#441) was left untouched for the owner (HUMAN_TODO q-29). Issue #464 records a
+  5-second fixture deadline in the resource-receipt tests that fails on a slow windows-latest runner (rerun passed).
+
+Reviews: one fresh-context adversarial pass per PR plus the Codex connector, no CRITICAL/HIGH on any; findings fixed in-PR were the guidance
+text (#452), the free_memory claim gated on the traceback (#465), committed recipes and the skip-completed guard (#462). Not verified: the recipes,
+the control and the editor by clicking through the page (the API runs use the page's prepare and worker path); any pose picture other than the
+owner's; art acceptance (HUMAN_TODO q-28, q-30).
+
 ## Fantasy pack: the brief's four steps exist as one review batch — 16 September 2026 (02:07-02:10)
 
 The G2 slice open since 13 September ran: look B (`anima-v1-baseline`, slot 1 at 1.0, seed 2026091301, 832x1216) through the brief's four steps as four Studio jobs on the page's own path (`experiments/curated/fantasy-pack-20260916/pack_lookb.py`): portrait with both hands on the lantern (`ca5c5082…`, 34.3 s with the model load), full body with the lantern and a satchel (`373d0b35…`, 18.2 s), the surprised-smile variation (`053f6cf5…`, 18.2 s), and Anime Detail Fix on the portrait through the repair path (`009eddad…`, 70.5 s). Inspected: the costume reads across all three renders; the seed did not carry identity (the hair changed on the expression render); the detail pass repainted the face (eyes brown to grey-blue) and left the slightly odd lantern grip. Sheet `examples/fantasy-pack/first-batch.jpg`; the four assets are unreviewed in the review queue (HUMAN_TODO q-30). **Identity follow-up (02:55-03:00):** *Change one thing* on the portrait kept the identity in full with a new (broader than asked) smile (`d0e8524e…`, 64.5 s); the depth Combine from the portrait into the batch's full-body pose carried pose and costume but lost the face and the painterly finish at full-body scale (`18a4f441…`, 107.1 s). Rule for the pack from here: variations are edits of one reference portrait; a body-pose change needs a route that keeps the face at that scale. Not verified: art acceptance; a useful hand correction; Copy Pose as the full-body route for this character.
