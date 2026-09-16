@@ -9,12 +9,13 @@
   const node=(tag,text)=>{const n=document.createElement(tag);n.textContent=text;return n;};
   let caps=null,files=[],epoch=0,handle=null,last=null,busy=false,timer=null,storageError=false;
   const say=text=>{el('ra-status').textContent=text;};
+  function clearAck(){el('ra-acknowledge').checked=false;}
   function validHandle(value){return value&&Object.keys(value).length===2&&typeof value.workspace_id==='string'&&/^[a-f0-9]{32}$/.test(value.workspace_id)&&typeof value.request_id==='string'&&/^[A-Za-z0-9_.:-]{16,128}$/.test(value.request_id);}
   function remember(value){
     if(!validHandle(value))throw Error('Invalid analysis recovery identity.');
     const text=JSON.stringify(value);sessionStorage.setItem(key,text);
     if(sessionStorage.getItem(key)!==text)throw Error('Recovery identity was not saved.');
-    handle=value;storageError=false;el('ra-identity').textContent=value.request_id;
+    handle=value;storageError=false;el('ra-identity').textContent=value.request_id;clearAck();
   }
   function controls(){
     const held=last?.state.resource_hold, settled=last&&!active.has(last.state.status);
@@ -109,6 +110,7 @@
       if(action!=='retire')body.expected_state_sha256=last.state_sha256;
       if(action==='release')body.acknowledge_unknown=el('ra-acknowledge').checked;
       accept(await request(action,body));
+      if(action==='release')clearAck();
     }catch(error){say(error.message+' Check status before another command.');}
     finally{busy=false;controls();schedule();}
   }
@@ -119,7 +121,7 @@
     if(busy||!last||active.has(last.state.status)||last.state.resource_hold)return;
     try{sessionStorage.removeItem(key);if(sessionStorage.getItem(key)!==null)throw Error('Could not clear the local handle.');}
     catch(error){say(error.message);return;}
-    handle=null;last=null;storageError=false;el('ra-identity').textContent='';clearTimeout(timer);await capabilities();
+    handle=null;last=null;storageError=false;el('ra-identity').textContent='';clearAck();clearTimeout(timer);await capabilities();
     say('Ready for a separately requested analysis. The previous operation remains in Workspace history.');controls();
   });
   el('ra-recent').addEventListener('change',controls);
