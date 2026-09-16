@@ -42,6 +42,46 @@ said in words.
 
 ## From a finished picture: Continue with this → Combine
 
+**Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** leads the
+route since 15 September 2026 (later that night). The graph turns the pose picture into a Depth Anything V2 depth map and
+that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
+picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
+the deep waist bend and the crossed legs on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept,
+bare feet, no tights and no tail, in 90-115 s warm (`examples/style-pose/combine-pose-round2.jpg`; the fourth seed bent
+only moderately). Proved through the Studio's own path: job `22ff6394…`, output `Combine/Klein-9B-depth_00001_.png`. Two things the
+research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
+blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
+wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
+heel can still shape a foot: the control **Cut the depth map below (%)** (16 September 2026) paints the map black below that
+fraction of its height inside the graph (a 100-row mask band resized onto the ~1 MP map, composited with a black source before the
+VAE), 100 keeps all of it and the variant *Cut below the ankles (86 %)* reproduces the round-three edit that gave bare feet on 3 of 3
+seeds (`pose_sources.py` painted the map from row 0.86·h down). Audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)** is second on the
+route (16 September 2026). It runs the shipped 9B graph with the civitai *Copy Pose* LoRA (`KleinBase9B_PoseTransfer`, strength 1.0,
+model only) and turns the order round: **your character is image 1** and is kept, with its own background, framing and rendering,
+and **the pose picture is image 2**, from which only the pose is taken. On the owner's pair (pose round three,
+`examples/style-pose/combine-pose-round3.jpg`) 3 of 3 seeds held the deep bend, crossed legs and look-back with the face,
+lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking, 75-80 s warm. It wants the
+real pose picture: a depth map as image 2 copied the map's black ground and a grey ghost figure on 3 of 3 seeds. Three fills in the
+wording's reading order: who is in image 1, image 1's clothes and colours, image 2's pose with the hands and the camera. Choose it
+over the depth recipe when the character's own picture should stay the picture; choose the depth recipe when the pose picture's
+framing is wanted. The LoRA's civitai flags read Rent only (no Image, no Sell) and its description says non-commercial; the 9B
+model is non-commercial. Proving run through the Studio: see the catalog `execution_note` once recorded.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** is third on the route and is the
+recipe to reach for when the pose picture's camera, framing and background should be kept as well as the pose (the depth
+recipe keeps only the body position). It is the recipe for a strong pose (a deep bend, a crouch, a lean seen from an angle). It works
+the other way round from the 4B recipe: the **pose picture is image 1** and is kept (pose, camera, framing, background),
+and **your character is image 2** and is swapped into it. Three bracketed fills: who is in image 2, image 1's pose in a
+few words, and your character's clothes and colours. The last one is not optional: without it image 1's black shorts and
+heels leaked in our test; with it FLUX.2 Klein 9B held a deep waist bend on 4 of 4 seeds on the owner's own pictures
+(`examples/style-pose/combine-klein9b-pose-first.jpg`). A shoe or stocking from image 1 can still ghost in, lettering
+can garble; audition three seeds. About 100-200 s warm; the 9B model is non-commercial (private experiments only). Why
+this order: the Klein models keep image 1's structure, so the 4B recipe below (character first, pose in words) can only
+give a mild pose, and putting the pose picture first on 4B just brings the character's own pose back; the research table
+in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows all 22 renders.
+
 **Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
 what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
 handoff puts it there), image 2 goes on Picture 1 of the board (*Pull from library* or drop a file); both are scaled to

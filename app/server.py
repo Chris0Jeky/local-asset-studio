@@ -49,7 +49,7 @@ from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit into an unobserved/busy queue
@@ -396,7 +396,7 @@ class Studio:
             # strength 0, so refuse it here while the inventory is known.
             if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
             self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False)):
+        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -592,8 +592,8 @@ class Studio:
     def _estimate_graph(self, preset, controls):
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
-        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", *LORA_SLOTS}
-        integer = {"seed", "steps", "width", "height", "frames", "fps"}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
+        integer = {"seed", "steps", "width", "height", "frames", "fps", "depth_cut"}
         extras = preset.get("bindings_extra") or {}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
@@ -1292,8 +1292,21 @@ class Studio:
         exception_message = text("exception_message", 450)
         combined = " ".join(value for value in (exception_type, exception_message) if value).lower()
         allocation = bool(re.search(r"bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455", combined))
+        # ComfyUI's own model cache can trip on the first load of a different model family in a session (IndexError in
+        # free_memory before any sampling, #350: observed twice on 14 September 2026, the identical graph succeeded on retry).
+        trace = detail.get("traceback")
+        has_trace = isinstance(trace, list) and any(isinstance(line, str) and line.strip() for line in trace)
+        trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if has_trace else ""
+        # Only the distinctive signature counts: an IndexError whose traceback names free_memory. A loader's own IndexError (a
+        # corrupt or incompatible file) stays a plain execution error, whatever the node is called.
+        swap = "indexerror" in combined and "free_memory" in trace_text
 
-        if allocation:
+        if swap:
+            kind = "model_swap_fault"
+            title = "ComfyUI model-swap fault"
+            summary = f"ComfyUI failed inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
+            action = "Run the same job again with the same seed: measured 14 September 2026, the identical graph succeeded on the retry. The original prompt was not retried automatically."
+        elif allocation:
             kind = "memory_allocation"
             title = "Memory allocation failed"
             if re.search(r"defaultcpuallocator|alloc_cpu|paging file|os error 1455|commit", combined):
@@ -1433,7 +1446,8 @@ class Studio:
                     submission["status"] = "failed"
                     job["failure"] = self._execution_failure(detail)
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
-                    message = "ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else "")
+                    label = "ComfyUI model-swap fault; running the same job again is safe" if job["failure"].get("kind") == "model_swap_fault" else "ComfyUI reported an execution error"
+                    message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
                 outputs = history.get("outputs", {})

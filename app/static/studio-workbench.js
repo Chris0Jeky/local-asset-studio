@@ -26,6 +26,40 @@
   const setup=q('#createView .setup'),drawer=element('details','ux-recipe-drawer');drawer.open=window.innerWidth>850;drawer.innerHTML='<summary>Recipe library <small id="uxRecipeLabel">Choose a starting point</small></summary>';while(setup.firstChild)drawer.append(setup.firstChild);setup.append(drawer);
   const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Draft recovery is browser-local.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
   q('#positiveWrap').before(element('div','ux-section-heading','<span>01</span><h3>Describe the result</h3><a href="/prompt-lab.html">Open Prompt Lab ↗</a>'));
+  // A recipe's bracketed fills (who, the pose, the clothes) are short fields that write the prepared wording for you; the
+  // paragraph stays visible and editable underneath, and a hand edit stops the fields from rewriting it (#422 slice A).
+  const fillsBlock=element('div','ux-fills');fillsBlock.id='uxFills';fillsBlock.hidden=true;q('#positiveWrap').before(fillsBlock);
+  let fillsPreset=null,fillsSource=null,fillsTemplate='',fillsAssembled=null,transferredFills=null;
+  const fillInputs=()=>[...fillsBlock.querySelectorAll('[data-ux-fill]')];
+  function fillValues(){return Object.fromEntries(fillInputs().map(input=>[input.dataset.uxFill,input.value]));}
+  function fillsKey(){return continuationState?'studio-fills:'+continuationState.source_asset_id:null;}
+  function rememberedFills(){const key=fillsKey();if(!key)return{};try{const value=JSON.parse(localStorage.getItem(key)||'{}');return value&&typeof value==='object'?value:{};}catch(e){return{};}}
+  function rememberFills(){const key=fillsKey();if(!key)return;const remembered={...rememberedFills(),...fillValues()};for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)remembered['@'+meaning]=value;}try{localStorage.setItem(key,JSON.stringify(remembered));}catch(e){}}
+  function assembleFills(){
+    const text=StudioContinuation.assemble(fillsTemplate,fillValues());fillsAssembled=text;rememberFills();
+    if(q('#positive').value!==text){q('#positive').value=text;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof updateReady==='function')updateReady();}
+  }
+  function syncFills(){
+    const spec=selected&&typeof StudioContinuation!=='undefined'?StudioContinuation.fills(selected,selected.continuation_prompt):[];
+    if(!spec.length){fillsBlock.hidden=true;fillsPreset=null;fillsSource=null;return;}
+    const current=q('#positive').value,carries=spec.every(f=>current.includes(f.placeholder)),source=continuationState?.source_asset_id||null;
+    // The block belongs to one recipe and one source picture: another source (or leaving the continuation) starts from that
+    // source's remembered answers, never from the previous character's.
+    if(fillsPreset!==selected.id||fillsSource!==source||(carries&&current!==fillsTemplate)){
+      // The template is the prepared wording: the textarea while it still carries every fill, otherwise the recipe's continuation
+      // wording with `{source}` resolved the way Continue with this resolves it (the literal token must never reach the model).
+      fillsPreset=selected.id;fillsSource=source;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered={...rememberedFills(),...(transferredFills?.preset===selected.id&&transferredFills.source===source?transferredFills.values:{})};
+      fillsBlock.innerHTML='<p class="muted">Answer these in a few words; they write the wording below for you. The paragraph stays editable.</p>'+spec.map(f=>'<label>'+escape(f.label)+'<input data-ux-fill="'+escape(f.placeholder)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(remembered[f.placeholder]||'')+'" autocomplete="off"></label>').join('')+'<p id="uxFillsNote" class="muted" hidden>The wording below is not what the fields would write (restored, or edited by hand), so they leave it alone. <button type="button" id="uxRebuildFills">Rebuild it from the fields</button></p>';
+    }
+    fillsBlock.hidden=!fillsTemplate;if(fillsBlock.hidden)return;
+    if(carries&&Object.values(fillValues()).some(v=>String(v).trim()))assembleFills();
+    // Wording the fields did not write (a restored draft, a bracket answered in the paragraph, a hand edit) stays until Rebuild is
+    // pressed; an empty box, the template itself and the recipe's own example text are not hand edits.
+    const text=q('#positive').value,detached=!carries&&!!text.trim()&&text!==fillsAssembled&&text!==String(selected.defaults?.positive||'');
+    const note=q('#uxFillsNote');if(note)note.hidden=!detached;
+  }
+  fillsBlock.addEventListener('input',e=>{if(!e.target.matches('[data-ux-fill]'))return;const note=q('#uxFillsNote');if(note&&!note.hidden)return;assembleFills();});
+  fillsBlock.addEventListener('click',e=>{if(e.target.closest('#uxRebuildFills'))assembleFills();});
   const referenceHeading=element('div','ux-section-heading','<span>02</span><h3>Bring in your sources</h3><button id="uxFindReferenceRecipes" hidden>Show reference recipes</button><button id="uxPullAsset">Pull from library</button>');q('#roleReferences').before(referenceHeading);
   const sourceNote=element('p','ux-source-note');sourceNote.id='uxSourceNote';referenceHeading.after(sourceNote);
   // A wrong turn must say something. The sources section stays on screen for every recipe; on a
@@ -69,7 +103,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy,unfilled,sourceMissing});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -83,7 +117,7 @@
   function syncReady(){
     if(!q('#uxRunSummary'))return;
     const {items,required}=readinessItems();
-    q('#generate').disabled=items.length>0;syncContinuation();
+    q('#generate').disabled=items.length>0;syncContinuation();syncFills();syncCombinePair();
     const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
     // Polling identical evidence must not replace a focused action or announce the same status again.
     if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
@@ -114,7 +148,7 @@
       else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||(lastMissing&&uploaded?q('#lastReference'):q('#reference'));
     }
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
-    if(action==='wording'||action==='fills')target=q('#positive');
+    if(action==='wording'||action==='fills')target=(!fillsBlock.hidden&&fillInputs().find(input=>!input.value.trim()))||q('#positive');
     if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
     if(action==='second')target=q('#uxSecondPicture');
     if(action==='source-back'){void reattachSource();return;}
@@ -135,6 +169,105 @@
   const contextPanel=element('section','ux-continuation');contextPanel.id='uxContinuation';contextPanel.hidden=true;
   contextPanel.innerHTML='<img id="uxContinuationImage" alt="Source image for this pass"><div><span class="eyebrow">CONTINUING YOUR IMAGE</span><h3 id="uxContinuationTitle"></h3><p id="uxContinuationOrigin"></p><div id="uxContinuationGuidance"></div><details><summary>Source wording and provenance</summary><pre id="uxContinuationPrompt"></pre><small id="uxContinuationRecord"></small></details><div class="ux-context-actions"><button id="uxRestoreSourcePrompt">Restore source wording</button><button id="uxChangeRoute">Change route</button><button id="uxLeaveContinuation">Leave this continuation</button></div><p id="uxContinuationContract">Setup choices keep this source and your wording; they reset sampling and adapters to their defaults. Check Parameters before running.</p></div>';
   q('#selectedPreset').before(contextPanel);
+  // A Combine is two pictures: show them next to each other, in the order the model reads them, with the recipe's own
+  // labels; an empty tile offers the same repair the readiness list does (#422 slice A).
+  const pairPanel=element('section','ux-pair');pairPanel.id='uxPair';pairPanel.hidden=true;q('#selectedPreset').before(pairPanel);
+  let pairMarkup='';
+  const imageNumber=label=>Number(/\(image (\d)\)/.exec(String(label||''))?.[1])||0;
+  function syncCombinePair(){
+    const combine=!!selected&&(selected.continuation_capability?.operation==='combine'||selected.continuation_operation==='combine')&&!!selected.reference_board&&!!selected.last_reference;
+    pairPanel.hidden=!combine;if(!combine){pairMarkup='';syncCombineEngines();syncCombineResults();return;}
+    const board=referenceRecords[0],boardFile=board?.file&&!board.missing?board.file:null,keepAsset=continuationState?.source_asset_id||null;
+    const tiles=[{label:selected.reference_board_label||'Pose picture',n:imageNumber(selected.reference_board_label)||2,src:boardFile?'/api/uploads/'+encodeURIComponent(boardFile):null,empty:'No pose picture yet.',action:'board',button:'Pull it from the library'},
+                 {label:selected.last_reference_label||'Picture to keep',n:imageNumber(selected.last_reference_label)||1,src:lastUploaded?'/api/uploads/'+encodeURIComponent(lastUploaded):keepAsset?'/api/assets/'+encodeURIComponent(keepAsset)+'/file':null,empty:'No picture to keep yet.',action:'keep',button:'Choose your picture'}].sort((a,b)=>a.n-b.n);
+    const markup=tiles.map(t=>'<figure class="ux-pair-tile">'+(t.src?'<img src="'+escape(t.src)+'" alt="'+escape(t.label)+'">':'<div class="ux-pair-empty"><span>'+escape(t.empty)+'</span><button type="button" data-ux-pair="'+t.action+'">'+escape(t.button)+'</button></div>')+'<figcaption>'+escape(t.label)+'</figcaption></figure>').join('');
+    if(markup!==pairMarkup){pairMarkup=markup;pairPanel.innerHTML='<span class="eyebrow">THE TWO PICTURES, IN THE ORDER THE MODEL READS THEM</span><div class="ux-pair-tiles">'+markup+'</div>';}
+    syncCombineEngines();syncCombineResults();
+  }
+  pairPanel.onclick=e=>{
+    const button=e.target.closest('[data-ux-pair]');if(!button)return;
+    if(button.dataset.uxPair==='board')q('#uxPullAsset').click();
+    else if(!focusReadinessTarget(q('#lastReference')))q('#uxPullAsset').click();
+  };
+  // One experiment retains semantic source roles; image numbers and graph bindings belong to the selected recipe.
+  const enginePanel=element('section','ux-combine-engines');enginePanel.id='uxCombineEngines';enginePanel.hidden=true;pairPanel.after(enginePanel);
+  const resultPanel=element('section','ux-pair-results');resultPanel.id='uxPairResults';resultPanel.hidden=true;runBox.after(resultPanel);
+  const combineWording=new Map();let engineMarkup='',resultMarkup='',pairActionBusy=false;
+  function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
+  function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
+  function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy;}
+  function syncCombineEngines(){
+    enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
+    const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
+    const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
+      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
+      const label=({'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-skeleton':'Klein 9B · skeleton'})[p.id]||p.name;
+      const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
+      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
+    }).join('')+'</div>';
+    if(markup!==engineMarkup){engineMarkup=markup;enginePanel.innerHTML=markup;}
+  }
+  enginePanel.onclick=e=>{
+    const button=e.target.closest('[data-ux-engine]');if(!button||button.disabled||combineBusy()||button.dataset.uxEngine===selected.id)return;
+    try{
+      const target=catalog.presets.find(p=>p.id===button.dataset.uxEngine),reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason)throw Error(reason);
+      if(!continuationSource||lastUploaded!==continuationState.reference_file)throw Error('Put the source back before changing recipes.');
+      if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before changing recipes.');
+      const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
+      const identity=pairKey(),oldWords=q('#positive').value,manual=q('#uxFillsNote')&&!q('#uxFillsNote').hidden;
+      if(manual)combineWording.set(identity+'|'+selected.id,oldWords);else combineWording.delete(identity+'|'+selected.id);
+      const refs=StudioContinuation.combineReferences(target,referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
+      const restored=combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
+      rememberFills();transferredFills={preset:target.id,source:source.asset_id,values:mapped};
+      selectPreset(target.id,true,true);continuationState=prepared.claim;continuationSource=source;lastUploaded=keep;uploaded=null;parentAssets=parents;parentByInput=inputs;referenceRecords=refs;
+      q('#positive').value=positive;if(selected.negative)q('#negative').value=prepared.negative;
+      for(const key of ['seed','width','height']){const input=getControl(key);if(input&&prior[key]!=null)input.value=prior[key];}q('#batch').value=batch;
+      fillsPreset=null;renderReferenceSlots();syncFills();if(restored===undefined)fillsAssembled=positive;transferredFills=null;
+      rememberFills();draftDirty=true;saveDraft();updateReady();recipeChanged();scheduleTimeEstimate();
+      announce('Same pictures, '+target.name+'. '+(restored!==undefined?'Your edited wording for this recipe is restored. ':'The wording now uses this recipe’s image order. ')+'Review it, then Generate.');
+    }catch(error){announce(error.message,true);}
+  };
+  function syncCombineResults(){
+    const active=!!StudioContinuation.combineKind(selected);resultPanel.hidden=!active;if(!active){resultMarkup='';return;}
+    const record=currentPair(),matches=jobs.filter(job=>StudioContinuation.sameCombinePair(record,job,catalog.presets));
+    const outputs=matches.flatMap(job=>(job.outputs||[]).map((output,index)=>({job,output,index}))).filter(({output})=>!assetState.assets.find(a=>a.id===output.asset_id)?.trashed_at);
+    const sources=[...referenceRecords.filter(r=>r.file&&!r.missing).map(r=>({file:r.file,label:'Pose source'})),{file:lastUploaded,label:'Character'}].filter(r=>r.file);
+    const sourceTiles='<div class="ux-result-sources">'+sources.map(s=>'<figure><img src="/api/uploads/'+encodeURIComponent(s.file)+'" alt="'+s.label+'"><figcaption>'+s.label+'</figcaption></figure>').join('')+'</div>';
+    const tiles=outputs.slice(0,24).map(({job,output,index})=>{
+      const asset=assetState.assets.find(a=>a.id===output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',rerun=job.status==='completed'&&!combineBusy();
+      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="Combine result, seed '+escape(output.seed??job.controls?.seed??'unknown')+'"><b>Seed '+escape(output.seed??job.controls?.seed??'unknown')+'</b><small>'+escape(job.preset_name)+(Number(job.elapsed_seconds)>0?' · '+durationLabel(job.elapsed_seconds):'')+'</small><span>'+escape(review==='selected'?'Keeper':review.replaceAll('_',' '))+'</span><div class="ux-result-actions">'+(output.asset_id?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+(rerun?'':'disabled')+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+(rerun?'':'disabled')+'>Prepare new seed</button><button type="button" data-ux-result-recipe="'+id+'">Recipe</button></div>'+(job.status!=='completed'?'<small>Run '+escape(job.status)+'. Resolve it in Problems before preparing another.</small>':'')+'</article>';
+    }).join('');
+    const activeRuns=matches.filter(j=>j.status!=='completed').map(j=>'<p>'+escape(j.preset_name)+' · '+escape(j.status)+': '+escape(j.message||'')+'</p>').join('');
+    const markup='<h3>Runs for these pictures</h3><p>Review each seed beside its sources. Preparing a seed loads the recorded recipe; Generate remains a separate step.</p><div class="ux-experiment-strip">'+sourceTiles+(tiles||'<p class="ux-no-results">'+(sources.length>1?'No saved results for these pictures yet.':'Attach both pictures to see their results.')+'</p>')+'</div>'+activeRuns+(outputs.length>24?'<p>Showing the latest 24 of '+outputs.length+' outputs. All saved outputs remain in the library.</p>':'')+'<p id="uxPairActionStatus" role="status"></p>';
+    if(markup!==resultMarkup){resultMarkup=markup;resultPanel.innerHTML=markup;}
+  }
+  resultPanel.onclick=async e=>{
+    const button=e.target.closest('button');if(!button||button.disabled||pairActionBusy)return;
+    if(button.dataset.uxResultRecipe){try{await exportRecipe(button.dataset.uxResultRecipe);}catch(error){announce(error.message,true);}return;}
+    if(!button.dataset.uxReview&&!button.dataset.uxRerun)return;
+    const stamp=setupStamp();pairActionBusy=true;syncReady();let status='';
+    try{
+      if(button.dataset.uxReview){
+        await refreshAssets(true);await mutateAssets({action:'edit',ids:[button.dataset.asset],review:button.dataset.uxReview});
+        status=button.dataset.uxReview==='selected'?'Keeper saved.':'Needs-work decision saved.';
+      }else{
+        const job=jobs.find(j=>j.id===button.dataset.job),index=Number(button.dataset.index),output=job?.outputs?.[index];
+        if(job?.status!=='completed'||!output)throw Error('Only a completed run can prepare another seed. Inspect unresolved work in Problems.');
+        const recipe=await api('/api/jobs/'+encodeURIComponent(job.id)+'/recipe'),check=await post('/api/recipe-check',recipe);
+        if(stamp!==setupStamp())throw Error('The workbench changed while reading this recipe. Your current work was kept.');
+        const target=catalog.presets.find(p=>p.id===recipe.preset_id);if(!target)throw Error('This recipe is no longer available.');
+        const seed=output.seed??recipe.controls?.seed;if(seed==null)throw Error('This run has no recorded seed. Inspect its recipe before preparing another.');let next=seed;
+        if(button.dataset.uxRerun==='new'){next=crypto.getRandomValues(new Uint32Array(1))[0];if(String(next)===String(seed))next=(next+1)%4294967296;}
+        const setup={preset:target.id,continuation:recipe.continuation,controls:{...recipe.controls,seed:String(next)},batch_count:1,parent_assets:recipe.parent_assets,references:StudioContinuation.combineReferences(target,recipe.references||[])};
+        selectPreset(target.id,true,true);applySaved(setup);
+        recipeTemplateHash=check.template_sha256;draftDirty=true;saveDraft();updateReady();recipeChanged();
+        status=(button.dataset.uxRerun==='new'?'New seed ':'Recorded seed ')+next+' prepared. Review the recipe, then Generate.';
+      }
+    }catch(error){status=error.message;announce(status,true);}
+    finally{pairActionBusy=false;syncReady();const line=q('#uxPairActionStatus');if(line)line.textContent=status;}
+  };
+  after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',syncCombineResults);
   function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   function syncContinuation(){
     contextPanel.hidden=!continuationState;if(!continuationState)return;
@@ -256,7 +389,7 @@
       else{const label=StudioContinuation.sourceLabel(selected).toLowerCase(),op=selected.continuation_capability?.operation,board=op==='combine'?'Picture 1 (the picture whose pose you want)':selected.continuation_capability?.keeps_picture&&selected.style_weight?'the style board (off until you raise Style weight)':selected.continuation_capability?.prompt_role==='instruction'?'Picture 1 (the picture drawn the way you want)':'the style board';
         if(style?.file){announce('Source attached as the '+label+'; your picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
         else if(style?.asset){announce('Source attached as the '+label+'; your picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
-        else{announce('Source attached as the '+label+'. Now add a picture to Picture 1 of '+board+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}
+        else{announce('Source attached as the '+label+'. Now add '+(op==='combine'?'the picture whose pose you want to Picture 1':'a picture to Picture 1 of '+board)+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}
     }catch(error){q('#uxHandoffStatus').textContent=error.message;}
     finally{handoffBusy=false;destinationDetails();syncReady();}
   };
