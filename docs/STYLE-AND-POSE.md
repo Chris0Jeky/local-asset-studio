@@ -71,18 +71,19 @@ in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows al
 
 **Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)** takes a
 coloured stick figure on black as image 1, and since #444 you draw it on the Combine screen instead of elsewhere:
-a **Draw the pose** panel appears whenever the open continuation is a Combine. Drag the 18 COCO-18 joints with a
-mouse or a finger, or pick one in the joint list and nudge it with the arrow keys (1 % of the canvas, 5 % with
+a **Draw the pose** panel appears whenever a Combine recipe is open (a continuation, or one chosen straight from
+the library). Drag the 18 COCO-18 joints with a mouse or a finger, or pick one in the joint list and nudge it with the arrow keys (1 % of the canvas, 5 % with
 Shift); *Start from* loads a plain standing figure, the bent-forward research figure or a left-right mirror of what
 is on the canvas; a joint can be marked unknown, which leaves it and every limb touching it out of the drawing (a
 missing joint is omitted, never coordinate zero); Undo steps back one change. **Use this pose** posts the joints to
 `POST /api/pose/render`, which validates them through `studio_workflow.pose_artifact` (every joint recorded as
 manual with no detector confidence), renders the PNG with `studio_workflow.pose_raster.render_png` and stores it the
-way an uploaded picture is stored, then attaches it to Picture 1 — switching to this recipe first when you were on
-another Combine, through the same path the engine buttons use. The endpoint submits nothing to ComfyUI and creates
-no job; Generate stays a separate press. A skeleton and a pose picture are different inputs, so a switch from the
-depth or pose-picture recipes is refused with that reason beside the button — reach this recipe through *Continue
-with this → Combine* and choose it there, then draw.
+way an uploaded picture is stored, then attaches it to Picture 1. The endpoint submits nothing to ComfyUI and
+creates no job; Generate stays a separate press. Attaching takes the engine buttons' own switch path when the
+recipe has to change, and that path applies `combineSwitchReason`: a skeleton and a pose picture are different
+inputs, and the drawn skeleton is currently the only skeleton-kind Combine, so from the depth and pose-picture
+recipes the button stays **disabled** and names the route instead (*Continue with this → Combine*, choose this
+recipe, then draw). The switch itself becomes reachable the day a second skeleton-kind recipe exists.
 
 The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours as the hand-drawn research figure but
 thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px

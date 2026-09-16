@@ -287,7 +287,10 @@
     const target=catalog?.presets.find(p=>p.id===POSE_RECIPE);
     if(!target)return 'The drawn-skeleton recipe is not in this catalog.';
     if(!continuationState||!continuationSource)return 'Open this pair through Continue with this, then draw the pose.';
-    return StudioContinuation.combineSwitchReason(selected,target,referenceRecords)||target.runtime_block||'';
+    // A refusal that only names the mismatch leaves the user stuck: say where the drawn route actually is. Today the
+    // drawn skeleton is the one skeleton-kind recipe, so this is the answer from every picture-kind Combine.
+    const reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords)||target.runtime_block||'';
+    return reason?reason+' Reach the drawn-skeleton recipe through Continue with this → Combine, then draw here.':'';
   }
   function syncPoseActions(){
     const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo');
@@ -295,6 +298,7 @@
     const named=StudioPoseEditor.LABELS[poseJoint].toLowerCase(),drawn=!!(posePoints&&posePoints[poseJoint]);
     unknown.textContent=(drawn?'Mark ':'Restore ')+named;unknown.title=drawn?'Leaves it out of the guide, with its limbs.':'Puts it back where it last was.';
     unknown.disabled=poseBusy;undo.disabled=poseBusy||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
+    if(poseBusy)unknown.title=undo.title='The drawing is being rendered.';
   }
   function syncPoseEditor(){
     const active=!!selected&&!!StudioContinuation.combineKind(selected);

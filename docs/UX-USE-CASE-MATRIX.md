@@ -7,9 +7,10 @@ Combine continuation: the 18 COCO-18 joints drag with a mouse or a finger, the j
 the arrow keys (1 % of the canvas, 5 % with Shift), a joint can be marked unknown so it and its limbs
 leave the drawing, *Start from* loads a standing figure, the bent-forward research figure or a mirror,
 and Undo steps back one change. **Use this pose** renders the guide through `POST /api/pose/render` and
-attaches it to Picture 1, switching to the drawn-skeleton recipe through the same path as the engine
-buttons. Every disabled state names its reason; a skeleton and a pose picture remain different inputs,
-so that switch is refused from the depth and pose-picture recipes and says so beside the button.
+attaches it to Picture 1, taking the engine buttons' own switch path when the recipe has to change. Every
+disabled state names its reason and the route to take: a skeleton and a pose picture remain different
+inputs and the drawn skeleton is the only skeleton-kind Combine today, so from the depth and pose-picture
+recipes the button is disabled and points at *Continue with this → Combine* instead.
 
 `python tests/studio_use_cases.py` passed **14/14** journeys in 65.3 s on Windows/Python 3.14, with
 **zero generation submissions and zero page errors**. The new `draw-a-pose-for-combine` journey takes
