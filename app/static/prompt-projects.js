@@ -89,7 +89,7 @@
     const list=await request('list',{workspace_id:scope});
     if(list.workspace_id!==scope||!Array.isArray(list.projects)||list.projects.length>128)throw Error('Invalid saved brief listing.');
     const selected=el('pp-list').value;el('pp-list').replaceChildren(node('option','Choose a saved brief'));el('pp-list').firstChild.value='';
-    for(const row of list.projects){const option=node('option',row.name+' · r'+row.revision);option.value=row.id;el('pp-list').append(option);}
+    for(const row of list.projects){const option=node('option',(row.unreadable?'Unreadable brief':row.name)+' · r'+row.revision);option.value=row.id;el('pp-list').append(option);}
     if(list.projects.some(x=>x.id===selected))el('pp-list').value=selected;
     controls();
   }
