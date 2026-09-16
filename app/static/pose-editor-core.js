@@ -74,6 +74,7 @@
   // Treat rendering as a response to this exact canvas; never spread untrusted attachment metadata into a slot.
   function guideResponse(value,request){
     if(!value||typeof value!=='object'||Array.isArray(value)||!request
+        ||typeof value.file!=='string'||typeof value.sha256!=='string'||typeof value.artifact_id!=='string'
         ||!/^[a-f0-9]{32}_drawn-pose\.png$/.test(value.file||'')
         ||!/^[a-f0-9]{64}$/.test(value.sha256||'')||!/^[a-f0-9]{64}$/.test(value.artifact_id||'')
         ||!Number.isInteger(value.bytes)||value.bytes<1||value.bytes>20*1024*1024

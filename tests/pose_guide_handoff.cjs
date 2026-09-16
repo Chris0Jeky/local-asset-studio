@@ -40,4 +40,35 @@ test('malformed or mismatched render replies cannot replace the existing picture
     assert.throws(()=>P.guideResponse({...reply,...patch},request));
   for(const value of [null,[],{},false])assert.throws(()=>P.guideResponse(value,request));
 });
-console.log(count+' pose guide handoff contracts passed.');
+async function pendingAttachmentTests(){
+  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const start=code.indexOf('  async function usePose(){'),end=code.indexOf("  q('#uxPoseUse').onclick",start);
+  assert.ok(start>=0&&end>start,'exercise the actual usePose implementation');
+  for(const conflict of ['pending-upload','reference-epoch','picker','none']){
+    let resolveReply,switches=0;
+    const state={pending:0,epoch:0,picker:false};
+    const context={poseBusy:false,posePoints:P.fromPreset('standing',{width:1024,height:1536}),poseCanvas:{width:1024,height:1536},
+      poseBlockedReason:()=>'',syncPoseActions:()=>{},workbenchStamp:()=>'unchanged source pair',
+      setupStamp:()=>JSON.stringify([state.pending,state.epoch]),setupBusy:()=>state.pending>0||state.picker,
+      selected:{id:'picture'},POSE_RECIPE:'skeleton',StudioPoseEditor:P,syncReady:()=>{},
+      post:()=>new Promise(resolve=>{resolveReply=resolve;}),
+      switchCombineEngine:()=>{switches++;throw Error('test stops before attachment');},poseStatus:()=>{},announce:()=>{}};
+    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
+    const pending=context.usePose();
+    assert.equal(context.poseBusy,true,'the real function admitted the render');
+    if(conflict==='pending-upload')state.pending=1;
+    if(conflict==='reference-epoch')state.epoch++;
+    if(conflict==='picker')state.picker=true;
+    resolveReply(reply);await pending;
+    assert.equal(switches,conflict==='none'?1:0,conflict+' must not let the old guide discard a newer reference operation');
+    assert.equal(context.poseBusy,false,'the render hold is released');
+  }
+  count++;console.log('PASS actual handoff invalidates pending uploads, reference epochs and active picker operations');
+}
+pendingAttachmentTests().then(()=>{
+  test('render identity fields must be strings, not coercible arrays',()=>{
+    for(const key of ['file','sha256','artifact_id'])assert.throws(()=>P.guideResponse({...reply,[key]:[reply[key]]},request));
+  });
+  console.log(count+' pose guide handoff contracts passed.');
+}).catch(error=>{console.error(error);process.exitCode=1;});
