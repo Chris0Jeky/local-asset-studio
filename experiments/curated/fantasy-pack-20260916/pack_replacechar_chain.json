@@ -1,0 +1,82 @@
+[
+ {
+  "group": "chain",
+  "seed": 2026091311,
+  "prompt_id": "d92d1844-cb65-432c-b0ed-4cc90c341935",
+  "status": "success",
+  "image1": "e96eaacb7a3e4e2895447602cedc93c7_Klein-9B-depth_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's clean rendering and its plain light background. One figure only, nobody else in the picture.",
+  "lora": "replace_character_v1_klein.safetensors",
+  "size": "832x1216",
+  "seconds": 257.1,
+  "files": [
+   "Research/pack-replacechar-chain_00001_.png"
+  ],
+  "error": []
+ },
+ {
+  "group": "chain",
+  "seed": 2026091312,
+  "prompt_id": "ae1a53bb-07ac-46ac-9a47-54cd4871a3e8",
+  "status": "success",
+  "image1": "e96eaacb7a3e4e2895447602cedc93c7_Klein-9B-depth_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's clean rendering and its plain light background. One figure only, nobody else in the picture.",
+  "lora": "replace_character_v1_klein.safetensors",
+  "size": "832x1216",
+  "seconds": 353.4,
+  "files": [
+   "Research/pack-replacechar-chain_00002_.png"
+  ],
+  "error": []
+ },
+ {
+  "group": "chain",
+  "seed": 2026091313,
+  "prompt_id": "fe84f3d6-8991-485a-9f4d-6e713ab5bb2d",
+  "status": "success",
+  "image1": "e96eaacb7a3e4e2895447602cedc93c7_Klein-9B-depth_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's clean rendering and its plain light background. One figure only, nobody else in the picture.",
+  "lora": "replace_character_v1_klein.safetensors",
+  "size": "832x1216",
+  "seconds": 88.2,
+  "files": [
+   "Research/pack-replacechar-chain_00003_.png"
+  ],
+  "error": []
+ },
+ {
+  "group": "cross",
+  "seed": 2026091321,
+  "prompt_id": "252560e8-0585-4754-a142-8014a2c06e2f",
+  "status": "success",
+  "image1": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "text": "Replace the woman in image 1 with the character in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The character in image 2 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's painterly rendering and its station platform. One figure only, nobody else in the picture.",
+  "lora": "replace_character_v1_klein.safetensors",
+  "size": "832x1216",
+  "seconds": 201.0,
+  "files": [
+   "Research/pack-replacechar-cross_00001_.png"
+  ],
+  "error": []
+ },
+ {
+  "group": "cross",
+  "seed": 2026091322,
+  "prompt_id": "f398e988-22c5-4c29-a537-f934c610ffdd",
+  "status": "success",
+  "image1": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "text": "Replace the woman in image 1 with the character in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The character in image 2 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's painterly rendering and its station platform. One figure only, nobody else in the picture.",
+  "lora": "replace_character_v1_klein.safetensors",
+  "size": "832x1216",
+  "seconds": 76.1,
+  "files": [
+   "Research/pack-replacechar-cross_00002_.png"
+  ],
+  "error": []
+ }
+]
