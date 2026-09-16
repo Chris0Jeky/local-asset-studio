@@ -496,6 +496,14 @@ class ServerTests(unittest.TestCase):
         down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
         self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
 
+    def test_empty_comfy_response_is_only_allowed_for_free(self):
+        """An empty 200 is the /free contract, not a global substitute for required JSON."""
+        s=self.studio()
+        with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+            with self.assertRaises(json.JSONDecodeError): s._request('/system_stats')
+        with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+            self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
+
     def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
         """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
         s=self.studio()
