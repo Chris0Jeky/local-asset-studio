@@ -12,7 +12,7 @@ def _rows(db, query, parameters=()):
 
 def retained_evidence(adapter):
     """Capture the exact persisted rows owned by one matrix subject."""
-    if adapter.domain == "workflow":
+    if adapter.domain == "workflow-documents":
         connection = adapter.workspace.connection
         with connection() as db:
             return (
@@ -34,7 +34,7 @@ def retained_evidence(adapter):
                     (adapter.key,),
                 ),
             )
-    if adapter.domain == "setup":
+    if adapter.domain == "setup-drafts":
         connection = adapter.studio.assets.connection
         with connection() as db:
             return (
