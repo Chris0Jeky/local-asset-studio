@@ -1,6 +1,6 @@
 # Current state — 16 September 2026
 
-## The face route: a character into a picture that keeps its pose and scene; the idle release measured; the night's evidence — 16 September 2026 (03:20-04:30)
+## The face route: a character into a picture that keeps its pose and scene; the idle release measured; the night's evidence — 16 September 2026 (03:20-05:15)
 
 - **Replace character is a recipe (PR #481, built by a worker, proved through the Studio by the coordinator):** `combine-klein-9b-replace`, fourth on
   the Combine route for a 9B picture: the shipped 9B graph with the civitai `replace_character_v1_klein` LoRA at 1.0 (strength and file as Studio
@@ -36,6 +36,18 @@
 - **Operations:** the main checkout is on main with the Studio running from it (pid in `.runtime/server.pid`); the worktrees of merged PRs are removed.
   The Studio's own guard declined one proving job while a research batch held ComfyUI (`02d7c0e4…`, never submitted, abandoned from the page, its
   recipe retained); renders under three concurrent test suites took 250-350 s instead of about 100 s, which is CPU contention, not the slow state.
+
+- **The merge worker's final report (05:15):** fourteen Codex PRs merged tonight (#389, #396, #398, #418, #421, #390, #402, #415, #383, #428,
+  #426, #442, #471, #472), each reviewed (one fresh-context pass for ten of them; the worker's own review for #383, #426, #428 and #442, with the Codex findings on #426
+  and #428 verified), CI green at its head and a full local suite where the change warranted it; four defects fixed inside three PRs (#415's
+  preview guard rejected every seed because it re-checked the installed schema's bounds; #428's canvas contracts had no Python wrapper so the suite
+  never ran them; #442 claimed a job cancellation that does not exist and called the Combine routes qualified against this file's own evidence). #340 parked (#461, eight failures with one
+  root cause); #472 merged last (`f1cbf50`) after its rerun proved the red was #373's budget again; #474, #475, #476, #478 and #480 reviewed and left open, #480 conflicting with #475 in
+  `studio-workbench.js` so it waits for #475; the adult programme stack untouched (q-29). Seventeen issues filed. Three findings to act on:
+  reference analysis is inert on this host as merged (#459: 185 run records, of which the two uncertain ones carry no disposition and, with one still running, block its idle check); a
+  negative-path HTTP test family fails with WinError 10053 when the suite runs as a batch, reproduced on plain main (#468); the 420 s suite lifetime
+  (#373) now costs a rerun every few PRs. Ledger `.runtime/merge-queue-20260916.md`. The Studio was restarted on c2cfba8 right after #485 merged, while the
+  owner was working; #426, #442, #471 and #472 landed after that, so the next idle restart picks them up.
 
 Reviews: #481 one fresh-context adversarial pass (no CRITICAL/HIGH; two MEDIUMs fixed in-PR) plus a scoped second pass on the fix diff (one stale
 doc sentence fixed), and the Codex connector's two threads (the same findings, resolved); #470's three Codex P2s were already fixed in its review
