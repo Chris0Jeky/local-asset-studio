@@ -43,7 +43,7 @@ The repository already contains credible slices of all five layers:
 - a working local Studio and configured ComfyUI environments;
 - recipes, presets, prompt helpers, settings knowledge, LoRA slots, environment switching, and local job receipts;
 - Workspace and Experiments surfaces;
-- reference roles and qualified edit/Combine routes, including pose skeleton and depth paths;
+- reference roles and executed, reviewed edit/Combine routes, including pose skeleton and depth paths (executed and reviewed, not yet qualified across a representative pose/character set);
 - curated execution evidence for selected anime/fantasy and other workflows;
 - short video, textured-3D, Blender-authored, Krita, and Godot paths;
 - validation, benchmarking, profiling, resource, source/provenance, and research infrastructure;

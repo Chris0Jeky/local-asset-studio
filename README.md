@@ -35,7 +35,7 @@ The long-term goal is not a black-box “make art” button. It is a studio in w
 - a simpler local browser interface backed by a Python standard-library server;
 - prompt recipes, wildcard expansion, settings knowledge, LoRA slots, parameter controls, seed reuse, and saved output metadata;
 - explicit model-environment switching for isolated routes such as HiDream O1 and MiniMax H3;
-- local job submission, progress, cancellation, output validation, and bounded receipts.
+- local job submission, progress, output validation, bounded receipts, and an explicit local disposition for an uncertain job (which records the outcome as unknown and does not cancel remote work; cancellation itself exists only for AV/Production operations).
 
 ### Reference work
 
