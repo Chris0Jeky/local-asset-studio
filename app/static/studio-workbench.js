@@ -92,7 +92,7 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture'};
+  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
   function readinessItems(){
@@ -104,6 +104,7 @@
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
     const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
+    if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -147,6 +148,7 @@
       if(selected?.reference_slots?.length){const index=referenceRecords.findIndex(r=>!r.file||r.missing);target=index>=0?q('[data-ref-file="'+index+'"]'):lastMissing?q('#lastReference'):q('#referenceSummary');}
       else target=[...pendingInputs].filter(id=>!q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded)).map(id=>q('#'+id))[0]||(lastMissing&&uploaded?q('#lastReference'):q('#reference'));
     }
+    if(action==='pose-position')target=q('#uxPoseX');
     if(action==='parameters')target=q('#i2vMode')||getControl('frames');
     if(action==='wording'||action==='fills')target=(!fillsBlock.hidden&&fillInputs().find(input=>!input.value.trim()))||q('#positive');
     if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
@@ -196,7 +198,7 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy;}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
   function syncCombineEngines(){
     enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
@@ -214,17 +216,19 @@
   };
   // The one path that moves this pair to another Combine recipe: the engine buttons and the pose editor
   // both take it, so pictures, lineage and the three answers survive a switch the same way in both.
-  function switchCombineEngine(presetId){
-      const target=catalog.presets.find(p=>p.id===presetId),reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason)throw Error(reason);
+  function switchCombineEngine(presetId,guide=null){
+      const target=catalog.presets.find(p=>p.id===presetId),reason=guide?StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords):StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason||target?.runtime_block)throw Error(reason||target.runtime_block);
       if(!continuationSource||lastUploaded!==continuationState.reference_file)throw Error('Put the source back before changing recipes.');
       if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before changing recipes.');
       const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
       const identity=pairKey(),oldWords=q('#positive').value,manual=q('#uxFillsNote')&&!q('#uxFillsNote').hidden;
       if(manual)combineWording.set(identity+'|'+selected.id,oldWords);else combineWording.delete(identity+'|'+selected.id);
-      const refs=StudioContinuation.combineReferences(target,referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
-      const restored=combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
+      const previous=guide?referenceRecords[0]?.parent_asset:null,refs=StudioContinuation.combineReferences(target,guide?[guide]:referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
+      if(guide)Object.assign(refs[0],guide,{parent_asset:null,missing:false});
+      const restored=guide?undefined:combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
       rememberFills();transferredFills={preset:target.id,source:source.asset_id,values:mapped};
       selectPreset(target.id,true,true);continuationState=prepared.claim;continuationSource=source;lastUploaded=keep;uploaded=null;parentAssets=parents;parentByInput=inputs;referenceRecords=refs;
+      if(previous!==source.asset_id)releaseParentAsset(previous);
       q('#positive').value=positive;if(selected.negative)q('#negative').value=prepared.negative;
       for(const key of ['seed','width','height']){const input=getControl(key);if(input&&prior[key]!=null)input.value=prior[key];}q('#batch').value=batch;
       fillsPreset=null;renderReferenceSlots();syncFills();if(restored===undefined)fillsAssembled=positive;transferredFills=null;
@@ -241,9 +245,10 @@
     +'<div class="ux-pose-side"><label for="uxPoseStart">Start from<select id="uxPoseStart"><option value="">Keep this drawing</option>'
     +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
     +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'
+    +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
     +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
     +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
-  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='';
+  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
   const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
   // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
   function poseCanvasSize(){
@@ -282,22 +287,46 @@
     if(!selected)return 'Choose a Combine recipe first.';
     if(StudioPoseEditor.known(posePoints||[])<2)return 'Mark at least two joints: a guide with fewer draws no limb.';
     if(poseBusy)return 'The drawing is being rendered.';
+    if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
     if(combineBusy())return 'Finish the attachment in progress first.';
     if(selected.id===POSE_RECIPE)return '';
     const target=catalog?.presets.find(p=>p.id===POSE_RECIPE);
     if(!target)return 'The drawn-skeleton recipe is not in this catalog.';
     if(!continuationState||!continuationSource)return 'Open this pair through Continue with this, then draw the pose.';
-    // A refusal that only names the mismatch leaves the user stuck: say where the drawn route actually is. Today the
-    // drawn skeleton is the one skeleton-kind recipe, so this is the answer from every picture-kind Combine.
-    const reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords)||target.runtime_block||'';
-    return reason?reason+' Reach the drawn-skeleton recipe through Continue with this → Combine, then draw here.':'';
+    if(lastUploaded!==continuationState.reference_file)return 'Put the character source back before replacing the pose picture.';
+    if(['reference','lastReference'].some(id=>q('#'+id).files?.length))return 'Finish attaching the chosen picture first.';
+    return StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords)||target.runtime_block||'';
+  }
+  function posePositionDirty(){
+    if(!StudioContinuation.combineKind(selected)||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
+    try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
+      return value.x!==Math.round(point.x*100)/100||value.y!==Math.round(point.y*100)/100;
+    }catch(_){return true;}
+  }
+  function syncPosePosition(){
+    const point=posePoints?.[poseJoint],signature=JSON.stringify([poseJoint,point,poseCanvas]);
+    q('#uxPosePositionLabel').textContent=StudioPoseEditor.LABELS[poseJoint]+' position (pixels)';
+    for(const key of ['x','y']){
+      const input=q(key==='x'?'#uxPoseX':'#uxPoseY');input.max=key==='x'?poseCanvas.width:poseCanvas.height;
+      input.disabled=poseBusy||!point;
+      // Readiness polling must not replace partially typed coordinates for the same joint.
+      if(signature!==posePositionSignature){input.value=point?Math.round(point[key]*100)/100:'';input.removeAttribute('aria-invalid');}
+    }
+    posePositionSignature=signature;q('#uxPosePositionApply').disabled=poseBusy||!point;
+    q('#uxPosePositionReset').disabled=poseBusy||!posePositionDirty();
   }
   function syncPoseActions(){
     const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo');
-    use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';q('#uxPoseReason').textContent=reason;
+    const replacing=selected?.id!==POSE_RECIPE;
+    use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
+    use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
+    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays; review the pose wording before Generate.':'');
+    const positionPending=posePositionDirty();
+    q('#uxPoseStart').disabled=poseBusy||positionPending;syncPosePosition();
+    q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});
     const named=StudioPoseEditor.LABELS[poseJoint].toLowerCase(),drawn=!!(posePoints&&posePoints[poseJoint]);
     unknown.textContent=(drawn?'Mark ':'Restore ')+named;unknown.title=drawn?'Leaves it out of the guide, with its limbs.':'Puts it back where it last was.';
-    unknown.disabled=poseBusy;undo.disabled=poseBusy||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
+    unknown.disabled=poseBusy||positionPending;undo.disabled=poseBusy||positionPending||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
     if(poseBusy)unknown.title=undo.title='The drawing is being rendered.';
   }
   function syncPoseEditor(){
@@ -319,8 +348,22 @@
     posePoints=next;if(remember)poseHome=poseHome.map((point,index)=>posePoints[index]||point);
     poseSignature='';renderPoseJoints();drawPose();syncPoseActions();
   }
+  function applyPosePosition(){
+    if(poseBusy||!posePoints?.[poseJoint])return;
+    try{
+      const point=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),next=StudioPoseEditor.move(posePoints,poseJoint,point.x,point.y,poseCanvas);
+      if(JSON.stringify(StudioPoseEditor.serialize(next,poseCanvas))===JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas))){posePositionSignature='';syncReady();poseStatus('The joint is already at that position.');return;}
+      pushPose();poseEdit(next);syncReady();poseStatus(StudioPoseEditor.LABELS[poseJoint]+' moved. Undo steps back this change.');
+    }catch(error){q('#uxPoseX').setAttribute('aria-invalid','true');q('#uxPoseY').setAttribute('aria-invalid','true');poseStatus(error.message);}
+  }
+  q('#uxPosePositionApply').onclick=applyPosePosition;
+  q('#uxPosePositionReset').onclick=()=>{if(poseBusy)return;posePositionSignature='';syncReady();poseStatus('Typed coordinates reset to the drawing.');};
+  for(const id of ['#uxPoseX','#uxPoseY']){
+    q(id).oninput=()=>{q('#uxPoseX').removeAttribute('aria-invalid');q('#uxPoseY').removeAttribute('aria-invalid');poseDrag=-1;syncReady();};
+    q(id).onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyPosePosition();}};
+  }
   q('#uxPoseStart').onchange=e=>{
-    const id=e.target.value;e.target.value='';if(!id||!posePoints)return;
+    const id=e.target.value;e.target.value='';if(!id||!posePoints||poseBusy||posePositionDirty())return;
     pushPose();poseEdit(StudioPoseEditor.start(id,posePoints,poseCanvas));
     poseStatus((StudioPoseEditor.PRESETS.find(p=>p.id===id)||{}).label+' loaded. Nothing was submitted.');
   };
@@ -332,34 +375,39 @@
   q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled||!poseHistory.length)return;const step=poseHistory.pop();poseHome=step.home;poseEdit(step.points,false);poseStatus('One change stepped back.');};
   function poseKeys(e){
     const step={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
-    // Arrow keys inside the Start-from list still change the option; the drawing only follows them elsewhere.
-    if(!step||!posePoints||poseBusy||e.target.closest('select'))return;
+    // Native select/number editing keeps its own arrow keys; only the drawing and joint buttons nudge geometry.
+    if(!step||!posePoints||poseBusy||posePositionDirty()||!e.target.closest('#uxPoseCanvas,[data-ux-joint]'))return;
     e.preventDefault();
     if(!posePoints[poseJoint]){poseStatus(StudioPoseEditor.LABELS[poseJoint]+' is unknown. Restore it before moving it.');return;}
     pushPose();poseEdit(StudioPoseEditor.nudge(posePoints,poseJoint,step[0],step[1],poseCanvas,e.shiftKey?.05:.01));
   }
   posePanel.addEventListener('keydown',poseKeys);
   q('#uxPoseCanvas').addEventListener('pointerdown',e=>{
-    if(!posePoints||poseBusy)return;
+    if(!posePoints||poseBusy||posePositionDirty())return;
     const at=poseAt(e),index=StudioPoseEditor.nearest(posePoints,at.x,at.y,POSE_GRAB*poseCanvas.width/Math.max(1,q('#uxPoseCanvas').width));
     if(index<0){poseStatus('Nothing to grab there. Drag a coloured joint, or pick one in the list.');return;}
     e.preventDefault();pushPose();poseJoint=index;poseDrag=index;
     try{q('#uxPoseCanvas').setPointerCapture(e.pointerId);}catch(_){}
     poseEdit(StudioPoseEditor.move(posePoints,index,at.x,at.y,poseCanvas));
   });
-  q('#uxPoseCanvas').addEventListener('pointermove',e=>{if(poseDrag<0||!posePoints)return;e.preventDefault();const at=poseAt(e);poseEdit(StudioPoseEditor.move(posePoints,poseDrag,at.x,at.y,poseCanvas));});
+  q('#uxPoseCanvas').addEventListener('pointermove',e=>{if(poseDrag<0||!posePoints||poseBusy)return;e.preventDefault();const at=poseAt(e);poseEdit(StudioPoseEditor.move(posePoints,poseDrag,at.x,at.y,poseCanvas));});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])q('#uxPoseCanvas').addEventListener(name,()=>{poseDrag=-1;});
   async function usePose(){
     if(poseBusy||!posePoints)return;
     const blocked=poseBlockedReason();if(blocked){poseStatus(blocked);syncPoseActions();return;}
-    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE;
-    poseBusy=true;syncReady();
+    const stamp=setupStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+    poseDrag=-1;poseBusy=true;syncReady();
     try{
-      const result=await post('/api/pose/render',StudioPoseEditor.serialize(posePoints,poseCanvas));
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the pose was rendering. Nothing was attached.');
-      if(switching)switchCombineEngine(POSE_RECIPE);
-      const slot=referenceRecords[0];if(!slot)throw Error('This recipe has no pose slot. Choose the drawn-skeleton recipe first.');
-      const previous=slot.parent_asset;Object.assign(slot,{parent_asset:null},result,{missing:false});releaseParentAsset(previous);
+      const response=await post('/api/pose/render',request);
+      if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
+      const result=StudioPoseEditor.guideResponse(response,request);
+      if(switching)switchCombineEngine(POSE_RECIPE,result);
+      else{
+        const previous=referenceRecords[0]?.parent_asset;
+        referenceRecords=StudioContinuation.combineReferences(selected,[result]);
+        Object.assign(referenceRecords[0],result,{parent_asset:null,missing:false});
+        if(previous!==continuationState?.source_asset_id)releaseParentAsset(previous);
+      }
       if(StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
       renderReferenceSlots();draftDirty=true;saveDraft();syncCreate();
       poseStatus('Your drawing is on Picture 1. No generation was submitted.');

@@ -199,7 +199,7 @@ class ComparisonTests(unittest.TestCase):
         result = subprocess.run(command, cwd=ROOT.parent, capture_output=True, text=True, timeout=10)
         self.assertNotEqual(result.returncode, 0); self.assertEqual(output.read_bytes(), before)
 
-    def test_cli_partial_report_returns_nonzero_but_keeps_the_report(self):
+    def test_cli_invalid_report_returns_nonzero_but_keeps_the_report(self):
         self.path.write_text(json.dumps(self.plan), encoding='utf-8')
         (self.b / 'summary.json').unlink()
         script = ROOT / 'scripts/compare-resource-observations.py'; output = self.root / 'partial.json'
@@ -207,7 +207,7 @@ class ComparisonTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(script), str(self.path), '--output', str(output)],
                                 cwd=self.root, capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertTrue(output.exists()); self.assertEqual(fixtures.read(output)['counts']['incomplete_observations'], 1)
+        self.assertTrue(output.exists()); self.assertEqual(fixtures.read(output)['counts']['invalid_observations'], 1)
 
     def test_maximum_eight_pairs_and_missing_artifacts_remain_bounded(self):
         self.plan['pairs'] = []

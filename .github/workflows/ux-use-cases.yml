@@ -6,6 +6,7 @@ on:
       - 'presets/catalog.json'
       - 'research/ux/use-cases.json'
       - 'tests/studio_use_cases.py'
+      - 'tests/pose_editor_handoff_browser.py'
       - 'tests/test_use_case_matrix.py'
       - 'tests/studio_browser_smoke.py'
       - 'studio_workflow/guides.py'
@@ -32,6 +33,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Measure every use case against the local fixture (never ComfyUI)
         run: python -u tests/studio_use_cases.py
+      - name: Pose replacement and stale-response browser regressions
+        run: python -u tests/pose_editor_handoff_browser.py
       - name: Fail if any use case missed its success condition
         run: |
           python - <<'PY'
@@ -51,6 +54,7 @@ jobs:
           name: ux-use-case-evidence
           path: |
             .runtime/ux-use-cases/
+            .runtime/pose-handoff-browser/
             research/ux/use-case-matrix.json
           if-no-files-found: ignore
           retention-days: 7
