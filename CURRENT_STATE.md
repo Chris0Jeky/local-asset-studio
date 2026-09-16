@@ -1,5 +1,29 @@
 # Current state — 16 September 2026
 
+## Easier-issue drain: eight named defects closed — 16 September 2026 (19:35)
+
+A Grok session drained the first easier-issue queue (one named failing scenario, no owner creative/licence decision, no GPU). Work was in isolated worktrees; the Studio checkout on 8191 was not switched or restarted.
+
+Merged (merge commits, never squash):
+
+| PR | Merge SHA | Issue | What changed |
+| --- | --- | --- | --- |
+| #516 | `4dddecaa` | #513 | Paired-observation doc allows exact shared `(job_id, result_sha256, directory)` triples; partial reuse still refused |
+| #518 | `9538a432` | #487 #488 | Missing plan path is `report_unavailable`, not `incomplete`; reused-prompt payload drop is named in limitations |
+| #517 | `2d75f847` | #511 | Reference-assistant runbook workspace is `.runtime/reference-session` |
+| #520 | `ae33f911` | #460 | `PromptProjects.list()` SQL-projects rows; one unreadable head no longer 503s the whole list |
+| #519 | `6c9442b7` | #454 | Analyze release acknowledgement clears on handle change, new analysis, and successful release |
+| #515 | `f4a0a484` | #512 | Deleted listed sidecar is `invalid`, not `incomplete`; incomplete is unfinished evidence, not “still writing” |
+| #521 | `27eb2e25` | #493 | Pose canvas refresh before readiness; exponential coordinates accepted; `aria-invalid` per axis |
+
+Each PR had green hosted checks at merge (one mixed-batch lifetime red on #517 reran green), law-2 review (Codex and/or one independent pass; no untriaged CRITICAL/HIGH), and the three-minute aging floor. Local proving logs are in the session scratch, not Git.
+
+Easier items still open (parked, not silently dropped): #490 sample-window overshoot bound; #484 same-tick rewrite (content digest already in `resource_receipts._capture_file` after #471 — needs an explicit regression test before closing); prompt/reference UI #456 #457 #463 #489 #491.
+
+Untouched on purpose: adult-illustration stack (HUMAN_TODO q-29); q-7/q-25/q-27/q-28/q-30; parked #340/#461; #373 suite budget; Combine remaining owner-acceptance (#422/#444/#445/#446).
+
+Not verified: live click-through on 8191 (still serving the older checkout); art acceptance; licence clearance. HUMAN_TODO items were not ticked.
+
 ## Replace pose picture no longer keeps the old pose wording — 16 September 2026 (18:40)
 
 **Replace pose picture with drawing** still swaps Picture 1 for the rendered stick figure and selects the skeleton recipe, and who/clothes still transfer. The pose fill is now cleared and left as a bracket, so Generate stays blocked until the drawing is described (issue #492). Redrawing while already on the skeleton recipe keeps the pose wording written for that drawing. Native fixture driver: 8/8 cases, 190 assertions, zero generation submissions. Docs for the use-case matrix and Style + Pose name the Replace action and the one-way return to a pose picture. Not verified: a click-through on the live Studio at 8191; art acceptance (HUMAN_TODO q-28).
