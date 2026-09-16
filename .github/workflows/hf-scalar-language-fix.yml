@@ -27,35 +27,27 @@ jobs:
 
           source_path = Path('studio_prompt/adult_illustration_source_intake.py')
           source = source_path.read_text(encoding='utf-8')
-          base_anchor = '''    else:
-              raise ValueError("Hugging Face base_model metadata is invalid")
-
-          access_state = _hf_access_state(payload)
-          '''
-          language_block = '''    else:
-              raise ValueError("Hugging Face base_model metadata is invalid")
-
-          language = card.get("language")
-          if isinstance(language, str):
-              if not language.strip() or len(language) > 1_024:
-                  raise ValueError("Hugging Face language metadata is invalid")
-              languages = [language.strip()]
-          else:
-              languages = _bounded_strings(
-                  language, "Hugging Face languages", maximum=128
-              )
-
-          access_state = _hf_access_state(payload)
-          '''
-          if source.count(base_anchor) != 1:
-              raise SystemExit('base-model insertion anchor drifted')
-          source = source.replace(base_anchor, language_block)
-          old_language = '''            "languages": _bounded_strings(card.get("language"), "Hugging Face languages", maximum=128),
-          '''
-          new_language = '''            "languages": languages,
-          '''
+          base_line = '        raise ValueError("Hugging Face base_model metadata is invalid")\n'
+          language_block = (
+              base_line
+              + '\n'
+              + '    language = card.get("language")\n'
+              + '    if isinstance(language, str):\n'
+              + '        if not language.strip() or len(language) > 1_024:\n'
+              + '            raise ValueError("Hugging Face language metadata is invalid")\n'
+              + '        languages = [language.strip()]\n'
+              + '    else:\n'
+              + '        languages = _bounded_strings(\n'
+              + '            language, "Hugging Face languages", maximum=128\n'
+              + '        )\n'
+          )
+          if source.count(base_line) != 1:
+              raise SystemExit(f'base-model insertion anchor drifted: {source.count(base_line)}')
+          source = source.replace(base_line, language_block)
+          old_language = '            "languages": _bounded_strings(card.get("language"), "Hugging Face languages", maximum=128),\n'
+          new_language = '            "languages": languages,\n'
           if source.count(old_language) != 1:
-              raise SystemExit('language metadata anchor drifted')
+              raise SystemExit(f'language metadata anchor drifted: {source.count(old_language)}')
           source_path.write_text(source.replace(old_language, new_language), encoding='utf-8')
 
           workflow_path = Path('.github/workflows/prompt-studio.yml')
@@ -63,14 +55,12 @@ jobs:
           script_anchor = "'scripts/studio_adult_illustration_prompt.py', 'app/static/prompt-lab.*'"
           script_replacement = "'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'app/static/prompt-lab.*'"
           if workflow.count(script_anchor) != 2:
-              raise SystemExit('Prompt Studio script path anchors drifted')
+              raise SystemExit(f'Prompt Studio script path anchors drifted: {workflow.count(script_anchor)}')
           workflow = workflow.replace(script_anchor, script_replacement)
-          if workflow.count("'tests/test_adult_illustration_prompt*.py'") != 3:
-              raise SystemExit('adult illustration test anchors drifted')
-          workflow = workflow.replace(
-              "'tests/test_adult_illustration_prompt*.py'",
-              "'tests/test_adult_illustration*.py'",
-          )
+          test_anchor = "'tests/test_adult_illustration_prompt*.py'"
+          if workflow.count(test_anchor) != 3:
+              raise SystemExit(f'adult illustration test anchors drifted: {workflow.count(test_anchor)}')
+          workflow = workflow.replace(test_anchor, "'tests/test_adult_illustration*.py'")
           workflow_path.write_text(workflow, encoding='utf-8')
           PY
 
