@@ -43,6 +43,8 @@ jobs:
           git diff --cached --check
           node tests/pose_guide_handoff.cjs
           node tests/pose_editor_core.cjs
+          # The Actions token cannot publish workflow edits. That one file is applied separately via the authorized connector.
+          git restore --source=HEAD --staged --worktree .github/workflows/ux-use-cases.yml
           git -c user.name='Cristian Tcaci' -c user.email='59696583+Chris0Jeky@users.noreply.github.com' commit -m 'fix: replace a Combine pose picture with a checked drawing'
           git push origin HEAD:refs/heads/codex/pose-guide-handoff-build-1
           git rev-parse HEAD HEAD^{tree}
