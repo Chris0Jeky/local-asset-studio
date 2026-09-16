@@ -6,6 +6,10 @@ Status: architecture and implementation programme, not a claim of qualified pose
 
 Read [EXPERIMENTS.md](EXPERIMENTS.md) for the qualification protocol and [IMPLEMENTATION.md](IMPLEMENTATION.md) for the first test-first slices.
 
+The first P1 surface is shipped: the **Draw the pose** panel on the Combine screen edits the 18 body joints and
+stages the rendered guide through `POST /api/pose/render`; see [Draw the pose](../STYLE-AND-POSE.md#draw-the-pose-16-september-2026)
+for what it does, what the renderer is and what is still unproved.
+
 ## Product outcome
 
 A person can see the intended geometry, correct a failed extraction directly, keep that correction while changing generation routes, and repair a local defect without discarding an otherwise accepted result. Agents use the same artifact and revision identities. Success is time and active effort to an accepted asset, not the number of available models or successful HTTP jobs.

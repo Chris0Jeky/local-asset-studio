@@ -42,6 +42,7 @@ import prompting
 import submission_evidence
 import job_resources
 import continuation
+import pose_guide
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -131,6 +132,8 @@ class Studio:
         self.backends.activate(self.backends.active)
         from studio_prompt.reference_jobs import ReferenceJobs
         self.reference_jobs = ReferenceJobs(self)
+        from studio_prompt.projects import PromptProjects
+        self.prompt_projects = PromptProjects(self.assets)
         self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
@@ -1603,9 +1606,9 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError: raise StudioError("Valid Content-Length required")
         if size < 0 or size > limit: raise StudioError("Request body is too large")
         return size
-    def _body_json(self):
+    def _body_json(self, limit=1024 * 1024):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
-        return json.loads(self.rfile.read(self._content_length(1024 * 1024)).decode())
+        return json.loads(self.rfile.read(self._content_length(limit)).decode())
     def _media(self, descriptor, job=None):
         query = urlencode({k:descriptor[k] for k in ("filename", "subfolder", "type") if descriptor.get(k) is not None})
         headers = {}
@@ -1815,6 +1818,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
+            # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
+            if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             return self._json(404, {"error":"Not found"})
         except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})

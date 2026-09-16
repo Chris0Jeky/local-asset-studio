@@ -82,6 +82,33 @@ this order: the Klein models keep image 1's structure, so the 4B recipe below (c
 give a mild pose, and putting the pose picture first on 4B just brings the character's own pose back; the research table
 in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows all 22 renders.
 
+### Draw the pose (16 September 2026)
+
+**Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)** takes a
+coloured stick figure on black as image 1, and since #444 you draw it on the Combine screen instead of elsewhere:
+a **Draw the pose** panel appears whenever a Combine recipe is open (a continuation, or one chosen straight from
+the library). Drag the 18 COCO-18 joints with a mouse or a finger, or pick one in the joint list and nudge it with the arrow keys (1 % of the canvas, 5 % with
+Shift); *Start from* loads a plain standing figure, the bent-forward research figure or a left-right mirror of what
+is on the canvas; a joint can be marked unknown, which leaves it and every limb touching it out of the drawing (a
+missing joint is omitted, never coordinate zero); Undo steps back one change. **Use this pose** posts the joints to
+`POST /api/pose/render`, which validates them through `studio_workflow.pose_artifact` (every joint recorded as
+manual with no detector confidence), renders the PNG with `studio_workflow.pose_raster.render_png` and stores it the
+way an uploaded picture is stored, then attaches it to Picture 1. The endpoint submits nothing to ComfyUI and
+creates no job; Generate stays a separate press. Attaching takes the engine buttons' own switch path when the
+recipe has to change, and that path applies `combineSwitchReason`: a skeleton and a pose picture are different
+inputs, and the drawn skeleton is currently the only skeleton-kind Combine, so from the depth and pose-picture
+recipes the button stays **disabled** and names the route instead (*Continue with this → Combine*, choose this
+recipe, then draw). The switch itself becomes reachable the day a second skeleton-kind recipe exists.
+
+The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours as the hand-drawn research figure but
+thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px
+lines and 12 px joint dots). **Proved 16 September (04:10):** a guide rendered by this endpoint from the bent-forward
+starting figure put the character into the drawn pose through the skeleton recipe on the Studio's own path (job `8b571dd4…`, 66.5 s,
+seed 2026091461, the same figure and seed as the hand-drawn proving run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`):
+the thin 8 px strokes carried the pose as well as the 14 px research figure did. The research figure itself carried the pose on 3 of 3
+seeds. Not yet measured: drawing in the panel by hand and pressing *Use this pose* then Generate as one browser journey (the use-case
+driver covers the panel up to the attached guide with zero generations; the proving run submitted the same request shape by API).
+
 **Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
 what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
 handoff puts it there), image 2 goes on Picture 1 of the board (*Pull from library* or drop a file); both are scaled to

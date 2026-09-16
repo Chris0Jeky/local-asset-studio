@@ -297,6 +297,23 @@ Sheet: `examples/style-pose/combine-copypose-proving.jpg` (image 1, image 2, the
 page (the API run uses the page's prepare and worker path); the engine switch depth -> Copy Pose by clicking; any other pair; art acceptance
 (HUMAN_TODO q-28 (e), which is now a choice between two shipped recipes).
 
+## The pose editor's guide through the skeleton recipe, 16 September 2026 (04:10)
+
+The *Draw the pose* panel (PR #466) renders its guide on the server (`POST /api/pose/render` -> `studio_workflow.pose_raster`, renderer
+`studio.coco18-lines/v1`: stroke `min(w,h)//128` = 8 px at 1024x1536 against the 14 px of the hand-drawn research figure). Proving run
+(`prove_pose_editor.py`: the panel's "Bent forward, looking back" starting figure, the `KP` list above with the right ear unknown, rendered by
+the endpoint, then `combine-klein-9b-skeleton` through POST /api/jobs with that file on Pose skeleton and the same fills and seed as the
+hand-drawn proving run `26448d58`; `prove_pose_editor.json`, exact recipe `prove_pose_editor.recipe.json`, the guide `pose-editor-drawn-pose.png`):
+
+| Run | Seed | Job / prompt | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| the page-rendered guide (8 px strokes) on the shipped skeleton recipe | 2026091461 | `8b571dd4-ba0f-403b-9f3d-35019cb1e3a3` / `2a80b266-d1cd-46df-8ccd-32a8ed7a65e1` | 66.5 | `Combine/Klein-9B-skeleton_00002_.png` | **the drawn pose as with the hand-drawn figure: deep bend, the arm raised behind the head, one leg straight and one crossing, look-back, bare feet, face and hair kept**; the lettering hidden by the bend (garbled on the hand-drawn run of the same seed) |
+
+Sheet: `examples/style-pose/pose-editor-proving.jpg` (guide, its output, the hand-drawn figure, its output). Thin 8 px lines carry the pose as
+well as the 14 px ones on this seed. Not verified: drawing in the panel by hand in a browser and pressing *Use this pose* then Generate as one
+journey (the use-case driver covers the panel up to the attached guide with zero generations; this run submitted the same request shape by
+API); other seeds; art acceptance (HUMAN_TODO q-28 (d)).
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
