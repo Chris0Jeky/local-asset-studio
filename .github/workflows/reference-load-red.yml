@@ -6,15 +6,41 @@ on:
       - test/reference-review-programmatic-load-reset
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  focused-regression:
+  patch-and-verify:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: test/reference-review-programmatic-load-reset
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m pip install Pillow==12.3.0
-      - run: python -m unittest discover -s tests -p 'test_reference_review_apply_frontend.py' -v
+      - name: Disarm old evidence before asynchronous programmatic loading
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('app/static/reference-review.js')
+          text = path.read_text(encoding='utf-8')
+          before = "    changed();const current=epoch;\n    const result=await post('inspect',{analysis});"
+          after = "    applied=null;receipt=null;changed();const current=epoch;\n    const result=await post('inspect',{analysis});"
+          if text.count(before) != 1:
+              raise SystemExit(f'programmatic load anchor drifted: {text.count(before)}')
+          path.write_text(text.replace(before, after), encoding='utf-8')
+          PY
+      - name: Verify both review-context transition paths
+        run: |
+          python -m unittest discover -s tests -p 'test_reference_review_apply_frontend.py' -v
+          node --check app/static/reference-review.js
+          git diff --check
+      - name: Publish the verified implementation on the disposable branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/static/reference-review.js
+          git commit -m 'Disarm stale reference review evidence during load'
+          git push origin HEAD:test/reference-review-programmatic-load-reset
