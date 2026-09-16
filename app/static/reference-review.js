@@ -86,7 +86,18 @@
     renderCards();controls();
   }
   // Completed worker observations enter this same review owner. Loading never applies intent.
-  globalThis.StudioReferenceReview=Object.freeze({load:async(analysis,files=[])=>{
+  globalThis.StudioReferenceReview=Object.freeze({
+    capture:()=>({version:epoch,context:report?{analysis:clone(report),review:clone(review)}:null}),
+    restore:context=>{
+      // The persistence service validated this context. Original pixels are not saved.
+      changed();report=context?clone(context.analysis):null;review=context?clone(context.review):null;
+      originals=null;applied=null;receipt=null;releaseUrls();el('rr-cards').replaceChildren();
+      el('rr-originals').value='';el('rr-analysis').value='';el('rr-adopt').checked=false;
+      el('rr-review').hidden=!report;
+      if(report)showReport();
+      el('rr-source-status').textContent='Reselect the exact originals before previewing another reference transfer.';
+      message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
+    },load:async(analysis,files=[])=>{
     if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
     changed();const current=epoch;
     const result=await post('inspect',{analysis});
