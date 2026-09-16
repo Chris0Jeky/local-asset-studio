@@ -44,6 +44,9 @@ def load_records(path=RESULTS):
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, list):
         raise ValueError(f"Research receipt must be a JSON array: {path}")
+    for index, record in enumerate(value):
+        if not isinstance(record, dict):
+            raise ValueError(f"Research receipt row {index} must be a JSON object: {path}")
     return value
 
 
@@ -54,12 +57,26 @@ def save_records(records, path=RESULTS):
     os.replace(temporary, path)
 
 
+def find_record(records, group, seed):
+    matches = [record for record in records
+               if record.get("group") == group and record.get("seed") == seed]
+    if len(matches) > 1:
+        raise ValueError(f"Duplicate research receipt rows for {group} seed {seed}")
+    return matches[0] if matches else None
+
+
 def upsert(records, record):
-    for index, current in enumerate(records):
-        if current.get("group") == record["group"] and current.get("seed") == record["seed"]:
-            records[index] = record
-            return
-    records.append(record)
+    matches = [index for index, current in enumerate(records)
+               if current.get("group") == record["group"]
+               and current.get("seed") == record["seed"]]
+    if len(matches) > 1:
+        raise ValueError(
+            f"Duplicate research receipt rows for {record['group']} seed {record['seed']}"
+        )
+    if matches:
+        records[matches[0]] = record
+    else:
+        records.append(record)
 
 
 def post_studio(path, body, *, open_url=urllib.request.urlopen):
@@ -113,8 +130,7 @@ def poll(prompt_id, submitted_at, *, open_url=urllib.request.urlopen, clock=time
 def run(group, image1, image2, seed, *, results_path=RESULTS, graph_dir=GRAPH_DIR,
         open_url=urllib.request.urlopen, clock=time.time, sleeper=time.sleep):
     records = load_records(results_path)
-    record = next((item for item in records
-                   if item.get("group") == group and item.get("seed") == seed), None)
+    record = find_record(records, group, seed)
     if record and record.get("status") not in {"submitted", "timeout"}:
         print("skip", group, seed, "(recorded)", flush=True)
         return record
@@ -151,8 +167,8 @@ def run(group, image1, image2, seed, *, results_path=RESULTS, graph_dir=GRAPH_DI
 
 
 def has_unrecorded(group, seeds, path=RESULTS):
-    recorded = {(item.get("group"), item.get("seed")) for item in load_records(path)}
-    return any((group, seed) not in recorded for seed in seeds)
+    records = load_records(path)
+    return any(find_record(records, group, seed) is None for seed in seeds)
 
 
 if __name__ == "__main__":
