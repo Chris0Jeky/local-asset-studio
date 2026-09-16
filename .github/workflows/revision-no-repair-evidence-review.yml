@@ -1,0 +1,138 @@
+name: Revision no-repair evidence review
+
+on:
+  push:
+    branches:
+      - review/revision-no-repair-evidence
+
+permissions:
+  contents: write
+
+jobs:
+  focused:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: review/revision-no-repair-evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Bind no-repair assertions to exact corrupted bytes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/test_revision_consistency_matrix.py')
+          source = path.read_text(encoding='utf-8')
+
+          class_anchor = (
+              "class ConsistencyFacts:\n"
+              "    head: int\n"
+              "    revisions: int\n"
+              "    requests: int\n"
+              "    accounted_bytes: int\n\n\n"
+              "class WorkflowAdapter:\n"
+          )
+          class_replacement = (
+              "class ConsistencyFacts:\n"
+              "    head: int\n"
+              "    revisions: int\n"
+              "    requests: int\n"
+              "    accounted_bytes: int\n\n\n"
+              "@dataclass(frozen=True)\n"
+              "class StoredEvidence:\n"
+              "    payload: str\n"
+              "    sha256: str\n\n\n"
+              "class WorkflowAdapter:\n"
+          )
+          if source.count(class_anchor) != 1:
+              raise SystemExit(f'evidence dataclass anchor drifted: {source.count(class_anchor)}')
+          source = source.replace(class_anchor, class_replacement)
+
+          workflow_anchor = (
+              "        return ConsistencyFacts(head, revision[0], requests, revision[1])\n\n"
+              "    def corrupt(self, kind: str):\n"
+          )
+          workflow_replacement = (
+              "        return ConsistencyFacts(head, revision[0], requests, revision[1])\n\n"
+              "    def integrity_evidence(self):\n"
+              "        with self.workspace.connection() as db:\n"
+              "            row = db.execute(\n"
+              "                'SELECT document,sha256 FROM workflow_revisions_v1 WHERE document_id=? AND revision=(SELECT head FROM workflow_documents_v1 WHERE id=?)',\n"
+              "                (self.key, self.key),\n"
+              "            ).fetchone()\n"
+              "        return StoredEvidence(row['document'], row['sha256'])\n\n"
+              "    def corrupt(self, kind: str):\n"
+          )
+          if source.count(workflow_anchor) != 1:
+              raise SystemExit(f'workflow evidence anchor drifted: {source.count(workflow_anchor)}')
+          source = source.replace(workflow_anchor, workflow_replacement)
+
+          setup_anchor = (
+              "        return ConsistencyFacts(head, revision[0], requests[0], revision[1] + requests[1])\n\n"
+              "    def corrupt(self, kind: str):\n"
+          )
+          setup_replacement = (
+              "        return ConsistencyFacts(head, revision[0], requests[0], revision[1] + requests[1])\n\n"
+              "    def integrity_evidence(self):\n"
+              "        with self.studio.assets.connection() as db:\n"
+              "            row = db.execute(\n"
+              "                'SELECT record,sha256 FROM setup_versions_v1 WHERE draft_id=? AND revision=(SELECT head FROM setup_drafts_v1 WHERE id=?)',\n"
+              "                (self.key, self.key),\n"
+              "            ).fetchone()\n"
+              "        return StoredEvidence(row['record'], row['sha256'])\n\n"
+              "    def corrupt(self, kind: str):\n"
+          )
+          if source.count(setup_anchor) != 1:
+              raise SystemExit(f'setup evidence anchor drifted: {source.count(setup_anchor)}')
+          source = source.replace(setup_anchor, setup_replacement)
+
+          assertion_anchor = (
+              "                    adapter.create()\n"
+              "                    before = adapter.facts()\n"
+              "                    adapter.corrupt(fault)\n"
+              "                    with self.assertRaises(ValueError) as caught:\n"
+              "                        adapter.read_head()\n"
+              "                    adapter.assert_integrity_error(self, caught.exception)\n"
+              "                    self.assertEqual(adapter.facts(), before)\n"
+          )
+          assertion_replacement = (
+              "                    adapter.create()\n"
+              "                    before = adapter.facts()\n"
+              "                    original = adapter.integrity_evidence()\n"
+              "                    adapter.corrupt(fault)\n"
+              "                    corrupted = adapter.integrity_evidence()\n"
+              "                    self.assertNotEqual(corrupted, original)\n"
+              "                    with self.assertRaises(ValueError) as caught:\n"
+              "                        adapter.read_head()\n"
+              "                    adapter.assert_integrity_error(self, caught.exception)\n"
+              "                    self.assertEqual(adapter.integrity_evidence(), corrupted)\n"
+              "                    self.assertEqual(adapter.facts(), before)\n"
+          )
+          if source.count(assertion_anchor) != 1:
+              raise SystemExit(f'no-repair assertion anchor drifted: {source.count(assertion_anchor)}')
+          source = source.replace(assertion_anchor, assertion_replacement)
+
+          source = source.replace(
+              "observable facts: head, revision count, request count and accounted history bytes.\n",
+              "observable facts: head, revision count, request count, accounted history bytes and exact fault evidence.\n",
+          )
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Verify the shared fault matrix
+        run: |
+          python -m unittest discover -s tests -p 'test_revision_consistency_matrix.py' -v
+          python -m py_compile tests/test_revision_consistency_matrix.py
+          git diff --check
+
+      - name: Publish the verified test refinement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test_revision_consistency_matrix.py
+          git commit -m 'Bind no-repair checks to exact stored evidence'
+          git push origin HEAD:review/revision-no-repair-evidence
