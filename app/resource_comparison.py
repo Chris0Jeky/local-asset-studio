@@ -1,6 +1,7 @@
 """Finite, descriptive comparisons of pinned job observations; no execution path."""
 from __future__ import annotations
 
+import copy
 import json
 import os
 from pathlib import Path
@@ -58,6 +59,11 @@ def _fit_report(result):
     return compact
 
 
+def _trial_identity(trial):
+    return (trial['job_id'], trial['result_sha256'],
+            os.path.normcase(os.path.abspath(trial['directory'])))
+
+
 def _manifest(raw, parent):
     plan = parse_document(raw)
     require(isinstance(plan, dict) and set(plan) == {'schema', 'generation_allowance', 'pairs'}
@@ -65,12 +71,14 @@ def _manifest(raw, parent):
             and plan['generation_allowance'] == 0, 'plan_invalid')
     pairs = plan['pairs']
     require(isinstance(pairs, list) and 1 <= len(pairs) <= MAX_PAIRS, 'pair_limit_invalid')
-    ids, jobs, pins, paths = set(), set(), set(), set()
+    ids = set()
+    component_owners = {'job_id': {}, 'result_sha256': {}, 'directory': {}}
     for pair in pairs:
         require(isinstance(pair, dict) and set(pair) == {'id', 'condition', 'baseline', 'candidate'}
                 and is_id(pair['id']) and pair['id'] not in ids
                 and pair['condition'] in CONDITIONS, 'pair_invalid')
         ids.add(pair['id'])
+        pair_identities = {}
         for side in ('baseline', 'candidate'):
             trial = pair[side]
             require(isinstance(trial, dict) and set(trial) == {'directory', 'result_sha256', 'job_id'}
@@ -80,12 +88,15 @@ def _manifest(raw, parent):
             path = Path(trial['directory'])
             if not path.is_absolute(): path = parent / path
             # Do not resolve symlinks: the inspector must still see and refuse them.
-            path = path.absolute()
-            normalized = os.path.normcase(os.path.abspath(path))
-            require(trial['job_id'] not in jobs and trial['result_sha256'] not in pins
-                    and normalized not in paths, 'duplicate_trial_evidence')
-            jobs.add(trial['job_id']); pins.add(trial['result_sha256']); paths.add(normalized)
-            trial['directory'] = path
+            trial['directory'] = path.absolute()
+            identity = _trial_identity(trial)
+            for component, value in (('job_id', identity[0]), ('result_sha256', identity[1]),
+                                     ('directory', identity[2])):
+                previous = component_owners[component].get(value)
+                require(previous is None or previous == identity, 'duplicate_trial_evidence')
+                component_owners[component][value] = identity
+            pair_identities[side] = identity
+        require(pair_identities['baseline'] != pair_identities['candidate'], 'duplicate_trial_evidence')
     return pairs
 
 
@@ -107,15 +118,18 @@ def _reject_reused_prompts(pairs):
         for side in ('baseline', 'candidate'):
             row = pair[side]
             if row['state'] != 'verified': continue
+            identity = (row['expected_job_id'], row['expected_result_sha256'])
             for item in row['observation']['submissions']:
                 pin = item['prompt_id_sha256']
-                if pin is not None: owners.setdefault(pin, []).append(row)
-    for rows in owners.values():
-        if len(rows) > 1:
-            for row in rows:
-                row['state'] = 'invalid'
-                row['observation'] = None
-                if 'reused_prompt_evidence' not in row['reasons']: row['reasons'].append('reused_prompt_evidence')
+                if pin is not None: owners.setdefault(pin, {}).setdefault(identity, []).append(row)
+    for identities in owners.values():
+        if len(identities) > 1:
+            for rows in identities.values():
+                for row in rows:
+                    row['state'] = 'invalid'
+                    row['observation'] = None
+                    if 'reused_prompt_evidence' not in row['reasons']:
+                        row['reasons'].append('reused_prompt_evidence')
 
 
 def _metric(a, b):
@@ -178,11 +192,19 @@ def compare_observations(manifest: str | Path) -> dict:
     path = Path(manifest).absolute()
     raw = read_evidence_file(path, MAX_PLAN_BYTES)
     requested = _manifest(raw, path.parent)
+    inspected = {}
+
+    def inspect_once(trial):
+        identity = _trial_identity(trial)
+        if identity not in inspected: inspected[identity] = _inspect(trial)
+        return copy.deepcopy(inspected[identity])
     pairs = [{'id': pair['id'], 'declared_condition': pair['condition'], 'condition_verified': False,
-              'qualified_benchmark': False, 'baseline': _inspect(pair['baseline']), 'candidate': _inspect(pair['candidate'])}
+              'qualified_benchmark': False, 'baseline': inspect_once(pair['baseline']),
+              'candidate': inspect_once(pair['candidate'])}
              for pair in requested]
     _reject_reused_prompts(pairs)
-    counts = {'requested_pairs': len(pairs), 'requested_observations': 2 * len(pairs), 'verified_observations': 0,
+    counts = {'requested_pairs': len(pairs), 'requested_observations': 2 * len(pairs),
+              'unique_observations': len(inspected), 'verified_observations': 0,
               'invalid_observations': 0, 'incomplete_observations': 0, 'descriptive_pairs': 0, 'withheld_pairs': 0}
     for pair in pairs:
         for side in ('baseline', 'candidate'): counts[pair[side]['state'] + '_observations'] += 1
@@ -199,7 +221,8 @@ def compare_observations(manifest: str | Path) -> dict:
                   'Sample counts and timing differ; sampled extrema can miss peaks and do not reserve resources.',
                   'Device indices do not prove identical hardware; working sets and memory domains are not summed.',
                   'Coordinator snapshots are not authoritative final outcomes; elapsed time is not inference phase time.',
-                  'Every requested observation is retained; no success-only averages or pooled performance claims.',
+                  'Every requested pair slot is retained; exact shared bindings are inspected once and reported in each pair.',
+                  'No success-only averages or pooled performance claims are produced.',
                   'Finite benchmark execution and full trial identity remain separate from this offline report.'
               ]}
     return _fit_report(result)

@@ -6,34 +6,33 @@
 # ~/.claude.json). Do not declare comfy-local or MCP_DOCKER here: one gateway
 # per runtime. URL-only helpers (context7, GitHub, docs) also live at user scope.
 #
-# `:*` is Grok's prefix form (same as Claude's settings.json). `git status *`
-# would require a trailing argument and miss the bare command.
+# Grok supports both compact allow/deny arrays and structured rules. This file
+# uses one structured list so the repository test can inspect the exact policy.
+# Bash patterns are prefix/glob matches without an implicit word boundary, so
+# argument-bearing commands use a literal trailing space before `*`.
+#
+# Read-only git status/branch/log/diff/show/ls-files and rg are deliberately not
+# repeated here. Grok already recognizes those with its stricter built-in
+# read-only matcher and retains its safety escalation for risky options/config.
 
 [permission]
-allow = [
-  "Bash(python -m unittest:*)",
-  "Bash(python scripts/validate-repo.py:*)",
-  "Bash(python scripts/validate-live.py:*)",
-  "Bash(python scripts/game_asset_pipeline.py:*)",
-  "Bash(python scripts/game_asset_demo.py:*)",
-  "Bash(python scripts/game_asset_media.py:*)",
-  "Bash(node --check:*)",
-  "Bash(node --version:*)",
-  "Bash(python --version:*)",
-  "Bash(git status:*)",
-  "Bash(git log:*)",
-  "Bash(git diff:*)",
-  "Bash(git show:*)",
-  "Bash(git branch:*)",
-  "Bash(git switch:*)",
-  "Bash(git add:*)",
-  "Bash(git commit:*)",
-  "Bash(git fetch:*)",
-  "Bash(git ls-files:*)",
-  "Bash(gh pr:*)",
-  "Bash(gh issue:*)",
-  "Bash(gh run:*)",
-  "Bash(gh auth status:*)",
-  "Bash(gh repo view:*)",
-  "Bash(rg:*)",
+rules = [
+  { action = "deny", tool = "bash", pattern = "git push" },
+  { action = "allow", tool = "bash", pattern = "python -m unittest *" },
+  { action = "allow", tool = "bash", pattern = "python scripts/validate-repo.py" },
+  { action = "allow", tool = "bash", pattern = "python scripts/validate-live.py" },
+  { action = "allow", tool = "bash", pattern = "python scripts/game_asset_pipeline.py *" },
+  { action = "allow", tool = "bash", pattern = "python scripts/game_asset_demo.py *" },
+  { action = "allow", tool = "bash", pattern = "python scripts/game_asset_media.py *" },
+  { action = "allow", tool = "bash", pattern = "node --check *" },
+  { action = "allow", tool = "bash", pattern = "node --version" },
+  { action = "allow", tool = "bash", pattern = "python --version" },
+  { action = "allow", tool = "bash", pattern = "git switch *" },
+  { action = "allow", tool = "bash", pattern = "git add *" },
+  { action = "allow", tool = "bash", pattern = "git commit *" },
+  { action = "allow", tool = "bash", pattern = "git fetch *" },
+  { action = "allow", tool = "bash", pattern = "gh pr *" },
+  { action = "allow", tool = "bash", pattern = "gh issue *" },
+  { action = "allow", tool = "bash", pattern = "gh run *" },
+  { action = "allow", tool = "bash", pattern = "gh repo view" },
 ]
