@@ -7,11 +7,13 @@
 # per runtime. URL-only helpers (context7, GitHub, docs) also live at user scope.
 #
 # Grok permission rules use a tool plus a shell-style command pattern. A
-# trailing `*` admits the bare command and its supported arguments. Git push is
-# deliberately absent and therefore still prompts.
+# trailing `*` admits the bare command and its supported arguments. Deny rules
+# win over allows, so git push remains blocked even when appended to an allowed
+# shell prefix.
 
 [permission]
 rules = [
+  { action = "deny", tool = "bash", pattern = "*git push*" },
   { action = "allow", tool = "bash", pattern = "python -m unittest*" },
   { action = "allow", tool = "bash", pattern = "python scripts/validate-repo.py*" },
   { action = "allow", tool = "bash", pattern = "python scripts/validate-live.py*" },
