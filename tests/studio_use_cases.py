@@ -64,6 +64,15 @@ def dead_end(record):
 # start/resume, job resume, saved-workflow runs, scene and voice renders.
 OBSERVED_POSTS = []  # every POST the browser sent, both modes; the fixture's own log is not available live
 GENERATION_ROUTE = re.compile(r'^/api/jobs$|^/api/[a-z0-9_/-]+/(start|resume|run|render|generate)$')
+# One route ends in /render without being engine work: the pose editor rasterises a drawn skeleton with
+# Pillow into the Studio's own uploads folder. tests/test_pose_guide.py proves it reaches no model, creates
+# no job and queues nothing, so it is named here rather than left to read as a submission.
+DRAWING_ROUTES = ('/api/pose/render',)
+
+
+def submissions(paths):
+    """The observed POSTs that could have started engine work."""
+    return [path for path in paths if path not in DRAWING_ROUTES and GENERATION_ROUTE.search(path)]
 
 
 def case_totals(records):
@@ -105,6 +114,7 @@ DENY_IDS = {
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
     'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
     'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
+    'uxPoseUse',
 }
 DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
@@ -195,6 +205,14 @@ def build_handler():
             if path == '/api/upload':
                 self.rfile.read(length); fixture.POSTS.append({'path': path, 'data': {}})
                 return self.json({'file': 'f' * 32 + '_upload.png', 'sha256': 'a' * 64, 'width': 512, 'height': 768})
+            if path == '/api/pose/render':
+                # The same shape app/pose_guide.py accepts, so the journey proves what the page sends.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': {}})
+                if not isinstance(data, dict) or set(data) != {'width', 'height', 'keypoints'} or len(data['keypoints']) != 18:
+                    return self.json({'error': 'The fixture accepts one 18-joint pose and nothing else'}, 400)
+                return self.json({'file': 'f' * 32 + '_drawn-pose.png', 'sha256': 'd' * 64, 'bytes': 2048,
+                                  'width': data['width'], 'height': data['height'], 'original_name': 'drawn-pose',
+                                  'artifact_id': 'e' * 64, 'renderer': 'studio.coco18-lines/v1', 'generation_submitted': False})
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
@@ -654,6 +672,43 @@ def _combine(c):
     return done, 'source attached=%s, %d board picture(s), %d bracket(s) left, run control enabled=%s' % (attached, filled, brackets, c.ready())
 
 
+@driver('draw-a-pose-for-combine')
+def _draw_pose(c):
+    """#444: the stick figure the skeleton recipe needs is drawn on the page, and drawing it submits nothing."""
+    import studio_browser_smoke as fixture
+    c.boot('#create')
+    c.page.wait_for_timeout(600)
+    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
+    c.act('#uxDestination', 'select', typed='combine-klein-9b-skeleton', note='the recipe whose image 1 is a drawn skeleton')
+    c.act('#uxPrepareHandoff')
+    c.page.wait_for_timeout(800)
+    c.act('#uxPoseEditor', 'read', note='the pose is drawn here, beside the two pictures')
+    if c.live or not c.page.locator('#uxPoseCanvas').count():
+        return False, 'Needs the prepared fixture pair; live mode never renders a guide (it writes a file). '
+    c.act('#uxPoseStart', 'select', typed='bent', note='start from the research figure, then correct it')
+    c.act('[data-ux-joint="4"]', note='pick one joint for the keyboard')
+    before = c.page.evaluate('document.querySelector("#uxPoseCanvas").toDataURL()')
+    for key in ('ArrowRight', 'ArrowRight', 'Shift+ArrowUp'): c.page.keyboard.press(key)
+    c.page.wait_for_timeout(200)
+    nudged = c.page.evaluate('document.querySelector("#uxPoseCanvas").toDataURL()') != before
+    c.observe('the arrow keys moved the picked joint', nudged, 'the drawing did not change under the keyboard')
+    c.act('#uxPoseUnknown', note='leave one joint, and its limbs, out of the guide')
+    posts = len(fixture.POSTS)
+    c.act('#uxPoseUse')
+    c.page.wait_for_function('!!(typeof referenceRecords !== "undefined" && referenceRecords[0] && referenceRecords[0].file)', timeout=10000)
+    state = c.page.evaluate('({preset:selected.id,file:(referenceRecords[0]||{}).file,missing:!!(referenceRecords[0]||{}).missing,'
+                            'sha:(referenceRecords[0]||{}).sha256,keep:typeof lastUploaded!=="undefined"?lastUploaded:null})')
+    routes = [post['path'] for post in fixture.POSTS[posts:]]
+    drawn = bool(state['file']) and not state['missing'] and state['preset'] == 'combine-klein-9b-skeleton'
+    c.observe('Picture 1 holds the drawing and nothing was generated', drawn and routes == ['/api/pose/render'],
+              'routes after the drawing: %s; board state: %s' % (routes or 'none', state))
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    return drawn and nudged and routes == ['/api/pose/render'] and bool(state['keep']), \
+        'skeleton recipe kept, Picture 1 = %s (sha %s), character kept=%s, routes=%s' % (
+            state['file'], str(state['sha'])[:12], bool(state['keep']), routes)
+
+
 @driver('combine-same-pair-second-engine')
 def _combine_loop(c):
     """Real page controls over synthetic completed jobs; recipe switches and reruns never submit."""
@@ -754,7 +809,7 @@ def _guided(c):
         c.act('.studio-guide-panel button:has-text("Next step")', navigation=True, note='stage=%s' % stage)
     final = c.page.evaluate("new URLSearchParams(location.search).get('stage')")
     reached.append(final)
-    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    submitted = submissions(OBSERVED_POSTS)
     c.act('body', 'read', note='stages reached: %s; generation posts: %d' % (','.join(str(x) for x in reached), len(submitted)))
     complete = len([x for x in reached if x]) >= 6 and not submitted
     return complete, 'stages reached=%s, start href=%s, generation posts=%d' % (reached, href, len(submitted))
@@ -780,7 +835,7 @@ def _workflow(c):
     c.act('#exportGraph', 'read', note='export availability after the check')
     c.act('#saveSharedWorkflow', 'read', note='save to Workspace')
     c.act('#prepareSavedRun', 'read', note='prepare a run from a saved revision')
-    runs = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    runs = submissions(OBSERVED_POSTS)
     c.act('#workflowStatus', 'read', note='%d run requests sent' % len(runs))
     exportable = c.page.locator('#exportGraph').count() and not c.page.locator('#exportGraph').is_disabled()
     return bool(exportable) and not runs, 'export available=%s, run requests=%d' % (bool(exportable), len(runs))
@@ -897,7 +952,7 @@ def main(argv=None):
         if server: server.shutdown(); server.server_close()
         if thread: thread.join(timeout=5)
 
-    submitted = [path for path in OBSERVED_POSTS if GENERATION_ROUTE.search(path)]
+    submitted = submissions(OBSERVED_POSTS)
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
               'cases': len(rows), 'passed': len([row for row in rows if row['passed']]),
