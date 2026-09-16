@@ -65,7 +65,7 @@ def main(argv=None):
                               'The separate action explicitly names replacement')
                         if name == 'missing-slot':
                             # Inject a disappeared staged source, not a new user journey or a successful upload.
-                            page.evaluate("referenceRecords[0].missing=true;syncCreate()")
+                            page.evaluate("referenceRecords[0].missing=true;document.querySelector('#positive').dispatchEvent(new Event('change',{bubbles:true}))")
                             before = page.evaluate(SNAPSHOT)
                         page.locator('#uxPoseStart').select_option('bent')
                         page.locator('[data-ux-joint="4"]').click()
