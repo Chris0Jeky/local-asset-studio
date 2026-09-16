@@ -102,7 +102,7 @@ recipe, then draw). The switch itself becomes reachable the day a second skeleto
 
 The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours as the hand-drawn research figure but
 thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px
-lines and 12 px joint dots). **The drawn guide has not been through a Studio generation yet.** What is proved is the
+lines and 12 px joint dots).Proved 16 September (04:10): a guide rendered by this endpoint from the bent-forward starting figure put the character into the drawn pose through the skeleton recipe on the Studio's own path (job `8b571dd4…`, 66.5 s, seed 2026091461, the same figure and seed as the hand-drawn proving run; sheet `examples/style-pose/pose-editor-proving.jpg`): the thin 8 px strokes carried the pose as the 14 px research figure did.** What is proved is the
 input, not this renderer: the research figure carried the pose on 3 of 3 seeds and the recipe's own Studio proving
 run (job `26448d58…`, 68.7 s) used a hand-drawn PNG uploaded from disk. A proving render from a guide drawn in this
 panel is still owed.
