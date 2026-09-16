@@ -123,6 +123,41 @@ class PoseGuideTests(unittest.TestCase):
         self.assertEqual(self.studio.requests, [])
 
 
+class PoseGuideRecipeTests(unittest.TestCase):
+    """The shipped recipe, its real graph, and the guide the editor renders. Still no model runs."""
+    RECIPE = "combine-klein-9b-skeleton"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup); self.root = Path(self.tmp.name)
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        self.preset = next((p for p in catalog["presets"] if p["id"] == self.RECIPE), None)
+        self.assertIsNotNone(self.preset, self.RECIPE + " is the recipe the pose editor draws for")
+        (self.root / "presets").mkdir(); (self.root / "workflows/api").mkdir(parents=True)
+        (self.root / "config").mkdir(); (self.root / "fake-comfy/input").mkdir(parents=True)
+        (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [self.preset]}), encoding="utf-8")
+        (self.root / "workflows/api" / Path(self.preset["graph"]).name).write_bytes((ROOT / self.preset["graph"]).read_bytes())
+        (self.root / "config/local.json").write_text(json.dumps({"comfy_root": str(self.root / "fake-comfy")}))
+        with patch.object(threading.Thread, "start", lambda *_: None): self.studio = NoComfyStudio(self.root)
+
+    def test_the_rendered_guide_binds_as_image_one_of_the_shipped_recipe(self):
+        guide = pose_guide.render(self.studio, payload())
+        picture = io.BytesIO(); Image.new("RGB", (832, 1216), "teal").save(picture, "PNG")
+        character = self.studio.upload("character", "image/png", picture.getvalue())
+        wording = self.preset["continuation_prompt"]
+        for placeholder in self.preset["continuation_placeholder"]: wording = wording.replace(placeholder, "a named character in named clothes")
+        result = self.studio.preview({"preset_id": self.RECIPE, "batch_count": 1,
+                                      "controls": {"positive": wording, "width": 1024, "height": 1536, "seed": 7,
+                                                   "last_reference": character["file"]},
+                                      "references": [{"file": guide["file"], "role": "pose", "sha256": guide["sha256"],
+                                                      "contribution": "", "avoid": ""}]})
+        board_node, board_field = self.preset["reference_slots"][0]["binding"]
+        keep_node, keep_field = self.preset["last_reference"]
+        self.assertEqual(result["workflow"][board_node]["inputs"][board_field], guide["file"], "the drawing is image 1")
+        self.assertEqual(result["workflow"][keep_node]["inputs"][keep_field], character["file"], "the character stays image 2")
+        self.assertEqual([(r["slot"], r["role"], r["file"]) for r in result["references"]], [(1, "pose", guide["file"])])
+        self.assertFalse(result["submitted"]); self.assertFalse(self.studio.jobs); self.assertEqual(self.studio.requests, [])
+
+
 class PoseGuideRouteTests(unittest.TestCase):
     def setUp(self):
         PoseGuideTests.setUp(self)
