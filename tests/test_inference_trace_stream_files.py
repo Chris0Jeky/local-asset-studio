@@ -77,7 +77,9 @@ class EvidenceStreamTests(unittest.TestCase):
                 self.path.write_bytes(wire([event()]))
                 def consume(stream):
                     result=stream_trace.summarize_trace_stream(stream)
+                    before=self.path.stat().st_mtime_ns
                     self.path.write_bytes(replacement)
+                    later=before+1_000_000;os.utime(self.path,ns=(later,later))   # a real edit lands later; inside one Windows clock tick a same-length rewrite is invisible (#467)
                     return result
                 with self.assertRaisesRegex(receipts.EvidenceError,'^file_changed$'):
                     receipts.read_evidence_stream(self.path,1024,consume)
