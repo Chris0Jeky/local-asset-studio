@@ -1,5 +1,27 @@
 # UX use-case matrix
 
+## Draw the pose — 16 September 2026
+
+The Combine screen now draws its own pose skeleton (#444). A **Draw the pose** panel appears for any
+Combine continuation: the 18 COCO-18 joints drag with a mouse or a finger, the joint list picks one for
+the arrow keys (1 % of the canvas, 5 % with Shift), a joint can be marked unknown so it and its limbs
+leave the drawing, *Start from* loads a standing figure, the bent-forward research figure or a mirror,
+and Undo steps back one change. **Use this pose** renders the guide through `POST /api/pose/render` and
+attaches it to Picture 1, taking the engine buttons' own switch path when the recipe has to change. Every
+disabled state names its reason and the route to take: a skeleton and a pose picture remain different
+inputs and the drawn skeleton is the only skeleton-kind Combine today, so from the depth and pose-picture
+recipes the button is disabled and points at *Continue with this → Combine* instead.
+
+`python tests/studio_use_cases.py` passed **14/14** journeys in 65.3 s on Windows/Python 3.14, with
+**zero generation submissions and zero page errors**. The new `draw-a-pose-for-combine` journey takes
+8 clicks: four to reach a prepared Combine on the drawn-skeleton recipe, then a starting figure, a
+picked joint, an unknown joint and **Use this pose**; the keyboard nudge is measured by comparing the
+canvas bitmap before and after three arrow presses. The guide route is named in `DRAWING_ROUTES` so it
+is not miscounted as engine work — `tests/test_pose_guide.py` proves it reaches no model and creates no
+job. **This is interface evidence only:** no picture was generated from a guide drawn in this panel,
+and the renderer (`studio.coco18-lines/v1`) draws thinner strokes than the hand-drawn figure the
+research proved. See [Draw the pose](STYLE-AND-POSE.md#draw-the-pose-16-september-2026).
+
 ## Combine experiment loop — 16 September 2026
 
 The same source pair now has a result strip with seed tiles, Workspace keeper/needs-work decisions,
