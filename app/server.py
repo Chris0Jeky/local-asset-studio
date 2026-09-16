@@ -1290,8 +1290,21 @@ class Studio:
         exception_message = text("exception_message", 450)
         combined = " ".join(value for value in (exception_type, exception_message) if value).lower()
         allocation = bool(re.search(r"bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455", combined))
+        # ComfyUI's own model cache can trip on the first load of a different model family in a session (IndexError in
+        # free_memory before any sampling, #350: observed twice on 14 September 2026, the identical graph succeeded on retry).
+        trace = detail.get("traceback")
+        has_trace = isinstance(trace, list) and any(isinstance(line, str) and line.strip() for line in trace)
+        trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if has_trace else ""
+        # Only the distinctive signature counts: an IndexError whose traceback names free_memory. A loader's own IndexError (a
+        # corrupt or incompatible file) stays a plain execution error, whatever the node is called.
+        swap = "indexerror" in combined and "free_memory" in trace_text
 
-        if allocation:
+        if swap:
+            kind = "model_swap_fault"
+            title = "ComfyUI model-swap fault"
+            summary = f"ComfyUI failed inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
+            action = "Run the same job again with the same seed: measured 14 September 2026, the identical graph succeeded on the retry. The original prompt was not retried automatically."
+        elif allocation:
             kind = "memory_allocation"
             title = "Memory allocation failed"
             if re.search(r"defaultcpuallocator|alloc_cpu|paging file|os error 1455|commit", combined):
@@ -1431,7 +1444,8 @@ class Studio:
                     submission["status"] = "failed"
                     job["failure"] = self._execution_failure(detail)
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
-                    message = "ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else "")
+                    label = "ComfyUI model-swap fault; running the same job again is safe" if job["failure"].get("kind") == "model_swap_fault" else "ComfyUI reported an execution error"
+                    message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
                 outputs = history.get("outputs", {})
