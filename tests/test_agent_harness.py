@@ -34,7 +34,6 @@ GROK_BASH_ALLOW_PATTERNS = {
     'gh pr *',
     'gh issue *',
     'gh run *',
-    'gh auth status',
     'gh repo view',
 }
 GROK_BASH_DENY_PATTERNS = {'git push'}
