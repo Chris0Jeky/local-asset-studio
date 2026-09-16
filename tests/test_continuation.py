@@ -432,7 +432,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it; `verified` is
                 # true only when the execution note opens with a Studio run (research against ComfyUI is not a Studio proving run); the
                 # third fill is image 1's outfit (meaning "outfit", never carried by an engine switch as the character's clothes).
-                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], preset["execution_note"].startswith("Verified"))
+                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], "through the Studio (POST /api/jobs): job" in preset["execution_note"])
                 self.assertTrue(preset["continuation_placeholder"][2].startswith("[image 1's outfit and its colours"))
             elif preset["id"] == "combine-klein-9b-skeleton":
                 # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,

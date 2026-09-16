@@ -95,8 +95,8 @@ own pair (the pack's full-body render as image 1, its portrait as image 2, `expe
 sheet `examples/fantasy-pack/full-body-keeps-face.jpg`): 3 of 3 seeds carried the portrait's fringe, gold earrings, face shape and
 calm expression into the full-body scene with the coat, scarf, satchel, lantern, boots, platform and light of image 1 kept, 116-132 s
 at 832x1216. That is the slice the depth recipe could not give: at full-body scale it lost the face entirely. Those three renders are
-**research straight against ComfyUI**, not the Studio's own path - the catalog entry stays `verified: false` until a Studio run is
-recorded in its `execution_note`. The LoRA's civitai flags read Image/RentCivit/Rent with no Sell; the 9B model is non-commercial.
+**research straight against ComfyUI**, not the Studio's own path; the catalog entry is `verified: true` since two Studio runs the same
+night (jobs `7051b297...` at 832x1216 and `2752190c...` at the default canvas) were recorded in its `execution_note`. The LoRA's civitai flags read Image/RentCivit/Rent with no Sell; the 9B model is non-commercial.
 
 ### Draw the pose (16 September 2026)
 
