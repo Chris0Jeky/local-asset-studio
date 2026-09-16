@@ -34,6 +34,11 @@ def precision_checks(page, check):
     page.locator('#uxPoseY').press('Enter')
     check(page.locator('#uxPoseUse').is_enabled(), 'Enter applies the explicit edit and releases the hold')
     check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') != before, 'The accepted exact position changes the drawing')
+    applied = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    for control in ('#uxPosePositionApply', '#uxPoseUse', '#uxPoseUndo'):
+        page.locator(control).focus(); page.keyboard.press('ArrowRight')
+        check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == applied,
+              'Arrow keys on ' + control + ' do not nudge the drawing')
     page.locator('#uxPoseUndo').click()
     check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == initial, 'Existing Undo restores both displayed coordinates')
     page.locator('#uxPoseX').fill(''); page.locator('#uxPosePositionApply').click()
@@ -68,7 +73,7 @@ def main(argv=None):
     records, errors, posts, drawings = [], [], [], []
     spec = next(case for case in ux.load_cases()['cases'] if case['id'] == 'combine-character-with-another-pose')
     cases = [('depth', 1536), ('copypose', 390), ('missing-slot', 1536), ('corrupt-reply', 390),
-             ('stale-workbench', 1536), ('busy-drawing', 390), ('transport-failure', 1536)]
+             ('stale-workbench', 1536), ('busy-drawing', 390), ('transport-failure', 1536), ('newer-role-upload', 390)]
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, args=['--no-sandbox'],
@@ -106,12 +111,12 @@ def main(argv=None):
                         page.keyboard.press('ArrowRight')
                         if name in ('depth', 'copypose'): precision_checks(page, check)
                         check(page.locator('#uxPoseUse').is_enabled(), 'An explicit new drawing is admissible for this pair')
-                        held = []
-                        if name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure'):
+                        held, uploads = [], []
+                        if name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure', 'newer-role-upload'):
                             page.route('**/api/pose/render', lambda route: held.append(route))
                         count_before = posts.count('/api/pose/render')
                         page.locator('#uxPoseUse').click()
-                        if held or name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure'):
+                        if held or name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure', 'newer-role-upload'):
                             for _ in range(40):
                                 if held: break
                                 page.wait_for_timeout(50)
@@ -128,6 +133,16 @@ def main(argv=None):
                                 page.locator('#uxPoseCanvas').focus(); page.keyboard.press('ArrowRight')
                                 check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == bitmap,
                                       'Keyboard input cannot alter the in-flight geometry')
+                            if name == 'newer-role-upload':
+                                page.route('**/api/upload', lambda route: uploads.append(route))
+                                page.locator('[data-ref-file="0"]').set_input_files({
+                                    'name': 'newer.png', 'mimeType': 'image/png',
+                                    'buffer': (ROOT / 'examples/references/lantern-reference.png').read_bytes()})
+                                page.wait_for_function('referencePending>0')
+                                for _ in range(40):
+                                    if uploads: break
+                                    page.wait_for_timeout(50)
+                                check(len(uploads) == 1, 'A newer real role-slot upload is pending before the guide reply')
                             reply = dict(file='f'*32+'_drawn-pose.png', sha256='d'*64, artifact_id='e'*64,
                                          bytes=2048, width=request['width'], height=request['height'],
                                          renderer='studio.coco18-lines/v1', generation_submitted=False)
@@ -136,12 +151,22 @@ def main(argv=None):
                                 held[0].fulfill(status=503, content_type='application/json', body='{"error":"fixture render unavailable"}')
                             else: held[0].fulfill(status=201, content_type='application/json', body=json.dumps(reply))
                             page.wait_for_function("!document.querySelector('#uxPoseStart').disabled")
-                        failed = name in ('corrupt-reply', 'stale-workbench', 'transport-failure')
+                        failed = name in ('corrupt-reply', 'stale-workbench', 'transport-failure', 'newer-role-upload')
                         if failed:
                             page.wait_for_function("document.querySelector('#uxPoseStatus').textContent.length>0")
                             after = page.evaluate(SNAPSHOT)
                             for key in ('recipe', 'keep', 'parents', 'claim', 'refs'):
                                 check(after[key] == before[key], 'Rejected response preserves ' + key)
+                            if name == 'newer-role-upload':
+                                check(page.locator('#uxPoseUse').is_disabled(), 'The newer pending attachment retains its own readiness hold')
+                                uploaded = dict(file='c'*32+'_newer.png', sha256='c'*64, bytes=1024,
+                                                width=256, height=256)
+                                uploads[0].fulfill(status=201, content_type='application/json', body=json.dumps(uploaded))
+                                page.wait_for_function("referencePending===0 && referenceRecords[0]?.file?.endsWith('_newer.png')")
+                                current = page.evaluate(SNAPSHOT)
+                                check(current['recipe'] == before['recipe'] and current['keep'] == before['keep'],
+                                      'The newer upload finishes on the original recipe with the character retained')
+                                check(current['refs'][0]['sha256'] == 'c'*64, 'The new donor is attached instead of the stale drawn guide')
                             check(page.locator('#uxPoseUse').is_enabled(), 'Failure releases the drawing control without retrying')
                             if name == 'stale-workbench':
                                 check('Newer human wording.' in page.locator('#positive').input_value(), 'Newer wording is retained')

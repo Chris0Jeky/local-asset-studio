@@ -32,3 +32,7 @@ python scripts/validate-repo.py
 Pure tests cover valid zero/boundary/fractional coordinates, missing/nonfinite/boolean/hex/out-of-range values, the actionable readiness hold and reuse of Undo. The native-page fixture checks typing-versus-application, pending-draft holds, refresh without lost typing, Enter, invalid input, reset, unknown/restore, number-input arrows, exact coordinates in the actual guide request, and render-busy holds at desktop and 390px. Existing replacement/recovery scenarios remain in the same driver. APIs are synthetic and Generate is never clicked; hosted reports/screenshots are the browser evidence when local navigation is administrator-blocked.
 
 No GPU generation, model/node/runtime change, native renderer qualification, source-art publication or owner art acceptance occurs. The initial pinned baseline was `186d2b0`; persistent reference brief PRs #418/#421 merged independently while this work was underway and are not rebuilt here. Full current-main integration is recorded on each PR separately from local tests of the pinned source.
+
+## Review correction: keyboard ownership
+
+The keydown handler now admits nudges only from the canvas or a joint-list button. Arrow keys on Set joint position, Reset, Undo or Use pose are not drawing commands and must not create a pose change or Undo snapshot. An actual-handler regression checks the permitted and excluded targets, and the native-page driver presses arrow keys while those action controls are focused. The child also retains the parent's newer-reference-operation protection.

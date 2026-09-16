@@ -376,7 +376,7 @@
   function poseKeys(e){
     const step={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
     // Native select/number editing keeps its own arrow keys; only the drawing and joint buttons nudge geometry.
-    if(!step||!posePoints||poseBusy||posePositionDirty()||e.target.closest('select,input,textarea'))return;
+    if(!step||!posePoints||poseBusy||posePositionDirty()||!e.target.closest('#uxPoseCanvas,[data-ux-joint]'))return;
     e.preventDefault();
     if(!posePoints[poseJoint]){poseStatus(StudioPoseEditor.LABELS[poseJoint]+' is unknown. Restore it before moving it.');return;}
     pushPose();poseEdit(StudioPoseEditor.nudge(posePoints,poseJoint,step[0],step[1],poseCanvas,e.shiftKey?.05:.01));
@@ -395,11 +395,11 @@
   async function usePose(){
     if(poseBusy||!posePoints)return;
     const blocked=poseBlockedReason();if(blocked){poseStatus(blocked);syncPoseActions();return;}
-    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+    const stamp=setupStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
     poseDrag=-1;poseBusy=true;syncReady();
     try{
       const response=await post('/api/pose/render',request);
-      if(stamp!==workbenchStamp()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
+      if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
       const result=StudioPoseEditor.guideResponse(response,request);
       if(switching)switchCombineEngine(POSE_RECIPE,result);
       else{

@@ -56,4 +56,54 @@ test('typed drafts have an actionable generation hold and use the existing undo 
   assert.match(code,/if\(action==='pose-position'\)target=q\('#uxPoseX'\)/);
   assert.match(code,/pushPose\(\);poseEdit\(next\)/);
 });
-console.log(count+' pose guide handoff contracts passed.');
+test('actual arrow handler nudges only the canvas and joint buttons',()=>{
+  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const start=code.indexOf('  function poseKeys(e){'),end=code.indexOf("  posePanel.addEventListener('keydown',poseKeys)",start);
+  assert.ok(start>=0&&end>start);
+  for(const target of ['apply','reset','undo','use','input','canvas','joint']){
+    let edits=0,history=0,prevented=0;
+    const context={posePoints:[{x:1,y:1}],poseBusy:false,posePositionDirty:()=>false,poseJoint:0,
+      poseCanvas:{width:1024,height:1536},poseStatus:()=>{},pushPose:()=>history++,poseEdit:()=>edits++,
+      StudioPoseEditor:{nudge:()=>[{x:2,y:1}]}};
+    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
+    context.poseKeys({key:'ArrowRight',shiftKey:false,preventDefault:()=>prevented++,
+      target:{closest:selector=>selector==='#uxPoseCanvas,[data-ux-joint]'?['canvas','joint'].includes(target):selector==='select,input,textarea'&&target==='input'}});
+    const expected=['canvas','joint'].includes(target)?1:0;
+    assert.equal(edits,expected,target+' must not unexpectedly alter the drawing');
+    assert.equal(history,expected,target+' must not add a spurious undo entry');
+    assert.equal(prevented,expected,target+' retains its keyboard event');
+  }
+});
+async function pendingAttachmentTests(){
+  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const start=code.indexOf('  async function usePose(){'),end=code.indexOf("  q('#uxPoseUse').onclick",start);
+  assert.ok(start>=0&&end>start,'exercise the actual usePose implementation');
+  for(const conflict of ['pending-upload','reference-epoch','picker','none']){
+    let resolveReply,switches=0;
+    const state={pending:0,epoch:0,picker:false};
+    const context={poseBusy:false,posePoints:P.fromPreset('standing',{width:1024,height:1536}),poseCanvas:{width:1024,height:1536},
+      poseBlockedReason:()=>'',syncPoseActions:()=>{},workbenchStamp:()=>'unchanged source pair',
+      setupStamp:()=>JSON.stringify([state.pending,state.epoch]),setupBusy:()=>state.pending>0||state.picker,
+      selected:{id:'picture'},POSE_RECIPE:'skeleton',StudioPoseEditor:P,syncReady:()=>{},
+      post:()=>new Promise(resolve=>{resolveReply=resolve;}),
+      switchCombineEngine:()=>{switches++;throw Error('test stops before attachment');},poseStatus:()=>{},announce:()=>{}};
+    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
+    const pending=context.usePose();
+    assert.equal(context.poseBusy,true,'the real function admitted the render');
+    if(conflict==='pending-upload')state.pending=1;
+    if(conflict==='reference-epoch')state.epoch++;
+    if(conflict==='picker')state.picker=true;
+    resolveReply(reply);await pending;
+    assert.equal(switches,conflict==='none'?1:0,conflict+' must not let the old guide discard a newer reference operation');
+    assert.equal(context.poseBusy,false,'the render hold is released');
+  }
+  count++;console.log('PASS actual handoff invalidates pending uploads, reference epochs and active picker operations');
+}
+pendingAttachmentTests().then(()=>{
+  test('render identity fields must be strings, not coercible arrays',()=>{
+    for(const key of ['file','sha256','artifact_id'])assert.throws(()=>P.guideResponse({...reply,[key]:[reply[key]]},request));
+  });
+  console.log(count+' pose guide handoff contracts passed.');
+}).catch(error=>{console.error(error);process.exitCode=1;});
