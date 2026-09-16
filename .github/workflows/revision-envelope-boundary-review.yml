@@ -27,12 +27,8 @@ jobs:
 
           path = Path('studio_workflow/documents.py')
           source = path.read_text(encoding='utf-8')
-          old_import = '''from .revision_consistency import (RequestState, byte_budget, canonical_value,
-                                             classify_request, compare_head, stored_value)
-          '''
-          new_import = '''from .revision_consistency import (RequestState, byte_budget, canonical_sha256,
-                                             canonical_value, classify_request, compare_head, stored_value)
-          '''
+          old_import = "from .revision_consistency import (RequestState, byte_budget, canonical_value,\n                                   classify_request, compare_head, stored_value)\n"
+          new_import = "from .revision_consistency import (RequestState, byte_budget, canonical_sha256,\n                                   canonical_value, classify_request, compare_head, stored_value)\n"
           if source.count(old_import) != 1:
               raise SystemExit(f'documents import anchor drifted: {source.count(old_import)}')
           source = source.replace(old_import, new_import)
@@ -49,28 +45,22 @@ jobs:
 
           path = Path('tests/test_revision_consistency_values.py')
           source = path.read_text(encoding='utf-8')
-          old_import = '''    byte_budget,
-              canonical_value,
-          '''
-          new_import = '''    byte_budget,
-              canonical_sha256,
-              canonical_value,
-          '''
-          if source.count(old_import) != 1:
-              raise SystemExit(f'value test import anchor drifted: {source.count(old_import)}')
-          source = source.replace(old_import, new_import)
-          anchor = '''    def test_canonical_value_binds_normalized_input_bytes_once(self):
-          '''
-          method = '''    def test_internal_envelope_hash_does_not_apply_the_payload_decode_limit(self):
-              payload = {'value': 'x' * (1024 * 1024)}
-              self.assertEqual(len(canonical_sha256(payload)), 64)
-              with self.assertRaises(ValueError):
-                  canonical_value(payload)
-
-          '''
-          if source.count(anchor) != 1:
-              raise SystemExit(f'value test method anchor drifted: {source.count(anchor)}')
-          path.write_text(source.replace(anchor, method + anchor), encoding='utf-8')
+          import_anchor = "    byte_budget,\n    canonical_value,\n"
+          import_replacement = "    byte_budget,\n    canonical_sha256,\n    canonical_value,\n"
+          if source.count(import_anchor) != 1:
+              raise SystemExit(f'value test import anchor drifted: {source.count(import_anchor)}')
+          source = source.replace(import_anchor, import_replacement)
+          method_anchor = "    def test_canonical_value_binds_normalized_input_bytes_once(self):\n"
+          method = (
+              "    def test_internal_envelope_hash_does_not_apply_the_payload_decode_limit(self):\n"
+              "        payload = {'value': 'x' * (1024 * 1024)}\n"
+              "        self.assertEqual(len(canonical_sha256(payload)), 64)\n"
+              "        with self.assertRaises(ValueError):\n"
+              "            canonical_value(payload)\n\n"
+          )
+          if source.count(method_anchor) != 1:
+              raise SystemExit(f'value test method anchor drifted: {source.count(method_anchor)}')
+          path.write_text(source.replace(method_anchor, method + method_anchor), encoding='utf-8')
           PY
 
       - name: Verify focused and domain contracts
