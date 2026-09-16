@@ -42,15 +42,20 @@ so the same 1 MiB report limit applies to file and stdout output. There is no HT
 
 `studio.resource-comparison-plan/v1` has exactly `schema`, `generation_allowance: 0`, and `pairs`.
 Each pair has exactly `id`, `condition`, `baseline`, `candidate`. Each side names one `directory`,
-`result_sha256` and `job_id`. Pair IDs, job IDs, result pins and normalized directory identities must
-not repeat. The entire manifest is validated before any observation directory is read.
+`result_sha256` and `job_id`. Pair IDs must not repeat. Exact `(job_id, result_sha256, directory)`
+triples may be shared across pairs; those bindings are inspected once and reported in each pair
+that names them. Reusing only some of those three components (same job with a different pin or
+directory, same pin with a different job, or same directory with a different identity) is still
+`duplicate_trial_evidence` and is refused before any observation is read. The entire manifest is
+validated before any observation directory is read.
 
 There are at most eight pairs / sixteen observations, and the input is at most 64 KiB. Each side
 inherits the inspector's bounded reads and fixed five-file capture; histories are not scanned.
 One pair cannot silently adopt the other side's receipt. Reuse of an actual received prompt identity
 also invalidates **all** affected rows, even when copied/rehashed artifacts have different job labels.
-Explicit duplicate-job refusal is intentionally conservative; multiple windows of one job are not
-independent trials. Grouping such windows needs a different explicit protocol.
+Partial-component reuse is still refused: the same job ID with a different pin or directory is
+not two independent trials. Grouping distinct windows of one job needs a different explicit
+protocol.
 
 Conditions are `unspecified`, `cold_process`, `cold_first_generation`, `warm_same_model` or
 `model_switch`. They remain caller declarations: every pair says `condition_verified: false`.
