@@ -6,14 +6,85 @@ on:
       - review/revision-envelope-size-boundary
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   focused:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: review/revision-envelope-size-boundary
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m unittest discover -s tests -p 'test_revision_request_envelope_boundary.py' -v
+
+      - name: Keep internal identity envelopes outside the public payload bound
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('studio_workflow/documents.py')
+          source = path.read_text(encoding='utf-8')
+          old_import = '''from .revision_consistency import (RequestState, byte_budget, canonical_value,
+                                             classify_request, compare_head, stored_value)
+          '''
+          new_import = '''from .revision_consistency import (RequestState, byte_budget, canonical_sha256,
+                                             canonical_value, classify_request, compare_head, stored_value)
+          '''
+          if source.count(old_import) != 1:
+              raise SystemExit(f'documents import anchor drifted: {source.count(old_import)}')
+          source = source.replace(old_import, new_import)
+          replacements = {
+              "canonical_value({'action': 'create', **value}).sha256": "canonical_sha256({'action': 'create', **value})",
+              "canonical_value({'action': 'fork', 'id': key, **value}).sha256": "canonical_sha256({'action': 'fork', 'id': key, **value})",
+              "canonical_value({'action': 'restore' if restore else 'command', 'id': key, **value}).sha256": "canonical_sha256({'action': 'restore' if restore else 'command', 'id': key, **value})",
+          }
+          for old, new in replacements.items():
+              if source.count(old) != 1:
+                  raise SystemExit(f'documents hash anchor drifted: {old!r} -> {source.count(old)}')
+              source = source.replace(old, new)
+          path.write_text(source, encoding='utf-8')
+
+          path = Path('tests/test_revision_consistency_values.py')
+          source = path.read_text(encoding='utf-8')
+          old_import = '''    byte_budget,
+              canonical_value,
+          '''
+          new_import = '''    byte_budget,
+              canonical_sha256,
+              canonical_value,
+          '''
+          if source.count(old_import) != 1:
+              raise SystemExit(f'value test import anchor drifted: {source.count(old_import)}')
+          source = source.replace(old_import, new_import)
+          anchor = '''    def test_canonical_value_binds_normalized_input_bytes_once(self):
+          '''
+          method = '''    def test_internal_envelope_hash_does_not_apply_the_payload_decode_limit(self):
+              payload = {'value': 'x' * (1024 * 1024)}
+              self.assertEqual(len(canonical_sha256(payload)), 64)
+              with self.assertRaises(ValueError):
+                  canonical_value(payload)
+
+          '''
+          if source.count(anchor) != 1:
+              raise SystemExit(f'value test method anchor drifted: {source.count(anchor)}')
+          path.write_text(source.replace(anchor, method + anchor), encoding='utf-8')
+          PY
+
+      - name: Verify focused and domain contracts
+        run: |
+          python -m unittest discover -s tests -p 'test_revision_request_envelope_boundary.py' -v
+          python -m unittest tests.test_revision_consistency_values -v
+          python -m unittest discover -s tests -p 'test_workflow_documents.py' -v
+          python -m py_compile studio_workflow/revision_consistency.py studio_workflow/documents.py tests/test_revision_consistency_values.py tests/test_revision_request_envelope_boundary.py
+          git diff --check
+
+      - name: Publish the verified implementation on the disposable branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add studio_workflow/revision_consistency.py studio_workflow/documents.py tests/test_revision_consistency_values.py tests/test_revision_request_envelope_boundary.py
+          git commit -m 'Preserve request identity at the payload size boundary'
+          git push origin HEAD:review/revision-envelope-size-boundary
