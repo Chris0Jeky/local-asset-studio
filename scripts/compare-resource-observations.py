@@ -7,7 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'app'), str(ROOT)]
-from resource_comparison import EvidenceError, SCHEMA, compare_observations
+from resource_comparison import EvidenceError, SCHEMA, compare_observations, encode_report
 
 
 def main(argv=None):
@@ -17,11 +17,14 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try: report = compare_observations(args.manifest)
     except EvidenceError as error:
-        print(json.dumps({'schema': SCHEMA, 'reason': error.code, 'state': 'invalid_plan',
-                          'qualified_benchmark': False, 'execution_authority': False}))
+        state = ('report_unavailable' if error.code == 'report_too_large'
+                 else 'incomplete' if error.incomplete else 'invalid_plan')
+        print(json.dumps({'schema': SCHEMA, 'reason': error.code, 'state': state,
+                          'qualified_benchmark': False, 'execution_authority': False},
+                         ensure_ascii=True, allow_nan=False, separators=(',', ':')))
         return 2
     try:
-        data = json.dumps(report, ensure_ascii=True, allow_nan=False, separators=(',', ':')) + '\n'
+        data = encode_report(report).decode('ascii')
         if args.output is None: sys.stdout.write(data)
         else:
             with args.output.open('x', encoding='utf-8', newline='\n') as stream: stream.write(data)
