@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   patch-and-verify:
-    if: github.actor != 'github-actions[bot]'
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the corrective branch
@@ -35,15 +35,16 @@ jobs:
           path = Path('tests/test_server.py')
           text = path.read_text(encoding='utf-8')
           anchor = '    def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):\n'
-          regression = '''    def test_empty_comfy_response_is_only_allowed_for_free(self):
-              """An empty 200 is the /free contract, not a global substitute for required JSON."""
-              s=self.studio()
-              with patch.object(server,'urlopen',return_value=self._http_response(b'')):
-                  with self.assertRaises(json.JSONDecodeError): s._request('/system_stats')
-              with patch.object(server,'urlopen',return_value=self._http_response(b'')):
-                  self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
-
-'''
+          regression = (
+              '    def test_empty_comfy_response_is_only_allowed_for_free(self):\n'
+              '        """An empty 200 is the /free contract, not a global substitute for required JSON."""\n'
+              '        s=self.studio()\n'
+              "        with patch.object(server,'urlopen',return_value=self._http_response(b'')):\n"
+              '            with self.assertRaises(json.JSONDecodeError): s._request(\'/system_stats\')\n'
+              "        with patch.object(server,'urlopen',return_value=self._http_response(b'')):\n"
+              "            self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))\n"
+              '\n'
+          )
           if text.count(anchor) != 1:
               raise SystemExit('test insertion anchor drifted')
           if 'test_empty_comfy_response_is_only_allowed_for_free' in text:
@@ -94,7 +95,7 @@ jobs:
 
       - name: Verify the corrected response contracts
         run: |
-          python -m unittest discover -s tests -p 'test_server.py' -k 'empty_comfy_response_is_only_allowed_for_free or idle_tick_releases_the_comfy_cache_once_per_idle_stretch or idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks' -v
+          python -m unittest discover -s tests -p 'test_server.py' -v
           python -m py_compile app/server.py tests/test_server.py
           python scripts/validate-repo.py
           git diff --check
