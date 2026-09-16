@@ -58,9 +58,13 @@ jobs:
               raise SystemExit(f'Prompt Studio script path anchors drifted: {workflow.count(script_anchor)}')
           workflow = workflow.replace(script_anchor, script_replacement)
           test_anchor = "'tests/test_adult_illustration_prompt*.py'"
-          if workflow.count(test_anchor) != 3:
+          if workflow.count(test_anchor) != 2:
               raise SystemExit(f'adult illustration test anchors drifted: {workflow.count(test_anchor)}')
           workflow = workflow.replace(test_anchor, "'tests/test_adult_illustration*.py'")
+          command_anchor = "python -m unittest discover -s tests -p 'test_adult_illustration_prompt*.py' -v"
+          if workflow.count(command_anchor) != 1:
+              raise SystemExit(f'adult illustration test command drifted: {workflow.count(command_anchor)}')
+          workflow = workflow.replace(command_anchor, "python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v")
           workflow_path.write_text(workflow, encoding='utf-8')
           PY
 
