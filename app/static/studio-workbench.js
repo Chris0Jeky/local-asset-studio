@@ -29,12 +29,12 @@
   // A recipe's bracketed fills (who, the pose, the clothes) are short fields that write the prepared wording for you; the
   // paragraph stays visible and editable underneath, and a hand edit stops the fields from rewriting it (#422 slice A).
   const fillsBlock=element('div','ux-fills');fillsBlock.id='uxFills';fillsBlock.hidden=true;q('#positiveWrap').before(fillsBlock);
-  let fillsPreset=null,fillsSource=null,fillsTemplate='',fillsAssembled=null;
+  let fillsPreset=null,fillsSource=null,fillsTemplate='',fillsAssembled=null,transferredFills=null;
   const fillInputs=()=>[...fillsBlock.querySelectorAll('[data-ux-fill]')];
   function fillValues(){return Object.fromEntries(fillInputs().map(input=>[input.dataset.uxFill,input.value]));}
   function fillsKey(){return continuationState?'studio-fills:'+continuationState.source_asset_id:null;}
   function rememberedFills(){const key=fillsKey();if(!key)return{};try{const value=JSON.parse(localStorage.getItem(key)||'{}');return value&&typeof value==='object'?value:{};}catch(e){return{};}}
-  function rememberFills(){const key=fillsKey();if(!key)return;try{localStorage.setItem(key,JSON.stringify(fillValues()));}catch(e){}}
+  function rememberFills(){const key=fillsKey();if(!key)return;const remembered={...rememberedFills(),...fillValues()};for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)remembered['@'+meaning]=value;}try{localStorage.setItem(key,JSON.stringify(remembered));}catch(e){}}
   function assembleFills(){
     const text=StudioContinuation.assemble(fillsTemplate,fillValues());fillsAssembled=text;rememberFills();
     if(q('#positive').value!==text){q('#positive').value=text;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof updateReady==='function')updateReady();}
@@ -48,7 +48,7 @@
     if(fillsPreset!==selected.id||fillsSource!==source||(carries&&current!==fillsTemplate)){
       // The template is the prepared wording: the textarea while it still carries every fill, otherwise the recipe's continuation
       // wording with `{source}` resolved the way Continue with this resolves it (the literal token must never reach the model).
-      fillsPreset=selected.id;fillsSource=source;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered=rememberedFills();
+      fillsPreset=selected.id;fillsSource=source;fillsTemplate=carries?current:String(StudioContinuation.promptFor(selected,continuationSource)||'');fillsAssembled=null;const remembered={...rememberedFills(),...(transferredFills?.preset===selected.id&&transferredFills.source===source?transferredFills.values:{})};
       fillsBlock.innerHTML='<p class="muted">Answer these in a few words; they write the wording below for you. The paragraph stays editable.</p>'+spec.map(f=>'<label>'+escape(f.label)+'<input data-ux-fill="'+escape(f.placeholder)+'" placeholder="'+escape(f.example?'e.g. '+f.example:'')+'" value="'+escape(remembered[f.placeholder]||'')+'" autocomplete="off"></label>').join('')+'<p id="uxFillsNote" class="muted" hidden>The wording below is not what the fields would write (restored, or edited by hand), so they leave it alone. <button type="button" id="uxRebuildFills">Rebuild it from the fields</button></p>';
     }
     fillsBlock.hidden=!fillsTemplate;if(fillsBlock.hidden)return;
@@ -103,7 +103,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -117,7 +117,7 @@
   function syncReady(){
     if(!q('#uxRunSummary'))return;
     const {items,required}=readinessItems();
-    q('#generate').disabled=items.length>0;syncContinuation();syncFills();syncCombinePair();
+    q('#generate').disabled=items.length>0;syncContinuation();syncFills();syncCombinePair();syncPoseEditor();
     const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
     // Polling identical evidence must not replace a focused action or announce the same status again.
     if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
@@ -176,18 +176,238 @@
   const imageNumber=label=>Number(/\(image (\d)\)/.exec(String(label||''))?.[1])||0;
   function syncCombinePair(){
     const combine=!!selected&&(selected.continuation_capability?.operation==='combine'||selected.continuation_operation==='combine')&&!!selected.reference_board&&!!selected.last_reference;
-    pairPanel.hidden=!combine;if(!combine){pairMarkup='';return;}
+    pairPanel.hidden=!combine;if(!combine){pairMarkup='';syncCombineEngines();syncCombineResults();return;}
     const board=referenceRecords[0],boardFile=board?.file&&!board.missing?board.file:null,keepAsset=continuationState?.source_asset_id||null;
     const tiles=[{label:selected.reference_board_label||'Pose picture',n:imageNumber(selected.reference_board_label)||2,src:boardFile?'/api/uploads/'+encodeURIComponent(boardFile):null,empty:'No pose picture yet.',action:'board',button:'Pull it from the library'},
                  {label:selected.last_reference_label||'Picture to keep',n:imageNumber(selected.last_reference_label)||1,src:lastUploaded?'/api/uploads/'+encodeURIComponent(lastUploaded):keepAsset?'/api/assets/'+encodeURIComponent(keepAsset)+'/file':null,empty:'No picture to keep yet.',action:'keep',button:'Choose your picture'}].sort((a,b)=>a.n-b.n);
     const markup=tiles.map(t=>'<figure class="ux-pair-tile">'+(t.src?'<img src="'+escape(t.src)+'" alt="'+escape(t.label)+'">':'<div class="ux-pair-empty"><span>'+escape(t.empty)+'</span><button type="button" data-ux-pair="'+t.action+'">'+escape(t.button)+'</button></div>')+'<figcaption>'+escape(t.label)+'</figcaption></figure>').join('');
     if(markup!==pairMarkup){pairMarkup=markup;pairPanel.innerHTML='<span class="eyebrow">THE TWO PICTURES, IN THE ORDER THE MODEL READS THEM</span><div class="ux-pair-tiles">'+markup+'</div>';}
+    syncCombineEngines();syncCombineResults();
   }
   pairPanel.onclick=e=>{
     const button=e.target.closest('[data-ux-pair]');if(!button)return;
     if(button.dataset.uxPair==='board')q('#uxPullAsset').click();
     else if(!focusReadinessTarget(q('#lastReference')))q('#uxPullAsset').click();
   };
+  // One experiment retains semantic source roles; image numbers and graph bindings belong to the selected recipe.
+  const enginePanel=element('section','ux-combine-engines');enginePanel.id='uxCombineEngines';enginePanel.hidden=true;pairPanel.after(enginePanel);
+  const resultPanel=element('section','ux-pair-results');resultPanel.id='uxPairResults';resultPanel.hidden=true;runBox.after(resultPanel);
+  const combineWording=new Map();let engineMarkup='',resultMarkup='',pairActionBusy=false;
+  function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
+  function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
+  function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy;}
+  function syncCombineEngines(){
+    enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
+    const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
+    const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
+      const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
+      const label=({'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-skeleton':'Klein 9B · skeleton'})[p.id]||p.name;
+      const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
+      return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
+    }).join('')+'</div>';
+    if(markup!==engineMarkup){engineMarkup=markup;enginePanel.innerHTML=markup;}
+  }
+  enginePanel.onclick=e=>{
+    const button=e.target.closest('[data-ux-engine]');if(!button||button.disabled||combineBusy()||button.dataset.uxEngine===selected.id)return;
+    try{switchCombineEngine(button.dataset.uxEngine);}catch(error){announce(error.message,true);}
+  };
+  // The one path that moves this pair to another Combine recipe: the engine buttons and the pose editor
+  // both take it, so pictures, lineage and the three answers survive a switch the same way in both.
+  function switchCombineEngine(presetId){
+      const target=catalog.presets.find(p=>p.id===presetId),reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason)throw Error(reason);
+      if(!continuationSource||lastUploaded!==continuationState.reference_file)throw Error('Put the source back before changing recipes.');
+      if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before changing recipes.');
+      const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
+      const identity=pairKey(),oldWords=q('#positive').value,manual=q('#uxFillsNote')&&!q('#uxFillsNote').hidden;
+      if(manual)combineWording.set(identity+'|'+selected.id,oldWords);else combineWording.delete(identity+'|'+selected.id);
+      const refs=StudioContinuation.combineReferences(target,referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
+      const restored=combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
+      rememberFills();transferredFills={preset:target.id,source:source.asset_id,values:mapped};
+      selectPreset(target.id,true,true);continuationState=prepared.claim;continuationSource=source;lastUploaded=keep;uploaded=null;parentAssets=parents;parentByInput=inputs;referenceRecords=refs;
+      q('#positive').value=positive;if(selected.negative)q('#negative').value=prepared.negative;
+      for(const key of ['seed','width','height']){const input=getControl(key);if(input&&prior[key]!=null)input.value=prior[key];}q('#batch').value=batch;
+      fillsPreset=null;renderReferenceSlots();syncFills();if(restored===undefined)fillsAssembled=positive;transferredFills=null;
+      rememberFills();draftDirty=true;saveDraft();updateReady();recipeChanged();scheduleTimeEstimate();
+      announce('Same pictures, '+target.name+'. '+(restored!==undefined?'Your edited wording for this recipe is restored. ':'The wording now uses this recipe’s image order. ')+'Review it, then Generate.');
+      return target;
+  }
+  // A pose you draw here becomes the skeleton recipe's image 1: a coloured stick figure on black, the input that
+  // carried the pose on 3 of 3 research seeds. Drawing and rendering submit nothing; Generate stays your press (#444).
+  const POSE_RECIPE='combine-klein-9b-skeleton',POSE_GRID=8,POSE_LIMITS=[64,1536],POSE_DISPLAY=320,POSE_GRAB=18,POSE_UNDO=60;
+  const posePanel=element('section','ux-pose-editor');posePanel.id='uxPoseEditor';posePanel.hidden=true;pairPanel.after(posePanel);
+  posePanel.innerHTML='<h3>Draw the pose</h3><p>Drag a joint, or pick one below and nudge it with the arrow keys (1 %, or 5 % with Shift). Use this pose puts the drawing on Picture 1; nothing runs until you press Generate.</p>'
+    +'<div class="ux-pose-layout"><canvas id="uxPoseCanvas" tabindex="0" role="img" aria-label="Pose skeleton. Drag a joint, or pick one in the joint list and use the arrow keys."></canvas>'
+    +'<div class="ux-pose-side"><label for="uxPoseStart">Start from<select id="uxPoseStart"><option value="">Keep this drawing</option>'
+    +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
+    +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'
+    +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
+    +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
+  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='';
+  const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
+  // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
+  function poseCanvasSize(){
+    const read=key=>{const value=Number(getControl(key)?.value);return Number.isFinite(value)&&value>=POSE_LIMITS[0]&&value<=POSE_LIMITS[1]&&!(value%POSE_GRID)?Math.round(value):0;};
+    return{width:read('width')||1024,height:read('height')||1536};
+  }
+  function poseDisplaySize(){
+    const ratio=poseCanvas.width/poseCanvas.height;
+    return ratio>=1?{width:POSE_DISPLAY,height:Math.max(1,Math.round(POSE_DISPLAY/ratio))}:{width:Math.max(1,Math.round(POSE_DISPLAY*ratio)),height:POSE_DISPLAY};
+  }
+  // Undo carries the remembered positions with the drawing: otherwise restoring an unknown joint after an undo
+  // would put it back where the undone edit had left it (Codex review, PR #466).
+  function pushPose(){poseHistory.push(JSON.parse(JSON.stringify({points:posePoints,home:poseHome})));if(poseHistory.length>POSE_UNDO)poseHistory.shift();}
+  function poseAt(event){const rect=q('#uxPoseCanvas').getBoundingClientRect();
+    return{x:(event.clientX-rect.left)/(rect.width||1)*poseCanvas.width,y:(event.clientY-rect.top)/(rect.height||1)*poseCanvas.height};}
+  function drawPose(){
+    const el=q('#uxPoseCanvas'),ctx=el&&el.getContext&&el.getContext('2d');if(!ctx||!posePoints)return;
+    const sx=el.width/poseCanvas.width,sy=el.height/poseCanvas.height,stroke=Math.max(3,Math.round(Math.min(el.width,el.height)/48));
+    ctx.fillStyle='#000';ctx.fillRect(0,0,el.width,el.height);ctx.lineCap='round';ctx.lineWidth=stroke;
+    // A joint marked unknown is omitted, and so is every limb that touches it: exactly what the server renders.
+    for(const [from,to] of StudioPoseEditor.LIMBS){const a=posePoints[from],b=posePoints[to];if(!a||!b)continue;
+      ctx.strokeStyle=StudioPoseEditor.COLORS[to];ctx.beginPath();ctx.moveTo(a.x*sx,a.y*sy);ctx.lineTo(b.x*sx,b.y*sy);ctx.stroke();}
+    posePoints.forEach((point,index)=>{if(!point)return;
+      ctx.beginPath();ctx.arc(point.x*sx,point.y*sy,stroke,0,Math.PI*2);ctx.fillStyle=StudioPoseEditor.COLORS[index];ctx.fill();
+      if(index===poseJoint){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=stroke;}});
+  }
+  // The joint buttons are built once and then only updated: rebuilding them would take the keyboard focus away mid-edit.
+  function renderPoseJoints(){
+    const list=q('#uxPoseJoints');
+    if(!list.children.length)list.innerHTML=StudioPoseEditor.LABELS.map((label,index)=>'<button type="button" data-ux-joint="'+index+'"><span class="ux-pose-swatch" style="background:'+StudioPoseEditor.COLORS[index]+'"></span><b>'+escape(label)+'</b><small></small></button>').join('');
+    [...list.children].forEach((button,index)=>{button.setAttribute('aria-pressed',String(index===poseJoint));
+      button.querySelector('small').textContent=posePoints&&posePoints[index]?'':'unknown';});
+  }
+  // Why Use this pose cannot run right now, in the words on screen. Empty means it can.
+  function poseBlockedReason(){
+    if(!selected)return 'Choose a Combine recipe first.';
+    if(StudioPoseEditor.known(posePoints||[])<2)return 'Mark at least two joints: a guide with fewer draws no limb.';
+    if(poseBusy)return 'The drawing is being rendered.';
+    if(combineBusy())return 'Finish the attachment in progress first.';
+    if(selected.id===POSE_RECIPE)return '';
+    const target=catalog?.presets.find(p=>p.id===POSE_RECIPE);
+    if(!target)return 'The drawn-skeleton recipe is not in this catalog.';
+    if(!continuationState||!continuationSource)return 'Open this pair through Continue with this, then draw the pose.';
+    // A refusal that only names the mismatch leaves the user stuck: say where the drawn route actually is. Today the
+    // drawn skeleton is the one skeleton-kind recipe, so this is the answer from every picture-kind Combine.
+    const reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords)||target.runtime_block||'';
+    return reason?reason+' Reach the drawn-skeleton recipe through Continue with this → Combine, then draw here.':'';
+  }
+  function syncPoseActions(){
+    const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo');
+    use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';q('#uxPoseReason').textContent=reason;
+    const named=StudioPoseEditor.LABELS[poseJoint].toLowerCase(),drawn=!!(posePoints&&posePoints[poseJoint]);
+    unknown.textContent=(drawn?'Mark ':'Restore ')+named;unknown.title=drawn?'Leaves it out of the guide, with its limbs.':'Puts it back where it last was.';
+    unknown.disabled=poseBusy;undo.disabled=poseBusy||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
+    if(poseBusy)unknown.title=undo.title='The drawing is being rendered.';
+  }
+  function syncPoseEditor(){
+    const active=!!selected&&!!StudioContinuation.combineKind(selected);
+    posePanel.hidden=!active;if(!active)return;
+    const next=poseCanvasSize();
+    if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseHistory=[];poseCanvas=next;}
+    else if(next.width!==poseCanvas.width||next.height!==poseCanvas.height){
+      // The undo stack follows the canvas too, so stepping back after a size change cannot restore old-canvas pixels.
+      poseHistory=poseHistory.map(step=>({points:StudioPoseEditor.resize(step.points,poseCanvas,next),home:StudioPoseEditor.resize(step.home,poseCanvas,next)}));
+      posePoints=StudioPoseEditor.resize(posePoints,poseCanvas,next);poseHome=StudioPoseEditor.resize(poseHome,poseCanvas,next);poseCanvas=next;}
+    const el=q('#uxPoseCanvas'),display=poseDisplaySize();
+    const signature=JSON.stringify([posePoints,poseCanvas,poseJoint,display]);
+    if(el.width!==display.width||el.height!==display.height){el.width=display.width;el.height=display.height;poseSignature='';}
+    if(signature!==poseSignature){poseSignature=signature;renderPoseJoints();drawPose();}
+    syncPoseActions();
+  }
+  function poseEdit(next,remember=true){
+    posePoints=next;if(remember)poseHome=poseHome.map((point,index)=>posePoints[index]||point);
+    poseSignature='';renderPoseJoints();drawPose();syncPoseActions();
+  }
+  q('#uxPoseStart').onchange=e=>{
+    const id=e.target.value;e.target.value='';if(!id||!posePoints)return;
+    pushPose();poseEdit(StudioPoseEditor.start(id,posePoints,poseCanvas));
+    poseStatus((StudioPoseEditor.PRESETS.find(p=>p.id===id)||{}).label+' loaded. Nothing was submitted.');
+  };
+  q('#uxPoseJoints').onclick=e=>{const button=e.target.closest('[data-ux-joint]');if(!button)return;poseJoint=Number(button.dataset.uxJoint);poseEdit(posePoints,false);};
+  q('#uxPoseJoints').addEventListener('focusin',e=>{const button=e.target.closest('[data-ux-joint]');if(!button)return;poseJoint=Number(button.dataset.uxJoint);poseEdit(posePoints,false);});
+  q('#uxPoseUnknown').onclick=()=>{if(q('#uxPoseUnknown').disabled||!posePoints)return;
+    pushPose();poseEdit(StudioPoseEditor.toggle(posePoints,poseJoint,poseHome[poseJoint],poseCanvas),false);
+    poseStatus(StudioPoseEditor.LABELS[poseJoint]+(posePoints[poseJoint]?' is back in the guide.':' is left out, with the limbs that touch it.'));};
+  q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled||!poseHistory.length)return;const step=poseHistory.pop();poseHome=step.home;poseEdit(step.points,false);poseStatus('One change stepped back.');};
+  function poseKeys(e){
+    const step={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+    // Arrow keys inside the Start-from list still change the option; the drawing only follows them elsewhere.
+    if(!step||!posePoints||poseBusy||e.target.closest('select'))return;
+    e.preventDefault();
+    if(!posePoints[poseJoint]){poseStatus(StudioPoseEditor.LABELS[poseJoint]+' is unknown. Restore it before moving it.');return;}
+    pushPose();poseEdit(StudioPoseEditor.nudge(posePoints,poseJoint,step[0],step[1],poseCanvas,e.shiftKey?.05:.01));
+  }
+  posePanel.addEventListener('keydown',poseKeys);
+  q('#uxPoseCanvas').addEventListener('pointerdown',e=>{
+    if(!posePoints||poseBusy)return;
+    const at=poseAt(e),index=StudioPoseEditor.nearest(posePoints,at.x,at.y,POSE_GRAB*poseCanvas.width/Math.max(1,q('#uxPoseCanvas').width));
+    if(index<0){poseStatus('Nothing to grab there. Drag a coloured joint, or pick one in the list.');return;}
+    e.preventDefault();pushPose();poseJoint=index;poseDrag=index;
+    try{q('#uxPoseCanvas').setPointerCapture(e.pointerId);}catch(_){}
+    poseEdit(StudioPoseEditor.move(posePoints,index,at.x,at.y,poseCanvas));
+  });
+  q('#uxPoseCanvas').addEventListener('pointermove',e=>{if(poseDrag<0||!posePoints)return;e.preventDefault();const at=poseAt(e);poseEdit(StudioPoseEditor.move(posePoints,poseDrag,at.x,at.y,poseCanvas));});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])q('#uxPoseCanvas').addEventListener(name,()=>{poseDrag=-1;});
+  async function usePose(){
+    if(poseBusy||!posePoints)return;
+    const blocked=poseBlockedReason();if(blocked){poseStatus(blocked);syncPoseActions();return;}
+    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE;
+    poseBusy=true;syncReady();
+    try{
+      const result=await post('/api/pose/render',StudioPoseEditor.serialize(posePoints,poseCanvas));
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the pose was rendering. Nothing was attached.');
+      if(switching)switchCombineEngine(POSE_RECIPE);
+      const slot=referenceRecords[0];if(!slot)throw Error('This recipe has no pose slot. Choose the drawn-skeleton recipe first.');
+      const previous=slot.parent_asset;Object.assign(slot,{parent_asset:null},result,{missing:false});releaseParentAsset(previous);
+      if(StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+      renderReferenceSlots();draftDirty=true;saveDraft();syncCreate();
+      poseStatus('Your drawing is on Picture 1. No generation was submitted.');
+      announce('Your drawn pose is on Picture 1'+(switching?', and this pair is now on '+selected.name+'.':'.')+' Check the wording, then press Generate.');
+    }catch(error){poseStatus(error.message);announce(error.message,true);}
+    finally{poseBusy=false;syncReady();}
+  }
+  q('#uxPoseUse').onclick=()=>{void usePose();};
+  function syncCombineResults(){
+    const active=!!StudioContinuation.combineKind(selected);resultPanel.hidden=!active;if(!active){resultMarkup='';return;}
+    const record=currentPair(),matches=jobs.filter(job=>StudioContinuation.sameCombinePair(record,job,catalog.presets));
+    const outputs=matches.flatMap(job=>(job.outputs||[]).map((output,index)=>({job,output,index}))).filter(({output})=>!assetState.assets.find(a=>a.id===output.asset_id)?.trashed_at);
+    const sources=[...referenceRecords.filter(r=>r.file&&!r.missing).map(r=>({file:r.file,label:'Pose source'})),{file:lastUploaded,label:'Character'}].filter(r=>r.file);
+    const sourceTiles='<div class="ux-result-sources">'+sources.map(s=>'<figure><img src="/api/uploads/'+encodeURIComponent(s.file)+'" alt="'+s.label+'"><figcaption>'+s.label+'</figcaption></figure>').join('')+'</div>';
+    const tiles=outputs.slice(0,24).map(({job,output,index})=>{
+      const asset=assetState.assets.find(a=>a.id===output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',rerun=job.status==='completed'&&!combineBusy();
+      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="Combine result, seed '+escape(output.seed??job.controls?.seed??'unknown')+'"><b>Seed '+escape(output.seed??job.controls?.seed??'unknown')+'</b><small>'+escape(job.preset_name)+(Number(job.elapsed_seconds)>0?' · '+durationLabel(job.elapsed_seconds):'')+'</small><span>'+escape(review==='selected'?'Keeper':review.replaceAll('_',' '))+'</span><div class="ux-result-actions">'+(output.asset_id?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+(pairActionBusy?'disabled':'')+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+(rerun?'':'disabled')+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+(rerun?'':'disabled')+'>Prepare new seed</button><button type="button" data-ux-result-recipe="'+id+'">Recipe</button></div>'+(job.status!=='completed'?'<small>Run '+escape(job.status)+'. Resolve it in Problems before preparing another.</small>':'')+'</article>';
+    }).join('');
+    const activeRuns=matches.filter(j=>j.status!=='completed').map(j=>'<p>'+escape(j.preset_name)+' · '+escape(j.status)+': '+escape(j.message||'')+'</p>').join('');
+    const markup='<h3>Runs for these pictures</h3><p>Review each seed beside its sources. Preparing a seed loads the recorded recipe; Generate remains a separate step.</p><div class="ux-experiment-strip">'+sourceTiles+(tiles||'<p class="ux-no-results">'+(sources.length>1?'No saved results for these pictures yet.':'Attach both pictures to see their results.')+'</p>')+'</div>'+activeRuns+(outputs.length>24?'<p>Showing the latest 24 of '+outputs.length+' outputs. All saved outputs remain in the library.</p>':'')+'<p id="uxPairActionStatus" role="status"></p>';
+    if(markup!==resultMarkup){resultMarkup=markup;resultPanel.innerHTML=markup;}
+  }
+  resultPanel.onclick=async e=>{
+    const button=e.target.closest('button');if(!button||button.disabled||pairActionBusy)return;
+    if(button.dataset.uxResultRecipe){try{await exportRecipe(button.dataset.uxResultRecipe);}catch(error){announce(error.message,true);}return;}
+    if(!button.dataset.uxReview&&!button.dataset.uxRerun)return;
+    const stamp=setupStamp();pairActionBusy=true;syncReady();let status='';
+    try{
+      if(button.dataset.uxReview){
+        await refreshAssets(true);await mutateAssets({action:'edit',ids:[button.dataset.asset],review:button.dataset.uxReview});
+        status=button.dataset.uxReview==='selected'?'Keeper saved.':'Needs-work decision saved.';
+      }else{
+        const job=jobs.find(j=>j.id===button.dataset.job),index=Number(button.dataset.index),output=job?.outputs?.[index];
+        if(job?.status!=='completed'||!output)throw Error('Only a completed run can prepare another seed. Inspect unresolved work in Problems.');
+        const recipe=await api('/api/jobs/'+encodeURIComponent(job.id)+'/recipe'),check=await post('/api/recipe-check',recipe);
+        if(stamp!==setupStamp())throw Error('The workbench changed while reading this recipe. Your current work was kept.');
+        const target=catalog.presets.find(p=>p.id===recipe.preset_id);if(!target)throw Error('This recipe is no longer available.');
+        const seed=output.seed??recipe.controls?.seed;if(seed==null)throw Error('This run has no recorded seed. Inspect its recipe before preparing another.');let next=seed;
+        if(button.dataset.uxRerun==='new'){next=crypto.getRandomValues(new Uint32Array(1))[0];if(String(next)===String(seed))next=(next+1)%4294967296;}
+        const setup={preset:target.id,continuation:recipe.continuation,controls:{...recipe.controls,seed:String(next)},batch_count:1,parent_assets:recipe.parent_assets,references:StudioContinuation.combineReferences(target,recipe.references||[])};
+        selectPreset(target.id,true,true);applySaved(setup);
+        recipeTemplateHash=check.template_sha256;draftDirty=true;saveDraft();updateReady();recipeChanged();
+        status=(button.dataset.uxRerun==='new'?'New seed ':'Recorded seed ')+next+' prepared. Review the recipe, then Generate.';
+      }
+    }catch(error){status=error.message;announce(status,true);}
+    finally{pairActionBusy=false;syncReady();const line=q('#uxPairActionStatus');if(line)line.textContent=status;}
+  };
+  after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',syncCombineResults);
   function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   function syncContinuation(){
     contextPanel.hidden=!continuationState;if(!continuationState)return;

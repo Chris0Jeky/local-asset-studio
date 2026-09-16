@@ -20,3 +20,7 @@ paths:
   one off only when the human stated the decision; record the date and their words.
 - `docs/` is beginner-facing: keep commands runnable as written, keep model claims tied to the recorded
   run, and route ComfyUI-level detail to `workflows/comfyui/` rather than restating node graphs in prose.
+- Clock times come from receipts or Git, never from the session's sense of time: `created_at` in
+  `experiments/runs/<job>/state.json` (the receipts root), `git log --format=%ci`, or `python -c "import datetime;
+  print(datetime.datetime.now())"` run right before writing. Twice on 16 September 2026 section headers were
+  written more than an hour late; Git Bash's `date` labels the zone `GMTST` but is local time.

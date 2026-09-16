@@ -85,6 +85,40 @@
     else message('Analysis loaded. Choose the exact originals to review changes.');
     renderCards();controls();
   }
+  // Completed worker observations enter this same review owner. Loading never applies intent.
+  globalThis.StudioReferenceReview=Object.freeze({
+    capture:()=>({version:epoch,context:report?{analysis:clone(report),review:clone(review)}:null}),
+    restore:context=>{
+      // The persistence service validated this context. Original pixels are not saved.
+      changed();report=context?clone(context.analysis):null;review=context?clone(context.review):null;
+      originals=null;applied=null;receipt=null;releaseUrls();el('rr-cards').replaceChildren();
+      el('rr-originals').value='';el('rr-analysis').value='';el('rr-adopt').checked=false;
+      el('rr-review').hidden=!report;
+      if(report)showReport();
+      el('rr-source-status').textContent='Reselect the exact originals before previewing another reference transfer.';
+      message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
+    },load:async(analysis,files=[])=>{
+    if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
+    changed();const current=epoch;
+    const result=await post('inspect',{analysis});
+    if(current!==epoch)throw Error('The reference review changed during loading; newer work was retained.');
+    if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
+    const selected=new Map();
+    for(const file of files){
+      if(file.size>limit)throw Error('Reference exceeds 8 MiB.');
+      const bytes=await file.arrayBuffer();
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
+      selected.set(hash,file);
+    }
+    if(current!==epoch)throw Error('The reference review changed during image checks; newer work was retained.');
+    report=result.analysis;review=result.review;originals=null;el('rr-adopt').checked=false;
+    const refs=report.request.references;
+    if(refs.every(ref=>selected.has(ref.sha256))&&selected.size===files.length&&selected.size===new Set(refs.map(ref=>ref.sha256)).size)originals=refs.map(ref=>selected.get(ref.sha256));
+    el('rr-originals').value='';
+    el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
+    showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
+    return report.report_sha256;
+  }});
   el('rr-analysis').addEventListener('change',async event=>{
     changed();const current=epoch;report=null;review=null;originals=null;releaseUrls();el('rr-cards').replaceChildren();
     el('rr-review').hidden=true;el('rr-originals').value='';el('rr-adopt').checked=false;el('rr-source-status').textContent='Open an analysis first.';controls();
