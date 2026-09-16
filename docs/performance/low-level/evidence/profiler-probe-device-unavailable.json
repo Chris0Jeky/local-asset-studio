@@ -1,0 +1,41 @@
+{
+  "advertised_activities": [
+    "CPU"
+  ],
+  "code": "activity_unavailable",
+  "device_architecture": null,
+  "device_name_sha256": null,
+  "driver_identity": null,
+  "generation_jobs_submitted": 0,
+  "inference_performance_qualified": false,
+  "interpreter_path_sha256": "975703467de559cbd0f8a272f88f1983db8e5b30292d43171db9a3a68ddadb42",
+  "job_binding": "unbound",
+  "last_stage": "capabilities",
+  "limits": {
+    "hard_producer_output_limit": null,
+    "hard_worker_memory_limit": null,
+    "post_export_trace_bytes": 1048576,
+    "state_bytes": 16384,
+    "timeout_seconds": 30
+  },
+  "profiler_overhead_qualified": false,
+  "requested_device": "cuda",
+  "schema": "studio.profiler-probe/v1",
+  "scope": "fixed_16x16_arithmetic_probe",
+  "status": "unsupported",
+  "supervision": {
+    "child_reaped": true,
+    "code": null,
+    "elapsed_ms": 1873.611,
+    "retained_stdout_stderr_bytes": 0,
+    "returncode": 0
+  },
+  "temporary_cleanup": "removed",
+  "versions": {
+    "cuda_build": null,
+    "hip": null,
+    "python": "3.13.5",
+    "torch": "2.10.0+cpu"
+  },
+  "worker_source_sha256": "155c3989bea0b22ad3af2698578cab69b2441087ebd61e6daeaf160df3f44c84"
+}

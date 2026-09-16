@@ -336,7 +336,9 @@ read as "the prompt makes no difference". `combine-character-with-another-pose` 
 Klein 9B recipe that keeps the board picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
 until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced: first the depth-map
 variant (`combine-klein-9b-depth`, later that day), then the Copy Pose LoRA recipe (`combine-klein-9b-copypose`, 16 September: character
-as image 1, pose picture as image 2), then the pose-first one, then the 4B recipe (source on image 1, two fills). The
+as image 1, pose picture as image 2), then the pose-first one, then the replace-character recipe
+(`combine-klein-9b-replace`, 16 September: the picture to keep as image 1, the character whose face goes in as image 2, and no pose
+change), then the 4B recipe (source on image 1, two fills). The
 row below was measured with the pose-first 9B recipe leading; the depth variant has the same slots and fills, and the driver
 matches the fills by their wording, so the journey is the same length (not re-measured by hand; the `ux-use-cases` lane re-runs it).
 

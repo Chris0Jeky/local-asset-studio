@@ -314,6 +314,27 @@ well as the 14 px ones on this seed. Not verified: drawing in the panel by hand 
 journey (the use-case driver covers the panel up to the attached guide with zero generations; this run submitted the same request shape by
 API); other seeds; art acceptance (HUMAN_TODO q-28 (d)).
 
+## Night audition, 16 September 2026 (02:57-03:10): the cut sweep, the editor and Copy Pose at three seeds
+
+Seven more Studio jobs (`audition_night.py`, results `audition_night.json`, exact recipes under `audition-recipes/`), same pair and fills as the
+proving runs, so the single proving runs become small auditions and the new control gets its numbers. ComfyUI's model cache had been
+released just before (see CURRENT_STATE, the RAM measurement), so the first run of each family includes its reload.
+
+| Run | Job / prompt | s | Output | Result |
+| --- | --- | --- | --- | --- |
+| `combine-klein-9b-depth`, seed 2026091441, **depth_cut 80** | `f8c45ada-5549-42b9-a660-a5a4e3a7f928` / `822a47d8-d4bd-4710-8c78-c1660c9c9f05` | 121.2 | `Combine/Klein-9B-depth_00006_.png` | bare feet, the bend kept, head down; the figure sits lower in the frame (more of the map gone) |
+| the same at **depth_cut 92** | `63f9ecaa-310b-4237-9d22-11c6264ce24c` / `c9263b40-1bbd-416b-abaa-0e9307438e1d` | 54.5 | `Combine/Klein-9B-depth_00007_.png` | **bare feet too**: the heel is already gone at 92; bend, crossed legs, look-back and lettering as in the 86 run |
+| the same at 86 and 100 (recorded above) | `b57c6f3f…` / `216239b8…` | | | 86: bare feet; 100: one heel-shaped foot (the uncut map) |
+| `combine-klein-9b-skeleton` with the page-rendered guide, seed 2026091462 | `bac76a97-098c-452d-a485-bccfd6b60282` / `b1a39482-abf5-4cab-914d-18b87aa6b6bc` | 93.1 | `Combine/Klein-9B-skeleton_00003_.png` | **the drawn pose held**: deep bend, the arm behind the head, one leg crossing, look-back with a smile, bare feet |
+| the same, seed 2026091463 | `bf3d1c70-eb27-443c-9aad-53af07d6e970` / `bfa1a4d0-4c72-4e92-bf08-a60e46d57659` | 75.3 | `Combine/Klein-9B-skeleton_00004_.png` | **held again**: bend, arm behind the head, look-back, bare feet; lettering partly hidden |
+| `combine-klein-9b-copypose`, seed 2026091472 | `572794b6-4681-4457-8a2f-9eec373fa387` / `37f19109-b8ef-4060-a451-70837585bc2c` | 132.9 | `Combine/Klein-9B-copypose_00002_.png` | **the picture's bend and look-back with the character's own light background kept**, both hands between the knees on this seed, bare feet, lettering intact |
+| the same, seed 2026091473 | `069c5efe-e412-482d-83e6-4477b2633c4e` / `b3c4ff76-5bd3-4dff-9e29-b18e3626ed02` | 143.2 | `Combine/Klein-9B-copypose_00003_.png` | **held again**: bend from behind, a hand on the knee, face looking down in profile, bare feet, lettering intact |
+
+Sheets: `examples/style-pose/combine-depth-cut-sweep.jpg` (80 / 86 / 92 / 100), `pose-editor-audition.jpg` (seeds 61-63), `combine-copypose-audition.jpg`
+(seeds 71-73). What it settles: on this pair each of the three tested cuts (80, 86, 92) removed the heel and 92 lost the least of the figure, so the
+recipe hint now says 86-92 (the values between them were not run); the page-rendered guide carried the pose on 3 of 3 seeds like the hand-drawn one; Copy Pose held on 3 of 3 seeds through the
+Studio as it did in research. Not verified: other pairs; art acceptance (HUMAN_TODO q-28).
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
