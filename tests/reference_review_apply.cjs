@@ -1,6 +1,15 @@
 // Execute the real Prompt Lab and reference-review modules around a successful Apply.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const fixture=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const referenceRecords=fixture.report.request.references.map((reference,index)=>({
+  id:reference.id,
+  role:fixture.review.selections[index].role,
+  kind:'image',
+  path:reference.path,
+  sha256:reference.sha256,
+  take:[],
+  ignore:[],
+}));
 
 class Element {
   constructor(tag='div'){
@@ -51,7 +60,7 @@ const context=vm.createContext({
     if(url.endsWith('/preview'))return response({
       format:'studio.reference-transfer-preview/v1',
       base_intent:body.intent,
-      intent:{...body.intent,facets:{...body.intent.facets,style:'reviewed ink'},references:fixture.report.request.references},
+      intent:{...body.intent,facets:{...body.intent.facets,style:'reviewed ink'},references:referenceRecords},
       reference_draft:{source_report_sha256:fixture.report.report_sha256,review:body.review},
       changes:[{field:'facets.style',before:null,after:'reviewed ink'}],
       inference_submitted:false,generation_submitted:false,execution_authorized:false,
