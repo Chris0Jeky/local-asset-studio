@@ -99,4 +99,5 @@ def extend_handler(base):
     # Compose at the existing extension seam; no second server or worker.
     from studio_workflow.http_extension import extend_handler as workflow_handler
     from .reference_job_http import extend_handler as reference_job_handler
-    return reference_job_handler(workflow_handler(PromptHandler))
+    from .project_http import extend_handler as project_handler
+    return project_handler(reference_job_handler(workflow_handler(PromptHandler)))

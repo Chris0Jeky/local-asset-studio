@@ -35,13 +35,16 @@ def validate_request(value):
     text(value['brief'], 4000, empty=True)
     refs = value['references']
     need(type(refs) is list and 1 <= len(refs) <= MAX_REFERENCES, 'Supply one to four image references; never truncate')
-    ids = set()
+    ids, paths, hashes = set(), set(), set()
     for ref in refs:
         fields(ref, ('id', 'path', 'sha256', 'role_hint'))
         identifier(ref['id']); need(ref['id'] not in ids, 'Duplicate reference ID'); ids.add(ref['id'])
-        _hash(ref['sha256']); text(ref['path'], 500)
+        _hash(ref['sha256'])
+        need(ref['sha256'] not in hashes, 'Duplicate reference content'); hashes.add(ref['sha256'])
+        text(ref['path'], 500)
         need('\\' not in ref['path'] and ':' not in ref['path'] and
              all(x not in ('', '.', '..') for x in ref['path'].split('/')), 'Unsafe reference path')
+        need(ref['path'] not in paths, 'Duplicate reference path'); paths.add(ref['path'])
         need(type(ref['role_hint']) is str and ref['role_hint'] in ('auto', *ROLE_FACETS), 'Unsupported role hint')
     return _bounded(value)
 
@@ -101,21 +104,37 @@ def review_template(report):
          'overrides': {}, 'tags': []} for image in report['answer']['images']]}
 
 
-def draft(report, review, root=None, *, source_bytes=None):
-    """Explicit selection creates a NEW intent; never overwrites an existing one.
+def validate_review(report, review):
+    """Validate selected descriptions only; never certify source pixels or execute."""
+    _projection(report, review)
+    return copy.deepcopy(review)
 
-    Supply either a file root or exact in-memory originals. Analysis of yesterday's
-    pixels cannot silently attach today's replacement. Staging must check again.
-    """
+
+def draft(report, review, root=None, *, source_bytes=None):
+    """Project reviewed traits only after checking every supplied original."""
+    result = _projection(report, review)
+    refs = report['request']['references']
+    need((root is not None) != (source_bytes is not None), 'Supply one source workspace or exact in-memory originals')
+    if source_bytes is not None:
+        need(type(source_bytes) is dict and set(source_bytes) == {ref['id'] for ref in refs},
+             'Supply every original exactly once')
+    for ref in refs:
+        if source_bytes is None: file_bytes(root, ref, 8 * 1024 * 1024)
+        else:
+            raw = source_bytes[ref['id']]
+            need(type(raw) is bytes and 0 < len(raw) <= 8 * 1024 * 1024, 'Reference size limit exceeded')
+            need(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed')
+    return result
+
+
+def _projection(report, review):
+    # Private: persistence needs to validate context without pretending to reopen
+    # original files. Public draft() retains its mandatory source checks above.
     report = validate_report(report); fields(review, ('report_sha256', 'selections'))
     need(review['report_sha256'] == report['report_sha256'], 'Stale reference review')
     _bounded(review)
     q = report['request']; answer = report['answer']; choices = review['selections']
     need(type(choices) is list and len(choices) == len(q['references']), 'Review every reference; do not silently omit images')
-    need((root is not None) != (source_bytes is not None), 'Supply one source workspace or exact in-memory originals')
-    if source_bytes is not None:
-        need(type(source_bytes) is dict and set(source_bytes) == {ref['id'] for ref in q['references']},
-             'Supply every original exactly once')
     intent = new_brief(q['brief'] if q['brief'].strip() else answer['summary'])
     transfers = []; parts = {}; unknowns = []
     for ref, image, choice in zip(q['references'], answer['images'], choices):
@@ -128,11 +147,6 @@ def draft(report, review, root=None, *, source_bytes=None):
         fields(choice['overrides'], (), selected)
         strings(choice['tags'], 20, 80)
         need(len(set(choice['tags'])) == len(choice['tags']) and set(choice['tags']) <= set(image['tags']), 'Unknown/duplicate selected tags')
-        if source_bytes is None: file_bytes(root, ref, 8 * 1024 * 1024)
-        else:
-            raw = source_bytes[ref['id']]
-            need(type(raw) is bytes and 0 < len(raw) <= 8 * 1024 * 1024, 'Reference size limit exceeded')
-            need(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed')
         takes = []
         for facet in selected:
             edited = facet in choice['overrides']
@@ -140,7 +154,7 @@ def draft(report, review, root=None, *, source_bytes=None):
             need(edited or facet not in image['uncertain_facets'], 'An uncertain facet needs an explicit user description')
             value = choice['overrides'][facet] if edited else image['facets'][facet]
             text(value, 240)
-            parts.setdefault(facet, []).append(ref['id'] + ': ' + value)
+            parts.setdefault(facet, []).append((ref['id'], value))
             takes.append(facet + ': ' + value)
             transfers.append({'reference_id': ref['id'], 'source_sha256': ref['sha256'], 'field': facet,
                               'value': value, 'origin': 'user_edit' if edited else 'selected_visual_observation'})
@@ -151,7 +165,11 @@ def draft(report, review, root=None, *, source_bytes=None):
         intent['references'].append({'id': ref['id'], 'role': role, 'kind': 'image', 'path': ref['path'],
                                      'sha256': ref['sha256'], 'take': takes, 'ignore': []})
         unknowns.extend({'reference_id': ref['id'], 'text': value} for value in image['unknowns'])
-    intent['facets'] = {key: '; '.join(values) for key, values in parts.items()}
+    intent['facets'] = {
+        key: values[0][1] if len(values) == 1
+        else '; '.join(reference_id + ': ' + value for reference_id, value in values)
+        for key, values in parts.items()
+    }
     validate(intent)  # Enforce the existing compiler's caps; do not truncate a constraint.
     result = {'format': 'studio.reference-draft/v1', 'intent': intent, 'source_report_sha256': report['report_sha256'],
               'review': copy.deepcopy(review), 'transfers': transfers, 'unknowns': unknowns,

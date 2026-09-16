@@ -197,14 +197,14 @@
   const combineWording=new Map();let engineMarkup='',resultMarkup='',pairActionBusy=false;
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
-  function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
+  function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
   function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
   function syncCombineEngines(){
     enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
     const markup='<h3>Try this pair with another recipe</h3><p>Pictures and answers stay here. Each recipe keeps its edited wording. Generate starts the next run.</p><div class="ux-engine-options">'+options.map(p=>{
       const reason=StudioContinuation.combineSwitchReason(selected,p,referenceRecords)||p.runtime_block||'',run=jobs.find(j=>j.preset_id===p.id&&j.status==='completed'&&Number(j.elapsed_seconds)>0);
-      const label=({'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-skeleton':'Klein 9B · skeleton'})[p.id]||p.name;
+      const label=({'combine-klein':'Klein 4B','combine-klein-9b':'Klein 9B · pose','combine-klein-9b-depth':'Klein 9B · depth','combine-klein-9b-copypose':'Klein 9B · Copy Pose','combine-klein-9b-replace':'Klein 9B · replace','combine-klein-9b-skeleton':'Klein 9B · skeleton'})[p.id]||p.name;
       const timing=run?'Last completed run: '+durationLabel(run.elapsed_seconds)+' · '+(run.batch_count||1)+' output(s)':'No completed timing yet';
       return '<button type="button" data-ux-engine="'+escape(p.id)+'" aria-pressed="'+(p.id===selected.id)+'" '+(reason||busy?'disabled':'')+' title="'+escape(reason||p.name)+'"><b>'+escape(label)+'</b><small>'+escape(timing)+'</small>'+(reason?'<small>'+escape(reason)+'</small>':'')+'</button>';
     }).join('')+'</div>';
