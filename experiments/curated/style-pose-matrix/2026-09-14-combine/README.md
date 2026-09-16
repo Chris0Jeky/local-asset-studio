@@ -264,6 +264,20 @@ shipped as `combine-klein-9b-skeleton` and proved through the Studio (job `26448
 **The two-pass journey works in the Studio as it stands** (136 s: depth Combine, then Change one thing on the output), which is the repair
 loop the owner asked for until the ankle crop is a control.
 
+## The ankle cut as a Studio control, 16 September 2026 (02:50-03:00)
+
+`combine-klein-9b-depth` now carries the round-three edit inside the graph: **Cut the depth map below (%)** (`depth_cut`, PR #453) composites
+a black source through a 100-row mask band starting at that row (SolidMask + MaskComposite + ImageCompositeMasked with `resize_source`,
+applied to the ~1 MP map before the VAE encode); 100 cuts nothing, the variant *Cut below the ankles (86 %)* is the `paint_depth` rectangle
+of `pose_sources.py` (`0.86 * h`). Proving run through the Studio (`prove_depthcut.py`, POST /api/jobs, `prove_depthcut.json`):
+
+| Run | Seed | Job / prompt | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| the shipped depth recipe, `depth_cut` 86, same pair and fills as the 15 September proving run `22ff6394` (uncut, one heel-shaped foot) | 2026091441 | `b57c6f3f-0d12-430d-863e-02e0bd0ebaa0` / `7769c72d-602d-49cc-b4f0-41238d09fd03` | 122.9 (fresh ComfyUI, model load included) | `Combine/Klein-9B-depth_00003_.png` | **same bend, crossed legs and look-back; both feet bare on tiptoe, no heel**; face, hair, SHARK lettering, pink shorts kept; submitted graph node 33 `y` = 86 (`state.json` in the receipts root) |
+
+Sheet: `examples/style-pose/combine-depth-cut-control.jpg` (uncut vs cut, same seed). Not verified: the control by clicking through the page
+(the API run uses the page's prepare and worker path); any other pose picture; art acceptance (HUMAN_TODO q-28).
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
