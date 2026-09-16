@@ -2,9 +2,10 @@
 
 Shared facts — what the Studio is, how to run it, the per-seam proving checks, architecture, pitfalls,
 tier and authority — live in **`CLAUDE.md`** and are not repeated here. Global working agreements reach
-Codex through `~/.codex/AGENTS.md` and Grok through `~/.claude/CLAUDE.md` (Claude compatibility) plus
-`~/.grok/AGENTS.md`. This file is the Codex-runtime delta; Grok also loads it, so the Grok section
-at the bottom overrides the Codex facts for Grok sessions.
+Codex through `~/.codex/AGENTS.md` and Grok through `~/.grok/rules/00-global-laws.md` (deployed copy of
+`~/.claude/CLAUDE.md`) plus `~/.grok/AGENTS.md`. `[compat.claude] agents` is off so `~/.claude/AGENTS.md`
+(claude-config's project file) does not leak. This file is the Codex-runtime delta; Grok also loads
+it, so the Grok section at the bottom overrides the Codex facts for Grok sessions.
 
 ## Start here
 
