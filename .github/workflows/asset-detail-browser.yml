@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'app/static/**'
+      - 'tests/addressable_figures*'
       - 'tests/collection_editor*'
       - 'tests/test_collection*'
       - 'app/workspace.py'
@@ -69,6 +70,11 @@ jobs:
         run: |
           node tests/asset_grid_contracts.cjs
           python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
+      - name: Addressable figure editor recovery
+        if: matrix.response-delay-ms == 0
+        run: |
+          node tests/addressable_figures_frontend.cjs
+          python tests/addressable_figures_browser.py --out .runtime/addressable-figures-proof
       - name: Collection editing with actual Workspace storage
         if: matrix.response-delay-ms == 0
         run: |
@@ -85,6 +91,7 @@ jobs:
             .runtime/asset-workspace-proof/
             .runtime/asset-library-proof/
             .runtime/asset-grid-proof/
+            .runtime/addressable-figures-proof/
             .runtime/collection-editor-proof/
           if-no-files-found: ignore
           retention-days: 7

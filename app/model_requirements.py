@@ -9,13 +9,14 @@ import stat
 from download_contracts import relative_model_path, validate_pins
 from model_library import FOLDERS, SUFFIXES
 
-from studio_workflow.model_contracts import MODEL_INPUT_FOLDERS
+from studio_workflow.model_contracts import ANNOTATOR_SELECTIONS, MODEL_INPUT_FOLDERS
 
 # Do not misclassify ordinary prompt/output text merely because it ends in a suffix.
 TEXT_FIELDS = {'text', 'prompt', 'positive', 'negative', 'filename_prefix'}
 
 
 def model_selection(kind, field, value):
+    if (kind, field) in ANNOTATOR_SELECTIONS: return False
     return isinstance(value, str) and ((kind, field) in MODEL_INPUT_FOLDERS or
         field not in TEXT_FIELDS and Path(value).suffix.lower() in SUFFIXES | {'.patch'})
 

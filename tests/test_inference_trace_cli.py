@@ -41,6 +41,14 @@ class InferenceTraceCliTests(unittest.TestCase):
                     self.assertEqual(json.loads(result.stdout)['code'], code)
                     self.assertNotIn('CANARY', result.stdout + result.stderr)
 
+    def test_abbreviated_hash_option_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'trace.json'; path.write_bytes(RAW)
+            result = self.invoke(path, '--sha', hashlib.sha256(RAW).hexdigest())
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('unrecognized arguments', result.stderr)
+            self.assertEqual(result.stdout, '')
+
     def test_hash_mismatch_preserves_file(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'trace.json'; path.write_bytes(RAW)
