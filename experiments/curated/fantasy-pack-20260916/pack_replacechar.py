@@ -34,6 +34,9 @@ def load_records(path=RESULTS):
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, list):
         raise ValueError(f"Research receipt must be a JSON array: {path}")
+    for index, record in enumerate(value):
+        if not isinstance(record, dict):
+            raise ValueError(f"Research receipt row {index} must be a JSON object: {path}")
     return value
 
 
@@ -44,12 +47,26 @@ def save_records(records, path=RESULTS):
     os.replace(temporary, path)
 
 
+def find_record(records, variant, seed):
+    matches = [record for record in records
+               if record.get("variant") == variant and record.get("seed") == seed]
+    if len(matches) > 1:
+        raise ValueError(f"Duplicate research receipt rows for {variant} seed {seed}")
+    return matches[0] if matches else None
+
+
 def upsert(records, record):
-    for index, current in enumerate(records):
-        if current.get("variant") == record["variant"] and current.get("seed") == record["seed"]:
-            records[index] = record
-            return
-    records.append(record)
+    matches = [index for index, current in enumerate(records)
+               if current.get("variant") == record["variant"]
+               and current.get("seed") == record["seed"]]
+    if len(matches) > 1:
+        raise ValueError(
+            f"Duplicate research receipt rows for {record['variant']} seed {record['seed']}"
+        )
+    if matches:
+        records[matches[0]] = record
+    else:
+        records.append(record)
 
 
 def build(seed):
@@ -92,8 +109,7 @@ def poll(prompt_id, submitted_at, *, open_url=urllib.request.urlopen, clock=time
 def run(seed, *, results_path=RESULTS, graph_dir=GRAPH_DIR,
         open_url=urllib.request.urlopen, clock=time.time, sleeper=time.sleep):
     records = load_records(results_path)
-    record = next((item for item in records
-                   if item.get("variant") == "replacechar" and item.get("seed") == seed), None)
+    record = find_record(records, "replacechar", seed)
     if record and record.get("status") not in {"submitted", "timeout"}:
         print("skip", "replacechar", seed, "(recorded)", flush=True)
         return record
