@@ -17,6 +17,15 @@
       throw Error('This value exceeds the browser safe integer or finite-number range. Use the Python SDK for wide integers.');
     if (value && typeof value === 'object') Object.values(value).forEach(safe);
   }
+  /* Only literals this browser could carry back into the graph are held to the safe-integer rule.
+     Installed schemas routinely declare bounds beyond 2^53 (a seed's max is 0xffffffffffffffff),
+     and the reply echoes them as targets[].minimum/maximum/step_hint and interface.minimum/maximum.
+     Guarding the whole reply refused valid proposals and blamed the user's value for a schema bound. */
+  function safeValues(result) {
+    safe(result.value); safe(result.commands);
+    if (Array.isArray(result.targets)) for (const target of result.targets) safe(target.current);
+    if (result.interface) safe(result.interface.choices);
+  }
   const panel = el('details', null, {id:'controlPreviewPanel', class:'wf-panel wf-control-preview'});
   panel.append(el('summary', 'Preview a shared setting across nodes'));
   const body = el('div', null, {class:'wf-control-body'});
@@ -179,7 +188,7 @@
       if (token !== stamp) return;
       if (epoch !== W.epoch() || source !== JSON.stringify(W.snapshot())) return invalidate('The draft changed. Preview the current values again.');
       if (!response.ok) throw Error(result.error || 'Preview request failed (HTTP ' + response.status + ').');
-      safe(result);
+      safeValues(result);
       if (result.format !== 'studio.control-preview/v1' || !['ready','blocked'].includes(result.state) ||
           result.committed !== false || result.generation_submitted !== false || result.document_revision !== doc.revision ||
           result.backend_id !== doc.backend_id || result.schema_sha256 !== doc.schema_sha256 ||

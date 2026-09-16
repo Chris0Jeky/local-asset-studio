@@ -107,6 +107,16 @@ class ControlPreviewBrowserTests(unittest.TestCase):
         self.open();self.add();self.add('b');self.propose();self.state('blocked')
         expect(self.page.locator('#controlPreviewResult')).to_contain_text('outside')
         expect(self.page.locator('#controlPreviewResult')).to_contain_text('No commands proposed')
+    def test_schema_declared_wide_bound_does_not_refuse_an_in_range_proposal(self):
+        """A seed's installed max is 0xffffffffffffffff. The reply echoes that bound, so guarding the
+        whole reply with the safe-integer rule refused every valid proposal for such an input."""
+        self.info['Finish']['input']['required']['value'][1]['max']=18446744073709551615
+        self.value['document']['schema_sha256']=catalog(self.info,'primary')['schema_sha256']
+        self.open();self.add('b');self.propose();self.state('ready')
+        expect(self.page.locator('#controlPreviewResult')).to_contain_text('1 proposed input changes')
+        self.assertEqual(self.requests[-1]['value'],12)
+        self.assertEqual(self.page.evaluate('fixtureDoc'),self.original)
+
     def test_duplicate_target_is_explained_without_adding_or_posting(self):
         self.open();self.add();self.add()
         expect(self.page.locator('#controlPreviewStatus')).to_contain_text('already')
