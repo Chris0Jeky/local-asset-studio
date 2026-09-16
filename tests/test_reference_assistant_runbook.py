@@ -1,10 +1,11 @@
-"""Operator examples for the reference assistant remain portable and explicit."""
+"""Operator documentation stays portable and avoids stale measured counts."""
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = ROOT / 'docs/prompt-studio/REFERENCE-ASSISTANT.md'
+AGENT_GUIDE = ROOT / 'CLAUDE.md'
 
 
 class ReferenceAssistantRunbookTests(unittest.TestCase):
@@ -21,6 +22,12 @@ class ReferenceAssistantRunbookTests(unittest.TestCase):
         self.assertIn('<workspace>/.runtime/prompt-cache/', self.text)
         self.assertIn('--no-cache', self.text)
         self.assertIn('derived local data', self.text)
+
+    def test_agent_test_guidance_uses_live_query_not_stale_module_count(self):
+        guide = AGENT_GUIDE.read_text(encoding='utf-8')
+        self.assertNotIn('49 of 130 modules', guide)
+        self.assertIn('rg "^(from|import) (test_|review_fixture)" tests', guide)
+        self.assertIn('stored module count', guide)
 
 
 if __name__ == '__main__':
