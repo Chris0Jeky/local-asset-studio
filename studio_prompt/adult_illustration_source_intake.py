@@ -231,6 +231,18 @@ def _optional_positive_int(value: Any, label: str) -> int | None:
     return _positive_int(value, label, allow_none=True)
 
 
+def _nonnegative_int(value: Any, label: str, *, allow_none: bool = False) -> int | None:
+    if value is None and allow_none:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise ValueError(f"{label} must be a non-negative integer")
+    return value
+
+
+def _optional_nonnegative_int(value: Any, label: str) -> int | None:
+    return _nonnegative_int(value, label, allow_none=True)
+
+
 def _sha256(value: Any, label: str, *, allow_none: bool = True) -> str | None:
     if value is None and allow_none:
         return None
@@ -360,7 +372,7 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
         byte_count = item.get("size")
         if byte_count is None:
             byte_count = lfs.get("size")
-        byte_count = _optional_positive_int(byte_count, f"Hugging Face file {path!r} byte count")
+        byte_count = _optional_nonnegative_int(byte_count, f"Hugging Face file {path!r} byte count")
         digest = item.get("sha256")
         if digest is None:
             digest = lfs.get("sha256")
