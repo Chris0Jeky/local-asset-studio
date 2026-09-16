@@ -36,11 +36,9 @@ with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
 Use the `discover -s tests -p` form by default: any module that imports a sibling test or fixture unqualified
-(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`.
-The affected set changes as fixtures move, so run that command for the current list instead of relying on a
-stored module count. Examples include `test_production`, `test_backends`, `test_review_desk`,
-`test_voice_baseline`, `test_failed_job_timing` and parts of the `test_workflow_*`/`test_character_*` families.
-Eight `app/` modules have no same-named test file:
+(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`. Run that
+command for the current list instead of a stored module count. Examples include `test_production`, `test_backends`, `test_review_desk`,
+`test_voice_baseline`, `test_failed_job_timing` and parts of the `test_workflow_*`/`test_character_*` families. Eight `app/` modules have no same-named test file:
 `articulated.py` → `test_articulated_operation`, `backend_contracts.py` → `test_backend_safety`, `download_contracts.py` →
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
