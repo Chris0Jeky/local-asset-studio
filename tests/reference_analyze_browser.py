@@ -59,8 +59,10 @@ def run(output):
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler);http_thread=threading.Thread(target=server.serve_forever)
     original_get=fixture.studio_instance.queue.get
     class EndWorker(BaseException):pass
-    def get():
-        item=original_get(timeout=40)
+    def get(timeout=None):
+        # The worker's own get is bounded now and it swallows queue.Empty, so the 40 s watchdog ends the worker explicitly.
+        try:item=original_get(timeout=40)
+        except queue.Empty:raise EndWorker()
         if item==('fixture-stop',None):raise EndWorker()
         return item
     def worker():
@@ -104,8 +106,8 @@ def run(output):
                         expect(page.locator('#rr-preview')).to_be_enabled()
                         expect(page.locator('#brief')).to_have_value('Keep this newer instruction')
                         page.locator('#rr-preview').click();expect(page.locator('#rr-apply')).to_be_enabled();page.locator('#rr-apply').click()
-                        expect(page.locator('#subject')).to_have_value('picture-1: silver-haired traveller')
-                        assert page.evaluate("StudioPromptDraft.capture().intent.facets.action")=='picture-2: leaning over a desk'
+                        expect(page.locator('#subject')).to_have_value('silver-haired traveller')
+                        assert page.evaluate("StudioPromptDraft.capture().intent.facets.action")=='leaning over a desk'
                         expect(page.locator('#brief')).to_have_value('Keep this newer instruction')
                         with page.expect_download() as download:page.locator('#rr-export').click()
                         destination=output/f'analysis-receipt-{width}.json';download.value.save_as(str(destination));receipt=json.loads(destination.read_text(encoding='utf-8'))

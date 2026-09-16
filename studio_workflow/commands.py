@@ -34,7 +34,7 @@ def apply_commands(source, commands):
     for command in commands:
         need(isinstance(command, dict), 'Each command must be an object')
         op = command.get('op')
-        if op in ('put_step', 'remove_step', 'set_step_enabled', 'duplicate_step'):
+        if op in ('put_step', 'remove_step', 'set_step_enabled', 'duplicate_step', 'move_step'):
             from .steps import apply_step_command
             apply_step_command(doc, command)
         elif op == 'replace':

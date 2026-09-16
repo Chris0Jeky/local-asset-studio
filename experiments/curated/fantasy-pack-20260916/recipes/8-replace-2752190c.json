@@ -1,0 +1,547 @@
+{
+ "version": 2,
+ "preset_id": "combine-klein-9b-replace",
+ "controls": {
+  "positive": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (standing upright facing the viewer, full body from head to boots, holding a brass lantern down at her right side, her left hand on the strap of a satchel over her shoulder, the camera at chest height straight on). The character in image 2 is a woman with long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, a brass lantern in her hand, a leather satchel on a strap. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+  "last_reference": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "seed": 2026091302
+ },
+ "batch_count": 1,
+ "created_at": 1789527112.4768164,
+ "workflow": {
+  "1": {
+   "class_type": "UnetLoaderGGUF",
+   "inputs": {
+    "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+   }
+  },
+  "2": {
+   "class_type": "CLIPLoader",
+   "inputs": {
+    "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+    "type": "flux2",
+    "device": "default"
+   }
+  },
+  "3": {
+   "class_type": "VAELoader",
+   "inputs": {
+    "vae_name": "flux2-vae.safetensors"
+   }
+  },
+  "4": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "text": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (standing upright facing the viewer, full body from head to boots, holding a brass lantern down at her right side, her left hand on the strap of a satchel over her shoulder, the camera at chest height straight on). The character in image 2 is a woman with long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, a brass lantern in her hand, a leather satchel on a strap. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+    "clip": [
+     "2",
+     0
+    ]
+   }
+  },
+  "5": {
+   "class_type": "ConditioningZeroOut",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ]
+   }
+  },
+  "6": {
+   "class_type": "CFGGuider",
+   "inputs": {
+    "model": [
+     "40",
+     0
+    ],
+    "positive": [
+     "23",
+     0
+    ],
+    "negative": [
+     "18",
+     0
+    ],
+    "cfg": 1.0
+   }
+  },
+  "7": {
+   "class_type": "RandomNoise",
+   "inputs": {
+    "noise_seed": 2026091302
+   }
+  },
+  "8": {
+   "class_type": "KSamplerSelect",
+   "inputs": {
+    "sampler_name": "euler"
+   }
+  },
+  "9": {
+   "class_type": "Flux2Scheduler",
+   "inputs": {
+    "steps": 6,
+    "width": 1024,
+    "height": 1536
+   }
+  },
+  "10": {
+   "class_type": "EmptyFlux2LatentImage",
+   "inputs": {
+    "width": 1024,
+    "height": 1536,
+    "batch_size": 1
+   }
+  },
+  "11": {
+   "class_type": "SamplerCustomAdvanced",
+   "inputs": {
+    "noise": [
+     "7",
+     0
+    ],
+    "guider": [
+     "6",
+     0
+    ],
+    "sampler": [
+     "8",
+     0
+    ],
+    "sigmas": [
+     "9",
+     0
+    ],
+    "latent_image": [
+     "10",
+     0
+    ]
+   }
+  },
+  "12": {
+   "class_type": "VAEDecode",
+   "inputs": {
+    "samples": [
+     "11",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "13": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "filename_prefix": "Combine/Klein-9B-replace",
+    "images": [
+     "12",
+     0
+    ]
+   }
+  },
+  "14": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png"
+   }
+  },
+  "15": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "14",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "16": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "15",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "17": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "4",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "18": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "5",
+     0
+    ],
+    "latent": [
+     "16",
+     0
+    ]
+   }
+  },
+  "20": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png"
+   }
+  },
+  "21": {
+   "class_type": "ImageScaleToTotalPixels",
+   "inputs": {
+    "image": [
+     "20",
+     0
+    ],
+    "upscale_method": "lanczos",
+    "megapixels": 1.0,
+    "resolution_steps": 1
+   }
+  },
+  "22": {
+   "class_type": "VAEEncode",
+   "inputs": {
+    "pixels": [
+     "21",
+     0
+    ],
+    "vae": [
+     "3",
+     0
+    ]
+   }
+  },
+  "23": {
+   "class_type": "ReferenceLatent",
+   "inputs": {
+    "conditioning": [
+     "17",
+     0
+    ],
+    "latent": [
+     "22",
+     0
+    ]
+   }
+  },
+  "40": {
+   "class_type": "LoraLoaderModelOnly",
+   "inputs": {
+    "lora_name": "replace_character_v1_klein.safetensors",
+    "strength_model": 1.0,
+    "model": [
+     "1",
+     0
+    ]
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "bc74e671-d71d-45e1-840d-0d2fc92acdd5",
+   "seed": 2026091302,
+   "graph": {
+    "1": {
+     "class_type": "UnetLoaderGGUF",
+     "inputs": {
+      "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "text": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (standing upright facing the viewer, full body from head to boots, holding a brass lantern down at her right side, her left hand on the strap of a satchel over her shoulder, the camera at chest height straight on). The character in image 2 is a woman with long centre-parted dark hair with a fringe, brown eyes, a calm face and small gold earrings; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, a brass lantern in her hand, a leather satchel on a strap. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+      "clip": [
+       "2",
+       0
+      ]
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "CFGGuider",
+     "inputs": {
+      "model": [
+       "40",
+       0
+      ],
+      "positive": [
+       "23",
+       0
+      ],
+      "negative": [
+       "18",
+       0
+      ],
+      "cfg": 1.0
+     }
+    },
+    "7": {
+     "class_type": "RandomNoise",
+     "inputs": {
+      "noise_seed": 2026091302
+     }
+    },
+    "8": {
+     "class_type": "KSamplerSelect",
+     "inputs": {
+      "sampler_name": "euler"
+     }
+    },
+    "9": {
+     "class_type": "Flux2Scheduler",
+     "inputs": {
+      "steps": 6,
+      "width": 1024,
+      "height": 1536
+     }
+    },
+    "10": {
+     "class_type": "EmptyFlux2LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1536,
+      "batch_size": 1
+     }
+    },
+    "11": {
+     "class_type": "SamplerCustomAdvanced",
+     "inputs": {
+      "noise": [
+       "7",
+       0
+      ],
+      "guider": [
+       "6",
+       0
+      ],
+      "sampler": [
+       "8",
+       0
+      ],
+      "sigmas": [
+       "9",
+       0
+      ],
+      "latent_image": [
+       "10",
+       0
+      ]
+     }
+    },
+    "12": {
+     "class_type": "VAEDecode",
+     "inputs": {
+      "samples": [
+       "11",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "13": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "filename_prefix": "Combine/Klein-9B-replace",
+      "images": [
+       "12",
+       0
+      ]
+     }
+    },
+    "14": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png"
+     }
+    },
+    "15": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "14",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "16": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "15",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "17": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "18": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "5",
+       0
+      ],
+      "latent": [
+       "16",
+       0
+      ]
+     }
+    },
+    "20": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png"
+     }
+    },
+    "21": {
+     "class_type": "ImageScaleToTotalPixels",
+     "inputs": {
+      "image": [
+       "20",
+       0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 1
+     }
+    },
+    "22": {
+     "class_type": "VAEEncode",
+     "inputs": {
+      "pixels": [
+       "21",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ]
+     }
+    },
+    "23": {
+     "class_type": "ReferenceLatent",
+     "inputs": {
+      "conditioning": [
+       "17",
+       0
+      ],
+      "latent": [
+       "22",
+       0
+      ]
+     }
+    },
+    "40": {
+     "class_type": "LoraLoaderModelOnly",
+     "inputs": {
+      "lora_name": "replace_character_v1_klein.safetensors",
+      "strength_model": 1.0,
+      "model": [
+       "1",
+       0
+      ]
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-replace_00001_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026091302,
+   "prompt_id": "bc74e671-d71d-45e1-840d-0d2fc92acdd5",
+   "media_type": "image",
+   "asset_id": "6182ceae774d571291a9ebd99f7b94ac"
+  }
+ ],
+ "parent_assets": [
+  "021731c057d955b4a2487395a37fadf6",
+  "025678cadf5750bf9a3bfa8ed62e6590"
+ ],
+ "references": [
+  {
+   "file": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+   "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+   "bytes": 1158496,
+   "width": 832,
+   "height": 1216,
+   "role": "composition",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents with the replace-character LoRA at 1.0: the picture to put the character into is image 1 (its pose, action, camera, composition, background, lighting and clothes all stay, only the person in it changes), your character follows as image 2 and only its face, hair and expression are taken, each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}
