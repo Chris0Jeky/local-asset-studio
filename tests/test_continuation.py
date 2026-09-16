@@ -352,7 +352,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
         control must read a default back from its graph."""
         root = Path(__file__).resolve().parents[1]
         catalog = json.loads((root / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
-        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength")
+        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength", "depth_cut")
         for preset in catalog:
             graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
             result = continuation.capability(preset, graph)
@@ -396,6 +396,13 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
                 self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
                 self.assertIn("depth map", preset["continuation_prompt"]); self.assertIn("cc-by-nc-4.0", preset["commercial_note"])
+                # Cut below (%): a 100x100 mask whose band starts at row y (node 33, the depth_cut control) is applied through a black source
+                # resized to the 1 MP map (node 35) before the VAE sees it; y = 100 authored means nothing is cut, the ankle variant sets 86.
+                self.assertEqual(preset["depth_cut"], ["33", "y"]); self.assertEqual(graph["16"]["inputs"]["pixels"], ["35", 0])
+                self.assertEqual((graph["33"]["class_type"], graph["33"]["inputs"]["destination"], graph["33"]["inputs"]["source"], graph["33"]["inputs"]["y"], graph["33"]["inputs"]["operation"]), ("MaskComposite", ["31", 0], ["32", 0], 100, "add"))
+                self.assertEqual((graph["31"]["inputs"]["value"], graph["32"]["inputs"]["value"], graph["31"]["inputs"]["height"], graph["32"]["inputs"]["height"]), (0.0, 1.0, 100, 100))
+                self.assertEqual((graph["35"]["class_type"], graph["35"]["inputs"]["destination"], graph["35"]["inputs"]["source"], graph["35"]["inputs"]["mask"], graph["35"]["inputs"]["resize_source"], graph["34"]["inputs"]["color"]), ("ImageCompositeMasked", ["15", 0], ["34", 0], ["33", 0], True, 0))
+                self.assertEqual(preset["variants"][0], {"name": "Cut below the ankles (86 %)", "controls": {"depth_cut": 86}})
             elif preset["id"] == "combine-klein-9b-skeleton":
                 # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
                 # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.
