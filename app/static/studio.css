@@ -74,3 +74,20 @@
 .ux-result-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}.ux-result-actions button{font-size:10px;min-height:36px;padding:6px 8px}
 .ux-no-results{min-width:180px;align-self:center}.job-problems{grid-column:1/-1;padding:14px;border:1px solid var(--line,#455b56);border-radius:9px}.job-problems summary{cursor:pointer}.job-problems .jobStatus{margin-top:12px}
 @media(max-width:700px){.ux-result-sources{position:static;flex-basis:135px}.ux-result-tile{flex-basis:195px}.ux-result-actions button{min-height:44px}}
+
+/* Draw the pose: a stick figure on black, the skeleton recipe's image 1. Drawing submits nothing. */
+.ux-pose-editor{margin:18px 0;padding:16px;border:1px solid var(--line,#455b56);border-radius:12px;min-width:0}
+.ux-pose-editor[hidden]{display:none}
+.ux-pose-editor h3{margin:0 0 8px}.ux-pose-editor p{font-size:12px;line-height:1.5}
+.ux-pose-layout{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+#uxPoseCanvas{flex:0 0 auto;max-width:100%;background:#000;border:1px solid var(--line,#455b56);border-radius:8px;touch-action:none;cursor:grab}
+#uxPoseCanvas:focus-visible{outline:2px solid var(--accent,#c6dd94);outline-offset:2px}
+.ux-pose-side{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ux-pose-joints{display:flex;flex-wrap:wrap;gap:4px;max-height:190px;overflow-y:auto}
+.ux-pose-joints button{display:flex;align-items:center;gap:5px;flex:1 1 118px;min-height:34px;padding:4px 6px;font-size:11px;text-align:left}
+.ux-pose-joints b{font-weight:500}.ux-pose-joints small{margin-left:auto;font-size:10px;opacity:.75}
+.ux-pose-joints [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
+.ux-pose-swatch{width:10px;height:10px;border-radius:50%;flex:none}
+.ux-pose-actions{display:flex;flex-wrap:wrap;gap:6px}.ux-pose-actions button{min-height:38px;font-size:11px}
+#uxPoseReason:empty,#uxPoseStatus:empty{display:none}
+@media(max-width:700px){#uxPoseCanvas{width:100%;height:auto}.ux-pose-actions button{min-height:44px}}
