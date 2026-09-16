@@ -144,6 +144,10 @@ test('a Klein board combines two pictures: source stays image 1, the pose pictur
   assert.deepEqual(C.destinations('combine',[p,combine,board,nine,depth,look],source).map(x=>x.id),['combine-klein-9b-depth','combine-klein-9b','combine-klein']);
   assert.match(C.guidance(depth,source).join(' '),/whose pose you want to Picture 1 \(image 1\)/);
   assert.match(C.guidance(depth,source).join(' '),/read as a depth map: only the silhouette reaches the model/);assert.doesNotMatch(C.guidance(depth,source).join(' '),/background follows the pose picture/);
+  // The replace recipe keeps image 1 and takes only the face: its guidance never tells the user to name the character's clothes.
+  const replace={...depth,id:'combine-klein-9b-replace',reference_slots:[{role:'composition',binding:['14','image']}],reference_board:{min:1,policy:'FLUX.2 Klein reference latents with the replace-character LoRA at 1.0'},reference_board_label:'Picture to put them in (image 1)',last_reference_label:'Character to keep (image 2)'};
+  const replaceText=C.guidance(replace,source).join(' ');
+  assert.match(replaceText,/only the person changes/);assert.match(replaceText,/name image 1.s outfit and colours in it, not your character.s/);assert.doesNotMatch(replaceText,/outfit leaks/);assert.doesNotMatch(replaceText,/stays who it is/);assert.match(replaceText,/Character to keep \(image 2\)/);assert.match(replaceText,/to Picture 1 \(image 1\)/);
   assert.match(nineText,/shoe or stocking from it can ghost in/);
   const lookText=C.guidance(look,source).join(' ');
   assert.match(lookText,/copy how image 2 is drawn/);assert.match(lookText,/Colours can drift/);assert.doesNotMatch(lookText,/Style weight/);assert.doesNotMatch(lookText,/add one to three pictures/);
@@ -184,6 +188,10 @@ test('engine changes carry character, pose and clothes by meaning and never reus
   const answers={who:'a witch',pose:'leaning forward',clothes:'a red robe'};
   assert.deepEqual(Object.values(C.combineFillValues(nine,answers)),['a witch','leaning forward','a red robe']);
   assert.match(C.combineFillValues(four,answers)[four.continuation_placeholder[0]],/a witch.*a red robe/,'a two-field recipe still carries the third fact');
+  // The replace recipe's third fill is the scene picture's outfit: never carried by meaning, and the character's clothes are not folded into "who".
+  const replace={...nine,id:'combine-klein-9b-replace',reference_slots:[{role:'composition'}],reference_board_label:'Picture to put them in (image 1)',last_reference:['20','image'],continuation_placeholder:["[image 1's pose and the camera in a few words, e.g. standing]",'[who is in image 2, e.g. a witch]',"[image 1's outfit and its colours, e.g. a coat]"]};
+  assert.deepEqual(replace.continuation_placeholder.map(C.fillMeaning),['pose','who','outfit']);
+  assert.deepEqual(Object.values(C.combineFillValues(replace,answers)),['leaning forward','a witch',''],'the scene outfit is left for the user; the robe is not written as image 1 clothes');
   const refs=[{file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset',slot:1,transform:{old:'graph'}},{file:null}];
   assert.equal(C.combineSwitchReason(four,nine,refs),'');
   assert.deepEqual(C.combineReferences(nine,refs),[{role:'pose',contribution:'',avoid:'',file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset'}]);
