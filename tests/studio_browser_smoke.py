@@ -146,6 +146,8 @@ def run(screenshots):
             check(len([post for post in POSTS if post['path']=='/api/estimate'])>before_estimates,'time estimate refreshes after a control change')
             failed=page.locator('#gallery .jobStatus').filter(has_text='Memory allocation failed')
             check(failed.count()==1,'failed allocation shows a clear diagnosis panel')
+            check(not page.locator('#jobProblems').evaluate('(el)=>el.open'),'old failures are collapsed outside the experiment flow')
+            page.click('#jobProblems > summary')
             check('smaller resolution' in failed.inner_text() and 'bad allocation' in failed.inner_text(),'failure panel keeps the next action and engine detail')
             page.evaluate("""jobs.push({id:'trackable-job',preset_name:'Interrupted fixture',status:'uncertain',message:'Original uncertain outcome is retained.',controls:{},prompt_ids:['known-fixture'],submissions:[{prompt_id:'known-fixture',status:'observing'}],outputs:[],can_stop_tracking:true});renderJobs()""")
             check(page.locator('[data-stop-tracking-reason="trackable-job"]').count()==1,'uncertain known prompt exposes an explicit stop reason')
@@ -162,7 +164,8 @@ def run(screenshots):
             page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-desktop.png'),full_page=True)
             page.keyboard.press('Control+k');check(page.locator('#studioCommandDialog').is_visible(),'Ctrl+K opens finder');page.fill('#studioCommandSearch','voice');check(page.locator('#studioCommandResults a').count()==1,'finder filters tools');page.keyboard.press('Escape');check(not page.locator('#studioCommandDialog').is_visible(),'Escape closes finder')
-            page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.locator('#uxRecipeLabel').inner_text().startswith('Qwen'),'intent chooses compatible recipe');check(page.locator('#generate').is_disabled(),'empty required slots block generation')
+            page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.evaluate('selected.continuation_capability.consumes_source'),'intent chooses compatible recipe')
+            page.evaluate("selectPreset('qwen-1ref')");check(page.locator('#generate').is_disabled(),'empty required slots block generation')
             page.click('#uxPullAsset');page.wait_for_selector('[data-ux-pull="asset-0"]');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "'+('a'*32)+'_fixture.png"');check(page.evaluate('parentAssets[0]')=='asset-0','picker preserves lineage');check(page.locator('#generate').is_enabled(),'filled required slot becomes ready');check(page.locator('#gallery .reference-output').count()==1,'output actions consolidate to one handoff');check(all(x['path']!='/api/jobs' for x in POSTS),'source picker does not generate')
             page.fill('#positive','A saved workflow draft');page.wait_for_timeout(500);check(page.evaluate('Object.keys(localStorage).some(k=>k.includes("qwen-1ref"))'),'edited draft is persisted')
             if screenshots:

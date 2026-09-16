@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'scripts/character_*.py'
+      - 'scripts/pixel_diff.py'
+      - 'tests/test_pixel_*.py'
+      - 'tests/test_bundle_equality.py'
+      - 'tests/fixtures/bundle_equality_baseline.py'
       - 'integrations/krita/**'
       - 'tests/test_character*.py'
       - 'app/server.py'
@@ -19,6 +23,10 @@ on:
     branches: [main]
     paths:
       - 'scripts/character_*.py'
+      - 'scripts/pixel_diff.py'
+      - 'tests/test_pixel_*.py'
+      - 'tests/test_bundle_equality.py'
+      - 'tests/fixtures/bundle_equality_baseline.py'
       - 'integrations/krita/**'
       - 'tests/test_character*.py'
       - 'app/server.py'
@@ -49,3 +57,5 @@ jobs:
       # Real local HTTP/filesystem/process-death tests; no ComfyUI, GPU or native editor.
       - run: python -m unittest discover -s tests -p "test_character_edit*.py" -v
       - run: python -m unittest discover -s tests -p "test_character_krita*.py" -v
+      - run: python -m unittest discover -s tests -p "test_pixel_*.py" -v
+      - run: python -m unittest discover -s tests -p "test_bundle_equality.py" -v

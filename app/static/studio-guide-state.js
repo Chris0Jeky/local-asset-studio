@@ -85,6 +85,14 @@
   const targetSelectors = step => [step.target, ...(step.alternatives || [])]
     .filter(selector => typeof selector === 'string' && /^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector));
   function targetVisible(node, doc) {
+    // Chromium can retain layout boxes for content inside closed details.
+    // Only the first summary remains visible; nested closed ancestors still hide it.
+    for (let parent = node?.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === 'DETAILS' && !parent.open) {
+        const summary = [...parent.children].find(child => child.tagName === 'SUMMARY');
+        if (!summary?.contains(node)) return false;
+      }
+    }
     return !!(node && node.getClientRects().length && !node.closest('[hidden]') &&
       !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility));
   }
@@ -98,13 +106,21 @@
   function revealTarget(step, doc) {
     for (const selector of targetSelectors(step)) {
       const node = doc.getElementById(selector.slice(1));
-      if (!node) continue;
+      if (!node || node.closest('[hidden]') || node.closest('[inert]')) continue;
+      let unavailable = false;
+      for (let parent = node; parent; parent = parent.parentElement) {
+        if (doc.defaultView?.getComputedStyle(parent).display === 'none') { unavailable = true; break; }
+      }
+      if (unavailable) continue;
+      const opened = [];
       let disclosure = node.closest?.('details:not([open])') || null;
       while (disclosure) {
-        disclosure.open = true;
+        disclosure.open = true; opened.push(disclosure);
         disclosure = disclosure.parentElement?.closest?.('details:not([open])') || null;
       }
       if (targetVisible(node, doc)) return node;
+      // An unusable alternative must not leave unrelated panels expanded.
+      for (const item of opened.reverse()) item.open = false;
     }
     return null;
   }
