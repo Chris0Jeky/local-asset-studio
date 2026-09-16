@@ -156,5 +156,43 @@
     for(const [placeholder,value]of Object.entries(values||{})){const words=String(value==null?'':value).trim();if(words&&placeholder&&!words.includes(placeholder))text=text.split(placeholder).join(words);}
     return text;
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble};
+  function combineKind(preset){
+    if(preset?.continuation_capability?.operation!=='combine'||sourceInput(preset.continuation_capability)!=='last_reference'||!preset.reference_board||!preset.last_reference)return null;
+    return /skeleton/i.test(preset.reference_board_label||'')?'skeleton':'picture';
+  }
+  function fillMeaning(placeholder){
+    const label=String(placeholder).split(', e.g. ')[0].toLowerCase();
+    return /who/.test(label)?'who':/clothes|colours/.test(label)?'clothes':/pose/.test(label)?'pose':null;
+  }
+  function combineFillValues(preset,answers){
+    const hasClothes=placeholders(preset).some(p=>fillMeaning(p)==='clothes');
+    return Object.fromEntries(placeholders(preset).map(p=>{
+      const meaning=fillMeaning(p);let value=String(answers[meaning]||'');
+      if(meaning==='who'&&!hasClothes&&answers.clothes&&!value.includes(answers.clothes))value+=(value?', wearing ':'')+answers.clothes;
+      return[p,value];
+    }));
+  }
+  function combineSwitchReason(from,to,refs=[]){
+    if(!combineKind(from)||!combineKind(to))return 'This recipe uses a different source layout. Choose it through Change route.';
+    if(combineKind(from)!==combineKind(to))return 'A pose skeleton and a pose picture are different inputs. Choose that route with the matching source.';
+    if(refs.filter(r=>r?.file).length>(to.reference_slots?.length||0))return 'This recipe takes fewer pictures. Remove the extra board picture before switching.';
+    if(refs.some(r=>r?.missing))return 'Reattach the missing picture before switching.';
+    return '';
+  }
+  function combineReferences(preset,refs){
+    const filled=refs.filter(r=>r?.file);
+    if(filled.length>preset.reference_slots.length)throw Error('The destination cannot keep every attached picture.');
+    return preset.reference_slots.map((slot,i)=>({role:slot.role,contribution:'',avoid:'',file:null,...Object.fromEntries(Object.entries(filled[i]||{}).filter(([key])=>['file','sha256','bytes','width','height','parent_asset','missing'].includes(key)))}));
+  }
+  function sameCombinePair(current,job,presets){
+    const first=presets.find(p=>p.id===current?.preset_id),second=presets.find(p=>p.id===job?.preset_id),kind=combineKind(first);
+    if(!kind||kind!==combineKind(second))return false;
+    const same=(a,b)=>/^[a-f0-9]{64}$/.test(a.sha256||'')&&/^[a-f0-9]{64}$/.test(b.sha256||'')?a.sha256===b.sha256:!!a.file&&a.file===b.file;
+    const keep=record=>({file:record.controls?.last_reference,sha256:record.continuation?.source_sha256});
+    if(!same(keep(current),keep(job)))return false;
+    const refs=record=>(record.references||[]).filter(r=>r?.file);
+    const a=refs(current),b=refs(job);
+    return a.length>0&&a.length===b.length&&!a.concat(b).some(r=>r.missing)&&a.every((ref,i)=>same(ref,b[i]));
+  }
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineSwitchReason,combineReferences,sameCombinePair};
 });

@@ -1,4 +1,12 @@
-# Current state — 15 September 2026
+# Current state — 16 September 2026
+
+## Combine experiment loop and local pose tools — 16 September 2026
+
+Issue #422 now has a tested on-screen experiment loop in PR #451: switch compatible recipes in one click while retaining both pictures and the named answers; recover each recipe's hand-edited wording when switching back; see matching seed results beside their source pair; mark keeper/needs-work through the existing Workspace revision contract; and prepare the saved recipe with the same or a new seed before an explicit Generate click. Skeleton/picture mismatches and missing or excess references block switching. Historical failed or uncertain jobs sit under Problems, with their recovery controls retained.
+
+Full suite at `415d038`: 2,622 offline unit tests in 332.494 s (72 skips). Browser proof: 13/13 Chromium fixture journeys with zero generation requests or page errors, full browser smoke, and mixed-batch keyboard/desktop/mobile recovery checks. After integrating main through #449, the same-pair/second-engine journey passed again (one click to change engine, zero generation requests or page errors), alongside 92 focused unit tests, 19 continuation policy checks, 3 route-lead checks and repository validation. These checks prove interaction and saved-recipe handling; they do not prove new inference quality or GPU timing. Timing labels use existing completed local runs where available.
+
+Related groundwork merged: #447 documents pose-artifact boundaries, #448 adds local pose import/correction/export tools, #449 adds fixed-canvas post-depth erasure with input-format checks, and #425 restores the intended Combine route leader. The expanded #422 acceptance remains open: draggable geometry controls (#444), native guide routing (#445), artistic comparison (#446), and owner acceptance in HUMAN_TODO q-28. No model download or real generation was needed for this UI slice.
 
 ## Pose round three: the slow state is a restart, the words move the hands, a drawn skeleton carries the pose, four LoRAs measured — 15 September 2026 (03:40-05:30)
 
