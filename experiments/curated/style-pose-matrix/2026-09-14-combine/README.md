@@ -314,7 +314,7 @@ well as the 14 px ones on this seed. Not verified: drawing in the panel by hand 
 journey (the use-case driver covers the panel up to the attached guide with zero generations; this run submitted the same request shape by
 API); other seeds; art acceptance (HUMAN_TODO q-28 (d)).
 
-## Night audition, 16 September 2026 (04:35-04:55): the cut sweep, the editor and Copy Pose at three seeds
+## Night audition, 16 September 2026 (02:57-03:10): the cut sweep, the editor and Copy Pose at three seeds
 
 Seven more Studio jobs (`audition_night.py`, results `audition_night.json`, exact recipes under `audition-recipes/`), same pair and fills as the
 proving runs, so the single proving runs become small auditions and the new control gets its numbers. ComfyUI's model cache had been
@@ -331,8 +331,8 @@ released just before (see CURRENT_STATE, the RAM measurement), so the first run 
 | the same, seed 2026091473 | `069c5efe-e412-482d-83e6-4477b2633c4e` / `b3c4ff76-5bd3-4dff-9e29-b18e3626ed02` | 143.2 | `Combine/Klein-9B-copypose_00003_.png` | **held again**: bend from behind, a hand on the knee, face looking down in profile, bare feet, lettering intact |
 
 Sheets: `examples/style-pose/combine-depth-cut-sweep.jpg` (80 / 86 / 92 / 100), `pose-editor-audition.jpg` (seeds 61-63), `combine-copypose-audition.jpg`
-(seeds 71-73). What it settles: on this pair any cut between 80 and 92 removes the heel and 92 loses the least of the figure, so the recipe hint
-now says 86-92; the page-rendered guide carried the pose on 3 of 3 seeds like the hand-drawn one; Copy Pose held on 3 of 3 seeds through the
+(seeds 71-73). What it settles: on this pair each of the three tested cuts (80, 86, 92) removed the heel and 92 lost the least of the figure, so the
+recipe hint now says 86-92 (the values between them were not run); the page-rendered guide carried the pose on 3 of 3 seeds like the hand-drawn one; Copy Pose held on 3 of 3 seeds through the
 Studio as it did in research. Not verified: other pairs; art acceptance (HUMAN_TODO q-28).
 
 ## Through the page
