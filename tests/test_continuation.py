@@ -403,6 +403,19 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 self.assertEqual((graph["31"]["inputs"]["value"], graph["32"]["inputs"]["value"], graph["31"]["inputs"]["height"], graph["32"]["inputs"]["height"]), (0.0, 1.0, 100, 100))
                 self.assertEqual((graph["35"]["class_type"], graph["35"]["inputs"]["destination"], graph["35"]["inputs"]["source"], graph["35"]["inputs"]["mask"], graph["35"]["inputs"]["resize_source"], graph["34"]["inputs"]["color"]), ("ImageCompositeMasked", ["15", 0], ["34", 0], ["33", 0], True, 0))
                 self.assertEqual(preset["variants"][0], {"name": "Cut below the ankles (86 %)", "controls": {"depth_cut": 86}})
+            elif preset["id"] == "combine-klein-9b-copypose":
+                # Copy Pose LoRA: the order turns round. The character is last_reference on image 1 (node 14, kept and re-posed), the
+                # board slot is the pose picture on image 2 (node 20); the LoRA sits between the GGUF loader and the guider, model only,
+                # and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["14", "image"], [["20", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "KleinBase9B_PoseTransfer.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("change the actions and poses in Image 1 to match those in Image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 1)", preset["last_reference_label"]); self.assertIn("(image 2)", preset["reference_board_label"]); self.assertIn("Rent only", preset["commercial_note"])
             elif preset["id"] == "combine-klein-9b-skeleton":
                 # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
                 # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.
