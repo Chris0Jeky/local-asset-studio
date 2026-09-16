@@ -5,6 +5,7 @@
   "comfy_launcher": "C:/AI/Start-ComfyUI.ps1",
   "primary_disable_pinned_memory": false,
   "runtime_auto_recover": false,
+  "idle_cache_release_minutes": 10,
   "observe_job_resources": false,
   "resource_observation_samples": 120,
   "resource_observation_interval_seconds": 5,
