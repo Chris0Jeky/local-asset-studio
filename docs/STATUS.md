@@ -62,13 +62,13 @@ pass. No controlled with/without-adapter comparison at matched seed exists. AniF
 
 **Later on 16 September 2026 (identity).** An edit route keeps identity for expressions, and the replace-character route (`combine-klein-9b-replace`, PR #481) puts the
 portrait's face into any picture that keeps its own pose and scene, including the depth Combine's own posed output, so the pack's posed full body is
-*pose route, then face route* at any seed. Both proved through the Studio and recorded in the pack folder; the assets wait unreviewed (q-30).
+*pose route, then face route* on the tested seeds (three research seeds and two Studio jobs, not a guarantee for others). Both proved through the Studio and recorded in the pack folder; the assets wait unreviewed (q-30).
 
 **Previous next slice (13 September).** Run look B through the brief's four steps at a fixed seed, push each through `anime-detail-fix`, and
 present the before/after pairs to the owner as one review batch. Every ingredient is proven; the missing artifact is an
 owner decision. Open issue: #14.
 
-**16 September 2026 (pose transfer).** Two strong pose-transfer routes are recipes on the Combine route (depth map leading, Copy Pose second), the ankle cut is a control on the depth recipe, a drawn stick figure is a recipe, and a keypoint pose editor draws that figure on the page (PR #466); every one proved through the Studio on the owner's pair. Identity across a body-pose change from a portrait-sized reference is still open (the depth route lost the face at full-body scale, `experiments/curated/fantasy-pack-20260916/`).
+**16 September 2026 (pose transfer).** Two strong pose-transfer routes are recipes on the Combine route (depth map leading, Copy Pose second), the ankle cut is a control on the depth recipe, a drawn stick figure is a recipe, and a keypoint pose editor draws that figure on the page (PR #466); every one proved through the Studio on the owner's pair. Identity across a body-pose change from a portrait-sized reference was open at this point (the depth route lost the face at full-body scale, `experiments/curated/fantasy-pack-20260916/`); the identity paragraph above records the same night's answer, *pose route, then face route* (PR #481), on the tested seeds.
 
 ## G3 — Character sheets, figures, poses, in-betweens
 

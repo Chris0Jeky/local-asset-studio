@@ -18,7 +18,9 @@
   folder, HUMAN_TODO q-30 (f) and (g).
 - **The idle cache release works end to end (PR #470):** the Studio restarted on main at 03:47; after the last job ended at 04:04 the release fired at
   04:14:32 (`/api/health` `cache_release`: count 1, no error); ComfyUI's python went from 5.3 GB resident with the 9B models loaded to 463 MB. The
-  first job after a release pays the model reload. `idle_cache_release_minutes` in `config/local.json` (default 10, 0 = off).
+  first job after a release pays the model reload: measured after the second release (04:40:36, ComfyUI at 441 MB), one `combine-klein-9b-replace` job at
+  832x1216 (`60b161cb…`, seed 2026091303) took 121.1 s against 104.9 s warm, ComfyUI back at 12984 MB. `idle_cache_release_minutes` in `config/local.json`
+  (default 10, 0 = off).
 - **The night audition (PR #473):** on the owner's pair `depth_cut` 80, 86 and 92 all gave bare feet (92 loses the least of the figure; the hint says
   86-92; the values between were not run); the page-rendered guide held the drawn pose on 3 of 3 seeds; Copy Pose held on 3 of 3 through the
   Studio; a stricter instruction gave the surprised look as asked, so the earlier grin was the wording's doing. The audition script now persists
