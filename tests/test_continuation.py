@@ -416,6 +416,24 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
                 self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
                 self.assertIn("(image 1)", preset["last_reference_label"]); self.assertIn("(image 2)", preset["reference_board_label"]); self.assertIn("Rent only", preset["commercial_note"])
+            elif preset["id"] == "combine-klein-9b-replace":
+                # Replace character: the board slot is the picture to keep on image 1 (node 14: its pose, camera, scene and clothes stay),
+                # the character whose face goes in stays last_reference on image 2 (node 20); the LoRA sits between the GGUF loader and the
+                # guider, model only, and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "replace_character_v1_klein.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("Replace the person in image 1 with the character in image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 2)", preset["last_reference_label"]); self.assertIn("(image 1)", preset["reference_board_label"]); self.assertIn("no Sell", preset["commercial_note"])
+                # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it; `verified` is
+                # true only when the execution note opens with a Studio run (research against ComfyUI is not a Studio proving run); the
+                # third fill is image 1's outfit (meaning "outfit", never carried by an engine switch as the character's clothes).
+                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], "through the Studio (POST /api/jobs): job" in preset["execution_note"])
+                self.assertTrue(preset["continuation_placeholder"][2].startswith("[image 1's outfit and its colours"))
             elif preset["id"] == "combine-klein-9b-skeleton":
                 # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
                 # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.

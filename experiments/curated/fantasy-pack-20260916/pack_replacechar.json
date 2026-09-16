@@ -1,0 +1,47 @@
+[
+ {
+  "variant": "replacechar",
+  "seed": 2026091301,
+  "prompt_id": "6eaa00a9-083e-41e9-88c9-d2820b0b4487",
+  "status": "success",
+  "seconds": 116.1,
+  "files": [
+   "Research/pack-replacechar_00001_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's painterly rendering and its station platform. One figure only, nobody else in the picture.",
+  "image1": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "lora": "replace_character_v1_klein.safetensors"
+ },
+ {
+  "variant": "replacechar",
+  "seed": 2026091302,
+  "prompt_id": "36312e34-4c09-477b-ab4b-bf33c544ff61",
+  "status": "success",
+  "seconds": 132.2,
+  "files": [
+   "Research/pack-replacechar_00002_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's painterly rendering and its station platform. One figure only, nobody else in the picture.",
+  "image1": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "lora": "replace_character_v1_klein.safetensors"
+ },
+ {
+  "variant": "replacechar",
+  "seed": 2026091303,
+  "prompt_id": "b6b1e704-b0aa-4e75-8330-21fdd909d35d",
+  "status": "success",
+  "seconds": 124.3,
+  "files": [
+   "Research/pack-replacechar_00003_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background and lighting as in image 1. The woman in image 2 has long centre-parted dark hair, brown eyes, a calm face and small gold earrings; keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image 1's painterly rendering and its station platform. One figure only, nobody else in the picture.",
+  "image1": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+  "image2": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "lora": "replace_character_v1_klein.safetensors"
+ }
+]
