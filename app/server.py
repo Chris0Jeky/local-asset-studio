@@ -1293,13 +1293,19 @@ class Studio:
         # ComfyUI's own model cache can trip on the first load of a different model family in a session (IndexError in
         # free_memory before any sampling, #350: observed twice on 14 September 2026, the identical graph succeeded on retry).
         trace = detail.get("traceback")
-        trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if isinstance(trace, list) else ""
-        swap = "indexerror" in combined and ("free_memory" in trace_text or bool(re.search(r"loader", node_type.lower())))
+        has_trace = isinstance(trace, list) and any(isinstance(line, str) and line.strip() for line in trace)
+        trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if has_trace else ""
+        in_cache = "free_memory" in trace_text
+        # The loader-name arm is a fallback for a payload without a traceback only: a traceback that names other frames says the
+        # loader itself raised, and that record must not claim a cache fault it cannot see.
+        swap = "indexerror" in combined and (in_cache or (not has_trace and bool(re.search(r"loader", node_type.lower()))))
 
         if swap:
             kind = "model_swap_fault"
-            title = "ComfyUI model-swap fault before sampling"
-            summary = f"ComfyUI failed inside its own model cache (free_memory) while loading {node_type or 'a model'}: the first load of a different model family in a session can trip this before anything is sampled. The recipe and the prompt are not the cause."
+            title = "ComfyUI model-swap fault"
+            where = (f"inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}" if in_cache
+                     else f"in {node_type} with no traceback returned, the signature of the model-cache fault (#350)")
+            summary = f"ComfyUI failed {where}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
             action = "Run the same job again with the same seed: measured 14 September 2026, the identical graph succeeded on the retry. The original prompt was not retried automatically."
         elif allocation:
             kind = "memory_allocation"
@@ -1441,7 +1447,7 @@ class Studio:
                     submission["status"] = "failed"
                     job["failure"] = self._execution_failure(detail)
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
-                    label = "ComfyUI model-swap fault before sampling; running the same job again is safe" if job["failure"].get("kind") == "model_swap_fault" else "ComfyUI reported an execution error"
+                    label = "ComfyUI model-swap fault; running the same job again is safe" if job["failure"].get("kind") == "model_swap_fault" else "ComfyUI reported an execution error"
                     message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
