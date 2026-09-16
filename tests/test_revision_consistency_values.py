@@ -5,6 +5,7 @@ import unittest
 from studio_workflow.revision_consistency import (
     RequestState,
     byte_budget,
+    canonical_sha256,
     canonical_value,
     classify_request,
     compare_head,
@@ -13,6 +14,12 @@ from studio_workflow.revision_consistency import (
 
 
 class RevisionConsistencyValueTests(unittest.TestCase):
+    def test_internal_envelope_hash_does_not_apply_the_payload_decode_limit(self):
+        payload = {'value': 'x' * (1024 * 1024)}
+        self.assertEqual(len(canonical_sha256(payload)), 64)
+        with self.assertRaises(ValueError):
+            canonical_value(payload)
+
     def test_canonical_value_binds_normalized_input_bytes_once(self):
         left = canonical_value({'b': [2, 1], 'a': {'value': 'α'}})
         right = canonical_value({'a': {'value': 'α'}, 'b': [2, 1]})
