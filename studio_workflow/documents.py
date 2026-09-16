@@ -6,7 +6,7 @@ writes and request receipts share one transaction with an expected-revision chec
 from __future__ import annotations
 import time
 import uuid
-from .core import document, decode, need
+from .core import document, decode, digest, need
 from .revision_consistency import (RequestState, byte_budget, canonical_value,
                                    classify_request, compare_head, stored_value)
 from .commands import apply_commands, changes, execution_inputs_sha256, identifier, fields
@@ -122,7 +122,7 @@ class WorkflowDocuments:
 
     def create(self, value):
         value = self._request(value, ('request_id', 'document'))
-        doc = document(value['document']); sha = canonical_value({'action': 'create', **value}).sha256
+        doc = document(value['document']); sha = digest({'action': 'create', **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
@@ -139,7 +139,7 @@ class WorkflowDocuments:
 
     def fork(self, key, value):
         identifier(key); value = self._request(value, ('request_id', 'revision', 'name'))
-        self._revision(value['revision']); sha = canonical_value({'action': 'fork', 'id': key, **value}).sha256
+        self._revision(value['revision']); sha = digest({'action': 'fork', 'id': key, **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
@@ -161,7 +161,7 @@ class WorkflowDocuments:
     def command(self, key, value, restore=False):
         identifier(key); field = 'revision' if restore else 'commands'
         value = self._request(value, ('request_id', 'expected_revision', field))
-        sha = canonical_value({'action': 'restore' if restore else 'command', 'id': key, **value}).sha256
+        sha = digest({'action': 'restore' if restore else 'command', 'id': key, **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
