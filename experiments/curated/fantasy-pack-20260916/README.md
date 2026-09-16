@@ -115,7 +115,7 @@ at the time (the third took 88 s); that is contention, not the slow state that n
 **What this does NOT establish:** the choker (hidden by the scarf) and any accessory the wording names but image 1's clothes cover; the stray
 glyph on the cross seed 2026091321 platform; anything at portrait fidelity; art acceptance (HUMAN_TODO q-30).
 
-### Through the Studio: the recipe verified (16 September 2026, 03:53-03:51)
+### Through the Studio: the recipe verified (16 September 2026, 03:51-04:04)
 
 `combine-klein-9b-replace` on the Studio's own path (POST /api/jobs, `prove_replace.py` in the style-pose research folder's sibling scratch,
 exported recipes `recipes/7-replace-7051b297.json` and `8-replace-2752190c.json`): the portrait as *Character to keep* (image 2), the full-body render on
