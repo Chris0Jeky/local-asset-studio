@@ -1,0 +1,36 @@
+# Project-scoped Grok configuration for Local Asset Studio.
+# Loaded when the repository is a trusted project. Authority is declared in
+# .agent-harness/tier.json, not here.
+#
+# MCP stays at user scope (~/.grok/config.toml and, via Claude compatibility,
+# ~/.claude.json). Do not declare comfy-local or MCP_DOCKER here: one gateway
+# per runtime. URL-only helpers (context7, GitHub, docs) also live at user scope.
+
+[permission]
+allow = [
+  "Bash(python -m unittest *)",
+  "Bash(python scripts/validate-repo.py *)",
+  "Bash(python scripts/validate-live.py *)",
+  "Bash(python scripts/game_asset_pipeline.py *)",
+  "Bash(python scripts/game_asset_demo.py *)",
+  "Bash(python scripts/game_asset_media.py *)",
+  "Bash(node --check *)",
+  "Bash(node --version *)",
+  "Bash(python --version *)",
+  "Bash(git status *)",
+  "Bash(git log *)",
+  "Bash(git diff *)",
+  "Bash(git show *)",
+  "Bash(git branch *)",
+  "Bash(git switch *)",
+  "Bash(git add *)",
+  "Bash(git commit *)",
+  "Bash(git fetch *)",
+  "Bash(git ls-files *)",
+  "Bash(gh pr *)",
+  "Bash(gh issue *)",
+  "Bash(gh run *)",
+  "Bash(gh auth status *)",
+  "Bash(gh repo view *)",
+  "Bash(rg *)",
+]
