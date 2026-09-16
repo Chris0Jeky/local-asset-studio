@@ -94,3 +94,21 @@ Commands: `python -m unittest discover -s tests -p 'test_reference_*.py'`,
 journey, full suite and repository validator. Hosted Chromium is the browser gate
 where local container navigation is blocked by administrator policy; that policy
 is not changed. Refs #35, #38, #178, #313. HUMAN_TODO choices are unchanged.
+
+
+## A request that never reached the journal
+
+A failed intake or lost create reply can leave a saved request ID with no visible
+operation. **Recover an earlier analysis / setup → Retire unqueued request** is
+an explicit recovery action. The server atomically returns the existing operation
+unchanged, or records a terminal no-dispatch tombstone. A slow create arriving
+after that commit cannot run under the retired ID. The action does not cancel a
+running helper, release a hold or infer non-submission from a transient 404.
+
+After a retired receipt is visible, **New analysis** clears only this tab's
+handle; starting the corrected request still needs an explicit Analyze action.
+A lost retirement reply is recovered with Check status against the same saved ID.
+Tombstones remain under the same history cap; this does not implement general
+history eviction or allow an old retired ID to become new work. Existing queued,
+submitting or uncertain operations are returned intact and use their normal
+observation/cancel/release controls. See issue #397 and `REFERENCE-JOBS.md`.
