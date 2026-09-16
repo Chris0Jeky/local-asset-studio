@@ -75,7 +75,10 @@ class ReferenceReviewTests(unittest.TestCase):
         self.intent['brief'] = ''; report = copy.deepcopy(self.report)
         report = analysis.make_report({**report['request'], 'brief': ''}, report['answer'], report['analysis_inputs'])
         self.payload.update(analysis=report, review=analysis.review_template(report), adopt_brief=True)
-        self.assertEqual(self.preview()['intent']['brief'], report['answer']['summary'])
+        preview = self.preview()
+        self.assertEqual(preview['intent']['brief'], report['answer']['summary'])
+        self.assertEqual(preview['base_intent']['brief'], '')
+        self.assertEqual(preview['base_intent'], self.intent)
 
     def test_every_changed_lock_is_checked(self):
         for lock in ('facets', 'facets.style', 'references'):
