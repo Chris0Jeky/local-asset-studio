@@ -76,10 +76,10 @@ jobs:
           python -m py_compile studio_prompt/adult_illustration_source_intake.py scripts/studio_adult_illustration_source_snapshot.py tests/test_adult_illustration_source_language.py
           git diff --check
 
-      - name: Publish the verified implementation on the disposable branch
+      - name: Publish the verified parser implementation
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add studio_prompt/adult_illustration_source_intake.py tests/test_adult_illustration_source_language.py .github/workflows/prompt-studio.yml
+          git add studio_prompt/adult_illustration_source_intake.py
           git commit -m 'Accept scalar Hugging Face language metadata'
           git push origin HEAD:test/hf-scalar-language
