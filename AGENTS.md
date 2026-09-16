@@ -4,14 +4,14 @@ Shared facts — what the Studio is, how to run it, the per-seam proving checks,
 tier and authority — live in **`CLAUDE.md`** and are not repeated here. Global working agreements reach
 Codex through `~/.codex/AGENTS.md` and Grok through `~/.claude/CLAUDE.md` (Claude compatibility) plus
 `~/.grok/AGENTS.md`. This file is the Codex-runtime delta; Grok also loads it, so the Grok section
-below overrides the Codex facts for Grok sessions.
+at the bottom overrides the Codex facts for Grok sessions.
 
 ## Start here
 
 1. `CLAUDE.md` — repo facts, proving checks, architecture, pitfalls.
 2. `CURRENT_STATE.md` head — executed evidence versus plans; reconcile claims against code and `.runtime/`.
 3. `HUMAN_TODO.md` — human-only creative choices; surface open items in every summary, never tick them.
-4. Codex: `.codex/README.md` and `.codex/memories/00_ACTIVE.md`. Grok: `.grok/README.md`.
+4. If you are Codex, read `.codex/README.md` and `.codex/memories/00_ACTIVE.md`. If you are Grok, read `.grok/README.md`.
 5. Authority: `.agent-harness/tier.json` (T2, push free, merge free). Read it live; never infer it from prose.
 
 ## Hard rules (also in CLAUDE.md; listed here because sessions submit generations)
@@ -28,6 +28,13 @@ below overrides the Codex facts for Grok sessions.
   otherwise `Refs #N` plus the remaining acceptance. List multiple closures individually, recheck
   the live issue state before and after merge, and never use a closing keyword as a non-closing example.
 
+## Codex-specific facts
+
+- Branches from Codex sessions are named `codex/<topic>`; PRs are opened ready-for-review, never draft.
+- Project MCP config is `.codex/config.toml` (no Docker gateway here; it is declared once at user scope).
+- Skills: `.codex/skills/` mirrors `.claude/skills/` body-for-body; `tests/test_agent_harness.py` fails on
+  drift. Change the Claude tree first, then port the body verbatim in the same commit.
+
 ## Grok-specific facts
 
 - Branches from Grok sessions are named `grok/<topic>`; PRs are opened ready-for-review, never draft.
@@ -35,14 +42,7 @@ below overrides the Codex facts for Grok sessions.
   do not redeclare `comfy-local` or `MCP_DOCKER` here.
 - Skills come from `.claude/skills/` via Claude compatibility. Do not add `.grok/skills/` (a third copy
   would collide and `tests/test_agent_harness.py` fails).
-- Ignore the Codex-specific facts below (`.codex/` paths, `codex/<topic>` branches).
-
-## Codex-specific facts
-
-- Branches from Codex sessions are named `codex/<topic>`; PRs are opened ready-for-review, never draft.
-- Project MCP config is `.codex/config.toml` (no Docker gateway here; it is declared once at user scope).
-- Skills: `.codex/skills/` mirrors `.claude/skills/` body-for-body; `tests/test_agent_harness.py` fails on
-  drift. Change the Claude tree first, then port the body verbatim in the same commit.
+- Ignore the Codex-specific facts above (`.codex/` paths, `codex/<topic>` branches).
 
 ## Skill routing
 
