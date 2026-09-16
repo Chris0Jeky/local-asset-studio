@@ -203,6 +203,8 @@ def compare_observations(manifest: str | Path) -> dict:
               'candidate': inspect_once(pair['candidate'])}
              for pair in requested]
     _reject_reused_prompts(pairs)
+    dropped_prompt = any('reused_prompt_evidence' in pair[side]['reasons']
+                         for pair in pairs for side in ('baseline', 'candidate'))
     counts = {'requested_pairs': len(pairs), 'requested_observations': 2 * len(pairs),
               'unique_observations': len(inspected), 'verified_observations': 0,
               'invalid_observations': 0, 'incomplete_observations': 0, 'descriptive_pairs': 0, 'withheld_pairs': 0}
@@ -225,4 +227,7 @@ def compare_observations(manifest: str | Path) -> dict:
                   'No success-only averages or pooled performance claims are produced.',
                   'Finite benchmark execution and full trial identity remain separate from this offline report.'
               ]}
+    if dropped_prompt:
+        result['limitations'].append(
+            'Observation payloads were omitted on rows whose received prompt identity was reused; those rows keep reasons including reused_prompt_evidence.')
     return _fit_report(result)

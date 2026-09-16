@@ -38,6 +38,15 @@ A structurally invalid manifest creates no output file. A valid manifest with on
 still produces the complete requested report (including that missing row) and exits 2. JSON is compact
 so the same 1 MiB report limit applies to file and stdout output. There is no HTML rendering path.
 
+CLI diagnostics for a refused plan (no report file) are `invalid_plan` when the file opened and
+failed the manifest contract, and `report_unavailable` when the plan path could not be read, changed
+during the guarded read, or the report could not be represented. A missing or mistyped plan path is
+not `incomplete` evidence. Observation-level incomplete rows live inside a written report.
+
+Rows whose received prompt identity is reused keep their pair slot with `reused_prompt_evidence`;
+the observation payload is omitted. The report limitation names that drop so it is not mistaken for
+full payload retention.
+
 ## Manifest contract
 
 `studio.resource-comparison-plan/v1` has exactly `schema`, `generation_allowance: 0`, and `pairs`.
@@ -117,7 +126,7 @@ changing runtime flags remains the design basis.
 ## Verification
 
 ```powershell
-python -m unittest discover -s tests -p "test_resource_comparison.py" -v
+python -m unittest discover -s tests -p "test_resource_comparison*.py" -v
 python -m unittest discover -s tests -p "test_resource_receipts*.py" -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
