@@ -91,14 +91,15 @@
     let highlighted = null;
     function find(show = false) {
       if (highlighted) highlighted.classList.remove('studio-guide-target'); highlighted = null;
-      const target = correctTool() ? C.visibleTarget(step, document) : null;
-      targetNote.textContent = target ? 'Target control is available. Show the control moves focus; it never activates it.'
-        : step.target ? 'Target is not visible here. Choose a matching recipe or asset, then use Show the control.'
+      const reveal = show || !shown;
+      const target = correctTool() ? (reveal ? C.visibleTarget(step, document) : C.peekTarget(step, document)) : null;
+      targetNote.textContent = target ? 'Target control is available. Show the control opens collapsed panels and moves focus; it never activates the control.'
+        : step.target ? 'Target is not visible here. Show the control can open collapsed panels; choose a matching recipe or asset if it stays unavailable.'
         : 'Reviewed in the tool itself; no single control is highlighted.';
       if (recipeButton) recipeButton.textContent = 'Choose ' + recommendedPreset().name;
       if (!target) return;
-      // Arriving at a step reveals its control once; later re-checks keep the mark without stealing focus.
-      const reveal = show || !shown; shown = true; highlighted = target; target.classList.add('studio-guide-target');
+      // Reveal once per stage. Later observations respect the user's disclosure and focus choices.
+      shown = true; highlighted = target; target.classList.add('studio-guide-target');
       if (!reveal) return;
       target.scrollIntoView({block:'center', behavior:'auto'});
       const idle = show || !document.activeElement || document.activeElement === document.body || panel.contains(document.activeElement);

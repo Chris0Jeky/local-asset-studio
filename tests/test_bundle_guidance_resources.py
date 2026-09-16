@@ -132,6 +132,14 @@ class GuidanceResourceTests(unittest.TestCase):
         report = G.explain(p, g, {}, k, m)
         self.assertFalse(any('unknown.safetensors' in r['file'] for r in report['resources']))
 
+    def test_annotator_checkpoint_is_not_projected_into_the_library(self):
+        # Depth Anything V2's weights are fetched by the comfyui_controlnet_aux node into its own ckpts folder; the guidance
+        # projection must not invent checkpoints/<name> for them (the readiness projection already excludes them).
+        p, g, m, k = fixture()
+        g['5'] = {'class_type': 'DepthAnythingV2Preprocessor', 'inputs': {'ckpt_name': 'depth_anything_v2_vitl.pth', 'resolution': 1024}}
+        report = G.explain(p, g, {}, k, m)
+        self.assertFalse(any('depth_anything_v2_vitl' in r['file'] for r in report['resources']))
+
     def test_guidance_import_does_not_load_runtime_or_comfy_app_modules(self):
         code = "import sys,types;sys.path.insert(0,"+repr(str(ROOT))+" );sys.modules['app']=types.ModuleType('app');from studio_workflow import guidance;assert 'model_library' not in sys.modules;assert 'server' not in sys.modules"
         result = subprocess.run([sys.executable, '-I', '-c', code], capture_output=True, text=True)
