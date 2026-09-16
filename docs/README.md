@@ -94,4 +94,5 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 
 Agent-facing contracts also live in [`../agent-skills/`](../agent-skills/) (five SKILL.md contracts:
 av-studio, character-editing, game-assets, prompt-studio, workflow-studio) and in the repo-local skills under
-[`../.claude/skills/`](../.claude/skills/README.md) with the Codex mirror in `../.codex/skills/`.
+[`../.claude/skills/`](../.claude/skills/README.md) with the Codex mirror in `../.codex/skills/`
+and the Grok adapter in [`../.grok/`](../.grok/README.md) (Grok loads the Claude skill tree; it has no third copy).
