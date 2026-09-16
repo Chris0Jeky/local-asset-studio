@@ -5,8 +5,8 @@ path (POST /api/jobs: prepare -> worker -> ComfyUI, the shape the page submits; 
 on the owner's chosen **look B**: `anima-v1-baseline` with slot 1 `nsfw_girls_anima.safetensors` at 1.0 (the other five slots at 0), seed
 `2026091301`, 832x1216, 30 steps, CFG 4.5, euler/simple, the baseline's negative prompt; the character wording is the baseline's clothed
 traveller with the brief's navy coat, brass details and teal accents named. Backend `primary` (ComfyUI 0.35.0 on 8188), receipts under the
-configured receipts root (`experiments/runs/<job-id>/`: recipe, state with the exact submitted graph, workflow). Sheet:
-`examples/fantasy-pack/first-batch.jpg`.
+configured receipts root (`experiments/runs/<job-id>/`: recipe, state with the exact submitted graph, workflow). The exact submitted recipes
+(`/api/jobs/<id>/recipe`, graph included) are committed under `recipes/`. Sheet: `examples/fantasy-pack/first-batch.jpg`.
 
 | Step | Job / prompt | s | Output | Inspected (agent's reading, not acceptance) |
 | --- | --- | --- | --- | --- |

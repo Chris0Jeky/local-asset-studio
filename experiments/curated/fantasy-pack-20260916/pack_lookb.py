@@ -5,7 +5,9 @@ seed 2026091301, 832x1216, 30 steps, CFG 4.5, euler/simple) through the brief's 
 next to this file: job IDs, prompt IDs, outputs, timing. Nothing here is art acceptance; the four outputs land in the Workspace
 review queue for the owner (HUMAN_TODO).
 
-Usage: python pack_lookb.py [step ...]   steps: portrait fullbody expression fix   (default: all four in order)"""
+Usage: python pack_lookb.py [step ...]   steps: portrait fullbody expression fix   (default: all four in order)
+A base step already completed in pack_lookb.json is skipped, so re-running the default invocation submits nothing; set FORCE=1 to
+run it again anyway (a new job and a new Workspace asset). The fix step always runs on the chosen completed source."""
 import json, time, urllib.request, urllib.error, os, sys
 OUT = os.path.dirname(os.path.abspath(__file__)); STUDIO = "http://127.0.0.1:8191"; SEED = 2026091301
 CHARACTER = ("A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck "
@@ -60,6 +62,8 @@ if __name__ == "__main__":
             src = done.get(os.environ.get("FIX_SOURCE", "portrait")) or next(iter(done.values()), None)
             if not src: raise SystemExit("no completed base step to correct")
             run_fix(src)
+        elif step in done and os.environ.get("FORCE") != "1":
+            print(step, "already completed as job", done[step]["id"], "(set FORCE=1 to run it again)", flush=True)
         else:
             r = run_base(step)
             if r and r["status"] == "completed": done[step] = r
