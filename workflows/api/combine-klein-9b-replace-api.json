@@ -22,7 +22,7 @@
   "4": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting ([image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]). The character in image 2 is [who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: [image 1's clothes and colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+      "text": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting ([image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]). The character in image 2 is [who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: [image 1's outfit and its colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
       "clip": [
         "2",
         0

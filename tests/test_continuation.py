@@ -429,9 +429,11 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
                 self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
                 self.assertIn("(image 2)", preset["last_reference_label"]); self.assertIn("(image 1)", preset["reference_board_label"]); self.assertIn("no Sell", preset["commercial_note"])
-                # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it, and the
-                # recipe stays unverified until it has run through the Studio (research against ComfyUI is not a Studio proving run).
-                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertFalse(preset["verified"])
+                # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it; `verified` is
+                # true only when the execution note opens with a Studio run (research against ComfyUI is not a Studio proving run); the
+                # third fill is image 1's outfit (meaning "outfit", never carried by an engine switch as the character's clothes).
+                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], preset["execution_note"].startswith("Verified"))
+                self.assertTrue(preset["continuation_placeholder"][2].startswith("[image 1's outfit and its colours"))
             elif preset["id"] == "combine-klein-9b-skeleton":
                 # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
                 # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.

@@ -83,7 +83,7 @@ recorded in `models/library.json`, not granted here.
 
 The Studio recipe built from this run is **`combine-klein-9b-replace`** (`workflows/api/combine-klein-9b-replace-api.json` plus its
 catalog entry): the same graph, with "Picture to put them in (image 1)" as the board slot, "Character to keep (image 2)" as the
-picture you continue from, and three bracketed fills (image 1's pose and camera, who is in image 2, image 1's clothes and colours).
+picture you continue from, and three bracketed fills (image 1's pose and camera, who is in image 2, image 1's outfit and its colours).
 
 ## Next slices this points at
 

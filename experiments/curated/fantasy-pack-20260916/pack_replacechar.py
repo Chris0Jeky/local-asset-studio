@@ -34,7 +34,7 @@ def run(g):
 if __name__ == "__main__":
     results = json.load(open(OUT + "/pack_replacechar.json")) if os.path.exists(OUT + "/pack_replacechar.json") else []
     for seed in [int(x) for x in (sys.argv[1:] or ["2026091301", "2026091302", "2026091303"])]:
-        g = build(seed); json.dump(g, open(OUT + "/pack-replacechar-%d.graph.json" % seed, "w"), indent=1)
+        g = build(seed); os.makedirs(OUT + "/research-graphs", exist_ok=True); json.dump(g, open(OUT + "/research-graphs/pack-replacechar-%d.graph.json" % seed, "w"), indent=1)
         pid, st, secs, files, err = run(g); print("replacechar", seed, pid[:8], st, secs, files, err, flush=True)
         results.append(dict(variant="replacechar", seed=seed, prompt_id=pid, status=st, seconds=secs, files=files, error=err, text=TEXT, image1=FULLBODY, image2=PORTRAIT, lora="replace_character_v1_klein.safetensors"))
         json.dump(results, open(OUT + "/pack_replacechar.json", "w"), indent=1)

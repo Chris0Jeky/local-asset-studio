@@ -112,7 +112,8 @@
     if(source?.preset_id&&source.preset_id!==preset.id&&cap.prompt_role!=='none')text.push('Different source recipe: '+(source.preset_name||source.preset_id)+'. Source sampling settings, seed and adapters are not copied. Check destination style triggers; low denoise does not guarantee the same look.');
     // The owner's report (14 Sep 2026): restyling a restyle with the same wording and seed gave "the same exact image".
     else if(source?.preset_id&&source.preset_id===preset.id&&cap.prompt_role!=='none')text.push('This picture already came from this recipe. The same wording and seed give the same picture again: change the wording, or the seed, before running.');
-    if(cap.operation==='combine')text.push('Your picture goes on '+sourceLabel(preset)+' and stays who it is: face, hair, outfit, colours and rendering style. After preparing, add the picture whose pose you want to Picture 1'+boardImage(preset)+'. The wording is prepared for you'+((preset?.reference_slots?.length||0)>1?'; a third picture leaks its costume unless you say exactly what to take from image 3.':'; name your character\'s clothes and colours in it or the pose picture\'s outfit leaks.'));
+    if(cap.operation==='combine'&&/replace-character/i.test(preset?.reference_board?.policy||''))text.push('Your picture goes on '+sourceLabel(preset)+' and only its face, hair and expression are taken. After preparing, add the picture to put the character into to Picture 1'+boardImage(preset)+'. The wording is prepared for you; name image 1\'s outfit and colours in it, not your character\'s: that picture\'s clothes are what the figure goes on wearing.');
+    else if(cap.operation==='combine')text.push('Your picture goes on '+sourceLabel(preset)+' and stays who it is: face, hair, outfit, colours and rendering style. After preparing, add the picture whose pose you want to Picture 1'+boardImage(preset)+'. The wording is prepared for you'+((preset?.reference_slots?.length||0)>1?'; a third picture leaks its costume unless you say exactly what to take from image 3.':'; name your character\'s clothes and colours in it or the pose picture\'s outfit leaks.'));
     else if(cap.operation==='restyle'&&!cap.board_min)text.push('Your picture goes on '+sourceLabel(preset)+'. The wording is prepared for you: the finish to draw, what to keep, and this output’s submitted description when one exists. There is no style board to fill.');
     else if(cap.operation==='restyle'&&cap.prompt_role==='instruction')text.push('Your picture goes on '+sourceLabel(preset)+' and keeps its pose, costume and layout. After preparing, add the picture drawn the way you want to Picture 1 (image 2): the wording tells the model to copy how it is drawn, not what it shows. Colours drift towards that picture; name the colours to keep in the wording.');
     else if(cap.operation==='restyle')text.push('Your picture becomes the '+(preset.last_reference_label||'pose picture').toLowerCase()+'. After preparing, add one to three pictures whose look you want to the style board.'+(cap.keeps_picture?' The finish terms and the light-novel LoRA are added to your prompt for you; eyes and lashes get a face pass with the same styled model.':' To keep the costume and background as well, choose a Restyle a picture recipe.'));
@@ -162,10 +163,11 @@
   }
   function fillMeaning(placeholder){
     const label=String(placeholder).split(', e.g. ')[0].toLowerCase();
-    return /who/.test(label)?'who':/clothes|colours/.test(label)?'clothes':/pose/.test(label)?'pose':null;
+    // 'outfit' is the scene picture's clothes (the replace recipe): never carried across engines and never a stand-in for the character's clothes.
+    return /outfit/.test(label)?'outfit':/who/.test(label)?'who':/clothes|colours/.test(label)?'clothes':/pose/.test(label)?'pose':null;
   }
   function combineFillValues(preset,answers){
-    const hasClothes=placeholders(preset).some(p=>fillMeaning(p)==='clothes');
+    const hasClothes=placeholders(preset).some(p=>['clothes','outfit'].includes(fillMeaning(p)));
     return Object.fromEntries(placeholders(preset).map(p=>{
       const meaning=fillMeaning(p);let value=String(answers[meaning]||'');
       if(meaning==='who'&&!hasClothes&&answers.clothes&&!value.includes(answers.clothes))value+=(value?', wearing ':'')+answers.clothes;

@@ -85,11 +85,11 @@ in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows al
 ### Put a character into a picture you already have (16 September 2026)
 
 **Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)** is
-fourth on the Combine route and is the one recipe there that does not move a pose. It runs the shipped 9B graph with the pinned
+fourth on the Combine route for a 9B picture (after the 4B recipe when the picture came from a 4B one) and is the one recipe there that does not move a pose. It runs the shipped 9B graph with the pinned
 civitai *replace character* LoRA (`replace_character_v1_klein`, strength 1.0, model only) and keeps the other 9B recipes' image
 order: the **picture to keep is image 1** - its pose, action, camera angle, composition, background, lighting *and clothes* all
 stay - and **your character is image 2**, from which only the face, hair and expression are taken. Three fills in the wording's
-reading order: image 1's pose and camera, who is in image 2, image 1's clothes and colours. Reach for it when the picture is right
+reading order: image 1's pose and camera, who is in image 2, image 1's outfit and its colours (that last fill is the scene's outfit, so an engine switch never carries a character's clothes into it). Reach for it when the picture is right
 and the face is wrong; reach for the depth or Copy Pose recipes when the pose is what you want moved. Proved on the fantasy pack's
 own pair (the pack's full-body render as image 1, its portrait as image 2, `experiments/curated/fantasy-pack-20260916/README.md`,
 sheet `examples/fantasy-pack/full-body-keeps-face.jpg`): 3 of 3 seeds carried the portrait's fringe, gold earrings, face shape and
