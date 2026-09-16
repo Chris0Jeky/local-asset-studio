@@ -20,7 +20,10 @@ receipts root, exact recipes committed beside the scripts, sheets in `examples/s
 - **Pose editor (PR #466, #444 minimal slice, by a worker):** *Draw the pose* on the Combine screen: COCO-18 joints dragged with mouse, touch or
   keyboard, a per-joint unknown toggle, two starting figures (standing; the round-three bent-forward one), mirror, undo; *Use this pose* renders the
   guide on the server (`POST /api/pose/render` -> `studio_workflow.pose_raster`, stored like an upload, every joint manual with no detector
-  confidence) and puts it on Picture 1 of `combine-klein-9b-skeleton` through the engine-switch path. Proving render: see the PR.
+  confidence) and puts it on Picture 1 of `combine-klein-9b-skeleton` through the engine-switch path. Proved: a guide rendered by that
+  endpoint from the bent-forward starting figure gave the drawn pose through the skeleton recipe (job `8b571dd4…`, 66.5 s, the same figure and
+  seed as the hand-drawn run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`): thin 8 px strokes carry the pose as well as the
+  14 px research figure. The worker filed #467 (a Windows clock-tick dependency in a trace-stream test).
 - **Failed jobs say when a retry is safe (PR #465, #350):** an IndexError whose traceback names ComfyUI's `free_memory` (the first load of a different
   model family in a session) is recorded as `model_swap_fault` with the action *run the same job again with the same seed*; nothing is retried
   automatically; a loader's own IndexError stays a plain execution error.
