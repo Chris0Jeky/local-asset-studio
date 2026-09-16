@@ -474,6 +474,27 @@ class ServerTests(unittest.TestCase):
             self.assertEqual(job["failure"]["kind"],kind,detail)
             if kind=="model_swap_fault": self.assertIn("while running VAEDecode",job["failure"]["summary"])
 
+    def test_idle_tick_releases_the_comfy_cache_once_per_idle_stretch(self):
+        """After the configured idle minutes on an empty ComfyUI queue the worker posts /free once; activity re-arms it; a busy queue or 0 disables it."""
+        s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True},{"queue_running":[],"queue_pending":[]},{"ok":True}])
+        self.assertEqual(s.idle_release_minutes,10.0); self.assertFalse(s._idle_tick())        # not idle long enough
+        s._last_activity-=11*60
+        self.assertTrue(s._idle_tick()); self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"])
+        self.assertEqual(s.requests[1][1].get("method"),"POST"); self.assertEqual(s.requests[1][1].get("data"),{"unload_models":True,"free_memory":True})
+        self.assertEqual(s.cache_release["count"],1); self.assertIsNone(s.cache_release["last_error"]); self.assertFalse(s.cache_release_status()["pending"])
+        self.assertFalse(s._idle_tick()); self.assertEqual(len(s.requests),2)                  # once per idle stretch
+        s._last_activity=server.time.monotonic()-11*60; s._released_since_activity=False        # a job ran and the stretch restarted
+        self.assertTrue(s._idle_tick()); self.assertEqual(s.cache_release["count"],2)
+        busy=FakeStudio(self.root,[{"queue_running":[["x"]],"queue_pending":[]}]); busy._last_activity-=11*60
+        self.assertFalse(busy._idle_tick()); self.assertEqual(len(busy.requests),1); self.assertTrue(busy.cache_release_status()["pending"])
+        (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy"),"idle_cache_release_minutes":0}))
+        off=FakeStudio(self.root,[]); off._last_activity-=60*60
+        self.assertFalse(off._idle_tick()); self.assertEqual(off.requests,[]); self.assertFalse(off.cache_release_status()["pending"])
+        # A ComfyUI that cannot be reached is recorded, not retried every tick.
+        (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy")}))
+        down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
+        self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
+
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"seed":40},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)

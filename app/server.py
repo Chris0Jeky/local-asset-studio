@@ -21,7 +21,7 @@ import zipfile
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from queue import Queue
+from queue import Empty, Queue
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import Request, urlopen
@@ -112,6 +112,12 @@ class Studio:
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
+        # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
+        try: self.idle_release_minutes = float(self.config.get("idle_cache_release_minutes", 10))
+        except (TypeError, ValueError): self.idle_release_minutes = 10.0
+        if not (self.idle_release_minutes >= 0 and self.idle_release_minutes == self.idle_release_minutes): self.idle_release_minutes = 10.0
+        self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
@@ -1118,8 +1124,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -1200,9 +1206,32 @@ class Studio:
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
             self._save(job)
 
+    def cache_release_status(self):
+        idle = time.monotonic() - self._last_activity
+        return {**self.cache_release, "idle_minutes": self.idle_release_minutes, "idle_seconds": round(idle, 1), "pending": self.idle_release_minutes > 0 and not self._released_since_activity}
+
+    def _idle_tick(self):
+        """Release ComfyUI's model cache once per idle stretch: only after the configured idle time, only on an idle ComfyUI queue."""
+        if self.idle_release_minutes <= 0 or self._released_since_activity: return False
+        if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
+        try:
+            queue = self._request("/queue", timeout=5)
+            if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): return False
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60)
+        except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
+            self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
+        self._released_since_activity = True
+        self.cache_release.update(count=self.cache_release["count"] + 1, last_at=time.time(), last_error=None)
+        return True
+
     def _work(self):
         while True:
-            action, job_id = self.queue.get()
+            try: action, job_id = self.queue.get(timeout=30)
+            except Empty:
+                try: self._idle_tick()
+                except Exception: pass
+                continue
+            self._last_activity = time.monotonic(); self._released_since_activity = False
             mixed_request = None
             job = None
             try:
