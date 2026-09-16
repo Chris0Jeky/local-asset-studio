@@ -8,7 +8,7 @@ MAX_BODY_BYTES = 16 * 1024          # a bounded 18-joint document, not an upload
 CANVAS_LIMITS = (64, 1536)          # server.py's own recipe grid defaults (dimension_limits)
 CANVAS_MULTIPLE = 8                 # server.py's dimension_multiple default; the Klein recipes use 16
 MINIMUM_JOINTS = 2                  # fewer than two known joints cannot draw a limb
-FILENAME = "drawn-pose.png"
+FILENAME = "drawn-pose"    # Studio.upload appends the image extension, exactly as it does for an upload
 
 
 def _canvas(value, name):
