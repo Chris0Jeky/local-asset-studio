@@ -64,6 +64,16 @@ class ByteBudget:
         return self.total <= self.limit
 
 
+def canonical_sha256(value: Any) -> str:
+    """Hash canonical bytes without imposing a second payload-size boundary.
+
+    Use this only for internal identity envelopes assembled from values that have
+    already passed their domain validator. The envelope is not itself persisted
+    or accepted as another public payload.
+    """
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
 def canonical_value(value: Any) -> CanonicalValue:
     """Canonicalize once, enforce the shared JSON bound, and bind exact bytes."""
     raw = canonical(value)
