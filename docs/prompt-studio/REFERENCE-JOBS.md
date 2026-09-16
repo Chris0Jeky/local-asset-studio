@@ -1,8 +1,8 @@
 # Durable reference analysis on the Studio worker
 
 The operation API runs the existing reference assistant through Studio's single
-worker. It is opt-in, local-only and distinct from image generation. The browser
-Analyze integration is the next slice; the operator CLI still works independently.
+worker. It is opt-in, local-only and distinct from image generation. Use the [browser Analyze panel](REFERENCE-ANALYZE-UI.md) for the normal flow.
+The operator CLI still works independently and must not overlap on the same helper.
 
 ## Configure once, after qualifying an installed vision helper
 
@@ -128,3 +128,20 @@ Studio/server/backend/recovery tests, `python tests/check_full_suite_lifetime.py
 and `python scripts/validate-repo.py`. Tests use real SQLite, the actual worker
 branch and HTTP handlers, synthetic images, and simulated sensors/model responses.
 Refs #35, #38, #178, #313. HUMAN_TODO and all image-generation allowances remain.
+
+
+## Retire an unqueued request
+
+`POST /api/prompt/reference-jobs/retire` accepts only `workspace_id` and
+`request_id`. This is the explicit pre-commit recovery companion to status reads.
+Within the existing Workspace transaction it either returns an existing row
+unchanged, or records a `cancelled` row with `retired_without_dispatch:true`, zero
+inference attempts and no resource hold. Both create checks refuse that ID,
+including an intake that began before retirement and finishes afterwards.
+
+A tombstone reserves 8 KiB within the unchanged 64-operation/128 MiB history
+limits. It contains no source pixels or model payload. It survives restart, is
+idempotently observable and is never enqueued. Retirement cannot cancel or modify
+an already-created operation, clear a resource hold, grant a generation allowance
+or reuse an existing request ID. A missing status row alone provides none of these
+guarantees; the explicit committed retirement provides the late-arrival fence.
