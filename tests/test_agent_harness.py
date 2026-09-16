@@ -1,7 +1,8 @@
-"""Structural gate for the agent harness: tier declaration, doc budgets and Claude/Codex skill parity.
+"""Structural gate for the agent harness: tier declaration, doc budgets, Claude/Codex skill parity, Grok thin adapter.
 
-Green means the files are present, well-formed and body-identical across runtimes. It does not prove
-that a skill is correct or that an agent follows it.
+Green means the files are present, well-formed and body-identical across Claude and Codex. Grok has no
+third skill tree: it loads `.claude/skills/` via Claude compatibility. It does not prove that a skill
+is correct or that an agent follows it.
 """
 import json
 import re
@@ -37,6 +38,8 @@ class TierDeclarationTests(unittest.TestCase):
         self.assertTrue((ROOT / tier['human_todo']).is_file())
         self.assertFalse((ROOT / '.claude/tier.json').exists(), 'legacy tier file must not coexist')
         self.assertFalse((ROOT / '.codex/hooks.json').exists(), 'floor_wiring none: no Codex hook adapter')
+        self.assertFalse((ROOT / '.grok/hooks').exists(), 'floor_wiring none: no Grok hook adapter')
+        self.assertFalse((ROOT / '.grok/hooks.json').exists(), 'floor_wiring none: no Grok hook adapter')
 
     def test_claude_md_tier_line_matches_declaration(self):
         head = (ROOT / 'CLAUDE.md').read_text(encoding='utf-8').splitlines()[:8]
@@ -92,9 +95,24 @@ class SkillParityTests(unittest.TestCase):
             self.assertIn(f'${name}', yaml_text, f'{name}: default_prompt must invoke ${name}')
 
     def test_routing_tables_name_every_skill(self):
-        for doc in ('AGENTS.md', 'CLAUDE.md', '.claude/skills/README.md', '.codex/skills/README.md'):
+        for doc in ('AGENTS.md', 'CLAUDE.md', '.claude/skills/README.md', '.codex/skills/README.md', '.grok/README.md'):
             text = (ROOT / doc).read_text(encoding='utf-8')
             for name in SKILL_NAMES: self.assertIn(name, text, f'{doc} does not route to {name}')
+
+
+class GrokAdapterTests(unittest.TestCase):
+    def test_grok_is_a_thin_adapter_not_a_third_skill_tree(self):
+        self.assertTrue((ROOT / '.grok/README.md').is_file())
+        self.assertTrue((ROOT / '.grok/config.toml').is_file())
+        self.assertFalse((ROOT / '.grok/skills').exists(), 'Grok loads .claude/skills via Claude compatibility')
+        text = (ROOT / '.grok/config.toml').read_text(encoding='utf-8')
+        self.assertNotIn('[mcp_servers.comfy-local]', text)
+        self.assertNotIn('[mcp_servers.MCP_DOCKER]', text)
+        self.assertIn('[permission]', text)
+
+    def test_docs_name_the_grok_adapter(self):
+        for doc in ('AGENTS.md', 'CLAUDE.md'):
+            self.assertIn('.grok/', (ROOT / doc).read_text(encoding='utf-8'), doc)
 
 
 if __name__ == '__main__': unittest.main()
