@@ -462,16 +462,17 @@ class ServerTests(unittest.TestCase):
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
         with self.assertRaises(server.StudioError): s._run(job)
         self.assertEqual(job["failure"]["kind"],"execution_error"); self.assertTrue(job["message"].startswith("ComfyUI reported an execution error: KSampler"))
-        # A loader that raised with a traceback naming other frames is the loader's own error; only a payload without a traceback
-        # falls back to the loader-name signature. A traceback sent as one string is read as absent, never crashes the record.
+        # A loader's own IndexError (a corrupt or incompatible file) is not the cache fault, with or without a traceback, and a
+        # traceback sent as one string or absent never crashes the record: only the free_memory frame earns the retry-safe label.
         for detail,kind in (({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range","traceback":["  File \"gguf.py\", line 9, in load","IndexError: list index out of range"]},"execution_error"),
-                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range"},"model_swap_fault"),
-                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range","traceback":"IndexError: list index out of range"},"model_swap_fault")):
+                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range"},"execution_error"),
+                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range","traceback":"IndexError: list index out of range"},"execution_error"),
+                            ({"node_type":"VAEDecode","exception_type":"IndexError","exception_message":"list index out of range","traceback":["  File \"comfy/model_management.py\", line 560, in free_memory","IndexError: list index out of range"]},"model_swap_fault")):
             replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p"},{"p":{"status":{"status_str":"error","messages":[["execution_error",detail]]}}}]
             s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
             with self.assertRaises(server.StudioError): s._run(job)
             self.assertEqual(job["failure"]["kind"],kind,detail)
-            if kind=="model_swap_fault": self.assertIn("no traceback returned",job["failure"]["summary"])
+            if kind=="model_swap_fault": self.assertIn("while running VAEDecode",job["failure"]["summary"])
 
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]

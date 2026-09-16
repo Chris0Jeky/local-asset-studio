@@ -1295,17 +1295,14 @@ class Studio:
         trace = detail.get("traceback")
         has_trace = isinstance(trace, list) and any(isinstance(line, str) and line.strip() for line in trace)
         trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if has_trace else ""
-        in_cache = "free_memory" in trace_text
-        # The loader-name arm is a fallback for a payload without a traceback only: a traceback that names other frames says the
-        # loader itself raised, and that record must not claim a cache fault it cannot see.
-        swap = "indexerror" in combined and (in_cache or (not has_trace and bool(re.search(r"loader", node_type.lower()))))
+        # Only the distinctive signature counts: an IndexError whose traceback names free_memory. A loader's own IndexError (a
+        # corrupt or incompatible file) stays a plain execution error, whatever the node is called.
+        swap = "indexerror" in combined and "free_memory" in trace_text
 
         if swap:
             kind = "model_swap_fault"
             title = "ComfyUI model-swap fault"
-            where = (f"inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}" if in_cache
-                     else f"in {node_type} with no traceback returned, the signature of the model-cache fault (#350)")
-            summary = f"ComfyUI failed {where}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
+            summary = f"ComfyUI failed inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
             action = "Run the same job again with the same seed: measured 14 September 2026, the identical graph succeeded on the retry. The original prompt was not retried automatically."
         elif allocation:
             kind = "memory_allocation"
