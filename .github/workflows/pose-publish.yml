@@ -1,0 +1,48 @@
+name: Publish verified pose handoff candidate
+on:
+  push:
+    branches: [codex/pose-continuation-transfer-20260916]
+    paths: [.github/workflows/pose-publish.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transfer
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 186d2b085c91cdc368bd79a3bcf65e0da45b5a29
+          path: source
+      - name: Apply only the tested patch and verify complete tree
+        working-directory: source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, subprocess
+          patch = Path('../transfer/.transfer/pose-existing.patch').resolve()
+          assert hashlib.sha256(patch.read_bytes()).hexdigest() == '3608ee2996b745c5231ee7a847aefe7e77b7aa6367426eb5f5d94bdfe33ed677'
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          root=Path('../transfer/.transfer/new')
+          for item in root.rglob('*'):
+              if item.is_file():
+                  relative=item.relative_to(root)
+                  assert str(relative) in {'tests/pose_guide_handoff.cjs','tests/test_pose_guide_handoff.py','tests/pose_editor_handoff_browser.py','docs/pose-control/HANDOFF-2026-09-16.md'}
+                  assert not Path(relative).exists()
+                  Path(relative).parent.mkdir(parents=True,exist_ok=True)
+                  Path(relative).write_bytes(item.read_bytes())
+                  subprocess.run(['git','add',str(relative)],check=True)
+          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
+          assert tree == '562c26e4e6911172bebbc14c60f1dbb7b49e0842',tree
+          print('Verified tested tree:',tree)
+          PY
+          git diff --cached --check
+          node tests/pose_guide_handoff.cjs
+          node tests/pose_editor_core.cjs
+          git -c user.name='Cristian Tcaci' -c user.email='59696583+Chris0Jeky@users.noreply.github.com' commit -m 'fix: replace a Combine pose picture with a checked drawing'
+          git push origin HEAD:refs/heads/codex/pose-guide-handoff-build-1
+          git rev-parse HEAD HEAD^{tree}
