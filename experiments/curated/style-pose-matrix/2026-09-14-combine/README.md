@@ -280,6 +280,23 @@ of `pose_sources.py` (`0.86 * h`). Proving run through the Studio (`prove_depthc
 Exact submitted recipes (`/api/jobs/<id>/recipe`, graph included): `prove_depthcut.recipe.json`, `prove_depthcut_noop.recipe.json`. Sheet: `examples/style-pose/combine-depth-cut-control.jpg` (uncut vs cut, same seed). Not verified: the control by clicking through the page
 (the API run uses the page's prepare and worker path); any other pose picture; art acceptance (HUMAN_TODO q-28).
 
+## Copy Pose as a recipe, 16 September 2026 (02:05)
+
+`combine-klein-9b-copypose` (PR #452) ships the round-three `copypose` variant: the 9B graph with `LoraLoaderModelOnly`
+`KleinBase9B_PoseTransfer.safetensors` at 1.0 ahead of the guider, the character as image 1 (`last_reference`, node 14) and the pose picture
+as image 2 (the board slot, node 20); the wording leads with the LoRA's trigger sentence and carries three fills in reading order (who is in
+image 1; image 1's clothes and colours; image 2's pose, hands and camera), subject-neutral outside the brackets. Second on the Combine
+route, engine label *Klein 9B · Copy Pose*. Proving run through the Studio (`prove_copypose.py`, POST /api/jobs; `prove_copypose.json`;
+exact recipe `prove_copypose.recipe.json`):
+
+| Run | Seed | Job / prompt | s | Output | Result |
+| --- | --- | --- | --- | --- | --- |
+| the shipped recipe, the SHARK character on Picture to keep (image 1), the fan picture on Pose picture (image 2), fills replaced | 2026091471 | `61dd5375-aa6c-42ca-b1e0-12466689857e` / `1fbea73e-e37c-4753-b94c-039552b2640c` | 58.5 (warm) | `Combine/Klein-9B-copypose_00001_.png` | **the deep bend, crossed legs and look-back with the character's own light background and framing kept**, bare feet, no tights, heels or tail; face, hair and pink shorts kept, the lettering partly hidden by the bend, the character picture's speech bubble kept (as in research) |
+
+Sheet: `examples/style-pose/combine-copypose-proving.jpg` (image 1, image 2, the output). Not verified: the recipe by clicking through the
+page (the API run uses the page's prepare and worker path); the engine switch depth -> Copy Pose by clicking; any other pair; art acceptance
+(HUMAN_TODO q-28 (e), which is now a choice between two shipped recipes).
+
 ## Through the page
 
 `combine-klein` proving run: see the catalog `execution_note` and `CURRENT_STATE.md` (job `fb0eb95d-ba3f-4025-a77e-9c62165d250f`).
