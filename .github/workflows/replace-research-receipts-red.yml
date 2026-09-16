@@ -1,0 +1,19 @@
+name: Replace research receipt regressions
+
+on:
+  push:
+    branches:
+      - test/replace-research-receipt-regressions
+
+permissions:
+  contents: read
+
+jobs:
+  focused-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest tests.test_replace_character_research_receipts -v
