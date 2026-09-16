@@ -108,6 +108,24 @@ class PromptProjectTests(unittest.TestCase):
         first=self.create()
         with self.workspace.connection() as db:db.execute("UPDATE prompt_project_revisions_v1 SET document_json='{}'")
         with self.assertRaises(p.ProjectError):self.service.get(self.scope,first['project']['id'])
+
+    def test_one_unreadable_revision_does_not_hide_the_list(self):
+        first=self.create()
+        other={**self.request,'request_id':'prompt-request-0002','document':copy.deepcopy(self.doc)}
+        other['document']['name']='Second keeper'
+        second=self.service.command('create',other)
+        with self.workspace.connection() as db:
+            db.execute("UPDATE prompt_project_revisions_v1 SET document_json='{}' WHERE id=?",(first['project']['id'],))
+        listed=self.service.list(self.scope)['projects']
+        self.assertEqual(len(listed),2)
+        by_id={row['id']:row for row in listed}
+        broken,ok=by_id[first['project']['id']],by_id[second['project']['id']]
+        self.assertTrue(broken['unreadable'])
+        self.assertFalse(ok['unreadable'])
+        self.assertEqual(ok['name'],'Second keeper')
+        with self.assertRaises(p.ProjectError) as error:
+            self.service.get(self.scope,first['project']['id'])
+        self.assertEqual(error.exception.code,'project_storage_invalid')
     def test_modified_receipt_cannot_certify_a_save(self):
         self.create()
         with self.workspace.connection() as db:db.execute("UPDATE prompt_project_commands_v1 SET command_sha='broken'")
