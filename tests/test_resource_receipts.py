@@ -177,7 +177,8 @@ class ReceiptTests(unittest.TestCase):
     def test_operator_doc_splits_incomplete_capture_from_deleted_listed_sidecar(self):
         text = (ROOT / 'docs/performance/RECEIPT-INTEGRITY.md').read_text(encoding='utf-8')
         self.assertNotIn('with `incomplete=True` for missing\nartifacts.', text)
-        self.assertIn('complete four-name manifest whose listed sidecar', text)
+        self.assertIn('complete four-name manifest whose', text)
+        self.assertIn('listed sidecar is gone', text)
         self.assertIn('incomplete=False', text)
         path = self.directory / 'result.json'; raw = path.read_bytes(); path.unlink()
         with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
