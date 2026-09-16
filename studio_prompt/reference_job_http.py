@@ -39,7 +39,7 @@ def extend_handler(base):
             held=None
             try:
                 service=self._reference_service()
-                need(self.path in (PREFIX+'create',PREFIX+'cancel',PREFIX+'release'),'Unknown reference command route')
+                need(self.path in (PREFIX+'create',PREFIX+'cancel',PREFIX+'release',PREFIX+'retire'),'Unknown reference command route')
                 need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
                 limit=64*1024
                 if self.path==PREFIX+'create':
@@ -48,6 +48,7 @@ def extend_handler(base):
                     held=service.intake;limit=48*1024*1024
                 raw=self.rfile.read(self._content_length(limit));value=decode(raw,limit=limit)
                 if self.path==PREFIX+'create':return self._json(202,service._create(value))
+                if self.path==PREFIX+'retire':return self._json(200,service.retire(value))
                 return self._json(200,service.cancel(value) if self.path.endswith('/cancel') else service.release(value))
             except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as exc:return self._reference_error(exc)
             finally:
