@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
-Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter.
+Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
 
 ## What this is
 
@@ -32,7 +32,7 @@ with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026
 | `app/static/*.js` | `node --check app/static/app.js` then `python -m unittest tests.test_frontend_handoffs` (skips without Node); when clicks or steps move, `python tests/studio_use_cases.py` (Playwright, ~40 s) and compare with `docs/UX-USE-CASE-MATRIX.md` |
 | `scripts/game_asset_*.py`, `research/game-assets/**` | `python -m unittest discover -s tests -p "test_game_asset_*.py"` (own CI lane) |
 | `scripts/krita_roundtrip.py`, `godot_asset_adapter.py`, `articulated_prop.py` | `tests.test_krita_roundtrip`, `tests.test_godot_asset_adapter`, `tests.test_articulated_*` |
-| `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
+| `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `.grok/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets, Claude/Codex skill parity, Grok thin adapter) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
 Use the `discover -s tests -p` form by default: any module that imports a sibling test or fixture unqualified
@@ -87,7 +87,7 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 
 ## Repo-local skills and rules
 
-`.claude/skills/` (canonical; `.codex/skills/` is the Codex adapter, body-identical, parity-tested):
+`.claude/skills/` (canonical; `.codex/skills/` Codex adapter, parity-tested; Grok loads this tree via Claude compatibility):
 `studio-preset-slice`, `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
 `studio-session-closeout`. Path rules auto-load from `.claude/rules/` for catalog and evidence-doc edits.
 `HUMAN_TODO.md` holds subjective creative choices: surface them in every summary, never tick them.
