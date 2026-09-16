@@ -1,6 +1,6 @@
 # Current state — 16 September 2026
 
-## Combine: Copy Pose is a recipe, the ankle cut is a control, a pose editor on the page; the Codex stacks landed — 16 September 2026 (01:40-04:00)
+## Combine: Copy Pose is a recipe, the ankle cut is a control, a pose editor on the page; the Codex stacks landed — 16 September 2026 (from 01:40)
 
 Every generation below went through the Studio's own path (POST /api/jobs: prepare -> worker -> ComfyUI) on the owner's pair; receipts in the
 receipts root, exact recipes committed beside the scripts, sheets in `examples/style-pose/`.
@@ -28,7 +28,7 @@ receipts root, exact recipes committed beside the scripts, sheets in `examples/s
   model family in a session) is recorded as `model_swap_fault` with the action *run the same job again with the same seed*; nothing is retried
   automatically; a loader's own IndexError stays a plain execution error.
 - **The fantasy pack's four steps exist** (separate entry below; HUMAN_TODO q-30).
-- **The RAM the owner saw is ComfyUI's model cache, not a leak (04:20):** with an idle queue ComfyUI's process held 25.8 GB committed
+- **The RAM the owner saw is ComfyUI's model cache, not a leak (measured between the 02:48 pose-editor run and the 02:57 night audition):** with an idle queue ComfyUI's process held 25.8 GB committed
   (11.4 GB working set; 1.1 GB physical free of 31.7) after a night of Klein 9B, Qwen3 8B, Anima and Klein 4B runs, the Studio server 40 MB;
   one `POST /free` (`unload_models` + `free_memory`) on the idle queue took ComfyUI to 5.7 GB committed / 0.44 GB working set and physical
   free RAM to 16.7 GB (commit 51.9 -> 32 GB of 95.7). PR #470 makes the Studio send that release once per idle stretch
