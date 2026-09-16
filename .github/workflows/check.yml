@@ -10,4 +10,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m unittest tests.test_agent_harness.GrokAdapterTests.test_grok_permission_rules_use_native_schema -v
+      - run: python -m unittest tests.test_agent_harness -v
+      - run: python -m py_compile tests/test_agent_harness.py
+      - run: python scripts/validate-repo.py
+      - run: git diff --check
