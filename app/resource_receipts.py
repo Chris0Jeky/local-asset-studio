@@ -89,7 +89,30 @@ def _directories(path):
         require(_plain(parent.lstat(), stat.S_ISDIR), 'directory_not_plain')
 
 
-def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
+class _BoundedRead:
+    """Non-seekable consumer view; byte count and real EOF belong to the reader."""
+    def __init__(self, stream, limit):
+        self.stream, self.limit = stream, limit
+        self.count, self.eof, self.after = 0, False, None
+
+    def read(self, count):
+        require(type(count) is int and 0 <= count <= 65536, 'stream_read_invalid')
+        if count == 0: return b''
+        data = self.stream.read(min(count, self.limit - self.count + 1))
+        self.count += len(data)
+        require(self.count <= self.limit, 'artifact_too_large')
+        self.eof = not data
+        if self.eof:
+            # A consumer may perform a replacement after it has parsed the
+            # complete source. Close the descriptor at verified EOF so that
+            # Windows can complete that rename; retain the descriptor stat
+            # for the identity bracket below.
+            self.after = os.fstat(self.stream.fileno())
+            self.stream.close()
+        return data
+
+
+def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
     """Bound the actual read and bracket one regular file with identity checks.
 
     This is not a filesystem lease or an OS sandbox against hostile parent races.
@@ -108,13 +131,22 @@ def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
             require(_plain(opened, stat.S_ISREG) and _cross_signature(opened) == _cross_signature(before), 'file_changed')
             stream = os.fdopen(fd, 'rb'); fd = None
             with stream:
-                data = stream.read(limit + 1)
-                after = os.fstat(stream.fileno())
+                if consume is None:
+                    data = stream.read(limit + 1)
+                    count = len(data)
+                else:
+                    reader = _BoundedRead(stream, limit)
+                    data = consume(reader)
+                    require(reader.eof, 'artifact_not_consumed')
+                    count = reader.count
+                    after = reader.after
+                if consume is None:
+                    after = os.fstat(stream.fileno())
         finally:
             if fd is not None: os.close(fd)
-        require(len(data) <= limit, 'artifact_too_large')
+        require(count <= limit, 'artifact_too_large')
         require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
-                and len(data) == before.st_size, 'file_changed')
+                and count == before.st_size, 'file_changed')
         return data, _signature(before)
     except FileNotFoundError: raise EvidenceError('artifact_missing', incomplete=True) from None
     except OSError: raise EvidenceError('artifact_unreadable') from None
@@ -123,6 +155,12 @@ def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
 def read_evidence_file(path: Path, limit: int) -> bytes:
     """Capture one bounded file; the public byte-reader contract stays unchanged."""
     return _capture_file(path, limit)[0]
+
+
+def read_evidence_stream(path: Path, limit: int, consume):
+    """Run a bounded consumer; return only after EOF and original identity checks."""
+    require(callable(consume), 'stream_consumer_invalid')
+    return _capture_file(path, limit, consume)[0]
 
 
 def _context(value, job_id):

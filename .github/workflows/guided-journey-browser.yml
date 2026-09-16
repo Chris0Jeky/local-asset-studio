@@ -33,6 +33,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_create_readiness_frontend.py -v
       - name: Actual pages and native HTTP, storage, keyboard and stage navigation
         run: python tests/studio_guide_browser.py --out .runtime/guide-proof
+      - name: Native disclosure layout and keyboard ownership on isolated coach fixture
+        run: python tests/studio_guide_disclosure_browser.py --out .runtime/guide-disclosure-proof -v
       - name: Create blockers, focus and read-only dependency retry
         run: python tests/create_readiness_browser.py --out .runtime/create-readiness-proof
       - uses: actions/upload-artifact@v4
@@ -41,6 +43,7 @@ jobs:
           name: guide-browser-proof
           path: |
             .runtime/guide-proof/
+            .runtime/guide-disclosure-proof/
             .runtime/create-readiness-proof/
           if-no-files-found: ignore
           retention-days: 7
