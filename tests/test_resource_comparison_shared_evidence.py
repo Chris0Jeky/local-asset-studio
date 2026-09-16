@@ -111,6 +111,18 @@ class SharedEvidenceTests(unittest.TestCase):
                 finally:
                     comparison.inspect_observation = original
 
+    def test_operator_doc_allows_exact_shared_triples(self):
+        text = (ROOT / 'docs/performance/PAIRED-OBSERVATIONS.md').read_text(encoding='utf-8')
+        self.assertNotIn(
+            'Pair IDs, job IDs, result pins and normalized directory identities must', text)
+        self.assertIn('Exact `(job_id, result_sha256, directory)`', text)
+        self.assertIn('inspected once', text)
+        self.assertIn('duplicate_trial_evidence', text)
+        report, calls = self.compare(self.plan())
+        self.assertEqual(len(calls), 3, 'shared baseline is inspected once, not twice')
+        self.assertEqual(report['counts']['unique_observations'], 3)
+        self.assertEqual(report['counts']['verified_observations'], 4)
+
     def test_distinct_prompt_reuse_invalidates_all_occurrences_but_not_shared_baseline(self):
         report, calls = self.compare(self.plan(), prompts={
             'base': '4', 'candidate-one': '7', 'candidate-two': '7',
