@@ -98,4 +98,5 @@ def extend_handler(base):
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
     # Compose at the existing extension seam; no second server or worker.
     from studio_workflow.http_extension import extend_handler as workflow_handler
-    return workflow_handler(PromptHandler)
+    from .reference_job_http import extend_handler as reference_job_handler
+    return reference_job_handler(workflow_handler(PromptHandler))

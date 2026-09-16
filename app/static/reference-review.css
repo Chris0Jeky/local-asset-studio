@@ -12,3 +12,7 @@
 #rr-status{min-height:24px}#rr-diff details{padding:4px 12px;border-left:2px solid #69847d}
 #reference-review summary:focus-visible{outline:3px solid #d8d5a2;outline-offset:3px}
 @media(max-width:700px){.rr-intake{grid-template-columns:1fr}.rr-card{padding:12px}#reference-review .row button{flex:1 1 150px}}
+
+#reference-analyze{min-width:0;overflow-wrap:anywhere}#reference-analyze [hidden]{display:none!important}
+#reference-analyze .rr-check{display:flex;align-items:flex-start;gap:9px}#reference-analyze .rr-check input{width:auto;flex:none;margin-top:5px}
+#reference-analyze button:disabled{opacity:.55;cursor:not-allowed}

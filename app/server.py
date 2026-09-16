@@ -124,6 +124,8 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        from studio_prompt.reference_jobs import ReferenceJobs
+        self.reference_jobs = ReferenceJobs(self)
         self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
@@ -523,6 +525,7 @@ class Studio:
             return self._create_job(payload, enqueue, job_id)
 
     def _create_job(self, payload, enqueue=True, job_id=None):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -1076,6 +1079,7 @@ class Studio:
         return worker is None or worker.ident is None or worker.is_alive()
 
     def require_worker(self):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         # Preserve pre-start/offline fixture behavior; never replace a dead worker
         # or silently replay its queue. All queue writers share this admission.
         if not Studio.worker_available(self):
@@ -1203,7 +1207,10 @@ class Studio:
             job = None
             try:
                 if action == "observe-mixed": job_id, mixed_request = job_id
-                if action == 'production': self.production.run(job_id)
+                if action == "reference-analysis": self.reference_jobs.run(job_id)
+                elif action == 'production':
+                    if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+                    self.production.run(job_id)
                 else:
                     job = self.jobs.get(job_id)
                     if job:
@@ -1212,7 +1219,8 @@ class Studio:
                         else: self._run(job)
             except Exception as exc:
                 try:
-                    if action == 'production':
+                    if action == 'reference-analysis': self.reference_jobs.record_failure(job_id, exc)
+                    elif action == 'production':
                         # Escaping here can be a failed job-state write after a POST.
                         # Only normal stage reconciliation can certify a terminal outcome.
                         self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
@@ -1321,6 +1329,7 @@ class Studio:
         self._save(job)
 
     def _run(self, job):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         with self.lock:
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
