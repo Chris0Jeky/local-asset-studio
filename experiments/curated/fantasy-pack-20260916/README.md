@@ -28,10 +28,24 @@ detailer's positive prompt and staged step 1's output through POST /api/assets/r
   clearance (Anima base v1.0 and the slot-1 adapter carry their own civitai terms, recorded in `models/library.json`).
 - Timing note: step 1 (34.3 s) includes the Anima model load after the Klein 9B runs earlier in the session; steps 2 and 3 ran warm.
 
+## Identity follow-up, the same night (02:55-03:00): a reference route instead of the seed
+
+Two more jobs (`pack_identity.py`, results in `pack_identity.json`, recipes 5 and 6 under `recipes/`, sheet `examples/fantasy-pack/identity-followup.jpg`),
+both fed from the batch's own outputs staged through POST /api/assets/reference the way *Continue with this* does:
+
+| Step | Job / prompt | s | Output | Inspected (agent's reading, not acceptance) |
+| --- | --- | --- | --- | --- |
+| A · expression through *Change one thing* (`flux-edit`, FLUX.2 Klein 4B) on the portrait, fill "change her expression to a warm, surprised smile with raised eyebrows and the mouth slightly open" | `d0e8524e-173c-4a26-99bc-d5e4fdb80197` / `aac58ca7-f12b-4591-816b-2933f391fb82` | 64.5 | `Verified/FLUX-Edit_00010_.png` | **identity kept in full**: the same face, centre-parted hair, earrings, coat, scarf, lantern and hands; the expression became a broad toothy grin rather than the surprised half-open mouth asked for. This is the expression variation the seed could not give. |
+| B · full body through the depth Combine (`combine-klein-9b-depth`, FLUX.2 Klein 9B): the portrait as the character (image 2), the batch's full-body render as the pose picture (image 1, read as a depth map) | `18a4f441-b504-44cf-9a1b-9baca4480fe0` / `a257dc56-5f1f-43f4-a6c2-b83b0a0fe05a` | 107.1 | `Combine/Klein-9B-depth_00005_.png` | the full-body pose, coat, scarf, belt, satchel, lantern and boots came through on a plain background, **but the face is lost**: closed-eye lines and no features, and the finish went flat vector-like instead of the portrait's painterly shading. At full-body scale the 9B depth route does not carry a face from a portrait-sized reference. |
+
+What this settles for the pack: an edit route on a finished picture keeps identity (A), so expression and small-costume variations should be edits of the
+reference portrait, not new seeds; a body-pose change from a portrait needs a route that keeps the face at that scale (Copy Pose with a
+full-body character picture, or a face pass after the Combine), which is the next experiment, not this one.
+
 ## Next slices this points at
 
-1. Identity across prompts needs a reference, not a seed: run steps 2 and 3 through a reference-carrying route (the character-consistency
-   study's canon, or a Combine/restyle continuation from step 1) and compare against these three.
+1. Identity across prompts needs a reference, not a seed: done for the expression (A above, kept); for the full body the depth Combine lost the
+   face (B above), so try Copy Pose with the batch's full-body render as the character and a pose picture, or a face pass on B's output.
 2. A targeted hand correction: the detailer's hand pass at 0.45 did not change the lantern grip; a masked repair on the hand region
    (the repair programme, #243-#257) or a *Change one thing* Klein edit on step 1 is the next candidate, at the same seed, with the original kept.
 3. The owner's review of the four assets in *Runs & review* decides which, if any, becomes the pack's reference (HUMAN_TODO q-30).
