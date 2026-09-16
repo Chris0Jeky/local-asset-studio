@@ -14,9 +14,7 @@ from bundle_equality_baseline import same_pixels as legacy_same
 
 
 def same_pixels(a, b):
-    # The initial red run exercises the frozen original predicate until the new
-    # implementation exists, rather than failing solely because an import lacks it.
-    return getattr(pixel_diff, 'same_pixels', legacy_same)(a, b)
+    return pixel_diff.same_pixels(a, b)
 
 
 class PixelEqualityTests(unittest.TestCase):

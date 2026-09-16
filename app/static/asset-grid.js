@@ -134,3 +134,13 @@
   }
   return {render,mediaKey,displayKey,nextFocus};
 });
+
+// The editor is a separate browser module; Node projection tests stay side-effect free.
+if(typeof document!=='undefined'){
+  const load=()=>{
+    if(document.querySelector('script[data-addressable-figures]'))return;
+    const script=document.createElement('script');script.src='/static/addressable-figures.js';script.async=false;script.dataset.addressableFigures='';
+    (document.head||document.documentElement).append(script);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load();
+}

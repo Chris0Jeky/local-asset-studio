@@ -101,21 +101,37 @@ def review_template(report):
          'overrides': {}, 'tags': []} for image in report['answer']['images']]}
 
 
-def draft(report, review, root=None, *, source_bytes=None):
-    """Explicit selection creates a NEW intent; never overwrites an existing one.
+def validate_review(report, review):
+    """Validate selected descriptions only; never certify source pixels or execute."""
+    _projection(report, review)
+    return copy.deepcopy(review)
 
-    Supply either a file root or exact in-memory originals. Analysis of yesterday's
-    pixels cannot silently attach today's replacement. Staging must check again.
-    """
+
+def draft(report, review, root=None, *, source_bytes=None):
+    """Project reviewed traits only after checking every supplied original."""
+    result = _projection(report, review)
+    refs = report['request']['references']
+    need((root is not None) != (source_bytes is not None), 'Supply one source workspace or exact in-memory originals')
+    if source_bytes is not None:
+        need(type(source_bytes) is dict and set(source_bytes) == {ref['id'] for ref in refs},
+             'Supply every original exactly once')
+    for ref in refs:
+        if source_bytes is None: file_bytes(root, ref, 8 * 1024 * 1024)
+        else:
+            raw = source_bytes[ref['id']]
+            need(type(raw) is bytes and 0 < len(raw) <= 8 * 1024 * 1024, 'Reference size limit exceeded')
+            need(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed')
+    return result
+
+
+def _projection(report, review):
+    # Private: persistence needs to validate context without pretending to reopen
+    # original files. Public draft() retains its mandatory source checks above.
     report = validate_report(report); fields(review, ('report_sha256', 'selections'))
     need(review['report_sha256'] == report['report_sha256'], 'Stale reference review')
     _bounded(review)
     q = report['request']; answer = report['answer']; choices = review['selections']
     need(type(choices) is list and len(choices) == len(q['references']), 'Review every reference; do not silently omit images')
-    need((root is not None) != (source_bytes is not None), 'Supply one source workspace or exact in-memory originals')
-    if source_bytes is not None:
-        need(type(source_bytes) is dict and set(source_bytes) == {ref['id'] for ref in q['references']},
-             'Supply every original exactly once')
     intent = new_brief(q['brief'] if q['brief'].strip() else answer['summary'])
     transfers = []; parts = {}; unknowns = []
     for ref, image, choice in zip(q['references'], answer['images'], choices):
@@ -128,11 +144,6 @@ def draft(report, review, root=None, *, source_bytes=None):
         fields(choice['overrides'], (), selected)
         strings(choice['tags'], 20, 80)
         need(len(set(choice['tags'])) == len(choice['tags']) and set(choice['tags']) <= set(image['tags']), 'Unknown/duplicate selected tags')
-        if source_bytes is None: file_bytes(root, ref, 8 * 1024 * 1024)
-        else:
-            raw = source_bytes[ref['id']]
-            need(type(raw) is bytes and 0 < len(raw) <= 8 * 1024 * 1024, 'Reference size limit exceeded')
-            need(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed')
         takes = []
         for facet in selected:
             edited = facet in choice['overrides']

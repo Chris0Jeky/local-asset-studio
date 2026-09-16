@@ -1,6 +1,8 @@
 """Create immutable figure-crop child assets; never submit generation work."""
 from __future__ import annotations
 
+from contextlib import closing
+
 import hashlib
 import importlib
 import io
@@ -162,25 +164,33 @@ def _pixel_box(workspace, rectangle, width, height):
 
 
 def _encode_crops(workspace, canvas, rectangles):
+    """Consume the canvas; retain only ordered snapshot metadata, not PNG bytes."""
     width, height = canvas.size
-    encoded = []
+    planned = []
     pixels = 0
     try:
+        # Validate every box and the total before allocating a crop or publishing.
         for rectangle in rectangles:
             box = _pixel_box(workspace, rectangle, width, height)
             pixels += (box["right"] - box["left"]) * (box["bottom"] - box["top"])
             if pixels > MAX_AGGREGATE_CROP_PIXELS:
                 raise _error(workspace, "Figure crops exceed the 80-megapixel aggregate limit")
-            with canvas.crop((box["left"], box["top"], box["right"], box["bottom"])) as crop:
-                stream = io.BytesIO()
-                crop.save(stream, format="PNG", optimize=False, compress_level=6)
-                data = stream.getvalue()
-            if not data:
-                raise _error(workspace, "A figure crop encoded as an empty image")
-            encoded.append((rectangle, box, data))
+            planned.append((rectangle, box))
+        snapshots = []
+        for rectangle, box in planned:
+            with closing(canvas.crop((box["left"], box["top"], box["right"], box["bottom"]))) as crop:
+                with io.BytesIO() as stream:
+                    crop.save(stream, format="PNG", optimize=False, compress_level=6)
+                    # A borrowed view avoids an extra encoded-byte copy. Release
+                    # it before closing the buffer or starting the next crop.
+                    with stream.getbuffer() as data:
+                        if not data:
+                            raise _error(workspace, "A figure crop encoded as an empty image")
+                        snapshot = _snapshot_png(workspace, data)
+            snapshots.append((rectangle, box, snapshot))
+        return (width, height), snapshots
     finally:
         canvas.close()
-    return (width, height), encoded
 
 
 def _snapshot_png(workspace, data):
@@ -228,7 +238,6 @@ def split_figures(workspace, payload):
 
     canvas = _read_parent(workspace, asset_id, parent_sha256)
     source_size, crops = _encode_crops(workspace, canvas, rectangles)
-    snapshots = [_snapshot_png(workspace, data) for _, _, data in crops]
     child_ids = [
         uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:figure:{identity}:{request_id}:{index}").hex
         for index in range(len(crops))
@@ -263,8 +272,8 @@ def split_figures(workspace, payload):
         stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parent["filename"]).stem)[:80] or "figure"
         job_id = "figure-crop:" + request_id
         figures = []
-        for index, ((rectangle, box, _), snapshot, child_id) in enumerate(
-            zip(crops, snapshots, child_ids), 1
+        for index, ((rectangle, box, snapshot), child_id) in enumerate(
+            zip(crops, child_ids), 1
         ):
             path, digest, size = snapshot
             source = {
