@@ -17,7 +17,7 @@ SKILL_NAMES = ('studio-preset-slice', 'studio-execution-evidence', 'studio-nativ
                'studio-runtime-models', 'studio-session-closeout')
 BUDGETS = {'CLAUDE.md': 100, 'AGENTS.md': 80}  # T2 caps from agent-harness SPECS §3
 SKILL_BUDGET = 80
-GROK_BASH_PATTERNS = {
+GROK_BASH_ALLOW_PATTERNS = {
     'python -m unittest*',
     'python scripts/validate-repo.py*',
     'python scripts/validate-live.py*',
@@ -44,6 +44,7 @@ GROK_BASH_PATTERNS = {
     'gh repo view*',
     'rg*',
 }
+GROK_BASH_DENY_PATTERNS = {'*git push*'}
 
 
 def split_frontmatter(text):
@@ -146,18 +147,28 @@ class GrokAdapterTests(unittest.TestCase):
         rules = permission.get('rules')
         self.assertIsInstance(rules, list)
         self.assertGreater(len(rules), 0)
-        patterns = set()
+        allow_patterns = set()
+        deny_patterns = set()
+        seen = set()
         for index, rule in enumerate(rules):
             self.assertIsInstance(rule, dict, index)
-            self.assertEqual(rule.get('action'), 'allow', index)
+            action = rule.get('action')
+            self.assertIn(action, {'allow', 'deny'}, index)
             self.assertEqual(rule.get('tool'), 'bash', index)
             pattern = rule.get('pattern')
             self.assertIsInstance(pattern, str, index)
             self.assertTrue(pattern.strip(), index)
             self.assertNotIn('Bash(', pattern, index)
-            patterns.add(pattern)
-        self.assertEqual(patterns, GROK_BASH_PATTERNS)
-        self.assertFalse(any(pattern.startswith('git push') for pattern in patterns))
+            identity = (action, pattern)
+            self.assertNotIn(identity, seen, f'duplicate Grok permission rule at {index}')
+            seen.add(identity)
+            if action == 'allow':
+                allow_patterns.add(pattern)
+            else:
+                deny_patterns.add(pattern)
+        self.assertEqual(allow_patterns, GROK_BASH_ALLOW_PATTERNS)
+        self.assertEqual(deny_patterns, GROK_BASH_DENY_PATTERNS)
+        self.assertFalse(any(pattern.startswith('git push') for pattern in allow_patterns))
 
     def test_docs_name_the_grok_adapter(self):
         for doc in ('AGENTS.md', 'CLAUDE.md'):
