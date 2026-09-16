@@ -2,15 +2,17 @@
 
 ## Draw the pose — 16 September 2026
 
-The Combine screen now draws its own pose skeleton (#444). A **Draw the pose** panel appears for any
+The Combine screen now draws its own pose skeleton (#444, #475, #480). A **Draw the pose** panel appears for any
 Combine continuation: the 18 COCO-18 joints drag with a mouse or a finger, the joint list picks one for
 the arrow keys (1 % of the canvas, 5 % with Shift), a joint can be marked unknown so it and its limbs
 leave the drawing, *Start from* loads a standing figure, the bent-forward research figure or a mirror,
-and Undo steps back one change. **Use this pose** renders the guide through `POST /api/pose/render` and
-attaches it to Picture 1, taking the engine buttons' own switch path when the recipe has to change. Every
-disabled state names its reason and the route to take: a skeleton and a pose picture remain different
-inputs and the drawn skeleton is the only skeleton-kind Combine today, so from the depth and pose-picture
-recipes the button is disabled and points at *Continue with this → Combine* instead.
+and Undo steps back one change. On the skeleton recipe **Use this pose** renders the guide through
+`POST /api/pose/render` and attaches it to Picture 1. On a picture-based Combine (depth, Copy Pose, pose-first)
+the same control reads **Replace pose picture with drawing**: it still renders through that endpoint, then
+replaces Picture 1 and selects the skeleton recipe. The character, seed, canvas and who/clothes answers stay;
+the pose answer is cleared so Generate waits for wording that matches the drawing (#492). Ordinary engine
+buttons still refuse picture/skeleton reinterpretation — getting back to depth or Copy Pose needs a pose
+picture re-pulled from the library. Drawing and rendering submit nothing; Generate stays a separate press.
 
 `python tests/studio_use_cases.py` passed **14/14** journeys in 65.3 s on Windows/Python 3.14, with
 **zero generation submissions and zero page errors**. The new `draw-a-pose-for-combine` journey takes

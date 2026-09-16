@@ -106,15 +106,15 @@ a **Draw the pose** panel appears whenever a Combine recipe is open (a continuat
 the library). Drag the 18 COCO-18 joints with a mouse or a finger, or pick one in the joint list and nudge it with the arrow keys (1 % of the canvas, 5 % with
 Shift); *Start from* loads a plain standing figure, the bent-forward research figure or a left-right mirror of what
 is on the canvas; a joint can be marked unknown, which leaves it and every limb touching it out of the drawing (a
-missing joint is omitted, never coordinate zero); Undo steps back one change. **Use this pose** posts the joints to
-`POST /api/pose/render`, which validates them through `studio_workflow.pose_artifact` (every joint recorded as
-manual with no detector confidence), renders the PNG with `studio_workflow.pose_raster.render_png` and stores it the
-way an uploaded picture is stored, then attaches it to Picture 1. The endpoint submits nothing to ComfyUI and
-creates no job; Generate stays a separate press. Attaching takes the engine buttons' own switch path when the
-recipe has to change, and that path applies `combineSwitchReason`: a skeleton and a pose picture are different
-inputs, and the drawn skeleton is currently the only skeleton-kind Combine, so from the depth and pose-picture
-recipes the button stays **disabled** and names the route instead (*Continue with this → Combine*, choose this
-recipe, then draw). The switch itself becomes reachable the day a second skeleton-kind recipe exists.
+missing joint is omitted, never coordinate zero); Undo steps back one change. On the skeleton recipe **Use this pose**
+posts the joints to `POST /api/pose/render`, which validates them through `studio_workflow.pose_artifact` (every joint
+recorded as manual with no detector confidence), renders the PNG with `studio_workflow.pose_raster.render_png` and
+stores it the way an uploaded picture is stored, then attaches it to Picture 1. On a picture-based Combine the same
+control reads **Replace pose picture with drawing** and takes an explicit replacement path: Picture 1 becomes the
+drawing, the skeleton recipe is selected, who/clothes stay, and the pose fill is cleared so Generate waits for a
+description of this drawing. The endpoint submits nothing to ComfyUI and creates no job. Ordinary engine buttons still
+apply `combineSwitchReason`: a skeleton and a pose picture remain different inputs, so after a replacement you re-pull
+a pose picture to return to depth or Copy Pose.
 
 The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours as the hand-drawn research figure but
 thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px

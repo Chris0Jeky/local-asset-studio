@@ -1,5 +1,9 @@
 # Current state — 16 September 2026
 
+## Replace pose picture no longer keeps the old pose wording — 16 September 2026 (18:40)
+
+**Replace pose picture with drawing** still swaps Picture 1 for the rendered stick figure and selects the skeleton recipe, and who/clothes still transfer. The pose fill is now cleared and left as a bracket, so Generate stays blocked until the drawing is described (issue #492). Redrawing while already on the skeleton recipe keeps the pose wording written for that drawing. Native fixture driver: 8/8 cases, 190 assertions, zero generation submissions. Docs for the use-case matrix and Style + Pose name the Replace action and the one-way return to a pose picture. Not verified: a click-through on the live Studio at 8191; art acceptance (HUMAN_TODO q-28).
+
 ## The face route: a character into a picture that keeps its pose and scene; the idle release measured; the night's evidence — 16 September 2026 (03:20-05:15)
 
 - **Replace character is a recipe (PR #481, built by a worker, proved through the Studio by the coordinator):** `combine-klein-9b-replace`, fourth on

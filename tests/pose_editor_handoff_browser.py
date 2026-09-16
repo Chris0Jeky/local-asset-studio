@@ -182,8 +182,12 @@ def main(argv=None):
                             for key in ('seed', 'width', 'height'):
                                 check(after['controls'][key] == before['controls'][key], key + ' is retained')
                             check(after['batch'] == before['batch'], 'Batch count is retained')
-                            check(dict(after['fields']) == dict(before['fields']), 'Named who/pose/clothes answers transfer by meaning')
-                            check('[' not in after['controls']['positive'], 'Image-order wording is rebuilt with no unresolved fills')
+                            before_fields, after_fields = dict(before['fields']), dict(after['fields'])
+                            check(after_fields.get('who') == before_fields.get('who'), 'Who transfers by meaning')
+                            check(after_fields.get('clothes') == before_fields.get('clothes'), 'Clothes transfer by meaning')
+                            check(not (after_fields.get('pose') or '').strip(), 'The old pose picture’s wording is not kept')
+                            check('[' in after['controls']['positive'], 'The pose fill stays as a bracket until the drawing is described')
+                            check(page.locator('#generate').is_disabled(), 'Generate waits for pose wording that matches the drawing')
                             # A subsequent explicit render on the already-selected skeleton path uses the same guarded attachment.
                             if name == 'depth':
                                 page.locator('#uxPoseUse').click()
