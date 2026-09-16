@@ -59,8 +59,10 @@ def run(output):
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler);http_thread=threading.Thread(target=server.serve_forever)
     original_get=fixture.studio_instance.queue.get
     class EndWorker(BaseException):pass
-    def get():
-        item=original_get(timeout=40)
+    def get(timeout=None):
+        # The worker's own get is bounded now and it swallows queue.Empty, so the 40 s watchdog ends the worker explicitly.
+        try:item=original_get(timeout=40)
+        except queue.Empty:raise EndWorker()
         if item==('fixture-stop',None):raise EndWorker()
         return item
     def worker():
