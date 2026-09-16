@@ -76,7 +76,7 @@ def _current(value, adopt_brief):
         check['brief'] = 'Pending reviewed instruction'
     validate(check)
     need(check['task'] in ('image', 'edit'), 'Reference review currently supports image/edit briefs only')
-    return copy.deepcopy(value)
+    return check
 
 
 def preview(value):
