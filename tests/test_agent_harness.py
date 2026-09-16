@@ -18,33 +18,26 @@ SKILL_NAMES = ('studio-preset-slice', 'studio-execution-evidence', 'studio-nativ
 BUDGETS = {'CLAUDE.md': 100, 'AGENTS.md': 80}  # T2 caps from agent-harness SPECS §3
 SKILL_BUDGET = 80
 GROK_BASH_ALLOW_PATTERNS = {
-    'python -m unittest*',
-    'python scripts/validate-repo.py*',
-    'python scripts/validate-live.py*',
-    'python scripts/game_asset_pipeline.py*',
-    'python scripts/game_asset_demo.py*',
-    'python scripts/game_asset_media.py*',
-    'node --check*',
+    'python -m unittest *',
+    'python scripts/validate-repo.py',
+    'python scripts/validate-live.py',
+    'python scripts/game_asset_pipeline.py *',
+    'python scripts/game_asset_demo.py *',
+    'python scripts/game_asset_media.py *',
+    'node --check *',
     'node --version',
     'python --version',
-    'git status*',
-    'git log*',
-    'git diff*',
-    'git show*',
-    'git branch*',
-    'git switch*',
-    'git add*',
-    'git commit*',
-    'git fetch*',
-    'git ls-files*',
-    'gh pr*',
-    'gh issue*',
-    'gh run*',
-    'gh auth status*',
-    'gh repo view*',
-    'rg*',
+    'git switch *',
+    'git add *',
+    'git commit *',
+    'git fetch *',
+    'gh pr *',
+    'gh issue *',
+    'gh run *',
+    'gh auth status',
+    'gh repo view',
 }
-GROK_BASH_DENY_PATTERNS = {'*git push*'}
+GROK_BASH_DENY_PATTERNS = {'git push'}
 
 
 def split_frontmatter(text):
@@ -139,11 +132,16 @@ class GrokAdapterTests(unittest.TestCase):
         self.assertNotIn('[mcp_servers.MCP_DOCKER]', text)
         self.assertIn('[permission]', text)
 
-    def test_grok_permission_rules_use_native_schema(self):
+    def test_grok_permission_rules_are_structured_and_bounded(self):
         config = tomllib.loads((ROOT / '.grok/config.toml').read_text(encoding='utf-8'))
         permission = config.get('permission')
         self.assertIsInstance(permission, dict)
-        self.assertNotIn('allow', permission, 'Claude-style allow arrays are not Grok Build permission rules')
+        for compact_key in ('allow', 'deny', 'ask'):
+            self.assertNotIn(
+                compact_key,
+                permission,
+                'use one structured representation instead of mixing equivalent Grok forms',
+            )
         rules = permission.get('rules')
         self.assertIsInstance(rules, list)
         self.assertGreater(len(rules), 0)
@@ -159,6 +157,12 @@ class GrokAdapterTests(unittest.TestCase):
             self.assertIsInstance(pattern, str, index)
             self.assertTrue(pattern.strip(), index)
             self.assertNotIn('Bash(', pattern, index)
+            self.assertLessEqual(pattern.count('*'), 1, index)
+            if '*' in pattern:
+                self.assertTrue(
+                    pattern.endswith(' *'),
+                    f'{pattern!r} widens a command token rather than its arguments',
+                )
             identity = (action, pattern)
             self.assertNotIn(identity, seen, f'duplicate Grok permission rule at {index}')
             seen.add(identity)
