@@ -40,6 +40,41 @@ test('malformed or mismatched render replies cannot replace the existing picture
     assert.throws(()=>P.guideResponse({...reply,...patch},request));
   for(const value of [null,[],{},false])assert.throws(()=>P.guideResponse(value,request));
 });
+test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>{
+  assert.equal(typeof P.positionInput,'function');
+  assert.deepEqual(P.positionInput('0','1536',{width:1024,height:1536}),{x:0,y:1536});
+  assert.deepEqual(P.positionInput(' 123.25 ','4.50',{width:1024,height:1536}),{x:123.25,y:4.5});
+  for(const bad of ['', ' ', '0x10', 'NaN', 'Infinity', '-1', '1025', true, null, [], {}])
+    assert.throws(()=>P.positionInput(bad,'5',{width:1024,height:1536}));
+  assert.throws(()=>P.positionInput('1','1537',{width:1024,height:1536}));
+  assert.throws(()=>P.positionInput('1','2',{width:0,height:1536}));
+});
+test('typed drafts have an actionable generation hold and use the existing undo history',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  assert.match(code,/code:'pose-position',message:.*action:'pose-position'/);
+  assert.match(code,/if\(action==='pose-position'\)target=q\('#uxPoseX'\)/);
+  assert.match(code,/pushPose\(\);poseEdit\(next\)/);
+});
+test('actual arrow handler nudges only the canvas and joint buttons',()=>{
+  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const start=code.indexOf('  function poseKeys(e){'),end=code.indexOf("  posePanel.addEventListener('keydown',poseKeys)",start);
+  assert.ok(start>=0&&end>start);
+  for(const target of ['apply','reset','undo','use','input','canvas','joint']){
+    let edits=0,history=0,prevented=0;
+    const context={posePoints:[{x:1,y:1}],poseBusy:false,posePositionDirty:()=>false,poseJoint:0,
+      poseCanvas:{width:1024,height:1536},poseStatus:()=>{},pushPose:()=>history++,poseEdit:()=>edits++,
+      StudioPoseEditor:{nudge:()=>[{x:2,y:1}]}};
+    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
+    context.poseKeys({key:'ArrowRight',shiftKey:false,preventDefault:()=>prevented++,
+      target:{closest:selector=>selector==='#uxPoseCanvas,[data-ux-joint]'?['canvas','joint'].includes(target):selector==='select,input,textarea'&&target==='input'}});
+    const expected=['canvas','joint'].includes(target)?1:0;
+    assert.equal(edits,expected,target+' must not unexpectedly alter the drawing');
+    assert.equal(history,expected,target+' must not add a spurious undo entry');
+    assert.equal(prevented,expected,target+' retains its keyboard event');
+  }
+});
 async function pendingAttachmentTests(){
   const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
   const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');

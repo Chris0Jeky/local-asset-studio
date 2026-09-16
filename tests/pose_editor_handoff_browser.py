@@ -21,6 +21,44 @@ SNAPSHOT = '''() => ({recipe:selected.id, keep:lastUploaded, parents:[...parentA
   fields:[...document.querySelectorAll('[data-ux-fill]')].map(el=>[StudioContinuation.fillMeaning(el.dataset.uxFill),el.value])})'''
 
 
+
+def precision_checks(page, check):
+    before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    initial = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
+    page.locator('#uxPoseX').fill('0'); page.locator('#uxPoseY').fill('123.45')
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before, 'Typing alone does not apply a geometry edit')
+    check(page.locator('#uxPoseUse').is_disabled() and page.locator('#generate').is_disabled(), 'Unapplied coordinates visibly hold use and generation')
+    check(page.locator('[data-ux-joint="5"]').is_disabled(), 'A joint switch cannot discard unapplied coordinates')
+    page.evaluate("document.querySelector('#positive').dispatchEvent(new Event('change',{bubbles:true}))")  # Simulate the same readiness refresh used after inspection/polling.
+    check(page.locator('#uxPoseX').input_value() == '0', 'Readiness refresh preserves an unfinished coordinate draft')
+    page.locator('#uxPoseY').press('Enter')
+    check(page.locator('#uxPoseUse').is_enabled(), 'Enter applies the explicit edit and releases the hold')
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') != before, 'The accepted exact position changes the drawing')
+    applied = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    for control in ('#uxPosePositionApply', '#uxPoseUse', '#uxPoseUndo'):
+        page.locator(control).focus(); page.keyboard.press('ArrowRight')
+        check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == applied,
+              'Arrow keys on ' + control + ' do not nudge the drawing')
+    page.locator('#uxPoseUndo').click()
+    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == initial, 'Existing Undo restores both displayed coordinates')
+    page.locator('#uxPoseX').fill(''); page.locator('#uxPosePositionApply').click()
+    check(page.locator('#uxPoseX').get_attribute('aria-invalid') == 'true', 'Empty typed input is refused, not coerced to zero')
+    page.locator('#uxPosePositionReset').click()
+    check(page.locator('#uxPoseX').input_value() == initial[0], 'Reset restores the unapplied fields without changing geometry')
+    page.locator('#uxPoseUnknown').click()
+    check(page.locator('#uxPoseX').is_disabled() and page.locator('#uxPoseY').is_disabled(), 'Unknown points cannot acquire accidental numeric coordinates')
+    page.locator('#uxPoseUnknown').click()
+    before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
+    page.locator('#uxPoseX').press('ArrowUp')
+    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before, 'Number-input arrows edit the field, not the skeleton')
+    page.locator('#uxPosePositionReset').click()
+    page.locator('#uxPoseX').fill('0'); page.locator('#uxPoseY').fill('123.45')
+    page.locator('#uxPosePositionApply').click()
+    check(page.locator('#uxPoseX').input_value() == '0', 'Coordinate zero remains a valid authored joint')
+    page.locator('#uxPoseY').fill('123.4501'); page.locator('#uxPosePositionApply').click()
+    check(page.locator('#uxPoseY').input_value() == '123.45' and page.locator('#uxPoseUse').is_enabled(), 'A rounded no-op clears the field hold without adding a geometry change')
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/pose-handoff-browser')
@@ -32,7 +70,7 @@ def main(argv=None):
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
     origin = 'http://127.0.0.1:' + str(server.server_port)
-    records, errors, posts = [], [], []
+    records, errors, posts, drawings = [], [], [], []
     spec = next(case for case in ux.load_cases()['cases'] if case['id'] == 'combine-character-with-another-pose')
     cases = [('depth', 1536), ('copypose', 390), ('missing-slot', 1536), ('corrupt-reply', 390),
              ('stale-workbench', 1536), ('busy-drawing', 390), ('transport-failure', 1536), ('newer-role-upload', 390)]
@@ -48,6 +86,7 @@ def main(argv=None):
                     records.append(row)
                     page.on('pageerror', lambda error, case=name: errors.append(case + ': ' + str(error)))
                     page.on('request', lambda request: posts.append(urlsplit(request.url).path) if request.method == 'POST' else None)
+                    page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
                     def check(condition, message):
                         if not condition: raise AssertionError(message)
                         row['assertions'].append(message)
@@ -70,6 +109,7 @@ def main(argv=None):
                         page.locator('#uxPoseStart').select_option('bent')
                         page.locator('[data-ux-joint="4"]').click()
                         page.keyboard.press('ArrowRight')
+                        if name in ('depth', 'copypose'): precision_checks(page, check)
                         check(page.locator('#uxPoseUse').is_enabled(), 'An explicit new drawing is admissible for this pair')
                         held, uploads = [], []
                         if name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure', 'newer-role-upload'):
@@ -83,13 +123,14 @@ def main(argv=None):
                             check(len(held) == 1, 'Exactly one drawing request is held for fault injection')
                             check(page.locator('#generate').is_disabled(), 'Generate is held while the drawing request is unresolved')
                             check(page.locator('#uxPoseStart').is_disabled(), 'Preset edits are held while the guide is rendering')
+                            check(page.locator('#uxPoseX').is_disabled() and page.locator('#uxPosePositionApply').is_disabled(), 'Numeric edits are held during rendering')
                             check(page.locator('#uxPoseUse').is_disabled(), 'A second rendering request is not admitted')
                             request = held[0].request.post_data_json
                             if name == 'stale-workbench':
                                 page.locator('#positive').fill(before['controls']['positive'] + ' Newer human wording.')
                             if name == 'busy-drawing':
                                 bitmap = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
-                                page.locator('[data-ux-joint="4"]').focus(); page.keyboard.press('ArrowRight')
+                                page.locator('#uxPoseCanvas').focus(); page.keyboard.press('ArrowRight')
                                 check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == bitmap,
                                       'Keyboard input cannot alter the in-flight geometry')
                             if name == 'newer-role-upload':
@@ -132,6 +173,8 @@ def main(argv=None):
                         else:
                             page.wait_for_function("selected.id==='"+SKELETON+"' && referenceRecords[0]?.file?.endsWith('_drawn-pose.png')")
                             after = page.evaluate(SNAPSHOT)
+                            if name in ('depth', 'copypose'):
+                                check(drawings[-1]['keypoints'][4] == [0, 123.45], 'The exact edited wrist reaches the guide request')
                             check(after['keep'] == before['keep'], 'The character attachment is preserved')
                             check(after['claim']['source_asset_id'] == before['claim']['source_asset_id'], 'Character identity remains the continuation source')
                             check(after['claim']['source_asset_id'] in after['parents'], 'Character lineage survives even when both old roles used the same asset')
