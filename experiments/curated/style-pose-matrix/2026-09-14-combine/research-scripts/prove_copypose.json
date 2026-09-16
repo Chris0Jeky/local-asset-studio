@@ -1,0 +1,41 @@
+[
+ {
+  "id": "61dd5375-aa6c-42ca-b1e0-12466689857e",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-copypose",
+  "prompt_ids": [
+   "1fbea73e-e37c-4753-b94c-039552b2640c"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-copypose_00001_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091471,
+    "prompt_id": "1fbea73e-e37c-4753-b94c-039552b2640c",
+    "media_type": "image",
+    "asset_id": "8695e52e99d058a6890e5a800469bb7e"
+   }
+  ],
+  "elapsed_seconds": 58.46972918510437,
+  "error": null,
+  "references": [
+   {
+    "file": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+    "sha256": "1c7b7fba6abc2b31c4bc1202a5754218adaae0ad05c53fb1fa29f96f0a85167c",
+    "bytes": 216501,
+    "width": 992,
+    "height": 1500,
+    "role": "pose",
+    "slot": 1,
+    "contribution": "",
+    "avoid": "",
+    "transform": {
+     "policy": "FLUX.2 Klein reference latents with the Copy Pose LoRA at 1.0: your character is image 1 (kept, re-posed), the pose picture is image 2 (only its pose is taken), each scaled to ~1 megapixel and VAE-encoded"
+    }
+   }
+  ],
+  "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep that character's face, hair and rendering style and the clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only the pose and framing change, to image 2's: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+  "seed": 2026091471
+ }
+]

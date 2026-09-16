@@ -52,6 +52,7 @@ def run(output):
                 page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda exc:errors.append(str(exc)))
                 page.goto(f'http://127.0.0.1:{target.server_port}');page.wait_for_function('!!selected')
                 page.evaluate("showView('create')")
+                page.locator('#jobProblems > summary').click()
                 box=page.locator('.mixedBatchControls');box.locator('summary').click()
                 assert not mutations
                 assert 'unknown submission outcome' in box.inner_text()

@@ -70,6 +70,8 @@ runtime rules in `CLAUDE.md`. Both agents follow these rules; they are listed in
   submit work through `run_workflow`, `run_template`, `generate_image`, `emit_partner_workflow` or
   `upload_file` against the shared install: they bypass the Studio's evidence trail, its admission gates
   and its uncertain-submission handling. `partner_generate` additionally spends Comfy Cloud credits.
-- `free_memory` (ComfyUI's `/free`) is not something the Studio calls. It was measured once by hand on an
-  idle queue and is recorded in `docs/RUNTIME-PRECONDITIONS.md` as unreliable on its own; treat it as a
-  manual, idle-queue-only operator action, never part of an agent routine.
+- `free_memory` (ComfyUI's `/free`) is what the Studio itself sends once per idle stretch (`idle_cache_release_minutes`, default 10,
+  see `docs/OPERATIONS.md`): after ten idle minutes on an empty ComfyUI queue the models cached in host RAM are released and the next
+  job reloads them. Agents do not call it themselves; if the models unloaded between jobs, the Studio's `/api/health` `cache_release`
+  field says when. The older note in `docs/RUNTIME-PRECONDITIONS.md` that `/free` is unreliable on its own was about commit headroom
+  after a native allocation failure, not about this cache.

@@ -1,0 +1,306 @@
+[
+ {
+  "variant": "copypose",
+  "seed": 2026091411,
+  "prompt_id": "5d1d1179-fbfa-4521-abce-6982274e5f5b",
+  "status": "success",
+  "seconds": 75.1,
+  "files": [
+   "pose3-copypose_00001_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "copypose",
+  "seed": 2026091412,
+  "prompt_id": "f9a7db6f-82b4-444d-b5cb-f6032f3947bc",
+  "status": "success",
+  "seconds": 80.3,
+  "files": [
+   "pose3-copypose_00002_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "copypose",
+  "seed": 2026091413,
+  "prompt_id": "a7c311f6-8808-4932-b5fe-a66880ae4a31",
+  "status": "success",
+  "seconds": 80.4,
+  "files": [
+   "pose3-copypose_00003_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "copypose-depth",
+  "seed": 2026091411,
+  "prompt_id": "f1481c1c-c9a0-4aaf-a8f7-aae57620d551",
+  "status": "success",
+  "seconds": 75.9,
+  "files": [
+   "pose3-copypose-depth_00001_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's (a depth map, a grey silhouette on black): bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "pose3-depth-raw.png"
+ },
+ {
+  "variant": "copypose-depth",
+  "seed": 2026091412,
+  "prompt_id": "fb187a7b-4ff3-45c4-aeb6-dee74f844831",
+  "status": "success",
+  "seconds": 75.2,
+  "files": [
+   "pose3-copypose-depth_00002_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's (a depth map, a grey silhouette on black): bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "pose3-depth-raw.png"
+ },
+ {
+  "variant": "copypose-depth",
+  "seed": 2026091413,
+  "prompt_id": "efad6ab7-c6e8-40a8-9b17-88848180834f",
+  "status": "success",
+  "seconds": 75.6,
+  "files": [
+   "pose3-copypose-depth_00003_.png"
+  ],
+  "error": [],
+  "text": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; keep her face, hair and rendering style and her clothes with their colours (a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet); only her pose and framing change, to image 2's (a depth map, a grey silhouette on black): bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. No tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "KleinBase9B_PoseTransfer.safetensors",
+  "image1": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg",
+  "image2": "pose3-depth-raw.png"
+ },
+ {
+  "variant": "replacechar",
+  "seed": 2026091411,
+  "prompt_id": "62ef11ee-6329-459e-8e5d-7b1fba244b48",
+  "status": "success",
+  "seconds": 80.1,
+  "files": [
+   "pose3-replacechar_00001_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the girl in image 2, while keeping the same pose, action, facial expression, camera angle, composition, background, and lighting as in image 1. The girl in image 2 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet; no tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "replace_character_v1_klein.safetensors",
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "replacechar",
+  "seed": 2026091412,
+  "prompt_id": "8e383703-4f92-49d6-87f3-9c2ef284ef41",
+  "status": "success",
+  "seconds": 75.1,
+  "files": [
+   "pose3-replacechar_00002_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the girl in image 2, while keeping the same pose, action, facial expression, camera angle, composition, background, and lighting as in image 1. The girl in image 2 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet; no tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "replace_character_v1_klein.safetensors",
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "replacechar",
+  "seed": 2026091413,
+  "prompt_id": "41eb0f2e-258a-4815-b8bd-1626e66cbcb4",
+  "status": "success",
+  "seconds": 75.2,
+  "files": [
+   "pose3-replacechar_00003_.png"
+  ],
+  "error": [],
+  "text": "Replace the woman in image 1 with the girl in image 2, while keeping the same pose, action, facial expression, camera angle, composition, background, and lighting as in image 1. The girl in image 2 is Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet; no tights, no heels, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "replace_character_v1_klein.safetensors",
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-skel",
+  "seed": 2026091411,
+  "prompt_id": "d542ed7b-8d95-4e9f-a8b7-433a441478ad",
+  "status": "success",
+  "seconds": 75.3,
+  "files": [
+   "pose3-refcontrol-skel_00001_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-skeleton-drawn.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-skel",
+  "seed": 2026091412,
+  "prompt_id": "c271436b-4557-4763-b5b1-69c0e5ceceb6",
+  "status": "success",
+  "seconds": 75.2,
+  "files": [
+   "pose3-refcontrol-skel_00002_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-skeleton-drawn.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-skel",
+  "seed": 2026091413,
+  "prompt_id": "f25bd5d4-80ce-486c-9e02-a1df8921cbd6",
+  "status": "success",
+  "seconds": 75.1,
+  "files": [
+   "pose3-refcontrol-skel_00003_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-skeleton-drawn.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-depth",
+  "seed": 2026091411,
+  "prompt_id": "1ea84cd4-90cc-4186-bfdf-7374a00a1c45",
+  "status": "success",
+  "seconds": 75.1,
+  "files": [
+   "pose3-refcontrol-depth_00001_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-depth-raw.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-depth",
+  "seed": 2026091412,
+  "prompt_id": "5cbb69f4-becd-43c8-af68-aa1c7ca49cfe",
+  "status": "success",
+  "seconds": 75.4,
+  "files": [
+   "pose3-refcontrol-depth_00002_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-depth-raw.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "refcontrol-depth",
+  "seed": 2026091413,
+  "prompt_id": "f0805e97-78cc-4868-bd22-ae54e298d4e3",
+  "status": "success",
+  "seconds": 75.2,
+  "files": [
+   "pose3-refcontrol-depth_00003_.png"
+  ],
+  "error": [],
+  "text": "apply pose from image 1 with reference from image 2. Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": "refcontrol_v2_poses.safetensors",
+  "image1": "pose3-depth-raw.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "mannequin-gen",
+  "seed": 2026091411,
+  "prompt_id": "ddd51f9c-a871-4cbb-9333-bfb88b669e68",
+  "status": "success",
+  "seconds": 68.2,
+  "files": [
+   "pose3-mannequin-gen_00001_.png"
+  ],
+  "error": [],
+  "text": "Generate a picture of CGI mannequins in the exact same pose as the people in the image. The mannequins should have fingers, toes, eyes, and a detailed facial expression. The mannequins do not have any hair. They have perfectly clean white skin without any discolorations. The background of the image is a plain featureless shiny black void. Do not include any objects the people in the image may or may not be interacting with. Do not change the people's pose in any way.",
+  "steps": 8,
+  "lora": "Mannequin_V1_F29B.safetensors",
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+  "image2": null
+ },
+ {
+  "variant": "mannequin-combine",
+  "seed": 2026091411,
+  "prompt_id": "aa98f658-f9bd-43c1-b9cc-1f4c7c9f6d43",
+  "status": "success",
+  "seconds": 90.1,
+  "files": [
+   "pose3-mannequin-combine_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": null,
+  "image1": "pose3-mannequin-gen.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "mannequin-combine",
+  "seed": 2026091412,
+  "prompt_id": "55fab498-0b6f-4b45-9a5e-dc32fdb192c8",
+  "status": "success",
+  "seconds": 85.8,
+  "files": [
+   "pose3-mannequin-combine_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": null,
+  "image1": "pose3-mannequin-gen.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ },
+ {
+  "variant": "mannequin-combine",
+  "seed": 2026091413,
+  "prompt_id": "2bf5fcfe-82a2-4db9-b8db-e72338fcccdb",
+  "status": "success",
+  "seconds": 86.0,
+  "files": [
+   "pose3-mannequin-combine_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "lora": null,
+  "image1": "pose3-mannequin-gen.png",
+  "image2": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+ }
+]
