@@ -49,7 +49,7 @@ from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit into an unobserved/busy queue
@@ -124,6 +124,8 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        from studio_prompt.reference_jobs import ReferenceJobs
+        self.reference_jobs = ReferenceJobs(self)
         self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
@@ -392,7 +394,7 @@ class Studio:
             # strength 0, so refuse it here while the inventory is known.
             if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
             self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False)):
+        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -523,6 +525,7 @@ class Studio:
             return self._create_job(payload, enqueue, job_id)
 
     def _create_job(self, payload, enqueue=True, job_id=None):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -587,8 +590,8 @@ class Studio:
     def _estimate_graph(self, preset, controls):
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
-        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", *LORA_SLOTS}
-        integer = {"seed", "steps", "width", "height", "frames", "fps"}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
+        integer = {"seed", "steps", "width", "height", "frames", "fps", "depth_cut"}
         extras = preset.get("bindings_extra") or {}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
@@ -1076,6 +1079,7 @@ class Studio:
         return worker is None or worker.ident is None or worker.is_alive()
 
     def require_worker(self):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         # Preserve pre-start/offline fixture behavior; never replace a dead worker
         # or silently replay its queue. All queue writers share this admission.
         if not Studio.worker_available(self):
@@ -1203,7 +1207,10 @@ class Studio:
             job = None
             try:
                 if action == "observe-mixed": job_id, mixed_request = job_id
-                if action == 'production': self.production.run(job_id)
+                if action == "reference-analysis": self.reference_jobs.run(job_id)
+                elif action == 'production':
+                    if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+                    self.production.run(job_id)
                 else:
                     job = self.jobs.get(job_id)
                     if job:
@@ -1212,7 +1219,8 @@ class Studio:
                         else: self._run(job)
             except Exception as exc:
                 try:
-                    if action == 'production':
+                    if action == 'reference-analysis': self.reference_jobs.record_failure(job_id, exc)
+                    elif action == 'production':
                         # Escaping here can be a failed job-state write after a POST.
                         # Only normal stage reconciliation can certify a terminal outcome.
                         self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
@@ -1321,6 +1329,7 @@ class Studio:
         self._save(job)
 
     def _run(self, job):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         with self.lock:
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')

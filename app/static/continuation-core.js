@@ -121,7 +121,7 @@
     return text.filter(Boolean);
   }
   function variantLabel(key){
-    return({cfg:'Guidance (CFG)',seed:'Seed',width:'Canvas width',height:'Canvas height',frames:'Frames',fps:'FPS',style_weight:'Style weight',pose_strength:'Pose strength'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
+    return({cfg:'Guidance (CFG)',seed:'Seed',width:'Canvas width',height:'Canvas height',frames:'Frames',fps:'FPS',style_weight:'Style weight',pose_strength:'Pose strength',depth_cut:'Cut the depth map below (%)'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase());
   }
   function variantHelp(preset,variant){
     const authored=variant?.controls&&typeof variant.controls==='object'&&!Array.isArray(variant.controls)?variant.controls:{};

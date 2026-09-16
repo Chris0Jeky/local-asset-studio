@@ -52,7 +52,10 @@ only moderately). Proved through the Studio's own path: job `22ff6394…`, outpu
 research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
 blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
 wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
-heel can still shape a foot; audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
+heel can still shape a foot: the control **Cut the depth map below (%)** (16 September 2026) paints the map black below that
+fraction of its height inside the graph (a 100-row mask band resized onto the ~1 MP map, composited with a black source before the
+VAE), 100 keeps all of it and the variant *Cut below the ankles (86 %)* reproduces the round-three edit that gave bare feet on 3 of 3
+seeds (`pose_sources.py` painted the map from row 0.86·h down). Audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
 
 **Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)** is second on the
 route (16 September 2026). It runs the shipped 9B graph with the civitai *Copy Pose* LoRA (`KleinBase9B_PoseTransfer`, strength 1.0,
