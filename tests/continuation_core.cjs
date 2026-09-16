@@ -192,6 +192,15 @@ test('engine changes carry character, pose and clothes by meaning and never reus
   const replace={...nine,id:'combine-klein-9b-replace',reference_slots:[{role:'composition'}],reference_board_label:'Picture to put them in (image 1)',last_reference:['20','image'],continuation_placeholder:["[image 1's pose and the camera in a few words, e.g. standing]",'[who is in image 2, e.g. a witch]',"[image 1's outfit and its colours, e.g. a coat]"]};
   assert.deepEqual(replace.continuation_placeholder.map(C.fillMeaning),['pose','who','outfit']);
   assert.deepEqual(Object.values(C.combineFillValues(replace,answers)),['leaning forward','a witch',''],'the scene outfit is left for the user; the robe is not written as image 1 clothes');
+  const cleared=C.combineGuideAnswers(answers);
+  assert.deepEqual(cleared,{who:'a witch',pose:'',clothes:'a red robe'},'a drawn guide drops the old pose wording');
+  assert.equal(answers.pose,'leaning forward','stored answers are not mutated');
+  assert.deepEqual(Object.values(C.combineFillValues(nine,cleared)),['a witch','','a red robe'],'who and clothes still transfer onto the skeleton recipe');
+  const skeletonPrompt='Image 1 is a pose skeleton of '+nine.continuation_placeholder[1]+'. Draw '+nine.continuation_placeholder[0]+' wearing '+nine.continuation_placeholder[2]+'.';
+  const skeletonText=C.assemble(skeletonPrompt,C.combineFillValues(nine,cleared));
+  assert.match(skeletonText,/\[image 1's pose/);
+  assert.doesNotMatch(skeletonText,/leaning forward/);
+  assert.deepEqual(C.unfilled(nine,skeletonText),[nine.continuation_placeholder[1]],'readiness still names the empty pose fill');
   const refs=[{file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset',slot:1,transform:{old:'graph'}},{file:null}];
   assert.equal(C.combineSwitchReason(four,nine,refs),'');
   assert.deepEqual(C.combineReferences(nine,refs),[{role:'pose',contribution:'',avoid:'',file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset'}]);

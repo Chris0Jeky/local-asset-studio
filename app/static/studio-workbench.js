@@ -220,7 +220,8 @@
       const target=catalog.presets.find(p=>p.id===presetId),reason=guide?StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords):StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason||target?.runtime_block)throw Error(reason||target.runtime_block);
       if(!continuationSource||lastUploaded!==continuationState.reference_file)throw Error('Put the source back before changing recipes.');
       if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before changing recipes.');
-      const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
+      const replacingPose=!!guide&&selected.id!==target.id;
+      const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=replacingPose?StudioContinuation.combineGuideAnswers(combineAnswers()):combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
       const identity=pairKey(),oldWords=q('#positive').value,manual=q('#uxFillsNote')&&!q('#uxFillsNote').hidden;
       if(manual)combineWording.set(identity+'|'+selected.id,oldWords);else combineWording.delete(identity+'|'+selected.id);
       const previous=guide?referenceRecords[0]?.parent_asset:null,refs=StudioContinuation.combineReferences(target,guide?[guide]:referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
@@ -233,7 +234,8 @@
       for(const key of ['seed','width','height']){const input=getControl(key);if(input&&prior[key]!=null)input.value=prior[key];}q('#batch').value=batch;
       fillsPreset=null;renderReferenceSlots();syncFills();if(restored===undefined)fillsAssembled=positive;transferredFills=null;
       rememberFills();draftDirty=true;saveDraft();updateReady();recipeChanged();scheduleTimeEstimate();
-      announce('Same pictures, '+target.name+'. '+(restored!==undefined?'Your edited wording for this recipe is restored. ':'The wording now uses this recipe’s image order. ')+'Review it, then Generate.');
+      const note=restored!==undefined?'Your edited wording for this recipe is restored. ':replacingPose?'Describe this pose in the wording; the old pose picture’s description was not kept. ':'The wording now uses this recipe’s image order. ';
+      announce((guide?'Picture 1 is now the drawing, ':'Same pictures, ')+target.name+'. '+note+'Review it, then Generate.');
       return target;
   }
   // A pose you draw here becomes the skeleton recipe's image 1: a coloured stick figure on black, the input that
@@ -320,7 +322,7 @@
     const replacing=selected?.id!==POSE_RECIPE;
     use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
     use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
-    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays; review the pose wording before Generate.':'');
+    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays. Describe this pose before Generate; the old pose picture’s wording is not kept.':'');
     const positionPending=posePositionDirty();
     q('#uxPoseStart').disabled=poseBusy||positionPending;syncPosePosition();
     q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});

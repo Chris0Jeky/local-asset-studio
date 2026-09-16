@@ -194,6 +194,9 @@
       return[p,value];
     }));
   }
+  // A freshly drawn guide is a different pose than the picture it replaced. Who/clothes stay; the pose fill
+  // is left empty so assemble keeps its bracket and readiness names it (#492).
+  function combineGuideAnswers(answers){return Object.assign({},answers||{},{pose:''});}
   function combineSwitchReason(from,to,refs=[]){
     if(!combineKind(from)||!combineKind(to))return 'This recipe uses a different source layout. Choose it through Change route.';
     if(combineKind(from)!==combineKind(to))return 'A pose skeleton and a pose picture are different inputs. Choose that route with the matching source.';
@@ -225,5 +228,5 @@
     const a=refs(current),b=refs(job);
     return a.length>0&&a.length===b.length&&!a.concat(b).some(r=>r.missing)&&a.every((ref,i)=>same(ref,b[i]));
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair};
 });

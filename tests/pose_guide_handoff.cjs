@@ -49,6 +49,13 @@ test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>
   assert.throws(()=>P.positionInput('1','1537',{width:1024,height:1536}));
   assert.throws(()=>P.positionInput('1','2',{width:0,height:1536}));
 });
+test('replacing a pose picture with a drawing clears only the pose answer in the shared switch path',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  assert.match(code,/const replacingPose=!!guide&&selected.id!==target.id/);
+  assert.match(code,/replacingPose\?StudioContinuation.combineGuideAnswers\(combineAnswers\(\)\):combineAnswers\(\)/);
+  assert.match(code,/the old pose picture’s description was not kept/);
+});
 test('typed drafts have an actionable generation hold and use the existing undo history',()=>{
   const fs=require('node:fs'),path=require('node:path');
   const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
