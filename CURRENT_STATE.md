@@ -37,11 +37,11 @@
   The Studio's own guard declined one proving job while a research batch held ComfyUI (`02d7c0e4…`, never submitted, abandoned from the page, its
   recipe retained); renders under three concurrent test suites took 250-350 s instead of about 100 s, which is CPU contention, not the slow state.
 
-- **The merge worker's final report (05:15):** thirteen Codex PRs merged tonight (#389, #396, #398, #418, #421, #390, #402, #415, #383, #428,
-  #426, #442, #471), each with one fresh-context review, CI green at its head and a full local suite where the change warranted it; three defects
+- **The merge worker's final report (05:15):** fourteen Codex PRs merged tonight (#389, #396, #398, #418, #421, #390, #402, #415, #383, #428,
+  #426, #442, #471, #472), each with one fresh-context review, CI green at its head and a full local suite where the change warranted it; three defects
   fixed inside the PRs (#415's preview guard rejected every seed because it re-checked the installed schema's bounds; #428's canvas contracts had
   no Python wrapper so the suite never ran them; #442 claimed a job cancellation that does not exist). #340 parked (#461, eight failures with one
-  root cause); #472 in flight with its review posted; #474, #475, #476, #478 and #480 reviewed and left open, #480 conflicting with #475 in
+  root cause); #472 merged last (`f1cbf50`) after its rerun proved the red was #373's budget again; #474, #475, #476, #478 and #480 reviewed and left open, #480 conflicting with #475 in
   `studio-workbench.js` so it waits for #475; the adult programme stack untouched (q-29). Seventeen issues filed. Three findings to act on:
   reference analysis is inert on this host as merged (#459: 185 run records, none with a disposition, three of them block its idle check); a
   negative-path HTTP test family fails with WinError 10053 when the suite runs as a batch, reproduced on plain main (#468); the 420 s suite lifetime
