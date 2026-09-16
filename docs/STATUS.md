@@ -9,7 +9,7 @@ the art), licensed (the terms allow the use). Update this page when a goal's sta
 | Goal | State | One-line summary |
 | --- | --- | --- |
 | G1 Workflows that genuinely work and are elaborated | ~65 % | Image lanes proven on this PC (63 of 66 graphs live-valid, 39 presets with completed jobs); video lane executes but fails inspection; per-backend validation missing |
-| G2 Chosen images at baseline quality | ~55 % | All six baseline families executed with retained IDs; zero accepted images; hands and feet unresolved; AniFox never ran |
+| G2 Chosen images at baseline quality | ~60 % | All six baseline families executed with retained IDs; the brief's four steps and a posed full body that keeps the face exist (16 Sep), all unreviewed; zero accepted images; hands and feet unresolved; AniFox never ran |
 | G3 Character sheets → figures, poses, in-betweens | ~35 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
 | G4 UX that reflects the real work | ~72 % | Workflow-first IA is real and wired to ComfyUI; the owner's 14 Sep verdict ("pretty much unusable") drove seven merged UX PRs under #278; review loop now has a queue, shortcuts and bulk review but is still unused by the owner; no task family for sheet/figure/sprite work |
 | G5 UI that works and feels good | ~55 % | 79 synthetic journeys pass; ten agent-driven use cases measured (fixture 10/10, live read-only 4/10, 4 dead ends ranked in UX-USE-CASE-MATRIX.md); the owner's first-hand statement is on record (UX-AUDIT-2026-09-14.md) and the next pass is the verdict (q-7) |
@@ -59,6 +59,10 @@ pass. No controlled with/without-adapter comparison at matched seed exists. AniF
 (download parked; two ledger entries disagree on the partial size and are reconciled in the assessment).
 
 **Done 16 September 2026.** Look B ran through the brief's four steps at seed 2026091301 (portrait, full body, expression, a detail pass on the portrait) as four Studio jobs, inspected and recorded in `experiments/curated/fantasy-pack-20260916/`; the four assets wait unreviewed in the review queue (HUMAN_TODO q-30). The seed did not carry identity across prompts (the hair changed on the expression render) and the detail pass changed the face's eye colour without touching the hands, so the same night the expression was redone as a *Change one thing* edit of the portrait (identity kept) while the depth Combine into the full-body pose lost the face at that scale: the next slice is a full-body route that keeps the face (Copy Pose or a face pass) plus a targeted hand repair, not another seed.
+
+**Later on 16 September 2026 (identity).** An edit route keeps identity for expressions, and the replace-character route (`combine-klein-9b-replace`, PR #481) puts the
+portrait's face into any picture that keeps its own pose and scene, including the depth Combine's own posed output, so the pack's posed full body is
+*pose route, then face route* at any seed. Both proved through the Studio and recorded in the pack folder; the assets wait unreviewed (q-30).
 
 **Previous next slice (13 September).** Run look B through the brief's four steps at a fixed seed, push each through `anime-detail-fix`, and
 present the before/after pairs to the owner as one review batch. Every ingredient is proven; the missing artifact is an

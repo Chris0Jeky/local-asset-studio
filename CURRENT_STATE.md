@@ -1,5 +1,46 @@
 # Current state — 16 September 2026
 
+## The face route: a character into a picture that keeps its pose and scene; the idle release measured; the night's evidence — 16 September 2026 (03:20-04:30)
+
+- **Replace character is a recipe (PR #481, built by a worker, proved through the Studio by the coordinator):** `combine-klein-9b-replace`, fourth on
+  the Combine route for a 9B picture: the shipped 9B graph with the civitai `replace_character_v1_klein` LoRA at 1.0 (strength and file as Studio
+  controls). The picture to keep is image 1 (board slot *Picture to put them in*, role `composition`: its pose, camera, composition, background,
+  lighting and clothes stay), the character is image 2 (*Character to keep*, the picture you continue from; only its face, hair and expression are
+  taken). Three fills in reading order: image 1's pose and camera, who is in image 2, image 1's outfit and its colours; the outfit fill has its own
+  meaning (`outfit`) so an engine switch never carries a character's clothes into it, and the Combine guidance says so for this recipe only (two
+  review MEDIUMs fixed in the PR, the same two Codex raised). Proving jobs `7051b297…` (seed 2026091301, 832x1216, 104.9 s)
+  and `2752190c…` (seed 2026091302, the default 1024x1536 canvas; 624 s from submission, most of it waiting behind a
+  research render): the fantasy pack's portrait face, fringe and gold earrings on its full-body scene with coat, scarf, satchel, lantern, boots and
+  platform kept. Research first, straight against ComfyUI: 3 of 3 seeds on that pair (116-132 s); 3 of 3 restoring the face on the depth Combine's
+  own output, so the pack's posed full body is *pose route, then face route* and identity no longer depends on the seed; 2 of 2 carrying the owner's
+  anime SHARK character into the painterly station scene in image 1's clothes (one stray glyph on one seed). Sheets in `examples/fantasy-pack/`
+  (`full-body-keeps-face.jpg`, `pose-then-face.jpg`, `replace-cross-style.jpg`, `replace-through-the-studio.jpg`), recipes 7 and 8 in the pack
+  folder, HUMAN_TODO q-30 (f) and (g).
+- **The idle cache release works end to end (PR #470):** the Studio restarted on main at 03:47; after the last job ended at 04:04 the release fired at
+  04:14:32 (`/api/health` `cache_release`: count 1, no error); ComfyUI's python went from 5.3 GB resident with the 9B models loaded to 463 MB. The
+  first job after a release pays the model reload. `idle_cache_release_minutes` in `config/local.json` (default 10, 0 = off).
+- **The night audition (PR #473):** on the owner's pair `depth_cut` 80, 86 and 92 all gave bare feet (92 loses the least of the figure; the hint says
+  86-92; the values between were not run); the page-rendered guide held the drawn pose on 3 of 3 seeds; Copy Pose held on 3 of 3 through the
+  Studio; a stricter instruction gave the surprised look as asked, so the earlier grin was the wording's doing. The audition script now persists
+  each accepted job ID before polling (a Codex P1). `.claude/rules/evidence-docs.md` gained one rule: clock times come from receipts or Git only,
+  after two section headers tonight were written more than an hour late and corrected from `state.json`.
+- **Flakes and follow-ups:** PR #479 merged (the trace-file test forces a later mtime; #467 closed); Codex's point that a same-tick same-length
+  rewrite is invisible to the metadata signature became #484. #477 filed (a transport test erred once in a full run, green in isolation). #373 got a
+  data point: two runs of one head hit the 420 s lifetime on a slow runner while seven sibling runs took 270-323 s, and the suite is about 2,800
+  tests now.
+- **Codex stacks landed by the merge worker:** #389, #390, #396, #398, #402, #415, #418, #421; its queue continues with the rest of the 15 September
+  backlog and the seven PRs a concurrent Codex session opened tonight (#471, #472, #474, #476, #478, #475 → #480); the adult programme stack is
+  untouched (HUMAN_TODO q-29).
+- **Operations:** the main checkout is on main with the Studio running from it (pid in `.runtime/server.pid`); the worktrees of merged PRs are removed.
+  The Studio's own guard declined one proving job while a research batch held ComfyUI (`02d7c0e4…`, never submitted, abandoned from the page, its
+  recipe retained); renders under three concurrent test suites took 250-350 s instead of about 100 s, which is CPU contention, not the slow state.
+
+Reviews: #481 one fresh-context adversarial pass (no CRITICAL/HIGH; two MEDIUMs fixed in-PR) plus a scoped second pass on the fix diff (one stale
+doc sentence fixed), and the Codex connector's two threads (the same findings, resolved); #470's three Codex P2s were already fixed in its review
+commit; #473 and #479 Codex clean after a fix and a tracked decline. Not verified: the replace recipe clicked through the browser; characters beyond
+the two tried; portrait-scale fidelity; art acceptance (HUMAN_TODO q-28, q-30); licence clearance (the 9B model is non-commercial, the adapter's
+civitai flags are recorded, not granted).
+
 ## Combine: Copy Pose is a recipe, the ankle cut is a control, a pose editor on the page; the Codex stacks landed — 16 September 2026 (from 01:40)
 
 Every generation below went through the Studio's own path (POST /api/jobs: prepare -> worker -> ComfyUI) on the owner's pair; receipts in the
