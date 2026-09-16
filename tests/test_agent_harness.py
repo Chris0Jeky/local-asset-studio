@@ -6,6 +6,7 @@ is correct or that an agent follows it.
 """
 import json
 import re
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,26 @@ SKILL_NAMES = ('studio-preset-slice', 'studio-execution-evidence', 'studio-nativ
                'studio-runtime-models', 'studio-session-closeout')
 BUDGETS = {'CLAUDE.md': 100, 'AGENTS.md': 80}  # T2 caps from agent-harness SPECS §3
 SKILL_BUDGET = 80
+GROK_BASH_ALLOW_PATTERNS = {
+    'python -m unittest *',
+    'python scripts/validate-repo.py',
+    'python scripts/validate-live.py',
+    'python scripts/game_asset_pipeline.py *',
+    'python scripts/game_asset_demo.py *',
+    'python scripts/game_asset_media.py *',
+    'node --check *',
+    'node --version',
+    'python --version',
+    'git switch *',
+    'git add *',
+    'git commit *',
+    'git fetch *',
+    'gh pr *',
+    'gh issue *',
+    'gh run *',
+    'gh repo view',
+}
+GROK_BASH_DENY_PATTERNS = {'git push'}
 
 
 def split_frontmatter(text):
@@ -109,6 +130,48 @@ class GrokAdapterTests(unittest.TestCase):
         self.assertNotIn('[mcp_servers.comfy-local]', text)
         self.assertNotIn('[mcp_servers.MCP_DOCKER]', text)
         self.assertIn('[permission]', text)
+
+    def test_grok_permission_rules_are_structured_and_bounded(self):
+        config = tomllib.loads((ROOT / '.grok/config.toml').read_text(encoding='utf-8'))
+        permission = config.get('permission')
+        self.assertIsInstance(permission, dict)
+        for compact_key in ('allow', 'deny', 'ask'):
+            self.assertNotIn(
+                compact_key,
+                permission,
+                'use one structured representation instead of mixing equivalent Grok forms',
+            )
+        rules = permission.get('rules')
+        self.assertIsInstance(rules, list)
+        self.assertGreater(len(rules), 0)
+        allow_patterns = set()
+        deny_patterns = set()
+        seen = set()
+        for index, rule in enumerate(rules):
+            self.assertIsInstance(rule, dict, index)
+            action = rule.get('action')
+            self.assertIn(action, {'allow', 'deny'}, index)
+            self.assertEqual(rule.get('tool'), 'bash', index)
+            pattern = rule.get('pattern')
+            self.assertIsInstance(pattern, str, index)
+            self.assertTrue(pattern.strip(), index)
+            self.assertNotIn('Bash(', pattern, index)
+            self.assertLessEqual(pattern.count('*'), 1, index)
+            if '*' in pattern:
+                self.assertTrue(
+                    pattern.endswith(' *'),
+                    f'{pattern!r} widens a command token rather than its arguments',
+                )
+            identity = (action, pattern)
+            self.assertNotIn(identity, seen, f'duplicate Grok permission rule at {index}')
+            seen.add(identity)
+            if action == 'allow':
+                allow_patterns.add(pattern)
+            else:
+                deny_patterns.add(pattern)
+        self.assertEqual(allow_patterns, GROK_BASH_ALLOW_PATTERNS)
+        self.assertEqual(deny_patterns, GROK_BASH_DENY_PATTERNS)
+        self.assertFalse(any(pattern.startswith('git push') for pattern in allow_patterns))
 
     def test_docs_name_the_grok_adapter(self):
         for doc in ('AGENTS.md', 'CLAUDE.md'):
