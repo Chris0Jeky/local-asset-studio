@@ -259,7 +259,7 @@ class MixedBatchTests(unittest.TestCase):
     def test_real_worker_dispatches_read_only_and_stale_queue_item_is_inert(self):
         self.unresolved();self.studio.replies=iter([completed()]);payload=self.payload();self.command('observe',payload)
         item=self.studio.queue.get_nowait();items=iter([item,item])
-        def get():
+        def get(timeout=None):
             try:return next(items)
             except StopIteration:raise SystemExit('test consumer finished')
         with patch.object(self.studio.queue,'get',side_effect=get):
@@ -304,7 +304,7 @@ class MixedBatchTests(unittest.TestCase):
     def test_malformed_mixed_dispatch_cannot_end_shared_worker(self):
         self.command('observe',self.payload());good=self.studio.queue.get_nowait()
         items=iter([('observe-mixed',(self.job['id'],)),good])
-        def get():
+        def get(timeout=None):
             try:return next(items)
             except StopIteration:raise SystemExit('test consumer finished')
         with patch.object(self.studio.queue,'get',side_effect=get):
@@ -333,7 +333,7 @@ class MixedBatchTests(unittest.TestCase):
             path=directory/name;path.write_text(json.dumps(json.loads(path.read_text()),separators=(',',':'))+'\n',encoding='utf-8')
         before=self.files();self.command('observe',self.payload())
         items=iter([self.studio.queue.get_nowait()])
-        def get():
+        def get(timeout=None):
             try:return next(items)
             except StopIteration:raise SystemExit('test consumer finished')
         with patch.object(self.studio.queue,'get',side_effect=get), \
