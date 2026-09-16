@@ -1,7 +1,7 @@
 """One real-SQLite consistency oracle for workflow documents and setup drafts.
 
 Adapters keep domain commands, receipts and errors typed. The matrix only shares
-observable facts: head, revision count, request count and accounted history bytes.
+observable facts: head, revision count, request count, accounted history bytes and exact fault evidence.
 No filesystem/model action is claimed atomic with either SQLite transaction.
 """
 from __future__ import annotations
@@ -31,6 +31,12 @@ class ConsistencyFacts:
     revisions: int
     requests: int
     accounted_bytes: int
+
+
+@dataclass(frozen=True)
+class StoredEvidence:
+    payload: str
+    sha256: str
 
 
 class WorkflowAdapter:
@@ -98,6 +104,14 @@ class WorkflowAdapter:
                 'SELECT COUNT(*) FROM workflow_requests_v1 WHERE document_id=?', (self.key,)
             ).fetchone()[0]
         return ConsistencyFacts(head, revision[0], requests, revision[1])
+
+    def integrity_evidence(self):
+        with self.workspace.connection() as db:
+            row = db.execute(
+                'SELECT document,sha256 FROM workflow_revisions_v1 WHERE document_id=? AND revision=(SELECT head FROM workflow_documents_v1 WHERE id=?)',
+                (self.key, self.key),
+            ).fetchone()
+        return StoredEvidence(row['document'], row['sha256'])
 
     def corrupt(self, kind: str):
         column, value = ('document', '{}') if kind == 'json' else ('sha256', '0' * 64)
@@ -249,6 +263,14 @@ class SetupAdapter:
             ).fetchone()
         return ConsistencyFacts(head, revision[0], requests[0], revision[1] + requests[1])
 
+    def integrity_evidence(self):
+        with self.studio.assets.connection() as db:
+            row = db.execute(
+                'SELECT record,sha256 FROM setup_versions_v1 WHERE draft_id=? AND revision=(SELECT head FROM setup_drafts_v1 WHERE id=?)',
+                (self.key, self.key),
+            ).fetchone()
+        return StoredEvidence(row['record'], row['sha256'])
+
     def corrupt(self, kind: str):
         column, value = ('record', '{}') if kind == 'json' else ('sha256', '0' * 64)
         with self.studio.assets.connection() as db:
@@ -358,10 +380,14 @@ class RevisionConsistencyFaultMatrix(unittest.TestCase):
                 with self.subTest(domain=factory.domain, fault=fault), self.adapter(factory) as adapter:
                     adapter.create()
                     before = adapter.facts()
+                    original = adapter.integrity_evidence()
                     adapter.corrupt(fault)
+                    corrupted = adapter.integrity_evidence()
+                    self.assertNotEqual(corrupted, original)
                     with self.assertRaises(ValueError) as caught:
                         adapter.read_head()
                     adapter.assert_integrity_error(self, caught.exception)
+                    self.assertEqual(adapter.integrity_evidence(), corrupted)
                     self.assertEqual(adapter.facts(), before)
 
     def test_storage_budget_refusal_preserves_all_prior_evidence(self):

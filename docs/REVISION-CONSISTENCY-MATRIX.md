@@ -9,7 +9,7 @@ Issue: #386. This document records the frozen, pre-refactor behavior that #385 m
 - `WorkflowDocuments`;
 - `SetupDrafts`.
 
-The adapters remain deliberately small and domain-typed. They translate only four observable facts: current head, retained revisions, retained request receipts, and bytes counted by that domain's existing history budget. They do not introduce a generic command endpoint or claim that file copies, model state, or any external side effect are atomic with SQLite.
+The adapters remain deliberately small and domain-typed. They translate current head, retained revision count, retained request-receipt count, and bytes counted by each domain's existing history budget. Deliberate integrity faults additionally capture the exact stored JSON and recorded digest so a failed read cannot silently repair or replace evidence while preserving only aggregate counts. The adapters do not introduce a generic command endpoint or claim that file copies, model state, or any external side effect are atomic with SQLite.
 
 ## Shared matrix
 
@@ -20,11 +20,11 @@ The adapters remain deliberately small and domain-typed. They translate only fou
 | Stale expected head | Domain revision-conflict code; no request receipt or revision. |
 | Two interleaved writers | Exactly one revision commits; the other observes the moved head. |
 | Response lost after commit | A newly opened store recovers the original receipt by request identity without repeating the write. |
-| Corrupt stored JSON or digest | Read fails closed; no repair, pruning, or replacement occurs. |
+| Corrupt stored JSON or digest | Read fails closed; the exact corrupted payload and digest remain unchanged; no repair, pruning, or replacement occurs. |
 | Storage budget exhausted | Existing head, revisions, requests, and accounted bytes remain unchanged. |
 | Restore | A third revision is appended; revisions one and two remain readable and unchanged. |
 
-The corruption rows are intentional discriminating faults. Removing the digest/JSON checks, moving replay behind head checks, recording stale requests, or mutating before budget validation makes the matrix fail.
+The corruption rows are intentional discriminating faults. Each case first proves that fault injection changed the stored evidence, then proves that the failed read leaves those exact corrupted fields untouched. Removing the digest/JSON checks, repairing on read, moving replay behind head checks, recording stale requests, or mutating before budget validation makes the matrix fail.
 
 ## Semantics intentionally not unified
 
