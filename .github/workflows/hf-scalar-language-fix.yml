@@ -1,0 +1,91 @@
+name: Apply Hugging Face scalar language fix
+
+on:
+  push:
+    branches:
+      - test/hf-scalar-language
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/hf-scalar-language
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Accept scalar language metadata and cover source snapshots in CI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('studio_prompt/adult_illustration_source_intake.py')
+          source = source_path.read_text(encoding='utf-8')
+          base_anchor = '''    else:
+              raise ValueError("Hugging Face base_model metadata is invalid")
+
+          access_state = _hf_access_state(payload)
+          '''
+          language_block = '''    else:
+              raise ValueError("Hugging Face base_model metadata is invalid")
+
+          language = card.get("language")
+          if isinstance(language, str):
+              if not language.strip() or len(language) > 1_024:
+                  raise ValueError("Hugging Face language metadata is invalid")
+              languages = [language.strip()]
+          else:
+              languages = _bounded_strings(
+                  language, "Hugging Face languages", maximum=128
+              )
+
+          access_state = _hf_access_state(payload)
+          '''
+          if source.count(base_anchor) != 1:
+              raise SystemExit('base-model insertion anchor drifted')
+          source = source.replace(base_anchor, language_block)
+          old_language = '''            "languages": _bounded_strings(card.get("language"), "Hugging Face languages", maximum=128),
+          '''
+          new_language = '''            "languages": languages,
+          '''
+          if source.count(old_language) != 1:
+              raise SystemExit('language metadata anchor drifted')
+          source_path.write_text(source.replace(old_language, new_language), encoding='utf-8')
+
+          workflow_path = Path('.github/workflows/prompt-studio.yml')
+          workflow = workflow_path.read_text(encoding='utf-8')
+          script_anchor = "'scripts/studio_adult_illustration_prompt.py', 'app/static/prompt-lab.*'"
+          script_replacement = "'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'app/static/prompt-lab.*'"
+          if workflow.count(script_anchor) != 2:
+              raise SystemExit('Prompt Studio script path anchors drifted')
+          workflow = workflow.replace(script_anchor, script_replacement)
+          if workflow.count("'tests/test_adult_illustration_prompt*.py'") != 3:
+              raise SystemExit('adult illustration test anchors drifted')
+          workflow = workflow.replace(
+              "'tests/test_adult_illustration_prompt*.py'",
+              "'tests/test_adult_illustration*.py'",
+          )
+          workflow_path.write_text(workflow, encoding='utf-8')
+          PY
+
+      - name: Verify focused and stacked adult-illustration contracts
+        run: |
+          python -m unittest tests.test_adult_illustration_source_language -v
+          python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
+          python scripts/validate_adult_illustration_intelligence.py
+          python -m py_compile studio_prompt/adult_illustration_source_intake.py scripts/studio_adult_illustration_source_snapshot.py tests/test_adult_illustration_source_language.py
+          git diff --check
+
+      - name: Publish the verified implementation on the disposable branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add studio_prompt/adult_illustration_source_intake.py tests/test_adult_illustration_source_language.py .github/workflows/prompt-studio.yml
+          git commit -m 'Accept scalar Hugging Face language metadata'
+          git push origin HEAD:test/hf-scalar-language
