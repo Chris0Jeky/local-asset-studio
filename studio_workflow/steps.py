@@ -54,7 +54,17 @@ def apply_step_command(doc, command):
     key = _id(command.get('id'))
     step = next((item for item in steps if item['id'] == key), None)
     need(step is not None, 'Unknown step')
-    if op == 'remove_step':
+    if op == 'move_step':
+        fields(command, ('op', 'id', 'before'))
+        before = command['before']
+        if before is not None:
+            _id(before); need(any(item['id'] == before for item in steps), 'Unknown destination step')
+        if before == key: return
+        ordered = [item for item in steps if item['id'] != key]
+        index = len(ordered) if before is None else next(i for i, item in enumerate(ordered) if item['id'] == before)
+        ordered.insert(index, step); doc['steps'] = ordered
+        # Presentation order only; graph connections determine execution order.
+    elif op == 'remove_step':
         fields(command, ('op', 'id'))
         doc['steps'] = [item for item in steps if item['id'] != key]
         # Removing the grouping never removes or enables its nodes.

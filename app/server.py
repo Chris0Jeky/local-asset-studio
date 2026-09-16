@@ -21,7 +21,7 @@ import zipfile
 from decimal import Decimal, InvalidOperation
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from queue import Queue
+from queue import Empty, Queue
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import Request, urlopen
@@ -42,6 +42,7 @@ import prompting
 import submission_evidence
 import job_resources
 import continuation
+import pose_guide
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -49,7 +50,7 @@ from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit into an unobserved/busy queue
@@ -112,6 +113,11 @@ class Studio:
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
+        # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
+        raw_minutes = self.config.get("idle_cache_release_minutes", 10)
+        self.idle_release_minutes = max(0.0, float(raw_minutes)) if self._finite_number(raw_minutes) else 10.0   # 0 or a negative value switches it off
+        self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
         for job in self.jobs.values():
@@ -124,6 +130,10 @@ class Studio:
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
+        from studio_prompt.reference_jobs import ReferenceJobs
+        self.reference_jobs = ReferenceJobs(self)
+        from studio_prompt.projects import PromptProjects
+        self.prompt_projects = PromptProjects(self.assets)
         self.resource_observations = job_resources.from_config(self)
         self.worker = threading.Thread(target=self._work, daemon=True, name="asset-studio-worker"); self.worker.start()
         self.runtime_recovery = RuntimeRecovery(self)
@@ -392,7 +402,7 @@ class Studio:
             # strength 0, so refuse it here while the inventory is known.
             if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
             self._bind_control(graph, preset, key, name)
-        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False)):
+        for key, lo, hi, integer in (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True)):
             if key in controls: self._bind_control(graph, preset, key, number(controls[key], key, lo, hi, integer))
         for key, lo, hi in (("frames", 5, 365), ("fps", 1, 60)):
             if key in controls:
@@ -523,6 +533,7 @@ class Studio:
             return self._create_job(payload, enqueue, job_id)
 
     def _create_job(self, payload, enqueue=True, job_id=None):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         preset, graph, graph_path, controls, batch = self.prepare(payload)
         parents = payload.get("parent_assets", [])
         if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
@@ -587,8 +598,8 @@ class Studio:
     def _estimate_graph(self, preset, controls):
         graph, _ = self.graph_for(preset)
         controls = controls if isinstance(controls, dict) else {}
-        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", *LORA_SLOTS}
-        integer = {"seed", "steps", "width", "height", "frames", "fps"}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
+        integer = {"seed", "steps", "width", "height", "frames", "fps", "depth_cut"}
         extras = preset.get("bindings_extra") or {}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
@@ -1058,7 +1069,9 @@ class Studio:
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None):
         body = json.dumps(data).encode() if data is not None else None
         req = Request((base_url or self.comfy_url) + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
-        with urlopen(req, timeout=timeout) as response: return json.loads(response.read().decode())
+        with urlopen(req, timeout=timeout) as response:
+            raw = response.read()
+            return json.loads(raw.decode()) if raw.strip() else None   # ComfyUI's /free answers 200 with no body
 
     def identity(self):
         return {"app": "local-asset-studio", "workspace": str(self.root), "version": "production-workspace-1"}
@@ -1076,6 +1089,7 @@ class Studio:
         return worker is None or worker.ident is None or worker.is_alive()
 
     def require_worker(self):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         # Preserve pre-start/offline fixture behavior; never replace a dead worker
         # or silently replay its queue. All queue writers share this admission.
         if not Studio.worker_available(self):
@@ -1114,8 +1128,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading()}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "cache_release": self.cache_release_status()}
 
     def inspect_preset(self, preset_id, graph=None):
         preset = self.preset(preset_id)
@@ -1196,14 +1210,40 @@ class Studio:
                 job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
             self._save(job)
 
+    def cache_release_status(self):
+        idle = time.monotonic() - self._last_activity
+        return {**self.cache_release, "idle_minutes": self.idle_release_minutes, "idle_seconds": round(idle, 1), "pending": self.idle_release_minutes > 0 and not self._released_since_activity}
+
+    def _idle_tick(self):
+        """Release ComfyUI's model cache once per idle stretch: only after the configured idle time, only on an idle ComfyUI queue."""
+        if self.idle_release_minutes <= 0 or self._released_since_activity: return False
+        if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
+        try:
+            queue = self._request("/queue", timeout=5)
+            if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")): return False
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60)
+        except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
+            self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
+        self._released_since_activity = True
+        self.cache_release.update(count=self.cache_release["count"] + 1, last_at=time.time(), last_error=None)
+        return True
+
     def _work(self):
         while True:
-            action, job_id = self.queue.get()
+            try: action, job_id = self.queue.get(timeout=30)
+            except Empty:
+                try: self._idle_tick()
+                except Exception: pass
+                continue
+            self._last_activity = time.monotonic(); self._released_since_activity = False
             mixed_request = None
             job = None
             try:
                 if action == "observe-mixed": job_id, mixed_request = job_id
-                if action == 'production': self.production.run(job_id)
+                if action == "reference-analysis": self.reference_jobs.run(job_id)
+                elif action == 'production':
+                    if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+                    self.production.run(job_id)
                 else:
                     job = self.jobs.get(job_id)
                     if job:
@@ -1212,7 +1252,8 @@ class Studio:
                         else: self._run(job)
             except Exception as exc:
                 try:
-                    if action == 'production':
+                    if action == 'reference-analysis': self.reference_jobs.record_failure(job_id, exc)
+                    elif action == 'production':
                         # Escaping here can be a failed job-state write after a POST.
                         # Only normal stage reconciliation can certify a terminal outcome.
                         self.production._mutate(job_id, status='uncertain', message='Coordinator processing or recording failed; inspect retained job evidence before new work: ' + str(exc)[:400])
@@ -1226,6 +1267,7 @@ class Studio:
                                            'recording_error': str(recording_error)[:500], 'durable': False}
                     try: print('Studio worker could not persist failure:', self.worker_failure, file=sys.stderr, flush=True)
                     except Exception: pass
+            finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
     def _batch_graph(self, job, index):
         graph = copy.deepcopy(job["graph"])
@@ -1282,8 +1324,21 @@ class Studio:
         exception_message = text("exception_message", 450)
         combined = " ".join(value for value in (exception_type, exception_message) if value).lower()
         allocation = bool(re.search(r"bad allocation|out of memory|not enough memory|memory allocation|alloc(?:ation)?_failed|alloc_cpu|paging file|os error 1455", combined))
+        # ComfyUI's own model cache can trip on the first load of a different model family in a session (IndexError in
+        # free_memory before any sampling, #350: observed twice on 14 September 2026, the identical graph succeeded on retry).
+        trace = detail.get("traceback")
+        has_trace = isinstance(trace, list) and any(isinstance(line, str) and line.strip() for line in trace)
+        trace_text = " ".join(line for line in trace if isinstance(line, str))[:6000].lower() if has_trace else ""
+        # Only the distinctive signature counts: an IndexError whose traceback names free_memory. A loader's own IndexError (a
+        # corrupt or incompatible file) stays a plain execution error, whatever the node is called.
+        swap = "indexerror" in combined and "free_memory" in trace_text
 
-        if allocation:
+        if swap:
+            kind = "model_swap_fault"
+            title = "ComfyUI model-swap fault"
+            summary = f"ComfyUI failed inside its own model cache (free_memory is in the traceback) while running {node_type or 'a model node'}: the first load of a different model family in a session can trip this, and the recipe and the prompt are not the cause."
+            action = "Run the same job again with the same seed: measured 14 September 2026, the identical graph succeeded on the retry. The original prompt was not retried automatically."
+        elif allocation:
             kind = "memory_allocation"
             title = "Memory allocation failed"
             if re.search(r"defaultcpuallocator|alloc_cpu|paging file|os error 1455|commit", combined):
@@ -1321,6 +1376,7 @@ class Studio:
         self._save(job)
 
     def _run(self, job):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         with self.lock:
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
@@ -1422,7 +1478,8 @@ class Studio:
                     submission["status"] = "failed"
                     job["failure"] = self._execution_failure(detail)
                     detail_text = f"{detail.get('node_type', '')}: {detail.get('exception_message', '')}".strip(': ')
-                    message = "ComfyUI reported an execution error" + (": " + detail_text[:450] if detail_text else "")
+                    label = "ComfyUI model-swap fault; running the same job again is safe" if job["failure"].get("kind") == "model_swap_fault" else "ComfyUI reported an execution error"
+                    message = label + (": " + detail_text[:450] if detail_text else "")
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
                 outputs = history.get("outputs", {})
@@ -1549,9 +1606,9 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError: raise StudioError("Valid Content-Length required")
         if size < 0 or size > limit: raise StudioError("Request body is too large")
         return size
-    def _body_json(self):
+    def _body_json(self, limit=1024 * 1024):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": raise StudioError("application/json required")
-        return json.loads(self.rfile.read(self._content_length(1024 * 1024)).decode())
+        return json.loads(self.rfile.read(self._content_length(limit)).decode())
     def _media(self, descriptor, job=None):
         query = urlencode({k:descriptor[k] for k in ("filename", "subfolder", "type") if descriptor.get(k) is not None})
         headers = {}
@@ -1761,6 +1818,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.stop_tracking(self.path.split("/")[3], self._body_json().get("reason")))
             if self.path == "/api/upload":
                 size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
+            # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
+            if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             return self._json(404, {"error":"Not found"})
         except WorkspaceError as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc: self._json(400, {"error": str(exc)})

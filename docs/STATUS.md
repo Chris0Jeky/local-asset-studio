@@ -10,8 +10,8 @@ the art), licensed (the terms allow the use). Update this page when a goal's sta
 | --- | --- | --- |
 | G1 Workflows that genuinely work and are elaborated | ~65 % | Image lanes proven on this PC (63 of 66 graphs live-valid, 39 presets with completed jobs); video lane executes but fails inspection; per-backend validation missing |
 | G2 Chosen images at baseline quality | ~55 % | All six baseline families executed with retained IDs; zero accepted images; hands and feet unresolved; AniFox never ran |
-| G3 Character sheets → figures, poses, in-betweens | ~25 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
-| G4 UX that reflects the real work | ~70 % | Workflow-first IA is real and wired to ComfyUI; the owner's 14 Sep verdict ("pretty much unusable") drove seven merged UX PRs under #278; review loop now has a queue, shortcuts and bulk review but is still unused by the owner; no task family for sheet/figure/sprite work |
+| G3 Character sheets → figures, poses, in-betweens | ~35 % | Primitives proven (face/hand repair, upscale, Krita protected edit, Godot playback); no addressable-figure capability exists; in-betweens are research only |
+| G4 UX that reflects the real work | ~72 % | Workflow-first IA is real and wired to ComfyUI; the owner's 14 Sep verdict ("pretty much unusable") drove seven merged UX PRs under #278; review loop now has a queue, shortcuts and bulk review but is still unused by the owner; no task family for sheet/figure/sprite work |
 | G5 UI that works and feels good | ~55 % | 79 synthetic journeys pass; ten agent-driven use cases measured (fixture 10/10, live read-only 4/10, 4 dead ends ranked in UX-USE-CASE-MATRIX.md); the owner's first-hand statement is on record (UX-AUDIT-2026-09-14.md) and the next pass is the verdict (q-7) |
 | G6 Modular workflow editing in the Studio | ~55 % | Revisioned documents, Steps, bundles, agent parity exist; edited graphs are not runnable by design (#122); dynamic ComfyUI inputs were mis-read (fixed in PR #262) |
 | G7 Everything else | ~40 % | Runtime resilience strongest; video/Wan and voice weakest; #77/#89 crash root causes still open |
@@ -58,9 +58,13 @@ unresolved on all three new baselines and no baseline output has been put throug
 pass. No controlled with/without-adapter comparison at matched seed exists. AniFox v2 is the one family that never ran
 (download parked; two ledger entries disagree on the partial size and are reconciled in the assessment).
 
-**Next slice.** Run look B through the brief's four steps at a fixed seed, push each through `anime-detail-fix`, and
+**Done 16 September 2026.** Look B ran through the brief's four steps at seed 2026091301 (portrait, full body, expression, a detail pass on the portrait) as four Studio jobs, inspected and recorded in `experiments/curated/fantasy-pack-20260916/`; the four assets wait unreviewed in the review queue (HUMAN_TODO q-30). The seed did not carry identity across prompts (the hair changed on the expression render) and the detail pass changed the face's eye colour without touching the hands, so the same night the expression was redone as a *Change one thing* edit of the portrait (identity kept) while the depth Combine into the full-body pose lost the face at that scale: the next slice is a full-body route that keeps the face (Copy Pose or a face pass) plus a targeted hand repair, not another seed.
+
+**Previous next slice (13 September).** Run look B through the brief's four steps at a fixed seed, push each through `anime-detail-fix`, and
 present the before/after pairs to the owner as one review batch. Every ingredient is proven; the missing artifact is an
 owner decision. Open issue: #14.
+
+**16 September 2026 (pose transfer).** Two strong pose-transfer routes are recipes on the Combine route (depth map leading, Copy Pose second), the ankle cut is a control on the depth recipe, a drawn stick figure is a recipe, and a keypoint pose editor draws that figure on the page (PR #466); every one proved through the Studio on the owner's pair. Identity across a body-pose change from a portrait-sized reference is still open (the depth route lost the face at full-body scale, `experiments/curated/fantasy-pack-20260916/`).
 
 ## G3 — Character sheets, figures, poses, in-betweens
 

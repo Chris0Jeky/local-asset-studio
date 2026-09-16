@@ -1,0 +1,38 @@
+name: Figure crop memory contracts
+on:
+  pull_request:
+    paths:
+      - 'studio_workflow/addressable_figures.py'
+      - 'app/workspace.py'
+      - 'tests/test_figure_crop*.py'
+      - 'tests/test_addressable_figures.py'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/figure-crop-memory.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'studio_workflow/addressable_figures.py'
+      - 'app/workspace.py'
+      - 'tests/test_figure_crop*.py'
+      - 'tests/test_addressable_figures.py'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
+      - '.github/workflows/figure-crop-memory.yml'
+permissions:
+  contents: read
+concurrency:
+  group: figure-crop-memory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p "test_figure_crop*.py" -v
+      - run: python -m unittest discover -s tests -p "test_addressable_figures.py" -v
