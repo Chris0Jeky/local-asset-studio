@@ -114,9 +114,8 @@ class Studio:
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
-        try: self.idle_release_minutes = float(self.config.get("idle_cache_release_minutes", 10))
-        except (TypeError, ValueError): self.idle_release_minutes = 10.0
-        if not (self.idle_release_minutes >= 0 and self.idle_release_minutes == self.idle_release_minutes): self.idle_release_minutes = 10.0
+        raw_minutes = self.config.get("idle_cache_release_minutes", 10)
+        self.idle_release_minutes = max(0.0, float(raw_minutes)) if self._finite_number(raw_minutes) else 10.0   # 0 or a negative value switches it off
         self._last_activity = time.monotonic(); self._released_since_activity = False; self.cache_release = {"count": 0, "last_at": None, "last_error": None}
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
@@ -1067,7 +1066,9 @@ class Studio:
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None):
         body = json.dumps(data).encode() if data is not None else None
         req = Request((base_url or self.comfy_url) + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
-        with urlopen(req, timeout=timeout) as response: return json.loads(response.read().decode())
+        with urlopen(req, timeout=timeout) as response:
+            raw = response.read()
+            return json.loads(raw.decode()) if raw.strip() else None   # ComfyUI's /free answers 200 with no body
 
     def identity(self):
         return {"app": "local-asset-studio", "workspace": str(self.root), "version": "production-workspace-1"}
@@ -1216,7 +1217,7 @@ class Studio:
         if time.monotonic() - self._last_activity < self.idle_release_minutes * 60: return False
         try:
             queue = self._request("/queue", timeout=5)
-            if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): return False
+            if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")): return False
             self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60)
         except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
@@ -1263,6 +1264,7 @@ class Studio:
                                            'recording_error': str(recording_error)[:500], 'durable': False}
                     try: print('Studio worker could not persist failure:', self.worker_failure, file=sys.stderr, flush=True)
                     except Exception: pass
+            finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
     def _batch_graph(self, job, index):
         graph = copy.deepcopy(job["graph"])

@@ -10,6 +10,7 @@ from unittest.mock import patch
 from unittest.mock import Mock
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
+from queue import Empty
 from PIL import Image
 
 def png():
@@ -494,6 +495,31 @@ class ServerTests(unittest.TestCase):
         (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy")}))
         down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
         self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
+
+    def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
+        """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
+        s=self.studio()
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'')]
+        s._last_activity-=11*60
+        with patch.object(server,'urlopen',side_effect=replies): self.assertTrue(s._idle_tick())
+        self.assertEqual((s.cache_release['count'],s.cache_release['last_error']),(1,None))
+        # The real loop: an empty wait ticks, a dequeued job re-arms and stamps activity, and the loop survives a tick that raises.
+        s=self.studio(); calls=[]
+        with patch.object(s.queue,'get',side_effect=[Empty(),Empty(),KeyboardInterrupt()]), patch.object(s,'_idle_tick',side_effect=[RuntimeError('boom'),True]) as tick:
+            with self.assertRaises(KeyboardInterrupt): s._work()
+        self.assertEqual(tick.call_count,2)
+        s=self.studio(); before=s._last_activity-1000; s._last_activity=before; s._released_since_activity=True
+        with patch.object(s.queue,'get',side_effect=[('generate','missing-job'),KeyboardInterrupt()]):
+            with self.assertRaises(KeyboardInterrupt): s._work()
+        self.assertGreater(s._last_activity,before); self.assertFalse(s._released_since_activity)
+        # A malformed queue answer is not evidence of an idle queue.
+        s=FakeStudio(self.root,[{'queue_running':None,'queue_pending':[]}]); s._last_activity-=11*60
+        self.assertFalse(s._idle_tick()); self.assertEqual(len(s.requests),1); self.assertEqual(s.cache_release['count'],0)
+        # Config: a negative value switches the release off, a non-finite value falls back to the default.
+        for value,expected in ((-5,0.0),(1e999,10.0),('nan',10.0),(True,10.0),(2.5,2.5)):
+            (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'idle_cache_release_minutes':value}))
+            self.assertEqual(self.studio().idle_release_minutes,expected,value)
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy')}))
 
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
