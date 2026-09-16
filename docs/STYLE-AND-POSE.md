@@ -54,7 +54,19 @@ blank image 1 plus the pose in words gives perfect identity but never the deep b
 wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
 heel can still shape a foot; audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
 
-**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** is second on the route and is the
+**Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)** is second on the
+route (16 September 2026). It runs the shipped 9B graph with the civitai *Copy Pose* LoRA (`KleinBase9B_PoseTransfer`, strength 1.0,
+model only) and turns the order round: **your character is image 1** and is kept, with its own background, framing and rendering,
+and **the pose picture is image 2**, from which only the pose is taken. On the owner's pair (pose round three,
+`examples/style-pose/combine-pose-round3.jpg`) 3 of 3 seeds held the deep bend, crossed legs and look-back with the face,
+lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking, 75-80 s warm. It wants the
+real pose picture: a depth map as image 2 copied the map's black ground and a grey ghost figure on 3 of 3 seeds. Three fills in the
+wording's reading order: who is in image 1, image 1's clothes and colours, image 2's pose with the hands and the camera. Choose it
+over the depth recipe when the character's own picture should stay the picture; choose the depth recipe when the pose picture's
+framing is wanted. The LoRA's civitai flags read Rent only (no Image, no Sell) and its description says non-commercial; the 9B
+model is non-commercial. Proving run through the Studio: see the catalog `execution_note` once recorded.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** is third on the route and is the
 recipe to reach for when the pose picture's camera, framing and background should be kept as well as the pose (the depth
 recipe keeps only the body position). It is the recipe for a strong pose (a deep bend, a crouch, a lean seen from an angle). It works
 the other way round from the 4B recipe: the **pose picture is image 1** and is kept (pose, camera, framing, background),
