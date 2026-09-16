@@ -275,6 +275,8 @@ of `pose_sources.py` (`0.86 * h`). Proving run through the Studio (`prove_depthc
 | --- | --- | --- | --- | --- | --- |
 | the shipped depth recipe, `depth_cut` 86, same pair and fills as the 15 September proving run `22ff6394` (uncut, one heel-shaped foot) | 2026091441 | `b57c6f3f-0d12-430d-863e-02e0bd0ebaa0` / `7769c72d-602d-49cc-b4f0-41238d09fd03` | 122.9 (fresh ComfyUI, model load included) | `Combine/Klein-9B-depth_00003_.png` | **same bend, crossed legs and look-back; both feet bare on tiptoe, no heel**; face, hair, SHARK lettering, pink shorts kept; submitted graph node 33 `y` = 86 (`state.json` in the receipts root) |
 
+| the same recipe at the default `depth_cut` 100 (no-op check, `prove_depthcut_noop.json`) | 2026091441 | `216239b8-981f-426a-9d50-b2b02ef8f7fb` / `6879ee82-cabe-4387-9580-ed8fa82ecc8a` | 90.5 | `Combine/Klein-9B-depth_00004_.png` | **byte-identical to the 15 September uncut output `Klein-9B-depth_00001_.png`** (PIL difference: bbox None, max 0): the composite is a no-op at 100 on the real runtime, so the recorded run stays reproducible |
+
 Sheet: `examples/style-pose/combine-depth-cut-control.jpg` (uncut vs cut, same seed). Not verified: the control by clicking through the page
 (the API run uses the page's prepare and worker path); any other pose picture; art acceptance (HUMAN_TODO q-28).
 
