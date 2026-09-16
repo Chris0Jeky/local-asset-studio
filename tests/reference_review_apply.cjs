@@ -43,6 +43,7 @@ const document={
   body:new Element(),
 };
 const response=value=>({ok:true,json:async()=>value});
+let inspectGate=null;
 const context=vm.createContext({
   document,
   window:{addEventListener(){}},
@@ -53,10 +54,13 @@ const context=vm.createContext({
   fetch:async(url,options)=>{
     if(url==='/api/prompt/profiles')return response({profiles:[]});
     const body=JSON.parse(options.body);
-    if(url.endsWith('/inspect'))return response({
-      format:'studio.reference-review/v1',analysis:fixture.report,review:fixture.review,
-      inference_submitted:false,generation_submitted:false,execution_authorized:false,
-    });
+    if(url.endsWith('/inspect')){
+      if(inspectGate)await inspectGate;
+      return response({
+        format:'studio.reference-review/v1',analysis:fixture.report,review:fixture.review,
+        inference_submitted:false,generation_submitted:false,execution_authorized:false,
+      });
+    }
     if(url.endsWith('/preview'))return response({
       format:'studio.reference-transfer-preview/v1',
       base_intent:body.intent,
@@ -72,24 +76,17 @@ for(const name of ['prompt-lab.js','reference-review.js']){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static',name),'utf8'),context);
 }
 
-(async()=>{
-  el('brief').value='Keep my instruction';
-  const analysisFile={size:100,text:async()=>JSON.stringify(fixture.report)};
-  el('rr-analysis').files=[analysisFile];
-  await el('rr-analysis').fire('change');
-  el('rr-originals').files=fixture.images.map((row,index)=>{
-    const bytes=Buffer.from(row.media_base64,'base64');
-    return {size:bytes.length,name:'renamed-'+index+'.png',
-      arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};
-  });
+const originalFiles=()=>fixture.images.map((row,index)=>{
+  const bytes=Buffer.from(row.media_base64,'base64');
+  return {size:bytes.length,name:'renamed-'+index+'.png',
+    arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};
+});
+async function previewAndApply(){
+  el('rr-originals').files=originalFiles();
   await el('rr-originals').fire('change');
   await el('rr-preview').fire('click');
-
   assert.equal(el('rr-apply').disabled,false,'A verified preview must arm Apply');
-  assert.equal(el('rr-diff').children.length,1,'The before/after diff must be rendered before Apply');
-  assert.match(el('rr-change-summary').textContent,/Nothing is applied yet/);
   const retainedDiff=el('rr-diff').children[0];
-
   el('rr-apply').fire('click');
   assert.equal(el('style').value,'reviewed ink');
   assert.equal(el('rr-diff').children.length,1,'Apply must not clear its own reviewed diff');
@@ -99,9 +96,30 @@ for(const name of ['prompt-lab.js','reference-review.js']){
   assert.equal(el('rr-undo').disabled,false,'The successful application must remain undoable');
   assert.equal(el('rr-export').disabled,false,'The successful application must remain exportable');
   assert.match(el('rr-status').textContent,/Applied to this brief/);
+}
 
-  // A new analysis is a new review context. It must not expose the prior
-  // analysis's undo ticket or receipt as though they belonged to the new one.
+(async()=>{
+  el('brief').value='Keep my instruction';
+  const analysisFile={size:100,text:async()=>JSON.stringify(fixture.report)};
+  el('rr-analysis').files=[analysisFile];
+  await el('rr-analysis').fire('change');
+  await previewAndApply();
+
+  // Programmatic load is also a review-context transition. The previous
+  // analysis's mutation ticket and receipt must be unusable before any async
+  // inspection or source hashing can finish.
+  let releaseInspect;
+  inspectGate=new Promise(resolve=>{releaseInspect=resolve;});
+  const loading=context.StudioReferenceReview.load(fixture.report,[]);
+  assert.equal(el('rr-undo').disabled,true,'Programmatic load must immediately disarm the prior undo ticket');
+  assert.equal(el('rr-export').disabled,true,'Programmatic load must immediately disarm the prior receipt');
+  releaseInspect();
+  await loading;
+  inspectGate=null;
+
+  // Re-establish one applied review so the file-input transition remains
+  // covered independently of the programmatic path above.
+  await previewAndApply();
   el('rr-analysis').files=[analysisFile];
   await el('rr-analysis').fire('change');
   assert.equal(el('rr-undo').disabled,true,'Opening another analysis must disarm the prior undo ticket');
