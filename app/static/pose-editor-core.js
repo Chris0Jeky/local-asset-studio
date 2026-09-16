@@ -71,6 +71,16 @@
     const round=(value,limit)=>Math.round(clamp(value,limit)*100)/100;
     return{width:c.width,height:c.height,keypoints:copy(points).map(p=>p?[round(p.x,c.width),round(p.y,c.height)]:null)};
   }
+  // Typed values are not pointer drags: refuse invalid/out-of-range input instead of clamping it.
+  function positionInput(x,y,canvas){
+    const c=canvasOf(canvas),read=value=>{
+      if(typeof value!=='number'&&(typeof value!=='string'||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())))
+        throw Error('Enter X and Y as decimal pixel coordinates.');
+      const result=Number(value);if(!Number.isFinite(result))throw Error('Coordinates must be finite.');return result;
+    },point={x:read(x),y:read(y)};
+    if(point.x<0||point.x>c.width||point.y<0||point.y>c.height)throw Error('X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
+    return point;
+  }
   // Treat rendering as a response to this exact canvas; never spread untrusted attachment metadata into a slot.
   function guideResponse(value,request){
     if(!value||typeof value!=='object'||Array.isArray(value)||!request
@@ -82,5 +92,5 @@
       throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
     return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse};
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse,positionInput};
 });
