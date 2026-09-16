@@ -1,4 +1,4 @@
-name: Publish verified pose handoff candidate
+name: Publish verified pose continuation candidates
 on:
   push:
     branches: [codex/pose-continuation-transfer-20260916]
@@ -16,35 +16,29 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 186d2b085c91cdc368bd79a3bcf65e0da45b5a29
+          ref: 5d502e490ac611126c09f250a7e41f34aed666c3
           path: source
-      - name: Apply only the tested patch and verify complete tree
+      - name: Publish only hash-checked code patches, never tooling files
         working-directory: source
         run: |
           python - <<'PY'
           from pathlib import Path
           import hashlib, subprocess
-          patch = Path('../transfer/.transfer/pose-existing.patch').resolve()
-          assert hashlib.sha256(patch.read_bytes()).hexdigest() == '3608ee2996b745c5231ee7a847aefe7e77b7aa6367426eb5f5d94bdfe33ed677'
-          subprocess.run(['git','apply','--index',str(patch)],check=True)
-          root=Path('../transfer/.transfer/new')
-          for item in root.rglob('*'):
-              if item.is_file():
-                  relative=item.relative_to(root)
-                  assert str(relative) in {'tests/pose_guide_handoff.cjs','tests/test_pose_guide_handoff.py','tests/pose_editor_handoff_browser.py','docs/pose-control/HANDOFF-2026-09-16.md'}
-                  assert not Path(relative).exists()
-                  Path(relative).parent.mkdir(parents=True,exist_ok=True)
-                  Path(relative).write_bytes(item.read_bytes())
-                  subprocess.run(['git','add',str(relative)],check=True)
-          tree=subprocess.check_output(['git','write-tree'],text=True).strip()
-          assert tree == '562c26e4e6911172bebbc14c60f1dbb7b49e0842',tree
-          print('Verified tested tree:',tree)
+          targets = [
+              ('pose-parent-fix.patch','1c0ec4db8e0953c2c9211c4c4ed8b10ce5408ed76efcd7a54863db8b24041ddf','c7d5ac0fad404fe41eccc59d66b09924d386563d','codex/pose-guide-handoff-build-2','test: drive missing pose readiness through the actual event listener'),
+              ('pose-precision.patch','bce01d91a563bc608478c07c04a0090ce158d66d02e2951f98dea2d8aaa2d472','cd5c8ecc6d403a46f4600f48a0c7110313f6a9c0','codex/pose-precision-build-1','feat: set precise joint positions with explicit draft and undo')
+          ]
+          for name, digest, expected_tree, branch, message in targets:
+              path=Path('../transfer/.transfer')/name
+              assert hashlib.sha256(path.read_bytes()).hexdigest()==digest,name
+              subprocess.run(['git','apply','--unidiff-zero','--index',str(path.resolve())],check=True)
+              tree=subprocess.check_output(['git','write-tree'],text=True).strip()
+              assert tree==expected_tree,(name,tree)
+              subprocess.run(['git','diff','--cached','--check'],check=True)
+              subprocess.run(['node','tests/pose_guide_handoff.cjs'],check=True)
+              subprocess.run(['node','tests/pose_editor_core.cjs'],check=True)
+              subprocess.run(['python','-m','py_compile','tests/pose_editor_handoff_browser.py'],check=True)
+              subprocess.run(['git','-c','user.name=Cristian Tcaci','-c','user.email=59696583+Chris0Jeky@users.noreply.github.com','commit','-m',message],check=True)
+              subprocess.run(['git','push','origin','HEAD:refs/heads/'+branch],check=True)
+              subprocess.run(['git','rev-parse','HEAD','HEAD^{tree}'],check=True)
           PY
-          git diff --cached --check
-          node tests/pose_guide_handoff.cjs
-          node tests/pose_editor_core.cjs
-          # The Actions token cannot publish workflow edits. That one file is applied separately via the authorized connector.
-          git restore --source=HEAD --staged --worktree .github/workflows/ux-use-cases.yml
-          git -c user.name='Cristian Tcaci' -c user.email='59696583+Chris0Jeky@users.noreply.github.com' commit -m 'fix: replace a Combine pose picture with a checked drawing'
-          git push origin HEAD:refs/heads/codex/pose-guide-handoff-build-1
-          git rev-parse HEAD HEAD^{tree}

@@ -1,0 +1,212 @@
+diff --git a/app/static/pose-editor-core.js b/app/static/pose-editor-core.js
+index 5a645f3..170339d 100644
+--- a/app/static/pose-editor-core.js
++++ b/app/static/pose-editor-core.js
+@@ -73,0 +74,10 @@
++  // Typed values are not pointer drags: refuse invalid/out-of-range input instead of clamping it.
++  function positionInput(x,y,canvas){
++    const c=canvasOf(canvas),read=value=>{
++      if(typeof value!=='number'&&(typeof value!=='string'||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())))
++        throw Error('Enter X and Y as decimal pixel coordinates.');
++      const result=Number(value);if(!Number.isFinite(result))throw Error('Coordinates must be finite.');return result;
++    },point={x:read(x),y:read(y)};
++    if(point.x<0||point.x>c.width||point.y<0||point.y>c.height)throw Error('X must be 0–'+c.width+' and Y 0–'+c.height+' pixels.');
++    return point;
++  }
+@@ -85 +95 @@
+-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse};
++  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse,positionInput};
+diff --git a/app/static/studio-workbench.js b/app/static/studio-workbench.js
+index d1a189c..1a84953 100644
+--- a/app/static/studio-workbench.js
++++ b/app/static/studio-workbench.js
+@@ -95 +95 @@
+-  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture'};
++  const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates'};
+@@ -106,0 +107 @@
++    if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
+@@ -149,0 +151 @@
++    if(action==='pose-position')target=q('#uxPoseX');
+@@ -199 +201 @@
+-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy;}
++  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty();}
+@@ -245,0 +248 @@
++    +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
+@@ -248 +251 @@
+-  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='';
++  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
+@@ -286,0 +290 @@
++    if(posePositionDirty())return 'Set the typed joint position or reset its fields before continuing.';
+@@ -295,0 +300,18 @@
++  function posePositionDirty(){
++    if(!StudioContinuation.combineKind(selected)||!posePoints?.[poseJoint]||posePositionSignature!==JSON.stringify([poseJoint,posePoints[poseJoint],poseCanvas]))return false;
++    try{const value=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),point=posePoints[poseJoint];
++      return value.x!==Math.round(point.x*100)/100||value.y!==Math.round(point.y*100)/100;
++    }catch(_){return true;}
++  }
++  function syncPosePosition(){
++    const point=posePoints?.[poseJoint],signature=JSON.stringify([poseJoint,point,poseCanvas]);
++    q('#uxPosePositionLabel').textContent=StudioPoseEditor.LABELS[poseJoint]+' position (pixels)';
++    for(const key of ['x','y']){
++      const input=q(key==='x'?'#uxPoseX':'#uxPoseY');input.max=key==='x'?poseCanvas.width:poseCanvas.height;
++      input.disabled=poseBusy||!point;
++      // Readiness polling must not replace partially typed coordinates for the same joint.
++      if(signature!==posePositionSignature){input.value=point?Math.round(point[key]*100)/100:'';input.removeAttribute('aria-invalid');}
++    }
++    posePositionSignature=signature;q('#uxPosePositionApply').disabled=poseBusy||!point;
++    q('#uxPosePositionReset').disabled=poseBusy||!posePositionDirty();
++  }
+@@ -302 +324,3 @@
+-    q('#uxPoseStart').disabled=poseBusy;
++    const positionPending=posePositionDirty();
++    q('#uxPoseStart').disabled=poseBusy||positionPending;syncPosePosition();
++    q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});
+@@ -305 +329 @@
+-    unknown.disabled=poseBusy;undo.disabled=poseBusy||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
++    unknown.disabled=poseBusy||positionPending;undo.disabled=poseBusy||positionPending||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
+@@ -326,0 +351,14 @@
++  function applyPosePosition(){
++    if(poseBusy||!posePoints?.[poseJoint])return;
++    try{
++      const point=StudioPoseEditor.positionInput(q('#uxPoseX').value,q('#uxPoseY').value,poseCanvas),next=StudioPoseEditor.move(posePoints,poseJoint,point.x,point.y,poseCanvas);
++      if(JSON.stringify(StudioPoseEditor.serialize(next,poseCanvas))===JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas))){posePositionSignature='';syncReady();poseStatus('The joint is already at that position.');return;}
++      pushPose();poseEdit(next);syncReady();poseStatus(StudioPoseEditor.LABELS[poseJoint]+' moved. Undo steps back this change.');
++    }catch(error){q('#uxPoseX').setAttribute('aria-invalid','true');q('#uxPoseY').setAttribute('aria-invalid','true');poseStatus(error.message);}
++  }
++  q('#uxPosePositionApply').onclick=applyPosePosition;
++  q('#uxPosePositionReset').onclick=()=>{if(poseBusy)return;posePositionSignature='';syncReady();poseStatus('Typed coordinates reset to the drawing.');};
++  for(const id of ['#uxPoseX','#uxPoseY']){
++    q(id).oninput=()=>{q('#uxPoseX').removeAttribute('aria-invalid');q('#uxPoseY').removeAttribute('aria-invalid');poseDrag=-1;syncReady();};
++    q(id).onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyPosePosition();}};
++  }
+@@ -328 +366 @@
+-    const id=e.target.value;e.target.value='';if(!id||!posePoints||poseBusy)return;
++    const id=e.target.value;e.target.value='';if(!id||!posePoints||poseBusy||posePositionDirty())return;
+@@ -340,2 +378,2 @@
+-    // Arrow keys inside the Start-from list still change the option; the drawing only follows them elsewhere.
+-    if(!step||!posePoints||poseBusy||e.target.closest('select'))return;
++    // Native select/number editing keeps its own arrow keys; only the drawing and joint buttons nudge geometry.
++    if(!step||!posePoints||poseBusy||posePositionDirty()||e.target.closest('select,input,textarea'))return;
+@@ -348 +386 @@
+-    if(!posePoints||poseBusy)return;
++    if(!posePoints||poseBusy||posePositionDirty())return;
+diff --git a/app/static/studio.css b/app/static/studio.css
+index 31e8c06..acab4fd 100644
+--- a/app/static/studio.css
++++ b/app/static/studio.css
+@@ -90,0 +91 @@
++.ux-pose-position{display:flex;flex-wrap:wrap;gap:8px;align-items:end;min-width:0;border:1px solid var(--line);border-radius:8px;padding:8px}.ux-pose-position legend{font-size:12px}.ux-pose-position label{flex:1 1 80px;min-width:0}.ux-pose-position input{width:100%;box-sizing:border-box}.ux-pose-position button{min-height:38px}
+diff --git a/docs/pose-control/PRECISE-JOINTS.md b/docs/pose-control/PRECISE-JOINTS.md
+new file mode 100644
+index 0000000..a58ea4a
+--- /dev/null
++++ b/docs/pose-control/PRECISE-JOINTS.md
+@@ -0,0 +1,34 @@
++# Precise joint positions in Combine
++
++Continuation of #466 and #475 under #444. This is a small addition to the existing body editor, not a second pose application, document store or inference route.
++
++## Interaction
++
++Select a known joint and enter **X / Y in pixels**. **Set joint position** or Enter applies the pair as one edit to the existing drawing and Undo history. Both values must be finite decimal numbers inside the current canvas; zero and fractional positions are valid. Empty input is not silently converted to zero. Invalid coordinates leave the drawing unchanged and mark the fields invalid.
++
++Typing alone changes no geometry or attachment. A readiness refresh preserves unfinished input. While the pair of fields differs from the drawing, Generate, Use/Replace pose, engine switching, joint selection, dragging, presets, unknown/restore and Undo are held. The readiness message has a **Review joint coordinates** action; **Reset fields** discards only the unapplied field values. This prevents a visible numeric edit from being ignored by the next guide render.
++
++Unknown joints have disabled position fields; use the existing Restore action first. Arrow keys inside a numeric input edit that input, not the skeleton. Once applied, the guide request contains the edited coordinates. The render-in-progress hold also covers the new fields and Apply/Reset controls.
++
++The drawing's coordinates are continuous pixel-edge positions: X in 0..width, Y in 0..height, measured from the top-left, with Y downward. UI and guide serialization use two decimal places. The server remains the authority for canvas limits and input validation. This does not change the raster renderer or any model conditioning settings.
++
++## Scope and state
++
++The existing editor's drawing and remembered positions remain in-session. Undo uses its existing snapshots; this slice does not implement redo, durable Workspace revisions or saved pose reopening. Explicitly changing the canvas rescales the drawing and refreshes numeric fields to that new geometry. Changing away from a Combine recipe does not impose an irrelevant pose-field blocker on another recipe. Source-image overlays, imported detector confidence, shared headless editing and persistent geometry remain #444.
++
++The first handoff PR preserves character/source roles and rejects stale/malformed guide responses. This child adds precision inputs; it does not infer whether a drawn pose agrees with the retained natural-language pose wording. Review that wording before Generate.
++
++## Verification
++
++```console
++node tests/pose_guide_handoff.cjs
++node tests/pose_editor_core.cjs
++python -m unittest discover -s tests -p 'test_pose_guide*.py' -v
++python tests/pose_editor_handoff_browser.py
++python tests/check_full_suite_lifetime.py
++python scripts/validate-repo.py
++```
++
++Pure tests cover valid zero/boundary/fractional coordinates, missing/nonfinite/boolean/hex/out-of-range values, the actionable readiness hold and reuse of Undo. The native-page fixture checks typing-versus-application, pending-draft holds, refresh without lost typing, Enter, invalid input, reset, unknown/restore, number-input arrows, exact coordinates in the actual guide request, and render-busy holds at desktop and 390px. Existing replacement/recovery scenarios remain in the same driver. APIs are synthetic and Generate is never clicked; hosted reports/screenshots are the browser evidence when local navigation is administrator-blocked.
++
++No GPU generation, model/node/runtime change, native renderer qualification, source-art publication or owner art acceptance occurs. The initial pinned baseline was `186d2b0`; persistent reference brief PRs #418/#421 merged independently while this work was underway and are not rebuilt here. Full current-main integration is recorded on each PR separately from local tests of the pinned source.
+diff --git a/tests/pose_editor_handoff_browser.py b/tests/pose_editor_handoff_browser.py
+index 93fcdf3..24b9af9 100644
+--- a/tests/pose_editor_handoff_browser.py
++++ b/tests/pose_editor_handoff_browser.py
+@@ -23,0 +24,33 @@ SNAPSHOT = '''() => ({recipe:selected.id, keep:lastUploaded, parents:[...parentA
++
++def precision_checks(page, check):
++    before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
++    initial = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
++    page.locator('#uxPoseX').fill('0'); page.locator('#uxPoseY').fill('123.45')
++    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before, 'Typing alone does not apply a geometry edit')
++    check(page.locator('#uxPoseUse').is_disabled() and page.locator('#generate').is_disabled(), 'Unapplied coordinates visibly hold use and generation')
++    check(page.locator('[data-ux-joint="5"]').is_disabled(), 'A joint switch cannot discard unapplied coordinates')
++    page.evaluate("document.querySelector('#positive').dispatchEvent(new Event('change',{bubbles:true}))")  # Simulate the same readiness refresh used after inspection/polling.
++    check(page.locator('#uxPoseX').input_value() == '0', 'Readiness refresh preserves an unfinished coordinate draft')
++    page.locator('#uxPoseY').press('Enter')
++    check(page.locator('#uxPoseUse').is_enabled(), 'Enter applies the explicit edit and releases the hold')
++    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') != before, 'The accepted exact position changes the drawing')
++    page.locator('#uxPoseUndo').click()
++    check([page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')] == initial, 'Existing Undo restores both displayed coordinates')
++    page.locator('#uxPoseX').fill(''); page.locator('#uxPosePositionApply').click()
++    check(page.locator('#uxPoseX').get_attribute('aria-invalid') == 'true', 'Empty typed input is refused, not coerced to zero')
++    page.locator('#uxPosePositionReset').click()
++    check(page.locator('#uxPoseX').input_value() == initial[0], 'Reset restores the unapplied fields without changing geometry')
++    page.locator('#uxPoseUnknown').click()
++    check(page.locator('#uxPoseX').is_disabled() and page.locator('#uxPoseY').is_disabled(), 'Unknown points cannot acquire accidental numeric coordinates')
++    page.locator('#uxPoseUnknown').click()
++    before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
++    page.locator('#uxPoseX').press('ArrowUp')
++    check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == before, 'Number-input arrows edit the field, not the skeleton')
++    page.locator('#uxPosePositionReset').click()
++    page.locator('#uxPoseX').fill('0'); page.locator('#uxPoseY').fill('123.45')
++    page.locator('#uxPosePositionApply').click()
++    check(page.locator('#uxPoseX').input_value() == '0', 'Coordinate zero remains a valid authored joint')
++    page.locator('#uxPoseY').fill('123.4501'); page.locator('#uxPosePositionApply').click()
++    check(page.locator('#uxPoseY').input_value() == '123.45' and page.locator('#uxPoseUse').is_enabled(), 'A rounded no-op clears the field hold without adding a geometry change')
++
++
+@@ -35 +68 @@ def main(argv=None):
+-    records, errors, posts = [], [], []
++    records, errors, posts, drawings = [], [], [], []
+@@ -50,0 +84 @@ def main(argv=None):
++                    page.on('request', lambda request: drawings.append(request.post_data_json) if request.method == 'POST' and urlsplit(request.url).path == '/api/pose/render' else None)
+@@ -72,0 +107 @@ def main(argv=None):
++                        if name in ('depth', 'copypose'): precision_checks(page, check)
+@@ -85,0 +121 @@ def main(argv=None):
++                            check(page.locator('#uxPoseX').is_disabled() and page.locator('#uxPosePositionApply').is_disabled(), 'Numeric edits are held during rendering')
+@@ -92 +128 @@ def main(argv=None):
+-                                page.locator('[data-ux-joint="4"]').focus(); page.keyboard.press('ArrowRight')
++                                page.locator('#uxPoseCanvas').focus(); page.keyboard.press('ArrowRight')
+@@ -114,0 +151,2 @@ def main(argv=None):
++                            if name in ('depth', 'copypose'):
++                                check(drawings[-1]['keypoints'][4] == [0, 123.45], 'The exact edited wrist reaches the guide request')
+diff --git a/tests/pose_guide_handoff.cjs b/tests/pose_guide_handoff.cjs
+index 9bc899f..dd8deb9 100644
+--- a/tests/pose_guide_handoff.cjs
++++ b/tests/pose_guide_handoff.cjs
+@@ -42,0 +43,16 @@ test('malformed or mismatched render replies cannot replace the existing picture
++test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>{
++  assert.equal(typeof P.positionInput,'function');
++  assert.deepEqual(P.positionInput('0','1536',{width:1024,height:1536}),{x:0,y:1536});
++  assert.deepEqual(P.positionInput(' 123.25 ','4.50',{width:1024,height:1536}),{x:123.25,y:4.5});
++  for(const bad of ['', ' ', '0x10', 'NaN', 'Infinity', '-1', '1025', true, null, [], {}])
++    assert.throws(()=>P.positionInput(bad,'5',{width:1024,height:1536}));
++  assert.throws(()=>P.positionInput('1','1537',{width:1024,height:1536}));
++  assert.throws(()=>P.positionInput('1','2',{width:0,height:1536}));
++});
++test('typed drafts have an actionable generation hold and use the existing undo history',()=>{
++  const fs=require('node:fs'),path=require('node:path');
++  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
++  assert.match(code,/code:'pose-position',message:.*action:'pose-position'/);
++  assert.match(code,/if\(action==='pose-position'\)target=q\('#uxPoseX'\)/);
++  assert.match(code,/pushPose\(\);poseEdit\(next\)/);
++});
