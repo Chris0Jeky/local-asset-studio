@@ -1,0 +1,108 @@
+name: Bootstrap strict ComfyUI response contract
+
+on:
+  push:
+    branches:
+      - fix/strict-comfy-response-contract
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the corrective branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/strict-comfy-response-contract
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install focused test dependency
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Add the regression and prove it is red
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/test_server.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = '    def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):\n'
+          regression = '''    def test_empty_comfy_response_is_only_allowed_for_free(self):
+              """An empty 200 is the /free contract, not a global substitute for required JSON."""
+              s=self.studio()
+              with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+                  with self.assertRaises(json.JSONDecodeError): s._request('/system_stats')
+              with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+                  self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
+
+'''
+          if text.count(anchor) != 1:
+              raise SystemExit('test insertion anchor drifted')
+          if 'test_empty_comfy_response_is_only_allowed_for_free' in text:
+              raise SystemExit('regression already exists unexpectedly')
+          path.write_text(text.replace(anchor, regression + anchor), encoding='utf-8')
+          PY
+          set +e
+          python -m unittest discover -s tests -p 'test_server.py' -k empty_comfy_response_is_only_allowed_for_free -v 2>&1 | tee /tmp/strict-response-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo 'The regression unexpectedly passed before the production correction.' >&2
+            exit 1
+          fi
+          grep -Eq 'JSONDecodeError not raised|unexpected keyword argument.*allow_empty' /tmp/strict-response-red.log
+
+      - name: Restore strict JSON by default and scope empty replies to /free
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/server.py')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old, new, label):
+              global text
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label} anchor drifted: {text.count(old)} matches')
+              text = text.replace(old, new)
+
+          replace_once(
+              '    def _request(self, path, method="GET", data=None, timeout=15, base_url=None):\n',
+              '    def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):\n',
+              'request signature',
+          )
+          replace_once(
+              '            raw = response.read()\n            return json.loads(raw.decode()) if raw.strip() else None   # ComfyUI\'s /free answers 200 with no body\n',
+              '            raw = response.read()\n            if allow_empty and not raw.strip(): return None\n            return json.loads(raw.decode())\n',
+              'response decoding',
+          )
+          replace_once(
+              '            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60)\n',
+              '            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True)\n',
+              'free endpoint',
+          )
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify the corrected response contracts
+        run: |
+          python -m unittest discover -s tests -p 'test_server.py' -k 'empty_comfy_response_is_only_allowed_for_free or idle_tick_releases_the_comfy_cache_once_per_idle_stretch or idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks' -v
+          python -m py_compile app/server.py tests/test_server.py
+          python scripts/validate-repo.py
+          git diff --check
+
+      - name: Publish the reviewed correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/server.py tests/test_server.py
+          git commit -m 'Restore strict ComfyUI response decoding'
+          git push origin HEAD:fix/strict-comfy-response-contract
