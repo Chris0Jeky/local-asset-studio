@@ -58,3 +58,19 @@
 #uxBlockers .ux-blocker button{flex:none;max-width:100%;font-size:11px;min-height:40px}
 #uxReadinessActionStatus:empty{display:none}
 @media(max-width:700px){.ux-readiness-heading,#uxBlockers .ux-blocker{align-items:stretch;flex-direction:column}.ux-readiness-heading button,#uxBlockers .ux-blocker button{min-height:44px}}
+
+/* Combine keeps the current source pair beside its seeds and recipe choices. */
+.ux-combine-engines,.ux-pair-results{margin:18px 0;padding:16px;border:1px solid var(--line,#455b56);border-radius:12px;min-width:0}
+.ux-combine-engines[hidden],.ux-pair-results[hidden]{display:none}
+.ux-combine-engines h3,.ux-pair-results h3{margin:0 0 8px}.ux-combine-engines p,.ux-pair-results p{font-size:12px;line-height:1.5}
+.ux-engine-options{display:flex;gap:8px;flex-wrap:wrap}.ux-engine-options button{flex:1 1 155px;text-align:left;white-space:normal;min-height:64px}
+.ux-engine-options b,.ux-engine-options small{display:block}.ux-engine-options small{margin-top:5px;font-size:10px;line-height:1.4}
+.ux-engine-options [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}
+.ux-experiment-strip{display:flex;gap:12px;overflow-x:auto;padding:5px 0 12px;align-items:stretch}
+.ux-result-sources{position:sticky;left:0;z-index:1;display:flex;gap:6px;flex:0 0 170px;background:var(--panel,#1b2525);padding:8px;border-radius:8px;align-items:flex-start}
+.ux-result-sources figure{margin:0;min-width:0;flex:1}.ux-result-sources img{width:100%;height:120px;object-fit:contain}.ux-result-sources figcaption{font-size:10px;text-align:center}
+.ux-result-tile{flex:0 0 220px;min-width:0;display:flex;flex-direction:column;gap:7px;border:1px solid var(--line,#455b56);border-radius:8px;padding:10px}
+.ux-result-tile>img{width:100%;height:190px;object-fit:contain}.ux-result-tile>small{font-size:10px;line-height:1.5}.ux-result-tile>span{font-size:11px}
+.ux-result-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto}.ux-result-actions button{font-size:10px;min-height:36px;padding:6px 8px}
+.ux-no-results{min-width:180px;align-self:center}.job-problems{grid-column:1/-1;padding:14px;border:1px solid var(--line,#455b56);border-radius:9px}.job-problems summary{cursor:pointer}.job-problems .jobStatus{margin-top:12px}
+@media(max-width:700px){.ux-result-sources{position:static;flex-basis:135px}.ux-result-tile{flex-basis:195px}.ux-result-actions button{min-height:44px}}
