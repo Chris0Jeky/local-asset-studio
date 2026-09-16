@@ -66,6 +66,16 @@ class DuplicateResearchReceiptTests(unittest.TestCase):
                     sleeper=lambda _seconds: None,
                 )
 
+    def test_chain_preflight_validates_later_keys_before_reporting_missing_work(self):
+        with tempfile.TemporaryDirectory() as raw:
+            results = Path(raw) / "results.json"
+            results.write_text(json.dumps([
+                {"group": "chain", "seed": 9, "prompt_id": "a", "status": "success"},
+                {"group": "chain", "seed": 9, "prompt_id": "b", "status": "submitted"},
+            ]), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Duplicate.*chain.*9"):
+                self.chain.has_unrecorded("chain", (8, 9), path=results)
+
 
 if __name__ == "__main__":
     unittest.main()
