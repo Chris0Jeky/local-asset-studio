@@ -153,16 +153,26 @@ class ReceiptTests(unittest.TestCase):
         write(self.directory / 'result.json', original)
         self.assertEqual(self.inspect()['integrity'], 'verified')
 
-    def test_missing_result_or_artifact_is_incomplete_not_a_success(self):
-        for name in ('result.json', 'summary.json', 'context.json'):
+    def test_missing_result_or_manifest_entry_is_incomplete_not_a_success(self):
+        path = self.directory / 'result.json'; raw = path.read_bytes(); path.unlink()
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertTrue(caught.exception.incomplete); path.write_bytes(raw)
+
+        result = read(path)
+        del result['artifact_hashes']['summary.json']
+        result['summary_available'] = False
+        write(path, result)
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertTrue(caught.exception.incomplete)
+
+    def test_missing_manifest_listed_artifact_is_invalid(self):
+        for name in ('summary.json', 'context.json'):
             path = self.directory / name; raw = path.read_bytes(); path.unlink()
             with self.subTest(name=name), self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
-            self.assertTrue(caught.exception.incomplete); path.write_bytes(raw)
-        (self.directory / 'summary.json').unlink(); rehash(self.directory)
-        result = read(self.directory / 'result.json'); result['summary_available'] = False
-        write(self.directory / 'result.json', result)
-        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
-        self.assertTrue(caught.exception.incomplete)
+            self.assertEqual(caught.exception.code, 'artifact_missing')
+            self.assertFalse(caught.exception.incomplete); path.write_bytes(raw)
 
     def test_artifact_names_cannot_escape_fixed_set(self):
         result = read(self.directory / 'result.json')

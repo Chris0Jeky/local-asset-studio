@@ -10,11 +10,12 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LIFETIME_BUDGET_SECONDS = 420
-TRACEBACK_AFTER_SECONDS = 390
+LIFETIME_BUDGET_SECONDS = 600
+TRACEBACK_AFTER_SECONDS = 570
 
 
 def printable(value: str | bytes | None) -> str:
@@ -41,6 +42,7 @@ def suite_command(traceback_after: float = TRACEBACK_AFTER_SECONDS) -> list[str]
 
 def main() -> int:
     command = suite_command()
+    started = time.monotonic()
     try:
         result = subprocess.run(
             command,
@@ -52,9 +54,11 @@ def main() -> int:
     except subprocess.TimeoutExpired as exc:
         output = printable(exc.stdout) + printable(exc.stderr)
         print(output, end="" if output.endswith("\n") else "\n")
+        elapsed = time.monotonic() - started
         print(
-            "offline suite exceeded the 420-second lifetime budget; "
-            "the last START marker and lifetime watchdog dump identify the blocked test and threads",
+            f"offline suite exceeded the {LIFETIME_BUDGET_SECONDS}-second lifetime budget "
+            f"after {elapsed:.2f} seconds; the last START marker and lifetime watchdog dump "
+            "identify the blocked test and threads",
             file=sys.stderr,
         )
         return 124

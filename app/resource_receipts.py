@@ -186,6 +186,16 @@ def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
     except OSError: raise EvidenceError('artifact_unreadable') from None
 
 
+def _capture_manifest_artifact(path: Path, limit: int) -> tuple[object, tuple]:
+    """Capture one artifact whose presence is promised by a final result manifest."""
+    try:
+        return _capture_file(path, limit)
+    except EvidenceError as error:
+        if error.code == 'artifact_missing':
+            raise EvidenceError('artifact_missing') from None
+        raise
+
+
 def read_evidence_file(path: Path, limit: int) -> bytes:
     """Capture one bounded file; the public byte-reader contract stays unchanged."""
     return _capture_file(path, limit)[0]
@@ -340,7 +350,7 @@ def inspect_observation(directory: str | Path, *, expected_result_sha256: str | 
         entry = manifest[name]
         require(isinstance(entry, dict) and set(entry) == {'sha256', 'bytes'} and is_hash(entry.get('sha256'))
                 and type(entry.get('bytes')) is int and 0 <= entry['bytes'] <= limit, 'artifact_manifest_invalid')
-        raw, signature = _capture_file(directory / name, limit)
+        raw, signature = _capture_manifest_artifact(directory / name, limit)
         require(len(raw) == entry['bytes'] and sha256(raw) == entry['sha256'], 'artifact_hash_mismatch')
         captured[name] = raw
         signatures[name] = signature

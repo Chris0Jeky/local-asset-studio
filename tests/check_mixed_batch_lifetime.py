@@ -1,8 +1,9 @@
 """Run the mixed-batch HTTP module in fresh interpreters and fail on socket leaks.
 
-This is a Windows diagnostic gate for #227, not part of unittest discovery.  Fresh
-interpreters make interpreter-shutdown ResourceWarnings visible, while tracemalloc
-retains the allocation site if the intermittent loopback leak returns.
+This is a Windows diagnostic gate for #227, not part of unittest discovery. Fresh
+interpreters make interpreter-shutdown ResourceWarnings visible. Each child starts
+tracemalloc after normal site initialisation but before importing the target test,
+so allocation sites remain available without tracing unrelated startup hooks.
 """
 from __future__ import annotations
 
@@ -17,6 +18,22 @@ ROOT = Path(__file__).resolve().parents[1]
 ATTEMPTS = 2
 TIMEOUT_SECONDS = 45
 DIAGNOSTIC_TAIL_CHARS = 16_384
+CHILD_CODE = """\
+import tracemalloc
+tracemalloc.start(25)
+import sys
+import unittest
+sys.argv = [
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-p",
+    "test_mixed_batch_http.py",
+    "-v",
+]
+unittest.main(module=None)
+"""
 
 
 def printable_tail(value: str | bytes | None) -> str:
@@ -30,19 +47,15 @@ def printable_tail(value: str | bytes | None) -> str:
 
 def run_once(attempt: int) -> None:
     environment = os.environ.copy()
-    environment["PYTHONTRACEMALLOC"] = "25"
+    # PYTHONTRACEMALLOC starts tracing before site initialisation. Remove an
+    # inherited setting and start it in CHILD_CODE immediately before discovery.
+    environment.pop("PYTHONTRACEMALLOC", None)
     command = [
         sys.executable,
         "-W",
         "always::ResourceWarning",
-        "-m",
-        "unittest",
-        "discover",
-        "-s",
-        "tests",
-        "-p",
-        "test_mixed_batch_http.py",
-        "-v",
+        "-c",
+        CHILD_CODE,
     ]
     print(f"--- mixed-batch lifetime attempt {attempt}/{ATTEMPTS} ---", flush=True)
     started = time.monotonic()
