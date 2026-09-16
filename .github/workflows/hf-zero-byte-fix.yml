@@ -1,0 +1,76 @@
+name: Apply Hugging Face zero-byte compatibility
+
+on:
+  push:
+    branches:
+      - fix/hf-source-snapshot-compatibility
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/hf-source-snapshot-compatibility
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Accept non-negative Hugging Face file sizes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('studio_prompt/adult_illustration_source_intake.py')
+          source = path.read_text(encoding='utf-8')
+          anchor = '''def _optional_positive_int(value: Any, label: str) -> int | None:
+              return _positive_int(value, label, allow_none=True)
+
+
+          def _sha256'''
+          replacement = '''def _optional_positive_int(value: Any, label: str) -> int | None:
+              return _positive_int(value, label, allow_none=True)
+
+
+          def _nonnegative_int(value: Any, label: str, *, allow_none: bool = False) -> int | None:
+              if value is None and allow_none:
+                  return None
+              if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                  raise ValueError(f"{label} must be a non-negative integer")
+              return value
+
+
+          def _optional_nonnegative_int(value: Any, label: str) -> int | None:
+              return _nonnegative_int(value, label, allow_none=True)
+
+
+          def _sha256'''
+          if source.count(anchor) != 1:
+              raise SystemExit(f'non-negative helper anchor drifted: {source.count(anchor)}')
+          source = source.replace(anchor, replacement)
+          old = '        byte_count = _optional_positive_int(byte_count, f"Hugging Face file {path!r} byte count")\n'
+          new = '        byte_count = _optional_nonnegative_int(byte_count, f"Hugging Face file {path!r} byte count")\n'
+          if source.count(old) != 1:
+              raise SystemExit(f'Hugging Face byte-count anchor drifted: {source.count(old)}')
+          path.write_text(source.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Verify provider and adult-illustration contracts
+        run: |
+          python -m unittest tests.test_adult_illustration_source_zero_bytes -v
+          python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
+          python scripts/validate_adult_illustration_intelligence.py
+          python -m py_compile studio_prompt/adult_illustration_source_intake.py tests/test_adult_illustration_source_zero_bytes.py
+          git diff --check
+
+      - name: Publish verified parser correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add studio_prompt/adult_illustration_source_intake.py
+          git commit -m 'Accept zero-byte Hugging Face repository files'
+          git push origin HEAD:fix/hf-source-snapshot-compatibility
