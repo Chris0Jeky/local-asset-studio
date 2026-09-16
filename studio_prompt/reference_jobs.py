@@ -143,6 +143,7 @@ class ReferenceJobs:
                 self.workspace._check_scope(db,value['workspace_id'])
                 old=db.execute('SELECT * FROM reference_jobs_v1 WHERE id=?',(value['request_id'],)).fetchone()
                 if old:
+                    need(not self._state(old).get('retired_without_dispatch'), 'This analysis request was retired before dispatch; use a new request ID')
                     need(old['request_sha']==sha,'Request ID already has different content')
                     return self._public(db,old)
             self.studio.require_worker();need(not self.busy(),'An analysis is already outstanding; inspect it first')
@@ -161,6 +162,7 @@ class ReferenceJobs:
                 db.execute('BEGIN IMMEDIATE');self.workspace._check_scope(db,value['workspace_id'])
                 old=db.execute('SELECT * FROM reference_jobs_v1 WHERE id=?',(value['request_id'],)).fetchone()
                 if old:
+                    need(not self._state(old).get('retired_without_dispatch'), 'This analysis request was retired before dispatch; use a new request ID')
                     need(old['request_sha']==sha,'Request ID already has different content');return self._public(db,old)
                 states=[self._state(row) for row in db.execute('SELECT state,state_sha FROM reference_jobs_v1')]
                 need(not any(s['resource_hold'] or s['status'] in ACTIVE for s in states),'An analysis is already outstanding')
@@ -258,6 +260,30 @@ class ReferenceJobs:
             # A failed journal write cannot release a client whose remote work may live.
             self.failure_hold=True
             raise
+
+
+    def retire(self,value):
+        """Fence a never-created ID; an existing operation is only observed.
+
+        The commit is the no-late-arrival boundary. A 404 alone cannot establish
+        that a slow create will never arrive. This action never cancels a model.
+        """
+        fields(value,('workspace_id','request_id'))
+        self.workspace._validate_scope(value['workspace_id']);self.workspace.request_id(value['request_id'])
+        with self.studio.lock:
+            with self.workspace.connection() as db:
+                db.execute('BEGIN IMMEDIATE');self.workspace._check_scope(db,value['workspace_id'])
+                old=db.execute('SELECT * FROM reference_jobs_v1 WHERE id=?',(value['request_id'],)).fetchone()
+                if old:return self._public(db,old)
+                count,used=db.execute('SELECT COUNT(*),COALESCE(SUM(bytes),0) FROM reference_jobs_v1').fetchone()
+                need(count<MAX_JOBS and used+8192<=MAX_BYTES,'Reference operation history is full; no history was removed')
+                state={'status':'cancelled','resource_hold':False,'inference_attempts':0,'response_done':False,
+                    'retired_without_dispatch':True,'message':'Request retired before creation. A late arrival cannot start analysis.',
+                    'updated_at':time.time(),'request_sha256':digest({}),'context_sha256':digest({}),'result_sha256':None}
+                db.execute('INSERT INTO reference_jobs_v1 VALUES(?,?,?,?,?,?,?,?,?,?)',(
+                    value['request_id'],digest({'retired_without_dispatch':value}),'{}','{}',digest({}),'{}',
+                    canonical(state).decode(),digest(state),None,8192))
+                return self._public(db,self._row(db,value['request_id']))
 
     def _command(self,value,action):
         fields(value,('workspace_id','request_id','expected_state_sha256')+(('acknowledge_unknown',) if action=='release' else ()))
