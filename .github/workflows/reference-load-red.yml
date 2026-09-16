@@ -1,0 +1,19 @@
+name: Reference review load transition regression
+
+on:
+  push:
+    branches:
+      - test/reference-review-programmatic-load-reset
+
+permissions:
+  contents: read
+
+jobs:
+  focused-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_reference_review_apply_frontend.py' -v
