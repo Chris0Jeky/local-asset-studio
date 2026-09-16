@@ -1066,12 +1066,13 @@ class Studio:
                         self._save(data)
                 self.jobs[data["id"]] = data
 
-    def _request(self, path, method="GET", data=None, timeout=15, base_url=None):
+    def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
         body = json.dumps(data).encode() if data is not None else None
         req = Request((base_url or self.comfy_url) + path, data=body, method=method, headers={"Content-Type": "application/json"} if body else {})
         with urlopen(req, timeout=timeout) as response:
             raw = response.read()
-            return json.loads(raw.decode()) if raw.strip() else None   # ComfyUI's /free answers 200 with no body
+            if allow_empty and not raw.strip(): return None
+            return json.loads(raw.decode())
 
     def identity(self):
         return {"app": "local-asset-studio", "workspace": str(self.root), "version": "production-workspace-1"}
@@ -1221,7 +1222,7 @@ class Studio:
         try:
             queue = self._request("/queue", timeout=5)
             if not isinstance(queue, dict) or any(type(queue.get(key)) is not list or queue.get(key) for key in ("queue_running", "queue_pending")): return False
-            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60)
+            self._request("/free", method="POST", data={"unload_models": True, "free_memory": True}, timeout=60, allow_empty=True)
         except (URLError, HTTPError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             self.cache_release["last_error"] = str(exc)[:200]; self._released_since_activity = True; return False
         self._released_since_activity = True

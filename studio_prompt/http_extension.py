@@ -5,14 +5,18 @@ import sqlite3
 from urllib.parse import urlparse
 
 from studio_workflow.addressable_figures import split_figures
-try:
-    from workspace import WorkspaceError
-except ModuleNotFoundError as error:
-    if error.name != 'workspace':
-        raise
-    from app.workspace import WorkspaceError
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
+
+
+def _typed_value_error(exc):
+    """Return a domain HTTP response without relying on one exception class identity."""
+    response = getattr(exc, 'response', None)
+    status = getattr(exc, 'status', None)
+    if not callable(response) or type(status) is not int or not 400 <= status <= 599:
+        return None
+    value = response()
+    return (status, value) if isinstance(value, dict) else None
 
 
 def dispatch(path, value, studio=None):
@@ -68,8 +72,6 @@ def extend_handler(base):
                     need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
                     body=self.rfile.read(self._content_length(1024*1024))
                     return self._json(201,split_figures(self.studio.assets,decode(body)))
-                except WorkspaceError as exc:
-                    return self._json(exc.status,exc.response())
                 except sqlite3.Error:
                     return self._json(503,{
                         'error':'Asset storage could not confirm this request. Check its receipt before retrying the exact command.',
@@ -79,7 +81,11 @@ def extend_handler(base):
                 except OSError as exc:
                     return self._json(500,{'error':'Local figure split failed: '+str(exc)[:200],
                                            'generation_submitted':False})
-                except (ValueError,KeyError,TypeError,IndexError,RecursionError) as exc:
+                except ValueError as exc:
+                    domain = _typed_value_error(exc)
+                    if domain is not None: return self._json(*domain)
+                    return self._json(400,{'error':str(exc),'generation_submitted':False})
+                except (KeyError,TypeError,IndexError,RecursionError) as exc:
                     return self._json(400,{'error':str(exc),'generation_submitted':False})
             if not path.startswith('/api/prompt/'): return super().do_POST()
             if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
