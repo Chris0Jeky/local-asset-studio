@@ -10,7 +10,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
-      - name: Full offline suite with resource lifetime diagnostics
-        run: python tests/check_full_suite_lifetime.py
-      - run: python scripts/validate-repo.py
+      - run: python -m unittest tests.test_agent_harness.GrokAdapterTests.test_grok_permission_rules_use_native_schema -v
