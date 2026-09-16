@@ -488,6 +488,23 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(bound['1']['inputs']['frames'],22)
         self.assertEqual(bound['1']['inputs']['last_reference'],upload)
 
+    def test_depth_cut_binds_as_a_whole_percentage(self):
+        """The depth Combine recipe exposes the mask row that cuts the depth map as a 0-100 whole-number control."""
+        preset=dict(PRESET, depth_cut=["1","y"])
+        graph=json.loads(json.dumps(GRAPH)); graph['1']['inputs']['y']=100
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        self.assertEqual(next(p for p in s.catalog()['presets'] if p['id']=='demo')['defaults']['depth_cut'],100)
+        with self.assertRaisesRegex(server.StudioError,'between 0 and 100'): s.prepare({'preset_id':'demo','controls':{'depth_cut':101}})
+        with self.assertRaisesRegex(server.StudioError,'must be a number'): s.prepare({'preset_id':'demo','controls':{'depth_cut':'ankles'}})
+        with self.assertRaisesRegex(server.StudioError,'finite integer'): s.prepare({'preset_id':'demo','controls':{'depth_cut':86.5}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'depth_cut':'86'}})
+        self.assertEqual(bound['1']['inputs']['y'],86)
+        # Unbound elsewhere: the catalog stays the allow-list.
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
+        with self.assertRaises(server.StudioError): self.studio().prepare({'preset_id':'demo','controls':{'depth_cut':86}})
+
     def test_style_weight_and_pose_strength_bind_through_the_catalog(self):
         """The Style + Pose recipes expose IP-Adapter weight and ControlNet strength as plain 0-2 controls."""
         preset=dict(PRESET, style_weight=["1","style_weight"], pose_strength=["2","pose_strength"], last_reference=["2","last_reference"])
