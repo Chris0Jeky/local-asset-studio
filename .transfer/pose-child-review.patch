@@ -1,0 +1,140 @@
+diff --git a/app/static/pose-editor-core.js b/app/static/pose-editor-core.js
+index 170339d..2b84589 100644
+--- a/app/static/pose-editor-core.js
++++ b/app/static/pose-editor-core.js
+@@ -86,0 +87 @@
++        ||typeof value.file!=='string'||typeof value.sha256!=='string'||typeof value.artifact_id!=='string'
+diff --git a/app/static/studio-workbench.js b/app/static/studio-workbench.js
+index 1a84953..196bcc9 100644
+--- a/app/static/studio-workbench.js
++++ b/app/static/studio-workbench.js
+@@ -379 +379 @@
+-    if(!step||!posePoints||poseBusy||posePositionDirty()||e.target.closest('select,input,textarea'))return;
++    if(!step||!posePoints||poseBusy||posePositionDirty()||!e.target.closest('#uxPoseCanvas,[data-ux-joint]'))return;
+@@ -398 +398 @@
+-    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
++    const stamp=setupStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+@@ -402 +402 @@
+-      if(stamp!==workbenchStamp()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
++      if(stamp!==setupStamp()||setupBusy()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
+diff --git a/docs/pose-control/HANDOFF-2026-09-16.md b/docs/pose-control/HANDOFF-2026-09-16.md
+index 75a6cfc..2a717ef 100644
+--- a/docs/pose-control/HANDOFF-2026-09-16.md
++++ b/docs/pose-control/HANDOFF-2026-09-16.md
+@@ -47,0 +48,4 @@ Precise numerical joint edits and redo should reuse the current geometry/history
++
++## Review correction: a newer reference operation wins
++
++The pose handoff now reuses the existing setup snapshot (reference epoch, pending count, recipe/selection identity and parent bindings) and refuses a reply while another setup operation is active. A new role-slot upload can begin before its filename changes: an unchanged source-pair snapshot alone is therefore insufficient. The render reply must not switch recipes and invalidate that newer upload. One native regression holds both requests, releases the guide first, then proves that the newer upload still attaches to the original recipe. Causal tests execute the actual handoff function with changed upload/epoch/picker state and a non-conflicting control. Identity fields additionally require strings rather than coercible arrays. None of this retries or cancels the user's newer operation.
+diff --git a/docs/pose-control/PRECISE-JOINTS.md b/docs/pose-control/PRECISE-JOINTS.md
+index a58ea4a..b973f86 100644
+--- a/docs/pose-control/PRECISE-JOINTS.md
++++ b/docs/pose-control/PRECISE-JOINTS.md
+@@ -34,0 +35,4 @@ No GPU generation, model/node/runtime change, native renderer qualification, sou
++
++## Review correction: keyboard ownership
++
++The keydown handler now admits nudges only from the canvas or a joint-list button. Arrow keys on Set joint position, Reset, Undo or Use pose are not drawing commands and must not create a pose change or Undo snapshot. An actual-handler regression checks the permitted and excluded targets, and the native-page driver presses arrow keys while those action controls are focused. The child also retains the parent's newer-reference-operation protection.
+diff --git a/tests/pose_editor_handoff_browser.py b/tests/pose_editor_handoff_browser.py
+index 24b9af9..979051f 100644
+--- a/tests/pose_editor_handoff_browser.py
++++ b/tests/pose_editor_handoff_browser.py
+@@ -36,0 +37,5 @@ def precision_checks(page, check):
++    applied = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
++    for control in ('#uxPosePositionApply', '#uxPoseUse', '#uxPoseUndo'):
++        page.locator(control).focus(); page.keyboard.press('ArrowRight')
++        check(page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()') == applied,
++              'Arrow keys on ' + control + ' do not nudge the drawing')
+@@ -71 +76 @@ def main(argv=None):
+-             ('stale-workbench', 1536), ('busy-drawing', 390), ('transport-failure', 1536)]
++             ('stale-workbench', 1536), ('busy-drawing', 390), ('transport-failure', 1536), ('newer-role-upload', 390)]
+@@ -109,2 +114,2 @@ def main(argv=None):
+-                        held = []
+-                        if name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure'):
++                        held, uploads = [], []
++                        if name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure', 'newer-role-upload'):
+@@ -114 +119 @@ def main(argv=None):
+-                        if held or name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure'):
++                        if held or name in ('corrupt-reply', 'stale-workbench', 'busy-drawing', 'transport-failure', 'newer-role-upload'):
+@@ -130,0 +136,10 @@ def main(argv=None):
++                            if name == 'newer-role-upload':
++                                page.route('**/api/upload', lambda route: uploads.append(route))
++                                page.locator('[data-ref-file="0"]').set_input_files({
++                                    'name': 'newer.png', 'mimeType': 'image/png',
++                                    'buffer': (ROOT / 'examples/references/lantern-reference.png').read_bytes()})
++                                page.wait_for_function('referencePending>0')
++                                for _ in range(40):
++                                    if uploads: break
++                                    page.wait_for_timeout(50)
++                                check(len(uploads) == 1, 'A newer real role-slot upload is pending before the guide reply')
+@@ -139 +154 @@ def main(argv=None):
+-                        failed = name in ('corrupt-reply', 'stale-workbench', 'transport-failure')
++                        failed = name in ('corrupt-reply', 'stale-workbench', 'transport-failure', 'newer-role-upload')
+@@ -144,0 +160,10 @@ def main(argv=None):
++                            if name == 'newer-role-upload':
++                                check(page.locator('#uxPoseUse').is_disabled(), 'The newer pending attachment retains its own readiness hold')
++                                uploaded = dict(file='c'*32+'_newer.png', sha256='c'*64, bytes=1024,
++                                                width=256, height=256)
++                                uploads[0].fulfill(status=201, content_type='application/json', body=json.dumps(uploaded))
++                                page.wait_for_function("referencePending===0 && referenceRecords[0]?.file?.endsWith('_newer.png')")
++                                current = page.evaluate(SNAPSHOT)
++                                check(current['recipe'] == before['recipe'] and current['keep'] == before['keep'],
++                                      'The newer upload finishes on the original recipe with the character retained')
++                                check(current['refs'][0]['sha256'] == 'c'*64, 'The new donor is attached instead of the stale drawn guide')
+diff --git a/tests/pose_guide_handoff.cjs b/tests/pose_guide_handoff.cjs
+index dd8deb9..1cf87f2 100644
+--- a/tests/pose_guide_handoff.cjs
++++ b/tests/pose_guide_handoff.cjs
+@@ -59 +59,51 @@ test('typed drafts have an actionable generation hold and use the existing undo
+-console.log(count+' pose guide handoff contracts passed.');
++test('actual arrow handler nudges only the canvas and joint buttons',()=>{
++  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
++  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
++  const start=code.indexOf('  function poseKeys(e){'),end=code.indexOf("  posePanel.addEventListener('keydown',poseKeys)",start);
++  assert.ok(start>=0&&end>start);
++  for(const target of ['apply','reset','undo','use','input','canvas','joint']){
++    let edits=0,history=0,prevented=0;
++    const context={posePoints:[{x:1,y:1}],poseBusy:false,posePositionDirty:()=>false,poseJoint:0,
++      poseCanvas:{width:1024,height:1536},poseStatus:()=>{},pushPose:()=>history++,poseEdit:()=>edits++,
++      StudioPoseEditor:{nudge:()=>[{x:2,y:1}]}};
++    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
++    context.poseKeys({key:'ArrowRight',shiftKey:false,preventDefault:()=>prevented++,
++      target:{closest:selector=>selector==='#uxPoseCanvas,[data-ux-joint]'?['canvas','joint'].includes(target):selector==='select,input,textarea'&&target==='input'}});
++    const expected=['canvas','joint'].includes(target)?1:0;
++    assert.equal(edits,expected,target+' must not unexpectedly alter the drawing');
++    assert.equal(history,expected,target+' must not add a spurious undo entry');
++    assert.equal(prevented,expected,target+' retains its keyboard event');
++  }
++});
++async function pendingAttachmentTests(){
++  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
++  const code=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
++  const start=code.indexOf('  async function usePose(){'),end=code.indexOf("  q('#uxPoseUse').onclick",start);
++  assert.ok(start>=0&&end>start,'exercise the actual usePose implementation');
++  for(const conflict of ['pending-upload','reference-epoch','picker','none']){
++    let resolveReply,switches=0;
++    const state={pending:0,epoch:0,picker:false};
++    const context={poseBusy:false,posePoints:P.fromPreset('standing',{width:1024,height:1536}),poseCanvas:{width:1024,height:1536},
++      poseBlockedReason:()=>'',syncPoseActions:()=>{},workbenchStamp:()=>'unchanged source pair',
++      setupStamp:()=>JSON.stringify([state.pending,state.epoch]),setupBusy:()=>state.pending>0||state.picker,
++      selected:{id:'picture'},POSE_RECIPE:'skeleton',StudioPoseEditor:P,syncReady:()=>{},
++      post:()=>new Promise(resolve=>{resolveReply=resolve;}),
++      switchCombineEngine:()=>{switches++;throw Error('test stops before attachment');},poseStatus:()=>{},announce:()=>{}};
++    vm.createContext(context);vm.runInContext(code.slice(start,end),context);
++    const pending=context.usePose();
++    assert.equal(context.poseBusy,true,'the real function admitted the render');
++    if(conflict==='pending-upload')state.pending=1;
++    if(conflict==='reference-epoch')state.epoch++;
++    if(conflict==='picker')state.picker=true;
++    resolveReply(reply);await pending;
++    assert.equal(switches,conflict==='none'?1:0,conflict+' must not let the old guide discard a newer reference operation');
++    assert.equal(context.poseBusy,false,'the render hold is released');
++  }
++  count++;console.log('PASS actual handoff invalidates pending uploads, reference epochs and active picker operations');
++}
++pendingAttachmentTests().then(()=>{
++  test('render identity fields must be strings, not coercible arrays',()=>{
++    for(const key of ['file','sha256','artifact_id'])assert.throws(()=>P.guideResponse({...reply,[key]:[reply[key]]},request));
++  });
++  console.log(count+' pose guide handoff contracts passed.');
++}).catch(error=>{console.error(error);process.exitCode=1;});
