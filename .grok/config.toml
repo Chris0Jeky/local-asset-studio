@@ -34,6 +34,5 @@ rules = [
   { action = "allow", tool = "bash", pattern = "gh pr *" },
   { action = "allow", tool = "bash", pattern = "gh issue *" },
   { action = "allow", tool = "bash", pattern = "gh run *" },
-  { action = "allow", tool = "bash", pattern = "gh auth status" },
   { action = "allow", tool = "bash", pattern = "gh repo view" },
 ]
