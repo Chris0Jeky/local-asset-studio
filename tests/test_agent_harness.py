@@ -6,6 +6,7 @@ is correct or that an agent follows it.
 """
 import json
 import re
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,33 @@ SKILL_NAMES = ('studio-preset-slice', 'studio-execution-evidence', 'studio-nativ
                'studio-runtime-models', 'studio-session-closeout')
 BUDGETS = {'CLAUDE.md': 100, 'AGENTS.md': 80}  # T2 caps from agent-harness SPECS §3
 SKILL_BUDGET = 80
+GROK_BASH_PATTERNS = {
+    'python -m unittest*',
+    'python scripts/validate-repo.py*',
+    'python scripts/validate-live.py*',
+    'python scripts/game_asset_pipeline.py*',
+    'python scripts/game_asset_demo.py*',
+    'python scripts/game_asset_media.py*',
+    'node --check*',
+    'node --version',
+    'python --version',
+    'git status*',
+    'git log*',
+    'git diff*',
+    'git show*',
+    'git branch*',
+    'git switch*',
+    'git add*',
+    'git commit*',
+    'git fetch*',
+    'git ls-files*',
+    'gh pr*',
+    'gh issue*',
+    'gh run*',
+    'gh auth status*',
+    'gh repo view*',
+    'rg*',
+}
 
 
 def split_frontmatter(text):
@@ -109,6 +137,27 @@ class GrokAdapterTests(unittest.TestCase):
         self.assertNotIn('[mcp_servers.comfy-local]', text)
         self.assertNotIn('[mcp_servers.MCP_DOCKER]', text)
         self.assertIn('[permission]', text)
+
+    def test_grok_permission_rules_use_native_schema(self):
+        config = tomllib.loads((ROOT / '.grok/config.toml').read_text(encoding='utf-8'))
+        permission = config.get('permission')
+        self.assertIsInstance(permission, dict)
+        self.assertNotIn('allow', permission, 'Claude-style allow arrays are not Grok Build permission rules')
+        rules = permission.get('rules')
+        self.assertIsInstance(rules, list)
+        self.assertGreater(len(rules), 0)
+        patterns = set()
+        for index, rule in enumerate(rules):
+            self.assertIsInstance(rule, dict, index)
+            self.assertEqual(rule.get('action'), 'allow', index)
+            self.assertEqual(rule.get('tool'), 'bash', index)
+            pattern = rule.get('pattern')
+            self.assertIsInstance(pattern, str, index)
+            self.assertTrue(pattern.strip(), index)
+            self.assertNotIn('Bash(', pattern, index)
+            patterns.add(pattern)
+        self.assertEqual(patterns, GROK_BASH_PATTERNS)
+        self.assertFalse(any(pattern.startswith('git push') for pattern in patterns))
 
     def test_docs_name_the_grok_adapter(self):
         for doc in ('AGENTS.md', 'CLAUDE.md'):
