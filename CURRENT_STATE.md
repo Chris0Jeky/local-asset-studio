@@ -37,6 +37,17 @@
   The Studio's own guard declined one proving job while a research batch held ComfyUI (`02d7c0e4…`, never submitted, abandoned from the page, its
   recipe retained); renders under three concurrent test suites took 250-350 s instead of about 100 s, which is CPU contention, not the slow state.
 
+- **The merge worker's final report (05:15):** thirteen Codex PRs merged tonight (#389, #396, #398, #418, #421, #390, #402, #415, #383, #428,
+  #426, #442, #471), each with one fresh-context review, CI green at its head and a full local suite where the change warranted it; three defects
+  fixed inside the PRs (#415's preview guard rejected every seed because it re-checked the installed schema's bounds; #428's canvas contracts had
+  no Python wrapper so the suite never ran them; #442 claimed a job cancellation that does not exist). #340 parked (#461, eight failures with one
+  root cause); #472 in flight with its review posted; #474, #475, #476, #478 and #480 reviewed and left open, #480 conflicting with #475 in
+  `studio-workbench.js` so it waits for #475; the adult programme stack untouched (q-29). Seventeen issues filed. Three findings to act on:
+  reference analysis is inert on this host as merged (#459: 185 run records, none with a disposition, three of them block its idle check); a
+  negative-path HTTP test family fails with WinError 10053 when the suite runs as a batch, reproduced on plain main (#468); the 420 s suite lifetime
+  (#373) now costs a rerun every few PRs. Ledger `.runtime/merge-queue-20260916.md`. The Studio was restarted on c2cfba8 at 04:52 while the owner
+  was working; #471 landed after that, so the next idle restart picks it up.
+
 Reviews: #481 one fresh-context adversarial pass (no CRITICAL/HIGH; two MEDIUMs fixed in-PR) plus a scoped second pass on the fix diff (one stale
 doc sentence fixed), and the Codex connector's two threads (the same findings, resolved); #470's three Codex P2s were already fixed in its review
 commit; #473 and #479 Codex clean after a fix and a tracked decline. Not verified: the replace recipe clicked through the browser; characters beyond
