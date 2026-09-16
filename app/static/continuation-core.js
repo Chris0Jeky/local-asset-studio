@@ -179,6 +179,15 @@
     if(refs.some(r=>r?.missing))return 'Reattach the missing picture before switching.';
     return '';
   }
+  // Unlike an engine switch, this action explicitly replaces Picture 1 with a newly rendered guide.
+  // Only that input may be discarded: ordinary switching still requires matching representation types.
+  function combinePoseReplacementReason(from,to,refs=[]){
+    if(!combineKind(from)||combineKind(to)!=='skeleton'||to.reference_slots?.length!==1||to.reference_slots[0].role!=='pose')
+      return 'The drawing needs a Combine recipe with one skeleton input and a separate character input.';
+    if(!Array.isArray(refs)||refs.slice(1).some(r=>r?.file||r?.missing))
+      return 'Remove the extra board picture before replacing the pose with a drawing.';
+    return '';
+  }
   function combineReferences(preset,refs){
     const filled=refs.filter(r=>r?.file);
     if(filled.length>preset.reference_slots.length)throw Error('The destination cannot keep every attached picture.');
@@ -194,5 +203,5 @@
     const a=refs(current),b=refs(job);
     return a.length>0&&a.length===b.length&&!a.concat(b).some(r=>r.missing)&&a.every((ref,i)=>same(ref,b[i]));
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineSwitchReason,combineReferences,sameCombinePair};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair};
 });

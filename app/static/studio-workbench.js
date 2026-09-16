@@ -214,17 +214,19 @@
   };
   // The one path that moves this pair to another Combine recipe: the engine buttons and the pose editor
   // both take it, so pictures, lineage and the three answers survive a switch the same way in both.
-  function switchCombineEngine(presetId){
-      const target=catalog.presets.find(p=>p.id===presetId),reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason)throw Error(reason);
+  function switchCombineEngine(presetId,guide=null){
+      const target=catalog.presets.find(p=>p.id===presetId),reason=guide?StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords):StudioContinuation.combineSwitchReason(selected,target,referenceRecords);if(reason||target?.runtime_block)throw Error(reason||target.runtime_block);
       if(!continuationSource||lastUploaded!==continuationState.reference_file)throw Error('Put the source back before changing recipes.');
       if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before changing recipes.');
       const source=continuationSource,prepared=StudioContinuation.initial(source,target,'combine',lastUploaded),answers=combineAnswers(),mapped=StudioContinuation.combineFillValues(target,answers);
       const identity=pairKey(),oldWords=q('#positive').value,manual=q('#uxFillsNote')&&!q('#uxFillsNote').hidden;
       if(manual)combineWording.set(identity+'|'+selected.id,oldWords);else combineWording.delete(identity+'|'+selected.id);
-      const refs=StudioContinuation.combineReferences(target,referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
-      const restored=combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
+      const previous=guide?referenceRecords[0]?.parent_asset:null,refs=StudioContinuation.combineReferences(target,guide?[guide]:referenceRecords),parents=[...parentAssets],inputs={...parentByInput},prior=values(),batch=q('#batch').value,keep=lastUploaded;
+      if(guide)Object.assign(refs[0],guide,{parent_asset:null,missing:false});
+      const restored=guide?undefined:combineWording.get(identity+'|'+target.id),positive=restored??StudioContinuation.assemble(prepared.positive,mapped);
       rememberFills();transferredFills={preset:target.id,source:source.asset_id,values:mapped};
       selectPreset(target.id,true,true);continuationState=prepared.claim;continuationSource=source;lastUploaded=keep;uploaded=null;parentAssets=parents;parentByInput=inputs;referenceRecords=refs;
+      if(previous!==source.asset_id)releaseParentAsset(previous);
       q('#positive').value=positive;if(selected.negative)q('#negative').value=prepared.negative;
       for(const key of ['seed','width','height']){const input=getControl(key);if(input&&prior[key]!=null)input.value=prior[key];}q('#batch').value=batch;
       fillsPreset=null;renderReferenceSlots();syncFills();if(restored===undefined)fillsAssembled=positive;transferredFills=null;
@@ -287,14 +289,17 @@
     const target=catalog?.presets.find(p=>p.id===POSE_RECIPE);
     if(!target)return 'The drawn-skeleton recipe is not in this catalog.';
     if(!continuationState||!continuationSource)return 'Open this pair through Continue with this, then draw the pose.';
-    // A refusal that only names the mismatch leaves the user stuck: say where the drawn route actually is. Today the
-    // drawn skeleton is the one skeleton-kind recipe, so this is the answer from every picture-kind Combine.
-    const reason=StudioContinuation.combineSwitchReason(selected,target,referenceRecords)||target.runtime_block||'';
-    return reason?reason+' Reach the drawn-skeleton recipe through Continue with this → Combine, then draw here.':'';
+    if(lastUploaded!==continuationState.reference_file)return 'Put the character source back before replacing the pose picture.';
+    if(['reference','lastReference'].some(id=>q('#'+id).files?.length))return 'Finish attaching the chosen picture first.';
+    return StudioContinuation.combinePoseReplacementReason(selected,target,referenceRecords)||target.runtime_block||'';
   }
   function syncPoseActions(){
     const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo');
-    use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';q('#uxPoseReason').textContent=reason;
+    const replacing=selected?.id!==POSE_RECIPE;
+    use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
+    use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
+    q('#uxPoseReason').textContent=reason||(replacing?'Replaces Picture 1 and selects the skeleton recipe. Your character stays; review the pose wording before Generate.':'');
+    q('#uxPoseStart').disabled=poseBusy;
     const named=StudioPoseEditor.LABELS[poseJoint].toLowerCase(),drawn=!!(posePoints&&posePoints[poseJoint]);
     unknown.textContent=(drawn?'Mark ':'Restore ')+named;unknown.title=drawn?'Leaves it out of the guide, with its limbs.':'Puts it back where it last was.';
     unknown.disabled=poseBusy;undo.disabled=poseBusy||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
@@ -320,7 +325,7 @@
     poseSignature='';renderPoseJoints();drawPose();syncPoseActions();
   }
   q('#uxPoseStart').onchange=e=>{
-    const id=e.target.value;e.target.value='';if(!id||!posePoints)return;
+    const id=e.target.value;e.target.value='';if(!id||!posePoints||poseBusy)return;
     pushPose();poseEdit(StudioPoseEditor.start(id,posePoints,poseCanvas));
     poseStatus((StudioPoseEditor.PRESETS.find(p=>p.id===id)||{}).label+' loaded. Nothing was submitted.');
   };
@@ -347,19 +352,24 @@
     try{q('#uxPoseCanvas').setPointerCapture(e.pointerId);}catch(_){}
     poseEdit(StudioPoseEditor.move(posePoints,index,at.x,at.y,poseCanvas));
   });
-  q('#uxPoseCanvas').addEventListener('pointermove',e=>{if(poseDrag<0||!posePoints)return;e.preventDefault();const at=poseAt(e);poseEdit(StudioPoseEditor.move(posePoints,poseDrag,at.x,at.y,poseCanvas));});
+  q('#uxPoseCanvas').addEventListener('pointermove',e=>{if(poseDrag<0||!posePoints||poseBusy)return;e.preventDefault();const at=poseAt(e);poseEdit(StudioPoseEditor.move(posePoints,poseDrag,at.x,at.y,poseCanvas));});
   for(const name of ['pointerup','pointercancel','lostpointercapture'])q('#uxPoseCanvas').addEventListener(name,()=>{poseDrag=-1;});
   async function usePose(){
     if(poseBusy||!posePoints)return;
     const blocked=poseBlockedReason();if(blocked){poseStatus(blocked);syncPoseActions();return;}
-    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE;
-    poseBusy=true;syncReady();
+    const stamp=workbenchStamp(),switching=selected.id!==POSE_RECIPE,request=StudioPoseEditor.serialize(posePoints,poseCanvas),drawing=JSON.stringify(request);
+    poseDrag=-1;poseBusy=true;syncReady();
     try{
-      const result=await post('/api/pose/render',StudioPoseEditor.serialize(posePoints,poseCanvas));
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the pose was rendering. Nothing was attached.');
-      if(switching)switchCombineEngine(POSE_RECIPE);
-      const slot=referenceRecords[0];if(!slot)throw Error('This recipe has no pose slot. Choose the drawn-skeleton recipe first.');
-      const previous=slot.parent_asset;Object.assign(slot,{parent_asset:null},result,{missing:false});releaseParentAsset(previous);
+      const response=await post('/api/pose/render',request);
+      if(stamp!==workbenchStamp()||drawing!==JSON.stringify(StudioPoseEditor.serialize(posePoints,poseCanvas)))throw Error('The workbench or drawing changed while the pose was rendering. Nothing was attached.');
+      const result=StudioPoseEditor.guideResponse(response,request);
+      if(switching)switchCombineEngine(POSE_RECIPE,result);
+      else{
+        const previous=referenceRecords[0]?.parent_asset;
+        referenceRecords=StudioContinuation.combineReferences(selected,[result]);
+        Object.assign(referenceRecords[0],result,{parent_asset:null,missing:false});
+        if(previous!==continuationState?.source_asset_id)releaseParentAsset(previous);
+      }
       if(StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
       renderReferenceSlots();draftDirty=true;saveDraft();syncCreate();
       poseStatus('Your drawing is on Picture 1. No generation was submitted.');

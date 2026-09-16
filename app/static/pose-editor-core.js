@@ -71,5 +71,16 @@
     const round=(value,limit)=>Math.round(clamp(value,limit)*100)/100;
     return{width:c.width,height:c.height,keypoints:copy(points).map(p=>p?[round(p.x,c.width),round(p.y,c.height)]:null)};
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize};
+  // Treat rendering as a response to this exact canvas; never spread untrusted attachment metadata into a slot.
+  function guideResponse(value,request){
+    if(!value||typeof value!=='object'||Array.isArray(value)||!request
+        ||!/^[a-f0-9]{32}_drawn-pose\.png$/.test(value.file||'')
+        ||!/^[a-f0-9]{64}$/.test(value.sha256||'')||!/^[a-f0-9]{64}$/.test(value.artifact_id||'')
+        ||!Number.isInteger(value.bytes)||value.bytes<1||value.bytes>20*1024*1024
+        ||value.width!==request.width||value.height!==request.height
+        ||value.renderer!=='studio.coco18-lines/v1'||value.generation_submitted!==false)
+      throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
+    return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
+  }
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse};
 });
