@@ -42,6 +42,9 @@ What this settles for the pack: an edit route on a finished picture keeps identi
 reference portrait, not new seeds; a body-pose change from a portrait needs a route that keeps the face at that scale (Copy Pose with a
 full-body character picture, or a face pass after the Combine), which is the next experiment, not this one.
 
+### A second expression edit (03:08)
+
+The same *Change one thing* route on the portrait with the instruction "change her expression to surprised: eyebrows raised, eyes a little wider, lips parted slightly as if about to speak, no smile and no grin": job `ccf4fbf4-c034-488b-b0df-6411a7fea70b` / `992a5c6f-26d8-4984-a043-e2684099b637`, 93.2 s, `Verified/FLUX-Edit_00011_.png` (recipe `../style-pose-matrix/2026-09-14-combine/research-scripts/audition-recipes/expression-2026091301-ccf4fbf4.json`, sheet `examples/fantasy-pack/expression-edits.jpg`): **the surprised look as asked** (raised brows, wide eyes, parted lips, no grin) with the same face, hair, earrings, coat, scarf, hands and lantern. The wording, not the route, decided the earlier grin.
 ## Full body that keeps the face: the replace-character LoRA (16 September 2026, 03:19-03:26)
 
 The slice B could not give - the depth Combine carried the pose and the costume but lost the face - proved the same night, but **in

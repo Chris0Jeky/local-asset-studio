@@ -1,0 +1,169 @@
+[
+ {
+  "id": "f8c45ada-5549-42b9-a660-a5a4e3a7f928",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-depth",
+  "prompt_ids": [
+   "822a47d8-d4bd-4710-8c78-c1660c9c9f05"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00006_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091441,
+    "prompt_id": "822a47d8-d4bd-4710-8c78-c1660c9c9f05",
+    "media_type": "image",
+    "asset_id": "e2cc14d25865567f80b5df5b05a73745"
+   }
+  ],
+  "elapsed_seconds": 121.16466212272644,
+  "error": null,
+  "group": "depthcut",
+  "seed": 2026091441,
+  "depth_cut": 80
+ },
+ {
+  "id": "63f9ecaa-310b-4237-9d22-11c6264ce24c",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-depth",
+  "prompt_ids": [
+   "c9263b40-1bbd-416b-abaa-0e9307438e1d"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00007_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091441,
+    "prompt_id": "c9263b40-1bbd-416b-abaa-0e9307438e1d",
+    "media_type": "image",
+    "asset_id": "efbe9f6df0825aebaf67a757abb85a5e"
+   }
+  ],
+  "elapsed_seconds": 54.50693225860596,
+  "error": null,
+  "group": "depthcut",
+  "seed": 2026091441,
+  "depth_cut": 92
+ },
+ {
+  "id": "bac76a97-098c-452d-a485-bccfd6b60282",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-skeleton",
+  "prompt_ids": [
+   "b1a39482-abf5-4cab-914d-18b87aa6b6bc"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-skeleton_00003_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091462,
+    "prompt_id": "b1a39482-abf5-4cab-914d-18b87aa6b6bc",
+    "media_type": "image",
+    "asset_id": "55819d76c9625d298fcd741fb6c08179"
+   }
+  ],
+  "elapsed_seconds": 93.05498242378235,
+  "error": null,
+  "group": "editor",
+  "seed": 2026091462,
+  "guide": "0d468872db0a4cb0b05a49fd94c4ec0b_drawn-pose.png"
+ },
+ {
+  "id": "bf3d1c70-eb27-443c-9aad-53af07d6e970",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-skeleton",
+  "prompt_ids": [
+   "bfa1a4d0-4c72-4e92-bf08-a60e46d57659"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-skeleton_00004_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091463,
+    "prompt_id": "bfa1a4d0-4c72-4e92-bf08-a60e46d57659",
+    "media_type": "image",
+    "asset_id": "87db27a22d125e659ce979db67420dea"
+   }
+  ],
+  "elapsed_seconds": 75.29800319671631,
+  "error": null,
+  "group": "editor",
+  "seed": 2026091463,
+  "guide": "0d468872db0a4cb0b05a49fd94c4ec0b_drawn-pose.png"
+ },
+ {
+  "id": "572794b6-4681-4457-8a2f-9eec373fa387",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-copypose",
+  "prompt_ids": [
+   "37f19109-b8ef-4060-a451-70837585bc2c"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-copypose_00002_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091472,
+    "prompt_id": "37f19109-b8ef-4060-a451-70837585bc2c",
+    "media_type": "image",
+    "asset_id": "adb9076fba0b541994d9e56966f8aee6"
+   }
+  ],
+  "elapsed_seconds": 132.93650126457214,
+  "error": null,
+  "group": "copypose",
+  "seed": 2026091472
+ },
+ {
+  "id": "069c5efe-e412-482d-83e6-4477b2633c4e",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-copypose",
+  "prompt_ids": [
+   "b3c4ff76-5bd3-4dff-9e29-b18e3626ed02"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-copypose_00003_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091473,
+    "prompt_id": "b3c4ff76-5bd3-4dff-9e29-b18e3626ed02",
+    "media_type": "image",
+    "asset_id": "af9313f5641a5283887e4296e3b7098d"
+   }
+  ],
+  "elapsed_seconds": 143.18129348754883,
+  "error": null,
+  "group": "copypose",
+  "seed": 2026091473
+ },
+ {
+  "id": "ccf4fbf4-c034-488b-b0df-6411a7fea70b",
+  "status": "completed",
+  "preset_id": "flux-edit",
+  "prompt_ids": [
+   "992a5c6f-26d8-4984-a043-e2684099b637"
+  ],
+  "outputs": [
+   {
+    "filename": "FLUX-Edit_00011_.png",
+    "subfolder": "Verified",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "992a5c6f-26d8-4984-a043-e2684099b637",
+    "media_type": "image",
+    "asset_id": "89114fab310152ff8101adf1840e489b"
+   }
+  ],
+  "elapsed_seconds": 93.20180535316467,
+  "error": null,
+  "group": "expression",
+  "seed": 2026091301,
+  "source_asset": "021731c057d955b4a2487395a37fadf6",
+  "instruction": "surprised, no grin"
+ }
+]
