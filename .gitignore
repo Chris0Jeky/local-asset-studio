@@ -31,6 +31,7 @@ experiments/projects/
 .claude/worktrees/
 .claude/scratch/
 .codex/scratch/
+.grok/scratch/
 *.log
 *.blend1
 .DS_Store
