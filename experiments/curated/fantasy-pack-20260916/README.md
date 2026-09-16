@@ -42,10 +42,55 @@ What this settles for the pack: an edit route on a finished picture keeps identi
 reference portrait, not new seeds; a body-pose change from a portrait needs a route that keeps the face at that scale (Copy Pose with a
 full-body character picture, or a face pass after the Combine), which is the next experiment, not this one.
 
+## Full body that keeps the face: the replace-character LoRA (16 September 2026, 03:19-03:26)
+
+The slice B could not give - the depth Combine carried the pose and the costume but lost the face - proved the same night, but **in
+research, straight against ComfyUI** (`POST /prompt` on 8188), *not* through the Studio: `pack_replacechar.py` next to this file,
+results in `pack_replacechar.json`, the three exact submitted graphs under `research-graphs/`. Sheet:
+`examples/fantasy-pack/full-body-keeps-face.jpg`.
+
+The pair is the pack's own: **image 1** is the batch's full-body render (step 2, `Studio/Anima-v1-Baseline_00005_.png`, staged in
+ComfyUI's input folder as `9c880763...`) and **image 2** the batch's three-quarter portrait (step 1, `...Baseline_00004_.png`,
+`aa93fb46...`). The graph is the shipped FLUX.2 Klein 9B two-reference Combine (`workflows/api/combine-klein-9b-api.json`) with one
+node added: a `LoraLoaderModelOnly` on the pinned civitai adapter `replace_character_v1_klein.safetensors` at strength 1.0, model
+only (node 40), feeding the CFGGuider's model input. 832x1216, 6 Euler steps on the Flux2 schedule at CFG 1.0, one image per seed,
+backend `primary` (ComfyUI 0.35.0 on 8188). The same wording on all three seeds, the LoRA author's sentence with the costume named:
+
+> Replace the woman in image 1 with the woman in image 2, while keeping the same pose, action, camera angle, composition, background
+> and lighting as in image 1. The woman in image 2 has long centre-parted dark hair, brown eyes, a calm face and small gold earrings;
+> keep her face, hair and expression exactly as in image 2. She wears image 1's clothes: a navy double-breasted travelling coat with
+> brass buttons, a teal scarf, dark trousers, brown lace-up boots, holding a brass lantern, a leather satchel on a strap. Keep image
+> 1's painterly rendering and its station platform. One figure only, nobody else in the picture.
+
+| Seed | Prompt | s | Output | Inspected (agent's reading, not acceptance) |
+| --- | --- | --- | --- | --- |
+| 2026091301 | `6eaa00a9-083e-41e9-88c9-d2820b0b4487` | 116.1 | `Research/pack-replacechar_00001_.png` | the portrait's heavy centre-parted fringe low over the brows, its gold diamond earrings, its rounder face and calm half-lidded gaze - on image 1's body: the same standing pose, lantern in the right hand, left hand on the satchel strap, navy coat, belt, teal scarf, boots, platform, rails and evening light unchanged. |
+| 2026091302 | `36312e34-4c09-477b-ab4b-bf33c544ff61` | 132.2 | `Research/pack-replacechar_00002_.png` | the same transfer; the eyes read a little more open and both earrings show. Pose, costume, framing and background again unchanged from image 1. |
+| 2026091303 | `b6b1e704-b0aa-4e75-8330-21fdd909d35d` | 124.3 | `Research/pack-replacechar_00003_.png` | between the other two: the fringe covers one brow, the earrings are visible, the calm expression is kept; image 1's scene intact. |
+
+**What held, 3 of 3 seeds:** the portrait's fringe, gold earrings, face shape and calm expression arrived in the full-body scene, and
+image 1 kept everything else - pose, action, camera angle, composition, the navy double-breasted coat with brass buttons, the teal
+scarf, the belt, the satchel, the brass lantern, the boots, the station platform and the evening light. One figure in each, nobody
+added. 116-132 s per render.
+
+**What this does NOT establish:** the recipe through the Studio - these are `POST /prompt` research renders, the prepare/worker path
+is still owed and the catalog entry stays `verified: false` until it runs; any other character or pair (one pair, one look, one
+costume - and because the portrait wears the same coat, this run is not a hard test of costume leaking from image 2); non-Anima or
+photographic styles; that the face matches the portrait at portrait fidelity (at full-body scale the head is a small fraction of the
+frame: the fringe, earrings, hair and expression read, the fine features are re-drawn); art acceptance by the owner (HUMAN_TODO
+q-30); licence clearance - the 9B model is non-commercial and the adapter's civitai flags (Image/RentCivit/Rent, no Sell) are
+recorded in `models/library.json`, not granted here.
+
+The Studio recipe built from this run is **`combine-klein-9b-replace`** (`workflows/api/combine-klein-9b-replace-api.json` plus its
+catalog entry): the same graph, with "Picture to put them in (image 1)" as the board slot, "Character to keep (image 2)" as the
+picture you continue from, and three bracketed fills (image 1's pose and camera, who is in image 2, image 1's clothes and colours).
+
 ## Next slices this points at
 
-1. Identity across prompts needs a reference, not a seed: done for the expression (A above, kept); for the full body the depth Combine lost the
-   face (B above), so try Copy Pose with the batch's full-body render as the character and a pose picture, or a face pass on B's output.
+1. Identity across prompts needs a reference, not a seed: done for the expression (A above, kept) and now for the full body - the
+   replace-character LoRA carried the portrait's face into the batch's own full-body render on 3 of 3 seeds (the section above), and that
+   run is the Studio recipe `combine-klein-9b-replace`. What is left on this slice: the Studio proving run for that recipe, and a face
+   pass on one of the three renders if the owner wants the face at portrait fidelity.
 2. A targeted hand correction: the detailer's hand pass at 0.45 did not change the lantern grip; a masked repair on the hand region
    (the repair programme, #243-#257) or a *Change one thing* Klein edit on step 1 is the next candidate, at the same seed, with the original kept.
 3. The owner's review of the four assets in *Runs & review* decides which, if any, becomes the pack's reference (HUMAN_TODO q-30).
