@@ -103,7 +103,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy,unfilled,sourceMissing});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
     const specific=continuationBlockerItems().map(item=>({code:'continuation-'+item.code,message:item.message,action:continuationActions[item.code]||'continuation'}));
     // The continuation names the exact empty slot; the generic reference line would only repeat it.
@@ -196,7 +196,7 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy;}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy;}
   function syncCombineEngines(){
     enginePanel.hidden=!continuationState||!StudioContinuation.combineKind(selected);if(enginePanel.hidden){engineMarkup='';return;}
     const options=StudioContinuation.destinations('combine',catalog.presets,continuationSource),busy=combineBusy();
@@ -254,7 +254,9 @@
     const ratio=poseCanvas.width/poseCanvas.height;
     return ratio>=1?{width:POSE_DISPLAY,height:Math.max(1,Math.round(POSE_DISPLAY/ratio))}:{width:Math.max(1,Math.round(POSE_DISPLAY*ratio)),height:POSE_DISPLAY};
   }
-  function pushPose(){poseHistory.push(JSON.parse(JSON.stringify(posePoints)));if(poseHistory.length>POSE_UNDO)poseHistory.shift();}
+  // Undo carries the remembered positions with the drawing: otherwise restoring an unknown joint after an undo
+  // would put it back where the undone edit had left it (Codex review, PR #466).
+  function pushPose(){poseHistory.push(JSON.parse(JSON.stringify({points:posePoints,home:poseHome})));if(poseHistory.length>POSE_UNDO)poseHistory.shift();}
   function poseAt(event){const rect=q('#uxPoseCanvas').getBoundingClientRect();
     return{x:(event.clientX-rect.left)/(rect.width||1)*poseCanvas.width,y:(event.clientY-rect.top)/(rect.height||1)*poseCanvas.height};}
   function drawPose(){
@@ -300,6 +302,8 @@
     const next=poseCanvasSize();
     if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseHistory=[];poseCanvas=next;}
     else if(next.width!==poseCanvas.width||next.height!==poseCanvas.height){
+      // The undo stack follows the canvas too, so stepping back after a size change cannot restore old-canvas pixels.
+      poseHistory=poseHistory.map(step=>({points:StudioPoseEditor.resize(step.points,poseCanvas,next),home:StudioPoseEditor.resize(step.home,poseCanvas,next)}));
       posePoints=StudioPoseEditor.resize(posePoints,poseCanvas,next);poseHome=StudioPoseEditor.resize(poseHome,poseCanvas,next);poseCanvas=next;}
     const el=q('#uxPoseCanvas'),display=poseDisplaySize();
     const signature=JSON.stringify([posePoints,poseCanvas,poseJoint,display]);
@@ -321,7 +325,7 @@
   q('#uxPoseUnknown').onclick=()=>{if(q('#uxPoseUnknown').disabled||!posePoints)return;
     pushPose();poseEdit(StudioPoseEditor.toggle(posePoints,poseJoint,poseHome[poseJoint],poseCanvas),false);
     poseStatus(StudioPoseEditor.LABELS[poseJoint]+(posePoints[poseJoint]?' is back in the guide.':' is left out, with the limbs that touch it.'));};
-  q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled||!poseHistory.length)return;poseEdit(poseHistory.pop(),false);poseStatus('One change stepped back.');};
+  q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled||!poseHistory.length)return;const step=poseHistory.pop();poseHome=step.home;poseEdit(step.points,false);poseStatus('One change stepped back.');};
   function poseKeys(e){
     const step={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
     // Arrow keys inside the Start-from list still change the option; the drawing only follows them elsewhere.
