@@ -443,6 +443,26 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.public(job)["failure"],job["failure"])
         self.assertEqual(self.studio().jobs[job["id"]]["failure"]["detail"],"bad allocation")
 
+    def test_model_swap_fault_is_labelled_as_retry_safe(self):
+        """The first load of another model family can die in ComfyUI's free_memory (#350); the record says so and names the safe next step."""
+        trace=["Traceback (most recent call last):","  File \"comfy/model_management.py\", line 560, in free_memory","    if current_loaded_models[i].model.is_dynamic():","IndexError: list index out of range"]
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"swap-failed"},
+                 {"swap-failed":{"status":{"status_str":"error","messages":[
+                     ["execution_error",{"node_id":"1","node_type":"CheckpointLoaderSimple","exception_type":"IndexError","exception_message":"list index out of range","traceback":trace}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual((job["status"],job["failure"]["kind"],job["failure"]["node_type"]),("failed","model_swap_fault","CheckpointLoaderSimple"))
+        self.assertIn("free_memory",job["failure"]["summary"]); self.assertIn("same seed",job["failure"]["action"]); self.assertIn("not retried automatically",job["failure"]["action"])
+        self.assertTrue(job["message"].startswith("ComfyUI model-swap fault before sampling; running the same job again is safe: CheckpointLoaderSimple"))
+        self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
+        # The same exception text inside a sampler, with no free_memory frame, stays a plain execution error.
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"sampler-index"},
+                 {"sampler-index":{"status":{"status_str":"error","messages":[
+                     ["execution_error",{"node_id":"7","node_type":"KSampler","exception_type":"IndexError","exception_message":"list index out of range","traceback":["IndexError: list index out of range"]}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job["failure"]["kind"],"execution_error"); self.assertTrue(job["message"].startswith("ComfyUI reported an execution error: KSampler"))
+
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"seed":40},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)
