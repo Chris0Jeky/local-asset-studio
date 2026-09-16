@@ -23,8 +23,12 @@ replacement and accepting it does not establish that it is the original.
 
 Python callers use `resource_receipts.inspect_observation(directory,
 expected_result_sha256=..., expected_job_id=...)`. Both pins are optional for initial
-inspection. `EvidenceError.code` is a bounded diagnostic, with `incomplete=True` for missing
-artifacts. No exception message includes receipt content or the nominated path.
+inspection. `EvidenceError.code` is a bounded diagnostic. Missing `result.json`, or a short
+`artifact_hashes` manifest that does not yet list all four named artifacts, is
+`incomplete=True` (still writing — retry). A complete four-name manifest whose listed sidecar
+is gone is `artifact_missing` with `incomplete=False` (`invalid`): a broken finished claim,
+not an in-progress capture. CLI `integrity: incomplete` is not a reason to wait on a deleted
+listed file. No exception message includes receipt content or the nominated path.
 
 Exit 0 means the recorded artifact set passed these integrity checks and the report was
 written. Exit 2 prints an `invalid` or `incomplete` JSON diagnostic to stdout and creates no

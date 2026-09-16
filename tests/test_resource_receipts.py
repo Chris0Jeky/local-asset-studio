@@ -174,6 +174,20 @@ class ReceiptTests(unittest.TestCase):
             self.assertEqual(caught.exception.code, 'artifact_missing')
             self.assertFalse(caught.exception.incomplete); path.write_bytes(raw)
 
+    def test_operator_doc_splits_incomplete_capture_from_deleted_listed_sidecar(self):
+        text = (ROOT / 'docs/performance/RECEIPT-INTEGRITY.md').read_text(encoding='utf-8')
+        self.assertNotIn('with `incomplete=True` for missing\nartifacts.', text)
+        self.assertIn('complete four-name manifest whose listed sidecar', text)
+        self.assertIn('incomplete=False', text)
+        path = self.directory / 'result.json'; raw = path.read_bytes(); path.unlink()
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertTrue(caught.exception.incomplete, 'missing result.json must stay incomplete')
+        path.write_bytes(raw)
+        sidecar = self.directory / 'summary.json'; sidecar.unlink()
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertFalse(caught.exception.incomplete, 'deleted listed sidecar must be invalid')
+
     def test_artifact_names_cannot_escape_fixed_set(self):
         result = read(self.directory / 'result.json')
         result['artifact_hashes']['../PRIVATE'] = {'sha256': 'a' * 64, 'bytes': 1}
