@@ -35,13 +35,16 @@ def validate_request(value):
     text(value['brief'], 4000, empty=True)
     refs = value['references']
     need(type(refs) is list and 1 <= len(refs) <= MAX_REFERENCES, 'Supply one to four image references; never truncate')
-    ids = set()
+    ids, paths, hashes = set(), set(), set()
     for ref in refs:
         fields(ref, ('id', 'path', 'sha256', 'role_hint'))
         identifier(ref['id']); need(ref['id'] not in ids, 'Duplicate reference ID'); ids.add(ref['id'])
-        _hash(ref['sha256']); text(ref['path'], 500)
+        _hash(ref['sha256'])
+        need(ref['sha256'] not in hashes, 'Duplicate reference content'); hashes.add(ref['sha256'])
+        text(ref['path'], 500)
         need('\\' not in ref['path'] and ':' not in ref['path'] and
              all(x not in ('', '.', '..') for x in ref['path'].split('/')), 'Unsafe reference path')
+        need(ref['path'] not in paths, 'Duplicate reference path'); paths.add(ref['path'])
         need(type(ref['role_hint']) is str and ref['role_hint'] in ('auto', *ROLE_FACETS), 'Unsupported role hint')
     return _bounded(value)
 
@@ -151,7 +154,7 @@ def _projection(report, review):
             need(edited or facet not in image['uncertain_facets'], 'An uncertain facet needs an explicit user description')
             value = choice['overrides'][facet] if edited else image['facets'][facet]
             text(value, 240)
-            parts.setdefault(facet, []).append(ref['id'] + ': ' + value)
+            parts.setdefault(facet, []).append((ref['id'], value))
             takes.append(facet + ': ' + value)
             transfers.append({'reference_id': ref['id'], 'source_sha256': ref['sha256'], 'field': facet,
                               'value': value, 'origin': 'user_edit' if edited else 'selected_visual_observation'})
@@ -162,7 +165,11 @@ def _projection(report, review):
         intent['references'].append({'id': ref['id'], 'role': role, 'kind': 'image', 'path': ref['path'],
                                      'sha256': ref['sha256'], 'take': takes, 'ignore': []})
         unknowns.extend({'reference_id': ref['id'], 'text': value} for value in image['unknowns'])
-    intent['facets'] = {key: '; '.join(values) for key, values in parts.items()}
+    intent['facets'] = {
+        key: values[0][1] if len(values) == 1
+        else '; '.join(reference_id + ': ' + value for reference_id, value in values)
+        for key, values in parts.items()
+    }
     validate(intent)  # Enforce the existing compiler's caps; do not truncate a constraint.
     result = {'format': 'studio.reference-draft/v1', 'intent': intent, 'source_report_sha256': report['report_sha256'],
               'review': copy.deepcopy(review), 'transfers': transfers, 'unknowns': unknowns,
