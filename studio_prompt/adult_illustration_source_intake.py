@@ -404,6 +404,16 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
     else:
         raise ValueError("Hugging Face base_model metadata is invalid")
 
+    language = card.get("language")
+    if isinstance(language, str):
+        if not language.strip() or len(language) > 1_024:
+            raise ValueError("Hugging Face language metadata is invalid")
+        languages = [language.strip()]
+    else:
+        languages = _bounded_strings(
+            language, "Hugging Face languages", maximum=128
+        )
+
     access_state = _hf_access_state(payload)
     record = {
         "id": f"huggingface-{repo_id.replace('/', '--').casefold()}-{commit[:12]}",
@@ -429,7 +439,7 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
             "last_modified": payload.get("lastModified") if isinstance(payload.get("lastModified"), str) else None,
             "disabled": payload.get("disabled") is True,
             "tags": _bounded_strings(payload.get("tags"), "Hugging Face tags"),
-            "languages": _bounded_strings(card.get("language"), "Hugging Face languages", maximum=128),
+            "languages": languages,
         },
         "claims": _claims(
             ("source_claim", f"Hugging Face repository metadata resolved requested revision {revision!r} to commit {commit}"),
