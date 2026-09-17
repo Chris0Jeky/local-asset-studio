@@ -175,8 +175,11 @@ class ReferenceJobs:
             return self.get(value['workspace_id'],value['request_id'])
 
     def _idle(self):
-        need(not any(j.get('status') in ('submitting','running','uncertain','partial') for j in self.studio.jobs.values()),
-             'Reconcile existing generation work before reference analysis')
+        need(not any(
+            job.get('status') in ('submitting','running')
+            or (job.get('status') == 'uncertain' and not self.studio._tracking_stopped(job))
+            for job in self.studio.jobs.values()
+        ), 'Reconcile existing generation work before reference analysis')
         queue=self.studio._request('/queue',timeout=5)
         need(type(queue) is dict and all(type(queue.get(k)) is list and not queue[k] for k in ('queue_running','queue_pending')),
              'Comfy queue is busy or unknown; no helper inference started')
