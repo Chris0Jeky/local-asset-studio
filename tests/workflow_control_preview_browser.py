@@ -107,6 +107,12 @@ class ControlPreviewBrowserTests(unittest.TestCase):
         self.open();self.add();self.add('b');self.propose();self.state('blocked')
         expect(self.page.locator('#controlPreviewResult')).to_contain_text('outside')
         expect(self.page.locator('#controlPreviewResult')).to_contain_text('No commands proposed')
+    def test_stale_pinned_schema_renders_the_actionable_live_diagnostic(self):
+        self.value['document']['schema_sha256']='0'*64
+        self.open();self.add();self.propose();self.state('blocked')
+        expect(self.page.locator('#controlPreviewResult')).to_contain_text('installed schema changed')
+        expect(self.page.locator('#controlPreviewResult')).to_contain_text('No commands proposed')
+        self.assertNotIn('incompatible',self.page.locator('#controlPreviewStatus').text_content())
     def test_schema_declared_wide_bound_does_not_refuse_an_in_range_proposal(self):
         """A seed's installed max is 0xffffffffffffffff. The reply echoes that bound, so guarding the
         whole reply with the safe-integer rule refused every valid proposal for such an input."""
@@ -197,7 +203,7 @@ class ControlPreviewBrowserTests(unittest.TestCase):
     def test_schema_refresh_updates_enum_editor_without_auto_preview(self):
         self.value,self.info=fixture(first=[['old']],second=[['old']]);self.open();self.add()
         self.page.evaluate("fixtureSchema.nodes.Source.inputs[0].options.options=['new'];document.dispatchEvent(new Event('workflow:render'))")
-        expect(self.page.locator('#controlProposedValue option')).to_have_text(['"new"'])
+        expect(self.page.locator('#controlProposedValue option')).to_have_text(['\"new\"'])
         self.assertEqual(self.requests,[])
 
     def test_removing_unsupported_first_target_enables_remaining_scalar_preview(self):
