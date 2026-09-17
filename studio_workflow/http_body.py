@@ -23,7 +23,7 @@ def drain_declared_body(handler) -> bool:
     if raw is None:
         return True
     text = raw.strip() if isinstance(raw, str) else ''
-    if not text.isdigit():
+    if not text or any(character < '0' or character > '9' for character in text):
         return False
     significant = text.lstrip('0') or '0'
     limit = str(DRAIN_LIMIT)
