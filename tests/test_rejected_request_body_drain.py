@@ -62,7 +62,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 self.assertEqual(handler.rfile.read(), b'')
 
     def test_oversized_or_malformed_claim_is_never_drained(self):
-        for length in (str(DRAIN_LIMIT + 1), '-1', 'not-a-number'):
+        for length in (str(DRAIN_LIMIT + 1), '-1', 'not-a-number', '²'):
             with self.subTest(length=length):
                 handler = request('/unused', b'x')
                 handler.headers['Content-Length'] = length
