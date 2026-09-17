@@ -1,5 +1,6 @@
 """Early HTTP refusals drain only safely declared request bodies."""
 import io
+from email.message import Message
 import unittest
 
 from studio_prompt.http_extension import extend_handler
@@ -72,6 +73,20 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
     def test_transfer_encoding_is_never_drained_even_with_content_length(self):
         handler = request('/api/prompt/compile', b'chunk framing', safe=True, content_type='text/plain')
         handler.headers['Transfer-Encoding'] = 'chunked'
+        self.assertFalse(drain_declared_body(handler))
+        self.assertEqual(handler.rfile.tell(), 0)
+        status, value = handler.do_POST()
+        self.assertEqual(status, 400)
+        self.assertEqual(value['error'], 'application/json required')
+        self.assertEqual(handler.rfile.tell(), 0)
+
+    def test_duplicate_content_lengths_are_never_drained(self):
+        handler = request('/api/prompt/compile', b'ab', safe=True, content_type='text/plain')
+        headers = Message()
+        headers['Content-Type'] = 'text/plain'
+        headers['Content-Length'] = '1'
+        headers['Content-Length'] = '2'
+        handler.headers = headers
         self.assertFalse(drain_declared_body(handler))
         self.assertEqual(handler.rfile.tell(), 0)
         status, value = handler.do_POST()
