@@ -69,6 +69,26 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 self.assertFalse(drain_declared_body(handler))
                 self.assertEqual(handler.rfile.tell(), 0)
 
+    def test_transfer_encoding_is_never_drained_even_with_content_length(self):
+        handler = request('/api/prompt/compile', b'chunk framing', safe=True, content_type='text/plain')
+        handler.headers['Transfer-Encoding'] = 'chunked'
+        self.assertFalse(drain_declared_body(handler))
+        self.assertEqual(handler.rfile.tell(), 0)
+        status, value = handler.do_POST()
+        self.assertEqual(status, 400)
+        self.assertEqual(value['error'], 'application/json required')
+        self.assertEqual(handler.rfile.tell(), 0)
+
+    def test_pathological_digit_length_cannot_escape_refusal(self):
+        handler = request('/api/prompt/compile', b'x', safe=True, content_type='text/plain')
+        handler.headers['Content-Length'] = '9' * 5000
+        self.assertFalse(drain_declared_body(handler))
+        self.assertEqual(handler.rfile.tell(), 0)
+        status, value = handler.do_POST()
+        self.assertEqual(status, 400)
+        self.assertEqual(value['error'], 'application/json required')
+        self.assertEqual(handler.rfile.tell(), 0)
+
     def test_exact_bound_and_zero_length_are_supported(self):
         handler = request('/unused', b'x' * DRAIN_LIMIT)
         self.assertTrue(drain_declared_body(handler))
