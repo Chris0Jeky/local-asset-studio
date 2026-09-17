@@ -231,6 +231,18 @@ def _optional_positive_int(value: Any, label: str) -> int | None:
     return _positive_int(value, label, allow_none=True)
 
 
+def _nonnegative_int(value: Any, label: str, *, allow_none: bool = False) -> int | None:
+    if value is None and allow_none:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise ValueError(f"{label} must be a non-negative integer")
+    return value
+
+
+def _optional_nonnegative_int(value: Any, label: str) -> int | None:
+    return _nonnegative_int(value, label, allow_none=True)
+
+
 def _sha256(value: Any, label: str, *, allow_none: bool = True) -> str | None:
     if value is None and allow_none:
         return None
@@ -360,7 +372,7 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
         byte_count = item.get("size")
         if byte_count is None:
             byte_count = lfs.get("size")
-        byte_count = _optional_positive_int(byte_count, f"Hugging Face file {path!r} byte count")
+        byte_count = _optional_nonnegative_int(byte_count, f"Hugging Face file {path!r} byte count")
         digest = item.get("sha256")
         if digest is None:
             digest = lfs.get("sha256")
@@ -404,6 +416,16 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
     else:
         raise ValueError("Hugging Face base_model metadata is invalid")
 
+    language = card.get("language")
+    if isinstance(language, str):
+        if not language.strip() or len(language) > 1_024:
+            raise ValueError("Hugging Face language metadata is invalid")
+        languages = [language.strip()]
+    else:
+        languages = _bounded_strings(
+            language, "Hugging Face languages", maximum=128
+        )
+
     access_state = _hf_access_state(payload)
     record = {
         "id": f"huggingface-{repo_id.replace('/', '--').casefold()}-{commit[:12]}",
@@ -429,7 +451,7 @@ def snapshot_huggingface(repo_id: str, revision: str, transport: Transport) -> d
             "last_modified": payload.get("lastModified") if isinstance(payload.get("lastModified"), str) else None,
             "disabled": payload.get("disabled") is True,
             "tags": _bounded_strings(payload.get("tags"), "Hugging Face tags"),
-            "languages": _bounded_strings(card.get("language"), "Hugging Face languages", maximum=128),
+            "languages": languages,
         },
         "claims": _claims(
             ("source_claim", f"Hugging Face repository metadata resolved requested revision {revision!r} to commit {commit}"),
