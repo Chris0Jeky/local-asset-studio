@@ -14,14 +14,28 @@ def drain_declared_body(handler) -> bool:
     and it temporarily bounds socket waiting so an early refusal cannot become
     an unbounded local read.
     """
-    # A request carrying any transfer coding is not a fixed-length byte stream,
-    # even when a conflicting Content-Length is also present. Never interpret
-    # chunk framing through the fixed-length drain.
-    if handler.headers.get('Transfer-Encoding') is not None:
-        return False
-    raw = handler.headers.get('Content-Length')
-    if raw is None:
-        return True
+    headers = handler.headers
+    get_all = getattr(headers, 'get_all', None)
+    if callable(get_all):
+        # HTTPMessage preserves repeated fields. Any transfer coding or more
+        # than one length makes the fixed-length framing ambiguous, even when
+        # duplicate lengths happen to carry the same value.
+        if get_all('Transfer-Encoding'):
+            return False
+        lengths = get_all('Content-Length') or []
+        if len(lengths) > 1:
+            return False
+        if not lengths:
+            return True
+        raw = lengths[0]
+    else:
+        # Lightweight test and embedding mappings expose only get().
+        if headers.get('Transfer-Encoding') is not None:
+            return False
+        raw = headers.get('Content-Length')
+        if raw is None:
+            return True
+
     text = raw.strip() if isinstance(raw, str) else ''
     if not text or any(character < '0' or character > '9' for character in text):
         return False
@@ -56,7 +70,7 @@ def drain_declared_body(handler) -> bool:
         if restore_timeout:
             try:
                 connection.settimeout(old_timeout)
-            except OSError:
+            except (OSError, ValueError):
                 pass
 
 
