@@ -319,7 +319,7 @@ class ReceiptTests(unittest.TestCase):
         for index in range(4):
             intent = dict(original[0], index=index, graph_sha256=str(index)*64)
             accepted = dict(original[1], index=index, recorded_at=original[0]['recorded_at'],
-                            prompt_id='prompt-α-' + str(index))
+                            prompt_id='prompt-\u03b1-' + str(index))
             accepted['prompt_id_sha256'] = producer.digest(accepted['prompt_id'])
             values.extend((intent, accepted))
         values.append(original[-1])
@@ -327,7 +327,7 @@ class ReceiptTests(unittest.TestCase):
         write(self.directory / 'context.json', context); put_events(self.directory, values)
         report = self.inspect()
         self.assertEqual([s['index'] for s in report['submissions']], [0, 1, 2, 3])
-        self.assertEqual(report['submissions'][-1]['prompt_id'], 'prompt-α-3')
+        self.assertEqual(report['submissions'][-1]['prompt_id'], 'prompt-\u03b1-3')
         values[3]['prompt_id'] = values[1]['prompt_id']
         values[3]['prompt_id_sha256'] = values[1]['prompt_id_sha256']
         put_events(self.directory, values); self.refuses('event_invalid')
