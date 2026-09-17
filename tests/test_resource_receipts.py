@@ -41,7 +41,8 @@ def make_observation(root, job_id='fixture-job', *, status='completed', elapsed=
     job = {'id': job_id, 'comfy_url': 'http://127.0.0.1:8188', 'controls': {}, 'references': []}
     manager.intent(producer.event_snapshot('intent', job, index=0, graph={'seed': 1}))
     try:
-        deadline = time.monotonic() + 5
+        # Loaded Windows runners can spend several seconds scheduling the writer thread.
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             directory = manager.last.path
             if directory and (directory / 'profile.jsonl').is_file():
@@ -318,7 +319,7 @@ class ReceiptTests(unittest.TestCase):
         for index in range(4):
             intent = dict(original[0], index=index, graph_sha256=str(index)*64)
             accepted = dict(original[1], index=index, recorded_at=original[0]['recorded_at'],
-                            prompt_id='prompt-\u03b1-' + str(index))
+                            prompt_id='prompt-α-' + str(index))
             accepted['prompt_id_sha256'] = producer.digest(accepted['prompt_id'])
             values.extend((intent, accepted))
         values.append(original[-1])
@@ -326,7 +327,7 @@ class ReceiptTests(unittest.TestCase):
         write(self.directory / 'context.json', context); put_events(self.directory, values)
         report = self.inspect()
         self.assertEqual([s['index'] for s in report['submissions']], [0, 1, 2, 3])
-        self.assertEqual(report['submissions'][-1]['prompt_id'], 'prompt-\u03b1-3')
+        self.assertEqual(report['submissions'][-1]['prompt_id'], 'prompt-α-3')
         values[3]['prompt_id'] = values[1]['prompt_id']
         values[3]['prompt_id_sha256'] = values[1]['prompt_id_sha256']
         put_events(self.directory, values); self.refuses('event_invalid')
