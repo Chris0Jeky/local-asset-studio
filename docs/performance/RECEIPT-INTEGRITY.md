@@ -62,12 +62,16 @@ Repeated responses and duplicate prompt identities are refused. A missing respon
 The stored summary must equal an **independent reduction of the captured raw profile**,
 including numeric types. Changing a sampled maximum and rehashing the summary in result.json
 cannot make that changed number agree with the raw evidence. A `true` substituted for count
-`1` also cannot pass. Sample count/interval must match context limits. Sample timestamps
-must begin within the recorded observation window. The final sample may begin no more than
-100 ms after the finish/result timestamp solely to cover the producer's timestamp-to-stop
-race; that case remains visible as `sample_window_overshoot`. A later sample is refused, and
-the configured 1–60 second sampling interval never widens this allowance. Observable
-event/timestamp/identity conflicts are refused rather than silently reconciled.
+`1` also cannot pass. Sample count/interval must match context limits. The first sample cannot
+predate the intent and the last sample cannot postdate the observer's `result.finished_at`,
+which is written only after sampling and receipt finalisation stop. The coordinator finish
+event is a status snapshot, not a sampling barrier: its timestamp is created before the stop
+request reaches the observer, and thread scheduling can delay that hand-off without a fixed
+wall-clock bound. A sample after that snapshot but before `result.finished_at` therefore
+remains visible as `sample_window_overshoot`. It can verify as captured evidence, but the
+paired-observation consumer withholds all metric arithmetic for either row carrying that
+warning. The configured 1–60 second interval is never treated as proof of the scheduler gap.
+Observable event/timestamp/identity conflicts are refused rather than silently reconciled.
 
 This directly addresses the #318 review follow-up: `summary_available` means file presence.
 A torn summary can be present and hash-bound. The inspector does not reinterpret that
@@ -87,16 +91,18 @@ producer field as validation; only successful parsing and exact re-reduction set
 | `finish_snapshot` | Coordinator status/elapsed value when its exit event was recorded, or null |
 | `source_observation` | Capture-time commit/dirty observation and observer source hash; loaded-code parity stays null |
 | `runtime_observation` | Recorded listener/process/profile bracket and loss state, or null |
-| `warnings` | Incomplete sampling, missing exit, unresolved snapshot, bracket loss, early observer stop, index gap or a <=100 ms finish-race overshoot |
+| `warnings` | Incomplete sampling, missing exit, unresolved snapshot, bracket loss, early observer stop, index gap or a post-coordinator sample still inside observer lifetime |
 | `qualified_benchmark: false` | These v1 receipts cannot prove a matched causal benchmark |
 | `execution_authority: false` | Inspection never grants submission, retry, recovery or lifecycle authority |
 
 A fully verified artifact set can have zero samples, incomplete sampling, unavailable
 counters, a missing finish event or an uncertain/running coordinator snapshot. These facts
-remain visible. The coordinator event can precede its outer error handler's final state;
-this is not a fresh authoritative job read. Elapsed coordinator time includes waiting and
-is not sampling/load/decode time. Process working sets and device/Torch domains are not
-summed. Sampled maxima may miss higher transient allocations.
+remain visible. The coordinator event can precede both the observer stop hand-off and its
+outer error handler's final state; it is not a fresh authoritative job read. A
+`sample_window_overshoot` row remains inspectable but is not eligible for paired descriptive
+arithmetic. Elapsed coordinator time includes waiting and is not sampling/load/decode time.
+Process working sets and device/Torch domains are not summed. Sampled maxima may miss higher
+transient allocations.
 
 Unknown model/input contents, actual geometry, precision, cold/warm conditions, loaded code,
 final job state and inference-phase timings are explicitly listed as qualification gaps.
@@ -117,11 +123,15 @@ Tests create actual recorder output with injected synthetic sensors and source o
 They also inject a real writer failure leaving a hash-bound torn summary. They cover external
 pins, cross-job/mixed events, four batch graphs, Unicode identities, duplicate keys, corrupt
 and oversized input, incomplete/unknown windows, links/FIFOs, disappearing files, result
-replacement and no-overwrite/no-live-dependency CLI behavior. CPU fixtures are not GPU
-performance measurements or owner-host acceptance. Exact-head results are recorded on the PR.
+replacement and no-overwrite/no-live-dependency CLI behavior. Timestamp fixtures prove that
+a scheduler-delayed coordinator hand-off remains a warning inside observer lifetime, that a
+sample after `result.finished_at` is refused, and that paired arithmetic is withheld for the
+warning. CPU fixtures are not GPU performance measurements or owner-host acceptance.
+Exact-head results are recorded on the PR.
 
 ```powershell
 python -m unittest discover -s tests -p "test_resource_receipt*.py" -v
+python -m unittest discover -s tests -p "test_resource_comparison*.py" -v
 python -m unittest discover -s tests -p "test_job_resources*.py" -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
