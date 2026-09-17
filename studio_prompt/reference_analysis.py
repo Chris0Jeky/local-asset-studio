@@ -166,8 +166,7 @@ def _projection(report, review):
                                      'sha256': ref['sha256'], 'take': takes, 'ignore': []})
         unknowns.extend({'reference_id': ref['id'], 'text': value} for value in image['unknowns'])
     intent['facets'] = {
-        key: values[0][1] if len(values) == 1
-        else '; '.join(reference_id + ': ' + value for reference_id, value in values)
+        key: '; '.join(value for _, value in values)
         for key, values in parts.items()
     }
     validate(intent)  # Enforce the existing compiler's caps; do not truncate a constraint.
