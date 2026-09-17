@@ -60,7 +60,11 @@ def decode(raw, *, limit=LIMIT):
         return result
     def reject(value):
         raise ValueError('Nonfinite JSON number')
-    return json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=reject)
+    def floating(value):
+        result = float(value)
+        need(math.isfinite(result), 'Nonfinite JSON number')
+        return result
+    return json.loads(raw.decode('utf-8'), object_pairs_hook=pairs, parse_constant=reject, parse_float=floating)
 
 
 def read_json(path):
