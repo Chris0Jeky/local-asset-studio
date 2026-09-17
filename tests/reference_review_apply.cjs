@@ -100,11 +100,19 @@ for(const name of ['prompt-lab.js','reference-review.js']){
   assert.equal(el('rr-export').disabled,false,'The successful application must remain exportable');
   assert.match(el('rr-status').textContent,/Applied to this brief/);
 
-  // A new analysis is a new review context. It must not expose the prior
-  // analysis's undo ticket or receipt as though they belonged to the new one.
+  // A rejected replacement is not a new review context. The existing recovery
+  // ticket and receipt must remain available because nothing was loaded.
+  el('rr-analysis').files=[{size:129*1024,text:async()=>{throw Error('Oversized file must not be read');}}];
+  await el('rr-analysis').fire('change');
+  assert.equal(el('rr-undo').disabled,false,'A rejected analysis must retain the prior undo ticket');
+  assert.equal(el('rr-export').disabled,false,'A rejected analysis must retain the prior receipt');
+  assert.match(el('rr-status').textContent,/no larger than 128 KiB/);
+
+  // A successfully loaded analysis is a new review context. It must not expose
+  // the prior analysis's undo ticket or receipt as though they belonged to it.
   el('rr-analysis').files=[analysisFile];
   await el('rr-analysis').fire('change');
   assert.equal(el('rr-undo').disabled,true,'Opening another analysis must disarm the prior undo ticket');
   assert.equal(el('rr-export').disabled,true,'Opening another analysis must disarm the prior receipt');
-  console.log('Reference review apply diff and context reset passed');
+  console.log('Reference review apply diff and transactional context reset passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});
