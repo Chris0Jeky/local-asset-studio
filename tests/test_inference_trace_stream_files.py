@@ -84,6 +84,21 @@ class EvidenceStreamTests(unittest.TestCase):
                 with self.assertRaisesRegex(receipts.EvidenceError,'^file_changed$'):
                     receipts.read_evidence_stream(self.path,1024,consume)
 
+    def test_same_tick_same_length_rewrite_is_caught_by_content_digest(self):
+        original=wire([event()]);replacement=wire([event(ts=9)])
+        self.assertEqual(len(replacement),len(original))
+        self.path.write_bytes(original);metadata=self.path.stat()
+        def consume(stream):
+            result=stream_trace.summarize_trace_stream(stream)
+            self.path.write_bytes(replacement)
+            os.utime(self.path,ns=(metadata.st_atime_ns,metadata.st_mtime_ns))
+            return result
+        # Freeze the metadata signature at one value so only the bounded content
+        # re-read can distinguish the replacement from the bytes just consumed.
+        with patch.object(receipts,'_signature',return_value=('same-tick',)):
+            with self.assertRaisesRegex(receipts.EvidenceError,'^file_changed$'):
+                receipts.read_evidence_stream(self.path,1024,consume)
+
     def test_bound_applies_to_actual_reads_when_source_grows(self):
         raw=self.path.read_bytes()
         def consume(stream):
