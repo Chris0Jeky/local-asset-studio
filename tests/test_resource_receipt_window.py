@@ -38,17 +38,17 @@ class SampleWindowTests(unittest.TestCase):
         )
         return warnings
 
-    def test_sample_finishing_gap_within_interval_is_retained_as_warning(self):
-        warnings = self.verify(sampling(last=10.5, interval=1))
+    def test_small_finish_race_is_retained_as_warning(self):
+        warnings = self.verify(sampling(last=10.05, interval=1))
         self.assertEqual(warnings, ['sample_window_overshoot'])
 
-    def test_exact_interval_boundary_is_retained_as_warning(self):
-        warnings = self.verify(sampling(last=11, interval=1))
+    def test_exact_finish_race_boundary_is_retained_as_warning(self):
+        warnings = self.verify(sampling(last=10.1, interval=1))
         self.assertEqual(warnings, ['sample_window_overshoot'])
 
-    def test_sample_beyond_one_interval_is_refused(self):
+    def test_sampling_interval_does_not_widen_finish_race_slack(self):
         with self.assertRaises(receipts.EvidenceError) as caught:
-            self.verify(sampling(last=11.001, interval=1))
+            self.verify(sampling(last=10.101, interval=60))
         self.assertEqual(caught.exception.code, 'samples_outside_window')
 
     def test_sample_before_intent_is_still_refused(self):
@@ -63,7 +63,7 @@ class SampleWindowTests(unittest.TestCase):
         self.assertEqual(self.verify(value), [])
 
     def test_missing_finish_uses_result_completion_timestamp(self):
-        warnings = self.verify(sampling(last=11.5, interval=1), finish=None, finished=11)
+        warnings = self.verify(sampling(last=11.05, interval=1), finish=None, finished=11)
         self.assertEqual(warnings, ['sample_window_overshoot'])
 
 

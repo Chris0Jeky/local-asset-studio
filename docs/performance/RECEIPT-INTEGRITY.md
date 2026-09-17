@@ -62,9 +62,12 @@ Repeated responses and duplicate prompt identities are refused. A missing respon
 The stored summary must equal an **independent reduction of the captured raw profile**,
 including numeric types. Changing a sampled maximum and rehashing the summary in result.json
 cannot make that changed number agree with the raw evidence. A `true` substituted for count
-`1` also cannot pass. Sample count/interval must match context limits; sample timestamps must
-fall within the recorded observation window. Observable event/timestamp/identity conflicts
-are refused rather than silently reconciled.
+`1` also cannot pass. Sample count/interval must match context limits. Sample timestamps
+must begin within the recorded observation window. The final sample may begin no more than
+100 ms after the finish/result timestamp solely to cover the producer's timestamp-to-stop
+race; that case remains visible as `sample_window_overshoot`. A later sample is refused, and
+the configured 1–60 second sampling interval never widens this allowance. Observable
+event/timestamp/identity conflicts are refused rather than silently reconciled.
 
 This directly addresses the #318 review follow-up: `summary_available` means file presence.
 A torn summary can be present and hash-bound. The inspector does not reinterpret that
@@ -84,7 +87,7 @@ producer field as validation; only successful parsing and exact re-reduction set
 | `finish_snapshot` | Coordinator status/elapsed value when its exit event was recorded, or null |
 | `source_observation` | Capture-time commit/dirty observation and observer source hash; loaded-code parity stays null |
 | `runtime_observation` | Recorded listener/process/profile bracket and loss state, or null |
-| `warnings` | Incomplete sampling, missing exit, unresolved snapshot, bracket loss, early observer stop or index gap |
+| `warnings` | Incomplete sampling, missing exit, unresolved snapshot, bracket loss, early observer stop, index gap or a <=100 ms finish-race overshoot |
 | `qualified_benchmark: false` | These v1 receipts cannot prove a matched causal benchmark |
 | `execution_authority: false` | Inspection never grants submission, retry, recovery or lifecycle authority |
 
@@ -118,7 +121,7 @@ replacement and no-overwrite/no-live-dependency CLI behavior. CPU fixtures are n
 performance measurements or owner-host acceptance. Exact-head results are recorded on the PR.
 
 ```powershell
-python -m unittest discover -s tests -p "test_resource_receipts*.py" -v
+python -m unittest discover -s tests -p "test_resource_receipt*.py" -v
 python -m unittest discover -s tests -p "test_job_resources*.py" -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
