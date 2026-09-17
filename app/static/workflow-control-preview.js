@@ -173,7 +173,7 @@
     if (flight) return;
     let controller = null, token, timer;
     try {
-      const doc = W.snapshot(); if (!doc || !W.schema()) throw Error('Open a workflow and load its installed nodes first.');
+      const doc = W.snapshot(), schema = W.schema(); if (!doc || !schema) throw Error('Open a workflow and load its installed nodes first.');
       safe(doc); if (!targets.length) throw Error('Choose at least one target.');
       if (!name.value.trim()) throw Error('Give the setting a name.');
       const value = proposedValue(), control = {format:'studio.control/v1',name:name.value,targets:clone(targets)};
@@ -191,7 +191,7 @@
       safeValues(result);
       if (result.format !== 'studio.control-preview/v1' || !['ready','blocked'].includes(result.state) ||
           result.committed !== false || result.generation_submitted !== false || result.document_revision !== doc.revision ||
-          result.backend_id !== doc.backend_id || result.schema_sha256 !== doc.schema_sha256 ||
+          result.backend_id !== schema.backend_id || result.schema_sha256 !== schema.schema_sha256 ||
           result.control?.format !== control.format || result.control?.name !== control.name ||
           !Array.isArray(result.control?.targets) || result.control.targets.length !== control.targets.length ||
           result.control.targets.some((item,i) => item.node !== control.targets[i].node || item.input !== control.targets[i].input) || JSON.stringify(result.value) !== JSON.stringify(value) ||
