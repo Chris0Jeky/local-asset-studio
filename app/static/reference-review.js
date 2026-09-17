@@ -121,7 +121,7 @@
     return report.report_sha256;
   }});
   el('rr-analysis').addEventListener('change',async event=>{
-    changed();applied=null;receipt=null;controls();const current=epoch;report=null;review=null;originals=null;releaseUrls();el('rr-cards').replaceChildren();
+    changed();controls();const current=epoch;report=null;review=null;originals=null;releaseUrls();el('rr-cards').replaceChildren();
     el('rr-review').hidden=true;el('rr-originals').value='';el('rr-adopt').checked=false;el('rr-source-status').textContent='Open an analysis first.';controls();
     try{
       const file=event.target.files[0];if(!file||file.size>128*1024)throw Error('Choose an analysis JSON no larger than 128 KiB.');
@@ -129,6 +129,7 @@
       // Parse on the server so duplicate keys are never normalized away by JSON.parse.
       const result=await post('inspect',{analysis_json:text});if(current!==epoch)return;
       if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
+      applied=null;receipt=null;
       report=result.analysis;review=result.review;el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
     }catch(error){if(current===epoch)message(error.message);}
   });
