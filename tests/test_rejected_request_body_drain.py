@@ -36,11 +36,12 @@ def request(path, body, *, safe=False, content_type='application/json'):
 
 
 class RejectedRequestBodyDrainTests(unittest.TestCase):
-    def test_same_origin_refusals_consume_small_prompt_and_job_bodies(self):
+    def test_same_origin_refusals_consume_small_declared_bodies(self):
         body = b'{"untrusted":"body"}'
         for path in (
             '/api/prompt/reference-review/preview',
             '/api/prompt/reference-jobs/retire',
+            '/api/workflow-studio/setup-proposal',
         ):
             with self.subTest(path=path):
                 handler = request(path, body)
@@ -48,12 +49,17 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 self.assertEqual(status, 403)
                 self.assertEqual(handler.rfile.read(), b'')
 
-    def test_wrong_content_type_refusal_consumes_small_prompt_body(self):
-        handler = request('/api/prompt/compile', b'not-json', safe=True, content_type='text/plain')
-        status, value = handler.do_POST()
-        self.assertEqual(status, 400)
-        self.assertEqual(value['error'], 'application/json required')
-        self.assertEqual(handler.rfile.read(), b'')
+    def test_wrong_content_type_refusals_consume_small_declared_bodies(self):
+        for path in (
+            '/api/prompt/compile',
+            '/api/workflow-studio/setup-proposal',
+        ):
+            with self.subTest(path=path):
+                handler = request(path, b'not-json', safe=True, content_type='text/plain')
+                status, value = handler.do_POST()
+                self.assertEqual(status, 400)
+                self.assertEqual(value['error'], 'application/json required')
+                self.assertEqual(handler.rfile.read(), b'')
 
     def test_oversized_or_malformed_claim_is_never_drained(self):
         for length in (str(DRAIN_LIMIT + 1), '-1', 'not-a-number'):
