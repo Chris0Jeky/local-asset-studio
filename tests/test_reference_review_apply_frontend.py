@@ -1,4 +1,4 @@
-"""Successful reference Apply retains its evidence and resets across analyses."""
+"""Successful reference Apply retains evidence across rejected replacement analyses."""
 import json
 from pathlib import Path
 import shutil
@@ -9,7 +9,7 @@ import unittest
 
 class ReferenceReviewApplyFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
-    def test_apply_retains_diff_and_new_analysis_disarms_old_receipt(self):
+    def test_apply_retains_recovery_until_a_valid_new_analysis_loads(self):
         from test_reference_review import ReferenceReviewTests
 
         fixture = ReferenceReviewTests()
@@ -29,7 +29,7 @@ class ReferenceReviewApplyFrontendTests(unittest.TestCase):
                 timeout=15,
             )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Reference review apply diff and context reset passed', result.stdout)
+        self.assertIn('Reference review apply evidence and rejected-load recovery passed', result.stdout)
 
 
 if __name__ == '__main__':
