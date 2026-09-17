@@ -20,7 +20,6 @@ PROFILE_LIMIT = 4 * 1024 * 1024
 EVENT_LIMIT = 8192
 ARTIFACTS = ('context.json', 'events.jsonl', 'profile.jsonl', 'summary.json')
 SCHEMA = 'studio.job-resource-inspection/v1'
-_FINISH_RACE_SLACK_SECONDS = 0.1
 _HEX = re.compile(r'[0-9a-f]{64}\Z')
 _ID = re.compile(r'[A-Za-z0-9_-]{1,128}\Z')
 
@@ -307,20 +306,15 @@ def _runtime(value, summary):
 
 
 def _verify_sample_window(records, finish, finished, sampling, warnings):
-    """Allow only the producer's bounded timestamp-to-stop race after completion."""
+    """Keep samples inside observer lifetime; disclose coordinator overshoot."""
     if not sampling['observed']:
         return
     start = _timestamp(records[0]['recorded_at'])
     first = _timestamp(sampling['first_observed_at'])
     last = _timestamp(sampling['last_observed_at'])
-    end = _timestamp(finish['recorded_at']) if finish else finished
-    require(start <= first, 'samples_outside_window')
-    if last <= end:
-        return
-    overshoot = (last - end).total_seconds()
-    allowance = min(sampling['interval_seconds_after_completion'], _FINISH_RACE_SLACK_SECONDS)
-    require(overshoot <= allowance, 'samples_outside_window')
-    warnings.append('sample_window_overshoot')
+    require(start <= first and last <= finished, 'samples_outside_window')
+    if finish is not None and last > _timestamp(finish['recorded_at']):
+        warnings.append('sample_window_overshoot')
 
 
 def inspect_observation(directory: str | Path, *, expected_result_sha256: str | None = None,
