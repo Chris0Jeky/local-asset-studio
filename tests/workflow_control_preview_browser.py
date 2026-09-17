@@ -203,7 +203,7 @@ class ControlPreviewBrowserTests(unittest.TestCase):
     def test_schema_refresh_updates_enum_editor_without_auto_preview(self):
         self.value,self.info=fixture(first=[['old']],second=[['old']]);self.open();self.add()
         self.page.evaluate("fixtureSchema.nodes.Source.inputs[0].options.options=['new'];document.dispatchEvent(new Event('workflow:render'))")
-        expect(self.page.locator('#controlProposedValue option')).to_have_text(['\"new\"'])
+        expect(self.page.locator('#controlProposedValue option')).to_have_text(['"new"'])
         self.assertEqual(self.requests,[])
 
     def test_removing_unsupported_first_target_enables_remaining_scalar_preview(self):
