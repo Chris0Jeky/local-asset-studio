@@ -14,15 +14,25 @@ def drain_declared_body(handler) -> bool:
     and it temporarily bounds socket waiting so an early refusal cannot become
     an unbounded local read.
     """
+    # A request carrying any transfer coding is not a fixed-length byte stream,
+    # even when a conflicting Content-Length is also present. Never interpret
+    # chunk framing through the fixed-length drain.
+    if handler.headers.get('Transfer-Encoding') is not None:
+        return False
     raw = handler.headers.get('Content-Length')
     if raw is None:
-        return not handler.headers.get('Transfer-Encoding')
+        return True
     text = raw.strip() if isinstance(raw, str) else ''
     if not text.isdigit():
         return False
-    size = int(text)
-    if size > DRAIN_LIMIT:
+    significant = text.lstrip('0') or '0'
+    limit = str(DRAIN_LIMIT)
+    # Compare decimal text before int conversion. Besides avoiding work for an
+    # oversized claim, this prevents Python's long-integer digit guard from
+    # escaping the early refusal when a pathological header is supplied.
+    if len(significant) > len(limit) or (len(significant) == len(limit) and significant > limit):
         return False
+    size = int(significant)
 
     connection = getattr(handler, 'connection', None)
     old_timeout = None
