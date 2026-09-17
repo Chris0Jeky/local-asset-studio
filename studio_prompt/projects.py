@@ -122,25 +122,31 @@ class PromptProjects:
     def list(self,scope):
         with self.workspace.connection() as db:
             db.execute('BEGIN');self._scope(db,scope)
-            rows=db.execute('''SELECT p.id,p.head,r.document_json,r.document_sha FROM prompt_projects_v1 p
-                JOIN prompt_project_revisions_v1 r ON p.id=r.id AND r.revision=p.head
+            rows=db.execute('''SELECT p.id,p.head,r.document_json,r.document_sha,r.bytes FROM prompt_projects_v1 p
+                LEFT JOIN prompt_project_revisions_v1 r ON p.id=r.id AND r.revision=p.head
                 ORDER BY p.id LIMIT ?''',(MAX_PROJECTS+1,)).fetchall()
             need(len(rows)<=MAX_PROJECTS,'Prompt project count exceeds limit')
             result=[]
             for row in rows:
                 item={'id':row['id'],'revision':row['head'],'document_sha256':row['document_sha'],
                       'name':None,'unreadable':False}
+                raw=None
                 try:
-                    doc=document(decode(row['document_json'].encode('utf-8')))
+                    raw=row['document_json'].encode('utf-8')
+                    need(len(raw)<=MAX_DOCUMENT_BYTES,'Stored document exceeds limit')
+                    doc=document(decode(raw));project_id(row['id']);revision(row['head'])
+                    need(len(raw)==row['bytes'] and digest(doc)==row['document_sha'],'Stored document changed')
                     item['name']=doc['name']
-                except (ValueError,KeyError,TypeError,RecursionError,AttributeError,UnicodeEncodeError):
+                except (ValueError,KeyError,TypeError,RecursionError,AttributeError):
                     item['unreadable']=True
-                    try:
-                        parsed=decode(row['document_json'].encode('utf-8'))
-                        if isinstance(parsed,dict) and isinstance(parsed.get('name'),str):
-                            item['name']=parsed['name']
-                    except (ValueError,KeyError,TypeError,RecursionError,AttributeError,UnicodeEncodeError):
-                        pass
+                    # Recover only a bounded display hint, never readability or authority.
+                    if raw is not None and len(raw)<=MAX_DOCUMENT_BYTES:
+                        try:
+                            parsed=decode(raw)
+                            if isinstance(parsed,dict):
+                                text(parsed.get('name'),120);item['name']=parsed['name']
+                        except (ValueError,KeyError,TypeError,RecursionError,AttributeError):
+                            pass
                 result.append(item)
         return {'workspace_id':scope,'projects':result,**FLAGS}
 
