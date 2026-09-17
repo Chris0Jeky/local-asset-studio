@@ -6,6 +6,7 @@ from .guides import guides
 from .execution import prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
+from .http_body import reject_json
 
 PREFIX = '/api/workflow-studio'
 
@@ -98,10 +99,14 @@ def extend_handler(base):
         def do_POST(self):
             path = urlparse(self.path).path
             if not path.startswith(PREFIX + '/'): return super().do_POST()
-            if not self._safe_mutation(): return self._json(403, {'error': 'Local same-origin request required'})
+            if not self._safe_mutation(): return reject_json(self, 403, {'error': 'Local same-origin request required'})
             is_run = path == PREFIX + '/run'
+            if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                result = {'error': 'application/json required'}
+                if not is_run: result['generation_submitted'] = False
+                else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
+                return reject_json(self, 400, result)
             try:
-                need(self.headers.get('Content-Type', '').split(';')[0] == 'application/json', 'application/json required')
                 value = decode(self.rfile.read(self._content_length(1048576)))
                 result = post(path, value, self.studio)
                 return self._json(200, result)
