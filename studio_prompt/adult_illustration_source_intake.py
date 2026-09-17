@@ -1,8 +1,9 @@
 """Guarded facade for bounded adult-illustration provider snapshots.
 
-The parser implementation lives in :mod:`adult_illustration_source_intake_base`.
-This facade adds stable file identities, pre-conversion numeric bounds, and
-strict validation whenever stored snapshot JSON re-enters the trust boundary.
+The parser implementation lives in the private
+:mod:`_adult_illustration_source_intake_impl` module. This facade adds stable
+file identities, pre-conversion numeric bounds, and strict validation whenever
+stored snapshot JSON re-enters the trust boundary.
 """
 from __future__ import annotations
 
@@ -10,7 +11,7 @@ import hashlib
 import math
 from typing import Any, Mapping
 
-from . import adult_illustration_source_intake_base as _base
+from . import _adult_illustration_source_intake_impl as _base
 
 HttpRequest = _base.HttpRequest
 HttpResponse = _base.HttpResponse
