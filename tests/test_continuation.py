@@ -349,6 +349,12 @@ class ContinuationTests(unittest.TestCase):
         result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_canvas_limits.cjs")], capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
+    def test_client_route_lead_policy(self):
+        result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_route_lead.cjs")], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Continuation route lead contracts passed", result.stdout, result.stdout + result.stderr)
+
 
 class ShippedCatalogCapabilityTests(unittest.TestCase):
     def test_every_shipped_preset_yields_a_capability_and_defaults(self):
