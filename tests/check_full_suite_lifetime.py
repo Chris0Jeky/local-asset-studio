@@ -16,6 +16,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 LIFETIME_BUDGET_SECONDS = 600
 TRACEBACK_AFTER_SECONDS = 570
+SHUTDOWN_TRACEBACK_AFTER_SECONDS = 2.0
 
 
 def printable(value: str | bytes | None) -> str:
@@ -24,7 +25,10 @@ def printable(value: str | bytes | None) -> str:
     return value.decode(errors="replace") if isinstance(value, bytes) else value
 
 
-def suite_command(traceback_after: float = TRACEBACK_AFTER_SECONDS) -> list[str]:
+def suite_command(
+    traceback_after: float = TRACEBACK_AFTER_SECONDS,
+    shutdown_traceback_after: float = SHUTDOWN_TRACEBACK_AFTER_SECONDS,
+) -> list[str]:
     return [
         sys.executable,
         "-u",
@@ -37,6 +41,8 @@ def suite_command(traceback_after: float = TRACEBACK_AFTER_SECONDS) -> list[str]
         str(ROOT / "tests"),
         "--traceback-after",
         str(traceback_after),
+        "--shutdown-traceback-after",
+        str(shutdown_traceback_after),
     ]
 
 
