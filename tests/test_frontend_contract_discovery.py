@@ -2,9 +2,12 @@
 executed by some Python module under `tests/`/`scripts/` or by a step in a `.github/workflows/` lane.
 
 PR #583 shipped two contract files that no wrapper and no lane ever ran: they were green because nothing
-executed them. This asserts wiring, never behaviour — a wired contract can still be wrong, a contract named
-only inside a Python comment does not count, and this module excludes itself so its own sentinels cannot
-vouch for a contract."""
+executed them. This asserts wiring, never behaviour — a wired contract can still be wrong. What does not
+count as wiring: a whole-line comment, a workflow `paths:` trigger entry (it fires the lane, it does not
+run the file), a basename that is only a tail of a longer one (`core.cjs` inside `continuation_core.cjs`),
+and this module's own text, which is excluded so its sentinels cannot vouch for a contract. A trailing
+comment after real code does still count — the known hole, pinned in MatchingRules rather than claimed shut."""
+import re
 import unittest
 from pathlib import Path
 
@@ -23,19 +26,34 @@ def contracts():
     return dict(sorted(found.items()))
 
 
+PATHS_ENTRY = re.compile(r"-\s*['\"][^'\"]*['\"]\s*\Z")  # a workflow `paths:` entry: fires the lane, runs nothing
+
+
+def executable_text(text, python):
+    """The lines that could actually execute something: no comments, and for a workflow no bare quoted
+    list entry, which is how `on: pull_request: paths:` names a file it fires on but never runs."""
+    lines = [line for line in text.splitlines() if not line.lstrip().startswith('#')]
+    if not python: lines = [line for line in lines if not PATHS_ENTRY.match(line.strip())]
+    return '\n'.join(lines)
+
+
 def runner_text(path):
-    text = path.read_text(encoding='utf-8', errors='ignore')
-    if path.suffix != '.py': return text
-    return '\n'.join(line for line in text.splitlines() if not line.lstrip().startswith('#'))
+    return executable_text(path.read_text(encoding='utf-8', errors='ignore'), path.suffix == '.py')
 
 
-def runners():
+def runners(exclude_self=True):
     found = {}
     for pattern in RUNNER_GLOBS:
         for path in ROOT.glob(pattern):
             rel = path.relative_to(ROOT).as_posix()
-            if rel != SELF: found[rel] = runner_text(path)
+            if rel != SELF or not exclude_self: found[rel] = runner_text(path)
     return dict(sorted(found.items()))
+
+
+def names(text):
+    """Every .cjs basename the text executes. Matched on a path boundary so `core.cjs` is not read out of
+    `continuation_core.cjs`; a duplicate basename would still be ambiguous, hence the uniqueness test."""
+    return {match.group(1) for match in re.finditer(r'(?:^|[^\w.\-])([\w.\-]+\.cjs)', text, re.M)}
 
 
 class ContractDiscoveryTests(unittest.TestCase):
@@ -43,6 +61,7 @@ class ContractDiscoveryTests(unittest.TestCase):
         found, ran = contracts(), runners()
         self.assertGreaterEqual(len(found), CONTRACT_FLOOR, f'only {len(found)} .cjs contracts discovered; the globs {CONTRACT_GLOBS} stopped matching')
         self.assertGreaterEqual(len(ran), 1, f'no runner files discovered; the globs {RUNNER_GLOBS} stopped matching')
+        self.assertIn(SELF, runners(exclude_self=False), 'the self-exclusion no longer matches this file, so it silently excludes nothing')
         self.assertNotIn(SELF, ran, 'the discovery module must not vouch for its own sentinels')
         for sentinel in SENTINELS: self.assertIn(sentinel, found, f'{sentinel} exists but the contract scan missed it')
 
@@ -55,10 +74,32 @@ class ContractDiscoveryTests(unittest.TestCase):
         self.assertEqual(clashes, {}, f'duplicate .cjs basenames make wiring ambiguous: {clashes}')
 
     def test_every_cjs_contract_is_executed_by_a_python_module_or_a_ci_lane(self):
-        ran = runners()
-        orphans = [rel for rel, path in contracts().items() if not any(path.name in text for text in ran.values())]
+        executed = set().union(*(names(text) for text in runners().values()))
+        orphans = [rel for rel, path in contracts().items() if path.name not in executed]
         self.assertEqual(orphans, [], 'these .cjs contracts are never executed — nothing under tests/, scripts/ or .github/workflows/ names them, so they are silently green: '
                          + ', '.join(orphans) + '. Wire each into a Python wrapper (see tests/test_workbench_handoff_guards.py) or a workflow step, or delete it.')
+
+
+class MatchingRules(unittest.TestCase):
+    """The three ways this gate could vouch for a contract nothing runs."""
+
+    def test_a_basename_is_never_read_out_of_a_longer_one(self):
+        self.assertEqual(names('subprocess.run([node, "tests/continuation_core.cjs"])'), {'continuation_core.cjs'})
+        self.assertEqual(names('subprocess.run([node, "tests/core.cjs"])'), {'core.cjs'})
+        self.assertEqual(names("run: node --test tests/a.cjs tests/b.cjs"), {'a.cjs', 'b.cjs'})
+
+    def test_a_commented_out_invocation_is_not_wiring(self):
+        self.assertEqual(executable_text('    # node tests/probe.cjs\nreal = 1\n', True), 'real = 1')
+        self.assertEqual(executable_text('      # - run: node tests/probe.cjs\n      - run: true\n', False), '      - run: true')
+
+    def test_a_workflow_paths_entry_is_not_wiring(self):
+        lane = "on:\n  pull_request:\n    paths:\n      - 'tests/probe.cjs'\n      - \"tests/other.cjs\"\njobs:\n  x:\n    steps:\n      - run: node tests/real.cjs\n"
+        self.assertEqual(names(executable_text(lane, False)), {'real.cjs'})
+
+    def test_a_trailing_comment_is_a_known_hole(self):
+        """Only whole-line comments are stripped; a trailing note still vouches. Documented, not claimed
+        otherwise, and cheap to spot in review — tracked rather than parsed."""
+        self.assertEqual(names(executable_text('real = 1  # tests/probe.cjs is wired below\n', True)), {'probe.cjs'})
 
 
 if __name__ == '__main__': unittest.main()
