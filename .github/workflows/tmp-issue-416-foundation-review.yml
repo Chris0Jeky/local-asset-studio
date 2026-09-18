@@ -1,0 +1,55 @@
+name: Temporary Adult Illustration foundation review correction
+
+on:
+  push:
+    branches:
+      - codex/adult-illustration-foundation
+    paths:
+      - .github/workflows/tmp-issue-416-foundation-review.yml
+
+permissions:
+  contents: write
+
+jobs:
+  correct-foundation:
+    if: github.repository == 'Chris0Jeky/local-asset-studio' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Confirm the two reviewed defects are present
+        run: python scripts/_issue_416_foundation_review_patch.py assert-old
+
+      - name: Apply bounded source-state and street-benchmark corrections
+        run: python scripts/_issue_416_foundation_review_patch.py apply
+
+      - name: Verify corrected contracts
+        run: |
+          python scripts/_issue_416_foundation_review_patch.py verify
+          python -m json.tool research/adult-illustration/benchmark-corpus.json >/dev/null
+          python -m json.tool research/adult-illustration/genre-packs.json >/dev/null
+          python -m json.tool research/adult-illustration/route-candidates.json >/dev/null
+
+      - name: Publish correction and remove temporary machinery
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            docs/adult-illustration/MODEL-AND-TECHNIQUE-LANDSCAPE.md \
+            docs/adult-illustration/README.md \
+            docs/adult-illustration/EVALUATION.md \
+            research/adult-illustration/benchmark-corpus.json \
+            research/adult-illustration/genre-packs.json
+          git rm -f \
+            .github/workflows/tmp-issue-416-foundation-review.yml \
+            scripts/_issue_416_foundation_review_patch.py
+          git commit -m "docs: correct Adult Illustration source and street evidence"
+          git push origin HEAD:codex/adult-illustration-foundation
