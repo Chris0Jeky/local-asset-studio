@@ -1,0 +1,67 @@
+name: Apply issue 359 receipt recheck diagnostic
+on:
+  push:
+    branches:
+      - fix/359-recheck-unreadable-diagnostic
+permissions:
+  contents: write
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prove diagnostic mismatch before correction
+        shell: bash
+        run: |
+          set +e
+          python -m unittest tests.test_resource_receipt_recheck_diagnostics -v > /tmp/recheck-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/recheck-red.log
+          test "$status" -ne 0
+          grep -F "test_unreadable_second_open_is_not_reported_as_content_change" /tmp/recheck-red.log
+          grep -F "'file_changed' != 'artifact_unreadable'" /tmp/recheck-red.log
+      - name: Preserve unreadable versus changed diagnostics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/resource_receipts.py')
+          text = path.read_text(encoding='utf-8')
+          old = """    except (EvidenceError, FileNotFoundError, OSError):
+        raise EvidenceError('file_changed') from None
+"""
+          new = """    except EvidenceError:
+        raise
+    except FileNotFoundError:
+        raise EvidenceError('file_changed') from None
+    except OSError:
+        raise EvidenceError('artifact_unreadable') from None
+"""
+          assert text.count(old) == 1, text.count(old)
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+      - name: Verify receipt integrity behavior
+        run: |
+          python -m unittest tests.test_resource_receipt_recheck_diagnostics -v
+          python -m unittest discover -s tests -p 'test_resource_receipt*.py' -v
+          python -m unittest tests.test_inference_trace_stream_files -v
+          python scripts/validate-repo.py
+          git diff --check
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          rm .github/workflows/agent-patch-359-recheck-diagnostic.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/resource_receipts.py tests/test_resource_receipt_recheck_diagnostics.py .github/workflows/agent-patch-359-recheck-diagnostic.yml
+          git diff --cached --check
+          git commit -m "fix: distinguish unreadable receipt rechecks"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
