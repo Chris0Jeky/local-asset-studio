@@ -7,6 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
+from http_refusal_transport import atomic_json_post
 from test_recipe_shortlist import make_studio
 from test_recipe_shortlist_ordered import sources, route
 from test_recipe_shortlist_proposal import payload
@@ -261,17 +262,15 @@ class SetupApplyTransportTests(unittest.TestCase):
         self.assertEqual(self.s.upload_count,3)
 
     def test_origin_type_and_duplicate_input_guards_precede_writes(self):
-        from http.client import HTTPConnection
         from studio_workflow.setup_drafts import PREFIX
         for raw,headers,status in [(b'{}',{'Origin':'https://other.invalid'},403),
                                   (b'{}',{'Host':'other.invalid'},403),
                                   (b'{}',{'Content-Type':'text/plain'},400),
                                   (b'{"action":"create","action":"apply"}',{},400)]:
-            c=HTTPConnection('127.0.0.1',self.http.server_port,timeout=5)
-            try:
-                c.request('POST',PREFIX,raw,{'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**headers})
-                r=c.getresponse();r.read();self.assertEqual(r.status,status)
-            finally:c.close()
+            # Same unread-body refusal shape as the proposal fixture (#477).
+            wire={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**headers}
+            with self.subTest(headers=headers):
+                self.assertEqual(atomic_json_post(self.http.server_port,PREFIX,raw,host=wire['Host'],origin=wire['Origin'],content_type=wire['Content-Type'])[0],status)
         self.assertEqual(self.s.upload_count,0)
 
     def test_client_transport_loss_reports_unknown_and_never_retries_the_write(self):
