@@ -229,16 +229,21 @@ def _bounded_json(value: Any, label: str) -> Any:
     return copy.deepcopy(value)
 
 
-def _source_path(value: Any) -> str:
+def _relative_source_path(value: Any) -> str:
     text = _text(value, "source file path", 1_024)
     if "\\" in text or ":" in text:
         raise ValueError("source file path is unsafe")
     path = PurePosixPath(text)
     if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
         raise ValueError("source file path is unsafe")
-    if path.suffix.casefold() != ".safetensors":
-        raise ValueError("acquisition plans support safetensors files only")
     return path.as_posix()
+
+
+def _selected_source_path(value: Any) -> str:
+    path = _relative_source_path(value)
+    if PurePosixPath(path).suffix.casefold() != ".safetensors":
+        raise ValueError("acquisition plans support safetensors files only")
+    return path
 
 
 def _provider_hashes(value: Any) -> dict[str, str]:
@@ -287,8 +292,11 @@ class AcquisitionSelection:
         object.__setattr__(self, "terms_review_ref", review)
 
 
-def _validate_snapshot(snapshot: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+def _validate_snapshot(
+    snapshot: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], str]:
     parsed = read_snapshot_json(_canonical_bytes(snapshot))
+    snapshot_sha = hashlib.sha256(_canonical_bytes(parsed)).hexdigest()
     _exact(parsed, SNAPSHOT_FIELDS, "source snapshot")
     _false_authority(parsed, "source snapshot")
     provider = parsed.get("provider")
@@ -364,7 +372,7 @@ def _validate_snapshot(snapshot: dict[str, Any]) -> tuple[dict[str, Any], dict[s
         file_id = _text(item.get("id"), "source file id", 128)
         if FILE_ID.fullmatch(file_id) is None:
             raise ValueError("source file id has an invalid shape")
-        path = _source_path(item.get("path"))
+        path = _relative_source_path(item.get("path"))
         if file_id in ids or path in paths:
             raise ValueError("source snapshot contains duplicate file identity")
         ids.add(file_id)
@@ -398,20 +406,20 @@ def _validate_snapshot(snapshot: dict[str, Any]) -> tuple[dict[str, Any], dict[s
             _bounded_json(item["metadata"], "Civitai file metadata")
         elif re.fullmatch(r"hf-file-[0-9a-f]{20}", file_id) is None:
             raise ValueError("Hugging Face file id has an invalid shape")
-        validated_files.append(
-            {
-                **copy.deepcopy(item),
-                "id": file_id,
-                "path": path,
-                "provider_hashes": hashes,
-                "provider_file_id": provider_file_id,
-            }
-        )
+        normalized_file = {
+            **copy.deepcopy(item),
+            "id": file_id,
+            "path": path,
+            "provider_hashes": hashes,
+        }
+        if provider == "civitai":
+            normalized_file["provider_file_id"] = provider_file_id
+        validated_files.append(normalized_file)
 
     validated = copy.deepcopy(parsed)
     validated["raw_payload_sha256"] = raw_payload_sha
     validated["record"]["files"] = validated_files
-    return validated, record
+    return validated, record, snapshot_sha
 
 
 def _handoff(source: Mapping[str, Any], selection: Mapping[str, Any]) -> dict[str, Any]:
@@ -479,18 +487,18 @@ def prepare_acquisition_plan(
 
     if not isinstance(selection, AcquisitionSelection):
         raise TypeError("selection must be AcquisitionSelection")
-    validated, record = _validate_snapshot(snapshot)
+    validated, record, snapshot_sha = _validate_snapshot(snapshot)
     matches = [
         item for item in validated["record"]["files"] if item["id"] == selection.file_id
     ]
     if len(matches) != 1:
         raise ValueError(f"source snapshot has no unique file {selection.file_id!r}")
     file_record = matches[0]
+    source_path = _selected_source_path(file_record.get("path"))
     byte_count = _positive(file_record.get("bytes"), "selected file byte count")
     digest = _sha(file_record.get("sha256"), "selected file SHA-256")
     terms = _bounded_json(record["terms"], "source terms claims")
     terms_sha = hashlib.sha256(_canonical_bytes(terms)).hexdigest()
-    snapshot_sha = hashlib.sha256(_canonical_bytes(validated)).hexdigest()
     provider = validated["provider"]
     source = {
         "provider": provider,
@@ -509,7 +517,7 @@ def prepare_acquisition_plan(
     selected = {
         "file_id": file_record["id"],
         "provider_file_id": file_record.get("provider_file_id"),
-        "source_path": file_record["path"],
+        "source_path": source_path,
         "bytes": byte_count,
         "sha256": digest,
         "provider_hashes": copy.deepcopy(file_record["provider_hashes"]),
@@ -594,7 +602,7 @@ def _validate_selection(value: Any, provider: str) -> tuple[dict[str, Any], Acqu
             raise ValueError("Civitai selected file identity is inconsistent")
     elif provider_file_id is not None:
         raise ValueError("Hugging Face selected provider file id must be null")
-    source_path = _source_path(selected.get("source_path"))
+    source_path = _selected_source_path(selected.get("source_path"))
     byte_count = _positive(selected.get("bytes"), "selected file byte count")
     digest = _sha(selected.get("sha256"), "selected file SHA-256")
     hashes = _provider_hashes(selected.get("provider_hashes"))
