@@ -72,6 +72,7 @@ jobs:
             studio_prompt/adult_illustration_prompt_membership.py \
             scripts/studio_adult_illustration_prompt.py \
             tests/test_adult_illustration_prompt_membership.py \
+            tests/test_adult_illustration_prompt_membership_source_auth.py \
             docs/adult-illustration/TAXONOMY-MEMBERSHIP-INSPECTION.md
           git rm \
             .github/workflows/issue-562-source-auth-patch.yml \
