@@ -51,7 +51,7 @@ def main():
         page.locator('.wk-modebar a').first.click()
         assert page.locator('#demoNotice').is_visible()
         before=page.locator('#status').inner_text()
-        assert page.locator('#workshopGuidanceAction').get_attribute('data-action')=='results'
+        assert page.locator('#workshopGuidanceAction').get_attribute('data-intent')=='open-results'
         page.click('#workshopGuidanceAction')
         assert page.locator('#workshopResults').evaluate('(el)=>el.open')
         assert page.locator('#status').inner_text()==before
