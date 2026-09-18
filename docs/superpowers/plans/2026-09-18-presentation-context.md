@@ -45,14 +45,14 @@
 - Produces: `StudioPresentationContext` in browsers and CommonJS exports under Node.
 - Produces: frozen context/view data, closed `ACTIONS`, guarded `dispatch(intent)` and freshness tokens.
 
-- [ ] Implement strict primitive normalization and recursive freezing.
-- [ ] Implement known/unknown capability and execution observations.
-- [ ] Implement exact source-slot projection with separate missing, pending and extra collections.
-- [ ] Implement deterministic intent precedence and data-only output.
-- [ ] Implement guarded semantic dispatch without arbitrary payload forwarding.
-- [ ] Implement monotonic observation tokens and A-B-A rejection.
-- [ ] Run `node --test tests/presentation_context.cjs` and confirm all contracts pass.
-- [ ] Refactor only after the suite remains green.
+- [x] Implement strict primitive normalization and recursive freezing.
+- [x] Implement known/unknown capability and execution observations.
+- [x] Implement exact source-slot projection with separate missing, pending and extra collections.
+- [x] Implement deterministic intent precedence and data-only output.
+- [x] Implement guarded semantic dispatch without arbitrary payload forwarding.
+- [x] Implement monotonic observation tokens and A-B-A rejection.
+- [x] Run `node --test tests/presentation_context.cjs` and confirm all contracts pass.
+- [x] Refactor only after the suite remains green.
 
 ### Task 3: Register the contracts in normal repository discovery
 
@@ -63,9 +63,9 @@
 - Consumes: `tests/presentation_context.cjs`.
 - Produces: one unittest-discoverable test that skips only when Node is unavailable.
 
-- [ ] Add a bounded subprocess wrapper with captured output and a 30-second timeout.
-- [ ] Run `python -m unittest tests.test_presentation_context -v`.
-- [ ] Confirm Node failure output propagates through Python when a sentinel assertion is introduced, then restore the passing file.
+- [x] Add a bounded subprocess wrapper with captured output and a 30-second timeout.
+- [x] Run `python -m unittest tests.test_presentation_context -v`.
+- [x] Confirm Node failure output propagates through Python when a sentinel assertion is introduced, then restore the passing file.
 
 ### Task 4: Document usage and claim boundaries
 
@@ -76,17 +76,17 @@
 - Consumes: the implemented public API.
 - Produces: integration guidance for the later workshop adapter slice.
 
-- [ ] Document the normalized context, intent precedence and action adapter.
-- [ ] Include a concrete safe integration example that maps semantic IDs to existing local reveal/focus handlers.
-- [ ] State that the module is not loaded by production in this PR and does not prove frontend, backend or GPU behaviour.
+- [x] Document the normalized context, intent precedence and action adapter.
+- [x] Include a concrete safe integration example that maps semantic IDs to existing local reveal/focus handlers.
+- [x] State that the module is not loaded by production in this PR and does not prove frontend, backend or GPU behaviour.
 
 ### Task 5: Publish and qualify the stacked PR
 
 **Files:**
 - Modify only if evidence changes: this plan and the PR description.
 
-- [ ] Run fresh local Node and Python contract commands.
-- [ ] Create a draft PR targeting `codex/immersive-studio-presentation`.
+- [x] Run fresh local Node and Python contract commands.
+- [x] Create a draft PR targeting `codex/immersive-studio-presentation`.
 - [ ] Inspect all current-head hosted workflows.
 - [ ] Resolve actionable review findings with regression coverage.
 - [ ] Mark ready for review only after current-head CI is green and the PR body distinguishes pure contract evidence from production integration.
