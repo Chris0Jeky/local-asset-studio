@@ -1,16 +1,16 @@
 """Bind the source-key rule to the catalog and to its browser copy (#600).
 
-A preset declares that the user supplies the picture through one of `SOURCE_KEYS`. Three guards refuse a
-source-needing preset on those keys alone — `studio_workflow/preset_adapter.py`, `studio_workflow/guidance.py`
-and `app/static/bundle-workflow-core.js`. Nothing used to assert the invariant they depend on: that every
-catalog preset whose API graph loads a picture actually declares one of those keys. A new image input under
-an undeclared key would pass all three and bind against the bundled authored example instead of the user's
-image.
+A preset declares that the user supplies the picture through one of `SOURCE_KEYS`. `preset_adapter`'s
+`project_document` and the browser bundle guard inspect the graph for an image input as well, so they are
+belt-and-braces; `studio_workflow.guidance.project` and the browser's reference staging read the keys alone.
+Nothing used to assert the invariant the key-only readers depend on: that every catalog preset whose API graph
+loads a picture actually declares one of those keys. Under an undeclared key the preset reads to them as
+text-only, and the bundled authored example gets bound in place of the user's image.
 
-Green means the invariant holds over the shipped catalog, that `missing_source_key` (the predicate
-`scripts/validate-repo.py` runs) reports the offending nodes, and that the browser copy of the key list
-still matches the Python one. It does not prove the guards themselves refuse correctly; those have their own
-tests.
+Green means the invariant holds over every graph the shipped catalog owns (`graph` and `canonical_graph`),
+that `missing_source_key` — the predicate `scripts/validate-repo.py` runs — reports the offending nodes, and
+that the browser copy of both lists still matches the Python tuples. It does not prove the guards themselves
+refuse correctly; those have their own tests.
 """
 import json
 import re
@@ -34,10 +34,12 @@ class CatalogInvariant(unittest.TestCase):
         offenders = []
         loading = 0
         for preset in self.presets:
-            graph = json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
-            if any(node.get('class_type') in IMAGE_INPUT_CLASSES for node in graph.values()): loading += 1
-            nodes = missing_source_key(preset, graph)
-            if nodes: offenders.append((preset['id'], preset['graph'], nodes))
+            for key in ('graph', 'canonical_graph'):
+                if not preset.get(key): continue
+                graph = json.loads((ROOT / preset[key]).read_text(encoding='utf-8'))
+                if any(node.get('class_type') in IMAGE_INPUT_CLASSES for node in graph.values()): loading += 1
+                nodes = missing_source_key(preset, graph)
+                if nodes: offenders.append((preset['id'], preset[key], nodes))
         self.assertGreater(loading, 0, 'no catalog graph loads a picture; the sweep is checking nothing')
         self.assertEqual(offenders, [], 'presets whose graph loads a picture without declaring one of '
                          + repr(SOURCE_KEYS) + ': ' + repr(offenders))

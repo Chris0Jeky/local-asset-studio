@@ -31,10 +31,18 @@ for preset in catalog:
     assert preset.get('modality','image') in {'image','video','3d'}
     # The RGBA-mask guard in app/server.py refuses a queue without that upload, so the flag needs the slot.
     if preset.get('requires_rgba_mask'): assert preset.get('reference'), (preset['id'],'requires_rgba_mask without a reference binding')
-    # A graph that loads a picture must say so with a source key: the adapter, guidance and browser bundle guards
-    # refuse such a preset by that key alone, so an undeclared image input would bind the authored example instead (#600).
-    loaders=missing_source_key(preset,graph)
-    assert not loaders, (preset['id'],loaders,'graph loads a picture but the preset declares none of '+repr(SOURCE_KEYS))
+    # A graph that loads a picture must say so with a source key: `studio_workflow.guidance.project` and the
+    # browser's reference staging read those keys alone, so an image input declared under none of them is invisible
+    # to them and the authored example gets bound in place of the user's picture (#600). `canonical_graph` is a
+    # second API graph the same preset owns (app/i2v_diagnostics.py loads it), so it is swept on the same terms.
+    graphs=[(preset['graph'],graph)]
+    if preset.get('canonical_graph'):
+        canonical_path=(root/preset['canonical_graph']).resolve()
+        assert canonical_path.is_relative_to(root/'workflows/api'), (preset['id'],'canonical_graph outside workflow directory')
+        graphs.append((preset['canonical_graph'],json.loads(canonical_path.read_text(encoding='utf-8'))))
+    for where,body in graphs:
+        loaders=missing_source_key(preset,body)
+        assert not loaders, (preset['id'],where,loaders,'graph loads a picture but the preset declares none of '+repr(SOURCE_KEYS))
     if preset.get('visual'):
         visual_path=(root/preset['visual']).resolve()
         assert visual_path.is_relative_to(root/'workflows/comfyui')
