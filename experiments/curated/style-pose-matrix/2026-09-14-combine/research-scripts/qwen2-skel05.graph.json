@@ -1,0 +1,299 @@
+{
+ "1": {
+  "class_type": "UnetLoaderGGUF",
+  "inputs": {
+   "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+  }
+ },
+ "2": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+   "type": "qwen_image",
+   "device": "default"
+  }
+ },
+ "3": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "qwen_image_vae.safetensors"
+  }
+ },
+ "8": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+   "strength_model": 1.0,
+   "model": [
+    "1",
+    0
+   ]
+  }
+ },
+ "9": {
+  "class_type": "ModelSamplingAuraFlow",
+  "inputs": {
+   "shift": 3.1,
+   "model": [
+    "8",
+    0
+   ]
+  }
+ },
+ "4": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+  }
+ },
+ "16": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+  }
+ },
+ "5": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "upscale_method": "lanczos",
+   "megapixels": 0.5,
+   "resolution_steps": 1,
+   "image": [
+    "4",
+    0
+   ]
+  }
+ },
+ "18": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "upscale_method": "lanczos",
+   "megapixels": 0.5,
+   "resolution_steps": 1,
+   "image": [
+    "17",
+    0
+   ]
+  }
+ },
+ "21": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "5",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "22": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "18",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "6": {
+  "class_type": "TextEncodeQwenImageEditPlus",
+  "inputs": {
+   "prompt": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 is a pose skeleton (a stick figure on black) giving the body position to copy. Draw the girl from Picture 1 with her body in exactly the skeleton's pose: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep her face, hair, clothes, colours and clean anime rendering style. Plain light background, one figure only, no skeleton lines in the result.",
+   "clip": [
+    "2",
+    0
+   ],
+   "image1": [
+    "5",
+    0
+   ],
+   "image2": [
+    "18",
+    0
+   ]
+  }
+ },
+ "7": {
+  "class_type": "TextEncodeQwenImageEditPlus",
+  "inputs": {
+   "prompt": "",
+   "clip": [
+    "2",
+    0
+   ],
+   "image1": [
+    "5",
+    0
+   ],
+   "image2": [
+    "18",
+    0
+   ]
+  }
+ },
+ "23": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "6",
+    0
+   ],
+   "latent": [
+    "21",
+    0
+   ]
+  }
+ },
+ "24": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "23",
+    0
+   ],
+   "latent": [
+    "22",
+    0
+   ]
+  }
+ },
+ "25": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "7",
+    0
+   ],
+   "latent": [
+    "21",
+    0
+   ]
+  }
+ },
+ "26": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "25",
+    0
+   ],
+   "latent": [
+    "22",
+    0
+   ]
+  }
+ },
+ "14": {
+  "class_type": "FluxKontextMultiReferenceLatentMethod",
+  "inputs": {
+   "reference_latents_method": "index_timestep_zero",
+   "conditioning": [
+    "24",
+    0
+   ]
+  }
+ },
+ "15": {
+  "class_type": "FluxKontextMultiReferenceLatentMethod",
+  "inputs": {
+   "reference_latents_method": "index_timestep_zero",
+   "conditioning": [
+    "26",
+    0
+   ]
+  }
+ },
+ "20": {
+  "class_type": "EmptySD3LatentImage",
+  "inputs": {
+   "width": 832,
+   "height": 1248,
+   "batch_size": 1
+  }
+ },
+ "11": {
+  "class_type": "KSampler",
+  "inputs": {
+   "seed": 2026091411,
+   "steps": 4,
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "model": [
+    "9",
+    0
+   ],
+   "positive": [
+    "14",
+    0
+   ],
+   "negative": [
+    "15",
+    0
+   ],
+   "latent_image": [
+    "20",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "VAEDecodeTiled",
+  "inputs": {
+   "tile_size": 256,
+   "overlap": 64,
+   "temporal_size": 64,
+   "temporal_overlap": 8,
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "Research/qwen2-skel05",
+   "images": [
+    "12",
+    0
+   ]
+  }
+ },
+ "17": {
+  "class_type": "OpenposePreprocessor",
+  "inputs": {
+   "detect_hand": "enable",
+   "detect_body": "enable",
+   "detect_face": "enable",
+   "resolution": 1024,
+   "scale_stick_for_xinsr_cn": "disable",
+   "image": [
+    "16",
+    0
+   ]
+  }
+ },
+ "27": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "Research/qwen2-skeleton",
+   "images": [
+    "17",
+    0
+   ]
+  }
+ }
+}

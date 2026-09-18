@@ -5,7 +5,7 @@
 """
 from __future__ import annotations
 import argparse
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import hashlib
 import json
 from pathlib import Path
@@ -19,6 +19,7 @@ if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 from scripts.character_study import (canonical, file_sha, inside, keys, read_json,
     relative, require, sha, verify_artifact, write_json)
 from scripts.character_edit import check_plan, digest
+from scripts.pixel_diff import changed_mask as _bounded_changed_mask, same_pixels
 
 
 def png(path: Path) -> Image.Image:
@@ -30,13 +31,7 @@ def png(path: Path) -> Image.Image:
 
 
 def changed_mask(a: Image.Image, b: Image.Image) -> Image.Image:
-    require(a.size == b.size, 'Cannot compare differing dimensions')
-    # RGBA.getbbox() defaults to alpha-only in some Pillow versions. Compare ALL
-    # channels, including invisible RGB, to prove decoded-pixel preservation.
-    diff = ImageChops.difference(a.convert('RGBA'), b.convert('RGBA'))
-    maximum = Image.new('L', a.size, 0)
-    for channel in diff.split(): maximum = ImageChops.lighter(maximum, channel)
-    return maximum.point(lambda x: 255 if x else 0)
+    return _bounded_changed_mask(a, b)
 
 
 def verify_references(root: Path, plan: dict) -> None:
@@ -159,11 +154,9 @@ def _verify_bundle(root: Path, plan: dict, folder: str, patches: dict, transform
     keys(bundle['files'], set(patches))
     for name, expected in patches.items():
         record = bundle['files'][name]; require(record.get('path') == name, 'Unexpected bundle member path')
-        actual = png(verify_artifact(receipt_path.parent, record))
-        require(actual.mode == expected.mode and actual.size == expected.size
-                and actual.tobytes() == expected.tobytes()
-                and actual.convert('RGBA').tobytes() == expected.convert('RGBA').tobytes()
-                and actual.info.get('icc_profile') == expected.info.get('icc_profile'), 'Bundle pixels/profile changed')
+        with closing(png(verify_artifact(receipt_path.parent, record))) as actual:
+            require(same_pixels(actual, expected)
+                    and actual.info.get('icc_profile') == expected.info.get('icc_profile'), 'Bundle pixels/profile changed')
     return bundle
 
 

@@ -115,7 +115,7 @@
         const origin=atelierRecipes.find(r=>r.id===tuning.present.origin);if(!origin||B.canonical(origin)!==tuning.present.originSnapshot)throw Error('The staged source recipe changed. Reopen and review it again.');
         selectPreset(latest.id);applyRecipe(B.tuningHandoff(latest,origin,controls));
         q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
-        showView('create');opener=preset.positive?q('#positive'):q('#presetSearch');dialog.close();opener.focus();message('Bundle applied as an editable setup. Review readiness; Generate is still a separate action.');
+        showView('create');opener=preset.positive?q('#positive'):q('#presetSearch');dialog.close();q('#createView').__workshop?.finishRecipeSelection(opener);opener.focus();message('Bundle applied as an editable setup. Review readiness; Generate is still a separate action.');
       }catch(err){q('#bundleApplyStatus').textContent=err.message;q('#bundleApply').disabled=true;}
     }
     button.onclick=async()=>{

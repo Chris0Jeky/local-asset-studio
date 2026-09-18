@@ -4,7 +4,7 @@ const safeUrl = url => { try { const u = new URL(url); return ['http:','https:']
 const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
-const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','sampler','scheduler'];
+const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
@@ -196,9 +196,19 @@ const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
 function rememberNegativeCollapse(open) { try { sessionStorage.setItem(NEGATIVE_COLLAPSE_KEY, open ? '0' : '1'); } catch (e) {} }
 $('#negativeWrap')?.addEventListener('toggle', () => rememberNegativeCollapse($('#negativeWrap').open));
+// A long recipe description is a research report above step 01: the card shows its first sentence and what the recipe
+// asks you to type; the measurements and the licence paragraph stay one disclosure away (#422 slice A).
+function recipeCard(preset) {
+  const description = String(preset.description || ''), note = String(preset.commercial_note || '');
+  const cut = description.length > 260 ? description.search(/\.\s(?=[A-Z])/) : -1;
+  if (cut < 40) return '<p>' + esc(description) + '</p><small>' + esc(note) + '</small>';
+  const fills = typeof StudioContinuation !== 'undefined' ? StudioContinuation.fills(preset, preset.continuation_prompt) : [];
+  const typing = fills.length ? '<p class="recipe-typing">You fill in: ' + esc(fills.map(f => f.label.toLowerCase()).join(' · ')) + '.</p>' : '';
+  return '<p>' + esc(description.slice(0, cut + 1)) + '</p>' + typing + '<details class="create-context-help recipe-more"><summary>More about this recipe</summary><p>' + esc(description.slice(cut + 1).trim()) + '</p><small>' + esc(note) + '</small></details>';
+}
 function renderSelected() {
   if (!selected) return;
-  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.description) + '</p><small>' + esc(selected.commercial_note) + '</small>';
+  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2>' + recipeCard(selected);
   $('#positiveWrap').hidden = !selected.positive;
   $('#positive').value = selected.defaults?.positive || ''; $('#negative').value = selected.defaults?.negative || ''; $('#negativeWrap').hidden = !selected.negative;
   // What to avoid is part of the brief, not an advanced setting: open it whenever the recipe binds it,
@@ -208,7 +218,7 @@ function renderSelected() {
   const variants = selected.variants || [{name:'3-seed audition',batch_count:3}];
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '"><b>' + esc(v.name) + '</b>' + (selected.reference && typeof StudioContinuation !== 'undefined' ? '<small>' + esc(StudioContinuation.variantHelp(selected,v)) + '</small>' : '') + '</button>').join('');
   const i2vModeControl = selected.i2v_modes?.length ? '<label>I2V mode<select id="i2vMode" data-key="mode">' + selected.i2v_modes.map(spec => '<option value="' + esc(spec.id) + '">' + esc(spec.name || spec.id) + '</option>').join('') + '</select><small id="i2vModeNote"></small></label>' : '';
-  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['style_weight','Style weight','number','min="0" max="2" step="0.05"'],['pose_strength','Pose strength','number','min="0" max="2" step="0.05"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
+  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['style_weight','Style weight','number','min="0" max="2" step="0.05"'],['pose_strength','Pose strength','number','min="0" max="2" step="0.05"'],['depth_cut','Cut the depth map below (% of its height; 100 = keep all)','number','min="0" max="100" step="1"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
   const inStack = new Set(activeLoraSlots().flatMap(k => [k, loraNameKey(k)]));
   $('#controls').innerHTML = i2vModeControl + specs.filter(([k]) => (selected[k] || selected.bindings_extra?.[k]) && !inStack.has(k)).map(([key,label,type,attrs]) => {
     if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
@@ -350,7 +360,7 @@ async function mixedBatchAction(button) {
 function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
-  const cards=[];
+  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -362,11 +372,15 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
       const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
-      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      (['failed','partial','uncertain','abandoned'].includes(job.status)?problems:cards).push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
-  $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>' ;
+  const problemMarkup=problems.length?'<details id="jobProblems" class="job-problems" '+(problemsOpen?'open':'')+'><summary>Problems · '+problems.length+' run(s)</summary>'+problems.join('')+'</details>':'';
+  const host=document.getElementById?.('jobProblemsHost')||null;
+  $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
+  $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>')+(host?'':problemMarkup);
+  if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   renderCompare();
 }
@@ -460,6 +474,8 @@ function beginContinuation(result,presetId,intent='edit'){
   continuationState=prepared.claim;continuationSource=result.context;
   attachContinuationSource(result);
   $('#positive').value=prepared.positive;if(selected.negative)$('#negative').value=prepared.negative;
+  // A restyle that keeps the picture draws it at its own aspect ratio; other routes keep the recipe canvas.
+  const canvas=StudioContinuation.canvasFor(result.context,target);if(canvas)for(const key of ['width','height']){const input=getControl(key);if(input)input.value=canvas[key];}
   $('#batch').value=1;updateReady();
 }
 function leaveContinuation(){

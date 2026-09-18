@@ -4,6 +4,16 @@
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const result = (state, message) => ({state, message});
   const unknown = message => result('unknown', message || 'Not checked yet. The guide is reading current evidence.');
+  function referenceSlots(preset, records) {
+    const slots = Array.isArray(preset?.reference_slots) ? preset.reference_slots : [];
+    const rows = Array.isArray(records) ? records : [];
+    const missing = rows.some(row => row?.missing);
+    if (!slots.length) return {attached:false, missing};
+    const board = object(preset?.reference_board) ? preset.reference_board : null;
+    const minimum = board ? (board.min === undefined ? 1 : (Number.isSafeInteger(board.min) ? board.min : 0)) : slots.length;
+    const filled = rows.filter(row => object(row) && typeof row.file === 'string' && row.file && !row.missing).length;
+    return {attached:rows.length === slots.length && !missing && minimum >= 1 && minimum <= slots.length && filled >= minimum, missing};
+  }
   function evaluate(check, s = {}) {
     const met = text => result('met', text), blocked = text => result('blocked', text);
     if (check === 'manual') return result('manual', 'This step needs your judgment. Next records navigation only.');
@@ -72,20 +82,56 @@
     }
     return unknown('This step has no evidence adapter yet. Continue manually without a completion claim.');
   }
-  function visibleTarget(step, doc) {
-    for (const selector of [step.target, ...(step.alternatives || [])]) {
-      if (typeof selector !== 'string' || !/^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector)) continue;
+  const targetSelectors = step => [step.target, ...(step.alternatives || [])]
+    .filter(selector => typeof selector === 'string' && /^#[A-Za-z][A-Za-z0-9_-]{0,95}$/.test(selector));
+  function targetVisible(node, doc) {
+    // Chromium can retain layout boxes for content inside closed details.
+    // Only the first summary remains visible; nested closed ancestors still hide it.
+    for (let parent = node?.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === 'DETAILS' && !parent.open) {
+        const summary = [...parent.children].find(child => child.tagName === 'SUMMARY');
+        if (!summary?.contains(node)) return false;
+      }
+    }
+    return !!(node && node.getClientRects().length && !node.closest('[hidden]') &&
+      !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility));
+  }
+  function peekTarget(step, doc) {
+    for (const selector of targetSelectors(step)) {
       const node = doc.getElementById(selector.slice(1));
-      if (node && node.getClientRects().length && !node.closest('[hidden]') &&
-        !['hidden','collapse'].includes(doc.defaultView?.getComputedStyle(node).visibility)) return node;
+      if (targetVisible(node, doc)) return node;
     }
     return null;
+  }
+  function revealTarget(step, doc) {
+    for (const selector of targetSelectors(step)) {
+      const node = doc.getElementById(selector.slice(1));
+      if (!node || node.closest('[hidden]') || node.closest('[inert]')) continue;
+      let unavailable = false;
+      for (let parent = node; parent; parent = parent.parentElement) {
+        if (doc.defaultView?.getComputedStyle(parent).display === 'none') { unavailable = true; break; }
+      }
+      if (unavailable) continue;
+      const opened = [];
+      let disclosure = node.closest?.('details:not([open])') || null;
+      while (disclosure) {
+        disclosure.open = true; opened.push(disclosure);
+        disclosure = disclosure.parentElement?.closest?.('details:not([open])') || null;
+      }
+      if (targetVisible(node, doc)) return node;
+      // An unusable alternative must not leave unrelated panels expanded.
+      for (const item of opened.reverse()) item.open = false;
+    }
+    return null;
+  }
+  function visibleTarget(step, doc) {
+    return peekTarget(step, doc) || revealTarget(step, doc);
   }
   function route(value, origin) {
     const u = new URL(value, origin);
     if (u.username || u.password || u.origin !== origin || !['/', '/workflow-studio.html', '/av.html', '/voice.html'].includes(u.pathname) || u.search) throw Error('Unsupported guide route');
     return u;
   }
-  const api = {evaluate, unknown, visibleTarget, route};
+  const api = {evaluate, unknown, referenceSlots, peekTarget, visibleTarget, revealTarget, route};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
 })(globalThis);

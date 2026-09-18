@@ -1,0 +1,181 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "flux-2-klein-4b-fp8.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen_3_4b.safetensors",
+   "type": "flux2",
+   "device": "default"
+  }
+ },
+ "3": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "flux2-vae.safetensors"
+  }
+ },
+ "4": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "Redraw this image as a polished light-novel illustration: soft but rich colours, bright high-key lighting with gentle bloom, a light airy background, delicate clean lineart, smooth soft shading, glossy hair, large detailed sparkling eyes. Keep the character, the pose, the face and expression, the hair colour, the clothing and its colours, the props and the background layout exactly as they are; only change the rendering style. The picture shows: 1girl, solo, adult woman, original character, witch, wide-brimmed witch hat, long dark hair, red and black robe with gold trim, full body, sitting on an ornate throne, one knee raised, leaning back, one eye closed, smiling, looking at viewer, from below.",
+   "clip": [
+    "2",
+    0
+   ]
+  }
+ },
+ "5": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "",
+   "clip": [
+    "2",
+    0
+   ]
+  }
+ },
+ "6": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "positive": [
+    "23",
+    0
+   ],
+   "negative": [
+    "5",
+    0
+   ],
+   "cfg": 1.0
+  }
+ },
+ "7": {
+  "class_type": "RandomNoise",
+  "inputs": {
+   "noise_seed": 2026091407
+  }
+ },
+ "8": {
+  "class_type": "KSamplerSelect",
+  "inputs": {
+   "sampler_name": "euler"
+  }
+ },
+ "9": {
+  "class_type": "Flux2Scheduler",
+  "inputs": {
+   "steps": 6,
+   "width": 1024,
+   "height": 1536
+  }
+ },
+ "10": {
+  "class_type": "EmptyFlux2LatentImage",
+  "inputs": {
+   "width": 1024,
+   "height": 1536,
+   "batch_size": 1
+  }
+ },
+ "11": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "7",
+    0
+   ],
+   "guider": [
+    "6",
+    0
+   ],
+   "sampler": [
+    "8",
+    0
+   ],
+   "sigmas": [
+    "9",
+    0
+   ],
+   "latent_image": [
+    "10",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "Research/next-k4-generic-tags",
+   "images": [
+    "12",
+    0
+   ]
+  }
+ },
+ "20": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "e0e988933f3c453099c7086337d32394_Nova_00004_.png.png"
+  }
+ },
+ "21": {
+  "class_type": "ImageScaleToTotalPixels",
+  "inputs": {
+   "image": [
+    "20",
+    0
+   ],
+   "upscale_method": "lanczos",
+   "megapixels": 1.0,
+   "resolution_steps": 1
+  }
+ },
+ "22": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "21",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  }
+ },
+ "23": {
+  "class_type": "ReferenceLatent",
+  "inputs": {
+   "conditioning": [
+    "4",
+    0
+   ],
+   "latent": [
+    "22",
+    0
+   ]
+  }
+ }
+}

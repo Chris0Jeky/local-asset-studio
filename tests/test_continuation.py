@@ -1,5 +1,5 @@
 """Real prepare, retained-output and HTTP regressions; synthetic pixels, no inference."""
-import copy
+import copy, re
 import hashlib
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
@@ -236,9 +236,117 @@ class ContinuationTests(unittest.TestCase):
             self.assertEqual(request("POST", "/api/jobs", self.payload)[0], 201); self.assertEqual(self.studio.queue.qsize(), 1)
         finally: http.shutdown(); http.server_close(); thread.join(3)
 
+    def test_declared_restyle_continuation_pins_the_source_to_the_reference_without_a_board(self):
+        """Continue with this → Restyle on the shipped Klein recipe: the source must sit on `reference`, the authored
+        example is refused, no board is asked for, and the claim survives dispatch rechecks."""
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        klein = next(preset for preset in catalog["presets"] if preset["id"] == "restyle-klein")
+        graph_path = self.root / klein["graph"]; shutil.copyfile(ROOT / klein["graph"], graph_path)
+        data = json.loads((self.root / "presets/catalog.json").read_text()); data["presets"].append(klein)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        cap = next(preset for preset in self.studio.catalog()["presets"] if preset["id"] == "restyle-klein")["continuation_capability"]
+        self.assertEqual((cap["operation"], cap["source_input"], cap["board_min"], cap["keeps_picture"], cap["prompt_role"]), ("restyle", "reference", 0, True, "instruction"))
+        claim = dict(self.claim, intent="restyle", preset_id="restyle-klein", template_sha256=hashlib.sha256(graph_path.read_bytes()).hexdigest())
+        wording = klein["continuation_prompt"].replace("{source}", " The picture shows: " + self.attachment["context"]["positive"].rstrip(".") + ".")
+        payload = dict(preset_id="restyle-klein", controls={"positive": wording, "reference": self.attachment["file"], "width": 1040, "height": 1520}, parent_assets=[self.asset_id], continuation=claim)
+        preview = self.studio.preview(payload); workflow = preview["workflow"]
+        self.assertFalse(preview["submitted"])
+        self.assertEqual(workflow["14"]["inputs"]["image"], self.attachment["file"]); self.assertEqual(workflow["4"]["inputs"]["text"], wording)
+        self.assertEqual((workflow["10"]["inputs"]["width"], workflow["10"]["inputs"]["height"], workflow["9"]["inputs"]["width"], workflow["9"]["inputs"]["height"]), (1040, 1520, 1040, 1520))
+        authored = copy.deepcopy(payload); authored["controls"]["reference"] = "pose-reference-example.png"
+        # The authored example name is refused before continuation validation even sees it (upload-name check), which is fine.
+        with self.assertRaisesRegex(Exception, "declared source input|upload is invalid"): self.studio.prepare(authored)
+        missing = copy.deepcopy(payload); missing["controls"].pop("reference")
+        with self.assertRaisesRegex(ValueError, "declared source input"): self.studio.prepare(missing)
+        wrong_intent = copy.deepcopy(payload); wrong_intent["continuation"]["intent"] = "edit"
+        with self.assertRaisesRegex(ValueError, "does not support"): self.studio.prepare(wrong_intent)
+        blank = copy.deepcopy(payload); blank["controls"]["positive"] = "  "
+        with self.assertRaisesRegex(ValueError, "Describe"): self.studio.prepare(blank)
+        job = self.studio.jobs[self.studio.create_job(payload, enqueue=False)["id"]]
+        self.assertEqual(job["continuation"], claim)
+        preset = self.studio.preset("restyle-klein")
+        self.assertEqual(continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True), claim)
+        (self.studio.comfy_root / "input" / self.attachment["file"]).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "bytes changed"): continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True)
+
+    def test_every_shipped_recipe_that_transforms_a_picture_refuses_the_plain_route_without_its_source(self):
+        # A board with a picture to keep, or a declared restyle/combine, would otherwise submit the authored example
+        # picture (pose-reference-example.png) literally from the plain Create route (PR #372).
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        shipped = [p for p in catalog["presets"] if (p.get("reference_board") and p.get("last_reference")) or p.get("continuation_operation")]
+        self.assertGreaterEqual(len(shipped), 9, [p["id"] for p in shipped])
+        data = json.loads((self.root / "presets/catalog.json").read_text())
+        for preset in shipped:
+            graph_path = self.root / preset["graph"]; graph_path.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(ROOT / preset["graph"], graph_path); data["presets"].append(preset)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        for preset in shipped:
+            key = "last_reference" if preset.get("last_reference") else "reference"
+            label = preset.get(key + "_label") or "Picture to keep (image 1)"
+            wording = preset.get("continuation_prompt") or "a witch"
+            for fill in (preset.get("continuation_placeholder") or []) if isinstance(preset.get("continuation_placeholder"), list) else [preset.get("continuation_placeholder")]:
+                if fill: wording = wording.replace(fill, "the witch")
+            with self.assertRaisesRegex(Exception, re.escape(preset["name"] + " needs your picture on " + label + "; the authored example picture cannot be queued"), msg=preset["id"]):
+                self.studio.prepare(dict(preset_id=preset["id"], controls={"positive": wording.replace("{source}", "")}))
+
+    def test_combine_continuation_keeps_the_source_as_image_one_and_refuses_the_unreplaced_placeholder(self):
+        """Continue with this → Combine on the shipped Klein board: the source sits on last_reference (image 1), the pose
+        picture on Picture 1 (image 2), the empty second slot is bypassed so the guider reads the surviving reference
+        latent, and the bracketed pose placeholder blocks until replaced."""
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))
+        combine = next(preset for preset in catalog["presets"] if preset["id"] == "combine-klein")
+        graph_path = self.root / combine["graph"]; graph_path.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(ROOT / combine["graph"], graph_path)
+        data = json.loads((self.root / "presets/catalog.json").read_text()); data["presets"].append(combine)
+        (self.root / "presets/catalog.json").write_text(json.dumps(data))
+        cap = next(preset for preset in self.studio.catalog()["presets"] if preset["id"] == "combine-klein")["continuation_capability"]
+        self.assertEqual((cap["operation"], cap["source_input"], cap["board_min"], cap["keeps_picture"], cap["prompt_role"], cap["reference_count"]), ("combine", "last_reference", 1, False, "instruction", 3))
+        import io; from PIL import Image
+        stream = io.BytesIO(); Image.new("RGB", (8, 12), "green").save(stream, "PNG")
+        pose = self.studio.upload("pose.png", "image/png", stream.getvalue())
+        claim = dict(self.claim, intent="combine", preset_id="combine-klein", template_sha256=hashlib.sha256(graph_path.read_bytes()).hexdigest())
+        board = lambda first: [dict(role="pose", file=first["file"], sha256=first["sha256"]) if first else dict(role="pose", file=None), dict(role="pose", file=None)]
+        who, pose_words = combine["continuation_placeholder"]
+        wording = combine["continuation_prompt"].replace(who, "the witch in the black and red robe").replace(pose_words, "leaning forward, one hand on her hip")
+        payload = dict(preset_id="combine-klein", controls={"positive": wording, "last_reference": self.attachment["file"]}, parent_assets=[self.asset_id], references=board(pose), continuation=claim)
+        preview = self.studio.preview(payload); workflow = preview["workflow"]
+        self.assertFalse(preview["submitted"])
+        self.assertEqual(workflow["14"]["inputs"]["image"], self.attachment["file"]); self.assertEqual(workflow["20"]["inputs"]["image"], pose["file"])
+        for node in ("24", "25", "26", "27"): self.assertNotIn(node, workflow)
+        self.assertEqual(workflow["6"]["inputs"]["positive"], ["23", 0]); self.assertEqual(workflow["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual(workflow["4"]["inputs"]["text"], wording)
+        unreplaced = copy.deepcopy(payload); unreplaced["controls"]["positive"] = combine["continuation_prompt"]
+        with self.assertRaisesRegex(ValueError, "replace .*who is in image 1.* and .*the pose in a few words"): self.studio.prepare(unreplaced)
+        half = copy.deepcopy(payload); half["controls"]["positive"] = combine["continuation_prompt"].replace(who, "the witch")
+        with self.assertRaisesRegex(ValueError, "replace .*the pose in a few words"): self.studio.prepare(half)
+        # The plain Create route (no continuation claim) refuses the authored fills just the same (Codex review, #367).
+        plain = dict(preset_id="combine-klein", controls={"positive": combine["continuation_prompt"], "last_reference": self.attachment["file"]}, references=board(pose))
+        with self.assertRaisesRegex(Exception, "Fill in the wording: replace .*who is in image 1"): self.studio.prepare(plain)
+        omitted = dict(plain); omitted["controls"] = {"last_reference": self.attachment["file"]}  # the authored graph text carries the fills too
+        with self.assertRaisesRegex(Exception, "Fill in the wording"): self.studio.prepare(omitted)
+        plain_filled = dict(plain); plain_filled["controls"] = dict(plain["controls"], positive=wording)
+        self.assertFalse(self.studio.preview(plain_filled)["submitted"])
+        # The plain route without the picture you keep would otherwise submit the authored example picture as image 1.
+        no_source = dict(plain_filled); no_source["controls"] = {"positive": wording}
+        with self.assertRaisesRegex(Exception, "needs your picture on Picture to keep \\(image 1\\); the authored example picture cannot be queued"): self.studio.prepare(no_source)
+        empty = copy.deepcopy(payload); empty["references"] = board(None)
+        with self.assertRaisesRegex(ValueError, "at least 1 picture"): self.studio.prepare(empty)
+        moved = copy.deepcopy(payload); moved["controls"].pop("last_reference"); moved["references"] = board(self.attachment)
+        with self.assertRaisesRegex(ValueError, "declared source input"): self.studio.prepare(moved)
+        wrong_intent = copy.deepcopy(payload); wrong_intent["continuation"]["intent"] = "restyle"
+        with self.assertRaisesRegex(ValueError, "does not support"): self.studio.prepare(wrong_intent)
+        job = self.studio.jobs[self.studio.create_job(payload, enqueue=False)["id"]]
+        self.assertEqual(job["continuation"], claim)
+        preset = self.studio.preset("combine-klein"); preset["_prepared_references"] = job["references"]
+        self.assertEqual(continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True), claim)
+        (self.studio.comfy_root / "input" / pose["file"]).write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "bytes changed"): continuation.validate(self.studio, job, preset, job["graph"], check_runtime=True)
+
     @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
     def test_client_policy_and_draft_roundtrip(self):
         result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_core.cjs")], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
+    def test_client_canvas_limits(self):
+        result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_canvas_limits.cjs")], capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
@@ -249,12 +357,159 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
         control must read a default back from its graph."""
         root = Path(__file__).resolve().parents[1]
         catalog = json.loads((root / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
-        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength")
+        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength", "depth_cut")
         for preset in catalog:
             graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
             result = continuation.capability(preset, graph)
-            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle"}, preset["id"])
-            if preset.get("reference_board") and preset.get("last_reference"): self.assertEqual((result["operation"], result["source_input"]), ("restyle", "last_reference"), preset["id"])
+            self.assertIn(result["operation"], {"new-image", "unsupported-reference", "masked-repair", "image-to-video", "image-to-3d", "localized-detail", "instruction-edit", "upscale", "image-to-image", "reference-guided-generation", "restyle", "combine"}, preset["id"])
+            if preset.get("reference_board") and preset.get("last_reference"): self.assertEqual((result["operation"], result["source_input"]), ("combine" if preset.get("continuation_operation") == "combine" else "restyle", "last_reference"), preset["id"])
+            # Restyle a picture starts the sampler from the picture itself (img2img) or declares the picture its reference; Style + Pose
+            # starts from an empty latent, and a Combine changes the pose.
+            self.assertEqual(result["keeps_picture"], preset["id"].startswith("restyle-"), preset["id"])
+            declared = preset.get("continuation_placeholder")
+            for placeholder in (declared if isinstance(declared, list) else [declared]) if declared else []:
+                self.assertIn(placeholder, preset["continuation_prompt"], preset["id"])
+                self.assertTrue(placeholder.startswith("[") and placeholder.endswith("]"), preset["id"])
+            if declared and preset.get("reference_board"):
+                # Outside the fills the wording must not assume who is in the picture: "her hat" once put hats on a hatless character.
+                fixed = re.sub(r"\[[^\]]*\]", "", preset["continuation_prompt"]).lower()
+                self.assertFalse(re.search(r"\b(she|he|her|his|hat|robe|witch)\b", fixed), (preset["id"], fixed))
+            if preset["id"] in ("combine-klein", "restyle-klein-picture"):
+                # A Klein board: the source is image 1 (last_reference, first reference latent), the board pictures follow it
+                # as image 2 and 3; an empty slot is bypassed, not left on the authored example (test_references).
+                self.assertEqual((result["operation"], result["source_input"], result["board_min"], result["prompt_role"], result["reference_count"]), ("combine" if preset["id"] == "combine-klein" else "restyle", "last_reference", 1, "instruction", 3))
+                self.assertEqual([slot["binding"] for slot in preset["reference_slots"]], [["20", "image"], ["24", "image"]]); self.assertEqual(preset["last_reference"], ["14", "image"])
+                self.assertEqual(graph["6"]["inputs"]["positive"], ["27", 0])
+                for latent, loader, upstream in (("27", "24", "23"), ("23", "20", "17"), ("17", "14", "4")):
+                    self.assertEqual(graph[latent]["class_type"], "ReferenceLatent"); self.assertEqual(graph[latent]["inputs"]["conditioning"][0], upstream)
+                    encode = graph[latent]["inputs"]["latent"][0]; scale = graph[encode]["inputs"]["pixels"][0]
+                    self.assertEqual((graph[encode]["class_type"], graph[scale]["class_type"], graph[scale]["inputs"]["image"][0]), ("VAEEncode", "ImageScaleToTotalPixels", loader))
+                # No {source}: the source description names its pose and undid the transfer (measured 14 Sep 2026). The wording
+                # carries a bracketed placeholder instead, which the handoff refuses to run unreplaced.
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"])
+                self.assertEqual((graph["6"]["inputs"]["cfg"], graph["9"]["inputs"]["steps"], graph["9"]["inputs"]["width"], graph["10"]["inputs"]["height"]), (1.0, 6, 1024, 1536))
+            elif preset["id"] == "combine-klein-9b":
+                # Pose first: the board slot is image 1 (node 14, kept), the character is last_reference on image 2 (node 20).
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+            elif preset["id"] == "combine-klein-9b-depth":
+                # Depth first: the board slot (node 14) feeds a Depth Anything V2 map (node 30) that is image 1; the character stays
+                # last_reference on image 2 (node 20); loaders, chain and wording identity as on the 9B pose-first recipe.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["30"]["class_type"], graph["30"]["inputs"]["image"], graph["15"]["inputs"]["image"], graph["21"]["inputs"]["image"]), ("DepthAnythingV2Preprocessor", ["14", 0], ["30", 0], ["20", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("depth map", preset["continuation_prompt"]); self.assertIn("cc-by-nc-4.0", preset["commercial_note"])
+                # Cut below (%): a 100x100 mask whose band starts at row y (node 33, the depth_cut control) is applied through a black source
+                # resized to the 1 MP map (node 35) before the VAE sees it; y = 100 authored means nothing is cut, the ankle variant sets 86.
+                self.assertEqual(preset["depth_cut"], ["33", "y"]); self.assertEqual(graph["16"]["inputs"]["pixels"], ["35", 0])
+                self.assertEqual((graph["33"]["class_type"], graph["33"]["inputs"]["destination"], graph["33"]["inputs"]["source"], graph["33"]["inputs"]["y"], graph["33"]["inputs"]["operation"]), ("MaskComposite", ["31", 0], ["32", 0], 100, "add"))
+                self.assertEqual((graph["31"]["inputs"]["value"], graph["32"]["inputs"]["value"], graph["31"]["inputs"]["height"], graph["32"]["inputs"]["height"]), (0.0, 1.0, 100, 100))
+                self.assertEqual((graph["35"]["class_type"], graph["35"]["inputs"]["destination"], graph["35"]["inputs"]["source"], graph["35"]["inputs"]["mask"], graph["35"]["inputs"]["resize_source"], graph["34"]["inputs"]["color"]), ("ImageCompositeMasked", ["15", 0], ["34", 0], ["33", 0], True, 0))
+                self.assertEqual(preset["variants"][0], {"name": "Cut below the ankles (86 %)", "controls": {"depth_cut": 86}})
+            elif preset["id"] == "combine-klein-9b-copypose":
+                # Copy Pose LoRA: the order turns round. The character is last_reference on image 1 (node 14, kept and re-posed), the
+                # board slot is the pose picture on image 2 (node 20); the LoRA sits between the GGUF loader and the guider, model only,
+                # and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["14", "image"], [["20", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "KleinBase9B_PoseTransfer.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("change the actions and poses in Image 1 to match those in Image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 1)", preset["last_reference_label"]); self.assertIn("(image 2)", preset["reference_board_label"]); self.assertIn("Rent only", preset["commercial_note"])
+            elif preset["id"] == "combine-klein-9b-replace":
+                # Replace character: the board slot is the picture to keep on image 1 (node 14: its pose, camera, scene and clothes stay),
+                # the character whose face goes in stays last_reference on image 2 (node 20); the LoRA sits between the GGUF loader and the
+                # guider, model only, and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "replace_character_v1_klein.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("Replace the person in image 1 with the character in image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 2)", preset["last_reference_label"]); self.assertIn("(image 1)", preset["reference_board_label"]); self.assertIn("no Sell", preset["commercial_note"])
+                # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it; `verified` is
+                # true only when the execution note opens with a Studio run (research against ComfyUI is not a Studio proving run); the
+                # third fill is image 1's outfit (meaning "outfit", never carried by an engine switch as the character's clothes).
+                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], "through the Studio (POST /api/jobs): job" in preset["execution_note"])
+                self.assertTrue(preset["continuation_placeholder"][2].startswith("[image 1's outfit and its colours"))
+            elif preset["id"] == "combine-klein-9b-skeleton":
+                # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
+                # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("pose skeleton", preset["continuation_prompt"]); self.assertIn("skeleton", preset["reference_board_label"].lower()); self.assertNotIn("30", graph)
+            elif preset["id"] == "flux-edit":
+                self.assertEqual((result["operation"], preset["continuation_prompt"].count("{source}")), ("instruction-edit", 1))
+            elif preset["id"] == "restyle-klein":
+                # A declared restyle: the picture is the model's reference latent, no board, wording authored for the handoff.
+                self.assertEqual((result["operation"], result["source_input"], result["board_min"], result["prompt_role"], result["reference_count"]), ("restyle", "reference", 0, "instruction", 1))
+                self.assertEqual(graph["6"]["inputs"]["positive"][0], "17"); self.assertEqual(graph["17"]["class_type"], "ReferenceLatent"); self.assertEqual(graph["17"]["inputs"]["latent"][0], "16")
+                self.assertEqual(graph["16"]["inputs"]["pixels"][0], "15"); self.assertEqual(graph["15"]["inputs"]["image"][0], str(preset["reference"][0]))
+                # promptFor substitutes the first placeholder only, so the authored wording carries exactly one.
+                self.assertEqual(preset["continuation_prompt"].count("{source}"), 1); self.assertEqual(preset["continuation_prompt"].replace("{source}", ""), graph["4"]["inputs"]["text"])
+                self.assertEqual((graph["6"]["inputs"]["cfg"], graph["9"]["inputs"]["steps"], graph["9"]["inputs"]["width"], graph["10"]["inputs"]["height"]), (1.0, 6, 1024, 1536))
+            elif preset["id"].startswith("restyle-"):
+                self.assertEqual(graph["5"]["inputs"]["latent_image"][0], "41"); self.assertEqual(graph["41"]["inputs"]["pixels"][0], "4"); self.assertEqual(graph["4"]["inputs"]["image"][0], str(preset["last_reference"][0]))
+                self.assertEqual(graph["14"]["inputs"]["weight_type"], "style transfer"); self.assertEqual(graph["7"]["inputs"]["images"][0], "51"); self.assertEqual(graph["51"]["class_type"], "FaceDetailer")
             for key in keys:
                 binding = preset.get(key)
                 if binding: self.assertIn(str(binding[1]), graph[str(binding[0])]["inputs"], (preset["id"], key))
+
+
+class DeclaredRestyleTests(unittest.TestCase):
+    """A recipe may declare `continuation_operation: restyle` only for a reference edit (ReferenceLatent): the picture
+    is the model's own reference and the prepared wording carries the look, so there is no style board."""
+    EDIT = {
+        "1": {"class_type": "CLIPTextEncode", "inputs": {"text": "Redraw this image as a soft look. Keep everything else."}},
+        "2": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["1", 0]}},
+        "4": {"class_type": "LoadImage", "inputs": {"image": "example.png"}},
+        "5": {"class_type": "VAEEncode", "inputs": {"pixels": ["4", 0]}},
+        "6": {"class_type": "ReferenceLatent", "inputs": {"conditioning": ["1", 0], "latent": ["5", 0]}},
+        "7": {"class_type": "SamplerCustomAdvanced", "inputs": {"guider": ["6", 0], "latent_image": ["3", 0]}},
+        "3": {"class_type": "EmptyFlux2LatentImage", "inputs": {"width": 1024, "height": 1536}},
+        "8": {"class_type": "VAEDecode", "inputs": {"samples": ["7", 0]}},
+        "9": {"class_type": "SaveImage", "inputs": {"images": ["8", 0]}},
+    }
+
+    def test_declared_restyle_is_a_reference_edit_without_a_board(self):
+        preset = dict(id="restyle-x", reference=["4", "image"], positive=["1", "text"], continuation_operation="restyle", continuation_prompt="Redraw this image as a soft look. Keep everything else.{source}")
+        result = continuation.capability(preset, copy.deepcopy(self.EDIT))
+        self.assertEqual((result["operation"], result["source_input"], result["board_min"], result["keeps_picture"], result["prompt_role"], result["consumes_source"]), ("restyle", "reference", 0, True, "instruction", True))
+
+    def test_declaration_is_ignored_on_a_description_graph_and_on_a_board(self):
+        plain = continuation.capability(dict(PRESET, continuation_operation="restyle"), copy.deepcopy(GRAPH))
+        self.assertEqual((plain["operation"], plain["keeps_picture"]), ("image-to-image", False))
+        undeclared = continuation.capability(dict(id="edit", reference=["4", "image"], positive=["1", "text"]), copy.deepcopy(self.EDIT))
+        self.assertEqual((undeclared["operation"], undeclared["keeps_picture"]), ("instruction-edit", False))
+        board = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
+        wai = next(p for p in board if p["id"] == "restyle-wai"); graph = json.loads((ROOT / wai["graph"]).read_text(encoding="utf-8"))
+        result = continuation.capability(dict(wai, continuation_operation="restyle"), graph)
+        self.assertEqual((result["operation"], result["source_input"], result["board_min"]), ("restyle", "last_reference", 1))
+
+    def test_declared_restyle_needs_a_consumed_reference(self):
+        graph = copy.deepcopy(self.EDIT); graph["9"]["inputs"]["images"] = ["3", 0]  # the saved output no longer descends from the picture
+        preset = dict(id="restyle-x", reference=["4", "image"], positive=["1", "text"], continuation_operation="restyle")
+        cap = continuation.capability(preset, graph)
+        self.assertEqual((cap["operation"], cap["consumes_source"], cap["keeps_picture"]), ("unsupported-reference", False, False))
+
+    def test_a_klein_board_is_a_combine_or_a_picture_keeping_restyle_by_declaration(self):
+        """The same board wiring (source on last_reference, pictures on the slots) is a Combine when declared so, and a
+        Restyle that keeps the picture when declared a restyle; without a declaration it is the pose-only board restyle."""
+        catalog = json.loads((ROOT / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
+        combine = next(p for p in catalog if p["id"] == "combine-klein"); graph = json.loads((ROOT / combine["graph"]).read_text(encoding="utf-8"))
+        declared = continuation.capability(combine, copy.deepcopy(graph))
+        self.assertEqual((declared["operation"], declared["source_input"], declared["board_min"], declared["keeps_picture"]), ("combine", "last_reference", 1, False))
+        look = continuation.capability(dict(combine, continuation_operation="restyle"), copy.deepcopy(graph))
+        self.assertEqual((look["operation"], look["source_input"], look["board_min"], look["keeps_picture"]), ("restyle", "last_reference", 1, True))
+        plain = dict(combine); plain.pop("continuation_operation")
+        undeclared = continuation.capability(plain, copy.deepcopy(graph))
+        self.assertEqual((undeclared["operation"], undeclared["keeps_picture"]), ("restyle", False))
+        self.assertEqual(continuation.ROUTES["combine"], {"combine"}); self.assertNotIn("combine", continuation.ROUTES["restyle"])

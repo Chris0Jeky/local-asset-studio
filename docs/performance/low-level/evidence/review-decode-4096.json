@@ -1,0 +1,33 @@
+{
+  "schema": "studio.cpu-copy-evidence/v1",
+  "note": "Compact projection of benchmark output: common identities are factored out; every trial is retained in execution order.",
+  "operation": "decode",
+  "edge": 4096,
+  "mode": "RGBA",
+  "python": "3.13.5",
+  "pillow": "12.3.0",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "module_sha256": {
+    "baseline": "6e4968373938bae436de941b5dbc3eaea64ce4d00543da4c46e3b0dd6394429e",
+    "candidate": "fdb2917ede40149fabca74ce0fa5576f5b59dfddd62e1ea01c74f9b976ee4371"
+  },
+  "input_sha256": "b19c2335b10fd6467ddc73193df6d18eb4beed9582c3fe6fb14abc82343bb89b",
+  "decoded_output_sha256": "e1bf24e8924b809493d921c3b7b4e2516245c4d15d2381f7b9a7856b5644139f",
+  "transform": {"encoded_size": [4096, 4096], "oriented_size": [4096, 4096], "exif_orientation": 1, "colour": "8-bit review preview; embedded ICC profiles are not colour-managed"},
+  "output_parity": true,
+  "neural_executions": 0,
+  "sample_columns": ["implementation", "repeat", "elapsed_ms", "process_peak_rss_bytes"],
+  "samples": [
+    ["baseline", 0, 186.722831, 298463232],
+    ["candidate", 0, 171.646414, 231342080],
+    ["candidate", 1, 235.873003, 231305216],
+    ["baseline", 1, 334.719601, 298479616],
+    ["baseline", 2, 262.214185, 298467328],
+    ["candidate", 2, 181.97372, 231358464],
+    ["candidate", 3, 162.835122, 231366656],
+    ["baseline", 3, 191.433261, 298307584],
+    ["baseline", 4, 267.68783, 298455040],
+    ["candidate", 4, 339.020383, 231333888]
+  ],
+  "limitations": ["Synthetic Linux CPU fixture, not owner-machine inference", "Peak RSS includes setup; not Windows commit or GPU memory", "Five samples per implementation do not qualify p95/p99 or a stable speed-up"]
+}

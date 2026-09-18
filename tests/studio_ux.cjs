@@ -26,7 +26,22 @@ test('image handoffs require actual reference bindings', () => {
   assert.ok(!U.recipesFor('animate',catalog,true).some(p=>p.id==='wan22-t2v'));
 });
 test('unknown intents do not offer fabricated recipes', () => assert.deepEqual(U.recipesFor('invented',catalog),[]));
-test('Qwen one-reference is preferred for edit', () => assert.equal(U.recipesFor('edit',catalog)[0].id,'qwen-1ref'));
+test('the 20-second Klein edit is preferred for edit, the 11-minute Qwen edit second', () => assert.deepEqual(U.recipesFor('edit',catalog).slice(0,2).map(p=>p.id),['flux-edit','qwen-1ref']));
+test('bracketed fills left in the wording block readiness on every route and name the prompt', () => {
+  const base={preset:{id:'x'},online:true,schemaAvailable:true};
+  assert.deepEqual(U.readinessItems(base),[]);
+  const items=U.readinessItems({...base,unfilled:['[who]','[the pose]']});
+  assert.deepEqual(items.map(i=>[i.code,i.action]),[['wording','fills']]);assert.match(items[0].message,/replace “\[who\]” and “\[the pose\]” in the prompt/);
+  // A recipe that transforms a picture blocks on the missing picture you keep, named by the recipe's own label, before anything else.
+  const source=U.readinessItems({...base,preset:{id:'combine-klein',last_reference_label:'Picture to keep (image 1)'},sourceMissing:true,unfilled:['[who]']});
+  assert.deepEqual(source.map(i=>[i.code,i.action]),[['source','source'],['wording','fills']]);assert.equal(source[0].message,'Add your picture to Picture to keep (image 1); the authored example picture is never run.');
+  // A pose picture is not kept, so the line names the slot by the recipe's own label rather than promising to keep it.
+  assert.equal(U.readinessItems({...base,preset:{id:'style-pose-wai',last_reference_label:'Pose picture'},sourceMissing:true})[0].message,'Add your picture to Pose picture; the authored example picture is never run.');
+});
+test('combine offers only declared combine boards and restyle never offers them', () => {
+  const combine=U.recipesFor('combine',catalog);assert.ok(combine.length&&combine.every(p=>p.continuation_operation==='combine'&&p.reference_board&&p.last_reference));
+  assert.ok(!U.recipesFor('restyle',catalog).some(p=>p.continuation_operation==='combine'));
+});
 test('review totals exclude trash and do not infer art approval', () => {
   const s=U.summarize([{review:'selected'},{review:'needs_work'},{},{review:'unreviewed',trashed_at:123}],[],[{status:'completed'}]);
   assert.deepEqual([s.assets,s.keepers,s.needsWork,s.unreviewed],[3,1,1,1]);

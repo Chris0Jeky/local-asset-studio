@@ -74,6 +74,11 @@ test('restyle puts the source on the pose picture and needs one board picture',(
   assert.throws(()=>C.initial(source,board,'edit',file));assert.throws(()=>C.initial(source,p,'restyle',file));
   assert.deepEqual(C.destinations('restyle',[p,board,{...board,id:'other',name:'Other'}],source).map(x=>x.id),['style-pose-nova','other']);
   assert.match(C.guidance(board,source).join(' '),/pose picture/i);assert.doesNotMatch(C.guidance(board,source).join(' '),/Picture 1 only/);
+  const keeps={...board,id:'restyle-wai',last_reference_label:'Picture to restyle',continuation_capability:{...boardCap,keeps_picture:true}};
+  assert.match(C.guidance(keeps,source).join(' '),/Keeps this picture \(layout, pose, costume, colours/);assert.match(C.guidance(keeps,source).join(' '),/Style weight says \(0 = off\)/);assert.match(C.guidance(keeps,source).join(' '),/picture to restyle/);assert.match(C.guidance(keeps,source).join(' '),/face pass/);assert.doesNotMatch(C.guidance(keeps,source).join(' '),/Restyle a picture recipe/);
+  assert.match(C.guidance(board,source).join(' '),/paints a new image/);assert.match(C.guidance(board,source).join(' '),/choose a Restyle a picture recipe/);
+  assert.deepEqual(C.destinations('restyle',[p,board,keeps],source).map(x=>x.id),['restyle-wai','style-pose-nova']);
+  assert.deepEqual(C.destinations('restyle',[board,{...keeps,family:'Other'}],{...source,preset_id:'style-pose-nova'}).map(x=>x.id),['restyle-wai','style-pose-nova'],'keeps_picture outranks the source family');
 });
 test('family matching never resurrects a text-only graph as a refinement',()=>{
   const same={...p,id:'same',family:'Anima'},different={...p,id:'different',family:'Krea'};
@@ -88,5 +93,135 @@ test('draft roundtrip keeps the guard rather than downgrading to a normal recipe
 });
 test('dead worker cannot be masked by enhanced run presentation',()=>{
   assert.equal(U.readiness({preset:p,online:true,schemaAvailable:true,workerAlive:false}).ready,false);
+});
+test('a declared restyle keeps the picture without a board, prepares its own wording and fits the canvas',()=>{
+  const klein={id:'restyle-klein',name:'Restyle a picture (Klein)',modality:'image',reference:['14','image'],reference_label:'Picture to restyle',positive:['4','text'],width:['10','width'],height:['10','height'],dimension_multiple:16,defaults:{},continuation_operation:'restyle',continuation_prompt:'Redraw this image as a soft look. Keep everything else.{source}',continuation_capability:{...cap,operation:'restyle',prompt_role:'instruction',reference_count:1,source_input:'reference',board_min:0,keeps_picture:true}};
+  const keeps={...board,id:'restyle-wai',last_reference_label:'Picture to restyle',continuation_capability:{...boardCap,keeps_picture:true}};
+  const prepared=C.initial(source,klein,'restyle',file);
+  assert.equal(prepared.claim.intent,'restyle');assert.equal(prepared.positive,'Redraw this image as a soft look. Keep everything else. The picture shows: An adult traveller at the station.');
+  assert.equal(C.promptFor(klein,{...source,prompt_origin:'unavailable',positive:null}),'Redraw this image as a soft look. Keep everything else.');
+  assert.equal(C.promptFor(keeps,source),null,'recipes without authored continuation wording keep the copy rule');
+  assert.deepEqual(C.destinations('restyle',[board,keeps,klein],source).map(x=>x.id),['restyle-klein','restyle-wai','style-pose-nova']);
+  assert.deepEqual(C.blockers(prepared.claim,klein,{positive:prepared.positive,reference:file},['source-asset']),[]);
+  assert.match(C.blockers(prepared.claim,klein,{positive:prepared.positive,reference:'other.png'},['source-asset']).join(),/Picture to restyle no longer holds/);
+  const text=C.guidance(klein,source).join(' ');
+  assert.match(text,/no style board/i);assert.match(text,/Picture to restyle/);assert.doesNotMatch(text,/Style weight/);assert.doesNotMatch(text,/add one to three pictures/);
+  assert.deepEqual(C.canvasFor({...source,width:832,height:1216},klein),{width:1040,height:1520});
+  assert.deepEqual(C.canvasFor({...source,width:1216,height:832},klein),{width:1520,height:1040});
+  assert.deepEqual(C.canvasFor({...source,width:4000,height:4000},klein),{width:1248,height:1248});
+  assert.deepEqual(C.canvasFor({...source,width:1920,height:1080},klein),{width:1536,height:864},'the long edge hits the limit and the short edge follows');
+  assert.deepEqual(C.canvasFor({...source,width:1080,height:1920},klein),{width:864,height:1536});
+  assert.equal(C.promptFor(klein,{...source,positive:'A $& witch with $1 gold'}),'Redraw this image as a soft look. Keep everything else. The picture shows: A $& witch with $1 gold.','replacement patterns stay literal');
+  assert.equal(C.promptFor(klein,{...source,positive:'x'.repeat(7990)}),'Redraw this image as a soft look. Keep everything else.','a description that would pass the 8000-character prompt limit is left out');
+  assert.equal(C.canvasFor({...source,width:832,height:1216},keeps),null,'a board restyle keeps its own canvas rule');
+  assert.equal(C.canvasFor({...source,width:832,height:1216},p),null);
+  assert.deepEqual(U.recipesFor('restyle',[klein,board,p]).map(x=>x.id),['restyle-klein','style-pose-nova']);
+});
+test('a Klein board combines two pictures: source stays image 1, the pose picture goes on the board, placeholders block until replaced',()=>{
+  const klein={id:'restyle-klein',name:'Restyle a picture (Klein)',modality:'image',reference:['14','image'],reference_label:'Picture to restyle',positive:['4','text'],continuation_operation:'restyle',continuation_prompt:'Redraw this image as a soft look. Keep everything else.{source}',continuation_capability:{...cap,operation:'restyle',prompt_role:'instruction',reference_count:1,source_input:'reference',board_min:0,keeps_picture:true}};
+  const combineCap={...boardCap,operation:'combine',prompt_role:'instruction',reference_count:3,keeps_picture:false};
+  const combine={id:'combine-klein',name:'Put this character in another picture’s pose (Klein)',modality:'image',positive:['4','text'],width:['10','width'],height:['10','height'],dimension_multiple:16,defaults:{},reference_slots:[{role:'pose',binding:['20','image']},{role:'pose',binding:['24','image']}],reference_board:{min:1},last_reference:['14','image'],last_reference_label:'Picture to keep (image 1)',reference_board_label:'Pose picture (image 2)',continuation_operation:'combine',continuation_prompt:'Redraw [who] from image 1 in the pose of image 2: [say the pose]. Keep image 1.',continuation_placeholder:['[who]','[say the pose]'],continuation_capability:combineCap};
+  const look={...combine,id:'restyle-klein-picture',name:'Restyle in another picture’s look (Klein)',continuation_operation:'restyle',continuation_prompt:'Copy how image 2 is drawn.{source}',continuation_placeholder:undefined,continuation_capability:{...combineCap,operation:'restyle',keeps_picture:true}};
+  const prepared=C.initial(source,combine,'combine',file);
+  assert.equal(prepared.claim.intent,'combine');assert.equal(prepared.positive,'Redraw [who] from image 1 in the pose of image 2: [say the pose]. Keep image 1.','no {source}: the description names the source pose and would undo the transfer');
+  assert.throws(()=>C.initial(source,combine,'restyle',file),'a combine board is not a restyle destination');assert.throws(()=>C.initial(source,klein,'combine',file));
+  const empty=[{role:'pose',file:null},{role:'pose',file:null}],one=[{role:'pose',file:styleFile},{role:'pose',file:null}];
+  assert.deepEqual(C.blockerItems(prepared.claim,combine,{positive:prepared.positive,last_reference:file},['source-asset'],empty).map(i=>i.code),['board','wording']);
+  assert.match(C.blockers(prepared.claim,combine,{positive:prepared.positive,last_reference:file},['source-asset'],empty).join(),/picture whose pose you want to Picture 1/);
+  assert.match(C.blockers(prepared.claim,combine,{positive:prepared.positive,last_reference:file},['source-asset'],one).join(),/replace “\[who\]” and “\[say the pose\]” in the prompt/);
+  assert.match(C.blockers(prepared.claim,combine,{positive:'Redraw the witch from image 1 in the pose of image 2: [say the pose]. Keep image 1.',last_reference:file},['source-asset'],one).join(),/replace “\[say the pose\]” in the prompt/,'each unreplaced placeholder is named');
+  assert.deepEqual(C.blockers(prepared.claim,combine,{positive:'Redraw the witch from image 1 in the pose of image 2: leaning forward. Keep image 1.',last_reference:file},['source-asset'],one),[]);
+  assert.deepEqual(C.destinations('combine',[p,board,klein,look,combine],source).map(x=>x.id),['combine-klein']);
+  assert.deepEqual(C.destinations('restyle',[p,board,combine,look,klein],source).map(x=>x.id),['restyle-klein','restyle-klein-picture','style-pose-nova'],'the look board follows the wording restyle; the combine board is not offered');
+  const text=C.guidance(combine,source).join(' ');
+  assert.match(text,/pose of the picture you put on the board/);assert.match(text,/Picture to keep \(image 1\)/);assert.match(text,/Picture 1 \(image 2\)/);assert.doesNotMatch(text,/style board/);
+  // The 9B recipe keeps the pose picture as image 1 and swaps the character in as image 2: the guidance and blocker follow the labels, one slot means no third-picture warning.
+  const nine={...combine,id:'combine-klein-9b',reference_slots:[{role:'pose',binding:['14','image']}],last_reference:['20','image'],last_reference_label:'Picture to keep (image 2)',reference_board_label:'Pose picture (image 1)'};
+  const nineText=C.guidance(nine,source).join(' ');assert.match(nineText,/Picture to keep \(image 2\)/);assert.match(nineText,/whose pose you want to Picture 1 \(image 1\)/);assert.doesNotMatch(nineText,/image 3/);assert.match(nineText,/clothes and colours/);
+  assert.match(C.blockers(prepared.claim,nine,{positive:prepared.positive,last_reference:file},['source-asset'],empty).join(),/whose pose you want to Picture 1 \(image 1\)/);
+  // The depth-map recipe leads the Combine route (nothing of the pose picture leaks), then pose-first 9B, then 4B.
+  const depth={...nine,id:'combine-klein-9b-depth',reference_board_label:'Depth map of the pose picture (image 1)'};
+  assert.deepEqual(C.destinations('combine',[p,combine,board,nine,depth,look],source).map(x=>x.id),['combine-klein-9b-depth','combine-klein-9b','combine-klein']);
+  assert.match(C.guidance(depth,source).join(' '),/whose pose you want to Picture 1 \(image 1\)/);
+  assert.match(C.guidance(depth,source).join(' '),/read as a depth map: only the silhouette reaches the model/);assert.doesNotMatch(C.guidance(depth,source).join(' '),/background follows the pose picture/);
+  // The replace recipe keeps image 1 and takes only the face: its guidance never tells the user to name the character's clothes.
+  const replace={...depth,id:'combine-klein-9b-replace',reference_slots:[{role:'composition',binding:['14','image']}],reference_board:{min:1,policy:'FLUX.2 Klein reference latents with the replace-character LoRA at 1.0'},reference_board_label:'Picture to put them in (image 1)',last_reference_label:'Character to keep (image 2)'};
+  const replaceText=C.guidance(replace,source).join(' ');
+  assert.match(replaceText,/only the person changes/);assert.match(replaceText,/name image 1.s outfit and colours in it, not your character.s/);assert.doesNotMatch(replaceText,/outfit leaks/);assert.doesNotMatch(replaceText,/stays who it is/);assert.match(replaceText,/Character to keep \(image 2\)/);assert.match(replaceText,/to Picture 1 \(image 1\)/);
+  assert.match(nineText,/shoe or stocking from it can ghost in/);
+  const lookText=C.guidance(look,source).join(' ');
+  assert.match(lookText,/copy how image 2 is drawn/);assert.match(lookText,/Colours can drift/);assert.doesNotMatch(lookText,/Style weight/);assert.doesNotMatch(lookText,/add one to three pictures/);
+  assert.equal(C.promptFor(look,source),'Copy how image 2 is drawn. Image 1 shows: An adult traveller at the station.','a board recipe numbers its source');
+  assert.equal(C.promptFor(klein,{...source,prompt_role:'instruction',positive:'Redraw this image as a soft look. Keep everything else.'}),'Redraw this image as a soft look. Keep everything else.','an instruction-role source prompt is not appended as a description (it compounded the previous pass)');
+  assert.match(C.guidance(klein,{...source,preset_id:'restyle-klein'}).join(' '),/same wording and seed give the same picture again/);
+  assert.doesNotMatch(C.guidance(klein,source).join(' '),/same wording and seed/);
+  assert.deepEqual(C.canvasFor({...source,width:832,height:1216},look),{width:1040,height:1520},'a board restyle that keeps the picture fits the canvas');
+  assert.equal(C.canvasFor({...source,width:832,height:1216},combine),null,'a combine changes the pose and keeps the recipe canvas');
+  const edit={...p,id:'flux-edit',continuation_prompt:'Change one thing: [say what changes]. Keep the rest.{source}',continuation_placeholder:'[say what changes]',continuation_capability:{...cap,operation:'instruction-edit',prompt_role:'instruction'}};
+  const editPrepared=C.initial(source,edit,'edit',file);
+  assert.equal(editPrepared.positive,'Change one thing: [say what changes]. Keep the rest. The picture shows: An adult traveller at the station.');
+  assert.deepEqual(C.blockerItems(editPrepared.claim,edit,{positive:editPrepared.positive,reference:file},['source-asset']).map(i=>i.code),['wording']);
+  assert.deepEqual(C.blockerItems(editPrepared.claim,edit,{positive:'Change one thing: a red hat. Keep the rest.',reference:file},['source-asset']),[]);
+  assert.deepEqual(C.destinations('edit',[{...p,id:'qwen-1ref',name:'Qwen'},{...p,id:'krea-refine',name:'Krea'},edit],source).map(x=>x.id),['flux-edit','qwen-1ref','krea-refine'],'the 20-second edit greets the user, not the 11-minute one');
+  assert.deepEqual(U.recipesFor('combine',[combine,board,look,p]).map(x=>x.id),['combine-klein']);
+  assert.deepEqual(U.recipesFor('restyle',[combine,board,look,klein]).map(x=>x.id),['restyle-klein','restyle-klein-picture','style-pose-nova']);
+  assert.equal(U.INTENTS.find(i=>i.id==='combine').verb,'Combine');
+  assert.deepEqual(C.unfilled(combine,combine.continuation_prompt),['[who]','[say the pose]']);assert.deepEqual(C.unfilled(combine,'Redraw the witch: leaning.'),[]);assert.deepEqual(C.unfilled(edit,null),[]);assert.deepEqual(C.unfilled(p,'[anything]'),[],'a recipe without fills has none');
+  assert.deepEqual(U.recipesFor('edit',[{...p,id:'qwen-1ref',name:'Qwen',reference:['4','image']},{...edit,reference:['4','image']}]).map(x=>x.id),['flux-edit','qwen-1ref']);
+});
+test('Combine results follow the exact pictures across engines, not filenames, roles or unrelated runs',()=>{
+  const preset=id=>({id,reference_board:{min:1},reference_slots:[{role:'pose'}],last_reference:['20','image'],reference_board_label:'Pose picture (image 1)',continuation_capability:{operation:'combine',source_input:'last_reference'}});
+  const presets=[preset('depth'),preset('rgb'),{...preset('skeleton'),reference_board_label:'Pose skeleton (image 1)'}];
+  const current={preset_id:'depth',controls:{last_reference:'keep.png'},continuation:{source_sha256:'a'.repeat(64)},references:[{file:'pose.png',sha256:'b'.repeat(64)}]};
+  const other={...current,preset_id:'rgb',controls:{last_reference:'restaged.png'},references:[{file:'restaged-pose.png',sha256:'b'.repeat(64)}]};
+  assert.equal(C.sameCombinePair(current,other,presets),true,'verified bytes, not staging names, identify the pair');
+  assert.equal(C.sameCombinePair(current,{...other,continuation:{source_sha256:'c'.repeat(64)}},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[{file:'pose.png',sha256:'d'.repeat(64)}]},presets),false,'a reused filename cannot mask changed bytes');
+  assert.equal(C.sameCombinePair(current,{...other,preset_id:'skeleton'},presets),false,'a skeleton and a picture have different input contracts');
+  assert.equal(C.sameCombinePair(current,{...other,references:[...other.references,{file:'third.png'}]},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[]},presets),false);
+  assert.equal(C.sameCombinePair(current,{...other,references:[{...other.references[0],missing:true}]},presets),false);
+});
+test('engine changes carry character, pose and clothes by meaning and never reuse the old graph binding',()=>{
+  const four={id:'four',reference_board:{min:1},reference_slots:[{role:'pose'},{role:'pose'}],last_reference:['14','image'],reference_board_label:'Pose picture (image 2)',continuation_capability:{operation:'combine',source_input:'last_reference'},continuation_placeholder:['[who is in image 1, e.g. a witch]','[the pose in a few words, e.g. leaning]']};
+  const nine={...four,id:'nine',reference_slots:[{role:'pose'}],reference_board_label:'Pose picture (image 1)',continuation_placeholder:['[who is in image 2, e.g. a witch]',"[image 1's pose, e.g. leaning]","[image 2's clothes and colours, e.g. a robe]"]};
+  const answers={who:'a witch',pose:'leaning forward',clothes:'a red robe'};
+  assert.deepEqual(Object.values(C.combineFillValues(nine,answers)),['a witch','leaning forward','a red robe']);
+  assert.match(C.combineFillValues(four,answers)[four.continuation_placeholder[0]],/a witch.*a red robe/,'a two-field recipe still carries the third fact');
+  // The replace recipe's third fill is the scene picture's outfit: never carried by meaning, and the character's clothes are not folded into "who".
+  const replace={...nine,id:'combine-klein-9b-replace',reference_slots:[{role:'composition'}],reference_board_label:'Picture to put them in (image 1)',last_reference:['20','image'],continuation_placeholder:["[image 1's pose and the camera in a few words, e.g. standing]",'[who is in image 2, e.g. a witch]',"[image 1's outfit and its colours, e.g. a coat]"]};
+  assert.deepEqual(replace.continuation_placeholder.map(C.fillMeaning),['pose','who','outfit']);
+  assert.deepEqual(Object.values(C.combineFillValues(replace,answers)),['leaning forward','a witch',''],'the scene outfit is left for the user; the robe is not written as image 1 clothes');
+  const cleared=C.combineGuideAnswers(answers);
+  assert.deepEqual(cleared,{who:'a witch',pose:'',clothes:'a red robe'},'a drawn guide drops the old pose wording');
+  assert.equal(answers.pose,'leaning forward','stored answers are not mutated');
+  assert.deepEqual(Object.values(C.combineFillValues(nine,cleared)),['a witch','','a red robe'],'who and clothes still transfer onto the skeleton recipe');
+  const skeletonPrompt='Image 1 is a pose skeleton of '+nine.continuation_placeholder[1]+'. Draw '+nine.continuation_placeholder[0]+' wearing '+nine.continuation_placeholder[2]+'.';
+  const skeletonText=C.assemble(skeletonPrompt,C.combineFillValues(nine,cleared));
+  assert.match(skeletonText,/\[image 1's pose/);
+  assert.doesNotMatch(skeletonText,/leaning forward/);
+  assert.deepEqual(C.unfilled(nine,skeletonText),[nine.continuation_placeholder[1]],'readiness still names the empty pose fill');
+  const refs=[{file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset',slot:1,transform:{old:'graph'}},{file:null}];
+  assert.equal(C.combineSwitchReason(four,nine,refs),'');
+  assert.deepEqual(C.combineReferences(nine,refs),[{role:'pose',contribution:'',avoid:'',file:'pose.png',sha256:'b'.repeat(64),parent_asset:'pose-asset'}]);
+  assert.match(C.combineSwitchReason(four,nine,[...refs.slice(0,1),{file:'third.png'}]),/pictures/);
+  assert.match(C.combineSwitchReason(nine,{...nine,reference_board_label:'Pose skeleton (image 1)'},refs),/skeleton/i);
+});
+test('bracketed fills become labelled fields and the answers write the prepared wording (#422 slice A)',()=>{
+  const depth={id:'combine-klein-9b-depth',continuation_prompt:'Image 1 is a depth map: [image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.',
+    continuation_placeholder:['[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]','[image 1\'s pose in a few words, e.g. bent forward at the waist, hands on hips]','[image 2\'s clothes and colours, e.g. a black crop top, pink shorts]']};
+  const spec=C.fills(depth);
+  assert.deepEqual(spec.map(f=>f.label),['Who is in image 2','Image 1\'s pose in a few words','Image 2\'s clothes and colours'],'the label is the text before the example; catalog order without a template');
+  assert.deepEqual(spec.map(f=>f.example),['Ellen Joe, a girl with short black hair with red tips','bent forward at the waist, hands on hips','a black crop top, pink shorts']);
+  assert.deepEqual(C.fills(depth,depth.continuation_prompt).map(f=>f.label),['Image 1\'s pose in a few words','Who is in image 2','Image 2\'s clothes and colours'],'with the wording, the fields follow the order it reads them');
+  assert.equal(C.assemble(depth.continuation_prompt,{[spec[0].placeholder]:'quoting '+spec[0].placeholder+' itself'}),depth.continuation_prompt,'an answer that quotes its own bracket is left out');
+  assert.deepEqual(C.fills({continuation_placeholder:'[who]'}),[{placeholder:'[who]',label:'Who',example:''}],'a fill without an example has an empty example');
+  assert.deepEqual(C.fills({}),[]);
+  const values={[spec[0].placeholder]:'Ellen Joe, red-tipped black hair',[spec[1].placeholder]:'  bent double, legs crossed ',[spec[2].placeholder]:''};
+  const text=C.assemble(depth.continuation_prompt,values);
+  assert.equal(text,'Image 1 is a depth map: bent double, legs crossed. Draw Ellen Joe, red-tipped black hair from image 2 wearing [image 2\'s clothes and colours, e.g. a black crop top, pink shorts]. One figure only.','answers are trimmed and an empty answer keeps its bracket');
+  assert.deepEqual(C.unfilled(depth,text),[spec[2].placeholder],'the readiness list still names the one fill left');
+  assert.equal(C.assemble(depth.continuation_prompt,{...values,[spec[2].placeholder]:'a black crop top, pink shorts, bare feet'}).includes('['),false);
+  assert.equal(C.assemble(null,values),'');assert.equal(C.assemble('plain wording',null),'plain wording');
 });
 console.log(count+' continuation client policy checks passed.');

@@ -21,7 +21,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 12, 'the brief asks for 8-10 use cases; the restyle journey of 14 Sep 2026 is the eleventh')
+        self.assertTrue(8 <= len(CASES['cases']) <= 14, 'the original journeys plus Restyle, Combine, the same-pair experiment loop and the drawn pose')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -135,6 +135,13 @@ class Totals(unittest.TestCase):
             self.assertTrue(runner.GENERATION_ROUTE.search(path), path)
         for path in ('/api/production', '/api/workspace', '/api/prompt/compile', '/api/estimate'):
             self.assertFalse(runner.GENERATION_ROUTE.search(path), path)
+
+    def test_drawing_a_pose_guide_is_not_counted_as_a_submission(self):
+        # It ends in /render, so the pattern still matches it; only the named drawing route is excused.
+        self.assertTrue(runner.GENERATION_ROUTE.search('/api/pose/render'))
+        observed = ['/api/pose/render', '/api/upload', '/api/jobs', '/api/av/projects/abc/render']
+        self.assertEqual(runner.submissions(observed), ['/api/jobs', '/api/av/projects/abc/render'])
+        self.assertEqual(runner.submissions(['/api/pose/render']), [])
 
     def test_empty_case(self):
         empty = runner.case_totals([])

@@ -1,0 +1,119 @@
+{
+  "schema": "studio.bundle-equality-benchmark/v1",
+  "edge": 4096,
+  "changed": "none",
+  "python": "3.13.5",
+  "pillow": "12.3.0",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "module_sha256": {
+    "baseline": "1ae61eb6998efdefaebe11461d131717923005ca66b335cd93f498453df37c47",
+    "candidate": "4bab40e6314bed8093fd62184e066be5f802f3faa0429ef85279fca0169f09b9"
+  },
+  "samples": [
+    {
+      "elapsed_ms": 651.878601,
+      "process_peak_rss_bytes": 498962432,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "baseline",
+      "repeat": 0
+    },
+    {
+      "elapsed_ms": 174.275138,
+      "process_peak_rss_bytes": 237760512,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "candidate",
+      "repeat": 0
+    },
+    {
+      "elapsed_ms": 183.917805,
+      "process_peak_rss_bytes": 237776896,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "candidate",
+      "repeat": 1
+    },
+    {
+      "elapsed_ms": 893.570557,
+      "process_peak_rss_bytes": 498950144,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "baseline",
+      "repeat": 1
+    },
+    {
+      "elapsed_ms": 235.616596,
+      "process_peak_rss_bytes": 498941952,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "baseline",
+      "repeat": 2
+    },
+    {
+      "elapsed_ms": 164.85788,
+      "process_peak_rss_bytes": 237776896,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "candidate",
+      "repeat": 2
+    },
+    {
+      "elapsed_ms": 168.394614,
+      "process_peak_rss_bytes": 237776896,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "candidate",
+      "repeat": 3
+    },
+    {
+      "elapsed_ms": 913.420813,
+      "process_peak_rss_bytes": 498962432,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "baseline",
+      "repeat": 3
+    },
+    {
+      "elapsed_ms": 246.126735,
+      "process_peak_rss_bytes": 498954240,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "baseline",
+      "repeat": 4
+    },
+    {
+      "elapsed_ms": 159.284972,
+      "process_peak_rss_bytes": 237772800,
+      "input_sha256": "22231c40e299843cf85e58c2519f5ef4bdfd272202245ff6bb28a079e617e969",
+      "equal": true,
+      "implementation": "candidate",
+      "repeat": 4
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "median_ms": 651.878601,
+      "range_ms": [
+        235.616596,
+        913.420813
+      ],
+      "median_process_peak_rss_bytes": 498954240
+    },
+    "candidate": {
+      "median_ms": 168.394614,
+      "range_ms": [
+        159.284972,
+        183.917805
+      ],
+      "median_process_peak_rss_bytes": 237776896
+    }
+  },
+  "result_parity": true,
+  "neural_executions": 0,
+  "limitations": [
+    "Standalone predicate, not the whole bundle verifier",
+    "Synthetic CPU process RSS includes setup; not Windows commit or GPU memory",
+    "Small samples do not establish tail latency or a guaranteed speed-up"
+  ]
+}

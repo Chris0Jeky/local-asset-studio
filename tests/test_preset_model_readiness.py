@@ -209,6 +209,14 @@ class PresetModelReadinessTests(unittest.TestCase):
                       'prompt': 'draw weights.gguf', 'filename_prefix': 'art/model.pt'}}}
         self.assertEqual(self.requirements(self.studio()), {})
 
+    def test_annotator_checkpoint_is_not_a_models_library_dependency(self):
+        # Depth Anything V2's weights are fetched by the comfyui_controlnet_aux node into its own ckpts folder; the
+        # readiness projection must neither invent a models-library location for them nor report them missing.
+        self.graph = {'1': {'class_type': 'DepthAnythingV2Preprocessor', 'inputs': {'ckpt_name': 'depth_anything_v2_vitl.pth', 'resolution': 1024}},
+                      '2': {'class_type': 'CLIPVisionLoader', 'inputs': {'clip_name': 'shared.safetensors'}}}
+        rows = self.requirements(self.studio())
+        self.assertEqual(list(rows), ['clip_vision/shared.safetensors'])
+
     def test_live_non_name_enum_remains_authoritative_with_files_present(self):
         self.put('inpaint/head.pth'); self.put('inpaint/fix.patch')
         self.schema['INPAINT_LoadFooocusInpaint']['input']['required']['patch'] = [['different.patch']]
