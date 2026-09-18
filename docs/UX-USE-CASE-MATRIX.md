@@ -1,5 +1,19 @@
 # UX use-case matrix
 
+## Reference analysis review and Apply — 18 September 2026
+
+`reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an
+owner-shaped journey. In fixture mode it loads deterministic exported analysis, supplies the same
+original image bytes under renamed files, edits an approved style facet, prepares the real before/after
+diff through the production reference-review HTTP extension, applies explicitly, and verifies that the
+applied references and diff remain visible. The journey records every step and the global use-case
+harness still rejects any generation-capable request.
+
+This is interface and data-contract evidence, not evidence that a vision model described a real owner
+image well. `tests/reference_review_browser.py` remains the deeper two-viewport proof for undo,
+stale-response handling, receipt export, exact-original refusal and text-zoom layout. The focused CI
+lane runs both that proof and this measured matrix case.
+
 ## Draw the pose — 16 September 2026
 
 The Combine screen now draws its own pose skeleton (#444, #475, #480). A **Draw the pose** panel appears for any

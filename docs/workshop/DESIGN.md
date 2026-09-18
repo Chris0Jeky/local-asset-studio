@@ -1,51 +1,86 @@
 # Create workshop redesign
 
-Design baseline: main `b8b1409d0f397b7562e67366e51629826ec0ae7d`.
-Source brief: owner-supplied **LAS Create UX wishlist, 17 September 2026**, especially sections 3, 5, 7 and 8. The brief's 3397 px height and ~25 controls are its QA observations, not new measurements. This change measures its own browser fixture separately.
+Original design baseline: main `b8b1409d0f397b7562e67366e51629826ec0ae7d`.  
+Immersive extension approved by the repository owner on 18 September 2026 from the supplied frontend mockups and the adaptive-studio strategy.
 
 ## Outcome
 
 Create should open on an idea, not a catalogue. Keep the active recipe, the prompt, required sources and the real Generate action easy to find. Power controls remain available without dominating the first screen.
 
-Two layouts share one editor: **Focus** is a generous single-column writing desk; **Studio** places that same desk alongside the existing result gallery. Layout is independent from skin. **Atelier** is warm graphite and a peach accent; **Arcade** uses a midnight palette and pixel motifs; **Sakura** uses an anime-inspired rose palette and illustrated atmosphere. None changes models, prompt semantics, defaults, permissions, or generation behaviour.
+Three layouts share one editor:
+
+- **Focus** is the default single-column writing desk.
+- **Studio** places that same desk beside the existing result gallery.
+- **Immersive Studio** creates a wide three-column composition: compact run setup, the same editor, and one contextual next-action rail. At smaller widths it becomes the same deterministic stacked workbench.
+
+Layout is independent from skin and ambience. Atelier, Arcade, Sakura and Retro Anime alter presentation tokens only. None, Night Shift and Quiet Morning alter only optional local decorative art. They do not change models, prompt semantics, recipe defaults, permissions, reference roles or generation behaviour.
 
 ## State and authority
 
-Keep `studio-workbench.js` as the migration adapter and the existing application as the only executor. Move actual DOM nodes, not duplicate inputs or cloned buttons. The existing per-workspace/per-recipe draft system stays the sole prompt-recovery owner. Store only allow-listed layout/skin preferences under a new browser-local key. A storage failure must not prevent editing. No analytics transport, model download, generated example, or job submission runs on load.
+Keep `studio-workbench.js` and the existing application as the only editable-state and execution owners. Move actual DOM nodes; do not clone inputs, file controls or Generate. The existing per-workspace/per-recipe draft system remains the sole prompt-recovery owner.
 
-A native labelled dialog owns recipe discovery. Tuning and inspection stay in inline disclosures so existing validation, walkthrough and keyboard focus targets remain reachable. Escape closes the recipe dialog and focus returns to its opener; inline disclosures retain native summary behaviour. The recipe readiness action opens the moved picker before the existing handler focuses its search. Preserve source-file input identities and current values while switching presentation.
+Presentation state is an allow-listed object under `studio.workshop.presentation.v2`:
+
+```json
+{"layout":"focus","skin":"atelier","ambience":"none"}
+```
+
+A valid v1 layout/skin value is read when v2 is absent; ambience becomes `none`. Prompt text, file names, model identity, seed and generation settings are never written to this key. A storage failure must not prevent editing.
+
+A native labelled dialog owns recipe discovery. Tuning and inspection stay in inline disclosures so existing validation, walkthrough and keyboard-focus targets remain reachable. Escape closes the recipe dialog and returns focus. Preserve source-file input identity and current values through every presentation switch.
 
 ## Surfaces
 
 | Surface | Treatment |
 | --- | --- |
-| Active recipe | Compact header with Change action; full metadata remains inspectable |
-| Recipe discovery | Searchable modal using the current catalogue and its filters; no second recipe store |
-| Prompt | Spacious textarea; existing fill-in wording and continuation tools preserved |
-| Negative prompt | First workshop visit collapses the existing disclosure without clearing it; its existing session toggle owner then retains explicit choices |
-| Parameters/adapters | Above-the-fold quick summary; existing controls and adapter stack in a grouped inline disclosure |
-| Sources | Existing recipe-specific file inputs, reference board and continuation controls |
-| Readiness/run | Original checks, status, ETA and original Generate button; always-visible run dock on Create |
-| Recent runs | Existing media, provenance and Continue actions; opens after explicit Generate, right rail only in Studio on wide screens |
-| Saved setups | Secondary disclosure/surface, using the current store and apply/save handlers |
-| Models | Existing dedicated Models route; no inline full catalogue |
+| Environment | Optional shallow local header; never a status or execution surface |
+| Route strip | Navigation/reveal only; no alternate task state or executor |
+| Run setup rail | Existing active recipe, Change action, tuning summary and readiness review |
+| Recipe discovery | Searchable native modal using the current catalogue and filters |
+| Prompt | Existing textarea, unchanged identity and handlers |
+| Negative prompt | Existing disclosure and session preference owner |
+| Parameters/adapters | Existing controls grouped under progressive disclosure |
+| Sources | Existing file inputs, reference board and continuation controls |
+| Context rail | One read-only next action based on current blocker, Generate state or output count |
+| Readiness/run | Existing checks, status, ETA and original Generate button in the fixed dock |
+| Recent runs | Existing media, provenance and Continue actions |
+| Saved setups | Existing store and apply/save handlers in secondary disclosure |
 | Under the hood | Optional inspection, never promoted over generation |
 
-No new queue, model registry, reference store, or prompt editor. No backend rewrite or dependency change.
+No new queue, model registry, reference store, prompt editor, readiness owner or backend service is introduced.
+
+## Context guidance contract
+
+The contextual rail has exactly three bounded actions:
+
+1. **Review readiness** reveals the existing readiness disclosure and its first reported blocker.
+2. **Focus Generate** moves focus to the existing Generate button without invoking it.
+3. **Open recent runs** opens and focuses the existing result disclosure.
+
+The rail cannot infer an installed model, fabricate VRAM/timing, change a recipe, mutate a source, submit a job or retry an uncertain operation. Its “Why this?” text states which current UI observation it used.
+
+## Visual and media policy
+
+Retro Anime uses deep navy surfaces, restrained rose/lavender accents and cyan highlights with system fonts. Night Shift and Quiet Morning are original same-camera geometric SVG scenes. Source SVGs remain reviewable, while production CSS embeds inert data copies because the application static handler does not serve SVG files directly.
+
+The scenes contain no text, controls, status or remote references. They disappear in forced-colour mode. No video, audio, parallax, autoplay, remote provider or network probe is included. The UI reserves no environment gap when ambience is None.
 
 ## Interaction decisions
 
-Opening a picker does not mutate the editor. Switching the presentation does not reconstruct the editor. Choosing a different recipe must pass a work-loss confirmation when custom wording or attachments would be replaced; cancellation leaves the current recipe and draft untouched. It does not silently carry incompatible image bindings to a new recipe. Existing prepared-setup and continuation review flows retain their own guards.
+Opening a picker does not mutate the editor. Switching presentation does not reconstruct the editor. Choosing a different recipe still passes the existing work-loss confirmation when custom wording or attachments would be replaced. Cancellation leaves the current recipe and draft untouched.
 
-The native modal scrolls independently; the page must not jump to the top when it closes. Avoid viewport-height clipping of sources and blockers. At small widths the recipe surface fills the available screen, and the run dock wraps without horizontal page overflow. Short viewports may require scrolling the content, but the action remains reachable.
-
-Presentation selectors are allow-listed. Decorative assets are local, optional, non-interactive, and kept out of text fields and status areas. Honour reduced motion and forced colours. Use ordinary system fonts; do not fetch fonts or artwork from a third party.
+The recipe modal scrolls independently and restores focus/scroll. At small widths, native Layout, Skin and Ambience selects remain visible; the richer skin cards are an optional wide Immersive mirror. The run dock stays reachable without horizontal page overflow.
 
 ## Verification and delivery
 
-PR 1: Focus workbench, shared presentation seam, recipe/tuning surfaces, state-preserving navigation, accessibility and browser contracts.
-PR 2: Studio variation and optional skins on the same seam, offline interactive prototype, asset source notes, comparison evidence.
+Required automated evidence:
 
-At 1440×900, the active recipe, prompt and Generate should appear in the first viewport; default document height target is <1600 px. At 390×844, no horizontal page overflow and no hidden Generate. Measure with fixture state labelled as such, not fabricated local hardware evidence. Exercise the real application through its existing fake-server test fixture where possible. Retain existing suite coverage for drafts, handoffs, references, readiness and saved setups.
+- Node contracts for allow-listing, v1 fallback, v2 persistence scope and option matrices.
+- Component browser checks for cancelled/accepted recipe changes, draft/file identity, all 36 layout × skin × ambience combinations, contextual guidance authority and zero implicit submissions.
+- Desktop/mobile geometry for every layout × skin pair, with an Immersive ambience representative.
+- Actual-application HTTP/storage checks for real source lineage and exactly one explicit original submission request.
+- Offline prototype checks with zero network requests/page exceptions.
 
-Open acceptance: Chris's preference between layouts/skins; a real local ComfyUI click-through with the installed models and owner references. No screenshot or passing frontend test constitutes art acceptance or model licence clearance. Existing HUMAN_TODO choices remain untouched.
+Production defaults remain Focus + Atelier + None. The review prototype starts in the approved visual pilot only.
+
+Open acceptance: a real local ComfyUI click-through with installed models and owner references, plus owner judgement of the environment art in normal use. No screenshot or passing frontend test constitutes model/GPU qualification, art acceptance or licence clearance.

@@ -46,7 +46,11 @@ def dispatch(path, value, studio=None):
                              value.get('output_node'))
     if path == '/api/prompt/bind':
         fields(value, ('compiled','binding')); need(studio is not None,'Studio binding context unavailable')
-        binding=value['binding']; preset=studio.preset(binding['preset_id']); graph,path=studio.graph_for(preset)
+        binding=value['binding']; preset=studio.preset(binding['preset_id'])
+        need(not any(preset.get(k) for k in ('reference','last_reference','reference_slots','requires_rgba_mask'))
+             and not any((preset.get('bindings_extra') or {}).get(k) for k in ('reference','last_reference')),
+             'Reference-bearing presets require an explicit source handoff; text-only binding is unavailable')
+        graph,path=studio.graph_for(preset)
         for key,target in binding['bindings'].items():
             need(preset.get(key)==target and not preset.get('bindings_extra',{}).get(key),'Binding differs from registered preset or has unhandled companions')
         raw=path.read_bytes(); need(decode(raw)==graph,'Template changed during binding')

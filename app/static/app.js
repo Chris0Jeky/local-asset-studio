@@ -99,9 +99,8 @@ function scheduleTimeEstimate() {
 }
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : (selected?.reference_hint || "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.");
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
-// Lineage is attributed per attachment point. A slot-less input, plus the named continuation
-// lastReference on a board recipe, records its source in parentByInput. A role slot records it
-// on the reference record itself (parent_asset, supplied by
+// Lineage is attributed per attachment point. A slot-less input and a board's distinct lastReference
+// source record their claim in parentByInput; a role slot records it on its reference record (parent_asset, supplied by
 // /api/assets/reference). A parent survives while any attachment point still claims it, and a parent
 // with no attribution anywhere - a job-exported recipe, a production branch - is never dropped by an
 // edit: only the point that changed may release what that point claimed.

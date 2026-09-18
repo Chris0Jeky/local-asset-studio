@@ -24,8 +24,10 @@ def main(argv=None):
     except EvidenceError as error:
         # Plan-file I/O and report encoding are not observation completeness.
         state = ('report_unavailable' if error.code in PLAN_IO else 'invalid_plan')
-        print(json.dumps({'schema': SCHEMA, 'reason': error.code, 'state': state,
-                          'qualified_benchmark': False, 'execution_authority': False},
+        print(json.dumps({'schema': SCHEMA, 'state': state,
+                          'integrity': 'incomplete' if error.incomplete else 'invalid',
+                          'reason': error.code, 'qualified_benchmark': False,
+                          'execution_authority': False},
                          ensure_ascii=True, allow_nan=False, separators=(',', ':')))
         return 2
     try:

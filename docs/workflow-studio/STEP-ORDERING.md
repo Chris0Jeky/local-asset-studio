@@ -1,19 +1,21 @@
 # Arrange workflow Steps with shared commands
 
 15 September 2026. Implements the shared-command portion of #382; advances #120
-and #123. The broader workstreams and the UI portion of #382 remain open.
+and #123. The UI portion of #382 shipped in PR #587; the broader #120/#123
+workstreams remain open.
 
 ## Delivery boundary
 
-This PR adds `move_step` to the existing reducer, with nine backend/compiler tests.
-A matching Move up/down UI and six real-DOM/shared-reducer tests were implemented
-and passed locally, but the GitHub UI write was blocked twice by an indeterminate
-OpenAI safety-status result. Those UI changes and tests are **not in this PR**.
-Do not advertise Move buttons as shipped.
+`move_step` landed in the existing reducer first, with nine backend/compiler tests.
+The matching Move up/down UI followed in PR #587 and **is now shipped**: the step
+cards in the editor carry Move up / Move down buttons that dispatch this same
+reducer op. Earlier revisions of this file said the UI was not included; that is
+no longer true.
 
-The local UI prototype uses the same reducer, boundary-disabled buttons, keyboard
-focus restoration and the existing stale-response guard. Its source and test driver
-are retained in the session handoff for independent review and a later UI PR.
+The UI uses this reducer rather than reordering in the view layer, disables the
+boundary buttons (first step up, last step down), restores keyboard focus after a
+move, and relies on the existing stale-response guard so a double click cannot
+apply twice.
 
 ## Shared command for agents
 
@@ -87,6 +89,6 @@ preservation test also retains a wide integer without claiming browser precision
 support. Existing full-checkout CI remains required. No GPU generation, runtime
 readiness, native ComfyUI round-trip or creative acceptance was tested here.
 
-The existing Check studio suite discovers the new Python tests. The local browser
-fixture is not added to CI without its matching UI implementation. In the retained
-UI handoff, run `python tests/workflow_step_order_browser.py --browser-path /path/to/chromium -v`.
+The existing Check studio suite discovers the new Python tests. The UI move
+buttons are exercised by `python tests/workflow_steps_browser.py --out <dir>`,
+which the Guided journey browser lane runs on changes under `app/static/`.

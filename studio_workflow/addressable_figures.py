@@ -21,6 +21,7 @@ MAX_COMMAND_BYTES = 128 * 1024
 MAX_PARENT_BYTES = 64 * 1024 * 1024
 MAX_PARENT_PIXELS = 40_000_000
 MAX_AGGREGATE_CROP_PIXELS = 80_000_000
+SUPPORTED_IMAGE_FORMATS = ("PNG", "JPEG", "WEBP")
 _ALLOWED_FIELDS = {
     "workspace_id",
     "request_id",
@@ -134,7 +135,7 @@ def _read_parent(workspace, asset_id, expected_sha256):
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
         raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
-        with Image.open(io.BytesIO(raw)) as opened:
+        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
             width, height = opened.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
@@ -153,10 +154,16 @@ def _read_parent(workspace, asset_id, expected_sha256):
 
 
 def _pixel_box(workspace, rectangle, width, height):
-    left = rectangle["x"] * width // BASIS_POINTS
-    top = rectangle["y"] * height // BASIS_POINTS
-    right = ((rectangle["x"] + rectangle["width"]) * width + BASIS_POINTS - 1) // BASIS_POINTS
-    bottom = ((rectangle["y"] + rectangle["height"]) * height + BASIS_POINTS - 1) // BASIS_POINTS
+    # Project every normalized edge through the same nearest-pixel rule. Using
+    # floor for leading edges and ceil for trailing edges makes adjacent source
+    # rectangles overlap whenever their shared edge falls between two pixels.
+    def edge(value, dimension):
+        return (value * dimension + BASIS_POINTS // 2) // BASIS_POINTS
+
+    left = edge(rectangle["x"], width)
+    top = edge(rectangle["y"], height)
+    right = edge(rectangle["x"] + rectangle["width"], width)
+    bottom = edge(rectangle["y"] + rectangle["height"], height)
     right, bottom = min(width, right), min(height, bottom)
     if left >= right or top >= bottom:
         raise _error(workspace, "A marked figure is smaller than one source pixel")

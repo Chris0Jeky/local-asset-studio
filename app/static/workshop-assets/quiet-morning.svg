@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8dff6"/><stop offset=".52" stop-color="#d9cdeb"/><stop offset="1" stop-color="#f1c8d6"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a9badc" stop-opacity=".78"/><stop offset="1" stop-color="#63718f" stop-opacity=".72"/></linearGradient>
+    <linearGradient id="desk" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#30293d"/><stop offset="1" stop-color="#5a3548"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="16"/></filter>
+  </defs>
+  <rect width="1600" height="420" fill="url(#sky)"/>
+  <circle cx="1362" cy="68" r="105" fill="#fff3da" opacity=".8" filter="url(#soft)"/>
+  <path d="M610 288V145h75V90h52v198h48V120h78v168h38V58h62v230h52V133h92v155h37V85h74v203h50V155h83v133h49v132H610z" fill="#596581" opacity=".52"/>
+  <g fill="url(#glass)" stroke="#7784a3" stroke-opacity=".52">
+    <path d="M650 270V164h96v106z"/><path d="M806 270V145h104v125z"/><path d="M989 270V103h92v167z"/><path d="M1149 270V154h118v116z"/><path d="M1322 270V127h94v143z"/>
+  </g>
+  <g fill="#f8e4a7" opacity=".7"><path d="M674 184h15v8h-15zm34 31h15v8h-15zm119-42h18v8h-18zm38 50h19v8h-19zm145-76h18v9h-18zm34 49h18v9h-18zm132-18h18v8h-18zm40 46h18v8h-18zm130-60h17v8h-17zm37 43h17v8h-17z"/></g>
+  <path d="M720 318h880v102H670z" fill="url(#desk)"/>
+  <path d="M1130 230h210l28 135h-266z" fill="#26283a" stroke="#8a7087" stroke-width="3"/>
+  <path d="M1151 248h166l18 96h-203z" fill="#c7d5e9"/>
+  <path d="M1168 266h130l8 8h-146zm0 24h112l8 8h-128zm0 24h86l8 8h-102z" fill="#627894" opacity=".62"/>
+  <path d="M1374 333h128v18h-128z" fill="#312b3d"/><path d="M1421 236h14v97h-14z" fill="#6a4555"/><path d="M1391 223h74l-18 26h-38z" fill="#ffd69a" opacity=".9"/>
+  <g fill="#f3aac6" opacity=".56"><circle cx="1510" cy="81" r="5"/><circle cx="1470" cy="121" r="3"/><circle cx="1541" cy="154" r="4"/><path d="M1493 98l5 8-9 2zM1522 130l6 8-9 3z"/></g>
+  <rect x="620" y="279" width="930" height="2" fill="#fff" opacity=".45"/>
+</svg>
