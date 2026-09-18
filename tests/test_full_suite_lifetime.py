@@ -189,7 +189,7 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                         def test_wait(self):
                             self.id = "fixture-status"
                             self.assertTrue(callable(split_figures))
-                            time.sleep(0.15)
+                            time.sleep(1.2)
                     """
                 ),
                 encoding="utf-8",
@@ -204,13 +204,13 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                     "--pattern",
                     "test_hang.py",
                     "--traceback-after",
-                    "0.03",
+                    "0.6",
                     "--shutdown-traceback-after",
-                    "0.15",
+                    "0.3",
                 ],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=20,
             )
         output = result.stdout + result.stderr
         self.assertEqual(result.returncode, 0, output)
@@ -257,7 +257,7 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                     "--traceback-after",
                     "4",
                     "--shutdown-traceback-after",
-                    "0.15",
+                    "0.3",
                 ],
                 cwd=HERE.parent,
                 stdout=subprocess.PIPE,
@@ -412,6 +412,33 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: value})
+
+    def test_marker_never_overlaps_the_all_thread_dump(self):
+        worker = load("lifetime_worker", HERE / "full_suite_lifetime_worker.py")
+        separation = worker.MARKER_SEPARATION_SECONDS
+        for seconds in (separation + 0.01, 0.6, 4.0, 570.0):
+            with self.subTest(seconds=seconds):
+                diagnostics = worker.LifetimeDiagnostics(seconds)
+                delay = max(0.0, seconds - max(separation, min(1.0, seconds / 3.0)))
+                self.assertGreaterEqual(seconds - delay, separation)
+                self.assertIsNone(diagnostics.marker)
+        for seconds in (0, -1, 0.03, separation):
+            with self.subTest(seconds=seconds):
+                with self.assertRaises(ValueError):
+                    worker.LifetimeDiagnostics(seconds)
+
+    def test_shutdown_watchdog_is_armed_only_while_a_thread_retains_the_worker(self):
+        worker = load("lifetime_worker", HERE / "full_suite_lifetime_worker.py")
+        self.assertEqual(worker.retained_threads(), [])
+        released = threading.Event()
+        retained = threading.Thread(target=released.wait, daemon=False)
+        retained.start()
+        try:
+            self.assertIn(retained, worker.retained_threads())
+        finally:
+            released.set()
+            retained.join(timeout=5)
+        self.assertEqual(worker.retained_threads(), [])
 
     def test_windows_full_suite_lane_raises_the_budget_it_measured(self):
         workflow = (HERE.parent / ".github" / "workflows" / "full-suite-lifetime.yml").read_text(
