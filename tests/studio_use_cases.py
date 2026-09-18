@@ -156,6 +156,7 @@ def build_handler():
     from studio_workflow.guides import guides
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
+    from test_server import server
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -176,21 +177,12 @@ def build_handler():
 
     class PromptFixtureBase(fixture.Handler):
         studio = None
+        _safe_host = server.Handler._safe_host
+        _safe_mutation = server.Handler._safe_mutation
+        _content_length = server.Handler._content_length
 
         def _json(self, status, value):
             return self.json(value, status)
-
-        def _safe_host(self):
-            return self.headers.get('Host') == '127.0.0.1:%s' % self.server.server_port
-
-        def _safe_mutation(self):
-            return self._safe_host() and self.headers.get('Origin') == 'http://127.0.0.1:%s' % self.server.server_port
-
-        def _content_length(self, limit):
-            length = int(self.headers.get('Content-Length', '-1'))
-            if not 0 <= length <= limit:
-                raise ValueError('Request too large')
-            return length
 
     class Handler(extend_handler(PromptFixtureBase)):
         def do_GET(self):

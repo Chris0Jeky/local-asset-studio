@@ -572,42 +572,15 @@
       "success_condition": "Switching recipes takes one click, keeps the source roles and three facts, retains edited wording per recipe, shows only matching results, saves independent review decisions and stages same or new seeds without submitting a generation.",
       "wrong_turn": false,
       "steps": [
-        {
-          "intent": "continue a saved character through Combine",
-          "expect": "the source-bound workbench opens"
-        },
-        {
-          "intent": "choose a pose picture and describe the result",
-          "expect": "both source images and the named answers are retained"
-        },
-        {
-          "intent": "read the runs for these pictures",
-          "expect": "unrelated results and collapsed historical problems do not obscure the pair"
-        },
-        {
-          "intent": "edit the prepared wording",
-          "expect": "the edit belongs to this recipe"
-        },
-        {
-          "intent": "switch to another engine on the same screen",
-          "expect": "one click keeps the inputs and answers and updates their image order"
-        },
-        {
-          "intent": "return to the previous engine",
-          "expect": "its edited wording is restored"
-        },
-        {
-          "intent": "mark one seed as a keeper and another as needing work",
-          "expect": "each decision is saved through the existing library"
-        },
-        {
-          "intent": "prepare the same seed and then a new seed",
-          "expect": "the recorded recipe and source pair are loaded without generating"
-        },
-        {
-          "intent": "read the run control",
-          "expect": "the next generation still needs an explicit click"
-        }
+        {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
+        {"intent": "choose a pose picture and describe the result", "expect": "both source images and the named answers are retained"},
+        {"intent": "read the runs for these pictures", "expect": "unrelated results and collapsed historical problems do not obscure the pair"},
+        {"intent": "edit the prepared wording", "expect": "the edit belongs to this recipe"},
+        {"intent": "switch to another engine on the same screen", "expect": "one click keeps the inputs and answers and updates their image order"},
+        {"intent": "return to the previous engine", "expect": "its edited wording is restored"},
+        {"intent": "mark one seed as a keeper and another as needing work", "expect": "each decision is saved through the existing library"},
+        {"intent": "prepare the same seed and then a new seed", "expect": "the recorded recipe and source pair are loaded without generating"},
+        {"intent": "read the run control", "expect": "the next generation still needs an explicit click"}
       ]
     },
     {
@@ -617,54 +590,18 @@
       "success_condition": "The pose panel appears for a Combine, a starting figure loads, one joint moves with the keyboard and can be left out of the guide, and Use this pose attaches the drawing to Picture 1 with the character and the recipe kept and no generation requested.",
       "wrong_turn": false,
       "steps": [
-        {
-          "intent": "continue a saved character through Combine",
-          "expect": "the source-bound workbench opens"
-        },
-        {
-          "intent": "choose the route that combines two pictures",
-          "expect": "the combine recipes are offered"
-        },
-        {
-          "intent": "choose the recipe that takes a drawn pose",
-          "expect": "the prepared wording names the drawn skeleton as image 1"
-        },
-        {
-          "intent": "prepare it in Create",
-          "expect": "the character is attached and nothing runs"
-        },
-        {
-          "intent": "find where the pose is drawn",
-          "expect": "a drawing panel sits beside the two pictures"
-        },
-        {
-          "intent": "start from a figure close to the pose wanted",
-          "expect": "a full skeleton appears, still editable"
-        },
-        {
-          "intent": "pick one joint to correct",
-          "expect": "the picked joint is named and highlighted"
-        },
-        {
-          "intent": "move it with the arrow keys",
-          "expect": "the drawing follows the keyboard"
-        },
-        {
-          "intent": "leave one joint out of the guide",
-          "expect": "it is omitted, with the limbs that touch it"
-        },
-        {
-          "intent": "use this drawing as the pose",
-          "expect": "it is rendered and attached to Picture 1"
-        },
-        {
-          "intent": "see what reached Picture 1",
-          "expect": "the drawing is attached and only the drawing route was called"
-        },
-        {
-          "intent": "check that nothing ran",
-          "expect": "generation is still a separate, explicit press"
-        }
+        {"intent": "continue a saved character through Combine", "expect": "the source-bound workbench opens"},
+        {"intent": "choose the route that combines two pictures", "expect": "the combine recipes are offered"},
+        {"intent": "choose the recipe that takes a drawn pose", "expect": "the prepared wording names the drawn skeleton as image 1"},
+        {"intent": "prepare it in Create", "expect": "the character is attached and nothing runs"},
+        {"intent": "find where the pose is drawn", "expect": "a drawing panel sits beside the two pictures"},
+        {"intent": "start from a figure close to the pose wanted", "expect": "a full skeleton appears, still editable"},
+        {"intent": "pick one joint to correct", "expect": "the picked joint is named and highlighted"},
+        {"intent": "move it with the arrow keys", "expect": "the drawing follows the keyboard"},
+        {"intent": "leave one joint out of the guide", "expect": "it is omitted, with the limbs that touch it"},
+        {"intent": "use this drawing as the pose", "expect": "it is rendered and attached to Picture 1"},
+        {"intent": "see what reached Picture 1", "expect": "the drawing is attached and only the drawing route was called"},
+        {"intent": "check that nothing ran", "expect": "generation is still a separate, explicit press"}
       ]
     }
   ]
