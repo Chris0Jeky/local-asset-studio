@@ -38,10 +38,13 @@ A structurally invalid manifest creates no output file. A valid manifest with on
 still produces the complete requested report (including that missing row) and exits 2. JSON is compact
 so the same 1 MiB report limit applies to file and stdout output. There is no HTML rendering path.
 
-CLI diagnostics for a refused plan (no report file) are `invalid_plan` when the file opened and
-failed the manifest contract, and `report_unavailable` when the plan path could not be read, changed
-during the guarded read, or the report could not be represented. A missing or mistyped plan path is
-not `incomplete` evidence. Observation-level incomplete rows live inside a written report.
+CLI diagnostics for a refused plan (no report file) use two independent fields. `state` is
+`invalid_plan` when the file opened and failed the manifest contract, and `report_unavailable` when
+the plan path could not be read, changed during the guarded read, or the report could not be
+represented. `integrity` preserves the underlying evidence-reader classification as `invalid` or
+`incomplete`; it does not turn the plan/report disposition into an observation row. A missing or
+mistyped plan path therefore remains `state: report_unavailable`, while its unavailable source is
+reported as `integrity: incomplete`. Observation-level incomplete rows live inside a written report.
 
 Rows whose received prompt identity is reused keep their pair slot with `reused_prompt_evidence`;
 the observation payload is omitted. The report limitation names that drop so it is not mistaken for
