@@ -64,22 +64,35 @@
     const a=canvasOf(from),b=canvasOf(to);
     return copy(points).map(p=>p?place(p.x/a.width*b.width,p.y/a.height*b.height,b):null);
   }
-  // Local pose history owns geometry plus remembered homes. Recording a new edit after undo deliberately
-  // clears the future branch; moving between history entries never aliases the live drawing.
+  // Local pose history owns geometry plus remembered homes. Workbench edits begin before geometry is calculated,
+  // then commit only after points or homes actually differ. This keeps Redo across clamped/no-op interactions while
+  // still retaining the original pre-drag snapshot when the first real pointer movement arrives later.
   function timeline(limit=60){
     if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error('Pose history needs a whole-number limit from 1 to 1000.');
-    let past=[],future=[];
+    let past=[],future=[],pending=null;
     const snapshot=(points,home)=>({points:copy(points),home:copy(home)});
     const retain=(stack,value)=>{stack.push(value);if(stack.length>limit)stack.shift();};
+    const samePoints=(left,right)=>JOINTS.every((_,index)=>{
+      const a=left[index],b=right[index];
+      return a===null&&b===null||!!a&&!!b&&a.x===b.x&&a.y===b.y;
+    });
+    const same=(left,right)=>samePoints(left.points,right.points)&&samePoints(left.home,right.home);
     return{
-      record(points,home){retain(past,snapshot(points,home));future=[];},
-      undo(points,home){if(!past.length)return null;retain(future,snapshot(points,home));return past.pop();},
-      redo(points,home){if(!future.length)return null;retain(past,snapshot(points,home));return future.pop();},
+      record(points,home){pending=null;retain(past,snapshot(points,home));future=[];},
+      begin(points,home){pending=snapshot(points,home);},
+      commit(points,home){
+        if(!pending)return false;
+        const current=snapshot(points,home);
+        if(same(pending,current))return false;
+        retain(past,pending);future=[];pending=null;return true;
+      },
+      undo(points,home){pending=null;if(!past.length)return null;retain(future,snapshot(points,home));return past.pop();},
+      redo(points,home){pending=null;if(!future.length)return null;retain(past,snapshot(points,home));return future.pop();},
       resize(from,to){
         const scale=step=>({points:resize(step.points,from,to),home:resize(step.home,from,to)});
-        past=past.map(scale);future=future.map(scale);
+        past=past.map(scale);future=future.map(scale);if(pending)pending=scale(pending);
       },
-      reset(){past=[];future=[];},
+      reset(){past=[];future=[];pending=null;},
       get canUndo(){return past.length>0;},
       get canRedo(){return future.length>0;},
       get pastCount(){return past.length;},
