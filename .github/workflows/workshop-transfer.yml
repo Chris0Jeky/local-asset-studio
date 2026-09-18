@@ -1,0 +1,62 @@
+name: Publish verified workshop variations
+on:
+  push:
+    branches: ['codex/create-workshop-studio']
+    paths: ['.github/workflows/workshop-transfer.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/codex/create-workshop-studio'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize the two hash-verified snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = b4cb8cf29485041027e56c1122310f4b806e0b8f
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import base64, hashlib, pathlib, subprocess, zlib
+          def git(*args):
+              return subprocess.check_output(['git', *args])
+          workflow = pathlib.Path('.github/workflows/workshop-ui.yml')
+          original_workflow = workflow.read_bytes()
+          for name, count, size, digest in (
+              ('focus', 3, 95005, 'd6a42604572865215b8532f05b4aad944a6dc971e77a1854d93d10a4ab70baeb'),
+              ('studio', 2, 53570, '882d6ba48578135fad32125ef8ed1ea77bc6de6089e47fa4756738911110752c'),
+          ):
+              parts = [pathlib.Path('.workshop-transfer/%s-%d.txt' % (name, i)) for i in range(1, count + 1)]
+              patch = zlib.decompress(base64.b64decode(''.join(p.read_text() for p in parts), validate=True))
+              assert len(patch) == size
+              assert hashlib.sha256(patch).hexdigest() == digest
+              target = pathlib.Path('/tmp/workshop-%s.patch' % name); target.write_bytes(patch)
+              if name == 'studio':
+                  workflow.write_bytes(pathlib.Path('/tmp/workshop-focus-ui.yml').read_bytes())
+                  git('add', str(workflow))
+              git('apply', '--check', str(target))
+              git('apply', '--index', str(target))
+              pathlib.Path('/tmp/workshop-%s-ui.yml' % name).write_bytes(workflow.read_bytes())
+              # The connector publishes workflow edits. This job pushes only ordinary files.
+              workflow.write_bytes(original_workflow); git('add', str(workflow))
+              if name == 'studio':
+                  for p in pathlib.Path('.workshop-transfer').glob('*.txt'): p.unlink()
+                  pathlib.Path('.workshop-transfer').rmdir()
+                  git('add', '-u', '.workshop-transfer')
+              git('diff', '--cached', '--check')
+              git('commit', '-m', 'feat(create): verified %s workshop snapshot' % name)
+              print(name.upper() + '_COMMIT=' + git('rev-parse', 'HEAD').decode().strip(), flush=True)
+              print(name.upper() + '_TREE=' + git('rev-parse', 'HEAD^{tree}').decode().strip(), flush=True)
+          PY
+          node --check app/static/workshop.js
+          node --test tests/workshop_contracts.cjs
+          python scripts/validate-repo.py
+          git push origin HEAD:codex/create-workshop-studio
