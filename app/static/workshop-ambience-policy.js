@@ -16,6 +16,10 @@
   const INTERNET_STATES = Object.freeze(['online', 'offline', 'unknown']);
   const BACKEND_STATES = Object.freeze(['ready', 'down', 'unknown']);
   const ACTIVE_EXECUTION = new Set(['submitting', 'running', 'uncertain', 'unknown']);
+  const UPDATE_KEYS = Object.freeze([
+    'requested', 'assetState', 'executionState', 'internetState',
+    'backendState', 'userPaused'
+  ]);
 
   const oneOf = (value, allowed, fallback) => allowed.includes(value) ? value : fallback;
   const bool = value => value === true;
@@ -43,15 +47,25 @@
   }
 
   function posterStatus(observation) {
-    if (observation.reducedMotion)
-      return ['Reduced-motion preference keeps ambience still.', 'Local static poster · motion disabled.'];
-    if (observation.saveData)
-      return ['Data-saving preference suppresses optional media work.', 'Local static poster · no optional transfer.'];
-    if (observation.userPaused)
-      return ['The user paused optional ambience motion.', 'Local static poster · optional motion paused.'];
-    if (ACTIVE_EXECUTION.has(observation.executionState))
-      return ['Runtime work is active or uncertain, so ambience remains still.', 'Local static poster · runtime-safe still mode.'];
-    return ['An approved local poster is available.', 'Local static poster · no network.'];
+    const reasons = [], details = [];
+    if (observation.reducedMotion) {
+      reasons.push('Reduced-motion preference keeps ambience still.');
+      details.push('motion disabled');
+    }
+    if (observation.saveData) {
+      reasons.push('Data-saving preference suppresses optional media work.');
+      details.push('no optional transfer');
+    }
+    if (observation.userPaused) {
+      reasons.push('The user paused optional ambience motion.');
+      details.push('optional motion paused');
+    }
+    if (ACTIVE_EXECUTION.has(observation.executionState)) {
+      reasons.push('Runtime work is active or uncertain, so ambience remains still.');
+      details.push('runtime-safe still mode');
+    }
+    if (!reasons.length) return ['An approved local poster is available.', 'Local static poster · no network.'];
+    return [reasons.join(' '), 'Local static poster · ' + details.join(' · ') + '.'];
   }
 
   function project(input = {}) {
@@ -94,8 +108,78 @@
     });
   }
 
+  function listen(target, name, callback) {
+    if (!target || typeof target.addEventListener !== 'function') return () => {};
+    target.addEventListener(name, callback);
+    return () => target.removeEventListener?.(name, callback);
+  }
+
+  function mediaQuery(w, query) {
+    try { return typeof w?.matchMedia === 'function' ? w.matchMedia(query) : null; }
+    catch (_) { return null; }
+  }
+
+  function createController(w, options = {}) {
+    const d = w?.document || null;
+    const body = options.body || d?.body || null;
+    const create = options.create || null;
+    const hero = options.hero || null;
+    const status = options.status || null;
+    const forced = mediaQuery(w, '(forced-colors: active)');
+    const reduced = mediaQuery(w, '(prefers-reduced-motion: reduce)');
+    const connection = w?.navigator?.connection || null;
+    const initial = options.initial && typeof options.initial === 'object' && !Array.isArray(options.initial)
+      ? options.initial : {};
+    const state = {};
+    for (const key of UPDATE_KEYS) if (Object.hasOwn(initial, key)) state[key] = initial[key];
+    let decision = project(state), destroyed = false;
+
+    function observation() {
+      return {
+        ...state,
+        visibility:d?.visibilityState === 'hidden' ? 'hidden' : 'visible',
+        forcedColors:forced?.matches === true,
+        reducedMotion:reduced?.matches === true,
+        saveData:connection?.saveData === true
+      };
+    }
+
+    function render() {
+      if (destroyed) return decision;
+      decision = project(observation());
+      if (body?.dataset) body.dataset.workshopAmbienceRender = decision.renderMode;
+      if (create?.dataset) create.dataset.workshopAmbienceRender = decision.renderMode;
+      if (hero?.dataset) hero.dataset.ambienceRender = decision.renderMode;
+      if (status && status.textContent !== decision.status) status.textContent = decision.status;
+      return decision;
+    }
+
+    const refresh = () => { render(); };
+    const cleanup = [
+      listen(d, 'visibilitychange', refresh),
+      listen(forced, 'change', refresh),
+      listen(reduced, 'change', refresh),
+      listen(connection, 'change', refresh)
+    ];
+
+    render();
+    return Object.freeze({
+      update(patch = {}) {
+        if (destroyed || !patch || typeof patch !== 'object' || Array.isArray(patch)) return decision;
+        for (const key of UPDATE_KEYS) if (Object.hasOwn(patch, key)) state[key] = patch[key];
+        return render();
+      },
+      snapshot() { return decision; },
+      destroy() {
+        if (destroyed) return;
+        destroyed = true;
+        for (const remove of cleanup.splice(0)) remove();
+      }
+    });
+  }
+
   return Object.freeze({
     REQUESTS, ASSET_STATES, RENDER_MODES, EXECUTION_STATES,
-    normalize, project
+    normalize, project, createController
   });
 });
