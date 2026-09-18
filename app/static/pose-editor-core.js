@@ -64,6 +64,28 @@
     const a=canvasOf(from),b=canvasOf(to);
     return copy(points).map(p=>p?place(p.x/a.width*b.width,p.y/a.height*b.height,b):null);
   }
+  // Local pose history owns geometry plus remembered homes. Recording a new edit after undo deliberately
+  // clears the future branch; moving between history entries never aliases the live drawing.
+  function timeline(limit=60){
+    if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error('Pose history needs a whole-number limit from 1 to 1000.');
+    let past=[],future=[];
+    const snapshot=(points,home)=>({points:copy(points),home:copy(home)});
+    const retain=(stack,value)=>{stack.push(value);if(stack.length>limit)stack.shift();};
+    return{
+      record(points,home){retain(past,snapshot(points,home));future=[];},
+      undo(points,home){if(!past.length)return null;retain(future,snapshot(points,home));return past.pop();},
+      redo(points,home){if(!future.length)return null;retain(past,snapshot(points,home));return future.pop();},
+      resize(from,to){
+        const scale=step=>({points:resize(step.points,from,to),home:resize(step.home,from,to)});
+        past=past.map(scale);future=future.map(scale);
+      },
+      reset(){past=[];future=[];},
+      get canUndo(){return past.length>0;},
+      get canRedo(){return future.length>0;},
+      get pastCount(){return past.length;},
+      get futureCount(){return future.length;}
+    };
+  }
   function known(points){return copy(points).filter(Boolean).length;}
   function serialize(points,canvas){
     const c=canvasOf(canvas);
@@ -94,5 +116,5 @@
       throw Error('The rendered guide did not match this drawing request. The previous picture was kept.');
     return Object.fromEntries(['file','sha256','artifact_id','bytes','width','height','renderer','generation_submitted'].map(key=>[key,value[key]]));
   }
-  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,known,serialize,guideResponse,positionInput};
+  return{JOINTS,LABELS,LIMBS,COLORS,PRESETS,fromPreset,mirror,start,move,nudge,setUnknown,toggle,nearest,resize,timeline,known,serialize,guideResponse,positionInput};
 });
