@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""One-shot guarded patch for the large no-build workbench; removed after CI applies it."""
+"""One-shot guarded patch for the large no-build workbench; deleted after CI applies it."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKBENCH = ROOT / 'app/static/studio-workbench.js'
 BROWSER_TEST = ROOT / 'tests/pose_editor_handoff_browser.py'
-WORKFLOW = ROOT / '.github/workflows/pose-redo-bootstrap.yml'
-SELF = Path(__file__).resolve()
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -77,7 +75,3 @@ browser = replace_once(
     'browser redo coverage',
 )
 BROWSER_TEST.write_text(browser, encoding='utf-8', newline='\n')
-
-# This bootstrap is an implementation transport, not part of the product or its permanent CI surface.
-SELF.unlink()
-WORKFLOW.unlink()
