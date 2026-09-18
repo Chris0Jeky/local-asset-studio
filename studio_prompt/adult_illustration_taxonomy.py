@@ -238,6 +238,169 @@ def render_taxonomy_index(value: dict[str, Any]) -> bytes:
     ).encode("utf-8")
 
 
+def _validated_string_array(value: Any, label: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"{label} must be an array of non-empty text")
+    if len(value) != len(set(value)):
+        raise ValueError(f"{label} contains duplicates")
+    return value
+
+
+def _validate_index_structure(index: dict[str, Any]) -> None:
+    expected_fields = {
+        "schema", "kind", "executable", "authority", *AUTHORITY,
+        "source", "contracts", "counts", "entries", "notes", "index_id",
+    }
+    if set(index) != expected_fields or index.get("kind") != "anime-tag-taxonomy-index":
+        raise ValueError("Taxonomy index has missing, unknown or unsupported fields")
+
+    source = index.get("source")
+    source_fields = {"provider", "repository", "revision", "selected_file", "bytes", "sha256", "records"}
+    if not isinstance(source, dict) or set(source) != source_fields:
+        raise ValueError("Taxonomy index source has missing or unknown fields")
+    if source.get("provider") != "huggingface":
+        raise ValueError("Taxonomy index source provider is unsupported")
+    for field in ("repository", "selected_file"):
+        if not isinstance(source.get(field), str) or not source[field]:
+            raise ValueError(f"Taxonomy index source {field} must be non-empty text")
+    if not isinstance(source.get("revision"), str) or len(source["revision"]) != 40:
+        raise ValueError("Taxonomy index source revision must be 40-hex")
+    if not all(character in "0123456789abcdef" for character in source["revision"]):
+        raise ValueError("Taxonomy index source revision must be lowercase 40-hex")
+    if not isinstance(source.get("sha256"), str) or SHA256.fullmatch(source["sha256"]) is None:
+        raise ValueError("Taxonomy index source SHA-256 is invalid")
+    for field in ("bytes", "records"):
+        value = source.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            raise ValueError(f"Taxonomy index source {field} must be a positive integer")
+
+    contracts = index.get("contracts")
+    contract_fields = {"source_manifest_sha256", "review_manifest_sha256"}
+    if not isinstance(contracts, dict) or set(contracts) != contract_fields:
+        raise ValueError("Taxonomy index contracts have missing or unknown fields")
+    if any(not isinstance(value, str) or SHA256.fullmatch(value) is None for value in contracts.values()):
+        raise ValueError("Taxonomy index contract identity is invalid")
+
+    counts = index.get("counts")
+    count_fields = {"source", "reviewed", "accepted", "aliases"}
+    if not isinstance(counts, dict) or set(counts) != count_fields:
+        raise ValueError("Taxonomy index counts have missing or unknown fields")
+    for field, value in counts.items():
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ValueError(f"Taxonomy index count {field} must be a non-negative integer")
+
+    entries = index.get("entries")
+    if not isinstance(entries, list):
+        raise ValueError("Taxonomy index entries must be an array")
+    if len(entries) != counts["source"] or len(entries) != source["records"]:
+        raise ValueError("Taxonomy index source count does not match entries")
+    _validated_string_array(index.get("notes"), "Taxonomy index notes")
+
+    entry_fields = {
+        "tag_id", "source_name", "source_category", "source_category_value", "frequency",
+        "reviewed", "display", "aliases", "implications", "deprecated_by",
+        "semantic_facets", "polarity", "profile_ids", "accepted_for_compilation",
+    }
+    tag_ids: set[int] = set()
+    canonical_names: set[str] = set()
+    canonical_normalised: dict[str, str] = {}
+    reviewed_count = accepted_count = alias_count = 0
+    previous_sort_key: tuple[str, int] | None = None
+
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != entry_fields:
+            raise ValueError("Taxonomy index entry has missing or unknown fields")
+        tag_id = entry.get("tag_id")
+        category_value = entry.get("source_category_value")
+        frequency = entry.get("frequency")
+        if not isinstance(tag_id, int) or isinstance(tag_id, bool) or tag_id < 1:
+            raise ValueError("Taxonomy index entry tag_id must be a positive integer")
+        if tag_id in tag_ids:
+            raise ValueError(f"Taxonomy index contains duplicate tag_id {tag_id}")
+        tag_ids.add(tag_id)
+        if not isinstance(category_value, int) or isinstance(category_value, bool) or category_value < 0:
+            raise ValueError("Taxonomy index entry source_category_value is invalid")
+        if not isinstance(frequency, int) or isinstance(frequency, bool) or frequency < 0:
+            raise ValueError("Taxonomy index entry frequency is invalid")
+        source_name = entry.get("source_name")
+        category = entry.get("source_category")
+        display = entry.get("display")
+        if not isinstance(source_name, str) or not source_name:
+            raise ValueError("Taxonomy index entry source_name must be non-empty text")
+        if not isinstance(category, str) or not category:
+            raise ValueError("Taxonomy index entry source_category must be non-empty text")
+        if not isinstance(display, str) or not display:
+            raise ValueError("Taxonomy index entry display must be non-empty text")
+        normalised = normalise_term(source_name)
+        if source_name in canonical_names or normalised in canonical_normalised:
+            raise ValueError(f"Taxonomy index contains duplicate canonical name {source_name!r}")
+        canonical_names.add(source_name)
+        canonical_normalised[normalised] = source_name
+        sort_key = (source_name.casefold(), tag_id)
+        if previous_sort_key is not None and sort_key < previous_sort_key:
+            raise ValueError("Taxonomy index entries are not deterministically sorted")
+        previous_sort_key = sort_key
+
+        reviewed = entry.get("reviewed")
+        accepted = entry.get("accepted_for_compilation")
+        if not isinstance(reviewed, bool) or not isinstance(accepted, bool):
+            raise ValueError("Taxonomy index review flags must be boolean")
+        aliases = _validated_string_array(entry.get("aliases"), f"Taxonomy index {source_name} aliases")
+        implications = _validated_string_array(
+            entry.get("implications"), f"Taxonomy index {source_name} implications"
+        )
+        facets = _validated_string_array(
+            entry.get("semantic_facets"), f"Taxonomy index {source_name} semantic facets"
+        )
+        profiles = _validated_string_array(
+            entry.get("profile_ids"), f"Taxonomy index {source_name} profile ids"
+        )
+        deprecated_by = entry.get("deprecated_by")
+        if deprecated_by is not None and (not isinstance(deprecated_by, str) or not deprecated_by):
+            raise ValueError("Taxonomy index deprecated_by must be null or non-empty text")
+        polarity = entry.get("polarity")
+        if polarity not in {None, "positive", "negative"}:
+            raise ValueError("Taxonomy index polarity is invalid")
+        if not reviewed and (
+            aliases or implications or deprecated_by is not None or facets or polarity is not None
+            or profiles or accepted
+        ):
+            raise ValueError(f"Unreviewed taxonomy entry {source_name!r} contains reviewed semantics")
+        if accepted and (not reviewed or not facets or not profiles or polarity is None or deprecated_by is not None):
+            raise ValueError(f"Accepted taxonomy entry {source_name!r} is incomplete or deprecated")
+        reviewed_count += int(reviewed)
+        accepted_count += int(accepted)
+        alias_count += len(aliases)
+
+    alias_owner: dict[str, str] = {}
+    for entry in entries:
+        source_name = entry["source_name"]
+        for alias in entry["aliases"]:
+            normalised = normalise_term(alias)
+            if not normalised or normalised in canonical_normalised:
+                raise ValueError(f"Taxonomy index alias {alias!r} collides with a canonical name")
+            if normalised in alias_owner:
+                raise ValueError(
+                    f"Taxonomy index contains duplicate alias {alias!r}; first owned by {alias_owner[normalised]!r}"
+                )
+            alias_owner[normalised] = source_name
+        for target in entry["implications"]:
+            if target not in canonical_names:
+                raise ValueError(f"Taxonomy index implication target {target!r} is missing")
+        replacement = entry["deprecated_by"]
+        if replacement is not None and replacement not in canonical_names:
+            raise ValueError(f"Taxonomy index deprecation target {replacement!r} is missing")
+
+    expected_counts = {
+        "source": len(entries),
+        "reviewed": reviewed_count,
+        "accepted": accepted_count,
+        "aliases": alias_count,
+    }
+    if counts != expected_counts:
+        raise ValueError("Taxonomy index counts do not match entry content")
+
+
 def _validate_identity(index: Any) -> dict[str, Any]:
     if not isinstance(index, dict) or index.get("schema") != INDEX_SCHEMA:
         raise ValueError("Unsupported taxonomy index")
@@ -253,6 +416,7 @@ def _validate_identity(index: Any) -> dict[str, Any]:
     unsigned.pop("index_id", None)
     if sha256(canonical_bytes(unsigned)) != index_id:
         raise ValueError("Taxonomy index identity does not match content")
+    _validate_index_structure(index)
     return index
 
 
