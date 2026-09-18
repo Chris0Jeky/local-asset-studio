@@ -50,6 +50,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Effective local ambience and fallback policy
+        run: python tests/workshop_ambience_browser.py --output .runtime/workshop-ambience
       - name: Native disclosure lifecycle and nested modal handoffs
         run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
@@ -64,6 +66,7 @@ jobs:
           name: workshop-browser-evidence
           path: |
             .runtime/workshop-component/
+            .runtime/workshop-ambience/
             .runtime/workshop-application/
             .runtime/workshop-handoffs/
             .runtime/workshop-prototype/
