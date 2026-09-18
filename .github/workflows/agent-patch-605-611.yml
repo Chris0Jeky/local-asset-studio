@@ -1,0 +1,92 @@
+name: Apply issues 605 and 611 reference review gates
+on:
+  push:
+    branches:
+      - fix/605-611-reference-review-gates
+permissions:
+  contents: write
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pillow
+      - name: Apply the minimal corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('tests/studio_use_cases.py')
+          source = source_path.read_text(encoding='utf-8')
+          old = """|    if c.live:
+          |        c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')
+          |        c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')
+          |        c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')
+          |        c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')
+          |        c.act('#rr-diff', 'read', note='the prepared before/after review surface')
+          |        c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')
+          |        c.observe('reference review is registered without generation', True,
+          |                  'full deterministic preview/apply evidence runs in fixture mode')
+          |        return True, 'live read-only controls registered; fixture mode owns preview/apply evidence'
+          |""".replace('|', '')
+          new = """|    if c.live:
+          |        checks = [
+          |            ('#rr-analysis', c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')),
+          |            ('#rr-originals', c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')),
+          |            ('#rr-cards', c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')),
+          |            ('#rr-preview', c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')),
+          |            ('#rr-diff', c.act('#rr-diff', 'read', note='the prepared before/after review surface')),
+          |            ('#rr-apply', c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')),
+          |        ]
+          |        missing = [selector for selector, record in checks if record.get('control_missing')]
+          |        registered = not missing
+          |        detail = ('live read-only controls registered; fixture mode owns preview/apply evidence'
+          |                  if registered else 'live reference-review controls missing: ' + ', '.join(missing))
+          |        c.observe('reference review is registered without generation', registered,
+          |                  'full deterministic preview/apply evidence runs in fixture mode' if registered else detail)
+          |        return registered, detail
+          |""".replace('|', '')
+          if old in source:
+              source_path.write_text(source.replace(old, new, 1), encoding='utf-8')
+          elif new not in source:
+              raise SystemExit('reference-review live branch did not match either expected state')
+
+          workflow_path = Path('.github/workflows/reference-review-use-case.yml')
+          workflow = workflow_path.read_text(encoding='utf-8')
+          old_gate = """|          failed = [row['id'] for row in matrix['rows'] if not row['passed']]
+          |          assert matrix['generation_submissions'] == 0, 'the journey submitted a generation'
+          |""".replace('|', '')
+          new_gate = """|          failed = [row['id'] for row in matrix['rows'] if not row['passed']]
+          |          assert matrix['cases'] == 1, 'expected exactly one measured journey, got %r' % (matrix['cases'],)
+          |          assert matrix['generation_submissions'] == 0, 'the journey submitted a generation'
+          |""".replace('|', '')
+          if old_gate in workflow:
+              workflow_path.write_text(workflow.replace(old_gate, new_gate, 1), encoding='utf-8')
+          elif new_gate not in workflow:
+              raise SystemExit('reference-review workflow gate did not match either expected state')
+          PY
+      - name: Verify focused contracts
+        run: |
+          python -m unittest discover -s tests -p test_reference_review_use_case_registration.py -v
+          python -m unittest discover -s tests -p test_use_case_matrix.py -v
+      - name: Validate repository
+        run: |
+          python scripts/validate-repo.py
+          git diff --check
+      - name: Commit verified implementation
+        run: |
+          if git diff --quiet -- tests/studio_use_cases.py .github/workflows/reference-review-use-case.yml; then
+            echo 'Verified implementation already present.'
+            exit 0
+          fi
+          git config user.name 'Cristian Tcaci'
+          git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
+          git add tests/studio_use_cases.py .github/workflows/reference-review-use-case.yml
+          git commit -m 'fix(ux): make reference review gates truthful'
+          git push origin HEAD:fix/605-611-reference-review-gates
