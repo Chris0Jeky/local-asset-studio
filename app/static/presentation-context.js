@@ -48,14 +48,17 @@
 
   function stableValue(value, seen = new Set()) {
     if (value === null || ['string','number','boolean'].includes(typeof value)) return value;
-    if (Array.isArray(value)) return value.map(item => stableValue(item, seen));
-    if (!object(value) || seen.has(value)) return null;
+    if ((!Array.isArray(value) && !object(value)) || seen.has(value)) return null;
     seen.add(value);
-    const result = {};
-    for (const key of Object.keys(value).sort()) {
-      const item = value[key];
-      if (typeof item === 'undefined' || typeof item === 'function' || typeof item === 'symbol') continue;
-      result[key] = stableValue(item, seen);
+    let result;
+    if (Array.isArray(value)) result = value.map(item => stableValue(item, seen));
+    else {
+      result = {};
+      for (const key of Object.keys(value).sort()) {
+        const item = value[key];
+        if (typeof item === 'undefined' || typeof item === 'function' || typeof item === 'symbol') continue;
+        result[key] = stableValue(item, seen);
+      }
     }
     seen.delete(value);
     return result;
