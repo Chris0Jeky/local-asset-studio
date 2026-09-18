@@ -51,6 +51,32 @@ class ReferenceReviewHttpTests(unittest.TestCase):
     def test_route_header_cap_refuses_before_reading_body(self):
         status, result = self.call('reference-review/preview', b'', **{'Content-Length': str(reference_review.HTTP_LIMIT+1)})
         self.assertEqual(status, 400); self.assertIn('limit', result['error'])
+    def test_fixture_accepts_both_production_loopback_origins(self):
+        raw = json.dumps(self.fixture.payload).encode()
+        status, result = self.call(
+            'reference-review/preview',
+            raw,
+            Host='127.0.0.1:8191',
+            Origin='http://127.0.0.1:8191',
+        )
+        self.assertEqual(status, 200, result)
+        self.assertTrue(result['source_bytes_verified'])
+    def test_fixture_uses_production_content_length_errors(self):
+        status, result = self.call(
+            'reference-review/preview',
+            b'',
+            **{'Content-Length': 'not-an-integer'},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(result['error'], 'Valid Content-Length required')
+
+        status, result = self.call(
+            'reference-review/preview',
+            b'',
+            **{'Content-Length': str(reference_review.HTTP_LIMIT + 1)},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(result['error'], 'Request body is too large')
     def test_origin_host_and_content_type_are_required(self):
         raw = json.dumps(self.fixture.payload).encode()
         for headers, code in (({'Host':'evil.invalid'},403), ({'Origin':'http://evil.invalid'},403), ({'Content-Type':'text/plain'},400)):
