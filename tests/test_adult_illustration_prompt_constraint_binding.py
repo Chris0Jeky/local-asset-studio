@@ -30,6 +30,9 @@ class AdultIllustrationPromptConstraintBindingTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        # This test targets constraint routing, not the separately tested
+        # three-reference limit of the pinned Qwen profile.
+        intent["references"] = intent["references"][:3]
         intent["constraints"].append(
             {
                 "id": "wardrobe-write-scope",
