@@ -120,14 +120,16 @@ def _route(value, expected):
 
 def _case(value, ordinal, expected):
     case_id, scope, slot_mode, expected_observations = expected
-    common = ('id', 'ordinal', 'title', 'scope', 'slot_mode', 'source_ref',
+    common = ('id', 'ordinal', 'title', 'scope', 'slot_mode',
               'required_observations')
-    _keys(value, common, ('pair_labels',))
+    if slot_mode == 'paired-counterfactual':
+        _keys(value, common + ('pair_labels', 'source_refs'))
+    else:
+        _keys(value, common + ('source_ref',))
     if (_id(value['id'], 'case id') != case_id or
             _integer(value['ordinal'], 1, 8, 'case ordinal') != ordinal or
             value['scope'] != scope or value['slot_mode'] != slot_mode):
         raise ValueError('case identity, order, scope or slot protocol changed')
-    source_ref = _id(value['source_ref'], 'source reference')
     observations = value['required_observations']
     if (not isinstance(observations, list) or
             observations != list(expected_observations)):
@@ -138,15 +140,22 @@ def _case(value, ordinal, expected):
         'title': _title(value['title']),
         'scope': scope,
         'slot_mode': slot_mode,
-        'source_ref': source_ref,
         'required_observations': list(observations),
     }
     if slot_mode == 'paired-counterfactual':
-        if value.get('pair_labels') != ['baseline', 'variant']:
+        if value['pair_labels'] != ['baseline', 'variant']:
             raise ValueError('counterfactual case requires baseline and variant labels')
+        _keys(value['source_refs'], ('baseline', 'variant'))
+        source_refs = {
+            label: _id(value['source_refs'][label], label + ' source reference')
+            for label in ('baseline', 'variant')
+        }
+        if source_refs['baseline'] == source_refs['variant']:
+            raise ValueError('counterfactual baseline and variant sources must be distinct')
         result['pair_labels'] = ['baseline', 'variant']
-    elif 'pair_labels' in value:
-        raise ValueError('only the counterfactual case may declare pair labels')
+        result['source_refs'] = source_refs
+    else:
+        result['source_ref'] = _id(value['source_ref'], 'source reference')
     return result
 
 
@@ -201,13 +210,14 @@ def validate_manifest(manifest):
     }
 
 
-def _cell_id(manifest_sha256, case_id, route_id, slot, seed):
+def _cell_id(manifest_sha256, case_id, route_id, slot, seed, source_ref):
     return hashlib.sha256(canonical({
         'manifest_sha256': manifest_sha256,
         'case_id': case_id,
         'route_id': route_id,
         'slot': slot,
         'seed': seed,
+        'source_ref': source_ref,
     })).hexdigest()
 
 
@@ -220,8 +230,10 @@ def compile_plan(manifest):
         for case in source['cases']:
             if case['slot_mode'] == 'replicated-seeds':
                 slots = (
-                    ('replicate-a', route['noise_seeds']['replicate_a'], None),
-                    ('replicate-b', route['noise_seeds']['replicate_b'], None),
+                    ('replicate-a', route['noise_seeds']['replicate_a'],
+                     None, case['source_ref']),
+                    ('replicate-b', route['noise_seeds']['replicate_b'],
+                     None, case['source_ref']),
                 )
             else:
                 pair_group = hashlib.sha256(canonical({
@@ -231,14 +243,18 @@ def compile_plan(manifest):
                     'kind': 'paired-counterfactual',
                 })).hexdigest()
                 seed = route['noise_seeds']['counterfactual']
-                slots = (('baseline', seed, pair_group), ('variant', seed, pair_group))
-            for slot, seed, pair_group in slots:
+                slots = (
+                    ('baseline', seed, pair_group, case['source_refs']['baseline']),
+                    ('variant', seed, pair_group, case['source_refs']['variant']),
+                )
+            for slot, seed, pair_group, source_ref in slots:
                 cells.append({
-                    'id': _cell_id(manifest_sha256, case['id'], route['id'], slot, seed),
+                    'id': _cell_id(manifest_sha256, case['id'], route['id'],
+                                   slot, seed, source_ref),
                     'case_id': case['id'],
                     'case_ordinal': case['ordinal'],
                     'case_scope': case['scope'],
-                    'source_ref': case['source_ref'],
+                    'source_ref': source_ref,
                     'route_id': route['id'],
                     'mechanism': route['mechanism'],
                     'input_representation': route['input_representation'],
