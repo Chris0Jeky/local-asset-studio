@@ -1,0 +1,84 @@
+name: Research inspection blob publication
+on:
+  push:
+    branches: [codex/research-continuation-source-0918]
+    paths: [.github/workflows/research-inspection-publish.yml]
+permissions:
+  contents: read
+jobs:
+  publish-blobs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: f0b3f7cfd75c3ead770815a4d72fde181cd5c265
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ec94d4cb2294b5965a9a5940235922cf092826d2
+          path: transfer
+          persist-credentials: false
+          sparse-checkout: .github/research-inspection.patch.z64
+          sparse-checkout-cone-mode: false
+      - name: Verify exact tree then publish eight Git blobs only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, os, pathlib, subprocess, urllib.request, zlib
+          source = pathlib.Path('source')
+          def git(*args, data=None):
+              return subprocess.check_output(['git', '-C', str(source), *args], input=data)
+          def require(ok, message):
+              if not ok: raise SystemExit(message)
+          require(git('rev-parse','HEAD').decode().strip() == 'f0b3f7cfd75c3ead770815a4d72fde181cd5c265', 'Wrong source commit')
+          require(git('rev-parse','HEAD^{tree}').decode().strip() == '78d4e2695b783fb89f48260f5335a09868fdf052', 'Wrong source tree')
+          packed = pathlib.Path('transfer/.github/research-inspection.patch.z64').read_bytes()
+          require(len(packed) <= 16000, 'Oversized transfer')
+          inflater = zlib.decompressobj()
+          patch = inflater.decompress(base64.b64decode(packed.strip(), validate=True), 35263)
+          require(inflater.eof and not inflater.unused_data and not inflater.unconsumed_tail and len(patch)==35262, 'Invalid bounded patch')
+          require(hashlib.sha256(patch).hexdigest()=='8073777de887063216263ff8e2664466e940884e68a22dce2a41874bbc1c3c7e', 'Patch identity differs')
+          git('apply','--index','--whitespace=error','-',data=patch)
+          tree = git('write-tree').decode().strip()
+          require(tree=='8ff1350719af00b7e94c99f95db5cf75685a6878', 'Not the locally tested source tree')
+          expected = {
+              '.github/workflows/production-storage.yml':'029504c89e46f9700657031ba1d58f280be91ecd',
+              'app/production.py':'f456c8614ed97aeec1de9b19bd3aae9c65d4b5ed',
+              'app/settings_planner.py':'4bcb9db844c3a03df7b39394fd589363c1042b97',
+              'app/static/production.js':'5b2226a659154a2e47e768fa4e6c68c79a6c6c5d',
+              'docs/EXPERIMENTS.md':'da5ab1fb0d0547ce7939c703ec3b808ebe46cd80',
+              'tests/production_planner_inspection.cjs':'7507fd2196f93eeeb43c9e16c0f6b3ee6d0ea41a',
+              'tests/test_production_planner_inspection.py':'099d8768ef4096fdaa0d386d714f1c0441c3b25c',
+              'tests/test_settings_inspection.py':'b9c17e9f5c06cd48de30407b1e96e0eb2ce4d58b',
+          }
+          paths = git('diff','--cached','--name-only','-z').decode().rstrip('\0').split('\0')
+          require(set(paths)==set(expected), 'Unexpected changed files')
+          rows=[]
+          for path in paths:
+              mode, sha, stage = git('ls-files','-s','--',path).decode().split('\t')[0].split()
+              require(mode=='100644' and stage=='0' and sha==expected[path], 'Unexpected file identity')
+              raw = git('show', ':'+path)
+              require(len(raw)<=100000, 'Oversized source blob')
+              payload = json.dumps({'content':base64.b64encode(raw).decode('ascii'),'encoding':'base64'}).encode('ascii')
+              request = urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs', data=payload, method='POST', headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/json','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(request,timeout=30) as response:
+                  result = json.load(response)
+              require(result.get('sha')==sha, 'Published blob differs')
+              rows.append({'path':path,'mode':mode,'type':'blob','sha':sha})
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'research-publication'
+          out.mkdir()
+          (out/'receipt.json').write_text(json.dumps({'source_commit':'f0b3f7cfd75c3ead770815a4d72fde181cd5c265','target_tree':tree,'tree_elements':rows,'refs_changed':False,'source_executed':False},indent=2)+'\n',encoding='utf-8')
+          print('Verified and published',len(rows),'source blobs; no ref or commit writes')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research-inspection-publication
+          path: ${{ runner.temp }}/research-publication/
+          retention-days: 1
+          if-no-files-found: error
