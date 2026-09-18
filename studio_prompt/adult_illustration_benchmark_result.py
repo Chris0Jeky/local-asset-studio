@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from datetime import date
 import hashlib
 import json
 import math
@@ -132,6 +133,11 @@ DECISION_OUTCOMES = {
     "reject_control",
 }
 TARGET_TYPES = {"route", "control", "adapter", "workflow"}
+DECISION_TARGET_TYPES = {
+    "promote_route": "route",
+    "reject_route": "route",
+    "reject_control": "control",
+}
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -239,13 +245,16 @@ def _strings(
 def _manifest_ids(
     corpus: Any,
     routes: Any,
-) -> tuple[set[str], list[str], set[str]]:
+) -> tuple[set[str], list[str], set[str], str]:
     if not isinstance(corpus, dict) or corpus.get("schema") != CORPUS_SCHEMA:
         raise ValueError("unsupported Adult Illustration benchmark corpus")
     if corpus.get("executable") is not False or corpus.get("authority") != "none":
         raise ValueError("benchmark corpus must remain non-executing and zero-authority")
     if corpus.get("issue") != 409:
         raise ValueError("benchmark corpus issue owner must remain #409")
+    corpus_baseline = corpus.get("source_baseline")
+    if not isinstance(corpus_baseline, str) or SHA1.fullmatch(corpus_baseline) is None:
+        raise ValueError("benchmark corpus source baseline must be lowercase 40-hex")
     cases = corpus.get("cases")
     if not isinstance(cases, list) or not cases or len(cases) > MAX_CANDIDATES:
         raise ValueError("benchmark corpus cases must be a bounded non-empty array")
@@ -269,6 +278,11 @@ def _manifest_ids(
         raise ValueError("route manifest must remain non-executing and zero-authority")
     if routes.get("issue") != 405:
         raise ValueError("route manifest issue owner must remain #405")
+    route_baseline = routes.get("source_baseline")
+    if not isinstance(route_baseline, str) or SHA1.fullmatch(route_baseline) is None:
+        raise ValueError("route manifest source baseline must be lowercase 40-hex")
+    if route_baseline != corpus_baseline:
+        raise ValueError("benchmark corpus and route manifest source baselines do not match")
     candidates = routes.get("candidates")
     if not isinstance(candidates, list) or not candidates or len(candidates) > MAX_CANDIDATES:
         raise ValueError("route candidates must be a bounded non-empty array")
@@ -279,7 +293,7 @@ def _manifest_ids(
         route_ids.append(_text(item.get("id"), "route candidate id", 128))
     if len(set(route_ids)) != len(route_ids):
         raise ValueError("route manifest contains duplicate route IDs")
-    return set(case_ids), measures, set(route_ids)
+    return set(case_ids), measures, set(route_ids), corpus_baseline
 
 
 def _validate_measurement_value(value: Any, label: str) -> Any:
@@ -391,7 +405,9 @@ def validate_benchmark_result(
 ) -> dict[str, Any]:
     """Validate one result against exact corpus and route-manifest identities."""
 
-    case_ids, measure_ids, route_ids = _manifest_ids(corpus, routes)
+    case_ids, measure_ids, route_ids, expected_baseline = _manifest_ids(
+        corpus, routes
+    )
     expected_corpus_blob = _sha1(corpus_blob_sha, "corpus blob identity")
     expected_route_blob = _sha1(route_blob_sha, "route manifest blob identity")
     value = _exact(result, TOP_FIELDS, "benchmark result")
@@ -412,8 +428,17 @@ def validate_benchmark_result(
     baseline = value.get("source_baseline")
     if not isinstance(baseline, str) or SHA1.fullmatch(baseline) is None:
         raise ValueError("benchmark result source baseline must be lowercase 40-hex")
-    if not isinstance(value.get("research_date"), str):
-        raise ValueError("benchmark result research date must be text")
+    if baseline != expected_baseline:
+        raise ValueError("benchmark result source baseline does not match frozen manifests")
+    research_date = value.get("research_date")
+    try:
+        if not isinstance(research_date, str):
+            raise ValueError
+        date.fromisoformat(research_date)
+    except ValueError as exc:
+        raise ValueError(
+            "benchmark result research date must be an ISO calendar date"
+        ) from exc
     for field in AUTHORITY_FIELDS:
         if value.get(field) is not False:
             raise ValueError(f"benchmark result must keep {field} false")
@@ -598,6 +623,12 @@ def validate_benchmark_result(
     target_type = decision.get("target_type")
     if target_type not in TARGET_TYPES:
         raise ValueError("benchmark decision target type is invalid")
+    required_target_type = DECISION_TARGET_TYPES.get(outcome)
+    if required_target_type is not None and target_type != required_target_type:
+        raise ValueError(
+            f"benchmark decision outcome {outcome!r} requires target type "
+            f"{required_target_type!r}"
+        )
     target_id = _text(decision.get("target_id"), "benchmark decision target id", 128)
     if target_type == "route" and target_id not in route_ids:
         raise ValueError("benchmark decision references an unknown route")
