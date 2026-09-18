@@ -37,6 +37,8 @@ def main():
         page.wait_for_timeout(100)
         assert page.evaluate('submitted') == 0
         assert page.evaluate("Object.entries(originalNodes).every(([id,node])=>document.getElementById(id)===node)")
+        assert page.evaluate("document.querySelector('#i2vMode') && document.querySelector('#i2vMode').closest('.wk-control-group') === null"), 'I2V mode must stay outside the 2-column control groups'
+        assert page.evaluate("!!document.querySelector('#controls > label:has(#i2vMode)')")
         assert not page.locator('.ux-parameters').evaluate('(el)=>el.open')
         assert not page.locator('#negativeWrap').evaluate('(el)=>el.open')
         height=page.evaluate('document.documentElement.scrollHeight')

@@ -14,6 +14,14 @@ test('missing, malformed, oversized and unavailable storage are harmless', () =>
   assert.deepEqual(W.readPreferences({getItem(){throw Error('blocked');}}), {layout:'focus',skin:'atelier'});
   assert.equal(W.writePreferences({setItem(){throw Error('full');}}, {}), false);
 });
+test('groupControls leaves the I2V hold note outside two-column fieldsets', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  const body = js.slice(js.indexOf('function groupControls()'), js.indexOf('function applyPresentation()'));
+  assert.match(body, /if \(label\.querySelector\('#i2vMode'\)\) continue;/);
+});
+
 test('only allow-listed presentation preferences are persisted, never prompts', () => {
   let stored;
   const storage={getItem:()=>stored,setItem:(key,value)=>{assert.equal(key,W.STORAGE_KEY);stored=value;}};
