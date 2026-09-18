@@ -74,7 +74,7 @@ jobs:
             tests/test_adult_illustration_prompt_membership.py \
             tests/test_adult_illustration_prompt_membership_source_auth.py \
             docs/adult-illustration/TAXONOMY-MEMBERSHIP-INSPECTION.md
-          git rm \
+          git rm -f \
             .github/workflows/issue-562-source-auth-patch.yml \
             scripts/_issue_562_source_auth_patch.py
           git commit -m "fix: authenticate taxonomy membership from exact source bytes"
