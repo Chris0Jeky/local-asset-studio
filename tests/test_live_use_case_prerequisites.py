@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 
-from tests import studio_use_cases as runner
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tests"))
+import studio_use_cases as runner
 
 
 class LiveValueSelectionTests(unittest.TestCase):
