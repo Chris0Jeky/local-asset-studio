@@ -18,9 +18,9 @@
                   [.44,.86],[.55,.47],[.56,.66],[.56,.86],[.475,.108],[.525,.108],[.45,.12],[.55,.12]];
   const PRESETS=[{id:'standing',label:'Standing',points:STANDING},{id:'bent',label:'Bent forward, looking back',points:BENT},{id:'mirror',label:'Mirror left-right'}];
 
-  // History begins before a workbench edit, while geometry is calculated afterwards. The geometry helpers publish
-  // the exact immutable transition through this WeakMap so a timeline can commit synchronously when its readiness
-  // getters run. Nothing is attached to serialized pose arrays and abandoned drawings remain garbage-collectable.
+  // History normally begins before a workbench edit, while geometry is calculated afterwards. Geometry helpers also
+  // publish the exact immutable transition through this WeakMap so callers that must validate a precomputed result can
+  // record it without losing the transition. Nothing is attached to serialized arrays and abandoned drawings collect.
   const transitions=new WeakMap();
 
   function finite(value){return typeof value==='number'&&isFinite(value);}
@@ -127,8 +127,12 @@
     return{
       record(points,home){
         settleActual(points,home);
+        const published=transitions.get(points);
         transitions.delete(points);
         pending=snapshot(points,home);pendingSource=points;
+        // A validated typed edit may have called move() before record(). Restore that exact transition so the
+        // normal readiness getter settles it just like record-before-move pointer and keyboard edits.
+        if(published)transitions.set(points,published);
       },
       undo(points,home){
         settleActual(points,home);

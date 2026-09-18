@@ -76,17 +76,20 @@ test('timeline enforces a bounded history and safe no-op edges',()=>{
   for(const bad of [0,-1,1.5,Infinity,true,'2'])assert.throws(()=>P.timeline(bad));
 });
 
-test('the typed-position path records before publishing geometry',()=>{
-  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
-  const start=workbench.indexOf('function applyPosePosition(){');
-  const end=workbench.indexOf("q('#uxPosePositionApply').onclick=applyPosePosition;",start);
-  assert.ok(start>=0&&end>start,'the typed-position handler must be present');
-  const handler=workbench.slice(start,end);
-  const record=handler.indexOf('pushPose();');
-  const publish=handler.indexOf('StudioPoseEditor.move(');
-  assert.ok(record>=0&&publish>=0,'the handler must record and publish one edit');
-  assert.ok(record<publish,
-    'record the current drawing before move publishes its transition, so a first typed edit enables Undo and a branch edit clears Redo');
+test('a precomputed typed transition enables undo and clears an abandoned redo branch',()=>{
+  const timeline=P.timeline(60),before=drawing(100),home=drawing(100);
+  const typed=P.move(before,4,200,200,CANVAS);
+  timeline.record(before,home);
+  assert.equal(timeline.canUndo,true,'record must retain a move that was validated before history recording');
+  assert.equal(timeline.canRedo,false);
+  const restored=timeline.undo(typed,drawing(200));
+  assert.deepEqual(restored.points[4],before[4]);
+  assert.equal(timeline.canRedo,true);
+  const branch=P.move(restored.points,4,150,200,CANVAS);
+  timeline.record(restored.points,restored.home);
+  assert.equal(timeline.canUndo,true,'the precomputed branch edit must remain undoable');
+  assert.equal(timeline.canRedo,false,'the precomputed branch edit must clear stale redo');
+  assert.deepEqual(branch[4],{x:150,y:200});
 });
 
 test('the Combine editor exposes and wires redo without adding a generation path',()=>{
