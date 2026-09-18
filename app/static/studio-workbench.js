@@ -250,9 +250,9 @@
     +StudioPoseEditor.PRESETS.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.label)+'</option>').join('')+'</select></label>'
     +'<div id="uxPoseJoints" class="ux-pose-joints" role="group" aria-label="Joints"></div>'
     +'<fieldset class="ux-pose-position"><legend id="uxPosePositionLabel">Joint position (pixels)</legend><label for="uxPoseX">X<input id="uxPoseX" type="number" min="0" step="0.01" inputmode="decimal"></label><label for="uxPoseY">Y<input id="uxPoseY" type="number" min="0" step="0.01" inputmode="decimal"></label><button type="button" id="uxPosePositionApply">Set joint position</button><button type="button" id="uxPosePositionReset">Reset fields</button></fieldset>'
-    +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
+    +'<div class="ux-pose-actions"><button type="button" id="uxPoseUnknown">Mark unknown</button><button type="button" id="uxPoseUndo">Undo</button><button type="button" id="uxPoseRedo">Redo</button><button type="button" id="uxPoseUse" class="primary" aria-describedby="uxPoseReason">Use this pose</button></div>'
     +'<p id="uxPoseReason" class="muted"></p><p id="uxPoseStatus" role="status"></p></div></div>';
-  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseHistory=[],poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
+  let posePoints=null,poseHome=null,poseCanvas={width:1024,height:1536},poseTimeline=StudioPoseEditor.timeline(POSE_UNDO),poseJoint=0,poseBusy=false,poseDrag=-1,poseSignature='',posePositionSignature='';
   const poseStatus=text=>{q('#uxPoseStatus').textContent=text;};
   // The canvas the recipe will actually render at: the width and height controls when they are usable, else the recipe's own.
   function poseCanvasSize(){
@@ -263,9 +263,9 @@
     const ratio=poseCanvas.width/poseCanvas.height;
     return ratio>=1?{width:POSE_DISPLAY,height:Math.max(1,Math.round(POSE_DISPLAY/ratio))}:{width:Math.max(1,Math.round(POSE_DISPLAY*ratio)),height:POSE_DISPLAY};
   }
-  // Undo carries the remembered positions with the drawing: otherwise restoring an unknown joint after an undo
-  // would put it back where the undone edit had left it (Codex review, PR #466).
-  function pushPose(){poseHistory.push(JSON.parse(JSON.stringify({points:posePoints,home:poseHome})));if(poseHistory.length>POSE_UNDO)poseHistory.shift();}
+  // Undo and redo carry remembered positions with the drawing, so restoring an unknown joint follows the
+  // reviewed geometry rather than a later edit. A new authored edit clears only the abandoned redo branch.
+  function pushPose(){poseTimeline.record(posePoints,poseHome);}
   function poseAt(event){const rect=q('#uxPoseCanvas').getBoundingClientRect();
     return{x:(event.clientX-rect.left)/(rect.width||1)*poseCanvas.width,y:(event.clientY-rect.top)/(rect.height||1)*poseCanvas.height};}
   function drawPose(){
@@ -320,7 +320,7 @@
     q('#uxPosePositionReset').disabled=poseBusy||!posePositionDirty();
   }
   function syncPoseActions(){
-    const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo');
+    const reason=poseBlockedReason(),use=q('#uxPoseUse'),unknown=q('#uxPoseUnknown'),undo=q('#uxPoseUndo'),redo=q('#uxPoseRedo');
     const replacing=selected?.id!==POSE_RECIPE;
     use.textContent=replacing?'Replace pose picture with drawing':'Use this pose';
     use.disabled=!!reason;use.title=reason||'Renders the drawing and puts it on Picture 1.';
@@ -330,17 +330,19 @@
     q('#uxPoseJoints').querySelectorAll('button').forEach(button=>{button.disabled=poseBusy||positionPending;});
     const named=StudioPoseEditor.LABELS[poseJoint].toLowerCase(),drawn=!!(posePoints&&posePoints[poseJoint]);
     unknown.textContent=(drawn?'Mark ':'Restore ')+named;unknown.title=drawn?'Leaves it out of the guide, with its limbs.':'Puts it back where it last was.';
-    unknown.disabled=poseBusy||positionPending;undo.disabled=poseBusy||positionPending||!poseHistory.length;undo.title=poseHistory.length?'Steps back one change.':'Nothing to undo yet.';
-    if(poseBusy)unknown.title=undo.title='The drawing is being rendered.';
+    unknown.disabled=poseBusy||positionPending;
+    undo.disabled=poseBusy||positionPending||!poseTimeline.canUndo;redo.disabled=poseBusy||positionPending||!poseTimeline.canRedo;
+    undo.title=poseTimeline.canUndo?'Steps back one change.':'Nothing to undo yet.';redo.title=poseTimeline.canRedo?'Restores the change just stepped back.':'Nothing to redo yet.';
+    if(poseBusy)unknown.title=undo.title=redo.title='The drawing is being rendered.';
   }
   function syncPoseEditor(){
     const active=!!selected&&!!StudioContinuation.combineKind(selected);
     posePanel.hidden=!active;if(!active)return;
     const next=poseCanvasSize();
-    if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseHistory=[];poseCanvas=next;}
+    if(!posePoints){posePoints=StudioPoseEditor.fromPreset('standing',next);poseHome=StudioPoseEditor.fromPreset('standing',next);poseTimeline.reset();poseCanvas=next;}
     else if(next.width!==poseCanvas.width||next.height!==poseCanvas.height){
-      // The undo stack follows the canvas too, so stepping back after a size change cannot restore old-canvas pixels.
-      poseHistory=poseHistory.map(step=>({points:StudioPoseEditor.resize(step.points,poseCanvas,next),home:StudioPoseEditor.resize(step.home,poseCanvas,next)}));
+      // Both history directions follow the canvas, so undo or redo cannot restore old-canvas pixels.
+      poseTimeline.resize(poseCanvas,next);
       posePoints=StudioPoseEditor.resize(posePoints,poseCanvas,next);poseHome=StudioPoseEditor.resize(poseHome,poseCanvas,next);poseCanvas=next;}
     const el=q('#uxPoseCanvas'),display=poseDisplaySize();
     const signature=JSON.stringify([posePoints,poseCanvas,poseJoint,display]);
@@ -380,7 +382,8 @@
   q('#uxPoseUnknown').onclick=()=>{if(q('#uxPoseUnknown').disabled||!posePoints)return;
     pushPose();poseEdit(StudioPoseEditor.toggle(posePoints,poseJoint,poseHome[poseJoint],poseCanvas),false);
     poseStatus(StudioPoseEditor.LABELS[poseJoint]+(posePoints[poseJoint]?' is back in the guide.':' is left out, with the limbs that touch it.'));};
-  q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled||!poseHistory.length)return;const step=poseHistory.pop();poseHome=step.home;poseEdit(step.points,false);poseStatus('One change stepped back.');};
+  q('#uxPoseUndo').onclick=()=>{if(q('#uxPoseUndo').disabled)return;const step=poseTimeline.undo(posePoints,poseHome);if(!step)return;poseHome=step.home;poseEdit(step.points,false);poseStatus('One change stepped back. Redo restores it.');};
+  q('#uxPoseRedo').onclick=()=>{if(q('#uxPoseRedo').disabled)return;const step=poseTimeline.redo(posePoints,poseHome);if(!step)return;poseHome=step.home;poseEdit(step.points,false);poseStatus('One change restored.');};
   function poseKeys(e){
     const step={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
     // Native select/number editing keeps its own arrow keys; only the drawing and joint buttons nudge geometry.
