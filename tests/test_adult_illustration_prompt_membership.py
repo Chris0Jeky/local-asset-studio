@@ -54,6 +54,7 @@ def write_fixture(root: Path):
         (1, "solo", 0, 100),
         (2, "mystery_tag", 0, 50),
         (3, "watermark", 0, 25),
+        (4, "blocked_tag", 0, 10),
     ]
     source = csv_bytes(rows)
     reviews = [
@@ -63,6 +64,7 @@ def write_fixture(root: Path):
             facets=["quality"],
             polarity="negative",
         ),
+        review_entry("blocked_tag", facets=["style"], accepted=False),
     ]
     write_contracts(root, source, rows, reviews)
     target = root / "research" / "adult-illustration"
@@ -72,7 +74,12 @@ def write_fixture(root: Path):
     )
 
     intent = copy.deepcopy(sample_projection()["intent"])
-    intent["tags"] = ["solo", "mystery tag", "not in source"]
+    intent["tags"] = [
+        "solo",
+        "mystery tag",
+        "blocked tag",
+        "not in source",
+    ]
     intent["avoid"] = ["watermark"]
     projection = project(intent)
     compiled = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
@@ -88,7 +95,7 @@ def by_input(report: dict[str, object]) -> dict[tuple[str, str], dict[str, objec
 
 
 class PromptMembershipTests(unittest.TestCase):
-    def test_report_distinguishes_reviewed_unreviewed_and_absent_terms(self) -> None:
+    def test_report_distinguishes_all_membership_states(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             projection, compiled, index = write_fixture(root)
@@ -101,9 +108,9 @@ class PromptMembershipTests(unittest.TestCase):
         self.assertEqual(
             report["counts"],
             {
-                "inputs": 4,
+                "inputs": 5,
                 "source_known_reviewed_accepted": 2,
-                "source_known_reviewed_ineligible": 0,
+                "source_known_reviewed_ineligible": 1,
                 "source_known_unreviewed": 1,
                 "not_in_pinned_source": 1,
             },
@@ -124,6 +131,14 @@ class PromptMembershipTests(unittest.TestCase):
         self.assertEqual(
             rows[("positive", "mystery tag")]["membership"]["match_kind"],
             "canonical",
+        )
+        self.assertEqual(
+            rows[("positive", "blocked tag")]["membership"]["classification"],
+            "source_known_reviewed_ineligible",
+        )
+        self.assertEqual(
+            rows[("positive", "blocked tag")]["compiler"]["status"],
+            "not_accepted",
         )
         self.assertEqual(
             rows[("positive", "not in source")]["membership"]["classification"],
@@ -256,6 +271,9 @@ class PromptMembershipCliTests(unittest.TestCase):
             self.assertEqual(stdout, "")
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["counts"]["source_known_unreviewed"], 1)
+            self.assertEqual(
+                report["counts"]["source_known_reviewed_ineligible"], 1
+            )
             original = report_path.read_bytes()
             code, stdout, stderr = self.run_cli(args)
             self.assertEqual(code, 2)
