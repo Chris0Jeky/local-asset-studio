@@ -48,7 +48,9 @@
       required:false, staged:!!uploaded, pending:!uploaded && !!picked.reference, missing:false});
     // #610 item 1: last_reference is a real slot alongside an authored board, not only in the slot-less shape.
     // It is required exactly where studio-workbench.js reports sourceMissing, so nothing new is invented here.
-    if (recipe?.last_reference) slots.push({id:'last-reference', role:label(recipe.last_reference_label, 'Last frame'), kind:'input', index:null,
+    // An authored slot may not already own the id: a duplicate makes presentation-context drop the whole
+    // capability as "identities missing or duplicated", losing the guidance entirely (found by draft PR #627).
+    if (recipe?.last_reference && !slots.some(slot => slot.id === 'last-reference')) slots.push({id:'last-reference', role:label(recipe.last_reference_label, 'Last frame'), kind:'input', index:null,
       required:!source.continuation && (!!recipe.reference_board || !!recipe.continuation_operation),
       staged:!!lastUploaded, pending:!lastUploaded && !!picked.lastReference, missing:false});
     const references = slots.filter(slot => slot.staged || slot.pending).map(slot => ({

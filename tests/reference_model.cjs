@@ -135,3 +135,14 @@ test('live() reads Studio state without a DOM and never mutates one', () => {
   for (const forbidden of ['innerHTML', 'textContent =', '.append(', 'fetch(', 'addEventListener'])
     assert.ok(!source.includes(forbidden), forbidden + ' must not appear in a pure projection');
 });
+
+// Found by draft PR #627: a duplicate slot id makes presentation-context.js reject the whole capability.
+test('an authored slot that already owns the last-reference id is not duplicated', () => {
+  const recipe = {id:'r', last_reference:true, last_reference_label:'Picture to keep', reference_board:{min:1},
+    reference_slots:[{id:'last-reference', role:'Authored'}, {id:'board-2', role:'Board 2'}]};
+  const view = M.project({recipe, records:[{file:'a.png'}, {file:null}]});
+  const ids = view.slots.map(slot => slot.id);
+  assert.deepEqual(ids, ['last-reference', 'board-2']);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(view.references.filter(r => r.slotId === 'last-reference').length, 1);
+});
