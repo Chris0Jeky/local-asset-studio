@@ -364,6 +364,9 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
             bufsize=1,
         )
         capture = ProcessCapture(process)
+        self.assertTrue(capture.wait_for("stdout-once", 1), capture.output())
+        self.assertTrue(capture.wait_for("stderr-once", 1), capture.output())
+        process.wait(timeout=5)
         returncode, output = capture.reap()
         self.assertEqual(returncode, 0, output)
         self.assertEqual(output.count("stdout-once"), 1)
