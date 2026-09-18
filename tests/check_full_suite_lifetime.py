@@ -16,7 +16,11 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 LIFETIME_BUDGET_SECONDS = 600
 TRACEBACK_AFTER_SECONDS = 570
-SHUTDOWN_TRACEBACK_AFTER_SECONDS = 2.0
+# A full Windows interpreter can need several seconds to release thousands of
+# test-owned modules, streams and executor objects after unittest completes.
+# Keep this well inside the parent's hard budget while avoiding a false leak
+# report during ordinary teardown. Focused leaked-thread tests pass 0.15 seconds.
+SHUTDOWN_TRACEBACK_AFTER_SECONDS = 15.0
 
 
 def printable(value: str | bytes | None) -> str:
