@@ -15,8 +15,12 @@ from studio_prompt.adult_illustration_prompt_projection import (  # noqa: E402
     compile_prompt,
     validate_prompt_projection,
 )
+from studio_prompt.adult_illustration_taxonomy_membership import (  # noqa: E402
+    inspect_prompt_taxonomy_membership,
+)
 
 LIMIT = 1_048_576
+INDEX_LIMIT = 67_108_864
 
 
 def _pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -32,12 +36,20 @@ def _reject_constant(value: str) -> None:
     raise ValueError(f"Non-finite JSON value {value!r}")
 
 
-def _read_json(path: str | Path) -> Any:
+def _read_json(
+    path: str | Path,
+    maximum: int = LIMIT,
+    label: str = "JSON",
+) -> Any:
     raw = Path(path).read_bytes()
-    if len(raw) > LIMIT:
-        raise ValueError("JSON exceeds 1 MiB")
+    if len(raw) > maximum:
+        raise ValueError(f"{label} exceeds {maximum} bytes")
     try:
-        return json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs, parse_constant=_reject_constant)
+        return json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_pairs,
+            parse_constant=_reject_constant,
+        )
     except (UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError(f"Invalid UTF-8 JSON: {exc}") from exc
 
@@ -73,6 +85,16 @@ def _parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("--source", required=True)
     validate_parser.add_argument("--repo-root", default=str(Path(__file__).resolve().parents[1]))
     validate_parser.add_argument("--out")
+
+    membership = subparsers.add_parser(
+        "inspect-membership",
+        help="join a validated prompt artifact to a content-addressed taxonomy index",
+    )
+    membership.add_argument("compiled")
+    membership.add_argument("--source", required=True)
+    membership.add_argument("--taxonomy-index", required=True)
+    membership.add_argument("--repo-root", default=str(Path(__file__).resolve().parents[1]))
+    membership.add_argument("--out")
     return parser
 
 
@@ -113,10 +135,25 @@ def main(argv: list[str] | None = None) -> int:
             source = _read_json(args.source)
             value = compile_prompt(source, args.profile, args.repo_root)
             _emit(value, args.out)
-        else:
+        elif args.command == "validate":
             compiled = _read_json(args.compiled)
             source = _read_json(args.source)
             value = validate_prompt_projection(compiled, source, args.repo_root)
+            _emit(value, args.out)
+        else:
+            compiled = _read_json(args.compiled)
+            source = _read_json(args.source)
+            taxonomy_index = _read_json(
+                args.taxonomy_index,
+                INDEX_LIMIT,
+                "Taxonomy index JSON",
+            )
+            value = inspect_prompt_taxonomy_membership(
+                compiled,
+                source,
+                taxonomy_index,
+                args.repo_root,
+            )
             _emit(value, args.out)
         return 0
     except (ValueError, KeyError, TypeError, OSError, RecursionError) as exc:
