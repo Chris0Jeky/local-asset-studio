@@ -158,3 +158,13 @@ test('context stamps safely normalize cyclic arrays without leaking source mater
   assert.match(stamp, /^ctx-[0-9a-f]{8}$/);
   assert.doesNotMatch(stamp, /private/);
 });
+
+test('unknown capability does not erase a known uncertain operation identity', () => {
+  const input = baseInput();
+  input.capability = {state:'unknown', reason:'Recipe bindings are refreshing.'};
+  input.execution = knownExecution('uncertain', {operationId:'op-still-running'});
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.evidenceState, 'active');
+  assert.equal(view.primaryAction.id, C.ACTIONS.INSPECT_OPERATION);
+  assert.match(view.primaryAction.description, /op-still-running/);
+});
