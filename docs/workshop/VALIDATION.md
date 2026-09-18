@@ -14,18 +14,21 @@ The Immersive delivery established:
 
 ## Read-only context and guidance
 
-The stacked context slice replaces direct guidance decisions with an immutable, allow-listed projection and semantic intent adapter. Its contracts cover unknown and stale evidence, missing and excess sources, uncertainty, draft conflicts, context-stamp changes and refusal of unsupported, cross-workspace or stale intents. The latest parent correction mirrors the real readiness owner's source requirements instead of inventing required roles.
+The stacked context slice replaces direct guidance decisions with an immutable, allow-listed projection and semantic intent adapter. Its contracts cover unknown and stale evidence, missing and excess sources, uncertainty, draft conflicts, context-stamp changes and refusal of unsupported, cross-workspace or stale intents.
+
+The latest parent correction is merged into this branch as ancestry. It mirrors the real readiness owner's source requirements instead of inventing required roles: slot-less references remain optional, and reference-board recipes use their board-level minimum rather than marking every slot required.
 
 ## Ambience eligibility: scoped local evidence
 
 The ambience-policy slice separates persisted request from effective rendering without moving execution authority.
 
-Fresh scoped commands run against a local copy of the parent workshop review package with the exact changed policy, adapter, fixtures and tests applied:
+Fresh scoped commands run against a local copy of the parent workshop review package with the exact changed policy, adapter, fixtures, tests and latest parent source-requirement correction applied:
 
 ```sh
 node --check app/static/workshop-ambience-policy.js
 node --check app/static/workshop-ambience.js
 node --check app/static/studio-shell.js
+node --check app/static/workshop.js
 node --test tests/presentation_context.cjs tests/workshop_ambience_policy.cjs tests/workshop_contracts.cjs
 python -m unittest tests.test_presentation_context tests.test_workshop_ambience_policy tests.test_workshop_frontend -v
 STUDIO_BROWSER_EXECUTABLE=/usr/bin/chromium \
@@ -43,8 +46,8 @@ Observed results:
 - **7 Python unittest tests passed**, including normal discovery of both Node contract files and existing workshop frontend contracts.
 - The dedicated Chromium ambience journey passed **5 check groups**: available local poster, missing-poster token fallback, offline independence, forced-colour fallback/restoration and None.
 - That journey retained the original prompt and file-input DOM nodes, recorded **zero submissions**, **zero HTTP/HTTPS/WebSocket requests** and **zero page exceptions**.
-- The existing workshop component driver still passed **8 check groups**, including all 36 presentation combinations and 24 desktop/mobile geometry cases.
-- The standalone prototype still passed **9 checks** and exported as one offline HTML document.
+- The existing workshop component driver passed **9 check groups**, including the inherited no-invented-source regression, all 36 presentation combinations and 24 desktop/mobile geometry cases.
+- The standalone prototype passed **9 checks** and exported as one offline HTML document.
 
 The local review package does not contain the complete Python application modules used by `workshop_application.py` and `workshop_handoffs.py`; those two native-origin checks are therefore reserved for the hosted workflow rather than being represented as local passes.
 
