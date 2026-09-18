@@ -1,23 +1,63 @@
 name: Workshop UI
 on:
-  push:
-    branches: ['codex/create-workshop-focus', 'codex/create-workshop-studio']
   pull_request:
     paths:
       - 'app/static/**'
+      - 'docs/workshop/**'
+      - 'scripts/export-workshop-prototype.py'
       - 'tests/*workshop*'
+      - 'tests/studio_browser_smoke.py'
       - '.github/workflows/workshop-ui.yml'
 permissions:
   contents: read
 jobs:
-  browser:
+  source:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - name: Capture tracked source for isolated frontend review
-        run: git archive --format=tar HEAD > /tmp/workshop-source.tar
+        with:
+          persist-credentials: false
+      - name: Package exact frontend source for offline review
+        run: |
+          mkdir -p /tmp/workshop-review
+          git rev-parse HEAD > /tmp/workshop-review/COMMIT.txt
+          git archive --format=tar HEAD app/static tests docs/workshop .github/workflows scripts/export-workshop-prototype.py > /tmp/workshop-review/workshop-source.tar
       - uses: actions/upload-artifact@v4
         with:
-          name: workshop-source
-          path: /tmp/workshop-source.tar
+          name: workshop-review-source
+          path: /tmp/workshop-review/
           retention-days: 1
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/workshop_contracts.cjs
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Component presentation and original-control contracts
+        run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Real application, native HTTP/storage and original submission handler
+        run: python tests/workshop_application.py --output .runtime/workshop-application
+      - name: Offline prototype interactions and screenshots
+        run: python tests/workshop_prototype.py --output .runtime/workshop-prototype
+      - name: Export standalone prototype
+        run: python scripts/export-workshop-prototype.py --out .runtime/workshop-prototype/index.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workshop-browser-evidence
+          path: |
+            .runtime/workshop-component/
+            .runtime/workshop-application/
+            .runtime/workshop-prototype/
+          retention-days: 7
