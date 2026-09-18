@@ -121,9 +121,12 @@ def _validate_not_modified(
     wire: WireResponse,
     cached: HttpResponse,
     validators: Mapping[str, str],
+    redirects: tuple[str, ...],
 ) -> None:
     if not validators:
         raise ValueError("HTTP 304 cannot be accepted without a cache validator")
+    if wire.url != cached.final_url or redirects != cached.redirect_chain:
+        raise ValueError("HTTP 304 metadata route does not match cached response")
     checks = {
         "etag": "if-none-match",
         "last-modified": "if-modified-since",
@@ -300,7 +303,7 @@ class BoundedProviderTransport:
         if wire.status == 304:
             if cached is None:
                 raise ValueError("HTTP 304 cannot be accepted without a cached response")
-            _validate_not_modified(wire, cached, validators)
+            _validate_not_modified(wire, cached, validators, redirects)
             response = cached
             cache_state = "revalidated"
         else:
