@@ -105,6 +105,24 @@ def main():
             page.keyboard.press('Escape')
         checks.append({'name': 'every carried source state preserves recipe-replacement confirmation'})
 
+        page.evaluate("""() => {
+          selected = {
+            id:'secondary-copy', name:'Secondary copy fixture',
+            reference_slots:[{id:'pose', role:'Pose picture', required:true}],
+            defaults:{positive:document.querySelector('#positive').value, negative:document.querySelector('#negative').value}
+          };
+          referenceRecords = []; uploaded = null; lastUploaded = null; window.parentAssets = [];
+          document.querySelector('#uxBlockers .ux-blocker p').textContent =
+            'Install the selected local model before generating.';
+          document.querySelector('#generate').disabled = true;
+          document.dispatchEvent(new Event('studio:recipe'));
+        }""")
+        page.wait_for_timeout(50)
+        assert page.locator('#workshopGuidanceTitle').inner_text() == 'Review the source roles'
+        secondary = page.locator('.wk-guidance-secondary').inner_text()
+        assert 'Install the selected local model before generating.' in secondary, secondary
+        checks.append({'name': 'secondary guidance retains the exact readiness description'})
+
         assert page.evaluate('submitted') == 0
         assert not errors, errors
         assert not requests, requests
