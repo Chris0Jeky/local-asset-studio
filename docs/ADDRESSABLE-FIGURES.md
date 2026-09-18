@@ -34,6 +34,8 @@ Host: 127.0.0.1:8191
 
 Rectangle coordinates are integer basis points on the displayed source: `0` is the top/left edge and `10000` is the bottom/right edge. This keeps a retained request independent of browser CSS pixels and zoom. Width and height must be positive, every rectangle must stay inside the source, and one command may create at most 32 children. Touching edges are allowed. Overlap is rejected when `require_non_overlapping` is true.
 
+Each normalized edge is projected once to the nearest source-pixel boundary. Adjacent basis-point rectangles therefore share one raster boundary instead of receiving the same pixel. A rectangle that becomes empty at the source resolution is refused rather than expanded into a neighbouring figure.
+
 ## Durable identity and retries
 
 The command uses the existing Workspace identity and asset-command journal:
@@ -64,7 +66,7 @@ The parent file, title, collections, review state and metadata revision are unch
 
 ## Safety and resource bounds
 
-The route is available only through the existing same-origin loopback handler composition. Inputs are strict JSON. It accepts still image assets only, rejects trashed or changed parents, limits source bytes to 64 MiB, source dimensions to 40 megapixels, and aggregate crop area to 80 megapixels. Media publication uses no-clobber content-addressed files; database failures leave no child rows or success receipt.
+The route is available only through the existing same-origin loopback handler composition. Inputs are strict JSON. It accepts single-frame PNG, JPEG and WebP assets only; ambient Pillow decoders for formats such as BMP or TIFF do not widen that contract. It rejects trashed or changed parents, limits source bytes to 64 MiB, source dimensions to 40 megapixels, and aggregate crop area to 80 megapixels. Media publication uses no-clobber content-addressed files; database failures leave no child rows or success receipt.
 
 ## Remaining issue #252 work
 
