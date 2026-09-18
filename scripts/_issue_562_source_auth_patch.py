@@ -19,36 +19,12 @@ def patch_module() -> None:
     text = replace_once(
         text,
         "from .adult_illustration_taxonomy import _validate_identity\n",
-        "from .adult_illustration_taxonomy import validate_taxonomy_index\n",
+        "from .adult_illustration_taxonomy import (\n"
+        "    _validate_identity,\n"
+        "    validate_taxonomy_index,\n"
+        ")\n",
         "taxonomy validator import",
     )
-    text = replace_once(
-        text,
-        "    load_taxonomy_contracts,\n",
-        "",
-        "unused contract loader import",
-    )
-    text, count = re.subn(
-        r"\n_SOURCE_FIELDS = \(.*?\n\)\n_REVIEW_FIELDS = \(.*?\n\)\n",
-        "\n",
-        text,
-        flags=re.S,
-    )
-    if count != 1:
-        raise SystemExit(f"contract field constants: expected one replacement, found {count}")
-    text, count = re.subn(
-        r"def _validated_index\(value: Any, root: Path \| str\) -> dict\[str, Any\]:\n.*?\n    return index\n",
-        """def _validated_index(
-    value: Any, source_bytes: bytes, root: Path | str
-) -> dict[str, Any]:
-    \"\"\"Rebuild the index from exact source bytes before trusting membership.\"\"\"
-    return validate_taxonomy_index(value, source_bytes, root)
-""",
-        text,
-        flags=re.S,
-    )
-    if count != 1:
-        raise SystemExit(f"validated index function: expected one replacement, found {count}")
     text = replace_once(
         text,
         """    taxonomy_index: Any,
@@ -64,8 +40,11 @@ def patch_module() -> None:
     )
     text = replace_once(
         text,
-        "    index = _validated_index(taxonomy_index, root)\n",
-        "    index = _validated_index(taxonomy_index, taxonomy_source, root)\n",
+        """    index = _validated_index(taxonomy_index, root)
+    _require_compatible(compiled, index)""",
+        """    index = _validated_index(taxonomy_index, root)
+    index = validate_taxonomy_index(index, taxonomy_source, root)
+    _require_compatible(compiled, index)""",
         "inspection validation call",
     )
     text = replace_once(
@@ -229,6 +208,20 @@ def patch_tests() -> None:
     )
     text = replace_once(
         text,
+        """                report = inspect_prompt_membership(
+                    compiled, projection, index, root
+                )""",
+        """                report = inspect_prompt_membership(
+                    compiled,
+                    projection,
+                    index,
+                    taxonomy_source,
+                    root,
+                )""",
+        "runtime side-effect inspection",
+    )
+    text = replace_once(
+        text,
         '        self.assertFalse(report["taxonomy"]["source_revalidated"])\n',
         '        self.assertTrue(report["taxonomy"]["source_revalidated"])\n',
         "source revalidation assertion",
@@ -262,6 +255,22 @@ def patch_tests() -> None:
                 str(taxonomy_source_path),
                 \"--repo-root\",""",
         "CLI source argument",
+    )
+    path.write_text(text, encoding="utf-8")
+
+
+def patch_source_auth_tests() -> None:
+    path = Path("tests/test_adult_illustration_prompt_membership_source_auth.py")
+    text = path.read_text(encoding="utf-8")
+    old = "projection, compiled, index = write_fixture(root)"
+    count = text.count(old)
+    if count != 3:
+        raise SystemExit(
+            f"source-auth fixture destructuring: expected three replacements, found {count}"
+        )
+    text = text.replace(
+        old,
+        "projection, compiled, index, _fixture_source = write_fixture(root)",
     )
     path.write_text(text, encoding="utf-8")
 
@@ -309,7 +318,9 @@ def patch_docs() -> None:
         flags=re.S,
     )
     if count != 1:
-        raise SystemExit(f"source revalidation explanation: expected one replacement, found {count}")
+        raise SystemExit(
+            f"source revalidation explanation: expected one replacement, found {count}"
+        )
     path.write_text(text, encoding="utf-8")
 
 
@@ -317,6 +328,7 @@ def main() -> None:
     patch_module()
     patch_cli()
     patch_tests()
+    patch_source_auth_tests()
     patch_docs()
 
 
