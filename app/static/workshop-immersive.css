@@ -21,3 +21,78 @@
   .workshop .wk-setup-status {min-width:0;overflow-wrap:anywhere}
   .workshop .wk-setup-review {white-space:normal;overflow-wrap:anywhere;min-width:0}
 }
+
+/* Prompt Lab owns this handoff panel. Add a grid row only while it is visible, so
+   normal Create views retain their original spacing and the Apply action stays near
+   the top instead of being auto-placed after every named workshop row. */
+.studio-main #createView.workshop:has(> #uxTransfer:not([hidden])) > #uxTransfer {
+  grid-area:transfer;
+}
+.studio-main #createView.workshop:has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "heading"
+    "transfer"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.studio-main #createView.workshop:is([data-workshop-layout="focus"],[data-workshop-layout="studio"]):not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "heading"
+    "transfer"
+    "hero"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "hero"
+    "modes"
+    "transfer"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+
+@media (min-width:1280px) {
+  .studio-main #createView.workshop[data-workshop-layout="studio"]:has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading"
+      "transfer transfer"
+      "toolbar toolbar"
+      "setup setup"
+      "editor results"
+      "problems problems";
+  }
+  .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading"
+      "transfer transfer"
+      "hero hero"
+      "toolbar toolbar"
+      "setup setup"
+      "editor results"
+      "problems problems";
+  }
+  .studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading heading"
+      "hero hero hero"
+      "modes modes modes"
+      "transfer transfer transfer"
+      "toolbar toolbar toolbar"
+      "setup editor guidance"
+      "problems problems problems"
+      ". results .";
+  }
+}
