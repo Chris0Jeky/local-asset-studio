@@ -23,17 +23,35 @@ Layout, skin and ambience are independent presentation choices. Switching any of
 | Night Shift | Original rainy-city workshop scene, embedded locally in CSS |
 | Quiet Morning | Same camera and architecture in a softer daylight treatment |
 
-Ambience is decorative only. It contains no status, instructions or controls; failure to render it cannot block editing or generation. There are no remote media, fonts, video, audio, autoplay, service worker or third-party requests. Forced-colour mode removes the art, and the interface remains complete without it.
+Ambience is decorative only. It contains no status, instructions or controls; failure to render it cannot block editing or generation. There are no remote media, fonts, video, audio, autoplay, service worker or third-party requests.
+
+## Requested ambience and effective rendering
+
+The selected ambience and the decoration currently painted by the browser are deliberately separate:
+
+| Effective mode | Meaning |
+| --- | --- |
+| `none` | The user selected None; no ambience surface is reserved. |
+| `poster` | The approved local static Night Shift or Quiet Morning poster is available. |
+| `tokens` | Theme geometry and colours remain, but illustration is suppressed because the asset is unavailable or forced-colour mode is active. |
+| `suspended` | The document is hidden, so optional illustration is not painted until it is visible again. |
+
+An available local poster does not depend on internet reachability or backend health. Offline internet with a healthy local backend, and online internet with a down backend, produce the same static-poster decision. Reduced motion, data saving, user pause and active or uncertain execution keep motion ineligible; they do not turn a valid static environment into an “offline punishment”. This delivery remains static-only and reports `motionEligible: false`.
+
+`workshop-ambience-policy.js` is a pure bounded policy. It cannot receive URLs, prompts, credentials, filesystem paths or executable configuration, and every decision has `authorizesExecution: false` and `commands: []`. `workshop-ambience.js` is a separate presentation adapter that observes allow-listed appearance/readiness signals, updates only decorative data attributes and status text, and disconnects its listeners when destroyed. It never clicks Generate, changes a recipe, stages a source or writes to storage.
+
+If the policy script cannot load, the shell still mounts the ordinary workshop and retains the earlier static presentation. Forced-colour mode and missing-asset fallback leave the prompt, references, errors and run controls complete.
 
 ## Contextual guidance
 
-Immersive Studio shows one next action derived from the current UI:
+Immersive Studio shows one next action derived through the read-only presentation context:
 
 - reveal the existing readiness details when Generate is blocked;
 - focus the existing Generate control when it is ready;
-- open the existing Recent runs surface when outputs are present.
+- open the existing Recent runs surface when outputs are present;
+- reveal the exact required source when a real recipe capability requires one.
 
-The guidance action never clicks Generate, changes a recipe, rewrites a prompt, stages a reference or asserts backend health. Its explanation identifies the observation it used.
+The guidance action never clicks Generate, changes a recipe, rewrites a prompt, stages a reference or asserts backend health. Its explanation identifies the observation it used, and stale intents are refused after the context changes.
 
 ## Try the standalone prototype
 
@@ -43,9 +61,9 @@ From the repository root:
 python scripts/export-workshop-prototype.py --output .runtime/workshop-preview.html
 ```
 
-Open that file in a browser. It embeds its scripts, both production workshop stylesheets, paired ambience art and existing repository examples. There are no CDN, font, API or model requests. The review build starts in **Immersive Studio + Retro Anime + Night Shift** so the approved visual pilot is immediately visible. Production still starts in **Focus + Atelier + None**.
+Open that file in a browser. It embeds its scripts, production workshop stylesheets, the local ambience policy, paired ambience art and existing repository examples. There are no CDN, font, API or model requests. The review build starts in **Immersive Studio + Retro Anime + Night Shift** so the approved visual pilot is immediately visible. Production still starts in **Focus + Atelier + None**.
 
-Try the presentation controls; Change recipe, search, cancel or confirm replacement; fine-tune parameters and the example adapter; attach a local image in Refine; save a demo brief in this tab; export the brief; and use Preview setup. The source page is `prototype.html` with `prototype-data.js`; presentation comes from the same `app/static/workshop.js`, `workshop.css` and `workshop-immersive.css` as the application.
+Try the presentation controls; Change recipe, search, cancel or confirm replacement; fine-tune parameters and the example adapter; attach a local image in Refine; save a demo brief in this tab; export the brief; and use Preview setup. The source page is `prototype.html` with `prototype-data.js`; presentation comes from the same context, workshop, ambience-policy and ambience-adapter modules as the application.
 
 The prototype is not an alternative executor. Its recipes, notices and saved setups are demo data. Preview setup does not call ComfyUI or simulate a successful run. Displayed result art already existed in this repository. Uploaded preview files stay in the tab. Closing the tab clears demo drafts and sources; exported demo briefs are not claimed to be compatible Studio setup files.
 
@@ -57,11 +75,13 @@ The prototype is not an alternative executor. Its recipes, notices and saved set
 - [Local asset provenance](ASSETS.md)
 - [Paired usability trial](EVALUATION.md)
 - [Approved Immersive Studio design](../superpowers/specs/2026-09-18-immersive-studio-design.md)
+- [Read-only presentation context](../superpowers/specs/2026-09-18-presentation-context-design.md)
+- [Ambience eligibility policy](../superpowers/specs/2026-09-18-workshop-ambience-policy-design.md)
 
-`Workshop UI` CI publishes browser reports/screenshots and the exported prototype. The application driver uses the existing synthetic API fixture, not a live GPU.
+`Workshop UI` CI publishes browser reports/screenshots and the exported prototype. Its dedicated ambience journey qualifies static poster, token fallback, offline independence, forced-colour restoration and None. The application driver uses the existing synthetic API fixture, not a live GPU.
 
 ## Small, reversible integration
 
-No framework migration, generated graph change, new prompt store or backend service. `studio-shell.js` loads the existing progressive presentation adapter; that adapter adds `workshop-immersive.css` only after its DOM contract is present. Existing editable DOM nodes and handlers remain the sole owners. The source picker, readiness actions, queue, provenance, saved setups and draft recovery keep their existing owners. If the expected DOM is absent, enhancement does not mount.
+No framework migration, generated graph change, new prompt store or backend service. `studio-shell.js` loads the read-only context, then the pure ambience policy, then the existing progressive workshop adapter, then the isolated ambience presentation adapter. Existing editable DOM nodes and handlers remain the sole owners. The source picker, readiness actions, queue, provenance, saved setups and draft recovery keep their existing owners.
 
-Removing the new stylesheet/assets and reverting the versioned presentation additions restores the previous workshop. No domain migration or job resubmission is required.
+If the policy is absent, workshop loading still proceeds. Removing the policy/adapter loads and their focused CSS restores the earlier static workshop without a domain migration or job resubmission.
