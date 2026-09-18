@@ -1,4 +1,35 @@
-# Current state — 16 September 2026
+# Current state — 18 September 2026
+
+## Merge queue drain: fourteen PRs shipped — 18 September 2026 (05:14)
+
+A Grok session reviewed and merged the independent Codex fix queue plus the Create-workshop stack. Work was in isolated worktrees; the Studio checkout on 8191 (pid 34696, identity workspace `...\local-asset-studio`) was not switched, pulled, or restarted.
+
+Merged (merge commits, never squash):
+
+| PR | Merge SHA | Issue | What changed |
+| --- | --- | --- | --- |
+| #531 | `d1a30c79` | Fixes #464 | Fixture writer poll deadline 5s→30s on slow Windows runners |
+| #534 | `5d9ba9ba` | Fixes #484 | Same-tick same-length rewrite caught by content digest |
+| #526 | `8661a2f8` | Fixes #463 | Control preview compares live schema identity so stale-schema diagnostics render |
+| #527 | `36306e55` | Fixes #489 | Multi-contributor facet text is semantic; provenance stays on transfers/take |
+| #530 | `f1d56068` | Fixes #459 | Reference analysis admits terminal partial / stop-tracked uncertain history |
+| #528 | `70502117` | Fixes #457 | Programmatic reference-review load announces `studio-prompt-state` |
+| #536 | `0dc9df95` | Fixes #455 | Retirement tombstones get a separate 64-record / 512 KiB budget |
+| #533 | `664190ea` | Refs #490 | Observer `finished_at` is the hard sample bound; overshoot withholds comparison arithmetic |
+| #535 | `eb3fc1e1` | Fixes #468; Refs #477 | Early HTTP refusals drain bounded declared bodies |
+| #529 | `96607b1b` | Fixes #491 | Rejected analysis load keeps Undo/Export visible inside `#rr-review` |
+| #537 | `537fa2be` | Fixes #456 | Historical prompt-project revisions open as detached drafts |
+| #540 | `7fc585d2` | Refs #539 | Focus Create workshop; I2V hold note stays a full-row `#controls` child |
+| #542 | `193d7f44` | Refs #446 | Deterministic 48-cell corrected-pose screening plans; CLI JSON unauthorized receipts |
+| #541 | `cf25df38` | Refs #539 | Studio layout + Arcade/Sakura skins; heading art inlined because Handler refuses `.svg` |
+
+Each merge had hosted Check studio SUCCESS at the merged head, law-2 review with no untriaged CRITICAL/HIGH, and the three-minute aging floor. Stack: #540 then retarget #541 onto main; stacked base `codex/create-workshop-focus` was not deleted.
+
+Follow-ups filed this pass: #543 (retirement-cap docs; draft #554 exists), #545 (composed-handler drains; draft #553 exists), #546 (pose_screening CLI JSON receipts; closed by #542).
+
+Left unmerged by policy: HUMAN_TODO q-29 adult-illustration stack (#416→#417→#419→#420→#434→#436→#441 plus mid-session #550/#555/#562); parked-red #340; draft #532 closed unmerged at 04:13 (superseded by draft #558). Mid-session PRs not in the start inventory were not merged here (#547–#562).
+
+Not verified: live click-through on 8191 (still serving the pre-session checkout); art acceptance; licence clearance. HUMAN_TODO items were not ticked.
 
 ## Easier-issue drain: eight named defects closed — 16 September 2026 (19:35)
 
@@ -19,6 +50,8 @@ Merged (merge commits, never squash):
 Each PR had green hosted checks at merge (one mixed-batch lifetime red on #517 reran green), law-2 review (Codex and/or one independent pass; no untriaged CRITICAL/HIGH), and the three-minute aging floor. Local proving logs are in the session scratch, not Git.
 
 Easier items still open (parked, not silently dropped): #490 sample-window overshoot bound; #484 same-tick rewrite (content digest already in `resource_receipts._capture_file` after #471 — needs an explicit regression test before closing); prompt/reference UI #456 #457 #463 #489 #491.
+
+**Correction, 18 September 2026:** #484 #456 #457 #463 #489 #491 and the #490 comparison-withhold half were closed by the merge table in the 05:14 section above. #490 remains open for the remaining producer-timestamp/probe-span work.
 
 Untouched on purpose: adult-illustration stack (HUMAN_TODO q-29); q-7/q-25/q-27/q-28/q-30; parked #340/#461; #373 suite budget; Combine remaining owner-acceptance (#422/#444/#445/#446).
 
