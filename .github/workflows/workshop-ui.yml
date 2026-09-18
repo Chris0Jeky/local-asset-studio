@@ -1,0 +1,23 @@
+name: Workshop UI
+on:
+  push:
+    branches: ['codex/create-workshop-focus', 'codex/create-workshop-studio']
+  pull_request:
+    paths:
+      - 'app/static/**'
+      - 'tests/*workshop*'
+      - '.github/workflows/workshop-ui.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture tracked source for isolated frontend review
+        run: git archive --format=tar HEAD > /tmp/workshop-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workshop-source
+          path: /tmp/workshop-source.tar
+          retention-days: 1
