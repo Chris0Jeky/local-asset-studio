@@ -4,6 +4,15 @@ This directory consolidates the product, engineering, UX and delivery conclusion
 
 It is a **decision aid**, not a replacement for runtime truth. Exact executed facts remain in [`CURRENT_STATE.md`](../../CURRENT_STATE.md), current goal status remains in [`STATUS.md`](../STATUS.md), and human creative decisions remain in [`HUMAN_TODO.md`](../../HUMAN_TODO.md).
 
+
+## 18 September research integration
+
+The [anime and multi-reference qualification integration](anime-qualification/README.md) adapts the
+owner-supplied 15 September report to a later repository checkpoint under #552. It adds a page-addressed
+knowledge crosswalk, role/configuration portfolio, architecture decisions, finite testing protocol, source
+corrections and existing-issue implementation map. It preserves #313 and the historical snapshot below;
+research priority is not model promotion or creative acceptance.
+
 ## Snapshot boundary
 
 This assessment was reconciled against `main` at commit `368886191434433eb5205d54688ce0093a4adb7f` on 14 September 2026. At that checkpoint the repository had no open pull requests, so this bundle is not written against an unresolved implementation stack. Later changes must be evaluated separately.

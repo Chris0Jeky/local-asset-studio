@@ -146,6 +146,25 @@ def profiles():
     data = read_json(ROOT / 'research/prompt-studio/profiles.json')
     need(data['schema_version'] == 1, 'Unknown profile schema')
     rows = data['profiles']; need(len({p['id'] for p in rows}) == len(rows), 'Duplicate profiles')
+    for p in rows:
+        if 'dialect_check' not in p and 'template_bindings' not in p: continue
+        checks = {'anima_aesthetic': 'prose', 'anima_base': 'prose', 'animagine_opt': 'tags'}
+        need(isinstance(p.get('dialect_check'), str) and p['dialect_check'] in checks
+             and p['dialect'] == checks[p['dialect_check']], 'Unknown or mismatched exact-profile dialect check')
+        need(p['negative'] is True and p['min_refs'] == p['max_refs'] == 0
+             and p['tasks'] == ['image'], 'Exact profiles currently support text-only images')
+        templates = p.get('template_bindings')
+        need(isinstance(templates, list) and 1 <= len(templates) <= 8, 'Use 1..8 exact profile templates')
+        seen = set()
+        for t in templates:
+            fields(t, ('preset_id', 'graph_sha256', 'bindings'))
+            identifier(t['preset_id']); need(t['preset_id'] not in seen, 'Duplicate exact profile template'); seen.add(t['preset_id'])
+            need(isinstance(t['graph_sha256'], str) and re.fullmatch(r'[a-f0-9]{64}', t['graph_sha256']), 'Exact profile template needs a graph SHA256')
+            fields(t['bindings'], ('positive', 'negative'))
+            for pair in t['bindings'].values():
+                need(isinstance(pair, list) and len(pair) == 2 and all(isinstance(x, str) and 0 < len(x) <= 120 for x in pair), 'Invalid exact profile text binding')
+            need(t['bindings']['positive'] != t['bindings']['negative'], 'Exact profile text bindings collide')
+        need(p['recipes'] == [t['preset_id'] for t in templates], 'Exact profile recipes and templates differ')
     return {p['id']: p for p in rows}
 
 

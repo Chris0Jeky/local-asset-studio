@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'app/production.py'
+      - 'app/settings_planner.py'
+      - 'tests/test_settings*.py'
+      - 'tests/production_planner_inspection.cjs'
       - 'app/project_storage.py'
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
@@ -41,6 +44,9 @@ on:
     branches: [main]
     paths:
       - 'app/production.py'
+      - 'app/settings_planner.py'
+      - 'tests/test_settings*.py'
+      - 'tests/production_planner_inspection.cjs'
       - 'app/project_storage.py'
       - 'app/production_clock.py'
       - 'app/submission_evidence.py'
@@ -102,6 +108,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_production_storage.py -v
       - run: python -m unittest discover -s tests -p test_production_storage_integration.py -v
       - run: python -m unittest discover -s tests -p test_production.py -v
+      - run: python -m unittest discover -s tests -p test_production_planner_inspection.py -v
+      - run: python -m unittest discover -s tests -p 'test_settings*.py' -v
       - run: python -m unittest discover -s tests -p test_submission_recovery.py -v
       - run: python -m unittest discover -s tests -p test_production_clock.py -v
       - run: python -m unittest discover -s tests -p test_oldest_issue_regressions.py -v

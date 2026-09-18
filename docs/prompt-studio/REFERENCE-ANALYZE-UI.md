@@ -108,7 +108,9 @@ running helper, release a hold or infer non-submission from a transient 404.
 After a retired receipt is visible, **New analysis** clears only this tab's
 handle; starting the corrected request still needs an explicit Analyze action.
 A lost retirement reply is recovered with Check status against the same saved ID.
-Tombstones remain under the same history cap; this does not implement general
+Tombstones use a separate 64-record/512 KiB retirement budget and do not consume
+the 64-operation/128 MiB analysis history budget. The exact live values are
+reported by the server's capabilities response. This does not implement general
 history eviction or allow an old retired ID to become new work. Existing queued,
 submitting or uncertain operations are returned intact and use their normal
 observation/cancel/release controls. See issue #397 and `REFERENCE-JOBS.md`.

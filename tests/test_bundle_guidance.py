@@ -221,6 +221,7 @@ class GuidanceHTTPTests(unittest.TestCase):
     def test_real_http_explains_with_zero_runtime_or_storage_access(self):
         before={p.relative_to(self.studio.root):p.read_bytes() for p in self.studio.root.rglob('*') if p.is_file()}
         status,result=self.send();self.assertEqual(status,200);self.assertEqual(result['claims'][0]['applicability'],'applies')
+        self.assertEqual(result['claims'][0]['source_scope'], 'unrecorded')
         after={p.relative_to(self.studio.root):p.read_bytes() for p in self.studio.root.rglob('*') if p.is_file()};self.assertEqual(before,after)
     def test_host_and_origin_are_still_enforced(self):
         body=json.dumps(self.payload).encode()
