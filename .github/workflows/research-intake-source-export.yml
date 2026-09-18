@@ -1,0 +1,30 @@
+name: Research intake source export
+on:
+  push:
+    branches: [codex/research-intake-source-export]
+    paths: [.github/workflows/research-intake-source-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 6cdf6ab09683b37f55e1b55af582e4e28eac8100
+          persist-credentials: false
+      - name: Export the exact tracked source checkpoint only
+        run: |
+          mkdir -p "$RUNNER_TEMP/research-source"
+          git archive --format=tar.gz --output="$RUNNER_TEMP/research-source/source.tar.gz" HEAD
+          git rev-parse HEAD > "$RUNNER_TEMP/research-source/commit.txt"
+          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/research-source/tree.txt"
+          cd "$RUNNER_TEMP/research-source"
+          sha256sum source.tar.gz > source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research-source-6cdf6ab
+          path: ${{ runner.temp }}/research-source/
+          retention-days: 1
+          if-no-files-found: error
