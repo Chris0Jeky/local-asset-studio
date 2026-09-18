@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parents[2]
 
 
 class ProductionBriefTests(unittest.TestCase):
@@ -111,6 +112,16 @@ class ProductionBriefTests(unittest.TestCase):
         self.assertIn('Asset brief error:', stderr.getvalue())
         self.assertIn('object', stderr.getvalue().lower())
         self.assertNotIn('Traceback', stderr.getvalue())
+
+    def test_production_handoff_requires_the_open_pilot_world_decision(self):
+        text = (ROOT / 'SESSION-HANDOFF.md').read_text(encoding='utf-8')
+        self.assertIn('adaptive-pilot-world', text)
+        self.assertRegex(text, r'(?i)confirm[^\n]+adaptive-pilot-world')
+
+    def test_agent_guide_records_the_current_path_filtered_lane_count(self):
+        text = (REPO / 'CLAUDE.md').read_text(encoding='utf-8')
+        self.assertIn('20 further\npath-filtered lanes', text)
+        self.assertNotIn('19 further\npath-filtered lanes', text)
 
 
 if __name__ == '__main__':
