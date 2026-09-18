@@ -346,8 +346,9 @@ class CaseRun:
         return record
 
     # -- actions -----------------------------------------------------------------------
-    def act(self, selector, action='click', typed=None, navigation=False, note='', timeout=3000, wait=250):
-        step = self._intent()
+    def act(self, selector, action='click', typed=None, navigation=False, note='', timeout=3000, wait=250, supplementary=False):
+        # Extra disclosure actions are measured without shifting the owner's task intents.
+        step = {'intent': note, 'expect': 'The requested surface is available.'} if supplementary else self._intent()
         record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
                   'action': action, 'selector': selector, 'typed': typed, 'note': note,
                   'control': '', 'control_name': '', 'control_missing': False, 'control_hidden': False,
@@ -476,11 +477,11 @@ def _first_image(c):
     c.boot('#home')
     c.act('#uxJourneys, #uxRecent', 'read', note='overview starting points')
     c.act('[data-studio-route="create"]', navigation=True)
-    c.act('#workshopRecipeChange', note='open the recipe picker')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='anima')
     c.act('#presetList button.preset', note='first matching recipe')
     c.act('#positive', 'fill', typed=BRIEF)
-    c.act('#negativeWrap > summary', note='open optional exclusions')
+    c.act('#negativeWrap > summary', note='open optional exclusions', supplementary=True)
     c.act('#negative', 'fill', typed='blurry, extra fingers, watermark')
     c.act('#generate', 'read', note='readiness only; never pressed')
     return c.ready(), 'run control enabled=%s' % c.ready()
@@ -489,11 +490,11 @@ def _first_image(c):
 @driver('reference-edit-one-source')
 def _one_reference(c):
     c.boot('#create')
-    c.act('#workshopRecipeChange', note='open the recipe picker')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='a text-only illustration recipe')
     c.act('#uxPullAsset', note='deliberate wrong turn: text-only recipe has no reference slot')
     c.act('#uxSourcePicker[open], #referenceHint, #uxNotice', 'read', note='what the screen says after the wrong turn')
-    c.act('#workshopRecipeChange', note='open the recipe picker')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='Atelier')
     c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')
     c.act('#uxPullAsset')
@@ -510,7 +511,7 @@ def _one_reference(c):
 @driver('three-reference-identity-pose-style')
 def _three_references(c):
     c.boot('#create')
-    c.act('#workshopRecipeChange', note='open the recipe picker')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="qwen-3ref"]', note='the three-reference Qwen Atelier recipe')
     for index, (role, asset) in enumerate([('identity', 'asset-0'), ('pose', 'asset-1'), ('style', 'asset-4')]):
         c.act('[data-ref-role="%d"]' % index, 'select', typed=role)
@@ -535,10 +536,10 @@ def _three_references(c):
 @driver('compare-settings-from-recipe')
 def _compare(c):
     c.boot('#create')
-    c.act('#workshopRecipeChange', note='open the recipe picker')
+    c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
-    c.act('#workshopReview', note='open run details')
+    c.act('#workshopReview', note='open run details', supplementary=True)
     c.act('#planComparison')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
@@ -595,7 +596,7 @@ def _restyle(c):
     """The owner's 14 Sep 2026 report: a liked output, a second picture with the wanted look, no idea which recipe."""
     c.boot('#create')
     c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs')
+    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
     c.act('#gallery .reference-output', note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
     c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
@@ -633,7 +634,7 @@ def _combine(c):
     """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
     c.boot('#create')
     c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs')
+    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
     c.act('#gallery .reference-output', note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
     c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
@@ -687,7 +688,7 @@ def _draw_pose(c):
     import studio_browser_smoke as fixture
     c.boot('#create')
     c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs')
+    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
     c.act('#gallery .reference-output', note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
     c.act('#uxDestination', 'select', typed='combine-klein-9b-skeleton', note='the recipe whose image 1 is a drawn skeleton')

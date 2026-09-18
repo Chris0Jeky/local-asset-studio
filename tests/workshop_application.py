@@ -62,6 +62,7 @@ def main():
             assert page.locator('#positive').input_value()=='A private draft that must not disappear'
             page.keyboard.press('Escape')
             page.click('#negativeWrap > summary')
+            page.wait_for_function('Object.keys(localStorage).some(key=>key.startsWith("studio-draft-v1:") && (localStorage.getItem(key)||"").includes("A private draft that must not disappear"))')
             page.reload()
             page.wait_for_function('!!selected && schemaAvailable && !!document.querySelector("#workshopRecipeChange")')
             assert page.locator('#negativeWrap').evaluate('(el)=>el.open'), 'explicit negative disclosure choice survives reload'
@@ -93,7 +94,7 @@ def main():
             page.click('#workshopTune')
             assert page.locator('[data-key="seed"]').is_visible()
             page.fill('[data-key="seed"]','1024')
-            assert '1024' in page.locator('.wk-parameter-summary').inner_text()
+            page.wait_for_function('document.querySelector(".wk-parameter-summary").textContent.includes("1024")')
             page.evaluate("showView('home')")
             assert not page.locator('#generate').is_visible()
             page.evaluate("showView('create')")

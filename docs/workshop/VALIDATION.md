@@ -22,3 +22,13 @@ The existing use-case driver now counts opening the recipe picker, negative disc
 ## Owner acceptance, not claimed by tests
 
 Run one ordinary text-to-image and one reference continuation on the installed ComfyUI environment after merging. Check useful tab order, recovery, long errors, model-specific controls and actual outputs. Choose the preferred layout/skin with the same recipe, prompt and sources. Measure time to ready-to-Generate, scroll depth and perceived clutter; faster submission is not itself better art. Existing HUMAN_TODO creative decisions remain open and untouched.
+
+## Studio/skin follow-on, 18 September
+
+The component Chromium matrix passes for **2 layouts × 3 skins × 2 viewports** (1440×900 and 390×844). This checks horizontal overflow, in-viewport action geometry and zero unintended submissions; the shared interaction sequence also checks input identity, file preservation, cancelled/accepted recipe replacement and readiness focus. The fresh Focus fixture is 1464 px tall. This is not the real-machine QA measurement.
+
+The standalone exported prototype passes seven checks: shared layouts/skins, embedded repository artwork, guarded recipe change, a local reference surviving presentation changes, non-generating Preview setup, adapter feedback and mobile geometry. Its browser session records **zero network requests and zero page exceptions**. The final prototype starts in Studio, while production defaults to Focus. Node presentation contracts now contain four tests, including the full preference round-trip matrix.
+
+Native HTTP/localStorage execution of `tests/workshop_application.py` remains a hosted-CI gate. This environment supports `set_content` browser inspection but blocks top-level URL navigation; no workaround is used to claim native-origin or live-Comfy qualification. Review the actual CI result, not this planned test inventory, before merge.
+
+An additional offline inspection loaded the actual application scripts against the synthetic API with explicit in-memory storage. It passed cancelled recipe replacement, a real source attachment and parent-asset lineage across all six combinations, tuning, and exactly one original submission-handler request (rejected by the fixture). No page exceptions occurred. This supplements, but does not replace, native-origin storage/reload qualification.

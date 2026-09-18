@@ -16,8 +16,8 @@
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
   const STORAGE_KEY = 'studio.workshop.presentation.v1';
-  const LAYOUTS = Object.freeze({focus:'Focus'});
-  const SKINS = Object.freeze({atelier:'Atelier'});
+  const LAYOUTS = Object.freeze({focus:'Focus',studio:'Studio'});
+  const SKINS = Object.freeze({atelier:'Atelier',arcade:'Arcade',sakura:'Sakura'});
   function preferences(value) {
     const plain = value && typeof value === 'object' && !Array.isArray(value);
     const own = key => plain && Object.hasOwn(value, key) ? value[key] : null;
