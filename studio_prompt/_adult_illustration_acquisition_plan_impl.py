@@ -552,7 +552,7 @@ def _validate_source(value: Any) -> dict[str, Any]:
     provider = source.get("provider")
     if provider not in {"huggingface", "civitai"}:
         raise ValueError("acquisition plan source provider is unsupported")
-    _text(source.get("record_id"), "source record id", 256)
+    record_id = _text(source.get("record_id"), "source record id", 256)
     _sha(source.get("snapshot_sha256"), "source snapshot SHA-256")
     _sha(source.get("raw_payload_sha256"), "source raw payload SHA-256")
     canonical = _text(source.get("canonical_url"), "source canonical URL", 4_096)
@@ -575,6 +575,9 @@ def _validate_source(value: Any) -> dict[str, Any]:
         if source.get("access_state") != "public":
             raise ValueError("Hugging Face acquisition source must be public")
         expected_url = f"https://huggingface.co/{repo}/tree/{immutable}"
+        expected_record_id = (
+            f"huggingface-{repo.replace('/', '--').casefold()}-{immutable[:12]}"
+        )
     else:
         model_id = _positive(source.get("provider_model_id"), "Civitai model id")
         version_id = _positive(source.get("provider_version_id"), "Civitai version id")
@@ -585,8 +588,13 @@ def _validate_source(value: Any) -> dict[str, Any]:
         expected_url = (
             f"https://civitai.com/models/{model_id}?modelVersionId={version_id}"
         )
+        expected_record_id = f"civitai-{model_id}-{version_id}"
     if canonical != expected_url:
         raise ValueError("acquisition plan canonical URL does not match source")
+    if record_id != expected_record_id:
+        raise ValueError(
+            "acquisition plan source record id does not match provider identity"
+        )
     return source
 
 
@@ -595,14 +603,23 @@ def _validate_selection(value: Any, provider: str) -> tuple[dict[str, Any], Acqu
     file_id = _text(selected.get("file_id"), "selected file id", 128)
     if FILE_ID.fullmatch(file_id) is None:
         raise ValueError("selected file id has an invalid shape")
+    source_path = _selected_source_path(selected.get("source_path"))
     provider_file_id = selected.get("provider_file_id")
     if provider == "civitai":
         provider_file_id = _positive(provider_file_id, "Civitai provider file id")
         if file_id != f"civitai-file-{provider_file_id}":
             raise ValueError("Civitai selected file identity is inconsistent")
-    elif provider_file_id is not None:
-        raise ValueError("Hugging Face selected provider file id must be null")
-    source_path = _selected_source_path(selected.get("source_path"))
+    else:
+        if provider_file_id is not None:
+            raise ValueError("Hugging Face selected provider file id must be null")
+        expected_file_id = (
+            "hf-file-"
+            + hashlib.sha256(source_path.encode("utf-8")).hexdigest()[:20]
+        )
+        if file_id != expected_file_id:
+            raise ValueError(
+                "Hugging Face selected file id does not match source path"
+            )
     byte_count = _positive(selected.get("bytes"), "selected file byte count")
     digest = _sha(selected.get("sha256"), "selected file SHA-256")
     hashes = _provider_hashes(selected.get("provider_hashes"))
