@@ -35,7 +35,8 @@ def main():
         html = (ROOT / 'tests/workshop_fixture.html').read_text(encoding='utf-8')
         html = html.replace(
             '<script src="/static/workshop.js"></script>',
-            '<script>' + (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>',
+            '<script>' + (ROOT / 'app/static/presentation-context.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
+            + '<script>' + (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>',
         )
         styles = (
             '<style id="workshopStyles">' + (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8') + '</style>'
@@ -101,7 +102,19 @@ def main():
         assert not page.locator('#workshopRecipeDialog').evaluate('(el)=>el.open')
         checks.append({'name': 'native focus return + cancelled and accepted recipe replacement'})
 
+        page.select_option('#workshopLayout', 'immersive')
+        # A slot-less reference recipe is not a readiness prerequisite in app.js (referencesReady() returns
+        # true and the recipe's example stands until replaced), so guidance must not invent one here.
+        assert page.evaluate("document.querySelector('#workshopGuidanceAction')?.dataset.intent") != 'review-sources'
+        checks.append({'name': 'a slot-less reference recipe reports no invented source prerequisite'})
         page.locator('#reference').set_input_files({'name': 'source.png', 'mimeType': 'image/png', 'buffer': b'fixture'})
+        page.wait_for_function("document.querySelector('#workshopGuidanceAction')?.dataset.intent==='review-sources'")
+        source_submissions = page.evaluate('submitted')
+        page.locator('#workshopGuidanceAction').click()
+        assert page.locator('#reference').evaluate('(el)=>el===document.activeElement')
+        assert page.evaluate('submitted') == source_submissions
+        page.evaluate("uploaded='source.png';document.dispatchEvent(new Event('studio:recipe'))")
+        page.wait_for_function("document.querySelector('#workshopGuidanceAction')?.dataset.intent==='review-readiness'")
         await_value = page.locator('#positive').input_value()
         layouts = page.locator('#workshopLayout option').evaluate_all('(els)=>els.map(e=>e.value)')
         skins = page.locator('#workshopSkin option').evaluate_all('(els)=>els.map(e=>e.value)')
@@ -136,9 +149,19 @@ def main():
         checks.append({'name': 'Immersive Studio uses local ambience and three live-control columns'})
 
         blocked_submission_count = page.evaluate('submitted')
-        assert page.locator('#workshopGuidanceAction').get_attribute('data-action') == 'review'
+        assert page.locator('#workshopGuidanceAction').get_attribute('data-intent') == 'review-readiness'
         page.locator('#workshopGuidanceAction').click()
         assert page.locator('#workshopChecks').evaluate('(el)=>el.open')
+        assert page.evaluate('submitted') == blocked_submission_count
+        assert page.evaluate("createView.__workshop.presentationView().authorizesSubmission===false")
+        assert page.evaluate("createView.__workshop.presentationView().commands.length===0")
+        assert 'private' not in page.evaluate("JSON.stringify(createView.__workshop.presentationView())")
+        old_intent = page.evaluate("createView.__workshop.presentationView().primaryAction")
+        old_stamp = old_intent['contextStamp']
+        page.locator('#positive').fill('A different private draft with the same presentation')
+        page.wait_for_function("stamp => createView.__workshop.presentationView().contextStamp !== stamp", arg=old_stamp)
+        stale = page.evaluate("intent => createView.__workshop.dispatchIntent(intent)", old_intent)
+        assert stale == {'ok': False, 'reason': 'stale-context'}
         assert page.evaluate('submitted') == blocked_submission_count
 
         page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=ux-blocker><p>Review image size</p><button data-ux-resolve=parameters>Review settings</button></div>'")
@@ -149,12 +172,12 @@ def main():
         checks.append({'name': 'readiness action still reveals and focuses original control'})
 
         page.evaluate("document.getElementById('uxBlockers').replaceChildren();document.getElementById('generate').disabled=false")
-        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.action==='generate'")
+        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.intent==='focus-generate'")
         page.locator('#workshopGuidanceAction').click()
         assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.evaluate('submitted') == blocked_submission_count
         page.evaluate("document.getElementById('gallery').innerHTML='<article class=\"imageCard\">result</article>'")
-        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.action==='results'")
+        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.intent==='open-results'")
         page.locator('#workshopGuidanceAction').click()
         assert page.locator('#workshopResults').evaluate('(el)=>el.open')
         assert page.evaluate('submitted') == blocked_submission_count
