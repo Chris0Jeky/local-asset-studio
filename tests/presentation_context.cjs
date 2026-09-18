@@ -150,3 +150,11 @@ test('pending file work remains source attention even before a slot record exist
   assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
   assert.match(view.primaryAction.description, /pending/i);
 });
+
+test('context stamps safely normalize cyclic arrays without leaking source material', () => {
+  const cyclic = [];
+  cyclic.push('private', cyclic);
+  const stamp = C.makeContextStamp({cyclic});
+  assert.match(stamp, /^ctx-[0-9a-f]{8}$/);
+  assert.doesNotMatch(stamp, /private/);
+});
