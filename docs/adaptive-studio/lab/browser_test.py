@@ -61,8 +61,11 @@ def run(output, injected=False):
         checks.append('required-source action reveals the real scenario field; overflow never truncates')
 
         page.select_option('#job','uncertain')
+        page.check('#conflict')
         page.select_option('#assistance','expert')
         assert page.locator('#nextTitle').inner_text()=='Inspect the original request'
+        assert page.locator('#secondary').is_visible(), 'blocking conflict must remain visible in Expert during uncertainty'
+        assert 'draft conflict' in page.locator('#secondary').inner_text()
         page.click('#reviewPlan')
         assert 'demo-request-17' in page.locator('#reviewText').inner_text()
         assert page.locator('#applyExample').is_hidden()

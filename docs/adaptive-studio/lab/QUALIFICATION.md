@@ -5,12 +5,12 @@
 ## Completed checks
 
 - Initial regression checkpoint: policy tests failed because `index.html` and its policy implementation did not exist.
-- `node --test docs/adaptive-studio/lab/policy.test.cjs`: **14 tests passed** against the exact inline browser policy.
+- `node --test docs/adaptive-studio/lab/policy.test.cjs`: **15 tests passed** against the exact inline browser policy.
 - `python docs/adaptive-studio/lab/browser_test.py --injected --output <report>`: **11 browser check groups passed**, zero page exceptions, zero HTTP/HTTPS/WebSocket requests, zero screenshot/media creation.
 - Browser matrix included **36 combinations** of 3 layouts, 6 skins and 2 viewports (1440x900, 390x844), plus 200% zoom.
 - The brief's DOM identity and value remain unchanged through the matrix. The review action remains in the viewport with no horizontal page overflow.
 - Native dialog cancellation and successful synthetic recipe change restore the intended focus.
-- Missing sources and excess sources remain distinct. Expert retains uncertainty/conflict guidance.
+- Missing sources and excess sources remain distinct. Expert retains uncertainty/conflict guidance, including a simultaneous uncertain operation and cross-tab conflict. That combined case failed in both the policy and browser tests before the review fix.
 - Internet hint, local API/backend and media permission/fallback behavior are independently exercised.
 - OS reduced-motion changes are observed live; user pause, economy, visibility and active operation override motion eligibility.
 - An A-B-A skin change rejects the late simulated result. This is a local timer/state test, not a provider/network test.

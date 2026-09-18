@@ -18,7 +18,7 @@
   "network_requests": [],
   "screenshots_created": false,
   "document_mode": "injected exact HTML",
-  "html_sha256": "eeb565142c95184b95459ba7f7ece5eabb03c1975acfbc65ec4f887e9eac0568",
-  "policy_tests_passed": 14,
+  "html_sha256": "330d8242a1491a30e2c40861aec4cee219b3cd35a306df95d6533255f90648c7",
+  "policy_tests_passed": 15,
   "asset_brief_tests_passed": 11
 }

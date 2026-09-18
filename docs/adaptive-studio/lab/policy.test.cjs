@@ -28,6 +28,13 @@ test('an uncertain operation overrides creative guidance', () => {
   assert.equal(view.action, 'inspect');
   assert.match(view.title, /original request/i);
 });
+test('uncertain recovery retains a blocking draft conflict in Expert', () => {
+  const view = A.project({...base(), job:'uncertain', conflict:true, assistance:'expert'});
+  assert.equal(view.action, 'inspect');
+  assert.equal(view.blockingSecondary, true);
+  assert.ok(view.secondary.some(text => /draft conflict/i.test(text)));
+  assert.ok(view.secondary.length <= 2);
+});
 test('a conflicting draft remains visible in expert mode', () => {
   const view = A.project({...base(), conflict:true, assistance:'expert'});
   assert.equal(view.action, 'conflict');

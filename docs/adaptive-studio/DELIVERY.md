@@ -18,7 +18,7 @@ For the next asset session, use [SESSION-HANDOFF](assets/SESSION-HANDOFF.md) and
 
 ## Qualification summary
 
-The asset reader passes 11 offline tests; its catalogue resolves all 154 requests. The inline lab policy passes 14 Node tests. The document-level browser test passes 11 groups including 36 layout/skin/viewport combinations and a separate 200% zoom check, with zero observed network requests or page errors. The same textarea and its value survive presentation changes. See [QUALIFICATION](lab/QUALIFICATION.md) and [the retained report](lab/evidence.json).
+The asset reader passes 11 offline tests; its catalogue resolves all 154 requests. The inline lab policy passes 15 Node tests. The document-level browser test passes 11 groups including 36 layout/skin/viewport combinations and a separate 200% zoom check, with zero observed network requests or page errors. The same textarea and its value survive presentation changes. See [QUALIFICATION](lab/QUALIFICATION.md) and [the retained report](lab/evidence.json).
 
 Native local-file navigation is blocked in this execution environment. The successful browser run injects the exact standalone HTML through an explicitly named test option. It is not native-file, production-origin, real-workflow, media-decoder or GPU evidence. The focused CI workflow runs native-file browser mode when a hosted runner is available; a pending CI run is not counted as passing.
 
