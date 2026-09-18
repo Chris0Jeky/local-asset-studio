@@ -1,6 +1,7 @@
 """Scoped prompt-document commands on the existing same-origin Studio handler."""
 import sqlite3
 from urllib.parse import parse_qs,urlsplit
+from studio_workflow.http_body import reject_json
 from .schema import decode,need
 from .projects import FLAGS,REQUEST_LIMIT,ProjectError
 
@@ -46,10 +47,13 @@ def extend_handler(base):
         def do_POST(self):
             parsed=urlsplit(self.path)
             if not parsed.path.startswith(PREFIX):return super().do_POST()
-            if not self._safe_mutation():return self._json(403,{'error':'Local same-origin request required',**FLAGS})
+            if not self._safe_mutation():return reject_json(self,403,{'error':'Local same-origin request required',**FLAGS})
             try:
-                route=parsed.path[len(PREFIX):];need(not parsed.query and route in ('create','save','restore'),'Unknown prompt project command route')
-                need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
+                route=parsed.path[len(PREFIX):]
+                if parsed.query or route not in ('create','save','restore'):
+                    return reject_json(self,400,{'error':'Unknown prompt project command route','code':'invalid_project_command',**FLAGS})
+                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                    return reject_json(self,400,{'error':'application/json required','code':'invalid_project_command',**FLAGS})
                 value=decode(self.rfile.read(self._content_length(REQUEST_LIMIT)))
                 return self._json(200,self._prompt_project_service().command(route,value))
             except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as error:return self._prompt_project_error(error)
