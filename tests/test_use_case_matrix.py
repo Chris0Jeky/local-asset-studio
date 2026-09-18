@@ -206,4 +206,63 @@ class Table(unittest.TestCase):
         self.assertEqual(len(text.splitlines()), 3)
 
 
+class Verdict(unittest.TestCase):
+    """The runner's exit contract. `main()` returned 0 whatever it measured until #611, so a failing
+    journey was a green CI check; the two lanes carried hand-copied gate steps instead."""
+
+    def matrix(self, **overrides):
+        base = {'mode': 'fixture', 'cases': 1, 'passed': 1, 'generation_submissions': 0, 'page_errors': [],
+                'rows': [{'id': 'alpha', 'passed': True}]}
+        base.update(overrides)
+        return base
+
+    def test_a_clean_run_is_green(self):
+        self.assertEqual(runner.verdict(self.matrix()), [])
+
+    def test_a_failed_journey_is_red_and_names_itself(self):
+        reasons = runner.verdict(self.matrix(cases=2, passed=1, rows=[{'id': 'alpha', 'passed': True}, {'id': 'beta', 'passed': False}]))
+        self.assertEqual(len(reasons), 1)
+        self.assertIn('beta', reasons[0])
+        self.assertNotIn('alpha', reasons[0])
+
+    def test_a_page_error_is_red(self):
+        reasons = runner.verdict(self.matrix(page_errors=['alpha: TypeError: x is not a function']))
+        self.assertEqual(len(reasons), 1)
+        self.assertIn('TypeError', reasons[0])
+
+    def test_a_generation_submission_is_red(self):
+        reasons = runner.verdict(self.matrix(generation_submissions=1))
+        self.assertEqual(len(reasons), 1)
+        self.assertIn('submitted a generation', reasons[0])
+
+    def test_measuring_nothing_is_red_not_green(self):
+        """Zero failures out of zero cases reads exactly like a clean pass; it is not one."""
+        reasons = runner.verdict(self.matrix(cases=0, passed=0, rows=[]))
+        self.assertEqual(len(reasons), 1)
+        self.assertIn('nothing was measured', reasons[0])
+
+    def test_every_reason_is_reported_not_just_the_first(self):
+        reasons = runner.verdict(self.matrix(generation_submissions=2, page_errors=['boom'], rows=[{'id': 'beta', 'passed': False}]))
+        self.assertEqual(len(reasons), 3)
+
+    def test_a_missing_key_does_not_read_as_green(self):
+        self.assertTrue(runner.verdict({}), 'an empty or truncated matrix must not pass')
+
+    def test_the_process_exit_code_is_the_verdict(self):
+        """Returning 1 only gates CI if the entry point propagates it."""
+        source = (ROOT / 'tests/studio_use_cases.py').read_text(encoding='utf-8')
+        self.assertIn("if __name__ == '__main__': raise SystemExit(main())", source)
+        self.assertIn('return 1 if reasons else 0', source)
+
+
+class CaseSelection(unittest.TestCase):
+    def test_an_unknown_case_id_is_refused_rather_than_filtered_away(self):
+        """Filtering to an id no manifest carries used to run zero cases and exit 0 (#611)."""
+        with self.assertRaises(SystemExit) as caught: runner.main(['--case', 'no-such-journey'])
+        self.assertIn('no-such-journey', str(caught.exception))
+
+    def test_a_real_case_id_survives_selection(self):
+        self.assertIn(CASES['cases'][0]['id'], runner.DRIVERS)
+
+
 if __name__ == '__main__': unittest.main()

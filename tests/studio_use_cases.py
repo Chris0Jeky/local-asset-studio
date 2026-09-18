@@ -13,6 +13,10 @@ first, and anything that would create server state is recorded as skipped, never
 Intents live in research/ux/use-cases.json (selector-free, owner's words). The selectors
 live here, one driver per case id, so the matrix reports the pipeline, not the markup.
 Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
+
+Exit code: 0 only when every measured journey reached its success condition with no page
+error, no generation submitted and at least one case run. The report is written either way,
+so a red run still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
 import argparse
 import copy
@@ -102,6 +106,21 @@ def friction_points(rows):
     """Rank cases by dead ends first, then clicks. Stable on id so a rerun prints the same order."""
     def key(row): return (-row.get('dead_ends', 0), -row.get('clicks', 0), row.get('id', ''))
     return sorted(rows, key=key)
+
+
+def verdict(matrix):
+    """Every reason this measured run must not count as green, worst first; empty means green.
+
+    The exit code is this list, so a red journey cannot pass as a green check (#611). A run that
+    measured nothing is red too: filtering to an unknown case id used to leave zero rows, and zero
+    failures out of zero cases reads exactly like a clean pass."""
+    reasons = []
+    if matrix.get('generation_submissions'): reasons.append('A use case submitted a generation; that must never happen.')
+    failed = [row.get('id') for row in matrix.get('rows') or () if not row.get('passed')]
+    if failed: reasons.append('Use cases that did not reach their success condition: ' + ', '.join(failed))
+    if matrix.get('page_errors'): reasons.append('The page raised exceptions: ' + '; '.join(str(error) for error in matrix['page_errors']))
+    if not matrix.get('rows'): reasons.append('No use case ran, so nothing was measured.')
+    return reasons
 
 
 # --------------------------------------------------------------------------------------
@@ -1025,6 +1044,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     data = load_cases()
+    known = {case['id'] for case in data['cases']}
+    unknown = [case_id for case_id in (args.case or ()) if case_id not in known]
+    if unknown: raise SystemExit('No such use case in research/ux/use-cases.json: ' + ', '.join(unknown))
     cases = [case for case in data['cases'] if not args.case or case['id'] in args.case]
     missing = [case['id'] for case in cases if case['id'] not in DRIVERS]
     if missing: raise SystemExit('No driver registered for: ' + ', '.join(missing))
@@ -1084,8 +1106,9 @@ def main(argv=None):
     print()
     print('mode=%s cases=%d passed=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
     print('matrix -> ' + str(args.out))
-    if submitted: raise SystemExit('A use case submitted a generation; that must never happen.')
-    return 0
+    reasons = verdict(matrix)
+    for reason in reasons: print('FAILED: ' + reason, file=sys.stderr, flush=True)
+    return 1 if reasons else 0
 
 
 if __name__ == '__main__': raise SystemExit(main())
