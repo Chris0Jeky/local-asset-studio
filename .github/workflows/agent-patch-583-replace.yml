@@ -1,3 +1,4 @@
+# Publication retry 2: cross-realm state is normalised before assertion.
 name: Apply issue 345 replacement source guard
 
 on:
