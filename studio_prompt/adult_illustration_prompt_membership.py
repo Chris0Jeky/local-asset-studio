@@ -11,6 +11,7 @@ from .adult_illustration_taxonomy import _validate_identity
 from .adult_illustration_taxonomy_contracts import (
     AUTHORITY,
     canonical_bytes,
+    load_taxonomy_contracts,
     normalise_term,
     sha256,
 )
@@ -18,6 +19,26 @@ from .adult_illustration_taxonomy_contracts import (
 REPORT_FORMAT = "studio.adult-illustration.prompt-membership-report/v1"
 MAX_INSPECTIONS = 512
 MAX_REPORT_BYTES = 262_144
+_SOURCE_FIELDS = (
+    "provider",
+    "repository",
+    "revision",
+    "selected_file",
+    "bytes",
+    "sha256",
+    "records",
+)
+_REVIEW_FIELDS = (
+    "source_name",
+    "display",
+    "aliases",
+    "implications",
+    "deprecated_by",
+    "semantic_facets",
+    "polarity",
+    "profile_ids",
+    "accepted_for_compilation",
+)
 
 __all__ = [
     "REPORT_FORMAT",
@@ -30,9 +51,48 @@ def _canonical(value: Any) -> bytes:
     return canonical_bytes(value)
 
 
-def _validated_index(value: Any) -> dict[str, Any]:
-    """Validate a saved index without implying reconstruction from source bytes."""
-    return copy.deepcopy(_validate_identity(value))
+def _validated_index(value: Any, root: Path | str) -> dict[str, Any]:
+    """Validate saved index identity and bind it to current checked-in contracts."""
+    index = _validate_identity(value)
+    contracts = load_taxonomy_contracts(root)
+    source_contract = contracts["source"]
+    review_contract = contracts["review"]
+
+    expected_source = {
+        key: source_contract["source"][key] for key in _SOURCE_FIELDS
+    }
+    if index["source"] != expected_source:
+        raise ValueError(
+            "Taxonomy index source metadata does not match the current pinned source contract"
+        )
+
+    expected_contracts = {
+        "source_manifest_sha256": source_contract["manifest_sha256"],
+        "review_manifest_sha256": review_contract["manifest_sha256"],
+    }
+    if index["contracts"] != expected_contracts:
+        raise ValueError(
+            "Taxonomy index contract identity does not match current source/review contracts"
+        )
+
+    expected_review = {
+        entry["source_name"]: {
+            field: copy.deepcopy(entry[field]) for field in _REVIEW_FIELDS
+        }
+        for entry in review_contract["entries"]
+    }
+    indexed_review = {
+        entry["source_name"]: {
+            field: copy.deepcopy(entry[field]) for field in _REVIEW_FIELDS
+        }
+        for entry in index["entries"]
+        if entry["reviewed"]
+    }
+    if indexed_review != expected_review:
+        raise ValueError(
+            "Taxonomy index reviewed entries do not match the current review contract"
+        )
+    return index
 
 
 def _require_compatible(
@@ -57,14 +117,21 @@ def _require_compatible(
 
 def _membership_maps(
     index: dict[str, Any]
-) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+) -> tuple[
+    dict[str, dict[str, Any]],
+    dict[str, dict[str, Any]],
+    dict[str, dict[str, Any]],
+]:
     canonical: dict[str, dict[str, Any]] = {}
+    displays: dict[str, dict[str, Any]] = {}
     aliases: dict[str, dict[str, Any]] = {}
     for entry in index["entries"]:
         canonical[normalise_term(entry["source_name"])] = entry
-        for alias in entry["aliases"]:
-            aliases[normalise_term(alias)] = entry
-    return canonical, aliases
+        if entry["reviewed"]:
+            displays[normalise_term(entry["display"])] = entry
+            for alias in entry["aliases"]:
+                aliases[normalise_term(alias)] = entry
+    return canonical, displays, aliases
 
 
 def _classification(entry: dict[str, Any] | None) -> str:
@@ -80,14 +147,23 @@ def _classification(entry: dict[str, Any] | None) -> str:
 def _membership(
     raw: str,
     canonical: dict[str, dict[str, Any]],
+    displays: dict[str, dict[str, Any]],
     aliases: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     normalised = normalise_term(raw)
     entry = canonical.get(normalised)
-    match_kind: str | None = "canonical"
-    if entry is None:
-        entry = aliases.get(normalised)
-        match_kind = "alias" if entry is not None else None
+    match_kind: str | None = None
+    if entry is not None:
+        match_kind = (
+            "canonical" if raw == entry["source_name"] else "normalised_space"
+        )
+    else:
+        entry = displays.get(normalised)
+        if entry is not None:
+            match_kind = "display"
+        else:
+            entry = aliases.get(normalised)
+            match_kind = "alias" if entry is not None else None
     return {
         "classification": _classification(entry),
         "match_kind": match_kind,
@@ -124,13 +200,13 @@ def inspect_prompt_membership(
 ) -> dict[str, Any]:
     """Inspect original compiler terms against one strict saved taxonomy index."""
     compiled = validate_prompt_projection(compiled_prompt, source_projection, root)
-    index = _validated_index(taxonomy_index)
+    index = _validated_index(taxonomy_index, root)
     _require_compatible(compiled, index)
 
     raw_resolutions = compiled.get("vocabulary_resolutions")
     if not isinstance(raw_resolutions, list) or len(raw_resolutions) > MAX_INSPECTIONS:
         raise ValueError("Compiled prompt has an invalid membership inspection set")
-    canonical, aliases = _membership_maps(index)
+    canonical, displays, aliases = _membership_maps(index)
     inspections: list[dict[str, Any]] = []
     counts = {
         "inputs": len(raw_resolutions),
@@ -146,7 +222,7 @@ def inspect_prompt_membership(
         raw = resolution.get("input")
         if channel not in {"positive", "negative"} or not isinstance(raw, str):
             raise ValueError("Compiled prompt resolution has invalid input identity")
-        membership = _membership(raw, canonical, aliases)
+        membership = _membership(raw, canonical, displays, aliases)
         counts[membership["classification"]] += 1
         inspections.append(
             {
@@ -181,6 +257,7 @@ def inspect_prompt_membership(
             "source_records": index["counts"]["source"],
             "reviewed_entries": index["counts"]["reviewed"],
             "index_identity_validated": True,
+            "current_contracts_validated": True,
             "source_revalidated": False,
         },
         "counts": counts,
@@ -190,14 +267,15 @@ def inspect_prompt_membership(
         "limits": [
             "This report inspects evidence and does not alter prompt emission, "
             "vocabulary acceptance or route selection.",
-            "The saved index content identity was validated, but exact source "
-            "bytes were not rebuilt; source_revalidated remains false.",
+            "The saved index content identity and current source/review contracts "
+            "were validated, but exact source bytes were not rebuilt; "
+            "source_revalidated remains false.",
             "Source membership does not establish adulthood, consent, content "
             "approval, tokenizer behavior, artistic quality or generation authority.",
         ],
     }
     body["report_sha256"] = sha256(_canonical(body))
-    if len(json.dumps(body, ensure_ascii=False, allow_nan=False).encode("utf-8")) > MAX_REPORT_BYTES:
+    if len(_canonical(body)) > MAX_REPORT_BYTES:
         raise ValueError("Prompt membership report exceeds configured byte bound")
     return body
 
