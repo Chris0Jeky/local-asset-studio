@@ -26,7 +26,7 @@ function replaceHarness() {
     "const legacyReferenceChange=null;const DataTransfer=function(){};const Event=function(){};",
     replaceSecondPictureSource,
     "this.start=()=>q('#uxSecondReplace').onclick();this.setStamp=value=>{stamp=value};this.finish=value=>finish(value);",
-    "this.state=()=>({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
+    "this.state=()=>JSON.stringify({uploaded,draftDirty,replaceCount,saveCount,syncCount});this.notices=notices;",
   ].join('\n'), context);
   return context;
 }
@@ -37,7 +37,7 @@ test('a delayed replacement copy cannot overwrite a newer workbench state', asyn
   harness.setStamp('changed');
   harness.finish({file:'replacement.png'});
   await pending;
-  assert.deepEqual(harness.state(), {
+  assert.deepEqual(JSON.parse(harness.state()), {
     uploaded:'old-upload',draftDirty:false,replaceCount:0,saveCount:0,syncCount:0,
   });
   assert.equal(harness.notices.at(-1).error, true);
@@ -49,7 +49,7 @@ test('a current replacement copy commits once', async () => {
   const pending = harness.start();
   harness.finish({file:'replacement.png'});
   await pending;
-  assert.deepEqual(harness.state(), {
+  assert.deepEqual(JSON.parse(harness.state()), {
     uploaded:'replacement.png',draftDirty:true,replaceCount:1,saveCount:1,syncCount:1,
   });
   assert.equal(harness.notices.length, 1);
