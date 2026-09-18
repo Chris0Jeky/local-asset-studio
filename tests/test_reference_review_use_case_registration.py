@@ -33,6 +33,15 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
         self.assertIn('--case ' + CASE_ID, workflow)
         self.assertIn('tests/reference_review_browser.py', workflow)
 
+    def test_fixture_reuses_production_transport_guards(self):
+        from test_server import server
+
+        handler, _ = runner.build_handler()
+        fixture_base = next(cls for cls in handler.__mro__ if cls.__name__ == 'PromptFixtureBase')
+        self.assertIs(fixture_base._safe_host, server.Handler._safe_host)
+        self.assertIs(fixture_base._safe_mutation, server.Handler._safe_mutation)
+        self.assertIs(fixture_base._content_length, server.Handler._content_length)
+
 
 if __name__ == '__main__':
     unittest.main()
