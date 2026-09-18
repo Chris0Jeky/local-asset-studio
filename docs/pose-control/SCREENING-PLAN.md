@@ -15,14 +15,15 @@ The compiler accepts only this campaign shape:
 - two first-pass cells per case and route;
 - cases 1–7 use route-local `replicate_a` and `replicate_b` seeds;
 - case 8 uses `baseline` and `variant` at the same route-local counterfactual seed;
+- cells are emitted in three 16-cell route blocks so an authorized runner can preserve resident-model order;
 - exactly **48** first-pass cells;
 - zero repair, retry, warm-up or other image-producing slots;
 - zero execution authority and zero generation submission.
 
-The manifest must pin model, encoder, VAE, graph, node-set, runtime and reference-transform identities.
-Klein also pins its renderer, Copy Pose pins its LoRA, and SDXL pins both ControlNet and renderer. The SDXL
-route is accepted only as `bypass-precomputed-guide`; silently running the corrected guide back through a
-pose detector is a contract failure.
+The manifest must pin model, encoder, VAE, graph, node-set, runtime, reference-transform and prompt-dialect
+identities. Klein also pins its renderer, Copy Pose pins its LoRA, and SDXL pins both ControlNet and renderer.
+The SDXL route is accepted only as `bypass-precomputed-guide`; silently running the corrected guide back
+through a pose detector is a contract failure.
 
 The checked-in manifest is deliberately synthetic. Repeated-character hashes are not provider evidence or
 installed-runtime qualification. Real source bytes remain outside Git. Before a campaign can run, a reviewed
@@ -38,9 +39,10 @@ python scripts/pose_screening.py validate-plan examples/pose-control/screening-m
 ```
 
 `plan` uses exclusive creation and will not overwrite an existing plan. `validate-plan` recompiles from the
-manifest and requires exact equality, including order, route-local seeds, pair grouping and deterministic
-identities. Every success and error record states that execution is unauthorized and generation was not
-submitted.
+manifest and requires exact equality, including campaign identity, route-block order, route-local seeds, pair
+grouping and deterministic identities. Every success and error record states that execution is unauthorized
+and generation was not submitted. Successful receipts retain the campaign ID alongside the plan and manifest
+identities.
 
 ## Data boundary
 
