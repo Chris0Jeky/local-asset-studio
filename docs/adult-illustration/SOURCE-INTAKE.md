@@ -95,10 +95,41 @@ The checked-in Civitai record is synthetic and exists only to exercise the contr
 2. **Snapshot proposal** — capture IDs, moving revision, terms, files and unresolved fields. No bytes are downloaded.
 3. **Review** — select the exact version/files and inspect storage, terms, base lineage, component requirements and known incompatibilities.
 4. **Pin** — resolve an immutable revision and exact expected hashes/bytes.
-5. **Prepare acquisition** — emit a resumable plan through #356 with destination, capacity, credentials boundary and checksum expectations. Preparation performs no network action.
+5. **Prepare acquisition** — emit a deterministic [zero-authority acquisition plan](ACQUISITION-HANDOFF.md) with destination, credentials boundary and checksum expectations. Preparation performs no network action.
 6. **Acquire explicitly** — a separately authorized operation downloads to staging, records redirects and verifies bytes before promotion into inventory.
 7. **Reconcile** — #9 records the exact bundle and detects duplicates or conflicts.
 8. **Qualify** — #405/#406 validate graph, runtime, control behavior and accepted output.
+
+## Implemented acquisition-plan boundary
+
+The local-only planner consumes one validated `studio.adult-illustration-source-snapshot/v1` record and one explicit operator selection. It emits `studio.adult-illustration-acquisition-plan/v1` with:
+
+- exact provider, immutable source and snapshot identities;
+- one unique `.safetensors` file with positive bytes and SHA-256;
+- one reviewed Model Library folder role and plain destination name;
+- a bounded intended-use statement;
+- an optional, explicitly unverified terms-review pointer;
+- exact dry-run arguments for the existing Hugging Face or Civitai downloader;
+- unresolved terms, collision, inventory, compatibility and storage gates;
+- zero authorized candidates and false runtime authority.
+
+Prepare and validate plans with:
+
+```console
+python scripts/studio_adult_illustration_acquisition_plan.py prepare \
+  --snapshot snapshot.json \
+  --file-id <exact-snapshot-file-id> \
+  --destination-folder checkpoints \
+  --destination-name candidate.safetensors \
+  --intended-use "private local qualification" \
+  --out acquisition-plan.json
+
+python scripts/studio_adult_illustration_acquisition_plan.py validate \
+  --plan acquisition-plan.json \
+  --snapshot snapshot.json
+```
+
+The CLI reads bounded regular local files, rejects symlinks and duplicate JSON keys, preflights output paths, creates outputs exclusively and never imports or invokes a downloader. The plan is content-addressed, but a matching plan ID does not substitute for structural and semantic validation. See [Adult Illustration acquisition handoff](ACQUISITION-HANDOFF.md) for the complete contract and review checklist.
 
 ## URL and transport rules
 
@@ -145,7 +176,7 @@ Do not mutate the historical snapshot. Add a new revision and mark dependent pla
 
 ## Agent contract
 
-Agents may search, inspect and prepare a bounded snapshot proposal. The result must include:
+Agents may search, inspect and prepare a bounded snapshot proposal. They may also propose one exact file and destination and produce a deterministic zero-authority acquisition plan. The result must include:
 
 - exact source and moving/immutable identity;
 - proposed files with storage total;
@@ -153,9 +184,10 @@ Agents may search, inspect and prepare a bounded snapshot proposal. The result m
 - terms state;
 - component and compatibility unknowns;
 - existing-inventory matches;
+- plan identity and unresolved gates where a file was selected;
 - the next explicit approval boundary.
 
-Agents may not download, install, activate, execute, accept terms, select a mirror, choose a latest version, or advance evidence merely because the provider API returned successfully.
+Agents may not download, install, activate, execute, accept terms, provide credentials, select a mirror, choose a latest version, or advance evidence merely because the provider API returned successfully or a plan validated.
 
 ## Acceptance path
 
