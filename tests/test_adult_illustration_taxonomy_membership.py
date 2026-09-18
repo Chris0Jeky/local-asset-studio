@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import io
 import json
 from pathlib import Path
 import socket
@@ -242,6 +243,24 @@ class PromptTaxonomyMembershipTests(unittest.TestCase):
         ):
             result = self.inspect()
         self.assertFalse(result["authority"]["generation_submitted"])
+
+    def test_json_reader_stops_at_the_requested_bound(self) -> None:
+        cli = load_cli()
+
+        class RecordingStream(io.BytesIO):
+            requested = None
+
+            def read(self, size=-1):
+                self.requested = size
+                return super().read(size)
+
+        stream = RecordingStream(b'{"too":"large"}')
+        with (
+            patch.object(Path, "open", return_value=stream),
+            self.assertRaisesRegex(ValueError, "Fixture exceeds 4 bytes"),
+        ):
+            cli._read_json(Path("ignored.json"), 4, "Fixture")
+        self.assertEqual(stream.requested, 5)
 
     def test_cli_reads_large_index_and_never_overwrites_output(self) -> None:
         cli = load_cli()
