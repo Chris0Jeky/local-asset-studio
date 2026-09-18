@@ -168,3 +168,27 @@ test('unknown capability does not erase a known uncertain operation identity', (
   assert.equal(view.primaryAction.id, C.ACTIONS.INSPECT_OPERATION);
   assert.match(view.primaryAction.description, /op-still-running/);
 });
+
+test('draft conflict keeps a simultaneous blocked readiness action visible', () => {
+  const input = baseInput();
+  input.draft.conflict = true;
+  input.execution = knownExecution('blocked', {
+    blockers:[{code:'model-missing', message:'Install the selected model.', target:'models'}]
+  });
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.primaryAction.id, C.ACTIONS.RESOLVE_DRAFT_CONFLICT);
+  const readiness = view.secondaryActions.find(action => action.id === C.ACTIONS.REVIEW_READINESS);
+  assert.ok(readiness);
+  assert.match(readiness.description, /Install the selected model/);
+});
+
+test('source attention keeps simultaneous unknown readiness visible', () => {
+  const input = baseInput();
+  input.draft.pendingFiles = 1;
+  input.execution = {state:'unknown', reason:'No fresh backend observation.'};
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
+  const readiness = view.secondaryActions.find(action => action.id === C.ACTIONS.REVIEW_READINESS);
+  assert.ok(readiness);
+  assert.match(readiness.description, /No fresh backend observation/);
+});
