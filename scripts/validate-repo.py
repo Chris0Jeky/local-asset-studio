@@ -6,6 +6,7 @@ root=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(root/'app'))
 sys.path.insert(0,str(root))
 from model_library import FOLDERS, SUFFIXES
+from studio_workflow.preset_adapter import SOURCE_KEYS, missing_source_key
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
 fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name','lora5','lora5_name','lora6','lora6_name']
@@ -30,6 +31,10 @@ for preset in catalog:
     assert preset.get('modality','image') in {'image','video','3d'}
     # The RGBA-mask guard in app/server.py refuses a queue without that upload, so the flag needs the slot.
     if preset.get('requires_rgba_mask'): assert preset.get('reference'), (preset['id'],'requires_rgba_mask without a reference binding')
+    # A graph that loads a picture must say so with a source key: the adapter, guidance and browser bundle guards
+    # refuse such a preset by that key alone, so an undeclared image input would bind the authored example instead (#600).
+    loaders=missing_source_key(preset,graph)
+    assert not loaders, (preset['id'],loaders,'graph loads a picture but the preset declares none of '+repr(SOURCE_KEYS))
     if preset.get('visual'):
         visual_path=(root/preset['visual']).resolve()
         assert visual_path.is_relative_to(root/'workflows/comfyui')
