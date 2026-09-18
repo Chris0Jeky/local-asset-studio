@@ -76,9 +76,7 @@ test('Studio shell loads the read-only context boundary before the workshop adap
   const fs = require('node:fs');
   const path = require('node:path');
   const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
-  const context = shell.indexOf('presentation-context.js');
-  const workshop = shell.indexOf('workshop.js');
-  assert.ok(context >= 0 && workshop > context);
+  assert.match(shell, /context\.src='\/static\/presentation-context\.js'/);
   assert.match(shell, /context\.onload=/);
 });
 
@@ -106,12 +104,8 @@ test('Studio shell loads ambience policy and adapter around the workshop present
   const fs = require('node:fs');
   const path = require('node:path');
   const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
-  const context = shell.indexOf('presentation-context.js');
-  const policy = shell.indexOf('workshop-ambience-policy.js');
-  const workshop = shell.indexOf('workshop.js');
-  const adapter = shell.indexOf('workshop-ambience.js');
-  assert.ok(context >= 0 && policy > context && workshop > policy && adapter > workshop);
-  assert.match(shell, /ambience\.onload=loadWorkshop/);
+  assert.match(shell, /context\.onload=.*workshop-ambience-policy\.js.*ambience\.onload=loadWorkshop/);
+  assert.match(shell, /loadWorkshop=.*workshop\.js.*workshop\.onload=.*workshop-ambience\.js/);
   assert.match(shell, /ambience\.onerror=loadWorkshop/);
 });
 
