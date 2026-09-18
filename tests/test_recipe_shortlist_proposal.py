@@ -221,7 +221,11 @@ class SetupProposalTransportTests(unittest.TestCase):
         # A Host/Origin/media-type refusal answers before the declared body is read, so the
         # reply must be read atomically rather than over a reusable http.client connection
         # the server may close on the unread bytes (#477).
-        if extra: return atomic_json_post(self.http.server_port,PREFIX,body,host=headers['Host'],origin=headers['Origin'],content_type=headers['Content-Type'])
+        if extra:
+            # Only these three reach the wire below, so a later override of anything else must
+            # fail loudly rather than assert a refusal against a request that never carried it.
+            assert set(extra)<={'Host','Origin','Content-Type'},'This fixture forwards only Host, Origin and Content-Type'
+            return atomic_json_post(self.http.server_port,PREFIX,body,host=headers['Host'],origin=headers['Origin'],content_type=headers['Content-Type'])
         c=HTTPConnection('127.0.0.1',self.http.server_port,timeout=10)
         try:
             c.request('POST',PREFIX,body,headers)

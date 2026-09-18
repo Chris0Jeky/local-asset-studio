@@ -267,7 +267,8 @@ class SetupApplyTransportTests(unittest.TestCase):
                                   (b'{}',{'Host':'other.invalid'},403),
                                   (b'{}',{'Content-Type':'text/plain'},400),
                                   (b'{"action":"create","action":"apply"}',{},400)]:
-            # Same unread-body refusal shape as the proposal fixture (#477).
+            # The three header rows are refused before the declared body is read, like the
+            # proposal fixture (#477); the duplicate-key row is refused after reading it.
             wire={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**headers}
             with self.subTest(headers=headers):
                 self.assertEqual(atomic_json_post(self.http.server_port,PREFIX,raw,host=wire['Host'],origin=wire['Origin'],content_type=wire['Content-Type'])[0],status)
