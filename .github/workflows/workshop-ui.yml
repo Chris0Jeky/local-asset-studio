@@ -50,6 +50,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Source-state presentation bridge and replacement confirmation
+        run: python tests/workshop_source_bridge.py --output .runtime/workshop-source-bridge
       - name: Native disclosure lifecycle and nested modal handoffs
         run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
@@ -64,6 +66,7 @@ jobs:
           name: workshop-browser-evidence
           path: |
             .runtime/workshop-component/
+            .runtime/workshop-source-bridge/
             .runtime/workshop-application/
             .runtime/workshop-handoffs/
             .runtime/workshop-prototype/
