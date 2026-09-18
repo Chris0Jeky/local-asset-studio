@@ -1,10 +1,10 @@
 name: Prompt Studio
 on:
   pull_request:
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'scripts/studio_adult_illustration_acquisition_plan.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'docs/adult-illustration/README.md', 'docs/adult-illustration/SOURCE-INTAKE.md', 'docs/adult-illustration/ACQUISITION-HANDOFF.md', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', '.github/workflows/prompt-studio.yml']
   push:
     branches: [main]
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'scripts/studio_adult_illustration_acquisition_plan.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'docs/adult-illustration/README.md', 'docs/adult-illustration/SOURCE-INTAKE.md', 'docs/adult-illustration/ACQUISITION-HANDOFF.md', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', '.github/workflows/prompt-studio.yml']
 permissions:
   contents: read
 jobs:
@@ -26,6 +26,7 @@ jobs:
       - run: python scripts/studio_prompt.py compile examples/prompt-studio/portrait.json --profile sdxl-prose-v1
       - run: python scripts/studio_adult_illustration_prompt.py profiles
       - run: python scripts/studio_adult_illustration_source_fetch.py --help
+      - run: python scripts/studio_adult_illustration_acquisition_plan.py --help
       - run: python scripts/start_prompt_studio.py --help
   browser:
     runs-on: ubuntu-latest
