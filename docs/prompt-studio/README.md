@@ -57,3 +57,9 @@ The workspace lock prevents simultaneous helper calls **only in that workspace**
 Exported briefs remain model-independent. Imported proposals can be accepted field by field; stale proposals and locked changes are rejected. References carry role, take/ignore instructions and exact hashes. The UI records images but does not upload them to Comfy. Real multi-reference graph binding remains a separate integration with issue21.
 
 The opt-in `/api/prompt/bind` operation verifies actual preset text bindings and raw template bytes, then returns a normal Studio submission payload without submitting it. It currently handles reference-free text-only projections and rejects companion bindings it does not implement. Pure CLI `bind` produces a graph preview; its canonical hash is not the raw-file hash required by Studio's existing submission guard.
+
+## Exact-template anime profiles
+
+[Anima Aesthetic, Anima Base and Animagine Opt](EXACT-ANIME-PROFILES.md) are opt-in
+projections with retained legacy profile hashes, reviewed dialect conflicts and checked text-template
+handoffs. They do not qualify installed model bytes, runtime performance or artistic output.
