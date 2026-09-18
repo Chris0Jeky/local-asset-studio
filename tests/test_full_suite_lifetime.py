@@ -399,6 +399,27 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         self.assertIsNotNone(returncode)
         self.assertEqual(output, "")
 
+    def test_lifetime_budget_defaults_and_keeps_its_diagnostic_margin(self):
+        for environ in ({}, {wrapper.BUDGET_VARIABLE: ""}, {wrapper.BUDGET_VARIABLE: "  "}):
+            with self.subTest(environ=environ):
+                self.assertEqual(wrapper.lifetime_budget(environ), 600.0)
+        self.assertEqual(wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: "1500"}), 1500.0)
+        self.assertEqual(wrapper.traceback_deadline(1500.0), 1470.0)
+        self.assertEqual(wrapper.traceback_deadline(600.0), wrapper.TRACEBACK_AFTER_SECONDS)
+
+    def test_unusable_lifetime_budget_is_refused_rather_than_silently_ignored(self):
+        for value in ("0", "-1", "30", "soon", "600s"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: value})
+
+    def test_windows_full_suite_lane_raises_the_budget_it_measured(self):
+        workflow = (HERE.parent / ".github" / "workflows" / "full-suite-lifetime.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '1500'", workflow)
+        self.assertIn("timeout-minutes: 30", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
