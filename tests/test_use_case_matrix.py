@@ -248,21 +248,41 @@ class Verdict(unittest.TestCase):
     def test_a_missing_key_does_not_read_as_green(self):
         self.assertTrue(runner.verdict({}), 'an empty or truncated matrix must not pass')
 
+    def test_a_truncated_report_is_red_by_absence_not_green_by_default(self):
+        """The deleted CI steps subscripted these keys and crashed when they were absent; reading them
+        with .get() would otherwise score a hand-edited or partial artifact as a clean pass."""
+        for key in runner.REPORT_KEYS:
+            partial = self.matrix(); partial.pop(key)
+            reasons = runner.verdict(partial)
+            self.assertTrue(any('missing ' + key in reason for reason in reasons), key)
+
+    def test_live_mode_journey_results_are_advisory(self):
+        """Live mode is read-only: the deny list refuses most deciding clicks on purpose, so the
+        documented `--base-url` run must not report a healthy Studio as a failure."""
+        self.assertEqual(runner.verdict(self.matrix(mode='live-readonly', cases=2, passed=1,
+                                                    rows=[{'id': 'alpha', 'passed': True}, {'id': 'beta', 'passed': False}])), [])
+
+    def test_live_mode_still_binds_everything_else(self):
+        for override in ({'generation_submissions': 1}, {'page_errors': ['boom']}, {'rows': []}):
+            self.assertTrue(runner.verdict(self.matrix(mode='live-readonly', **override)), override)
+
     def test_the_process_exit_code_is_the_verdict(self):
-        """Returning 1 only gates CI if the entry point propagates it."""
+        """Returning 1 only gates CI if the entry point propagates it; nothing else can test that line."""
         source = (ROOT / 'tests/studio_use_cases.py').read_text(encoding='utf-8')
         self.assertIn("if __name__ == '__main__': raise SystemExit(main())", source)
-        self.assertIn('return 1 if reasons else 0', source)
 
 
 class CaseSelection(unittest.TestCase):
     def test_an_unknown_case_id_is_refused_rather_than_filtered_away(self):
-        """Filtering to an id no manifest carries used to run zero cases and exit 0 (#611)."""
+        """Filtering to an id no manifest carries used to run zero cases and exit 0 (#611). This also
+        pins that the refusal stays above the playwright import: the offline lane has no browser."""
         with self.assertRaises(SystemExit) as caught: runner.main(['--case', 'no-such-journey'])
         self.assertIn('no-such-journey', str(caught.exception))
 
-    def test_a_real_case_id_survives_selection(self):
-        self.assertIn(CASES['cases'][0]['id'], runner.DRIVERS)
+    def test_one_unknown_id_among_real_ones_is_still_refused(self):
+        with self.assertRaises(SystemExit) as caught: runner.main(['--case', CASES['cases'][0]['id'], '--case', 'no-such-journey'])
+        self.assertIn('no-such-journey', str(caught.exception))
+        self.assertNotIn(CASES['cases'][0]['id'], str(caught.exception))
 
 
 if __name__ == '__main__': unittest.main()

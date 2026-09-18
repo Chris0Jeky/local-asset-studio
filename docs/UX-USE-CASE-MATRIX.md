@@ -323,9 +323,12 @@ python tests/studio_use_cases.py --base-url http://127.0.0.1:8191    # live, rea
 
 The runner exits non-zero when any journey missed its success condition, the page raised an error, a
 generation was submitted, or nothing ran at all (an unknown `--case` id is refused rather than filtered
-away). The report is written either way, so a red run still leaves its evidence; `verdict()` holds that
-rule and `tests/test_use_case_matrix.py` pins it without a browser. Until #611 the runner returned 0
-whatever it measured, and each lane carried its own hand-copied gate step to compensate.
+away). **Live mode is the carve-out**: with `--base-url` most journeys stop short because the deny list
+refuses their deciding click by design — see the 3-of-10 live run recorded above — so live journey results
+are advisory and only a submitted generation, a page exception or an empty run turn a live run red. The
+report is written either way, so a red run still leaves its evidence; `verdict()` holds the whole rule and
+`tests/test_use_case_matrix.py` pins it without a browser. Until #611 the runner returned 0 whatever it
+measured, and each lane carried its own hand-copied gate step to compensate.
 
 Needs Playwright and Chromium (`python -m pip install playwright && python -m playwright install chromium`);
 the normal unittest suite needs neither. `.github/workflows/ux-use-cases.yml` runs the offline gate and
