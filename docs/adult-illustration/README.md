@@ -21,20 +21,21 @@ This foundation is non-executing:
 - no generation or training allowance is created;
 - no private reference or artwork is committed;
 - no route is called installed, 16 GB compatible, unrestricted or promoted;
-- no planning record grants runtime authority.
+- no planning or benchmark-result record grants runtime or promotion authority.
 
 It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence, Workflow Studio, Production, character consistency and Repair Studio. It does not add another model registry, workflow store, queue, executor, review database or painting canvas.
 
 ## Validate the foundation
 
-Run the standard-library-only offline gate before changing a programme manifest:
+Run the standard-library-only offline gates before changing a programme manifest or benchmark-result contract:
 
 ```console
 python scripts/validate_adult_illustration.py
-python -m unittest discover -s tests -p "test_adult_illustration.py" -v
+python scripts/validate_adult_illustration_benchmark_result.py
+python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The regression suite specifically rejects a promoted synthetic adapter even when an interval is supplied, non-finite sweep weights, and issue-owner drift away from #404–#413. It does not inspect installed models, call the network or submit generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The benchmark-result validator additionally binds the result to exact corpus and route-manifest Git blobs, requires complete candidate retention and accounting, keeps failure classes distinct, preserves null-versus-zero measurement semantics, and refuses synthetic or machine-only promotion. Neither validator inspects installed models, calls the network or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -53,12 +54,13 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Control vocabulary | [`control-ontology.json`](../../research/adult-illustration/control-ontology.json) |
 | Route research candidates | [`route-candidates.json`](../../research/adult-illustration/route-candidates.json) |
 | Held-out task declarations | [`benchmark-corpus.json`](../../research/adult-illustration/benchmark-corpus.json) |
+| Result/accounting contract example | [`benchmark-result-example.json`](../../research/adult-illustration/benchmark-result-example.json) |
 | Composable genre starts | [`genre-packs.json`](../../research/adult-illustration/genre-packs.json) |
 | Adapter qualification template | [`lora-qualification-example.json`](../../research/adult-illustration/lora-qualification-example.json) |
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-evidence candidates, 21-case finite corpus, validator and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-evidence candidates, 21-case finite corpus, result/accounting contract, validators and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
