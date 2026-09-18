@@ -64,8 +64,6 @@ def main() -> None:
         page.wait_for_selector('#workshopRecipeChange')
         page.wait_for_function("document.querySelector('#createView').__workshopAmbience")
 
-        prompt = page.locator('#positive').element_handle()
-        source = page.locator('#reference').element_handle()
         page.select_option('#workshopLayout', 'immersive')
         page.select_option('#workshopAmbience', 'night-shift')
         page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'poster'")
@@ -83,8 +81,8 @@ def main() -> None:
         assert missing['renderMode'] == 'tokens'
         assert page.locator('#workshopAmbienceHero').is_visible()
         assert page.evaluate("getComputedStyle(workshopAmbienceHero,'::after').backgroundImage === 'none'")
-        assert page.locator('#positive').element_handle() == prompt
-        assert page.locator('#reference').element_handle() == source
+        assert page.evaluate("document.getElementById('positive') === originalNodes.positive")
+        assert page.evaluate("document.getElementById('reference') === originalNodes.reference")
         assert page.evaluate('submitted') == 0
         checks.append({'name': 'missing poster falls back to tokens and preserves controls'})
 
