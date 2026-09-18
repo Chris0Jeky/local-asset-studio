@@ -26,7 +26,7 @@ def export() -> str:
         css = path.read_text(encoding='utf-8')
         css = re.sub(r"url\(['\"]?/static/([^'\")]+)['\"]?\)", lambda m: "url('" + data_url(ROOT / 'app/static' / m.group(1)) + "')", css)
         css = re.sub(r"url\(['\"]?(workshop-assets/[^'\")]+)['\"]?\)", lambda m: "url('" + data_url(path.parent / m.group(1)) + "')", css)
-        identity = ' id="workshopStyles"' if 'workshopStyles' in match.group(0) else ''
+        identity = ' id="workshopStyles"' if 'workshopStyles' in match.group(0) else ' id="workshopImmersiveStyles"' if 'workshopImmersiveStyles' in match.group(0) else ''
         return '<style' + identity + '>' + css + '</style>'
     html = re.sub(r'<link\s+([^>]*?)href="([^"]+)"[^>]*>', style, html)
     def script(match):

@@ -15,23 +15,42 @@
   else start();
 })(typeof window !== 'undefined' ? window : null, function () {
   'use strict';
-  const STORAGE_KEY = 'studio.workshop.presentation.v1';
-  const LAYOUTS = Object.freeze({focus:'Focus',studio:'Studio'});
-  const SKINS = Object.freeze({atelier:'Atelier',arcade:'Arcade',sakura:'Sakura'});
+  const LEGACY_STORAGE_KEY = 'studio.workshop.presentation.v1';
+  const STORAGE_KEY = 'studio.workshop.presentation.v2';
+  const LAYOUTS = Object.freeze({focus:'Focus',studio:'Studio',immersive:'Immersive Studio'});
+  const SKINS = Object.freeze({atelier:'Atelier',arcade:'Arcade',sakura:'Sakura','retro-anime':'Retro Anime'});
+  const AMBIENCES = Object.freeze({none:'None','night-shift':'Night Shift','quiet-morning':'Quiet Morning'});
+
   function preferences(value) {
     const plain = value && typeof value === 'object' && !Array.isArray(value);
     const own = key => plain && Object.hasOwn(value, key) ? value[key] : null;
-    return {layout:Object.hasOwn(LAYOUTS, own('layout')) ? own('layout') : 'focus',
-      skin:Object.hasOwn(SKINS, own('skin')) ? own('skin') : 'atelier'};
+    return {
+      layout:Object.hasOwn(LAYOUTS, own('layout')) ? own('layout') : 'focus',
+      skin:Object.hasOwn(SKINS, own('skin')) ? own('skin') : 'atelier',
+      ambience:Object.hasOwn(AMBIENCES, own('ambience')) ? own('ambience') : 'none'
+    };
+  }
+  function parseStored(storage, key) {
+    try {
+      const raw = storage?.getItem(key);
+      if (!raw || raw.length >= 2048) return null;
+      const value = JSON.parse(raw);
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+    } catch (_) { return null; }
   }
   function readPreferences(storage) {
-    try { const raw = storage?.getItem(STORAGE_KEY); return preferences(raw && raw.length < 2048 ? JSON.parse(raw) : null); }
-    catch (_) { return preferences(null); }
+    try {
+      const current = parseStored(storage, STORAGE_KEY);
+      if (current) return preferences(current);
+      const legacy = parseStored(storage, LEGACY_STORAGE_KEY);
+      return preferences(legacy);
+    } catch (_) { return preferences(null); }
   }
   function writePreferences(storage, value) {
     try { if (!storage) return false; storage.setItem(STORAGE_KEY, JSON.stringify(preferences(value))); return true; }
     catch (_) { return false; }
   }
+
   function mount(w, bridge = {}) {
     const d = w.document, q = selector => d.querySelector(selector), create = q('#createView');
     if (!create || create.__workshop) return create?.__workshop || null;
@@ -41,8 +60,13 @@
     if (!editor || !setup || !parameters || !runBox || !actions || !q('#positive') || !q('#presetList')) return null;
     let storage;
     try { storage = w.localStorage; } catch (_) { storage = null; }
-    let initialiseDisclosure = true;
-    try { initialiseDisclosure = !storage?.getItem(STORAGE_KEY); } catch (_) { /* This tab can still use the workshop. */ }
+    let initialiseDisclosure = true, persistInitialPresentation = true;
+    try {
+      const hasCurrentPresentation = !!storage?.getItem(STORAGE_KEY);
+      const hasLegacyPresentation = !!storage?.getItem(LEGACY_STORAGE_KEY);
+      initialiseDisclosure = !hasCurrentPresentation && !hasLegacyPresentation;
+      persistInitialPresentation = !hasCurrentPresentation;
+    } catch (_) { /* This tab can still use the workshop. */ }
     // A details toggle is deferred; flush the visible choice before navigation
     // through the existing session-preference owner, not a second settings store.
     w.addEventListener('pagehide', () => {
@@ -54,7 +78,7 @@
       const node = d.createElement(tag); if (className) node.className = className;
       if (text !== undefined) node.textContent = text; return node;
     };
-    const text = (node, value) => { if (node.textContent !== value) node.textContent = value; };
+    const text = (node, value) => { if (node && node.textContent !== value) node.textContent = value; };
     const button = (id, label, callback) => {
       const node = el('button', '', label); node.id = id; node.type = 'button';
       node.addEventListener('click', callback); return node;
@@ -66,8 +90,66 @@
     if (!q('#workshopStyles')) {
       const css = el('link'); css.id = 'workshopStyles'; css.rel = 'stylesheet'; css.href = '/static/workshop.css'; d.head.append(css);
     }
+    if (!q('#workshopImmersiveStyles')) {
+      const css = el('link'); css.id = 'workshopImmersiveStyles'; css.rel = 'stylesheet'; css.href = '/static/workshop-immersive.css'; d.head.append(css);
+    }
     create.classList.add('workshop');
+
+    const hero = el('section', 'wk-immersive-hero'); hero.id = 'workshopAmbienceHero';
+    const heroCopy = el('div', 'wk-hero-copy');
+    heroCopy.append(el('span', 'eyebrow', 'LOCAL / PRIVATE / YOURS'));
+    const heroTitle = el('h2', '', 'Turn your ideas into something real.');
+    const heroText = el('p', '', 'A calm visual environment around the same working draft.');
+    heroCopy.append(heroTitle, heroText);
+    const heroArt = el('div', 'wk-hero-art'); heroArt.setAttribute('aria-hidden','true');
+    hero.append(heroCopy, heroArt);
+
+    const modebar = el('nav', 'wk-modebar'); modebar.setAttribute('aria-label','Create workspace routes');
+    const currentMode = el('button', 'active', 'Generate'); currentMode.type = 'button'; currentMode.setAttribute('aria-current','page');
+    currentMode.addEventListener('click', () => q('#positive')?.focus({preventScroll:true}));
+    const route = (label, href) => { const link = el('a', '', label); link.href = href; return link; };
+    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Runs & review','/#production'));
+
     const toolbar = el('div', 'wk-toolbar');
+    const preferenceNotice = el('p', 'wk-preference-notice'); preferenceNotice.setAttribute('role','status');
+    const selectControls = el('div', 'wk-select-controls');
+    function persistPresentation() {
+      text(preferenceNotice, writePreferences(storage, state) ? '' : 'Appearance applies in this tab; browser storage is unavailable.');
+    }
+    function updatePreference(key, value) {
+      state = preferences({...state, [key]:value});
+      applyPresentation(); persistPresentation();
+    }
+    function choice(id, label, options, key) {
+      const wrap = el('label', 'wk-select-control', label), select = el('select'); select.id = id;
+      for (const [value, name] of Object.entries(options)) { const option = el('option', '', name); option.value = value; select.append(option); }
+      select.value = state[key]; wrap.append(select); selectControls.append(wrap);
+      select.addEventListener('change', () => updatePreference(key, select.value));
+      return select;
+    }
+    const layoutSelect = choice('workshopLayout', 'Layout', LAYOUTS, 'layout');
+    const ambienceSelect = choice('workshopAmbience', 'Ambience', AMBIENCES, 'ambience');
+    const skinControl = el('div', 'wk-skin-control');
+    const skinLabel = el('span', 'wk-control-label', 'Skin');
+    const nativeSkinLabel = el('label', 'wk-native-skin-select', 'Skin');
+    const skinSelect = el('select'); skinSelect.id = 'workshopSkin'; skinSelect.setAttribute('aria-label','Skin');
+    for (const [value, name] of Object.entries(SKINS)) { const option = el('option', '', name); option.value = value; skinSelect.append(option); }
+    skinSelect.value = state.skin; nativeSkinLabel.append(skinSelect);
+    const skinPicker = el('div', 'wk-skin-picker'); skinPicker.setAttribute('role','group'); skinPicker.setAttribute('aria-label','Visual skin');
+    const skinButtons = new Map();
+    for (const [value, name] of Object.entries(SKINS)) {
+      const skinButton = button('workshopSkinChoice-'+value, name, () => updatePreference('skin', value));
+      skinButton.className = 'wk-skin-choice'; skinButton.dataset.workshopSkinChoice = value;
+      const swatch = el('span', 'wk-skin-swatch'); swatch.setAttribute('aria-hidden','true');
+      skinButton.prepend(swatch); skinPicker.append(skinButton); skinButtons.set(value, skinButton);
+    }
+    skinSelect.addEventListener('change', () => updatePreference('skin', skinSelect.value));
+    skinControl.append(skinLabel, nativeSkinLabel, skinPicker);
+    toolbar.append(selectControls, skinControl, preferenceNotice);
+
+    const setupRail = el('aside', 'wk-setup-rail'); setupRail.id = 'workshopSetupRail';
+    const setupHeading = el('div', 'wk-rail-heading');
+    setupHeading.append(el('span', 'eyebrow', 'RECIPE & READINESS'), el('h2', '', 'Run setup'));
     const recipeChip = el('div', 'wk-recipe');
     const recipeMark = el('span', 'wk-recipe-mark', '✦'); recipeMark.setAttribute('aria-hidden','true');
     const recipeInfo = el('div'); recipeInfo.append(el('small', '', 'ACTIVE RECIPE'));
@@ -75,20 +157,14 @@
     const change = button('workshopRecipeChange', 'Change recipe', () => openRecipes());
     change.setAttribute('aria-haspopup', 'dialog'); change.setAttribute('aria-controls', 'workshopRecipeDialog');
     recipeChip.append(recipeMark, recipeInfo, change);
-    const presentation = el('div', 'wk-presentation');
-    function choice(id, label, options, key) {
-      const wrap = el('label', '', label), select = el('select'); select.id = id;
-      for (const [value, name] of Object.entries(options)) { const option = el('option', '', name); option.value = value; select.append(option); }
-      select.value = state[key]; wrap.append(select); presentation.append(wrap);
-      select.addEventListener('change', () => { state = preferences({...state, [key]:select.value}); applyPresentation();
-        text(preferenceNotice, writePreferences(storage, state) ? '' : 'Appearance applies in this tab; browser storage is unavailable.'); });
-    }
-    choice('workshopLayout', 'Layout', LAYOUTS, 'layout'); choice('workshopSkin', 'Skin', SKINS, 'skin');
-    const preferenceNotice = el('p', 'wk-preference-notice'); preferenceNotice.setAttribute('role','status');
     const quickTune = button('workshopTune', 'Fine-tune the recipe', () => reveal(parameters));
-    quickTune.className = 'wk-quick-tune'; parameters.id = 'workshopParameters';
-    quickTune.setAttribute('aria-controls', parameters.id);
-    toolbar.append(recipeChip, presentation, quickTune, preferenceNotice); editor.before(toolbar);
+    quickTune.className = 'wk-quick-tune'; parameters.id = 'workshopParameters'; quickTune.setAttribute('aria-controls', parameters.id);
+    const setupStatus = el('div', 'wk-setup-status');
+    const setupReadiness = el('strong', '', 'Checking readiness…'); setupReadiness.id = 'workshopSetupReadiness';
+    const setupEta = el('span', '', 'Runtime estimate not available'); setupEta.id = 'workshopSetupEta';
+    setupStatus.append(setupReadiness, setupEta);
+    setupRail.append(setupHeading, recipeChip, quickTune, setupStatus);
+    editor.before(hero, modebar, toolbar, setupRail);
 
     // One native modal around the current picker. Its search, shortlist and handlers are unchanged.
     const recipeDialog = el('dialog', 'wk-recipe-dialog'); recipeDialog.id = 'workshopRecipeDialog';
@@ -199,6 +275,8 @@
     const review = disclosure('workshopChecks', 'Readiness & run details', [runBox]);
     const reviewSummary = review.querySelector('summary');
     editor.append(parameters, inspection, review);
+    const setupReview = button('workshopSetupReview', 'Review readiness', () => reveal(review));
+    setupReview.className = 'wk-setup-review'; setupRail.append(setupReview);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
     readiness.id = 'workshopReadiness'; eta.id = 'workshopEta';
@@ -215,6 +293,25 @@
     create.append(problemsHost, results);
     problemsHost.onclick = q('#gallery')?.onclick;
     q('#generate').addEventListener('click', () => { if (!q('#generate').disabled) results.open = true; }, true);
+
+    const guidance = el('aside', 'wk-guidance'); guidance.id = 'workshopGuidance';
+    guidance.append(el('span', 'eyebrow', 'ONE NEXT ACTION'));
+    const guidanceTitle = el('h2', '', 'Review readiness'); guidanceTitle.id = 'workshopGuidanceTitle';
+    const guidanceDescription = el('p', '', 'Use the current readiness evidence before running.'); guidanceDescription.id = 'workshopGuidanceDescription';
+    const guidanceAction = button('workshopGuidanceAction', 'Review readiness', () => {
+      const action = guidanceAction.dataset.action;
+      if (action === 'review') reveal(review);
+      else if (action === 'generate') { q('#generate')?.focus({preventScroll:true}); q('#generate')?.scrollIntoView({block:'center',behavior:'instant'}); }
+      else if (action === 'results') { results.open = true; results.querySelector('summary')?.focus({preventScroll:true}); results.scrollIntoView({block:'center',behavior:'instant'}); }
+    });
+    const guidanceWhy = el('details', 'wk-guidance-why'); guidanceWhy.id = 'workshopGuidanceWhy';
+    guidanceWhy.append(el('summary', '', 'Why this?'));
+    const guidanceReason = el('p', '', 'Based on existing UI observations. No job is submitted.');
+    guidanceWhy.append(guidanceReason);
+    const guidanceSecondary = el('p', 'wk-guidance-secondary', 'Presentation never changes execution authority.');
+    guidance.append(guidanceTitle, guidanceDescription, guidanceAction, guidanceWhy, guidanceSecondary);
+    editor.after(guidance);
+
     function reveal(target) {
       if (!target || create.hidden) return;
       if (setup.contains(target)) openRecipes();
@@ -243,8 +340,21 @@
       for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
     }
     function applyPresentation() {
-      create.dataset.workshopLayout = state.layout; d.body.dataset.workshopSkin = state.skin;
-      results.open = state.layout === 'studio';
+      create.dataset.workshopLayout = state.layout;
+      create.dataset.workshopAmbience = state.ambience;
+      d.body.dataset.workshopSkin = state.skin;
+      d.body.dataset.workshopAmbience = state.ambience;
+      hero.dataset.ambience = state.ambience;
+      hero.hidden = state.ambience === 'none';
+      layoutSelect.value = state.layout; ambienceSelect.value = state.ambience; skinSelect.value = state.skin;
+      for (const [value, skinButton] of skinButtons) {
+        const active = value === state.skin; skinButton.setAttribute('aria-pressed', String(active)); skinButton.classList.toggle('active', active);
+      }
+      results.open = state.layout === 'studio' || state.layout === 'immersive';
+      text(heroTitle, state.ambience === 'quiet-morning' ? 'Make room for the next idea.' : 'Turn your ideas into something real.');
+      text(heroText, state.ambience === 'quiet-morning'
+        ? 'The same private workspace, with a quieter morning atmosphere.'
+        : 'A calm visual environment around the same working draft.');
     }
     function sync() {
       const active = !create.hidden;
@@ -254,9 +364,10 @@
       text(recipeName, recipe?.name || q('#uxRecipeLabel')?.textContent || 'Choose a starting point');
       // One-time presentation migration, after the first real recipe has rendered.
       // Existing negative-wrap toggle handling remains the session preference owner.
-      if (initialiseDisclosure && recipe) {
-        initialiseDisclosure = false; if (q('#negativeWrap')) q('#negativeWrap').open = false;
-        writePreferences(storage, state);
+      if (recipe && (initialiseDisclosure || persistInitialPresentation)) {
+        if (initialiseDisclosure && q('#negativeWrap')) q('#negativeWrap').open = false;
+        if (persistInitialPresentation) writePreferences(storage, state);
+        initialiseDisclosure = false; persistInitialPresentation = false;
       }
       groupControls();
       const value = key => q('[data-key="'+key+'"]')?.value;
@@ -268,15 +379,33 @@
       text(paramHint, [summary, seed].filter(Boolean).join(' · '));
       text(quickTune, summary+'   ·   Tune settings ↗');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
-      text(readiness, blocked ? first || 'Review readiness before generating.' : 'No blockers reported');
+      const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
+      text(readiness, readinessText); text(setupReadiness, readinessText);
       const time = q('#estimateValue')?.textContent;
-      text(eta, estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available');
+      const etaText = estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available';
+      text(eta, etaText); text(setupEta, etaText);
       text(reviewSummary, blocked ? 'Readiness & run details · needs attention' : 'Readiness & run details');
       const pending = ['uxRestoreDraft','uxKeepDraft'].some(id => q('#'+id) && !q('#'+id).hidden);
       if (draftOptions && pending && !recoveryPending) draftOptions.open = true;
       recoveryPending = pending;
       const outputs = q('#gallery')?.querySelectorAll('.imageCard').length || 0;
       text(results.querySelector('summary'), 'Recent runs'+(outputs ? ' · '+outputs+' output'+(outputs === 1 ? '' : 's') : ''));
+      if (blocked) {
+        text(guidanceTitle, 'Resolve the next blocker');
+        text(guidanceDescription, first || 'Open readiness details to see what the current recipe still needs.');
+        text(guidanceAction, 'Review readiness'); guidanceAction.dataset.action = 'review';
+        text(guidanceReason, 'This uses the first blocker already reported by the existing readiness owner.');
+      } else if (outputs) {
+        text(guidanceTitle, 'Review the latest result');
+        text(guidanceDescription, outputs+' result'+(outputs === 1 ? ' is' : 's are')+' available in the existing Recent runs surface.');
+        text(guidanceAction, 'Open recent runs'); guidanceAction.dataset.action = 'results';
+        text(guidanceReason, 'This is based on the existing gallery count and does not change the selected output.');
+      } else {
+        text(guidanceTitle, 'Ready when you are');
+        text(guidanceDescription, 'The existing Generate control is enabled. Review the setup or run it when you decide.');
+        text(guidanceAction, 'Focus Generate'); guidanceAction.dataset.action = 'generate';
+        text(guidanceReason, 'The current Generate control is enabled. Focusing it does not submit a job.');
+      }
     }
     const schedule = () => {
       if (scheduled) return; scheduled = true;
@@ -296,11 +425,11 @@
       d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px');
     }) : null;
     resize?.observe(dock);
-    create.__workshop = {reveal, sync, openRecipes, finishRecipeSelection};
+    create.__workshop = {reveal, sync, openRecipes, finishRecipeSelection, preferences:()=>({...state})};
     applyPresentation(); sync();
     // A recipe-goal deep link is an explicit request to open discovery.
     if (new w.URLSearchParams(w.location.search).has('recipe_goal')) openRecipes();
     return create.__workshop;
   }
-  return {STORAGE_KEY, LAYOUTS, SKINS, preferences, readPreferences, writePreferences, mount};
+  return {LEGACY_STORAGE_KEY, STORAGE_KEY, LAYOUTS, SKINS, AMBIENCES, preferences, readPreferences, writePreferences, mount};
 });

@@ -20,6 +20,20 @@ class WorkshopFrontendTests(unittest.TestCase):
         self.assertIn('[data-workshop-skin="arcade"] .ux-create-heading', css)
         self.assertIn('[data-workshop-skin="sakura"] .ux-create-heading', css)
 
+    def test_immersive_ambience_art_is_local_inert_and_inlined(self):
+        css = (ROOT / 'app/static/workshop-immersive.css').read_text(encoding='utf-8')
+        workshop = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
+        self.assertNotIn('/static/workshop-assets/', css)
+        self.assertEqual(css.count('data:image/svg+xml;base64,'), 2)
+        self.assertIn("css.href = '/static/workshop-immersive.css'", workshop)
+        self.assertNotIn('http://', css)
+        self.assertNotIn('https://', css)
+        for name in ['night-shift.svg', 'quiet-morning.svg']:
+            source = (ROOT / 'app/static/workshop-assets' / name).read_text(encoding='utf-8')
+            self.assertNotIn('<script', source.lower())
+            self.assertNotIn('<foreignObject', source)
+            self.assertNotIn('href=', source)
+
     def test_job_problems_render_into_a_host_outside_recent_runs(self):
         workshop = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
         app = (ROOT / 'app/static/app.js').read_text(encoding='utf-8')
@@ -31,7 +45,7 @@ class WorkshopFrontendTests(unittest.TestCase):
         self.assertIn("document.getElementById?.('jobProblemsHost')", app)
         self.assertIn('if(host)host.innerHTML=problemMarkup;', app)
         self.assertIn("host?'':problemMarkup", app)
-        self.assertIn('problemsHost.onclick = q(\'#gallery\')?.onclick;', workshop)
+        self.assertIn("problemsHost.onclick = q('#gallery')?.onclick;", workshop)
 
     def test_i2v_hold_note_is_not_grouped_into_two_column_fieldset(self):
         js = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
