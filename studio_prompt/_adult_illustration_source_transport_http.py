@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+from http.client import HTTPException
 import time
 from typing import Any, Callable, Mapping
 from urllib.error import HTTPError, URLError
@@ -41,7 +42,12 @@ class _NoRedirectHandler(HTTPRedirectHandler):
 
 
 def _read_bounded_stream(stream: Any, maximum: int) -> bytes:
-    data = stream.read(maximum + 1)
+    try:
+        data = stream.read(maximum + 1)
+    except HTTPException as exc:
+        raise ConnectionError(
+            f"Provider metadata response read failed: {exc}"
+        ) from exc
     if not isinstance(data, bytes):
         raise ValueError("HTTP response reader did not return bytes")
     if len(data) > maximum:
@@ -85,6 +91,10 @@ class StdlibMetadataExchange:
             )
         except TimeoutError:
             raise
+        except HTTPException as exc:
+            raise ConnectionError(
+                f"Provider metadata request failed: {exc}"
+            ) from exc
         except URLError as exc:
             if isinstance(exc.reason, TimeoutError):
                 raise TimeoutError(str(exc.reason)) from exc
