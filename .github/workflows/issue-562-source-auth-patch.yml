@@ -33,6 +33,20 @@ jobs:
           test "$status" -ne 0
           grep -q "inspect_prompt_membership" "$RUNNER_TEMP/source-auth-red.log"
 
+      - name: Align the retained patch guard with reviewed documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/_issue_562_source_auth_patch.py')
+          text = path.read_text(encoding='utf-8')
+          old = "The saved index's content identity is validated, but inspection does not receive source bytes. It therefore records:"
+          new = "The saved index's content identity, current source metadata and current reviewed overlay are validated, but inspection does not receive source bytes. It therefore records:"
+          if text.count(old) != 1:
+              raise SystemExit('Expected exactly one stale evidence-identity guard')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
       - name: Apply exact source reconstruction requirement
         run: python scripts/_issue_562_source_auth_patch.py
 
