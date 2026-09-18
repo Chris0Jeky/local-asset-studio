@@ -540,7 +540,7 @@
     dismissSecondPicture();selectPreset(selected.id,true,true);
     try{
       if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
-      else{const result=await post('/api/assets/reference',{id:item.asset.id});uploaded=result.file;q('#reference').value='';replaceParentAsset('reference',null,item.asset.id);}
+      else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id:item.asset.id});if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');uploaded=result.file;q('#reference').value='';replaceParentAsset('reference',null,item.asset.id);}
       draftDirty=true;saveDraft();syncCreate();announce('Continuation ended. '+secondName(item)+' is now the reference; the prompt is the recipe default.');
     }catch(error){announce(error.message,true);}
   };
