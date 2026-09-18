@@ -1,0 +1,59 @@
+name: Apply remaining issue 600 prompt profile follow-ups
+on:
+  push:
+    branches:
+      - fix/600-prompt-bind-and-blockers
+permissions:
+  contents: write
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply plain-language blocker mappings
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/static/studio-core.js')
+          source = path.read_text(encoding='utf-8')
+          anchor = """      TAGS_REQUIRED:()=>({message:'This profile reads comma-separated tags and \"Approved tags\" is empty. Your description is never turned into tags for you.',action:'Add the tags you approve, or switch to a description-based profile.',fix:'switch-profile'}),
+          """
+          addition = anchor + """      MODEL_SCORE_TOKEN_CONFLICT:()=>({message:'This profile cannot use score_* tokens from another model dialect.',action:'Remove or rewrite the score_* tokens, or switch to a profile that supports them.',fix:''}),
+                MODEL_TAG_ORDER_CONFLICT:()=>({message:'This profile requires quality terms at the end of the approved tag list, but other tags follow them.',action:'Move the quality terms to the final tag group, or remove them.',fix:''}),
+          """.replace('            ', '      ')
+          if addition in source:
+              pass
+          elif anchor in source:
+              path.write_text(source.replace(anchor, addition, 1), encoding='utf-8')
+          else:
+              raise SystemExit('Prompt blocker insertion point changed')
+          PY
+      - name: Verify focused contracts
+        run: |
+          python -m unittest discover -s tests -p test_prompt_profile_review_followups.py -v
+          node tests/prompt_profile_blockers.cjs
+          node tests/studio_ux.cjs
+          python -m unittest discover -s tests -p test_exact_anime_profiles.py -v
+          python -m unittest discover -s tests -p test_source_key_invariant.py -v
+      - name: Validate repository
+        run: |
+          python scripts/validate-repo.py
+          git diff --check
+      - name: Commit verified implementation and retire publisher
+        run: |
+          git rm .github/workflows/agent-patch-600-followups.yml
+          git config user.name 'Cristian Tcaci'
+          git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
+          git add app/static/studio-core.js
+          git commit -m 'fix(prompt): explain exact-profile binding conflicts'
+          git push origin HEAD:fix/600-prompt-bind-and-blockers
