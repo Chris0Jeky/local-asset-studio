@@ -78,12 +78,25 @@ def _render(value: object) -> str:
     ) + "\n"
 
 
+def _preflight_output(output: str | None) -> None:
+    """Refuse unusable destinations before any provider exchange can occur."""
+
+    if output is None:
+        return
+    target = Path(output)
+    if target.exists() or target.is_symlink():
+        raise ValueError(f"Output already exists: {target}")
+    parent = target.parent
+    if parent.is_symlink():
+        raise ValueError(f"Output parent cannot be a symlink: {parent}")
+    if not parent.exists() or not parent.is_dir():
+        raise ValueError(f"Output parent must be an existing directory: {parent}")
+
+
 def _emit(value: object, output: str | None) -> None:
     text = _render(value)
     if output:
         target = Path(output)
-        if target.exists() or target.is_symlink():
-            raise ValueError(f"Output already exists: {target}")
         with target.open("x", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
     else:
@@ -112,6 +125,7 @@ def _error(command: str, exc: Exception) -> dict[str, Any]:
 def main(argv: list[str] | None = None, *, exchange=None) -> int:
     args = _parser().parse_args(argv)
     try:
+        _preflight_output(args.out)
         if not args.allow_network:
             raise ValueError(
                 "--allow-network is required for explicit provider metadata access"
