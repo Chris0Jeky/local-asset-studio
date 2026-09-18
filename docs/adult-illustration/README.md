@@ -25,6 +25,19 @@ This foundation is non-executing:
 
 It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence, Workflow Studio, Production, character consistency and Repair Studio. It does not add another model registry, workflow store, queue, executor, review database or painting canvas.
 
+## Validate the foundation
+
+Run the standard-library-only offline gate before changing a programme manifest:
+
+```console
+python scripts/validate_adult_illustration.py
+python -m unittest discover -s tests -p "test_adult_illustration.py" -v
+```
+
+The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The regression suite specifically rejects a promoted synthetic adapter even when an interval is supplied, non-finite sweep weights, and issue-owner drift away from #404–#413. It does not inspect installed models, call the network or submit generation.
+
+Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
+
 ## Read by task
 
 | Need | Start here |
@@ -61,4 +74,4 @@ Every programme intent must declare unambiguous adult subject status through rev
 
 ## Next useful slice
 
-Implement the stdlib validator and agent skill over these manifests, then map the ontology onto the existing `CreativeIntent` and reviewed setup contracts (#404). Do not begin with downloads or a broad model shelf. The first runtime work is a finite comparison of existing routes plus a small Anima/SDXL/Qwen shortlist under #405 and #409, using the existing coordinator and exact evidence rules.
+Map the validated ontology onto the existing `CreativeIntent` and reviewed setup contracts (#404). Do not begin with downloads or a broad model shelf. The first runtime work is a finite comparison of existing routes plus a small Anima/SDXL/Qwen shortlist under #405 and #409, using the existing coordinator and exact evidence rules.
