@@ -1,0 +1,84 @@
+name: Apply issue 345 board source recovery
+on:
+  push:
+    branches:
+      - fix/345-board-source-recovery
+permissions:
+  contents: write
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prove regressions fail before correction
+        shell: bash
+        run: |
+          set +e
+          node --test tests/workbench_board_source_recovery.cjs > /tmp/board-source-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/board-source-red.log
+          test "$status" -ne 0
+          grep -F "restoring a board draft rechecks and releases an unavailable picture-to-keep copy" /tmp/board-source-red.log
+          grep -F "slot zero does not overwrite uploaded when the continuation source belongs to lastReference" /tmp/board-source-red.log
+      - name: Patch board source lifecycle
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/static/studio-workbench.js')
+          text = path.read_text(encoding='utf-8')
+
+          start_marker = '  async function restoreDraft(draft){'
+          end_marker = "\n  q('#uxRestoreDraft').onclick="
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          current = text[start:end]
+          assert "if(!selected.reference_slots?.length)" in current
+          assert "uploaded=lastUploaded=null" in current
+
+          replacement = """  async function restoreDraft(draft){
+            if(!draft)return;if(!catalog?.presets.some(p=>p.id===draft.recipe.preset)){announce('This draft needs a recipe that is not in the current catalog.',true);return;}
+            restoring=true;let epoch=null,checkedInputs=[];
+            try{applySaved(draft.recipe);epoch=selectionEpoch;recipeTemplateHash=draft.templateHash;pendingInputs=new Set(draft.pendingInputs);syncReady();
+              checkedInputs=[...(!selected.reference_slots?.length&&selected.reference&&uploaded?[['reference',uploaded]]:[]),...(selected.last_reference&&lastUploaded?[['lastReference',lastUploaded]]:[])];
+              if(checkedInputs.length){const files=[...new Set(checkedInputs.map(([,file])=>file))],checks=await post('/api/references/check',{files});if(epoch!==selectionEpoch)return;for(const [name,file]of checkedInputs)if(!checks.some(c=>c.file===file&&c.available)){pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;releaseInputParent(name);}}
+              syncCreate();announce('Draft restored. Reattach any missing local files, then review before running.');
+            }catch(err){if(epoch===selectionEpoch){for(const [name,file]of checkedInputs){if(!file)continue;pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;}announce('Input availability could not be checked: '+err.message,true);}}
+            finally{restoring=false;if(epoch===selectionEpoch)draftDirty=false;syncReady();}
+          }"""
+          text = text[:start] + replacement + text[end:]
+
+          old = "if(Number(slot)===0)uploaded=result.file;"
+          new = "if(Number(slot)===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;"
+          assert text.count(old) == 1, text.count(old)
+          text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify focused frontend behavior
+        run: |
+          node --check app/static/studio-workbench.js
+          node --test tests/workbench_board_source_recovery.cjs tests/workbench_handoff_guards.cjs tests/frontend_handoffs.cjs
+          python -m unittest tests.test_workbench_board_source_recovery tests.test_workbench_handoff_guards tests.test_studio_ux -v
+          python scripts/validate-repo.py
+          git diff --check
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          rm .github/workflows/agent-patch-345-board-source.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/static/studio-workbench.js tests/workbench_board_source_recovery.cjs tests/test_workbench_board_source_recovery.py .github/workflows/agent-patch-345-board-source.yml
+          git diff --cached --check
+          git commit -m "fix(workbench): recheck board continuation sources"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
