@@ -1,10 +1,14 @@
 """Offline specification tests; no media, providers or application services."""
 import copy
+from contextlib import redirect_stderr
 import importlib.util
+import io
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent
 
@@ -94,6 +98,19 @@ class ProductionBriefTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn('Unknown asset', result.stderr)
         self.assertNotIn('Traceback', result.stderr)
+
+    def test_cli_malformed_profiles_document_has_the_same_clear_error_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / 'catalog.csv').write_bytes((ROOT / 'catalog.csv').read_bytes())
+            (folder / 'profiles.json').write_text('[]', encoding='utf-8')
+            stderr = io.StringIO()
+            with patch.object(self.mod, 'ROOT', folder), patch.object(sys, 'argv', ['brief.py', 'validate']), redirect_stderr(stderr):
+                code = self.mod.main()
+        self.assertEqual(code, 2)
+        self.assertIn('Asset brief error:', stderr.getvalue())
+        self.assertIn('object', stderr.getvalue().lower())
+        self.assertNotIn('Traceback', stderr.getvalue())
 
 
 if __name__ == '__main__':
