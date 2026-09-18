@@ -1,4 +1,4 @@
-# Publication retry 2: cross-realm state is normalised before assertion.
+# Publication retry 3: retain one final newline in the permanent regression.
 name: Apply issue 345 replacement source guard
 
 on:
