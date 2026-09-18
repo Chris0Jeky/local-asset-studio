@@ -76,6 +76,19 @@ test('timeline enforces a bounded history and safe no-op edges',()=>{
   for(const bad of [0,-1,1.5,Infinity,true,'2'])assert.throws(()=>P.timeline(bad));
 });
 
+test('the typed-position path records before publishing geometry',()=>{
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const start=workbench.indexOf('function applyPosePosition(){');
+  const end=workbench.indexOf("q('#uxPosePositionApply').onclick=applyPosePosition;",start);
+  assert.ok(start>=0&&end>start,'the typed-position handler must be present');
+  const handler=workbench.slice(start,end);
+  const record=handler.indexOf('pushPose();');
+  const publish=handler.indexOf('StudioPoseEditor.move(');
+  assert.ok(record>=0&&publish>=0,'the handler must record and publish one edit');
+  assert.ok(record<publish,
+    'record the current drawing before move publishes its transition, so a first typed edit enables Undo and a branch edit clears Redo');
+});
+
 test('the Combine editor exposes and wires redo without adding a generation path',()=>{
   const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
   assert.match(workbench,/id="uxPoseRedo">Redo<\/button>/);
