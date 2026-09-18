@@ -5,8 +5,10 @@ load remote media, or authorize generation.
 """
 import argparse
 import json
+import os
 import re
 from pathlib import Path
+import shutil
 
 from playwright.sync_api import sync_playwright
 
@@ -54,7 +56,8 @@ def main() -> None:
     errors = []
     requests = []
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch()
+        executable = os.environ.get('STUDIO_BROWSER_EXECUTABLE') or shutil.which('chromium')
+        browser = playwright.chromium.launch(**({'executable_path': executable} if executable else {}))
         context = browser.new_context(viewport={'width': 1440, 'height': 900})
         page = context.new_page()
         page.on('pageerror', lambda error: errors.append(str(error)))
