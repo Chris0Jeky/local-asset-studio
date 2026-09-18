@@ -4,7 +4,7 @@
   "executable": false,
   "authority": "none",
   "research_date": "2026-09-15",
-  "source_baseline": "b29205cfc95ca4e64d72ae38d53df30c83968997",
+  "source_baseline": "d73f67db48257e635def2170b67cefd6a3165098",
   "epic": 403,
   "parent_issue": 14,
   "entry_document": "docs/adult-illustration/README.md",
@@ -18,16 +18,18 @@
     "genre_packs": 410,
     "training": 411,
     "finishing": 412,
-    "agents": 413
+    "agents": 413,
+    "prompt_dialects": 432,
+    "source_intake": 433
   },
   "milestones": [
-    {"id":"A0","goal":"Architecture, static contracts, validator and agent handoff","issues":[403,404,409,413]},
-    {"id":"A1","goal":"One controlled adult-character vertical slice","issues":[405,407,408,409]},
-    {"id":"A2","goal":"Qualified modular controls and adapter interactions","issues":[406,407,409]},
+    {"id":"A0","goal":"Architecture, static contracts, source provenance, prompt intelligence, validators and agent handoff","issues":[403,404,409,413,432,433]},
+    {"id":"A1","goal":"One controlled adult-character vertical slice","issues":[405,407,408,409,432]},
+    {"id":"A2","goal":"Qualified modular controls and adapter interactions","issues":[406,407,409,433]},
     {"id":"A3","goal":"Role-separated multi-reference and multi-subject composition","issues":[408,409]},
     {"id":"A4","goal":"Composable guided genre portfolio","issues":[410,118,120]},
     {"id":"A5","goal":"Justified training and qualified finishing","issues":[411,412]},
-    {"id":"A6","goal":"Shared UI, CLI, SDK and MCP operation","issues":[413,123]}
+    {"id":"A6","goal":"Shared UI, CLI, SDK and MCP operation","issues":[413,123,432,433]}
   ],
   "requirements": [
     {"id":"AI-ADULT","issues":[404,409]},
@@ -41,11 +43,13 @@
     {"id":"AI-TRAIN","issues":[411]},
     {"id":"AI-FINISH","issues":[412,256,257]},
     {"id":"AI-AGENT","issues":[413,123]},
+    {"id":"AI-PROMPT","issues":[432,35,37,38]},
+    {"id":"AI-SOURCE","issues":[433,9,144,356]},
     {"id":"AI-RESOURCE","issues":[405,178,302]},
     {"id":"AI-AUTHORITY","issues":[10,22,122]}
   ],
-  "reuse": [9,10,14,16,21,22,35,37,38,65,66,71,72,118,120,122,123,144,178,232,243,245,248,249,251,256,257,302,313,343,357],
-  "next_issue": 404,
+  "reuse": [9,10,14,16,21,22,35,37,38,65,66,71,72,118,120,122,123,144,178,232,243,245,248,249,251,256,257,302,313,343,356,357],
+  "next_issue": 432,
   "notes": [
     "This index navigates research and issue ownership; it is not a scheduler, model registry, workflow, prompt or authority record.",
     "All public fixtures are synthetic, adult-only and non-explicit.",
