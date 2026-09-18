@@ -38,7 +38,10 @@ def main():
             page.wait_for_function('document.querySelector("#workshopEta").textContent.includes("42")')
             page.wait_for_timeout(200)
             height = page.evaluate('document.documentElement.scrollHeight')
-            assert height < 1600, height
+            # Focus keeps Recent runs closed; the collapsed Problems summary stays in the first viewport.
+            assert height < 1700, height
+            assert not page.locator('#workshopResults').evaluate('(el)=>el.open')
+            assert page.evaluate("document.getElementById('jobProblemsHost') && !document.getElementById('workshopResults').contains(document.getElementById('jobProblemsHost'))")
             for selector in ['#positive','#generate','#workshopRecipeChange']:
                 box = page.locator(selector).bounding_box()
                 assert box and box['y'] >= 0 and box['y'] + box['height'] < 900, (selector,box)

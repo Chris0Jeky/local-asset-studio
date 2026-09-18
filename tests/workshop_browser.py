@@ -48,7 +48,7 @@ def main():
         assert not page.locator('.ux-parameters').evaluate('(el)=>el.open')
         assert not page.locator('#negativeWrap').evaluate('(el)=>el.open')
         height=page.evaluate('document.documentElement.scrollHeight')
-        assert height < 1600, height
+        assert height < 1700, height
         assert page.locator('#generate').bounding_box()['y'] < 900
         assert page.locator('#positive').bounding_box()['y'] < 900
         page.screenshot(path=str(args.output/'focus-atelier.png'),full_page=True)
