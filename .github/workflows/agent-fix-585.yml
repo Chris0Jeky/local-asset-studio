@@ -34,25 +34,11 @@ jobs:
               assert text.count(import_line) == 1
               text = text.replace(import_line, import_line + "    from test_server import server\n", 1)
 
-          old = '''    class PromptFixtureBase(fixture.Handler):
-              studio = None
-
-              def _json(self, status, value):
-                  return self.json(value, status)
-
-              def _safe_host(self):
-                  return self.headers.get('Host') == '127.0.0.1:%s' % self.server.server_port
-
-              def _safe_mutation(self):
-                  return self._safe_host() and self.headers.get('Origin') == 'http://127.0.0.1:%s' % self.server.server_port
-
-              def _content_length(self, limit):
-                  length = int(self.headers.get('Content-Length', '-1'))
-                  if not 0 <= length <= limit:
-                      raise ValueError('Request too large')
-                  return length
-          '''
-          new = '''    class PromptFixtureBase(fixture.Handler):
+          start_marker = '    class PromptFixtureBase(fixture.Handler):\n'
+          end_marker = '    class Handler(extend_handler(PromptFixtureBase)):\n'
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          replacement = '''    class PromptFixtureBase(fixture.Handler):
               studio = None
               _safe_host = server.Handler._safe_host
               _safe_mutation = server.Handler._safe_mutation
@@ -60,9 +46,10 @@ jobs:
 
               def _json(self, status, value):
                   return self.json(value, status)
+
           '''
-          assert text.count(old) == 1, 'expected copied transport guard block once'
-          runner.write_text(text.replace(old, new, 1), encoding='utf-8')
+          text = text[:start] + replacement + text[end:]
+          runner.write_text(text, encoding='utf-8')
 
           current_path = Path('research/ux/use-cases.json')
           current = json.loads(current_path.read_text(encoding='utf-8'))
