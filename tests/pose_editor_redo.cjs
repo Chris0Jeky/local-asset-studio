@@ -69,7 +69,10 @@ test('the Combine editor exposes and wires redo without adding a generation path
   assert.match(workbench,/poseTimeline\.undo\(posePoints,poseHome\)/);
   assert.match(workbench,/poseTimeline\.redo\(posePoints,poseHome\)/);
   assert.match(workbench,/redo\.disabled=.*!poseTimeline\.canRedo/);
-  assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'redo remains a local drawing operation');
+  const redoHandler=workbench.match(/q\('#uxPoseRedo'\)\.onclick=\(\)=>\{[^\n]+\};/);
+  assert.ok(redoHandler,'the workbench must own one explicit redo handler');
+  assert.doesNotMatch(redoHandler[0],/\b(?:post|fetch|usePose)\s*\(/,
+    'redo remains a local drawing operation');
 });
 
 console.log(count+' pose editor redo contracts passed.');
