@@ -18,15 +18,37 @@ Executed against the exact local files prepared for this PR:
 
 The source SVGs were inspected for scripts, `foreignObject` and external references. Production uses inert CSS data copies so SVG serving is not added to the application.
 
+## Source-state presentation bridge
+
+The presentation bridge now represents a recipe's reference board and its distinct `last_reference` input separately. This does not change the reference-board owner or readiness calculation. It prevents read-only guidance from reporting the board as complete while omitting the picture-to-keep role.
+
+A regression-first browser journey reproduced the earlier gap before the implementation: a board recipe with a staged pose source and no picture-to-keep projected as fully satisfied and had no `last-reference` slot. After the correction:
+
+- `python tests/workshop_source_bridge.py --output .runtime/workshop-source-bridge`: **2 grouped checks passed**;
+- the staged board source and missing picture-to-keep remain distinct roles;
+- staging `lastUploaded` satisfies only the `last-reference` role;
+- guarded recipe replacement still asks for confirmation when the carried state is a staged last reference, a restored missing reference record, or retained parent-asset lineage;
+- rejecting the confirmation preserves the current recipe and selection count;
+- the journey records zero generation submissions, external requests and page exceptions.
+
+Fresh supporting verification against the exact production file:
+
+- `node --check app/static/workshop.js`: pass;
+- `node --test tests/presentation_context.cjs tests/workshop_contracts.cjs`: **27 tests passed**;
+- `python tests/workshop_browser.py --output .runtime/workshop-component`: **8 check groups passed**.
+
+The correction is read-only presentation plumbing. It does not change upload validation, reference restoration, graph bindings, `referencesReady()`, prompt application or Generate authority.
+
 ## Hosted native browser gate
 
-`Workshop UI` runs the component driver, lifecycle/handoff checks, `tests/workshop_application.py`, the prototype driver and exporter. The actual-application driver uses native HTTP/browser storage and the real frontend against the existing synthetic API. It must verify:
+`Workshop UI` runs the component driver, the focused source-state bridge journey, lifecycle/handoff checks, `tests/workshop_application.py`, the prototype driver and exporter. The actual-application driver uses native HTTP/browser storage and the real frontend against the existing synthetic API. It must verify:
 
 - Focus + Atelier + None remains the production default;
 - v2 presentation preferences contain only layout/skin/ambience;
 - all presentation combinations preserve real source lineage and controls;
 - one explicit Generate reaches the original handler exactly once and is rejected by the fixture;
-- desktop/mobile geometry has no additional submissions or page exceptions.
+- desktop/mobile geometry has no additional submissions or page exceptions;
+- carried source state remains visible to replacement confirmation and presentation guidance.
 
 Current-head hosted results must be inspected before the PR is marked review-ready. A queued or older green run is not evidence for this head.
 
