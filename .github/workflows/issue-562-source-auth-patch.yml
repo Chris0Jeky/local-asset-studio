@@ -1,0 +1,346 @@
+name: Issue 562 taxonomy source authentication
+
+on:
+  push:
+    branches:
+      - codex/adult-illustration-taxonomy-membership-inspection
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Confirm forged-source regression is red
+        shell: bash
+        run: |
+          set +e
+          python -m unittest tests.test_adult_illustration_prompt_membership_source_auth -v > "$RUNNER_TEMP/source-auth-red.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/source-auth-red.log"
+          test "$status" -ne 0
+          grep -q "inspect_prompt_membership" "$RUNNER_TEMP/source-auth-red.log"
+
+      - name: Require exact source reconstruction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one replacement, found {count}")
+              return text.replace(old, new)
+
+          module_path = Path('studio_prompt/adult_illustration_prompt_membership.py')
+          module = module_path.read_text(encoding='utf-8')
+          module = module.replace('import copy\n', '')
+          module = module.replace(
+              'from .adult_illustration_taxonomy import _validate_identity\n',
+              'from .adult_illustration_taxonomy import validate_taxonomy_index\n',
+          )
+          module = module.replace('    load_taxonomy_contracts,\n', '')
+          module = re.sub(
+              r'\n_SOURCE_FIELDS = \(.*?\n\)\n_REVIEW_FIELDS = \(.*?\n\)\n',
+              '\n',
+              module,
+              flags=re.S,
+          )
+          module, count = re.subn(
+              r'def _validated_index\(value: Any, root: Path \| str\) -> dict\[str, Any\]:\n.*?\n\ndef _require_compatible',
+              '''def _validated_index(
+              value: Any, source_bytes: bytes, root: Path | str
+          ) -> dict[str, Any]:
+              """Rebuild the index from exact source bytes before trusting membership."""
+              return validate_taxonomy_index(value, source_bytes, root)
+
+
+def _require_compatible''',
+              module,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit(f'membership validator: expected one function replacement, found {count}')
+          module = replace_once(
+              module,
+              '''    taxonomy_index: Any,
+              root: Path | str = ".",
+          ) -> dict[str, Any]:''',
+              '''    taxonomy_index: Any,
+              taxonomy_source: bytes,
+              root: Path | str = ".",
+          ) -> dict[str, Any]:''',
+              'inspection signature',
+          )
+          module = replace_once(
+              module,
+              '    index = _validated_index(taxonomy_index, root)\n',
+              '    index = _validated_index(taxonomy_index, taxonomy_source, root)\n',
+              'inspection validation call',
+          )
+          module = replace_once(
+              module,
+              '            "source_revalidated": False,\n',
+              '            "source_revalidated": True,\n',
+              'source revalidation flag',
+          )
+          module = replace_once(
+              module,
+              '''            "The saved index content identity and current source/review contracts "
+              "were validated, but exact source bytes were not rebuilt; "
+              "source_revalidated remains false.",''',
+              '''            "The saved index was rebuilt from exact retained source bytes and "
+              "the current review contract before source membership was classified.",''',
+              'source evidence limit',
+          )
+          module = replace_once(
+              module,
+              '''    taxonomy_index: Any,
+              root: Path | str = ".",
+          ) -> dict[str, Any]:
+              """Recompute a retained report so changed derived evidence fails closed."""''',
+              '''    taxonomy_index: Any,
+              taxonomy_source: bytes,
+              root: Path | str = ".",
+          ) -> dict[str, Any]:
+              """Recompute a retained report so changed derived evidence fails closed."""''',
+              'report validation signature',
+          )
+          module = replace_once(
+              module,
+              '''    expected = inspect_prompt_membership(
+                  compiled_prompt, source_projection, taxonomy_index, root
+              )''',
+              '''    expected = inspect_prompt_membership(
+                  compiled_prompt,
+                  source_projection,
+                  taxonomy_index,
+                  taxonomy_source,
+                  root,
+              )''',
+              'report validation call',
+          )
+          module_path.write_text(module, encoding='utf-8')
+
+          cli_path = Path('scripts/studio_adult_illustration_prompt.py')
+          cli = cli_path.read_text(encoding='utf-8')
+          cli = replace_once(
+              cli,
+              'from studio_prompt.adult_illustration_prompt_projection import (  # noqa: E402\n',
+              'from studio_prompt.adult_illustration_taxonomy_contracts import load_taxonomy_contracts  # noqa: E402\nfrom studio_prompt.adult_illustration_prompt_projection import (  # noqa: E402\n',
+              'CLI contract import',
+          )
+          cli = replace_once(
+              cli,
+              '''def _read_json(path: str | Path, *, limit: int = DOCUMENT_LIMIT) -> Any:
+              with Path(path).open("rb") as stream:
+                  raw = stream.read(limit + 1)
+              if len(raw) > limit:
+                  raise ValueError(f"JSON exceeds {limit} byte limit")''',
+              '''def _read_bounded(path: str | Path, limit: int, label: str) -> bytes:
+              with Path(path).open("rb") as stream:
+                  raw = stream.read(limit + 1)
+              if len(raw) > limit:
+                  raise ValueError(f"{label} exceeds {limit} byte limit")
+              return raw
+
+
+def _read_json(path: str | Path, *, limit: int = DOCUMENT_LIMIT) -> Any:
+              raw = _read_bounded(path, limit, "JSON")''',
+              'bounded reader',
+          )
+          cli = replace_once(
+              cli,
+              '    membership.add_argument("--taxonomy-index", required=True)\n',
+              '    membership.add_argument("--taxonomy-index", required=True)\n    membership.add_argument("--taxonomy-source", required=True)\n',
+              'taxonomy source argument',
+          )
+          cli = replace_once(
+              cli,
+              '''            taxonomy_index = _read_json(
+                  args.taxonomy_index, limit=TAXONOMY_INDEX_LIMIT
+              )
+              value = inspect_prompt_membership(
+                  compiled, source, taxonomy_index, args.repo_root
+              )''',
+              '''            taxonomy_index = _read_json(
+                  args.taxonomy_index, limit=TAXONOMY_INDEX_LIMIT
+              )
+              contracts = load_taxonomy_contracts(args.repo_root)
+              taxonomy_source = _read_bounded(
+                  args.taxonomy_source,
+                  contracts["source"]["bounds"]["max_source_bytes"],
+                  "Taxonomy source",
+              )
+              value = inspect_prompt_membership(
+                  compiled,
+                  source,
+                  taxonomy_index,
+                  taxonomy_source,
+                  args.repo_root,
+              )''',
+              'CLI inspection call',
+          )
+          cli_path.write_text(cli, encoding='utf-8')
+
+          tests_path = Path('tests/test_adult_illustration_prompt_membership.py')
+          tests = tests_path.read_text(encoding='utf-8')
+          tests = tests.replace(
+              'projection, compiled, index = write_fixture(root)',
+              'projection, compiled, index, taxonomy_source = write_fixture(root)',
+          )
+          tests = replace_once(
+              tests,
+              '    return projection, compiled, index\n',
+              '    return projection, compiled, index, source\n',
+              'fixture return',
+          )
+          tests = tests.replace(
+              'inspect_prompt_membership(compiled, projection, index, root)',
+              'inspect_prompt_membership(compiled, projection, index, taxonomy_source, root)',
+          )
+          tests = tests.replace(
+              'inspect_prompt_membership(compiled, projection, stale, root)',
+              'inspect_prompt_membership(compiled, projection, stale, taxonomy_source, root)',
+          )
+          tests = tests.replace(
+              'inspect_prompt_membership(compiled, projection, changed, root)',
+              'inspect_prompt_membership(compiled, projection, changed, taxonomy_source, root)',
+          )
+          tests = tests.replace(
+              'inspect_prompt_membership(compiled, projection, malformed, root)',
+              'inspect_prompt_membership(compiled, projection, malformed, taxonomy_source, root)',
+          )
+          tests = tests.replace(
+              'inspect_prompt_membership(compiled, changed, index, root)',
+              'inspect_prompt_membership(compiled, changed, index, taxonomy_source, root)',
+          )
+          tests = tests.replace(
+              '''                copy.deepcopy(index),
+                  root,
+              )''',
+              '''                copy.deepcopy(index),
+                  taxonomy_source,
+                  root,
+              )''',
+          )
+          tests = tests.replace(
+              'first, compiled, projection, index, root',
+              'first, compiled, projection, index, taxonomy_source, root',
+          )
+          tests = tests.replace(
+              'changed, compiled, projection, index, root',
+              'changed, compiled, projection, index, taxonomy_source, root',
+          )
+          tests = tests.replace(
+              '''                    compiled, projection, index, root
+                  )''',
+              '''                    compiled, projection, index, taxonomy_source, root
+                  )''',
+          )
+          tests = tests.replace(
+              '        self.assertFalse(report["taxonomy"]["source_revalidated"])\n',
+              '        self.assertTrue(report["taxonomy"]["source_revalidated"])\n',
+          )
+          tests = replace_once(
+              tests,
+              '''            index_path = root / "index.json"
+              report_path = root / "report.json"''',
+              '''            index_path = root / "index.json"
+              taxonomy_source_path = root / "selected_tags.csv"
+              report_path = root / "report.json"''',
+              'CLI fixture paths',
+          )
+          tests = replace_once(
+              tests,
+              '''            index_path.write_text(json.dumps(index), encoding="utf-8")
+              args = [''',
+              '''            index_path.write_text(json.dumps(index), encoding="utf-8")
+              taxonomy_source_path.write_bytes(taxonomy_source)
+              args = [''',
+              'CLI source fixture',
+          )
+          tests = replace_once(
+              tests,
+              '''                "--taxonomy-index",
+                  str(index_path),
+                  "--repo-root",''',
+              '''                "--taxonomy-index",
+                  str(index_path),
+                  "--taxonomy-source",
+                  str(taxonomy_source_path),
+                  "--repo-root",''',
+              'CLI source argument',
+          )
+          tests_path.write_text(tests, encoding='utf-8')
+
+          docs_path = Path('docs/adult-illustration/TAXONOMY-MEMBERSHIP-INSPECTION.md')
+          docs = docs_path.read_text(encoding='utf-8')
+          docs = docs.replace(
+              '3. A taxonomy index built from the exact retained CSV and current review contracts:',
+              '3. The exact retained taxonomy CSV.\n4. A taxonomy index built from those exact bytes and current review contracts:',
+          )
+          docs = docs.replace(
+              '  --taxonomy-index .runtime/adult-illustration/taxonomy-index.json \\\n  --out',
+              '  --taxonomy-index .runtime/adult-illustration/taxonomy-index.json \\\n  --taxonomy-source /reviewed/source/selected_tags.csv \\\n  --out',
+          )
+          docs = docs.replace(
+              '2. validates the saved index content identity and strict structure;',
+              '2. deterministically rebuilds the index from the exact retained source bytes and current review contract;',
+          )
+          docs = docs.replace(
+              'The saved index\'s content identity is validated, but inspection does not receive source bytes. It therefore records:',
+              'Inspection receives and validates the exact retained source bytes before classifying source membership. It records:',
+          )
+          docs = docs.replace(
+              '  "source_revalidated": false',
+              '  "source_revalidated": true',
+          )
+          docs = re.sub(
+              r'`source_revalidated: false` is not a failure\..*?required\.\n',
+              '`source_revalidated: true` means the saved index exactly matched deterministic reconstruction from the supplied source bytes and current finite review. A self-rehashed index is insufficient evidence.\n',
+              docs,
+              flags=re.S,
+          )
+          docs_path.write_text(docs, encoding='utf-8')
+          PY
+
+      - name: Run focused membership and compiler contracts
+        run: |
+          python -m py_compile \
+            studio_prompt/adult_illustration_prompt_membership.py \
+            scripts/studio_adult_illustration_prompt.py \
+            tests/test_adult_illustration_prompt_membership.py \
+            tests/test_adult_illustration_prompt_membership_source_auth.py
+          python -m unittest \
+            tests.test_adult_illustration_prompt_membership_source_auth \
+            tests.test_adult_illustration_prompt_membership \
+            tests.test_adult_illustration_taxonomy_prompt_integration \
+            tests.test_adult_illustration_prompt_cli -v
+
+      - name: Commit verified review correction
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            studio_prompt/adult_illustration_prompt_membership.py \
+            scripts/studio_adult_illustration_prompt.py \
+            tests/test_adult_illustration_prompt_membership.py \
+            docs/adult-illustration/TAXONOMY-MEMBERSHIP-INSPECTION.md
+          git commit -m "fix: authenticate taxonomy membership from exact source bytes"
+          git push origin HEAD:codex/adult-illustration-taxonomy-membership-inspection
