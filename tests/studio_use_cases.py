@@ -155,6 +155,7 @@ def build_handler():
     import studio_browser_smoke as fixture
     from studio_workflow.guides import guides
     from studio_workflow.core import catalog, new_document, compile_document
+    from studio_prompt.http_extension import extend_handler
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -173,7 +174,25 @@ def build_handler():
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
 
-    class Handler(fixture.Handler):
+    class PromptFixtureBase(fixture.Handler):
+        studio = None
+
+        def _json(self, status, value):
+            return self.json(value, status)
+
+        def _safe_host(self):
+            return self.headers.get('Host') == '127.0.0.1:%s' % self.server.server_port
+
+        def _safe_mutation(self):
+            return self._safe_host() and self.headers.get('Origin') == 'http://127.0.0.1:%s' % self.server.server_port
+
+        def _content_length(self, limit):
+            length = int(self.headers.get('Content-Length', '-1'))
+            if not 0 <= length <= limit:
+                raise ValueError('Request too large')
+            return length
+
+    class Handler(extend_handler(PromptFixtureBase)):
         def do_GET(self):
             path = urlsplit(self.path).path
             if path == '/api/workflow-studio/guides': return self.json(guides())
@@ -780,6 +799,91 @@ def _combine_loop(c):
         return c.ready(), 'second engine in one click; sources, fills, edited wording and results retained; two reviews saved; same/new seeds prepared; zero generation requests'
     finally:
         fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair'))]
+
+
+@driver('reference-analysis-review-and-apply')
+def _reference_analysis_review(c):
+    import base64
+    from test_reference_review import ReferenceReviewTests
+
+    c.goto('/prompt-lab.html', note='reference review workspace')
+    try:
+        c.page.wait_for_selector('#profile option', state='attached', timeout=8000)
+    except Exception:
+        pass
+
+    if c.live:
+        c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')
+        c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')
+        c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')
+        c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')
+        c.act('#rr-diff', 'read', note='the prepared before/after review surface')
+        c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')
+        c.observe('reference review is registered without generation', True,
+                  'full deterministic preview/apply evidence runs in fixture mode')
+        return True, 'live read-only controls registered; fixture mode owns preview/apply evidence'
+
+    fixture = ReferenceReviewTests()
+    fixture.setUp()
+    analysis = {
+        'name': 'reference-analysis.json',
+        'mimeType': 'application/json',
+        'buffer': json.dumps({'analysis': fixture.report}).encode('utf-8'),
+    }
+    c.page.locator('#rr-analysis').set_input_files(analysis)
+    try:
+        c.page.wait_for_function("document.querySelector('#rr-summary').textContent.trim().length > 0", timeout=8000)
+    except Exception:
+        pass
+    summary_ok = c.page.locator('#rr-summary').inner_text().strip() == fixture.report['answer']['summary']
+    c.observe('the analysis summary and editable facets are shown', summary_ok,
+              'analysis summary did not match the imported report')
+
+    originals = []
+    for index, source in enumerate(fixture.images):
+        originals.append({
+            'name': 'renamed-%d.png' % index,
+            'mimeType': source.get('media_type') or 'image/png',
+            'buffer': base64.b64decode(source['media_base64']),
+        })
+    c.page.locator('#rr-originals').set_input_files(list(reversed(originals)))
+    try:
+        c.page.wait_for_function("document.querySelector('#rr-source-status').textContent.includes('originals matched')", timeout=8000)
+    except Exception:
+        pass
+    matched = '2 originals matched' in c.page.locator('#rr-source-status').inner_text()
+    c.observe('the exact originals are matched by content', matched,
+              c.page.locator('#rr-source-status').inner_text())
+
+    style_selector = '[data-reference="picture-1"] [data-facet="style"] textarea'
+    c.act(style_selector, 'fill', typed='bold expressive ink')
+    checkbox = c.page.locator('[data-reference="picture-1"] [data-facet="style"] input')
+    if checkbox.count() and not checkbox.is_checked():
+        checkbox.check()
+
+    before = c.page.locator('#brief').input_value()
+    c.act('#rr-preview')
+    try:
+        c.page.wait_for_function("!document.querySelector('#rr-apply').disabled", timeout=8000)
+    except Exception:
+        pass
+    prepared = (c.page.locator('#rr-apply').is_enabled() and
+                bool(c.page.locator('#rr-diff').inner_text().strip()) and
+                c.page.locator('#brief').input_value() == before)
+    c.observe('the prepared before and after diff', prepared,
+              'Apply enabled=%s, draft unchanged=%s' % (
+                  c.page.locator('#rr-apply').is_enabled(), c.page.locator('#brief').input_value() == before))
+
+    c.act('#rr-apply')
+    applied_style = c.page.locator('#style').input_value()
+    references = c.page.evaluate('StudioPromptDraft.capture().intent.references.length')
+    retained_diff = c.page.locator('#rr-diff').inner_text().strip()
+    applied = applied_style == 'bold expressive ink' and references == 2 and bool(retained_diff)
+    c.observe('the applied reference draft and retained diff', applied,
+              'style=%r, references=%s, diff retained=%s' % (applied_style, references, bool(retained_diff)))
+    return applied and prepared and matched and summary_ok, \
+        'summary=%s, originals=%s, prepared=%s, references=%s, retained diff=%s' % (
+            summary_ok, matched, prepared, references, bool(retained_diff))
 
 
 @driver('prompt-lab-to-create')
