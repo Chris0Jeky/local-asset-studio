@@ -116,7 +116,8 @@ python -m py_compile \
   scripts/studio_adult_illustration_prompt.py
 
 python -m unittest tests.test_adult_illustration_prompt_membership -v
+python -m unittest tests.test_adult_illustration_prompt_membership_source_auth -v
 python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
 ```
 
-Passing tests establish deterministic evidence classification, strict current-contract binding, bounded parsing, tamper rejection and zero-authority behavior. They do not establish source licence clearance, exact tokenizer behavior, prompt quality, route compatibility or accepted artwork.
+Passing tests establish deterministic evidence classification, exact-source authentication, strict current-contract binding, bounded parsing, tamper rejection and zero-authority behavior. They do not establish source licence clearance, exact tokenizer behavior, prompt quality, route compatibility or accepted artwork.
