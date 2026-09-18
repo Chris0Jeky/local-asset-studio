@@ -53,8 +53,9 @@ def write_fixture(root: Path):
     rows = [
         (1, "solo", 0, 100),
         (2, "mystery_tag", 0, 50),
-        (3, "watermark", 0, 25),
-        (4, "blocked_tag", 0, 10),
+        (3, "second_mystery_tag", 0, 40),
+        (4, "watermark", 0, 25),
+        (5, "blocked_tag", 0, 10),
     ]
     source = csv_bytes(rows)
     reviews = [
@@ -76,7 +77,8 @@ def write_fixture(root: Path):
     intent = copy.deepcopy(sample_projection()["intent"])
     intent["tags"] = [
         "solo",
-        "mystery tag",
+        "mystery_tag",
+        "second mystery tag",
         "blocked tag",
         "not in source",
     ]
@@ -95,7 +97,7 @@ def by_input(report: dict[str, object]) -> dict[tuple[str, str], dict[str, objec
 
 
 class PromptMembershipTests(unittest.TestCase):
-    def test_report_distinguishes_all_membership_states(self) -> None:
+    def test_report_distinguishes_all_membership_states_and_match_kinds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             projection, compiled, index = write_fixture(root)
@@ -108,10 +110,10 @@ class PromptMembershipTests(unittest.TestCase):
         self.assertEqual(
             report["counts"],
             {
-                "inputs": 5,
+                "inputs": 6,
                 "source_known_reviewed_accepted": 2,
                 "source_known_reviewed_ineligible": 1,
-                "source_known_unreviewed": 1,
+                "source_known_unreviewed": 2,
                 "not_in_pinned_source": 1,
             },
         )
@@ -120,18 +122,14 @@ class PromptMembershipTests(unittest.TestCase):
             rows[("positive", "solo")]["membership"]["classification"],
             "source_known_reviewed_accepted",
         )
-        self.assertEqual(
-            rows[("positive", "mystery tag")]["membership"]["classification"],
-            "source_known_unreviewed",
-        )
-        self.assertEqual(
-            rows[("positive", "mystery tag")]["membership"]["source_name"],
-            "mystery_tag",
-        )
-        self.assertEqual(
-            rows[("positive", "mystery tag")]["membership"]["match_kind"],
-            "canonical",
-        )
+        exact = rows[("positive", "mystery_tag")]["membership"]
+        self.assertEqual(exact["classification"], "source_known_unreviewed")
+        self.assertEqual(exact["source_name"], "mystery_tag")
+        self.assertEqual(exact["match_kind"], "canonical")
+        normalised = rows[("positive", "second mystery tag")]["membership"]
+        self.assertEqual(normalised["classification"], "source_known_unreviewed")
+        self.assertEqual(normalised["source_name"], "second_mystery_tag")
+        self.assertEqual(normalised["match_kind"], "normalised_space")
         self.assertEqual(
             rows[("positive", "blocked tag")]["membership"]["classification"],
             "source_known_reviewed_ineligible",
@@ -153,6 +151,7 @@ class PromptMembershipTests(unittest.TestCase):
         )
         self.assertFalse(report["taxonomy"]["source_revalidated"])
         self.assertTrue(report["taxonomy"]["index_identity_validated"])
+        self.assertTrue(report["taxonomy"]["current_contracts_validated"])
         self.assertTrue(all(value is False for value in report["authority"].values()))
 
     def test_report_is_deterministic_and_recomputed_validation_detects_tampering(self) -> None:
@@ -167,6 +166,9 @@ class PromptMembershipTests(unittest.TestCase):
                 root,
             )
             self.assertEqual(first, second)
+            unsigned = copy.deepcopy(first)
+            report_sha256 = unsigned.pop("report_sha256")
+            self.assertEqual(report_sha256, sha256(canonical_bytes(unsigned)))
             self.assertEqual(
                 validate_prompt_membership_report(
                     first, compiled, projection, index, root
@@ -182,15 +184,38 @@ class PromptMembershipTests(unittest.TestCase):
                     changed, compiled, projection, index, root
                 )
 
-    def test_stale_index_contract_identity_is_rejected(self) -> None:
+    def test_stale_index_contract_identities_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            projection, compiled, index = write_fixture(root)
+            for field in ("source_manifest_sha256", "review_manifest_sha256"):
+                with self.subTest(field=field):
+                    stale = copy.deepcopy(index)
+                    stale["contracts"][field] = "0" * 64
+                    rehash(stale)
+                    with self.assertRaisesRegex(ValueError, "source/review contracts"):
+                        inspect_prompt_membership(compiled, projection, stale, root)
+
+    def test_stale_source_metadata_is_rejected_even_after_rehash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             projection, compiled, index = write_fixture(root)
             stale = copy.deepcopy(index)
-            stale["contracts"]["review_manifest_sha256"] = "0" * 64
+            stale["source"]["sha256"] = "0" * 64
             rehash(stale)
-            with self.assertRaisesRegex(ValueError, "contract identity"):
+            with self.assertRaisesRegex(ValueError, "pinned source contract"):
                 inspect_prompt_membership(compiled, projection, stale, root)
+
+    def test_changed_reviewed_entry_is_rejected_even_after_rehash(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            projection, compiled, index = write_fixture(root)
+            changed = copy.deepcopy(index)
+            reviewed = next(item for item in changed["entries"] if item["reviewed"])
+            reviewed["display"] += " changed"
+            rehash(changed)
+            with self.assertRaisesRegex(ValueError, "current review contract"):
+                inspect_prompt_membership(compiled, projection, changed, root)
 
     def test_rehashed_structurally_invalid_index_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -243,6 +268,21 @@ class PromptMembershipCliTests(unittest.TestCase):
             code = self.cli.main(argv)
         return code, stdout.getvalue(), stderr.getvalue()
 
+    def test_json_reader_stops_at_the_requested_bound(self) -> None:
+        class RecordingStream(io.BytesIO):
+            requested = None
+
+            def read(self, size=-1):
+                self.requested = size
+                return super().read(size)
+
+        stream = RecordingStream(b'{"too":"large"}')
+        with mock.patch.object(Path, "open", return_value=stream), self.assertRaisesRegex(
+            ValueError, "5 byte limit"
+        ):
+            self.cli._read_json(Path("ignored.json"), limit=5)
+        self.assertEqual(stream.requested, 6)
+
     def test_cli_round_trip_and_exclusive_create(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -270,7 +310,7 @@ class PromptMembershipCliTests(unittest.TestCase):
             self.assertEqual(code, 0, stderr)
             self.assertEqual(stdout, "")
             report = json.loads(report_path.read_text(encoding="utf-8"))
-            self.assertEqual(report["counts"]["source_known_unreviewed"], 1)
+            self.assertEqual(report["counts"]["source_known_unreviewed"], 2)
             self.assertEqual(
                 report["counts"]["source_known_reviewed_ineligible"], 1
             )
