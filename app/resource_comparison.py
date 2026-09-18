@@ -155,7 +155,9 @@ def _compare(a, b):
     if _workload(left) != _workload(right): result['blockers'].append('saved_workload_mismatch')
     if not sa['sampling']['observed'] or not sb['sampling']['observed']: result['blockers'].append('no_observed_samples')
     if sa['source']['sampler_sha256'] != sb['source']['sampler_sha256']: result['blockers'].append('sampler_source_mismatch')
-    if any('intent_sequence_gap' in r['warnings'] for r in (left, right)): result['blockers'].append('intent_sequence_gap')
+    for warning in ('intent_sequence_gap', 'sample_window_overshoot'):
+        if any(warning in report['warnings'] for report in (left, right)):
+            result['blockers'].append(warning)
     if ra is None or rb is None or ra['lost'] or rb['lost']: result['blockers'].append('runtime_bracket_unavailable')
     if sa['sampling']['interval_seconds_after_completion'] != sb['sampling']['interval_seconds_after_completion']:
         result['warnings'].append('different_sampling_interval')
