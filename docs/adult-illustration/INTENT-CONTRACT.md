@@ -80,6 +80,18 @@ The existing Prompt Lab `CreativeIntent` keeps its own 1,000-character facet and
 
 `examples/adult-illustration/hot-spring-study.json` is a synthetic, non-executing example with three role-separated source declarations. The placeholder source paths and hashes prove the contract only; no image bytes are included or treated as present. Projection returns `requires_binding` and zero generation.
 
+## Offline CLI
+
+The stacked CLI exposes the pure operations without importing model, graph, workspace or production services:
+
+```console
+python scripts/studio_adult_illustration.py validate-intent examples/adult-illustration/hot-spring-study.json
+python scripts/studio_adult_illustration.py project examples/adult-illustration/hot-spring-study.json --out experiments/runs/hot-spring-projection.json
+python scripts/studio_adult_illustration.py validate-projection experiments/runs/hot-spring-projection.json
+```
+
+`--out` uses exclusive creation and never overwrites retained evidence. Validation failures are emitted as JSON on stderr with `execution_authorized: false` and `generation_submitted: false`. A valid `blocked` projection exits successfully because it is an inspectable planning result, not a generation failure. The CLI can round-trip projections above the source intent's 64 KiB budget up to `PROJECTION_MAX_BYTES` without weakening either source or CreativeIntent limits.
+
 ## Next integration
 
-The next slice should expose validate/project through an exclusive-create CLI, then map the projection onto existing revisioned Prompt/Setup commands. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.
+Map retained projections onto existing revisioned Prompt/Setup commands, then bind exact route capabilities. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.

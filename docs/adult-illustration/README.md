@@ -75,4 +75,4 @@ Every programme intent must declare unambiguous adult subject status through rev
 
 ## Next useful slice
 
-Expose strict intent validation and deterministic projection through an exclusive-create CLI, then map retained projections onto existing revisioned Prompt/Setup commands. Route binding remains under #405/#407/#408 and must use the existing coordinator and exact evidence rules rather than authorizing downloads or execution from this contract.
+Map retained intent projections onto existing revisioned Prompt/Setup commands, then bind exact route capabilities under #405/#407/#408. Use the existing coordinator and exact evidence rules; validation and projection artifacts do not authorize downloads or execution.
