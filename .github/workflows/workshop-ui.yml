@@ -7,6 +7,10 @@ on:
       - 'scripts/export-workshop-prototype.py'
       - 'tests/*workshop*'
       - 'tests/studio_browser_smoke.py'
+      - 'tests/setup_apply_browser.py'
+      - 'tests/setup_lineage_browser.py'
+      - 'tests/recipe_shortlist_browser.py'
+      - 'tests/preset_model_browser.py'
       - '.github/workflows/workshop-ui.yml'
 permissions:
   contents: read
@@ -46,12 +50,14 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Native disclosure lifecycle and nested modal handoffs
+        run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
         run: python tests/workshop_application.py --output .runtime/workshop-application
       - name: Offline prototype interactions and screenshots
         run: python tests/workshop_prototype.py --output .runtime/workshop-prototype
       - name: Export standalone prototype
-        run: python scripts/export-workshop-prototype.py --out .runtime/workshop-prototype/index.html
+        run: python scripts/export-workshop-prototype.py --output .runtime/workshop-prototype/index.html
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -59,5 +65,6 @@ jobs:
           path: |
             .runtime/workshop-component/
             .runtime/workshop-application/
+            .runtime/workshop-handoffs/
             .runtime/workshop-prototype/
           retention-days: 7

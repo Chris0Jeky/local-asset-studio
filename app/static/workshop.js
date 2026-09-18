@@ -43,6 +43,12 @@
     try { storage = w.localStorage; } catch (_) { storage = null; }
     let initialiseDisclosure = true;
     try { initialiseDisclosure = !storage?.getItem(STORAGE_KEY); } catch (_) { /* This tab can still use the workshop. */ }
+    // A details toggle is deferred; flush the visible choice before navigation
+    // through the existing session-preference owner, not a second settings store.
+    w.addEventListener('pagehide', () => {
+      const negative = q('#negativeWrap');
+      if (negative) w.rememberNegativeCollapse?.(negative.open);
+    });
     let state = readPreferences(storage), opener = null, pageScroll = null, scheduled = false, recoveryPending = false;
     const el = (tag, className, text) => {
       const node = d.createElement(tag); if (className) node.className = className;
@@ -113,6 +119,12 @@
       }
       opener = null; pageScroll = null;
     });
+    function finishRecipeSelection(target) {
+      if (!recipeDialog.open) return;
+      // Only a successful handoff calls this. Cancel/refusal keeps the picker.
+      // Its deferred close event must restore the destination, not the launcher.
+      opener = target; recipeDialog.close();
+    }
     recipeDialog.addEventListener('keydown', e => {
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.target.closest('input,textarea,select,[contenteditable]')) {
         e.preventDefault(); q('#presetSearch')?.focus();
@@ -280,8 +292,11 @@
       d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px');
     }) : null;
     resize?.observe(dock);
-    create.__workshop = {reveal, sync, openRecipes};
-    applyPresentation(); sync(); return create.__workshop;
+    create.__workshop = {reveal, sync, openRecipes, finishRecipeSelection};
+    applyPresentation(); sync();
+    // A recipe-goal deep link is an explicit request to open discovery.
+    if (new w.URLSearchParams(w.location.search).has('recipe_goal')) openRecipes();
+    return create.__workshop;
   }
   return {STORAGE_KEY, LAYOUTS, SKINS, preferences, readPreferences, writePreferences, mount};
 });
