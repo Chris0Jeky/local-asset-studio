@@ -71,7 +71,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
       return {ok: !(url.includes('/i2v-diagnostic') && diagnostic?.error), json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
     },
   });
-  for (const name of ['app.js', 'references.js', 'workspace.js']) {
+  for (const name of ['app.js', 'reference-model.js', 'references.js', 'workspace.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8'), context);
   }
   const run = source => vm.runInContext(source, context);

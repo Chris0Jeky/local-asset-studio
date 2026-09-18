@@ -35,7 +35,8 @@ def main():
         html = (ROOT / 'tests/workshop_fixture.html').read_text(encoding='utf-8')
         html = html.replace(
             '<script src="/static/workshop.js"></script>',
-            '<script>' + (ROOT / 'app/static/presentation-context.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
+            '<script>' + (ROOT / 'app/static/reference-model.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
+            + '<script>' + (ROOT / 'app/static/presentation-context.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
             + '<script>' + (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>',
         )
         styles = (

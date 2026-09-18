@@ -101,3 +101,29 @@ test('the offline prototype loads the context boundary before workshop.js', () =
   const workshop = html.indexOf('workshop.js');
   assert.ok(context >= 0 && workshop > context);
 });
+
+test('the workshop bridge consumes the reference model and re-derives none of it', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.match(js, /StudioReferenceModel\.live\(/);
+  // Every reference semantic belongs to reference-model.js; a second copy here is what #610 items 1 and 3 were.
+  for (const derived of ['reference_slots', 'reference_board', 'last_reference_label', 'referenceRecords', 'lastUploaded', 'referencePending'])
+    assert.ok(!js.includes(derived + ' '), derived + ' is re-derived in workshop.js');
+  const references = fs.readFileSync(path.join(__dirname, '../app/static/references.js'), 'utf8');
+  assert.match(references, /function referencesReady\(\)\{return referenceProjection\(\)\.ready;\}/);
+});
+
+test('every page and prototype that runs workshop.js loads the reference model first', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
+  const index = read('../app/static/index.html');
+  assert.ok(index.indexOf('/static/reference-model.js') >= 0);
+  assert.ok(index.indexOf('/static/reference-model.js') < index.indexOf('/static/references.js'));
+  const prototype = read('../docs/workshop/prototype.html');
+  assert.ok(prototype.indexOf('reference-model.js') >= 0);
+  assert.ok(prototype.indexOf('reference-model.js') < prototype.indexOf('workshop.js'));
+  const driver = read('workshop_browser_core.py');
+  assert.ok(driver.indexOf("app/static/reference-model.js") < driver.indexOf("app/static/workshop.js"));
+});
