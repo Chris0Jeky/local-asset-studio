@@ -108,3 +108,9 @@ Then require exact-head `Check studio`, Windows/runtime and relevant recovery wo
 - [ ] **Step 3: Reconcile issue and PR state**
 
 Document exact verification, leave the PR draft while CI is incomplete, and do not merge automatically.
+
+## Implementation reconciliation
+
+The production split is intentionally polymorphic: `require_worker()` calls `self.require_worker_observation()` after the reference-hold admission check. Duck-typed test doubles that delegate the full production method must therefore delegate the observation method as well. `StorageStudio` now exposes both delegates; production dispatch was not weakened to accommodate a partial fixture.
+
+Temporary write-enabled development workflows have been removed from the branch. Ordinary exact-head repository CI remains the readiness gate.
