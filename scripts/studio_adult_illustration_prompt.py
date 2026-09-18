@@ -41,7 +41,8 @@ def _read_json(
     maximum: int = LIMIT,
     label: str = "JSON",
 ) -> Any:
-    raw = Path(path).read_bytes()
+    with Path(path).open("rb") as stream:
+        raw = stream.read(maximum + 1)
     if len(raw) > maximum:
         raise ValueError(f"{label} exceeds {maximum} bytes")
     try:
