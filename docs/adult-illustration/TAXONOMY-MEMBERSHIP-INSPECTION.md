@@ -14,7 +14,8 @@ Membership inspection is an opt-in evidence operation for users or agents that a
 
 1. A reviewed source projection.
 2. A retained prompt projection compiled from that source.
-3. A taxonomy index built from the exact retained CSV and current review contracts:
+3. The exact retained taxonomy CSV.
+4. A taxonomy index built from those exact bytes and current review contracts:
 
 ```console
 python scripts/studio_adult_illustration_taxonomy.py build \
@@ -37,13 +38,14 @@ python scripts/studio_adult_illustration_prompt.py inspect-membership \
   experiments/runs/hot-spring-prompt.json \
   --source experiments/runs/hot-spring-projection.json \
   --taxonomy-index .runtime/adult-illustration/taxonomy-index.json \
+  --taxonomy-source /reviewed/source/selected_tags.csv \
   --out experiments/runs/hot-spring-membership.json
 ```
 
 The command:
 
 1. deterministically recompiles and validates the prompt artifact;
-2. validates the saved index content identity and strict structure;
+2. deterministically rebuilds the index from the exact retained source bytes and current review contract;
 3. requires all pinned source metadata, not only its SHA-256 and revision, to match the current source contract;
 4. requires the exact current source/review manifest hashes and every finite reviewed-overlay field to match;
 5. builds canonical, reviewed-display and reviewed-alias lookup maps once;
@@ -78,17 +80,17 @@ Reports use `studio.adult-illustration.prompt-membership-report/v1` and bind:
 - source and reviewed-entry counts;
 - a deterministic `report_sha256`.
 
-The saved index's content identity, current source metadata and current reviewed overlay are validated, but inspection does not receive source bytes. It therefore records:
+Inspection validates the exact retained source bytes before classifying source membership. It records:
 
 ```json
 {
   "index_identity_validated": true,
   "current_contracts_validated": true,
-  "source_revalidated": false
+  "source_revalidated": true
 }
 ```
 
-`source_revalidated: false` is not a failure. It prevents a persisted index from being mistaken for a fresh reconstruction. Use the taxonomy `validate` command when exact source-byte reconstruction is required.
+`source_revalidated: true` means the supplied source bytes reproduced the saved index exactly under the current finite review. A self-rehashed index is insufficient evidence.
 
 A retained membership report can also be validated by recomputing it from the same prompt, source projection and index. Changed classifications, compiler evidence, taxonomy identity or report metadata fail closed.
 

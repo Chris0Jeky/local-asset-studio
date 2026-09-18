@@ -86,7 +86,7 @@ def write_fixture(root: Path):
     projection = project(intent)
     compiled = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
     index = build_taxonomy_index(source, root)
-    return projection, compiled, index
+    return projection, compiled, index, source
 
 
 def by_input(report: dict[str, object]) -> dict[tuple[str, str], dict[str, object]]:
@@ -100,8 +100,8 @@ class PromptMembershipTests(unittest.TestCase):
     def test_report_distinguishes_all_membership_states_and_match_kinds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
-            report = inspect_prompt_membership(compiled, projection, index, root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
+            report = inspect_prompt_membership(compiled, projection, index, taxonomy_source, root)
 
         self.assertEqual(
             report["format"],
@@ -149,7 +149,7 @@ class PromptMembershipTests(unittest.TestCase):
             rows[("negative", "watermark")]["compiler"]["source"],
             "reviewed_taxonomy",
         )
-        self.assertFalse(report["taxonomy"]["source_revalidated"])
+        self.assertTrue(report["taxonomy"]["source_revalidated"])
         self.assertTrue(report["taxonomy"]["index_identity_validated"])
         self.assertTrue(report["taxonomy"]["current_contracts_validated"])
         self.assertTrue(all(value is False for value in report["authority"].values()))
@@ -157,12 +157,13 @@ class PromptMembershipTests(unittest.TestCase):
     def test_report_is_deterministic_and_recomputed_validation_detects_tampering(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
-            first = inspect_prompt_membership(compiled, projection, index, root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
+            first = inspect_prompt_membership(compiled, projection, index, taxonomy_source, root)
             second = inspect_prompt_membership(
                 copy.deepcopy(compiled),
                 copy.deepcopy(projection),
                 copy.deepcopy(index),
+                taxonomy_source,
                 root,
             )
             self.assertEqual(first, second)
@@ -171,7 +172,7 @@ class PromptMembershipTests(unittest.TestCase):
             self.assertEqual(report_sha256, sha256(canonical_bytes(unsigned)))
             self.assertEqual(
                 validate_prompt_membership_report(
-                    first, compiled, projection, index, root
+                    first, compiled, projection, index, taxonomy_source, root
                 ),
                 first,
             )
@@ -181,76 +182,80 @@ class PromptMembershipTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "Changed or invalid"):
                 validate_prompt_membership_report(
-                    changed, compiled, projection, index, root
+                    changed, compiled, projection, index, taxonomy_source, root
                 )
 
     def test_stale_index_contract_identities_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             for field in ("source_manifest_sha256", "review_manifest_sha256"):
                 with self.subTest(field=field):
                     stale = copy.deepcopy(index)
                     stale["contracts"][field] = "0" * 64
                     rehash(stale)
                     with self.assertRaisesRegex(ValueError, "source/review contracts"):
-                        inspect_prompt_membership(compiled, projection, stale, root)
+                        inspect_prompt_membership(compiled, projection, stale, taxonomy_source, root)
 
     def test_stale_source_metadata_is_rejected_even_after_rehash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             stale = copy.deepcopy(index)
             stale["source"]["sha256"] = "0" * 64
             rehash(stale)
             with self.assertRaisesRegex(ValueError, "pinned source contract"):
-                inspect_prompt_membership(compiled, projection, stale, root)
+                inspect_prompt_membership(compiled, projection, stale, taxonomy_source, root)
 
     def test_changed_reviewed_entry_is_rejected_even_after_rehash(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             changed = copy.deepcopy(index)
             reviewed = next(item for item in changed["entries"] if item["reviewed"])
             reviewed["display"] += " changed"
             rehash(changed)
             with self.assertRaisesRegex(ValueError, "current review contract"):
-                inspect_prompt_membership(compiled, projection, changed, root)
+                inspect_prompt_membership(compiled, projection, changed, taxonomy_source, root)
 
     def test_rehashed_structurally_invalid_index_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             malformed = copy.deepcopy(index)
             malformed["entries"].append(copy.deepcopy(malformed["entries"][0]))
             malformed["counts"]["source"] += 1
             malformed["source"]["records"] += 1
             rehash(malformed)
             with self.assertRaisesRegex(ValueError, "duplicate"):
-                inspect_prompt_membership(compiled, projection, malformed, root)
+                inspect_prompt_membership(compiled, projection, malformed, taxonomy_source, root)
 
     def test_changed_source_projection_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             changed = copy.deepcopy(projection)
             changed["creative_intent"]["brief"] += " Changed without reprojection."
             with self.assertRaisesRegex(
                 ValueError, "Changed or invalid adult illustration projection"
             ):
-                inspect_prompt_membership(compiled, changed, index, root)
+                inspect_prompt_membership(compiled, changed, index, taxonomy_source, root)
 
     def test_inspection_does_not_open_runtime_or_network_surfaces(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             with mock.patch(
                 "socket.socket", side_effect=AssertionError("network access")
             ), mock.patch(
                 "subprocess.run", side_effect=AssertionError("subprocess access")
             ):
                 report = inspect_prompt_membership(
-                    compiled, projection, index, root
+                    compiled,
+                    projection,
+                    index,
+                    taxonomy_source,
+                    root,
                 )
         self.assertFalse(report["execution_authorized"])
         self.assertFalse(report["generation_submitted"])
@@ -286,14 +291,16 @@ class PromptMembershipCliTests(unittest.TestCase):
     def test_cli_round_trip_and_exclusive_create(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, taxonomy_source = write_fixture(root)
             source_path = root / "source.json"
             compiled_path = root / "compiled.json"
             index_path = root / "index.json"
+            taxonomy_source_path = root / "selected_tags.csv"
             report_path = root / "report.json"
             source_path.write_text(json.dumps(projection), encoding="utf-8")
             compiled_path.write_text(json.dumps(compiled), encoding="utf-8")
             index_path.write_text(json.dumps(index), encoding="utf-8")
+            taxonomy_source_path.write_bytes(taxonomy_source)
             args = [
                 "inspect-membership",
                 str(compiled_path),
@@ -301,6 +308,8 @@ class PromptMembershipCliTests(unittest.TestCase):
                 str(source_path),
                 "--taxonomy-index",
                 str(index_path),
+                "--taxonomy-source",
+                str(taxonomy_source_path),
                 "--repo-root",
                 str(root),
                 "--out",

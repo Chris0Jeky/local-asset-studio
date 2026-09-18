@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from .adult_illustration_prompt_projection import validate_prompt_projection
-from .adult_illustration_taxonomy import _validate_identity
+from .adult_illustration_taxonomy import (
+    _validate_identity,
+    validate_taxonomy_index,
+)
 from .adult_illustration_taxonomy_contracts import (
     AUTHORITY,
     canonical_bytes,
@@ -196,11 +199,13 @@ def inspect_prompt_membership(
     compiled_prompt: Any,
     source_projection: Any,
     taxonomy_index: Any,
+    taxonomy_source: bytes,
     root: Path | str = ".",
 ) -> dict[str, Any]:
-    """Inspect original compiler terms against one strict saved taxonomy index."""
+    """Inspect terms only after exact taxonomy-source reconstruction."""
     compiled = validate_prompt_projection(compiled_prompt, source_projection, root)
     index = _validated_index(taxonomy_index, root)
+    index = validate_taxonomy_index(index, taxonomy_source, root)
     _require_compatible(compiled, index)
 
     raw_resolutions = compiled.get("vocabulary_resolutions")
@@ -258,7 +263,7 @@ def inspect_prompt_membership(
             "reviewed_entries": index["counts"]["reviewed"],
             "index_identity_validated": True,
             "current_contracts_validated": True,
-            "source_revalidated": False,
+            "source_revalidated": True,
         },
         "counts": counts,
         "inspections": inspections,
@@ -267,9 +272,8 @@ def inspect_prompt_membership(
         "limits": [
             "This report inspects evidence and does not alter prompt emission, "
             "vocabulary acceptance or route selection.",
-            "The saved index content identity and current source/review contracts "
-            "were validated, but exact source bytes were not rebuilt; "
-            "source_revalidated remains false.",
+            "The saved index was rebuilt from exact retained source bytes and "
+            "the current review contract before source membership was classified.",
             "Source membership does not establish adulthood, consent, content "
             "approval, tokenizer behavior, artistic quality or generation authority.",
         ],
@@ -285,13 +289,18 @@ def validate_prompt_membership_report(
     compiled_prompt: Any,
     source_projection: Any,
     taxonomy_index: Any,
+    taxonomy_source: bytes,
     root: Path | str = ".",
 ) -> dict[str, Any]:
     """Recompute a retained report so changed derived evidence fails closed."""
     if not isinstance(value, dict) or value.get("format") != REPORT_FORMAT:
         raise ValueError("Unsupported prompt membership report")
     expected = inspect_prompt_membership(
-        compiled_prompt, source_projection, taxonomy_index, root
+        compiled_prompt,
+        source_projection,
+        taxonomy_index,
+        taxonomy_source,
+        root,
     )
     if _canonical(value) != _canonical(expected):
         raise ValueError("Changed or invalid prompt membership report")

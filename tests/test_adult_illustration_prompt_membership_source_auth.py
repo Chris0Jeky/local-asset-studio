@@ -23,7 +23,7 @@ class PromptMembershipSourceAuthenticationTests(unittest.TestCase):
     def test_exact_source_bytes_authenticate_unreviewed_membership(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, _fixture_source = write_fixture(root)
             report = inspect_prompt_membership(
                 compiled,
                 projection,
@@ -39,7 +39,7 @@ class PromptMembershipSourceAuthenticationTests(unittest.TestCase):
     def test_rehashed_changed_unreviewed_row_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, _fixture_source = write_fixture(root)
             changed = copy.deepcopy(index)
             row = next(
                 item
@@ -65,7 +65,7 @@ class PromptMembershipSourceAuthenticationTests(unittest.TestCase):
     def test_wrong_source_bytes_are_rejected_before_classification(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            projection, compiled, index = write_fixture(root)
+            projection, compiled, index, _fixture_source = write_fixture(root)
             with self.assertRaisesRegex(ValueError, "source byte count|source SHA-256"):
                 inspect_prompt_membership(
                     compiled,
