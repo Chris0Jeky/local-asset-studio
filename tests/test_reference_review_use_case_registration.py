@@ -3,6 +3,7 @@ import json
 import unittest
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tests'))
@@ -38,9 +39,24 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
 
         handler, _ = runner.build_handler()
         fixture_base = next(cls for cls in handler.__mro__ if cls.__name__ == 'PromptFixtureBase')
-        self.assertIs(fixture_base._safe_host, server.Handler._safe_host)
-        self.assertIs(fixture_base._safe_mutation, server.Handler._safe_mutation)
         self.assertIs(fixture_base._content_length, server.Handler._content_length)
+
+    def test_fixture_guards_admit_the_port_the_fixture_actually_serves(self):
+        """Production's host guard hard-codes :8191; the fixture binds an ephemeral port."""
+        handler, _ = runner.build_handler()
+        fixture_base = next(cls for cls in handler.__mro__ if cls.__name__ == 'PromptFixtureBase')
+        probe = fixture_base.__new__(fixture_base)
+        probe.server = SimpleNamespace(server_port=45678)
+
+        probe.headers = {'Host': '127.0.0.1:45678', 'Origin': 'http://127.0.0.1:45678'}
+        self.assertTrue(probe._safe_host())
+        self.assertTrue(probe._safe_mutation())
+
+        probe.headers = {'Host': '127.0.0.1:8191', 'Origin': 'http://127.0.0.1:8191'}
+        self.assertFalse(probe._safe_host(), 'A request for another port must not be admitted')
+
+        probe.headers = {'Host': '127.0.0.1:45678', 'Origin': 'http://evil.invalid'}
+        self.assertFalse(probe._safe_mutation(), 'A cross-origin mutation must still be refused')
 
 
 if __name__ == '__main__':

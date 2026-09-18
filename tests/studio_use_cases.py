@@ -177,9 +177,16 @@ def build_handler():
 
     class PromptFixtureBase(fixture.Handler):
         studio = None
-        _safe_host = server.Handler._safe_host
-        _safe_mutation = server.Handler._safe_mutation
+        # Production's own length guard; its host/origin guards hard-code :8191 and this fixture
+        # binds an ephemeral port, so they are restated against the port actually served.
         _content_length = server.Handler._content_length
+
+        def _safe_host(self):
+            return self.headers.get('Host') in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}')
+
+        def _safe_mutation(self):
+            origin = self.headers.get('Origin')
+            return self._safe_host() and origin in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
 
         def _json(self, status, value):
             return self.json(value, status)
