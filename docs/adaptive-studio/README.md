@@ -28,7 +28,7 @@ Do not multiply these choices into separate editors. Do not infer intent from so
 | [ROADMAP.md](ROADMAP.md) | Independently reviewable implementation slices and evaluation gates |
 | [SOURCES.md](SOURCES.md) | Primary-source research and limits of the inspiration audit |
 
-Companion review slices add `assets/` for the production wishlist and `lab/` for a zero-backend interaction specification. They must not be imported by the production shell. These companion paths are planned until their own PRs land.
+The companion [asset production kit](assets/README.md) contains 154 planned requests and a read-only brief renderer. The [behavior lab](lab/README.md) is a self-contained, zero-backend interaction specification with empty asset slots. Neither is imported by the production shell. This combined index is part of the full review stack; see [DELIVERY.md](DELIVERY.md) for scope and qualification.
 
 ## Relationship to current work
 
@@ -44,4 +44,4 @@ The strongest visual candidate is **Retro Anime: Night Shift**, an original late
 
 ## Decisions reserved for Chris
 
-Choose the preferred pilot world after reviewing the written art direction; confirm whether a maintainer-only frontend build step is acceptable; decide whether remote decorative media should ever be enabled. Proposed defaults are Retro Anime as an optional pilot, static local ambience, no remote media, no automatic audio, and incremental Vue only after a measured spike. These are recommendations, not recorded owner approvals.
+Choose the preferred pilot world after reviewing the written art direction; confirm whether a maintainer-only frontend build step is acceptable; decide whether remote decorative media should ever be enabled. Proposed defaults are Retro Anime as an optional pilot, static local ambience, no remote media, no automatic audio, and incremental Vue only after a measured spike. These are recommendations, not recorded owner approvals. The three open choices are also recorded, unticked, in the canonical `HUMAN_TODO.md` as `adaptive-frontend-build`, `adaptive-pilot-world` and `adaptive-remote-media`.
