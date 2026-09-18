@@ -14,7 +14,10 @@ The compiler accepts only this campaign shape:
   corrected skeleton;
 - two first-pass cells per case and route;
 - cases 1–7 use route-local `replicate_a` and `replicate_b` seeds;
-- case 8 uses `baseline` and `variant` at the same route-local counterfactual seed;
+- case 8 declares distinct `baseline` and `variant` donor references and uses them at the same route-local
+  counterfactual seed;
+- every case-8 cell carries the donor reference selected for its slot, and those references participate in the
+  manifest, plan and cell identities;
 - cells are emitted in three 16-cell route blocks so an authorized runner can preserve resident-model order;
 - exactly **48** first-pass cells;
 - zero repair, retry, warm-up or other image-producing slots;
@@ -28,7 +31,8 @@ through a pose detector is a contract failure.
 The checked-in manifest is deliberately synthetic. Repeated-character hashes are not provider evidence or
 installed-runtime qualification. Real source bytes remain outside Git. Before a campaign can run, a reviewed
 preflight must replace every synthetic pin and local source reference with retained evidence from the exact
-machine and route.
+machine and route. In particular, case 8's two identifiers must resolve to the reviewed donor pair rather than
+two aliases for the same input.
 
 ## Commands
 
@@ -39,17 +43,18 @@ python scripts/pose_screening.py validate-plan examples/pose-control/screening-m
 ```
 
 `plan` uses exclusive creation and will not overwrite an existing plan. `validate-plan` recompiles from the
-manifest and requires exact equality, including campaign identity, route-block order, route-local seeds, pair
-grouping and deterministic identities. Every success and error record states that execution is unauthorized
-and generation was not submitted. Successful receipts retain the campaign ID alongside the plan and manifest
-identities.
+manifest and requires exact equality, including campaign identity, route-block order, route-local seeds,
+pair-specific donor binding, pair grouping and deterministic identities. Every success and error record states
+that execution is unauthorized and generation was not submitted. Successful receipts retain the campaign ID
+alongside the plan and manifest identities.
 
 ## Data boundary
 
 A plan cell identifies a case, source reference, route, input representation, slot and seed. It does not carry
 private source bytes, a prepared graph, a Production reservation, a prompt ID or a job ID. `source_ref` is a
-bounded identifier, not a path, URL or proof that a source was reviewed. A `plan_id` is a content identity,
-not an approval.
+bounded identifier, not a path, URL or proof that a source was reviewed. Case 8 has a declared two-entry
+`source_refs` map, and the compiled cells select its `baseline` or `variant` value explicitly. A `plan_id` is a
+content identity, not an approval.
 
 The compiler also preserves the campaign stop conditions:
 
@@ -67,7 +72,8 @@ This slice delivers the machine-readable campaign definition, exact arithmetic, 
 cell ledger and agent-safe validation CLI. It does **not** complete the issue. Remaining work is:
 
 - qualify and pin the real installed route identities under #445;
-- select and review the eight real source situations without committing private media;
+- select and review the eight real source situations, including the distinct case-8 donor pair, without
+  committing private media;
 - run the separately authorized 48-cell campaign through existing Studio/Production services;
 - retain every reservation, actual attempt, failure class and timing component;
 - complete per-axis human review and the final failure-inclusive report;
