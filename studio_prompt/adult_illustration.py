@@ -19,6 +19,7 @@ from .adult_illustration_schema import (
 )
 from .adult_illustration_projection import (
     PROJECTION_FORMAT,
+    PROJECTION_MAX_BYTES,
     ROLE_MAP,
     project,
     validate_projection,
@@ -35,6 +36,7 @@ __all__ = (
     "INTENT_FORMAT",
     "LOCKS",
     "PROJECTION_FORMAT",
+    "PROJECTION_MAX_BYTES",
     "REFERENCE_ROLES",
     "RESERVED_CONSTRAINTS",
     "ROLE_MAP",

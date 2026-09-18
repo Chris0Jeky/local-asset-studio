@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from adult_illustration_intelligence_common import (
     AVAILABILITY, EVIDENCE, REQUIRED, SHA256, SNAPSHOTS, TERMS,
@@ -75,19 +75,75 @@ def _sources(value: dict[str, Any], errors: list[str]) -> None:
             host = ""
         else:
             host = (urlparse(url).hostname or "").casefold()
+        parsed_url = urlparse(url) if _https(url) else None
         if provider == "huggingface":
             model_id = record.get("provider_model_id")
-            if host != "huggingface.co" or not isinstance(model_id, str) or model_id.count("/") != 1:
-                errors.append(f"{label}: Hugging Face record {rid!r} needs huggingface.co org/model identity")
+            valid_model_id = (
+                isinstance(model_id, str)
+                and model_id.count("/") == 1
+                and all(_text(part, 96) for part in model_id.split("/"))
+            )
+            if host != "huggingface.co" or not valid_model_id:
+                errors.append(
+                    f"{label}: Hugging Face record {rid!r} needs huggingface.co org/model identity"
+                )
+            elif parsed_url is not None:
+                path_identity = "/".join(
+                    part for part in parsed_url.path.split("/") if part
+                )
+                if (
+                    path_identity != model_id
+                    or bool(parsed_url.query)
+                    or bool(parsed_url.fragment)
+                ):
+                    errors.append(
+                        f"{label}: Hugging Face record {rid!r} canonical URL identity "
+                        "must match provider_model_id"
+                    )
         if provider == "civitai":
             model_id = record.get("provider_model_id")
             version_id = record.get("provider_version_id")
+            valid_model_id = (
+                isinstance(model_id, int)
+                and not isinstance(model_id, bool)
+                and model_id > 0
+            )
+            valid_version_id = (
+                isinstance(version_id, int)
+                and not isinstance(version_id, bool)
+                and version_id > 0
+            )
             if host not in {"civitai.com", "www.civitai.com"}:
                 errors.append(f"{label}: Civitai record {rid!r} must use civitai.com")
-            if not isinstance(model_id, int) or isinstance(model_id, bool) or model_id <= 0:
+            if not valid_model_id:
                 errors.append(f"{label}: Civitai record {rid!r} needs positive model ID")
-            if not isinstance(version_id, int) or isinstance(version_id, bool) or version_id <= 0:
+            if not valid_version_id:
                 errors.append(f"{label}: Civitai record {rid!r} needs positive version ID")
+            if parsed_url is not None and valid_model_id and valid_version_id:
+                parts = [part for part in parsed_url.path.split("/") if part]
+                query = parse_qs(parsed_url.query, keep_blank_values=True)
+                url_model = (
+                    int(parts[1])
+                    if len(parts) >= 2
+                    and parts[0].casefold() == "models"
+                    and parts[1].isdigit()
+                    else None
+                )
+                versions = query.get("modelVersionId", [])
+                url_version = (
+                    int(versions[0])
+                    if len(versions) == 1 and versions[0].isdigit()
+                    else None
+                )
+                if (
+                    url_model != model_id
+                    or url_version != version_id
+                    or bool(parsed_url.fragment)
+                ):
+                    errors.append(
+                        f"{label}: Civitai record {rid!r} canonical URL identity "
+                        "must match provider model/version IDs"
+                    )
         revision = record.get("immutable_revision")
         if revision is not None and not _text(revision, 160):
             errors.append(f"{label}: record {rid!r} immutable revision is invalid")
@@ -106,6 +162,7 @@ def _sources(value: dict[str, Any], errors: list[str]) -> None:
             errors.append(f"{label}: record {rid!r} files must be bounded")
             files = []
         file_ids: set[str] = set()
+        file_paths: set[str] = set()
         selected = 0
         for index, item in enumerate(files):
             if not isinstance(item, dict):
@@ -116,8 +173,18 @@ def _sources(value: dict[str, Any], errors: list[str]) -> None:
                 errors.append(f"{label}: record {rid!r} has invalid/duplicate file id")
             else:
                 file_ids.add(fid)
-            if not _safe_path(item.get("path")):
+            raw_path = item.get("path")
+            if not _safe_path(raw_path):
                 errors.append(f"{label}: record {rid!r} file path is unsafe")
+            else:
+                normalized_path = PurePosixPath(raw_path).as_posix()
+                if normalized_path in file_paths:
+                    errors.append(
+                        f"{label}: record {rid!r} has duplicate file path "
+                        f"{normalized_path!r}"
+                    )
+                else:
+                    file_paths.add(normalized_path)
             byte_count = item.get("bytes")
             if byte_count is not None and (not isinstance(byte_count, int) or isinstance(byte_count, bool) or byte_count <= 0):
                 errors.append(f"{label}: record {rid!r} file byte count is invalid")
