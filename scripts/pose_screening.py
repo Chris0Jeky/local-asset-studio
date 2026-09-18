@@ -23,6 +23,7 @@ def read(path):
 
 def receipt(plan):
     return {
+        'campaign_id': plan['campaign_id'],
         'plan_id': plan['plan_id'],
         'manifest_sha256': plan['manifest_sha256'],
         'candidate_count': plan['candidate_count'],
