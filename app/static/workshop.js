@@ -210,7 +210,10 @@
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); editor.append(savedDetails);
     const gallery = q('#createView .gallery-panel');
-    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results'); create.append(results);
+    const problemsHost = el('div'); problemsHost.id = 'jobProblemsHost';
+    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results');
+    create.append(problemsHost, results);
+    problemsHost.onclick = q('#gallery')?.onclick;
     q('#generate').addEventListener('click', () => { if (!q('#generate').disabled) results.open = true; }, true);
     function reveal(target) {
       if (!target || create.hidden) return;
@@ -237,7 +240,7 @@
         if (!groups.has(name)) { const group = el('fieldset', 'wk-control-group'); group.append(el('legend', '', name)); groups.set(name, group); }
         groups.get(name).append(label);
       }
-      for (const name of ['Canvas & duration','Sampling','Seed','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
+      for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
     }
     function applyPresentation() {
       create.dataset.workshopLayout = state.layout; d.body.dataset.workshopSkin = state.skin;

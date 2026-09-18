@@ -377,7 +377,10 @@ function renderJobs(signature=JSON.stringify(jobs)) {
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
   const problemMarkup=problems.length?'<details id="jobProblems" class="job-problems" '+(problemsOpen?'open':'')+'><summary>Problems · '+problems.length+' run(s)</summary>'+problems.join('')+'</details>':'';
-  $('#gallery').className=cards.length||problems.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=(cards.length?cards.join(''):problems.length?'':'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>')+problemMarkup;
+  const host=document.getElementById?.('jobProblemsHost')||null;
+  $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
+  $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>')+(host?'':problemMarkup);
+  if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   renderCompare();
 }
