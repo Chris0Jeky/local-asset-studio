@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Repository operating model
+    url: https://github.com/Chris0Jeky/local-asset-studio/blob/main/docs/PROJECT-OPERATING-MODEL.md
+    about: Taxonomy, readiness, WIP limits, evidence placement and generated state.
