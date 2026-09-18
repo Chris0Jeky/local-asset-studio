@@ -62,7 +62,7 @@ test('a current replacement copy commits once', async () => {
 def add_test() -> None:
     source = TEST.read_text(encoding='utf-8')
     if MARKER not in source:
-        TEST.write_text(source.rstrip() + TEST_APPEND + '\n', encoding='utf-8')
+        TEST.write_text(source.rstrip() + TEST_APPEND.rstrip() + '\n', encoding='utf-8')
 
 
 def add_implementation() -> None:
