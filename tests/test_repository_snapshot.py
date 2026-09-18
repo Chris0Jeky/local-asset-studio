@@ -151,10 +151,12 @@ class RepositorySnapshotTests(unittest.TestCase):
             body = out.read_text(encoding="utf-8")
             self.assertNotIn("q-25", body)
             self.assertNotIn("presets;", body)
-            with patch("sys.stderr", new=io.StringIO()) as error:
-                self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
-                                                "--format", "markdown", "--local-facts", "--check", str(out)]), 2)
-                self.assertIn("cannot be combined with --check", error.getvalue())
+            for sink in ("--check", "--output"):
+                with patch("sys.stderr", new=io.StringIO()) as error:
+                    self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
+                                                    "--format", "markdown", "--local-facts", sink, str(out)]), 2)
+                    self.assertIn("writes to stdout only", error.getvalue())
+            self.assertEqual(out.read_text(encoding="utf-8"), body)
 
     def test_receipt_currency_uses_the_measured_revision(self):
         test_receipt = {"schema_version": 1, "source_sha": FACTS_HEAD, "run_at": CAPTURED,

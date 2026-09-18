@@ -103,7 +103,7 @@ The first design read `presets/catalog.json` and `HUMAN_TODO.md` into the commit
 The rule now:
 
 - the committed projection is a **pure function of the committed capture, the receipts and the generator**. Nothing else can turn the drift gate red, so `--check` asserts exactly one thing - the checked-in Markdown is what those committed inputs render;
-- `presets/catalog.json` and `HUMAN_TODO.md` are read **only** with `--local-facts`, which appends a clearly separated section and is rejected together with `--check`;
+- `presets/catalog.json` and `HUMAN_TODO.md` are read **only** with `--local-facts`, which appends a clearly separated section, prints to stdout only, and is refused with `--check` or `--output` so those facts can never be written into the committed projection;
 - that section records the blob it actually observed and whether it still matches the identity the capture recorded. A difference is reported, never raised;
 - the capture keeps `catalog_blob_sha` and `human_todo_blob_sha` as the observation it was authored against, not as a pin the checkout must satisfy.
 

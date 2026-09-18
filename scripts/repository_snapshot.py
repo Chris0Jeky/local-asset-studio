@@ -7,8 +7,8 @@ recorded receipts and are marked stale when they name another measured revision.
 The committed projection is a pure function of the committed capture, the receipts
 and this generator, so `--check` stays satisfiable. Checkout-derived facts
 (`presets/catalog.json`, `HUMAN_TODO.md`) change during ordinary work, so they are
-read only on request (`--local-facts`), reported against the blob identities the
-capture recorded, and never fail generation (#461).
+read only on request (`--local-facts`), printed to stdout only, reported against the
+blob identities the capture recorded, and never fail generation (#461).
 """
 from __future__ import annotations
 
@@ -459,13 +459,13 @@ def main(argv=None):
     parser.add_argument("--validation-receipt")
     parser.add_argument("--format", choices=("json", "markdown"), default="markdown")
     parser.add_argument("--local-facts", action="store_true",
-                        help="append checkout-derived catalog/HUMAN_TODO facts; never part of --check")
+                        help="print checkout-derived catalog/HUMAN_TODO facts to stdout; never written into the projection")
     destination = parser.add_mutually_exclusive_group()
     destination.add_argument("--output"); destination.add_argument("--check")
     args = parser.parse_args(argv)
     try:
-        if args.check and args.local_facts:
-            raise ValueError("--local-facts cannot be combined with --check: checkout-derived facts are outside the drift-checked projection")
+        if args.local_facts and (args.check or args.output):
+            raise ValueError("--local-facts writes to stdout only: checkout-derived facts must never enter the drift-checked projection")
         value = build_snapshot(Path(args.repo_root), load_source(Path(args.source)),
                                args.test_receipt, args.validation_receipt, include_local=args.local_facts)
         text = render_json(value) if args.format == "json" else render_markdown(value)
