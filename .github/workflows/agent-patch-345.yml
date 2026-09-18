@@ -1,0 +1,233 @@
+name: Apply issue 345 workbench handoff guards
+
+on:
+  push:
+    branches:
+      - fix/345-restyle-handoff-guards
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Add regression coverage
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          Path('tests/workbench_handoff_guards.cjs').write_text(r'''const assert = require('node:assert/strict');
+const test = require('node:test');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+
+function between(start, end) {
+  const first = source.indexOf(start);
+  assert.notEqual(first, -1, `missing source marker: ${start}`);
+  const last = source.indexOf(end, first);
+  assert.notEqual(last, -1, `missing source marker: ${end}`);
+  return source.slice(first, last);
+}
+
+const openHandoffSource = between('  function openHandoff(', "\n  q('#uxDestination').onchange=destinationDetails;");
+const useSecondPictureSource = between('  const useSecondPicture=', "\n  q('#uxSecondRestyle').onclick=");
+const pullIntoSlotSource = between('  async function pullIntoSlot(', "\n  q('#uxSourceAssets').onclick=");
+
+function secondPictureHarness(sourceExists) {
+  const context = {};
+  const asset = sourceExists
+    ? "[{id:'source',title:'Source',review:'unreviewed',sha256:'a'.repeat(64),media_type:'image',trashed_at:null}]"
+    : '[]';
+  vm.runInNewContext([
+    "let secondPicture={asset:{id:'style',title:'Style'}},pendingStyle=null;",
+    "const continuationState={source_asset_id:'source'};",
+    "const boardDestination=()=>({id:'restyle-recipe'});",
+    "const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',innerHTML:'',textContent:''});return nodes.get(selector);};",
+    "const dismissSecondPicture=()=>{};const syncReady=()=>{};",
+    "let handoffEpoch=0,sourceContext=null,handoffBaseline=null,handoffIntent='edit',handoffId=null;",
+    "const assetDetailsDirty=()=>false;const warnUnsavedAsset=()=>{};",
+    "const catalog={presets:[]};const notices=[];const announce=(message,error=false)=>notices.push({message,error});",
+    `const assetState={assets:${asset}};`,
+    "const workbenchStamp=()=> 'stamp';const assetPreview=()=>'<img>';const escape=value=>String(value);",
+    "const handoffRecipes=()=>{};const destinationDetails=()=>{};",
+    "const handoff={open:false,showModal(){this.open=true;}};",
+    "const readSource=()=>new Promise(()=>{});",
+    openHandoffSource,
+    useSecondPictureSource,
+    "this.run=useSecondPicture('restyle');this.pending=()=>pendingStyle;this.dialog=handoff;this.notices=notices;",
+    "this.openDirect=()=>openHandoff('source','restyle-recipe',undefined,'restyle');",
+  ].join('\n'), context);
+  return context;
+}
+
+test('a rejected second-picture handoff clears the pending style', () => {
+  const harness = secondPictureHarness(false);
+  harness.run();
+  assert.equal(harness.pending(), null);
+  assert.equal(harness.dialog.open, false);
+  assert.match(harness.notices.at(-1).message, /available image/);
+});
+
+test('a valid handoff reports that it opened and retains the reviewed style', () => {
+  const harness = secondPictureHarness(true);
+  harness.run();
+  assert.equal(harness.dialog.open, true);
+  assert.equal(harness.pending().asset.id, 'style');
+  assert.equal(harness.openDirect(), true);
+});
+
+function pullHarness() {
+  const context = {};
+  vm.runInNewContext([
+    "const notices=[];let stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
+    "const referenceRecords=[{parent_asset:'old-parent',file:'old.png',missing:false}];",
+    "const selected={continuation_capability:{}};const StudioContinuation={sourceInput:()=> 'last_reference'};",
+    "const post=()=>new Promise((resolve,reject)=>{finish=resolve;fail=reject;});",
+    "const workbenchStamp=()=>stamp;let renderCount=0,replaceCount=0,saveCount=0,syncCount=0;",
+    "const renderReferenceSlots=()=>{renderCount++};const replaceParentAsset=()=>{replaceCount++};",
+    "const saveDraft=()=>{saveCount++};const syncCreate=()=>{syncCount++};",
+    "const announce=(message,error=false)=>notices.push({message,error});",
+    pullIntoSlotSource,
+    "this.start=()=>pullIntoSlot(0,'style-asset');this.setStamp=value=>{stamp=value};",
+    "this.finish=value=>finish(value);this.fail=error=>fail(error);",
+    "this.snapshot=()=>JSON.stringify(referenceRecords[0]);",
+    "this.counts=()=>[renderCount,replaceCount,saveCount,syncCount];this.notices=notices;",
+  ].join('\n'), context);
+  return context;
+}
+
+test('a delayed copy cannot overwrite a newer workbench state', async () => {
+  const harness = pullHarness();
+  const pending = harness.start();
+  harness.setStamp('after');
+  harness.finish({parent_asset:'style-asset',file:'style.png'});
+  assert.equal(await pending, false);
+  assert.deepEqual(JSON.parse(harness.snapshot()), {parent_asset:'old-parent',file:'old.png',missing:false});
+  assert.deepEqual(Array.from(harness.counts()), [0,0,0,0]);
+  assert.equal(harness.notices.at(-1).error, true);
+  assert.match(harness.notices.at(-1).message, /workbench changed/);
+});
+
+test('a failed copy is reported without an unhandled rejection', async () => {
+  const harness = pullHarness();
+  const pending = harness.start();
+  harness.fail(new Error('offline'));
+  assert.equal(await pending, false);
+  assert.deepEqual(Array.from(harness.counts()), [0,0,0,0]);
+  assert.equal(harness.notices.at(-1).error, true);
+  assert.match(harness.notices.at(-1).message, /offline/);
+});
+
+test('a current copy commits once', async () => {
+  const harness = pullHarness();
+  const pending = harness.start();
+  harness.finish({parent_asset:'style-asset',file:'style.png'});
+  assert.equal(await pending, true);
+  assert.deepEqual(JSON.parse(harness.snapshot()), {parent_asset:'style-asset',file:'style.png',missing:false});
+  assert.deepEqual(Array.from(harness.counts()), [1,1,1,1]);
+  assert.equal(harness.notices.length, 0);
+});
+''', encoding='utf-8')
+          PY
+
+      - name: Reproduce the regressions before the fix
+        shell: bash
+        run: |
+          if node --test tests/workbench_handoff_guards.cjs; then
+            echo '::error::The regression tests unexpectedly passed before the source fix.'
+            exit 1
+          fi
+          echo 'Expected pre-fix failures reproduced.'
+
+      - name: Patch the workbench state transitions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/static/studio-workbench.js')
+          source = path.read_text(encoding='utf-8')
+
+          open_start = source.index('  function openHandoff(')
+          open_end_marker = "\n  q('#uxDestination').onchange=destinationDetails;"
+          open_end = source.index(open_end_marker, open_start)
+          handoff = source[open_start:open_end]
+
+          replacements = [
+              ("if(epoch!=null&&epoch!==handoffEpoch)return;const request=++handoffEpoch;",
+               "if(epoch!=null&&epoch!==handoffEpoch)return false;const request=++handoffEpoch;"),
+              ("if(assetDetailsDirty()){warnUnsavedAsset();return;}if(!catalog){announce('Recipes are still loading.');return;}",
+               "if(assetDetailsDirty()){warnUnsavedAsset();return false;}if(!catalog){announce('Recipes are still loading.');return false;}"),
+              ("if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return;}",
+               "if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return false;}"),
+          ]
+          for old, new in replacements:
+              if handoff.count(old) != 1:
+                  raise SystemExit(f'expected one handoff fragment, found {handoff.count(old)}: {old}')
+              handoff = handoff.replace(old, new)
+
+          closing = '\n  }'
+          if not handoff.endswith(closing):
+              raise SystemExit('openHandoff closing marker changed')
+          handoff = handoff[:-len(closing)] + '\n    return true;\n  }'
+          source = source[:open_start] + handoff + source[open_end:]
+
+          old_second = "    openHandoff(continuationState.source_asset_id,dest.id,undefined,intent);"
+          new_second = "    if(!openHandoff(continuationState.source_asset_id,dest.id,undefined,intent))pendingStyle=null;"
+          if source.count(old_second) != 1:
+              raise SystemExit(f'expected one second-picture handoff call, found {source.count(old_second)}')
+          source = source.replace(old_second, new_second)
+
+          old_pull = "  async function pullIntoSlot(index,id){const result=await post('/api/assets/reference',{id});const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],result,{missing:false});if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();}"
+          new_pull = """  async function pullIntoSlot(index,id,stamp=workbenchStamp()){
+    try{
+      const result=await post('/api/assets/reference',{id});
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');
+      const slot=referenceRecords[index];if(!slot)throw Error('The destination slot is no longer available.');
+      const previous=slot.parent_asset;Object.assign(slot,result,{missing:false});
+      if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+      renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();return true;
+    }catch(error){announce('The second picture was not attached. '+error.message,true);return false;}
+  }"""
+          if source.count(old_pull) != 1:
+              raise SystemExit(f'expected one pullIntoSlot implementation, found {source.count(old_pull)}')
+          source = source.replace(old_pull, new_pull)
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Verify focused frontend behavior
+        shell: bash
+        run: |
+          node --check app/static/studio-workbench.js
+          node --test tests/workbench_handoff_guards.cjs
+          node --test tests/frontend_handoffs.cjs
+          python -m unittest tests/test_studio_ux.py
+          python scripts/validate-repo.py
+          git diff --check
+
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          git rm .github/workflows/agent-patch-345.yml
+          git add app/static/studio-workbench.js tests/workbench_handoff_guards.cjs
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(workbench): guard deferred restyle handoffs'
+          git push origin HEAD
