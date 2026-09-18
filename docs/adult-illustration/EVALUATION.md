@@ -100,6 +100,8 @@ Null means unobserved, not zero.
 A result record:
 
 - binds the exact benchmark-corpus and route-candidate Git blob identities;
+- requires the corpus, route manifest and result to declare the same lowercase 40-hex source baseline;
+- uses a real ISO calendar date rather than arbitrary date-shaped text;
 - names the selected cases, phase, route and prompt variant;
 - records a declared cap but does not create or expand an allowance;
 - requires non-synthetic evidence to pin route configuration, graph, source set, external campaign and authorization references;
@@ -111,6 +113,7 @@ A result record:
 - distinguishes `unobserved`, `not_applicable`, `observed` and `uncertain` measurements;
 - requires observed ratios to use valid numerators/denominators and retained evidence;
 - keeps decisions content-addressed but still requires human approval and evidence for consequential non-synthetic outcomes;
+- requires route-promotion/rejection outcomes to target routes and control-rejection outcomes to target controls;
 - always keeps `promotion_authorized: false`; a result describes evidence and never performs promotion.
 
 Validate the checked-in example and its exact dependencies with:
@@ -119,9 +122,10 @@ Validate the checked-in example and its exact dependencies with:
 python scripts/validate_adult_illustration_benchmark_result.py
 python -m unittest tests.test_adult_illustration_benchmark_result -v
 python -m unittest tests.test_adult_illustration_benchmark_result_cli -v
+python -m unittest tests.test_adult_illustration_benchmark_result_integrity -v
 ```
 
-Changing the corpus or route manifest makes the example stale until it is explicitly reviewed and regenerated. Recomputing `result_id` cannot make inconsistent accounting, invented case/route IDs, hidden attempts, invalid measurements or synthetic promotion valid.
+Changing the corpus or route manifest makes the example stale until it is explicitly reviewed and regenerated. Recomputing `result_id` cannot make inconsistent accounting, invented case/route IDs, hidden attempts, invalid measurements, baseline drift, malformed dates, mismatched decision targets or synthetic promotion valid.
 
 ## Automated assistance
 
