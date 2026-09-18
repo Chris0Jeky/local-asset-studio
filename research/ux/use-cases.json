@@ -263,6 +263,47 @@
       ]
     },
     {
+      "id": "reference-analysis-review-and-apply",
+      "goal": "Review exported reference analysis against the exact original pictures and apply only the approved facets to the Prompt Lab draft.",
+      "starting_view": "prompt-lab",
+      "success_condition": "The originals match by content, the prepared diff is reviewed before Apply, the applied draft keeps its references and visible diff, and no generation is submitted.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open Prompt Lab at the reference review workspace",
+          "expect": "the ordinary prompt fields and the reference review panel are shown"
+        },
+        {
+          "intent": "load an exported reference analysis for review",
+          "expect": "the analysis summary and editable reference facets appear"
+        },
+        {
+          "intent": "match the analysis to the exact original pictures",
+          "expect": "the panel confirms every original by content rather than filename"
+        },
+        {
+          "intent": "edit and approve the style facet that should influence the draft",
+          "expect": "the reviewed style wording is selected for the prepared change"
+        },
+        {
+          "intent": "preview the reviewed reference changes without applying them",
+          "expect": "a prepared result is created while the current Prompt Lab draft stays unchanged"
+        },
+        {
+          "intent": "inspect the before and after diff before applying anything",
+          "expect": "the diff names the reference changes and Apply becomes available"
+        },
+        {
+          "intent": "apply the prepared reference changes explicitly",
+          "expect": "the approved style and reference records enter the current draft"
+        },
+        {
+          "intent": "confirm the applied draft and its review evidence remain visible",
+          "expect": "the references and applied diff remain present and no generation request was sent"
+        }
+      ]
+    },
+    {
       "id": "prompt-lab-to-create",
       "goal": "Shape the wording for a character in Prompt Lab and hand the reviewed text to a recipe in Create.",
       "starting_view": "prompt-lab",

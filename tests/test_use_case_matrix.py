@@ -21,7 +21,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 14, 'the original journeys plus Restyle, Combine, the same-pair experiment loop and the drawn pose')
+        self.assertTrue(8 <= len(CASES['cases']) <= 15, 'the original journeys plus Restyle, Combine, the same-pair experiment loop and the drawn pose')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -61,7 +61,8 @@ class Cases(unittest.TestCase):
         for expected in ('first-image-from-brief', 'reference-edit-one-source',
                          'three-reference-identity-pose-style', 'compare-settings-from-recipe',
                          'review-and-keep-winner', 'reuse-keeper-as-reference',
-                         'prompt-lab-to-create', 'guided-edit-or-preserve-character',
+                         'reference-analysis-review-and-apply', 'prompt-lab-to-create',
+                         'guided-edit-or-preserve-character',
                          'build-and-prepare-node-workflow', 'frames-to-native-export',
                          'restyle-recent-output-with-a-look'):
             self.assertIn(expected, ids)
