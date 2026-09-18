@@ -17,12 +17,39 @@ from ._adult_illustration_source_transport_common import (
     HttpRequest,
     HttpResponse,
     cached_headers,
+    endpoint_provider,
     parse_cache_json,
     parse_provider_json,
     request_identity,
     request_key,
     validate_json_media_type,
 )
+
+
+def _validate_response_routes(
+    request: HttpRequest,
+    final_url: object,
+    redirects: object,
+) -> tuple[str, tuple[str, ...]]:
+    """Revalidate cached routes against the exact reviewed endpoint families."""
+
+    provider = endpoint_provider(request.url, "cache request URL")
+    if not isinstance(redirects, (list, tuple)) or len(redirects) > 5:
+        raise ValueError("Source response cache redirect chain is invalid")
+    validated_redirects: list[str] = []
+    for redirect in redirects:
+        if not isinstance(redirect, str):
+            raise ValueError("Source response cache redirect URL is invalid")
+        if endpoint_provider(redirect, "cached redirect URL") != provider:
+            raise ValueError(
+                "Source response cache redirect crosses the provider boundary"
+            )
+        validated_redirects.append(redirect)
+    if endpoint_provider(final_url, "cached final URL") != provider:
+        raise ValueError(
+            "Source response cache final URL crosses the provider boundary"
+        )
+    return provider, tuple(validated_redirects)
 
 
 class SnapshotResponseCache:
@@ -106,14 +133,13 @@ class SnapshotResponseCache:
             "redirect_chain",
         }:
             raise ValueError("Source response cache response envelope is invalid")
-        redirects = response.get("redirect_chain")
-        if (
-            response.get("status") != 200
-            or not isinstance(redirects, list)
-            or len(redirects) > 5
-            or not all(isinstance(item, str) for item in redirects)
-        ):
+        if response.get("status") != 200:
             raise ValueError("Source response cache response state is invalid")
+        _, redirects = _validate_response_routes(
+            request,
+            response.get("final_url"),
+            response.get("redirect_chain"),
+        )
         headers = cached_headers(response.get("headers", {}))
         validate_json_media_type(headers)
         return HttpResponse(
@@ -122,12 +148,19 @@ class SnapshotResponseCache:
             status=200,
             headers=headers,
             body=body,
-            redirect_chain=tuple(redirects),
+            redirect_chain=redirects,
         )
 
     def store(self, request: HttpRequest, response: HttpResponse) -> str:
         if not isinstance(response, HttpResponse) or response.status != 200:
             raise ValueError("Only successful metadata responses can be cached")
+        if response.request_url != request.url:
+            raise ValueError("Source response cache request identity changed")
+        _, redirects = _validate_response_routes(
+            request,
+            response.final_url,
+            response.redirect_chain,
+        )
         parse_provider_json(response.body, MAX_PROVIDER_RESPONSE_BYTES)
         validate_json_media_type(response.headers)
         key = request_key(request)
@@ -142,7 +175,7 @@ class SnapshotResponseCache:
                 "final_url": response.final_url,
                 "status": response.status,
                 "headers": cached_headers(response.headers),
-                "redirect_chain": list(response.redirect_chain),
+                "redirect_chain": list(redirects),
             },
             "body_base64": base64.b64encode(response.body).decode("ascii"),
             "body_bytes": len(response.body),
