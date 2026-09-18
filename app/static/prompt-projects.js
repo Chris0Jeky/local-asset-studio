@@ -7,7 +7,7 @@
   const clone=v=>JSON.parse(JSON.stringify(v));
   const stable=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(key=>[key,x[key]])):x);
   const same=(a,b)=>stable(a)===stable(b),flags=x=>x&&['generation_submitted','inference_submitted','execution_authorized'].every(k=>x[k]===false);
-  let scope=null,active=null,prepared=null,busy=false,pending=null,journalInvalid=false,saved=null;
+  let scope=null,active=null,detached=null,prepared=null,busy=false,pending=null,journalInvalid=false,saved=null;
   const text=s=>{el('pp-status').textContent=s;};
   const node=(tag,value)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=value;return e;};
   function capture(){return {draft:owner.capture(),reference:review.capture(),name:el('pp-name').value};}
@@ -29,6 +29,8 @@
     if(active){
       let dirty=true;try{dirty=!same(makeDocument(capture()),saved);}catch(_){}
       el('pp-current').textContent='Saved brief '+active.id.slice(0,8)+' · revision '+active.revision+(dirty?' · unsaved editor changes':' · editor matches this revision')+'.';
+    }else if(detached){
+      el('pp-current').textContent='Historical revision '+detached.revision+' of brief '+detached.id.slice(0,8)+' is open as a detached draft; saved head '+detached.head_revision+' was not changed. Save as a new brief or reopen the head.';
     }else el('pp-current').textContent='No saved brief is open. Edits are not automatically saved.';
   }
   function parsePending(raw){
@@ -84,7 +86,7 @@
   async function refresh(){
     const data=await request('capabilities');
     if(data.format!=='studio.prompt-projects/v1'||!/^[a-f0-9]{32}$/.test(data.workspace_id))throw Error('Invalid Workspace identity.');
-    if(scope&&scope!==data.workspace_id){active=null;prepared=null;saved=null;}
+    if(scope&&scope!==data.workspace_id){active=null;detached=null;prepared=null;saved=null;}
     scope=data.workspace_id;
     const list=await request('list',{workspace_id:scope});
     if(list.workspace_id!==scope||!Array.isArray(list.projects)||list.projects.length>128)throw Error('Invalid saved brief listing.');
@@ -100,14 +102,20 @@
     if(row.revision!==expected||(command.action!=='create'&&row.id!==command.value.id)||(command.action!=='restore'&&!same(row.document,command.value.document)))throw Error('Save receipt has a different document or revision.');
     return row;
   }
+  function bindCurrent(row){
+    if(row.revision===row.head_revision){
+      active={id:row.id,revision:row.revision};saved=clone(row.document);detached=null;return true;
+    }
+    active=null;saved=null;detached={id:row.id,revision:row.revision,head_revision:row.head_revision};return false;
+  }
   async function send(command,ticket=null){
     try{
       const value=await request(command.action,null,command.body),row=receipt(value,command);
-      clearPending();active={id:row.id,revision:row.revision};saved=clone(row.document);
+      clearPending();const current=bindCurrent(row);
       // A response acknowledges only its submitted snapshot. Never assign its words over later typing.
       if(ticket&&matches(ticket)&&command.action==='restore')showPreview(row,ticket);
       else if(!ticket)showPreview(row);
-      text('Save confirmed at revision '+row.revision+'. Your editor was not overwritten.');
+      text(current?'Save confirmed at revision '+row.revision+'. Your editor was not overwritten.':'Save revision '+row.revision+' was confirmed, but saved head '+row.head_revision+' is newer. The confirmed snapshot is detached; your editor was not overwritten.');
       try{await refresh();el('pp-list').value=row.id;}catch(error){text('Save confirmed, but the list could not refresh: '+error.message);}
     }catch(error){text(error.message+' Check save status; the exact command remains retained.');}
   }
@@ -141,8 +149,8 @@
       if(busy||pending||journalInvalid||!prepared||!matches(prepared.ticket))throw Error('The editor changed or a save is pending. Preview again after resolving it.');
       const selected=prepared,row=selected.row;
       owner.openSaved(selected.ticket.draft,row.document);review.restore(row.document.reference_context);
-      el('pp-name').value=row.document.name;active={id:row.id,revision:row.revision};saved=clone(row.document);prepared=null;
-      text('Opened revision '+row.revision+'. Saved descriptions are restored; original pictures must be reselected.');controls();
+      el('pp-name').value=row.document.name;const current=bindCurrent(row);prepared=null;
+      text(current?'Opened revision '+row.revision+'. Saved descriptions are restored; original pictures must be reselected.':'Opened historical revision '+row.revision+' as a detached draft. Saved head '+row.head_revision+' was not changed; save this as a new brief or reopen the head.');controls();
     }catch(error){text(error.message);controls();}
   });
   el('pp-history').addEventListener('click',()=>action(async()=>{
@@ -156,7 +164,7 @@
   el('pp-check').addEventListener('click',()=>action(async()=>{
     if(!pending||scope!==pending.value.workspace_id)throw Error('Reconnect to the Workspace of the retained save.');
     const command=pending,value=await request('status',{workspace_id:scope,request_id:command.value.request_id}),row=receipt(value,command);
-    clearPending();showPreview(row);text('Save confirmed at revision '+row.revision+'. Open the preview explicitly; newer editor words were preserved.');await refresh();el('pp-list').value=row.id;
+    clearPending();const current=bindCurrent(row);showPreview(row);text(current?'Save confirmed at revision '+row.revision+'. Open the preview explicitly; newer editor words were preserved.':'Save revision '+row.revision+' was confirmed, but saved head '+row.head_revision+' is newer. The confirmed snapshot is detached; newer editor words were preserved.');await refresh();el('pp-list').value=row.id;
   }));
   el('pp-retry').addEventListener('click',()=>action(async()=>{
     if(!pending||scope!==pending.value.workspace_id)throw Error('Reconnect to the Workspace of the retained save.');
