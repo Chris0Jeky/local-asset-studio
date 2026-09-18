@@ -71,3 +71,33 @@ test('immersive presentation exposes local ambience, visual skin and read-only g
     assert.ok(js.includes(marker), marker+' missing');
   assert.doesNotMatch(js, /workshopGuidanceAction[^\n]+click\(\)/);
 });
+
+test('Studio shell loads the read-only context boundary before the workshop adapter', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
+  const context = shell.indexOf("presentation-context.js");
+  const workshop = shell.indexOf("workshop.js");
+  assert.ok(context >= 0 && workshop > context);
+  assert.match(shell, /context\.onload=.*workshop/);
+});
+
+test('workshop guidance projects immutable intents and dispatches only through the semantic adapter', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.match(js, /Context\.project\(/);
+  assert.match(js, /Context\.createActionAdapter\(/);
+  assert.match(js, /presentationView/);
+  assert.match(js, /dispatchIntent/);
+  assert.doesNotMatch(js, /guidanceAction\.dataset\.action/);
+});
+
+test('the offline prototype loads the context boundary before workshop.js', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '../docs/workshop/prototype.html'), 'utf8');
+  const context = html.indexOf('presentation-context.js');
+  const workshop = html.indexOf('workshop.js');
+  assert.ok(context >= 0 && workshop > context);
+});
