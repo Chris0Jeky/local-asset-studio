@@ -116,3 +116,11 @@ Probes: `witch-target-ersde-4step` very good; `witch-target-plus-baroque-oil-4st
 `witch-target-stack` very good; `witch-target-stack-4step` very good; `witch-nijisis-baseline` potential
 but imperfect; `witch-nijisis-4step` very good; `witch-airy-watercolor-short-4step` good with a lot of
 potential. Almost all carry some imperfection the owner would like a correction workflow for.
+
+## Adaptive Studio: future production choices (18 September 2026)
+
+The strategy, asset wishlist and isolated behavior lab were requested and can be reviewed now. The following are open choices before adopting their proposed production defaults, not approvals inferred from that documentation request. See [the strategy](docs/adaptive-studio/README.md). Existing decisions above are unchanged; agents do not tick these.
+
+- [ ] **adaptive-frontend-build:** Choose a maintainer/CI-only TypeScript + Vue/Vite island experiment, or retain JavaScript/checkJs for the next production slice. The proposed experiment must keep normal Python startup offline and free of Node/npm/CDN requirements. See [STACK-ADR](docs/adaptive-studio/STACK-ADR.md).
+- [ ] **adaptive-pilot-world:** Choose the first optional visual world, another direction, or defer artwork. Retro Anime / Night Shift with a same-camera Quiet Morning still is the proposed pilot, not an accepted design or permission to generate the whole wishlist. See [AMBIENCE](docs/adaptive-studio/AMBIENCE.md).
+- [ ] **adaptive-remote-media:** Decide whether decorative media stays local-only or may be explicitly enabled from reviewed remote sources. Proposed defaults are local stills, no remote media and no autoplay audio; internet absence must not disable a healthy local workflow. No remote acquisition is authorized by recording this question.
