@@ -19,24 +19,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Align stable source file IDs
+      - name: Align stable source file IDs and tamper assertion
         shell: python
         run: |
           from pathlib import Path
-          path = Path('studio_prompt/_adult_illustration_acquisition_plan_impl.py')
-          text = path.read_text(encoding='utf-8')
+
+          implementation = Path('studio_prompt/_adult_illustration_acquisition_plan_impl.py')
+          text = implementation.read_text(encoding='utf-8')
           old = 'elif re.fullmatch(r"hf-file-[1-9][0-9]*", file_id) is None:'
           new = 'elif re.fullmatch(r"hf-file-[0-9a-f]{20}", file_id) is None:'
           if text.count(old) != 1:
               raise SystemExit('expected acquisition file-id check not found exactly once')
-          path.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
+          implementation.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
+
+          tests = Path('tests/test_adult_illustration_acquisition_plan.py')
+          text = tests.read_text(encoding='utf-8')
+          old = 'with self.assertRaisesRegex(ValueError, "plan_id|match"):'
+          new = 'with self.assertRaisesRegex(ValueError, "plan_id|match|handoff"):'
+          if text.count(old) != 1:
+              raise SystemExit('expected tamper assertion not found exactly once')
+          tests.write_text(text.replace(old, new), encoding='utf-8', newline='\n')
       - run: python -m unittest tests.test_adult_illustration_acquisition_plan -v
       - name: Commit fix
         run: |
           git config user.name "Cristian Tcaci"
           git config user.email "59696583+Chris0Jeky@users.noreply.github.com"
-          git add studio_prompt/_adult_illustration_acquisition_plan_impl.py
-          git commit -m "fix: align acquisition plans with stable source file ids"
+          git add studio_prompt/_adult_illustration_acquisition_plan_impl.py tests/test_adult_illustration_acquisition_plan.py
+          git commit -m "fix: align acquisition plans with source contracts"
           git push origin HEAD:codex/adult-illustration-acquisition-handoff
   contracts:
     strategy:
