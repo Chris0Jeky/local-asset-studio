@@ -13,6 +13,13 @@ class WorkshopFrontendTests(unittest.TestCase):
                                 text=True, capture_output=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_skin_heading_art_is_inlined_because_static_handler_refuses_svg(self):
+        css = (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8')
+        self.assertNotIn("url('workshop-assets/", css)
+        self.assertGreaterEqual(css.count('data:image/svg+xml;base64,'), 2)
+        self.assertIn('[data-workshop-skin="arcade"] .ux-create-heading', css)
+        self.assertIn('[data-workshop-skin="sakura"] .ux-create-heading', css)
+
     def test_i2v_hold_note_is_not_grouped_into_two_column_fieldset(self):
         js = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
         css = (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8')

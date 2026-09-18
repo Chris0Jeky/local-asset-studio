@@ -29,3 +29,14 @@ test('only allow-listed presentation preferences are persisted, never prompts', 
   assert.deepEqual(JSON.parse(stored),{layout:'focus',skin:'atelier'});
   assert.deepEqual(W.readPreferences(storage),{layout:'focus',skin:'atelier'});
 });
+
+test('two independent layouts and three skins round-trip without generation settings', () => {
+  assert.deepEqual(Object.keys(W.LAYOUTS), ['focus','studio']);
+  assert.deepEqual(Object.keys(W.SKINS), ['atelier','arcade','sakura']);
+  for (const layout of Object.keys(W.LAYOUTS)) for (const skin of Object.keys(W.SKINS)) {
+    let value;
+    const storage={getItem:()=>value,setItem:(_,next)=>{value=next;}};
+    assert.equal(W.writePreferences(storage,{layout,skin,seed:123,checkpoint:'private'}),true);
+    assert.deepEqual(W.readPreferences(storage),{layout,skin});
+  }
+});

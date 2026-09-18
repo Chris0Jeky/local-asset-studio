@@ -4,6 +4,7 @@ on:
     paths:
       - 'app/static/**'
       - 'docs/workshop/**'
+      - 'scripts/export-workshop-prototype.py'
       - 'tests/*workshop*'
       - 'tests/studio_browser_smoke.py'
       - 'tests/setup_apply_browser.py'
@@ -25,7 +26,7 @@ jobs:
         run: |
           mkdir -p /tmp/workshop-review
           git rev-parse HEAD > /tmp/workshop-review/COMMIT.txt
-          git archive --format=tar HEAD app/static tests docs/workshop .github/workflows > /tmp/workshop-review/workshop-source.tar
+          git archive --format=tar HEAD app/static tests docs/workshop .github/workflows scripts/export-workshop-prototype.py > /tmp/workshop-review/workshop-source.tar
       - uses: actions/upload-artifact@v4
         with:
           name: workshop-review-source
@@ -53,6 +54,10 @@ jobs:
         run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
         run: python tests/workshop_application.py --output .runtime/workshop-application
+      - name: Offline prototype interactions and screenshots
+        run: python tests/workshop_prototype.py --output .runtime/workshop-prototype
+      - name: Export standalone prototype
+        run: python scripts/export-workshop-prototype.py --output .runtime/workshop-prototype/index.html
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -61,4 +66,5 @@ jobs:
             .runtime/workshop-component/
             .runtime/workshop-application/
             .runtime/workshop-handoffs/
+            .runtime/workshop-prototype/
           retention-days: 7
