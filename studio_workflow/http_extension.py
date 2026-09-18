@@ -7,8 +7,10 @@ from .execution import prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
 from .http_body import reject_json
+from . import pose_artifact_store
 
 PREFIX = '/api/workflow-studio'
+POSE_ARTIFACT_PREFIX = '/api/pose/artifacts/'
 
 
 def capabilities():
@@ -89,6 +91,22 @@ def extend_handler(base):
     class WorkflowHandler(base):
         def do_GET(self):
             path = urlparse(self.path).path
+            if path.startswith(POSE_ARTIFACT_PREFIX):
+                if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
+                try:
+                    parts = path.split('/')
+                    need(len(parts) == 5 and parts[4], 'Unknown pose artifact route')
+                    raw = pose_artifact_store.read(self.studio.experiments, parts[4])
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Content-Length', str(len(raw)))
+                    self.send_header('X-Content-Type-Options', 'nosniff')
+                    self.end_headers()
+                    try: self.wfile.write(raw)
+                    except (BrokenPipeError, ConnectionResetError): pass
+                    return
+                except (ValueError, OSError) as exc:
+                    return self._json(400, {'error': str(exc), 'generation_submitted': False})
             if not path.startswith(PREFIX + '/'): return super().do_GET()
             if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
             try:
