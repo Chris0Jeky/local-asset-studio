@@ -125,6 +125,7 @@ for name in filter(None,files):
     assert path.stat().st_size<=10*1024*1024, 'Tracked file exceeds 10 MiB: '+name
     assert path.suffix.lower() not in {'.safetensors','.gguf','.ckpt','.onnx','.pt','.pth','.bin','.exe','.dll','.zip'}, 'Dependency/weight in Git: '+name
     assert not name.startswith(OPERATIONAL_PREFIXES), 'Operational output in Git: '+name
+    assert not name.startswith('experiments/') or name.startswith('experiments/curated/'), 'Operational output in Git: '+name
     assert name!='config/local.json' and not path.name.startswith('.env'), 'Local config/secret file in Git'
 print(f'PASS: {len(catalog)} preset graphs/bindings; {len(library["assets"])} pinned assets; {len(list(filter(None,files)))} tracked paths checked.')
 # Every LoRA a preset, variant or recipe names must be a known, installed adapter (KB entry not marked uninstalled, or a pinned library file).
