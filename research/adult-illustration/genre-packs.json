@@ -170,7 +170,7 @@
       "adult_assertion_required": true,
       "compatible_routes": [],
       "benchmark_cases": [
-        "adult-canon-new-outfit"
+        "adult-street-fashion-urban-night"
       ],
       "modules": [
         "draft_composition",
