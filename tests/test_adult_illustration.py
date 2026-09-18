@@ -133,10 +133,17 @@ class AdultIllustrationManifestTests(unittest.TestCase):
                 self.assert_has_error(errors, "tested_weights", "finite")
 
     def test_programme_issue_owners_are_pinned(self):
-        def mutate(payload):
-            payload["issues"]["routes"] = 999
-        errors = self.validate_mutation("programme.json", mutate)
-        self.assert_has_error(errors, "routes", "405")
+        cases = (
+            ("routes", 405),
+            ("prompt_dialects", 432),
+            ("source_intake", 433),
+        )
+        for key, expected in cases:
+            with self.subTest(key=key):
+                def mutate(payload, key=key):
+                    payload["issues"][key] = 999
+                errors = self.validate_mutation("programme.json", mutate)
+                self.assert_has_error(errors, key, str(expected))
 
     def test_pack_must_reference_known_benchmark_cases(self):
         def mutate(payload):

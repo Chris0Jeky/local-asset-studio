@@ -427,6 +427,8 @@ def _validate_programme(payload: dict[str, Any], errors: list[str]) -> None:
         "training": 411,
         "finishing": 412,
         "agents": 413,
+        "prompt_dialects": 432,
+        "source_intake": 433,
     }
     if not isinstance(issues, dict):
         errors.append(f"{label}: issues must be an object")

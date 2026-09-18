@@ -1,6 +1,6 @@
 # Controlled adult illustration
 
-Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`.
+Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The foundation source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`; the prompt/source-intelligence research was prepared against `d73f67db48257e635def2170b67cefd6a3165098` and is rebased here without changing those evidence claims.
 
 The objective is not a single “best” checkpoint or style LoRA. The Studio should turn a short brief and optional references into an inspectable plan that separates:
 
@@ -31,12 +31,14 @@ Run the standard-library-only offline gates before changing a programme manifest
 
 ```console
 python scripts/validate_adult_illustration.py
+python scripts/validate_adult_illustration_intelligence.py
 python -m unittest discover -s tests -p "test_adult_illustration.py" -v
 python -m unittest discover -s tests -p "test_adult_illustration_intent.py" -v
 python -m unittest discover -s tests -p "test_adult_illustration_cli.py" -v
+python -m unittest discover -s tests -p "test_adult_illustration_intelligence.py" -v
 ```
 
-The manifest validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The intent and CLI suites additionally cover total bounded projection, exclusive-create evidence, duplicate-key rejection, tamper detection, structured zero-authority errors, and round-tripping projections above the source intent's 64 KiB budget. None inspects installed models, calls the network, binds a route or submits generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The intelligence validator additionally checks prompt-dialect isolation, verified immutable vocabulary provenance, provider URL/ID agreement, unique source file paths, technique availability and hash-pinned selection. The intent and CLI suites cover total bounded projection, exclusive-create evidence, duplicate-key rejection, tamper detection and structured zero-authority errors. None inspects installed models, contacts a provider, downloads bytes, binds a route or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -48,6 +50,10 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Independent creative controls | [Control ontology](CONTROL-ONTOLOGY.md) |
 | Reviewed source intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
 | Offline validate/project commands | [Intent contract: Offline CLI](INTENT-CONTRACT.md#offline-cli) |
+| Prompt dialects, vocabulary and analyzers | [Prompt and tag intelligence](PROMPT-AND-TAG-INTELLIGENCE.md) |
+| Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
+| Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
+| Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
@@ -56,13 +62,17 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Machine-readable navigation | [`research/adult-illustration/programme.json`](../../research/adult-illustration/programme.json) |
 | Control vocabulary | [`control-ontology.json`](../../research/adult-illustration/control-ontology.json) |
 | Route research candidates | [`route-candidates.json`](../../research/adult-illustration/route-candidates.json) |
+| Prompt dialect candidates | [`prompt-dialects.json`](../../research/adult-illustration/prompt-dialects.json) |
+| Tag-vocabulary contract | [`tag-vocabulary-example.json`](../../research/adult-illustration/tag-vocabulary-example.json) |
+| Technique candidates/watchlist | [`technique-candidates.json`](../../research/adult-illustration/technique-candidates.json) |
+| Source-intake contract examples | [`source-intake-example.json`](../../research/adult-illustration/source-intake-example.json) |
 | Held-out task declarations | [`benchmark-corpus.json`](../../research/adult-illustration/benchmark-corpus.json) |
 | Composable genre starts | [`genre-packs.json`](../../research/adult-illustration/genre-packs.json) |
 | Adapter qualification template | [`lora-qualification-example.json`](../../research/adult-illustration/lora-qualification-example.json) |
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-evidence candidates, 21-case finite corpus, validator and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-evidence candidates, provider/source provenance, prompt-dialect and vocabulary contracts, 21-case finite corpus, validators and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
@@ -76,6 +86,10 @@ These are evidence gates, not dates.
 
 Every programme intent must declare unambiguous adult subject status through reviewed user/canon metadata. A vision model or visual appearance cannot establish age or consent. Ambiguous or youthful identity is refused instead of “fixed” through negative prompting. Multi-adult intimate test cases additionally require an explicit consent-context declaration. Public fixtures are synthetic and non-explicit; broader content classes remain route-specific reviewed declarations.
 
-## Next useful slice
+## Next useful slices
 
-Map retained intent projections onto existing revisioned Prompt/Setup commands, then bind exact route capabilities under #405/#407/#408. Use the existing coordinator and exact evidence rules; validation and projection artifacts do not authorize downloads or execution.
+1. Review the stacked foundation, validator, intent-projection, offline CLI and intelligence PRs in order.
+2. Add read-only programme/dialect/technique/source discovery and zero-authority comparison-plan commands under #413.
+3. Build a fake-transport provider snapshot adapter under #433; do not download anything.
+4. Pin one taxonomy source and implement one route profile at a time under #432.
+5. Begin runtime work only through a finite comparison of existing routes under #405/#409, using the existing coordinator and exact evidence rules.
