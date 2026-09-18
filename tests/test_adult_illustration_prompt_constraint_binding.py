@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -9,6 +10,17 @@ from studio_prompt.adult_illustration_prompt_projection import compile_prompt
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _digest(value: object) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
 
 
 class AdultIllustrationPromptConstraintBindingTests(unittest.TestCase):
@@ -54,6 +66,7 @@ class AdultIllustrationPromptConstraintBindingTests(unittest.TestCase):
             },
         )
         self.assertEqual(result["state"], "requires_binding")
+        self.assertEqual(result["source_document_sha256"], _digest(projection))
 
 
 if __name__ == "__main__":
