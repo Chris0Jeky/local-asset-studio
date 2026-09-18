@@ -57,9 +57,11 @@ def main():
             checks.append({'name':'real app default first viewport','document_height':height})
             page.screenshot(path=str(args.output/'application-focus.png'),full_page=True)
             # #598: the Prompt Lab handoff panel had no grid area, so the named templates auto-placed it in the
-            # first free full-width row - measured at y=1353 (Focus) and y=1358 (Studio), ~1250 px below the fold.
-            # It now takes the heading row; the hidden state must create no row at all.
-            # Draft PR #625 covered mobile width and a visible ambience hero; both change which row is free.
+            # first free full-width row - y=1353 (Focus) and y=1358 (Studio) in this 900 px viewport: 1250 px below
+            # where it belongs and 450 px below the fold. It now takes the heading row; the hidden state must create
+            # no row at all. Draft PR #625 covered mobile width and a visible ambience hero; both change which row
+            # is free. The preview is filled first, because a real handoff carries the panel's full height.
+            page.evaluate("document.querySelector('#uxTransferPreview').textContent=Array.from({length:40},(_,i)=>'A transferred line '+i).join(String.fromCharCode(10));document.querySelector('#uxTransferNotice').textContent='Compiled text from Prompt Lab. Applying it replaces the current wording only.'")
             transfer=[]
             for layout,ambience in [(l,a) for l in ['focus','studio','immersive'] for a in ['none','night-shift']]:
                 page.select_option('#workshopLayout',layout);page.select_option('#workshopAmbience',ambience);page.wait_for_timeout(120)
@@ -80,6 +82,7 @@ def main():
             page.select_option('#workshopLayout','focus');page.select_option('#workshopAmbience','none');page.wait_for_timeout(120)
             narrow=browser.new_page(viewport={'width':390,'height':844});narrow.on('pageerror',lambda e:errors.append(str(e)))
             narrow.goto(origin+'/#create');narrow.wait_for_function('!!selected && schemaAvailable && !!document.querySelector("#workshopRecipeChange")')
+            narrow.evaluate("document.querySelector('#uxTransferPreview').textContent=Array.from({length:40},(_,i)=>'A transferred line '+i).join(String.fromCharCode(10));document.querySelector('#uxTransferNotice').textContent='Compiled text from Prompt Lab. Applying it replaces the current wording only.'")
             for layout in ['focus','immersive']:
                 narrow.select_option('#workshopLayout',layout)
                 narrow.evaluate("document.querySelector('#uxTransfer').hidden=false");narrow.wait_for_timeout(120)

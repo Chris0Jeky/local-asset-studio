@@ -28,7 +28,8 @@ body.workshop-active {
 .workshop .wk-results {grid-area:results}
 /* #598: the Prompt Lab handoff panel is created by studio-workbench.js as a direct child of #createView and
    has no grid area, so the named templates auto-placed it in the first free full-width row - the always-empty
-   guidance row - about 1250 px below the fold in Focus and Studio. It takes the heading row instead, and the
+   guidance row - at y=1353 in a 900 px viewport in Focus and Studio, 1250 px below where it belongs and 450 px
+   below the fold. It takes the heading row instead, and the
    heading moves into an implicit row above the explicit grid only while the panel is visible, so the hidden
    state (the normal one) creates no row and no gap and its geometry is unchanged. Immersive hides the heading
    and keeps the panel at the very top, where #574 already put it. */
