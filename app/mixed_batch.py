@@ -114,7 +114,7 @@ def command(studio,job_id,action,payload):
         if payload['expected_revision']!=_hash(job):raise ValueError('Mixed batch evidence changed; refresh before issuing a new command')
         if job.get('status')!='uncertain' or 'abandonment' in job:raise ValueError('Only an inactive uncertain mixed batch can be changed')
         if action=='observe':
-            studio.require_worker()
+            studio.require_worker_observation()
             if studio.backends.busy:raise ValueError('Wait for the backend switch to finish')
             if len(history)>=MAX_OBSERVATIONS:raise ValueError('Observation history limit reached; all prior evidence is retained')
         record={'request_id':request_id,'request_sha256':request_hash,'expected_revision':payload['expected_revision'],

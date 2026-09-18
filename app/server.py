@@ -998,7 +998,7 @@ class Studio:
             return self.public(job)
 
     def _resume_tracking(self, job):
-        self.require_worker()
+        self.require_worker_observation()
         if job.get("status") != "uncertain": raise StudioError("Only an uncertain job can resume observation")
         error = self._known_prompt_error(job)
         if error: raise StudioError(error)
@@ -1089,12 +1089,17 @@ class Studio:
         worker = getattr(self, 'worker', None)
         return worker is None or worker.ident is None or worker.is_alive()
 
-    def require_worker(self):
-        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
-        # Preserve pre-start/offline fixture behavior; never replace a dead worker
-        # or silently replay its queue. All queue writers share this admission.
+    def require_worker_observation(self):
+        # Known-prompt observation uses the shared worker without requesting
+        # admission for a new reservation, submission or inference call.
         if not Studio.worker_available(self):
             raise StudioError('Studio worker is unavailable. Restart Studio; no work was queued or reserved.')
+
+    def require_worker(self):
+        if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
+        # Preserve pre-start/offline fixture behavior; new work never replaces a
+        # dead worker or silently replays its queue.
+        self.require_worker_observation()
 
     def health(self, refresh=False):
         worker_alive = self.worker_available()
