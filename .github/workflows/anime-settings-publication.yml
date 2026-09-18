@@ -2,54 +2,64 @@ name: Transfer tested anime settings blobs
 on:
   push:
     branches: [codex/anime-settings-publication]
-    paths: [.github/workflows/anime-settings-publication.yml]
+    paths: [.github/workflows/anime-settings-publication.yml, .github/accelerator-transfer.patch, .github/profile-transfer.patch]
 permissions:
   contents: write
 jobs:
   blobs:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0b510ac852c922db4a01e49ce68cdb083f9ad4e4
+          path: transfer
           persist-credentials: false
-      - name: Reconstruct hash-checked blobs only; no commits or refs
+      - uses: actions/checkout@v4
+        with:
+          ref: 0b510ac852c922db4a01e49ce68cdb083f9ad4e4
+          path: product
+          persist-credentials: false
+      - name: Apply tested patches and transfer exact trees only; no commits or refs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
           import base64, hashlib, json, os, subprocess, urllib.request
           from pathlib import Path
-          def oid(raw):
-              return hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
-          def replace(raw, old, new):
-              old, new = old.encode(), new.encode()
-              if raw.count(old) != 1: raise ValueError('Replacement is not unique')
-              return raw.replace(old, new)
-          assert subprocess.check_output(['git','rev-parse','HEAD']).decode().strip() == '0b510ac852c922db4a01e49ce68cdb083f9ad4e4'
-          changes = []
-          raw = Path('app/production.py').read_bytes()
-          assert oid(raw) == '436f196dfd008ce11092f044a4cd8a1e93669c03'
-          raw = replace(raw, 'available=settings_planner.axes_for(preset,kb)', 'available=settings_planner.axes_for(preset,kb,controls)')
-          raw = replace(raw, 'The settings library documents no axis this recipe can change', 'The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
-          assert oid(raw) == 'ed71b1f296292fbfde6022f1afad2d556683870b'
-          changes.append(('app/production.py', raw))
-          raw = Path('presets/settings-kb.json').read_bytes()
-          assert oid(raw) == 'a3f3ae1ffbbd66314f5fdd059ab8420a3767f784'
-          raw = replace(raw, '"values": [\n            8,\n            20,\n            30\n          ]', '"values": [\n            20,\n            30\n          ]')
-          raw = replace(raw, '30 is the template and reference value; 8 only with the official turbo LoRA at cfg 1; 20 for a quick study.', '30 is the template and reference value; 20 for a quick study. The conditional 8-step accelerator schedule is separate resource-scoped authored guidance, not a family sweep value.')
-          assert oid(raw) == 'ef6f939e19fc6c38a919a147eb359b3ae0bd811b'
-          changes.append(('presets/settings-kb.json', raw))
-          rows = []
-          for path, raw in changes:
-              data = json.dumps({'content':base64.b64encode(raw).decode(),'encoding':'base64'}).encode()
-              request = urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs', data=data, headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'}, method='POST')
-              with urllib.request.urlopen(request, timeout=30) as response: result=json.load(response)
-              assert result['sha'] == oid(raw)
-              rows.append({'path':path,'sha':result['sha'],'bytes':len(raw)})
-          Path(os.environ['RUNNER_TEMP'],'anime-settings-blobs.json').write_text(json.dumps(rows,indent=2))
-          print(json.dumps(rows,indent=2))
+          source='0b510ac852c922db4a01e49ce68cdb083f9ad4e4'
+          source_tree='8f1add8c511eb803ed6d02a21ccd48e7e33c80d6'
+          definitions=[('accelerator','1df6808072267eff56aa502651036fe7278c77e837243849f2f120c52a195087','175f39ae40156391f9a79c97989bcfbf7767782a'),('profile','2b3f47ab50f1d7297e9842e3106f93058bd43827856e5465d52b81b933b74a64','f2c07b8e43267ac29f3a0e835ac2ac8862bacbfe')]
+          def git(*args,input=None):
+              return subprocess.check_output(['git',*args],cwd='product',input=input)
+          def post(endpoint,value):
+              request=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/'+endpoint,data=json.dumps(value).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(request,timeout=30) as response: return json.load(response)
+          assert git('rev-parse','HEAD').decode().strip()==source
+          assert git('rev-parse','HEAD^{tree}').decode().strip()==source_tree
+          reports=[]
+          for name,patch_hash,expected in definitions:
+              path=Path('transfer/.github')/(name+'-transfer.patch')
+              if not path.exists(): continue
+              patch=path.read_bytes()
+              assert hashlib.sha256(patch).hexdigest()==patch_hash, 'Patch byte mismatch: '+name
+              git('read-tree',source)
+              git('apply','--cached','--whitespace=error-all','-',input=patch)
+              assert git('write-tree').decode().strip()==expected, 'Local tree mismatch: '+name
+              paths=git('diff','--cached','--name-only',source).decode().splitlines()
+              assert 1<=len(paths)<=16 and all(p.startswith(('app/','studio_prompt/','presets/','research/','tests/','docs/')) for p in paths)
+              entries=[]
+              for path in paths:
+                  raw=git('show',':'+path)
+                  oid=hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+                  blob=post('blobs',{'encoding':'base64','content':base64.b64encode(raw).decode()})
+                  assert blob['sha']==oid
+                  entries.append({'path':path,'type':'blob','mode':'100644','sha':oid})
+              tree=post('trees',{'base_tree':source_tree,'tree':entries})
+              assert tree['sha']==expected, 'Remote tree mismatch: '+name
+              reports.append({'slice':name,'source':source,'tree':tree['sha'],'patch_sha256':patch_hash,'files':entries})
+          assert reports, 'No input patches'
+          Path(os.environ['RUNNER_TEMP'],'anime-settings-blobs.json').write_text(json.dumps(reports,indent=2))
+          print(json.dumps(reports,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
