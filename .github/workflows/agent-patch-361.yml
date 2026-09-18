@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - fix/361-reference-review-use-case
+    paths:
+      - '.github/workflows/agent-patch-361.yml'
 
 permissions:
   contents: write
@@ -54,10 +56,9 @@ jobs:
           python scripts/validate-repo.py
           git diff --check
 
-      - name: Commit the verified implementation
+      - name: Commit the verified source implementation
         run: |
-          git rm .github/workflows/agent-patch-361.yml .github/agent-patch-361.py
-          git add .github/workflows/reference-review-use-case.yml docs/UX-USE-CASE-MATRIX.md research/ux/use-cases.json tests/studio_use_cases.py tests/test_use_case_matrix.py tests/test_reference_review_use_case_registration.py
+          git add docs/UX-USE-CASE-MATRIX.md research/ux/use-cases.json tests/studio_use_cases.py tests/test_use_case_matrix.py
           git diff --cached --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
