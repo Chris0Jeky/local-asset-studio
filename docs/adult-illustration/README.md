@@ -44,6 +44,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | --- | --- |
 | Product and component boundaries | [Architecture](ARCHITECTURE.md) |
 | Independent creative controls | [Control ontology](CONTROL-ONTOLOGY.md) |
+| Reviewed source intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
@@ -74,4 +75,4 @@ Every programme intent must declare unambiguous adult subject status through rev
 
 ## Next useful slice
 
-Map the validated ontology onto the existing `CreativeIntent` and reviewed setup contracts (#404). Do not begin with downloads or a broad model shelf. The first runtime work is a finite comparison of existing routes plus a small Anima/SDXL/Qwen shortlist under #405 and #409, using the existing coordinator and exact evidence rules.
+Expose strict intent validation and deterministic projection through an exclusive-create CLI, then map retained projections onto existing revisioned Prompt/Setup commands. Route binding remains under #405/#407/#408 and must use the existing coordinator and exact evidence rules rather than authorizing downloads or execution from this contract.
