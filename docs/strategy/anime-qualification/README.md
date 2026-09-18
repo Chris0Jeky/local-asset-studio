@@ -35,7 +35,7 @@ Read together with the existing [product thesis](../PRODUCT-THESIS.md), [fantasy
 
 **Runtime:** page 16 uses the wrong AMD hardware row for the Linux kernel. ROCm 10.0.0's Radeon table pairs Ubuntu 24.04.4 with **HWE 6.17**, whereas the report's GA 6.8 appears in the Instinct table. The corrected tuple is a candidate to validate under #303, not an installation instruction or proof of ComfyUI/custom-node compatibility.
 
-**Repository evidence:** Anima Base 1.0 is already installed and has executed in the repository's atelier records. The report's “not proven” row is a limitation of that review, not evidence of absence. Likewise, the newer Combine/pose-then-face workflows must participate in a matched baseline before replacement is justified.
+**Repository evidence:** The repository's dated atelier records show Anima Base 1.0 was present and executed for those jobs; this intake did not inspect current workstation files. The report's “not proven” row is a limitation of that review, not evidence of absence. Likewise, the newer Combine/pose-then-face workflows must participate in a matched baseline before replacement is justified.
 
 **Scope:** the parked adult-illustration stack is not required for this general anime integration. HUMAN_TODO q-29 remains an owner decision. The owner has already answered the private-experiment use question; this work preserves terms records without manufacturing a new commercial launch requirement.
 
