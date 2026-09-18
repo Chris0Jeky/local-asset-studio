@@ -87,20 +87,26 @@ def observe_shutdown(
     hard_timeout,
     evidence=(SHUTDOWN_WATCHDOG, "Thread "),
 ):
-    """Wait for suite completion, then start a distinct bounded shutdown window."""
+    """Wait for suite completion, then start one bounded shutdown window."""
     hard_deadline = capture.started_at + hard_timeout
+    startup_deadline = min(
+        hard_deadline,
+        capture.started_at + startup_timeout,
+    )
 
-    def remaining(requested, phase):
-        value = hard_deadline - time.monotonic()
-        if value <= 0:
-            raise TimeoutError(f"hard lifetime budget expired during {phase}")
-        return min(requested, value)
-
-    if not capture.wait_for(
-        SUITE_COMPLETE,
-        remaining(startup_timeout, "startup/test completion"),
-    ):
+    startup_remaining = startup_deadline - time.monotonic()
+    if startup_remaining <= 0:
+        raise TimeoutError(
+            "hard lifetime budget expired during startup/test completion"
+        )
+    if not capture.wait_for(SUITE_COMPLETE, startup_remaining):
         output = capture.output()
+        now = time.monotonic()
+        if now >= hard_deadline:
+            raise TimeoutError(
+                "hard lifetime budget expired during startup/test completion:\n"
+                + output
+            )
         returncode = capture.process.poll()
         if returncode is not None:
             raise RuntimeError(
@@ -112,13 +118,31 @@ def observe_shutdown(
         )
 
     completed_at = time.monotonic()
+    shutdown_deadline = min(
+        hard_deadline,
+        completed_at + observation_timeout,
+    )
     for marker in evidence:
-        if capture.wait_for(
-            marker,
-            remaining(observation_timeout, "shutdown observation"),
-        ):
+        observation_remaining = shutdown_deadline - time.monotonic()
+        if observation_remaining <= 0:
+            output = capture.output()
+            if time.monotonic() >= hard_deadline:
+                raise TimeoutError(
+                    "hard lifetime budget expired during shutdown observation:\n"
+                    + output
+                )
+            raise TimeoutError(
+                f"shutdown watchdog evidence {marker!r} was not observed:\n{output}"
+            )
+        if capture.wait_for(marker, observation_remaining):
             continue
         output = capture.output()
+        now = time.monotonic()
+        if now >= hard_deadline:
+            raise TimeoutError(
+                "hard lifetime budget expired during shutdown observation:\n"
+                + output
+            )
         returncode = capture.process.poll()
         if returncode is not None:
             raise RuntimeError(
@@ -321,6 +345,29 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         finally:
             returncode, output = capture.reap()
         self.assertEqual(returncode, 7, output)
+
+    def test_process_capture_retains_each_stream_line_once(self):
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                "-c",
+                (
+                    "import sys; "
+                    "print('stdout-once', flush=True); "
+                    "print('stderr-once', file=sys.stderr, flush=True)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        capture = ProcessCapture(process)
+        returncode, output = capture.reap()
+        self.assertEqual(returncode, 0, output)
+        self.assertEqual(output.count("stdout-once"), 1)
+        self.assertEqual(output.count("stderr-once"), 1)
 
     def test_shutdown_probe_keeps_a_hard_total_budget(self):
         process = subprocess.Popen(
