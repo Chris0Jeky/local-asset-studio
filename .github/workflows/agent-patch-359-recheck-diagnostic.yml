@@ -44,7 +44,7 @@ jobs:
         run: |
           python -m unittest tests.test_resource_receipt_recheck_diagnostics -v
           python -m unittest discover -s tests -p 'test_resource_receipt*.py' -v
-          python -m unittest tests.test_inference_trace_stream_files -v
+          python -m unittest discover -s tests -p 'test_inference_trace_stream_files.py' -v
           python scripts/validate-repo.py
           git diff --check
       - name: Commit verified implementation
