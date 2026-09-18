@@ -39,9 +39,9 @@ test('a real edit after undo clears only the redo branch',()=>{
 });
 
 test('the workbench record path preserves redo across a clamped no-op',()=>{
-  const timeline=P.timeline(60),home=drawing(80),before=drawing(100),after=drawing(200);
+  const timeline=P.timeline(60),home=drawing(100),before=drawing(100),after=drawing(200);
   timeline.record(before,home);
-  const restored=timeline.undo(after,home);
+  const restored=timeline.undo(after,drawing(200));
   assert.equal(timeline.canRedo,true);
   timeline.record(restored.points,restored.home);
   const unchanged=P.move(restored.points,4,restored.points[4].x,restored.points[4].y,CANVAS);
