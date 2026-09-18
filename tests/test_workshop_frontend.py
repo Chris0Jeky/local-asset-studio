@@ -1,0 +1,24 @@
+"""Node presentation contracts, included in the normal offline suite."""
+from pathlib import Path
+import shutil
+import subprocess
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+
+class WorkshopFrontendTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node is unavailable')
+    def test_presentation_contracts(self):
+        result = subprocess.run(['node', '--test', 'tests/workshop_contracts.cjs'], cwd=ROOT,
+                                text=True, capture_output=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_i2v_hold_note_is_not_grouped_into_two_column_fieldset(self):
+        js = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
+        css = (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8')
+        fixture = (ROOT / 'tests/workshop_fixture.html').read_text(encoding='utf-8')
+        body = js[js.index('function groupControls()'):js.index('function applyPresentation()')]
+        self.assertIn("if (label.querySelector('#i2vMode')) continue;", body)
+        self.assertIn('id="i2vMode"', fixture)
+        self.assertIn('id="i2vModeNote"', fixture)
+        self.assertIn('.workshop #controls>label:has(#i2vMode)', css)

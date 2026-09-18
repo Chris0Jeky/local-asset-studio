@@ -75,7 +75,10 @@ async def run(args):
                 page = await browser.new_page(viewport={'width': 1440, 'height': 1100}, reduced_motion='reduce')
                 page.set_default_timeout(5000)
                 page.on('pageerror', lambda error: errors.append(str(error)))
-                if args.inert: await inert_page(page, server.server_port)
+                if args.inert:
+                    await inert_page(page, server.server_port)
+                    await page.add_style_tag(content=(ROOT/'app/static/workshop.css').read_text())
+                    await page.add_script_tag(content=(ROOT/'app/static/workshop.js').read_text())
                 else: await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
                 await page.wait_for_function('!!catalog && !!selected && schemaAvailable')
                 await page.evaluate("showView('create')")
@@ -84,7 +87,12 @@ async def run(args):
                 await page.set_input_files('#uxImportDraft', {'name': 'draft.json', 'mimeType': 'application/json',
                                                              'buffer': json.dumps(value).encode()})
                 await page.wait_for_function("document.querySelector('#uxNotice').textContent.includes('availability could not be checked') || document.querySelector('#uxNotice').textContent.includes('Draft restored')")
+            async def open_saved(page):
+                await page.wait_for_selector('#workshopSaved', state='attached')
+                if not await page.locator('#workshopSaved').evaluate('n=>n.open'):
+                    await page.click('#workshopSaved > summary')
             async def save(page, name):
+                await open_saved(page)
                 await page.fill('#saveName', name)
                 await page.click('#save')
                 await page.wait_for_function("document.querySelector('#status').textContent.includes('Setup not saved:') || document.querySelector('#status').textContent.includes('Setup saved in')")
@@ -127,8 +135,9 @@ async def run(args):
                   saved['controls'].get('reference') == 'a'*32+'_fixture.png' and
                   saved['parent_assets'] == ['asset-0'] and saved['parent_by_input'] == {'reference': 'asset-0'})
             second = await new_page()
+            await open_saved(second)
             await second.wait_for_selector('#savedList [data-load="0"]')
-            await second.locator('#savedList [data-load="0"]').scroll_into_view_if_needed()
+            await second.locator('#savedList [data-load="0"]').evaluate("n=>n.scrollIntoView({block:'center'})")
             await second.screenshot(path=str(args.out / 'saved-setup-target.png'))
             hit = await second.locator('#savedList [data-load="0"]').evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}')
             check('SETUP-16', 'Saved setup button is not covered by the sticky recipe panel', hit)

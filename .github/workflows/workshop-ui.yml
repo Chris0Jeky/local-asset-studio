@@ -1,0 +1,64 @@
+name: Workshop UI
+on:
+  pull_request:
+    paths:
+      - 'app/static/**'
+      - 'docs/workshop/**'
+      - 'tests/*workshop*'
+      - 'tests/studio_browser_smoke.py'
+      - 'tests/setup_apply_browser.py'
+      - 'tests/setup_lineage_browser.py'
+      - 'tests/recipe_shortlist_browser.py'
+      - 'tests/preset_model_browser.py'
+      - '.github/workflows/workshop-ui.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package exact frontend source for offline review
+        run: |
+          mkdir -p /tmp/workshop-review
+          git rev-parse HEAD > /tmp/workshop-review/COMMIT.txt
+          git archive --format=tar HEAD app/static tests docs/workshop .github/workflows > /tmp/workshop-review/workshop-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workshop-review-source
+          path: /tmp/workshop-review/
+          retention-days: 1
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/workshop_contracts.cjs
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Component presentation and original-control contracts
+        run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Native disclosure lifecycle and nested modal handoffs
+        run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
+      - name: Real application, native HTTP/storage and original submission handler
+        run: python tests/workshop_application.py --output .runtime/workshop-application
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workshop-browser-evidence
+          path: |
+            .runtime/workshop-component/
+            .runtime/workshop-application/
+            .runtime/workshop-handoffs/
+          retention-days: 7
