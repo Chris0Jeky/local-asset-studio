@@ -23,6 +23,8 @@ def ignored_experiment_dirs():
     for line in GITIGNORE.read_text(encoding='utf-8').splitlines():
         rule = line.strip()
         if not rule or rule.startswith('#') or rule.startswith('!'): continue
+        # `/experiments/x/` and `experiments/x/` are the same rule to git; `git ls-files` paths are root-relative.
+        if rule.startswith('/'): rule = rule[1:]
         if rule.startswith('experiments/') and rule.endswith('/'): found.add(rule)
     return found
 
@@ -39,6 +41,11 @@ class RuntimeFolderParity(unittest.TestCase):
     def test_lists_are_non_empty(self):
         """A parse that silently returns nothing would make every comparison below vacuous."""
         self.assertTrue(ignored_experiment_dirs()); self.assertTrue(guarded_prefixes())
+
+    def test_the_payload_guard_reads_the_constant(self):
+        """A constant no assertion consults would let the guard be deleted with this module still green."""
+        self.assertRegex(VALIDATOR.read_text(encoding='utf-8'),
+                         r'assert not name\.startswith\(OPERATIONAL_PREFIXES\)')
 
     def test_every_ignored_experiments_folder_is_payload_guarded(self):
         missing = ignored_experiment_dirs() - guarded_prefixes()
