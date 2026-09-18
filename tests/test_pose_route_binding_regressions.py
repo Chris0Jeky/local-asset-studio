@@ -89,6 +89,45 @@ def skeleton_request(pose, data):
     }
 
 
+def donor_request(data, canvas, image_format='JPEG'):
+    pins = {
+        'model': digest('1'),
+        'encoder': digest('2'),
+        'vae': digest('3'),
+        'graph': digest('4'),
+        'nodes': digest('5'),
+        'runtime': digest('6'),
+        'reference_transform': digest('7'),
+        'prompt_dialect': digest('8'),
+        'lora': digest('9'),
+    }
+    return {
+        'schema': binding.REQUEST_SCHEMA,
+        'authority': 'none',
+        'execution_authorized': False,
+        'generation_submitted': False,
+        'binding_name': 'oriented-donor-regression',
+        'route': {
+            'id': 'copy-pose',
+            'mechanism': 'copy-pose-rgb',
+            'source_kind': 'rgb-pose-donor',
+            'detector_behavior': 'not-applicable',
+            'native_slot': 'pose-donor-image-2',
+            'backend_id': 'primary',
+            'target_canvas': canvas,
+            'pins': pins,
+        },
+        'source': {
+            'kind': 'rgb-pose-donor',
+            'sha256': hashlib.sha256(data).hexdigest(),
+            'bytes': len(data),
+            'format': image_format,
+            'canvas': canvas,
+        },
+        'transform': binding.expected_transform('identity', canvas, canvas),
+    }
+
+
 class PoseRouteBindingRegressionTests(unittest.TestCase):
     def run_cli(self, *args):
         return subprocess.run(
@@ -121,6 +160,19 @@ class PoseRouteBindingRegressionTests(unittest.TestCase):
         request = skeleton_request(pose, data)
         with self.assertRaisesRegex(ValueError, 'opaque RGB'):
             binding.compile_binding(request, data, artifact=pose)
+
+    def test_exif_oriented_donor_is_rejected_before_transform_binding(self):
+        canvas = {'width': 40, 'height': 20}
+        image = Image.new('RGB', (canvas['width'], canvas['height']), (90, 120, 150))
+        exif = Image.Exif()
+        exif[274] = 6
+        output = io.BytesIO()
+        image.save(output, format='JPEG', exif=exif)
+        image.close()
+        data = output.getvalue()
+        request = donor_request(data, canvas)
+        with self.assertRaisesRegex(ValueError, 'orientation'):
+            binding.compile_binding(request, data)
 
 
 if __name__ == '__main__':
