@@ -19,10 +19,12 @@ CONTROLS = ('positive', 'negative', 'width', 'height', 'seed', 'steps', 'cfg',
     name for slot in ('lora', 'lora2', 'lora3', 'lora4', 'lora5', 'lora6')
     for name in (slot, slot + '_name'))
 
-# The keys by which a preset declares that the user supplies the picture. Single source of truth: the
-# adapter and guidance guards below, `scripts/validate-repo.py` and the browser bundle guard in
-# `app/static/bundle-workflow-core.js` all express the same rule, and the JS copy is held to this tuple
-# by tests/test_source_key_invariant.py.
+# The keys by which a preset declares that the user supplies the picture. Single source of truth for
+# `project_document` below, `studio_workflow.guidance.project`, `scripts/validate-repo.py`'s catalog sweep and
+# the browser bundle guard in `app/static/bundle-workflow-core.js`, whose copy is held to this tuple by
+# tests/test_source_key_invariant.py. `project_document` and the bundle check the graph for an image input as
+# well; guidance and the browser's reference staging read these keys alone, which is why the catalog sweep
+# exists to keep the keys a faithful description of the graphs.
 SOURCE_KEYS = ('reference', 'last_reference', 'reference_slots', 'requires_rgba_mask')
 # The API-graph classes that read a picture the user is meant to choose. Only `LoadImage` appears in
 # workflows/api/; `ImageOnlyCheckpointLoader` loads weights, not a picture, and is deliberately absent.
@@ -32,9 +34,9 @@ IMAGE_INPUT_CLASSES = ('LoadImage',)
 def missing_source_key(preset, graph):
     """Graph nodes that load a picture while `preset` declares no source key; empty when the preset is sound.
 
-    The guards that refuse a source-needing preset key off SOURCE_KEYS alone, so a graph that loads a
-    picture under an undeclared key would pass them and bind against the authored example instead of the
-    user's image (#600). `scripts/validate-repo.py` calls this over the whole catalog.
+    A graph that loads a picture under no declared key is invisible to every caller that reads SOURCE_KEYS
+    without also inspecting the graph, and the authored example gets bound in place of the user's image
+    (#600). `scripts/validate-repo.py` calls this over the whole catalog.
     """
     if any(preset.get(key) for key in SOURCE_KEYS): return []
     return sorted(node for node, body in graph.items() if body.get('class_type') in IMAGE_INPUT_CLASSES)
