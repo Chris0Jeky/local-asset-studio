@@ -38,7 +38,8 @@ jobs:
           end_marker = '    class Handler(extend_handler(PromptFixtureBase)):\n'
           start = text.index(start_marker)
           end = text.index(end_marker, start)
-          replacement = '''    class PromptFixtureBase(fixture.Handler):
+          replacement = textwrap.indent(textwrap.dedent('''\
+          class PromptFixtureBase(fixture.Handler):
               studio = None
               _safe_host = server.Handler._safe_host
               _safe_mutation = server.Handler._safe_mutation
@@ -47,7 +48,7 @@ jobs:
               def _json(self, status, value):
                   return self.json(value, status)
 
-          '''
+          '''), '    ')
           text = text[:start] + replacement + text[end:]
           runner.write_text(text, encoding='utf-8')
 
