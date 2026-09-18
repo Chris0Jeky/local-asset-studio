@@ -6,6 +6,7 @@ the documented setting it changes, so a sweep records why it was run and an
 undocumented number can never enter a plan by accident.
 """
 from __future__ import annotations
+import copy
 import hashlib
 import itertools
 import math
@@ -95,15 +96,13 @@ def _held_controls(preset,held):
     return blocked | {key for key in SETTING_KEYS if _control_pairs(preset,key) & pairs}
 
 
-def axes_for(preset,kb,base_controls=None):
-    """Family axes, excluding selected accelerator strength and active schedules."""
-    held=accelerator_slots(preset,kb,base_controls)
-    blocked=_held_controls(preset,held)
+def _family_axes(preset,kb):
+    """Bound family axes before applying the shared accelerator policy."""
     result=[]
     for axis in family_entry(preset,kb).get('axes') or []:
         if not isinstance(axis,dict):continue
         control=axis.get('control')
-        if not isinstance(control,str) or not _bound(preset,control) or control in blocked:continue
+        if not isinstance(control,str) or not _bound(preset,control):continue
         values=[v for v in (axis.get('values') or []) if not isinstance(v,(dict,list))]
         if control in CHOICE_CONTROLS:
             allowed=(preset.get('choices') or {}).get(control) or []
@@ -115,6 +114,39 @@ def axes_for(preset,kb,base_controls=None):
         result.append({'id':axis.get('id') or control,'control':control,'values':seen,
                        'rationale':axis.get('rationale') or '','sources':list(axis.get('sources') or [])})
     return result
+
+
+
+def inspect_axes(preset,kb,base_controls=None):
+    """Explain the existing holds, without selecting variants or changing inputs."""
+    held=accelerator_slots(preset,kb,base_controls)
+    blocked=_held_controls(preset,held)
+    causes={slot:_held_controls(preset,{slot:item}) for slot,item in held.items()}
+    available=[];withheld=[]
+    for axis in _family_axes(preset,kb):
+        control=axis['control']
+        if control not in blocked:
+            available.append(axis);continue
+        slots=[slot for slot,controls in causes.items() if control in controls]
+        if control in held:
+            code='accelerator_strength'
+            message='Acceleration strength is not a style sweep; use a reviewed exact-configuration comparison to change it.'
+        elif control in SCHEDULE_CONTROLS and any(not item['inactive'] for item in held.values()):
+            code='accelerator_schedule'
+            message='Accelerator inactivity is not established for every bound input; inspect exact-configuration guidance rather than a generic family schedule.'
+        else:
+            code='shared_accelerator_input'
+            message='This control shares an input with held acceleration settings; use a reviewed exact-configuration comparison.'
+        withheld.append({'id':axis['id'],'control':control,'code':code,'accelerator_slots':slots,
+                         'accelerator_files':[held[slot]['entry']['file'] for slot in slots], 'message':message})
+    return copy.deepcopy({'axes_available':available,'axes_withheld':withheld,
+                          'notice':'Known settings-library roles only, not installed-byte or compatibility attestation. '
+                                   'Unknown files and embedded acceleration are not covered. Inspection does not validate existing variants.'})
+
+
+def axes_for(preset,kb,base_controls=None):
+    """Keep the existing list projection and the inspection policy identical."""
+    return inspect_axes(preset,kb,base_controls)['axes_available']
 
 
 def _merge_sources(parts):
