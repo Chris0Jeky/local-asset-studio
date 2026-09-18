@@ -49,7 +49,7 @@ jobs:
             tests.test_adult_illustration_taxonomy_prompt_integration \
             tests.test_adult_illustration_prompt_cli -v
 
-      - name: Commit verified review correction
+      - name: Publish verified correction and remove temporary machinery
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -59,5 +59,8 @@ jobs:
             scripts/studio_adult_illustration_prompt.py \
             tests/test_adult_illustration_prompt_membership.py \
             docs/adult-illustration/TAXONOMY-MEMBERSHIP-INSPECTION.md
+          git rm \
+            .github/workflows/issue-562-source-auth-patch.yml \
+            scripts/_issue_562_source_auth_patch.py
           git commit -m "fix: authenticate taxonomy membership from exact source bytes"
           git push origin HEAD:codex/adult-illustration-taxonomy-membership-inspection
