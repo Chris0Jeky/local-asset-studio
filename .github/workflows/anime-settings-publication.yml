@@ -1,0 +1,59 @@
+name: Transfer tested anime settings blobs
+on:
+  push:
+    branches: [codex/anime-settings-publication]
+    paths: [.github/workflows/anime-settings-publication.yml]
+permissions:
+  contents: write
+jobs:
+  blobs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0b510ac852c922db4a01e49ce68cdb083f9ad4e4
+          persist-credentials: false
+      - name: Reconstruct hash-checked blobs only; no commits or refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, os, subprocess, urllib.request
+          from pathlib import Path
+          def oid(raw):
+              return hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+          def replace(raw, old, new):
+              old, new = old.encode(), new.encode()
+              if raw.count(old) != 1: raise ValueError('Replacement is not unique')
+              return raw.replace(old, new)
+          assert subprocess.check_output(['git','rev-parse','HEAD']).decode().strip() == '0b510ac852c922db4a01e49ce68cdb083f9ad4e4'
+          changes = []
+          raw = Path('app/production.py').read_bytes()
+          assert oid(raw) == '436f196dfd008ce11092f044a4cd8a1e93669c03'
+          raw = replace(raw, 'available=settings_planner.axes_for(preset,kb)', 'available=settings_planner.axes_for(preset,kb,controls)')
+          raw = replace(raw, 'The settings library documents no axis this recipe can change', 'The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
+          assert oid(raw) == 'ed71b1f296292fbfde6022f1afad2d556683870b'
+          changes.append(('app/production.py', raw))
+          raw = Path('presets/settings-kb.json').read_bytes()
+          assert oid(raw) == 'a3f3ae1ffbbd66314f5fdd059ab8420a3767f784'
+          raw = replace(raw, '"values": [\n            8,\n            20,\n            30\n          ]', '"values": [\n            20,\n            30\n          ]')
+          raw = replace(raw, '30 is the template and reference value; 8 only with the official turbo LoRA at cfg 1; 20 for a quick study.', '30 is the template and reference value; 20 for a quick study. The conditional 8-step accelerator schedule is separate resource-scoped authored guidance, not a family sweep value.')
+          assert oid(raw) == 'ef6f939e19fc6c38a919a147eb359b3ae0bd811b'
+          changes.append(('presets/settings-kb.json', raw))
+          rows = []
+          for path, raw in changes:
+              data = json.dumps({'content':base64.b64encode(raw).decode(),'encoding':'base64'}).encode()
+              request = urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs', data=data, headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'}, method='POST')
+              with urllib.request.urlopen(request, timeout=30) as response: result=json.load(response)
+              assert result['sha'] == oid(raw)
+              rows.append({'path':path,'sha':result['sha'],'bytes':len(raw)})
+          Path(os.environ['RUNNER_TEMP'],'anime-settings-blobs.json').write_text(json.dumps(rows,indent=2))
+          print(json.dumps(rows,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anime-settings-blobs
+          path: ${{ runner.temp }}/anime-settings-blobs.json
+          retention-days: 1
+          if-no-files-found: error
