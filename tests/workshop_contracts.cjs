@@ -109,9 +109,21 @@ test('the workshop bridge consumes the reference model and re-derives none of it
   assert.match(js, /StudioReferenceModel\.live\(/);
   // Every reference semantic belongs to reference-model.js; a second copy here is what #610 items 1 and 3 were.
   for (const derived of ['reference_slots', 'reference_board', 'last_reference_label', 'referenceRecords', 'lastUploaded', 'referencePending'])
-    assert.ok(!js.includes(derived + ' '), derived + ' is re-derived in workshop.js');
+    assert.ok(!js.includes(derived), derived + ' is re-derived in workshop.js');
   const references = fs.readFileSync(path.join(__dirname, '../app/static/references.js'), 'utf8');
   assert.match(references, /function referencesReady\(\)\{return referenceProjection\(\)\.ready;\}/);
+});
+
+test('the source intent focuses the slot the projection reports outstanding, and still only focuses', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  const body = js.slice(js.indexOf('function revealSources()'), js.indexOf('function openResults()'));
+  assert.match(body, /bridge\.referenceSlots\?\.\(\)/);
+  assert.match(body, /slot\.required && !slot\.staged/);
+  // The outstanding slot must be tried before the fixed page order, or a filled board picture wins again.
+  assert.ok(body.indexOf('outstanding') < body.indexOf("q('#roleReferences input[type=file]')"));
+  assert.ok(!/\.click\(|submit|generate/i.test(body), 'the source intent must never do more than focus');
 });
 
 test('every page and prototype that runs workshop.js loads the reference model first', () => {

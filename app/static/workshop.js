@@ -13,7 +13,7 @@
   const start = () => api.mount(root, {
     recipe:currentRecipe,
     backend:() => typeof backendActive !== 'undefined' && backendActive ? String(backendActive) : 'current',
-    referenceSlots:() => (projection()?.slots || []).map(slot => ({id:slot.id, role:slot.role, required:slot.required})),
+    referenceSlots:() => (projection()?.slots || []).map(slot => ({id:slot.id, role:slot.role, required:slot.required, index:slot.index, staged:slot.staged})),
     references:() => (projection()?.references || []).map(reference => ({...reference})),
     pendingFiles:() => projection()?.pendingFiles || 0,
     dirty:() => typeof draftDirty !== 'undefined' && !!draftDirty,
@@ -331,8 +331,14 @@
       target.focus?.({preventScroll:true}); target.scrollIntoView?.({block:'center', behavior:'instant'}); return true;
     }
     function revealSources() {
+      // The projection knows which slot is outstanding. Focusing the first file input on the page instead put the
+      // cursor on an already-filled board picture when the missing source was the kept image (#610 review).
+      const slots = Array.isArray(bridge.referenceSlots?.()) ? bridge.referenceSlots() : [];
+      const outstanding = slots.find(slot => slot.required && !slot.staged);
+      const named = !outstanding ? null : Number.isInteger(outstanding.index) ? q('[data-ref-file="'+outstanding.index+'"]')
+        : q(outstanding.id === 'last-reference' ? '#lastReferenceWrap input[type=file]' : '#referenceWrap input[type=file]');
       const candidates = [
-        q('#roleReferences input[type=file]'), q('#referenceWrap input[type=file]'), q('#lastReferenceWrap input[type=file]')
+        named, q('#roleReferences input[type=file]'), q('#referenceWrap input[type=file]'), q('#lastReferenceWrap input[type=file]')
       ];
       for (const target of candidates) if (target && !target.closest('[hidden]') && target.getClientRects().length && focusExisting(target)) return;
       const board = q('#roleReferences:not([hidden])') || q('#referenceWrap:not([hidden])') || q('#lastReferenceWrap:not([hidden])');

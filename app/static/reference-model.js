@@ -8,7 +8,9 @@
 
   // referencesReady() used to live in references.js and workshop.js re-derived a second, drifting copy of the
   // same semantics (#610 items 1 and 3). Both now read this projection, so `required`, board cardinality and
-  // last_reference are decided once. `ready` is the Generate gate and is bit-identical to the old function.
+  // last_reference are decided once. `ready` is the Generate gate and is bit-identical to the old function for
+  // every shape a catalog can produce; a malformed non-array reference_slots degrades to ready instead of
+  // throwing, where the old expression read a string's length. prepare() re-validates server side either way.
   const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
   const token = (value, fallback) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(value.trim()) ? value.trim() : fallback;
   const label = (value, fallback) => typeof value === 'string' && value.trim() ? value.trim().slice(0, 120) : fallback;
@@ -39,8 +41,10 @@
         // A board recipe is gated on reference_board.min across the board, not slot by slot (#582 / fe9b888).
         required:!board && slot?.required !== false, staged, pending:!staged && (!!pickedSlots[index] || missing), missing});
     }
+    // A slot-less reference is not a referencesReady() prerequisite: the recipe's example stands until replaced.
+    // studio-workbench.js also reports sourceMissing for one with a continuation_operation; that stays its own
+    // advisory, and readiness keeps primacy there, so the rail shows its specific message rather than this slot.
     else if (recipe?.reference) slots.push({id:'reference', role:label(recipe.reference_label, 'Reference'), kind:'input', index:null,
-      // A slot-less reference is never a readiness prerequisite: the recipe's example stands until replaced.
       required:false, staged:!!uploaded, pending:!uploaded && !!picked.reference, missing:false});
     // #610 item 1: last_reference is a real slot alongside an authored board, not only in the slot-less shape.
     // It is required exactly where studio-workbench.js reports sourceMissing, so nothing new is invented here.
@@ -78,7 +82,7 @@
       lastUploaded:typeof lastUploaded !== 'undefined' ? lastUploaded : null,
       claimedAssets:typeof parentAssets !== 'undefined' && Array.isArray(parentAssets) ? parentAssets.length : 0,
       continuation:typeof continuationState !== 'undefined' && !!continuationState,
-      picked:{slots:(recipe?.reference_slots || []).map((_, index) => chosen('[data-ref-file="'+index+'"]')),
+      picked:{slots:(Array.isArray(recipe?.reference_slots) ? recipe.reference_slots : []).map((_, index) => chosen('[data-ref-file="'+index+'"]')),
         reference:chosen('#reference'), lastReference:chosen('#lastReference')}
     });
   }
