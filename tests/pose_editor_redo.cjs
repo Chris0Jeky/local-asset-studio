@@ -27,27 +27,29 @@ test('timeline records immutable pose and home snapshots for undo and redo',()=>
   assert.equal(timeline.canUndo,true);assert.equal(timeline.canRedo,false);
 });
 
-test('a new edit after undo clears only the redo branch',()=>{
+test('a real edit after undo clears only the redo branch',()=>{
   const timeline=P.timeline(60),home=drawing(80),a=drawing(100),b=drawing(200),c=drawing(300);
   timeline.record(a,home);timeline.record(b,home);
   const restored=timeline.undo(c,home);
   assert.deepEqual(restored.points[4],b[4]);assert.equal(timeline.canRedo,true);
   timeline.record(restored.points,restored.home);
-  assert.equal(timeline.canRedo,false,'branching from an undone state must discard the stale future');
+  P.move(restored.points,4,250,200,CANVAS);
+  assert.equal(timeline.canRedo,false,'a real branch edit must discard the stale future');
   assert.equal(timeline.canUndo,true,'the current branch remains undoable');
 });
 
-test('a clamped no-op edit preserves redo until geometry really changes',()=>{
+test('the workbench record path preserves redo across a clamped no-op',()=>{
   const timeline=P.timeline(60),home=drawing(80),before=drawing(100),after=drawing(200);
   timeline.record(before,home);
   const restored=timeline.undo(after,home);
   assert.equal(timeline.canRedo,true);
-  timeline.begin(restored.points,restored.home);
-  assert.equal(timeline.commit(restored.points,restored.home),false,'unchanged geometry is not a history entry');
-  assert.equal(timeline.canRedo,true,'a boundary-clamped nudge must not discard redo');
+  timeline.record(restored.points,restored.home);
+  const unchanged=P.move(restored.points,4,restored.points[4].x,restored.points[4].y,CANVAS);
+  assert.equal(timeline.canRedo,true,'an unchanged move must not discard redo');
   assert.equal(timeline.canUndo,false,'a no-op must not add a duplicate undo entry');
-  assert.equal(timeline.commit(drawing(101),restored.home),true,'the pending edit commits on its first real change');
-  assert.equal(timeline.canRedo,false,'an actual branch edit discards the abandoned future');
+  timeline.record(unchanged,restored.home);
+  P.move(unchanged,4,101,200,CANVAS);
+  assert.equal(timeline.canRedo,false,'the first real change discards the abandoned future');
   assert.equal(timeline.canUndo,true);
 });
 
@@ -80,8 +82,7 @@ test('the Combine editor exposes and wires redo without adding a generation path
   assert.match(workbench,/id="uxPoseRedo">Redo<\/button>/);
   assert.match(workbench,/poseTimeline=StudioPoseEditor\.timeline\(POSE_UNDO\)/);
   assert.match(workbench,/poseTimeline\.resize\(poseCanvas,next\)/);
-  assert.match(workbench,/poseTimeline\.begin\(posePoints,poseHome\)/);
-  assert.match(workbench,/poseTimeline\.commit\(posePoints,poseHome\)/);
+  assert.match(workbench,/poseTimeline\.record\(posePoints,poseHome\)/);
   assert.match(workbench,/poseTimeline\.undo\(posePoints,poseHome\)/);
   assert.match(workbench,/poseTimeline\.redo\(posePoints,poseHome\)/);
   assert.match(workbench,/redo\.disabled=.*!poseTimeline\.canRedo/);
