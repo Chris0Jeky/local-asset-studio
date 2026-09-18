@@ -74,8 +74,8 @@ def source(**changes):
 
 def write_repo(root: Path):
     (root / "presets").mkdir(parents=True)
-    (root / "presets/catalog.json").write_text(CATALOG_TEXT, encoding="utf-8")
-    (root / "HUMAN_TODO.md").write_text(TODO_TEXT, encoding="utf-8")
+    (root / "presets/catalog.json").write_text(CATALOG_TEXT, encoding="utf-8", newline="")
+    (root / "HUMAN_TODO.md").write_text(TODO_TEXT, encoding="utf-8", newline="")
 
 
 class RepositorySnapshotTests(unittest.TestCase):
@@ -97,11 +97,7 @@ class RepositorySnapshotTests(unittest.TestCase):
             "catalog_blob_sha": CATALOG_BLOB_SHA,
             "human_todo_blob_sha": TODO_BLOB_SHA,
         })
-        self.assertEqual(result["catalog"], {"presets": 3, "unique_graphs": 2,
-                                             "verified_presets": 2, "visual_workflows": 1})
-        self.assertEqual(result["human_todo"]["open_count"], 3)
-        self.assertEqual([item["id"] for item in result["human_todo"]["items"]],
-                         ["q-25", "q-26", None])
+        self.assertEqual(result["local_facts"], {"status": "excluded"})
         self.assertEqual(result["work"]["open_pull_requests"], 3)
         self.assertEqual(result["work"]["independent_lines"], 2)
         self.assertEqual(result["work"]["stack_count"], 1)
@@ -116,7 +112,51 @@ class RepositorySnapshotTests(unittest.TestCase):
         self.assertEqual(result["subjective_fields"],
                          ["artistic acceptance", "product percentages", "priority judgement", "licensing approval"])
 
-    def test_local_facts_are_blob_bound_and_measurements_use_their_revision(self):
+    def test_checkout_facts_are_optional_observations_never_a_generation_failure(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp); write_repo(root)
+            result = snapshot.build_snapshot(root, source(), include_local=True)
+            local = result["local_facts"]
+            self.assertEqual(local["status"], "observed")
+            self.assertEqual(local["catalog"], {"blob_sha": CATALOG_BLOB_SHA, "presets": 3, "unique_graphs": 2,
+                                                "verified_presets": 2, "visual_workflows": 1})
+            self.assertEqual(local["human_todo"]["blob_sha"], TODO_BLOB_SHA)
+            self.assertEqual(local["human_todo"]["open_count"], 3)
+            self.assertEqual([item["id"] for item in local["human_todo"]["items"]], ["q-25", "q-26", None])
+            self.assertTrue(local["catalog_matches_capture"])
+            self.assertTrue(local["human_todo_matches_capture"])
+            (root / "HUMAN_TODO.md").write_text(TODO_TEXT + "- [ ] A later owner check" + chr(10), encoding="utf-8", newline="")
+            (root / "presets/catalog.json").write_text(json.dumps({"presets": []}), encoding="utf-8")
+            moved = snapshot.build_snapshot(root, source(), include_local=True)
+        self.assertFalse(moved["local_facts"]["catalog_matches_capture"])
+        self.assertFalse(moved["local_facts"]["human_todo_matches_capture"])
+        self.assertEqual(moved["local_facts"]["human_todo"]["open_count"], 4)
+        self.assertIn("differs from the capture", snapshot.render_markdown(moved))
+
+    def test_committed_projection_never_depends_on_catalog_or_owner_backlog_bytes(self):
+        """Regression for #461: the drift gate must not fail on unrelated backlog edits."""
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp); write_repo(root)
+            src = root / "state.json"; src.write_text(json.dumps(source()), encoding="utf-8")
+            out = root / "state.md"
+            self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
+                                            "--format", "markdown", "--output", str(out)]), 0)
+            (root / "HUMAN_TODO.md").write_text("**q-99 — a new owner choice (open).** Decide." + chr(10), encoding="utf-8")
+            (root / "presets/catalog.json").write_text(json.dumps({"presets": []}), encoding="utf-8")
+            self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
+                                            "--format", "markdown", "--check", str(out)]), 0)
+            (root / "HUMAN_TODO.md").unlink(); (root / "presets/catalog.json").unlink()
+            self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
+                                            "--format", "markdown", "--check", str(out)]), 0)
+            body = out.read_text(encoding="utf-8")
+            self.assertNotIn("q-25", body)
+            self.assertNotIn("presets;", body)
+            with patch("sys.stderr", new=io.StringIO()) as error:
+                self.assertEqual(snapshot.main(["--repo-root", str(root), "--source", str(src),
+                                                "--format", "markdown", "--local-facts", "--check", str(out)]), 2)
+                self.assertIn("cannot be combined with --check", error.getvalue())
+
+    def test_receipt_currency_uses_the_measured_revision(self):
         test_receipt = {"schema_version": 1, "source_sha": FACTS_HEAD, "run_at": CAPTURED,
                         "command": "python -m unittest discover -s tests", "total": 100,
                         "passed": 90, "skipped": 10, "failures": 0, "errors": 0,
@@ -129,9 +169,6 @@ class RepositorySnapshotTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             root = Path(tmp); write_repo(root)
             result = snapshot.build_snapshot(root, value, test_receipt, validation)
-            (root / "presets/catalog.json").write_text(json.dumps({"presets": []}), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "catalog.*Git blob"):
-                snapshot.build_snapshot(root, value)
         self.assertEqual(result["repository"]["head_sha"], HEAD)
         self.assertEqual(result["repository"]["facts_sha"], FACTS_HEAD)
         self.assertEqual(result["measurements"]["tests"]["status"], "current")
@@ -217,12 +254,12 @@ class RepositorySnapshotTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertIn("<!-- generated by scripts/repository_snapshot.py; do not hand-edit -->", first)
         self.assertIn(f"work capture `{HEAD}`", first)
-        self.assertIn(f"local facts `{HEAD}`", first)
+        self.assertIn(f"measured revision `{HEAD}`", first)
         self.assertIn("## Active work", first)
         self.assertIn("#337", first)
         self.assertIn("stacked on #334", first)
         self.assertIn("0/1 owner-run lanes", first)
-        self.assertIn("## Next ready", first)
+        self.assertIn("## Captured next-ready selection", first)
         self.assertIn("#314", first)
         self.assertIn("Measurements are unavailable", first)
         self.assertIn("Subjective judgements are deliberately excluded", first)

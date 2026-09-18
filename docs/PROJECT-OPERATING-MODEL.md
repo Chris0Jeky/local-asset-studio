@@ -9,7 +9,7 @@ This guide keeps Local Asset Studio's active queue legible while preserving the 
 | `STATUS.md` | authored current truth | Goal status, product judgement, current gaps and recommended next slice |
 | `CURRENT_STATE.md` | chronological evidence ledger | Executed work, exact receipts, retained failures and dated handoffs |
 | `HUMAN_TODO.md` | owner decisions | Creative, licensing and owner-run acceptance choices; agents never tick them |
-| `docs/generated/REPOSITORY-STATE.md` | generated factual projection | Captured active PRs, selected issue readiness, WIP arithmetic, blob-bound catalog/owner facts and SHA-bound receipts |
+| `docs/generated/REPOSITORY-STATE.md` | generated factual projection | Captured active PRs, selected issue readiness, WIP arithmetic and SHA-bound receipts |
 
 A generated snapshot cannot decide artistic acceptance, product percentages, priority or licensing. A passing check cannot close a broad issue.
 
@@ -85,8 +85,6 @@ The PR body is a decision surface, not the archive.
 `scripts/repository_snapshot.py` reads only local, explicit evidence:
 
 - a bounded capture of open PRs and selected active issues;
-- `presets/catalog.json`;
-- open entries in `HUMAN_TODO.md`;
 - optional test and validator receipts.
 
 It never calls GitHub, closes work, changes labels or infers acceptance. The captured GitHub projection under `research/repository-state/` is evidence at one time, not a project-management database.
@@ -94,9 +92,22 @@ It never calls GitHub, closes work, changes labels or infers acceptance. The cap
 The snapshot keeps two provenance lines deliberately separate:
 
 - `repository.head_sha` is the revision whose GitHub work queue was captured;
-- `repository.facts_sha` is the revision whose checked-out catalog and `HUMAN_TODO.md` facts are represented.
+- `repository.facts_sha` is the revision whose measurements the capture asserts; a receipt is current only when its own `source_sha` matches it.
 
-The capture also records the exact Git blob IDs for `presets/catalog.json` and `HUMAN_TODO.md`. Generation refuses if the checkout bytes do not match those identities. This prevents a later PR from regenerating a mixed-revision report while retaining an older advertised snapshot SHA. Test and validator receipts are current only when their `source_sha` matches `facts_sha`; otherwise they remain visibly stale.
+Test and validator receipts are current only when their `source_sha` matches `facts_sha`; otherwise they remain visibly stale.
+
+### Why the committed projection carries no checkout-derived facts
+
+The first design read `presets/catalog.json` and `HUMAN_TODO.md` into the committed projection and bound them to exact Git blob IDs, so generation refused when the checkout bytes moved. That made the drift gate unsatisfiable rather than strict: `HUMAN_TODO.md` is the one file every agent is asked to keep current, and `presets/catalog.json` changes with every preset slice, so the gate went red on edits unrelated to the capture, and the only repair was "regenerate", which republished a days-old PR landscape as current state. That was #461.
+
+The rule now:
+
+- the committed projection is a **pure function of the committed capture, the receipts and the generator**. Nothing else can turn the drift gate red, so `--check` asserts exactly one thing - the checked-in Markdown is what those committed inputs render;
+- `presets/catalog.json` and `HUMAN_TODO.md` are read **only** with `--local-facts`, which appends a clearly separated section and is rejected together with `--check`;
+- that section records the blob it actually observed and whether it still matches the identity the capture recorded. A difference is reported, never raised;
+- the capture keeps `catalog_blob_sha` and `human_todo_blob_sha` as the observation it was authored against, not as a pin the checkout must satisfy.
+
+Catalog counts remain owned by `python scripts/validate-repo.py`; open owner decisions remain owned by `HUMAN_TODO.md`, which agents surface in every summary and never tick.
 
 Generate or check the snapshot:
 
@@ -114,6 +125,14 @@ python scripts/repository_snapshot.py \
   --format markdown --check docs/generated/REPOSITORY-STATE.md
 ```
 
+Read the checkout-derived facts separately, without touching the gate:
+
+```console
+python scripts/repository_snapshot.py \
+  --source research/repository-state/active-work.json \
+  --format markdown --local-facts
+```
+
 Missing receipts are `unavailable`, never zero. A stale receipt remains useful historical evidence but is not promoted into a current fact. The Markdown projection retains each supplied receipt's exact source SHA, timestamp and test command where applicable.
 
 The `next_ready` array is a bounded **authored selection** from the capture. Validation proves that every listed issue is represented as ready and unblocked; it does not claim that the generator chose or objectively ranked those priorities.
@@ -123,7 +142,7 @@ The `next_ready` array is a bounded **authored selection** from the capture. Val
 1. Read live open PRs and relevant issues.
 2. Record only the active queue and immediate ready work; do not copy the entire historical issue list.
 3. Preserve the exact capture time and default-branch work-state SHA.
-4. Record the local-facts revision and exact catalog/`HUMAN_TODO.md` Git blob IDs.
+4. Record the receipt revision in `facts_sha`, and the catalog/`HUMAN_TODO.md` Git blob IDs observed at capture time. Those blob IDs are an observation the checkout may later diverge from; they never gate generation.
 5. Record each child’s immediate branch in `base`, but set every descendant’s `stack_parent` to the chain’s root PR.
 6. Mark owner-run work explicitly; only one active owner-run lane is permitted by default.
 7. Regenerate the snapshot and run its drift check.
@@ -141,7 +160,7 @@ Delivered here:
 
 - the taxonomy and WIP contract;
 - a structured issue form and concise-first PR template;
-- an offline deterministic generator with separate work/fact provenance and stale-receipt handling;
+- an offline deterministic generator with separate work/receipt provenance, stale-receipt handling and a drift gate that depends only on committed capture evidence;
 - root-owned stack validation and a one-owner-run-lane gate;
 - a checked generated snapshot and CI drift gate;
 - a bounded capture of the current active queue.

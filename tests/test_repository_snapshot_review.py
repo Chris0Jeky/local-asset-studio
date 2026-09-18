@@ -43,8 +43,8 @@ def source():
 
 def write_repo(root):
     (root / "presets").mkdir(parents=True)
-    (root / "presets/catalog.json").write_text(CATALOG_TEXT, encoding="utf-8")
-    (root / "HUMAN_TODO.md").write_text(TODO_TEXT, encoding="utf-8")
+    (root / "presets/catalog.json").write_text(CATALOG_TEXT, encoding="utf-8", newline="")
+    (root / "HUMAN_TODO.md").write_text(TODO_TEXT, encoding="utf-8", newline="")
 
 
 class RepositorySnapshotReviewTests(unittest.TestCase):
