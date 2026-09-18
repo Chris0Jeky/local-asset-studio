@@ -39,6 +39,12 @@ def main():
         assert page.evaluate("Object.entries(originalNodes).every(([id,node])=>document.getElementById(id)===node)")
         assert page.evaluate("document.querySelector('#i2vMode') && document.querySelector('#i2vMode').closest('.wk-control-group') === null"), 'I2V mode must stay outside the 2-column control groups'
         assert page.evaluate("!!document.querySelector('#controls > label:has(#i2vMode)')")
+        assert page.evaluate("document.getElementById('jobProblemsHost') && !document.getElementById('workshopResults').contains(document.getElementById('jobProblemsHost'))")
+        page.evaluate("document.getElementById('jobProblemsHost').innerHTML='<details id=\"jobProblems\"><summary>Problems</summary><button id=\"observeFix\">Check known batch receipts</button></details>'")
+        assert not page.locator('#workshopResults').evaluate('(el)=>el.open')
+        assert page.locator('#jobProblems > summary').is_visible()
+        page.locator('#jobProblems > summary').click()
+        assert page.locator('#observeFix').is_visible()
         assert not page.locator('.ux-parameters').evaluate('(el)=>el.open')
         assert not page.locator('#negativeWrap').evaluate('(el)=>el.open')
         height=page.evaluate('document.documentElement.scrollHeight')

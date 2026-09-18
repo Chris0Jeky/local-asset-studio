@@ -14,6 +14,16 @@ test('missing, malformed, oversized and unavailable storage are harmless', () =>
   assert.deepEqual(W.readPreferences({getItem(){throw Error('blocked');}}), {layout:'focus',skin:'atelier'});
   assert.equal(W.writePreferences({setItem(){throw Error('full');}}, {}), false);
 });
+test('jobProblemsHost is created outside the Recent runs disclosure', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  const host = js.indexOf("problemsHost.id = 'jobProblemsHost'");
+  const results = js.indexOf("disclosure('workshopResults'");
+  const append = js.indexOf('create.append(problemsHost, results)');
+  assert.ok(host >= 0 && results > host && append > results);
+});
+
 test('groupControls leaves the I2V hold note outside two-column fieldsets', () => {
   const fs = require('node:fs');
   const path = require('node:path');

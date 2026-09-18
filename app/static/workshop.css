@@ -75,9 +75,13 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-parameter-extras {display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0 20px}
 .workshop .wk-parameter-extras #variants {display:flex;flex-wrap:wrap;gap:8px}
 .workshop #controls {display:grid;grid-template-columns:1fr;gap:20px;margin:0 0 20px}
-.workshop #controls>label:has(#i2vMode) {grid-column:1/-1}
+.workshop #controls>label:has(#i2vMode) {grid-column:1/-1;width:100%;min-width:0}
+.workshop #i2vModeNote {display:block;width:100%;box-sizing:border-box}
+.workshop #jobProblemsHost {min-width:0}
+.workshop #jobProblemsHost:empty {display:none}
 .workshop .wk-control-group {border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;min-width:0;margin:0}
-.workshop .wk-control-group label:has(#i2vMode) {grid-column:1/-1}
+.workshop .wk-control-group label:has(#i2vMode),
+.workshop .wk-control-group label:has([data-key=seed]) {grid-column:1/-1}
 .workshop .wk-control-group legend {font-size:11px;color:var(--muted);letter-spacing:.04em;padding:0 7px}
 .workshop .wk-control-group label {font-size:12px;line-height:1.6;margin:0;min-width:0}
 .workshop .wk-control-group :is(input,select) {margin-top:7px;min-height:42px;font-size:13px;width:100%}
@@ -105,7 +109,8 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .imageCard {border-color:var(--line);background:var(--panel);border-radius:14px;overflow:hidden;max-width:100%}
 .workshop .imageCard img {max-width:100%;object-fit:contain}
 .workshop .imageCard button {font-size:11px}
-.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0}
+.workshop .wk-run-dock {position:fixed;z-index:55;bottom:16px;left:calc(var(--sidebar,224px) + 28px);right:28px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:15px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:var(--wk-shadow);max-width:1350px;margin:0 auto;min-width:0;pointer-events:none}
+.workshop .wk-run-dock :is(button,select,input,a,label) {pointer-events:auto}
 .wk-dock-info {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;min-width:0}
 .wk-dock-info>strong {font-size:12px;line-height:1.55;font-weight:500;max-height:3.1em;overflow:auto;overflow-wrap:anywhere;color:var(--text)}
 .wk-dock-info>span {font-size:11px;color:var(--muted);grid-column:1}

@@ -20,6 +20,19 @@ class WorkshopFrontendTests(unittest.TestCase):
         self.assertIn('[data-workshop-skin="arcade"] .ux-create-heading', css)
         self.assertIn('[data-workshop-skin="sakura"] .ux-create-heading', css)
 
+    def test_job_problems_render_into_a_host_outside_recent_runs(self):
+        workshop = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
+        app = (ROOT / 'app/static/app.js').read_text(encoding='utf-8')
+        host = workshop.index("problemsHost.id = 'jobProblemsHost'")
+        results = workshop.index("disclosure('workshopResults'")
+        append = workshop.index('create.append(problemsHost, results)')
+        self.assertLess(host, results)
+        self.assertLess(results, append)
+        self.assertIn("document.getElementById?.('jobProblemsHost')", app)
+        self.assertIn('if(host)host.innerHTML=problemMarkup;', app)
+        self.assertIn("host?'':problemMarkup", app)
+        self.assertIn('problemsHost.onclick = q(\'#gallery\')?.onclick;', workshop)
+
     def test_i2v_hold_note_is_not_grouped_into_two_column_fieldset(self):
         js = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
         css = (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8')
