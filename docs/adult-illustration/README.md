@@ -34,7 +34,7 @@ python scripts/validate_adult_illustration.py
 python -m unittest discover -s tests -p "test_adult_illustration.py" -v
 ```
 
-The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. It does not inspect installed models, call the network or submit generation.
+The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The regression suite specifically rejects a promoted synthetic adapter even when an interval is supplied, non-finite sweep weights, and issue-owner drift away from #404–#413. It does not inspect installed models, call the network or submit generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
