@@ -18,8 +18,13 @@ class PoseScreeningExampleTests(unittest.TestCase):
         self.assertEqual(plan['candidate_count'], 48)
         self.assertFalse(plan['execution_authorized'])
         self.assertFalse(plan['generation_submitted'])
-        self.assertEqual({cell['source_ref'] for cell in plan['cells']},
-                         {'local-source-' + str(i) for i in range(1, 9)})
+        expected_sources = {'local-source-' + str(i) for i in range(1, 8)} | {
+            'local-source-8-baseline', 'local-source-8-variant'
+        }
+        self.assertEqual({cell['source_ref'] for cell in plan['cells']}, expected_sources)
+        pair = [cell for cell in plan['cells']
+                if cell['route_id'] == plan['route_order'][0] and cell['case_ordinal'] == 8]
+        self.assertNotEqual(pair[0]['source_ref'], pair[1]['source_ref'])
         for route in source['routes']:
             for value in route['pins'].values():
                 self.assertEqual(len(set(value)), 1, 'example pins must remain visibly synthetic')
