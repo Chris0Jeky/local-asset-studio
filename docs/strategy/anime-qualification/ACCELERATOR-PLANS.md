@@ -21,7 +21,8 @@ from the actual grid after a filename or strength change.
 Remix varies only the remaining active non-accelerator slots. Selected accelerator filenames and
 strengths are preserved, including single-binding defaults omitted from the caller's snapshot. A missing
 strength spanning multiple inputs requires an explicit value before remixing, so the primary default
-cannot silently overwrite a different companion default. Preserved strengths still contribute
+cannot silently overwrite a different companion default. Missing or nonfinite accelerator strengths
+also refuse, including companion-only slots, rather than contributing a fabricated zero. Preserved strengths contribute
 to the existing total-strength warning. The explanation states what was held. An accelerator-only
 selection has no style remix and returns an actionable refusal, rather than reweighting it or inventing
 an alternative schedule.

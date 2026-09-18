@@ -8,6 +8,7 @@ undocumented number can never enter a plan by accident.
 from __future__ import annotations
 import hashlib
 import itertools
+import math
 import json
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -179,6 +180,9 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
     active=[slot for slot in active if slot not in blocked]
     if not active:raise ValueError('Turn on a non-accelerator LoRA slot to remix; acceleration settings stay unchanged')
     for slot,item in held.items():
+        try:known=math.isfinite(_number(item['value']))
+        except (ValueError,OverflowError):known=False
+        if not known:raise ValueError('Set a finite accelerator strength explicitly before remixing; authored strength is unknown')
         if slot not in base and len(_control_pairs(preset,slot))>1:
             raise ValueError('Set the accelerator strength explicitly before remixing; companion defaults may differ')
         # Freeze omitted authored values explicitly as well as caller overrides.

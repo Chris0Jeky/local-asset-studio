@@ -72,6 +72,18 @@ class AcceleratorPlannerTests(unittest.TestCase):
         self.assertEqual(row['controls']['lora6_name'], 'a.safetensors')
         self.assertEqual(row['label'], 'NIJISIS lead')
 
+    def test_unknown_companion_only_strength_refuses_instead_of_counting_zero(self):
+        self.p['bindings_extra']={'lora6':[['99','strength_model']]}
+        self.p['defaults']['lora6_name']='a.safetensors'
+        for value in (None,True,'NaN','Infinity','1e9999'):
+            with self.subTest(value=value):
+                base={'lora':0}
+                if value is not None:base['lora6']=value
+                with self.assertRaisesRegex(ValueError,'finite accelerator strength'):
+                    planner.plan_remix(self.p,self.k,base)
+        row=planner.plan_remix(self.p,self.k,{'lora':0,'lora6':0.75})[0]
+        self.assertEqual(row['controls']['lora6'],0.75)
+
     def test_omitted_companion_strength_is_not_proved_inactive_by_primary_default(self):
         self.p['defaults']['lora']=0
         self.p['bindings_extra']={'lora':[['10','strength_clip']]}
