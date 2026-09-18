@@ -222,12 +222,22 @@
       execution = {...unknown(context.capability.reason, 'Recipe capability has not been observed.'), observedAt:null, contextStamp:null};
     }
     const state = execution.state === 'known' ? execution.value.state : 'unknown';
+    const sourceDescription = () => {
+      const pendingSlots = new Set(sources.pending.map(reference => reference.slotId).filter(Boolean));
+      const absentRequired = sources.missing.filter(slot => !pendingSlots.has(slot.id));
+      if (sources.pending.length && absentRequired.length)
+        return 'Finish checking or staging the selected sources, then attach the remaining required source roles.';
+      if (sources.pending.length)
+        return 'The selected sources still need to finish checking or staging.';
+      if (absentRequired.length)
+        return 'Attach every missing required source role before continuing.';
+      if (sources.pendingFiles)
+        return 'One or more local sources have pending check or staging work.';
+      return 'One or more sources do not match an available recipe slot.';
+    };
     const sourceIntent = () => intent(
       context, ACTIONS.REVIEW_SOURCES, 'Review the source roles', 'Review sources',
-      sources.missing.length ? 'Attach or stage every required source role before continuing.'
-        : sources.pending.length ? 'Some selected sources are not staged yet.'
-          : sources.pendingFiles ? 'One or more local sources have pending check or staging work.'
-            : 'One or more sources do not match an available recipe slot.',
+      sourceDescription(),
       'Exact slot identities, pending staging and extra assignments are kept separate.'
     );
     const conflictIntent = () => intent(
