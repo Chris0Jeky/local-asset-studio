@@ -1,0 +1,100 @@
+name: Verify PR 585 fixture parity correction
+on:
+  push:
+    branches:
+      - fix/361-reference-review-use-case
+    paths:
+      - '.github/workflows/agent-fix-585.yml'
+permissions:
+  contents: write
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/361-reference-review-use-case
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply production transport guards and narrow the manifest diff
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import textwrap
+          from pathlib import Path
+
+          runner = Path('tests/studio_use_cases.py')
+          text = runner.read_text(encoding='utf-8')
+          import_line = "    from studio_prompt.http_extension import extend_handler\n"
+          if "    from test_server import server\n" not in text:
+              assert text.count(import_line) == 1
+              text = text.replace(import_line, import_line + "    from test_server import server\n", 1)
+
+          old = '''    class PromptFixtureBase(fixture.Handler):
+              studio = None
+
+              def _json(self, status, value):
+                  return self.json(value, status)
+
+              def _safe_host(self):
+                  return self.headers.get('Host') == '127.0.0.1:%s' % self.server.server_port
+
+              def _safe_mutation(self):
+                  return self._safe_host() and self.headers.get('Origin') == 'http://127.0.0.1:%s' % self.server.server_port
+
+              def _content_length(self, limit):
+                  length = int(self.headers.get('Content-Length', '-1'))
+                  if not 0 <= length <= limit:
+                      raise ValueError('Request too large')
+                  return length
+          '''
+          new = '''    class PromptFixtureBase(fixture.Handler):
+              studio = None
+              _safe_host = server.Handler._safe_host
+              _safe_mutation = server.Handler._safe_mutation
+              _content_length = server.Handler._content_length
+
+              def _json(self, status, value):
+                  return self.json(value, status)
+          '''
+          assert text.count(old) == 1, 'expected copied transport guard block once'
+          runner.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          current_path = Path('research/ux/use-cases.json')
+          current = json.loads(current_path.read_text(encoding='utf-8'))
+          case = next(case for case in current['cases'] if case['id'] == 'reference-analysis-review-and-apply')
+          base = subprocess.check_output(
+              ['git', 'show', 'origin/main:research/ux/use-cases.json'],
+              text=True,
+              encoding='utf-8',
+          )
+          marker = '    {\n      "id": "prompt-lab-to-create",'
+          assert base.count(marker) == 1
+          assert '"id": "reference-analysis-review-and-apply"' not in base
+          block = textwrap.indent(json.dumps(case, ensure_ascii=False, indent=2), '    ') + ',\n'
+          current_path.write_text(base.replace(marker, block + marker, 1), encoding='utf-8')
+          PY
+      - name: Install browser dependencies
+        run: |
+          python -m pip install pillow playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Verify focused contracts and measured journeys
+        run: |
+          python -m unittest discover -s tests -p 'test_reference_review*.py' -v
+          python -m unittest tests/test_use_case_matrix.py -v
+          python tests/studio_use_cases.py --case reference-analysis-review-and-apply --out .runtime/reference-review-use-case.json
+          python tests/reference_review_browser.py --output .runtime/reference-review/browser
+          python scripts/validate-repo.py
+          git diff --check
+      - name: Commit the verified correction and remove this one-shot workflow
+        run: |
+          git rm .github/workflows/agent-fix-585.yml
+          git config user.name 'Cristian Tcaci'
+          git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
+          git add tests/studio_use_cases.py tests/test_reference_review_use_case_registration.py research/ux/use-cases.json
+          git commit -m 'test: align reference review journey fixtures'
+          git push origin HEAD:fix/361-reference-review-use-case
