@@ -114,3 +114,102 @@ test('policy decisions are immutable and carry no execution authority', () => {
   assert.equal(result.motionEligible, false);
   assert.throws(() => { result.renderMode = 'video'; }, TypeError);
 });
+
+function eventTarget(initial = {}) {
+  const listeners = new Map();
+  return Object.assign(initial, {
+    addEventListener(name, callback) {
+      if (!listeners.has(name)) listeners.set(name, new Set());
+      listeners.get(name).add(callback);
+    },
+    removeEventListener(name, callback) { listeners.get(name)?.delete(callback); },
+    dispatch(name) { for (const callback of [...(listeners.get(name) || [])]) callback({type:name}); },
+    listenerCount(name) { return listeners.get(name)?.size || 0; }
+  });
+}
+
+function fakeBrowser() {
+  const document = eventTarget({visibilityState:'visible', body:{dataset:{}}});
+  const media = {
+    forced:eventTarget({matches:false}),
+    reduced:eventTarget({matches:false})
+  };
+  const connection = eventTarget({saveData:false});
+  const window = {
+    document,
+    navigator:{connection, serviceWorker:{register(){ throw new Error('service workers are forbidden'); }}},
+    matchMedia(query) {
+      return query.includes('forced-colors') ? media.forced : media.reduced;
+    },
+    fetch() { throw new Error('network is forbidden'); }
+  };
+  return {window, document, media, connection};
+}
+
+test('controller applies bounded render attributes and follows page visibility', () => {
+  const P = policy();
+  const env = fakeBrowser();
+  const create = {dataset:{}}, hero = {dataset:{}}, status = {textContent:''};
+  const controller = P.createController(env.window, {
+    create, hero, status,
+    initial:{requested:'night-shift', assetState:'available', executionState:'ready'}
+  });
+  assert.equal(env.document.body.dataset.workshopAmbienceRender, 'poster');
+  assert.equal(create.dataset.workshopAmbienceRender, 'poster');
+  assert.equal(hero.dataset.ambienceRender, 'poster');
+  assert.match(status.textContent, /Local static poster/);
+  env.document.visibilityState = 'hidden';
+  env.document.dispatch('visibilitychange');
+  assert.equal(controller.snapshot().renderMode, 'suspended');
+  assert.equal(hero.dataset.ambienceRender, 'suspended');
+  env.document.visibilityState = 'visible';
+  env.document.dispatch('visibilitychange');
+  assert.equal(controller.snapshot().renderMode, 'poster');
+  controller.destroy();
+  assert.equal(env.document.listenerCount('visibilitychange'), 0);
+});
+
+test('controller observes forced colours reduced motion and data saving without media work', () => {
+  const P = policy();
+  const env = fakeBrowser();
+  const controller = P.createController(env.window, {
+    create:{dataset:{}}, hero:{dataset:{}}, status:{textContent:''},
+    initial:{requested:'quiet-morning', assetState:'available'}
+  });
+  env.media.forced.matches = true;
+  env.media.forced.dispatch('change');
+  assert.equal(controller.snapshot().renderMode, 'tokens');
+  env.media.forced.matches = false;
+  env.media.reduced.matches = true;
+  env.media.reduced.dispatch('change');
+  assert.equal(controller.snapshot().renderMode, 'poster');
+  assert.equal(controller.snapshot().motionEligible, false);
+  env.connection.saveData = true;
+  env.connection.dispatch('change');
+  assert.equal(controller.snapshot().renderMode, 'poster');
+  assert.match(controller.snapshot().status, /no optional transfer/i);
+  controller.destroy();
+  assert.equal(env.media.forced.listenerCount('change'), 0);
+  assert.equal(env.media.reduced.listenerCount('change'), 0);
+  assert.equal(env.connection.listenerCount('change'), 0);
+});
+
+test('controller updates only allow-listed observations and exposes no command seam', () => {
+  const P = policy();
+  const env = fakeBrowser();
+  const controller = P.createController(env.window, {
+    initial:{requested:'night-shift', assetState:'available'}
+  });
+  controller.update({
+    requested:'quiet-morning', executionState:'running', userPaused:true,
+    url:'https://provider.example/private.mp4', command:'submit-generation'
+  });
+  const result = controller.snapshot();
+  assert.equal(result.requested, 'quiet-morning');
+  assert.equal(result.renderMode, 'poster');
+  assert.equal(result.motionEligible, false);
+  assert.equal(result.authorizesExecution, false);
+  assert.deepEqual(result.commands, []);
+  assert.doesNotMatch(JSON.stringify(result), /provider|submit-generation/);
+  controller.destroy();
+});
