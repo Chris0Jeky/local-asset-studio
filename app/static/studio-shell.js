@@ -34,7 +34,8 @@
   const route=location.pathname.includes('workflow-studio.html')?'workflows':location.pathname.includes('av.html')?'scene':location.pathname.includes('voice.html')?'voice':location.pathname.includes('prompt-lab.html')?'prompt':location.pathname.includes('review.html')?'review':'home';
   setView(isMain?StudioUX.normalizeView(location.hash):route);window.StudioShell={setView,openCommands};
   if(isMain){
-    const context=document.createElement('script');context.src='/static/presentation-context.js';context.onload=()=>{const workshop=document.createElement('script');workshop.src='/static/workshop.js';document.body.append(workshop);};document.body.append(context);
+    const loadWorkshop=()=>{const workshop=document.createElement('script');workshop.src='/static/workshop.js';workshop.onload=()=>{const ambienceView=document.createElement('script');ambienceView.src='/static/workshop-ambience.js';document.body.append(ambienceView);};document.body.append(workshop);};
+    const context=document.createElement('script');context.src='/static/presentation-context.js';context.onload=()=>{const ambience=document.createElement('script');ambience.src='/static/workshop-ambience-policy.js';ambience.onload=loadWorkshop;ambience.onerror=loadWorkshop;document.body.append(ambience);};document.body.append(context);
     const disclosureStyle=document.createElement('link');disclosureStyle.rel='stylesheet';disclosureStyle.href='/static/create-progressive-disclosure.css';document.head.append(disclosureStyle);
     const disclosure=document.createElement('script');disclosure.src='/static/create-progressive-disclosure.js';document.body.append(disclosure);
     const proposalStyle=document.createElement('link');proposalStyle.rel='stylesheet';proposalStyle.href='/static/setup-proposal.css';document.head.append(proposalStyle);
