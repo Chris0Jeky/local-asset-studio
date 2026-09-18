@@ -101,3 +101,44 @@ test('the offline prototype loads the context boundary before workshop.js', () =
   const workshop = html.indexOf('workshop.js');
   assert.ok(context >= 0 && workshop > context);
 });
+
+test('Studio shell loads ambience policy after context and before the workshop adapter', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
+  const context = shell.indexOf('presentation-context.js');
+  const ambience = shell.indexOf('workshop-ambience-policy.js');
+  const workshop = shell.indexOf('workshop.js');
+  assert.ok(context >= 0 && ambience > context && workshop > ambience);
+  assert.match(shell, /context\.onload=.*ambience.*ambience\.onload=.*workshop/);
+});
+
+test('workshop uses the ambience controller as a presentation-only observer', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.match(js, /AmbiencePolicy\.createController\(/);
+  assert.match(js, /workshopAmbienceStatus/);
+  assert.match(js, /ambienceDecision/);
+  assert.doesNotMatch(js, /AmbiencePolicy[^\n]+(?:fetch\(|serviceWorker|\.click\(\))/);
+});
+
+test('fixtures load ambience policy before workshop.js', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  for (const relative of ['../docs/workshop/prototype.html','workshop_fixture.html']) {
+    const text = fs.readFileSync(path.join(__dirname, relative), 'utf8');
+    const ambience = text.indexOf('workshop-ambience-policy.js');
+    const workshop = text.indexOf('workshop.js');
+    assert.ok(ambience >= 0 && workshop > ambience, relative);
+  }
+});
+
+test('effective token and suspended modes suppress only decorative poster art', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const css = fs.readFileSync(path.join(__dirname, '../app/static/workshop-immersive-core.css'), 'utf8');
+  assert.match(css, /data-workshop-ambience-render="tokens"/);
+  assert.match(css, /data-workshop-ambience-render="suspended"/);
+  assert.match(css, /background-image\s*:\s*none/);
+});
