@@ -812,15 +812,21 @@ def _reference_analysis_review(c):
         pass
 
     if c.live:
-        c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')
-        c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')
-        c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')
-        c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')
-        c.act('#rr-diff', 'read', note='the prepared before/after review surface')
-        c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')
-        c.observe('reference review is registered without generation', True,
-                  'full deterministic preview/apply evidence runs in fixture mode')
-        return True, 'live read-only controls registered; fixture mode owns preview/apply evidence'
+        checks = [
+            ('#rr-analysis', c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')),
+            ('#rr-originals', c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')),
+            ('#rr-cards', c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')),
+            ('#rr-preview', c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')),
+            ('#rr-diff', c.act('#rr-diff', 'read', note='the prepared before/after review surface')),
+            ('#rr-apply', c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')),
+        ]
+        missing = [selector for selector, record in checks if record.get('control_missing')]
+        registered = not missing
+        detail = ('live read-only controls registered; fixture mode owns preview/apply evidence'
+                  if registered else 'live reference-review controls missing: ' + ', '.join(missing))
+        c.observe('reference review is registered without generation', registered,
+                  'full deterministic preview/apply evidence runs in fixture mode' if registered else detail)
+        return registered, detail
 
     fixture = ReferenceReviewTests()
     fixture.setUp()
