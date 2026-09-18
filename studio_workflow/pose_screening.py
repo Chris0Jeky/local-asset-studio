@@ -20,7 +20,7 @@ _HASH = re.compile(r'[0-9a-f]{64}\Z')
 _ID = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?\Z')
 _COMMON_PINS = frozenset({
     'model', 'encoder', 'vae', 'graph', 'nodes', 'runtime',
-    'reference_transform',
+    'reference_transform', 'prompt_dialect',
 })
 _ROUTE_SPECS = (
     ('klein-geometry-reference', 'skeleton', 'route-native', frozenset({'renderer'})),
@@ -208,8 +208,8 @@ def compile_plan(manifest):
     source = validate_manifest(manifest)
     manifest_sha256 = hashlib.sha256(canonical(source)).hexdigest()
     cells = []
-    for case in source['cases']:
-        for route in source['routes']:
+    for route in source['routes']:
+        for case in source['cases']:
             if case['slot_mode'] == 'replicated-seeds':
                 slots = (
                     ('replicate-a', route['noise_seeds']['replicate_a'], None),
@@ -245,6 +245,7 @@ def compile_plan(manifest):
         raise ValueError('compiled candidate count does not match the frozen cap')
     body = {
         'schema': PLAN_SCHEMA,
+        'campaign_id': source['campaign_id'],
         'manifest_sha256': manifest_sha256,
         'authority': 'none',
         'execution_authorized': False,
