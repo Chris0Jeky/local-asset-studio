@@ -434,7 +434,9 @@
       text(guidanceAction, primary.label);
       guidanceAction.dataset.intent = primary.id;
       text(guidanceReason, primary.reason);
-      const secondary = currentView.secondaryActions.map(action => action.title).join(' · ');
+      // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
+      // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
+      const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
       text(guidanceSecondary, secondary || 'Presentation never changes execution authority.');
     }
     function sync() {
