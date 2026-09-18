@@ -41,7 +41,8 @@ def make_observation(root, job_id='fixture-job', *, status='completed', elapsed=
     job = {'id': job_id, 'comfy_url': 'http://127.0.0.1:8188', 'controls': {}, 'references': []}
     manager.intent(producer.event_snapshot('intent', job, index=0, graph={'seed': 1}))
     try:
-        deadline = time.monotonic() + 5
+        # Loaded Windows runners can spend several seconds scheduling the writer thread.
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             directory = manager.last.path
             if directory and (directory / 'profile.jsonl').is_file():
