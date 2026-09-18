@@ -105,7 +105,11 @@ def comparison_plan(
     gaps = set(result["compatibility_gaps"])
     for technique in selected:
         revision = technique.get("source_revision")
-        if revision is None or _base._moving(revision):
+        if (
+            not isinstance(revision, str)
+            or not revision.strip()
+            or _base._moving(revision)
+        ):
             gaps.add(
                 f"technique {technique['id']}: immutable source revision is unresolved"
             )
