@@ -53,6 +53,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Prompt dialects, vocabulary and analyzers | [Prompt and tag intelligence](PROMPT-AND-TAG-INTELLIGENCE.md) |
 | Deterministic Animagine/Anima/Qwen profile compiler | [Prompt profiles](PROMPT-PROFILES.md) |
 | Immutable anime taxonomy source and finite review | [Taxonomy intake](TAXONOMY-INTAKE.md) |
+| Inspect compiled terms against retained source membership | [Taxonomy membership inspection](TAXONOMY-MEMBERSHIP-INSPECTION.md) |
 | Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
 | Bounded provider-response snapshot adapters | [Source snapshots](SOURCE-SNAPSHOTS.md) |
 | Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
@@ -96,7 +97,7 @@ Every programme intent must declare unambiguous adult subject status through rev
 ## Next useful slices
 
 1. Review/merge the stacked foundation, validator, intent-projection, offline CLI, intelligence, discovery and source-snapshot PRs in order.
-2. Review the #437 prompt-profile and immutable-taxonomy slices, then integrate only reviewed eligible terms into diagnostics. Pin exact installed tokenizers before exact token-count claims.
+2. Review the #437 immutable taxonomy, taxonomy-aware compiler and optional membership-inspection slices in stack order. Pin exact installed tokenizers before exact token-count claims.
 3. Qualify unchanged/manual/taxonomy-assisted prompts under #37/#409; software tests alone do not prove artistic benefit.
 4. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact evidence work; do not treat a plan as authorization.
 5. Reconcile installed routes and execute the finite Anima/SDXL/Qwen campaign only through #405/#439 and the existing coordinator.
