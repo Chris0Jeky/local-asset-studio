@@ -11,9 +11,9 @@ model provider or a detector. It grants no allowance and does not qualify a rout
 
 | Route ID | Accepted source | Native slot | Detector rule | Route-specific pins |
 | --- | --- | --- | --- | --- |
-| `klein-geometry` | precomputed skeleton PNG tied to a pose artifact | `geometry-reference` | not applicable | renderer |
+| `klein-geometry` | opaque RGB skeleton PNG tied to a pose artifact | `geometry-reference` | not applicable | renderer |
 | `copy-pose` | RGB/RGBA PNG, JPEG or WebP donor | `pose-donor-image-2` | not applicable | LoRA |
-| `sdxl-corrected-skeleton` | precomputed skeleton PNG tied to a pose artifact | `control-image` | **bypass the detector** | ControlNet and renderer |
+| `sdxl-corrected-skeleton` | opaque RGB skeleton PNG tied to a pose artifact | `control-image` | **bypass the detector** | ControlNet and renderer |
 
 Every route also pins the model, encoder, VAE, graph, node set, runtime, reference transform and prompt
 dialect. Route ID, mechanism, source kind, detector behavior and native slot are one indivisible contract. A
@@ -28,21 +28,24 @@ RGB donor for corrected geometry.
 A precomputed-skeleton request binds:
 
 - the validated `studio.pose-artifact/v1` identity;
-- the exact PNG bytes, SHA-256, byte count, canvas and image mode;
+- the exact opaque RGB PNG bytes, SHA-256, byte count, canvas and image mode;
 - the renderer ID and renderer SHA-256, which must equal the route's renderer pin;
 - the confidence threshold and exact ordered set of filtered joints;
 - the deterministic source-to-target canvas transform.
 
-The artifact must retain at least one drawable COCO-18 limb at the declared threshold, and the PNG must contain
-non-black pixels. The local preview renderer, `studio.coco18-lines/v1`, is recomputed byte for byte from the
-artifact. An installed auxiliary/native renderer can only be receipt-bound here: its bytes and identity are
-retained, but this helper does not claim that the renderer or route is qualified.
+The artifact must retain at least one drawable COCO-18 limb at the declared threshold. The PNG must be opaque
+RGB, carry no transparency declaration and contain non-black pixels. This prevents hidden RGB values beneath
+a zero-alpha plane from being accepted as visible guide evidence. The local preview renderer,
+`studio.coco18-lines/v1`, is recomputed byte for byte from the artifact. An installed auxiliary/native renderer
+can only be receipt-bound here: its bytes and identity are retained, but this helper does not claim that the
+renderer or route is qualified.
 
 ## RGB donor evidence
 
 Copy Pose binds the exact donor pixels directly to image slot 2. It accepts no pose artifact and no renderer
 receipt. The declared format must match the actual decoded file, and the image must be one RGB/RGBA frame
-within the 20 MiB and 16-megapixel limits.
+within the 20 MiB and 16-megapixel limits. This donor contract deliberately continues to permit alpha; the
+opaque requirement applies only to the precomputed skeleton representation.
 
 ## Transform policy
 
