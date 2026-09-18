@@ -21,13 +21,18 @@ class WorkshopFrontendTests(unittest.TestCase):
         self.assertIn('[data-workshop-skin="sakura"] .ux-create-heading', css)
 
     def test_immersive_ambience_art_is_local_inert_and_inlined(self):
-        css = (ROOT / 'app/static/workshop-immersive.css').read_text(encoding='utf-8')
+        entrypoint = (ROOT / 'app/static/workshop-immersive.css').read_text(encoding='utf-8')
+        core = (ROOT / 'app/static/workshop-immersive-core.css').read_text(encoding='utf-8')
+        css = core + '\n' + entrypoint
         workshop = (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8')
+        self.assertIn("@import url('workshop-immersive-core.css');", entrypoint)
         self.assertNotIn('/static/workshop-assets/', css)
         self.assertEqual(css.count('data:image/svg+xml;base64,'), 2)
         self.assertIn("css.href = '/static/workshop-immersive.css'", workshop)
         self.assertNotIn('http://', css)
         self.assertNotIn('https://', css)
+        self.assertIn('repeat(auto-fit,minmax(min(100%,280px),1fr))', entrypoint)
+        self.assertIn('grid-template-columns:minmax(0,1.15fr)', entrypoint)
         for name in ['night-shift.svg', 'quiet-morning.svg']:
             source = (ROOT / 'app/static/workshop-assets' / name).read_text(encoding='utf-8')
             self.assertNotIn('<script', source.lower())

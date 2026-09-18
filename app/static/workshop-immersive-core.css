@@ -1,0 +1,402 @@
+/* Optional Immersive Studio presentation. Domain state and execution stay in existing owners. */
+body.workshop-active {
+  --wk-rail-width: 268px;
+  --wk-guide-width: 302px;
+}
+
+/* Make every new surface an ordinary grid participant. Existing layouts remain one live editor. */
+.studio-main #createView.workshop {
+  display:grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "heading"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.workshop .ux-create-heading {grid-area:heading}
+.workshop .wk-immersive-hero {grid-area:hero}
+.workshop .wk-modebar {grid-area:modes}
+.workshop .wk-toolbar {grid-area:toolbar}
+.workshop .wk-setup-rail {grid-area:setup}
+.studio-main .workshop .editor {grid-area:editor}
+.workshop .wk-guidance {grid-area:guidance}
+.workshop #jobProblemsHost {grid-area:problems}
+.workshop .wk-results {grid-area:results}
+.workshop .wk-guidance {display:none}
+.studio-main #createView.workshop[data-workshop-layout="immersive"] {
+  grid-template-areas:
+    "hero"
+    "modes"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.workshop[data-workshop-layout="immersive"] .ux-create-heading {display:none}
+.workshop[data-workshop-layout="immersive"] .wk-modebar {display:flex}
+.workshop[data-workshop-layout="immersive"] .wk-guidance {
+  display:block;
+  width:100%;
+  max-width:880px;
+  justify-self:center;
+  padding:21px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--panel);
+  min-width:0;
+}
+.workshop[data-workshop-layout="immersive"] .wk-guidance h2 {font-size:19px;line-height:1.25;margin:8px 0 10px}
+.workshop[data-workshop-layout="immersive"] .wk-guidance>p {font-size:12px;line-height:1.65;color:var(--muted)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance>button {width:100%;margin:4px 0 12px;background:var(--accent);color:var(--wk-on-accent);border-color:var(--accent)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-why {border-top:1px solid var(--line);padding-top:10px}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-why p {font-size:11px;color:var(--muted)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-secondary {border-top:1px solid var(--line);padding-top:12px;margin-bottom:0}
+
+/* Shallow local atmosphere. The SVG is decoration; gradients remain when it is absent. */
+.workshop .wk-immersive-hero {
+  position:relative;
+  isolation:isolate;
+  min-height:154px;
+  overflow:hidden;
+  display:grid;
+  align-items:end;
+  padding:30px 34px;
+  border:1px solid var(--line);
+  border-radius:calc(var(--wk-radius) + 2px);
+  background:
+    radial-gradient(circle at 78% 20%, color-mix(in srgb,var(--accent) 18%,transparent), transparent 34%),
+    linear-gradient(120deg,var(--panel),var(--wk-input));
+  box-shadow:var(--wk-shadow);
+}
+.workshop .wk-immersive-hero[hidden] {display:none!important}
+.workshop .wk-immersive-hero::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  opacity:.94;
+}
+body.workshop-active[data-workshop-ambience="night-shift"] .wk-immersive-hero::after {
+  background-image:
+    linear-gradient(90deg,rgba(5,7,21,.94) 0%,rgba(5,7,21,.76) 39%,rgba(5,7,21,.1) 72%),
+    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjQyMCIgdmlld0JveD0iMCAwIDE2MDAgNDIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IiI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiMwNzBiMjAiLz48c3RvcCBvZmZzZXQ9Ii41NiIgc3RvcC1jb2xvcj0iIzE0MjM0YSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzI1MTIzYSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdsYXNzIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzJmNGI4MyIgc3RvcC1vcGFjaXR5PSIuNjUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwYjExMjgiIHN0b3Atb3BhY2l0eT0iLjkiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJkZXNrIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMCI+PHN0b3Agc3RvcC1jb2xvcj0iIzEwMGQxYyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzI0MTEyZSIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJnbG93Ij48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIxMSIvPjwvZmlsdGVyPgogICAgPHBhdHRlcm4gaWQ9InJhaW4iIHdpZHRoPSIzOCIgaGVpZ2h0PSI1MiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgcGF0dGVyblRyYW5zZm9ybT0ic2tld1goLTEyKSI+PHBhdGggZD0iTTcgMHYxNk0yNiAzMHYxMyIgc3Ryb2tlPSIjOGJkYWYxIiBzdHJva2Utb3BhY2l0eT0iLjIyIiBzdHJva2Utd2lkdGg9IjIiLz48L3BhdHRlcm4+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjQyMCIgZmlsbD0idXJsKCNza3kpIi8+CiAgPGNpcmNsZSBjeD0iMTM3MCIgY3k9IjcwIiByPSI4NSIgZmlsbD0iI2Q4N2FjNyIgb3BhY2l0eT0iLjEzIiBmaWx0ZXI9InVybCgjZ2xvdykiLz4KICA8cGF0aCBkPSJNNjEwIDI4OFYxNDVoNzVWOTBoNTJ2MTk4aDQ4VjEyMGg3OHYxNjhoMzhWNThoNjJ2MjMwaDUyVjEzM2g5MnYxNTVoMzdWODVoNzR2MjAzaDUwVjE1NWg4M3YxMzNoNDl2MTMySDYxMHoiIGZpbGw9IiMwYTEwMjUiIG9wYWNpdHk9Ii45MiIvPgogIDxnIGZpbGw9InVybCgjZ2xhc3MpIiBzdHJva2U9IiMzOTU1OGQiIHN0cm9rZS1vcGFjaXR5PSIuNCI+CiAgICA8cGF0aCBkPSJNNjUwIDI3MFYxNjRoOTZ2MTA2eiIvPjxwYXRoIGQ9Ik04MDYgMjcwVjE0NWgxMDR2MTI1eiIvPjxwYXRoIGQ9Ik05ODkgMjcwVjEwM2g5MnYxNjd6Ii8+PHBhdGggZD0iTTExNDkgMjcwVjE1NGgxMTh2MTE2eiIvPjxwYXRoIGQ9Ik0xMzIyIDI3MFYxMjdoOTR2MTQzeiIvPgogIDwvZz4KICA8ZyBmaWxsPSIjNzJkZWYwIiBvcGFjaXR5PSIuNTUiPgogICAgPHBhdGggZD0iTTY3NCAxODRoMTV2OGgtMTV6bTM0IDMxaDE1djhoLTE1em0xMTktNDJoMTh2OGgtMTh6bTM4IDUwaDE5djhoLTE5em0xNDUtNzZoMTh2OWgtMTh6bTM0IDQ5aDE4djloLTE4em0xMzItMThoMTh2OGgtMTh6bTQwIDQ2aDE4djhoLTE4em0xMzAtNjBoMTd2OGgtMTd6bTM3IDQzaDE3djhoLTE3eiIvPgogIDwvZz4KICA8ZyBmaWxsPSIjZWQ3NmJlIiBvcGFjaXR5PSIuNyI+PHBhdGggZD0iTTY5MCAyMzhoMjN2OGgtMjN6bTE1OC00MWgyNXY5aC0yNXptMTg0IDM0aDI0djloLTI0em0xNzQtMjRoMjV2OWgtMjV6bTE1NyA0MGgyNHY5aC0yNHoiLz48L2c+CiAgPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iMzEwIiBmaWxsPSJ1cmwoI3JhaW4pIi8+CiAgPHBhdGggZD0iTTcyMCAzMThoODgwdjEwMkg2NzB6IiBmaWxsPSJ1cmwoI2Rlc2spIi8+CiAgPHBhdGggZD0iTTExMzAgMjMwaDIxMGwyOCAxMzVoLTI2NnoiIGZpbGw9IiMwOTBkMWUiIHN0cm9rZT0iIzcwNDg3OCIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHBhdGggZD0iTTExNTEgMjQ4aDE2NmwxOCA5NmgtMjAzeiIgZmlsbD0iIzE0MjQ1MCIvPgogIDxwYXRoIGQ9Ik0xMTY4IDI2NmgxMzBsOCA4aC0xNDZ6bTAgMjRoMTEybDggOGgtMTI4em0wIDI0aDg2bDggOGgtMTAyeiIgZmlsbD0iIzc5ZGNlOCIgb3BhY2l0eT0iLjYyIi8+CiAgPHBhdGggZD0iTTEzNzQgMzMzaDEyOHYxOGgtMTI4eiIgZmlsbD0iIzEyMGQyMCIvPjxwYXRoIGQ9Ik0xNDIxIDIzNmgxNHY5N2gtMTR6IiBmaWxsPSIjMjExMjJlIi8+PHBhdGggZD0iTTEzOTEgMjIzaDc0bC0xOCAyNmgtMzh6IiBmaWxsPSIjZWY4M2M2IiBvcGFjaXR5PSIuNjUiLz4KICA8ZyBmaWxsPSIjZjBhMWQyIiBvcGFjaXR5PSIuNyI+PGNpcmNsZSBjeD0iMTUxMCIgY3k9IjgxIiByPSI1Ii8+PGNpcmNsZSBjeD0iMTQ3MCIgY3k9IjEyMSIgcj0iMyIvPjxjaXJjbGUgY3g9IjE1NDEiIGN5PSIxNTQiIHI9IjQiLz48cGF0aCBkPSJNMTQ5MyA5OGw1IDgtOSAyek0xNTIyIDEzMGw2IDgtOSAzeiIvPjwvZz4KICA8cmVjdCB4PSI2MjAiIHk9IjI3OSIgd2lkdGg9IjkzMCIgaGVpZ2h0PSIyIiBmaWxsPSIjODNlMWViIiBvcGFjaXR5PSIuMyIvPgo8L3N2Zz4K');
+}
+body.workshop-active[data-workshop-ambience="quiet-morning"] .wk-immersive-hero::after {
+  background-image:
+    linear-gradient(90deg,rgba(22,21,35,.92) 0%,rgba(22,21,35,.7) 39%,rgba(22,21,35,.08) 72%),
+    url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjQyMCIgdmlld0JveD0iMCAwIDE2MDAgNDIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IiI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNkOGRmZjYiLz48c3RvcCBvZmZzZXQ9Ii41MiIgc3RvcC1jb2xvcj0iI2Q5Y2RlYiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2YxYzhkNiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdsYXNzIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iI2E5YmFkYyIgc3RvcC1vcGFjaXR5PSIuNzgiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM2MzcxOGYiIHN0b3Atb3BhY2l0eT0iLjcyIi8+PC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZGVzayIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPjxzdG9wIHN0b3AtY29sb3I9IiMzMDI5M2QiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1YTM1NDgiLz48L2xpbmVhckdyYWRpZW50PgogICAgPGZpbHRlciBpZD0ic29mdCI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMTYiLz48L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iNDIwIiBmaWxsPSJ1cmwoI3NreSkiLz4KICA8Y2lyY2xlIGN4PSIxMzYyIiBjeT0iNjgiIHI9IjEwNSIgZmlsbD0iI2ZmZjNkYSIgb3BhY2l0eT0iLjgiIGZpbHRlcj0idXJsKCNzb2Z0KSIvPgogIDxwYXRoIGQ9Ik02MTAgMjg4VjE0NWg3NVY5MGg1MnYxOThoNDhWMTIwaDc4djE2OGgzOFY1OGg2MnYyMzBoNTJWMTMzaDkydjE1NWgzN1Y4NWg3NHYyMDNoNTBWMTU1aDgzdjEzM2g0OXYxMzJINjEweiIgZmlsbD0iIzU5NjU4MSIgb3BhY2l0eT0iLjUyIi8+CiAgPGcgZmlsbD0idXJsKCNnbGFzcykiIHN0cm9rZT0iIzc3ODRhMyIgc3Ryb2tlLW9wYWNpdHk9Ii41MiI+CiAgICA8cGF0aCBkPSJNNjUwIDI3MFYxNjRoOTZ2MTA2eiIvPjxwYXRoIGQ9Ik04MDYgMjcwVjE0NWgxMDR2MTI1eiIvPjxwYXRoIGQ9Ik05ODkgMjcwVjEwM2g5MnYxNjd6Ii8+PHBhdGggZD0iTTExNDkgMjcwVjE1NGgxMTh2MTE2eiIvPjxwYXRoIGQ9Ik0xMzIyIDI3MFYxMjdoOTR2MTQzeiIvPgogIDwvZz4KICA8ZyBmaWxsPSIjZjhlNGE3IiBvcGFjaXR5PSIuNyI+PHBhdGggZD0iTTY3NCAxODRoMTV2OGgtMTV6bTM0IDMxaDE1djhoLTE1em0xMTktNDJoMTh2OGgtMTh6bTM4IDUwaDE5djhoLTE5em0xNDUtNzZoMTh2OWgtMTh6bTM0IDQ5aDE4djloLTE4em0xMzItMThoMTh2OGgtMTh6bTQwIDQ2aDE4djhoLTE4em0xMzAtNjBoMTd2OGgtMTd6bTM3IDQzaDE3djhoLTE3eiIvPjwvZz4KICA8cGF0aCBkPSJNNzIwIDMxOGg4ODB2MTAySDY3MHoiIGZpbGw9InVybCgjZGVzaykiLz4KICA8cGF0aCBkPSJNMTEzMCAyMzBoMjEwbDI4IDEzNWgtMjY2eiIgZmlsbD0iIzI2MjgzYSIgc3Ryb2tlPSIjOGE3MDg3IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTE1MSAyNDhoMTY2bDE4IDk2aC0yMDN6IiBmaWxsPSIjYzdkNWU5Ii8+CiAgPHBhdGggZD0iTTExNjggMjY2aDEzMGw4IDhoLTE0NnptMCAyNGgxMTJsOCA4aC0xMjh6bTAgMjRoODZsOCA4aC0xMDJ6IiBmaWxsPSIjNjI3ODk0IiBvcGFjaXR5PSIuNjIiLz4KICA8cGF0aCBkPSJNMTM3NCAzMzNoMTI4djE4aC0xMjh6IiBmaWxsPSIjMzEyYjNkIi8+PHBhdGggZD0iTTE0MjEgMjM2aDE0djk3aC0xNHoiIGZpbGw9IiM2YTQ1NTUiLz48cGF0aCBkPSJNMTM5MSAyMjNoNzRsLTE4IDI2aC0zOHoiIGZpbGw9IiNmZmQ2OWEiIG9wYWNpdHk9Ii45Ii8+CiAgPGcgZmlsbD0iI2YzYWFjNiIgb3BhY2l0eT0iLjU2Ij48Y2lyY2xlIGN4PSIxNTEwIiBjeT0iODEiIHI9IjUiLz48Y2lyY2xlIGN4PSIxNDcwIiBjeT0iMTIxIiByPSIzIi8+PGNpcmNsZSBjeD0iMTU0MSIgY3k9IjE1NCIgcj0iNCIvPjxwYXRoIGQ9Ik0xNDkzIDk4bDUgOC05IDJ6TTE1MjIgMTMwbDYgOC05IDN6Ii8+PC9nPgogIDxyZWN0IHg9IjYyMCIgeT0iMjc5IiB3aWR0aD0iOTMwIiBoZWlnaHQ9IjIiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii40NSIvPgo8L3N2Zz4K');
+}
+.workshop .wk-hero-copy {max-width:590px;position:relative;z-index:1}
+.workshop .wk-hero-copy h2 {
+  margin:6px 0 7px;
+  max-width:560px;
+  color:var(--text);
+  font-size:clamp(24px,3vw,39px);
+  font-weight:520;
+  line-height:1.08;
+  letter-spacing:-.045em;
+  text-shadow:0 2px 28px #050712;
+}
+.workshop .wk-hero-copy p {margin:0;max-width:540px;color:var(--muted);font-size:13px}
+.workshop .wk-hero-art {position:absolute;inset:0;pointer-events:none}
+
+/* A compact route strip echoes the mockup without introducing a second router. */
+.workshop .wk-modebar {
+  display:none;
+  gap:7px;
+  align-items:center;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:color-mix(in srgb,var(--panel) 88%,transparent);
+}
+.workshop .wk-modebar :is(a,button) {
+  min-height:38px;
+  flex:0 0 auto;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:var(--muted);
+  padding:8px 14px;
+  font-size:11px;
+  text-decoration:none;
+}
+.workshop .wk-modebar :is(a,button):hover {background:var(--panel2);color:var(--text);text-decoration:none}
+.workshop .wk-modebar .active {background:var(--wk-soft);border-color:var(--accent);color:var(--text);box-shadow:0 0 22px color-mix(in srgb,var(--accent) 20%,transparent)}
+
+/* Presentation choices remain native selects, with a richer optional visual skin mirror. */
+.workshop .wk-toolbar {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:end;
+  gap:14px 24px;
+  padding:16px 18px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--panel);
+}
+.workshop .wk-select-controls {display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.workshop .wk-select-control {display:grid;gap:4px;margin:0;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.workshop .wk-select-control select {min-width:150px;width:auto;min-height:38px;padding:7px 30px 7px 10px;font-size:11px;letter-spacing:0;text-transform:none}
+.workshop .wk-skin-control {min-width:150px;display:grid;gap:4px;align-items:end}
+.workshop .wk-control-label {display:none;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.workshop .wk-native-skin-select {display:grid;gap:4px;margin:0;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.workshop .wk-native-skin-select select {min-width:150px;width:auto;min-height:38px;padding:7px 30px 7px 10px;font-size:11px;letter-spacing:0;text-transform:none}
+.workshop .wk-skin-picker {display:none;grid-template-columns:repeat(4,minmax(92px,1fr));gap:8px;min-width:0}
+.workshop .wk-skin-choice {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr);
+  align-items:center;
+  gap:9px;
+  min-width:0;
+  min-height:48px;
+  padding:6px 9px;
+  text-align:left;
+  font-size:10px;
+  line-height:1.25;
+  overflow:hidden;
+}
+.workshop .wk-skin-choice.active {border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 0 22px color-mix(in srgb,var(--accent) 13%,transparent)}
+.workshop .wk-skin-swatch {height:32px;border-radius:7px;border:1px solid #ffffff24;background:linear-gradient(135deg,#222,#555)}
+.workshop [data-workshop-skin-choice="atelier"] .wk-skin-swatch {background:linear-gradient(135deg,#17181a,#3a302b 58%,#ffb18b)}
+.workshop [data-workshop-skin-choice="arcade"] .wk-skin-swatch {background:linear-gradient(135deg,#101321,#27295f 55%,#73e9d1)}
+.workshop [data-workshop-skin-choice="sakura"] .wk-skin-swatch {background:linear-gradient(135deg,#19141d,#513047 58%,#f2a8c9)}
+.workshop [data-workshop-skin-choice="retro-anime"] .wk-skin-swatch {background:linear-gradient(135deg,#080d1f,#1a2753 43%,#ec7bbd 68%,#6de2ee)}
+.workshop .wk-preference-notice {grid-column:1/-1}
+
+/* In Focus and Studio this stays one compact, legible setup band at desktop widths. */
+.workshop .wk-setup-rail {
+  width:100%;
+  max-width:880px;
+  justify-self:center;
+  display:grid;
+  grid-template-columns:minmax(230px,1fr) minmax(190px,.75fr) minmax(150px,.7fr) auto;
+  grid-template-areas:"recipe status tune review";
+  align-items:center;
+  gap:8px 14px;
+  padding:8px 14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--panel);
+  min-width:0;
+}
+.workshop .wk-rail-heading {display:none}
+.workshop .wk-setup-rail .wk-recipe {grid-area:recipe;min-width:0}
+.workshop .wk-setup-rail .wk-quick-tune {grid-area:tune;width:auto;min-width:0;white-space:normal;text-align:left;justify-self:start}
+.workshop .wk-setup-status {grid-area:status;display:grid;gap:2px;min-width:0}
+.workshop .wk-setup-status strong {font-size:11px;font-weight:550;line-height:1.4;overflow-wrap:anywhere}
+.workshop .wk-setup-status span {font-size:10px;color:var(--muted)}
+.workshop .wk-setup-review {grid-area:review;font-size:10px;white-space:nowrap}
+
+/* Retro Anime is a visual language only. It does not change task/model/content mode. */
+body.workshop-active[data-workshop-skin="retro-anime"] {
+  --bg:#070b19;
+  --panel:#10172a;
+  --panel2:#17213a;
+  --line:#2d3a5b;
+  --text:#f3f0ff;
+  --muted:#adb7d2;
+  --accent:#ef82c6;
+  --purple:#b8a7ff;
+  --danger:#ffadbc;
+  --wk-input:#0b1122;
+  --wk-soft:#24203a;
+  --wk-on-accent:#2c1025;
+  --wk-radius:17px;
+  --wk-shadow:0 24px 80px #02040dcc,0 0 35px #c35ca80d;
+  background:
+    radial-gradient(circle at 85% 0%,#1f265144,transparent 33%),
+    radial-gradient(circle at 12% 88%,#2a143a55,transparent 35%),
+    var(--bg);
+}
+body.workshop-active[data-workshop-skin="retro-anime"] .studio-sidebar,
+body.workshop-active[data-workshop-skin="retro-anime"] .studio-globalbar {background:#080c1bf2;backdrop-filter:blur(12px)}
+body.workshop-active[data-workshop-skin="retro-anime"] :is(.editor,.wk-results,.wk-toolbar,.wk-setup-rail,.wk-guidance) {
+  background:linear-gradient(155deg,color-mix(in srgb,var(--panel) 96%,#28315a),var(--panel));
+  box-shadow:0 18px 55px #02040d7a,inset 0 1px #ffffff08;
+}
+body.workshop-active[data-workshop-skin="retro-anime"] .primary,
+body.workshop-active[data-workshop-skin="retro-anime"] #generate {
+  background:linear-gradient(90deg,#ef82c6,#c78cf8)!important;
+  border-color:#ef82c6!important;
+  box-shadow:0 0 24px #e976bd36;
+}
+body.workshop-active[data-workshop-skin="retro-anime"] .studio-sidebar nav a.active {background:linear-gradient(90deg,#341936,#181d39);box-shadow:inset 3px 0 var(--accent)}
+body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
+
+/* Ambience stays independent from layout without taxing the default Focus viewport. */
+.studio-main #createView.workshop[data-workshop-layout="focus"]:not([data-workshop-ambience="none"]) {
+  grid-template-areas:"heading" "hero" "toolbar" "setup" "editor" "guidance" "problems" "results";
+}
+.studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]) {
+  grid-template-areas:"heading" "hero" "toolbar" "setup" "editor" "guidance" "problems" "results";
+}
+
+/* Immersive Studio: three rails, one draft, existing controls. */
+@media(min-width:1280px) {
+  .studio-main #createView.workshop[data-workshop-layout="studio"] {
+    grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);
+    grid-template-areas:
+      "heading heading"
+      "toolbar toolbar"
+      "setup setup"
+      "editor results"
+      "problems problems";
+    gap:22px 26px;
+  }
+  .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]) {
+    grid-template-areas:"heading heading" "hero hero" "toolbar toolbar" "setup setup" "editor results" "problems problems";
+  }
+  .workshop[data-workshop-layout="studio"] .wk-setup-rail {max-width:none}
+  .workshop[data-workshop-layout="studio"] .editor {grid-area:editor!important;max-width:none!important}
+  .workshop[data-workshop-layout="studio"] .wk-results {grid-area:results!important;max-width:none!important;position:sticky;top:84px}
+
+  .studio-main #createView.workshop[data-workshop-layout="immersive"] {
+    grid-template-columns:minmax(230px,var(--wk-rail-width)) minmax(480px,1fr) minmax(260px,var(--wk-guide-width));
+    grid-template-areas:
+      "heading heading heading"
+      "hero hero hero"
+      "modes modes modes"
+      "toolbar toolbar toolbar"
+      "setup editor guidance"
+      "problems problems problems"
+      ". results .";
+    gap:18px 20px;
+    max-width:none;
+  }
+  .workshop[data-workshop-layout="immersive"] .wk-immersive-hero {min-height:184px}
+  .workshop[data-workshop-layout="immersive"] .wk-toolbar {padding:12px 14px}
+  .workshop[data-workshop-layout="immersive"] .wk-skin-control {display:grid;grid-template-columns:auto 1fr;gap:6px 12px;min-width:0}
+  .workshop[data-workshop-layout="immersive"] .wk-control-label {display:block}
+  .workshop[data-workshop-layout="immersive"] .wk-native-skin-select {position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .workshop[data-workshop-layout="immersive"] .wk-skin-picker {grid-column:1/-1;display:grid}
+  .workshop[data-workshop-layout="immersive"] .wk-setup-rail {
+    position:sticky;
+    top:82px;
+    align-self:start;
+    width:100%;
+    max-width:none;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:16px;
+    padding:20px;
+    border-radius:16px;
+  }
+  .workshop[data-workshop-layout="immersive"] .wk-rail-heading {display:block;border-bottom:1px solid var(--line);padding-bottom:13px}
+  .workshop[data-workshop-layout="immersive"] .wk-rail-heading h2 {font-size:17px;margin:4px 0 0}
+  .workshop[data-workshop-layout="immersive"] .wk-recipe {display:grid;grid-template-columns:42px 1fr;gap:10px}
+  .workshop[data-workshop-layout="immersive"] .wk-recipe>button {grid-column:1/-1;width:100%}
+  .workshop[data-workshop-layout="immersive"] .wk-quick-tune {border:1px solid var(--line);border-radius:9px;padding:10px!important;min-height:42px!important}
+  .workshop[data-workshop-layout="immersive"] .wk-setup-status {padding:14px;border:1px solid var(--line);border-radius:11px;background:var(--wk-input)}
+  .workshop[data-workshop-layout="immersive"] .wk-setup-review {width:100%}
+  .workshop[data-workshop-layout="immersive"] .editor {
+    grid-area:editor!important;
+    width:100%;
+    max-width:none;
+    justify-self:stretch;
+    padding:25px 27px;
+  }
+  .workshop[data-workshop-layout="immersive"] .wk-guidance {
+    position:sticky;
+    top:82px;
+    align-self:start;
+    max-width:none;
+  }
+  .workshop[data-workshop-layout="immersive"] .wk-results {grid-area:results!important;max-width:none;width:100%}
+}
+
+@media(max-width:1279px) {
+  .workshop .wk-guidance {display:none}
+.workshop[data-workshop-layout="immersive"] {
+  grid-template-areas:
+    "hero"
+    "modes"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.workshop[data-workshop-layout="immersive"] .ux-create-heading {display:none}
+.workshop[data-workshop-layout="immersive"] .wk-modebar {display:flex}
+.workshop[data-workshop-layout="immersive"] .wk-guidance {
+  display:block;
+  width:100%;
+  max-width:880px;
+  justify-self:center;
+  padding:21px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--panel);
+  min-width:0;
+}
+.workshop[data-workshop-layout="immersive"] .wk-guidance h2 {font-size:19px;line-height:1.25;margin:8px 0 10px}
+.workshop[data-workshop-layout="immersive"] .wk-guidance>p {font-size:12px;line-height:1.65;color:var(--muted)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance>button {width:100%;margin:4px 0 12px;background:var(--accent);color:var(--wk-on-accent);border-color:var(--accent)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-why {border-top:1px solid var(--line);padding-top:10px}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-why p {font-size:11px;color:var(--muted)}
+.workshop[data-workshop-layout="immersive"] .wk-guidance-secondary {border-top:1px solid var(--line);padding-top:12px;margin-bottom:0}
+  .workshop .wk-setup-rail {grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"recipe review" "tune review" "status review";max-width:880px}
+}
+
+@media(max-width:900px) {
+  .workshop .wk-toolbar {grid-template-columns:1fr}
+  .workshop .wk-skin-control {grid-template-columns:1fr}
+  .workshop[data-workshop-layout="immersive"] .wk-skin-picker {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .workshop .wk-select-control {flex:1;min-width:145px}
+  .workshop .wk-select-control select {width:100%;min-width:0}
+  .workshop .wk-immersive-hero {min-height:140px;padding:24px}
+}
+
+@media(max-width:600px) {
+  .workshop .wk-modebar {margin-inline:-4px}
+  .workshop .wk-toolbar {padding:12px;gap:12px}
+  .workshop .wk-select-controls {display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .workshop .wk-skin-picker {display:none}
+  .workshop .wk-native-skin-select {
+    position:static!important;
+    width:auto!important;
+    height:auto!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:visible!important;
+    clip:auto!important;
+    white-space:normal!important;
+    border:0!important;
+    display:grid;
+    gap:4px;
+    color:var(--muted);
+    font-size:9px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .workshop .wk-native-skin-select select {width:100%;min-height:38px;font-size:11px;letter-spacing:0;text-transform:none}
+  .workshop .wk-control-label {display:none}
+  .workshop .wk-setup-rail {display:grid;grid-template-columns:1fr;grid-template-areas:"recipe" "tune" "status" "review";padding:14px}
+  .workshop .wk-immersive-hero {min-height:120px;padding:20px;border-radius:14px}
+  .workshop .wk-hero-copy h2 {font-size:25px;max-width:330px}
+  .workshop .wk-hero-copy p {font-size:11px;max-width:300px}
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .workshop .wk-immersive-hero,.workshop .wk-skin-choice {transition:none!important;animation:none!important}
+}
+
+@media(forced-colors:active) {
+  .workshop .wk-immersive-hero::after,.workshop .wk-skin-swatch {display:none}
+  .workshop .wk-immersive-hero,.workshop .wk-toolbar,.workshop .wk-setup-rail,.workshop .wk-guidance {border:1px solid CanvasText;box-shadow:none;background:Canvas}
+  .workshop .wk-skin-choice.active {outline:2px solid Highlight;box-shadow:none}
+}
