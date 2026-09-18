@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from datetime import date
@@ -27,6 +28,14 @@ REQUIRED_MANIFESTS = (
 MAX_MANIFEST_BYTES = 1_048_576
 MAX_ITEMS = 512
 BASELINE_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _finite_number(value: Any) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    return math.isfinite(value)
 
 
 def _path_label(filename: str) -> str:
@@ -377,31 +386,21 @@ def _validate_adapter(
         errors.append(f"{label}: adapter authorized_candidate_cap must remain zero")
     tested = adapter.get("tested_weights")
     if not isinstance(tested, list) or len(tested) < 2 or not all(
-        isinstance(value, (int, float)) and not isinstance(value, bool) for value in tested
+        _finite_number(value) for value in tested
     ):
-        errors.append(f"{label}: adapter tested_weights needs at least two numbers")
+        errors.append(
+            f"{label}: adapter tested_weights needs at least two finite numbers"
+        )
     else:
         if any(value < -4.0 or value > 4.0 for value in tested):
             errors.append(f"{label}: adapter tested_weights must stay bounded to -4..4")
         if any(left >= right for left, right in zip(tested, tested[1:])):
             errors.append(f"{label}: adapter tested_weights must be strictly increasing")
     promoted = adapter.get("promoted")
-    interval = adapter.get("promoted_interval")
-    if promoted is True:
-        if (
-            not isinstance(interval, list)
-            or len(interval) != 2
-            or not all(
-                isinstance(value, (int, float)) and not isinstance(value, bool)
-                for value in interval
-            )
-            or interval[0] >= interval[1]
-        ):
-            errors.append(
-                f"{label}: promoted adapter requires an ordered promoted_interval"
-            )
-    elif promoted is not False:
-        errors.append(f"{label}: adapter promoted must be a boolean")
+    if promoted is not False:
+        errors.append(
+            f"{label}: synthetic adapter template promoted must remain false"
+        )
     base_routes = adapter.get("base_route_ids")
     if not isinstance(base_routes, list):
         errors.append(f"{label}: adapter base_route_ids must be an array")
@@ -417,27 +416,35 @@ def _validate_programme(payload: dict[str, Any], errors: list[str]) -> None:
     if payload.get("epic") != 403 or payload.get("parent_issue") != 14:
         errors.append(f"{label}: programme must remain scoped to epic #403 under #14")
     issues = payload.get("issues")
-    required_issue_keys = {
-        "intent_controls",
-        "routes",
-        "adapters",
-        "geometry",
-        "multi_reference",
-        "evaluation",
-        "genre_packs",
-        "training",
-        "finishing",
-        "agents",
+    expected_issues = {
+        "intent_controls": 404,
+        "routes": 405,
+        "adapters": 406,
+        "geometry": 407,
+        "multi_reference": 408,
+        "evaluation": 409,
+        "genre_packs": 410,
+        "training": 411,
+        "finishing": 412,
+        "agents": 413,
+        "prompt_dialects": 432,
+        "source_intake": 433,
+        "research_discovery": 435,
     }
     if not isinstance(issues, dict):
         errors.append(f"{label}: issues must be an object")
     else:
-        missing = sorted(required_issue_keys - set(issues))
+        missing = sorted(set(expected_issues) - set(issues))
+        unknown = sorted(set(issues) - set(expected_issues))
         if missing:
             errors.append(f"{label}: missing issue owners {missing}")
-        for key, value in issues.items():
-            if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-                errors.append(f"{label}: issue owner {key!r} must be a positive integer")
+        if unknown:
+            errors.append(f"{label}: unknown issue owners {unknown}")
+        for key, expected in expected_issues.items():
+            if key in issues and issues[key] != expected:
+                errors.append(
+                    f"{label}: issue owner {key!r} must remain #{expected}"
+                )
     if payload.get("entry_document") != "docs/adult-illustration/README.md":
         errors.append(f"{label}: entry_document must point to adult illustration README")
 
