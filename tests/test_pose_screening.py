@@ -26,6 +26,7 @@ def route(route_id, mechanism, representation, seed_base):
         'nodes': digest('5'),
         'runtime': digest('6'),
         'reference_transform': digest('7'),
+        'prompt_dialect': digest('c'),
     }
     if mechanism == 'klein-geometry-reference':
         pins['renderer'] = digest('8')
