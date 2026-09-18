@@ -1,11 +1,45 @@
 """Contracts for workshop evidence fidelity from issue #599."""
 from pathlib import Path
 import sys
+import types
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tests"))
-import workshop_browser_core as core  # noqa: E402
+
+
+def _load_core_helpers():
+    """Import pure browser helpers when the optional Playwright runtime is absent."""
+    try:
+        import workshop_browser_core as core
+        return core
+    except ModuleNotFoundError as exc:
+        if exc.name not in {"playwright", "playwright.sync_api"}:
+            raise
+
+    playwright = types.ModuleType("playwright")
+    sync_api = types.ModuleType("playwright.sync_api")
+
+    def unavailable():
+        raise RuntimeError("Playwright is required to execute workshop browser journeys")
+
+    sync_api.sync_playwright = unavailable
+    playwright.sync_api = sync_api
+    sys.modules["playwright"] = playwright
+    sys.modules["playwright.sync_api"] = sync_api
+    try:
+        import workshop_browser_core as core
+        return core
+    finally:
+        # Keep this unit contract from making a fake optional dependency visible
+        # to later discovery modules. The local module reference remains usable for
+        # its pure CSS and geometry helpers; browser execution still requires Playwright.
+        sys.modules.pop("workshop_browser_core", None)
+        sys.modules.pop("playwright.sync_api", None)
+        sys.modules.pop("playwright", None)
+
+
+core = _load_core_helpers()
 
 
 class WorkshopEvidenceHardeningTests(unittest.TestCase):
