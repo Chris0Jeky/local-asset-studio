@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install focused test dependency
+        run: python -m pip install Pillow==12.3.0
+
       - name: Confirm the regression is red
         shell: bash
         run: |
