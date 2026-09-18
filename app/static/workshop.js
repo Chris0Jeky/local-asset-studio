@@ -13,11 +13,20 @@
   // slot-less reference is never a readiness prerequisite - the recipe's example stands until replaced.
   const referenceSlots = () => {
     const recipe = currentRecipe(); if (!recipe) return [];
-    if (Array.isArray(recipe.reference_slots)) { const board = !!recipe.reference_board; return recipe.reference_slots.map((slot, index) => ({
-      id:safeId(slot?.id || slot?.key, 'reference-'+(index+1)),
-      role:typeof slot?.role === 'string' && slot.role.trim() ? slot.role.trim() : 'Reference '+(index+1),
-      required:!board && slot?.required !== false
-    })); }
+    if (Array.isArray(recipe.reference_slots)) {
+      const board = !!recipe.reference_board;
+      const slots = recipe.reference_slots.map((slot, index) => ({
+        id:safeId(slot?.id || slot?.key, 'reference-'+(index+1)),
+        role:typeof slot?.role === 'string' && slot.role.trim() ? slot.role.trim() : 'Reference '+(index+1),
+        required:!board && slot?.required !== false
+      }));
+      if (recipe.last_reference && !slots.some(slot => slot.id === 'last-reference')) slots.push({
+        id:'last-reference',
+        role:recipe.last_reference_label || 'Last frame',
+        required:!!(recipe.reference_board || recipe.continuation_operation)
+      });
+      return slots;
+    }
     const slots = [];
     if (recipe.reference) slots.push({id:'reference',role:recipe.reference_label || 'Reference',required:false});
     if (recipe.last_reference) slots.push({id:'last-reference',role:recipe.last_reference_label || 'Last frame',required:false});
@@ -27,11 +36,20 @@
     const recipe = currentRecipe(), slots = referenceSlots(); if (!recipe) return [];
     if (Array.isArray(recipe.reference_slots)) {
       const records = typeof referenceRecords !== 'undefined' && Array.isArray(referenceRecords) ? referenceRecords : [];
-      return slots.flatMap((slot, index) => {
+      const result = slots.slice(0, recipe.reference_slots.length).flatMap((slot, index) => {
         const record = records[index], input = root.document.querySelector('[data-ref-file="'+index+'"]');
         const staged = !!record?.file && !record?.missing, selectedFile = !!input?.files?.length || !!record?.missing;
         return staged || selectedFile ? [{id:'source-'+(index+1),slotId:slot.id,role:record?.role || slot.role,stage:staged?'staged':'selected'}] : [];
       });
+      if (recipe.last_reference) {
+        const staged = typeof lastUploaded !== 'undefined' && !!lastUploaded;
+        const selectedFile = !!root.document.querySelector('#lastReference')?.files?.length;
+        if (staged || selectedFile) result.push({
+          id:'source-last-reference', slotId:'last-reference',
+          role:recipe.last_reference_label || 'Last frame', stage:staged?'staged':'selected'
+        });
+      }
+      return result;
     }
     const result = [];
     if (recipe.reference) {
@@ -58,6 +76,10 @@
     pendingFiles,
     dirty:() => typeof draftDirty !== 'undefined' && !!draftDirty,
     hasSources:() => references().some(item => item.stage === 'staged')
+      || (typeof uploaded !== 'undefined' && !!uploaded)
+      || (typeof lastUploaded !== 'undefined' && !!lastUploaded)
+      || (typeof parentAssets !== 'undefined' && parentAssets.length > 0)
+      || (typeof referenceRecords !== 'undefined' && referenceRecords.some(record => !!record?.file))
   });
   if (root.document.readyState === 'loading') root.addEventListener('DOMContentLoaded', start, {once:true});
   else start();
