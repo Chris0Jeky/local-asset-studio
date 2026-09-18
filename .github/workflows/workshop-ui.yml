@@ -54,6 +54,8 @@ jobs:
         run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
         run: python tests/workshop_application.py --output .runtime/workshop-application
+      - name: Prompt Lab handoff placement across presentations
+        run: python tests/workshop_transfer_handoff.py --output .runtime/workshop-transfer
       - name: Offline prototype interactions and screenshots
         run: python tests/workshop_prototype.py --output .runtime/workshop-prototype
       - name: Export standalone prototype
@@ -66,5 +68,6 @@ jobs:
             .runtime/workshop-component/
             .runtime/workshop-application/
             .runtime/workshop-handoffs/
+            .runtime/workshop-transfer/
             .runtime/workshop-prototype/
           retention-days: 7
