@@ -171,16 +171,16 @@ class ReportingTests(unittest.TestCase):
         spec.loader.exec_module(module)
         return module
 
-    def test_cli_maps_plan_io_to_unavailable_and_bad_content_to_invalid_plan(self):
+    def test_cli_preserves_source_integrity_separately_from_report_disposition(self):
         cli = self.load_cli()
         cases = [
-            (comparison.EvidenceError('artifact_missing', incomplete=True), 'report_unavailable'),
-            (comparison.EvidenceError('artifact_unreadable'), 'report_unavailable'),
-            (comparison.EvidenceError('file_changed'), 'report_unavailable'),
-            (comparison.EvidenceError('plan_invalid'), 'invalid_plan'),
-            (comparison.EvidenceError('report_too_large'), 'report_unavailable'),
+            (comparison.EvidenceError('artifact_missing', incomplete=True), 'report_unavailable', 'incomplete'),
+            (comparison.EvidenceError('artifact_unreadable'), 'report_unavailable', 'invalid'),
+            (comparison.EvidenceError('file_changed'), 'report_unavailable', 'invalid'),
+            (comparison.EvidenceError('plan_invalid'), 'invalid_plan', 'invalid'),
+            (comparison.EvidenceError('report_too_large'), 'report_unavailable', 'invalid'),
         ]
-        for error, state in cases:
+        for error, state, integrity in cases:
             with self.subTest(state=state, code=error.code), patch.object(cli, 'compare_observations', side_effect=error):
                 output = io.StringIO()
                 with contextlib.redirect_stdout(output):
@@ -188,6 +188,7 @@ class ReportingTests(unittest.TestCase):
                 self.assertEqual(code, 2)
                 value = json.loads(output.getvalue())
                 self.assertEqual(value['state'], state)
+                self.assertEqual(value['integrity'], integrity)
                 self.assertEqual(value['reason'], error.code)
                 self.assertFalse(value['qualified_benchmark'])
                 self.assertFalse(value['execution_authority'])
@@ -202,6 +203,7 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(absent.returncode, 2, absent.stderr)
         missing_report = json.loads(absent.stdout)
         self.assertEqual(missing_report['state'], 'report_unavailable')
+        self.assertEqual(missing_report['integrity'], 'incomplete')
         self.assertEqual(missing_report['reason'], 'artifact_missing')
         with tempfile.TemporaryDirectory() as tmp:
             bad = Path(tmp) / 'plan.json'
@@ -211,6 +213,7 @@ class ReportingTests(unittest.TestCase):
         self.assertEqual(invalid.returncode, 2, invalid.stderr)
         invalid_report = json.loads(invalid.stdout)
         self.assertEqual(invalid_report['state'], 'invalid_plan')
+        self.assertEqual(invalid_report['integrity'], 'invalid')
         self.assertNotEqual(invalid_report['state'], missing_report['state'])
 
 
