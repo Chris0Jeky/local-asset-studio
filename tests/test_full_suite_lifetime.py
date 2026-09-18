@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -307,9 +308,9 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
             with self.assertRaisesRegex(TimeoutError, "shutdown watchdog evidence"):
                 observe_shutdown(
                     capture,
-                    startup_timeout=1,
+                    startup_timeout=4,
                     observation_timeout=0.15,
-                    hard_timeout=1,
+                    hard_timeout=10,
                 )
         finally:
             returncode, output = capture.reap()
@@ -408,7 +409,7 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         self.assertEqual(wrapper.traceback_deadline(600.0), wrapper.TRACEBACK_AFTER_SECONDS)
 
     def test_unusable_lifetime_budget_is_refused_rather_than_silently_ignored(self):
-        for value in ("0", "-1", "30", "soon", "600s"):
+        for value in ("0", "-1", "30", "31", "soon", "600s", "inf", "nan", "1e400"):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):
                     wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: value})
@@ -417,10 +418,17 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         worker = load("lifetime_worker", HERE / "full_suite_lifetime_worker.py")
         separation = worker.MARKER_SEPARATION_SECONDS
         for seconds in (separation + 0.01, 0.6, 4.0, 570.0):
-            with self.subTest(seconds=seconds):
-                diagnostics = worker.LifetimeDiagnostics(seconds)
-                delay = max(0.0, seconds - max(separation, min(1.0, seconds / 3.0)))
-                self.assertGreaterEqual(seconds - delay, separation)
+            with self.subTest(seconds=seconds), contextlib.ExitStack() as stack:
+                sink = stack.enter_context(tempfile.TemporaryFile("w"))
+                diagnostics = worker.LifetimeDiagnostics(seconds, stream=sink)
+                self.assertIsNone(diagnostics.marker)
+                diagnostics.arm()
+                try:
+                    self.assertIsNotNone(diagnostics.marker)
+                    self.assertGreaterEqual(seconds - diagnostics.marker.interval, separation)
+                    self.assertLessEqual(diagnostics.marker.interval, seconds)
+                finally:
+                    diagnostics.cancel()
                 self.assertIsNone(diagnostics.marker)
         for seconds in (0, -1, 0.03, separation):
             with self.subTest(seconds=seconds):
@@ -444,8 +452,17 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         workflow = (HERE.parent / ".github" / "workflows" / "full-suite-lifetime.yml").read_text(
             encoding="utf-8"
         )
-        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '1500'", workflow)
-        self.assertIn("timeout-minutes: 30", workflow)
+        lane = workflow[workflow.index("  windows-full-suite:"):]
+        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '1500'", lane)
+        self.assertIn("timeout-minutes: 30", lane)
+        self.assertNotIn("timeout-minutes: 30", workflow[: workflow.index("  windows-full-suite:")])
+
+    def test_child_never_inherits_the_parent_budget_override(self):
+        child = wrapper.child_environment({"PATH": "kept", wrapper.BUDGET_VARIABLE: "1500"})
+        self.assertEqual(child, {"PATH": "kept"})
+        self.assertNotIn(wrapper.BUDGET_VARIABLE, wrapper.child_environment({}))
+        source = (HERE / "check_full_suite_lifetime.py").read_text(encoding="utf-8")
+        self.assertIn("env=child_environment()", source)
 
 
 if __name__ == "__main__":

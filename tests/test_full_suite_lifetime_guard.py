@@ -25,7 +25,10 @@ class FullSuiteLifetimeGuardTests(unittest.TestCase):
             ['worker'], 600, output='START slow.test\n', stderr='dump\n'
         )
         stdout, stderr = io.StringIO(), io.StringIO()
-        with patch.object(guard.subprocess, 'run', side_effect=timeout), \
+        # The default guard is what this asserts; an exported host override must not
+        # reach it (the parent already scrubs it from the child suite's environment).
+        with patch.dict(guard.os.environ, {}, clear=True), \
+             patch.object(guard.subprocess, 'run', side_effect=timeout), \
              patch.object(guard.time, 'monotonic', side_effect=[10.0, 611.25]), \
              contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             status = guard.main()

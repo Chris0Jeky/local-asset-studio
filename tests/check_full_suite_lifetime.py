@@ -7,6 +7,7 @@ before this parent enforces its hard lifetime budget.
 """
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -24,6 +25,10 @@ TRACEBACK_AFTER_SECONDS = LIFETIME_BUDGET_SECONDS - TRACEBACK_MARGIN_SECONDS
 # was still running ordinary tests when the 600-second budget expired, with no
 # hung test, no leaked thread and 2,236 of 2,968 tests started.
 BUDGET_VARIABLE = "FULL_SUITE_LIFETIME_BUDGET_SECONDS"
+# The worker refuses a deadline too short to keep its current-test marker clear
+# of the C-level all-thread dump, so the parent refuses a budget that could only
+# produce one.
+MIN_TRACEBACK_DEADLINE_SECONDS = 1.0
 # A full Windows interpreter can need several seconds to release thousands of
 # test-owned modules, streams and executor objects after unittest completes.
 # Keep this well inside the parent's hard budget while avoiding a false leak
@@ -40,10 +45,14 @@ def lifetime_budget(environ=None) -> float:
         budget = float(raw)
     except ValueError:
         raise ValueError(f"{BUDGET_VARIABLE} must be a number of seconds, not {raw!r}") from None
-    if not budget > TRACEBACK_MARGIN_SECONDS:
+    # An unusable deadline is as bad as a non-positive one: the worker refuses any
+    # deadline that cannot hold the marker clear of the all-thread dump, so require
+    # a finite budget that leaves the margin plus that separation.
+    if not math.isfinite(budget) or budget <= TRACEBACK_MARGIN_SECONDS + MIN_TRACEBACK_DEADLINE_SECONDS:
         raise ValueError(
-            f"{BUDGET_VARIABLE} must exceed the {TRACEBACK_MARGIN_SECONDS}-second "
-            f"diagnostic margin, not {raw!r}"
+            f"{BUDGET_VARIABLE} must be a finite number exceeding the "
+            f"{TRACEBACK_MARGIN_SECONDS}-second diagnostic margin by at least "
+            f"{MIN_TRACEBACK_DEADLINE_SECONDS} seconds, not {raw!r}"
         )
     return budget
 
@@ -51,6 +60,18 @@ def lifetime_budget(environ=None) -> float:
 def traceback_deadline(budget: float) -> float:
     """Dump every thread stack while the child is still alive under `budget`."""
     return budget - TRACEBACK_MARGIN_SECONDS
+
+
+def child_environment(environ=None) -> dict:
+    """The parent owns the budget; the child is told its deadlines on argv.
+
+    Leaving the override in the child's environment would reach the offline
+    suite itself, where `test_full_suite_lifetime_guard` asserts the default
+    600-second wording.
+    """
+    child = dict(os.environ if environ is None else environ)
+    child.pop(BUDGET_VARIABLE, None)
+    return child
 
 
 def printable(value: str | bytes | None) -> str:
@@ -88,6 +109,7 @@ def main() -> int:
         result = subprocess.run(
             command,
             cwd=ROOT,
+            env=child_environment(),
             capture_output=True,
             text=True,
             timeout=budget,
