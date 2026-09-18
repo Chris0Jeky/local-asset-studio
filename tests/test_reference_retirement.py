@@ -57,11 +57,35 @@ class ReferenceRetirementTests(unittest.TestCase):
         with self.f.studio_instance.assets.connection() as db:
             self.assertEqual(db.execute('SELECT COUNT(*) FROM reference_jobs_v1').fetchone()[0],0)
 
-    def test_retirement_needs_no_model_configuration_but_obeys_retention_cap(self):
+    def test_retirement_needs_no_model_configuration_and_has_its_own_cap(self):
         del self.f.studio_instance.config['reference_helper']
         with patch('studio_prompt.reference_jobs.MAX_JOBS',0):
-            with self.assertRaisesRegex(ValueError,'full'):self.f.service.retire(self.command)
-        self.assertTrue(self.f.service.retire(self.command)['state']['retired_without_dispatch'])
+            result=self.f.service.retire(self.command)
+        self.assertTrue(result['state']['retired_without_dispatch'])
+        other={**self.command,'request_id':'f'*32}
+        with patch('studio_prompt.reference_jobs.MAX_RETIREMENTS',1), \
+             patch('studio_prompt.reference_jobs.MAX_RETIREMENT_BYTES',8192):
+            with self.assertRaisesRegex(ValueError,'full'):self.f.service.retire(other)
+        self.assertEqual(self.f.calls,[])
+
+    def test_full_retirement_budget_does_not_block_real_analysis(self):
+        with patch('studio_prompt.reference_jobs.MAX_JOBS',3), \
+             patch('studio_prompt.reference_jobs.MAX_RETIREMENTS',3), \
+             patch('studio_prompt.reference_jobs.MAX_RETIREMENT_BYTES',3*8192):
+            for index in range(3):
+                self.f.service.retire({**self.command,'request_id':f'{index+1:032x}'})
+            with self.assertRaisesRegex(ValueError,'retirement history is full'):
+                self.f.service.retire({**self.command,'request_id':'e'*32})
+            self.assertEqual(self.f.create()['state']['status'],'queued')
+        self.assertEqual(self.f.calls,[])
+
+    def test_full_operation_budget_does_not_block_retirement_fence(self):
+        with patch('studio_prompt.reference_jobs.MAX_JOBS',1), \
+             patch('studio_prompt.reference_jobs.MAX_RETIREMENTS',1), \
+             patch('studio_prompt.reference_jobs.MAX_RETIREMENT_BYTES',8192):
+            self.assertEqual(self.f.create()['state']['status'],'queued')
+            result=self.f.service.retire({**self.command,'request_id':'d'*32})
+        self.assertTrue(result['state']['retired_without_dispatch'])
         self.assertEqual(self.f.calls,[])
 
 

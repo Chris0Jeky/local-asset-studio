@@ -18,6 +18,9 @@ from .local_helper import http_json
 
 MAX_JOBS = 64
 MAX_BYTES = 128 * 1024 * 1024
+MAX_RETIREMENTS = 64
+RETIREMENT_BYTES = 8192
+MAX_RETIREMENT_BYTES = MAX_RETIREMENTS * RETIREMENT_BYTES
 PAYLOAD_LIMIT = 16 * 1024 * 1024
 ACTIVE = ('queued', 'preparing', 'submitting')
 CONFIG_FIELDS = ('model', 'model_digest', 'port', 'min_available_ram_bytes',
@@ -79,6 +82,18 @@ class ReferenceJobs:
         need(len(canonical(state))<=8192,'Reference state exceeds 8 KiB')
         db.execute('UPDATE reference_jobs_v1 SET state=?,state_sha=? WHERE id=?',(canonical(state).decode(),digest(state),key))
 
+    def _history_usage(self,db):
+        """Keep analysis records and no-late-arrival tombstones on separate caps."""
+        usage={'operations':0,'operation_bytes':0,'retirements':0,'retirement_bytes':0}
+        for row in db.execute('SELECT state,state_sha,bytes FROM reference_jobs_v1'):
+            state=self._state(row);size=row['bytes']
+            need(type(size) is int and size>=0,'Stored reference byte accounting failed integrity checks')
+            if state.get('retired_without_dispatch') is True:
+                usage['retirements']+=1;usage['retirement_bytes']+=size
+            else:
+                usage['operations']+=1;usage['operation_bytes']+=size
+        return usage
+
     def busy(self, holds_only=False):
         if self.failure_hold:return True
         with self.workspace.connection() as db:
@@ -98,7 +113,9 @@ class ReferenceJobs:
         except ValueError as exc:config=None;enabled=False;message=str(exc)
         return {'format':'studio.reference-jobs/v1','workspace_id':scope,'enabled':enabled,
                 'model':config['model'] if config else None,'message':message,'busy':self.busy(),'recent':recent,
-                'limits':{'references':4,'retained_operations':MAX_JOBS,'retained_bytes':MAX_BYTES},'generation_submitted':False}
+                'limits':{'references':4,'retained_operations':MAX_JOBS,'retained_retirements':MAX_RETIREMENTS,
+                    'retained_operation_bytes':MAX_BYTES,'retained_retirement_bytes':MAX_RETIREMENT_BYTES,
+                    'retained_bytes':MAX_BYTES+MAX_RETIREMENT_BYTES},'generation_submitted':False}
 
     def _row(self,db,key):
         self.workspace.request_id(key)
@@ -166,8 +183,9 @@ class ReferenceJobs:
                     need(old['request_sha']==sha,'Request ID already has different content');return self._public(db,old)
                 states=[self._state(row) for row in db.execute('SELECT state,state_sha FROM reference_jobs_v1')]
                 need(not any(s['resource_hold'] or s['status'] in ACTIVE for s in states),'An analysis is already outstanding')
-                count,used=db.execute('SELECT COUNT(*),COALESCE(SUM(bytes),0) FROM reference_jobs_v1').fetchone()
-                need(count<MAX_JOBS and used+size<=MAX_BYTES,'Reference operation history is full; no history was removed')
+                usage=self._history_usage(db)
+                need(usage['operations']<MAX_JOBS and usage['operation_bytes']+size<=MAX_BYTES,
+                     'Reference operation history is full; no history was removed')
                 db.execute('INSERT INTO reference_jobs_v1 VALUES(?,?,?,?,?,?,?,?,?,?)',(
                     value['request_id'],sha,canonical(q).decode(),serialized.decode(),digest(payload),canonical(context).decode(),
                     canonical(state).decode(),digest(state),None,size))
@@ -278,14 +296,16 @@ class ReferenceJobs:
                 db.execute('BEGIN IMMEDIATE');self.workspace._check_scope(db,value['workspace_id'])
                 old=db.execute('SELECT * FROM reference_jobs_v1 WHERE id=?',(value['request_id'],)).fetchone()
                 if old:return self._public(db,old)
-                count,used=db.execute('SELECT COUNT(*),COALESCE(SUM(bytes),0) FROM reference_jobs_v1').fetchone()
-                need(count<MAX_JOBS and used+8192<=MAX_BYTES,'Reference operation history is full; no history was removed')
+                usage=self._history_usage(db)
+                need(usage['retirements']<MAX_RETIREMENTS
+                     and usage['retirement_bytes']+RETIREMENT_BYTES<=MAX_RETIREMENT_BYTES,
+                     'Reference retirement history is full; no history was removed')
                 state={'status':'cancelled','resource_hold':False,'inference_attempts':0,'response_done':False,
                     'retired_without_dispatch':True,'message':'Request retired before creation. A late arrival cannot start analysis.',
                     'updated_at':time.time(),'request_sha256':digest({}),'context_sha256':digest({}),'result_sha256':None}
                 db.execute('INSERT INTO reference_jobs_v1 VALUES(?,?,?,?,?,?,?,?,?,?)',(
                     value['request_id'],digest({'retired_without_dispatch':value}),'{}','{}',digest({}),'{}',
-                    canonical(state).decode(),digest(state),None,8192))
+                    canonical(state).decode(),digest(state),None,RETIREMENT_BYTES))
                 return self._public(db,self._row(db,value['request_id']))
 
     def _command(self,value,action):
