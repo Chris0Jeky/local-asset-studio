@@ -1,0 +1,47 @@
+name: Apply pose redo patch
+
+on:
+  push:
+    branches:
+      - codex/pose-editor-redo
+    paths:
+      - .github/workflows/pose-redo-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the implementation branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/pose-editor-redo
+          fetch-depth: 0
+
+      - name: Apply exact guarded replacements
+        run: python scripts/apply_pose_redo_patch.py
+
+      - name: Verify JavaScript and Python contracts
+        run: |
+          node --check app/static/pose-editor-core.js
+          node --check app/static/studio-workbench.js
+          node tests/pose_editor_redo.cjs
+          node tests/pose_editor_core.cjs
+          node tests/pose_guide_handoff.cjs
+          python -m py_compile tests/pose_editor_handoff_browser.py
+          git diff --check
+
+      - name: Commit the reviewed product change
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          test "$BRANCH_NAME" = "codex/pose-editor-redo"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git diff --cached --quiet && { echo "No patch produced"; exit 1; }
+          git commit -m "feat: wire pose editor redo"
+          git push origin HEAD:"$BRANCH_NAME"
