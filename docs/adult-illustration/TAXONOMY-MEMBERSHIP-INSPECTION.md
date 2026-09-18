@@ -44,12 +44,13 @@ The command:
 
 1. deterministically recompiles and validates the prompt artifact;
 2. validates the saved index content identity and strict structure;
-3. requires exact source SHA-256, immutable revision and source/review manifest hashes to match the compiled prompt;
-4. builds canonical and reviewed-alias lookup maps once;
-5. inspects each original compiler input in order;
-6. writes a separate content-addressed report using exclusive creation.
+3. requires all pinned source metadata, not only its SHA-256 and revision, to match the current source contract;
+4. requires the exact current source/review manifest hashes and every finite reviewed-overlay field to match;
+5. builds canonical, reviewed-display and reviewed-alias lookup maps once;
+6. inspects each original compiler input in order;
+7. writes a separate content-addressed report using exclusive creation.
 
-Prompt/source documents remain bounded to 1 MiB. The explicitly supplied index has a separate 64 MiB read cap, above the taxonomy contract's 16 MiB rendered-index limit but still finite before JSON parsing.
+Prompt/source documents remain bounded to 1 MiB. The explicitly supplied index has a separate 64 MiB read cap, above the taxonomy contract's 16 MiB rendered-index limit but still finite before JSON parsing. The reader requests at most the configured limit plus one byte before rejecting an oversized file.
 
 ## Classifications
 
@@ -57,12 +58,12 @@ Prompt/source documents remain bounded to 1 MiB. The explicitly supplied index h
 | --- | --- |
 | `source_known_reviewed_accepted` | The exact source contains the term and the Studio review currently accepts it for at least one declared compilation context. |
 | `source_known_reviewed_ineligible` | The source contains the term and it is reviewed, but the review does not accept it for compilation. |
-| `source_known_unreviewed` | The pinned source contains the normalized canonical term, but no Studio review semantics or compilation authority exist. |
-| `not_in_pinned_source` | The validated index has no canonical or reviewed-alias match for the input. |
+| `source_known_unreviewed` | The pinned source contains the canonical term, but no Studio review semantics or compilation authority exist. |
+| `not_in_pinned_source` | The validated index has no canonical, reviewed-display or reviewed-alias match for the input. |
 
-Each inspection retains the compiler's source, status, match kind, entry IDs, emitted forms and semantic facets beside index evidence such as canonical source name, tag ID, category and descriptive frequency.
+Membership match kinds remain distinct: `canonical` is an exact upstream source name, `normalised_space` is a spacing-equivalent source name, and `display`/`alias` come only from reviewed overlay evidence. Each inspection retains the compiler's source, status, match kind, entry IDs, emitted forms and semantic facets beside index evidence such as canonical source name, tag ID, category and descriptive frequency.
 
-Known upstream never means recommended, safe, adult, consented, tokenizer-compatible or artistically useful. An unreviewed term remains ineligible even when membership is proven.
+Known upstream never means recommended, safe, adult, consented, tokenizer-compatible or artistically useful. An unreviewed term remains ineligible even when membership is proven. Membership never overrides a compiler rejection, deprecation, polarity mismatch or profile constraint.
 
 ## Evidence identity
 
@@ -77,16 +78,19 @@ Reports use `studio.adult-illustration.prompt-membership-report/v1` and bind:
 - source and reviewed-entry counts;
 - a deterministic `report_sha256`.
 
-The saved index's content identity is validated, but inspection does not receive source bytes. It therefore records:
+The saved index's content identity, current source metadata and current reviewed overlay are validated, but inspection does not receive source bytes. It therefore records:
 
 ```json
 {
   "index_identity_validated": true,
+  "current_contracts_validated": true,
   "source_revalidated": false
 }
 ```
 
 `source_revalidated: false` is not a failure. It prevents a persisted index from being mistaken for a fresh reconstruction. Use the taxonomy `validate` command when exact source-byte reconstruction is required.
+
+A retained membership report can also be validated by recomputing it from the same prompt, source projection and index. Changed classifications, compiler evidence, taxonomy identity or report metadata fail closed.
 
 ## Authority and privacy boundary
 
@@ -113,4 +117,4 @@ python -m unittest tests.test_adult_illustration_prompt_membership -v
 python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
 ```
 
-Passing tests establish deterministic evidence classification, strict identity binding, bounded parsing, tamper rejection and zero-authority behavior. They do not establish source licence clearance, exact tokenizer behavior, prompt quality, route compatibility or accepted artwork.
+Passing tests establish deterministic evidence classification, strict current-contract binding, bounded parsing, tamper rejection and zero-authority behavior. They do not establish source licence clearance, exact tokenizer behavior, prompt quality, route compatibility or accepted artwork.
