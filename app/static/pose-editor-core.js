@@ -1,4 +1,4 @@
-/* Pure COCO-18 pose geometry for the Combine pose editor. Drawing a guide is not generating a picture. */
+/* Pure COCO-18 pose geometry and bounded local history for the Combine pose editor. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioPoseEditor=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   // OpenPose COCO-18 order, joint for joint with studio_workflow/pose_artifact.JOINTS: the endpoint reads this order.
@@ -18,6 +18,11 @@
                   [.44,.86],[.55,.47],[.56,.66],[.56,.86],[.475,.108],[.525,.108],[.45,.12],[.55,.12]];
   const PRESETS=[{id:'standing',label:'Standing',points:STANDING},{id:'bent',label:'Bent forward, looking back',points:BENT},{id:'mirror',label:'Mirror left-right'}];
 
+  // History begins before a workbench edit, while geometry is calculated afterwards. The geometry helpers publish
+  // the exact immutable transition through this WeakMap so a timeline can commit synchronously when its readiness
+  // getters run. Nothing is attached to serialized pose arrays and abandoned drawings remain garbage-collectable.
+  const transitions=new WeakMap();
+
   function finite(value){return typeof value==='number'&&isFinite(value);}
   function canvasOf(canvas){
     const width=Number(canvas&&canvas.width),height=Number(canvas&&canvas.height);
@@ -28,6 +33,14 @@
   function clamp(value,limit){return Math.min(limit,Math.max(0,value));}
   function place(x,y,canvas){return{x:clamp(x,canvas.width),y:clamp(y,canvas.height)};}
   function copy(points){return JOINTS.map((_,i)=>{const p=at(points,i);return p?{x:p.x,y:p.y}:null;});}
+  function samePoints(left,right){return JOINTS.every((_,index)=>{
+    const a=at(left,index),b=at(right,index);
+    return a===null&&b===null||!!a&&!!b&&a.x===b.x&&a.y===b.y;
+  });}
+  function publish(source,next,rememberHome){
+    if(Array.isArray(source))transitions.set(source,{points:next,rememberHome:rememberHome===true});
+    return next;
+  }
   function fromPreset(id,canvas){
     const c=canvasOf(canvas),found=PRESETS.find(item=>item.id===id&&item.points);
     return found?found.points.map(p=>p?place(p[0]*c.width,p[1]*c.height,c):null):null;
@@ -35,24 +48,33 @@
   // A mirror is the same drawing seen the other way round: x flips about the canvas centre and each joint keeps
   // its own identity, because flipping a picture does not turn somebody's right wrist into their left one.
   function mirror(points,canvas){const c=canvasOf(canvas);return copy(points).map(p=>p?place(c.width-p.x,p.y,c):null);}
-  function start(id,points,canvas){return id==='mirror'?mirror(points,canvas):fromPreset(id,canvas)||copy(points);}
-  function move(points,index,x,y,canvas){
+  function start(id,points,canvas){
+    const next=id==='mirror'?mirror(points,canvas):fromPreset(id,canvas)||copy(points);
+    return publish(points,next,true);
+  }
+  function moved(points,index,x,y,canvas){
     const c=canvasOf(canvas),next=copy(points);
     if(!Number.isInteger(index)||index<0||index>=JOINTS.length||!finite(x)||!finite(y))return next;
     next[index]=place(x,y,c);return next;
   }
+  function move(points,index,x,y,canvas){return publish(points,moved(points,index,x,y,canvas),true);}
   // One arrow press moves a fraction of the canvas along that axis: 1 % plain, 5 % with Shift.
   function nudge(points,index,dx,dy,canvas,step){
     const c=canvasOf(canvas),joint=at(points,index);
-    if(!joint||!finite(step))return copy(points);
-    return move(points,index,joint.x+dx*step*c.width,joint.y+dy*step*c.height,c);
+    const next=!joint||!finite(step)?copy(points):moved(points,index,joint.x+dx*step*c.width,joint.y+dy*step*c.height,c);
+    return publish(points,next,true);
   }
   // A missing joint is not coordinate zero: it is omitted, and every limb touching it goes undrawn.
-  function setUnknown(points,index){const next=copy(points);if(Number.isInteger(index)&&index>=0&&index<JOINTS.length)next[index]=null;return next;}
+  function unknown(points,index){const next=copy(points);if(Number.isInteger(index)&&index>=0&&index<JOINTS.length)next[index]=null;return next;}
+  function setUnknown(points,index){return publish(points,unknown(points,index),false);}
   function toggle(points,index,fallback,canvas){
-    if(at(points,index))return setUnknown(points,index);
-    const home=fallback&&finite(fallback.x)&&finite(fallback.y)?fallback:(fromPreset('standing',canvas)||[])[index];
-    return home?move(points,index,home.x,home.y,canvas):copy(points);
+    let next;
+    if(at(points,index))next=unknown(points,index);
+    else{
+      const home=fallback&&finite(fallback.x)&&finite(fallback.y)?fallback:(fromPreset('standing',canvas)||[])[index];
+      next=home?moved(points,index,home.x,home.y,canvas):copy(points);
+    }
+    return publish(points,next,false);
   }
   function nearest(points,x,y,radius){
     let best=-1,closest=Number(radius)*Number(radius);
@@ -64,39 +86,70 @@
     const a=canvasOf(from),b=canvasOf(to);
     return copy(points).map(p=>p?place(p.x/a.width*b.width,p.y/a.height*b.height,b):null);
   }
-  // Local pose history owns geometry plus remembered homes. Workbench edits begin before geometry is calculated,
-  // then commit only after points or homes actually differ. This keeps Redo across clamped/no-op interactions while
-  // still retaining the original pre-drag snapshot when the first real pointer movement arrives later.
   function timeline(limit=60){
     if(!Number.isInteger(limit)||limit<1||limit>1000)throw Error('Pose history needs a whole-number limit from 1 to 1000.');
-    let past=[],future=[],pending=null;
+    let past=[],future=[],pending=null,pendingSource=null;
     const snapshot=(points,home)=>({points:copy(points),home:copy(home)});
     const retain=(stack,value)=>{stack.push(value);if(stack.length>limit)stack.shift();};
-    const samePoints=(left,right)=>JOINTS.every((_,index)=>{
-      const a=left[index],b=right[index];
-      return a===null&&b===null||!!a&&!!b&&a.x===b.x&&a.y===b.y;
-    });
     const same=(left,right)=>samePoints(left.points,right.points)&&samePoints(left.home,right.home);
+    const remembered=(home,points)=>JOINTS.map((_,index)=>{
+      const point=at(points,index)||at(home,index);
+      return point?{x:point.x,y:point.y}:null;
+    });
+    const clearPending=()=>{
+      if(pendingSource)transitions.delete(pendingSource);
+      pending=null;pendingSource=null;
+    };
+    const commitPending=current=>{
+      const changed=!same(pending,current);
+      if(changed){retain(past,pending);future=[];}
+      clearPending();return changed;
+    };
+    const settleActual=(points,home)=>{
+      if(!pending)return false;
+      return commitPending(snapshot(points,home));
+    };
+    const settlePublished=()=>{
+      if(!pending||!pendingSource)return false;
+      const transition=transitions.get(pendingSource);
+      if(!transition)return false;
+      transitions.delete(pendingSource);
+      const current={
+        points:copy(transition.points),
+        home:transition.rememberHome?remembered(pending.home,transition.points):copy(pending.home)
+      };
+      if(same(pending,current)){
+        pendingSource=transition.points;
+        return false;
+      }
+      retain(past,pending);future=[];pending=null;pendingSource=null;return true;
+    };
     return{
-      record(points,home){pending=null;retain(past,snapshot(points,home));future=[];},
-      begin(points,home){pending=snapshot(points,home);},
-      commit(points,home){
-        if(!pending)return false;
-        const current=snapshot(points,home);
-        if(same(pending,current))return false;
-        retain(past,pending);future=[];pending=null;return true;
+      record(points,home){
+        settleActual(points,home);
+        transitions.delete(points);
+        pending=snapshot(points,home);pendingSource=points;
       },
-      undo(points,home){pending=null;if(!past.length)return null;retain(future,snapshot(points,home));return past.pop();},
-      redo(points,home){pending=null;if(!future.length)return null;retain(past,snapshot(points,home));return future.pop();},
+      undo(points,home){
+        settleActual(points,home);
+        if(!past.length)return null;
+        retain(future,snapshot(points,home));return past.pop();
+      },
+      redo(points,home){
+        settleActual(points,home);
+        if(!future.length)return null;
+        retain(past,snapshot(points,home));return future.pop();
+      },
       resize(from,to){
+        settlePublished();
         const scale=step=>({points:resize(step.points,from,to),home:resize(step.home,from,to)});
         past=past.map(scale);future=future.map(scale);if(pending)pending=scale(pending);
       },
-      reset(){past=[];future=[];pending=null;},
-      get canUndo(){return past.length>0;},
-      get canRedo(){return future.length>0;},
-      get pastCount(){return past.length;},
-      get futureCount(){return future.length;}
+      reset(){clearPending();past=[];future=[];},
+      get canUndo(){settlePublished();return past.length>0;},
+      get canRedo(){settlePublished();return future.length>0;},
+      get pastCount(){settlePublished();return past.length;},
+      get futureCount(){settlePublished();return future.length;}
     };
   }
   function known(points){return copy(points).filter(Boolean).length;}
