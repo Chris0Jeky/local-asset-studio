@@ -47,10 +47,9 @@ test('the workbench record path preserves redo across a clamped no-op',()=>{
   const unchanged=P.move(restored.points,4,restored.points[4].x,restored.points[4].y,CANVAS);
   assert.equal(timeline.canRedo,true,'an unchanged move must not discard redo');
   assert.equal(timeline.canUndo,false,'a no-op must not add a duplicate undo entry');
-  timeline.record(unchanged,restored.home);
   P.move(unchanged,4,101,200,CANVAS);
-  assert.equal(timeline.canRedo,false,'the first real change discards the abandoned future');
-  assert.equal(timeline.canUndo,true);
+  assert.equal(timeline.canRedo,false,'the first later drag movement discards the abandoned future');
+  assert.equal(timeline.canUndo,true,'the original pre-drag snapshot remains undoable');
 });
 
 test('undo and redo preserve unknown-joint homes and resize both stacks',()=>{
