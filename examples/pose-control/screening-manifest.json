@@ -74,7 +74,10 @@
       "required_observations": ["body_pose", "ignored_facet_leakage"],
       "scope": "held-out",
       "slot_mode": "paired-counterfactual",
-      "source_ref": "local-source-8",
+      "source_refs": {
+        "baseline": "local-source-8-baseline",
+        "variant": "local-source-8-variant"
+      },
       "title": "Irrelevant donor attribute counterfactual"
     }
   ],
