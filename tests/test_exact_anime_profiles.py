@@ -37,15 +37,28 @@ class ExactAnimeProfileTests(unittest.TestCase):
 
     def bound(self, profile_id, preset_id):
         a = self.compile(profile_id)
-        preset = next(p for p in json.loads((ROOT/'presets/catalog.json').read_text())['presets'] if p['id']==preset_id)
-        g = json.loads((ROOT/preset['graph']).read_text())
+        preset = next(p for p in json.loads((ROOT/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']==preset_id)
+        g = json.loads((ROOT/preset['graph']).read_text(encoding='utf-8'))
         binding = {'preset_id':preset_id,'profile_sha256':a['profile_sha256'],'graph_sha256':digest(g),
                    'bindings':{k:preset[k] for k in a['fields']}}
         return a, g, binding
 
+    def test_fixture_reads_do_not_depend_on_windows_default_encoding(self):
+        from unittest.mock import patch
+        read = Path.read_text
+        def windows_read(path, encoding=None, errors=None, **kwargs):
+            return read(path, encoding=encoding or 'cp1252', errors=errors, **kwargs)
+        with patch.object(Path, 'read_text', windows_read):
+            for profile_id, preset_id in ((AESTHETIC, 'anima-portrait'),
+                                          (BASE, 'anima-v1-baseline'),
+                                          (ANIMAGINE, 'anime')):
+                with self.subTest(profile=profile_id):
+                    artifact, graph, binding = self.bound(profile_id, preset_id)
+                    self.assertFalse(bind_graph(artifact, graph, binding)['generation_submitted'])
+
     def test_malformed_opt_in_contracts_fail_closed(self):
         from unittest.mock import patch
-        data=json.loads((ROOT/'research/prompt-studio/profiles.json').read_text())
+        data=json.loads((ROOT/'research/prompt-studio/profiles.json').read_text(encoding='utf-8'))
         self.assertIn(AESTHETIC,{p['id'] for p in data['profiles']})
         for mutation in ('unknown_check','empty_templates','duplicate_template','bad_hash','swapped_recipes','missing_checks'):
             with self.subTest(mutation=mutation):
@@ -98,7 +111,7 @@ class ExactAnimeProfileTests(unittest.TestCase):
                 self.assertEqual(a['state']=='blocked',blocked)
 
     def test_exact_profile_templates_never_require_an_implicit_source(self):
-        catalog={p['id']:p for p in json.loads((ROOT/'presets/catalog.json').read_text())['presets']}
+        catalog={p['id']:p for p in json.loads((ROOT/'presets/catalog.json').read_text(encoding='utf-8'))['presets']}
         for profile_id in (AESTHETIC,BASE,ANIMAGINE):
             for row in profiles()[profile_id]['template_bindings']:
                 preset=catalog[row['preset_id']]
@@ -151,14 +164,14 @@ class ExactAnimeProfileTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Profile/compiler drift'): bind_graph(a,g,b)
     def test_real_cli_compiles_and_refuses_rehashed_wrong_template(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root=Path(tmp); brief=root/'brief.json'; brief.write_text(json.dumps(new_brief('An original keeper.')))
+            root=Path(tmp); brief=root/'brief.json'; brief.write_text(json.dumps(new_brief('An original keeper.')), encoding='utf-8')
             command=[sys.executable,str(ROOT/'scripts/studio_prompt.py')]
             run=subprocess.run(command+['compile',str(brief),'--profile',AESTHETIC],capture_output=True,text=True,timeout=15)
             self.assertEqual(run.returncode,0,run.stderr)
             a=json.loads(run.stdout);self.assertFalse(a['generation_submitted'])
             _,g,b=self.bound(AESTHETIC,'anima-portrait');b['profile_sha256']=a['profile_sha256']
             g['1']['inputs']['unet_name']='wrong.safetensors';b['graph_sha256']=digest(g)
-            for name,value in [('compiled.json',a),('graph.json',g),('binding.json',b)]: (root/name).write_text(json.dumps(value))
+            for name,value in [('compiled.json',a),('graph.json',g),('binding.json',b)]: (root/name).write_text(json.dumps(value), encoding='utf-8')
             before={p.name:p.read_bytes() for p in root.iterdir()}
             run=subprocess.run(command+['bind',str(root/'compiled.json'),str(root/'graph.json'),str(root/'binding.json'),'--out',str(root/'result.json')],capture_output=True,text=True,timeout=15)
             self.assertEqual(run.returncode,2,run.stderr)
@@ -173,7 +186,7 @@ class ExactAnimeHTTPTests(unittest.TestCase):
         import threading
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); path=root/'graph.json'
-            preset=next(p for p in json.loads((ROOT/'presets/catalog.json').read_text())['presets'] if p['id']=='anima-portrait')
+            preset=next(p for p in json.loads((ROOT/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']=='anima-portrait')
             original=(ROOT/preset['graph']).read_bytes();path.write_bytes(original)
             class NoRuntime:
                 def __init__(self,root): self.root=root
@@ -197,7 +210,7 @@ class ExactAnimeHTTPTests(unittest.TestCase):
                          'bindings':{k:preset[k] for k in a['fields']}}
                 status,result=post('/api/prompt/bind',{'compiled':a,'binding':binding})
                 self.assertEqual(status,200,result);self.assertFalse(result['generation_submitted']);self.assertEqual(path.read_bytes(),original)
-                changed=json.loads(original);changed['1']['inputs']['unet_name']='wrong.safetensors';path.write_text(json.dumps(changed))
+                changed=json.loads(original);changed['1']['inputs']['unet_name']='wrong.safetensors';path.write_text(json.dumps(changed), encoding='utf-8')
                 binding['graph_sha256']=digest(changed);before=path.read_bytes()
                 status,result=post('/api/prompt/bind',{'compiled':a,'binding':binding})
                 self.assertEqual(status,400,result);self.assertFalse(result['generation_submitted'])
