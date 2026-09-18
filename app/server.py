@@ -1521,8 +1521,11 @@ class Studio:
             return self._queue_observation(job_id)
 
     def _queue_observation(self, job_id):
-        self.require_worker()
         job = self.jobs.get(job_id)
+        # Only a stopped job with known, unresolved prompt IDs takes the liveness-only guard; every
+        # other resume still asks for full new-work admission, including the reference hold (#458).
+        if job is not None and job.get("status") == "uncertain" and "pending_submission" not in job and self._tracking_stopped(job) and self._known_prompt_error(job) is None: self.require_worker_observation()
+        else: self.require_worker()
         if not job: raise StudioError("Unknown job")
         if job.get('status') == 'abandoned' or 'pending_submission' in job:
             raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')

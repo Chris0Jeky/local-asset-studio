@@ -58,6 +58,27 @@ class ObservationStudio:
     def require_worker_observation(self) -> None:
         server.Studio.require_worker_observation(self)
 
+    def resume_job(self, job_id: str) -> dict[str, object]:
+        return server.Studio.resume_job(self, job_id)
+
+    def _queue_observation(self, job_id: str) -> dict[str, object]:
+        return server.Studio._queue_observation(self, job_id)
+
+    def _resume_tracking(self, job: dict[str, object]) -> dict[str, object]:
+        return server.Studio._resume_tracking(self, job)
+
+    @staticmethod
+    def _tracking_stopped(job: dict[str, object]) -> bool:
+        return server.Studio._tracking_stopped(job)
+
+    @staticmethod
+    def _tracking_history(job: dict[str, object]) -> list:
+        return server.Studio._tracking_history(job)
+
+    @staticmethod
+    def _known_prompt_error(job: dict[str, object]):
+        return server.Studio._known_prompt_error(job)
+
     def _write_json_atomic(self, path: Path, value: object) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
@@ -89,6 +110,20 @@ def mixed_job() -> dict[str, object]:
             "index": 1,
             "graph": {"2": {"class_type": "Sampler", "inputs": {}}},
         },
+        "outputs": [],
+    }
+
+
+def stopped_job(*, known: bool = True) -> dict[str, object]:
+    """An uncertain job whose tracking was stopped, with or without known prompt IDs."""
+    submissions = [{"index": 0, "prompt_id": "known-prompt", "status": "observing", "graph": {}}] if known else []
+    return {
+        "id": "stopped-observation-job",
+        "status": "uncertain",
+        "message": "ComfyUI no longer lists this prompt.",
+        "prompt_ids": ["known-prompt"] if known else [],
+        "submissions": submissions,
+        "tracking_disposition": {"status": "stopped", "reason": "Paused while the host recovered", "recorded_at": 1.0, "event_id": "stop-0001"},
         "outputs": [],
     }
 
@@ -143,6 +178,63 @@ class ReferenceHoldObservationAdmissionTests(unittest.TestCase):
             )
             self.assertEqual(job["pending_submission"]["index"], 1)
             self.assertNotIn("abandonment", job)
+
+    def test_resume_job_observes_a_stopped_known_prompt_through_a_retained_hold(self) -> None:
+        """The public entry point, not just the helper: #458's own flow must reach the queue."""
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            job = stopped_job()
+            studio.jobs[job["id"]] = job
+
+            result = studio.resume_job(job["id"])
+
+            self.assertEqual(result["status"], "queued")
+            self.assertEqual(studio.reference_jobs.calls, 0, "Known-prompt observation must not ask for new-work admission")
+            self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"]))
+            self.assertEqual(job["tracking_disposition"]["status"], "resumed")
+
+    def test_resume_job_keeps_the_hold_for_a_stopped_job_without_known_prompt_ids(self) -> None:
+        """The relaxation is narrow: no known prompt, no bypass."""
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            job = stopped_job(known=False)
+            studio.jobs[job["id"]] = job
+
+            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
+                studio.resume_job(job["id"])
+            self.assertEqual(studio.reference_jobs.calls, 1)
+            self.assertTrue(studio.queue.empty())
+            self.assertEqual(job["status"], "uncertain")
+
+    def test_resume_job_keeps_the_hold_for_an_ordinary_resume(self) -> None:
+        """Tracking that was never stopped is ordinary new work, hold and all."""
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            job = stopped_job()
+            job.pop("tracking_disposition")
+            studio.jobs[job["id"]] = job
+
+            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
+                studio.resume_job(job["id"])
+            self.assertEqual(studio.reference_jobs.calls, 1)
+            self.assertTrue(studio.queue.empty())
+
+    def test_resume_job_keeps_the_hold_for_an_unknown_job_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
+                studio.resume_job("no-such-job")
+            self.assertEqual(studio.reference_jobs.calls, 1)
+
+    def test_dead_worker_refuses_stopped_known_prompt_observation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), alive=False, held=False)
+            job = stopped_job()
+            studio.jobs[job["id"]] = job
+
+            with self.assertRaisesRegex(server.StudioError, "Studio worker is unavailable"):
+                studio.resume_job(job["id"])
+            self.assertTrue(studio.queue.empty())
 
     def test_only_known_observation_paths_use_the_liveness_only_guard(self) -> None:
         resume_tracking = inspect.getsource(server.Studio._resume_tracking)

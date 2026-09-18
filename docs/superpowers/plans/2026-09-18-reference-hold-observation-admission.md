@@ -114,3 +114,12 @@ Document exact verification, leave the PR draft while CI is incomplete, and do n
 The production split is intentionally polymorphic: `require_worker()` calls `self.require_worker_observation()` after the reference-hold admission check. Duck-typed test doubles that delegate the full production method must therefore delegate the observation method as well. `StorageStudio` now exposes both delegates; production dispatch was not weakened to accommodate a partial fixture.
 
 Temporary write-enabled development workflows have been removed from the branch. Ordinary exact-head repository CI remains the readiness gate.
+
+Review reconciliation (Codex P1, confirmed independently and at runtime): moving `_resume_tracking()`
+alone left the fix inert, because its only caller `_queue_observation()` still asked for full
+new-work admission before dispatching. `_queue_observation()` now chooses the guard itself: the
+liveness-only guard for a stopped, non-abandoned, `uncertain` job whose prompt IDs already pass
+`_known_prompt_error()`, and `require_worker()` -- reference hold included -- for every other
+resume, unknown job id or malformed state. `tests/test_reference_hold_observation_admission.py`
+exercises `resume_job()` itself rather than the helper, in both the admitted and the refused
+direction.
