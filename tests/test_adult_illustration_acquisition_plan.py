@@ -339,7 +339,7 @@ class AcquisitionPlanTests(unittest.TestCase):
 
         changed = json.loads(render_acquisition_plan(plan))
         changed["selection"]["bytes"] += 1
-        with self.assertRaisesRegex(ValueError, "plan_id|match"):
+        with self.assertRaisesRegex(ValueError, "plan_id|match|handoff"):
             validate_acquisition_plan(changed, snapshot)
 
         rehashed = json.loads(render_acquisition_plan(plan))

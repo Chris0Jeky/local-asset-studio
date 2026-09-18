@@ -396,7 +396,7 @@ def _validate_snapshot(snapshot: dict[str, Any]) -> tuple[dict[str, Any], dict[s
             if not isinstance(item.get("metadata"), dict):
                 raise ValueError("Civitai file metadata must be an object")
             _bounded_json(item["metadata"], "Civitai file metadata")
-        elif re.fullmatch(r"hf-file-[1-9][0-9]*", file_id) is None:
+        elif re.fullmatch(r"hf-file-[0-9a-f]{20}", file_id) is None:
             raise ValueError("Hugging Face file id has an invalid shape")
         validated_files.append(
             {
