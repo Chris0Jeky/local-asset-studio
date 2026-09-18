@@ -121,3 +121,22 @@ test('context stamps are deterministic hashes and do not expose source material'
   assert.match(a, /^ctx-[0-9a-f]{8}$/);
   assert.doesNotMatch(a, /private|secret/);
 });
+
+test('unknown capability prevents a ready-looking execution observation from becoming a Generate intent', () => {
+  const input = baseInput();
+  input.capability = {state:'unknown', reason:'Recipe bindings are still loading.'};
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.evidenceState, 'unknown');
+  assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_READINESS);
+  assert.match(view.primaryAction.description, /Recipe bindings are still loading/);
+});
+
+test('execution evidence from an older context stamp is treated as stale unknown evidence', () => {
+  const input = baseInput();
+  input.contextStamp = 'ctx-current';
+  input.execution = {...knownExecution('ready'), contextStamp:'ctx-old'};
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.evidenceState, 'unknown');
+  assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_READINESS);
+  assert.match(view.primaryAction.description, /older context/i);
+});
