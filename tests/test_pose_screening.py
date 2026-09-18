@@ -74,11 +74,16 @@ def manifest():
             'title': case_id.replace('-', ' '),
             'scope': scope,
             'slot_mode': slot_mode,
-            'source_ref': 'local-source-' + str(ordinal),
             'required_observations': list(observations),
         }
         if slot_mode == 'paired-counterfactual':
             row['pair_labels'] = ['baseline', 'variant']
+            row['source_refs'] = {
+                'baseline': 'local-source-8-baseline',
+                'variant': 'local-source-8-variant',
+            }
+        else:
+            row['source_ref'] = 'local-source-' + str(ordinal)
         cases.append(row)
     return {
         'schema': pose_screening.MANIFEST_SCHEMA,
@@ -102,7 +107,8 @@ def manifest():
 
 class PoseScreeningTests(unittest.TestCase):
     def test_compiles_exact_48_cells_and_keeps_case_eight_paired(self):
-        plan = pose_screening.compile_plan(manifest())
+        source = manifest()
+        plan = pose_screening.compile_plan(source)
         self.assertEqual(plan['schema'], pose_screening.PLAN_SCHEMA)
         self.assertEqual(plan['candidate_count'], 48)
         self.assertEqual(plan['candidate_cap'], 48)
@@ -122,6 +128,11 @@ class PoseScreeningTests(unittest.TestCase):
                 self.assertIsNone(pair[0]['pair_group'])
             pair = [cell for cell in cells if cell['case_ordinal'] == 8]
             self.assertEqual([cell['slot'] for cell in pair], ['baseline', 'variant'])
+            self.assertEqual([cell['source_ref'] for cell in pair], [
+                source['cases'][7]['source_refs']['baseline'],
+                source['cases'][7]['source_refs']['variant'],
+            ])
+            self.assertNotEqual(pair[0]['source_ref'], pair[1]['source_ref'])
             self.assertEqual(pair[0]['seed'], pair[1]['seed'])
             self.assertEqual(pair[0]['pair_group'], pair[1]['pair_group'])
 
