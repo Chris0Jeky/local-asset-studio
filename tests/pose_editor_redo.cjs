@@ -52,6 +52,19 @@ test('the workbench record path preserves redo across a clamped no-op',()=>{
   assert.equal(timeline.canUndo,true,'the original pre-drag snapshot remains undoable');
 });
 
+test('a precomputed edit survives cleanup of an earlier no-op',()=>{
+  const timeline=P.timeline(60),home=drawing(100),before=drawing(100);
+  timeline.record(before,home);
+  const unchanged=P.move(before,4,100,200,CANVAS);
+  assert.equal(timeline.canUndo,false,'the no-op remains pending without adding history');
+  const typed=P.move(unchanged,4,175,200,CANVAS);
+  timeline.record(unchanged,home);
+  assert.equal(timeline.canUndo,true,
+    'cleaning up the earlier pending no-op must not delete the already-published typed transition');
+  const restored=timeline.undo(typed,drawing(175));
+  assert.deepEqual(restored.points[4],{x:100,y:200});
+});
+
 test('undo and redo preserve unknown-joint homes and resize both stacks',()=>{
   const timeline=P.timeline(60),home=drawing(123),known=drawing(123),unknown=P.setUnknown(known,4),small={width:512,height:768};
   timeline.record(known,home);

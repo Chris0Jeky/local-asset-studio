@@ -126,8 +126,9 @@
     };
     return{
       record(points,home){
-        settleActual(points,home);
+        // Capture a precomputed transition before pending no-op cleanup can delete the same WeakMap key.
         const published=transitions.get(points);
+        settleActual(points,home);
         transitions.delete(points);
         pending=snapshot(points,home);pendingSource=points;
         // A validated typed edit may have called move() before record(). Restore that exact transition so the
