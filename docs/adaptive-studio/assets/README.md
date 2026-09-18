@@ -57,4 +57,4 @@ The full kit intentionally includes far-future and optional requests. A small co
 
 ## Evidence for this kit
 
-The offline reader tests passed 10 cases after an initial missing-reader failure. They check all 154 requests resolve, IDs/profiles/dependencies, duplicate/cyclic/unknown references, planned-state boundaries, code-versus-capture routing, and read-only CLI behavior. These are documentation/tooling tests, not media-quality, real UI, source-rights or GPU evidence.
+The offline reader tests passed 11 cases after an initial missing-reader failure and a reproduced invalid-world-description regression. They check all 154 requests resolve, IDs/profiles/dependencies, duplicate/cyclic/unknown references, planned-state and world-description boundaries, code-versus-capture routing, and read-only CLI behavior. These are documentation/tooling tests, not media-quality, real UI, source-rights or GPU evidence.

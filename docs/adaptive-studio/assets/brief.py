@@ -23,6 +23,9 @@ def validate(rows, config):
     worlds, profiles = config.get('worlds', {}), config.get('profiles', {})
     if not isinstance(worlds, dict) or not isinstance(profiles, dict) or not worlds or not profiles:
         raise ValueError('World and delivery profiles are required')
+    for name, description in worlds.items():
+        if not isinstance(description, str) or not description.strip() or len(description) > 2000:
+            raise ValueError(f'Invalid world description: {name}')
     for name, p in profiles.items():
         if not isinstance(p, dict) or any(not isinstance(p.get(k), str) or not p[k].strip() for k in ('master','safe_zone','fallback','budget','motion')):
             raise ValueError(f'Incomplete profile: {name}')

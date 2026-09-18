@@ -6,7 +6,7 @@
 
 1. **#549: adaptive experience strategy.** Eight architecture/UX/source documents plus three newly open choices in the existing HUMAN_TODO. The original 25,268 bytes of that file were preserved verbatim; no prior answer or checkbox was changed.
 2. **#551: asset-production kit.** Nine files, 154 planned requests, 18 shared profiles, six worlds and neutral shared visual language. The reader prints a complete selected brief without acquiring anything.
-3. **Behavior lab companion PR:** this final stack slice adds the standalone HTML specification, policy/browser tests, qualification notes, a combined reading index and a read-only focused CI workflow. Review it after #549 and #551.
+3. **#556: behavior lab companion PR.** this final stack slice adds the standalone HTML specification, policy/browser tests, qualification notes, a combined reading index and a read-only focused CI workflow. Review it after #549 and #551.
 
 All three are additive review work. None changes production application rendering, backend behavior, model files, ComfyUI packages, source staging, generation authority or stored drafts. The lab is not loaded by the production shell. No image, video, audio, photograph, screenshot or external font was generated or acquired.
 
@@ -18,7 +18,7 @@ For the next asset session, use [SESSION-HANDOFF](assets/SESSION-HANDOFF.md) and
 
 ## Qualification summary
 
-The asset reader passes 10 offline tests; its catalogue resolves all 154 requests. The inline lab policy passes 14 Node tests. The document-level browser test passes 11 groups including 36 layout/skin/viewport combinations and a separate 200% zoom check, with zero observed network requests or page errors. The same textarea and its value survive presentation changes. See [QUALIFICATION](lab/QUALIFICATION.md) and [the retained report](lab/evidence.json).
+The asset reader passes 11 offline tests; its catalogue resolves all 154 requests. The inline lab policy passes 14 Node tests. The document-level browser test passes 11 groups including 36 layout/skin/viewport combinations and a separate 200% zoom check, with zero observed network requests or page errors. The same textarea and its value survive presentation changes. See [QUALIFICATION](lab/QUALIFICATION.md) and [the retained report](lab/evidence.json).
 
 Native local-file navigation is blocked in this execution environment. The successful browser run injects the exact standalone HTML through an explicitly named test option. It is not native-file, production-origin, real-workflow, media-decoder or GPU evidence. The focused CI workflow runs native-file browser mode when a hosted runner is available; a pending CI run is not counted as passing.
 
