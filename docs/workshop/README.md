@@ -27,13 +27,16 @@ Ambience is decorative only. It contains no status, instructions or controls; fa
 
 ## Contextual guidance
 
-Immersive Studio shows one next action derived from the current UI:
+Immersive Studio renders one primary semantic action from the read-only presentation context:
 
-- reveal the existing readiness details when Generate is blocked;
-- focus the existing Generate control when it is ready;
-- open the existing Recent runs surface when outputs are present.
+- **Review readiness** reveals the existing readiness disclosure when Generate is blocked or readiness is unknown;
+- **Review sources** focuses the exact outstanding existing file input or source board when source roles need attention;
+- **Focus Generate** focuses the existing Generate control when it is ready, without activating it;
+- **Open recent runs** opens the existing result disclosure when outputs are present.
 
-The guidance action never clicks Generate, changes a recipe, rewrites a prompt, stages a reference or asserts backend health. Its explanation identifies the observation it used.
+The production action adapter maps only those four actions because the current capture publishes `blocked`, `ready` or `completed` execution and no draft-conflict claim. The pure context module retains operation-inspection and conflict-review vocabulary for consumers that can publish those states, but the current workshop does not register unreachable handlers.
+
+Guidance never clicks Generate, changes a recipe, rewrites a prompt, stages a reference, retries an operation or asserts backend health. Its explanation identifies the observation it used, and a demoted readiness action retains the specific blocker description.
 
 ## Try the standalone prototype
 

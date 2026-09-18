@@ -1,130 +1,97 @@
 # Read-only presentation context
 
-`app/static/presentation-context.js` is a pure context and intent boundary for future Adaptive Studio presentation code. In this PR it is exercised by Node and Python contracts only. The production shell does not load it yet.
+`app/static/presentation-context.js` is the pure, immutable observation and intent boundary used by the production Create workshop. `studio-shell.js` loads it before `workshop.js`; the offline workshop prototype and exporter keep the same order.
 
-## Why it exists
+The boundary does not own editable state or execution. Existing recipe, reference, draft, readiness, job and result owners publish bounded primitive observations. The boundary normalizes those observations, projects one primary intent plus optional secondary observations, and rejects stale or cross-workspace dispatch.
 
-Current domain owners already know the selected recipe, source roles, draft/recovery state, readiness and output evidence. A presentation component should not duplicate those stores or infer authority from attractive UI state. The boundary converts an explicit snapshot into immutable display data and closed semantic intents.
+## What it never does
 
-It deliberately does not:
+It does not:
 
 - read the network or poll the page;
-- persist prompts, paths, file objects or model settings;
+- persist prompts, paths, file objects, model settings or credentials;
 - select a recipe or rewrite a prompt;
-- stage a source;
+- stage, remove or relabel a source;
 - submit, retry, cancel or approve a job;
-- accept arbitrary CSS selectors, URLs or callback payloads.
+- accept arbitrary selectors, URLs, callback payloads or model-generated commands.
 
-## Capturing a snapshot
+Every projection returns `authorizesSubmission: false` and an empty `commands` array.
 
-```js
-const Context = window.StudioPresentationContext;
-const context = Context.captureContext({
-  workspaceId: 'create',
-  contextStamp: 'ctx-current-revision',
-  taskId: 'pose',
-  capability: {
-    state: 'known',
-    value: {
-      recipeId: 'pose-transfer',
-      backendId: 'primary',
-      referenceSlots: [
-        {id: 'identity', role: 'Identity', required: true},
-        {id: 'pose', role: 'Pose', required: true}
-      ]
-    }
-  },
-  execution: {
-    state: 'unknown',
-    reason: 'The local readiness owner has not published a fresh observation.'
-  },
-  draft: {
-    dirty: true,
-    conflict: false,
-    pendingFiles: 1,
-    references: [
-      {id: 'source-1', slotId: 'identity', role: 'Identity', stage: 'staged'},
-      {id: 'source-2', slotId: 'pose', role: 'Pose', stage: 'selected'}
-    ]
-  }
-});
-```
+## Production capture
 
-The returned object is recursively frozen and contains only the documented primitive fields. Unknown capability or execution evidence remains unknown.
+The workshop captures one snapshot during its existing scheduled `sync()` pass. It adds no second observer or timer. The snapshot contains:
 
-## Projecting guidance
+- workspace and task identity;
+- selected recipe and backend identity when known;
+- exact source-slot IDs, human-readable roles and required flags from `reference-model.js`;
+- source records expressed only as bounded IDs, slot IDs, roles and `selected` / `checked` / `staged` stages;
+- pending-file count from the shared reference projection;
+- current Generate readiness, the first existing blocker and current result count;
+- `conflict: false` until an existing draft owner explicitly publishes a conflict observation.
 
-```js
-const view = Context.project(context, {
-  task: 'pose',
-  assistance: 'studio',
-  layout: 'immersive',
-  skin: 'retro-anime',
-  ambience: 'night-shift'
-});
-```
+Prompt text, file paths and image bytes never enter the context stamp or frozen projection. A monotonically increasing local revision makes an older intent stale after relevant UI evidence changes.
 
-The result contains:
+## Source projection
 
-- exact missing, pending and extra source-role collections;
-- one `primaryAction` and optional `secondaryActions`;
-- a context/workspace stamp on every action;
-- `authorizesSubmission: false`;
-- an empty `commands` array.
+`reference-model.js` is the single owner of reference readiness semantics. The presentation bridge consumes its slots, references, pending count and `hasSources` result. It does not re-derive `reference_slots`, `last_reference`, board cardinality or staging.
 
-Presentation preferences may alter wording or arrangement, but never mutate the captured evidence.
+The projected source summary keeps these cases distinct:
+
+- required role with no selected source;
+- selected source still checking or staging;
+- staged source;
+- source that does not match an available slot;
+- optional source role with no source.
 
 ## Intent precedence
 
-1. An uncertain or active operation stays primary so the original operation can be inspected.
-2. A draft conflict remains visible and becomes primary when no operation requires inspection.
-3. Missing, pending or extra source assignments point to source review.
-4. Unknown or blocked readiness points to the current readiness details without inventing a backend failure.
-5. Existing outputs point to Recent runs.
-6. Known ready state may focus Generate, but never activate it.
+The pure module supports a wider vocabulary for consumers that can publish the corresponding evidence:
 
-A simultaneous uncertain operation, draft conflict and source problem retains the latter two as secondary observations.
+1. active or uncertain operation inspection;
+2. draft-conflict review;
+3. missing, pending or extra source review;
+4. unknown or blocked readiness review;
+5. existing output review;
+6. known-ready Generate focus.
 
-## Safe local action mapping
+Unknown evidence remains unknown. The projection does not convert absence of evidence into backend failure or readiness.
 
-A later workshop integration can map closed semantic IDs to existing local reveal/focus functions:
+## Production-reachable actions
+
+The current production workshop captures only `blocked`, `ready` or `completed` execution and does not claim a draft conflict. Its closed action adapter therefore registers only four actions that the current capture can emit:
+
+- `review-readiness` reveals the existing readiness disclosure;
+- `review-sources` focuses the exact outstanding existing file input or source board;
+- `focus-generate` focuses and scrolls the existing Generate button without activating it;
+- `open-results` opens and focuses the existing Recent runs disclosure.
+
+The pure boundary still defines `inspect-operation` and `resolve-draft-conflict` for tests and future consumers. Production does not register those handlers until the existing job or draft owner exposes matching observations. Keeping an action in the pure vocabulary is not a claim that the current Create capture can emit it.
+
+## Safe local dispatch
 
 ```js
-let currentContext = context;
 const adapter = Context.createActionAdapter({
   workspaceId: 'create',
-  getContextStamp: () => currentContext.contextStamp,
+  getContextStamp: () => currentView.contextStamp,
   actions: {
     [Context.ACTIONS.REVIEW_READINESS]: () => reveal(existingReadinessDetails),
-    [Context.ACTIONS.REVIEW_SOURCES]: () => reveal(existingReferenceBoard),
+    [Context.ACTIONS.REVIEW_SOURCES]: () => focusOutstandingExistingSource(),
     [Context.ACTIONS.FOCUS_GENERATE]: () => existingGenerateButton.focus(),
     [Context.ACTIONS.OPEN_RESULTS]: () => openExistingRecentRuns()
   }
 });
 
-const result = adapter.dispatch(view.primaryAction);
+const result = adapter.dispatch(currentView.primaryAction);
 ```
 
-The adapter rejects unsupported action IDs, another workspace, stale context and missing handlers before calling anything. Handlers receive no selector or arbitrary payload. There is no semantic action for submitting generation.
+The adapter rejects unsupported action IDs, another workspace, stale context and missing handlers before invoking anything. Handlers receive no arbitrary payload. There is no submission action.
 
-## Rejecting late observations
+## Context stamps and late observations
 
-```js
-const gate = Context.createObservationGate();
-const token = gate.begin('create', context.contextStamp);
+`makeContextStamp(value)` produces a deterministic local FNV-1a identity over bounded primitive identity data. It is not encryption, provenance or authorization.
 
-// After asynchronous read-only evidence returns:
-if (gate.accept(token, 'create', currentContext.contextStamp)) {
-  // Publish the observation to the real owner or next snapshot.
-}
-```
-
-The monotonically increasing token rejects a late A result after an A → B → A sequence. Matching text alone does not make an old observation current.
-
-## Context stamps
-
-`makeContextStamp(value)` produces a deterministic local FNV-1a identity string such as `ctx-1a2b3c4d`. It does not expose its input, but it is not encryption, provenance or authorization. Callers should hash only bounded primitive identity data rather than image bytes or complete prompts.
+`createObservationGate()` supplies monotonically increasing tokens so a delayed A result is rejected after an A → B → A sequence. Matching text alone does not make an old observation current.
 
 ## Qualification boundary
 
-The contracts prove pure normalization, projection and local dispatch guards. They do not prove production script ordering, browser integration, actual readiness, model compatibility, GPU execution, artistic acceptance or usability. A follow-on stacked PR must load the module before `workshop.js`, reuse the workshop's existing observer rather than add polling, and preserve the exact prompt, file-input and Generate nodes.
+Node contracts prove normalization, immutability, precedence, guarded dispatch and freshness. Browser and native-application tests prove script ordering, original-node identity, source focus, stale-intent rejection and zero implicit submissions against repository fixtures. They do not prove live backend readiness, GPU execution, model compatibility, artistic acceptance or every assistive-technology configuration. Real-machine acceptance remains under #539.

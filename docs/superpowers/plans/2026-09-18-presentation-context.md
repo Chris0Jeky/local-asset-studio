@@ -87,6 +87,10 @@
 
 - [x] Run fresh local Node and Python contract commands.
 - [x] Create a draft PR targeting `codex/immersive-studio-presentation`.
-- [ ] Inspect all current-head hosted workflows.
-- [ ] Resolve actionable review findings with regression coverage.
-- [ ] Mark ready for review only after current-head CI is green and the PR body distinguishes pure contract evidence from production integration.
+- [x] Inspect all current-head hosted workflows.
+- [x] Resolve actionable review findings with regression coverage.
+- [x] Mark ready for review only after current-head CI is green and the PR body distinguishes pure contract evidence from production integration.
+
+## Completion note
+
+The pure boundary was implemented and qualified in #581. The production integration that consumes it landed in the stacked guidance work, and #626 removed the duplicate reference-readiness derivation discovered during independent review. All publication and review gates above are complete for this delivered plan.
