@@ -27,7 +27,7 @@
     target.parentNode.insertBefore(details,target);details.append(summary,target);observe(document,details,target);return details;
   }
   function mount(document){
-    return {recipe:wrap(document,'recipeNotes','recipeNotesHelp','Why this recipe?'),
+    return {recipe:wrap(document,'recipeNotes','recipeNotesHelp','Recipe details, provenance and sources'),
             references:wrap(document,'referenceBoardNote','referenceBoardHelp','How are these references used?')};
   }
   return{mount,observe,sync,wrap};

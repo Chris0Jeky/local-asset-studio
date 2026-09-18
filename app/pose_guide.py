@@ -1,7 +1,7 @@
 """Render a drawn COCO-18 pose into a stored guide picture.  This module never calls ComfyUI."""
 import math
 
-from studio_workflow import pose_artifact
+from studio_workflow import pose_artifact, pose_artifact_store
 from studio_workflow.pose_raster import RENDERER, render_png
 
 MAX_BODY_BYTES = 16 * 1024          # a bounded 18-joint document, not an upload channel
@@ -9,6 +9,7 @@ CANVAS_LIMITS = (64, 1536)          # server.py's own recipe grid defaults (dime
 CANVAS_MULTIPLE = 8                 # server.py's dimension_multiple default; the Klein recipes use 16
 MINIMUM_JOINTS = 2                  # fewer than two known joints cannot draw a limb
 FILENAME = "drawn-pose"    # Studio.upload appends the image extension, exactly as it does for an upload
+ARTIFACT_DIRECTORY = pose_artifact_store.DIRECTORY
 
 
 def _canvas(value, name):
@@ -51,8 +52,15 @@ def artifact(payload):
     return pose_artifact.validate(pose_artifact.revise(empty, empty["id"], {k: v for k, v in drawn.items() if v is not None}))
 
 
+def read_artifact(studio, artifact_id):
+    """Read and revalidate one exact editable sidecar. It remains unreviewed and non-authoritative."""
+    return pose_artifact_store.read(studio.experiments, artifact_id)
+
+
 def render(studio, payload):
-    """Store the rendered guide exactly as an uploaded picture is stored. No generation is submitted."""
+    """Store an editable artifact plus its rendered upload. No generation is submitted."""
     drawn = artifact(payload)
+    editable = pose_artifact_store.publish(studio.experiments, drawn)
     stored = studio.upload(FILENAME, "image/png", render_png(drawn))
-    return dict(stored, artifact_id=drawn["id"], renderer=RENDERER, generation_submitted=False)
+    return dict(stored, artifact_id=drawn["id"], artifact=editable,
+                renderer=RENDERER, generation_submitted=False)

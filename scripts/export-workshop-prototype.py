@@ -16,6 +16,19 @@ def data_url(path: Path) -> str:
     return 'data:' + mime + ';base64,' + base64.b64encode(path.read_bytes()).decode('ascii')
 
 
+def stylesheet(path: Path, stack: tuple[Path, ...] = ()) -> str:
+    path = path.resolve()
+    if not path.is_relative_to(ROOT) or path.suffix != '.css':
+        raise ValueError('Styles must be repository CSS files')
+    if path in stack:
+        raise ValueError('Circular stylesheet import: ' + str(path))
+    css = path.read_text(encoding='utf-8')
+    def inline_import(match):
+        imported = (path.parent / match.group(1)).resolve()
+        return stylesheet(imported, stack + (path,))
+    return re.sub(r"@import\s+url\(['\"]?([^'\")]+)['\"]?\)\s*;", inline_import, css)
+
+
 def export() -> str:
     html = (SOURCE / 'prototype.html').read_text(encoding='utf-8')
     def style(match):
@@ -23,10 +36,10 @@ def export() -> str:
         path = (SOURCE / relative).resolve()
         if not path.is_relative_to(ROOT):
             raise ValueError('Styles must come from this repository')
-        css = path.read_text(encoding='utf-8')
+        css = stylesheet(path)
         css = re.sub(r"url\(['\"]?/static/([^'\")]+)['\"]?\)", lambda m: "url('" + data_url(ROOT / 'app/static' / m.group(1)) + "')", css)
         css = re.sub(r"url\(['\"]?(workshop-assets/[^'\")]+)['\"]?\)", lambda m: "url('" + data_url(path.parent / m.group(1)) + "')", css)
-        identity = ' id="workshopStyles"' if 'workshopStyles' in match.group(0) else ''
+        identity = ' id="workshopStyles"' if 'workshopStyles' in match.group(0) else ' id="workshopImmersiveStyles"' if 'workshopImmersiveStyles' in match.group(0) else ''
         return '<style' + identity + '>' + css + '</style>'
     html = re.sub(r'<link\s+([^>]*?)href="([^"]+)"[^>]*>', style, html)
     def script(match):

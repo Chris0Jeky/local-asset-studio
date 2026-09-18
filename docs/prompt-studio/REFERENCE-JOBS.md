@@ -58,10 +58,14 @@ Comfy, or registered as new library assets. The reviewer must retain/reselect th
 
 One create body may be at most 48 MiB, with intake locked before that HTTP body is
 read; prepared payload at most 16 MiB; response at most 1 MiB. One analysis may be
-outstanding. There are 64 retained operations and a 128 MiB request/result budget,
-including a reserved result allowance before inference. No automatic history
-removal/eviction. Keys bind the exact canonical request: an identical key returns
-its original operation without requeueing; changed content under that key refuses.
+outstanding. There are 64 retained analysis operations and a 128 MiB request/result
+budget, including a reserved result allowance before inference. Retirement
+tombstones are accounted separately: 64 records and 512 KiB. `GET capabilities`
+reports both budgets as `retained_operations`, `retained_operation_bytes`,
+`retained_retirements` and `retained_retirement_bytes`, plus aggregate
+`retained_bytes`. No automatic history removal/eviction. Keys bind the exact
+canonical request: an identical key returns its original operation without
+requeueing; changed content under that key refuses.
 
 Dispatch runs the existing Studio worker. It refuses stale backend/configuration,
 unknown or nonempty Comfy queue, unresolved generation work, insufficient fresh
@@ -139,9 +143,10 @@ unchanged, or records a `cancelled` row with `retired_without_dispatch:true`, ze
 inference attempts and no resource hold. Both create checks refuse that ID,
 including an intake that began before retirement and finishes afterwards.
 
-A tombstone reserves 8 KiB within the unchanged 64-operation/128 MiB history
-limits. It contains no source pixels or model payload. It survives restart, is
-idempotently observable and is never enqueued. Retirement cannot cancel or modify
-an already-created operation, clear a resource hold, grant a generation allowance
-or reuse an existing request ID. A missing status row alone provides none of these
-guarantees; the explicit committed retirement provides the late-arrival fence.
+A tombstone reserves 8 KiB against the separate 64-record/512 KiB retirement
+budget. It does not consume the 64-operation/128 MiB analysis budget. It contains
+no source pixels or model payload, survives restart, is idempotently observable
+and is never enqueued. Retirement cannot cancel or modify an already-created
+operation, clear a resource hold, grant a generation allowance or reuse an
+existing request ID. A missing status row alone provides none of these guarantees;
+the explicit committed retirement provides the late-arrival fence.
