@@ -229,6 +229,7 @@
       const labels = [...controls.children].filter(n => n.tagName === 'LABEL'); if (!labels.length) return;
       const groups = new Map();
       for (const label of labels) {
+        if (label.querySelector('#i2vMode')) continue;
         const key = label.querySelector('[data-key]')?.dataset.key || '';
         const name = ['width','height','frames','fps'].includes(key) ? 'Canvas & duration'
           : key === 'seed' ? 'Seed'
