@@ -56,6 +56,28 @@ def main():
             assert stored == {'layout':'focus','skin':'atelier','ambience':'none'}, stored
             checks.append({'name':'real app default first viewport','document_height':height})
             page.screenshot(path=str(args.output/'application-focus.png'),full_page=True)
+            # #598: the Prompt Lab handoff panel had no grid area, so the named templates auto-placed it in the
+            # first free full-width row - measured at y=1353 (Focus) and y=1358 (Studio), ~1250 px below the fold.
+            # It now takes the heading row; the hidden state must create no row at all.
+            transfer=[]
+            for layout in ['focus','studio','immersive']:
+                page.select_option('#workshopLayout',layout);page.wait_for_timeout(120)
+                closed=page.evaluate("()=>[document.querySelector('.ux-create-heading').getBoundingClientRect().y,document.querySelector('#createView .editor').getBoundingClientRect().y,document.documentElement.scrollHeight]")
+                page.evaluate("document.querySelector('#uxTransfer').hidden=false");page.wait_for_timeout(120)
+                heading=page.locator('.ux-create-heading').bounding_box()
+                panel=page.locator('#uxTransfer').bounding_box();apply_button=page.locator('#uxApplyPrompt').bounding_box()
+                # The panel follows the heading in DOM order, so it must follow it on screen and stay above the editor.
+                assert panel['y']+panel['height']<=page.locator('#createView .editor').bounding_box()['y']+1,(layout,panel)
+                assert layout=='immersive' or panel['y']>=heading['y']+heading['height']-1,(layout,heading,panel)
+                # The handoff is useless below the fold: its primary Apply control must be in the first viewport.
+                assert 0<=apply_button['y'] and apply_button['y']+apply_button['height']<=900,(layout,apply_button)
+                assert layout=='immersive' or panel['width']>=heading['width']-1,(layout,panel,heading)
+                page.evaluate("document.querySelector('#uxTransfer').hidden=true");page.wait_for_timeout(120)
+                # Hiding it again restores the exact geometry of a Create view that never received a handoff.
+                assert page.evaluate("()=>[document.querySelector('.ux-create-heading').getBoundingClientRect().y,document.querySelector('#createView .editor').getBoundingClientRect().y,document.documentElement.scrollHeight]")==closed,(layout,closed)
+                transfer.append({'layout':layout,'panel_y':round(panel['y']),'apply_y':round(apply_button['y']),'editor_y':closed[1]})
+            page.select_option('#workshopLayout','focus');page.wait_for_timeout(120)
+            checks.append({'name':'Prompt Lab handoff panel stays in the first viewport and costs nothing when hidden','cases':transfer})
             # Preserve input identity, source and pending draft through presentation changes.
             page.evaluate("window.keptPrompt=document.querySelector('#positive');window.keptGenerate=document.querySelector('#generate');window.keptReference=document.querySelector('#reference')")
             page.fill('#positive','A private draft that must not disappear')
