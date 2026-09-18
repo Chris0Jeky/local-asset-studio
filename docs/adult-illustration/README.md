@@ -27,14 +27,16 @@ It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence,
 
 ## Validate the foundation
 
-Run the standard-library-only offline gate before changing a programme manifest:
+Run the standard-library-only offline gates before changing a programme manifest or intent/projection contract:
 
 ```console
 python scripts/validate_adult_illustration.py
 python -m unittest discover -s tests -p "test_adult_illustration.py" -v
+python -m unittest discover -s tests -p "test_adult_illustration_intent.py" -v
+python -m unittest discover -s tests -p "test_adult_illustration_cli.py" -v
 ```
 
-The validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The regression suite specifically rejects a promoted synthetic adapter even when an interval is supplied, non-finite sweep weights, and issue-owner drift away from #404–#413. It does not inspect installed models, call the network or submit generation.
+The manifest validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The intent and CLI suites additionally cover total bounded projection, exclusive-create evidence, duplicate-key rejection, tamper detection, structured zero-authority errors, and round-tripping projections above the source intent's 64 KiB budget. None inspects installed models, calls the network, binds a route or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -45,6 +47,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Product and component boundaries | [Architecture](ARCHITECTURE.md) |
 | Independent creative controls | [Control ontology](CONTROL-ONTOLOGY.md) |
 | Reviewed source intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
+| Offline validate/project commands | [Intent contract: Offline CLI](INTENT-CONTRACT.md#offline-cli) |
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
