@@ -109,6 +109,25 @@ def main() -> None:
         assert page.evaluate('submitted') == 0
         checks.append({'name': 'None removes the decorative surface without submitting'})
 
+        page.select_option('#workshopAmbience', 'night-shift')
+        page.evaluate("""
+            createView.__workshopAmbience.destroy();
+            document.getElementById('workshopImmersiveStyles')?.remove();
+            const link = document.createElement('link');
+            link.id = 'workshopImmersiveStyles';
+            link.rel = 'stylesheet';
+            document.head.append(link);
+            window.testAmbienceStyles = link;
+            StudioWorkshopAmbience.mount(window);
+        """)
+        page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'tokens'")
+        page.evaluate("testAmbienceStyles.dispatchEvent(new Event('error'))")
+        assert page.evaluate("createView.__workshopAmbience.snapshot().renderMode") == 'tokens'
+        page.evaluate("testAmbienceStyles.dispatchEvent(new Event('load'))")
+        page.wait_for_function("createView.__workshopAmbience.snapshot().renderMode === 'poster'")
+        assert page.evaluate('submitted') == 0
+        checks.append({'name': 'stylesheet readiness drives unknown, missing and available poster states'})
+
         assert not errors, errors
         assert not requests, requests
         page.screenshot(path=str(args.output / 'ambience-policy.png'), full_page=True)
