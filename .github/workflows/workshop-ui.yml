@@ -6,6 +6,10 @@ on:
       - 'docs/workshop/**'
       - 'tests/*workshop*'
       - 'tests/studio_browser_smoke.py'
+      - 'tests/setup_apply_browser.py'
+      - 'tests/setup_lineage_browser.py'
+      - 'tests/recipe_shortlist_browser.py'
+      - 'tests/preset_model_browser.py'
       - '.github/workflows/workshop-ui.yml'
 permissions:
   contents: read
@@ -45,6 +49,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Native disclosure lifecycle and nested modal handoffs
+        run: python tests/workshop_handoffs.py --output .runtime/workshop-handoffs
       - name: Real application, native HTTP/storage and original submission handler
         run: python tests/workshop_application.py --output .runtime/workshop-application
       - uses: actions/upload-artifact@v4
@@ -54,4 +60,5 @@ jobs:
           path: |
             .runtime/workshop-component/
             .runtime/workshop-application/
+            .runtime/workshop-handoffs/
           retention-days: 7
