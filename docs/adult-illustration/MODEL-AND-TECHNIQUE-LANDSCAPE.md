@@ -2,17 +2,19 @@
 
 Research freeze: 15 September 2026. These are candidates and hypotheses, not installed or promoted routes. Exact files, hashes, graphs, resources and terms must be captured through #9/#144 before execution.
 
+Entries whose manifest state is `discovered` remain moving-source research leads. Card-derived statements below are provider claims awaiting an immutable revision or retained snapshot; they are not completed source review.
+
 ## Portfolio lanes
 
 ### Fast drafting
 
-**Anima Turbo** is a source-reviewed candidate for composition search. Its card describes a distilled 2B anime model, native ComfyUI support, CFG 1 and 8–12 steps. The same card warns that distillation increases stability/default style while reducing diversity. It therefore belongs in a separate fast-preview lane, not as proof of final quality or compatibility with SDXL adapters.
+**Anima Turbo** is a discovered composition-search candidate. The current moving provider card describes a distilled 2B anime model, native ComfyUI support, CFG 1 and 8–12 steps. The same card warns that distillation increases stability/default style while reducing diversity. It therefore belongs in a separate fast-preview lane, not as proof of final quality or compatibility with SDXL adapters.
 
 Existing fast/accelerated repository routes remain baselines. Any Turbo, Lightning or acceleration adapter is a distinct route with its exact schedule.
 
 ### High-quality anime generation
 
-Source-reviewed first-wave baselines:
+First-wave discovery candidates awaiting immutable source snapshots:
 
 - **Anima Aesthetic** — hybrid tags and prose; quality tags differ from Base/Turbo conventions.
 - **Animagine XL 4.0 Opt** — SDXL, ordered tag-oriented prompting and documented generation settings.
@@ -24,7 +26,7 @@ Start with official/base cards and currently installed baselines. Community merg
 
 ### Multi-image instruction editing
 
-**Qwen Image Edit 2511** is the primary first-wave candidate because it documents multiple image inputs, improved character/multi-person consistency, geometric reasoning and LoRA integration. The official weights are 20B BF16; a 16 GB workstation therefore needs a separately pinned quantised/offloaded route and real memory evidence. Full/native and accelerated local configurations are not equivalent.
+The current moving provider card makes **Qwen Image Edit 2511** a primary first-wave discovery candidate because it describes multiple image inputs, improved character/multi-person consistency, geometric reasoning and LoRA integration. The official weights are 20B BF16; a 16 GB workstation therefore needs a separately pinned quantised/offloaded route and real memory evidence. Full/native and accelerated local configurations are not equivalent.
 
 **FLUX.1 Kontext dev** is an experimental edit comparator with character/style/object references and iterative consistency claims. Its model weights use a non-commercial licence; output permissions and model-service/product use remain separate facts.
 
@@ -89,7 +91,7 @@ High resolution is a separate derivative stage: simple resampling, illustration 
 
 Training begins only after reference/native routes show a repeatable gap. Candidate trainers such as OneTrainer or sd-scripts run in isolated environments. Record exact trainer commit, base hash, trained modules, dataset/captions/masks, split, precision, rank/alpha, learning rates, optimiser/scheduler, buckets, checkpoints, resources and failures.
 
-For Anima, the official card recommends Base for LoRAs, not training its LLM adapter, using a low learning rate and starting around rank 32 / `2e-5`. These are source recommendations to test, not universal settings.
+The current moving Anima card recommends Base for LoRAs, not training its LLM adapter, using a low learning rate and starting around rank 32 / `2e-5`. These are source recommendations to test, not universal settings.
 
 ## AMD/runtime
 

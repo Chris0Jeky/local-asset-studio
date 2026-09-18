@@ -45,7 +45,7 @@ It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence,
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, finite corpus, validator and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-evidence candidates, finite corpus, validator and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
