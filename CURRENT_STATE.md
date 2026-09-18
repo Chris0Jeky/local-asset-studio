@@ -25,6 +25,8 @@ Merged (merge commits, never squash):
 
 Each merge had hosted Check studio SUCCESS at the merged head, law-2 review with no untriaged CRITICAL/HIGH, and the three-minute aging floor. Stack: #540 then retarget #541 onto main; stacked base `codex/create-workshop-focus` was not deleted.
 
+**Correction, 18 September 2026:** Check studio was not the full hosted oracle for the Create workshop stack. #540 head `09d3448` had Production storage safety (`mixed_batch_browser`) and Preset model readiness (`control_layout_browser`) FAILURE before merge `7fc585d2`. #541 head `313938d` merged `cf25df38` while Production storage browser was still running (same mixed-batch click timeout). Follow-up **#565** `837dda30` (head `286ebfa9`): `#jobProblems` renders into `#jobProblemsHost` outside closed Recent runs; Seed is a full-width row; the Generate dock no longer intercepts control hits. Hosted Check studio, Production storage safety, and Preset model readiness were SUCCESS at that head before merge. Refs #539 (still open).
+
 Follow-ups filed this pass: #543 (retirement-cap docs; draft #554 exists), #545 (composed-handler drains; draft #553 exists), #546 (pose_screening CLI JSON receipts; closed by #542).
 
 Left unmerged by policy: HUMAN_TODO q-29 adult-illustration stack (#416→#417→#419→#420→#434→#436→#441 plus mid-session #550/#555/#562); parked-red #340; draft #532 closed unmerged at 04:13 (superseded by draft #558). Mid-session PRs not in the start inventory were not merged here (#547–#562).
