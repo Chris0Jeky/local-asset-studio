@@ -16,6 +16,7 @@ from studio_prompt.adult_illustration_taxonomy import (
     render_taxonomy_index,
     validate_taxonomy_index,
 )
+from studio_prompt.adult_illustration_taxonomy_contracts import canonical_bytes, sha256
 
 
 AUTHORITY = {
@@ -241,6 +242,24 @@ class TaxonomyTests(unittest.TestCase):
             changed["entries"][0]["frequency"] += 1
             with self.assertRaisesRegex(ValueError, "does not match"):
                 validate_taxonomy_index(changed, source, root)
+
+    def test_lookup_rejects_rehashed_structurally_invalid_index(self) -> None:
+        rows = [(1, "solo", 0, 10), (2, "sitting", 0, 9)]
+        source = csv_bytes(rows)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_contracts(root, source, rows, [review_entry("solo")])
+            index = build_taxonomy_index(source, root)
+
+        duplicate = json.loads(render_taxonomy_index(index))
+        duplicate["entries"].append(dict(duplicate["entries"][0]))
+        duplicate["counts"]["source"] += 1
+        duplicate["source"]["records"] += 1
+        unsigned = dict(duplicate)
+        unsigned.pop("index_id")
+        duplicate["index_id"] = sha256(canonical_bytes(unsigned))
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            lookup_taxonomy(duplicate, "solo")
 
     def test_lookup_resolves_reviewed_alias_but_keeps_unreviewed_source_ineligible(self) -> None:
         rows = [(1, "solo", 0, 10), (2, "unreviewed", 0, 9)]
