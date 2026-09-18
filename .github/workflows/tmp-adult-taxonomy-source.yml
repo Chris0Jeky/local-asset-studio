@@ -13,8 +13,19 @@ permissions:
 jobs:
   retain-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Retain bounded development checkout
+        shell: bash
+        run: |
+          mkdir taxonomy-checkout
+          cp -R studio_prompt scripts tests research/adult-illustration docs/adult-illustration taxonomy-checkout/
+          cp -R agent-skills/adult-illustration examples/adult-illustration taxonomy-checkout/
+          mkdir -p taxonomy-checkout/.github/workflows
+          cp .github/workflows/prompt-studio.yml taxonomy-checkout/.github/workflows/
+
       - name: Fetch and hash the immutable WD v3 vocabulary
         shell: bash
         run: |
@@ -72,6 +83,7 @@ jobs:
           (output / "source-metadata.json").write_text(rendered, encoding="utf-8")
           print(rendered)
           PY
+
       - name: Retain source evidence
         uses: actions/upload-artifact@v4
         with:
@@ -79,3 +91,11 @@ jobs:
           path: taxonomy-source
           if-no-files-found: error
           retention-days: 7
+
+      - name: Retain development checkout
+        uses: actions/upload-artifact@v4
+        with:
+          name: adult-taxonomy-dev-source
+          path: taxonomy-checkout
+          if-no-files-found: error
+          retention-days: 1
