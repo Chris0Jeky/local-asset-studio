@@ -97,6 +97,28 @@ class ExactAnimeProfileTests(unittest.TestCase):
                 self.assertEqual(a['fields']['positive'], ', '.join(tags))
                 self.assertEqual(a['state']=='blocked',blocked)
 
+    def test_exact_profile_templates_never_require_an_implicit_source(self):
+        catalog={p['id']:p for p in json.loads((ROOT/'presets/catalog.json').read_text())['presets']}
+        for profile_id in (AESTHETIC,BASE,ANIMAGINE):
+            for row in profiles()[profile_id]['template_bindings']:
+                preset=catalog[row['preset_id']]
+                with self.subTest(preset=preset['id']):
+                    self.assertFalse(any(preset.get(k) for k in ('reference','last_reference','reference_slots','requires_rgba_mask')))
+
+    def test_http_text_handoff_rejects_required_sources_before_graph_access(self):
+        from studio_prompt.http_extension import dispatch
+        a,g,b=self.bound(ANIMAGINE,'anime')
+        base={'id':'anime','positive':['2','text'],'negative':['3','text']}
+        for addition in ({'reference':['4','image']},{'last_reference':['4','image']},
+                         {'reference_slots':[{'node':'4','input':'image'}]},{'requires_rgba_mask':True},
+                         {'bindings_extra':{'reference':[['4','image']]}}):
+            with self.subTest(addition=addition):
+                class NoGraph:
+                    def preset(self,key):return {**base,**addition}
+                    def graph_for(self,preset):raise AssertionError('Source-dependent graph was inspected')
+                with self.assertRaisesRegex(ValueError,'explicit source handoff'):
+                    dispatch('/api/prompt/bind',{'compiled':a,'binding':b},NoGraph())
+
     def test_declared_templates_match_current_repository_and_bind_only_text(self):
         for profile_id in (AESTHETIC,BASE,ANIMAGINE):
             a=self.compile(profile_id)
