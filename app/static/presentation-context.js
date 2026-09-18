@@ -241,6 +241,21 @@
         : 'The current operation is ' + state + '. Inspect its existing evidence before another attempt.',
       'Active and uncertain operations take precedence over replacement or retry suggestions.'
     );
+    const readinessIntent = () => {
+      if (execution.state === 'unknown') return intent(
+        context, ACTIONS.REVIEW_READINESS, 'Readiness is not known', 'Review readiness',
+        execution.reason, 'Missing evidence is not converted into a backend failure or a ready state.'
+      );
+      const blocker = execution.value.blockers[0]?.message;
+      return intent(
+        context, ACTIONS.REVIEW_READINESS, 'Resolve the next blocker', 'Review readiness',
+        blocker || 'Open the existing readiness details to see what the current recipe still needs.',
+        'This uses the current readiness owner and does not invent a new prerequisite.'
+      );
+    };
+    const retainReadiness = () => {
+      if (execution.state === 'unknown' || state === 'blocked') secondary.push(readinessIntent());
+    };
 
     let primary;
     if (execution.state === 'known' && ACTIVE_STATES.has(state)) {
@@ -250,20 +265,12 @@
     } else if (context.draft.conflict) {
       primary = conflictIntent();
       if (sources.state === 'attention') secondary.push(sourceIntent());
+      retainReadiness();
     } else if (sources.state === 'attention') {
       primary = sourceIntent();
-    } else if (execution.state === 'unknown') {
-      primary = intent(
-        context, ACTIONS.REVIEW_READINESS, 'Readiness is not known', 'Review readiness',
-        execution.reason, 'Missing evidence is not converted into a backend failure or a ready state.'
-      );
-    } else if (state === 'blocked') {
-      const blocker = execution.value.blockers[0]?.message;
-      primary = intent(
-        context, ACTIONS.REVIEW_READINESS, 'Resolve the next blocker', 'Review readiness',
-        blocker || 'Open the existing readiness details to see what the current recipe still needs.',
-        'This uses the current readiness owner and does not invent a new prerequisite.'
-      );
+      retainReadiness();
+    } else if (execution.state === 'unknown' || state === 'blocked') {
+      primary = readinessIntent();
     } else if (execution.value.outputs > 0) {
       primary = intent(
         context, ACTIONS.OPEN_RESULTS, 'Review the latest result', 'Open recent runs',
