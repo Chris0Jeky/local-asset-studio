@@ -179,15 +179,13 @@ def _image(data: bytes, expected: dict[str, Any], formats: tuple[str, ...], skel
                     raise ValueError('source image canvas does not match the declaration')
                 if mode not in ('RGB', 'RGBA'):
                     raise ValueError('pose source must be RGB or RGBA without implicit conversion')
+                if skeleton and (mode != 'RGB' or 'transparency' in image.info):
+                    raise ValueError('precomputed skeleton guide must be opaque RGB')
                 image.load()
                 non_black = None
                 if skeleton:
-                    rgb = image.convert('RGB')
-                    try:
-                        pixels = (rgb.get_flattened_data() if hasattr(rgb, 'get_flattened_data') else rgb.getdata())
-                        non_black = sum(1 for pixel in pixels if pixel != (0, 0, 0))
-                    finally:
-                        rgb.close()
+                    pixels = (image.get_flattened_data() if hasattr(image, 'get_flattened_data') else image.getdata())
+                    non_black = sum(1 for pixel in pixels if pixel != (0, 0, 0))
                     if non_black == 0:
                         raise ValueError('precomputed skeleton guide is blank')
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError,
