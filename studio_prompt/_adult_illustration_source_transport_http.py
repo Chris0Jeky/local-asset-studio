@@ -140,6 +140,22 @@ def _validate_not_modified(
             raise ValueError(f"HTTP 304 returned a stale {response_name} validator")
 
 
+def _validate_cached_policy(
+    cached: HttpResponse,
+    policy: MetadataPolicy,
+) -> None:
+    """Apply the active fetch limits even when no network request is needed."""
+
+    if len(cached.body) > policy.max_response_bytes:
+        raise ValueError(
+            "Cached provider response exceeds the current response byte limit"
+        )
+    if len(cached.redirect_chain) > policy.max_redirects:
+        raise ValueError(
+            "Cached provider redirect chain exceeds the current redirect limit"
+        )
+
+
 class BoundedProviderTransport:
     """Implement the source parser's injected transport interface safely."""
 
@@ -261,6 +277,8 @@ class BoundedProviderTransport:
         provider = validate_base_request(request)
         key = request_key(request)
         cached = self.cache.load(request) if self.cache is not None else None
+        if cached is not None:
+            _validate_cached_policy(cached, self.policy)
         if cached is not None and not self.refresh:
             self._receipt = self._make_receipt(
                 provider=provider,
