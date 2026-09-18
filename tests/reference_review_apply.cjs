@@ -106,6 +106,7 @@ for(const name of ['prompt-lab.js','reference-review.js']){
   el('rr-analysis').files=[rejectedFile];
   await el('rr-analysis').fire('change');
   assert.match(el('rr-status').textContent,/128 KiB/,'The invalid replacement must be explained');
+  assert.equal(el('rr-review').hidden,false,'A rejected analysis must keep Undo and Export visible inside the review panel');
   assert.equal(el('rr-undo').disabled,false,'A rejected analysis must retain the prior undo ticket');
   assert.equal(el('rr-export').disabled,false,'A rejected analysis must retain the prior receipt');
 
