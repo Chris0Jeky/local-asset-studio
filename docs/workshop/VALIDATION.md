@@ -18,15 +18,31 @@ Executed against the exact local files prepared for this PR:
 
 The source SVGs were inspected for scripts, `foreignObject` and external references. Production uses inert CSS data copies so SVG serving is not added to the application.
 
+## Prompt Lab handoff placement
+
+The Prompt Lab text handoff is owned by `studio-workbench.js` and remains the same direct child, buttons and application path. The presentation layer now reserves a named transfer row only while `#uxTransfer` is visible; hidden handoffs do not add an empty grid track or change ordinary Create spacing.
+
+A regression-first Chromium journey reproduced the previous Focus failure before the CSS correction: the transfer started below the editor at approximately 899 px and its Apply action ended below a 900 px viewport. After the correction:
+
+- `python tests/workshop_transfer_handoff.py --output .runtime/workshop-transfer`: **12 presentation cases passed**;
+- coverage is 1440×900 and 390×844 across Focus, Studio and Immersive with both `None` and `Night Shift` ambience;
+- Focus and Studio place the transfer immediately after the visible Create heading and before ambience or toolbar content;
+- Immersive places it after the mode bar and before the presentation toolbar;
+- the Apply action remains in the first viewport in every case, with a measured maximum bottom edge of approximately 614 px;
+- the panel remains full-width with no horizontal overflow, page exceptions, network requests or execution surface.
+
+The existing `node --test tests/workshop_contracts.cjs` and `python tests/workshop_browser.py` suites were rerun after the correction: **8 Node tests** and **8 browser check groups** passed. This isolated component evidence does not replace the hosted native-application gate.
+
 ## Hosted native browser gate
 
-`Workshop UI` runs the component driver, lifecycle/handoff checks, `tests/workshop_application.py`, the prototype driver and exporter. The actual-application driver uses native HTTP/browser storage and the real frontend against the existing synthetic API. It must verify:
+`Workshop UI` runs the component driver, lifecycle/handoff checks, `tests/workshop_application.py`, the focused Prompt Lab handoff journey, the prototype driver and exporter. The actual-application driver uses native HTTP/browser storage and the real frontend against the existing synthetic API. It must verify:
 
 - Focus + Atelier + None remains the production default;
 - v2 presentation preferences contain only layout/skin/ambience;
 - all presentation combinations preserve real source lineage and controls;
 - one explicit Generate reaches the original handler exactly once and is rejected by the fixture;
-- desktop/mobile geometry has no additional submissions or page exceptions.
+- desktop/mobile geometry has no additional submissions or page exceptions;
+- the Prompt Lab handoff remains visible above the editor without altering its application authority.
 
 Current-head hosted results must be inspected before the PR is marked review-ready. A queued or older green run is not evidence for this head.
 
