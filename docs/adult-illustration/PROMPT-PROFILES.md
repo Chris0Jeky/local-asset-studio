@@ -96,6 +96,8 @@ Output files use exclusive creation. A failed compile or validation does not ove
 
 ## Output contract
 
+A compiled record uses `studio.adult-illustration.prompt-projection/v2`. Version 2 adds taxonomy identity and per-term resolution provenance; retained version 1 outputs must be recompiled rather than interpreted under the expanded shape.
+
 A compiled record contains:
 
 - exact profile and route-candidate IDs;
