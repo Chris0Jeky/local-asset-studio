@@ -51,7 +51,7 @@ byId('uxExportDraft').onclick=()=>{
   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download='workshop-demo-brief.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
-byId('planComparison').onclick=()=>{const select=byId('workshopLayout');select.value=select.value==='focus'?'studio':'focus';select.dispatchEvent(new Event('change',{bubbles:true}));};
+byId('planComparison').onclick=()=>{const select=byId('workshopLayout');select.value=select.value==='immersive'?'focus':'immersive';select.dispatchEvent(new Event('change',{bubbles:true}));};
 byId('uxRecheckReadiness').onclick=()=>demoStatus('Standalone interface preview. Connect your real Local Asset Studio to ComfyUI to generate.');
 let noticeTimer;
 document.addEventListener('click',e=>{
@@ -60,6 +60,10 @@ document.addEventListener('click',e=>{
   notice.textContent='This prototype covers Create. Other tools remain in the real Local Asset Studio.';notice.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>notice.hidden=true,4500);
 });
 window.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
-  // Start this demonstration in the visual variation; production still defaults to Focus.
-  const layout=byId('workshopLayout');if(layout){layout.value='studio';layout.dispatchEvent(new Event('change',{bubbles:true}));}
+  for(const link of document.querySelectorAll('.wk-modebar a'))link.dataset.demoNav='true';
+  // Production remains Focus / Atelier / None. This review page starts in the approved visual pilot.
+  const layout=byId('workshopLayout'),skin=byId('workshopSkin'),ambience=byId('workshopAmbience');
+  if(layout){layout.value='immersive';layout.dispatchEvent(new Event('change',{bubbles:true}));}
+  if(skin){skin.value='retro-anime';skin.dispatchEvent(new Event('change',{bubbles:true}));}
+  if(ambience){ambience.value='night-shift';ambience.dispatchEvent(new Event('change',{bubbles:true}));}
 },0));

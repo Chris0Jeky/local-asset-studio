@@ -1,0 +1,23 @@
+@import url('workshop-immersive-core.css');
+
+/* Desktop presentation controls remain fluid under browser zoom. The imported core
+   keeps the complete visual system; this entrypoint owns narrow corrective overrides. */
+@media (min-width:1280px) {
+  .workshop .wk-toolbar {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+    padding:14px 18px;
+    min-width:0;
+  }
+  .workshop .wk-select-controls {min-width:0}
+  .workshop .wk-select-control {flex:1 1 150px;min-width:0}
+  .workshop .wk-select-control select,
+  .workshop .wk-native-skin-select select {min-width:0;width:100%}
+  .workshop .wk-skin-control {min-width:0}
+  .workshop .wk-setup-rail {
+    grid-template-columns:minmax(0,1.15fr) minmax(0,.9fr) minmax(0,.7fr) auto;
+    padding:5px 14px;
+  }
+  .workshop .wk-setup-rail .wk-recipe {min-width:0;flex-wrap:wrap}
+  .workshop .wk-setup-status {min-width:0;overflow-wrap:anywhere}
+  .workshop .wk-setup-review {white-space:normal;overflow-wrap:anywhere;min-width:0}
+}

@@ -1,34 +1,37 @@
-# Focus validation record
+# Workshop validation record
 
-Baseline source: `b8b1409d0f397b7562e67366e51629826ec0ae7d` (18 September 2026 session).
+## Earlier Focus/Studio evidence
 
-## Executed locally
+The original Focus and Studio delivery retained full suite, component-browser and actual-application evidence in its merged PRs. Those historical counts are not repeated as current-head proof.
 
-- Full offline Python suite: **2925 tests, 20 skipped, 281.417 seconds, exit 0** on the first implementation snapshot. This precedes the later presentation refinements and the new Node-contract wrapper; do not mislabel it as final-head CI.
-- `node --test tests/workshop_contracts.cjs`: 3 passed.
-- `python -m unittest discover -s tests -p test_workshop_frontend.py`: 1 passed, invokes those real Node contracts.
-- `python tests/workshop_browser.py`: original control identities, cancellation/acceptance, same-recipe preservation, focus return, disabled state, explicit original handler, 1440×900 and 390×844 geometry passed with system Chromium 144.
-- Actual full application source was also rendered against the existing synthetic API fixture, using an offline document loader: default Focus document **1513 px** at 1440×900; recipe, prompt and Generate visible; no JS exceptions; no `/api/jobs` request. Its in-memory storage shim is **not** evidence of native storage/reload correctness.
-- Baseline repository validation: 80 preset graphs/bindings and 136 pinned assets passed.
+## Immersive implementation: fresh local evidence
 
-The component fixture explicitly labels itself non-generating. Actual-application fixture health and its 42-second estimate are synthetic data, not a measurement of Chris's PC. The wishlist's 3397 px figure belongs to its earlier QA; the two states are not a controlled A/B test.
+Executed against the exact local files prepared for this PR:
+
+- `node --test tests/workshop_contracts.cjs`: **8 tests passed**. Coverage includes unknown/malformed preferences, v1 fallback, scoped v2 persistence, 3 layouts, 4 skins, 3 ambiences and the presentation-only DOM seams.
+- `python tests/workshop_browser.py --output .runtime/workshop-component`: **8 check groups passed** with Chromium. The shared state sequence exercised all **36 layout × skin × ambience combinations** while preserving prompt and file-input identity and recording zero submissions.
+- The component geometry matrix exercised **24 desktop/mobile layout × skin cases** at 1440×900 and 390×844. It checked horizontal overflow, in-viewport Generate geometry, local ambience visibility, full-width stacked Immersive panels and contextual guidance at the narrow viewport, and zero page exceptions.
+- The default Focus fixture remained **1695 px** after the Problems disclosure was populated/opened; prompt and Generate stayed in the first 1440×900 viewport.
+- Contextual guidance reproduced blocked, ready and output states. Its actions only revealed readiness, focused Generate or opened Recent runs; submission count remained unchanged.
+- `python tests/workshop_prototype.py --output .runtime/workshop-prototype`: **9 checks passed**, including the Immersive + Retro Anime + Night Shift review default, embedded ambience art, guarded recipe replacement, local reference retention, non-generating setup preview, adapter feedback, offline route interception, read-only guidance and mobile geometry.
+- The prototype/browser sessions recorded **zero HTTP/HTTPS/WebSocket requests and zero page exceptions**. The exporter embeds both production workshop styles, local ambience art and existing repository example images.
+
+The source SVGs were inspected for scripts, `foreignObject` and external references. Production uses inert CSS data copies so SVG serving is not added to the application.
 
 ## Hosted native browser gate
 
-`Workshop UI` runs the component driver and `tests/workshop_application.py`, using real HTTP, browser storage, the actual frontend and the existing synthetic API. It exports screenshots and `report.json` files as `workshop-browser-evidence`. The application driver checks native reload/draft recovery, all shipped presentation combinations, lineage, control identity and exactly one explicit original `/api/jobs` request. The fixture rejects that request rather than fabricating an accepted generation.
+`Workshop UI` runs the component driver, lifecycle/handoff checks, `tests/workshop_application.py`, the prototype driver and exporter. The actual-application driver uses native HTTP/browser storage and the real frontend against the existing synthetic API. It must verify:
 
-The existing use-case driver now counts opening the recipe picker, negative disclosure, review details and recent runs as real actions. Readiness tests reveal collapsed sections before exercising their original actions.
+- Focus + Atelier + None remains the production default;
+- v2 presentation preferences contain only layout/skin/ambience;
+- all presentation combinations preserve real source lineage and controls;
+- one explicit Generate reaches the original handler exactly once and is rejected by the fixture;
+- desktop/mobile geometry has no additional submissions or page exceptions.
+
+Current-head hosted results must be inspected before the PR is marked review-ready. A queued or older green run is not evidence for this head.
 
 ## Owner acceptance, not claimed by tests
 
-Run one ordinary text-to-image and one reference continuation on the installed ComfyUI environment after merging. Check useful tab order, recovery, long errors, model-specific controls and actual outputs. Choose the preferred layout/skin with the same recipe, prompt and sources. Measure time to ready-to-Generate, scroll depth and perceived clutter; faster submission is not itself better art. Existing HUMAN_TODO creative decisions remain open and untouched.
+Run one ordinary text-to-image and one reference continuation on the installed ComfyUI environment. Check tab order, long blockers, modal recovery, model-specific controls, real outputs and whether the fixed dock obscures useful review content at the owner's common display sizes.
 
-## Studio/skin follow-on, 18 September
-
-The component Chromium matrix passes for **2 layouts × 3 skins × 2 viewports** (1440×900 and 390×844). This checks horizontal overflow, in-viewport action geometry and zero unintended submissions; the shared interaction sequence also checks input identity, file preservation, cancelled/accepted recipe replacement and readiness focus. The fresh Focus fixture is 1464 px tall. This is not the real-machine QA measurement.
-
-The standalone exported prototype passes seven checks: shared layouts/skins, embedded repository artwork, guarded recipe change, a local reference surviving presentation changes, non-generating Preview setup, adapter feedback and mobile geometry. Its browser session records **zero network requests and zero page exceptions**. The final prototype starts in Studio, while production defaults to Focus. Node presentation contracts now contain four tests, including the full preference round-trip matrix.
-
-Native HTTP/localStorage execution of `tests/workshop_application.py` remains a hosted-CI gate. This environment supports `set_content` browser inspection but blocks top-level URL navigation; no workaround is used to claim native-origin or live-Comfy qualification. Review the actual CI result, not this planned test inventory, before merge.
-
-An additional offline inspection loaded the actual application scripts against the synthetic API with explicit in-memory storage. It passed cancelled recipe replacement, a real source attachment and parent-asset lineage across all six combinations, tuning, and exactly one original submission-handler request (rejected by the fixture). No page exceptions occurred. This supplements, but does not replace, native-origin storage/reload qualification.
+Review Night Shift and Quiet Morning as optional atmosphere, not model-quality evidence. Confirm that the extra visual structure improves orientation without slowing normal Focus work. No browser fixture proves GPU performance, artistic acceptance, accessibility for every assistive setup, model compatibility or licence clearance.

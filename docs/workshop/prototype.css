@@ -1,4 +1,4 @@
-/* Demo art and copy only. Layout/skin styles come from app/static/workshop.css. */
+/* Demo art and copy only. Layout/skin styles come from the production workshop styles. */
 .studio-sidebar .studio-logo{display:flex;gap:10px;align-items:center;font-size:12px;font-weight:700;letter-spacing:.05em}
 .studio-sidebar nav{margin-top:32px}.studio-sidebar nav a{padding:12px;font-size:12px;margin:3px -4px}
 .studio-sidebar .sidebar-bottom{margin-top:50px;font-size:11px;line-height:1.8}
