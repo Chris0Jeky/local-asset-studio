@@ -17,6 +17,10 @@ HF_COMMIT = "a" * 40
 HF_SHA = "b" * 64
 CIVITAI_SHA = "c" * 64
 RAW_SHA = "d" * 64
+HF_PATH = "weights/model.safetensors"
+HF_ALT_PATH = "weights/alternate.safetensors"
+HF_FILE_ID = "hf-file-" + hashlib.sha256(HF_PATH.encode()).hexdigest()[:20]
+HF_ALT_FILE_ID = "hf-file-" + hashlib.sha256(HF_ALT_PATH.encode()).hexdigest()[:20]
 
 AUTHORITY = {
     "download_authorized": False,
@@ -28,6 +32,11 @@ AUTHORITY = {
 
 
 def _base_snapshot(provider: str, record: dict[str, object]) -> dict[str, object]:
+    url = (
+        "https://huggingface.co/api/models/owner/model/revision/main?blobs=true"
+        if provider == "huggingface"
+        else "https://civitai.com/api/v1/model-versions/123"
+    )
     return {
         "schema": "studio.adult-illustration-source-snapshot/v1",
         "kind": "source-snapshot-proposal",
@@ -37,12 +46,15 @@ def _base_snapshot(provider: str, record: dict[str, object]) -> dict[str, object
         "raw_payload_sha256": RAW_SHA,
         "request": {
             "method": "GET",
-            "url": "https://example.invalid/metadata",
-            "headers": {"accept": "application/json"},
+            "url": url,
+            "headers": {
+                "accept": "application/json",
+                "user-agent": "local-asset-studio-source-snapshot/1",
+            },
         },
         "response": {
             "status": 200,
-            "final_url": "https://example.invalid/metadata",
+            "final_url": url,
             "redirect_chain": [],
             "headers": {"content-type": "application/json"},
         },
@@ -52,96 +64,97 @@ def _base_snapshot(provider: str, record: dict[str, object]) -> dict[str, object
 
 
 def hf_snapshot() -> dict[str, object]:
-    record: dict[str, object] = {
-        "id": "huggingface-owner--model-aaaaaaaaaaaa",
-        "provider": "huggingface",
-        "synthetic": False,
-        "canonical_url": f"https://huggingface.co/owner/model/tree/{HF_COMMIT}",
-        "provider_model_id": "owner/model",
-        "provider_version_id": None,
-        "immutable_revision": HF_COMMIT,
-        "requested_revision": "main",
-        "snapshot_state": "pinned",
-        "terms_state": "snapshotted",
-        "access_state": "public",
-        "lineage": {"base_models": ["base/model"]},
-        "terms": {"license": "apache-2.0"},
-        "metadata": {"disabled": False},
-        "claims": [],
-        "files": [
-            {
-                "id": "hf-file-1",
-                "path": "weights/model.safetensors",
-                "bytes": 1024,
-                "sha256": HF_SHA,
-                "provider_hashes": {"xet": "xet-id"},
-                "selected": False,
-            },
-            {
-                "id": "hf-file-2",
-                "path": "weights/alternate.safetensors",
-                "bytes": 2048,
-                "sha256": "e" * 64,
-                "provider_hashes": {},
-                "selected": False,
-            },
-        ],
-        "download_authorized": False,
-        "install_authorized": False,
-        "execution_authorized": False,
-    }
-    return _base_snapshot("huggingface", record)
+    return _base_snapshot(
+        "huggingface",
+        {
+            "id": "huggingface-owner--model-aaaaaaaaaaaa",
+            "provider": "huggingface",
+            "synthetic": False,
+            "canonical_url": f"https://huggingface.co/owner/model/tree/{HF_COMMIT}",
+            "provider_model_id": "owner/model",
+            "provider_version_id": None,
+            "immutable_revision": HF_COMMIT,
+            "requested_revision": "main",
+            "snapshot_state": "pinned",
+            "terms_state": "snapshotted",
+            "access_state": "public",
+            "lineage": {"base_models": ["base/model"]},
+            "terms": {"license": "apache-2.0"},
+            "metadata": {"disabled": False},
+            "claims": [],
+            "files": [
+                {
+                    "id": HF_FILE_ID,
+                    "path": HF_PATH,
+                    "bytes": 1024,
+                    "sha256": HF_SHA,
+                    "provider_hashes": {"xet": "xet-id"},
+                    "selected": False,
+                },
+                {
+                    "id": HF_ALT_FILE_ID,
+                    "path": HF_ALT_PATH,
+                    "bytes": 2048,
+                    "sha256": "e" * 64,
+                    "provider_hashes": {},
+                    "selected": False,
+                },
+            ],
+            "download_authorized": False,
+            "install_authorized": False,
+            "execution_authorized": False,
+        },
+    )
 
 
 def civitai_snapshot() -> dict[str, object]:
-    record: dict[str, object] = {
-        "id": "civitai-9-123",
-        "provider": "civitai",
-        "synthetic": False,
-        "canonical_url": "https://civitai.com/models/9?modelVersionId=123",
-        "provider_model_id": 9,
-        "provider_version_id": 123,
-        "immutable_revision": "123",
-        "snapshot_state": "pinned",
-        "terms_state": "snapshotted",
-        "access_state": "public_metadata",
-        "air": "urn:air:sdxl:checkpoint:civitai:9@123",
-        "lineage": {"base_model": "SDXL 1.0"},
-        "terms": {
-            "allow_no_credit": False,
-            "allow_commercial_use": "Image",
-            "allow_derivatives": True,
-            "allow_different_license": False,
+    return _base_snapshot(
+        "civitai",
+        {
+            "id": "civitai-9-123",
+            "provider": "civitai",
+            "synthetic": False,
+            "canonical_url": "https://civitai.com/models/9?modelVersionId=123",
+            "provider_model_id": 9,
+            "provider_version_id": 123,
+            "immutable_revision": "123",
+            "snapshot_state": "pinned",
+            "terms_state": "snapshotted",
+            "access_state": "public_metadata",
+            "air": "urn:air:sdxl:checkpoint:civitai:9@123",
+            "lineage": {"base_model": "SDXL 1.0"},
+            "terms": {
+                "allow_no_credit": False,
+                "allow_commercial_use": "Image",
+                "allow_derivatives": True,
+                "allow_different_license": False,
+            },
+            "metadata": {"status": "Published", "model_type": "Checkpoint"},
+            "claims": [],
+            "files": [
+                {
+                    "id": "civitai-file-55",
+                    "provider_file_id": 55,
+                    "path": "model.safetensors",
+                    "bytes": 4096,
+                    "sha256": CIVITAI_SHA,
+                    "provider_hashes": {"sha256": CIVITAI_SHA.upper()},
+                    "file_type": "Model",
+                    "primary": True,
+                    "metadata": {"format": "SafeTensor"},
+                    "selected": False,
+                }
+            ],
+            "download_authorized": False,
+            "install_authorized": False,
+            "execution_authorized": False,
         },
-        "metadata": {
-            "status": "Published",
-            "model_type": "Checkpoint",
-        },
-        "claims": [],
-        "files": [
-            {
-                "id": "civitai-file-55",
-                "provider_file_id": 55,
-                "path": "model.safetensors",
-                "bytes": 4096,
-                "sha256": CIVITAI_SHA,
-                "provider_hashes": {"sha256": CIVITAI_SHA.upper()},
-                "file_type": "Model",
-                "primary": True,
-                "metadata": {"format": "SafeTensor"},
-                "selected": False,
-            }
-        ],
-        "download_authorized": False,
-        "install_authorized": False,
-        "execution_authorized": False,
-    }
-    return _base_snapshot("civitai", record)
+    )
 
 
 def hf_selection(**changes: object) -> AcquisitionSelection:
     values: dict[str, object] = {
-        "file_id": "hf-file-1",
+        "file_id": HF_FILE_ID,
         "destination_folder": "checkpoints",
         "destination_name": "adult-anime-candidate.safetensors",
         "intended_use": "private local qualification",
@@ -166,11 +179,8 @@ def _canonical_id(value: dict[str, object]) -> str:
 
 
 def _assert_zero_authority(test: unittest.TestCase, value: dict[str, object]) -> None:
-    test.assertFalse(value["download_authorized"])
-    test.assertFalse(value["install_authorized"])
-    test.assertFalse(value["execution_authorized"])
-    test.assertFalse(value["generation_submitted"])
-    test.assertFalse(value["training_authorized"])
+    for field in AUTHORITY:
+        test.assertFalse(value[field])
 
 
 class AcquisitionPlanTests(unittest.TestCase):
@@ -184,8 +194,8 @@ class AcquisitionPlanTests(unittest.TestCase):
         self.assertEqual(first["source"]["provider"], "huggingface")
         self.assertEqual(first["source"]["provider_model_id"], "owner/model")
         self.assertEqual(first["source"]["immutable_revision"], HF_COMMIT)
-        self.assertEqual(first["selection"]["file_id"], "hf-file-1")
-        self.assertEqual(first["selection"]["source_path"], "weights/model.safetensors")
+        self.assertEqual(first["selection"]["file_id"], HF_FILE_ID)
+        self.assertEqual(first["selection"]["source_path"], HF_PATH)
         self.assertEqual(first["selection"]["bytes"], 1024)
         self.assertEqual(first["selection"]["sha256"], HF_SHA)
         self.assertEqual(
@@ -196,17 +206,9 @@ class AcquisitionPlanTests(unittest.TestCase):
         self.assertEqual(
             first["handoff"]["dry_run_arguments"],
             [
-                "--repo",
-                "owner/model",
-                "--path",
-                "weights/model.safetensors",
-                "--revision",
-                HF_COMMIT,
-                "--dest-folder",
-                "checkpoints",
-                "--name",
-                "adult-anime-candidate.safetensors",
-                "--dry-run",
+                "--repo", "owner/model", "--path", HF_PATH,
+                "--revision", HF_COMMIT, "--dest-folder", "checkpoints",
+                "--name", "adult-anime-candidate.safetensors", "--dry-run",
             ],
         )
         self.assertFalse(first["handoff"]["transfer_arguments_authorized"])
@@ -224,7 +226,6 @@ class AcquisitionPlanTests(unittest.TestCase):
             intended_use="private local qualification",
             terms_review_ref="HUMAN_TODO.md#q-29",
         )
-
         plan = prepare_acquisition_plan(snapshot, selection)
 
         self.assertEqual(plan["source"]["provider"], "civitai")
@@ -234,15 +235,9 @@ class AcquisitionPlanTests(unittest.TestCase):
         self.assertEqual(
             plan["handoff"]["dry_run_arguments"],
             [
-                "--version-id",
-                "123",
-                "--file-id",
-                "55",
-                "--dest-folder",
-                "checkpoints",
-                "--name",
-                "civitai-candidate.safetensors",
-                "--dry-run",
+                "--version-id", "123", "--file-id", "55",
+                "--dest-folder", "checkpoints", "--name",
+                "civitai-candidate.safetensors", "--dry-run",
             ],
         )
         self.assertTrue(plan["handoff"]["transfer_credentials_external"])
@@ -260,8 +255,7 @@ class AcquisitionPlanTests(unittest.TestCase):
 
     def test_terms_reference_never_authorizes_download(self) -> None:
         plan = prepare_acquisition_plan(
-            hf_snapshot(),
-            hf_selection(terms_review_ref="decision-record-123"),
+            hf_snapshot(), hf_selection(terms_review_ref="decision-record-123")
         )
         self.assertEqual(
             plan["gates"]["human_terms_review"]["state"],
@@ -271,13 +265,12 @@ class AcquisitionPlanTests(unittest.TestCase):
         self.assertFalse(plan["handoff"]["transfer_arguments_authorized"])
 
     def test_blocked_source_states_are_refused(self) -> None:
-        cases = [
+        for field, value in [
             ("access_state", "private"),
             ("access_state", "gated"),
             ("synthetic", True),
             ("snapshot_state", "moving"),
-        ]
-        for field, value in cases:
+        ]:
             with self.subTest(field=field, value=value):
                 snapshot = hf_snapshot()
                 snapshot["record"][field] = value  # type: ignore[index]
@@ -320,7 +313,7 @@ class AcquisitionPlanTests(unittest.TestCase):
 
         duplicate = hf_snapshot()
         duplicate_file = copy.deepcopy(duplicate["record"]["files"][1])  # type: ignore[index]
-        duplicate_file["id"] = "hf-file-1"
+        duplicate_file["id"] = HF_FILE_ID
         duplicate["record"]["files"].append(duplicate_file)  # type: ignore[index]
         with self.assertRaisesRegex(ValueError, "duplicate"):
             prepare_acquisition_plan(duplicate, hf_selection())
