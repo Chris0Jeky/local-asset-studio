@@ -195,11 +195,11 @@ class Production:
         mode=payload.get('mode','grid')
         if mode not in ('grid','remix'):raise ValueError('Choose the settings grid or a LoRA remix')
         kb,digest=settings_planner.load_kb(self.studio.root)
-        available=settings_planner.axes_for(preset,kb)
+        available=settings_planner.axes_for(preset,kb,controls)
         limit=payload.get('limit')
         extra={} if limit is None else {'limit':limit}
         if mode=='grid':
-            if not available:raise ValueError('The settings library documents no axis this recipe can change')
+            if not available:raise ValueError('The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
             identifiers=payload.get('axes') or [axis['id'] for axis in available[:2]]
             if not isinstance(identifiers,list):raise ValueError('axes must be a list of documented axis identifiers')
             variants=settings_planner.plan_grid(preset,kb,controls,identifiers,**extra)
