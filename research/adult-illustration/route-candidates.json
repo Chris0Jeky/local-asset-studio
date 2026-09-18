@@ -23,7 +23,7 @@
       "lane": "fast_preview",
       "source_url": "https://huggingface.co/circlestone-labs/Anima",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "hybrid_tags_prose",
@@ -35,6 +35,7 @@
         "native ComfyUI support claimed"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "exact local file/hash",
         "RX 9070 XT speed/memory",
         "adapter/control compatibility",
@@ -46,7 +47,7 @@
       "lane": "quality_generation",
       "source_url": "https://huggingface.co/circlestone-labs/Anima",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "hybrid_tags_prose",
@@ -58,6 +59,7 @@
         "hybrid prompt dialect"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "local quality",
         "exact resources",
         "compatible controls and LoRAs"
@@ -68,7 +70,7 @@
       "lane": "training_base",
       "source_url": "https://huggingface.co/circlestone-labs/Anima",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "hybrid_tags_prose",
@@ -79,6 +81,7 @@
         "neutral/flexible base"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "trainer/backend support",
         "isolated environment",
         "dataset and held-out yield"
@@ -89,7 +92,7 @@
       "lane": "quality_generation",
       "source_url": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "ordered_tags",
@@ -101,6 +104,7 @@
         "existing repository experience"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "exact installed variant/hash",
         "current graph/control compatibility",
         "accepted-output yield"
@@ -111,7 +115,7 @@
       "lane": "quality_generation",
       "source_url": "https://huggingface.co/OnomaAIResearch/Illustrious-XL-v2.0",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "profile_required",
@@ -122,6 +126,7 @@
         "large derivative ecosystem"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "exact prompt grammar/settings",
         "local resources",
         "best derivative versus stable base"
@@ -132,7 +137,7 @@
       "lane": "quality_generation",
       "source_url": "https://huggingface.co/Laxhar/noobai-XL-1.1",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "ordered_tags",
@@ -143,6 +148,7 @@
         "SDXL ecosystem"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "EPS exact file/hash",
         "v-pred kept separate",
         "local terms and yield"
@@ -174,7 +180,7 @@
       "lane": "multi_image_edit",
       "source_url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "natural_language_instruction",
@@ -187,6 +193,7 @@
         "LoRA integration"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "exact quantised/offloaded local route",
         "16 GB latency/memory",
         "native versus accelerated fidelity",
@@ -240,7 +247,7 @@
       "lane": "experimental_edit",
       "source_url": "https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev",
       "source_revision": "main",
-      "evidence_state": "source_reviewed",
+      "evidence_state": "discovered",
       "installed": null,
       "executable": false,
       "prompt_mode": "natural_language_instruction",
@@ -251,6 +258,7 @@
         "reference consistency claims"
       ],
       "unknowns": [
+        "immutable reviewed source revision or retained snapshot",
         "local quantised route",
         "content-route behaviour",
         "value versus Qwen/current Klein",
@@ -268,7 +276,9 @@
     "task_scoped_decision"
   ],
   "notes": [
-    "These records are source-review leads, not model-library entries or executable presets.",
+    "Candidate IDs are stable historical identifiers and do not imply the current evidence state.",
+    "Moving provider branches remain discovered until an immutable reviewed revision or retained source-card snapshot is recorded.",
+    "These records are research leads, not model-library entries or executable presets.",
     "Installed repository routes must be reconciled from CURRENT_STATE and exact catalog/workflow evidence.",
     "Quantised, accelerated and full/native configurations are separate candidates."
   ]
