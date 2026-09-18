@@ -140,3 +140,13 @@ test('execution evidence from an older context stamp is treated as stale unknown
   assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_READINESS);
   assert.match(view.primaryAction.description, /older context/i);
 });
+
+test('pending file work remains source attention even before a slot record exists', () => {
+  const input = baseInput();
+  input.draft.pendingFiles = 1;
+  const view = C.project(C.captureContext(input), {});
+  assert.equal(view.sourceSummary.pendingFiles, 1);
+  assert.equal(view.sourceSummary.state, 'attention');
+  assert.equal(view.primaryAction.id, C.ACTIONS.REVIEW_SOURCES);
+  assert.match(view.primaryAction.description, /pending/i);
+});
