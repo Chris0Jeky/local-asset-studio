@@ -34,7 +34,9 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
         self.assertIn('--case ' + CASE_ID, workflow)
         self.assertIn('tests/reference_review_browser.py', workflow)
 
-    def test_fixture_reuses_production_transport_guards(self):
+    def test_fixture_reuses_the_production_body_length_guard(self):
+        """Only `_content_length` is inherited: the host and origin guards are rebound to the served
+        port and pinned by the probes below, not by identity with production's."""
         from test_server import server
 
         handler, _ = runner.build_handler()
@@ -57,6 +59,9 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
 
         probe.headers = {'Host': '127.0.0.1:45678', 'Origin': 'http://evil.invalid'}
         self.assertFalse(probe._safe_mutation(), 'A cross-origin mutation must still be refused')
+
+        probe.headers = {'Host': '127.0.0.1:8191', 'Origin': 'http://127.0.0.1:45678'}
+        self.assertFalse(probe._safe_mutation(), 'A mutation must fail its host check too, not only its origin check')
 
 
 if __name__ == '__main__':
