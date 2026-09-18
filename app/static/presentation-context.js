@@ -167,7 +167,7 @@
 
   function summarizeSources(context) {
     if (context.capability.state !== 'known') {
-      return deepFreeze({state:'unknown', required:[], provided:[], missing:[], pending:[], extra:[]});
+      return deepFreeze({state:'unknown', pendingFiles:context.draft.pendingFiles, required:[], provided:[], missing:[], pending:[], extra:[]});
     }
     const slots = context.capability.value.referenceSlots;
     const slotMap = new Map(slots.map(slot => [slot.id, slot]));
@@ -192,9 +192,9 @@
         if (slot.required) missing.push(slot);
       }
     }
-    const state = missing.length || pending.length || extra.length ? 'attention'
+    const state = missing.length || pending.length || extra.length || context.draft.pendingFiles ? 'attention'
       : slots.length ? 'satisfied' : 'not-required';
-    return deepFreeze({state, required, provided, missing, pending, extra});
+    return deepFreeze({state, pendingFiles:context.draft.pendingFiles, required, provided, missing, pending, extra});
   }
 
   function intent(context, id, title, label, description, reason) {
@@ -222,7 +222,8 @@
       context, ACTIONS.REVIEW_SOURCES, 'Review the source roles', 'Review sources',
       sources.missing.length ? 'Attach or stage every required source role before continuing.'
         : sources.pending.length ? 'Some selected sources are not staged yet.'
-          : 'One or more sources do not match an available recipe slot.',
+          : sources.pendingFiles ? 'One or more local sources have pending check or staging work.'
+            : 'One or more sources do not match an available recipe slot.',
       'Exact slot identities, pending staging and extra assignments are kept separate.'
     );
     const conflictIntent = () => intent(
