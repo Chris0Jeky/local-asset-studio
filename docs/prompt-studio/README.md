@@ -21,6 +21,15 @@ python -m unittest discover -s tests -p 'test_studio_prompt*.py' -v
 
 Output parent folders must exist. Files are exclusive-create: choose a new name rather than overwrite evidence. The compiler and parser use the standard library; Pillow is optional for image analysis preparation.
 
+### Headless JSON and Unicode
+
+The Prompt Studio CLI escapes non-ASCII characters in JSON written to standard output.
+This lets legacy Windows console/pipe encodings carry Japanese tags, accented text and
+other Unicode without turning successful compilation into an encoding error. JSON clients
+recover the original strings; intent, artifact hashes and compiler behaviour are unchanged.
+Explicit `--out` files retain the existing UTF-8, exclusive-create contract. Error diagnostics
+remain JSON on standard error with a nonzero exit status and no generation claim.
+
 For the page, start Studio normally using `Start Studio.cmd`, `scripts/Start-Studio.ps1`, or:
 
 ```console
@@ -48,12 +57,3 @@ The workspace lock prevents simultaneous helper calls **only in that workspace**
 Exported briefs remain model-independent. Imported proposals can be accepted field by field; stale proposals and locked changes are rejected. References carry role, take/ignore instructions and exact hashes. The UI records images but does not upload them to Comfy. Real multi-reference graph binding remains a separate integration with issue21.
 
 The opt-in `/api/prompt/bind` operation verifies actual preset text bindings and raw template bytes, then returns a normal Studio submission payload without submitting it. It currently handles reference-free text-only projections and rejects companion bindings it does not implement. Pure CLI `bind` produces a graph preview; its canonical hash is not the raw-file hash required by Studio's existing submission guard.
-
-## Headless JSON and Unicode
-
-The Prompt Studio CLI escapes non-ASCII characters in JSON written to standard output.
-This lets legacy Windows console/pipe encodings carry Japanese tags, accented text and
-other Unicode without turning successful compilation into an encoding error. JSON clients
-recover the original strings; intent, artifact hashes and compiler behaviour are unchanged.
-Explicit `--out` files retain the existing UTF-8, exclusive-create contract. Error diagnostics
-remain JSON on standard error with a nonzero exit status and no generation claim.
