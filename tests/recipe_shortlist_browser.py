@@ -103,6 +103,8 @@ async def run(out,inert):
                 page=await context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 if inert:
                     await inert_page(page,http.server_port)
+                    await page.add_style_tag(content=(ROOT/'app/static/workshop.css').read_text())
+                    await page.add_script_tag(content=(ROOT/'app/static/workshop.js').read_text())
                     await page.add_style_tag(content=(ROOT/'app/static/recipe-shortlist.css').read_text(encoding='utf-8'))
                     await page.add_script_tag(content=(ROOT/'app/static/recipe-shortlist.js').read_text(encoding='utf-8'))
                     await page.add_style_tag(content=(ROOT/'app/static/setup-proposal.css').read_text(encoding='utf-8'))
@@ -113,11 +115,14 @@ async def run(out,inert):
                 await page.wait_for_function("typeof catalog!=='undefined'&&!!selected&&!!document.querySelector('#recipeShortlist')")
                 await page.evaluate("showView('create');document.querySelector('#recipeShortlist').open=true")
                 check(PREFIX not in CALLS,'opening the Studio and shortlist makes no shortlist request')
+                if await page.locator('#workshopRecipeDialog').evaluate('n=>n.open'):
+                    await page.keyboard.press('Escape')
                 await page.evaluate("selectPreset('pixel-lora')")
                 await page.fill('#positive','Keep this exact current prompt')
                 await page.evaluate("uploaded='kept-source.png';lastUploaded='kept-last.png';parentAssets=['asset-0'];parentByInput={reference:'asset-0'}")
                 snapshot="()=>({preset:selected.id,positive:document.querySelector('#positive').value,values:values(),uploaded,lastUploaded,parentAssets,parentByInput})"
                 before=await page.evaluate(snapshot)
+                await page.click('#workshopRecipeChange')
                 await page.select_option('#uxIntent','animate')
                 await page.click('#checkStartingRecipes')
                 await page.wait_for_selector('#shortlistResults article')
@@ -165,8 +170,10 @@ async def run(out,inert):
                 MALFORMED=True;await page.click('#checkStartingRecipes');await page.wait_for_function("!document.querySelector('#checkStartingRecipes').disabled")
                 check('context' in await page.locator('#shortlistStatus').inner_text(),'mismatched report context is rejected');MALFORMED=False
                 await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
+                await page.keyboard.press('Escape')
                 await page.fill('#positive','A real edit invalidates the report')
                 check(await page.locator('#shortlistResults article').count()==0,'actual editor input invalidates the old shortlist')
+                await page.click('#workshopRecipeChange')
                 for action,label in [
                     ("selectPreset('pixel-lora')",'selecting a recipe'),
                     ("applyRecipe({preset_id:'pixel-lora',name:'Review setup',controls:{positive:'New wording'}})",'applying a same-preset setup'),
