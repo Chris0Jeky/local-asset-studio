@@ -69,6 +69,9 @@ class ReviewedTaxonomyPromptIntegrationTests(unittest.TestCase):
         result = compile_prompt(projection, "animagine-xl4-ordered-v1", ROOT)
         positive = result["channels"]["positive"]
 
+        self.assertEqual(
+            result["format"], "studio.adult-illustration.prompt-projection/v2"
+        )
         self.assertIn("onsen", positive)
         self.assertIn("closed_eyes", positive)
         self.assertIn("rim lighting", positive)
@@ -134,6 +137,56 @@ class ReviewedTaxonomyPromptIntegrationTests(unittest.TestCase):
         self.assertEqual(resolution["status"], "unsupported_profile")
         self.assertEqual(resolution["emitted"], [])
 
+    def test_reviewed_implications_are_emitted_and_profile_ordered(self) -> None:
+        def imply_solo(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            entries["sitting"]["implications"] = ["solo"]
+
+        projection = projection_with_terms(["sitting"])
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), imply_solo)
+            result = compile_prompt(projection, "animagine-xl4-ordered-v1", root)
+
+        positive = result["channels"]["positive"]
+        self.assertLess(positive.index("solo"), positive.index("sitting"))
+        resolution = positive_resolutions(result)["sitting"]
+        self.assertEqual(resolution["entry_ids"], ["sitting", "solo"])
+        self.assertEqual(resolution["emitted"], ["sitting", "solo"])
+
+    def test_taxonomy_relationship_cycles_fail_closed(self) -> None:
+        def add_cycle(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            entries["sitting"]["implications"] = ["solo"]
+            entries["solo"]["implications"] = ["sitting"]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), add_cycle)
+            with self.assertRaisesRegex(ValueError, "contains a cycle"):
+                load_prompt_taxonomy(root)
+
+    def test_taxonomy_relationship_depth_is_enforced(self) -> None:
+        chain = [
+            "solo",
+            "sitting",
+            "standing",
+            "kneeling",
+            "twisted_torso",
+            "holding",
+            "looking_at_viewer",
+            "looking_back",
+            "smile",
+        ]
+
+        def exceed_depth(value: dict[str, object]) -> None:
+            entries = {entry["source_name"]: entry for entry in value["entries"]}
+            for source, target in zip(chain, chain[1:]):
+                entries[source]["implications"] = [target]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_contract_root(Path(tmp), exceed_depth)
+            with self.assertRaisesRegex(ValueError, "exceeds depth 8"):
+                load_prompt_taxonomy(root)
+
     def test_normalized_taxonomy_alias_collision_fails_closed(self) -> None:
         def collide_alias(value: dict[str, object]) -> None:
             entries = {entry["source_name"]: entry for entry in value["entries"]}
@@ -157,6 +210,16 @@ class ReviewedTaxonomyPromptIntegrationTests(unittest.TestCase):
                 ValueError, "Changed or invalid prompt projection"
             ):
                 validate_prompt_projection(compiled, projection, root)
+
+    def test_version_one_prompt_artifact_is_not_reinterpreted_as_version_two(self) -> None:
+        projection = projection_with_terms(["closed eyes"])
+        compiled = compile_prompt(projection, "animagine-xl4-ordered-v1", ROOT)
+        compiled["format"] = "studio.adult-illustration.prompt-projection/v1"
+
+        with self.assertRaisesRegex(
+            ValueError, "Changed or invalid prompt projection"
+        ):
+            validate_prompt_projection(compiled, projection, ROOT)
 
     def test_instruction_profile_records_tags_without_dumping_them(self) -> None:
         projection = projection_with_terms(["closed eyes"], ["watermark"])
