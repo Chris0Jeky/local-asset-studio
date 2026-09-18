@@ -50,13 +50,6 @@ def rehash(index: dict[str, object]) -> None:
 
 
 def write_fixture(root: Path):
-    target = root / "research" / "adult-illustration"
-    target.mkdir(parents=True)
-    shutil.copyfile(
-        ROOT / "research" / "adult-illustration" / "prompt-profile-vocabulary.json",
-        target / "prompt-profile-vocabulary.json",
-    )
-
     rows = [
         (1, "solo", 0, 100),
         (2, "mystery_tag", 0, 50),
@@ -72,6 +65,11 @@ def write_fixture(root: Path):
         ),
     ]
     write_contracts(root, source, rows, reviews)
+    target = root / "research" / "adult-illustration"
+    shutil.copyfile(
+        ROOT / "research" / "adult-illustration" / "prompt-profile-vocabulary.json",
+        target / "prompt-profile-vocabulary.json",
+    )
 
     intent = copy.deepcopy(sample_projection()["intent"])
     intent["tags"] = ["solo", "mystery tag", "not in source"]
