@@ -163,7 +163,12 @@ class PromptTaxonomyMembershipTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.index = synthetic_index()
         cls.source = projection_with_terms(
-            ["hot spring", "source only term", "not in pinned source"],
+            [
+                "hot spring",
+                "source_only_term",
+                "source only term",
+                "not in pinned source",
+            ],
             ["watermark"],
         )
         cls.compiled = compile_prompt(
@@ -193,17 +198,23 @@ class PromptTaxonomyMembershipTests(unittest.TestCase):
         self.assertEqual(reviewed["source_name"], "onsen")
         self.assertTrue(reviewed["accepted_for_compilation"])
 
-        unreviewed = rows[("positive", "source only term")]
-        self.assertEqual(unreviewed["compiler"]["status"], "unknown")
-        self.assertEqual(unreviewed["membership"], "source_known_unreviewed")
-        self.assertEqual(unreviewed["match_kind"], "normalised_space")
-        self.assertEqual(unreviewed["source_name"], "source_only_term")
-        self.assertFalse(unreviewed["reviewed"])
+        canonical = rows[("positive", "source_only_term")]
+        self.assertEqual(canonical["membership"], "source_known_unreviewed")
+        self.assertEqual(canonical["match_kind"], "canonical")
+        self.assertEqual(canonical["source_name"], "source_only_term")
+
+        normalised = rows[("positive", "source only term")]
+        self.assertEqual(normalised["compiler"]["status"], "unknown")
+        self.assertEqual(normalised["membership"], "source_known_unreviewed")
+        self.assertEqual(normalised["match_kind"], "normalised_space")
+        self.assertEqual(normalised["source_name"], "source_only_term")
+        self.assertFalse(normalised["reviewed"])
 
         absent = rows[("positive", "not in pinned source")]
         self.assertEqual(absent["membership"], "absent")
         self.assertIsNone(absent["source_name"])
         self.assertIsNone(absent["tag_id"])
+        self.assertIn(("negative", "watermark"), rows)
 
     def test_report_is_deterministic_content_addressed_and_non_executing(self) -> None:
         first = self.inspect()
@@ -217,10 +228,19 @@ class PromptTaxonomyMembershipTests(unittest.TestCase):
         self.assertTrue(all(value is False for value in first["authority"].values()))
 
     def test_stale_contract_hash_is_rejected_even_after_rehash(self) -> None:
+        for field in ("source_manifest_sha256", "review_manifest_sha256"):
+            with self.subTest(field=field):
+                stale = copy.deepcopy(self.index)
+                stale["contracts"][field] = "0" * 64
+                stale = rehash(stale)
+                with self.assertRaisesRegex(ValueError, "source/review contract"):
+                    self.inspect(index=stale)
+
+    def test_stale_source_identity_is_rejected_even_after_rehash(self) -> None:
         stale = copy.deepcopy(self.index)
-        stale["contracts"]["review_manifest_sha256"] = "0" * 64
+        stale["source"]["sha256"] = "0" * 64
         stale = rehash(stale)
-        with self.assertRaisesRegex(ValueError, "review contract"):
+        with self.assertRaisesRegex(ValueError, "pinned source contract"):
             self.inspect(index=stale)
 
     def test_rehashed_structurally_invalid_index_is_rejected(self) -> None:
