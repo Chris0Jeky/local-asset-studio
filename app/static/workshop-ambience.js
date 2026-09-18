@@ -41,7 +41,14 @@
       (hero.querySelector('.wk-hero-copy') || hero).append(status);
     }
 
-    let assetState = ASSET_STATES.has(options.assetState) ? options.assetState : 'available';
+    const styles = options.styles || q('#workshopImmersiveStyles');
+    const explicitAssetState = ASSET_STATES.has(options.assetState);
+    function stylesheetState(node) {
+      if (!node) return 'unknown';
+      try { return node.sheet ? 'available' : 'unknown'; }
+      catch (_) { return 'unknown'; }
+    }
+    let assetState = explicitAssetState ? options.assetState : stylesheetState(styles);
     let scheduled = false;
 
     function requested() {
@@ -105,13 +112,23 @@
       w.queueMicrotask(() => { scheduled = false; refresh(); });
     };
 
+    const styleCleanup = [];
+    if (!explicitAssetState && styles?.addEventListener) {
+      const available = () => { assetState = 'available'; refresh(); };
+      const missing = () => { assetState = 'missing'; refresh(); };
+      styles.addEventListener('load', available);
+      styles.addEventListener('error', missing);
+      styleCleanup.push(() => styles.removeEventListener('load', available));
+      styleCleanup.push(() => styles.removeEventListener('error', missing));
+    }
+
     const observer = new w.MutationObserver(schedule);
     observer.observe(d.body, {attributes:true, attributeFilter:['data-workshop-ambience']});
     observer.observe(create, {attributes:true, attributeFilter:['hidden','data-workshop-ambience']});
     const generate = q('#generate');
     if (generate) observer.observe(generate, {attributes:true, attributeFilter:['disabled']});
     for (const node of [q('#gallery'), q('#status'), q('#jobProblemsHost'), q('#health')]) {
-      if (node) observer.observe(node, {childList:true, subtree:true, characterData:true});
+      if (node) observer.observe(node, {childList:true, subtree:true,characterData:true});
     }
 
     const api = Object.freeze({
@@ -123,6 +140,7 @@
       },
       destroy() {
         observer.disconnect();
+        for (const remove of styleCleanup.splice(0)) remove();
         controller.destroy();
         if (create.__workshopAmbience === api) delete create.__workshopAmbience;
       }
