@@ -1,0 +1,21 @@
+name: Apply issues 605 and 611 reference review gates
+on:
+  push:
+    branches:
+      - fix/605-611-reference-review-gates
+permissions:
+  contents: write
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pillow
+      - name: Reference-review gate contracts
+        run: python -m unittest discover -s tests -p test_reference_review_use_case_registration.py -v
