@@ -531,7 +531,7 @@
   const useSecondPicture=intent=>()=>{
     const item=secondPicture,dest=boardDestination(intent);if(!item||!dest||!continuationState)return;
     dismissSecondPicture();q('#reference').value='';pendingStyle=item;syncReady();
-    openHandoff(continuationState.source_asset_id,dest.id,undefined,intent);
+    if(!openHandoff(continuationState.source_asset_id,dest.id,undefined,intent))pendingStyle=null;
   };
   q('#uxSecondRestyle').onclick=useSecondPicture('restyle');q('#uxSecondCombine').onclick=useSecondPicture('combine');
   q('#uxSecondReplace').onclick=async()=>{
@@ -559,14 +559,15 @@
   function warnUnsavedAsset(){let notice=q('#uxAssetUnsaved');if(!notice){notice=element('p','callout');notice.id='uxAssetUnsaved';notice.setAttribute('role','status');q('#assetHandoffs').before(notice);}notice.textContent='Save your asset details before continuing. Your changes are still here.';q('#saveAssetDetails').focus();}
   document.addEventListener('click',e=>{if(e.target.closest('.ux-scene-link,#assetRecipe')&&assetDetailsDirty()){e.preventDefault();e.stopImmediatePropagation();warnUnsavedAsset();}},true);
   function openHandoff(id,preferred,epoch,intent){
-    if(epoch!=null&&epoch!==handoffEpoch)return;const request=++handoffEpoch;
-    if(assetDetailsDirty()){warnUnsavedAsset();return;}if(!catalog){announce('Recipes are still loading.');return;}
-    const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return;}
+    if(epoch!=null&&epoch!==handoffEpoch)return false;const request=++handoffEpoch;
+    if(assetDetailsDirty()){warnUnsavedAsset();return false;}if(!catalog){announce('Recipes are still loading.');return false;}
+    const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return false;}
     handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
     handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/^combine-/.test(preferred||'')?'combine':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(a.review||'unreviewed')+'</small>';
     q('#uxHandoffStatus').textContent='Reading this output’s exact submitted prompt…';handoffRecipes(preferred);handoff.showModal();
     readSource(id).then(source=>{if(request!==handoffEpoch||!handoff.open)return;if(source?.version!==1||source.asset_id!==id||source.sha256!==a.sha256)throw Error('Source identity changed; refresh the library.');sourceContext=source;q('#uxHandoffStatus').textContent=source.warning||'Source and output-specific wording found. Preparing remains separate from running.';const current=q('#uxDestination').value;handoffRecipes(preferred||current);}).catch(error=>{if(request===handoffEpoch&&handoff.open){q('#uxHandoffStatus').textContent='Could not read source context: '+error.message;sourceContext=null;destinationDetails();}});
+    return true;
   }
   q('#uxDestination').onchange=destinationDetails;
   q('#uxPrepareHandoff').onclick=async()=>{
@@ -628,7 +629,16 @@
   q('#uxPullAsset').onclick=async()=>{if(!takesSource()){announce(NO_SOURCE_SLOT);return;}const epoch=selectionEpoch;await refreshAssets();if(epoch!==selectionEpoch||view!=='create')return;q('#uxSourceSearch').value='';q('#uxPickerStatus').textContent='Attach a copy. The original stays in your library.';q('#uxSourceSlot').innerHTML=sourceSlotOptions();const first=nextEmptySlot();if(first>=0)q('#uxSourceSlot').value=String(first);renderSources();picker.showModal();};
   q('#uxSourceSearch').oninput=renderSources;
   after('selectPreset',()=>{if(picker.open)picker.close();});
-  async function pullIntoSlot(index,id){const result=await post('/api/assets/reference',{id});const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],result,{missing:false});if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();}
+  async function pullIntoSlot(index,id,stamp=workbenchStamp()){
+    try{
+      const result=await post('/api/assets/reference',{id});
+      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');
+      const slot=referenceRecords[index];if(!slot)throw Error('The destination slot is no longer available.');
+      const previous=slot.parent_asset;Object.assign(slot,result,{missing:false});
+      if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+      renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();return true;
+    }catch(error){announce('The second picture was not attached. '+error.message,true);return false;}
+  }
   q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
         if(isSource&&!selected.reference_slots?.length){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
