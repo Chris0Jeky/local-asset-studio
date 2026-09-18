@@ -215,10 +215,11 @@
     const sources = summarizeSources(context);
     const secondary = [];
     let execution = context.execution;
-    if (context.capability.state === 'unknown') {
-      execution = {...unknown(context.capability.reason, 'Recipe capability has not been observed.'), observedAt:null, contextStamp:null};
-    } else if (execution.state === 'known' && execution.contextStamp && execution.contextStamp !== context.contextStamp) {
+    if (execution.state === 'known' && execution.contextStamp && execution.contextStamp !== context.contextStamp) {
       execution = {...unknown('Execution evidence belongs to an older context. Recheck the current workspace.', 'Execution evidence is stale.'), observedAt:null, contextStamp:null};
+    } else if (context.capability.state === 'unknown' &&
+        (execution.state !== 'known' || execution.value.state === 'ready')) {
+      execution = {...unknown(context.capability.reason, 'Recipe capability has not been observed.'), observedAt:null, contextStamp:null};
     }
     const state = execution.state === 'known' ? execution.value.state : 'unknown';
     const sourceIntent = () => intent(
