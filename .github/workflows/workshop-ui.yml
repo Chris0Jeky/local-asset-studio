@@ -3,12 +3,30 @@ on:
   pull_request:
     paths:
       - 'app/static/**'
+      - 'docs/workshop/**'
       - 'tests/*workshop*'
       - 'tests/studio_browser_smoke.py'
       - '.github/workflows/workshop-ui.yml'
 permissions:
   contents: read
 jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package exact frontend source for offline review
+        run: |
+          mkdir -p /tmp/workshop-review
+          git rev-parse HEAD > /tmp/workshop-review/COMMIT.txt
+          git archive --format=tar HEAD app/static tests docs/workshop .github/workflows > /tmp/workshop-review/workshop-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workshop-review-source
+          path: /tmp/workshop-review/
+          retention-days: 1
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 12
