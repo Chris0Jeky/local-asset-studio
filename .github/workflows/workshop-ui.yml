@@ -1,23 +1,39 @@
 name: Workshop UI
 on:
-  push:
-    branches: ['codex/create-workshop-focus', 'codex/create-workshop-studio']
   pull_request:
     paths:
       - 'app/static/**'
       - 'tests/*workshop*'
+      - 'tests/studio_browser_smoke.py'
       - '.github/workflows/workshop-ui.yml'
 permissions:
   contents: read
 jobs:
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Capture tracked source for isolated frontend review
-        run: git archive --format=tar HEAD > /tmp/workshop-source.tar
-      - uses: actions/upload-artifact@v4
         with:
-          name: workshop-source
-          path: /tmp/workshop-source.tar
-          retention-days: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/workshop_contracts.cjs
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Component presentation and original-control contracts
+        run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Real application, native HTTP/storage and original submission handler
+        run: python tests/workshop_application.py --output .runtime/workshop-application
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workshop-browser-evidence
+          path: |
+            .runtime/workshop-component/
+            .runtime/workshop-application/
+          retention-days: 7

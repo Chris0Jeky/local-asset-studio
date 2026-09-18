@@ -34,6 +34,7 @@
   const route=location.pathname.includes('workflow-studio.html')?'workflows':location.pathname.includes('av.html')?'scene':location.pathname.includes('voice.html')?'voice':location.pathname.includes('prompt-lab.html')?'prompt':location.pathname.includes('review.html')?'review':'home';
   setView(isMain?StudioUX.normalizeView(location.hash):route);window.StudioShell={setView,openCommands};
   if(isMain){
+    const workshop=document.createElement('script');workshop.src='/static/workshop.js';document.body.append(workshop);
     const disclosureStyle=document.createElement('link');disclosureStyle.rel='stylesheet';disclosureStyle.href='/static/create-progressive-disclosure.css';document.head.append(disclosureStyle);
     const disclosure=document.createElement('script');disclosure.src='/static/create-progressive-disclosure.js';document.body.append(disclosure);
     const proposalStyle=document.createElement('link');proposalStyle.rel='stylesheet';proposalStyle.href='/static/setup-proposal.css';document.head.append(proposalStyle);
