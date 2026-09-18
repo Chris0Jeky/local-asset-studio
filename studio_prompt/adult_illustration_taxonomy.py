@@ -91,23 +91,27 @@ def _parse_source(source_bytes: bytes, contract: dict[str, Any]) -> list[dict[st
 
 def _acyclic(graph: dict[str, list[str]], label: str, maximum_depth: int) -> None:
     visiting: set[str] = set()
-    visited: set[str] = set()
+    subtree_depth: dict[str, int] = {}
 
-    def visit(node: str, depth: int) -> None:
-        if depth > maximum_depth:
-            raise ValueError(f"Taxonomy {label} graph exceeds depth {maximum_depth}")
+    def depth(node: str) -> int:
         if node in visiting:
             raise ValueError(f"Taxonomy {label} graph contains a cycle at {node!r}")
-        if node in visited:
-            return
+        cached = subtree_depth.get(node)
+        if cached is not None:
+            return cached
         visiting.add(node)
-        for target in graph.get(node, []):
-            visit(target, depth + 1)
-        visiting.remove(node)
-        visited.add(node)
+        try:
+            result = 1
+            for target in graph.get(node, []):
+                result = max(result, 1 + depth(target))
+        finally:
+            visiting.remove(node)
+        subtree_depth[node] = result
+        return result
 
     for node in sorted(graph):
-        visit(node, 1)
+        if depth(node) > maximum_depth:
+            raise ValueError(f"Taxonomy {label} graph exceeds depth {maximum_depth}")
 
 
 def _validate_review(
