@@ -118,6 +118,7 @@
     el('rr-originals').value='';
     el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
     showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
+    document.dispatchEvent(new CustomEvent('studio-prompt-state'));
     return report.report_sha256;
   }});
   el('rr-analysis').addEventListener('change',async event=>{

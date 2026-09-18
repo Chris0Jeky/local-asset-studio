@@ -63,7 +63,7 @@ class ReferenceFacetAttributionTests(unittest.TestCase):
             'action: standing with the left arm raised',
         ])
 
-    def test_multiple_contributors_keep_labels_to_disambiguate_their_values(self):
+    def test_multiple_contributors_keep_prompt_text_semantic_and_provenance_separate(self):
         report, originals = self.report([
             ('style', {'style': 'fine ink lines'}),
             ('style', {'style': 'soft painterly shading'}),
@@ -75,11 +75,16 @@ class ReferenceFacetAttributionTests(unittest.TestCase):
         )
         self.assertEqual(
             result['intent']['facets']['style'],
-            'picture-1: fine ink lines; picture-2: soft painterly shading',
+            'fine ink lines; soft painterly shading',
         )
+        self.assertNotIn('picture-', result['intent']['facets']['style'])
         self.assertEqual(
             [item['reference_id'] for item in result['transfers']],
             ['picture-1', 'picture-2'],
+        )
+        self.assertEqual(
+            [reference['take'] for reference in result['intent']['references']],
+            [['style: fine ink lines'], ['style: soft painterly shading']],
         )
 
     def test_duplicate_paths_and_content_hashes_are_refused_before_analysis(self):

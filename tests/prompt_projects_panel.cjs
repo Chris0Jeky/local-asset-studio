@@ -6,6 +6,16 @@ class Element{
 }
 const scope='a'.repeat(32),id='b'.repeat(32),store=new Map();let rejectStorage=false,drop=false,held=null,release,posts=[],rows=[],readRow=null,lastCommand;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
+const referenceAnalysis={
+ request:{references:[{id:'picture-1',path:'reference.png',sha256:'c'.repeat(64)}]},
+ answer:{summary:'Reviewed reference',assumptions:[],questions:[],images:[{
+  description:'A reviewed ink study.',tags:[],facets:{style:'fine ink lines'},uncertain_facets:[],unknowns:[],
+ }]},
+ report_sha256:'d'.repeat(64),
+};
+const referenceReview={report_sha256:referenceAnalysis.report_sha256,selections:[{
+ reference_id:'picture-1',role:'style',facets:['style'],overrides:{},tags:[],
+}]};
 function create(){
  const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
  const events={};const doc={getElementById:el,createElement:t=>new Element(t),createTextNode:()=>new Element(),body:new Element(),
@@ -18,6 +28,8 @@ function create(){
    crypto:require('node:crypto').webcrypto,TextEncoder,TextDecoder,AbortController,URLSearchParams,setTimeout:()=>1,clearTimeout(){},sessionStorage,
    URL:{revokeObjectURL(){}},fetch:async(url,options)=>{
     if(url==='/api/prompt/profiles')return response({profiles:[]});
+    if(url.endsWith('/reference-review/inspect'))return response({format:'studio.reference-review/v1',
+      analysis:JSON.parse(JSON.stringify(referenceAnalysis)),review:JSON.parse(JSON.stringify(referenceReview)),...zero});
     if(url.endsWith('/capabilities'))return response({format:'studio.prompt-projects/v1',workspace_id:scope,...zero});
     if(url.includes('/list?'))return response({workspace_id:scope,projects:rows.map(r=>({id:r.id,name:r.document.name,revision:r.revision})),...zero});
     if(url.includes('/status?'))return response(lastCommand);
@@ -50,6 +62,8 @@ function create(){
  el('brief').value='Unreported late input';await el('pp-open').fire('click');assert.equal(el('brief').value,'Unreported late input');assert.match(el('pp-status').textContent,/changed/);
  vm.runInContext("registry=[{id:'sdxl-prose-v1',tasks:['image'],max_refs:0,min_refs:0}];",context);el('pp-list').value=id;await el('pp-preview').fire('click');await el('pp-open').fire('click');
  assert.equal(el('brief').value,'Newer while saving');assert.match(el('pp-current').textContent,/revision 2/);
+ await context.StudioReferenceReview.load(referenceAnalysis);
+ assert.match(el('pp-current').textContent,/unsaved/,'Programmatic reference-review loads must invalidate the saved revision indicator');
  rejectStorage=true;await el('pp-save').fire('click');assert.equal(posts.length,count);assert.match(el('pp-status').textContent,/retained/);rejectStorage=false;
 
  // Opening a historical revision is a detached local draft, never a stale project head.
@@ -67,5 +81,5 @@ function create(){
  assert.equal(store.size,0);assert.equal(el('pp-save').disabled,false);assert.match(el('pp-current').textContent,/revision 1/);assert.match(el('pp-current').textContent,/unsaved/);
  const beforeSave=posts.length;await el('pp-save').fire('click');assert.equal(posts.length,beforeSave+1);
  assert.equal(JSON.parse(posts.at(-1).body).expected_revision,1);
- console.log('Saved brief panel recovery guards passed');
+ console.log('Saved brief panel recovery, review-state and detached-revision guards passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

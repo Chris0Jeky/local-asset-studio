@@ -306,19 +306,15 @@ def _runtime(value, summary):
 
 
 def _verify_sample_window(records, finish, finished, sampling, warnings):
-    """Retain one bounded finish-race sample without widening the evidence window."""
+    """Keep samples inside observer lifetime; disclose coordinator overshoot."""
     if not sampling['observed']:
         return
     start = _timestamp(records[0]['recorded_at'])
     first = _timestamp(sampling['first_observed_at'])
     last = _timestamp(sampling['last_observed_at'])
-    end = _timestamp(finish['recorded_at']) if finish else finished
-    require(start <= first, 'samples_outside_window')
-    if last <= end:
-        return
-    overshoot = (last - end).total_seconds()
-    require(overshoot <= sampling['interval_seconds_after_completion'], 'samples_outside_window')
-    warnings.append('sample_window_overshoot')
+    require(start <= first and last <= finished, 'samples_outside_window')
+    if finish is not None and last > _timestamp(finish['recorded_at']):
+        warnings.append('sample_window_overshoot')
 
 
 def inspect_observation(directory: str | Path, *, expected_result_sha256: str | None = None,

@@ -1,4 +1,4 @@
-"""Bounded timestamp-window contracts for offline resource receipts."""
+"""Timestamp-window contracts for offline resource receipts."""
 from datetime import timedelta
 from pathlib import Path
 import sys
@@ -38,17 +38,17 @@ class SampleWindowTests(unittest.TestCase):
         )
         return warnings
 
-    def test_sample_finishing_gap_within_interval_is_retained_as_warning(self):
-        warnings = self.verify(sampling(last=10.5, interval=1))
+    def test_post_coordinator_sample_before_observer_finish_is_warning(self):
+        warnings = self.verify(sampling(last=10.5), finish=10, finished=11)
         self.assertEqual(warnings, ['sample_window_overshoot'])
 
-    def test_exact_interval_boundary_is_retained_as_warning(self):
-        warnings = self.verify(sampling(last=11, interval=1))
+    def test_scheduler_delay_is_not_guessed_from_sampling_interval(self):
+        warnings = self.verify(sampling(last=15, interval=1), finish=10, finished=16)
         self.assertEqual(warnings, ['sample_window_overshoot'])
 
-    def test_sample_beyond_one_interval_is_refused(self):
+    def test_sample_after_observer_result_timestamp_is_refused(self):
         with self.assertRaises(receipts.EvidenceError) as caught:
-            self.verify(sampling(last=11.001, interval=1))
+            self.verify(sampling(last=11.001), finish=10, finished=11)
         self.assertEqual(caught.exception.code, 'samples_outside_window')
 
     def test_sample_before_intent_is_still_refused(self):
@@ -62,9 +62,11 @@ class SampleWindowTests(unittest.TestCase):
         value['observed'] = 0
         self.assertEqual(self.verify(value), [])
 
-    def test_missing_finish_uses_result_completion_timestamp(self):
-        warnings = self.verify(sampling(last=11.5, interval=1), finish=None, finished=11)
-        self.assertEqual(warnings, ['sample_window_overshoot'])
+    def test_missing_finish_uses_only_observer_result_boundary(self):
+        self.assertEqual(self.verify(sampling(last=10.5), finish=None, finished=11), [])
+        with self.assertRaises(receipts.EvidenceError) as caught:
+            self.verify(sampling(last=11.001), finish=None, finished=11)
+        self.assertEqual(caught.exception.code, 'samples_outside_window')
 
 
 if __name__ == '__main__':

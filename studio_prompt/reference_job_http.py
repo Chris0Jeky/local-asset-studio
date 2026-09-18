@@ -1,6 +1,7 @@
 """Same-origin operation commands on Studio's existing HTTP server, not inference threads."""
 import sqlite3
 from urllib.parse import parse_qs, urlparse
+from studio_workflow.http_body import reject_json
 from .schema import decode, need
 
 PREFIX='/api/prompt/reference-jobs/'
@@ -35,12 +36,13 @@ def extend_handler(base):
 
         def do_POST(self):
             if not urlparse(self.path).path.startswith(PREFIX):return super().do_POST()
-            if not self._safe_mutation():return self._json(403,{'error':'Local same-origin request required'})
+            if not self._safe_mutation():return reject_json(self,403,{'error':'Local same-origin request required'})
             held=None
             try:
                 service=self._reference_service()
                 need(self.path in (PREFIX+'create',PREFIX+'cancel',PREFIX+'release',PREFIX+'retire'),'Unknown reference command route')
-                need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
+                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 limit=64*1024
                 if self.path==PREFIX+'create':
                     # Admission precedes the large body read as well as image decoding.
