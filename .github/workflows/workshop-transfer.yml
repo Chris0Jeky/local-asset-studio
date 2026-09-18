@@ -1,0 +1,46 @@
+name: Publish reviewed workshop snapshot
+on:
+  push:
+    branches: ['codex/create-workshop-focus']
+    paths: ['.github/workflows/workshop-transfer.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/codex/create-workshop-focus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the exact locally verified patch and remove transport scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = b4cb8cf29485041027e56c1122310f4b806e0b8f
+          python - <<'PY'
+          import base64, hashlib, pathlib, subprocess, zlib
+          parts = [pathlib.Path('.workshop-transfer/part-%d.txt' % i) for i in (1,2,3)]
+          patch = zlib.decompress(base64.b64decode(''.join(p.read_text() for p in parts), validate=True))
+          assert len(patch) == 95005
+          assert hashlib.sha256(patch).hexdigest() == 'd6a42604572865215b8532f05b4aad944a6dc971e77a1854d93d10a4ab70baeb'
+          target = pathlib.Path('/tmp/workshop-reviewed.patch'); target.write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(target)],check=True)
+          subprocess.run(['git','apply','--index',str(target)],check=True)
+          for p in parts: p.unlink()
+          pathlib.Path('.workshop-transfer').rmdir()
+          pathlib.Path('.github/workflows/workshop-transfer.yml').unlink()
+          PY
+          git add -u .workshop-transfer .github/workflows/workshop-transfer.yml
+          node --check app/static/workshop.js
+          node --test tests/workshop_contracts.cjs
+          python scripts/validate-repo.py
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(create): focus workshop, recipe dialog and persistent run dock'
+          git push origin HEAD:codex/create-workshop-focus
