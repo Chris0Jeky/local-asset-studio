@@ -23,20 +23,30 @@ _COMMON_PINS = frozenset({
     'reference_transform', 'prompt_dialect',
 })
 _ROUTE_SPECS = (
-    ('klein-geometry-reference', 'skeleton', 'route-native', frozenset({'renderer'})),
-    ('copy-pose-rgb', 'rgb-pose-donor', 'not-applicable', frozenset({'lora'})),
-    ('sdxl-precomputed-skeleton', 'precomputed-skeleton',
+    ('klein-geometry', 'klein-geometry-reference', 'skeleton', 'route-native',
+     frozenset({'renderer'})),
+    ('copy-pose', 'copy-pose-rgb', 'rgb-pose-donor', 'not-applicable',
+     frozenset({'lora'})),
+    ('sdxl-corrected-skeleton', 'sdxl-precomputed-skeleton', 'precomputed-skeleton',
      'bypass-precomputed-guide', frozenset({'controlnet', 'renderer'})),
 )
 _CASE_SPECS = (
-    ('familiar-difficult-bend', 'development', 'replicated-seeds'),
-    ('unseen-crossed-legs', 'held-out', 'replicated-seeds'),
-    ('seated-support', 'held-out', 'replicated-seeds'),
-    ('overhead-reach', 'held-out', 'replicated-seeds'),
-    ('strong-camera-foreshortening', 'held-out', 'replicated-seeds'),
-    ('hand-prop-contact', 'held-out', 'replicated-seeds'),
-    ('second-character-unseen-pose', 'held-out', 'replicated-seeds'),
-    ('irrelevant-donor-counterfactual', 'held-out', 'paired-counterfactual'),
+    ('familiar-difficult-bend', 'development', 'replicated-seeds',
+     ('body_pose', 'camera')),
+    ('unseen-crossed-legs', 'held-out', 'replicated-seeds',
+     ('body_pose', 'anatomy_occlusion')),
+    ('seated-support', 'held-out', 'replicated-seeds',
+     ('body_pose', 'hands_contact_support')),
+    ('overhead-reach', 'held-out', 'replicated-seeds',
+     ('body_pose', 'anatomy_occlusion')),
+    ('strong-camera-foreshortening', 'held-out', 'replicated-seeds',
+     ('body_pose', 'camera')),
+    ('hand-prop-contact', 'held-out', 'replicated-seeds',
+     ('body_pose', 'hands_contact_support')),
+    ('second-character-unseen-pose', 'held-out', 'replicated-seeds',
+     ('body_pose', 'identity', 'outfit')),
+    ('irrelevant-donor-counterfactual', 'held-out', 'paired-counterfactual',
+     ('body_pose', 'ignored_facet_leakage')),
 )
 
 
@@ -82,12 +92,12 @@ def _title(value):
 def _route(value, expected):
     _keys(value, ('id', 'mechanism', 'input_representation', 'backend_id',
                   'detector_behavior', 'pins', 'noise_seeds'))
-    mechanism, representation, detector, special_pins = expected
-    if (value['mechanism'] != mechanism or
+    expected_id, mechanism, representation, detector, special_pins = expected
+    route_id = _id(value['id'], 'route id')
+    if (route_id != expected_id or value['mechanism'] != mechanism or
             value['input_representation'] != representation or
             value['detector_behavior'] != detector):
-        raise ValueError('route mechanism, representation and detector behavior disagree')
-    route_id = _id(value['id'], 'route id')
+        raise ValueError('route identity, mechanism, representation and detector behavior disagree')
     backend_id = _id(value['backend_id'], 'backend id')
     required_pins = _COMMON_PINS | special_pins
     _keys(value['pins'], required_pins)
@@ -109,7 +119,7 @@ def _route(value, expected):
 
 
 def _case(value, ordinal, expected):
-    case_id, scope, slot_mode = expected
+    case_id, scope, slot_mode, expected_observations = expected
     common = ('id', 'ordinal', 'title', 'scope', 'slot_mode', 'source_ref',
               'required_observations')
     _keys(value, common, ('pair_labels',))
@@ -119,11 +129,9 @@ def _case(value, ordinal, expected):
         raise ValueError('case identity, order, scope or slot protocol changed')
     source_ref = _id(value['source_ref'], 'source reference')
     observations = value['required_observations']
-    if (not isinstance(observations, list) or not observations or
-            len(observations) > len(REVIEW_AXES) or
-            any(not isinstance(item, str) or item not in REVIEW_AXES for item in observations) or
-            len(set(observations)) != len(observations)):
-        raise ValueError('required observations must be unique review axes')
+    if (not isinstance(observations, list) or
+            observations != list(expected_observations)):
+        raise ValueError('case-specific required observations changed')
     result = {
         'id': case_id,
         'ordinal': ordinal,
