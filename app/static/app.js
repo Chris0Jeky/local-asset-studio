@@ -99,15 +99,15 @@ function scheduleTimeEstimate() {
 }
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : (selected?.reference_hint || "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.");
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
-// Lineage is attributed per attachment point. A slot-less input records its source in parentByInput;
-// a role slot records it on the reference record itself (parent_asset, supplied by
+// Lineage is attributed per attachment point. A slot-less input and a board's distinct lastReference
+// source record their claim in parentByInput; a role slot records it on its reference record (parent_asset, supplied by
 // /api/assets/reference). A parent survives while any attachment point still claims it, and a parent
 // with no attribution anywhere - a job-exported recipe, a production branch - is never dropped by an
 // edit: only the point that changed may release what that point claimed.
 function parentClaimed(id) { const attached=typeof attachedReferencePayload==='function'?attachedReferencePayload():[]; return Object.values(parentByInput).includes(id)||attached.some(r=>r.file&&!r.missing&&r.parent_asset===id); }
 function releaseParentAsset(id) { if(id&&!parentClaimed(id))parentAssets=parentAssets.filter(p=>p!==id); }
 function releaseInputParent(input) { if(!(input in parentByInput))return; const id=parentByInput[input]; delete parentByInput[input]; releaseParentAsset(id); }
-function claimInputParent(input, id) { releaseInputParent(input); if(!id)return; if(!selected?.reference_slots?.length)parentByInput[input]=id; if(!parentAssets.includes(id))parentAssets=[...parentAssets,id]; }
+function claimInputParent(input, id) { releaseInputParent(input); if(!id)return; if(!selected?.reference_slots?.length||input==='lastReference')parentByInput[input]=id; if(!parentAssets.includes(id))parentAssets=[...parentAssets,id]; }
 // Pulling a saved source into one attachment point replaces whatever that point held before.
 function replaceParentAsset(input, previous, id) { releaseParentAsset(previous); claimInputParent(input, id); }
 // A handoff declares the whole lineage: this run descends from one source, on one input.
