@@ -35,16 +35,8 @@ jobs:
 
           path = Path('app/resource_receipts.py')
           text = path.read_text(encoding='utf-8')
-          old = """    except (EvidenceError, FileNotFoundError, OSError):
-        raise EvidenceError('file_changed') from None
-"""
-          new = """    except EvidenceError:
-        raise
-    except FileNotFoundError:
-        raise EvidenceError('file_changed') from None
-    except OSError:
-        raise EvidenceError('artifact_unreadable') from None
-"""
+          old = "    except (EvidenceError, FileNotFoundError, OSError):\n        raise EvidenceError('file_changed') from None\n"
+          new = "    except EvidenceError:\n        raise\n    except FileNotFoundError:\n        raise EvidenceError('file_changed') from None\n    except OSError:\n        raise EvidenceError('artifact_unreadable') from None\n"
           assert text.count(old) == 1, text.count(old)
           path.write_text(text.replace(old, new), encoding='utf-8')
           PY
