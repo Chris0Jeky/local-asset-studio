@@ -103,6 +103,10 @@ def main():
         checks.append({'name': 'native focus return + cancelled and accepted recipe replacement'})
 
         page.select_option('#workshopLayout', 'immersive')
+        # A slot-less reference recipe is not a readiness prerequisite in app.js (referencesReady() returns
+        # true and the recipe's example stands until replaced), so guidance must not invent one here.
+        assert page.evaluate("document.querySelector('#workshopGuidanceAction')?.dataset.intent") != 'review-sources'
+        checks.append({'name': 'a slot-less reference recipe reports no invented source prerequisite'})
         page.locator('#reference').set_input_files({'name': 'source.png', 'mimeType': 'image/png', 'buffer': b'fixture'})
         page.wait_for_function("document.querySelector('#workshopGuidanceAction')?.dataset.intent==='review-sources'")
         source_submissions = page.evaluate('submitted')

@@ -8,16 +8,19 @@
   root.StudioWorkshop = api;
   const safeId = (value, fallback) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(value) ? value : fallback;
   const currentRecipe = () => typeof selected === 'undefined' ? null : selected;
+  // `required` mirrors app.js referencesReady(), the readiness owner, so the projection never invents a
+  // prerequisite: a board recipe is gated on reference_board.min across the board, not slot by slot, and a
+  // slot-less reference is never a readiness prerequisite - the recipe's example stands until replaced.
   const referenceSlots = () => {
     const recipe = currentRecipe(); if (!recipe) return [];
-    if (Array.isArray(recipe.reference_slots)) return recipe.reference_slots.map((slot, index) => ({
+    if (Array.isArray(recipe.reference_slots)) { const board = !!recipe.reference_board; return recipe.reference_slots.map((slot, index) => ({
       id:safeId(slot?.id || slot?.key, 'reference-'+(index+1)),
       role:typeof slot?.role === 'string' && slot.role.trim() ? slot.role.trim() : 'Reference '+(index+1),
-      required:slot?.required !== false
-    }));
+      required:!board && slot?.required !== false
+    })); }
     const slots = [];
-    if (recipe.reference) slots.push({id:'reference',role:recipe.reference_label || 'Reference',required:true});
-    if (recipe.last_reference) slots.push({id:'last-reference',role:recipe.last_reference_label || 'Last frame',required:true});
+    if (recipe.reference) slots.push({id:'reference',role:recipe.reference_label || 'Reference',required:false});
+    if (recipe.last_reference) slots.push({id:'last-reference',role:recipe.last_reference_label || 'Last frame',required:false});
     return slots;
   };
   const references = () => {
