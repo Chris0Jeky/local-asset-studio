@@ -38,6 +38,14 @@ class ProductionBriefTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Duplicate'):
             self.mod.validate(self.rows + [self.rows[0]], self.config)
 
+    def test_invalid_world_descriptions_are_refused(self):
+        for value in (None, 12, [], {}, '', '   ', 'x' * 2001):
+            config = copy.deepcopy(self.config)
+            config['worlds']['shared'] = value
+            with self.subTest(value=type(value).__name__):
+                with self.assertRaisesRegex(ValueError, 'world description'):
+                    self.mod.validate(self.rows, config)
+
     def test_unknown_profile_and_anchor_are_refused(self):
         for key, value in [('profile', 'imaginary'), ('anchor', 'absent')]:
             rows = copy.deepcopy(self.rows)
