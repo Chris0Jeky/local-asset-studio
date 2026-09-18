@@ -44,7 +44,7 @@ Observed results:
 
 - **42 Node tests passed** across presentation context, ambience policy and workshop integration contracts.
 - **7 Python unittest tests passed**, including normal discovery of both Node contract files and existing workshop frontend contracts.
-- The dedicated Chromium ambience journey passed **5 check groups**: available local poster, missing-poster token fallback, offline independence, forced-colour fallback/restoration and None.
+- The dedicated Chromium ambience journey passed **6 check groups**: available local poster, missing-poster token fallback, offline independence, forced-colour fallback/restoration, None, and stylesheet readiness transitioning through unknown, missing and available states.
 - That journey retained the original prompt and file-input DOM nodes, recorded **zero submissions**, **zero HTTP/HTTPS/WebSocket requests** and **zero page exceptions**.
 - The existing workshop component driver passed **9 check groups**, including the inherited no-invented-source regression, all 36 presentation combinations and 24 desktop/mobile geometry cases.
 - The standalone prototype passed **9 checks** and exported as one offline HTML document.
@@ -58,6 +58,7 @@ The local review package does not contain the complete Python application module
 - An available local poster is independent from internet and backend reachability.
 - hidden documents suspend optional art;
 - forced-colour mode and missing/unknown assets use token fallback;
+- the adapter treats an unresolved stylesheet as unknown, an error event as missing and a load event as available instead of assuming that requested art exists;
 - reduced motion, data saving, user pause and active/uncertain execution retain an available static poster while motion remains ineligible;
 - malformed values fail closed and cannot introduce provider URLs, private paths or commands;
 - the controller and adapter remove their listeners/observers on destruction;

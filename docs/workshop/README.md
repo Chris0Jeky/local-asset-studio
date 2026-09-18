@@ -40,7 +40,9 @@ An available local poster does not depend on internet reachability or backend he
 
 `workshop-ambience-policy.js` is a pure bounded policy. It cannot receive URLs, prompts, credentials, filesystem paths or executable configuration, and every decision has `authorizesExecution: false` and `commands: []`. `workshop-ambience.js` is a separate presentation adapter that observes allow-listed appearance/readiness signals, updates only decorative data attributes and status text, and disconnects its listeners when destroyed. It never clicks Generate, changes a recipe, stages a source or writes to storage.
 
-If the policy script cannot load, the shell still mounts the ordinary workshop and retains the earlier static presentation. Forced-colour mode and missing-asset fallback leave the prompt, references, errors and run controls complete.
+The adapter does not assume that requested art exists. Before the immersive stylesheet is confirmed it reports the asset as unknown and uses theme tokens; a stylesheet error reports it missing; a successful stylesheet load makes the static poster available. These transitions affect decoration only and never alter the selected ambience preference.
+
+If the policy script cannot load, the shell still mounts the ordinary workshop and retains the earlier static presentation. Forced-colour mode, unresolved styles and missing-asset fallback leave the prompt, references, errors and run controls complete.
 
 ## Contextual guidance
 
@@ -78,7 +80,7 @@ The prototype is not an alternative executor. Its recipes, notices and saved set
 - [Read-only presentation context](../superpowers/specs/2026-09-18-presentation-context-design.md)
 - [Ambience eligibility policy](../superpowers/specs/2026-09-18-workshop-ambience-policy-design.md)
 
-`Workshop UI` CI publishes browser reports/screenshots and the exported prototype. Its dedicated ambience journey qualifies static poster, token fallback, offline independence, forced-colour restoration and None. The application driver uses the existing synthetic API fixture, not a live GPU.
+`Workshop UI` CI publishes browser reports/screenshots and the exported prototype. Its dedicated ambience journey qualifies static poster, token fallback, offline independence, forced-colour restoration, None, and stylesheet readiness moving through unknown, missing and available states. The application driver uses the existing synthetic API fixture, not a live GPU.
 
 ## Small, reversible integration
 

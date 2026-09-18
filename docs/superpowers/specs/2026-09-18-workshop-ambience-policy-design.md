@@ -98,12 +98,16 @@ It updates one status node with policy text. It does not fetch, decode, preload,
 The separate presentation adapter mounts only after the existing workshop has created its hero and controls. It:
 
 - reads the allow-listed requested ambience from existing workshop data attributes;
+- derives local poster availability from the existing `#workshopImmersiveStyles` link instead of assuming that requested art exists;
+- starts with `unknown` while the stylesheet is unresolved, changes to `missing` on its error event, and changes to `available` on load;
 - classifies the current visible execution evidence without changing it;
 - forwards internet/backend observations only as explanatory context;
 - creates `#workshopAmbienceStatus` when needed;
 - exposes `create.__workshopAmbience` for inspection and bounded asset-state qualification;
 - watches only ambience attributes, Generate disabled state, gallery/status/problem text and the connection label;
 - never clicks Generate, changes a recipe, writes a prompt, stages a file, mutates storage, or invokes a backend.
+
+The stylesheet listeners and mutation observer are removed on `destroy()`. An explicit asset state supplied by a deterministic test or future reviewed local manifest remains possible, but production defaults to stylesheet-backed evidence.
 
 `studio-shell.js` loads the presentation context, then the pure ambience policy, then `workshop.js`, then the ambience adapter. If the policy script fails to load, the shell still mounts `workshop.js`; the existing static appearance remains the fallback.
 
@@ -133,13 +137,14 @@ No essential text or control is baked into the image.
 
 - policy script loads before `workshop.js`, and the presentation adapter mounts afterwards;
 - shell policy-load failure still mounts the ordinary workshop;
+- unresolved, failed and successfully loaded immersive styles map to unknown, missing and available asset observations;
 - presentation switching preserves prompt and file-input identity;
-- visibility and media-query changes do not submit jobs;
+- visibility, stylesheet and media-query changes do not submit jobs;
 - a missing poster falls back to tokens without hiding controls;
 - desktop, mobile and 200% zoom retain no horizontal page overflow;
 - browser run records no HTTP, HTTPS, WebSocket, service-worker or media requests.
 
-A dedicated Chromium journey exercises available poster, missing-asset fallback, offline independence, forced-colour fallback/restoration and `None`, while retaining the original editable DOM nodes and zero submissions.
+A dedicated Chromium journey exercises available poster, missing-asset fallback, offline independence, forced-colour fallback/restoration, `None`, and stylesheet readiness moving through unknown, missing and available states, while retaining the original editable DOM nodes and zero submissions.
 
 ## Rollback
 
