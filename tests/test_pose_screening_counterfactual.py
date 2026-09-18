@@ -15,7 +15,7 @@ class PoseScreeningCounterfactualTests(unittest.TestCase):
     def source(self):
         source = json.loads((ROOT / 'examples/pose-control/screening-manifest.json').read_text(encoding='utf-8'))
         case = source['cases'][7]
-        case.pop('source_ref')
+        case.pop('source_ref', None)
         case['source_refs'] = {
             'baseline': 'local-source-8-baseline',
             'variant': 'local-source-8-variant',
