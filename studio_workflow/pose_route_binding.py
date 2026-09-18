@@ -179,6 +179,8 @@ def _image(data: bytes, expected: dict[str, Any], formats: tuple[str, ...], skel
                     raise ValueError('source image canvas does not match the declaration')
                 if mode not in ('RGB', 'RGBA'):
                     raise ValueError('pose source must be RGB or RGBA without implicit conversion')
+                if image.getexif().get(274, 1) != 1:
+                    raise ValueError('pose source EXIF orientation must be identity')
                 if skeleton and (mode != 'RGB' or 'transparency' in image.info):
                     raise ValueError('precomputed skeleton guide must be opaque RGB')
                 image.load()
