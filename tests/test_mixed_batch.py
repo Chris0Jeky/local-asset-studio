@@ -230,7 +230,7 @@ class MixedBatchTests(unittest.TestCase):
         self.assertEqual(self.job['pending_submission'],pending);self.assertTrue(self.studio.queue.empty())
     def test_dead_worker_refuses_observation_but_not_local_disposition(self):
         before=copy.deepcopy(self.job)
-        with patch.object(self.studio,'require_worker',side_effect=ValueError('worker unavailable')):
+        with patch.object(self.studio,'require_worker_observation',side_effect=ValueError('worker unavailable')):
             with self.assertRaisesRegex(ValueError,'worker'):self.command('observe',self.payload())
             self.assertEqual(self.job,before)
             self.command('dispose',self.payload(reason='No more observation',acknowledge_unknown=True))
