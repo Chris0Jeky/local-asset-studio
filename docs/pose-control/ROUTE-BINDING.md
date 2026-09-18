@@ -47,6 +47,10 @@ receipt. The declared format must match the actual decoded file, and the image m
 within the 20 MiB and 16-megapixel limits. This donor contract deliberately continues to permit alpha; the
 opaque requirement applies only to the precomputed skeleton representation.
 
+All pose sources must have identity EXIF orientation. The binder refuses rotated or mirrored orientation
+metadata instead of silently normalizing bytes, dimensions or joint coordinates. An upstream intake may
+materialize a visibly oriented derivative, but that derivative needs its own bytes, hash, canvas and transform.
+
 ## Transform policy
 
 A request declares either:
