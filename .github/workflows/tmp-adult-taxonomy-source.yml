@@ -1,0 +1,81 @@
+name: Temporary adult taxonomy source probe
+
+on:
+  push:
+    branches:
+      - codex/adult-illustration-taxonomy-intake
+    paths:
+      - .github/workflows/tmp-adult-taxonomy-source.yml
+
+permissions:
+  contents: read
+
+jobs:
+  retain-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch and hash the immutable WD v3 vocabulary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv
+          import hashlib
+          import io
+          import json
+          import pathlib
+          import urllib.request
+
+          revision = "fa2b83fd2d68b3d994e22fed5859d7cc99e1cdb0"
+          selected_file = "selected_tags.csv"
+          url = (
+              "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/"
+              f"{revision}/{selected_file}?download=true"
+          )
+          request = urllib.request.Request(url, headers={"User-Agent": "local-asset-studio-source-probe/1"})
+          with urllib.request.urlopen(request, timeout=30) as response:
+              data = response.read(1_048_577)
+              final_url = response.geturl()
+              status = response.status
+          if status != 200:
+              raise SystemExit(f"unexpected status {status}")
+          if len(data) > 1_048_576:
+              raise SystemExit("source exceeds 1 MiB intake bound")
+          text = data.decode("utf-8-sig")
+          rows = list(csv.DictReader(io.StringIO(text, newline="")))
+          if not rows:
+              raise SystemExit("source contains no records")
+          fieldnames = list(rows[0])
+          required = {"tag_id", "name", "category", "count"}
+          if set(fieldnames) != required:
+              raise SystemExit(f"unexpected columns: {fieldnames}")
+          if len(rows) > 20_000:
+              raise SystemExit("source exceeds 20,000-record intake bound")
+          output = pathlib.Path("taxonomy-source")
+          output.mkdir()
+          (output / selected_file).write_bytes(data)
+          metadata = {
+              "schema": "studio.adult-illustration-taxonomy-source-probe/v1",
+              "repository": "SmilingWolf/wd-eva02-large-tagger-v3",
+              "revision": revision,
+              "selected_file": selected_file,
+              "source_url": url,
+              "final_url": final_url,
+              "bytes": len(data),
+              "sha256": hashlib.sha256(data).hexdigest(),
+              "record_count": len(rows),
+              "columns": fieldnames,
+              "first_record": rows[0],
+              "last_record": rows[-1],
+          }
+          rendered = json.dumps(metadata, indent=2, sort_keys=True) + "\n"
+          (output / "source-metadata.json").write_text(rendered, encoding="utf-8")
+          print(rendered)
+          PY
+      - name: Retain source evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: wd-v3-selected-tags-source
+          path: taxonomy-source
+          if-no-files-found: error
+          retention-days: 7
