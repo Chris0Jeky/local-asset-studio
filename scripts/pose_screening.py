@@ -38,7 +38,7 @@ def receipt(plan):
 def main(argv=None):
     try:
         parser = Parser(description=__doc__)
-        commands = parser.add_subparsers(dest='command', required=True)
+        commands = parser.add_subparsers(dest='command', required=True, parser_class=Parser)
         validate = commands.add_parser('validate', help='validate and summarize a manifest')
         validate.add_argument('manifest', type=Path)
         plan = commands.add_parser('plan', help='compile a new immutable plan file')
