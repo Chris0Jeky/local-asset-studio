@@ -48,7 +48,10 @@ def _response() -> HttpResponse:
         request_url=HF_URL,
         final_url=HF_URL,
         status=200,
-        headers={"content-type": "application/json"},
+        headers={
+            "content-type": "application/json",
+            "etag": '"v1"',
+        },
         body=_body(),
         redirect_chain=(),
     )
@@ -145,6 +148,41 @@ class SourceTransportHardeningTests(unittest.TestCase):
                     ),
                 )
             self.assertEqual(exchange.calls, [])
+
+    def test_304_must_not_change_the_cached_metadata_route(self) -> None:
+        redirect_url = (
+            "https://huggingface.co/api/models/owner/model/revision/"
+            + HF_COMMIT
+            + "?blobs=true"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = SnapshotResponseCache(Path(tmp))
+            cache.store(_request(), _response())
+            exchange = ScriptedExchange(
+                WireResponse(
+                    url=HF_URL,
+                    status=302,
+                    headers={"location": redirect_url},
+                    body=b"",
+                ),
+                WireResponse(
+                    url=redirect_url,
+                    status=304,
+                    headers={"etag": '"v1"'},
+                    body=b"",
+                ),
+            )
+            with self.assertRaisesRegex(ValueError, "304.*route|route.*304"):
+                fetch_huggingface(
+                    "owner/model",
+                    "main",
+                    BoundedProviderTransport(
+                        exchange=exchange,
+                        cache=SnapshotResponseCache(Path(tmp)),
+                        refresh=True,
+                    ),
+                )
+            self.assertEqual(len(exchange.calls), 2)
 
     def test_rate_limit_response_retries_get_and_succeeds(self) -> None:
         rate_limited = WireResponse(
