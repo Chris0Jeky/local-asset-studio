@@ -37,6 +37,20 @@ test('a new edit after undo clears only the redo branch',()=>{
   assert.equal(timeline.canUndo,true,'the current branch remains undoable');
 });
 
+test('a clamped no-op edit preserves redo until geometry really changes',()=>{
+  const timeline=P.timeline(60),home=drawing(80),before=drawing(100),after=drawing(200);
+  timeline.record(before,home);
+  const restored=timeline.undo(after,home);
+  assert.equal(timeline.canRedo,true);
+  timeline.begin(restored.points,restored.home);
+  assert.equal(timeline.commit(restored.points,restored.home),false,'unchanged geometry is not a history entry');
+  assert.equal(timeline.canRedo,true,'a boundary-clamped nudge must not discard redo');
+  assert.equal(timeline.canUndo,false,'a no-op must not add a duplicate undo entry');
+  assert.equal(timeline.commit(drawing(101),restored.home),true,'the pending edit commits on its first real change');
+  assert.equal(timeline.canRedo,false,'an actual branch edit discards the abandoned future');
+  assert.equal(timeline.canUndo,true);
+});
+
 test('undo and redo preserve unknown-joint homes and resize both stacks',()=>{
   const timeline=P.timeline(60),home=drawing(123),known=drawing(123),unknown=P.setUnknown(known,4),small={width:512,height:768};
   timeline.record(known,home);
@@ -66,6 +80,8 @@ test('the Combine editor exposes and wires redo without adding a generation path
   assert.match(workbench,/id="uxPoseRedo">Redo<\/button>/);
   assert.match(workbench,/poseTimeline=StudioPoseEditor\.timeline\(POSE_UNDO\)/);
   assert.match(workbench,/poseTimeline\.resize\(poseCanvas,next\)/);
+  assert.match(workbench,/poseTimeline\.begin\(posePoints,poseHome\)/);
+  assert.match(workbench,/poseTimeline\.commit\(posePoints,poseHome\)/);
   assert.match(workbench,/poseTimeline\.undo\(posePoints,poseHome\)/);
   assert.match(workbench,/poseTimeline\.redo\(posePoints,poseHome\)/);
   assert.match(workbench,/redo\.disabled=.*!poseTimeline\.canRedo/);
