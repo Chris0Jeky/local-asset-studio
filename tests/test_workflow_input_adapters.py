@@ -141,7 +141,7 @@ class InputAdapters(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         received = json.loads(result.stdout)
         self.assertEqual(node['source_definition_json'], received['source_definition_json'])
-        self.assertEqual(node['inputs'][0]['source_descriptor_json'], received['source_descriptor_json'] if 'source_descriptor_json' in received else received['inputs'][0]['source_descriptor_json'])
+        self.assertEqual(node['inputs'][0]['source_descriptor_json'], received['inputs'][0]['source_descriptor_json'])
         restored = json.loads(received['source_definition_json'])
         self.assertEqual(2**64-1, restored['input']['required']['value'][1]['max'])
         self.assertIs(type(restored['vendor']['small_float']), float)
