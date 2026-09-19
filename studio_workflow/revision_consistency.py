@@ -6,7 +6,7 @@ from enum import Enum
 import hashlib
 from typing import Any
 
-from .core import canonical, decode
+from .core import MAX_BYTES, canonical, decode, need
 
 
 @dataclass(frozen=True)
@@ -104,3 +104,36 @@ def compare_head(expected: int, current: int, current_sha256: str | None = None)
 
 def byte_budget(used: int, added: int, limit: int) -> ByteBudget:
     return ByteBudget(used=used, added=added, limit=limit)
+
+
+@dataclass(frozen=True)
+class StoredBytes(StoredValue):
+    """Exact received bytes and digest facts, without rewriting stored evidence."""
+
+    raw: bytes
+
+    @property
+    def bytes(self) -> int:
+        return len(self.raw)
+
+
+def exact_stored_value(raw: bytes | str, stored_sha256: str, *, max_bytes: int) -> StoredBytes:
+    """Opt-in UTF-8 byte binding for new receipt formats, not a legacy migration.
+
+    Unlike stored_value(), whitespace and key order affect this digest. The
+    caller owns schema validation and the decision to refuse a mismatched fact.
+    A smaller domain bound is enforced before decoding; the shared JSON ceiling
+    cannot be increased through this API.
+    """
+    need(type(max_bytes) is int and 0 < max_bytes <= MAX_BYTES, 'Invalid stored JSON byte limit')
+    need(type(raw) in (bytes, str), 'Stored JSON must be UTF-8 bytes or text')
+    need(len(raw) <= max_bytes, 'Stored JSON exceeds its byte limit')
+    raw = raw.encode('utf-8') if isinstance(raw, str) else raw
+    need(len(raw) <= max_bytes, 'Stored JSON exceeds its byte limit')
+    raw.decode('utf-8')
+    # A BOM-less UTF-16/32 document can also be valid UTF-8 with NULs.
+    # Literal NUL is never legal JSON, but json.loads(bytes) autodetects it.
+    need(b'\x00' not in raw, 'Stored JSON must use UTF-8 without literal NUL')
+    value = decode(raw)
+    return StoredBytes(value=value, raw=raw,
+                       observed_sha256=hashlib.sha256(raw).hexdigest(), stored_sha256=stored_sha256)
