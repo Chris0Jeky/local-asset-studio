@@ -1,4 +1,4 @@
-// A programmatic review load must disarm prior mutation evidence before awaiting inspection.
+// A programmatic review load suspends prior mutation evidence and restores it on failure.
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const fixture=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const referenceRecords=fixture.report.request.references.map((reference,index)=>({
@@ -42,8 +42,8 @@ const document={
   dispatchEvent:event=>events[event.type]?.(event),
   body:new Element(),
 };
-const response=value=>({ok:true,json:async()=>value});
-let inspectGate=null;
+const response=(value,ok=true)=>({ok,json:async()=>value});
+let inspectGate=null,inspectError=null;
 const context=vm.createContext({
   document,
   window:{addEventListener(){}},
@@ -56,6 +56,7 @@ const context=vm.createContext({
     const body=JSON.parse(options.body);
     if(url.endsWith('/inspect')){
       if(inspectGate)await inspectGate;
+      if(inspectError)return response({error:inspectError},false);
       return response({
         format:'studio.reference-review/v1',analysis:fixture.report,review:fixture.review,
         inference_submitted:false,generation_submitted:false,execution_authorized:false,
@@ -81,6 +82,11 @@ const originalFiles=()=>fixture.images.map((row,index)=>{
   return {size:bytes.length,name:'renamed-'+index+'.png',
     arrayBuffer:async()=>bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};
 });
+const gatedInspect=()=>{
+  let release;
+  inspectGate=new Promise(resolve=>{release=resolve;});
+  return release;
+};
 
 (async()=>{
   el('brief').value='Keep my instruction';
@@ -91,14 +97,32 @@ const originalFiles=()=>fixture.images.map((row,index)=>{
   assert.equal(el('rr-undo').disabled,false,'The applied review must expose its undo ticket');
   assert.equal(el('rr-export').disabled,false,'The applied review must expose its receipt');
 
-  let releaseInspect;
-  inspectGate=new Promise(resolve=>{releaseInspect=resolve;});
+  inspectError='fixture inspect failed';
+  let releaseInspect=gatedInspect();
+  const failed=context.StudioReferenceReview.load(fixture.report,[]);
+  assert.equal(el('rr-undo').disabled,true,
+    'Programmatic load must immediately suspend the prior undo ticket');
+  assert.equal(el('rr-export').disabled,true,
+    'Programmatic load must immediately suspend the prior receipt');
+  releaseInspect();
+  await assert.rejects(failed,/fixture inspect failed/);
+  inspectGate=null;inspectError=null;
+  assert.equal(el('rr-undo').disabled,false,
+    'A failed replacement load must restore the still-valid prior undo ticket');
+  assert.equal(el('rr-export').disabled,false,
+    'A failed replacement load must restore the still-valid prior receipt');
+
+  releaseInspect=gatedInspect();
   const loading=context.StudioReferenceReview.load(fixture.report,[]);
   assert.equal(el('rr-undo').disabled,true,
-    'Programmatic load must immediately disarm the prior undo ticket');
+    'A successful replacement load must suspend the prior undo ticket in flight');
   assert.equal(el('rr-export').disabled,true,
-    'Programmatic load must immediately disarm the prior receipt');
+    'A successful replacement load must suspend the prior receipt in flight');
   releaseInspect();
   await loading;
-  console.log('Programmatic reference-review load disarmed prior mutation evidence');
+  assert.equal(el('rr-undo').disabled,true,
+    'A committed replacement context must revoke the prior undo ticket');
+  assert.equal(el('rr-export').disabled,true,
+    'A committed replacement context must revoke the prior receipt');
+  console.log('Programmatic reference-review loads suspend, restore, and commit evidence correctly');
 })().catch(error=>{console.error(error);process.exitCode=1;});
