@@ -1,6 +1,7 @@
 """Durable state, loopback transport, artifact verification and PCM assembly."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,22 @@ MAX_AUDIO_BYTES = 32 * 1024 * 1024
 MAX_ERROR_BYTES = 64 * 1024
 HEX_64 = re.compile(r'[0-9a-f]{64}\Z')
 PROJECT_ID = re.compile(r'[0-9a-f]{32}\Z')
+
+
+def digest_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    if type(chunk_size) is not int or chunk_size <= 0:
+        raise SpokenBriefError('File hash chunk size must be a positive integer')
+    hasher = hashlib.sha256()
+    try:
+        with Path(path).open('rb') as stream:
+            while True:
+                chunk = stream.read(chunk_size)
+                if not chunk:
+                    break
+                hasher.update(chunk)
+    except OSError as exc:
+        raise SpokenBriefError(f'Cannot hash spoken-brief file: {path}') from exc
+    return hasher.hexdigest()
 
 
 def normalize_loopback_url(base_url) -> str:
@@ -325,7 +342,7 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
                 input_receipts.append({
                     'id': entry['id'],
                     'path': str(path),
-                    'sha256': digest_bytes(path.read_bytes()),
+                    'sha256': digest_file(path),
                     'samples': details['samples'],
                     'pause_after_ms': pause_ms,
                 })
@@ -340,7 +357,7 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
             pass
     return {
         'path': str(output),
-        'sha256': digest_bytes(output.read_bytes()),
+        'sha256': digest_file(output),
         'samples': samples,
         'duration_seconds': samples / 48000,
         'format': 'wav-pcm-s16le-mono-48000',
@@ -427,7 +444,7 @@ def _completed_result(receipt_path: Path, manifest_sha256: str, expected_output:
         raise SpokenBriefError('Completed receipt output escapes its spoken-brief run directory')
     if not output.is_file():
         return None
-    if digest_bytes(output.read_bytes()) != record['sha256']:
+    if digest_file(output) != record['sha256']:
         raise SpokenBriefError('Completed receipt output hash no longer matches the retained WAV')
     projects = receipt.get('projects')
     if (not isinstance(projects, list) or not projects
