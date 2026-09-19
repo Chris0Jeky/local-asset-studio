@@ -99,7 +99,7 @@
       message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
     },load:async(analysis,files=[])=>{
     if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
-    changed();const current=epoch;
+    applied=null;receipt=null;changed();const current=epoch;
     const result=await post('inspect',{analysis});
     if(current!==epoch)throw Error('The reference review changed during loading; newer work was retained.');
     if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
