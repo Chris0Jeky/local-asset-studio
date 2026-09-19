@@ -322,7 +322,9 @@ def _validated_receipt(value, owner_id):
             raise ValueError("Stored active resource admission identity is invalid")
         if state == "retained":
             retained_identity = value.get("retained_identity_sha256")
-            if not isinstance(retained_identity, str) or not _HASH.fullmatch(retained_identity):
+            if retained_identity is not None and (
+                    not isinstance(retained_identity, str)
+                    or not _HASH.fullmatch(retained_identity)):
                 raise ValueError("Stored retained resource admission identity is invalid")
         reservation = value.get("reservation")
         if not isinstance(reservation, dict) or set(reservation) != set(DIMENSIONS):
@@ -349,9 +351,8 @@ class ReservationLedger:
             for key in DIMENSIONS
         }
         active_identity = (
-            validated["retained_identity_sha256"]
-            if state == "retained"
-            else validated["identity_sha256"]
+            validated.get("retained_identity_sha256")
+            or validated["identity_sha256"]
         )
         with self.lock:
             existing = self.reservations.get(owner_id)
