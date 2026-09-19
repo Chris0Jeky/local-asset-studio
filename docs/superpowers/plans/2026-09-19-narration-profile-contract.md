@@ -1,194 +1,124 @@
 # Narration Profile Contract Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** use `superpowers:executing-plans` or `superpowers:subagent-driven-development`, apply test-driven development, and require exact-head verification before merge.
 
-**Goal:** Give Spoken Briefs a stable, inspectable narration-profile selection contract and a deterministic qualification pack without claiming that CI has accepted a custom voice.
+**Goal:** Give Spoken Briefs stable, inspectable narration-profile and delivery selection plus a deterministic qualification pack, without claiming that CI has generated or accepted a custom voice.
 
-**Architecture:** Add a bounded JSON profile catalogue plus optional local revision registry, validated by a standard-library module. Spoken Brief planning binds a profile and delivery revision into its manifest; execution permits only a supported `voice-baseline` profile whose status is `control` or `accepted`, and refuses experimental or unbound profiles before loopback access. A separate qualification planner and report validator records shared scripts, candidate measurements, long-form evidence, and owner decisions while keeping recordings, weights, local paths, and generated audio outside Git.
+**Architecture:** A bounded checked-in catalogue defines reviewable profile intent. An optional local registry may supersede a profile only through an exact-hash compare-and-swap revision. Spoken Brief manifests and receipts bind the resolved profile, delivery, lexicon, mix, and speaker metadata. Execution is admitted before filesystem or network side effects. A separate zero-generation planner and report validator records candidate measurements, line evidence, long-form listening, and owner decisions. Recordings, model files, local paths, and private qualification evidence remain outside Git.
 
-**Tech Stack:** Python 3.12 standard library, JSON, existing Spoken Brief coordinator and Voice baseline, PowerShell, GitHub Actions on Ubuntu and Windows.
+**Tech stack:** Python 3.12 standard library, JSON, existing Spoken Brief coordinator and Voice baseline, PowerShell, GitHub Actions on Ubuntu and Windows.
 
-**Spec:** `docs/spoken-briefs/VOICE-PROFILE.md`, issue #637, and `docs/av-studio/AUDIO-VOICE.md`.
+**Specification:** `docs/spoken-briefs/VOICE-PROFILE.md`, `research/voice-profiles/README.md`, issue #637, and Voice Lab issue #28.
 
-## Global Constraints
+## Global constraints
 
-- Preserve the current `/api/voice-baseline` producer and Production worker; do not add another inference queue.
-- Keep `speaker_id` explicitly classified as recipe metadata, not evidence of identity design or cloning.
-- A profile may be previewed while experimental, but execution must fail before any Studio request unless its adapter is supported and its status is `control` or `accepted`.
-- An `accepted` original profile must retain owner acceptance, qualification-report hash, long-form manifest/audio hashes, and reference asset/transcript/permission evidence.
-- Checked-in records contain no absolute local paths, reference recordings, model weights, generated takes, or copyrighted show samples.
-- Local registry replacement uses explicit compare-and-swap provenance: a higher revision must name the exact profile SHA-256 it supersedes.
-- Qualification planning performs zero synthesis and zero network access.
-- Qualification acceptance requires the same evaluation-set revision, the Kokoro control, at least two measured non-control candidates, and a 5–10 minute reviewed long-form brief.
-- Existing `--speaker-id` commands remain valid; an override changes only the bound metadata and manifest identity.
+- Preserve the existing `/api/voice-baseline` producer and Production worker.
+- Keep `speaker_id` classified as recipe metadata, not voice design or cloning.
+- Permit experimental profiles in `plan`; refuse them in `run` before `_spoken`, lock, state, or Studio access.
+- Bind every run to exact profile, delivery, lexicon, mix, and speaker metadata hashes.
+- Require exact prior-hash provenance and a higher revision for local profile replacement.
+- Keep references, recordings, reports, model weights, generated audio, and absolute local configuration outside Git.
+- Perform no synthesis, model import, device probing, or network access during qualification planning.
+- Require the Kokoro control, at least two measured non-control candidates, exact ordered evaluation lines, and a 300–600 second owner-reviewed long-form take for accepted report evidence.
 - Match the repository's Python 3.12 floor and standard-library-first runtime.
-
-## Review Focus
-
-- A local registry attempting to replace a profile without the exact prior hash must be rejected rather than silently overriding it.
-- NaN, infinity, booleans, negative durations, incomplete hashes, and duplicate candidate/line IDs must never enter qualification evidence.
-- An experimental profile must be usable for `plan` but must not create a lock, state file, Studio client, or mutation request during `run`.
-- A completed receipt must expose the exact profile/delivery binding that was part of the manifest identity.
-- Profile catalogue paths and local registry contents must be bounded and treated strictly as data, never executable configuration.
 
 ---
 
-### Task 1: Add the checked-in profile catalogue and strict resolver
+## Task 1: Checked-in catalogue and strict resolver
 
 **Files:**
-- Create: `research/voice-profiles/catalog.json`
-- Create: `research/voice-profiles/evaluation-set.json`
-- Create: `scripts/voice_profile.py`
-- Create: `tests/test_voice_profile_contract.py`
 
-**Interfaces:**
-- Produces: `load_catalog(path: Path | None = None) -> dict`
-- Produces: `resolve_profile(profile_id: str, delivery_id: str, *, registry_path: Path | None = None, speaker_id: str | None = None) -> dict`
-- Produces: `require_executable(binding: dict) -> None`
-- Produces: `profile_digest(profile: dict) -> str`
+- `research/voice-profiles/catalog.json`
+- `research/voice-profiles/evaluation-set.json`
+- `scripts/voice_profile.py`
+- `tests/test_voice_profile_contract.py`
 
-- [ ] **Step 1: Write failing catalogue and override tests**
+- [x] Write catalogue and local-override contracts before implementation.
+- [x] Observe RED from the missing resolver on Ubuntu and Windows.
+- [x] Validate bounded UTF-8 JSON with exact schemas, stable lowercase IDs, canonical hashes, deep copies, and acceptance-state consistency.
+- [x] Check in the runnable `kokoro-af-heart-control-v1` control and non-runnable `ember-brief-v1` experiment.
+- [x] Resolve versioned delivery, lexicon, mix, speaker metadata, and canonical binding identity.
+- [x] Require a strictly higher revision and exact `supersedes_profile_sha256` before a local record replaces a checked-in profile.
+- [x] Reject path-like reference IDs, malformed hashes, unknown fields, duplicate IDs, unsupported statuses, and inconsistent accepted/rejected records.
+- [x] Admit only supported, runnable control/accepted bindings; explain experimental, rejected, unbound, and unsupported refusal.
+- [x] Preserve canonical identity when the CLI redundantly supplies the profile's default speaker metadata.
 
-Cover the default Kokoro control, the unbound `ember-brief-v1` experimental record, stable canonical hashes, delivery selection, bounded UTF-8 JSON, duplicate IDs, unknown fields, path-like evidence, malformed hashes, and local compare-and-swap replacement.
-
-- [ ] **Step 2: Run focused tests and verify RED**
-
-Run:
-
-```bash
-python -m unittest tests.test_voice_profile_contract -v
-```
-
-Expected before implementation: import failure for `voice_profile`.
-
-- [ ] **Step 3: Implement strict catalogue validation and resolution**
-
-Use exact schemas, lowercase stable IDs, finite numeric validation, canonical JSON hashing, a 256 KiB input ceiling, and deep copies. Reject duplicate local IDs unless the replacement revision is higher and `supersedes_profile_sha256` matches the currently resolved record.
-
-- [ ] **Step 4: Implement execution admission**
-
-`require_executable()` accepts only adapter `voice-baseline`, `runnable: true`, and status `control` or `accepted`. It must explicitly state why experimental, rejected, unbound, or unsupported profiles cannot run.
-
-- [ ] **Step 5: Run focused tests and verify GREEN**
-
-Expected: all profile-contract tests pass on Python 3.12.
-
-### Task 2: Add deterministic qualification plans and evidence validation
+## Task 2: Deterministic qualification plan and report validation
 
 **Files:**
-- Create: `scripts/voice_profile_qualification.py`
-- Create: `tests/test_voice_profile_qualification.py`
 
-**Interfaces:**
-- Consumes: `resolve_profile()` and `research/voice-profiles/evaluation-set.json`
-- Produces: `build_plan(profile_id: str, *, registry_path: Path | None = None) -> dict`
-- Produces: `validate_report(plan: dict, report: dict) -> dict`
-- Produces CLI: `plan` and `validate`
+- `scripts/voice_profile_qualification.py`
+- `tests/test_voice_profile_qualification.py`
 
-- [ ] **Step 1: Write failing plan and report tests**
+- [x] Write deterministic-plan and evidence-report contracts before implementation.
+- [x] Observe RED from the missing qualification module on Ubuntu and Windows.
+- [x] Build a canonical plan containing profile/evaluation hashes, stable candidate roles, measurement names, exact line IDs, long-form bounds, and `generation_submitted: false`.
+- [x] Include Qwen VoiceDesign exploration, Qwen reusable-reference reuse, IndexTTS 2.5 expressive comparison, and the Kokoro control in the programme.
+- [x] Validate exact plan identity and immutable evaluation-set revision.
+- [x] Require finite non-negative timing, memory, generated-duration, accepted-duration, and correction measurements.
+- [x] Require every evaluation line in exact order with audio hash, independent-transcript hash, machine differences, owner ratings, decision, and notes.
+- [x] Reject NaN, infinity, booleans as numbers, negative values, duplicate candidates, incomplete hashes, missing control, insufficient measured non-controls, and incomplete line coverage.
+- [x] Require one selected measured non-control candidate and a 300–600 second end-to-end owner-reviewed long-form file.
+- [x] Return a normalized report/long-form acceptance summary without mutating the source report or registry.
 
-Require deterministic plan identity, zero-generation metadata, the shared evaluation lines, Qwen VoiceDesign/reuse, one independent expressive candidate, and the Kokoro control. Test exact match, duplicate candidates, missing control, only one measured non-control, invalid finite metrics, incomplete line coverage, missing hashes, long-form duration outside 300–600 seconds, owner rejection, and accepted evidence.
-
-- [ ] **Step 2: Run focused tests and verify RED**
-
-Run:
-
-```bash
-python -m unittest tests.test_voice_profile_qualification -v
-```
-
-Expected before implementation: import failure for `voice_profile_qualification`.
-
-- [ ] **Step 3: Implement deterministic plan construction**
-
-The plan records the profile/catalogue/evaluation hashes, stable candidate IDs, required measurement names, line IDs, long-form requirements, and `generation_submitted: false`. It does not start Studio, import a model, or inspect local devices.
-
-- [ ] **Step 4: Implement strict report validation**
-
-Validate exact plan identity, complete SHA-256 values, finite non-negative timings/memory/seconds, every evaluation line per measured candidate, separate machine and owner findings, at least two measured non-control candidates plus the control, and a 5–10 minute owner-reviewed long-form record. Return a normalized acceptance summary; never mutate the source report.
-
-- [ ] **Step 5: Run focused tests and verify GREEN**
-
-Expected: all qualification tests pass.
-
-### Task 3: Bind profiles into Spoken Brief manifests, execution, receipts, and CLI
+## Task 3: Spoken Brief profile binding and admission
 
 **Files:**
-- Modify: `scripts/spoken_brief.py`
-- Modify: `scripts/spoken_brief_compile.py`
-- Modify: `scripts/spoken_brief_runtime.py`
-- Modify: `scripts/speak-handoff.ps1`
-- Create: `tests/test_spoken_brief_profile.py`
 
-**Interfaces:**
-- Consumes: `resolve_profile()` and `require_executable()`
-- Extends: `compile_source(..., voice_profile: dict | None = None) -> dict`
-- Extends: `plan(..., profile_id, delivery_id, profile_registry, speaker_id) -> dict`
-- Extends: `run(..., profile_id, delivery_id, profile_registry, speaker_id, ...) -> dict`
+- `scripts/spoken_brief.py`
+- `scripts/spoken_brief_compile.py`
+- `scripts/spoken_brief_runtime.py`
+- `scripts/speak-handoff.ps1`
+- `tests/test_spoken_brief_profile.py`
 
-- [ ] **Step 1: Write failing manifest, CLI, and no-network admission tests**
+- [x] Write manifest, CLI, PowerShell, receipt, and no-side-effect admission contracts before implementation.
+- [x] Bind the default Kokoro control during direct compilation so legacy recovery tooling and runtime commands derive the same manifest identity.
+- [x] Make profile, delivery, profile revision, speaker metadata, lexicon, and mix part of the manifest hash.
+- [x] Return the exact binding from `plan` and retain it in completed receipts/results.
+- [x] Resolve and gate `run` before creating `_spoken`, acquiring a claim, writing state, or constructing `StudioClient`.
+- [x] Permit `ember-brief-v1` preview planning while refusing execution as experimental/unbound.
+- [x] Extend Python with `--profile-id`, `--delivery-id`, `--profile-registry`, and metadata-only `--speaker-id`.
+- [x] Extend PowerShell with `ProfileId`, `DeliveryId`, `ProfileRegistry`, and optional `SpeakerId`, preserving direct argument forwarding.
+- [x] Preserve completed-run read-only reuse under the exact same profile binding.
+- [x] Run all prior Spoken Brief recovery, source-race, plan-drift, artifact, assembly, and transport contracts without regression.
 
-Prove the default plan binds the Kokoro control, delivery/profile changes alter manifest identity, `--profile-id` and `--delivery-id` parse, PowerShell forwards direct arguments, speaker overrides are labelled metadata-only, experimental plans succeed, experimental runs fail before `StudioClient` construction and before `_spoken` state is created, and completed receipts retain the exact binding.
-
-- [ ] **Step 2: Run focused tests and verify RED**
-
-Run:
-
-```bash
-python -m unittest tests.test_spoken_brief_profile -v
-```
-
-Expected before implementation: missing profile arguments and binding fields.
-
-- [ ] **Step 3: Add profile binding to compilation and planning**
-
-Include a canonical `voice_profile` binding in the manifest only when supplied, preserving direct legacy `compile_source(source, speaker_id=...)` callers. Return profile ID, revision, status, delivery, hashes, adapter, runnable state, and metadata speaker ID from `plan`.
-
-- [ ] **Step 4: Gate execution before local or network side effects**
-
-Resolve and validate the profile before creating `_spoken`, acquiring a lock, constructing `StudioClient`, or writing state. Use the resolved speaker metadata in child payloads. Include the exact binding in receipts and command results.
-
-- [ ] **Step 5: Extend Python and PowerShell CLIs**
-
-Add `--profile-id`, `--delivery-id`, and `--profile-registry`; keep `--speaker-id` as an optional metadata override. The PowerShell wrapper adds `ProfileId`, `DeliveryId`, and `ProfileRegistry` and still forwards an argument array without evaluation.
-
-- [ ] **Step 6: Run all focused contracts and verify GREEN**
-
-Run:
-
-```bash
-python -m unittest discover -s tests -p "test_voice_profile*.py" -v
-python -m unittest discover -s tests -p "test_spoken_brief*.py" -v
-python scripts/spoken_brief.py --help
-python scripts/voice_profile_qualification.py --help
-```
-
-Expected: zero failures.
-
-### Task 4: Document the boundary and add cross-platform CI coverage
+## Task 4: Documentation, privacy boundary, and CI
 
 **Files:**
-- Modify: `.github/workflows/spoken-brief.yml`
-- Modify: `docs/spoken-briefs/VOICE-PROFILE.md`
-- Modify: `docs/spoken-briefs/README.md`
-- Modify: `.gitignore`
 
-**Interfaces:**
-- Documents: catalogue/local-registry split, commands, acceptance gate, current runnable control, and workstation proving steps
-- Guards: local `_voice_profiles/` evidence excluded from Git
+- `.github/workflows/spoken-brief.yml`
+- `.gitignore`
+- `docs/spoken-briefs/VOICE-PROFILE.md`
+- `research/voice-profiles/README.md`
 
-- [ ] **Step 1: Extend workflow paths and commands**
+- [x] Trigger focused CI for profile scripts, tests, catalogue/evaluation data, Spoken Brief integration, PowerShell, and documentation changes.
+- [x] Run profile and Spoken Brief suites plus both CLI help contracts on Python 3.12 for Ubuntu and Windows.
+- [x] Parse the PowerShell wrapper on Windows.
+- [x] Document checked-in catalogue vs local registry, compare-and-swap replacement, selection commands, qualification planning, report validation, and promotion criteria.
+- [x] Document that the current executable adapter remains the pinned Kokoro control and that custom identities still require a genuine producer adapter.
+- [x] Ignore local `_voice_profiles/` evidence without ignoring checked-in `research/voice-profiles/` contracts.
+- [x] Preserve the evidence boundary: offline contracts prove orchestration and records, not real model compatibility or subjective acceptance.
 
-Trigger on `scripts/voice_profile*.py`, `tests/test_voice_profile*.py`, and `research/voice-profiles/**`; run both focused suites and both CLI help commands on Ubuntu and Windows.
+## Task 5: Exact-head review and publication
 
-- [ ] **Step 2: Document exact commands and evidence boundaries**
+- [x] Confirm the pre-documentation implementation head passes focused Ubuntu/Windows contracts and the complete repository suite.
+- [ ] Require `Spoken brief contracts` and repository-wide `Check studio` to pass on the final exact PR head.
+- [ ] Inspect the final changed-file set for model binaries, audio, references, absolute private paths, generated `_spoken`/`_voice_profiles` data, and unrelated changes.
+- [ ] Confirm the PR is mergeable and has no unresolved review threads.
+- [ ] Update the PR body with exact-head verification and move it from draft to ready for review.
 
-Explain profile/delivery selection, local registry CAS replacement, qualification-plan generation, report validation, why `ember-brief-v1` remains experimental, and why successful execution is not subjective acceptance.
+## Real-workstation proving boundary
 
-- [ ] **Step 3: Ignore local qualification evidence**
+After the contract PR lands:
 
-Ignore `_voice_profiles/` directories without ignoring the checked-in `research/voice-profiles/` catalogue and evaluation set.
+1. create a qualification plan for `ember-brief-v1` under ignored `_voice_profiles/` storage;
+2. provision each candidate through isolated, pinned environments under #28;
+3. render the shared line set and retain exact configuration/audio/transcript evidence;
+4. compare the Kokoro control with at least two non-control candidates, including the independent expressive route where feasible;
+5. run the selected candidate through one real 5–10 minute Spoken Brief;
+6. listen end to end and record identity, pronunciation, pacing, fatigue, and join findings;
+7. validate the local report;
+8. create a higher local profile revision that names the exact prior profile hash and a genuine producer adapter;
+9. keep references, weights, audio, reports, and permission records out of Git.
 
-- [ ] **Step 4: Run final exact-head verification**
-
-Require the path-specific Ubuntu/Windows workflow and repository-wide `Check studio` workflow on the exact final commit. Confirm no review threads, generated audio, local profile evidence, absolute paths, or model assets enter the PR.
+A successful invocation, report parse, or CI run does not constitute creative acceptance.
