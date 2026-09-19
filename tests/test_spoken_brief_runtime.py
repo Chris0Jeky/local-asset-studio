@@ -72,6 +72,31 @@ class SpokenBriefTests(unittest.TestCase):
             self.assertEqual(receipt['source']['sha256'], hashlib.sha256((pack / 'COMPRESSED.md').read_bytes()).hexdigest())
             self.assertEqual(receipt['output']['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
 
+    def test_successful_create_body_is_reconciled_through_the_retained_project_id(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        identifier = 'c' * 32
+        fixture.create_id_override = identifier
+        fixture.create_response_override = {'id': identifier, 'state': []}
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir()
+            (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertTrue(Path(result['output']).is_file())
+            creates = [item for item in fixture.requests if item[0] == 'POST' and item[1] == '/api/voice-baseline']
+            reads = [item for item in fixture.requests if item[0] == 'GET' and item[1] == f'/api/production/{identifier}']
+            self.assertEqual((len(creates), len(reads) >= 1), (1, True))
+
+    def test_successful_start_body_is_reconciled_through_the_known_project(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        fixture.start_response_override = {'accepted': True, 'state': []}
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir()
+            (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertTrue(Path(result['output']).is_file())
+            starts = [item for item in fixture.requests if item[0] == 'POST' and item[1].endswith('/start')]
+            self.assertEqual(len(starts), 1)
+
     def test_explicit_client_rejection_can_be_fixed_and_retried_without_uncertainty(self):
         fixture = Fixture(); self.addCleanup(fixture.close); fixture.create_rejection = 400
         with tempfile.TemporaryDirectory() as temporary:
