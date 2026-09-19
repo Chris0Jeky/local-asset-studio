@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -306,10 +307,41 @@ def _wav_details(path: Path) -> dict:
             }
     except (OSError, EOFError, wave.Error) as exc:
         raise SpokenBriefError(f'Invalid WAV artifact: {path}') from exc
+    _validate_wav_details(details)
+    return details
+
+
+def _validate_wav_details(details: dict) -> None:
     if (details['channels'] != 1 or details['sample_width'] != 2
             or details['sample_rate'] != 48000 or details['compression'] != 'NONE'):
         raise SpokenBriefError('Spoken brief assembly requires 48 kHz mono PCM16 scene WAVs')
-    return details
+
+
+def _wav_snapshot(path: Path) -> tuple[dict, bytes, str]:
+    path = Path(path)
+    try:
+        with path.open('rb') as stream:
+            raw = stream.read(MAX_AUDIO_BYTES + 1)
+    except OSError as exc:
+        raise SpokenBriefError(f'Cannot read WAV artifact: {path}') from exc
+    if len(raw) > MAX_AUDIO_BYTES:
+        raise SpokenBriefError(f'WAV artifact exceeded the {MAX_AUDIO_BYTES}-byte local input limit: {path}')
+    try:
+        with wave.open(io.BytesIO(raw), 'rb') as source:
+            details = {
+                'channels': source.getnchannels(),
+                'sample_width': source.getsampwidth(),
+                'sample_rate': source.getframerate(),
+                'samples': source.getnframes(),
+                'compression': source.getcomptype(),
+            }
+            frames = source.readframes(source.getnframes())
+    except (OSError, EOFError, wave.Error) as exc:
+        raise SpokenBriefError(f'Invalid WAV artifact: {path}') from exc
+    _validate_wav_details(details)
+    if len(frames) != details['samples'] * details['channels'] * details['sample_width']:
+        raise SpokenBriefError(f'Truncated WAV artifact: {path}')
+    return details, frames, digest_bytes(raw)
 
 
 def assemble_wav(entries: list[dict], output: Path) -> dict:
@@ -327,10 +359,8 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
             joined.setparams((1, 2, 48000, 0, 'NONE', ''))
             for entry in entries:
                 path = Path(entry['path'])
-                details = _wav_details(path)
-                with wave.open(str(path), 'rb') as source:
-                    raw = source.readframes(source.getnframes())
-                joined.writeframesraw(raw)
+                details, frames, snapshot_sha256 = _wav_snapshot(path)
+                joined.writeframesraw(frames)
                 samples += details['samples']
                 pause_ms = entry.get('pause_after_ms', 0)
                 if type(pause_ms) is not int or not 0 <= pause_ms <= 5000:
@@ -342,7 +372,7 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
                 input_receipts.append({
                     'id': entry['id'],
                     'path': str(path),
-                    'sha256': digest_file(path),
+                    'sha256': snapshot_sha256,
                     'samples': details['samples'],
                     'pause_after_ms': pause_ms,
                 })
