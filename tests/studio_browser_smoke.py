@@ -18,7 +18,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'app'))
+sys.path.insert(0, str(ROOT / 'app')); sys.path.insert(0, str(ROOT))  # app/ modules import studio_workflow from the repo root
 import continuation
 import wan_capacity
 POSTS = []

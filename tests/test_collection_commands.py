@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path
+import contextlib
 import sqlite3
 import sys
 import tempfile
@@ -432,7 +433,7 @@ class CollectionMigrationTests(unittest.TestCase):
         folder = Path(root) / 'workspace'; folder.mkdir()
         media = folder / 'media'; media.mkdir(); (media / 'original.bin').write_bytes(b'keep original')
         database = folder / 'assets.sqlite3'
-        with sqlite3.connect(database) as db:
+        with contextlib.closing(sqlite3.connect(database)) as db, db:  # close explicitly: Windows cannot remove an open database
             db.execute('CREATE TABLE collections(id TEXT PRIMARY KEY,name TEXT NOT NULL,description TEXT NOT NULL DEFAULT "",created_at REAL NOT NULL)')
             db.execute('INSERT INTO collections VALUES (?,?,?,?)', ('old-id', 'Old name', 'Old description', 123.5))
             db.execute('CREATE TABLE workspace_identity(singleton INTEGER PRIMARY KEY CHECK(singleton=1),id TEXT NOT NULL)')
@@ -464,7 +465,7 @@ class CollectionMigrationTests(unittest.TestCase):
                 with self.assertRaises(sqlite3.DatabaseError), db:
                     db.execute('BEGIN IMMEDIATE'); module.migrate(db)
             finally: db.close()
-            with sqlite3.connect(database) as check:
+            with contextlib.closing(sqlite3.connect(database)) as check:
                 self.assertNotIn('revision', [row[1] for row in check.execute('PRAGMA table_info(collections)')])
                 self.assertIsNone(check.execute("SELECT 1 FROM sqlite_master WHERE name='collection_command_schema'").fetchone())
                 self.assertEqual(check.execute('SELECT name FROM collections').fetchone()[0], 'Old name')
