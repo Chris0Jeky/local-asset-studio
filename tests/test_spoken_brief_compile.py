@@ -36,6 +36,20 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertEqual(compiled['omissions']['raw_urls'], 1)
         self.assertEqual([item['id'] for item in compiled['segments']], [f'segment-{index:04d}' for index in range(1, len(compiled['segments']) + 1)])
 
+    def test_fenced_code_closes_only_with_matching_marker_length_and_bare_suffix(self):
+        cases = (
+            '''# Brief\n\n````python\nsecret alpha\n```\nsecret beta\n~~~~\nsecret gamma\n````\n\nVisible conclusion.''',
+            '''# Brief\n\n~~~text\nsecret alpha\n```\nsecret beta\n~~~ trailing text\nsecret gamma\n~~~~\n\nVisible conclusion.''',
+        )
+        for source in cases:
+            with self.subTest(source=source):
+                compiled = spoken_brief.compile_markdown(source, source_name='COMPRESSED.md')
+                text = ' '.join(item['text'] for item in compiled['segments'])
+                self.assertIn('Brief', text)
+                self.assertIn('Visible conclusion.', text)
+                self.assertNotIn('secret', text)
+                self.assertEqual(compiled['omissions']['code_blocks'], 1)
+
     def test_segments_and_batches_fit_the_existing_voice_contract(self):
         paragraph = ' '.join('Sentence number %d explains a concrete engineering decision.' % index for index in range(90))
         compiled = spoken_brief.compile_markdown('# Long brief\n\n' + paragraph, source_name='COMPRESSED.md')
@@ -45,7 +59,7 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertTrue(all(1 <= len(batch) <= 6 for batch in batches))
         self.assertTrue(all(sum(len(item['text']) for item in batch) <= spoken_brief.MAX_BATCH_CHARS for batch in batches))
         self.assertTrue(all(sum(len(item['text'].split()) for item in batch) <= spoken_brief.MAX_BATCH_WORDS for batch in batches))
-        self.assertEqual([item['id'] for batch in batches for item in batch], [item['id'] for item in compiled['segments']])
+        self.assertEqual([item['id'] for batch in batches for item in batch], [item['id'] for item in compiled['segments'])
 
 
     def test_short_word_paragraph_still_obeys_the_batch_word_ceiling(self):
