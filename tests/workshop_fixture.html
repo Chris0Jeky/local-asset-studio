@@ -21,4 +21,4 @@ document.getElementById('presetList').onclick=e=>{const b=e.target.closest('[dat
 document.getElementById('presetSearch').oninput=e=>{for(const b of document.querySelectorAll('#presetList button'))b.hidden=!b.textContent.toLowerCase().includes(e.target.value.toLowerCase());};
 document.getElementById('generate').onclick=()=>submitted++;
 document.getElementById('uxBlockers').onclick=e=>{if(e.target.closest('[data-ux-resolve="parameters"]')){const target=document.querySelector('[data-key="width"]');for(let p=target.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true;target.focus();}};
-</script><script src="/static/workshop.js"></script></body></html>
+</script><script src="/static/reference-model.js"></script><script src="/static/presentation-context.js"></script><script src="/static/workshop-ambience-policy.js"></script><script src="/static/workshop.js"></script><script src="/static/workshop-ambience.js"></script></body></html>
