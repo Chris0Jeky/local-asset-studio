@@ -136,4 +136,5 @@ def extend_handler(base):
                 return self._json(400, result)
     from .setup_draft_http import extend_handler as extend_setups
     from .control_http import extend_handler as extend_controls
-    return extend_controls(extend_setups(extend_run_records(extend_documents(WorkflowHandler))))
+    from .collection_http import extend_handler as extend_collections
+    return extend_collections(extend_controls(extend_setups(extend_run_records(extend_documents(WorkflowHandler)))))

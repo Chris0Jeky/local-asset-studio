@@ -1,15 +1,15 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {setup}=require('./asset_detail_contracts.cjs');
+const {setup,collectionReceipt}=require('./collection_editor_fixture.cjs');
 const source=path.join(__dirname,'../app/static/collection-editor.js');
 const A='a'.repeat(32),B='b'.repeat(32),W='1'.repeat(32);
 function page(){
   const s=setup({autoOpen:false});
   s.run(`post=(url,data)=>api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-    assetState.collections=[{id:'${A}',name:'Portraits',description:'Keep this description',count:2},{id:'${B}',name:'Other',description:'Other notes',count:0}];assetScope='all';assetSelection=new Set(['a']);`);
+    assetState.collections=[{id:'${A}',name:'Portraits',description:'Keep this description',count:2,revision:1},{id:'${B}',name:'Other',description:'Other notes',count:0,revision:1}];assetScope='all';assetSelection=new Set(['a']);`);
   if(fs.existsSync(source))s.run(fs.readFileSync(source,'utf8'));
   const submit=()=>s.el('#collectionForm').onsubmit({preventDefault(){}});
-  const resolve=(index=0)=>{const p=s.payload(index);s.writes[index].resolve(p.action==='delete'?{id:p.id,deleted:true,workspace_id:W}:{id:p.id||A,name:p.name,description:p.description,workspace_id:W});};
+  const resolve=(index=0)=>{const p=s.payload(index);s.writes[index].resolve(collectionReceipt(p,A));};
   return {...s,submit,resolve,open:id=>s.run(`openCollection(${id?JSON.stringify(id):''})`)};
 }
 let passed=0,failed=0;
@@ -27,7 +27,7 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
  await test('Deadline aborts and no late success changes the panel',async()=>{const s=page();s.open();s.el('#collectionName').value='New';const p=s.submit();[...s.timers.values()][0]();await p;assert.equal(s.writes[0].options.signal.aborted,true);assert.match(s.el('#collectionStatus').textContent,/not confirmed/);assert.equal(s.el('#collectionDialog').open,true);assert.equal(s.timers.size,0);});
  await test('Malformed successful response remains unconfirmed',async()=>{const s=page();s.open();s.el('#collectionName').value='New';const p=s.submit();s.writes[0].resolve({});await p;assert.match(s.el('#collectionStatus').textContent,/not confirmed/);assert.equal(s.el('#saveCollection').disabled,true);});
  await test('Scope change refuses before a write',async()=>{const s=page();s.open(A);s.el('#collectionName').value='Edited';s.run("assetState.workspace_id='2'.repeat(32)");const p=s.submit();if(s.writes.length)s.resolve();await p;assert.equal(s.writes.length,0);assert.match(s.el('#collectionStatus').textContent,/Workspace/);});
- await test('Commands carry the opened Workspace identity',async()=>{const s=page();s.open(A);s.el('#collectionName').value='Edited';const p=s.submit();assert.equal(s.payload(0).workspace_id,W);s.resolve();await p;});
+ await test('Commands carry the opened Workspace identity',async()=>{const s=page();s.open(A);s.el('#collectionName').value='Edited';const p=s.submit();assert.equal(s.payload(0).workspace_id,W);assert.equal(s.payload(0).format,'studio.collection-command/v1');assert.equal(s.payload(0).expected_revision,1);assert.match(s.payload(0).request_id,/^[A-Za-z0-9_-]{16,128}$/);s.resolve();await p;});
  await test('Delete cancellation sends no command and preserves selection',async()=>{const s=page();s.run(`assetScope='collection:${A}'`);const p=s.el('#deleteCollection').onclick();if(s.writes.length)s.resolve();await p;assert.equal(s.writes.length,0);assert.equal(s.run('assetSelection.has("a")'),true);assert.equal(s.confirmations(),1);});
  await test('Delete failure stays with its captured collection',async()=>{const s=page();s.approve(true);s.run(`assetScope='collection:${A}'`);const p=s.el('#deleteCollection').onclick();s.writes[0].reject(Error('connection lost'));await p;assert.equal(s.el('#collectionDialog').open,true);assert.match(s.el('#collectionStatus').textContent,/not confirmed/);assert.equal(s.run('assetScope'),`collection:${A}`);});
  await test('A stale callback cannot close a replacement dialog',async()=>{const s=page();s.open(A);s.el('#collectionName').value='Edited';const p=s.submit();s.el('#collectionDialog').close();s.open(B);s.resolve();await p;assert.equal(s.el('#collectionDialog').open,true);assert.equal(s.el('#collectionName').value,'Other');});
