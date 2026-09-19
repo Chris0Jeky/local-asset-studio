@@ -65,7 +65,7 @@ Preview a profile and delivery without submitting generation:
 
 ```powershell
 .\scripts\speak-handoff.ps1 `
-  "C:\Users\jekyt\Documents\handoffs\<pack>" `
+  "C:\LAS\handoffs\<pack>" `
   -ProfileId ember-brief-v1 `
   -DeliveryId calm-brief `
   -PlanOnly
@@ -75,7 +75,7 @@ Planning an experimental profile is allowed because it only creates an inspectab
 
 ```powershell
 .\scripts\speak-handoff.ps1 `
-  "C:\Users\jekyt\Documents\handoffs\<pack>" `
+  "C:\LAS\handoffs\<pack>" `
   -ProfileId ember-brief-v1
 ```
 
@@ -83,7 +83,7 @@ The current executable control remains:
 
 ```powershell
 .\scripts\speak-handoff.ps1 `
-  "C:\Users\jekyt\Documents\handoffs\<pack>" `
+  "C:\LAS\handoffs\<pack>" `
   -ProfileId kokoro-af-heart-control-v1 `
   -DeliveryId dense-technical
 ```
@@ -98,7 +98,7 @@ Accepted references, permission records, local producer details, and owner-revie
 .\scripts\speak-handoff.ps1 <pack> `
   -ProfileId ember-brief-v1 `
   -DeliveryId calm-brief `
-  -ProfileRegistry "C:\Users\jekyt\Documents\LAS\_voice_profiles\profiles.json" `
+  -ProfileRegistry "C:\LAS\_voice_profiles\profiles.json" `
   -PlanOnly
 ```
 
@@ -118,7 +118,7 @@ Create a zero-generation plan:
 
 ```powershell
 python scripts/voice_profile_qualification.py plan ember-brief-v1 `
-  --output "C:\Users\jekyt\Documents\LAS\_voice_profiles\ember-plan.json"
+  --output "C:\LAS\_voice_profiles\ember-plan.json"
 ```
 
 The command does not start Studio, inspect a device, install a package, download a model, or submit inference. It records:
@@ -161,8 +161,8 @@ After local trials, validate the retained report:
 
 ```powershell
 python scripts/voice_profile_qualification.py validate `
-  "C:\Users\jekyt\Documents\LAS\_voice_profiles\ember-plan.json" `
-  "C:\Users\jekyt\Documents\LAS\_voice_profiles\ember-report.json"
+  "C:\LAS\_voice_profiles\ember-plan.json" `
+  "C:\LAS\_voice_profiles\ember-report.json"
 ```
 
 Per candidate, the validator requires:
