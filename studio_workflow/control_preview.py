@@ -75,8 +75,11 @@ def preview(value: dict, info: dict, backend_id: str) -> dict:
         if kind is None:
             problem('missing_class', 'This node class is absent from the installed schema.', target); continue
         matches = [item for item in kind['inputs'] if item['name'] == field]
-        if len(matches) != 1:
-            problem('ambiguous_input' if matches else 'missing_input',
+        # The adapter keeps one descriptor per name and records a duplicate as a schema error; the
+        # preview still reports that as ambiguity, not as an input needing a native adapter.
+        duplicate = ('Duplicate input name across groups: ' + field) in (kind.get('schema_errors') or ())
+        if duplicate or len(matches) != 1:
+            problem('ambiguous_input' if duplicate or matches else 'missing_input',
                     'The installed schema must identify this input exactly once.', target); continue
         spec = matches[0]; options = spec['options']; typ = spec['type']; row['type'] = typ
         raw_kind = info[node['class_type']]
