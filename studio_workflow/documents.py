@@ -174,6 +174,25 @@ class WorkflowDocuments:
             return self._append(db, key, current['revision'] + 1, next_doc, value['request_id'], sha,
                                 'restore' if restore else 'command', summary)
 
+    def plan(self, key, value):
+        from .command_plan import plan_commands
+        fields(value, ('expected_revision', 'commands'))
+        with self.workspace.connection() as db:
+            current = self._current(db, key, value['expected_revision'])
+        need(current['revision'] < MAX_REVISIONS, 'Workflow revision limit reached; export before archiving or forking')
+        result = plan_commands(current['document'], value['commands'])
+        result['document']['revision'] = current['revision'] + 1
+        sha = canonical_value(result['document']).sha256
+        return {**result, 'id': key, 'expected_revision': current['revision'],
+                'document_sha256': sha, 'after_document_sha256': sha}
+
+    def export_module(self, key, step_id, revision):
+        from .modules import export_module
+        self._revision(revision)
+        saved = self.get(key, revision)
+        module = export_module(saved['document'], step_id, document_id=key)
+        return {'module': module, 'module_sha256': canonical_value(module).sha256, 'generation_submitted': False}
+
     def preview(self, key, value):
         fields(value, ('expected_revision', 'commands'))
         with self.workspace.connection() as db:
