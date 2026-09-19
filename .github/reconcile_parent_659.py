@@ -69,17 +69,10 @@ readme_path = Path("research/voice-profiles/README.md")
 readme = readme_path.read_text(encoding="utf-8")
 readme = sub_once(
     readme,
-    r"## Local registry\n.*?(?=\n## Deterministic qualification plan)",
+    r"## Local registry\n.*?(?=\n## )",
     """## Local catalogue overlay
 
-Checked-in records do not contain accepted private references. Create a local ignored file such as `_voice_profiles/profiles.json`:
-
-```json
-{
-  "schema_version": 1,
-  "profiles": []
-}
-```
+Private or machine-specific records belong under an ignored `_voice_profiles/` directory. Supply a registry with `--profile-registry` or PowerShell `-ProfileRegistry`.
 
 Overlaying a checked-in profile requires:
 
