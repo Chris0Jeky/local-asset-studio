@@ -1,0 +1,20 @@
+name: Export source 659
+on:
+  push:
+    branches:
+      - codex/narration-policy-hardening-659
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: local-asset-studio-659-source
+          path: |
+            .
+            !.git/**
+          if-no-files-found: error
+          retention-days: 1
