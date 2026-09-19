@@ -52,6 +52,23 @@ test('the workbench record path preserves redo across a clamped no-op',()=>{
   assert.equal(timeline.canUndo,true,'the original pre-drag snapshot remains undoable');
 });
 
+test('a rounded typed no-op preserves redo and adds no undo entry',()=>{
+  const timeline=P.timeline(60),before=drawing(100),home=drawing(100),after=drawing(300);
+  timeline.record(before,home);
+  const restored=timeline.undo(after,drawing(300));
+  assert.equal(timeline.canRedo,true);
+  timeline.record(restored.points,restored.home);
+  const unchanged=P.move(restored.points,4,restored.points[4].x,restored.points[4].y,CANVAS);
+  assert.equal(timeline.canRedo,true,'the exact no-op leaves the redo branch pending');
+  const refused=P.move(unchanged,4,unchanged[4].x+0.001,unchanged[4].y,CANVAS);
+  assert.deepEqual(P.serialize(refused,CANVAS),P.serialize(unchanged,CANVAS),
+    'the workbench refuses a typed edit whose serialized pose is unchanged');
+  assert.equal(timeline.canRedo,true,'a refused sub-centipixel transition must not destroy redo');
+  assert.equal(timeline.canUndo,false,'a refused transition must not create an undo entry');
+  const redone=timeline.redo(unchanged,restored.home);
+  assert.deepEqual(redone.points[4],after[4]);
+});
+
 test('a precomputed edit survives cleanup of an earlier no-op',()=>{
   const timeline=P.timeline(60),home=drawing(100),before=drawing(100);
   timeline.record(before,home);
