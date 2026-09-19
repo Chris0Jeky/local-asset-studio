@@ -13,7 +13,7 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 1674 tests, 2-3 minutes, offline; budget minutes, not seconds
+python -m unittest discover -s tests          # ~3,000 tests, 11-15 minutes on this PC, offline; budget minutes, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
@@ -21,7 +21,7 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
 package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
-with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`).
+with a vendored model-viewer. Skips are environment-dependent (72 on 19 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`; the run is the record).
 
 ## Proving checks (narrowest command per seam)
 
