@@ -96,7 +96,7 @@ class VoiceProfileContractTests(unittest.TestCase):
         self.assertEqual(default['profile_sha256'], override['profile_sha256'])
         self.assertNotEqual(default['binding_sha256'], override['binding_sha256'])
 
-    def test_local_replacement_requires_exact_compare_and_swap_provenance(self):
+    def test_local_overlay_requires_exact_catalogue_provenance(self):
         catalog = voice_profile.load_catalog()
         base = profile_by_id(catalog, 'ember-brief-v1')
         base_hash = voice_profile.profile_digest(base)
@@ -114,6 +114,18 @@ class VoiceProfileContractTests(unittest.TestCase):
                              (base['revision'] + 1, 'accepted', True))
             with self.assertRaisesRegex(voice_profile.VoiceProfileError, 'unsupported adapter'):
                 voice_profile.require_executable(resolved)
+
+            successor = copy.deepcopy(replacement)
+            successor['revision'] += 1
+            successor['supersedes_profile_sha256'] = voice_profile.profile_digest(replacement)
+            registry.write_text(json.dumps({'schema_version': 1, 'profiles': [successor]}), encoding='utf-8')
+            with self.assertRaisesRegex(voice_profile.VoiceProfileError, 'supersedes'):
+                voice_profile.resolve_profile('ember-brief-v1', 'calm-brief', registry_path=registry)
+
+            successor['supersedes_profile_sha256'] = base_hash
+            registry.write_text(json.dumps({'schema_version': 1, 'profiles': [successor]}), encoding='utf-8')
+            resolved = voice_profile.resolve_profile('ember-brief-v1', 'calm-brief', registry_path=registry)
+            self.assertEqual(resolved['revision'], base['revision'] + 2)
 
     def test_current_voice_baseline_cannot_masquerade_as_an_accepted_custom_profile(self):
         catalog = voice_profile.load_catalog()
