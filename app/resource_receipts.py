@@ -138,8 +138,12 @@ def _content_fingerprint(path: Path, limit: int) -> tuple[int, str]:
         require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
                 and count == before.st_size, 'file_changed')
         return count, digest.hexdigest()
-    except (EvidenceError, FileNotFoundError, OSError):
+    except EvidenceError:
+        raise
+    except FileNotFoundError:
         raise EvidenceError('file_changed') from None
+    except OSError:
+        raise EvidenceError('artifact_unreadable') from None
 
 
 def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
