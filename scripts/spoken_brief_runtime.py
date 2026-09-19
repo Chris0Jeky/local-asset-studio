@@ -86,6 +86,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
         identity_record = _confirm_environment(client, state, state_path, manifest)
         deadline = time.monotonic() + deadline_seconds
         segment_files = {}
+        segment_hashes = {}
         for batch_index, (batch_state, batch) in enumerate(zip(state['batches'], batches), 1):
             _confirm_environment(client, state, state_path, manifest)
             identifier = batch_state.get('project_id')
@@ -198,9 +199,13 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                     'source_url': artifact['url'],
                 }
                 segment_files[line['id']] = target
+                segment_hashes[line['id']] = artifact['sha256']
             batch_state['status'] = 'completed'
             write_json(state_path, state)
-        missing = [segment['id'] for segment in manifest['segments'] if segment['id'] not in segment_files]
+        missing = [
+            segment['id'] for segment in manifest['segments']
+            if segment['id'] not in segment_files or segment['id'] not in segment_hashes
+        ]
         if missing:
             raise SpokenBriefError('Completed Voice projects did not yield every compiled segment')
         _confirm_environment(client, state, state_path, manifest)
@@ -208,6 +213,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             {
                 'id': segment['id'],
                 'path': segment_files[segment['id']],
+                'expected_sha256': segment_hashes[segment['id']],
                 'pause_after_ms': segment['pause_after_ms'],
             }
             for segment in manifest['segments']
