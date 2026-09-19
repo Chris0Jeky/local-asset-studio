@@ -4,7 +4,7 @@
 
 **Goal:** Convert a `COMPRESSED.md` or `INDEX.md` handoff into one deterministic local narration WAV through the existing LAS Voice baseline without duplicate inference.
 
-**Architecture:** A Python standard-library coordinator compiles bounded Markdown segments, persists an immutable schema-v2 manifest and durable mutable state, creates and reconciles ordinary Voice Production children through loopback HTTP, verifies Studio, producer, child-plan, artifact, and source provenance, and concatenates PCM frames with deterministic pauses. A thin PowerShell wrapper provides the one-command Windows route.
+**Architecture:** A Python standard-library coordinator compiles bounded Markdown segments, persists an immutable schema-v2 manifest and durable mutable state, creates and reconciles ordinary Voice Production children through loopback HTTP, verifies Studio, producer, child-plan, artifact, source, and exact input-snapshot provenance, and concatenates PCM frames with deterministic pauses. A thin PowerShell wrapper provides the one-command Windows route.
 
 **Tech stack:** Python 3.12+, PowerShell, existing LAS loopback HTTP, Production, and Voice baseline, GitHub Actions on Ubuntu and Windows.
 
@@ -17,9 +17,10 @@
 - Start generation only from the explicit `run` command.
 - Never replace a failed, interrupted, uncertain, or unconfirmed Voice request automatically.
 - Persist and flush create intent before POST, and persist the returned project ID before Start.
+- Treat successful mutation response bodies as acknowledgements; reconcile durable child state through canonical `GET` requests.
 - Use at most six lines, 1,500 characters, and 210 words per child batch, with at most 520 characters per line.
 - Accept only exact-project, SHA-256-bound, 48 kHz mono PCM16 scene WAVs.
-- Bind one run to exact source bytes, Studio workspace identity, child-plan hashes, and one producer fingerprint.
+- Bind one run to exact source bytes, Studio workspace identity, child-plan hashes, one producer fingerprint, and the exact WAV snapshots used during assembly.
 - Keep model weights, references, handoffs, and generated audio out of Git.
 - Treat `speaker_id` as recipe metadata, not evidence of voice design or cloning.
 - Match the repository's Python 3.12 floor and standard-library-first runtime.
@@ -71,6 +72,8 @@
 - [x] Persist `creating` before `POST /api/voice-baseline`.
 - [x] Distinguish explicit HTTP 4xx rejection from uncertain transport, HTTP 5xx, malformed identity, and lost-response outcomes.
 - [x] Persist the returned project ID before Start.
+- [x] Reconcile a successful create through canonical `GET /api/production/<id>` rather than trusting response state.
+- [x] Treat a successful Start body as an acknowledgement and reconcile the known child through canonical `GET`.
 - [x] Observe only known project IDs and block terminal failures or deadline expiry.
 - [x] Reuse completed or active children rather than creating replacements.
 - [x] Treat a missing create identity as `create-unconfirmed` and block later submissions.
@@ -136,10 +139,11 @@
 - [x] Require an exact relative route under the retained project ID.
 - [x] Verify complete SHA-256 evidence and downloaded bytes.
 - [x] Require uncompressed 48 kHz mono PCM16 input.
+- [x] Read each input as one bounded snapshot, then hash, validate, decode, and assemble that same snapshot.
 - [x] Copy PCM frames directly and insert exact zero-valued pause frames.
 - [x] Flush and `fsync` the temporary master, then atomically replace the target.
-- [x] Stream input, output, and completed-reuse hashes rather than loading a long master fully into memory.
-- [x] Publish a receipt containing source, Studio, producer, child plan, segment, input, and output evidence.
+- [x] Stream final-output and completed-reuse hashes rather than loading a long master fully into memory.
+- [x] Publish a receipt containing source, Studio, producer, child plan, segment, exact input-snapshot, and output evidence.
 - [x] Return a matching completed run before constructing a Studio client.
 
 ## Task 8: Add the one-command Windows adapter
@@ -155,6 +159,7 @@
 - [x] Forward direct argument arrays without `Invoke-Expression`.
 - [x] Serialize numeric values with invariant culture and preserve the child exit code.
 - [x] Parse the wrapper on Windows CI.
+- [x] Trigger the focused workflow when the shared fake-Studio fixture changes.
 
 ## Task 9: Document the product boundary and follow-on programme
 
@@ -173,11 +178,11 @@
 
 ## Task 10: Verification and review
 
-- [x] Observe RED for the added provenance, source-race, transport-shape, durability, and final-publication contracts before implementation.
-- [x] Run `python -m unittest discover -s tests -p "test_spoken_brief*.py" -v` with 40 passing contracts on Ubuntu and Windows.
+- [x] Observe RED for the added provenance, source-race, transport-shape, durability, final-publication, exact-input-snapshot, and canonical-read contracts before implementation.
+- [x] Run `python -m unittest discover -s tests -p "test_spoken_brief*.py" -v` with 43 passing contracts on Ubuntu and Windows.
 - [x] Run `python scripts/spoken_brief.py --help` on both operating-system families.
 - [x] Parse `scripts/speak-handoff.ps1` on Windows.
-- [x] Exercise one-batch, multi-batch, failed-child, uncertain-create, completed-reuse, source-drift, workspace-drift, plan-drift, and producer-drift paths through the fake loopback Studio.
+- [x] Exercise one-batch, multi-batch, failed-child, uncertain-create, successful-response reconciliation, completed-reuse, source-drift, workspace-drift, plan-drift, producer-drift, and final-publication paths through the fake loopback Studio.
 - [ ] Require both `Spoken brief contracts` and repository-wide `Check studio` to pass on the final exact PR head after all documentation and review changes.
 - [ ] Confirm no unresolved review threads, no accidental generated audio or private handoff content, and a mergeable PR before publication.
 
