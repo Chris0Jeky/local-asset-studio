@@ -28,6 +28,8 @@ class Fixture:
         self.counter = 0
         self.create_id_override = None
         self.create_rejection = None
+        self.create_response_override = None
+        self.start_response_override = None
         self.identity_redirect = None
         self.mismatch_after_start = False
         self.identity = {'app': 'local-asset-studio', 'workspace': 'fixture-workspace', 'version': 'production-workspace-1'}
@@ -87,7 +89,8 @@ class Fixture:
                                'state': {'status': 'planned', 'message': 'prepared', 'artifacts': []}}
                     fixture.projects[identifier] = project
                     if fixture.after_create is not None: fixture.after_create(project)
-                    return self._json(201, project)
+                    response = fixture.create_response_override if fixture.create_response_override is not None else project
+                    return self._json(201, response)
                 if self.path.endswith('/start'):
                     identifier = self.path.split('/')[3]
                     project = fixture.projects[identifier]; artifacts = []
@@ -99,6 +102,7 @@ class Fixture:
                         artifacts.append({'path': relative, 'url': route, 'sha256': hashlib.sha256(raw).hexdigest(), 'role': 'audio'})
                     project['state'] = {'status': 'completed', 'message': 'done', 'artifacts': artifacts}
                     if fixture.after_start is not None: fixture.after_start(project)
-                    return self._json(202, project)
+                    response = fixture.start_response_override if fixture.start_response_override is not None else project
+                    return self._json(202, response)
                 return self._json(404, {'error': 'unknown'})
         return Handler
