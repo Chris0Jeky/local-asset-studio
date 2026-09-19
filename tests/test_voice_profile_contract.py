@@ -35,7 +35,7 @@ def accepted_ember(base, supersedes):
         },
     )
     value['producer'] = {
-        'adapter': 'voice-baseline',
+        'adapter': 'qwen3-tts-profile',
         'runnable': True,
         'speaker_id': 'ember-brief',
     }
@@ -80,6 +80,13 @@ class VoiceProfileContractTests(unittest.TestCase):
         self.assertNotEqual(calm['binding_sha256'], spark['binding_sha256'])
         self.assertNotEqual(calm['delivery']['sha256'], spark['delivery']['sha256'])
 
+    def test_redundant_default_speaker_does_not_fork_manifest_identity(self):
+        default = voice_profile.resolve_profile('kokoro-af-heart-control-v1', 'calm-brief')
+        explicit = voice_profile.resolve_profile(
+            'kokoro-af-heart-control-v1', 'calm-brief', speaker_id='brief-narrator')
+        self.assertEqual(explicit['speaker_id_source'], 'profile')
+        self.assertEqual(default, explicit)
+
     def test_speaker_override_is_metadata_only_and_changes_binding_identity(self):
         default = voice_profile.resolve_profile('kokoro-af-heart-control-v1', 'calm-brief')
         override = voice_profile.resolve_profile(
@@ -105,7 +112,20 @@ class VoiceProfileContractTests(unittest.TestCase):
             resolved = voice_profile.resolve_profile('ember-brief-v1', 'calm-brief', registry_path=registry)
             self.assertEqual((resolved['revision'], resolved['status'], resolved['runnable']),
                              (base['revision'] + 1, 'accepted', True))
-            voice_profile.require_executable(resolved)
+            with self.assertRaisesRegex(voice_profile.VoiceProfileError, 'unsupported adapter'):
+                voice_profile.require_executable(resolved)
+
+    def test_current_voice_baseline_cannot_masquerade_as_an_accepted_custom_profile(self):
+        catalog = voice_profile.load_catalog()
+        base = profile_by_id(catalog, 'ember-brief-v1')
+        replacement = accepted_ember(base, voice_profile.profile_digest(base))
+        replacement['producer']['adapter'] = 'voice-baseline'
+        with tempfile.TemporaryDirectory() as temporary:
+            registry = Path(temporary) / 'profiles.json'
+            registry.write_text(json.dumps({'schema_version': 1, 'profiles': [replacement]}), encoding='utf-8')
+            resolved = voice_profile.resolve_profile('ember-brief-v1', 'calm-brief', registry_path=registry)
+            with self.assertRaisesRegex(voice_profile.VoiceProfileError, 'Kokoro af_heart control'):
+                voice_profile.require_executable(resolved)
 
     def test_duplicate_local_identity_without_supersedes_is_rejected(self):
         catalog = voice_profile.load_catalog()

@@ -421,11 +421,13 @@ def resolve_profile(
     if speaker_id is not None:
         if not isinstance(speaker_id, str) or not SPEAKER_RE.fullmatch(speaker_id):
             raise VoiceProfileError('speaker_id override must be stable lowercase metadata')
-        retained_speaker = speaker_id
-        speaker_source = 'cli-metadata-override'
+        if speaker_id != retained_speaker:
+            retained_speaker = speaker_id
+            speaker_source = 'cli-metadata-override'
 
     delivery_binding = copy.deepcopy(delivery)
     delivery_binding['sha256'] = canonical_digest(delivery)
+    profile_sha256 = profile_digest(profile)
     binding = {
         'schema_version': 1,
         'id': profile['id'],
@@ -433,7 +435,7 @@ def resolve_profile(
         'name': profile['name'],
         'status': profile['status'],
         'source': source_kind,
-        'profile_sha256': profile_digest(profile),
+        'profile_sha256': profile_sha256,
         'identity': copy.deepcopy(profile['identity']),
         'adapter': profile['producer']['adapter'],
         'runnable': profile['producer']['runnable'],
@@ -471,6 +473,14 @@ def require_executable(binding: dict) -> None:
     if binding.get('adapter') != 'voice-baseline':
         raise VoiceProfileError(
             f'Narration profile {identifier} uses unsupported adapter {binding.get("adapter")!r}'
+        )
+    identity = binding.get('identity')
+    if (status != 'control' or not isinstance(identity, dict)
+            or identity.get('model_id') != 'hexgrad/Kokoro-82M'
+            or identity.get('voice') != 'af_heart'):
+        raise VoiceProfileError(
+            'The current voice-baseline adapter can execute only the pinned Kokoro af_heart control; '
+            f'narration profile {identifier} needs its own qualified producer adapter'
         )
     if binding.get('runnable') is not True:
         raise VoiceProfileError(f'Narration profile {identifier} is not bound to a runnable producer')
