@@ -45,7 +45,7 @@ class SpokenBriefTests(unittest.TestCase):
             self.assertTrue(all(origin == fixture.base_url for method, _, origin, _ in posts if method == 'POST'))
             self.assertTrue(all(body['speaker_id'] == 'brief-narrator' for method, path, _, body in posts if path == '/api/voice-baseline'))
             receipt = json.loads(Path(result['receipt']).read_text(encoding='utf-8'))
-            self.assertEqual(receipt['studio'], {'base_url': fixture.base_url, 'identity': {'app': 'local-asset-studio'}})
+            self.assertEqual(receipt['studio'], {'base_url': fixture.base_url, 'identity': fixture.identity})
             self.assertEqual(receipt['source']['sha256'], hashlib.sha256((pack / 'COMPRESSED.md').read_bytes()).hexdigest())
             self.assertEqual(receipt['output']['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
 
