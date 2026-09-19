@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'scripts/strict_json.py'
       - 'scripts/voice_profile*.py'
       - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'scripts/strict_json.py'
       - 'scripts/voice_profile*.py'
       - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
