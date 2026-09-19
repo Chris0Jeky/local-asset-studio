@@ -104,7 +104,7 @@
     const note=el('p','Selected advice images are byte-checked only on request. A count alone is a declaration, not an upload. Checking never changes settings or starts generation.');note.className='muted';panel.append(note);
     const status=el('p','Choose an outcome, then check.','shortlist-status');status.id='shortlistStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const result=el('div');result.id='shortlistResults';panel.append(status,result);list.before(panel);
-    let last=null,source=null,ordered=null;
+    let last=null,source=null,ordered=null,sourceRenderEpoch=0;
     const session=new Session(async(q,signal)=>{
       const response=await w.fetch('/api/workflow-studio/shortlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q),signal});
       const raw=await response.text();need(raw.length<=1024*1024,'Shortlist response exceeds the browser limit.');
@@ -125,6 +125,7 @@
       panel.open=true;const drawer=panel.closest('.ux-recipe-drawer');if(drawer)drawer.open=true;check.focus();panel.scrollIntoView({block:'nearest',behavior:'auto'});
     });
     function renderSources(focusSlot){
+      const renderEpoch=++sourceRenderEpoch;
       sourceList.replaceChildren();count.value=String(ordered.length);count.disabled=true;
       role.disabled=true;role.hidden=true;rl.hidden=true;clear.hidden=false;
       sourceNote.textContent=ordered.length+' advice image(s), in Picture order. Every selected file will be checked. Nothing is attached or applied.';
@@ -138,13 +139,18 @@
         for(const [delta,title] of [[-1,'Move earlier'],[1,'Move later']]){
           const button=el('button',delta<0?'↑':'↓');button.type='button';button.dataset.move=String(delta);button.title=title;
           button.setAttribute('aria-label',title+': Picture '+(index+1));button.disabled=index+delta<0||index+delta>=ordered.length;
-          button.onclick=()=>{[ordered[index],ordered[index+delta]]=[ordered[index+delta],ordered[index]];session.invalidate('Picture order changed. Review each role and check again.');renderSources(index+delta+1);};buttons.append(button);
+          const move=()=>{[ordered[index],ordered[index+delta]]=[ordered[index+delta],ordered[index]];session.invalidate('Picture order changed. Review each role and check again.');renderSources(index+delta+1);};
+          button.onclick=move;button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();move();}};buttons.append(button);
         }
         const remove=el('button','Remove');remove.type='button';remove.dataset.remove=String(index+1);remove.setAttribute('aria-label','Remove Picture '+(index+1)+' from advice');
         remove.onclick=()=>{ordered.splice(index,1);session.invalidate('Advice image removed. Create attachments are unchanged.');if(ordered.length)renderSources(Math.min(index+1,ordered.length));else{clear.onclick();count.value='0';check.focus();}};
         buttons.append(remove);box.append(buttons);sourceList.append(box);
       });
-      if(focusSlot)$('#shortlistRole'+focusSlot)?.focus();
+      if(focusSlot){
+        const restoreFocus=()=>{if(renderEpoch===sourceRenderEpoch)$('#shortlistRole'+focusSlot)?.focus();};
+        restoreFocus();
+        if(typeof w.requestAnimationFrame==='function')w.requestAnimationFrame(restoreFocus);else w.setTimeout(restoreFocus,0);
+      }
     }
     d.addEventListener('studio:shortlist-sources',e=>{
       const items=e.detail;
