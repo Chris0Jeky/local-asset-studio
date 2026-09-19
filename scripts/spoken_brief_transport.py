@@ -360,6 +360,12 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
             for entry in entries:
                 path = Path(entry['path'])
                 details, frames, snapshot_sha256 = _wav_snapshot(path)
+                expected_sha256 = entry.get('expected_sha256')
+                if expected_sha256 is not None:
+                    if not HEX_64.fullmatch(str(expected_sha256)):
+                        raise SpokenBriefError(f'Assembly entry has an invalid artifact hash for {entry.get("id", path.name)}')
+                    if snapshot_sha256 != expected_sha256:
+                        raise SpokenBriefError(f'Voice artifact changed before assembly for {entry.get("id", path.name)}')
                 joined.writeframesraw(frames)
                 samples += details['samples']
                 pause_ms = entry.get('pause_after_ms', 0)
