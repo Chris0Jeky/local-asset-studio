@@ -47,9 +47,11 @@ class SpokenBriefHardeningTests(unittest.TestCase):
             Path(result['receipt']).unlink()
             Path(result['output']).unlink()
             fixture.identity = {**fixture.identity, 'workspace': 'different-workspace'}
+            request_count = len(fixture.requests)
             with self.assertRaisesRegex(spoken_brief.SpokenBriefError, r'Studio.*identity changed'):
                 spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
-            self.assertFalse(any(method == 'POST' for method, _, _, _ in fixture.requests[len(fixture.requests):]))
+            later = fixture.requests[request_count:]
+            self.assertFalse(any(method == 'POST' for method, _, _, _ in later))
 
     def test_workspace_change_between_batches_blocks_the_next_create(self):
         fixture = Fixture(); self.addCleanup(fixture.close)
@@ -114,6 +116,7 @@ class SpokenBriefHardeningTests(unittest.TestCase):
                 'state': {'status': 'planned', 'message': 'prepared', 'artifacts': []}}
             run_dir = spoken_brief.run_directory(source, compiled['manifest_sha256']); run_dir.mkdir(parents=True)
             state = spoken_brief.initial_state(compiled)
+            state['studio'] = {'base_url': fixture.base_url, 'identity': fixture.identity}
             state['batches'][0].update(project_id=identifier, status='planned')
             spoken_brief.write_json(run_dir / 'state.json', state)
             with self.assertRaisesRegex(spoken_brief.SpokenBriefError, r'plan fingerprint'):
@@ -170,6 +173,7 @@ class SpokenBriefHardeningTests(unittest.TestCase):
             output = root / 'brief.spoken.wav'; output.write_bytes(wav_bytes(10))
             receipt_path = root / 'receipt.json'
             spoken_brief.write_json(receipt_path, {
+                'schema_version': spoken_brief.SCHEMA_VERSION,
                 'manifest_sha256': 'a' * 64,
                 'output': {'path': str(output), 'sha256': hashlib.sha256(output.read_bytes()).hexdigest()},
                 'projects': ['b' * 32],
