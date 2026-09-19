@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
       - 'docs/spoken-briefs/**'
       - '.github/workflows/spoken-brief.yml'
@@ -11,6 +12,7 @@ on:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
       - 'docs/spoken-briefs/**'
       - '.github/workflows/spoken-brief.yml'
