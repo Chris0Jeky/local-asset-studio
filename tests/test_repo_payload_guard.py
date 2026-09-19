@@ -2,7 +2,8 @@
 
 `.gitignore` keeps generated `experiments/` output out of the working tree; `scripts/validate-repo.py`
 refuses the same paths in Git and independently enforces that `experiments/curated/` is the only tracked
-experiments subtree. #589 recorded what happens when a generated folder reaches neither enumerated list.
+experiments subtree. #589 recorded what happens when a generated folder reaches neither enumerated list;
+#614 makes the declared curated-only rule executable rather than relying on enumeration completeness.
 """
 import re
 import subprocess
