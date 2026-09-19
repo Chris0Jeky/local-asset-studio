@@ -60,6 +60,33 @@ class InputAdapters(unittest.TestCase):
                 self.assertIsNone(report['graph'])
                 self.assertEqual(1, doc['nodes']['1']['inputs']['value'])
 
+    def test_remote_flag_requires_a_real_boolean_before_static_authoring(self):
+        for value in (0, '', None, [], {}):
+            with self.subTest(value=value):
+                node, report, _, _ = inspect(
+                    {'input': {'required': {'value': ['INT', {'remote': value}]}}},
+                    {'value': 1},
+                )
+                field = node['inputs'][0]
+                self.assertEqual('unsupported', field['widget'])
+                self.assertIn('remote must be boolean', field['reason'])
+                self.assertFalse(field['capabilities']['static_validation'])
+                self.assertFalse(report['valid'])
+                self.assertIsNone(report['graph'])
+        node, report, _, _ = inspect(
+            {'input': {'required': {'value': ['INT', {'remote': False}]}}},
+            {'value': 1},
+        )
+        self.assertEqual('int', node['inputs'][0]['widget'])
+        self.assertTrue(report['valid'])
+        node, report, _, _ = inspect(
+            {'input': {'required': {'value': ['INT', {'remote': True}]}}},
+            {'value': 1},
+        )
+        self.assertEqual('unsupported', node['inputs'][0]['widget'])
+        self.assertIn('remote behaviour needs a native adapter', node['inputs'][0]['reason'])
+        self.assertFalse(report['valid'])
+
     def test_diagnostics_are_node_local_and_disconnected_opaque_data_survives(self):
         info = {'Good': {'input': {}, 'output': [], 'output_node': True},
                 'Bad': {'input': 17, 'output': [], 'output_node': True}}
@@ -114,7 +141,7 @@ class InputAdapters(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         received = json.loads(result.stdout)
         self.assertEqual(node['source_definition_json'], received['source_definition_json'])
-        self.assertEqual(node['inputs'][0]['source_descriptor_json'], received['inputs'][0]['source_descriptor_json'])
+        self.assertEqual(node['inputs'][0]['source_descriptor_json'], received['source_descriptor_json'] if 'source_descriptor_json' in received else received['inputs'][0]['source_descriptor_json'])
         restored = json.loads(received['source_definition_json'])
         self.assertEqual(2**64-1, restored['input']['required']['value'][1]['max'])
         self.assertIs(type(restored['vendor']['small_float']), float)
