@@ -3,6 +3,7 @@ import copy
 from contextlib import redirect_stderr
 import importlib.util
 import io
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -120,8 +121,10 @@ class ProductionBriefTests(unittest.TestCase):
 
     def test_agent_guide_records_the_current_path_filtered_lane_count(self):
         text = (REPO / 'CLAUDE.md').read_text(encoding='utf-8')
-        self.assertIn('20 further\npath-filtered lanes', text)
-        self.assertNotIn('19 further\npath-filtered lanes', text)
+        workflows = sorted((REPO / '.github/workflows').glob('*.yml'))
+        lanes = [p.name for p in workflows if p.name != 'check.yml' and re.search(r'^\s*paths:', p.read_text(encoding='utf-8'), re.M)]
+        self.assertTrue(lanes)
+        self.assertIn(f'{len(lanes)} further\npath-filtered lanes', text, f'CLAUDE.md must state the live count: {len(lanes)} path-filtered lanes besides check.yml')
 
 
 if __name__ == '__main__':
