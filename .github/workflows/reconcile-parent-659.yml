@@ -13,7 +13,7 @@ jobs:
         with:
           ref: codex/narration-policy-hardening-659
           fetch-depth: 0
-      - name: Merge audited parent and preserve #659 contracts
+      - name: Merge audited parent and preserve issue 659 contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -31,7 +31,7 @@ jobs:
 
           unresolved="$(git diff --name-only --diff-filter=U)"
           if [[ -n "$unresolved" && "$unresolved" != 'docs/spoken-briefs/VOICE-PROFILE.md' ]]; then
-            echo "Unexpected merge conflicts:"
+            echo 'Unexpected merge conflicts:'
             printf '%s\n' "$unresolved"
             exit 1
           fi
@@ -48,22 +48,28 @@ jobs:
 
           voice_path = Path('docs/spoken-briefs/VOICE-PROFILE.md')
           voice = voice_path.read_text(encoding='utf-8')
-          old_registry = '''A local profile cannot silently replace a checked-in revision. Replacement requires:
-
-- the same stable profile ID;
-- a strictly higher integer revision;
-- `supersedes_profile_sha256` equal to the exact currently resolved profile hash.
-
-This compare-and-swap rule makes stale or competing local edits fail closed. New local profile IDs must not claim to supersede an unknown record.'''
-          new_registry = '''A local profile can overlay a checked-in catalogue profile only when it carries:
-
-- the same stable profile ID;
-- a strictly higher integer revision than the checked-in profile;
-- `supersedes_profile_sha256` equal to the exact checked-in catalogue profile hash.
-
-This guard detects catalogue drift: a local overlay prepared for different checked-in profile bytes is refused. It is not a mutable registry compare-and-swap operation, a persisted local revision chain, or a concurrent-writer lock. Each resolution starts from the checked-in catalogue and then applies at most one local record per profile ID. Replacing the registry file is an external operator action; two competing writers are not serialized by the resolver. Issue #671 tracks a genuine local CAS update boundary if that stronger property is needed.
-
-New local profile IDs must not claim to supersede an unknown catalogue record.'''
+          old_registry = (
+              'A local profile cannot silently replace a checked-in revision. Replacement requires:\n\n'
+              '- the same stable profile ID;\n'
+              '- a strictly higher integer revision;\n'
+              '- `supersedes_profile_sha256` equal to the exact currently resolved profile hash.\n\n'
+              'This compare-and-swap rule makes stale or competing local edits fail closed. '
+              'New local profile IDs must not claim to supersede an unknown record.'
+          )
+          new_registry = (
+              'A local profile can overlay a checked-in catalogue profile only when it carries:\n\n'
+              '- the same stable profile ID;\n'
+              '- a strictly higher integer revision than the checked-in profile;\n'
+              '- `supersedes_profile_sha256` equal to the exact checked-in catalogue profile hash.\n\n'
+              'This guard detects catalogue drift: a local overlay prepared for different checked-in '
+              'profile bytes is refused. It is not a mutable registry compare-and-swap operation, a '
+              'persisted local revision chain, or a concurrent-writer lock. Each resolution starts from '
+              'the checked-in catalogue and then applies at most one local record per profile ID. '
+              'Replacing the registry file is an external operator action; two competing writers are not '
+              'serialized by the resolver. Issue #671 tracks a genuine local CAS update boundary if that '
+              'stronger property is needed.\n\n'
+              'New local profile IDs must not claim to supersede an unknown catalogue record.'
+          )
           if old_registry not in voice:
               raise SystemExit('Expected stale registry paragraph was not found')
           voice = voice.replace(old_registry, new_registry)
@@ -79,10 +85,22 @@ New local profile IDs must not claim to supersede an unknown catalogue record.''
               'canonical hashes, revision compare-and-swap, delivery binding,',
               'canonical hashes, catalogue-bound overlay validation, delivery binding,',
           )
-          voice = voice.replace(
-              '- that a custom producer adapter exists.\n\nThose require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641.',
-              '- that a custom producer adapter exists;\n- that local registry file writers are serialized or form a durable predecessor chain.\n\nThose require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641; stronger registry mutation semantics remain #671.',
+          old_evidence = (
+              '- that a custom producer adapter exists.\n\n'
+              'Those require local retained evidence and human listening. Broader producer, audition, '
+              'replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation '
+              'workflow remains #641.'
           )
+          new_evidence = (
+              '- that a custom producer adapter exists;\n'
+              '- that local registry file writers are serialized or form a durable predecessor chain.\n\n'
+              'Those require local retained evidence and human listening. Broader producer, audition, '
+              'replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation '
+              'workflow remains #641; stronger registry mutation semantics remain #671.'
+          )
+          if old_evidence not in voice:
+              raise SystemExit('Expected stale evidence paragraph was not found')
+          voice = voice.replace(old_evidence, new_evidence)
           voice_path.write_text(voice, encoding='utf-8')
 
           readme_path = Path('research/voice-profiles/README.md')
@@ -93,10 +111,25 @@ New local profile IDs must not claim to supersede an unknown catalogue record.''
               '"supersedes_profile_sha256": "the exact currently resolved profile hash"',
               '"supersedes_profile_sha256": "the exact checked-in catalogue profile hash"',
           )
-          readme = readme.replace(
-              'The replacement must contain the complete strict profile schema. A stale hash, unchanged revision, duplicate ID, unsupported field, malformed hash, filesystem path masquerading as an asset ID, or inconsistent acceptance state is rejected.\n\nThe compare-and-swap link prevents one local experiment from silently overwriting evidence produced from another revision.',
-              'The overlay must contain the complete strict profile schema. A hash for different checked-in catalogue bytes, unchanged revision, duplicate ID, unsupported field, malformed hash, filesystem path masquerading as an asset ID, or inconsistent acceptance state is rejected.\n\nThis is a catalogue-drift guard, not a mutable compare-and-swap registry. Resolution always starts from the checked-in catalogue and applies at most one local record per profile ID. The resolver does not retain local predecessor state or serialize competing file writers; issue #671 tracks that stronger mutation boundary.',
+          old_readme = (
+              'The replacement must contain the complete strict profile schema. A stale hash, unchanged '
+              'revision, duplicate ID, unsupported field, malformed hash, filesystem path masquerading '
+              'as an asset ID, or inconsistent acceptance state is rejected.\n\n'
+              'The compare-and-swap link prevents one local experiment from silently overwriting evidence '
+              'produced from another revision.'
           )
+          new_readme = (
+              'The overlay must contain the complete strict profile schema. A hash for different checked-in '
+              'catalogue bytes, unchanged revision, duplicate ID, unsupported field, malformed hash, '
+              'filesystem path masquerading as an asset ID, or inconsistent acceptance state is rejected.\n\n'
+              'This is a catalogue-drift guard, not a mutable compare-and-swap registry. Resolution always '
+              'starts from the checked-in catalogue and applies at most one local record per profile ID. '
+              'The resolver does not retain local predecessor state or serialize competing file writers; '
+              'issue #671 tracks that stronger mutation boundary.'
+          )
+          if old_readme not in readme:
+              raise SystemExit('Expected stale research README paragraph was not found')
+          readme = readme.replace(old_readme, new_readme)
           readme = readme.replace(
               'The normalized result is evidence for a later local profile revision.',
               'The normalized result is evidence for a later local catalogue overlay.',
