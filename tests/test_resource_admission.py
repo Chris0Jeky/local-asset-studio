@@ -1,11 +1,11 @@
 import copy
 import importlib.util
-import json
 import sys
 import threading
 import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).parents[1]
 
@@ -15,9 +15,9 @@ resource_probe.physical_memory = lambda: {}
 resource_probe.project_stats = lambda value: value
 wan_capacity = types.ModuleType('wan_capacity')
 wan_capacity.projection = lambda preset, graph: preset.get('wan_projection')
-sys.modules.update(host_memory=host_memory, resource_probe=resource_probe, wan_capacity=wan_capacity)
-spec = importlib.util.spec_from_file_location('resource_admission', ROOT / 'app/resource_admission.py')
-admission = importlib.util.module_from_spec(spec); spec.loader.exec_module(admission)
+with patch.dict(sys.modules, {'host_memory': host_memory, 'resource_probe': resource_probe, 'wan_capacity': wan_capacity}):
+    spec = importlib.util.spec_from_file_location('resource_admission_test_target', ROOT / 'app/resource_admission.py')
+    admission = importlib.util.module_from_spec(spec); spec.loader.exec_module(admission)
 
 GIB = 1024 ** 3
 GRAPH = {
@@ -39,8 +39,9 @@ def observation(ram=40 * GIB, commit=40 * GIB, vram=16 * GIB, version='1.0'):
 
 
 class Backends:
-    active = 'primary'
-    profiles = {'primary': {'id': 'primary', 'url': 'http://127.0.0.1:8188', 'root': 'C:/AI/ComfyUI', 'entry': 'main.py'}}
+    def __init__(self):
+        self.active = 'primary'
+        self.profiles = {'primary': {'id': 'primary', 'url': 'http://127.0.0.1:8188', 'root': 'C:/AI/ComfyUI', 'entry': 'main.py'}}
 
 
 class Studio:
