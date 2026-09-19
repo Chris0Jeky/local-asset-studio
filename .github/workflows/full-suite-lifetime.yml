@@ -1,0 +1,51 @@
+name: Full-suite lifetime contracts
+on:
+  pull_request:
+    paths:
+      - 'tests/check_full_suite_lifetime.py'
+      - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/test_full_suite_lifetime.py'
+      - '.github/workflows/full-suite-lifetime.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/check_full_suite_lifetime.py'
+      - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/test_full_suite_lifetime.py'
+      - '.github/workflows/full-suite-lifetime.yml'
+permissions:
+  contents: read
+concurrency:
+  group: full-suite-lifetime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolated-contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p test_full_suite_lifetime.py -v
+  windows-full-suite:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      # The hosted Windows runner needs roughly 800 seconds for the 2,968 offline
+      # tests (run 35339291681 started 2,236 of them inside the 600-second default
+      # with no hung test). Raise the hard budget only for this host; the default
+      # guard for every other platform stays at 600 seconds.
+      - run: python tests/check_full_suite_lifetime.py
+        env:
+          FULL_SUITE_LIFETIME_BUDGET_SECONDS: '1500'
