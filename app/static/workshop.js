@@ -16,7 +16,6 @@
     referenceSlots:() => (projection()?.slots || []).map(slot => ({id:slot.id, role:slot.role, required:slot.required, index:slot.index, staged:slot.staged})),
     references:() => (projection()?.references || []).map(reference => ({...reference})),
     pendingFiles:() => projection()?.pendingFiles || 0,
-    dirty:() => typeof draftDirty !== 'undefined' && !!draftDirty,
     hasSources:() => !!projection()?.hasSources
   });
   if (root.document.readyState === 'loading') root.addEventListener('DOMContentLoaded', start, {once:true});
@@ -353,8 +352,6 @@
       actions:{
         [Context.ACTIONS.REVIEW_READINESS]:() => reveal(review),
         [Context.ACTIONS.REVIEW_SOURCES]:revealSources,
-        [Context.ACTIONS.INSPECT_OPERATION]:() => reveal(q('#jobProblems') || q('#jobProblemsHost') || results),
-        [Context.ACTIONS.RESOLVE_DRAFT_CONFLICT]:() => reveal(draftOptions || draftBar),
         [Context.ACTIONS.FOCUS_GENERATE]:() => focusExisting(q('#generate')),
         [Context.ACTIONS.OPEN_RESULTS]:openResults
       }
@@ -428,7 +425,7 @@
       }};
       return Context.captureContext({
         workspaceId:'create', contextStamp, taskId:'generate', capability, execution,
-        draft:{dirty:!!bridge.dirty?.(), conflict:false, pendingFiles:pending, references:refs}
+        draft:{conflict:false, pendingFiles:pending, references:refs}
       });
     }
     function renderGuidance(blocked, first, outputs) {

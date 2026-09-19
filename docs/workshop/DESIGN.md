@@ -51,13 +51,16 @@ No new queue, model registry, reference store, prompt editor, readiness owner or
 
 ## Context guidance contract
 
-The contextual rail has exactly three bounded actions:
+The production contextual rail has four reachable actions:
 
 1. **Review readiness** reveals the existing readiness disclosure and its first reported blocker.
-2. **Focus Generate** moves focus to the existing Generate button without invoking it.
-3. **Open recent runs** opens and focuses the existing result disclosure.
+2. **Review sources** focuses the exact outstanding existing source input or reveals the current source board.
+3. **Focus Generate** moves focus to the existing Generate button without invoking it.
+4. **Open recent runs** opens and focuses the existing result disclosure.
 
-The rail cannot infer an installed model, fabricate VRAM/timing, change a recipe, mutate a source, submit a job or retry an uncertain operation. Its “Why this?” text states which current UI observation it used.
+The current production capture reports only `blocked`, `ready` or `completed` execution and hard-codes no draft conflict. It therefore does not register `inspect-operation` or `resolve-draft-conflict` handlers. Those IDs remain part of the pure presentation-context vocabulary for a future consumer only after an existing job or draft owner publishes matching evidence.
+
+The rail cannot infer an installed model, fabricate VRAM/timing, change a recipe, mutate a source, submit a job or retry an uncertain operation. Its “Why this?” text states which current UI observation it used. Source, readiness and result actions reveal or focus existing owners; they do not create a second workflow path.
 
 ## Visual and media policy
 

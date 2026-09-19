@@ -70,14 +70,14 @@ The button stores the semantic action ID as `data-intent` for diagnostics and te
 
 ## Closed local action map
 
-`createActionAdapter()` maps only these known IDs:
+Production currently maps only semantic IDs its current capture can emit:
 
 - `review-readiness` → reveal the existing readiness disclosure;
-- `review-sources` → reveal and focus the existing reference board or file input;
-- `inspect-operation` → reveal existing problem/result evidence;
-- `resolve-draft-conflict` → reveal the existing draft options when available;
+- `review-sources` → reveal and focus the exact outstanding reference board or file input;
 - `focus-generate` → focus and scroll the existing Generate button;
 - `open-results` → open and focus the existing Recent runs disclosure.
+
+The pure context boundary also defines `inspect-operation` and `resolve-draft-conflict`. They remain valid projection vocabulary and test cases, but the current Create capture emits only `blocked`, `ready` or `completed` execution and explicitly publishes no conflict. Production does not register handlers for unreachable intents. A future integration must first obtain those observations from the existing job or draft owner rather than infer them in presentation code.
 
 The adapter checks workspace and current context stamp before invoking a handler. A stale intent returns `stale-context`. There is no submit action.
 

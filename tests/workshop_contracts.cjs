@@ -138,6 +138,39 @@ test('every page and prototype that runs workshop.js loads the reference model f
   assert.ok(driver.indexOf("app/static/reference-model.js") < driver.indexOf("app/static/workshop.js"));
 });
 
+test('production guidance advertises only actions its current capture can emit', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.doesNotMatch(js, /draftDirty/, 'IIFE-private draft state must not be presented as a live bridge');
+  const start = js.indexOf('actions:{');
+  const end = js.indexOf('\n      }\n    });', start);
+  assert.ok(start >= 0 && end > start, 'production action map not found');
+  const map = js.slice(start, end);
+  for (const reachable of ['REVIEW_READINESS','REVIEW_SOURCES','FOCUS_GENERATE','OPEN_RESULTS'])
+    assert.match(map, new RegExp('Context\\.ACTIONS\\.'+reachable));
+  for (const unavailable of ['INSPECT_OPERATION','RESOLVE_DRAFT_CONFLICT'])
+    assert.doesNotMatch(map, new RegExp('Context\\.ACTIONS\\.'+unavailable));
+});
+
+test('workshop documentation describes the shipped boundary and reachable production actions', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
+  const context = read('../docs/workshop/PRESENTATION-CONTEXT.md');
+  assert.doesNotMatch(context, /production shell does not load it yet/i);
+  assert.doesNotMatch(context, /follow-on stacked PR must load the module/i);
+  assert.match(context, /production-reachable actions/i);
+  const readme = read('../docs/workshop/README.md');
+  const design = read('../docs/workshop/DESIGN.md');
+  assert.match(readme, /Review sources/);
+  assert.match(design, /Review sources/);
+  const spec = read('../docs/superpowers/specs/2026-09-18-workshop-context-guidance-design.md');
+  assert.match(spec, /Production currently maps/i);
+  for (const plan of ['../docs/superpowers/plans/2026-09-18-presentation-context.md','../docs/superpowers/plans/2026-09-18-workshop-context-guidance.md'])
+    assert.doesNotMatch(read(plan), /- \[ \]/, plan+' still claims delivered work is pending');
+});
+
 test('Studio shell loads ambience policy and adapter around the workshop presentation', () => {
   const fs = require('node:fs');
   const path = require('node:path');

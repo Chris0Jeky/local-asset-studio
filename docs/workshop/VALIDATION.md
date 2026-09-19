@@ -78,6 +78,19 @@ The local review package does not contain the complete Python application module
 - the controller and adapter remove their listeners/observers on destruction;
 - policy-load failure still permits the ordinary workshop to mount.
 
+## Guidance contract accuracy follow-up
+
+The #610 accuracy follow-up was developed regression-first. The new static contracts failed while `workshop.js` still read the unreachable `draftDirty` bridge, registered operation/conflict handlers that its capture could never emit, and the workshop documents still described the pre-integration tree.
+
+After the bounded correction, the branch workflow completed all of these commands successfully against the exact published files:
+
+- `node --check app/static/workshop.js`
+- `node --test tests/workshop_contracts.cjs tests/reference_model.cjs`
+- `python -m unittest tests.test_workshop_frontend tests.test_presentation_context -v`
+- `python scripts/validate-repo.py`
+
+The production adapter now registers only readiness review, source review, Generate focus and result opening. The wider pure-context vocabulary remains tested but is not presented as production-reachable without matching observations from an existing owner. Normal current-head `Workshop UI` and `Check studio` runs remain the hosted review gate before the stacked PR is marked ready.
+
 ## Hosted native browser gate
 
 `Workshop UI` runs:
