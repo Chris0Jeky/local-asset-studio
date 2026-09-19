@@ -102,13 +102,15 @@ Accepted references, permission records, local producer details, and owner-revie
   -PlanOnly
 ```
 
-A local profile cannot silently replace a checked-in revision. Replacement requires:
+A local profile can overlay a checked-in catalogue profile only when it carries:
 
 - the same stable profile ID;
-- a strictly higher integer revision;
-- `supersedes_profile_sha256` equal to the exact currently resolved profile hash.
+- a strictly higher integer revision than the checked-in profile;
+- `supersedes_profile_sha256` equal to the exact checked-in catalogue profile hash.
 
-This compare-and-swap rule makes stale or competing local edits fail closed. New local profile IDs must not claim to supersede an unknown record.
+This guard detects catalogue drift: a local overlay prepared for different checked-in profile bytes is refused. It is not a mutable registry compare-and-swap operation, a persisted local revision chain, or a concurrent-writer lock. Each resolution starts from the checked-in catalogue and then applies at most one local record per profile ID. Replacing the registry file is an external operator action; competing writers are not serialized by the resolver. Issue #671 tracks a genuine local CAS update boundary if that stronger property is needed.
+
+New local profile IDs must not claim to supersede an unknown catalogue record.
 
 Local `_voice_profiles/` directories are ignored by Git. Store model weights, recordings, generated takes, reports, absolute paths, and sensitive permission evidence there, not in the checked-in catalogue.
 
@@ -146,7 +148,7 @@ The checked-in policy defines the candidates. Workstation measurements determine
 
 `research/voice-profiles/qualification-policy.json` is the canonical repository-owned qualification policy. Its own ID, revision, and SHA-256 are independent from a generated plan's SHA-256. During report validation LAS reloads both the policy and `evaluation-set.json`, recomputes their hashes, and requires the plan's candidates, measurements, contrast pair, evaluation lines, and long-form bounds to match exactly. Removing a candidate, relaxing a duration, changing one line, or recomputing a weakened plan hash therefore does not weaken acceptance.
 
-A local profile registry may change the profile binding under the compare-and-swap rules above. It cannot change qualification candidates, producer families, measurements, evaluation text, contrast pairing, or long-form requirements. Catalogue, registry, plan, policy, evaluation, and report files all pass through the same bounded strict JSON decoder.
+A local profile registry may overlay a checked-in profile under the catalogue-drift guard above. It cannot change qualification candidates, producer families, measurements, evaluation text, contrast pairing, or long-form requirements. Catalogue, registry, plan, policy, evaluation, and report files all pass through the same bounded strict JSON decoder.
 
 ## Shared evaluation set
 
@@ -218,13 +220,13 @@ Validation returns a normalized acceptance summary with the report hash, long-fo
 - resource use fits the workstation without mutating the shared image-generation environment;
 - dry audio and mix treatment remain separate;
 - every delivery promoted with the profile is marked `qualified`;
-- the local revision names the exact checked-in/profile revision it supersedes.
+- the local overlay names the exact checked-in catalogue profile it replaces.
 
 Even an accepted local record is not executable until LAS has a producer adapter matching that identity. The current `voice-baseline` adapter remains tied to the pinned Kokoro control; it must not be relabelled as Qwen, IndexTTS, or `ember-brief-v1`.
 
 ## Evidence boundary
 
-The offline contracts prove profile parsing, strict unambiguous JSON decoding, canonical hashes, revision compare-and-swap, delivery binding, independent qualification-policy and evaluation identity, producer/reference evidence, independent-family admission, paired delivery contrast, report validation, CLI forwarding, manifest/receipt propagation, and refusal before side effects. A self-consistent or rehashed local plan is not trusted by itself: validation reloads the checked-in policy and evaluation set and compares every projected contract exactly.
+The offline contracts prove profile parsing, strict unambiguous JSON decoding, canonical hashes, catalogue-bound overlay validation, delivery binding, independent qualification-policy and evaluation identity, producer/reference evidence, independent-family admission, paired delivery contrast, report validation, CLI forwarding, manifest/receipt propagation, and refusal before side effects. A self-consistent or rehashed local plan is not trusted by itself: validation reloads the checked-in policy and evaluation set and compares every projected contract exactly.
 
 They do not prove:
 
@@ -233,6 +235,7 @@ They do not prove:
 - that independent transcription is accurate;
 - that an identity sounds original, consistent, pleasant, or low-fatigue;
 - that pronunciation or performance has been accepted;
-- that a custom producer adapter exists.
+- that a custom producer adapter exists;
+- that local registry file writers are serialized or form a durable predecessor chain.
 
-Those require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641.
+Those require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641; stronger registry mutation semantics remain #671.

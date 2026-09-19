@@ -12,11 +12,11 @@
 
 ## Global Constraints
 
-- Keep PR #653's profile catalogue, local compare-and-swap registry, profile/delivery manifest binding, and pre-side-effect execution admission unchanged.
+- Keep PR #653's profile catalogue, catalogue-bound local overlay, profile/delivery manifest binding, and pre-side-effect execution admission unchanged.
 - Use no new runtime dependency and no model installation, download, synthesis, or network call.
 - Reject duplicate JSON object keys and `NaN`, `Infinity`, and `-Infinity` before schema validation.
 - Validate a qualification plan against the checked-in policy and evaluation set, not merely against its own recomputed hash.
-- A local profile registry may change only the profile binding; it cannot redefine candidates, measurements, evaluation text, contrast pairing, or long-form requirements.
+- A local profile registry may overlay only the profile binding from the checked-in catalogue; it cannot redefine candidates, measurements, evaluation text, contrast pairing, or long-form requirements, and it is not treated as durable mutable CAS state.
 - Require the measured Kokoro control, at least two measured non-control candidates, and at least one measured non-control producer family different from the selected candidate's family.
 - Require exact candidate producer family, adapter, model revision, runtime SHA-256, configuration SHA-256, and reference evidence when the canonical policy says a reference is required.
 - Represent delivery contrast as two stable line IDs with identical text and distinct `calm-brief` and `spark-recap` deliveries.
