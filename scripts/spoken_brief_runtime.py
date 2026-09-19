@@ -101,7 +101,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                 write_json(state_path, state)
                 _confirm_environment(client, state, state_path, manifest)
                 try:
-                    project = client.post_json('/api/voice-baseline', payload)
+                    created = client.post_json('/api/voice-baseline', payload)
                 except StudioRejected as exc:
                     batch_state.update(status='pending', last_error=str(exc))
                     state['status'] = 'blocked'
@@ -114,15 +114,16 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                     raise SpokenBriefError(
                         'Voice project creation outcome is unconfirmed. Inspect Voice baseline before running this handoff again.'
                     )
-                identifier = project.get('id')
+                identifier = created.get('id')
                 if not isinstance(identifier, str) or not re.fullmatch(r'[0-9a-f]{32}', identifier):
                     batch_state['status'] = 'create-unconfirmed'
                     state['status'] = 'blocked'
                     write_json(state_path, state)
                     raise SpokenBriefError('Voice baseline returned an invalid project identity; creation is unconfirmed')
-                batch_state.update(project_id=identifier, status=project.get('state', {}).get('status', 'planned'))
+                batch_state.update(project_id=identifier, status='created')
                 write_json(state_path, state)
                 _confirm_environment(client, state, state_path, manifest)
+                project = client.get_json(f'/api/production/{identifier}')
             if not isinstance(project, dict) or project.get('id') != identifier or project.get('kind') != 'voice':
                 raise SpokenBriefError(f'Retained project {identifier} is not the expected Voice baseline project')
             if 'plan' not in project:
@@ -133,7 +134,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             if status == 'planned':
                 _confirm_environment(client, state, state_path, manifest)
                 try:
-                    project = client.post_json(f'/api/production/{identifier}/start', {})
+                    client.post_json(f'/api/production/{identifier}/start', {})
                 except StudioRejected as exc:
                     batch_state.update(status='start-rejected', last_error=str(exc))
                     state['status'] = 'blocked'
@@ -146,7 +147,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                     raise SpokenBriefError(
                         f'Voice start outcome is unconfirmed for {identifier}. Inspect that project; no replacement was created.'
                     )
-                batch_state['status'] = project.get('state', {}).get('status', 'start-accepted')
+                batch_state['status'] = 'start-accepted'
                 write_json(state_path, state)
                 _confirm_environment(client, state, state_path, manifest)
                 project = client.get_json(f'/api/production/{identifier}')
