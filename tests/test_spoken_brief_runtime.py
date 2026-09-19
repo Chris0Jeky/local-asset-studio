@@ -31,6 +31,29 @@ class SpokenBriefTests(unittest.TestCase):
             self.assertEqual(receipt['samples'], 5100)
             self.assertEqual(receipt['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
 
+    def test_assembly_receipt_hashes_the_exact_input_snapshot_it_used(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); source = root / 'source.wav'; output = root / 'joined.wav'
+            original = wav_bytes(100, 11); replacement = wav_bytes(100, 22)
+            source.write_bytes(original)
+            real_digest_file = spoken_brief_transport.digest_file
+
+            def mutate_before_late_hash(path, chunk_size=1024 * 1024):
+                path = Path(path)
+                if path == source:
+                    source.write_bytes(replacement)
+                return real_digest_file(path, chunk_size)
+
+            with patch.object(spoken_brief_transport, 'digest_file', side_effect=mutate_before_late_hash):
+                receipt = spoken_brief.assemble_wav([
+                    {'path': source, 'id': 'source', 'pause_after_ms': 0},
+                ], output)
+
+            self.assertEqual(receipt['inputs'][0]['sha256'], hashlib.sha256(original).hexdigest())
+            with wave.open(str(output), 'rb') as joined:
+                self.assertEqual(joined.readframes(joined.getnframes()),
+                                 (11).to_bytes(2, 'little', signed=True) * 100)
+
     def test_one_run_uses_voice_projects_and_produces_one_received_wav(self):
         fixture = Fixture(); self.addCleanup(fixture.close)
         with tempfile.TemporaryDirectory() as temporary:
@@ -70,14 +93,12 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertIn('InvariantCulture', text)
         self.assertNotIn('Invoke-Expression', text)
 
-
     def test_loopback_client_does_not_follow_redirects(self):
         fixture = Fixture(); self.addCleanup(fixture.close); fixture.identity_redirect = '/redirected-identity'
         client = spoken_brief.StudioClient(fixture.base_url)
         with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'HTTP 302'):
             client.get_json('/api/identity')
         self.assertEqual([path for method, path, _, _ in fixture.requests if method == 'GET'], ['/api/identity'])
-
 
     def test_loopback_json_response_is_bounded(self):
         fixture = Fixture(); self.addCleanup(fixture.close)
@@ -89,7 +110,6 @@ class SpokenBriefTests(unittest.TestCase):
     def test_non_loopback_studio_url_is_rejected(self):
         with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'loopback'):
             spoken_brief.StudioClient('https://example.test')
-
 
 
 if __name__ == '__main__': unittest.main()
