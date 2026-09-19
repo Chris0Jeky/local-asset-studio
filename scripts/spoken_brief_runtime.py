@@ -60,12 +60,10 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator', 
                 write_json(state_path, state)
             if not isinstance(project, dict) or project.get('id') != identifier or project.get('kind') != 'voice':
                 raise SpokenBriefError(f'Retained project {identifier} is not the expected Voice baseline project')
+            if 'plan' not in project:
+                project = client.get_json(f'/api/production/{identifier}')
+            verify_project(project, identifier, batch, speaker_id)
             status = project.get('state', {}).get('status')
-            if status in ACTIVE_STATUSES or status in ('planned', 'completed'):
-                if 'plan' not in project:
-                    project = client.get_json(f'/api/production/{identifier}')
-                    status = project.get('state', {}).get('status')
-                verify_project(project, identifier, batch, speaker_id)
             if status == 'planned':
                 try:
                     project = client.post_json(f'/api/production/{identifier}/start', {})
@@ -75,6 +73,8 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator', 
                 except SpokenBriefError:
                     batch_state['status'] = 'start-unconfirmed'; state['status'] = 'blocked'; write_json(state_path, state)
                     raise SpokenBriefError(f'Voice start outcome is unconfirmed for {identifier}. Inspect that project; no replacement was created.')
+                project = client.get_json(f'/api/production/{identifier}')
+                verify_project(project, identifier, batch, speaker_id)
                 status = project.get('state', {}).get('status')
                 batch_state['status'] = status; write_json(state_path, state)
             while status in ACTIVE_STATUSES:
@@ -83,6 +83,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator', 
                     raise SpokenBriefError(f'Spoken brief deadline reached while {identifier} remained {status}; the project was not repeated')
                 time.sleep(poll_seconds)
                 project = client.get_json(f'/api/production/{identifier}')
+                verify_project(project, identifier, batch, speaker_id)
                 status = project.get('state', {}).get('status'); batch_state['status'] = status; write_json(state_path, state)
             if status != 'completed':
                 message = project.get('state', {}).get('message') or f'Voice project ended as {status}'
@@ -109,7 +110,8 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator', 
         output_receipt = assemble_wav(entries, output)
         projects = [batch['project_id'] for batch in state['batches']]
         receipt = {'schema_version': SCHEMA_VERSION, 'manifest_sha256': manifest['manifest_sha256'],
-                   'source': manifest['source'], 'speaker_id': speaker_id, 'projects': projects,
+                   'source': manifest['source'], 'speaker_id': speaker_id,
+                   'studio': {'base_url': client.base_url, 'identity': identity}, 'projects': projects,
                    'segments': [{'id': item['id'], 'text_sha256': item['text_sha256'], 'pause_after_ms': item['pause_after_ms']} for item in manifest['segments']],
                    'output': output_receipt}
         write_json(receipt_path, receipt)
@@ -125,4 +127,3 @@ def plan(pack, *, speaker_id='brief-narrator') -> dict:
     path = directory / 'manifest.json'; write_json(path, manifest)
     return {'manifest': str(path), 'segments': len(manifest['segments']), 'batches': len(batch_segments(manifest['segments'])),
             'source': str(source), 'generation_submitted': False}
-

@@ -4,10 +4,12 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import wave
 
 sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
 import spoken_brief
+import spoken_brief_transport
 from spoken_brief_fixture import Fixture, wav_bytes
 
 
@@ -43,6 +45,7 @@ class SpokenBriefTests(unittest.TestCase):
             self.assertTrue(all(origin == fixture.base_url for method, _, origin, _ in posts if method == 'POST'))
             self.assertTrue(all(body['speaker_id'] == 'brief-narrator' for method, path, _, body in posts if path == '/api/voice-baseline'))
             receipt = json.loads(Path(result['receipt']).read_text(encoding='utf-8'))
+            self.assertEqual(receipt['studio'], {'base_url': fixture.base_url, 'identity': {'app': 'local-asset-studio'}})
             self.assertEqual(receipt['source']['sha256'], hashlib.sha256((pack / 'COMPRESSED.md').read_bytes()).hexdigest())
             self.assertEqual(receipt['output']['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
 
@@ -66,6 +69,22 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertIn("$command = 'plan'", text)
         self.assertIn('InvariantCulture', text)
         self.assertNotIn('Invoke-Expression', text)
+
+
+    def test_loopback_client_does_not_follow_redirects(self):
+        fixture = Fixture(); self.addCleanup(fixture.close); fixture.identity_redirect = '/redirected-identity'
+        client = spoken_brief.StudioClient(fixture.base_url)
+        with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'HTTP 302'):
+            client.get_json('/api/identity')
+        self.assertEqual([path for method, path, _, _ in fixture.requests if method == 'GET'], ['/api/identity'])
+
+
+    def test_loopback_json_response_is_bounded(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        client = spoken_brief.StudioClient(fixture.base_url)
+        with patch.object(spoken_brief_transport, 'MAX_JSON_BYTES', 32):
+            with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'response limit'):
+                client.get_json('/oversized-json')
 
     def test_non_loopback_studio_url_is_rejected(self):
         with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'loopback'):

@@ -8,10 +8,14 @@ import re
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 import wave
 
 from spoken_brief_compile import *
+
+MAX_JSON_BYTES = 2 * 1024 * 1024
+MAX_AUDIO_BYTES = 32 * 1024 * 1024
+MAX_ERROR_BYTES = 64 * 1024
 
 def initial_state(manifest: dict) -> dict:
     batches = batch_segments(manifest['segments'])
@@ -68,6 +72,18 @@ def read_json(path: Path):
         raise SpokenBriefError(f'Cannot read retained spoken-brief state: {path}') from exc
 
 
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, file_pointer, code, message, headers, new_url):
+        return None
+
+
+def _read_limited(response, maximum: int, label: str) -> bytes:
+    raw = response.read(maximum + 1)
+    if len(raw) > maximum:
+        raise SpokenBriefError(f'{label} exceeded the {maximum}-byte local response limit')
+    return raw
+
+
 class StudioClient:
     def __init__(self, base_url='http://127.0.0.1:8191', timeout=30):
         parsed = urlsplit(str(base_url))
@@ -77,6 +93,7 @@ class StudioClient:
             raise SpokenBriefError('Studio URL must not contain a path')
         self.base_url = f'http://{parsed.netloc}'.rstrip('/')
         self.timeout = timeout
+        self.opener = build_opener(ProxyHandler({}), _NoRedirect())
 
     def _request(self, method, path, payload=None):
         data = None; headers = {'Accept': 'application/json'}
@@ -85,10 +102,12 @@ class StudioClient:
             headers.update({'Content-Type': 'application/json', 'Origin': self.base_url})
         request = Request(self.base_url + path, data=data, headers=headers, method=method)
         try:
-            with urlopen(request, timeout=self.timeout) as response:
-                raw = response.read()
+            with self.opener.open(request, timeout=self.timeout) as response:
+                raw = _read_limited(response, MAX_JSON_BYTES, 'Studio JSON')
         except HTTPError as exc:
-            raw = exc.read()
+            raw = exc.read(MAX_ERROR_BYTES + 1)
+            if len(raw) > MAX_ERROR_BYTES:
+                raw = b''
             try: message = json.loads(raw.decode('utf-8')).get('error')
             except Exception: message = None
             error = StudioRejected if 400 <= exc.code < 500 else SpokenBriefError
@@ -106,7 +125,8 @@ class StudioClient:
     def get_bytes(self, path):
         request = Request(self.base_url + path, headers={'Accept': 'audio/wav'}, method='GET')
         try:
-            with urlopen(request, timeout=self.timeout) as response:return response.read()
+            with self.opener.open(request, timeout=self.timeout) as response:
+                return _read_limited(response, MAX_AUDIO_BYTES, 'Voice artifact')
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
             raise SpokenBriefError(f'Cannot download retained voice artifact {path}: {exc}') from exc
 
@@ -162,10 +182,12 @@ def artifact_for(project: dict, segment_id: str, project_id: str) -> dict:
     if len(matches) != 1:
         raise SpokenBriefError(f'Completed voice project does not expose one scene WAV for {segment_id}')
     artifact = matches[0]
+    relative = artifact.get('path')
+    expected_relative = f'voice/{segment_id}-scene.wav'
     url = artifact.get('url'); parsed = urlsplit(url) if isinstance(url, str) else None
-    expected = f'/api/production/{project_id}/files/'
-    if parsed is None or parsed.scheme or parsed.netloc or parsed.query or parsed.fragment or not parsed.path.startswith(expected):
-        raise SpokenBriefError(f'Voice artifact route escapes project {project_id}')
+    expected = f'/api/production/{project_id}/files/{expected_relative}'
+    if relative != expected_relative or parsed is None or parsed.scheme or parsed.netloc or parsed.query or parsed.fragment or parsed.path != expected:
+        raise SpokenBriefError(f'Voice artifact route escapes project {project_id} or does not match its retained path')
     if not re.fullmatch(r'[0-9a-f]{64}', str(artifact.get('sha256', ''))):
         raise SpokenBriefError(f'Voice artifact receipt is incomplete for {segment_id}')
     return artifact
@@ -212,4 +234,3 @@ def _completed_result(receipt_path: Path, manifest_sha256: str, expected_output:
     if not isinstance(projects, list) or any(not isinstance(item, str) or not re.fullmatch(r'[0-9a-f]{32}', item) for item in projects):
         raise SpokenBriefError('Completed receipt has invalid Voice project identities')
     return {'output': str(output), 'receipt': str(receipt_path), 'projects': projects, 'reused': True}
-

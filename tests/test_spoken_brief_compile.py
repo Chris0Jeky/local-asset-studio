@@ -47,6 +47,19 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertTrue(all(sum(len(item['text'].split()) for item in batch) <= spoken_brief.MAX_BATCH_WORDS for batch in batches))
         self.assertEqual([item['id'] for batch in batches for item in batch], [item['id'] for item in compiled['segments']])
 
+
+    def test_short_word_paragraph_still_obeys_the_batch_word_ceiling(self):
+        source = '# Dense brief\n\n' + ' '.join(['a'] * 100) + '. ' + ' '.join(['b'] * 125) + '.'
+        compiled = spoken_brief.compile_markdown(source, source_name='COMPRESSED.md')
+        batches = spoken_brief.batch_segments(compiled['segments'])
+        self.assertGreater(len(compiled['segments']), 2)
+        self.assertTrue(all(sum(len(item['text'].split()) for item in batch) <= spoken_brief.MAX_BATCH_WORDS for batch in batches))
+
+
+    def test_nul_characters_are_rejected_before_voice_preparation(self):
+        with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'NUL'):
+            spoken_brief.compile_markdown('safe\0unsafe', source_name='COMPRESSED.md')
+
     def test_compiler_refuses_an_accidentally_unbounded_audio_book(self):
         source = '\n\n'.join(f'Paragraph {index}.' for index in range(spoken_brief.MAX_SEGMENTS + 1))
         with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'segments'):

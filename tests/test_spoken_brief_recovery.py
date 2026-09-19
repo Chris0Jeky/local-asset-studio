@@ -20,8 +20,10 @@ class SpokenBriefTests(unittest.TestCase):
             run_dir = spoken_brief.run_directory(source, compiled['manifest_sha256'])
             run_dir.mkdir(parents=True)
             identifier = 'f' * 32
-            fixture.projects[identifier] = {'id': identifier, 'kind': 'voice', 'name': 'failed', 'plan': {},
-                                             'state': {'status': 'failed', 'message': 'retained failure', 'artifacts': []}}
+            batch = spoken_brief.batch_segments(compiled['segments'])[0]
+            fixture.projects[identifier] = {'id': identifier, 'kind': 'voice', 'name': 'failed',
+                'plan': {'speaker_id': 'brief-narrator', 'lines': [{'id': line['id'], 'text': line['text']} for line in batch]},
+                'state': {'status': 'failed', 'message': 'retained failure', 'artifacts': []}}
             state = spoken_brief.initial_state(compiled)
             state['batches'][0].update(project_id=identifier, status='failed')
             spoken_brief.write_json(run_dir / 'state.json', state)
@@ -93,6 +95,15 @@ class SpokenBriefTests(unittest.TestCase):
                 spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
             self.assertFalse(any(method == 'POST' for method, _, _, _ in fixture.requests))
 
+
+    def test_post_start_project_observation_must_still_match_the_batch(self):
+        fixture = Fixture(); self.addCleanup(fixture.close); fixture.mismatch_after_start = True
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir(); (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'does not match'):
+                spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertFalse(any('/files/' in path for method, path, _, _ in fixture.requests if method == 'GET'))
+
     def test_existing_run_claim_blocks_a_second_coordinator_before_network_use(self):
         fixture = Fixture(); self.addCleanup(fixture.close)
         with tempfile.TemporaryDirectory() as temporary:
@@ -126,6 +137,14 @@ class SpokenBriefTests(unittest.TestCase):
             second = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
             self.assertEqual(len(fixture.requests), request_count)
             self.assertTrue(second['reused']); self.assertEqual(second['output'], first['output'])
+
+
+    def test_artifact_url_must_match_the_retained_artifact_path(self):
+        identifier = 'f' * 32
+        project = {'state': {'artifacts': [{'role': 'audio', 'path': 'voice/segment-0001-scene.wav',
+                    'url': f'/api/production/{identifier}/files/voice/another-scene.wav', 'sha256': 'a' * 64}]}}
+        with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'artifact route'):
+            spoken_brief.artifact_for(project, 'segment-0001', identifier)
 
     def test_artifact_url_must_stay_on_the_project_file_route(self):
         project = {'state': {'artifacts': [{'role': 'audio', 'path': 'voice/segment-0001-scene.wav',

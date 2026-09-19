@@ -85,17 +85,18 @@ def _hard_split(text: str, maximum: int) -> list[str]:
     words = text.split()
     result = []
     current = ''
+    current_words = 0
     for word in words:
         if len(word) > maximum:
             if current:
-                result.append(current); current = ''
+                result.append(current); current = ''; current_words = 0
             result.extend(word[index:index + maximum] for index in range(0, len(word), maximum))
             continue
         candidate = word if not current else current + ' ' + word
-        if len(candidate) <= maximum:
-            current = candidate
+        if len(candidate) <= maximum and current_words < MAX_BATCH_WORDS:
+            current = candidate; current_words += 1
         else:
-            result.append(current); current = word
+            result.append(current); current = word; current_words = 1
     if current:
         result.append(current)
     return result
@@ -105,12 +106,12 @@ def _split_block(text: str) -> list[str]:
     sentences = [item.strip() for item in re.split(r'(?<=[.!?])\s+', text) if item.strip()]
     pieces = []
     for sentence in sentences or [text]:
-        pieces.extend(_hard_split(sentence, MAX_LINE_CHARS) if len(sentence) > MAX_LINE_CHARS else [sentence])
+        pieces.extend(_hard_split(sentence, MAX_LINE_CHARS) if len(sentence) > MAX_LINE_CHARS or len(sentence.split()) > MAX_BATCH_WORDS else [sentence])
     result = []
     current = ''
     for piece in pieces:
         candidate = piece if not current else current + ' ' + piece
-        if current and (len(candidate) > MAX_LINE_CHARS or (len(current) >= TARGET_LINE_CHARS and len(candidate) > TARGET_LINE_CHARS)):
+        if current and (len(candidate) > MAX_LINE_CHARS or len(candidate.split()) > MAX_BATCH_WORDS or (len(current) >= TARGET_LINE_CHARS and len(candidate) > TARGET_LINE_CHARS)):
             result.append(current); current = piece
         else:
             current = candidate
@@ -122,6 +123,8 @@ def _split_block(text: str) -> list[str]:
 def compile_markdown(source: str, *, source_name: str = 'brief.md') -> dict:
     if not isinstance(source, str):
         raise SpokenBriefError('Markdown source must be text')
+    if '\0' in source:
+        raise SpokenBriefError('Markdown source cannot contain NUL characters')
     source = source.lstrip('\ufeff')
     omissions = {'code_blocks': 0, 'raw_urls': 0, 'html_comments': 0, 'front_matter': 0}
     comments = re.findall(r'<!--.*?-->', source, flags=re.S)
@@ -201,6 +204,8 @@ def batch_segments(segments: list[dict]) -> list[list[dict]]:
         if not isinstance(text, str) or not 1 <= len(text) <= MAX_LINE_CHARS:
             raise SpokenBriefError('Every spoken segment must fit the Voice baseline line contract')
         word_count = len(text.split())
+        if word_count > MAX_BATCH_WORDS:
+            raise SpokenBriefError('Every spoken segment must fit the Voice baseline word contract')
         if current and (len(current) >= MAX_BATCH_LINES or characters + len(text) > MAX_BATCH_CHARS or words + word_count > MAX_BATCH_WORDS):
             batches.append(current); current = []; characters = 0; words = 0
         current.append(segment); characters += len(text); words += word_count

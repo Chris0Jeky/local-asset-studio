@@ -22,6 +22,8 @@ class Fixture:
         self.counter = 0
         self.create_id_override = None
         self.create_rejection = None
+        self.identity_redirect = None
+        self.mismatch_after_start = False
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), self.handler())
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -40,10 +42,17 @@ class Fixture:
                 self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw)
             def do_GET(self):
                 fixture.requests.append(('GET', self.path, self.headers.get('Origin'), None))
+                if self.path == '/api/identity' and fixture.identity_redirect:
+                    self.send_response(302); self.send_header('Location', fixture.identity_redirect); self.end_headers(); return
+                if self.path == '/redirected-identity': return self._json(200, {'app': 'local-asset-studio'})
+                if self.path == '/oversized-json': return self._json(200, {'payload': 'x' * 512})
                 if self.path == '/api/identity': return self._json(200, {'app': 'local-asset-studio'})
                 if self.path.startswith('/api/production/') and '/files/' not in self.path:
                     identifier = self.path.split('/')[3]
-                    return self._json(200, fixture.projects[identifier])
+                    project = json.loads(json.dumps(fixture.projects[identifier]))
+                    if fixture.mismatch_after_start and project.get('state', {}).get('status') == 'completed':
+                        project['plan']['lines'][0]['text'] = 'Different words returned after Start.'
+                    return self._json(200, project)
                 if self.path in fixture.audio:
                     raw = fixture.audio[self.path]
                     self.send_response(200); self.send_header('Content-Type', 'audio/wav')
