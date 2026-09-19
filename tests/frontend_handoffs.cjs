@@ -426,6 +426,33 @@ async function unstagedLocalFilesCannotBeSaved() {
 }
 
 
+// #345: a board recipe has a named continuation source and role slots at the same time.
+// Copying that same asset into a role slot must not let clearing the slot erase the source lineage.
+async function boardContinuationSourceHasItsOwnLineageClaim() {
+  const attached = sourceAttachment('source-copy.png', 'source-asset');
+  const local = {file: 'replacement.png', sha256: 'c'.repeat(64), width: 640, height: 640};
+  const s = sandbox(attached, local);
+  s.run(`selectPreset('combine-9b');
+    lastUploaded='continuation-source.png';
+    claimInputParent('lastReference','source-asset');
+    Object.assign(referenceRecords[0],{file:'source-copy.png',sha256:'a'.repeat(64),width:512,height:768,parent_asset:'source-asset',missing:false});
+    parentAssets=['source-asset'];renderReferenceSlots();`);
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')),
+    {lastReference:'source-asset'}, 'The continuation source needs an independent named-input claim on board recipes');
+  s.element('#saveName').value = 'Board continuation lineage';
+  await s.element('#save').onclick();
+  const saved = s.requests.find(request => request.url === '/api/setups').data.recipe;
+  assert.deepEqual(saved.parent_by_input, {lastReference:'source-asset'});
+  assert.deepEqual(saved.parent_assets, ['source-asset']);
+  s.run(`selectPreset('plain');applySaved(${JSON.stringify(saved)});`);
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')),
+    {lastReference:'source-asset'}, 'Reloading a board setup must restore the named continuation-source claim');
+  assert.equal(s.run('lastUploaded'), 'continuation-source.png');
+  await s.run(`uploadRoleFile(0,${JSON.stringify(localFile('replacement.png'))})`);
+  assert.deepEqual(s.parents(), ['source-asset'], 'Replacing the matching board slot must retain the reloaded continuation source parent');
+  assert.equal(s.run('lastUploaded'), 'continuation-source.png');
+}
+
 // The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
 async function recipeSwapDuringUploadNeverSubmits() {
   const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
@@ -474,6 +501,7 @@ async function recipeSwapDuringUploadNeverSubmits() {
   }
   for (const target of ['anime-detail-fix', 'krea-refine']) await swapDropsHandoffLineage(target);
   await slotSwapKeepsTheOtherSlots();
+  await boardContinuationSourceHasItsOwnLineageClaim();
   await boardSummaryFollowsTheRecipeOrder();
   await firstLastFramesAttributeSeparately();
   await savedSetupCarriesPerInputAttribution();

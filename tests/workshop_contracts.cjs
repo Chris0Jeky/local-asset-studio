@@ -71,3 +71,74 @@ test('immersive presentation exposes local ambience, visual skin and read-only g
     assert.ok(js.includes(marker), marker+' missing');
   assert.doesNotMatch(js, /workshopGuidanceAction[^\n]+click\(\)/);
 });
+
+test('Studio shell loads the read-only context boundary before the workshop adapter', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
+  assert.match(shell, /context\.src='\/static\/presentation-context\.js'/);
+  assert.match(shell, /context\.onload=/);
+});
+
+test('workshop guidance projects immutable intents and dispatches only through the semantic adapter', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
+  assert.match(js, /Context\.project\(/);
+  assert.match(js, /Context\.createActionAdapter\(/);
+  assert.match(js, /presentationView/);
+  assert.match(js, /dispatchIntent/);
+  assert.doesNotMatch(js, /guidanceAction\.dataset\.action/);
+});
+
+test('the offline prototype loads the context boundary before workshop.js', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '../docs/workshop/prototype.html'), 'utf8');
+  const context = html.indexOf('presentation-context.js');
+  const workshop = html.indexOf('workshop.js');
+  assert.ok(context >= 0 && workshop > context);
+});
+
+test('Studio shell loads ambience policy and adapter around the workshop presentation', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const shell = fs.readFileSync(path.join(__dirname, '../app/static/studio-shell.js'), 'utf8');
+  assert.match(shell, /context\.onload=.*workshop-ambience-policy\.js.*ambience\.onload=loadWorkshop/);
+  assert.match(shell, /loadWorkshop=.*workshop\.js.*workshop\.onload=.*workshop-ambience\.js/);
+  assert.match(shell, /ambience\.onerror=loadWorkshop/);
+});
+
+test('ambience adapter mounts the controller without execution or network authority', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop-ambience.js'), 'utf8');
+  const A = require('../app/static/workshop-ambience.js');
+  assert.equal(typeof A.mount, 'function');
+  assert.match(js, /AmbiencePolicy\.createController\(/);
+  assert.match(js, /workshopAmbienceStatus/);
+  assert.match(js, /__workshopAmbience/);
+  assert.doesNotMatch(js, /(?:fetch\(|serviceWorker|\.click\(\))/);
+});
+
+test('fixtures load context policy workshop and ambience adapter in order', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  for (const relative of ['../docs/workshop/prototype.html','workshop_fixture.html']) {
+    const text = fs.readFileSync(path.join(__dirname, relative), 'utf8');
+    const context = text.indexOf('presentation-context.js');
+    const policy = text.indexOf('workshop-ambience-policy.js');
+    const workshop = text.indexOf('workshop.js');
+    const adapter = text.indexOf('workshop-ambience.js');
+    assert.ok(context >= 0 && policy > context && workshop > policy && adapter > workshop, relative);
+  }
+});
+
+test('effective token and suspended modes suppress only decorative poster art', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const css = fs.readFileSync(path.join(__dirname, '../app/static/workshop-ambience.css'), 'utf8');
+  assert.match(css, /data-workshop-ambience-render="tokens"/);
+  assert.match(css, /data-workshop-ambience-render="suspended"/);
+  assert.match(css, /background-image\s*:\s*none/);
+});

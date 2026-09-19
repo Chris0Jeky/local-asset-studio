@@ -17,6 +17,12 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# faulthandler walks every thread's frames from C without the GIL. The hosted
+# Windows runner crashed the worker with an access violation (0xC0000005, run
+# 35391373354) when the Python marker timer was still inside its own print as
+# the C dump traversed it. Keep the two writers a real interval apart instead of
+# a fraction of a deadline that is only milliseconds long in a focused fixture.
+MARKER_SEPARATION_SECONDS = 0.25
 _CURRENT_TEST = "<not started>"
 _CURRENT_LOCK = threading.Lock()
 
@@ -32,8 +38,12 @@ def current_test() -> str:
         return _CURRENT_TEST
 
 
-def emit_current_test(stream=sys.stderr) -> None:
-    print(f"LIFETIME WATCHDOG CURRENT TEST: {current_test()}", file=stream, flush=True)
+def emit_current_test(stream=sys.stderr, prefix: str = "LIFETIME") -> None:
+    print(
+        f"{prefix} WATCHDOG CURRENT TEST: {current_test()}",
+        file=stream,
+        flush=True,
+    )
 
 
 class TrackingTextResult(unittest.TextTestResult):
@@ -56,19 +66,36 @@ class TrackingTextResult(unittest.TextTestResult):
 
 
 class LifetimeDiagnostics:
-    def __init__(self, seconds: float, stream=sys.stderr):
-        if not seconds > 0:
-            raise ValueError("traceback deadline must be positive")
+    def __init__(
+        self,
+        seconds: float,
+        *,
+        prefix: str = "LIFETIME",
+        stream=sys.stderr,
+    ):
+        if not seconds > MARKER_SEPARATION_SECONDS:
+            raise ValueError(
+                f"traceback deadline must exceed the {MARKER_SEPARATION_SECONDS}-second "
+                "marker separation"
+            )
         self.seconds = seconds
+        self.prefix = prefix
         self.stream = stream
-        self.marker = None
+        self.marker: threading.Timer | None = None
 
     def arm(self) -> None:
-        # Leave enough separation that the current-test marker normally appears
-        # immediately before the C-level all-thread dump. The START line remains
-        # the fallback if a test monopolizes the GIL and the Python timer cannot run.
-        marker_delay = max(0.0, self.seconds - min(1.0, self.seconds / 3.0))
-        self.marker = threading.Timer(marker_delay, emit_current_test, (self.stream,))
+        if self.marker is not None:
+            raise RuntimeError("lifetime diagnostics are already armed")
+        # Leave enough separation that the current-test marker is written, flushed
+        # and its timer thread finished before the C-level all-thread dump traverses
+        # it. The START line remains the fallback if a test monopolizes the GIL and
+        # the Python timer cannot run.
+        marker_delay = max(0.0, self.seconds - max(MARKER_SEPARATION_SECONDS, min(1.0, self.seconds / 3.0)))
+        self.marker = threading.Timer(
+            marker_delay,
+            emit_current_test,
+            (self.stream, self.prefix),
+        )
         self.marker.daemon = True
         self.marker.start()
         faulthandler.dump_traceback_later(
@@ -78,11 +105,34 @@ class LifetimeDiagnostics:
             exit=False,
         )
 
+    def cancel(self) -> None:
+        """Cancel this phase before another faulthandler deadline is armed."""
+        faulthandler.cancel_dump_traceback_later()
+        marker = self.marker
+        self.marker = None
+        if marker is not None:
+            marker.cancel()
+            marker.join(timeout=1)
+
+
+def retained_threads() -> list[threading.Thread]:
+    """Non-daemon threads that will hold this interpreter open after main returns."""
+    current = threading.current_thread()
+    return [
+        thread
+        for thread in threading.enumerate()
+        if thread is not current and thread.is_alive() and not thread.daemon
+    ]
+
+
 def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description="Run the offline suite with lifetime diagnostics.")
+    parser = argparse.ArgumentParser(
+        description="Run the offline suite with lifetime diagnostics."
+    )
     parser.add_argument("--start-dir", default=str(ROOT / "tests"))
     parser.add_argument("--pattern", default="test*.py")
     parser.add_argument("--traceback-after", type=float, required=True)
+    parser.add_argument("--shutdown-traceback-after", type=float, required=True)
     return parser.parse_args(argv)
 
 
@@ -92,13 +142,37 @@ def main(argv=None) -> int:
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
     diagnostics = LifetimeDiagnostics(args.traceback_after)
     diagnostics.arm()
-    # Keep both diagnostics armed while interpreter shutdown waits for leaked
-    # non-daemon threads; the parent owns the hard lifetime budget.
-    result = unittest.TextTestRunner(
-        stream=sys.stderr,
-        verbosity=1,
-        resultclass=TrackingTextResult,
-    ).run(suite)
+    try:
+        result = unittest.TextTestRunner(
+            stream=sys.stderr,
+            verbosity=1,
+            resultclass=TrackingTextResult,
+        ).run(suite)
+    finally:
+        diagnostics.cancel()
+
+    set_current_test("<suite complete>")
+    disposition = "success" if result.wasSuccessful() else "failure"
+    print(
+        f"LIFETIME SUITE COMPLETE: {disposition}",
+        file=sys.stderr,
+        flush=True,
+    )
+
+    # Arm a fresh short deadline only after discovery and every test have
+    # completed, and only while a non-daemon thread can actually hold this
+    # interpreter open. Do not cancel it: that wait is exactly the evidence.
+    # Arming it with nothing retained would leave a C dump to fire inside
+    # interpreter finalization, which has no thread state left to walk.
+    retained = retained_threads()
+    if not retained:
+        print("LIFETIME SHUTDOWN: no retained non-daemon thread", file=sys.stderr, flush=True)
+        return 0 if result.wasSuccessful() else 1
+    shutdown_diagnostics = LifetimeDiagnostics(
+        args.shutdown_traceback_after,
+        prefix="LIFETIME SHUTDOWN",
+    )
+    shutdown_diagnostics.arm()
     return 0 if result.wasSuccessful() else 1
 
 

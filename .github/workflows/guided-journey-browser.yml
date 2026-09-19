@@ -8,6 +8,9 @@ on:
       - 'studio_workflow/core.py'
       - 'tests/workflow_control*_browser.py'
       - 'tests/test_workflow_control*.py'
+      - 'tests/workflow_steps_browser.py'
+      - 'tests/test_workflow_step_order.py'
+      - 'tests/test_workflow_steps.py'
       - 'tests/studio_guide*'
       - 'tests/create_readiness*'
       - 'tests/test_create_readiness_frontend.py'
@@ -44,6 +47,13 @@ jobs:
           python -m unittest discover -s tests -p 'test_workflow_control*.py' -v
           python tests/workflow_control_preview_browser.py --out .runtime/control-preview-proof -v
           python tests/workflow_control_precision_browser.py --out .runtime/control-precision-proof -v
+      - name: Named Steps ordering, persistence and keyboard flow
+        run: |
+          python -m unittest tests/test_workflow_step_order.py tests/test_workflow_steps.py -v
+          python -m unittest discover -s tests -p 'test_workflow_documents.py' -v
+          node tests/workflow_project_state.cjs
+          node --check app/static/workflow-projects.js
+          python tests/workflow_steps_browser.py --out .runtime/workflow-steps-proof
       - name: Create blockers, focus and read-only dependency retry
         run: python tests/create_readiness_browser.py --out .runtime/create-readiness-proof
       - uses: actions/upload-artifact@v4
@@ -55,6 +65,7 @@ jobs:
             .runtime/guide-disclosure-proof/
             .runtime/control-preview-proof/
             .runtime/control-precision-proof/
+            .runtime/workflow-steps-proof/
             .runtime/create-readiness-proof/
           if-no-files-found: ignore
           retention-days: 7

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "source_sha": "9df20ed8dad91647b16198e353b709db03ce5dd7",
+  "run_at": "2026-09-14T12:20:00Z",
+  "command": "python -m unittest discover -s tests",
+  "total": 2294,
+  "passed": 2229,
+  "skipped": 65,
+  "failures": 0,
+  "errors": 0,
+  "environment": "Windows 11 / Python 3.14 strict full-suite control"
+}

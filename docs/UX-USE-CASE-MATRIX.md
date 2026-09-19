@@ -1,5 +1,19 @@
 # UX use-case matrix
 
+## Reference analysis review and Apply — 18 September 2026
+
+`reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an
+owner-shaped journey. In fixture mode it loads deterministic exported analysis, supplies the same
+original image bytes under renamed files, edits an approved style facet, prepares the real before/after
+diff through the production reference-review HTTP extension, applies explicitly, and verifies that the
+applied references and diff remain visible. The journey records every step and the global use-case
+harness still rejects any generation-capable request.
+
+This is interface and data-contract evidence, not evidence that a vision model described a real owner
+image well. `tests/reference_review_browser.py` remains the deeper two-viewport proof for undo,
+stale-response handling, receipt export, exact-original refusal and text-zoom layout. The focused CI
+lane runs both that proof and this measured matrix case.
+
 ## Draw the pose — 16 September 2026
 
 The Combine screen now draws its own pose skeleton (#444, #475, #480). A **Draw the pose** panel appears for any
@@ -307,11 +321,20 @@ python tests/studio_use_cases.py --case reference-edit-one-source    # one case
 python tests/studio_use_cases.py --base-url http://127.0.0.1:8191    # live, read-only
 ```
 
+The runner exits non-zero when any journey missed its success condition, the page raised an error, a
+generation was submitted, or nothing ran at all (an unknown `--case` id is refused rather than filtered
+away). **Live mode is the carve-out**: with `--base-url` most journeys stop short because the deny list
+refuses their deciding click by design — see the 3-of-10 live run recorded above — so live journey results
+are advisory and only a submitted generation, a page exception or an empty run turn a live run red. The
+report is written either way, so a red run still leaves its evidence; `verdict()` holds the whole rule and
+`tests/test_use_case_matrix.py` pins it without a browser. Until #611 the runner returned 0 whatever it
+measured, and each lane carried its own hand-copied gate step to compensate.
+
 Needs Playwright and Chromium (`python -m pip install playwright && python -m playwright install chromium`);
 the normal unittest suite needs neither. `.github/workflows/ux-use-cases.yml` runs the offline gate and
 the fixture measurement on every PR that touches `app/static/**`, `presets/catalog.json`,
-`studio_workflow/guides.py`, the case file or the runner, and fails when a case misses its success
-condition. The matrix JSON and the per-step screenshots are uploaded as a CI artifact.
+`studio_workflow/guides.py`, the case file or the runner. The matrix JSON and the per-step screenshots
+are uploaded as a CI artifact.
 
 Two lessons from this suite's own first hosted-CI runs, worth keeping if you add a case:
 

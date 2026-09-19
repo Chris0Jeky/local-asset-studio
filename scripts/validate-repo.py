@@ -7,6 +7,8 @@ sys.path.insert(0,str(root/'app'))
 sys.path.insert(0,str(root))
 from model_library import FOLDERS, SUFFIXES
 from studio_workflow.preset_adapter import SOURCE_KEYS, missing_source_key
+# Runtime output folders that must never be committed. Every entry is also a .gitignore rule; tests/test_repo_payload_guard.py holds the two lists in step so a new folder cannot be added to one alone.
+OPERATIONAL_PREFIXES=('experiments/runs/','experiments/imports/','experiments/uploads/','experiments/workspace/','experiments/projects/','experiments/diagnostics/','experiments/pose-artifacts/','.runtime/')
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
 fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name','lora5','lora5_name','lora6','lora6_name']
@@ -135,7 +137,7 @@ for name in filter(None,files):
     path=root/name
     assert path.stat().st_size<=10*1024*1024, 'Tracked file exceeds 10 MiB: '+name
     assert path.suffix.lower() not in {'.safetensors','.gguf','.ckpt','.onnx','.pt','.pth','.bin','.exe','.dll','.zip'}, 'Dependency/weight in Git: '+name
-    assert not name.startswith(('experiments/runs/','experiments/uploads/','experiments/workspace/','experiments/projects/','.runtime/')), 'Operational output in Git: '+name
+    assert not name.startswith(OPERATIONAL_PREFIXES), 'Operational output in Git: '+name
     assert name!='config/local.json' and not path.name.startswith('.env'), 'Local config/secret file in Git'
 print(f'PASS: {len(catalog)} preset graphs/bindings; {len(library["assets"])} pinned assets; {len(list(filter(None,files)))} tracked paths checked.')
 # Every LoRA a preset, variant or recipe names must be a known, installed adapter (KB entry not marked uninstalled, or a pinned library file).

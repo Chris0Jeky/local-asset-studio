@@ -13,6 +13,12 @@ first, and anything that would create server state is recorded as skipped, never
 Intents live in research/ux/use-cases.json (selector-free, owner's words). The selectors
 live here, one driver per case id, so the matrix reports the pipeline, not the markup.
 Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
+
+Exit code: 0 only when every measured journey reached its success condition with no page
+error, no generation submitted and at least one case run. In live mode the journey results are
+advisory - the deny list refuses most deciding clicks by design - but a submitted generation, a
+page exception or an empty run are still red. The report is written either way, so a red run
+still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
 import argparse
 import copy
@@ -104,6 +110,31 @@ def friction_points(rows):
     return sorted(rows, key=key)
 
 
+REPORT_KEYS = ('mode', 'rows', 'generation_submissions', 'page_errors')
+
+
+def verdict(matrix):
+    """Every reason this measured run must not count as green, worst first; empty means green.
+
+    The exit code is this list, so a red journey cannot pass as a green check (#611). A run that
+    measured nothing is red too: filtering to an unknown case id used to leave zero rows, and zero
+    failures out of zero cases reads exactly like a clean pass. A report missing the keys this reads
+    is red rather than green by absence.
+
+    Live mode is the one carve-out: it is read-only, so the deny list refuses most journeys' deciding
+    click on purpose and a row that stopped short there is the guard working. Everything else still
+    binds in live mode — a submitted generation, a page exception, an empty run."""
+    reasons = []
+    missing = [key for key in REPORT_KEYS if key not in matrix]
+    if missing: reasons.append('The report is missing ' + ', '.join(missing) + ', so it cannot be read as green.')
+    if matrix.get('generation_submissions'): reasons.append('A use case submitted a generation; that must never happen.')
+    failed = [str(row.get('id')) for row in matrix.get('rows') or () if not row.get('passed')]
+    if failed and matrix.get('mode') != 'live-readonly': reasons.append('Use cases that did not reach their success condition: ' + ', '.join(failed))
+    if matrix.get('page_errors'): reasons.append('The page raised exceptions: ' + '; '.join(str(error) for error in matrix['page_errors']))
+    if not matrix.get('rows'): reasons.append('No use case ran, so nothing was measured.')
+    return reasons
+
+
 # --------------------------------------------------------------------------------------
 # Live-mode guard. Checked before every click in every mode; enforced in live mode.
 # --------------------------------------------------------------------------------------
@@ -155,6 +186,8 @@ def build_handler():
     import studio_browser_smoke as fixture
     from studio_workflow.guides import guides
     from studio_workflow.core import catalog, new_document, compile_document
+    from studio_prompt.http_extension import extend_handler
+    from test_server import server
 
     info = {'Sink': {'input': {'required': {'text': ['STRING', {}], 'seed': ['INT', {'min': 0, 'max': 2 ** 64 - 1}]}}, 'output': [], 'output_node': True}}
     schema = catalog(info, 'primary')
@@ -173,7 +206,23 @@ def build_handler():
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
 
-    class Handler(fixture.Handler):
+    class PromptFixtureBase(fixture.Handler):
+        studio = None
+        # Production's own length guard; its host/origin guards hard-code :8191 and this fixture
+        # binds an ephemeral port, so they are restated against the port actually served.
+        _content_length = server.Handler._content_length
+
+        def _safe_host(self):
+            return self.headers.get('Host') in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}')
+
+        def _safe_mutation(self):
+            origin = self.headers.get('Origin')
+            return self._safe_host() and origin in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
+
+        def _json(self, status, value):
+            return self.json(value, status)
+
+    class Handler(extend_handler(PromptFixtureBase)):
         def do_GET(self):
             path = urlsplit(self.path).path
             if path == '/api/workflow-studio/guides': return self.json(guides())
@@ -782,6 +831,91 @@ def _combine_loop(c):
         fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith(('combine-loop-', 'combine-other-pair'))]
 
 
+@driver('reference-analysis-review-and-apply')
+def _reference_analysis_review(c):
+    import base64
+    from test_reference_review import ReferenceReviewTests
+
+    c.goto('/prompt-lab.html', note='reference review workspace')
+    try:
+        c.page.wait_for_selector('#profile option', state='attached', timeout=8000)
+    except Exception:
+        pass
+
+    if c.live:
+        c.act('#rr-analysis', 'read', note='live mode does not load a synthetic analysis')
+        c.act('#rr-originals', 'read', note='live mode does not attach synthetic originals')
+        c.act('#rr-cards', 'read', note='facet cards appear after an analysis is loaded')
+        c.act('#rr-preview', 'read', note='preview is measured but not posted in live read-only mode')
+        c.act('#rr-diff', 'read', note='the prepared before/after review surface')
+        c.act('#rr-apply', 'read', note='Apply is measured but never pressed in live read-only mode')
+        c.observe('reference review is registered without generation', True,
+                  'full deterministic preview/apply evidence runs in fixture mode')
+        return True, 'live read-only controls registered; fixture mode owns preview/apply evidence'
+
+    fixture = ReferenceReviewTests()
+    fixture.setUp()
+    analysis = {
+        'name': 'reference-analysis.json',
+        'mimeType': 'application/json',
+        'buffer': json.dumps({'analysis': fixture.report}).encode('utf-8'),
+    }
+    c.page.locator('#rr-analysis').set_input_files(analysis)
+    try:
+        c.page.wait_for_function("document.querySelector('#rr-summary').textContent.trim().length > 0", timeout=8000)
+    except Exception:
+        pass
+    summary_ok = c.page.locator('#rr-summary').inner_text().strip() == fixture.report['answer']['summary']
+    c.observe('the analysis summary and editable facets are shown', summary_ok,
+              'analysis summary did not match the imported report')
+
+    originals = []
+    for index, source in enumerate(fixture.images):
+        originals.append({
+            'name': 'renamed-%d.png' % index,
+            'mimeType': source.get('media_type') or 'image/png',
+            'buffer': base64.b64decode(source['media_base64']),
+        })
+    c.page.locator('#rr-originals').set_input_files(list(reversed(originals)))
+    try:
+        c.page.wait_for_function("document.querySelector('#rr-source-status').textContent.includes('originals matched')", timeout=8000)
+    except Exception:
+        pass
+    matched = '2 originals matched' in c.page.locator('#rr-source-status').inner_text()
+    c.observe('the exact originals are matched by content', matched,
+              c.page.locator('#rr-source-status').inner_text())
+
+    style_selector = '[data-reference="picture-1"] [data-facet="style"] textarea'
+    c.act(style_selector, 'fill', typed='bold expressive ink')
+    checkbox = c.page.locator('[data-reference="picture-1"] [data-facet="style"] input')
+    if checkbox.count() and not checkbox.is_checked():
+        checkbox.check()
+
+    before = c.page.locator('#brief').input_value()
+    c.act('#rr-preview')
+    try:
+        c.page.wait_for_function("!document.querySelector('#rr-apply').disabled", timeout=8000)
+    except Exception:
+        pass
+    prepared = (c.page.locator('#rr-apply').is_enabled() and
+                bool(c.page.locator('#rr-diff').inner_text().strip()) and
+                c.page.locator('#brief').input_value() == before)
+    c.observe('the prepared before and after diff', prepared,
+              'Apply enabled=%s, draft unchanged=%s' % (
+                  c.page.locator('#rr-apply').is_enabled(), c.page.locator('#brief').input_value() == before))
+
+    c.act('#rr-apply')
+    applied_style = c.page.locator('#style').input_value()
+    references = c.page.evaluate('StudioPromptDraft.capture().intent.references.length')
+    retained_diff = c.page.locator('#rr-diff').inner_text().strip()
+    applied = applied_style == 'bold expressive ink' and references == 2 and bool(retained_diff)
+    c.observe('the applied reference draft and retained diff', applied,
+              'style=%r, references=%s, diff retained=%s' % (applied_style, references, bool(retained_diff)))
+    return applied and prepared and matched and summary_ok, \
+        'summary=%s, originals=%s, prepared=%s, references=%s, retained diff=%s' % (
+            summary_ok, matched, prepared, references, bool(retained_diff))
+
+
 @driver('prompt-lab-to-create')
 def _prompt_lab(c):
     c.goto('/prompt-lab.html', note='wording workspace')
@@ -922,6 +1056,10 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     data = load_cases()
+    known = {case['id'] for case in data['cases']}
+    # Stays above the playwright import below: the offline lane runs this refusal with no browser installed.
+    unknown = [case_id for case_id in (args.case or ()) if case_id not in known]
+    if unknown: raise SystemExit('No such use case in research/ux/use-cases.json: ' + ', '.join(unknown))
     cases = [case for case in data['cases'] if not args.case or case['id'] in args.case]
     missing = [case['id'] for case in cases if case['id'] not in DRIVERS]
     if missing: raise SystemExit('No driver registered for: ' + ', '.join(missing))
@@ -981,8 +1119,9 @@ def main(argv=None):
     print()
     print('mode=%s cases=%d passed=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
     print('matrix -> ' + str(args.out))
-    if submitted: raise SystemExit('A use case submitted a generation; that must never happen.')
-    return 0
+    reasons = verdict(matrix)
+    for reason in reasons: print('FAILED: ' + reason, file=sys.stderr, flush=True)
+    return 1 if reasons else 0
 
 
 if __name__ == '__main__': raise SystemExit(main())

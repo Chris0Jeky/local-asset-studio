@@ -1,0 +1,72 @@
+name: Structured work item
+description: Record an epic, slice, defect, experiment, decision or research item without creating another state store.
+title: ""
+body:
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      description: Choose the single primary type. See docs/PROJECT-OPERATING-MODEL.md.
+      options:
+        - Epic — long-lived outcome or programme
+        - Slice — implementation-ready bounded change
+        - Defect — reproduced failure with causal regression
+        - Experiment — finite execution/evidence budget
+        - Decision — owner choice or approval
+        - Research — bounded evidence or feasibility question
+    validations:
+      required: true
+  - type: dropdown
+    id: readiness
+    attributes:
+      label: Readiness
+      options:
+        - blocked
+        - ready
+        - active
+        - review
+        - owner-run
+        - parked
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Describe the user or engineering result, not the amount of activity.
+      placeholder: After this item, a person or agent can…
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Current evidence and root cause
+      description: Link executed facts, reproduction, source research or owner feedback. State uncertainty.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance and proving checks
+      description: Include finite commands, browser/native evidence, creative review or budget as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, owner and merge order
+      description: Name blocked-by issues, existing domain owners, stack order and what must not be duplicated.
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Non-goals and stop conditions
+      description: State when to stop rather than widening the item.
+  - type: checkboxes
+    id: discipline
+    attributes:
+      label: Discipline
+      options:
+        - label: I checked for an existing owner and am not introducing a duplicate queue, store or executor.
+          required: true
+        - label: Passing tests or completed execution will not be treated as artistic acceptance or broad issue completion.
+          required: true

@@ -1,0 +1,465 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-09-18T20:25:00Z",
+  "repository": {
+    "head_sha": "b7a502614813cf023b43141cad6f5656ecec650d",
+    "default_branch": "main",
+    "facts_sha": "b7a502614813cf023b43141cad6f5656ecec650d",
+    "catalog_blob_sha": "5bcaf8cbb36efe8ed5b724817288aa088b70e5dd",
+    "human_todo_blob_sha": "cbee81b46f5530567de8e7f44d44e50456ee539f"
+  },
+  "pull_requests": [
+    {
+      "number": 340,
+      "title": "Add a deterministic repository operating snapshot and work taxonomy",
+      "head": "ops/repository-operating-model",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 416,
+      "title": "docs: establish controlled adult illustration programme",
+      "head": "codex/adult-illustration-foundation",
+      "base": "main",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 417,
+      "title": "test: add adult illustration manifest gate and agent skill",
+      "head": "codex/adult-illustration-scaffold",
+      "base": "codex/adult-illustration-foundation",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 419,
+      "title": "feat: project controlled adult illustration intent into Prompt Lab",
+      "head": "codex/adult-illustration-intent",
+      "base": "codex/adult-illustration-scaffold",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 420,
+      "title": "feat: add offline adult illustration validate/project CLI",
+      "head": "codex/adult-illustration-cli",
+      "base": "codex/adult-illustration-intent",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 434,
+      "title": "docs: add adult illustration prompt and source intelligence",
+      "head": "codex/adult-illustration-intelligence",
+      "base": "codex/adult-illustration-cli",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 436,
+      "title": "feat: add read-only adult illustration research discovery",
+      "head": "codex/adult-illustration-discovery",
+      "base": "codex/adult-illustration-intelligence",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 441,
+      "title": "feat: add bounded adult illustration source snapshots",
+      "head": "codex/adult-illustration-source-snapshots",
+      "base": "codex/adult-illustration-discovery",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 547,
+      "title": "Bind pose sources to exact native route slots",
+      "head": "codex/pose-route-binding",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 548,
+      "title": "Add bounded redo to the Combine pose editor",
+      "head": "codex/pose-editor-redo",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 549,
+      "title": "docs: design adaptive workflows, contextual guidance and frontend modernization",
+      "head": "codex/adaptive-studio-strategy",
+      "base": "main",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 550,
+      "title": "feat: add immutable adult illustration taxonomy intake",
+      "head": "codex/adult-illustration-taxonomy-intake",
+      "base": "codex/adult-illustration-source-snapshots",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 551,
+      "title": "docs: add comprehensive frontend asset wishlist and production handoff kit",
+      "head": "codex/adaptive-studio-assets",
+      "base": "codex/adaptive-studio-strategy",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": 549,
+      "owner_run": false
+    },
+    {
+      "number": 553,
+      "title": "fix: drain bounded bodies on composed HTTP refusals",
+      "head": "fix/drain-composed-http-refusals",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 555,
+      "title": "feat: integrate reviewed taxonomy into prompt diagnostics",
+      "head": "codex/adult-illustration-taxonomy-prompt-integration",
+      "base": "codex/adult-illustration-taxonomy-intake",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 556,
+      "title": "docs: add interactive adaptive UX behavior lab and qualification suite",
+      "head": "codex/adaptive-studio-lab",
+      "base": "codex/adaptive-studio-assets",
+      "type": "research",
+      "readiness": "review",
+      "stack_parent": 549,
+      "owner_run": false
+    },
+    {
+      "number": 557,
+      "title": "fix: retain comparison input integrity diagnostics",
+      "head": "fix/resource-comparison-error-integrity",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 560,
+      "title": "fix: bound addressable-figure formats and raster edges",
+      "head": "fix/addressable-figure-decode-bounds",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 562,
+      "title": "feat: inspect prompt terms against a validated taxonomy index",
+      "head": "codex/adult-illustration-taxonomy-membership-inspection",
+      "base": "codex/adult-illustration-taxonomy-prompt-integration",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 567,
+      "title": "fix: let known-prompt observation bypass retained reference holds",
+      "head": "fix/reference-hold-observation-admission",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 568,
+      "title": "fix: resolve live use-case prerequisites without false dead ends",
+      "head": "fix/live-use-case-prerequisites",
+      "base": "main",
+      "type": "defect",
+      "readiness": "active",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 569,
+      "title": "Integrate anime qualification research and distinguish source scope from resource pins",
+      "head": "codex/anime-qualification-integration",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 570,
+      "title": "Persist editable pose artifacts beside rendered guides",
+      "head": "codex/pose-artifact-handoff",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 571,
+      "title": "fix: preserve accelerators in settings grids and LoRA remixes",
+      "head": "codex/accelerator-aware-settings",
+      "base": "codex/anime-qualification-integration",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": 569,
+      "owner_run": false
+    },
+    {
+      "number": 572,
+      "title": "feat: add exact-template Anima and Animagine prompt profiles",
+      "head": "codex/exact-anime-prompt-profiles",
+      "base": "codex/anime-qualification-integration",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 569,
+      "owner_run": false
+    },
+    {
+      "number": 574,
+      "title": "feat(create): add Immersive Studio, Retro Anime and local ambience",
+      "head": "codex/immersive-studio-presentation",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 575,
+      "title": "test: align reference-review HTTP fixture with production transport",
+      "head": "fix/reference-review-http-fixture-parity",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 576,
+      "title": "test: separate shutdown-watchdog observation from startup",
+      "head": "fix/shutdown-watchdog-observation-window",
+      "base": "main",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 577,
+      "title": "feat: explain withheld accelerator settings without changing experiment drafts",
+      "head": "codex/planner-inspection",
+      "base": "codex/accelerator-aware-settings",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 569,
+      "owner_run": false
+    },
+    {
+      "number": 578,
+      "title": "fix: preserve Unicode prompt JSON through legacy Windows pipes",
+      "head": "codex/prompt-cli-json-portability",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 579,
+      "title": "feat: add bounded adult illustration source transport",
+      "head": "codex/adult-illustration-source-transport",
+      "base": "codex/adult-illustration-source-snapshots",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 580,
+      "title": "feat: add adult illustration acquisition handoff",
+      "head": "codex/adult-illustration-acquisition-handoff",
+      "base": "codex/adult-illustration-source-transport",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 581,
+      "title": "feat(frontend): add read-only presentation context boundary",
+      "head": "codex/presentation-context-boundary",
+      "base": "codex/immersive-studio-presentation",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 574,
+      "owner_run": false
+    },
+    {
+      "number": 582,
+      "title": "feat(create): drive workshop guidance from read-only context",
+      "head": "codex/workshop-context-guidance",
+      "base": "codex/presentation-context-boundary",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 574,
+      "owner_run": false
+    },
+    {
+      "number": 583,
+      "title": "fix(workbench): guard deferred restyle handoffs",
+      "head": "fix/345-restyle-handoff-guards",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 584,
+      "title": "feat: add bounded adult illustration benchmark result contracts",
+      "head": "codex/adult-illustration-benchmark-results",
+      "base": "codex/adult-illustration-scaffold",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": 416,
+      "owner_run": false
+    },
+    {
+      "number": 585,
+      "title": "test(ux): measure reference review and apply journey",
+      "head": "fix/361-reference-review-use-case",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 586,
+      "title": "feat(create): enforce local ambience eligibility and fallbacks",
+      "head": "codex/workshop-ambience-policy",
+      "base": "codex/workshop-context-guidance",
+      "type": "slice",
+      "readiness": "active",
+      "stack_parent": 574,
+      "owner_run": false
+    },
+    {
+      "number": 587,
+      "title": "feat(workflow): reorder named steps in the editor",
+      "head": "fix/382-workflow-step-ordering-ui",
+      "base": "main",
+      "type": "slice",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    },
+    {
+      "number": 588,
+      "title": "fix(workbench): retain board continuation source lineage",
+      "head": "fix/345-continuation-source-lineage",
+      "base": "main",
+      "type": "defect",
+      "readiness": "review",
+      "stack_parent": null,
+      "owner_run": false
+    }
+  ],
+  "issues": [
+    {
+      "number": 97,
+      "title": "graph_check falsely rejects every 3D and video preset; validate-live skips 34 of 60 presets",
+      "type": "defect",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 178,
+      "title": "Extend stage-aware resource admission through the existing generation coordinator",
+      "type": "slice",
+      "readiness": "blocked",
+      "blocked_by": [
+        77,
+        89
+      ]
+    },
+    {
+      "number": 252,
+      "title": "Add an addressable-figure primitive: split a multi-figure image into child assets with lineage",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 313,
+      "title": "Convergence milestone: prove the accepted-asset loop before expanding scope",
+      "type": "epic",
+      "readiness": "owner-run",
+      "blocked_by": []
+    },
+    {
+      "number": 314,
+      "title": "Extract a shared revisioned-command and durable-receipt toolkit",
+      "type": "research",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 315,
+      "title": "Adopt a repository operating model: issue taxonomy, WIP limits and generated state",
+      "type": "slice",
+      "readiness": "active",
+      "blocked_by": []
+    }
+  ],
+  "next_ready": [
+    97,
+    252,
+    314
+  ]
+}
