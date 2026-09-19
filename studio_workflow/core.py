@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 VERSION = "studio.workflow/v1"
+EXECUTION_FORMAT = 'studio.workflow-execution/v1'
 MAX_BYTES = 1024 * 1024
 MAX_NODES = 256
 ID = re.compile(r"[A-Za-z0-9_.-]{1,96}\Z")
@@ -228,6 +229,13 @@ def document(value: dict) -> dict:
     return copy.deepcopy(value)
 
 
+def execution_graph_sha256(graph: dict, backend_id: str, schema_sha256: str) -> str:
+    """Versioned selected executable inputs; not the legacy exact graph digest."""
+    return digest({'format': EXECUTION_FORMAT, 'backend_id': backend_id, 'schema_sha256': schema_sha256,
+                   'nodes': {key: {'class_type': node['class_type'], 'inputs': node['inputs']}
+                             for key, node in graph.items()}})
+
+
 def compile_document(value: dict, schema: dict) -> dict:
     doc = document(value)
     errors, warnings = [], []
@@ -344,4 +352,6 @@ def compile_document(value: dict, schema: dict) -> dict:
     warnings.append({"code": "authoring_only", "message": "Static authoring checks only. ComfyUI runtime validation, model compatibility, resources and custom-node behaviour are not certified. No generation was submitted."})
     return {"valid": not errors, "errors": errors, "warnings": warnings,
             "graph": graph if not errors else None, "graph_sha256": digest(graph) if not errors else None,
+            "graph_execution_format": EXECUTION_FORMAT,
+            "graph_execution_sha256": execution_graph_sha256(graph, doc['backend_id'], doc['schema_sha256']) if not errors else None,
             "document_sha256": digest(doc), "generation_submitted": False}

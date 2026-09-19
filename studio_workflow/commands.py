@@ -1,6 +1,7 @@
 """Pure document commands. Authoring changes are never execution authority."""
 from __future__ import annotations
 import copy
+import re
 from .core import canonical, decode, document, ID, RESERVED, link, need, digest
 
 MAX_COMMANDS = 256
@@ -27,6 +28,17 @@ def execution_inputs_sha256(doc):
                                for key, node in doc['nodes'].items()}})
 
 
+class StateConflict(ValueError):
+    def __init__(self, expected, current):
+        super().__init__('Authoring state changed; inspect before applying an inverse')
+        self.expected_sha256, self.current_sha256 = expected, current
+
+
+def state_sha256(doc):
+    """All authoring data except the server-assigned append-only revision."""
+    return digest({key: value for key, value in document(doc).items() if key != 'revision'})
+
+
 def apply_commands(source, commands):
     doc = document(source)
     need(isinstance(commands, list) and 1 <= len(commands) <= MAX_COMMANDS, 'Use 1–256 commands')
@@ -34,7 +46,16 @@ def apply_commands(source, commands):
     for command in commands:
         need(isinstance(command, dict), 'Each command must be an object')
         op = command.get('op')
-        if op in ('put_step', 'remove_step', 'set_step_enabled', 'duplicate_step', 'move_step'):
+        if op == 'assert_state':
+            fields(command, ('op', 'sha256'))
+            expected = command['sha256']
+            need(isinstance(expected, str) and re.fullmatch('[0-9a-f]{64}', expected), 'Invalid expected authoring digest')
+            current = state_sha256(doc)
+            if expected != current: raise StateConflict(expected, current)
+        elif op == 'import_module':
+            from .modules import insert_module
+            doc = insert_module(doc, command)
+        elif op in ('put_step', 'remove_step', 'set_step_enabled', 'duplicate_step', 'move_step'):
             from .steps import apply_step_command
             apply_step_command(doc, command)
         elif op == 'replace':
