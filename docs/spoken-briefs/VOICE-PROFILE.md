@@ -102,13 +102,15 @@ Accepted references, permission records, local producer details, and owner-revie
   -PlanOnly
 ```
 
-A local profile cannot silently replace a checked-in revision. Replacement requires:
+A local profile can overlay a checked-in catalogue profile only when it carries:
 
 - the same stable profile ID;
-- a strictly higher integer revision;
-- `supersedes_profile_sha256` equal to the exact currently resolved profile hash.
+- a strictly higher integer revision than the checked-in profile;
+- `supersedes_profile_sha256` equal to the exact checked-in catalogue profile hash.
 
-This compare-and-swap rule makes stale or competing local edits fail closed. New local profile IDs must not claim to supersede an unknown record.
+This guard detects catalogue drift: a local overlay prepared for different checked-in profile bytes is refused. It is not a mutable registry compare-and-swap operation, a persisted local revision chain, or a concurrent-writer lock. Each resolution starts from the checked-in catalogue and then applies at most one local record per profile ID. Replacing the registry file is an external operator action; two competing writers are not serialized by the resolver. Issue #671 tracks a genuine local CAS update boundary if that stronger property is needed.
+
+New local profile IDs must not claim to supersede an unknown catalogue record.
 
 Local `_voice_profiles/` directories are ignored by Git. Store model weights, recordings, generated takes, reports, absolute paths, and sensitive permission evidence there, not in the checked-in catalogue.
 
@@ -204,13 +206,13 @@ Validation returns a normalized acceptance summary with the report hash and long
 - resource use fits the workstation without mutating the shared image-generation environment;
 - dry audio and mix treatment remain separate;
 - every delivery promoted with the profile is marked `qualified`;
-- the local revision names the exact checked-in/profile revision it supersedes.
+- the local overlay names the exact checked-in catalogue profile it replaces.
 
 Even an accepted local record is not executable until LAS has a producer adapter matching that identity. The current `voice-baseline` adapter remains tied to the pinned Kokoro control; it must not be relabelled as Qwen, IndexTTS, or `ember-brief-v1`.
 
 ## Evidence boundary
 
-The offline contracts prove profile parsing, canonical hashes, revision compare-and-swap, delivery binding, qualification-plan identity, report validation, CLI forwarding, manifest/receipt propagation, and refusal before side effects.
+The offline contracts prove profile parsing, canonical hashes, catalogue-bound overlay validation, delivery binding, qualification-plan identity, report validation, CLI forwarding, manifest/receipt propagation, and refusal before side effects.
 
 They do not prove:
 
@@ -219,6 +221,7 @@ They do not prove:
 - that independent transcription is accurate;
 - that an identity sounds original, consistent, pleasant, or low-fatigue;
 - that pronunciation or performance has been accepted;
-- that a custom producer adapter exists.
+- that a custom producer adapter exists;
+- that local registry file writers are serialized or form a durable predecessor chain.
 
-Those require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641.
+Those require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641; stronger registry mutation semantics remain #671.
