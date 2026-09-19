@@ -1,4 +1,5 @@
 name: Spoken brief contracts
+# Cross-platform contracts for spoken briefs and narration-policy evidence.
 on:
   push:
     paths:
