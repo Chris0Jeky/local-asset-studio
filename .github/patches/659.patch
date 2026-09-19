@@ -1,0 +1,158 @@
+--- a/scripts/voice_profile.py
++++ b/scripts/voice_profile.py
+@@ -9,6 +9,8 @@
+ from pathlib import Path
+ import re
+ 
++from strict_json import StrictJsonError, load_bounded_json
++
+ ROOT = Path(__file__).resolve().parents[1]
+ DEFAULT_CATALOG = ROOT / 'research' / 'voice-profiles' / 'catalog.json'
+ MAX_PROFILE_JSON_BYTES = 256 * 1024
+@@ -122,26 +124,14 @@
+ 
+ 
+ def _read_json(path: Path, label: str):
+-    path = Path(path)
+     try:
+-        size = path.stat().st_size
+-    except OSError as exc:
+-        raise VoiceProfileError(f'Cannot inspect {label}: {path}') from exc
+-    if not 1 <= size <= MAX_PROFILE_JSON_BYTES:
+-        raise VoiceProfileError(
+-            f'{label} must contain 1 to {MAX_PROFILE_JSON_BYTES} bytes'
++        return load_bounded_json(
++            Path(path),
++            label=label,
++            maximum_bytes=MAX_PROFILE_JSON_BYTES,
+         )
+-    try:
+-        raw = path.read_bytes()
+-    except OSError as exc:
+-        raise VoiceProfileError(f'Cannot read {label}: {path}') from exc
+-    if len(raw) != size or len(raw) > MAX_PROFILE_JSON_BYTES:
+-        raise VoiceProfileError(f'{label} changed while it was read or exceeded its byte limit')
+-    try:
+-        value = json.loads(raw.decode('utf-8'))
+-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+-        raise VoiceProfileError(f'{label} must be bounded UTF-8 JSON') from exc
+-    return value
++    except StrictJsonError as exc:
++        raise VoiceProfileError(str(exc)) from exc
+ 
+ 
+ def _validate_reference(value, label):
+--- a/scripts/voice_profile_qualification.py
++++ b/scripts/voice_profile_qualification.py
+@@ -13,6 +13,8 @@
+ import sys
+ import tempfile
+ 
++from strict_json import StrictJsonError, load_bounded_json
++
+ from voice_profile import (
+     MAX_PROFILE_JSON_BYTES,
+     VoiceProfileError,
+@@ -110,23 +112,14 @@
+ 
+ 
+ def _read_json(path: Path, label: str):
+-    path = Path(path)
+-    try:
+-        size = path.stat().st_size
+-    except OSError as exc:
+-        raise QualificationError(f'Cannot inspect {label}: {path}') from exc
+-    if not 1 <= size <= MAX_PROFILE_JSON_BYTES:
+-        raise QualificationError(f'{label} exceeds its bounded JSON byte limit')
+-    try:
+-        raw = path.read_bytes()
+-    except OSError as exc:
+-        raise QualificationError(f'Cannot read {label}: {path}') from exc
+-    if len(raw) != size:
+-        raise QualificationError(f'{label} changed while it was read')
+     try:
+-        return json.loads(raw.decode('utf-8'))
+-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+-        raise QualificationError(f'{label} must be UTF-8 JSON') from exc
++        return load_bounded_json(
++            Path(path),
++            label=label,
++            maximum_bytes=MAX_PROFILE_JSON_BYTES,
++        )
++    except StrictJsonError as exc:
++        raise QualificationError(str(exc)) from exc
+ 
+ 
+ def _load_evaluation_set(path: Path | None = None) -> dict:
+--- /dev/null
++++ b/scripts/strict_json.py
+@@ -0,0 +1,69 @@
++#!/usr/bin/env python3
++"""Strict, bounded JSON decoding for persisted Local Asset Studio evidence."""
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++
++class StrictJsonError(ValueError):
++    """Raised when persisted JSON is ambiguous, non-standard, or unreadable."""
++
++
++def loads_strict(raw: bytes, *, label: str):
++    """Decode UTF-8 JSON while rejecting duplicate keys and non-standard numbers."""
++    if not isinstance(raw, bytes):
++        raise StrictJsonError(f'{label} must be supplied as bytes')
++
++    def pairs_hook(pairs):
++        result = {}
++        for key, value in pairs:
++            if key in result:
++                raise StrictJsonError(f'{label} contains duplicate key {key!r}')
++            result[key] = value
++        return result
++
++    def reject_constant(value):
++        raise StrictJsonError(
++            f'{label} contains non-standard numeric constant {value}'
++        )
++
++    try:
++        text = raw.decode('utf-8')
++    except UnicodeDecodeError as exc:
++        raise StrictJsonError(f'{label} must be bounded UTF-8 JSON') from exc
++    try:
++        return json.loads(
++            text,
++            object_pairs_hook=pairs_hook,
++            parse_constant=reject_constant,
++        )
++    except StrictJsonError:
++        raise
++    except (json.JSONDecodeError, RecursionError) as exc:
++        raise StrictJsonError(f'{label} must be bounded UTF-8 JSON') from exc
++
++
++def load_bounded_json(path: Path, *, label: str, maximum_bytes: int):
++    """Read one stable-size file and decode it with :func:`loads_strict`."""
++    if type(maximum_bytes) is not int or maximum_bytes < 1:
++        raise StrictJsonError('maximum_bytes must be a positive integer')
++    path = Path(path)
++    try:
++        size = path.stat().st_size
++    except OSError as exc:
++        raise StrictJsonError(f'Cannot inspect {label}: {path}') from exc
++    if not 1 <= size <= maximum_bytes:
++        raise StrictJsonError(
++            f'{label} must contain 1 to {maximum_bytes} bytes'
++        )
++    try:
++        with path.open('rb') as stream:
++            raw = stream.read(maximum_bytes + 1)
++    except OSError as exc:
++        raise StrictJsonError(f'Cannot read {label}: {path}') from exc
++    if len(raw) != size or len(raw) > maximum_bytes:
++        raise StrictJsonError(
++            f'{label} changed while it was read or exceeded its byte limit'
++        )
++    return loads_strict(raw, label=label)
