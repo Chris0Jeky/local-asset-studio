@@ -39,6 +39,29 @@ class ResourceAdmissionPublicationOrderTests(unittest.TestCase):
             {dimension: 0 for dimension in admission.DIMENSIONS},
         )
 
+    def test_rejected_receipt_publisher_prevents_reservation_publication(self):
+        studio = Studio()
+        profile, identity = profile_for(studio)
+        ledger = admission.ReservationLedger()
+        published = []
+
+        def reject(receipt):
+            published.append(receipt)
+            raise RuntimeError("receipt store unavailable")
+
+        with self.assertRaisesRegex(RuntimeError, "receipt store unavailable"):
+            ledger.admit(
+                "job",
+                identity,
+                profile,
+                observation(),
+                publish=reject,
+            )
+
+        self.assertEqual(len(published), 1)
+        self.assertEqual(published[0]["state"], "reserved")
+        self.assertEqual(ledger.snapshot()["owners"], [])
+
     def test_full_history_refuses_before_new_reservation_is_published(self):
         studio = Studio()
         profile_for(studio)
