@@ -8,7 +8,7 @@ import wave
 
 sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
 import spoken_brief
-from spoken_brief_fixture import Fixture, wav_bytes
+from spoken_brief_fixture import Fixture, signed_plan, wav_bytes
 
 
 class SpokenBriefTests(unittest.TestCase):
@@ -21,10 +21,13 @@ class SpokenBriefTests(unittest.TestCase):
             run_dir.mkdir(parents=True)
             identifier = 'f' * 32
             batch = spoken_brief.batch_segments(compiled['segments'])[0]
+            payload = {'name': 'failed', 'speaker_id': 'brief-narrator',
+                       'lines': [{'id': line['id'], 'text': line['text']} for line in batch]}
             fixture.projects[identifier] = {'id': identifier, 'kind': 'voice', 'name': 'failed',
-                'plan': {'speaker_id': 'brief-narrator', 'lines': [{'id': line['id'], 'text': line['text']} for line in batch]},
+                'plan': signed_plan(payload),
                 'state': {'status': 'failed', 'message': 'retained failure', 'artifacts': []}}
             state = spoken_brief.initial_state(compiled)
+            state['studio'] = {'base_url': fixture.base_url, 'identity': fixture.identity}
             state['batches'][0].update(project_id=identifier, status='failed')
             spoken_brief.write_json(run_dir / 'state.json', state)
             with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'retained failure'):
@@ -86,10 +89,14 @@ class SpokenBriefTests(unittest.TestCase):
             compiled = spoken_brief.compile_source(source, speaker_id='brief-narrator')
             run_dir = spoken_brief.run_directory(source, compiled['manifest_sha256']); run_dir.mkdir(parents=True)
             identifier = 'e' * 32
+            payload = {'name': 'wrong retained plan', 'speaker_id': 'brief-narrator',
+                       'lines': [{'id': 'segment-0001', 'text': 'Different words.'}]}
             fixture.projects[identifier] = {'id': identifier, 'kind': 'voice', 'name': 'wrong retained plan',
-                'plan': {'speaker_id': 'brief-narrator', 'lines': [{'id': 'segment-0001', 'text': 'Different words.'}]},
+                'plan': signed_plan(payload),
                 'state': {'status': 'planned', 'message': 'prepared', 'artifacts': []}}
-            state = spoken_brief.initial_state(compiled); state['batches'][0].update(project_id=identifier, status='planned')
+            state = spoken_brief.initial_state(compiled)
+            state['studio'] = {'base_url': fixture.base_url, 'identity': fixture.identity}
+            state['batches'][0].update(project_id=identifier, status='planned')
             spoken_brief.write_json(run_dir / 'state.json', state)
             with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'does not match'):
                 spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
