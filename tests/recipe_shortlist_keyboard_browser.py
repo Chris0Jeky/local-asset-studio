@@ -90,6 +90,7 @@ async def run(out):
                 }"""
             )
             target = page.locator('[data-slot="2"] [data-move="-1"]')
+            old_button = await target.element_handle()
             # Deliberately mirrors the formerly flaky full-shell driver sequence.
             await target.focus()
             await page.keyboard.press(key)
@@ -105,6 +106,15 @@ async def run(out):
             check(
                 actual["moveClicks"] == 0,
                 f"{key} does not depend on a deferred synthetic click",
+                actual,
+            )
+            await old_button.evaluate("button => button.click()")
+            await settle(page)
+            actual = await state(page)
+            check(
+                actual["roles"] == ["pose", "identity", "style"]
+                and actual["active"] == "shortlistRole1",
+                f"{key} ignores a queued activation from the detached button",
                 actual,
             )
             await page.close()
