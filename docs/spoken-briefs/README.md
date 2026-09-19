@@ -53,11 +53,13 @@ The wrapper resolves `LAS_PYTHON`, then the repository `.venv`, then `python` fr
 The coordinator reuses the bounded Voice baseline already exposed by Studio:
 
 1. `POST /api/voice-baseline` prepares one Voice project with one to six stable `{id,text}` lines.
-2. The returned 32-character project ID is durably persisted.
-3. The retained Voice plan SHA-256 and producer fingerprint are verified and persisted.
-4. `POST /api/production/<id>/start` explicitly starts that exact project.
-5. `GET /api/production/<id>` is observed until a durable terminal state exists.
-6. Each hashed `voice/<line-id>-scene.wav` is downloaded only through its own project file route.
+2. The returned 32-character project ID is durably persisted before any further request.
+3. `GET /api/production/<id>` supplies the canonical child state and signed Voice plan. Successful create-response state is advisory and is not trusted as the project record.
+4. The retained Voice plan SHA-256 and producer fingerprint are verified and persisted.
+5. `POST /api/production/<id>/start` explicitly starts that exact project.
+6. A successful Start acknowledgement is followed by another canonical `GET`; the response body is not treated as durable child state.
+7. `GET /api/production/<id>` is observed until a durable terminal state exists.
+8. Each hashed `voice/<line-id>-scene.wav` is downloaded only through its own project file route.
 
 The Voice implementation validates its pinned `voice_baseline_bundle`, isolated Python and package versions, model files, runner hash, and configured FFmpeg before execution. It produces 24 kHz dry WAVs and 48 kHz scene-interchange WAVs. Spoken Briefs consumes the scene copies and does not bypass or duplicate that producer.
 
@@ -80,7 +82,7 @@ A `COMPRESSED.md` run is stored beside its handoff pack:
 - `manifest.json` is the immutable schema-v2 source, compiler, speaker, and segment plan.
 - `state.json` is mutable coordination evidence. It records the exact Studio endpoint and workspace identity, every child project ID, every child plan SHA-256, one stable Voice producer fingerprint, statuses, and artifact hashes.
 - `segments/` contains verified 48 kHz mono PCM16 scene copies downloaded from their own project routes.
-- `receipt.json` binds source bytes, Studio identity, producer fingerprint, project IDs and plan hashes, segment text hashes, pauses, input WAV hashes, and the final master hash.
+- `receipt.json` binds source bytes, Studio identity, producer fingerprint, project IDs and plan hashes, segment text hashes, pauses, exact input WAV snapshots, and the final master hash.
 - `*.spoken.wav` is the deterministic archival listening file. Chaptered MP3 or M4B exports remain #640.
 
 The manifest identity includes the canonical source path, exact source byte count and SHA-256, speaker ID, compiler version and settings, omissions, and compiled segments. Moving or changing the source creates a different run directory instead of mutating an older narration.
@@ -118,7 +120,7 @@ Before any create, Start, observation, artifact download, or final publication b
 
 The source is checked again after local assembly. If it changes during assembly, the unreceipted master is removed, state is marked `source-changed`, and no completion receipt is published.
 
-State, lock intent, and completed records use flushed, fsynced temporary files followed by atomic replacement where applicable. The final WAV is fsynced before replacement. WAV hashes are streamed instead of loading a long master fully into memory.
+State, lock intent, and completed records use flushed, fsynced temporary files followed by atomic replacement where applicable. The final WAV is fsynced before replacement. Output and completed-reuse hashes are streamed. Each input receipt hashes the exact bounded file snapshot decoded and copied into the assembled WAV, so a later file mutation cannot make the receipt describe different bytes from those actually used.
 
 ## Recovery and repeat behaviour
 
@@ -131,7 +133,9 @@ Invoking `run` is the explicit generation action. Creating or changing a handoff
 | Completed child project | Verify its signed plan, exact text, producer, artifacts, hashes, and WAV format, then reuse it |
 | Failed, cancelled, stopped, interrupted, or otherwise terminal child | Block; never create a replacement implicitly |
 | Explicit HTTP 4xx create rejection | Retain the rejection, return the batch to `pending`, and permit a later explicit run after configuration is fixed |
-| Create response missing, malformed, or uncertain | Retain `create-unconfirmed` and block all later submissions |
+| Successful create response with a valid project ID | Persist the ID, then fetch and validate the canonical project before Start |
+| Create response missing an ID, malformed, or uncertain | Retain `create-unconfirmed` and block all later submissions |
+| Successful Start acknowledgement | Persist `start-accepted`, then fetch and validate the known project rather than trusting response state |
 | Start response uncertain | Retain the known child ID and require observation of that project; never create a replacement |
 | Source bytes change during the run | Block; keep the old child evidence under its original manifest and do not publish a new receipt |
 | Studio endpoint or workspace identity changes | Block before further mutation |
@@ -150,14 +154,15 @@ Markdown cannot provide an arbitrary URL, filesystem target, or shell command. T
 
 ## Evidence boundary
 
-The focused suite currently has 40 offline contracts on Python 3.12 and runs on Ubuntu and Windows. It uses a fake loopback Studio and synthetic PCM WAVs to prove:
+The focused suite currently has 43 offline contracts on Python 3.12 and runs on Ubuntu and Windows. It uses a fake loopback Studio and synthetic PCM WAVs to prove:
 
 - deterministic source selection, Markdown projection, segmentation, and batch bounds;
 - exact-byte source revalidation at mutation and publication boundaries;
 - durable state, lock, child identity, plan-hash, producer, and Studio-workspace provenance;
 - uncertain-create and uncertain-Start fail-closed recovery;
+- successful create and Start acknowledgements are reconciled through canonical project reads;
 - proxy, redirect, response-bound, JSON-shape, and artifact-route constraints;
-- exact PCM ordering, deterministic silence, atomic publication, streamed hashing, and read-only completed reuse;
+- exact PCM ordering, deterministic silence, exact-snapshot input receipts, atomic publication, streamed output hashing, and read-only completed reuse;
 - source, workspace, plan, and producer drift rejection on both supported operating-system families.
 
 CI does not prove real workstation inference speed, subjective voice quality, pronunciation, or long-form listening comfort. The next real proving action is one `-PlanOnly` preview followed by one short handoff on the configured workstation. Keep those generated files outside Git and record quality defects against #637 or #641 rather than treating process success as creative acceptance.
