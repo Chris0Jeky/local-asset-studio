@@ -11,6 +11,7 @@ an unrelated control.
 For **Move earlier** and **Move later**:
 
 - Enter and Space move the source exactly once.
+- A queued activation from the detached old button cannot replay the move.
 - The role stays attached to the image rather than to its old slot.
 - Any prior shortlist result is invalidated immediately.
 - Focus moves to the role selector in the image's new slot.
@@ -24,9 +25,11 @@ is introduced by this interaction.
 
 `app/static/recipe-shortlist.js` handles Enter and Space during `keydown`, prevents
 the deferred native click, and calls the same move function used by pointer clicks.
-After rows are rebuilt it focuses the new role selector synchronously and once more
-on the next animation frame. A monotonically increasing render epoch makes the
-second focus attempt a no-op when another render has already superseded it.
+Each rendered move control is single-use, so a queued event on its detached DOM node
+is harmless. After rows are rebuilt the chooser focuses the new role selector
+synchronously and once more on the next animation frame. A monotonically increasing
+render epoch makes the second focus attempt a no-op when another render has already
+superseded it.
 
 The next-frame attempt is deliberately bounded to one frame. It is not a retry
 loop, timer poll, or claim that the old DOM node remains valid.
@@ -45,8 +48,8 @@ python tests/recipe_shortlist_keyboard_browser.py \
   --out .runtime/shortlist-keyboard-browser
 ```
 
-The test writes `result.json` and covers Enter, Space, pointer activation, stale
-result invalidation, and two rapid renders. The recipe-shortlist workflow runs it
-before the larger native Studio-shell browser proof, so a timing-contract failure
-is reported separately from backend, storage, proposal, and setup-application
-coverage.
+The test writes `result.json` and covers Enter, Space, a queued detached-button
+activation, pointer activation, stale result invalidation, and two rapid renders.
+The recipe-shortlist workflow runs it before the larger native Studio-shell browser
+proof, so a timing-contract failure is reported separately from backend, storage,
+proposal, and setup-application coverage.
