@@ -1,7 +1,10 @@
 let referenceRecords=[], referenceEpoch=0, referencePending=0;
 const referenceRoles=['identity','pose','style','costume','composition','geometry','motion','mask'];
 function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceRecords=(selected?.reference_slots||[]).map(s=>({role:s.role,contribution:s.contribution,avoid:s.avoid,file:null}));}
-function referencesReady(){if(!selected?.reference_slots?.length)return true;if(referencePending||referenceRecords.length!==selected.reference_slots.length)return false;const filled=referenceRecords.filter(r=>r.file&&!r.missing).length;return selected.reference_board?filled>=(selected.reference_board.min??1)&&!referenceRecords.some(r=>r.missing):filled===referenceRecords.length;}
+// The readiness model itself lives in reference-model.js so presentation cannot re-derive a second copy of it (#610).
+// referenceProjection() is the read-only view: {mode, slots, references, board, pendingFiles, hasSources, ready, blockers}.
+function referenceProjection(){return StudioReferenceModel.live(typeof window!=='undefined'?window:null);}
+function referencesReady(){return referenceProjection().ready;}
 // A recipe that names its board (reference_board_label, e.g. "Pose picture (image 2)") describes it in its own words; the IP-Adapter sentence is the fallback (#367 shipped the labels without rendering them).
 // The labels' "(image N)" parentheticals carry the reference order: the 4B Combine keeps its source as image 1, the 9B Combine puts the board picture first (pose first, character swapped in).
 function boardSummaryLabel(preset){const label=String(preset.reference_board_label||'').replace(/\s*\(.*\)\s*$/,'').toLowerCase();if(!preset.last_reference)return label+'s only';const boardImage=/\(image (\d)\)/.exec(String(preset.reference_board_label||''))?.[1],keepImage=/\(image (\d)\)/.exec(String(preset.last_reference_label||''))?.[1];return boardImage&&keepImage&&Number(boardImage)<Number(keepImage)?'the '+label+' on the board is image '+boardImage+' (its structure is kept), the picture you keep follows it as image '+keepImage:'image 1 is the picture you keep, a '+label+' on the board follows it as image 2 (and 3)';}

@@ -6,58 +6,18 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (!root?.document || !Context) return;
   root.StudioWorkshop = api;
-  const safeId = (value, fallback) => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(value) ? value : fallback;
   const currentRecipe = () => typeof selected === 'undefined' ? null : selected;
-  // `required` mirrors app.js referencesReady(), the readiness owner, so the projection never invents a
-  // prerequisite: a board recipe is gated on reference_board.min across the board, not slot by slot, and a
-  // slot-less reference is never a readiness prerequisite - the recipe's example stands until replaced.
-  const referenceSlots = () => {
-    const recipe = currentRecipe(); if (!recipe) return [];
-    if (Array.isArray(recipe.reference_slots)) { const board = !!recipe.reference_board; return recipe.reference_slots.map((slot, index) => ({
-      id:safeId(slot?.id || slot?.key, 'reference-'+(index+1)),
-      role:typeof slot?.role === 'string' && slot.role.trim() ? slot.role.trim() : 'Reference '+(index+1),
-      required:!board && slot?.required !== false
-    })); }
-    const slots = [];
-    if (recipe.reference) slots.push({id:'reference',role:recipe.reference_label || 'Reference',required:false});
-    if (recipe.last_reference) slots.push({id:'last-reference',role:recipe.last_reference_label || 'Last frame',required:false});
-    return slots;
-  };
-  const references = () => {
-    const recipe = currentRecipe(), slots = referenceSlots(); if (!recipe) return [];
-    if (Array.isArray(recipe.reference_slots)) {
-      const records = typeof referenceRecords !== 'undefined' && Array.isArray(referenceRecords) ? referenceRecords : [];
-      return slots.flatMap((slot, index) => {
-        const record = records[index], input = root.document.querySelector('[data-ref-file="'+index+'"]');
-        const staged = !!record?.file && !record?.missing, selectedFile = !!input?.files?.length || !!record?.missing;
-        return staged || selectedFile ? [{id:'source-'+(index+1),slotId:slot.id,role:record?.role || slot.role,stage:staged?'staged':'selected'}] : [];
-      });
-    }
-    const result = [];
-    if (recipe.reference) {
-      const staged = typeof uploaded !== 'undefined' && !!uploaded, selectedFile = !!root.document.querySelector('#reference')?.files?.length;
-      if (staged || selectedFile) result.push({id:'source-reference',slotId:'reference',role:recipe.reference_label || 'Reference',stage:staged?'staged':'selected'});
-    }
-    if (recipe.last_reference) {
-      const staged = typeof lastUploaded !== 'undefined' && !!lastUploaded, selectedFile = !!root.document.querySelector('#lastReference')?.files?.length;
-      if (staged || selectedFile) result.push({id:'source-last-reference',slotId:'last-reference',role:recipe.last_reference_label || 'Last frame',stage:staged?'staged':'selected'});
-    }
-    return result;
-  };
-  const pendingFiles = () => {
-    const sources = references().filter(item => item.stage !== 'staged').length;
-    const uploads = typeof referencePending !== 'undefined' && Number.isSafeInteger(referencePending) ? referencePending : 0;
-    const pending = typeof pendingInputs !== 'undefined' && pendingInputs?.size ? pendingInputs.size : 0;
-    return Math.max(sources, uploads, pending);
-  };
+  // Presentation consumes the readiness model; it never re-derives one. reference-model.js owns `required`,
+  // board cardinality, last_reference and staging (#610 items 1 and 3); references.js owns the Generate gate.
+  const projection = () => typeof StudioReferenceModel === 'undefined' ? null : StudioReferenceModel.live(root);
   const start = () => api.mount(root, {
     recipe:currentRecipe,
     backend:() => typeof backendActive !== 'undefined' && backendActive ? String(backendActive) : 'current',
-    referenceSlots,
-    references,
-    pendingFiles,
+    referenceSlots:() => (projection()?.slots || []).map(slot => ({id:slot.id, role:slot.role, required:slot.required, index:slot.index, staged:slot.staged})),
+    references:() => (projection()?.references || []).map(reference => ({...reference})),
+    pendingFiles:() => projection()?.pendingFiles || 0,
     dirty:() => typeof draftDirty !== 'undefined' && !!draftDirty,
-    hasSources:() => references().some(item => item.stage === 'staged')
+    hasSources:() => !!projection()?.hasSources
   });
   if (root.document.readyState === 'loading') root.addEventListener('DOMContentLoaded', start, {once:true});
   else start();
@@ -371,8 +331,14 @@
       target.focus?.({preventScroll:true}); target.scrollIntoView?.({block:'center', behavior:'instant'}); return true;
     }
     function revealSources() {
+      // The projection knows which slot is outstanding. Focusing the first file input on the page instead put the
+      // cursor on an already-filled board picture when the missing source was the kept image (#610 review).
+      const slots = Array.isArray(bridge.referenceSlots?.()) ? bridge.referenceSlots() : [];
+      const outstanding = slots.find(slot => slot.required && !slot.staged);
+      const named = !outstanding ? null : Number.isInteger(outstanding.index) ? q('[data-ref-file="'+outstanding.index+'"]')
+        : q(outstanding.id === 'last-reference' ? '#lastReferenceWrap input[type=file]' : '#referenceWrap input[type=file]');
       const candidates = [
-        q('#roleReferences input[type=file]'), q('#referenceWrap input[type=file]'), q('#lastReferenceWrap input[type=file]')
+        named, q('#roleReferences input[type=file]'), q('#referenceWrap input[type=file]'), q('#lastReferenceWrap input[type=file]')
       ];
       for (const target of candidates) if (target && !target.closest('[hidden]') && target.getClientRects().length && focusExisting(target)) return;
       const board = q('#roleReferences:not([hidden])') || q('#referenceWrap:not([hidden])') || q('#lastReferenceWrap:not([hidden])');
@@ -474,7 +440,9 @@
       text(guidanceAction, primary.label);
       guidanceAction.dataset.intent = primary.id;
       text(guidanceReason, primary.reason);
-      const secondary = currentView.secondaryActions.map(action => action.title).join(' · ');
+      // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
+      // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
+      const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
       text(guidanceSecondary, secondary || 'Presentation never changes execution authority.');
     }
     function sync() {

@@ -73,7 +73,8 @@ def main():
         html = (ROOT / 'tests/workshop_fixture.html').read_text(encoding='utf-8')
         html = html.replace(
             '<script src="/static/workshop.js"></script>',
-            '<script>' + (ROOT / 'app/static/presentation-context.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
+            '<script>' + (ROOT / 'app/static/reference-model.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
+            + '<script>' + (ROOT / 'app/static/presentation-context.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
             + '<script>' + (ROOT / 'app/static/workshop.js').read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>',
         )
         styles = (
@@ -146,6 +147,10 @@ def main():
         checks.append({'name': 'a slot-less reference recipe reports no invented source prerequisite'})
         page.locator('#reference').set_input_files({'name': 'source.png', 'mimeType': 'image/png', 'buffer': b'fixture'})
         page.wait_for_function("document.querySelector('#workshopGuidanceAction')?.dataset.intent==='review-sources'")
+        # A demoted readiness intent keeps its specific blocker on the rail, not just a generic title (#610 item 4).
+        secondary = page.text_content('.wk-guidance-secondary')
+        assert 'Resolve the next blocker' in secondary and 'Connect your local model environment' in secondary, secondary
+        checks.append({'name': 'a secondary readiness intent still renders the specific blocker'})
         source_submissions = page.evaluate('submitted')
         page.locator('#workshopGuidanceAction').click()
         assert page.locator('#reference').evaluate('(el)=>el===document.activeElement')
