@@ -2,6 +2,7 @@
 """Compile one Markdown handoff into deterministic bounded voice batches."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -274,10 +275,12 @@ def batch_segments(segments: list[dict]) -> list[list[dict]]:
     return batches
 
 
-def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
+def compile_source(source: Path, *, speaker_id: str = 'brief-narrator', voice_profile: dict | None = None) -> dict:
     source = Path(source).resolve()
     if not SPEAKER_RE.fullmatch(speaker_id):
         raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
+    if voice_profile is not None and not isinstance(voice_profile, dict):
+        raise SpokenBriefError('Voice profile binding must be an object')
     raw = read_source_bytes(source)
     try:
         text = raw.decode('utf-8')
@@ -301,6 +304,8 @@ def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
         'omissions': compiled['omissions'],
         'segments': compiled['segments'],
     }
+    if voice_profile is not None:
+        manifest['voice_profile'] = copy.deepcopy(voice_profile)
     manifest['manifest_sha256'] = canonical_digest(manifest)
     return manifest
 

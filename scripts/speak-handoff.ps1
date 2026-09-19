@@ -4,7 +4,10 @@ param(
     [string] $Pack,
 
     [string] $BaseUrl = 'http://127.0.0.1:8191',
-    [string] $SpeakerId = 'brief-narrator',
+    [string] $ProfileId = 'kokoro-af-heart-control-v1',
+    [string] $DeliveryId = 'calm-brief',
+    [string] $ProfileRegistry = '',
+    [string] $SpeakerId = '',
     [double] $PollSeconds = 1,
     [double] $DeadlineMinutes = 60,
     [switch] $PlanOnly
@@ -36,7 +39,15 @@ if (-not $python) {
 $command = 'run'
 if ($PlanOnly) { $command = 'plan' }
 $script = Join-Path $PSScriptRoot 'spoken_brief.py'
-$arguments = @($script, $command, $Pack, '--speaker-id', $SpeakerId)
+$arguments = @(
+    $script,
+    $command,
+    $Pack,
+    '--profile-id', $ProfileId,
+    '--delivery-id', $DeliveryId
+)
+if ($ProfileRegistry) { $arguments += @('--profile-registry', $ProfileRegistry) }
+if ($SpeakerId) { $arguments += @('--speaker-id', $SpeakerId) }
 if (-not $PlanOnly) {
     $culture = [System.Globalization.CultureInfo]::InvariantCulture
     $arguments += @(
