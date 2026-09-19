@@ -18,7 +18,11 @@ jobs:
         run: |
           set -euo pipefail
           patch_file='.github/patches/659.patch'
+          encoded_patch='.github/patches/659.patch.gz.b64'
           message_file='.github/patches/659-message.txt'
+          if [[ -f "$encoded_patch" ]]; then
+            base64 -d "$encoded_patch" | gzip -d > "$patch_file"
+          fi
           if [[ ! -f "$patch_file" ]]; then
             echo 'No patch queued.'
             exit 0
@@ -27,8 +31,9 @@ jobs:
           cp "$message_file" /tmp/659-message.txt
           git apply --check "$patch_file"
           git apply "$patch_file"
-          rm -f "$patch_file" "$message_file"
+          rm -f "$patch_file" "$encoded_patch" "$message_file"
           python -m unittest discover -s tests -p 'test_voice_profile*.py' -v
+          python -m unittest discover -s tests -p 'test_spoken_brief*.py' -v
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
