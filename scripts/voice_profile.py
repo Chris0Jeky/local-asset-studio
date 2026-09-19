@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 import re
 
+from strict_json import StrictJsonError, load_bounded_json
+
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = ROOT / 'research' / 'voice-profiles' / 'catalog.json'
 MAX_PROFILE_JSON_BYTES = 256 * 1024
@@ -122,26 +124,14 @@ def _timestamp(value, label, *, required=False):
 
 
 def _read_json(path: Path, label: str):
-    path = Path(path)
     try:
-        size = path.stat().st_size
-    except OSError as exc:
-        raise VoiceProfileError(f'Cannot inspect {label}: {path}') from exc
-    if not 1 <= size <= MAX_PROFILE_JSON_BYTES:
-        raise VoiceProfileError(
-            f'{label} must contain 1 to {MAX_PROFILE_JSON_BYTES} bytes'
+        return load_bounded_json(
+            Path(path),
+            label=label,
+            maximum_bytes=MAX_PROFILE_JSON_BYTES,
         )
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        raise VoiceProfileError(f'Cannot read {label}: {path}') from exc
-    if len(raw) != size or len(raw) > MAX_PROFILE_JSON_BYTES:
-        raise VoiceProfileError(f'{label} changed while it was read or exceeded its byte limit')
-    try:
-        value = json.loads(raw.decode('utf-8'))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise VoiceProfileError(f'{label} must be bounded UTF-8 JSON') from exc
-    return value
+    except StrictJsonError as exc:
+        raise VoiceProfileError(str(exc)) from exc
 
 
 def _validate_reference(value, label):

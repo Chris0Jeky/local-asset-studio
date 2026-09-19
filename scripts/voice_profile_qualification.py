@@ -13,6 +13,8 @@ import re
 import sys
 import tempfile
 
+from strict_json import StrictJsonError, load_bounded_json
+
 from voice_profile import (
     MAX_PROFILE_JSON_BYTES,
     VoiceProfileError,
@@ -110,23 +112,14 @@ def _count(value, label) -> int:
 
 
 def _read_json(path: Path, label: str):
-    path = Path(path)
     try:
-        size = path.stat().st_size
-    except OSError as exc:
-        raise QualificationError(f'Cannot inspect {label}: {path}') from exc
-    if not 1 <= size <= MAX_PROFILE_JSON_BYTES:
-        raise QualificationError(f'{label} exceeds its bounded JSON byte limit')
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        raise QualificationError(f'Cannot read {label}: {path}') from exc
-    if len(raw) != size:
-        raise QualificationError(f'{label} changed while it was read')
-    try:
-        return json.loads(raw.decode('utf-8'))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise QualificationError(f'{label} must be UTF-8 JSON') from exc
+        return load_bounded_json(
+            Path(path),
+            label=label,
+            maximum_bytes=MAX_PROFILE_JSON_BYTES,
+        )
+    except StrictJsonError as exc:
+        raise QualificationError(str(exc)) from exc
 
 
 def _load_evaluation_set(path: Path | None = None) -> dict:
