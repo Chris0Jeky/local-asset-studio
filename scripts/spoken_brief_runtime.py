@@ -182,7 +182,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             for line in batch:
                 artifact = artifact_for(project, line['id'], identifier)
                 target = segment_dir / (line['id'] + '.wav')
-                if not target.is_file() or digest_bytes(target.read_bytes()) != artifact['sha256']:
+                if not target.is_file() or digest_file(target) != artifact['sha256']:
                     _confirm_environment(client, state, state_path, manifest)
                     raw = client.get_bytes(artifact['url'])
                     if digest_bytes(raw) != artifact['sha256']:
@@ -212,6 +212,14 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             for segment in manifest['segments']
         ]
         output_receipt = assemble_wav(entries, output)
+        try:
+            verify_source(manifest)
+        except SpokenBriefError as exc:
+            output.unlink(missing_ok=True)
+            state['status'] = 'source-changed'
+            state['last_error'] = str(exc)
+            write_json(state_path, state)
+            raise
         projects = [batch['project_id'] for batch in state['batches']]
         project_plans = [
             {'id': batch['project_id'], 'sha256': batch['project_plan_sha256']}
