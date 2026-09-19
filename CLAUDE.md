@@ -43,7 +43,7 @@ command for the current list instead of a stored module count. Examples include 
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 19 further
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 29 further
 path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
 only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 

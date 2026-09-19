@@ -29,12 +29,18 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
         docs = (ROOT / 'docs/UX-USE-CASE-MATRIX.md').read_text(encoding='utf-8')
         self.assertIn('`' + CASE_ID + '`', docs)
 
-    def test_ci_runs_the_measured_case(self):
+    def test_ci_runs_exactly_the_measured_case(self):
+        """The lane's gate is the runner's own exit code now, so what the workflow still has to promise is
+        that it measures this one journey and no other. Draft PR #615 asserted the same property as
+        `matrix['cases'] == 1` inside the gate step this branch removes; it belongs here instead."""
         workflow = (ROOT / '.github/workflows/reference-review-use-case.yml').read_text(encoding='utf-8')
         self.assertIn('--case ' + CASE_ID, workflow)
+        self.assertEqual(workflow.count('--case '), 1, 'the lane must measure exactly one journey')
         self.assertIn('tests/reference_review_browser.py', workflow)
 
-    def test_fixture_reuses_production_transport_guards(self):
+    def test_fixture_reuses_the_production_body_length_guard(self):
+        """Only `_content_length` is inherited: the host and origin guards are rebound to the served
+        port and pinned by the probes below, not by identity with production's."""
         from test_server import server
 
         handler, _ = runner.build_handler()
@@ -57,6 +63,9 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
 
         probe.headers = {'Host': '127.0.0.1:45678', 'Origin': 'http://evil.invalid'}
         self.assertFalse(probe._safe_mutation(), 'A cross-origin mutation must still be refused')
+
+        probe.headers = {'Host': '127.0.0.1:8191', 'Origin': 'http://127.0.0.1:45678'}
+        self.assertFalse(probe._safe_mutation(), 'A mutation must fail its host check too, not only its origin check')
 
 
 if __name__ == '__main__':

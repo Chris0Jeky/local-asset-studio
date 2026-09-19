@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import textwrap
+import threading
+import time
 import unittest
 
 HERE = Path(__file__).resolve().parent
+SUITE_COMPLETE = "LIFETIME SUITE COMPLETE:"
+SHUTDOWN_WATCHDOG = "LIFETIME SHUTDOWN WATCHDOG CURRENT TEST:"
 
 
 def load(name, path):
@@ -21,12 +26,153 @@ def load(name, path):
 wrapper = load("lifetime_wrapper", HERE / "check_full_suite_lifetime.py")
 
 
+class ProcessCapture:
+    """Drain a child continuously and retain each byte exactly once."""
+
+    def __init__(self, process):
+        self.process = process
+        self.started_at = time.monotonic()
+        self._condition = threading.Condition()
+        self._parts = []
+        self._closed = 0
+        self._threads = []
+        for stream in (process.stdout, process.stderr):
+            thread = threading.Thread(target=self._read, args=(stream,), daemon=True)
+            thread.start()
+            self._threads.append(thread)
+
+    def _read(self, stream):
+        try:
+            for line in iter(stream.readline, ""):
+                with self._condition:
+                    self._parts.append(line)
+                    self._condition.notify_all()
+        finally:
+            stream.close()
+            with self._condition:
+                self._closed += 1
+                self._condition.notify_all()
+
+    def output(self):
+        with self._condition:
+            return "".join(self._parts)
+
+    def wait_for(self, marker, timeout):
+        deadline = time.monotonic() + timeout
+        with self._condition:
+            while marker not in "".join(self._parts):
+                if self.process.poll() is not None and self._closed == 2:
+                    return False
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                self._condition.wait(min(remaining, 0.05))
+            return True
+
+    def reap(self):
+        if self.process.poll() is None:
+            self.process.kill()
+        returncode = self.process.wait(timeout=5)
+        for thread in self._threads:
+            thread.join(timeout=5)
+            if thread.is_alive():
+                raise AssertionError("child output reader did not terminate")
+        return returncode, self.output()
+
+
+def observe_shutdown(
+    capture,
+    *,
+    startup_timeout,
+    observation_timeout,
+    hard_timeout,
+    evidence=(SHUTDOWN_WATCHDOG, "Thread "),
+):
+    """Wait for suite completion, then start one bounded shutdown window."""
+    hard_deadline = capture.started_at + hard_timeout
+    startup_deadline = min(
+        hard_deadline,
+        capture.started_at + startup_timeout,
+    )
+
+    startup_remaining = startup_deadline - time.monotonic()
+    if startup_remaining <= 0:
+        raise TimeoutError(
+            "hard lifetime budget expired during startup/test completion"
+        )
+    if not capture.wait_for(SUITE_COMPLETE, startup_remaining):
+        output = capture.output()
+        now = time.monotonic()
+        if now >= hard_deadline:
+            raise TimeoutError(
+                "hard lifetime budget expired during startup/test completion:\n"
+                + output
+            )
+        returncode = capture.process.poll()
+        if returncode is not None:
+            raise RuntimeError(
+                f"worker exited {returncode} before suite completion:\n{output}"
+            )
+        raise TimeoutError(
+            "suite completion was not observed within the startup/test budget:\n"
+            + output
+        )
+
+    completed_at = time.monotonic()
+    shutdown_deadline = min(
+        hard_deadline,
+        completed_at + observation_timeout,
+    )
+    for marker in evidence:
+        observation_remaining = shutdown_deadline - time.monotonic()
+        if observation_remaining <= 0:
+            output = capture.output()
+            if time.monotonic() >= hard_deadline:
+                raise TimeoutError(
+                    "hard lifetime budget expired during shutdown observation:\n"
+                    + output
+                )
+            raise TimeoutError(
+                f"shutdown watchdog evidence {marker!r} was not observed:\n{output}"
+            )
+        if capture.wait_for(marker, observation_remaining):
+            continue
+        output = capture.output()
+        now = time.monotonic()
+        if now >= hard_deadline:
+            raise TimeoutError(
+                "hard lifetime budget expired during shutdown observation:\n"
+                + output
+            )
+        returncode = capture.process.poll()
+        if returncode is not None:
+            raise RuntimeError(
+                f"worker exited {returncode} before shutdown watchdog evidence "
+                f"{marker!r}:\n{output}"
+            )
+        raise TimeoutError(
+            f"shutdown watchdog evidence {marker!r} was not observed:\n{output}"
+        )
+
+    return {
+        "startup_seconds": completed_at - capture.started_at,
+        "shutdown_seconds": time.monotonic() - completed_at,
+        "output": capture.output(),
+    }
+
+
 class LifetimeDiagnosticsTests(unittest.TestCase):
     def test_wrapper_uses_unbuffered_diagnostic_worker(self):
-        command = wrapper.suite_command(traceback_after=12.5)
+        command = wrapper.suite_command(
+            traceback_after=12.5,
+            shutdown_traceback_after=0.75,
+        )
         self.assertIn("-u", command)
         self.assertIn(str(HERE / "full_suite_lifetime_worker.py"), command)
-        self.assertEqual(command[-2:], ["--traceback-after", "12.5"])
+        traceback_index = command.index("--traceback-after")
+        shutdown_index = command.index("--shutdown-traceback-after")
+        self.assertEqual(command[traceback_index + 1], "12.5")
+        self.assertEqual(command[shutdown_index + 1], "0.75")
 
     def test_worker_names_current_test_and_dumps_threads_before_parent_budget(self):
         worker = HERE / "full_suite_lifetime_worker.py"
@@ -44,7 +190,7 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                         def test_wait(self):
                             self.id = "fixture-status"
                             self.assertTrue(callable(split_figures))
-                            time.sleep(0.15)
+                            time.sleep(1.2)
                     """
                 ),
                 encoding="utf-8",
@@ -59,11 +205,13 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                     "--pattern",
                     "test_hang.py",
                     "--traceback-after",
-                    "0.03",
+                    "0.6",
+                    "--shutdown-traceback-after",
+                    "0.3",
                 ],
                 capture_output=True,
                 text=True,
-                timeout=5,
+                timeout=20,
             )
         output = result.stdout + result.stderr
         self.assertEqual(result.returncode, 0, output)
@@ -83,8 +231,10 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                 textwrap.dedent(
                     """
                     import threading
+                    import time
                     import unittest
 
+                    time.sleep(0.45)
                     leaked = threading.Event()
 
                     class LeaksNonDaemon(unittest.TestCase):
@@ -106,27 +256,213 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
                     "--pattern",
                     "test_leak.py",
                     "--traceback-after",
-                    "0.15",
+                    "4",
+                    "--shutdown-traceback-after",
+                    "0.3",
                 ],
                 cwd=HERE.parent,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                bufsize=1,
             )
+            capture = ProcessCapture(process)
             try:
-                stdout, stderr = process.communicate(timeout=0.8)
-                self.fail(f"worker exited despite the leaked non-daemon thread:\n{stdout}\n{stderr}")
-            except subprocess.TimeoutExpired as exc:
-                stdout = exc.stdout or ""
-                stderr = exc.stderr or ""
-                process.kill()
-                tail_stdout, tail_stderr = process.communicate(timeout=5)
-                def text(value):
-                    return value.decode(errors="replace") if isinstance(value, bytes) else value
-                output = text(stdout) + text(stderr) + text(tail_stdout) + text(tail_stderr)
+                observation = observe_shutdown(
+                    capture,
+                    startup_timeout=3,
+                    observation_timeout=1,
+                    hard_timeout=5,
+                )
+                self.assertIsNone(process.poll(), observation["output"])
+            finally:
+                returncode, output = capture.reap()
+
+        self.assertIsNotNone(returncode)
+        self.assertGreaterEqual(observation["startup_seconds"], 0.35)
+        self.assertLess(observation["shutdown_seconds"], 1.0)
         self.assertIn("END test_leak.LeaksNonDaemon.test_returns_with_live_thread", output)
-        self.assertIn("LIFETIME WATCHDOG CURRENT TEST:", output)
+        self.assertIn(SUITE_COMPLETE, output)
+        self.assertIn(SHUTDOWN_WATCHDOG, output)
         self.assertIn("Thread ", output)
+
+    def test_shutdown_probe_reports_absent_watchdog_and_reaps_child(self):
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                "-c",
+                (
+                    "import sys,time; "
+                    f"print({SUITE_COMPLETE!r} + ' success', file=sys.stderr, flush=True); "
+                    "time.sleep(5)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        capture = ProcessCapture(process)
+        try:
+            with self.assertRaisesRegex(TimeoutError, "shutdown watchdog evidence"):
+                observe_shutdown(
+                    capture,
+                    startup_timeout=4,
+                    observation_timeout=0.15,
+                    hard_timeout=10,
+                )
+        finally:
+            returncode, output = capture.reap()
+        self.assertIsNotNone(returncode)
+        self.assertIn(SUITE_COMPLETE, output)
+
+    def test_shutdown_probe_reports_unexpected_child_exit(self):
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                "-c",
+                (
+                    "import sys; "
+                    f"print({SUITE_COMPLETE!r} + ' success', file=sys.stderr, flush=True); "
+                    "raise SystemExit(7)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        capture = ProcessCapture(process)
+        try:
+            with self.assertRaisesRegex(RuntimeError, "exited 7"):
+                observe_shutdown(
+                    capture,
+                    startup_timeout=1,
+                    observation_timeout=1,
+                    hard_timeout=2,
+                )
+        finally:
+            returncode, output = capture.reap()
+        self.assertEqual(returncode, 7, output)
+
+    def test_process_capture_retains_each_stream_line_once(self):
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                "-c",
+                (
+                    "import sys; "
+                    "print('stdout-once', flush=True); "
+                    "print('stderr-once', file=sys.stderr, flush=True)"
+                ),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        capture = ProcessCapture(process)
+        self.assertTrue(capture.wait_for("stdout-once", 1), capture.output())
+        self.assertTrue(capture.wait_for("stderr-once", 1), capture.output())
+        process.wait(timeout=5)
+        returncode, output = capture.reap()
+        self.assertEqual(returncode, 0, output)
+        self.assertEqual(output.count("stdout-once"), 1)
+        self.assertEqual(output.count("stderr-once"), 1)
+
+    def test_shutdown_probe_keeps_a_hard_total_budget(self):
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-u",
+                "-c",
+                "import time; time.sleep(5)",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        capture = ProcessCapture(process)
+        try:
+            with self.assertRaisesRegex(TimeoutError, "hard lifetime budget"):
+                observe_shutdown(
+                    capture,
+                    startup_timeout=5,
+                    observation_timeout=5,
+                    hard_timeout=0.15,
+                )
+        finally:
+            returncode, output = capture.reap()
+        self.assertIsNotNone(returncode)
+        self.assertEqual(output, "")
+
+    def test_lifetime_budget_defaults_and_keeps_its_diagnostic_margin(self):
+        for environ in ({}, {wrapper.BUDGET_VARIABLE: ""}, {wrapper.BUDGET_VARIABLE: "  "}):
+            with self.subTest(environ=environ):
+                self.assertEqual(wrapper.lifetime_budget(environ), 600.0)
+        self.assertEqual(wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: "1500"}), 1500.0)
+        self.assertEqual(wrapper.traceback_deadline(1500.0), 1470.0)
+        self.assertEqual(wrapper.traceback_deadline(600.0), wrapper.TRACEBACK_AFTER_SECONDS)
+
+    def test_unusable_lifetime_budget_is_refused_rather_than_silently_ignored(self):
+        for value in ("0", "-1", "30", "31", "soon", "600s", "inf", "nan", "1e400"):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    wrapper.lifetime_budget({wrapper.BUDGET_VARIABLE: value})
+
+    def test_marker_never_overlaps_the_all_thread_dump(self):
+        worker = load("lifetime_worker", HERE / "full_suite_lifetime_worker.py")
+        separation = worker.MARKER_SEPARATION_SECONDS
+        for seconds in (separation + 0.01, 0.6, 4.0, 570.0):
+            with self.subTest(seconds=seconds), contextlib.ExitStack() as stack:
+                sink = stack.enter_context(tempfile.TemporaryFile("w"))
+                diagnostics = worker.LifetimeDiagnostics(seconds, stream=sink)
+                self.assertIsNone(diagnostics.marker)
+                diagnostics.arm()
+                try:
+                    self.assertIsNotNone(diagnostics.marker)
+                    self.assertGreaterEqual(seconds - diagnostics.marker.interval, separation)
+                    self.assertLessEqual(diagnostics.marker.interval, seconds)
+                finally:
+                    diagnostics.cancel()
+                self.assertIsNone(diagnostics.marker)
+        for seconds in (0, -1, 0.03, separation):
+            with self.subTest(seconds=seconds):
+                with self.assertRaises(ValueError):
+                    worker.LifetimeDiagnostics(seconds)
+
+    def test_shutdown_watchdog_is_armed_only_while_a_thread_retains_the_worker(self):
+        worker = load("lifetime_worker", HERE / "full_suite_lifetime_worker.py")
+        self.assertEqual(worker.retained_threads(), [])
+        released = threading.Event()
+        retained = threading.Thread(target=released.wait, daemon=False)
+        retained.start()
+        try:
+            self.assertIn(retained, worker.retained_threads())
+        finally:
+            released.set()
+            retained.join(timeout=5)
+        self.assertEqual(worker.retained_threads(), [])
+
+    def test_windows_full_suite_lane_raises_the_budget_it_measured(self):
+        workflow = (HERE.parent / ".github" / "workflows" / "full-suite-lifetime.yml").read_text(
+            encoding="utf-8"
+        )
+        lane = workflow[workflow.index("  windows-full-suite:"):]
+        self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '1500'", lane)
+        self.assertIn("timeout-minutes: 30", lane)
+        self.assertNotIn("timeout-minutes: 30", workflow[: workflow.index("  windows-full-suite:")])
+
+    def test_child_never_inherits_the_parent_budget_override(self):
+        child = wrapper.child_environment({"PATH": "kept", wrapper.BUDGET_VARIABLE: "1500"})
+        self.assertEqual(child, {"PATH": "kept"})
+        self.assertNotIn(wrapper.BUDGET_VARIABLE, wrapper.child_environment({}))
+        source = (HERE / "check_full_suite_lifetime.py").read_text(encoding="utf-8")
+        self.assertIn("env=child_environment()", source)
 
 
 if __name__ == "__main__":

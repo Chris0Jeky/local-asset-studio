@@ -35,19 +35,6 @@ jobs:
         run: python -u tests/studio_use_cases.py
       - name: Pose replacement and stale-response browser regressions
         run: python -u tests/pose_editor_handoff_browser.py
-      - name: Fail if any use case missed its success condition
-        run: |
-          python - <<'PY'
-          import json, sys
-          matrix = json.load(open('research/ux/use-case-matrix.json', encoding='utf-8'))
-          failed = [row['id'] for row in matrix['rows'] if not row['passed']]
-          assert matrix['generation_submissions'] == 0, 'a use case submitted a generation'
-          assert not matrix['page_errors'], 'the page raised exceptions: %r' % (matrix['page_errors'],)
-          print('mode=%s cases=%d passed=%d' % (matrix['mode'], matrix['cases'], matrix['passed']))
-          if failed:
-              print('Use cases that did not reach their success condition: ' + ', '.join(failed))
-              sys.exit(1)
-          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:

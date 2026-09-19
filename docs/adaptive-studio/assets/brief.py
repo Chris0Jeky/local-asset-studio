@@ -18,6 +18,8 @@ METHODS = {'generate', 'edit', 'derive', 'animate', 'source', 'vector', 'code', 
 
 
 def validate(rows, config):
+    if not isinstance(config, dict):
+        raise ValueError('profiles.json must contain an object')
     if config.get('version') != 1 or config.get('production_status') != 'planned' or config.get('asset_bytes_present') is not False:
         raise ValueError('This catalogue must remain planned; actual media belongs in separate receipts')
     worlds, profiles = config.get('worlds', {}), config.get('profiles', {})
