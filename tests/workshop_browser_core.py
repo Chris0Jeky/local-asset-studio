@@ -5,7 +5,7 @@ Uses Playwright's Chromium, or STUDIO_BROWSER_EXECUTABLE for a system browser.
 This is not a live ComfyUI or full application qualification.
 """
 import argparse
-import base64
+import re
 import json
 import os
 from pathlib import Path
@@ -16,12 +16,50 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _resolve_css(path: Path, stack=()) -> str:
+    path = path.resolve()
+    if path in stack:
+        raise RuntimeError(f"circular CSS import: {path}")
+    css = path.read_text(encoding="utf-8")
+    return re.sub(
+        r"@import\s+url\(['\"]?([^'\")]+)['\"]?\)\s*;",
+        lambda match: _resolve_css(path.parent / match.group(1), stack + (path,)),
+        css,
+    )
+
+
 def immersive_css() -> str:
-    css = (ROOT / 'app/static/workshop-immersive.css').read_text(encoding='utf-8')
-    for name in ('night-shift.svg', 'quiet-morning.svg'):
-        data = base64.b64encode((ROOT / 'app/static/workshop-assets' / name).read_bytes()).decode('ascii')
-        css = css.replace(f'/static/workshop-assets/{name}', f'data:image/svg+xml;base64,{data}')
-    return css
+    return _resolve_css(ROOT / "app/static/workshop-immersive.css")
+
+
+def attach_page_observers(page, errors, requests, allowed_origins=()):
+    page.on("pageerror", lambda error: errors.append(str(error)))
+
+    def record(request):
+        url = request.url
+        if not url.startswith(("http:", "https:", "ws:", "wss:")):
+            return
+        if any(url.startswith(origin) for origin in allowed_origins):
+            return
+        requests.append(url)
+
+    page.on("request", record)
+
+
+def presentation_geometry_cases(layouts, skins, widths=((390, 844), (1440, 900))):
+    return [
+        {
+            "width": width,
+            "height": height,
+            "layout": layout,
+            "skin": skin,
+            "ambience": ambience,
+        }
+        for width, height in widths
+        for layout in layouts
+        for skin in skins
+        for ambience in ("none", "night-shift")
+    ]
 
 
 def main():
@@ -52,8 +90,7 @@ def main():
         page = browser.new_page(viewport={'width': 1440, 'height': 900})
         errors = []
         requests = []
-        page.on('pageerror', lambda e: errors.append(str(e)))
-        page.on('request', lambda request: requests.append(request.url) if request.url.startswith(('http:', 'https:', 'ws:', 'wss:')) else None)
+        attach_page_observers(page, errors, requests)
         load(page)
         page.wait_for_selector('#workshopRecipeChange', timeout=5000)
         page.wait_for_timeout(100)
@@ -194,40 +231,46 @@ def main():
         page.close()
 
         geometry = []
-        for width, viewport_height in [(390, 844), (1440, 900)]:
-            for layout in layouts:
-                for skin in skins:
-                    page = browser.new_page(viewport={'width': width, 'height': viewport_height})
-                    page.on('pageerror', lambda e: errors.append(str(e)))
-                    load(page)
-                    page.wait_for_selector('#workshopRecipeChange')
-                    page.select_option('#workshopLayout', layout)
-                    page.select_option('#workshopSkin', skin)
-                    page.select_option('#workshopAmbience', 'night-shift' if layout == 'immersive' else 'none')
-                    page.wait_for_timeout(70)
-                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width, layout, skin)
-                    box = page.locator('#generate').bounding_box()
-                    assert box['y'] >= 0 and box['y'] + box['height'] <= viewport_height, (box, width, layout, skin)
-                    assert page.evaluate('submitted') == 0
-                    assert page.locator('#workshopAmbienceHero').is_visible() == (layout == 'immersive')
-                    if layout == 'immersive':
-                        assert page.locator('#workshopSetupRail').is_visible()
-                        assert page.locator('#workshopGuidance').is_visible()
-                        setup_width = page.locator('#workshopSetupRail').bounding_box()['width']
-                        editor_width = page.locator('#createView .editor').bounding_box()['width']
-                        if width < 600:
-                            assert setup_width >= width - 40, (width, setup_width)
-                            assert editor_width >= width - 40, (width, editor_width)
-                        else:
-                            assert setup_width >= 230, (width, setup_width)
-                            assert editor_width >= 480, (width, editor_width)
-                    if (layout, skin) in {('focus','atelier'), ('studio','sakura'), ('immersive','retro-anime')}:
-                        page.screenshot(path=str(args.output / f'{layout}-{skin}-{width}.png'), full_page=True)
-                    geometry.append({'width': width, 'layout': layout, 'skin': skin})
-                    page.close()
+        for case in presentation_geometry_cases(layouts, skins):
+            width = case["width"]
+            viewport_height = case["height"]
+            layout = case["layout"]
+            skin = case["skin"]
+            ambience = case["ambience"]
+            page = browser.new_page(viewport={"width": width, "height": viewport_height})
+            attach_page_observers(page, errors, requests)
+            load(page)
+            page.wait_for_selector('#workshopRecipeChange')
+            page.select_option('#workshopLayout', layout)
+            page.select_option('#workshopSkin', skin)
+            page.select_option('#workshopAmbience', ambience)
+            page.wait_for_timeout(70)
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), case
+            box = page.locator('#generate').bounding_box()
+            assert box['y'] >= 0 and box['y'] + box['height'] <= viewport_height, (box, case)
+            assert page.evaluate('submitted') == 0
+            assert page.locator('#workshopAmbienceHero').is_visible() == (ambience != 'none')
+            if layout == 'immersive':
+                assert page.locator('#workshopSetupRail').is_visible()
+                assert page.locator('#workshopGuidance').is_visible()
+                setup_width = page.locator('#workshopSetupRail').bounding_box()['width']
+                editor_width = page.locator('#createView .editor').bounding_box()['width']
+                if width < 600:
+                    assert setup_width >= width - 40, (width, setup_width)
+                    assert editor_width >= width - 40, (width, editor_width)
+                else:
+                    assert setup_width >= 230, (width, setup_width)
+                    assert editor_width >= 480, (width, editor_width)
+            if (layout, skin) in {('focus','atelier'), ('studio','sakura'), ('immersive','retro-anime')}:
+                page.screenshot(
+                    path=str(args.output / f'{layout}-{skin}-{ambience}-{width}.png'),
+                    full_page=True,
+                )
+            geometry.append(dict(case))
+            page.close()
         assert not errors, errors
         assert not requests, requests
-        checks.append({'name': 'desktop/mobile layout × skin geometry and no page errors', 'cases': geometry})
+        checks.append({'name': 'desktop/mobile layout × skin × ambience geometry and no page errors', 'cases': geometry})
         browser.close()
 
     (args.output / 'report.json').write_text(json.dumps({'fixture': 'workshop_fixture.html', 'live_comfyui': False, 'network_requests': requests, 'checks': checks}, indent=2) + '\n', encoding='utf-8')

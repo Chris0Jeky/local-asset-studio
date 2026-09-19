@@ -4,13 +4,15 @@
 
 The merged presentation deliveries retain full-suite, component-browser and actual-application evidence in their PRs. Historical counts below describe the scoped workshop package and are not automatically current-head proof for every later stacked slice.
 
-The Immersive delivery established:
+The original Immersive delivery established:
 
 - 3 layouts, 4 skins and 3 ambience requests;
 - all 36 layout × skin × ambience combinations preserving prompt and file-input identity with zero presentation-triggered submissions;
-- 24 desktop/mobile layout × skin geometry cases at 1440×900 and 390×844;
+- 24 desktop/mobile layout × skin geometry cases at 1440×900 and 390×844, using `None` outside the Immersive layout;
 - the Focus + Atelier + None production default;
 - a 9-check offline prototype with no observed HTTP/HTTPS/WebSocket requests or page exceptions.
+
+The later evidence-hardening slice expands the geometry matrix to **48 layout × skin × selected-ambience cases**: every Focus, Studio and Immersive combination is exercised at both viewports with both `None` and `Night Shift`. Request and page-error observers are attached to every browser page rather than only the first fixture page.
 
 ## Read-only context and guidance
 
@@ -22,7 +24,7 @@ The latest parent correction is merged into this branch as ancestry. It mirrors 
 
 The ambience-policy slice separates persisted request from effective rendering without moving execution authority.
 
-Fresh scoped commands run against a local copy of the parent workshop review package with the exact changed policy, adapter, fixtures, tests and latest parent source-requirement correction applied:
+Fresh scoped commands run against a local copy of the current workshop review package with the exact changed policy, adapter, fixtures, tests and source-requirement correction applied:
 
 ```sh
 node --check app/static/workshop-ambience-policy.js
@@ -40,16 +42,28 @@ STUDIO_BROWSER_EXECUTABLE=/usr/bin/chromium \
 python scripts/export-workshop-prototype.py --output .runtime/workshop-prototype/index.html
 ```
 
-Observed results:
+Observed results for the ambience-policy parent:
 
 - **42 Node tests passed** across presentation context, ambience policy and workshop integration contracts.
 - **7 Python unittest tests passed**, including normal discovery of both Node contract files and existing workshop frontend contracts.
 - The dedicated Chromium ambience journey passed **6 check groups**: available local poster, missing-poster token fallback, offline independence, forced-colour fallback/restoration, None, and stylesheet readiness transitioning through unknown, missing and available states.
 - That journey retained the original prompt and file-input DOM nodes, recorded **zero submissions**, **zero HTTP/HTTPS/WebSocket requests** and **zero page exceptions**.
-- The existing workshop component driver passed **9 check groups**, including the inherited no-invented-source regression, all 36 presentation combinations and 24 desktop/mobile geometry cases.
 - The standalone prototype passed **9 checks** and exported as one offline HTML document.
 
-The local review package does not contain the complete Python application modules used by `workshop_application.py` and `workshop_handoffs.py`; those two native-origin checks are therefore reserved for the hosted workflow rather than being represented as local passes.
+## Evidence-fidelity extension
+
+The visual-evidence follow-up was developed test-first against issue #599.
+
+Fresh local results for its exact changed files:
+
+- `python -m unittest tests.test_workshop_evidence_hardening -v`: **4 tests passed** after initially failing on unresolved CSS imports and missing shared geometry/observer helpers.
+- `python -m unittest tests.test_workshop_frontend -v`: **5 tests passed**. The ambience inertness contract now decodes the two base64 SVG renditions embedded in the production stylesheet and scans the bytes that actually ship, allowing only the standard SVG XML namespace URL.
+- `STUDIO_BROWSER_EXECUTABLE=/usr/bin/chromium python tests/workshop_browser.py ...`: **9 browser check groups passed**.
+- The component geometry report now contains **48 cases**: 2 viewports × 3 layouts × 4 skins × 2 ambience selections.
+- All 48 geometry pages install both page-error and external-request observers. The run recorded **zero HTTP/HTTPS/WebSocket requests**, **zero page exceptions**, and zero geometry-triggered submissions.
+- The core browser driver resolves `workshop-immersive.css` and its imported core itself. The wrapper no longer monkeypatches a different CSS loader, so direct and CI invocation exercise the same production CSS.
+
+The local review package does not contain the complete Python application modules used by `workshop_application.py` and `workshop_handoffs.py`; those native-origin checks are therefore reserved for the hosted workflow rather than being represented as local passes. The application driver now consumes the same 48-case helper and attaches request/error observers to every page; current-head CI must execute that code before the PR is marked review-ready.
 
 ## Policy properties qualified by contracts
 
@@ -66,16 +80,16 @@ The local review package does not contain the complete Python application module
 
 ## Hosted native browser gate
 
-`Workshop UI` now runs:
+`Workshop UI` runs:
 
-1. presentation-context, ambience-policy and workshop Node contracts;
-2. the existing component presentation matrix;
+1. presentation-context, ambience-policy, workshop and evidence-fidelity contracts;
+2. the complete component presentation and 48-case geometry matrix;
 3. the dedicated effective-ambience Chromium journey;
 4. native disclosure lifecycle and nested-modal handoffs;
-5. `tests/workshop_application.py` against native HTTP/browser storage and the real frontend with its synthetic API;
+5. `tests/workshop_application.py` against native HTTP/browser storage and the real frontend with its synthetic API, including the shared 48-case matrix and external-request observation;
 6. the offline prototype and exporter.
 
-The current-head hosted result must be inspected before this PR is marked review-ready. A queued, cancelled, superseded or parent-branch green run is not evidence for the final head. The application lane must continue proving that one explicit Generate reaches the original handler exactly once and that presentation/policy changes never create another submission path.
+The current-head hosted result must be inspected before either stacked PR is marked review-ready. A queued, cancelled, superseded or parent-branch green run is not evidence for the final head. The application lane must continue proving that one explicit Generate reaches the original handler exactly once and that presentation/policy changes never create another submission path.
 
 ## Owner acceptance, not claimed by tests
 
