@@ -4,6 +4,8 @@
 
 > Work from `docs/adaptive-studio/assets/` in `Chris0Jeky/local-asset-studio`. Read README, ART-DIRECTION, DELIVERY-SPEC and the selected catalogue rows. This is a future production session; the strategy pass produced no art. First reconcile the repository and existing accepted assets. Do not replace current work or generate the entire catalogue.
 >
+> Before selecting those IDs, confirm the owner's open `adaptive-pilot-world` choice in `HUMAN_TODO.md`; the list below is a proposed lane, not a decision.
+>
 > Start with these selected IDs: `retro-anime-master`, then `retro-anime-quiet`, `retro-anime-hero`, `retro-anime-poster`, `retro-anime-card`, `state-blank`, `state-source-required`. Resolve and approve the scene anchor before its derivatives. Prefer at most four initial master candidates, two targeted refinement rounds, and reused crops rather than independent images. These are proposed work limits; state the finite batch you are actually about to run.
 >
 > Use native image generation when it is available and appropriate. The owner calls the desired route “image 2.5”; discover the actual tool and record only the model/version it really exposes. Do not put an assumed model ID in API calls. Do not respond with tool argument JSON instead of creating the requested image. Do not claim a tool was used when only a prompt was written.
