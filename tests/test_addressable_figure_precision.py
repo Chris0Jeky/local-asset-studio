@@ -91,6 +91,18 @@ class FigurePrecisionTests(unittest.TestCase):
             figures.split_figures(self.workspace, request)
         self.assertEqual(len(self.workspace.snapshot()['assets']), 1)
 
+    def test_bytes_after_first_iend_are_refused_even_if_a_second_iend_is_terminal(self):
+        stream = io.BytesIO(); Image.new('RGB', (10, 10), 'red').save(stream, 'PNG')
+        raw = stream.getvalue()
+        # Pillow.verify stops at the first IEND. A suffix-only check can therefore
+        # be bypassed by appending arbitrary bytes followed by another canonical IEND.
+        forged = raw + b'ignored-after-real-iend' + raw[-12:]
+        parent = self.parent(raw=forged)
+        request = self.command(parent, [{'x': 0, 'y': 0, 'width': 10000, 'height': 10000}])
+        with self.assertRaisesRegex(server.WorkspaceError, 'complete supported still image'):
+            figures.split_figures(self.workspace, request)
+        self.assertEqual(len(self.workspace.snapshot()['assets']), 1)
+
     def test_shared_raster_boundaries_are_canonical_for_small_sources(self):
         for width in range(1, 35):
             for edge in (1, 2499, 2500, 4999, 5000, 5001, 7500, 9999):
