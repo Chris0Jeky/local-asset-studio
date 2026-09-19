@@ -141,6 +141,16 @@ def _read_parent(workspace, asset_id, expected_sha256):
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
             if getattr(opened, "n_frames", 1) != 1:
                 raise _error(workspace, "Animated images cannot be split into figure children")
+            # Pixel decode alone accepts some PNGs with missing IEND or damaged
+            # IDAT CRCs. Verify the container, close it, then decode a fresh view.
+            # Bounds precede both operations, and encoded buffers are not retained
+            # across passes while the potentially large decoded canvas is built.
+            if opened.format == "PNG" and raw[-12:] != bytes.fromhex("0000000049454e44ae426082"):
+                # Pillow.verify stops at the IEND header, before its CRC. The
+                # accepted PNG contract ends at the complete canonical IEND.
+                raise SyntaxError("PNG end marker is incomplete or has trailing bytes")
+            opened.verify()
+        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
             has_transparency = "A" in opened.getbands() or "transparency" in opened.info
             oriented = ImageOps.exif_transpose(opened)
             oriented.load()
@@ -149,7 +159,7 @@ def _read_parent(workspace, asset_id, expected_sha256):
             if oriented is not opened:
                 oriented.close()
     except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as error:
-        raise _error(workspace, "Parent asset is not a complete supported still image") from error
+        raise _error(workspace, "Parent asset is not a complete supported still image (PNG, JPEG or WebP)") from error
     return canvas
 
 
@@ -287,6 +297,8 @@ def split_figures(workspace, payload):
                 "operation": "figure-crop",
                 "parent_asset_id": asset_id,
                 "parent_sha256": parent_sha256,
+                "parent_metadata_revision": parent["metadata_revision"],
+                "crop_coordinate_policy": "basis-points-nearest-half-up/v1",
                 "request_id": request_id,
                 "crop_basis_points": rectangle,
                 "crop_pixels": box,
