@@ -60,8 +60,8 @@ def observation():
     }
 
 
-def profile(studio, identity):
-    raw = {
+def raw_profile(identity):
+    return {
         'schema': admission.PROFILE_SCHEMA,
         'identity_sha256': identity['identity_sha256'],
         'basis': 'observed',
@@ -73,6 +73,10 @@ def profile(studio, identity):
             'vram_bytes': 10 * GIB,
         }],
     }
+
+
+def profile(studio, identity):
+    raw = raw_profile(identity)
     studio.config['resource_admission_profiles'] = {identity['identity_sha256']: raw}
     return admission._profile(raw, identity)
 
@@ -148,6 +152,36 @@ class ResourceAdmissionHardeningTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'receipt SHA-256'):
             controller.reconcile()
         self.assertEqual(controller.ledger.snapshot()['owners'], [])
+
+    def test_restart_keeps_a_retained_reservation_bound_to_its_original_identity(self):
+        studio = Studio()
+        original = admission.workflow_identity(studio, PRESET, GRAPH, RUNTIME)
+        studio.config['resource_admission_profiles'] = {
+            original['identity_sha256']: raw_profile(original),
+        }
+        job = {'id': 'job-a', 'status': 'running', 'submissions': []}
+        studio.jobs = {'job-a': job}
+        controller = admission.AdmissionController(studio, observer=lambda _: observation())
+        controller.admit(job, PRESET, GRAPH)
+
+        changed_graph = copy.deepcopy(GRAPH)
+        changed_graph['2']['inputs']['width'] = 768
+        changed = admission.workflow_identity(studio, PRESET, changed_graph, RUNTIME)
+        studio.config['resource_admission_profiles'][changed['identity_sha256']] = raw_profile(changed)
+        with self.assertRaisesRegex(admission.AdmissionError, 'Existing capacity remains retained'):
+            controller.admit(job, PRESET, changed_graph)
+        self.assertEqual(job['resource_admission'][-1]['state'], 'retained')
+        self.assertEqual(
+            job['resource_admission'][-1]['retained_identity_sha256'],
+            original['identity_sha256'],
+        )
+
+        job['status'] = 'uncertain'
+        job['pending_submission'] = {'index': 0}
+        restarted = admission.AdmissionController(studio, observer=lambda _: observation())
+        restarted.reconcile()
+        restored = restarted.ledger.reservation_for('job-a')
+        self.assertEqual(restored['identity_sha256'], original['identity_sha256'])
 
 
 if __name__ == '__main__':
