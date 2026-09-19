@@ -179,7 +179,9 @@ class ResourceAdmissionTests(unittest.TestCase):
     def test_profile_and_receipt_bounds_fail_closed(self):
         studio = Studio(); obs = observation(); identity = admission.workflow_identity(studio, {'id': 'demo'}, GRAPH, obs['runtime'])
         bad = {'schema': admission.PROFILE_SCHEMA, 'identity_sha256': identity['identity_sha256'], 'basis': 'observed',
-               'source': {'receipt_sha256': 'a' * 64}, 'stages': [{'name': 'x', 'vram_bytes': -1}]}
+               'source': {'receipt_sha256': 'a' * 64},
+               'stages': [{'name': 'x', 'physical_ram_bytes': 0,
+                           'windows_commit_bytes': 0, 'vram_bytes': -1}]}
         with self.assertRaisesRegex(ValueError, 'non-negative'): admission._profile(bad, identity)
         job = {'id': 'job', 'resource_admission': [{}] * admission.MAX_RECEIPTS}
         controller = admission.AdmissionController(studio, observer=lambda _: obs)
