@@ -59,7 +59,7 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertTrue(all(1 <= len(batch) <= 6 for batch in batches))
         self.assertTrue(all(sum(len(item['text']) for item in batch) <= spoken_brief.MAX_BATCH_CHARS for batch in batches))
         self.assertTrue(all(sum(len(item['text'].split()) for item in batch) <= spoken_brief.MAX_BATCH_WORDS for batch in batches))
-        self.assertEqual([item['id'] for batch in batches for item in batch], [item['id'] for item in compiled['segments'])
+        self.assertEqual([item['id'] for batch in batches for item in batch], [item['id'] for item in compiled['segments']])
 
 
     def test_short_word_paragraph_still_obeys_the_batch_word_ceiling(self):
