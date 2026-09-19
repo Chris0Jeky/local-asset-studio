@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "id": "spoken-brief-evaluation-v1",
-  "revision": 1,
+  "revision": 2,
   "name": "Spoken Brief shared voice qualification set",
   "lines": [
     {
@@ -47,7 +47,13 @@
       "text": "We selected the review-first coordinator because it preserves every child project identity, blocks duplicate inference after an uncertain response, and allows the final audio to be rebuilt from verified segments, but a real workstation trial is still required before pronunciation, pacing, listener fatigue, or the intended voice identity can be accepted."
     },
     {
-      "id": "contrast",
+      "id": "contrast-calm",
+      "category": "delivery-contrast",
+      "delivery_id": "calm-brief",
+      "text": "The source stayed stable, every contract passed, and the listening file is ready for a careful owner review."
+    },
+    {
+      "id": "contrast-spark",
       "category": "delivery-contrast",
       "delivery_id": "spark-recap",
       "text": "The source stayed stable, every contract passed, and the listening file is ready for a careful owner review."
