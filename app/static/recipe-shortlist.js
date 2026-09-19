@@ -139,7 +139,8 @@
         for(const [delta,title] of [[-1,'Move earlier'],[1,'Move later']]){
           const button=el('button',delta<0?'↑':'↓');button.type='button';button.dataset.move=String(delta);button.title=title;
           button.setAttribute('aria-label',title+': Picture '+(index+1));button.disabled=index+delta<0||index+delta>=ordered.length;
-          const move=()=>{[ordered[index],ordered[index+delta]]=[ordered[index+delta],ordered[index]];session.invalidate('Picture order changed. Review each role and check again.');renderSources(index+delta+1);};
+          let moved=false;
+          const move=()=>{if(moved)return;moved=true;[ordered[index],ordered[index+delta]]=[ordered[index+delta],ordered[index]];session.invalidate('Picture order changed. Review each role and check again.');renderSources(index+delta+1);};
           button.onclick=move;button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();move();}};buttons.append(button);
         }
         const remove=el('button','Remove');remove.type='button';remove.dataset.remove=String(index+1);remove.setAttribute('aria-label','Remove Picture '+(index+1)+' from advice');
