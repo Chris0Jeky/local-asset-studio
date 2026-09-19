@@ -91,6 +91,8 @@ def main():
             median_process_peak_rss_bytes=statistics.median(memory) if all(v is not None for v in memory) else None)
     files=dict(eager_algorithm=baseline,stream_parser=ROOT/'app/inference_trace_stream.py',
                shared_aggregation=ROOT/'app/inference_trace.py')
+    if hasattr(streaming, '_JSONValues'):
+        files['value_framing'] = ROOT/'app/inference_trace_values.py'
     print(json.dumps(dict(schema='studio.trace-stream-benchmark/v1',events=args.events,
         argument_bytes_per_event=args.argument_bytes,python=platform.python_version(),platform=platform.platform(),
         module_sha256={k:hashlib.sha256(v.read_bytes()).hexdigest() for k,v in files.items()},
