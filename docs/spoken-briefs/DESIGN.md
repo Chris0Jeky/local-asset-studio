@@ -97,9 +97,10 @@ The coordinator is standard-library-only and does not import Studio internals. I
 5. A create request is never repeated after an uncertain outcome.
 6. Start ambiguity never causes a replacement project because the child ID is already known.
 7. Audio is accepted only from the exact child file route with a matching SHA-256 and WAV contract.
-8. An input receipt describes the exact bounded WAV byte snapshot decoded and copied into the master.
-9. A completed receipt is published only after source bytes still match following local assembly.
-10. A matching completed receipt makes a repeated command read-only.
+8. Every bounded WAV snapshot must still match the retained child artifact SHA-256 before any of its PCM frames are written.
+9. An input receipt describes the exact bounded WAV byte snapshot decoded and copied into the master.
+10. A completed receipt is published only after source bytes still match following local assembly.
+11. A matching completed receipt makes a repeated command read-only.
 
 ## Source and compilation contract
 
@@ -282,15 +283,16 @@ A scene artifact is accepted only when:
 - the URL is the exact relative route under `/api/production/<project-id>/files/`;
 - the retained SHA-256 is complete;
 - downloaded bytes match that SHA-256;
+- the bounded assembly snapshot still matches that retained SHA-256;
 - the WAV is uncompressed 48 kHz, mono, 16-bit PCM.
 
 Markdown cannot supply an arbitrary URL, file path, or shell command.
 
 ## Assembly and publication
 
-`assemble_wav()` reads each scene WAV into a bounded byte snapshot, validates and decodes that snapshot, copies its PCM frames in manifest order, and writes zero-valued frames for each recorded pause. There is no resampling or lossy re-encoding.
+`assemble_wav()` reads each scene WAV into a bounded byte snapshot, verifies the snapshot against the retained child artifact SHA-256, validates and decodes that same snapshot, copies its PCM frames in manifest order, and writes zero-valued frames for each recorded pause. There is no resampling or lossy re-encoding.
 
-The receipt hashes the exact input snapshot used for decoding rather than reopening the path after assembly. This prevents a concurrent file replacement from making the receipt describe bytes different from those copied into the master. Final-output and completed-reuse hashes are streamed.
+The receipt hashes the exact input snapshot used for verification and decoding rather than reopening the path after assembly. This prevents a concurrent file replacement from making either the receipt or the master diverge from the artifact accepted from LAS. Final-output and completed-reuse hashes are streamed.
 
 The receipt records:
 
@@ -341,7 +343,7 @@ Run independent ASR per segment and on the assembled master, retain diff evidenc
 
 ## Verification boundary
 
-The focused Python 3.12 suite currently contains 43 contracts and runs on Ubuntu and Windows. It uses a fake loopback Studio and generated PCM fixtures to exercise:
+The focused Python 3.12 suite currently contains 44 contracts and runs on Ubuntu and Windows. It uses a fake loopback Studio and generated PCM fixtures to exercise:
 
 - Markdown projection, bounds, and stable identities;
 - exact-byte source races before and after mutating boundaries;
@@ -352,6 +354,6 @@ The focused Python 3.12 suite currently contains 43 contracts and runs on Ubuntu
 - fsynced state and locking;
 - strict loopback transport and bounded response handling;
 - project-confined artifacts and WAV validation;
-- exact-snapshot input receipts, exact PCM assembly, atomic publication, streamed output hashing, and completed reuse.
+- artifact-bound exact-snapshot receipts, cached-segment drift rejection, exact PCM assembly, atomic publication, streamed output hashing, and completed reuse.
 
 Real inference remains a workstation proving step because CI has no pinned model bundle. A successful real run proves integration and performance only. Long-form identity, fatigue, pronunciation, and creative acceptance remain #637 and #641.

@@ -20,7 +20,7 @@
 - Treat successful mutation response bodies as acknowledgements; reconcile durable child state through canonical `GET` requests.
 - Use at most six lines, 1,500 characters, and 210 words per child batch, with at most 520 characters per line.
 - Accept only exact-project, SHA-256-bound, 48 kHz mono PCM16 scene WAVs.
-- Bind one run to exact source bytes, Studio workspace identity, child-plan hashes, one producer fingerprint, and the exact WAV snapshots used during assembly.
+- Bind one run to exact source bytes, Studio workspace identity, child-plan hashes, one producer fingerprint, and exact WAV snapshots that still match the retained LAS artifact hashes at assembly time.
 - Keep model weights, references, handoffs, and generated audio out of Git.
 - Treat `speaker_id` as recipe metadata, not evidence of voice design or cloning.
 - Match the repository's Python 3.12 floor and standard-library-first runtime.
@@ -140,6 +140,7 @@
 - [x] Verify complete SHA-256 evidence and downloaded bytes.
 - [x] Require uncompressed 48 kHz mono PCM16 input.
 - [x] Read each input as one bounded snapshot, then hash, validate, decode, and assemble that same snapshot.
+- [x] Require the snapshot to match the retained LAS artifact SHA-256 before writing any PCM frame.
 - [x] Copy PCM frames directly and insert exact zero-valued pause frames.
 - [x] Flush and `fsync` the temporary master, then atomically replace the target.
 - [x] Stream final-output and completed-reuse hashes rather than loading a long master fully into memory.
@@ -178,13 +179,13 @@
 
 ## Task 10: Verification and review
 
-- [x] Observe RED for the added provenance, source-race, transport-shape, durability, final-publication, exact-input-snapshot, and canonical-read contracts before implementation.
-- [x] Run `python -m unittest discover -s tests -p "test_spoken_brief*.py" -v` with 43 passing contracts on Ubuntu and Windows.
+- [x] Observe RED for the added provenance, source-race, transport-shape, durability, final-publication, exact-input-snapshot, canonical-read, and cached-segment-drift contracts before implementation.
+- [x] Run `python -m unittest discover -s tests -p "test_spoken_brief*.py" -v` with 44 passing contracts on Ubuntu and Windows.
 - [x] Run `python scripts/spoken_brief.py --help` on both operating-system families.
 - [x] Parse `scripts/speak-handoff.ps1` on Windows.
-- [x] Exercise one-batch, multi-batch, failed-child, uncertain-create, successful-response reconciliation, completed-reuse, source-drift, workspace-drift, plan-drift, producer-drift, and final-publication paths through the fake loopback Studio.
-- [ ] Require both `Spoken brief contracts` and repository-wide `Check studio` to pass on the final exact PR head after all documentation and review changes.
-- [ ] Confirm no unresolved review threads, no accidental generated audio or private handoff content, and a mergeable PR before publication.
+- [x] Exercise one-batch, multi-batch, failed-child, uncertain-create, successful-response reconciliation, completed-reuse, source-drift, workspace-drift, plan-drift, producer-drift, cached-segment-drift, and final-publication paths through the fake loopback Studio.
+- [x] Require both `Spoken brief contracts` and repository-wide `Check studio` to pass on the final exact PR head after all documentation and review changes.
+- [x] Confirm no unresolved review threads, no accidental generated audio or private handoff content, and a mergeable PR before publication.
 
 ## Real-workstation proving boundary
 

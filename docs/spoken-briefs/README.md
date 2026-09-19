@@ -120,7 +120,7 @@ Before any create, Start, observation, artifact download, or final publication b
 
 The source is checked again after local assembly. If it changes during assembly, the unreceipted master is removed, state is marked `source-changed`, and no completion receipt is published.
 
-State, lock intent, and completed records use flushed, fsynced temporary files followed by atomic replacement where applicable. The final WAV is fsynced before replacement. Output and completed-reuse hashes are streamed. Each input receipt hashes the exact bounded file snapshot decoded and copied into the assembled WAV, so a later file mutation cannot make the receipt describe different bytes from those actually used.
+State, lock intent, and completed records use flushed, fsynced temporary files followed by atomic replacement where applicable. The final WAV is fsynced before replacement. Output and completed-reuse hashes are streamed. Each input receipt hashes the exact bounded file snapshot decoded and copied into the assembled WAV. Before any PCM frame is written, that snapshot must also match the SHA-256 retained by the LAS child artifact, so replacing a cached segment blocks publication instead of silently changing the master.
 
 ## Recovery and repeat behaviour
 
@@ -140,6 +140,7 @@ Invoking `run` is the explicit generation action. Creating or changing a handoff
 | Source bytes change during the run | Block; keep the old child evidence under its original manifest and do not publish a new receipt |
 | Studio endpoint or workspace identity changes | Block before further mutation |
 | Child plan or producer configuration changes | Block before Start or artifact use |
+| Cached scene WAV changes before assembly | Block before writing its PCM frames; retain the child artifact hash for inspection |
 | Final WAV is missing but child evidence remains valid | Re-download or reassemble from the retained children without new TTS |
 | Final WAV hash differs from its receipt | Block for inspection |
 | `.spoken-brief.lock` exists | Treat another coordinator or a stale crash claim as active and block |
@@ -154,7 +155,7 @@ Markdown cannot provide an arbitrary URL, filesystem target, or shell command. T
 
 ## Evidence boundary
 
-The focused suite currently has 43 offline contracts on Python 3.12 and runs on Ubuntu and Windows. It uses a fake loopback Studio and synthetic PCM WAVs to prove:
+The focused suite currently has 44 offline contracts on Python 3.12 and runs on Ubuntu and Windows. It uses a fake loopback Studio and synthetic PCM WAVs to prove:
 
 - deterministic source selection, Markdown projection, segmentation, and batch bounds;
 - exact-byte source revalidation at mutation and publication boundaries;
@@ -162,8 +163,8 @@ The focused suite currently has 43 offline contracts on Python 3.12 and runs on 
 - uncertain-create and uncertain-Start fail-closed recovery;
 - successful create and Start acknowledgements are reconciled through canonical project reads;
 - proxy, redirect, response-bound, JSON-shape, and artifact-route constraints;
-- exact PCM ordering, deterministic silence, exact-snapshot input receipts, atomic publication, streamed output hashing, and read-only completed reuse;
-- source, workspace, plan, and producer drift rejection on both supported operating-system families.
+- exact PCM ordering, deterministic silence, artifact-bound exact-snapshot input receipts, atomic publication, streamed output hashing, and read-only completed reuse;
+- source, workspace, plan, producer, and cached-segment drift rejection on both supported operating-system families.
 
 CI does not prove real workstation inference speed, subjective voice quality, pronunciation, or long-form listening comfort. The next real proving action is one `-PlanOnly` preview followed by one short handoff on the configured workstation. Keep those generated files outside Git and record quality defects against #637 or #641 rather than treating process success as creative acceptance.
 
