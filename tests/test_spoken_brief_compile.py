@@ -16,10 +16,10 @@ class SpokenBriefTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); (root / 'INDEX.md').write_text('index', encoding='utf-8')
             (root / 'COMPRESSED.md').write_text('compressed', encoding='utf-8')
-            self.assertEqual(spoken_brief.resolve_source(root), root / 'COMPRESSED.md')
+            self.assertEqual(spoken_brief.resolve_source(root), (root / 'COMPRESSED.md').resolve())
             (root / 'COMPRESSED.md').unlink()
-            self.assertEqual(spoken_brief.resolve_source(root), root / 'INDEX.md')
-            self.assertEqual(spoken_brief.resolve_source(root / 'INDEX.md'), root / 'INDEX.md')
+            self.assertEqual(spoken_brief.resolve_source(root), (root / 'INDEX.md').resolve())
+            self.assertEqual(spoken_brief.resolve_source(root / 'INDEX.md'), (root / 'INDEX.md').resolve())
 
     def test_markdown_compiler_keeps_brief_content_but_omits_noise(self):
         source = '''---\ntitle: hidden metadata\n---\n# Release brief\n\n- **Decision:** ship the local queue.\n- Read [the evidence](https://example.test/evidence), not https://example.test/raw.\n\n```python\nprint("do not narrate source code")\n```\n\n| Owner | Status |\n| --- | --- |\n| Chris | Ready |\n'''
