@@ -25,6 +25,8 @@ experiments/imports/
 experiments/uploads/
 experiments/workspace/
 experiments/projects/
+experiments/diagnostics/
+experiments/pose-artifacts/
 .runtime/
 .runtime-codex/
 .claude/settings.local.json
