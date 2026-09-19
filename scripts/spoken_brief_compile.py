@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import re
 
+import voice_profile as _voice_profile
+
 SCHEMA_VERSION = 2
 COMPILER_VERSION = 2
 MAX_SOURCE_BYTES = 512 * 1024
@@ -275,12 +277,24 @@ def batch_segments(segments: list[dict]) -> list[list[dict]]:
     return batches
 
 
-def compile_source(source: Path, *, speaker_id: str = 'brief-narrator', voice_profile: dict | None = None) -> dict:
+def compile_source(source: Path, *, speaker_id: str | None = None, voice_profile: dict | None = None) -> dict:
     source = Path(source).resolve()
-    if not SPEAKER_RE.fullmatch(speaker_id):
-        raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
-    if voice_profile is not None and not isinstance(voice_profile, dict):
+    if voice_profile is None:
+        try:
+            voice_profile = _voice_profile.resolve_profile(
+                'kokoro-af-heart-control-v1',
+                'calm-brief',
+                speaker_id=speaker_id,
+            )
+        except _voice_profile.VoiceProfileError as exc:
+            raise SpokenBriefError(str(exc)) from exc
+    elif not isinstance(voice_profile, dict):
         raise SpokenBriefError('Voice profile binding must be an object')
+    effective_speaker = voice_profile.get('speaker_id') if speaker_id is None else speaker_id
+    if not isinstance(effective_speaker, str) or not SPEAKER_RE.fullmatch(effective_speaker):
+        raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
+    if voice_profile.get('speaker_id') != effective_speaker:
+        raise SpokenBriefError('Voice profile binding speaker metadata differs from the compiler speaker ID')
     raw = read_source_bytes(source)
     try:
         text = raw.decode('utf-8')
@@ -291,7 +305,8 @@ def compile_source(source: Path, *, speaker_id: str = 'brief-narrator', voice_pr
         'schema_version': SCHEMA_VERSION,
         'kind': 'spoken-brief',
         'source': {'path': str(source), 'name': source.name, 'bytes': len(raw), 'sha256': digest_bytes(raw)},
-        'speaker_id': speaker_id,
+        'speaker_id': effective_speaker,
+        'voice_profile': copy.deepcopy(voice_profile),
         'compiler': {
             'version': COMPILER_VERSION,
             'target_line_chars': TARGET_LINE_CHARS,
@@ -304,8 +319,6 @@ def compile_source(source: Path, *, speaker_id: str = 'brief-narrator', voice_pr
         'omissions': compiled['omissions'],
         'segments': compiled['segments'],
     }
-    if voice_profile is not None:
-        manifest['voice_profile'] = copy.deepcopy(voice_profile)
     manifest['manifest_sha256'] = canonical_digest(manifest)
     return manifest
 
