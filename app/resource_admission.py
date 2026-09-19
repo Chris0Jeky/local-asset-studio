@@ -315,10 +315,15 @@ def _validated_receipt(value, owner_id):
     unsigned = {key: item for key, item in value.items() if key != "receipt_sha256"}
     if not isinstance(claimed, str) or not _HASH.fullmatch(claimed) or _digest(unsigned) != claimed:
         raise ValueError("Stored resource admission receipt SHA-256 is invalid")
-    if value.get("state") in ACTIVE_STATES:
+    state = value.get("state")
+    if state in ACTIVE_STATES:
         identity_sha256 = value.get("identity_sha256")
         if not isinstance(identity_sha256, str) or not _HASH.fullmatch(identity_sha256):
             raise ValueError("Stored active resource admission identity is invalid")
+        if state == "retained":
+            retained_identity = value.get("retained_identity_sha256")
+            if not isinstance(retained_identity, str) or not _HASH.fullmatch(retained_identity):
+                raise ValueError("Stored retained resource admission identity is invalid")
         reservation = value.get("reservation")
         if not isinstance(reservation, dict) or set(reservation) != set(DIMENSIONS):
             raise ValueError("Stored active resource admission reservation is invalid")
@@ -336,16 +341,22 @@ class ReservationLedger:
 
     def restore(self, owner_id, record):
         validated = _validated_receipt(record, owner_id)
-        if validated.get("state") not in ACTIVE_STATES:
+        state = validated.get("state")
+        if state not in ACTIVE_STATES:
             return
         values = {
             key: validated["reservation"][key]
             for key in DIMENSIONS
         }
+        active_identity = (
+            validated["retained_identity_sha256"]
+            if state == "retained"
+            else validated["identity_sha256"]
+        )
         with self.lock:
             existing = self.reservations.get(owner_id)
             candidate = {
-                "identity_sha256": validated["identity_sha256"],
+                "identity_sha256": active_identity,
                 "reservation": values,
             }
             if existing is not None:
@@ -507,12 +518,17 @@ class AdmissionController:
             if last.get("state") not in ACTIVE_STATES:
                 continue
             active = self.ledger.reservation_for(owner_id)
+            release_identity = (
+                (active or {}).get("identity_sha256")
+                or last.get("retained_identity_sha256")
+                or last.get("identity_sha256")
+            )
             receipt = {
                 "schema": SCHEMA,
                 "owner_id": owner_id,
                 "kind": "release",
                 "recorded_at": time.time(),
-                "identity_sha256": last.get("identity_sha256"),
+                "identity_sha256": release_identity,
                 "decision": "released",
                 "state": "released",
                 "reservation": (
