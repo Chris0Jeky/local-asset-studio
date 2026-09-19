@@ -329,7 +329,7 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
                     'samples': details['samples'],
                     'pause_after_ms': pause_ms,
                 })
-        with temporary.open('rb') as stream:
+        with temporary.open('r+b') as stream:
             os.fsync(stream.fileno())
         os.replace(temporary, output)
         _sync_parent(output)
