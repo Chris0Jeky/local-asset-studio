@@ -97,8 +97,9 @@ The coordinator is standard-library-only and does not import Studio internals. I
 5. A create request is never repeated after an uncertain outcome.
 6. Start ambiguity never causes a replacement project because the child ID is already known.
 7. Audio is accepted only from the exact child file route with a matching SHA-256 and WAV contract.
-8. A completed receipt is published only after source bytes still match following local assembly.
-9. A matching completed receipt makes a repeated command read-only.
+8. An input receipt describes the exact bounded WAV byte snapshot decoded and copied into the master.
+9. A completed receipt is published only after source bytes still match following local assembly.
+10. A matching completed receipt makes a repeated command read-only.
 
 ## Source and compilation contract
 
@@ -228,7 +229,9 @@ State transitions are fail-closed:
 ```text
 pending
   -> creating        persisted and fsynced before POST /api/voice-baseline
-  -> planned         project ID persisted and fsynced before Start
+  -> created         returned project ID persisted and fsynced
+  -> planned         canonical GET verified before Start
+  -> start-accepted  persisted after a successful Start acknowledgement
   -> queued/running/observing
   -> completed
 
@@ -238,6 +241,10 @@ unknown Start outcome              -> known child retained -> blocked for observ
 known child terminal failure       -> blocked
 active child at deadline           -> timed-out, child retained
 ```
+
+A successful create response is authoritative only for a syntactically valid project ID. The ID is persisted immediately, then `GET /api/production/<id>` supplies the canonical project state and full signed plan. A malformed or incomplete success-body state therefore cannot be mistaken for durable evidence.
+
+A successful Start response is an acknowledgement, not the canonical child record. The coordinator persists `start-accepted`, then fetches the known child and verifies its plan and state through `GET`.
 
 Because the current API has no request-key lookup, an uncertain create result cannot be reconciled automatically. Repeating the create could duplicate expensive inference, so inspection is required.
 
@@ -281,11 +288,13 @@ Markdown cannot supply an arbitrary URL, file path, or shell command.
 
 ## Assembly and publication
 
-`assemble_wav()` copies PCM frames in manifest order and writes zero-valued frames for each recorded pause. There is no resampling or lossy re-encoding.
+`assemble_wav()` reads each scene WAV into a bounded byte snapshot, validates and decodes that snapshot, copies its PCM frames in manifest order, and writes zero-valued frames for each recorded pause. There is no resampling or lossy re-encoding.
 
-Input and output hashes are streamed. The receipt records:
+The receipt hashes the exact input snapshot used for decoding rather than reopening the path after assembly. This prevents a concurrent file replacement from making the receipt describe bytes different from those copied into the master. Final-output and completed-reuse hashes are streamed.
 
-- every input path, SHA-256, sample count, and pause;
+The receipt records:
+
+- every input path, exact-snapshot SHA-256, sample count, and pause;
 - total sample count and exact duration;
 - final format and SHA-256;
 - source record and manifest hash;
@@ -332,16 +341,17 @@ Run independent ASR per segment and on the assembled master, retain diff evidenc
 
 ## Verification boundary
 
-The focused Python 3.12 suite currently contains 40 contracts and runs on Ubuntu and Windows. It uses a fake loopback Studio and generated PCM fixtures to exercise:
+The focused Python 3.12 suite currently contains 43 contracts and runs on Ubuntu and Windows. It uses a fake loopback Studio and generated PCM fixtures to exercise:
 
 - Markdown projection, bounds, and stable identities;
 - exact-byte source races before and after mutating boundaries;
 - complete Studio workspace pinning;
 - signed child plan and producer provenance;
 - uncertain create and Start recovery;
+- canonical project reconciliation after successful create and Start acknowledgements;
 - fsynced state and locking;
 - strict loopback transport and bounded response handling;
 - project-confined artifacts and WAV validation;
-- exact PCM assembly, atomic publication, streamed hashing, and completed reuse.
+- exact-snapshot input receipts, exact PCM assembly, atomic publication, streamed output hashing, and completed reuse.
 
 Real inference remains a workstation proving step because CI has no pinned model bundle. A successful real run proves integration and performance only. Long-form identity, fatigue, pronunciation, and creative acceptance remain #637 and #641.
