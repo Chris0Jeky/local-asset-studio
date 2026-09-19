@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 
 from .core import canonical, decode, digest, need
 from .model_contracts import ANNOTATOR_SELECTIONS, FOLDERS, MODEL_INPUT_FOLDERS
-from .preset_adapter import CONTROLS, equivalent, graph_inputs
+from .preset_adapter import CONTROLS, SOURCE_KEYS, equivalent, graph_inputs
 
 FORMAT = 'studio.settings-guidance/v1'
 KINDS = {'creator_documentation', 'local_observation', 'controlled_experiment', 'authored_hypothesis'}
@@ -161,8 +161,8 @@ def bindings(preset):
 
 def project(preset, template, controls):
     """Apply only declared scalar edits for explanation, not runtime preparation."""
-    need(preset.get('modality') == 'image' and not any(preset.get(k) for k in
-         ('reference', 'last_reference', 'reference_slots', 'requires_rgba_mask')), 'Guidance currently covers non-reference image presets')
+    need(preset.get('modality') == 'image' and not any(preset.get(k) for k in SOURCE_KEYS),
+         'Guidance currently covers non-reference image presets')
     need(isinstance(template, dict) and 0 < len(template) <= 256, 'Invalid registered graph')
     need(isinstance(controls, dict), 'Controls must be an object')
     mapped = bindings(preset); need(set(controls) <= set(mapped), 'Unsupported guidance controls')
