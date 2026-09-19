@@ -78,86 +78,26 @@ def link(value: Any) -> bool:
 def compatible(source: str, target: str) -> bool:
     if not isinstance(source, str) or not isinstance(target, str):
         return False
-    left = {x.strip() for x in source.split(",")}
-    right = {x.strip() for x in target.split(",")}
-    return bool(left & right) or "*" in left or "*" in right
+    from .node_inputs import socket_tokens
+    left, right = socket_tokens(source), socket_tokens(target)
+    return bool(left and right and (left & right or "*" in left or "*" in right))
 
 
 def _input(name: str, descriptor: Any, required: bool) -> dict:
-    """Normalize backend v1/V3 tuples and published NodeDef-v2 dictionaries.
-
-    A normalized descriptor is presentation metadata, not proof of support for
-    dynamic inputs, frontend-only actions, rawLink or third-party validation.
-    """
-    if isinstance(descriptor, dict):
-        options = copy.deepcopy(descriptor)
-        kind = options.pop("type", None)
-        required = not options.get("isOptional", not required)
-    elif isinstance(descriptor, list) and descriptor:
-        kind = descriptor[0]
-        options = copy.deepcopy(descriptor[1]) if len(descriptor) > 1 and isinstance(descriptor[1], dict) else {}
-    else:
-        return {"name": name, "type": "UNKNOWN", "required": required,
-                "widget": "unsupported", "reason": "Unrecognized input descriptor", "options": {}, "hidden": False}
-    if isinstance(kind, list):
-        options["options"] = copy.deepcopy(kind)
-        kind = "COMBO"
-    kind = kind if isinstance(kind, str) else "UNKNOWN"
-    widget = kind.lower() if kind in SCALARS else "socket"
-    if kind == "COMBO":
-        choices = options.get("options")
-        widget = "combo" if isinstance(choices, list) and all(type(x) in (str, int, float, bool) for x in choices) else "unsupported"
-    if kind not in SCALARS | {"COMBO"} and (options.get("socketless") or "default" in options):
-        widget = "unsupported"
-    reasons = []
-    if kind in {"INT", "FLOAT"}:
-        # Metadata drives browser controls. Do not coerce a plugin's invalid
-        # bound/step into a plausible dial or let comparison raise TypeError.
-        numeric = lambda n: type(n) is int or (type(n) is float and math.isfinite(n))
-        if any(not numeric(options[k]) for k in ("min", "max", "step") if k in options):
-            reasons.append("Numeric bounds and step must be finite numbers")
-        elif ("min" in options and "max" in options and options["min"] > options["max"]):
-            reasons.append("Numeric minimum exceeds maximum")
-        elif "step" in options and options["step"] <= 0:
-            reasons.append("Numeric step must be positive")
-    # ComfyUI publishes its V3 dynamic families as COMFY_DYNAMICCOMBO_V3, COMFY_AUTOGROW_V3 and
-    # COMFY_MATCHTYPE_V3 (measured on 0.35.0); any other COMFY_*_V3 kind is treated the same way.
-    if kind in {"DYNAMIC_COMBO", "DYNAMIC_AUTOGROW", "UNKNOWN"} or (kind.startswith("COMFY_") and kind.endswith("_V3") and kind not in SCALARS | {"COMBO"}):
-        reasons.append("Dynamic/custom input needs a native adapter")
-    for flag in ("rawLink", "remote"):
-        if options.get(flag):
-            reasons.append(flag + " behaviour needs a native adapter")
-    if reasons:
-        widget = "unsupported"
-    if options.get("forceInput") and not reasons:
-        widget = "socket"
-    if widget == "unsupported" and not reasons:
-        reasons.append("Custom widget or non-scalar options need a native adapter")
-    return {"name": name, "type": kind, "required": required, "widget": widget,
-            "options": options, "reason": "; ".join(reasons),
-            "hidden": bool(options.get("hidden", False))}
+    from .node_inputs import descriptor as adapt
+    return adapt(name, descriptor, required)
 
 
 def catalog(info: dict, backend_id: str) -> dict:
     need(isinstance(info, dict), "ComfyUI returned no node definitions")
     nodes = {}
     for class_type, raw in info.items():
-        if not isinstance(raw, dict) or not isinstance(class_type, str) or class_type in RESERVED:
+        if not isinstance(class_type, str) or class_type in RESERVED:
             continue
-        inputs, schema_errors = [], []
-        if isinstance(raw.get("input"), dict):
-            for group in ("required", "optional"):
-                entries = raw["input"].get(group)
-                if entries is None: continue
-                if not isinstance(entries, dict):
-                    schema_errors.append(group + " input definitions must be an object")
-                    continue
-                for name, descriptor in entries.items():
-                    if name not in RESERVED:
-                        inputs.append(_input(name, descriptor, group == "required"))
-        elif isinstance(raw.get("inputs"), dict):
-            inputs = [_input(name, descriptor, True) for name, descriptor in raw["inputs"].items()
-                      if name not in RESERVED]
+        from .node_inputs import inputs as input_ports, evidence
+        inputs, schema_errors = input_ports(raw)
+        source_definition_json = evidence(raw)
+        raw = raw if isinstance(raw, dict) else {}
         from .node_outputs import outputs as output_ports
         outputs, output_errors = output_ports(raw)
         schema_errors.extend(output_errors)
@@ -168,6 +108,7 @@ def catalog(info: dict, backend_id: str) -> dict:
                              "description": raw.get("description", ""), "inputs": inputs, "outputs": outputs,
                              "output_node": raw.get("output_node") is True,
                              "module": raw.get("python_module"), "schema_errors": schema_errors,
+                             "source_definition_json": source_definition_json,
                              "unsupported": bool(schema_errors) or any(i["widget"] == "unsupported" for i in inputs)}
     return {"version": 1, "backend_id": backend_id, "schema_sha256": digest(info), "nodes": nodes,
             "generation_submitted": False,
