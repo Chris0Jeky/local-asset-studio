@@ -40,7 +40,8 @@ def loads_strict(raw: bytes, *, label: str):
         )
     except StrictJsonError:
         raise
-    except (json.JSONDecodeError, RecursionError) as exc:
+    except (ValueError, RecursionError) as exc:
+        # json.loads also raises plain ValueError at the interpreter integer limit.
         raise StrictJsonError(f'{label} must be bounded UTF-8 JSON') from exc
 
 
