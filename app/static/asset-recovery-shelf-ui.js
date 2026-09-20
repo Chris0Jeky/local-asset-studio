@@ -1,6 +1,6 @@
 /* Local shelf controls. Import/restore never call api(), post(), or generation. */
 let assetShelfStore=StudioAssetRecoveryShelf.create({storage:()=>localStorage,locks:()=>navigator.locks});
-let assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,onStatus:assetShelfStatus});
+let assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,tabStorage:()=>sessionStorage,onStatus:assetShelfStatus});
 let assetShelfRecords=[],assetShelfImported=null,assetShelfReading=false,assetShelfChanging=false,assetShelfReadEpoch=0,assetShelfImportEpoch=0,assetShelfReturnFocus=null;
 const assetShelfOptKey='studio.asset-recovery.shelf.enabled.v1';
 function assetShelfStatus(text,error=false){
