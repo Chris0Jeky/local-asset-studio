@@ -1,0 +1,28 @@
+name: Spoken parent source handoff
+on:
+  push:
+    branches: [codex/spoken-brief-segment-qa]
+    paths: [.github/workflows/spoken-source-handoff.yml]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1082f4023bd075fbb03b42c1522f9ef12cf3a9be
+          persist-credentials: false
+      - name: Archive tracked parent source only
+        run: |
+          git archive --format=zip -o spoken-parent.zip HEAD scripts tests docs/spoken-briefs
+          git ls-tree -r HEAD > parent-tree.txt
+          git rev-parse HEAD > parent-head.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spoken-parent-1082f402
+          path: |
+            spoken-parent.zip
+            parent-tree.txt
+            parent-head.txt
+          retention-days: 1
