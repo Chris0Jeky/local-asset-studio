@@ -12,7 +12,7 @@ from typing import Any
 
 SCALARS = {'INT': 'int', 'FLOAT': 'float', 'STRING': 'string', 'BOOLEAN': 'boolean'}
 RESERVED = {'__proto__', 'prototype', 'constructor'}
-BOOLEAN_OPTIONS = ('isOptional', 'forceInput', 'defaultInput', 'hidden', 'lazy', 'rawLink', 'socketless')
+BOOLEAN_OPTIONS = ('isOptional', 'forceInput', 'defaultInput', 'hidden', 'lazy', 'rawLink', 'remote', 'socketless')
 
 
 def evidence(value: Any) -> str:

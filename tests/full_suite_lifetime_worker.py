@@ -1,14 +1,16 @@
-"""Unbuffered offline-suite worker with pre-timeout test and thread diagnostics.
+"""Unbuffered offline-suite worker with pre-timeout resource diagnostics.
 
 The parent process owns the hard lifetime budget. This worker names every test as
 it starts and arms a slightly earlier marker plus faulthandler dump so a hung
 fixture leaves the current test ID and every Python thread stack in captured CI
-output before the parent terminates it.
+output before the parent terminates it. After the suite completes it also records
+active multiprocessing children that can retain interpreter shutdown.
 """
 from __future__ import annotations
 
 import argparse
 import faulthandler
+import multiprocessing
 from pathlib import Path
 import sys
 import threading
@@ -125,6 +127,32 @@ def retained_threads() -> list[threading.Thread]:
     ]
 
 
+def retained_processes() -> list[multiprocessing.Process]:
+    """Live direct children that multiprocessing finalization must handle."""
+    return [
+        process
+        for process in multiprocessing.active_children()
+        if process.is_alive()
+    ]
+
+
+def emit_retained_processes(
+    processes: list[multiprocessing.Process],
+    *,
+    stream=sys.stderr,
+    prefix: str = "LIFETIME SHUTDOWN",
+) -> None:
+    """Name non-thread shutdown blockers before the stack watchdog fires."""
+    for process in processes:
+        name = process.name.replace("\r", "\\r").replace("\n", "\\n")
+        print(
+            f"{prefix} RETAINED PROCESS: name={name} pid={process.pid} "
+            f"daemon={process.daemon} exitcode={process.exitcode}",
+            file=stream,
+            flush=True,
+        )
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Run the offline suite with lifetime diagnostics."
@@ -160,14 +188,20 @@ def main(argv=None) -> int:
     )
 
     # Arm a fresh short deadline only after discovery and every test have
-    # completed, and only while a non-daemon thread can actually hold this
-    # interpreter open. Do not cancel it: that wait is exactly the evidence.
-    # Arming it with nothing retained would leave a C dump to fire inside
-    # interpreter finalization, which has no thread state left to walk.
-    retained = retained_threads()
-    if not retained:
-        print("LIFETIME SHUTDOWN: no retained non-daemon thread", file=sys.stderr, flush=True)
+    # completed, and only while a resource can actually retain interpreter
+    # shutdown. A live multiprocessing child is handled by Python's atexit
+    # finalizer even when no non-daemon Python thread remains, so record its
+    # identity before returning into that potentially blocking finalizer.
+    threads = retained_threads()
+    processes = retained_processes()
+    if not threads and not processes:
+        print(
+            "LIFETIME SHUTDOWN: no retained non-daemon thread or active child process",
+            file=sys.stderr,
+            flush=True,
+        )
         return 0 if result.wasSuccessful() else 1
+    emit_retained_processes(processes)
     shutdown_diagnostics = LifetimeDiagnostics(
         args.shutdown_traceback_after,
         prefix="LIFETIME SHUTDOWN",
