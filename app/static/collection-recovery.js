@@ -8,7 +8,7 @@
   const integer=value=>Number.isSafeInteger(value)&&value>=0;
   function need(ok,message='Invalid local collection recovery evidence'){if(!ok)throw Error(message);}
   function fields(value,keys){need(value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join('|')===[...keys].sort().join('|'));}
-  function text(value,max){need(typeof value==='string'&&value.length<=max,'Collection text exceeds its limit');need(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value),'Collection text contains an unpaired surrogate');}
+  function text(value,max){need(typeof value==='string'&&[...value].length<=max,'Collection text exceeds its limit');need(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value),'Collection text contains an unpaired surrogate');}
   function values(value){fields(value,['name','description']);text(value.name,100);text(value.description,1000);}
   function canonical(value){return JSON.stringify(value,function(key,item){if(item&&typeof item==='object'&&!Array.isArray(item)){need(!Object.keys(item).some(k=>['__proto__','prototype','constructor'].includes(k)));return Object.fromEntries(Object.keys(item).sort().map(k=>[k,item[k]]));}return item;});}
   function bytes(value){return new TextEncoder().encode(value).length;}

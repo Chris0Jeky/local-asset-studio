@@ -24,7 +24,7 @@ class CollectionRecoveryTextBoundary(unittest.TestCase):
             for index, name in enumerate([
                 '\u0085Clicked\u0085', '\x1cClicked\x1f',
                 '\u0085 \x1dClicked\x1e \u0085',
-                '\u0085\ufeffClicked\ufeff\u0085', 'Café 🐈',
+                '\u0085\ufeffClicked\ufeff\u0085', 'Café 🐈', '🐈' * 70,
             ]):
                 command = {'format': 'studio.collection-command/v1', 'workspace_id': scope,
                            'request_id': f'text-boundary-request-{index}', 'action': 'create',
@@ -50,4 +50,4 @@ const cases=JSON.parse(fs.readFileSync(0,'utf8'));
             result = subprocess.run([shutil.which('node'), '-e', script], cwd=ROOT,
                                     input=json.dumps(cases), capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn('verified 5 real Python receipts', result.stdout)
+            self.assertIn('verified 6 real Python receipts', result.stdout)
