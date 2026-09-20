@@ -1,0 +1,142 @@
+name: Publish audited observation admission fix
+on:
+  push:
+    branches: [audit/admit-ordinary-known-prompt-observation-608]
+    paths: ['.github/workflows/audit-publish-691.yml']
+permissions:
+  contents: write
+concurrency:
+  group: audit-publish-691
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Apply exact audited patch and remove publisher
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+
+          expected_parent = 'dd4ddeb2938eac54a40be1f9fde4d8ec92f759e9'
+          parent = subprocess.check_output(['git', 'rev-parse', 'HEAD^'], text=True).strip()
+          if parent != expected_parent:
+              raise SystemExit(f'unexpected publisher parent: {parent}')
+
+          server_path = Path('app/server.py')
+          server = server_path.read_text(encoding='utf-8')
+          old = '''    def _queue_observation(self, job_id):
+        job = self.jobs.get(job_id)
+        # Only a stopped job with known, unresolved prompt IDs takes the liveness-only guard; every
+        # other resume still asks for full new-work admission, including the reference hold (#458).
+        if job is not None and job.get("status") == "uncertain" and "pending_submission" not in job and self._tracking_stopped(job) and self._known_prompt_error(job) is None: self.require_worker_observation()
+        else: self.require_worker()
+        if not job: raise StudioError("Unknown job")
+        if job.get('status') == 'abandoned' or 'pending_submission' in job:
+            raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
+        if self._tracking_stopped(job): return self._resume_tracking(job)
+        if job.get("status") in ("queued", "waiting", "submitting", "running"): raise StudioError("This job is already queued or being observed; wait for it to settle")
+        pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
+        # Every retained receipt terminal: _resume reconciles the job's own status without any ComfyUI request.
+        if not pending and not (job.get("submissions") and job.get("status") in ("uncertain", "partial")): raise StudioError("No known prompt IDs are available to resume")
+        if not pending: job["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}  # what the queued reconciliation started from
+        job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
+'''
+          new = '''    def _queue_observation(self, job_id):
+        job = self.jobs.get(job_id)
+        submissions = job.get("submissions") if isinstance(job, dict) else None
+        ordinary_observation = (
+            isinstance(submissions, list)
+            and bool(submissions)
+            and all(isinstance(submission, dict) for submission in submissions)
+            and job.get("status") not in ("abandoned", "queued", "waiting", "submitting", "running")
+            and "pending_submission" not in job
+            and (
+                any(submission.get("status") != "completed" and submission.get("prompt_id") for submission in submissions)
+                or job.get("status") in ("uncertain", "partial")
+            )
+        )
+        stopped_observation = (
+            job is not None
+            and job.get("status") == "uncertain"
+            and "pending_submission" not in job
+            and self._tracking_stopped(job)
+            and self._known_prompt_error(job) is None
+        )
+        # Both branches below can only observe retained prompt IDs or reconcile retained receipts.
+        # Unknown/no-prompt/new-work paths continue through full resource admission.
+        if stopped_observation or ordinary_observation: self.require_worker_observation()
+        else: self.require_worker()
+        if not job: raise StudioError("Unknown job")
+        if job.get('status') == 'abandoned' or 'pending_submission' in job:
+            raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
+        if self._tracking_stopped(job): return self._resume_tracking(job)
+        if job.get("status") in ("queued", "waiting", "submitting", "running"): raise StudioError("This job is already queued or being observed; wait for it to settle")
+        pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
+        # Every retained receipt terminal: _resume reconciles the job's own status without any ComfyUI request.
+        if not pending and not (job.get("submissions") and job.get("status") in ("uncertain", "partial")): raise StudioError("No known prompt IDs are available to resume")
+        if not pending: job["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}  # what the queued reconciliation started from
+        job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
+'''
+          if server.count(old) != 1:
+              raise SystemExit('server observation block did not match exactly once')
+          server_path.write_text(server.replace(old, new), encoding='utf-8')
+
+          test_path = Path('tests/test_reference_hold_observation_admission.py')
+          tests = test_path.read_text(encoding='utf-8')
+          old_test = '''    def test_resume_job_keeps_the_hold_for_an_ordinary_resume(self) -> None:
+        """Tracking that was never stopped is ordinary new work, hold and all."""
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            job = stopped_job()
+            job.pop("tracking_disposition")
+            studio.jobs[job["id"]] = job
+
+            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
+                studio.resume_job(job["id"])
+            self.assertEqual(studio.reference_jobs.calls, 1)
+            self.assertTrue(studio.queue.empty())
+'''
+          new_test = '''    def test_resume_job_keeps_the_hold_for_an_ordinary_job_without_known_prompts(self) -> None:
+        """The relaxation remains evidence-bound: no retained prompt, no bypass."""
+        with tempfile.TemporaryDirectory() as temporary:
+            studio = ObservationStudio(Path(temporary), held=True)
+            job = stopped_job(known=False)
+            job.pop("tracking_disposition")
+            studio.jobs[job["id"]] = job
+
+            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
+                studio.resume_job(job["id"])
+            self.assertEqual(studio.reference_jobs.calls, 1)
+            self.assertTrue(studio.queue.empty())
+            self.assertEqual(job["status"], "uncertain")
+'''
+          if tests.count(old_test) != 1:
+              raise SystemExit('ordinary-resume contract did not match exactly once')
+          test_path.write_text(tests.replace(old_test, new_test), encoding='utf-8')
+
+          Path('.github/workflows/audit-publish-691.yml').unlink()
+      - name: Focused regression suite
+        run: python -m unittest discover -s tests -p 'test_reference_hold*.py' -v
+      - name: Compile and scope checks
+        shell: bash
+        run: |
+          python -m py_compile app/server.py tests/test_reference_hold_observation_admission.py tests/test_reference_hold_ordinary_observation.py
+          git diff --check
+          test "$(git diff --name-only | sort)" = $'.github/workflows/audit-publish-691.yml\napp/server.py\ntests/test_reference_hold_observation_admission.py'
+      - name: Publish verified source commit
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/server.py tests/test_reference_hold_observation_admission.py .github/workflows/audit-publish-691.yml
+          git commit -m 'fix(observation): separate known-evidence admission'
+          git push origin HEAD:audit/admit-ordinary-known-prompt-observation-608
