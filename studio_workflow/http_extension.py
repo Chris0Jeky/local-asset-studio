@@ -137,4 +137,5 @@ def extend_handler(base):
     from .setup_draft_http import extend_handler as extend_setups
     from .control_http import extend_handler as extend_controls
     from .collection_http import extend_handler as extend_collections
-    return extend_collections(extend_controls(extend_setups(extend_run_records(extend_documents(WorkflowHandler)))))
+    from .asset_read_http import extend_handler as extend_asset_reads
+    return extend_asset_reads(extend_collections(extend_controls(extend_setups(extend_run_records(extend_documents(WorkflowHandler))))))
