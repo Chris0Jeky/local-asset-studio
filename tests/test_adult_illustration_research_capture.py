@@ -23,6 +23,9 @@ class ResearchCapturedEvidenceTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name).resolve()
         write_fixture(root)
+        # Golden identities bind bytes: keep synthetic fixtures LF on every OS.
+        for path in (root / "research/adult-illustration").glob("*.json"):
+            path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n"))
         self.set_revision(root, revision)
         return root
 
