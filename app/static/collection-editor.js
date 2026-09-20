@@ -1,7 +1,9 @@
 // Editable drafts and immutable dispatch intents are separate, per-tab recovery evidence.
 let collectionSession=null, collectionEpoch=0;
 function collectionValues(){return {name:$('#collectionName').value,description:$('#collectionDescription').value};}
-function collectionDirty(s=collectionSession){return !!s && JSON.stringify(collectionValues())!==JSON.stringify(s.baseline);}
+// Canonical storage sorts object keys; equality belongs to fields, not insertion order.
+function collectionSameValues(a,b){return a.name===b.name&&a.description===b.description;}
+function collectionDirty(s=collectionSession){return !!s && !collectionSameValues(collectionValues(),s.baseline);}
 function collectionStatus(text,error=false){const el=$('#collectionStatus');el.textContent=text;el.classList.toggle('error',error);}
 function collectionCurrent(s){return collectionSession===s && s.epoch===collectionEpoch && $('#collectionDialog').open;}
 function collectionScope(s){return /^[0-9a-f]{32}$/.test(s.scope||'')&&assetState.workspace_id===s.scope;}
@@ -120,10 +122,10 @@ async function collectionRequest(s,pending,inspect=false){
     if(!collectionCurrent(s))return;
     if(!collectionScope(s)){collectionStatus('Workspace changed during receipt verification. Return to the original Workspace to inspect the retained command.',true);return;}
     const result=receipt.result,visible=collectionValues();
-    const unchanged=JSON.stringify(visible)===JSON.stringify(snapshot);
+    const unchanged=collectionSameValues(visible,snapshot);
     const nextValues=unchanged?{name:result.name,description:result.description}:visible;
     const nextDraft=result.deleted?null:{id:result.id,revision:result.revision,baseline:{name:result.name,description:result.description},values:nextValues,updated_at:Date.now()};
-    s.journal.resolve(s.id,pending,nextDraft&&JSON.stringify(nextDraft.values)!==JSON.stringify(nextDraft.baseline)?nextDraft:null);
+    s.journal.resolve(s.id,pending,nextDraft&&!collectionSameValues(nextDraft.values,nextDraft.baseline)?nextDraft:null);
     // Only a verified historical receipt advances the baseline; current is an observation.
     const recovery=nextDraft?s.journal.get(result.id):null;
     s.pending=null;s.uncertain=false;s.recovery=recovery;s.confirmed=result;
