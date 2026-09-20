@@ -1,0 +1,28 @@
+name: Provider integrity source check
+on:
+  push:
+    branches: [codex/provider-snapshot-integrity-20260920]
+permissions:
+  contents: read
+jobs:
+  source-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Retain exact tracked source for offline reproduction
+        run: |
+          mkdir -p .runtime/provider-integrity-source
+          git rev-parse HEAD > .runtime/provider-integrity-source/commit.txt
+          git archive --format=zip HEAD -o .runtime/provider-integrity-source/source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-integrity-source-${{ github.sha }}
+          path: .runtime/provider-integrity-source/
+          retention-days: 2
+      - name: Provider fixture contracts only
+        run: python -m unittest discover -s tests -p 'test_adult_illustration_source*.py' -v
