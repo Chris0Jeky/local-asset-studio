@@ -1,0 +1,43 @@
+name: Restyle attachment ownership
+on:
+  pull_request:
+    paths:
+      - 'app/static/**'
+      - 'tests/*reference_attachment*'
+      - 'tests/*workbench*'
+      - 'tests/restyle_ownership_browser.py'
+      - 'tests/studio_browser_smoke.py'
+      - 'tests/asset_detail_browser.py'
+      - '.github/workflows/restyle-ownership.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - run: node --test tests/reference_attachment_races.cjs tests/workbench_handoff_guards.cjs tests/workbench_board_source_recovery.cjs
+      - name: Native File, modal and deferred attachment checks
+        run: python tests/restyle_ownership_browser.py --out .runtime/restyle-ownership
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: restyle-ownership-${{ matrix.os }}
+          path: .runtime/restyle-ownership/
+          if-no-files-found: ignore
+          retention-days: 7
