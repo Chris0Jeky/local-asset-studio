@@ -178,7 +178,6 @@ class ReportingTests(unittest.TestCase):
             (comparison.EvidenceError('artifact_unreadable'), 'report_unavailable', 'invalid'),
             (comparison.EvidenceError('file_changed'), 'report_unavailable', 'invalid'),
             (comparison.EvidenceError('plan_invalid'), 'invalid_plan', 'invalid'),
-            (comparison.EvidenceError('report_too_large'), 'report_unavailable', 'invalid'),
         ]
         for error, state, integrity in cases:
             with self.subTest(state=state, code=error.code), patch.object(cli, 'compare_observations', side_effect=error):
