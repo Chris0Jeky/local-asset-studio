@@ -137,23 +137,6 @@ def load_prompt_taxonomy(root: Path | str = ".") -> dict[str, Any]:
     }
 
 
-def _closure(taxonomy: dict[str, Any], source_name: str) -> list[dict[str, Any]]:
-    result: list[dict[str, Any]] = []
-    seen: set[str] = set()
-
-    def visit(name: str) -> None:
-        if name in seen:
-            return
-        seen.add(name)
-        entry = taxonomy["entries"][name]
-        result.append(entry)
-        for target in entry["implications"]:
-            visit(target)
-
-    visit(source_name)
-    return result
-
-
 def _diagnostic(
     code: str, message: str, raw: str, entry: dict[str, Any], **fields: Any
 ) -> dict[str, Any]:
@@ -255,13 +238,21 @@ def resolve_prompt_taxonomy(
             profile_id=profile["id"],
         )
 
-    closure = _closure(taxonomy, root["source_name"])
+    closure: list[dict[str, Any]] = []
+    pending = [root["source_name"]]
+    seen: set[str] = set()
     prompt_entries: list[dict[str, Any]] = []
     diagnostics: list[dict[str, Any]] = []
     emitted: list[str] = []
     rejected_status: str | None = None
     ordered_facets = set(profile["facet_order"])
-    for entry in closure:
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        entry = taxonomy["entries"][name]
+        closure.append(entry)
         status: tuple[str, str, str, dict[str, Any]] | None = None
         if not entry["accepted_for_compilation"]:
             status = (
@@ -319,6 +310,10 @@ def resolve_prompt_taxonomy(
                 "facets": list(entry["semantic_facets"]),
             }
         )
+        # Rejected entries remain in the trace, but their edges grant no path
+        # to descendants. Another eligible path or direct input can still reach
+        # a descendant. Reverse pushes retain left-to-right depth-first order.
+        pending.extend(reversed(entry["implications"]))
 
     result_status = (
         "partially_emitted"
