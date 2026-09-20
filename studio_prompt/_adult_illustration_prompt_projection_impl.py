@@ -148,15 +148,17 @@ def _entry_closure(
     result: list[tuple[str, dict[str, Any]]] = []
     seen: set[str] = set()
 
-    def visit(current: str) -> None:
+    pending = [entry_id]
+    while pending:
+        current = pending.pop()
         if current in seen:
-            return
+            continue
         seen.add(current)
         result.append((current, entries[current]))
-        for implied in entries[current]["implications"]:
-            visit(implied)
+        # A stack visits the last pushed child first; reverse to preserve the
+        # original left-to-right depth-first prompt and trace ordering.
+        pending.extend(reversed(entries[current]["implications"]))
 
-    visit(entry_id)
     return result
 
 
