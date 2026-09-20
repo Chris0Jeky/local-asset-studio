@@ -1,0 +1,35 @@
+name: Asset read source recovery
+on:
+  push:
+    branches: [codex/177-asset-read-transport]
+    paths: [.github/workflows/asset-read-source-recovery.yml]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 39373b477e5ef4c949738bb06814f75d612aea04
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Capture fixed source deltas and tree identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir recovery
+          git diff --binary f8fcc40f7388c23d13309c20c2776017a20004b2 39373b477e5ef4c949738bb06814f75d612aea04 > recovery/transport.patch
+          git diff --binary f8fcc40f7388c23d13309c20c2776017a20004b2 c8f1e6f110942ed0d94a58b0e4322a7d3533feb5 > recovery/main.patch
+          for ref in f8fcc40f7388c23d13309c20c2776017a20004b2 ff1c2ae782080b2209b4db627cb0e153e4084595 39373b477e5ef4c949738bb06814f75d612aea04 c8f1e6f110942ed0d94a58b0e4322a7d3533feb5; do
+            git ls-tree -r "$ref" > "recovery/$ref.tree"
+            git show -s --format='%H %T' "$ref"
+          done > recovery/identities.txt
+          sha256sum recovery/* > recovery/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: asset-read-fixed-source-deltas
+          path: recovery/
+          retention-days: 1
+          if-no-files-found: error
