@@ -27,8 +27,12 @@ including an interrupt, rather than swallowing it. Already returned result copie
 remain unchanged. The current `receipt` property is unavailable after an owned
 fetch fails instead of presenting an older success as the failed call's evidence.
 
-An existing raw response awaiting finalization is also preserved: a refused facade
-fetch cannot discard it. Its caller may still finalize or explicitly abort it.
+Every returned raw response is tracked independently of pending cache writes,
+including uncached responses, cache hits and HTTP 304 revalidation. A subsequent
+facade or raw request refuses until that response is finalized or aborted, without
+replacing its receipt. A failed digest check invalidates the receipt. A raw cache
+write failure preserves ownership for retry or explicit abort; a facade failure
+performs its owned cleanup instead.
 
 ## Exact boundary
 
@@ -45,16 +49,19 @@ provider claim consistency. Those independent changes are not included here.
 
 ## Evidence
 
-Seven regression methods use actual provider parsers and temporary caches, with
+Eleven regression methods use actual provider parsers and temporary caches, with
 fake exchanges only. Event-coordinated threads pause at the real result boundary;
 no sleep or performance threshold schedules the interleaving. Tests cover equal
 payloads at different request URLs, cache/no-cache overlap, nested cross-provider
 calls, stale receipts, argument/identity refusal, raw pending ownership, interrupts,
 cache write failure and successful sequential recovery. Threads are released and
-joined even on failed assertions.
+joined even on failed assertions. The four review-driven regressions cover all
+cache states, direct raw replacement, failed digest finalization and preservation
+of raw ownership after a cache write error. Before correction, seven assertions
+failed; the existing cache-miss control already passed.
 
 ```sh
-python -m unittest tests.test_adult_illustration_source_operation_ownership -v
+python -m unittest discover -s tests -p 'test_adult_illustration_source*.py' -v
 python -m unittest discover -s tests -p 'test_adult_illustration*.py'
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
