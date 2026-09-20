@@ -13,11 +13,13 @@ library handler did not bind a completion to the pending operation at all: a lat
 reply could clear newer local recovery and project historical metadata onto a
 same-ID row from another Workspace. The same issue affected delayed refusals.
 
-Seventeen deterministic contracts exercise the actual editor and journal code.
-Fourteen failed against the published parent modules before the correction; three
+Nineteen deterministic contracts exercise the actual editor and journal code.
+Sixteen failed against the original parent modules across two red/green passes; three
 were existing invariants. Success, conflict and transport failure are separately
 covered, along with same-ID operation replacement, stale callback invocation,
 Workspace A-to-B-to-A observations and ordinary same-Workspace refresh.
+The second pass covers gallery-driven Workspace observations, which bypass the
+ordinary refresh loader but use the same rendering boundary.
 
 Native-DOM interaction also reproduced focus loss when receipt confirmation
 removed the focused status button. A status check that finishes after newer
@@ -28,8 +30,8 @@ notes are typed must not move focus out of those notes.
 Each detail/library request has a transient owner token. Before accepting a
 reply it checks that token, its exact pending operation and Workspace. Detail
 requests also check the existing editor epoch and asset scope. A Workspace
-observation generation increments only when a successful library read changes
-Workspace identity, preventing an observed A-to-B-to-A cycle from reviving an
+observation generation increments when library or recovery rendering observes a
+changed Workspace identity, preventing an observed A-to-B-to-A cycle from reviving an
 old callback. Ordinary refreshes within one Workspace do not cancel a valid save.
 
 The token is intentionally not persisted: it owns an in-memory callback, not a

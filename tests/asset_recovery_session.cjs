@@ -65,3 +65,10 @@ test('same-Workspace refresh does not cancel a valid current request',async()=>{
   const refresh=s.actualRefresh(true);s.reads.at(-1).resolve(state);await refresh;s.writes[0].resolve(receipt);await p;
   assert.equal(s.run('activeAsset.notes'),'sent snapshot');assert.equal(journal(s),null);assert.equal(s.run('assetDetailBusy'),false);
 });
+for(const slot of ['detail','library'])test(slot+' callback stays stale across Workspace observations rendered by a different loader',async()=>{
+  const s=setup({autoOpen:slot==='detail'}),p=slot==='detail'?begin(s):s.run("mutateAssets({ids:['a'],action:'edit',favorite:true})").catch(()=>{}),receipt=s.receipt(0),bytes=journal(s,slot);
+  const state=s.run('JSON.stringify(assetState)');
+  swap(s);s.run('renderAssets()');s.run('assetState='+state+';renderAssets()');
+  s.writes[0].resolve(receipt);await p;
+  assert.equal(journal(s,slot),bytes);assert.equal(s.run('!!'+(slot==='detail'?'assetDetailPending':'assetLibraryPending')),true);assert.equal(s.run('assetState.assets[0].metadata_revision'),0);
+});

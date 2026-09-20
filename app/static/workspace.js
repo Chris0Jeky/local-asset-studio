@@ -1,5 +1,5 @@
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
-let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0;
+let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
 let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending = null, assetLibraryBusy = false;
@@ -20,6 +20,10 @@ function recoveryScopeMessage(scope) {
   return scope!==assetState.workspace_id?'This recovery belongs to a different Workspace. Return to that Workspace, or inspect and discard the local record. Recovery is paused.':'';
 }
 function requireAssetScope(scope){const problem=recoveryScopeMessage(scope);if(problem)throw Error(problem);}
+// Gallery handoffs and ordinary refreshes both render the observed Workspace.
+function observeAssetWorkspaceIdentity() {
+  if(assetObservedWorkspace!==assetState.workspace_id){assetObservedWorkspace=assetState.workspace_id;assetWorkspaceEpoch++;}
+}
 function assetReceiptURL(command){return '/api/assets/commands/'+command.request_id+'?workspace_id='+encodeURIComponent(command.workspace_id);}
 
 function rememberAssetDetails() {
@@ -273,7 +277,6 @@ async function refreshAssets(force=false) {
   try {
     const data=await api('/api/workspace'), signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
-    if(previousScope!==data.workspace_id)assetWorkspaceEpoch++;
     assetState=data;
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
     renderLibraryRecovery();
@@ -373,6 +376,7 @@ function assetPreview(asset, detail=false) {
 }
 function assetCardHTML(a) {return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(a.title)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(a.title)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(a.title)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(a.title)+'</button><div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
+  observeAssetWorkspaceIdentity();
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope);
   $('#assetTotal').textContent=assetState.assets.filter(a=>!a.trashed_at).length;
   $('#assetVisibleCount').textContent=assetFiltersActive()?assets.length+' of '+assetScopeAssets().length+' assets':assets.length+' assets';
@@ -501,6 +505,7 @@ async function bulkReviewSelected(review) {
   }
 }
 function renderLibraryRecovery() {
+  observeAssetWorkspaceIdentity();
   if(assetRetainedSelection && StudioAssetRecovery.workspace(assetLibraryPending?.command.workspace_id) && assetLibraryPending.command.workspace_id===assetState.workspace_id){assetSelection=new Set(assetRetainedSelection);assetRetainedSelection=null;}
   const panel=$('#assetCommandRecovery');
   const detail=assetRetainedDetail?'<p>This tab has a retained asset draft'+(assetRetainedDetail.operation?' and an unconfirmed save':'')+'. Reloading sends no save.</p><button data-asset-recover-open>Review retained draft</button><details><summary>Retained draft text</summary><pre>'+esc(JSON.stringify(assetRetainedDetail.draft,null,2))+'</pre></details>':'';
