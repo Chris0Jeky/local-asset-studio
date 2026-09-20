@@ -397,7 +397,7 @@ class BoundedProviderTransport:
             "max_redirects": self.policy.max_redirects,
             "max_response_bytes": self.policy.max_response_bytes,
             "validators_sent": list(validators),
-            "wire_status": wire.status,
+            "wire_status": wire_status,
             "effective_status": response.status,
             "final_url": response.final_url,
             "response_payload_sha256": hashlib.sha256(response.body).hexdigest(),
