@@ -1,0 +1,28 @@
+name: Spoken Studio source snapshot
+on:
+  push:
+    branches: [codex/spoken-brief-studio-review]
+    paths: [.github/workflows/spoken-studio-source.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: f458e8b22143d81da75b734c179feeb6b3ba6d5b
+          persist-credentials: false
+      - name: Archive exact tracked source
+        run: |
+          git archive --format=zip --output=spoken-studio-parent.zip HEAD scripts tests docs/spoken-briefs
+          git ls-tree -r HEAD > parent-tree.txt
+          git rev-parse HEAD > parent-head.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spoken-studio-parent-f458e8b
+          retention-days: 1
+          path: |
+            spoken-studio-parent.zip
+            parent-tree.txt
+            parent-head.txt
