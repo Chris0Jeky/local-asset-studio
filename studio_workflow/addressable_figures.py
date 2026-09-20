@@ -33,6 +33,7 @@ _ALLOWED_FIELDS = {
 }
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+_PNG_CRITICAL_CHUNKS = {b"IHDR", b"PLTE", b"IDAT", b"IEND"}
 
 
 def workspace_error_type(workspace):
@@ -121,12 +122,13 @@ def _parent_row(workspace, db, asset_id, parent_sha256):
 
 
 def _verify_png_container(raw):
-    """Require checked chunk CRCs and the first IEND to end the bounded file."""
+    """Require one unambiguous critical structure, checked CRCs and terminal IEND."""
     if not raw.startswith(_PNG_SIGNATURE):
         raise SyntaxError("PNG signature is invalid")
     data = memoryview(raw)
     try:
         offset = len(_PNG_SIGNATURE)
+        seen_ihdr = False
         while offset < len(data):
             if len(data) - offset < 12:
                 raise SyntaxError("PNG chunk is incomplete")
@@ -142,6 +144,22 @@ def _verify_png_container(raw):
             actual_crc = zlib.crc32(data[chunk_type_start:chunk_data_end]) & 0xFFFFFFFF
             if actual_crc != expected_crc:
                 raise SyntaxError("PNG chunk checksum does not match")
+            if any(
+                byte not in range(ord("A"), ord("Z") + 1)
+                and byte not in range(ord("a"), ord("z") + 1)
+                for byte in chunk_type
+            ):
+                raise SyntaxError("PNG chunk type contains a non-letter byte")
+            if chunk_type[2] & 0x20:
+                raise SyntaxError("PNG chunk type uses the reserved bit")
+            if not seen_ihdr:
+                if chunk_type != b"IHDR" or size != 13:
+                    raise SyntaxError("PNG must begin with one 13-byte IHDR chunk")
+                seen_ihdr = True
+            elif chunk_type == b"IHDR":
+                raise SyntaxError("PNG contains more than one IHDR chunk")
+            if not (chunk_type[0] & 0x20) and chunk_type not in _PNG_CRITICAL_CHUNKS:
+                raise SyntaxError("PNG contains an unsupported critical chunk")
             if chunk_type == b"IEND":
                 if size != 0 or chunk_end != len(data):
                     raise SyntaxError("PNG IEND is not the complete terminal chunk")
