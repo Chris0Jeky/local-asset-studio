@@ -1,0 +1,28 @@
+name: Taxonomy integrity source check
+on:
+  push:
+    branches: [codex/taxonomy-evidence-integrity-20260920]
+permissions:
+  contents: read
+jobs:
+  source-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Retain exact tracked source
+        run: |
+          mkdir -p .runtime/taxonomy-integrity-source
+          git rev-parse HEAD > .runtime/taxonomy-integrity-source/commit.txt
+          git archive --format=zip HEAD -o .runtime/taxonomy-integrity-source/source.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: taxonomy-integrity-source-${{ github.sha }}
+          path: .runtime/taxonomy-integrity-source/
+          retention-days: 2
+      - name: Offline taxonomy contracts
+        run: python -m unittest discover -s tests -p 'test_adult_illustration_taxonomy*.py' -v
