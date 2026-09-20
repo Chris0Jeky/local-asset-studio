@@ -100,8 +100,15 @@ alias forced a temporary sort, and 10,000 corrupt excess rows exhausted a
 10,000-instruction SQLite budget instead of producing bounded refusal. The
 indexed correction preserves all 10,000 rows and refuses from the first bounded
 revision walk. This deterministic VM budget is test evidence, not a wall-clock
-or universal database-performance guarantee. Final-head hosted results belong
-in the PR evidence.
+or universal database-performance guarantee.
+
+A subsequent review added two invalid-UTF-8 SQLite `TEXT` regressions for the
+stored record and digest. The reader now materializes those bounded fields as
+blobs and performs strict UTF-8/ASCII decoding inside its typed corruption
+boundary. Both cases retain byte-for-byte hex evidence and return
+`setup_history_corrupt` rather than leaking a driver `OperationalError` that an
+HTTP adapter would misclassify as storage unavailability. The combined history
+suite therefore has 49 tests. Final-head hosted results belong in the PR evidence.
 
 ## Integration and remaining scope
 

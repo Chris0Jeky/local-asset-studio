@@ -69,10 +69,13 @@ The inherited owner still limits a line to 256 immutable revisions. Missing or
 invalid revision accounting is refused rather than silently skipped. Returned
 rows and bytes are bounded; database execution time is not an OS resource quota.
 
-Stored record text and scalar columns are SQL-bounded before Python allocation,
-then checked for canonical JSON, digest, stored byte length and supported fields.
-Malformed/oversized head or selected records refuse the whole read. Other
-unselected revision payloads are not decoded. Listing is not a full audit of every historical payload.
+Stored record text and scalar columns are SQL-bounded before Python allocation.
+Record and digest text are materialized as bounded blobs and decoded explicitly
+inside the typed corruption boundary, so invalid UTF-8 cannot escape as a generic
+storage outage. Canonical JSON, digest, stored byte length and supported fields
+are then checked. Malformed/oversized head or selected records refuse the whole
+read. Other unselected revision payloads are not decoded. Listing is not a full
+audit of every historical payload.
 
 ## Comparison and export
 

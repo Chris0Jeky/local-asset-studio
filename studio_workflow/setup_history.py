@@ -118,18 +118,20 @@ class SetupHistory:
     def _read(db, key, revision):
         # Bound both text and scalar columns before Python materializes a corrupt row.
         row = db.execute('''SELECT
-            CASE WHEN typeof(record)='text' AND length(CAST(record AS BLOB))<=? THEN record END AS record,
-            CASE WHEN typeof(sha256)='text' AND length(CAST(sha256 AS BLOB))=64 THEN sha256 END AS sha256,
+            CASE WHEN typeof(record)='text' AND length(CAST(record AS BLOB))<=? THEN CAST(record AS BLOB) END AS record,
+            CASE WHEN typeof(sha256)='text' AND length(CAST(sha256 AS BLOB))=64 THEN CAST(sha256 AS BLOB) END AS sha256,
             CASE WHEN typeof(bytes)='integer' AND bytes BETWEEN 1 AND ? THEN bytes END AS bytes
             FROM setup_versions_v1 WHERE draft_id=? AND revision=?''', (MAX_COMMAND, MAX_COMMAND, key, revision)).fetchone()
         if row is None:
             raise HistoryReadError('setup_not_found', 'Reviewed setup revision not found', 404)
         try:
-            need(row['record'] is not None and _sha(row['sha256']) and row['bytes'] is not None,
+            need(type(row['record']) is bytes and type(row['sha256']) is bytes and row['bytes'] is not None,
                  'Stored setup revision exceeds its integrity bound')
-            raw = row['record'].encode('utf-8')
+            raw = row['record']
+            sha256 = row['sha256'].decode('ascii')
+            need(_sha(sha256), 'Stored setup revision hash failed its integrity check')
             need(len(raw) == row['bytes'], 'Stored setup revision bytes failed their integrity check')
-            stored = stored_value(row['record'], row['sha256'])
+            stored = stored_value(raw.decode('utf-8'), sha256)
             need(stored.matches and canonical(stored.value) == raw, 'Stored setup revision failed its canonical integrity check')
             record = stored.value
             need(type(record) is dict and set(record) == {'draft', 'inputs', 'runtime', 'graph_sha256'},
@@ -151,7 +153,7 @@ class SetupHistory:
                      'Invalid stored input identity')
                 names.add(name)
                 need(all(type(item[k]) is int and 1 <= item[k] <= 2**53-1 for k in ('bytes', 'width', 'height')), 'Invalid stored input dimensions or bytes')
-            return record, {'revision': revision, 'record_sha256': row['sha256'], 'record_bytes': row['bytes'],
+            return record, {'revision': revision, 'record_sha256': sha256, 'record_bytes': row['bytes'],
                             'draft_sha256': digest(record['draft']), 'preset_id': record['draft']['recipe']['preset'],
                             'backend_id': runtime['backend_id'], 'graph_sha256': record['graph_sha256'], 'input_count': len(inputs)}
         except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as exc:
