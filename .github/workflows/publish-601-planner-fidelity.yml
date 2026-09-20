@@ -1,0 +1,235 @@
+name: Publish planner fidelity correction
+
+on:
+  push:
+    branches:
+      - audit/601-planner-state-fidelity
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact main parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "f41855f1851ffce156c883962d0c4cca38ad3765"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/publish-601-planner-fidelity.yml"
+      - name: Install focused dependencies
+        run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Reproduce, correct, verify, and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD/tests${PYTHONPATH:+:$PYTHONPATH}"
+          python - <<'PY'
+          from pathlib import Path
+
+          path=Path('tests/test_settings_accelerators.py')
+          text=path.read_text(encoding='utf-8')
+          anchor="""    def test_anima_generic_steps_exclude_conditional_turbo_value(self):
+          """
+          method="""    def test_disabled_accelerator_does_not_claim_held_provenance(self):
+                  self.p['lora3'] = ['12', 'strength_model']
+                  self.p['lora3_name'] = ['12', 'lora_name']
+                  self.p['defaults'].update(lora=0, lora2=0.9, lora3=0.8,
+                                            lora3_name='b.safetensors')
+                  rows = planner.plan_remix(self.p, self.k, {'lora': 0})
+                  blend = rows[-1]
+                  self.assertEqual(blend['label'], 'All active LoRAs at 0.8')
+                  self.assertNotIn('selected accelerator', blend['rationale'])
+                  self.assertTrue(all('selected accelerator' not in row['rationale'] for row in rows))
+
+          """
+          if text.count(anchor)!=1: raise SystemExit('accelerator test anchor changed')
+          path.write_text(text.replace(anchor,method+anchor),encoding='utf-8')
+
+          path=Path('tests/test_production.py')
+          text=path.read_text(encoding='utf-8')
+          anchor="""    def test_a_missing_knowledge_base_plans_nothing_and_records_no_digest(self):
+          """
+          method="""    def test_no_axis_refusal_names_accelerators_only_when_effective(self):
+                  studio=FakeStudio(self.root,[]);lab=studio.production
+                  with self.assertRaises(ValueError) as ordinary:
+                      lab.plan({'preset_id':'demo','mode':'grid'})
+                  self.assertEqual(str(ordinary.exception),
+                                   'The settings library documents no axis this recipe can change')
+                  kb=json.loads(self.kb_bytes);kb['loras']['a.safetensors']['role']='accelerator'
+                  (self.root/'presets/settings-kb.json').write_text(json.dumps(kb))
+                  with self.assertRaisesRegex(ValueError,'selected accelerator settings'):
+                      lab.plan({'preset_id':'planned','mode':'grid',
+                                'controls':{'lora':1,'lora_name':'a.safetensors'}})
+                  self.assertEqual(lab.list(),[]);self.assertFalse(studio.jobs)
+                  self.assertEqual(studio.queue.qsize(),0)
+
+          """
+          if text.count(anchor)!=1: raise SystemExit('production test anchor changed')
+          path.write_text(text.replace(anchor,method+anchor),encoding='utf-8')
+
+          path=Path('tests/production_planner_inspection.cjs')
+          text=path.read_text(encoding='utf-8')
+          old="""  // An unavailable inspection leaves the local plan intact, not silently cleared.
+            wait = run('requestPlan("inspect")'); requests.shift().reject(new Error('Inspection unavailable')); await wait;
+            assert.equal(run('JSON.stringify(plannedVariants)'), JSON.stringify(saved));
+            assert.equal($('#experimentStatus').textContent, 'Inspection unavailable');
+            assert.doesNotMatch($('#plannerLimits').innerHTML, /&lt;script&gt;/, 'Stale reasons must not survive a failed read');
+            console.log('Planner inspection: explicit read, retained variants, escaped reasons, latest-action/context/close guards passed.');
+          """
+          new="""  // An unavailable inspection leaves the local plan intact, but clears hidden axis IDs.
+            run("plannerAxisIds=['stale-axis']");
+            wait = run('requestPlan("inspect")'); requests.shift().reject(new Error('Inspection unavailable')); await wait;
+            assert.equal(run('JSON.stringify(plannedVariants)'), JSON.stringify(saved));
+            assert.equal(run('JSON.stringify(plannerAxisIds)'), '[]', 'Failed inspection cannot retain invisible axis selection');
+            assert.equal($('#experimentStatus').textContent, 'Inspection unavailable');
+            assert.doesNotMatch($('#plannerLimits').innerHTML, /&lt;script&gt;/, 'Stale reasons must not survive a failed read');
+
+            // Clearing while a plan is in flight supersedes it and replaces the transient reading status.
+            setup();
+            wait = run('requestPlan("grid")'); const cleared = requests.shift();
+            assert.match($('#experimentStatus').textContent, /Reading/);
+            $('#clearPlanned').onclick();
+            const clearedStatus = $('#experimentStatus').textContent;
+            assert.equal(clearedStatus, 'Planned variants cleared. Nothing was reserved or submitted.');
+            cleared.resolve({...inspect, mode:'grid', variants:saved}); await wait;
+            assert.equal(run('plannedVariants'), null);
+            assert.equal($('#experimentStatus').textContent, clearedStatus, 'Stale reply cannot restore a reading status');
+
+            // Removing one candidate has the same latest-action status ownership.
+            setup();
+            run(`plannedVariants=${JSON.stringify([saved[0],{label:'Second',controls:{seed:8},rationale:'Retained',sources:[]}])};renderPlanner()`);
+            wait = run('requestPlan("grid")'); const removed = requests.shift();
+            $('#plannedVariants').onclick({target:{closest:()=>({dataset:{dropVariant:'0'}})}});
+            const removedStatus = $('#experimentStatus').textContent;
+            assert.equal(removedStatus, '1 planned variant remains. Nothing was reserved or submitted.');
+            removed.resolve({...inspect, mode:'grid', variants:saved}); await wait;
+            assert.equal(run('plannedVariants.length'), 1);
+            assert.equal($('#experimentStatus').textContent, removedStatus);
+            console.log('Planner inspection: explicit read, retained variants, escaped reasons, latest-action/context/status guards passed.');
+          """
+          if text.count(old)!=1: raise SystemExit('frontend test anchor changed')
+          path.write_text(text.replace(old,new),encoding='utf-8')
+
+          path=Path('tests/test_production_planner_inspection.py')
+          text=path.read_text(encoding='utf-8')
+          anchor="""class PlannerInspectionFrontendTests(unittest.TestCase):
+          """
+          method="""class PlannerDocumentationTests(unittest.TestCase):
+              def test_advanced_panel_docs_name_all_three_actions(self):
+                  text=(Path(__file__).parents[1]/'docs/EXPERIMENTS.md').read_text(encoding='utf-8')
+                  self.assertIn('Three actions under **Advanced: plan several settings from the library**',text)
+                  for action in ('Inspect available settings','Plan from settings library','Remix LoRA weights'):
+                      self.assertIn('**'+action+'**',text)
+
+
+          """
+          if text.count(anchor)!=1: raise SystemExit('documentation test anchor changed')
+          path.write_text(text.replace(anchor,method+anchor),encoding='utf-8')
+          PY
+
+          set +e
+          python -m unittest tests.test_settings_accelerators tests.test_production.PlannedSweepTests.test_no_axis_refusal_names_accelerators_only_when_effective tests.test_production_planner_inspection -v > /tmp/planner-red.log 2>&1
+          python_status=$?
+          node tests/production_planner_inspection.cjs > /tmp/planner-js-red.log 2>&1
+          node_status=$?
+          set -e
+          cat /tmp/planner-red.log
+          cat /tmp/planner-js-red.log
+          test "$python_status" -ne 0
+          test "$node_status" -ne 0
+          grep -q 'All active LoRAs' /tmp/planner-red.log
+          grep -q 'The settings library documents no axis this recipe can change' /tmp/planner-red.log
+          grep -q 'Failed inspection cannot retain invisible axis selection' /tmp/planner-js-red.log
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path=Path('app/production.py')
+          text=path.read_text(encoding='utf-8')
+          old="""            if not available:raise ValueError('The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
+          """
+          new="""            if not available:
+                          message='The settings library documents no axis this recipe can change'
+                          held=settings_planner.accelerator_slots(preset,kb,controls)
+                          if any(not item['inactive'] for item in held.values()):
+                              message+='; selected accelerator settings need a reviewed exact-configuration comparison'
+                          raise ValueError(message)
+          """
+          if text.count(old)!=1: raise SystemExit('production refusal anchor changed')
+          path.write_text(text.replace(old,new),encoding='utf-8')
+
+          path=Path('app/settings_planner.py')
+          text=path.read_text(encoding='utf-8')
+          old="""    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if held else '')
+              counted=active+[slot for slot,item in held.items() if not item['inactive']]
+          """
+          new="""    active_held={slot:item for slot,item in held.items() if not item['inactive']}
+              held_note=('; selected accelerator strengths and sampling settings remain unchanged' if active_held else '')
+              counted=active+list(active_held)
+          """
+          if text.count(old)!=1: raise SystemExit('held-note anchor changed')
+          text=text.replace(old,new)
+          old="""        variants.append({'label':f"All {'non-accelerator' if held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
+          """
+          new="""        variants.append({'label':f"All {'non-accelerator' if active_held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
+          """
+          if text.count(old)!=1: raise SystemExit('blend-label anchor changed')
+          path.write_text(text.replace(old,new),encoding='utf-8')
+
+          path=Path('app/static/production.js')
+          text=path.read_text(encoding='utf-8')
+          old="""    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();};
+              $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
+              $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
+          """
+          new="""    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();$('#experimentStatus').textContent='Planned variants cleared. Nothing was reserved or submitted.';};
+              $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
+              $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();const remaining=plannedVariants?.length||0;$('#experimentStatus').textContent=remaining+ ' planned variant'+(remaining===1?' remains':'s remain')+'. Nothing was reserved or submitted.';};
+          """
+          if text.count(old)!=1: raise SystemExit('planner action anchor changed')
+          text=text.replace(old,new)
+          old="""    plannerAxes=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
+          """
+          new="""    plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
+          """
+          if text.count(old)!=1: raise SystemExit('planner failure anchor changed')
+          path.write_text(text.replace(old,new),encoding='utf-8')
+
+          path=Path('docs/EXPERIMENTS.md')
+          text=path.read_text(encoding='utf-8')
+          old="""Two buttons under **Advanced: plan several settings from the library** plan
+          several documented settings at once, through `POST /api/experiments/plan`. **Plan from settings library** reads the family
+          """
+          new="""Three actions under **Advanced: plan several settings from the library** inspect or plan
+          documented settings through `POST /api/experiments/plan`. **Inspect available settings** reads the family entry without replacing existing variants. **Plan from settings library** reads the family
+          """
+          if text.count(old)!=1: raise SystemExit('experiments documentation anchor changed')
+          path.write_text(text.replace(old,new),encoding='utf-8')
+          PY
+
+          python -m unittest tests.test_settings_accelerators tests.test_production tests.test_production_planner_inspection -v
+          node tests/production_planner_inspection.cjs
+          node --check app/static/production.js
+          python -m py_compile app/production.py app/settings_planner.py tests/test_settings_accelerators.py tests/test_production.py tests/test_production_planner_inspection.py
+          python scripts/validate-repo.py
+          git diff --check
+
+          rm .github/workflows/publish-601-planner-fidelity.yml
+          git config user.name "chatgpt-codex-connector[bot]"
+          git config user.email "199175422+chatgpt-codex-connector[bot]@users.noreply.github.com"
+          git add app/production.py app/settings_planner.py app/static/production.js docs/EXPERIMENTS.md tests/test_settings_accelerators.py tests/test_production.py tests/production_planner_inspection.cjs tests/test_production_planner_inspection.py .github/workflows/publish-601-planner-fidelity.yml
+          git diff --cached --check
+          git commit -m "fix: keep planner status and provenance truthful"
+          git push origin HEAD:audit/601-planner-state-fidelity
