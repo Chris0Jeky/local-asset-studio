@@ -15,4 +15,4 @@ class ReferenceRestoreObservationTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('# fail 0', result.stdout)
-        self.assertIn('# tests 10', result.stdout)
+        self.assertIn('# tests 12', result.stdout)

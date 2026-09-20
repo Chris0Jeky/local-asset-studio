@@ -4,7 +4,7 @@ function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceReco
 // Transient attachment intent belongs to the slot owner, not prompt/settings snapshots.
 // Epoch changes invalidate structural edits; the per-record token also rejects an older
 // upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
-const referenceAttachments=new WeakMap();
+const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap();
 function beginReferenceAttachment(index){
   const slot=referenceRecords[index];
   if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
@@ -20,7 +20,7 @@ async function attachReferenceAsset(index,id){
   try{
     const result=await post('/api/assets/reference',{id});
     if(!attachment.current())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
-    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});
+    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});referenceChecks.delete(slot);
     if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
     replaceParentAsset('reference',previous,id);return result;
   }finally{attachment.finish();}
@@ -51,22 +51,21 @@ async function uploadRoleFile(index,file){
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
     if(!attachment.current())return false;
-    const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);return true;
+    const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});referenceChecks.delete(referenceRecords[index]);releaseParentAsset(previous);return true;
   }catch(e){if(!attachment||attachment.current()){message(e.message,true);$('#referenceSummary').textContent=e.message;}return false;}
   finally{attachment?.finish();}
 }
-const referenceChecks=new WeakMap();
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;
   if(Array.isArray(records)&&records.length===selected.reference_slots.length)referenceRecords=records.map(r=>({...r}));
   const epoch=referenceEpoch,check={};
   // An availability result describes these bytes/records, not whatever later occupies a slot.
-  // A new check or attachment intent supersedes this observation even if the filename repeats.
+  // A new check or committed attachment supersedes this observation even if the filename repeats.
   const observed=referenceRecords.map((ref,index)=>{
     referenceChecks.set(ref,check);
-    return {ref,index,file:ref.file,sha256:ref.sha256,attachment:referenceAttachments.get(ref)};
+    return {ref,index,file:ref.file,sha256:ref.sha256};
   });
-  const current=({ref,index,file,sha256,attachment})=>referenceRecords[index]===ref&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check&&referenceAttachments.get(ref)===attachment;
+  const current=({ref,index,file,sha256})=>referenceRecords[index]===ref&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check;
   referencePending++;renderReferenceSlots();
   try{
     const status=await post('/api/references/check',{files:observed.filter(r=>r.file).map(r=>r.file)});

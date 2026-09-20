@@ -56,8 +56,9 @@ remains authoritative; this is not another reference-readiness model.
 ## Availability observations
 
 A pending saved-reference check is an observation, not permission to change a newer
-attachment. It captures each record's identity, filename, content hash and current
-attachment intent. A newer check supersedes earlier checks on that record. Both successful
+attachment. It captures each record's identity, filename and content hash. A newer check
+or successfully committed attachment supersedes earlier checks on that record. Failed
+uploads leave observations of unchanged bytes current. Both successful
 and failed responses apply only to observations still current in the same reference epoch.
 No observation tokens are persisted or added to the readiness projection.
 

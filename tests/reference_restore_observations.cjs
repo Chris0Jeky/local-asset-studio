@@ -69,3 +69,18 @@ test('epoch reset owns the old pending count',async()=>{
   h.requests[0].reject(Error('old failure'));await pending;
   assert.equal(h.state().pending,0);assert.equal(h.notices.length,0);
 });
+test('a failed replacement does not suppress a current observation of unchanged bytes',async()=>{
+  const h=harness(),checking=h.restore(),uploading=h.upload();
+  h.requests[1].reject(Error('upload failed'));await uploading;
+  h.requests[0].resolve(oldStatus(false));await checking;
+  assert.equal(h.state().records[0].missing,true);
+  assert.equal(h.state().ready,false);
+});
+test('a check started during an upload loses authority when that upload commits identical bytes',async()=>{
+  const h=harness(),uploading=h.upload(),checking=h.restore();
+  h.requests[0].resolve({file:'old.png',sha256:'old'});await uploading;
+  h.requests[1].resolve(oldStatus(false));await checking;
+  assert.equal(h.state().records[0].missing,false);
+  assert.equal(h.state().ready,true);
+  assert.equal(h.notices.length,0);
+});
