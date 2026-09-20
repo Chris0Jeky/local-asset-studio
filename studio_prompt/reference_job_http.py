@@ -37,17 +37,24 @@ def extend_handler(base):
         def do_POST(self):
             if not urlparse(self.path).path.startswith(PREFIX):return super().do_POST()
             if not self._safe_mutation():return reject_json(self,403,{'error':'Local same-origin request required'})
-            held=None
+            if self.path not in (PREFIX+'create',PREFIX+'cancel',PREFIX+'release',PREFIX+'retire'):
+                return reject_json(self,400,{'error':'Unknown reference command route','generation_submitted':False})
+            if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
                 service=self._reference_service()
-                need(self.path in (PREFIX+'create',PREFIX+'cancel',PREFIX+'release',PREFIX+'retire'),'Unknown reference command route')
-                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
-                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
-                limit=64*1024
-                if self.path==PREFIX+'create':
-                    # Admission precedes the large body read as well as image decoding.
-                    if not service.intake.acquire(blocking=False):return self._json(409,{'error':'Reference intake is busy. Nothing was queued.', 'generation_submitted':False})
-                    held=service.intake;limit=48*1024*1024
+            except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as exc:
+                return self._reference_error(exc)
+            held=None;limit=64*1024
+            if self.path==PREFIX+'create':
+                # Admission precedes the large body read as well as image decoding.
+                try:admitted=service.intake.acquire(blocking=False)
+                except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as exc:
+                    return self._reference_error(exc)
+                if not admitted:
+                    return reject_json(self,409,{'error':'Reference intake is busy. Nothing was queued.', 'generation_submitted':False})
+                held=service.intake;limit=48*1024*1024
+            try:
                 raw=self.rfile.read(self._content_length(limit));value=decode(raw,limit=limit)
                 if self.path==PREFIX+'create':return self._json(202,service._create(value))
                 if self.path==PREFIX+'retire':return self._json(200,service.retire(value))
