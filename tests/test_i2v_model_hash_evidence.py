@@ -111,8 +111,9 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
         replacement_bytes = b"new path bytes......"
         self.assertEqual(len(original), len(replacement_bytes))
         self.model.write_bytes(original)
-        before = self.model.stat()
-        replacement = self.model.with_name("replacement.safetensors")
+        model = self.model
+        before = model.stat()
+        replacement = model.with_name("replacement.safetensors")
         real_open = Path.open
         replaced = False
 
@@ -134,9 +135,9 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
                 nonlocal replaced
                 if not replaced:
                     replacement.write_bytes(replacement_bytes)
-                    replacement.replace(self.model)
+                    replacement.replace(model)
                     os.utime(
-                        self.model,
+                        model,
                         ns=(before.st_atime_ns, before.st_mtime_ns),
                     )
                     replaced = True
@@ -144,15 +145,15 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
 
         def opening(candidate, *args, **kwargs):
             stream = real_open(candidate, *args, **kwargs)
-            if candidate == self.model and args and args[0] == "rb":
+            if candidate == model and args and args[0] == "rb":
                 return ReplacingStream(stream)
             return stream
 
         with mock.patch.object(Path, "open", autospec=True, side_effect=opening):
-            result = i2v._cached_file_hash(self.model, {})
+            result = i2v._cached_file_hash(model, {})
 
         self.assertTrue(replaced)
-        self.assertEqual(self.model.read_bytes(), replacement_bytes)
+        self.assertEqual(model.read_bytes(), replacement_bytes)
         self.assertTrue(result["present"])
         self.assertNotIn("sha256", result)
         self.assertIn("changed while hashing", result["error"].lower())
