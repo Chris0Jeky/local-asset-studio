@@ -14,10 +14,10 @@ def extend_handler(base):
             if urlparse(self.path).path != PATH: return super().do_POST()
             if not self._safe_mutation():
                 return reject_json(self, 403, {'code': 'same_origin_required', 'error': 'Local same-origin request required', 'generation_submitted': False})
+            if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                return reject_json(self, 400, {'code': 'control_preview_invalid', 'error': 'application/json required',
+                                               'committed': False, 'generation_submitted': False})
             try:
-                if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
-                    return reject_json(self, 400, {'code': 'control_preview_invalid', 'error': 'application/json required',
-                                                   'committed': False, 'generation_submitted': False})
                 value = decode(self.rfile.read(self._content_length(MAX_BYTES)))
                 return self._json(200, request(value, self.studio))
             except (ValueError, KeyError, TypeError, IndexError, OSError, URLError, RecursionError) as exc:

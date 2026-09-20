@@ -60,6 +60,33 @@ class InputAdapters(unittest.TestCase):
                 self.assertIsNone(report['graph'])
                 self.assertEqual(1, doc['nodes']['1']['inputs']['value'])
 
+    def test_remote_flag_requires_a_real_boolean_before_static_authoring(self):
+        for value in (0, '', None, [], {}):
+            with self.subTest(value=value):
+                node, report, _, _ = inspect(
+                    {'input': {'required': {'value': ['INT', {'remote': value}]}}},
+                    {'value': 1},
+                )
+                field = node['inputs'][0]
+                self.assertEqual('unsupported', field['widget'])
+                self.assertIn('remote must be boolean', field['reason'])
+                self.assertFalse(field['capabilities']['static_validation'])
+                self.assertFalse(report['valid'])
+                self.assertIsNone(report['graph'])
+        node, report, _, _ = inspect(
+            {'input': {'required': {'value': ['INT', {'remote': False}]}}},
+            {'value': 1},
+        )
+        self.assertEqual('int', node['inputs'][0]['widget'])
+        self.assertTrue(report['valid'])
+        node, report, _, _ = inspect(
+            {'input': {'required': {'value': ['INT', {'remote': True}]}}},
+            {'value': 1},
+        )
+        self.assertEqual('unsupported', node['inputs'][0]['widget'])
+        self.assertIn('remote behaviour needs a native adapter', node['inputs'][0]['reason'])
+        self.assertFalse(report['valid'])
+
     def test_diagnostics_are_node_local_and_disconnected_opaque_data_survives(self):
         info = {'Good': {'input': {}, 'output': [], 'output_node': True},
                 'Bad': {'input': 17, 'output': [], 'output_node': True}}
