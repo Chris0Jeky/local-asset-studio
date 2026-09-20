@@ -55,16 +55,26 @@ async function uploadRoleFile(index,file){
   }catch(e){if(!attachment||attachment.current()){message(e.message,true);$('#referenceSummary').textContent=e.message;}return false;}
   finally{attachment?.finish();}
 }
+const referenceChecks=new WeakMap();
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;
   if(Array.isArray(records)&&records.length===selected.reference_slots.length)referenceRecords=records.map(r=>({...r}));
-  const epoch=referenceEpoch;referencePending++;renderReferenceSlots();
+  const epoch=referenceEpoch,check={};
+  // An availability result describes these bytes/records, not whatever later occupies a slot.
+  // A new check or attachment intent supersedes this observation even if the filename repeats.
+  const observed=referenceRecords.map((ref,index)=>{
+    referenceChecks.set(ref,check);
+    return {ref,index,file:ref.file,sha256:ref.sha256,attachment:referenceAttachments.get(ref)};
+  });
+  const current=({ref,index,file,sha256,attachment})=>referenceRecords[index]===ref&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check&&referenceAttachments.get(ref)===attachment;
+  referencePending++;renderReferenceSlots();
   try{
-    const status=await post('/api/references/check',{files:referenceRecords.filter(r=>r.file).map(r=>r.file)});
+    const status=await post('/api/references/check',{files:observed.filter(r=>r.file).map(r=>r.file)});
     if(epoch!==referenceEpoch)return;
-    for(const ref of referenceRecords){const found=status.find(r=>r.file===ref.file);ref.missing=!!ref.file&&(!found?.available||(ref.sha256&&ref.sha256!==found.sha256));}
-    if(referenceRecords.some(r=>r.missing))message('A saved reference is missing or changed. Reattach it; the recipe and other references remain loaded.',true);
-  }catch(e){if(epoch===referenceEpoch){referenceRecords.forEach(r=>r.missing=true);message(e.message,true);}}
+    const retained=observed.filter(current);
+    for(const {ref} of retained){const found=status.find(r=>r.file===ref.file);ref.missing=!!ref.file&&(!found?.available||(ref.sha256&&ref.sha256!==found.sha256));}
+    if(retained.some(({ref})=>ref.missing))message('A saved reference is missing or changed. Reattach it; the recipe and other references remain loaded.',true);
+  }catch(e){if(epoch===referenceEpoch){const retained=observed.filter(current);retained.forEach(({ref})=>ref.missing=!!ref.file);if(retained.some(({ref})=>ref.file))message(e.message,true);}}
   finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
 }
 function attachedReferencePayload(){return selected?.reference_slots?.length?referenceRecords.map(r=>({...r})):[];}
