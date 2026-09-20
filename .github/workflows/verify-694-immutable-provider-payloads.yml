@@ -1,0 +1,925 @@
+name: Verify immutable provider payload retention
+
+on:
+  push:
+    branches:
+      - audit/694-immutable-provider-payloads
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact stacked parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "4b659470ae20a74787ed503d1e7d624e1187ef67"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/verify-694-immutable-provider-payloads.yml"
+      - name: Install focused dependencies
+        run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Write regression contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/test_adult_illustration_payload_evidence.py <<'PY'
+          from __future__ import annotations
+
+          import copy
+          from concurrent.futures import ThreadPoolExecutor
+          from pathlib import Path
+          import tempfile
+          import unittest
+          from unittest.mock import patch
+
+          from studio_prompt.adult_illustration_source_transport import (
+              BoundedProviderTransport,
+              SnapshotResponseCache,
+              WireResponse,
+              fetch_civitai,
+              fetch_huggingface,
+          )
+          from tests.test_adult_illustration_source_transport import (
+              ScriptedExchange,
+              _body,
+              _civitai_payload,
+              _hf_payload,
+              _json_response,
+          )
+
+
+          CIVITAI_URL = "https://civitai.com/api/v1/model-versions/123"
+          HF_URL = "https://huggingface.co/api/models/owner/model/revision/main?blobs=true"
+
+
+          def _evidence(result):
+              return result["raw_payload_ref"]["payload_evidence"]
+
+
+          class ImmutableProviderPayloadEvidenceTests(unittest.TestCase):
+              def test_changed_refresh_preserves_both_exact_bodies_across_restart(self):
+                  first_payload = _civitai_payload()
+                  second_payload = copy.deepcopy(first_payload)
+                  second_payload["model"]["allowCommercialUse"] = "None"
+                  first_body = _body(first_payload)
+                  second_body = _body(second_payload)
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      first_exchange = ScriptedExchange(_json_response(CIVITAI_URL, first_payload))
+                      first = fetch_civitai(
+                          123,
+                          BoundedProviderTransport(
+                              exchange=first_exchange,
+                              cache=SnapshotResponseCache(root),
+                          ),
+                      )
+                      second_exchange = ScriptedExchange(_json_response(CIVITAI_URL, second_payload))
+                      second = fetch_civitai(
+                          123,
+                          BoundedProviderTransport(
+                              exchange=second_exchange,
+                              cache=SnapshotResponseCache(root),
+                              refresh=True,
+                          ),
+                      )
+
+                      first_ref, second_ref = _evidence(first), _evidence(second)
+                      self.assertEqual(first_ref["state"], "retained")
+                      self.assertEqual(second_ref["state"], "retained")
+                      self.assertNotEqual(first_ref["sha256"], second_ref["sha256"])
+                      self.assertNotEqual(first_ref["content_key"], second_ref["content_key"])
+                      self.assertEqual(
+                          first["raw_payload_ref"]["cache_key"],
+                          second["raw_payload_ref"]["cache_key"],
+                      )
+                      self.assertTrue(first["raw_payload_ref"]["retained_in_cache"])
+                      self.assertTrue(second["raw_payload_ref"]["retained_in_cache"])
+
+                      reopened = SnapshotResponseCache(root)
+                      self.assertEqual(reopened.load_payload(first_ref["sha256"]), first_body)
+                      self.assertEqual(reopened.load_payload(second_ref["sha256"]), second_body)
+                      self.assertEqual(len(list((root / "payloads").glob("*.json"))), 2)
+                      self.assertEqual(len(list(root.glob("*.json"))), 1)
+
+              def test_same_content_200_and_304_deduplicate_without_losing_receipts(self):
+                  payload = _hf_payload()
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      first = fetch_huggingface(
+                          "owner/model",
+                          "main",
+                          BoundedProviderTransport(
+                              exchange=ScriptedExchange(
+                                  _json_response(HF_URL, payload, headers={"etag": '"v1"'})
+                              ),
+                              cache=SnapshotResponseCache(root),
+                          ),
+                      )
+                      repeated = fetch_huggingface(
+                          "owner/model",
+                          "main",
+                          BoundedProviderTransport(
+                              exchange=ScriptedExchange(
+                                  _json_response(HF_URL, payload, headers={"etag": '"v2"'})
+                              ),
+                              cache=SnapshotResponseCache(root),
+                              refresh=True,
+                          ),
+                      )
+
+                      def not_modified(request, timeout):
+                          self.assertEqual(request.headers["if-none-match"], '"v2"')
+                          return WireResponse(
+                              url=HF_URL,
+                              status=304,
+                              headers={"etag": '"v2"'},
+                              body=b"",
+                          )
+
+                      revalidated = fetch_huggingface(
+                          "owner/model",
+                          "main",
+                          BoundedProviderTransport(
+                              exchange=ScriptedExchange(not_modified),
+                              cache=SnapshotResponseCache(root),
+                              refresh=True,
+                          ),
+                      )
+                      self.assertEqual(
+                          [first["transport_receipt"]["cache_state"],
+                           repeated["transport_receipt"]["cache_state"],
+                           revalidated["transport_receipt"]["cache_state"]],
+                          ["miss", "refreshed", "revalidated"],
+                      )
+                      self.assertEqual(_evidence(first), _evidence(repeated))
+                      self.assertEqual(_evidence(first), _evidence(revalidated))
+                      self.assertEqual(len(list((root / "payloads").glob("*.json"))), 1)
+
+              def test_new_cache_hit_upgrades_legacy_mutable_body_without_inventing_old_refs(self):
+                  payload = _hf_payload()
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      first = fetch_huggingface(
+                          "owner/model",
+                          "main",
+                          BoundedProviderTransport(
+                              exchange=ScriptedExchange(_json_response(HF_URL, payload)),
+                              cache=SnapshotResponseCache(root),
+                          ),
+                      )
+                      evidence = _evidence(first)
+                      (root / evidence["content_key"]).unlink()
+                      self.assertEqual(
+                          SnapshotResponseCache(root).inspect_payload(evidence["sha256"])["state"],
+                          "unavailable",
+                      )
+                      no_network = ScriptedExchange(AssertionError("cache hit contacted network"))
+                      current = fetch_huggingface(
+                          "owner/model",
+                          "main",
+                          BoundedProviderTransport(
+                              exchange=no_network,
+                              cache=SnapshotResponseCache(root),
+                          ),
+                      )
+                      self.assertEqual(current["transport_receipt"]["cache_state"], "hit")
+                      self.assertEqual(no_network.calls, [])
+                      self.assertEqual(_evidence(current)["state"], "retained")
+                      self.assertEqual(
+                          SnapshotResponseCache(root).load_payload(evidence["sha256"]),
+                          _body(payload),
+                      )
+
+              def test_missing_and_corrupt_evidence_are_distinguishable(self):
+                  payload = _civitai_payload()
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      cache = SnapshotResponseCache(root)
+                      result = fetch_civitai(
+                          123,
+                          BoundedProviderTransport(
+                              exchange=ScriptedExchange(_json_response(CIVITAI_URL, payload)),
+                              cache=cache,
+                          ),
+                      )
+                      evidence = _evidence(result)
+                      path = root / evidence["content_key"]
+                      path.unlink()
+                      missing = cache.inspect_payload(evidence["sha256"])
+                      self.assertEqual((missing["state"], missing["reason"]),
+                                       ("unavailable", "missing"))
+                      cache.retain_payload(_body(payload))
+                      path.write_bytes(b"{}")
+                      corrupt = cache.inspect_payload(evidence["sha256"])
+                      self.assertEqual(corrupt["state"], "corrupt")
+                      self.assertIn(corrupt["reason"], {"sha256-mismatch", "invalid-json"})
+                      with self.assertRaisesRegex(ValueError, "corrupt"):
+                          cache.load_payload(evidence["sha256"])
+
+              def test_failed_evidence_publication_does_not_replace_request_cache(self):
+                  first_payload = _civitai_payload()
+                  changed_payload = copy.deepcopy(first_payload)
+                  changed_payload["model"]["allowCommercialUse"] = "None"
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      first_cache = SnapshotResponseCache(root)
+                      first_exchange = ScriptedExchange(_json_response(CIVITAI_URL, first_payload))
+                      first = fetch_civitai(
+                          123,
+                          BoundedProviderTransport(exchange=first_exchange, cache=first_cache),
+                      )
+                      request = first_exchange.calls[0][0]
+                      cache_path = first_cache.path_for(request)
+                      before = cache_path.read_bytes()
+                      failing_cache = SnapshotResponseCache(root)
+                      with patch.object(
+                          failing_cache.payloads,
+                          "retain",
+                          side_effect=OSError("injected evidence publication failure"),
+                      ):
+                          with self.assertRaisesRegex(OSError, "evidence publication failure"):
+                              fetch_civitai(
+                                  123,
+                                  BoundedProviderTransport(
+                                      exchange=ScriptedExchange(
+                                          _json_response(CIVITAI_URL, changed_payload)
+                                      ),
+                                      cache=failing_cache,
+                                      refresh=True,
+                                  ),
+                              )
+                      self.assertEqual(cache_path.read_bytes(), before)
+                      self.assertEqual(
+                          SnapshotResponseCache(root).load_payload(_evidence(first)["sha256"]),
+                          _body(first_payload),
+                      )
+                      self.assertEqual(len(list((root / "payloads").glob("*.json"))), 1)
+
+              def test_concurrent_same_digest_publication_is_exclusive_and_idempotent(self):
+                  payload = _body(_civitai_payload())
+                  with tempfile.TemporaryDirectory() as temporary:
+                      root = Path(temporary)
+                      cache = SnapshotResponseCache(root)
+                      with ThreadPoolExecutor(max_workers=8) as pool:
+                          references = list(pool.map(lambda _: cache.retain_payload(payload), range(24)))
+                      self.assertTrue(all(reference == references[0] for reference in references))
+                      self.assertEqual(references[0]["state"], "retained")
+                      self.assertEqual(len(list((root / "payloads").glob("*.json"))), 1)
+
+              def test_cache_disabled_is_explicitly_unavailable_not_retained(self):
+                  result = fetch_civitai(
+                      123,
+                      BoundedProviderTransport(
+                          exchange=ScriptedExchange(
+                              _json_response(CIVITAI_URL, _civitai_payload())
+                          )
+                      ),
+                  )
+                  evidence = _evidence(result)
+                  self.assertEqual((evidence["state"], evidence["reason"]),
+                                   ("unavailable", "cache-disabled"))
+                  self.assertFalse(result["raw_payload_ref"]["retained_in_cache"])
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+      - name: Prove the parent loses historical payload evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD/tests${PYTHONPATH:+:$PYTHONPATH}"
+          set +e
+          python -m unittest tests.test_adult_illustration_payload_evidence -v > /tmp/provider-payload-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/provider-payload-red.log
+          test "$status" -ne 0
+          grep -q 'test_changed_refresh_preserves_both_exact_bodies_across_restart' /tmp/provider-payload-red.log
+          grep -Eq 'FAILED|ERROR' /tmp/provider-payload-red.log
+          ! grep -q 'Failed to import test module' /tmp/provider-payload-red.log
+      - name: Implement immutable content-addressed payload evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > studio_prompt/_adult_illustration_source_transport_payloads.py <<'PY'
+          """Immutable content-addressed retention for validated provider metadata bytes."""
+          from __future__ import annotations
+
+          import hashlib
+          import os
+          from pathlib import Path
+          import tempfile
+          from typing import Any
+
+          from ._adult_illustration_source_transport_common import (
+              AUTHORITY,
+              MAX_PROVIDER_RESPONSE_BYTES,
+              SHA256,
+              parse_provider_json,
+          )
+
+          PAYLOAD_EVIDENCE_SCHEMA = (
+              "studio.adult-illustration-provider-payload-evidence/v1"
+          )
+
+
+          def _reference(
+              digest: str,
+              *,
+              state: str,
+              byte_count: int | None,
+              reason: str | None,
+          ) -> dict[str, Any]:
+              if not isinstance(digest, str) or SHA256.fullmatch(digest) is None:
+                  raise ValueError("Provider payload evidence SHA-256 is invalid")
+              if byte_count is not None and (
+                  not isinstance(byte_count, int)
+                  or isinstance(byte_count, bool)
+                  or not 0 <= byte_count <= MAX_PROVIDER_RESPONSE_BYTES
+              ):
+                  raise ValueError("Provider payload evidence byte count is invalid")
+              if state not in {"retained", "unavailable", "corrupt"}:
+                  raise ValueError("Provider payload evidence state is invalid")
+              if reason is not None and (
+                  not isinstance(reason, str) or not reason or len(reason) > 96
+              ):
+                  raise ValueError("Provider payload evidence reason is invalid")
+              return {
+                  "schema": PAYLOAD_EVIDENCE_SCHEMA,
+                  "sha256": digest,
+                  "state": state,
+                  "bytes": byte_count,
+                  "content_key": (
+                      f"payloads/{digest}.json" if state == "retained" else None
+                  ),
+                  "reason": reason,
+                  **AUTHORITY,
+              }
+
+
+          def unavailable_payload_evidence(
+              digest: str,
+              byte_count: int,
+              reason: str,
+          ) -> dict[str, Any]:
+              """Describe exact bytes that were not admitted to immutable retention."""
+              return _reference(
+                  digest,
+                  state="unavailable",
+                  byte_count=byte_count,
+                  reason=reason,
+              )
+
+
+          class ImmutableProviderPayloadStore:
+              """Retain validated raw metadata under immutable SHA-256 identity."""
+
+              def __init__(self, root: str | Path):
+                  self.root = Path(root)
+                  if self.root.is_symlink():
+                      raise ValueError("Provider payload evidence root cannot be a symlink")
+                  self.root.mkdir(exist_ok=True)
+                  self._resolved_root = self.root.resolve(strict=True)
+                  if not self._resolved_root.is_dir():
+                      raise ValueError("Provider payload evidence root must be a directory")
+
+              def _path(self, digest: str) -> Path:
+                  if not isinstance(digest, str) or SHA256.fullmatch(digest) is None:
+                      raise ValueError("Provider payload evidence SHA-256 is invalid")
+                  return self._resolved_root / f"{digest}.json"
+
+              @staticmethod
+              def _validate_body(body: bytes) -> bytes:
+                  if (
+                      not isinstance(body, bytes)
+                      or not 1 <= len(body) <= MAX_PROVIDER_RESPONSE_BYTES
+                  ):
+                      raise ValueError("Provider payload evidence bytes are invalid")
+                  parse_provider_json(body, MAX_PROVIDER_RESPONSE_BYTES)
+                  return body
+
+              def _inspect(
+                  self,
+                  digest: str,
+              ) -> tuple[dict[str, Any], bytes | None]:
+                  path = self._path(digest)
+                  try:
+                      if not path.exists():
+                          return (
+                              _reference(
+                                  digest,
+                                  state="unavailable",
+                                  byte_count=None,
+                                  reason="missing",
+                              ),
+                              None,
+                          )
+                      if path.is_symlink():
+                          return (
+                              _reference(
+                                  digest,
+                                  state="corrupt",
+                                  byte_count=None,
+                                  reason="symlink",
+                              ),
+                              None,
+                          )
+                      resolved = path.resolve(strict=True)
+                      if (
+                          resolved.parent != self._resolved_root
+                          or not resolved.is_file()
+                      ):
+                          return (
+                              _reference(
+                                  digest,
+                                  state="corrupt",
+                                  byte_count=None,
+                                  reason="invalid-path",
+                              ),
+                              None,
+                          )
+                      size = resolved.stat().st_size
+                      if not 1 <= size <= MAX_PROVIDER_RESPONSE_BYTES:
+                          return (
+                              _reference(
+                                  digest,
+                                  state="corrupt",
+                                  byte_count=(
+                                      size if 0 <= size <= MAX_PROVIDER_RESPONSE_BYTES else None
+                                  ),
+                                  reason="invalid-size",
+                              ),
+                              None,
+                          )
+                      body = resolved.read_bytes()
+                  except FileNotFoundError:
+                      return (
+                          _reference(
+                              digest,
+                              state="unavailable",
+                              byte_count=None,
+                              reason="missing",
+                          ),
+                          None,
+                      )
+                  except OSError:
+                      return (
+                          _reference(
+                              digest,
+                              state="corrupt",
+                              byte_count=None,
+                              reason="unreadable",
+                          ),
+                          None,
+                      )
+                  if len(body) != size:
+                      return (
+                          _reference(
+                              digest,
+                              state="corrupt",
+                              byte_count=len(body),
+                              reason="changed-during-read",
+                          ),
+                          None,
+                      )
+                  if hashlib.sha256(body).hexdigest() != digest:
+                      return (
+                          _reference(
+                              digest,
+                              state="corrupt",
+                              byte_count=len(body),
+                              reason="sha256-mismatch",
+                          ),
+                          None,
+                      )
+                  try:
+                      parse_provider_json(body, MAX_PROVIDER_RESPONSE_BYTES)
+                  except ValueError:
+                      return (
+                          _reference(
+                              digest,
+                              state="corrupt",
+                              byte_count=len(body),
+                              reason="invalid-json",
+                          ),
+                          None,
+                      )
+                  return (
+                      _reference(
+                          digest,
+                          state="retained",
+                          byte_count=len(body),
+                          reason=None,
+                      ),
+                      body,
+                  )
+
+              def inspect(self, digest: str) -> dict[str, Any]:
+                  """Return retained, unavailable or corrupt without inventing bytes."""
+                  reference, _ = self._inspect(digest)
+                  return reference
+
+              def load(self, digest: str) -> bytes:
+                  """Read exact retained bytes or distinguish missing from corrupt evidence."""
+                  reference, body = self._inspect(digest)
+                  if reference["state"] == "unavailable":
+                      raise FileNotFoundError("Provider payload evidence is unavailable")
+                  if reference["state"] != "retained" or body is None:
+                      raise ValueError("Provider payload evidence is corrupt")
+                  return body
+
+              def retain(self, body: bytes) -> dict[str, Any]:
+                  """Publish exact validated bytes once; never replace a digest path."""
+                  body = self._validate_body(body)
+                  digest = hashlib.sha256(body).hexdigest()
+                  path = self._path(digest)
+                  existing, existing_body = self._inspect(digest)
+                  if existing["state"] == "retained":
+                      if existing_body != body:
+                          raise ValueError(
+                              "Provider payload evidence digest resolves to different bytes"
+                          )
+                      return existing
+                  if existing["state"] == "corrupt":
+                      raise ValueError("Provider payload evidence destination is corrupt")
+
+                  temporary: Path | None = None
+                  try:
+                      with tempfile.NamedTemporaryFile(
+                          mode="xb",
+                          prefix=f".{digest}.",
+                          suffix=".tmp",
+                          dir=self._resolved_root,
+                          delete=False,
+                      ) as handle:
+                          temporary = Path(handle.name)
+                          handle.write(body)
+                          handle.flush()
+                          os.fsync(handle.fileno())
+                      try:
+                          os.link(temporary, path)
+                      except FileExistsError:
+                          pass
+                      reference, retained = self._inspect(digest)
+                      if reference["state"] != "retained" or retained != body:
+                          raise ValueError(
+                              "Provider payload evidence publication was not exact"
+                          )
+                      return reference
+                  finally:
+                      if temporary is not None:
+                          temporary.unlink(missing_ok=True)
+          PY
+
+          python - <<'PY'
+          from pathlib import Path
+
+          cache = Path('studio_prompt/_adult_illustration_source_transport_cache.py')
+          text = cache.read_text(encoding='utf-8')
+          anchor = ")\n\n\ndef _validate_response_routes("
+          replacement = ")\nfrom ._adult_illustration_source_transport_payloads import (\n    ImmutableProviderPayloadStore,\n)\n\n\ndef _validate_response_routes("
+          if text.count(anchor) != 1:
+              raise SystemExit('cache import anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        if not self._resolved_root.is_dir():
+                      raise ValueError("Source response cache root must be a directory")
+
+              def path_for(self, request: HttpRequest) -> Path:
+          """
+          replacement = """        if not self._resolved_root.is_dir():
+                      raise ValueError("Source response cache root must be a directory")
+                  self.payloads = ImmutableProviderPayloadStore(
+                      self._resolved_root / "payloads"
+                  )
+
+              def retain_payload(self, body: bytes) -> dict[str, object]:
+                  return self.payloads.retain(body)
+
+              def inspect_payload(self, digest: str) -> dict[str, object]:
+                  return self.payloads.inspect(digest)
+
+              def load_payload(self, digest: str) -> bytes:
+                  return self.payloads.load(digest)
+
+              def path_for(self, request: HttpRequest) -> Path:
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('cache constructor anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        parse_provider_json(response.body, MAX_PROVIDER_RESPONSE_BYTES)
+                  validate_json_media_type(response.headers)
+                  key = request_key(request)
+          """
+          replacement = """        parse_provider_json(response.body, MAX_PROVIDER_RESPONSE_BYTES)
+                  validate_json_media_type(response.headers)
+                  evidence = self.retain_payload(response.body)
+                  if evidence["sha256"] != hashlib.sha256(response.body).hexdigest():
+                      raise AssertionError("Provider payload evidence identity changed")
+                  key = request_key(request)
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('cache store anchor changed')
+          cache.write_text(text.replace(anchor, replacement), encoding='utf-8')
+
+          http = Path('studio_prompt/_adult_illustration_source_transport_http.py')
+          text = http.read_text(encoding='utf-8')
+          anchor = """from ._adult_illustration_source_transport_cache import SnapshotResponseCache
+          from ._adult_illustration_source_transport_common import (
+          """
+          replacement = """from ._adult_illustration_source_transport_cache import SnapshotResponseCache
+          from ._adult_illustration_source_transport_payloads import (
+              unavailable_payload_evidence,
+          )
+          from ._adult_illustration_source_transport_common import (
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP import anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        self._receipt: dict[str, Any] | None = None
+                  self._pending: tuple[HttpRequest, HttpResponse] | None = None
+
+              @property
+              def receipt(self) -> dict[str, Any]:
+          """
+          replacement = """        self._receipt: dict[str, Any] | None = None
+                  self._pending: tuple[HttpRequest, HttpResponse] | None = None
+                  self._completed: tuple[HttpRequest, HttpResponse] | None = None
+                  self._payload_evidence: dict[str, Any] | None = None
+
+              @property
+              def receipt(self) -> dict[str, Any]:
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP state anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """    def _exchange_with_retries(
+          """
+          replacement = """    @property
+              def payload_evidence(self) -> dict[str, Any]:
+                  if self._payload_evidence is None:
+                      raise RuntimeError("Provider payload evidence was not finalized")
+                  return copy.deepcopy(self._payload_evidence)
+
+              def _exchange_with_retries(
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP property anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        if self._pending is not None:
+                      raise RuntimeError("Previous provider response was not finalized")
+                  provider = validate_base_request(request)
+          """
+          replacement = """        if self._pending is not None or self._completed is not None:
+                      raise RuntimeError("Previous provider response was not finalized")
+                  self._payload_evidence = None
+                  provider = validate_base_request(request)
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP call guard anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """            self._receipt = self._make_receipt(
+                          provider=provider,
+                          request=request,
+                          response=cached,
+                          key=key,
+                          cache_state="hit",
+                          network_performed=False,
+                          attempts=0,
+                          redirects=len(cached.redirect_chain),
+                          validators=(),
+                          wire_status=200,
+                      )
+                      return cached
+          """
+          replacement = anchor.replace(
+              "            return cached\n",
+              "            self._completed = (request, cached)\n            return cached\n",
+          )
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP cache-hit anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        self._receipt = self._make_receipt(
+                      provider=provider,
+                      request=request,
+                      response=response,
+                      key=key,
+                      cache_state=cache_state,
+                      network_performed=True,
+                      attempts=attempts,
+                      redirects=len(redirects),
+                      validators=tuple(sorted(validators)),
+                      wire_status=wire.status,
+                  )
+                  return response
+          """
+          replacement = anchor.replace(
+              "        return response\n",
+              "        self._completed = (request, response)\n        return response\n",
+          )
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP completed-response anchor changed')
+          text = text.replace(anchor, replacement)
+          start = text.index("    def finalize(self, raw_payload_sha256: str) -> None:\n")
+          end = text.index("    def abort(self) -> None:\n", start)
+          replacement = '''    def finalize(self, raw_payload_sha256: str) -> None:
+                  if self._receipt is None or self._completed is None:
+                      raise RuntimeError("No provider metadata request has completed")
+                  if (
+                      not isinstance(raw_payload_sha256, str)
+                      or raw_payload_sha256
+                      != self._receipt["response_payload_sha256"]
+                  ):
+                      self._pending = None
+                      self._completed = None
+                      raise ValueError("Parsed snapshot payload identity does not match transport")
+                  request, response = self._completed
+                  if self.cache is None:
+                      evidence = unavailable_payload_evidence(
+                          raw_payload_sha256,
+                          len(response.body),
+                          "cache-disabled",
+                      )
+                  elif self._pending is not None:
+                      pending_request, pending_response = self._pending
+                      if pending_request != request or pending_response != response:
+                          raise AssertionError("Pending provider response identity changed")
+                      stored_key = self.cache.store(request, response)
+                      if stored_key != self._receipt["request_key"]:
+                          raise ValueError("Stored cache identity changed during finalization")
+                      evidence = self.cache.inspect_payload(raw_payload_sha256)
+                  else:
+                      evidence = self.cache.retain_payload(response.body)
+                  if self.cache is not None and evidence.get("state") != "retained":
+                      raise ValueError("Provider payload evidence was not retained")
+                  self._payload_evidence = evidence
+                  self._pending = None
+                  self._completed = None
+
+          '''
+          text = text[:start] + replacement + text[end:]
+          anchor = """    def abort(self) -> None:
+                  self._pending = None
+          """
+          replacement = """    def abort(self) -> None:
+                  self._pending = None
+                  self._completed = None
+                  self._payload_evidence = None
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('HTTP abort anchor changed')
+          http.write_text(text.replace(anchor, replacement), encoding='utf-8')
+
+          public = Path('studio_prompt/adult_illustration_source_transport.py')
+          text = public.read_text(encoding='utf-8')
+          anchor = """    transport.finalize(digest)
+              receipt = transport.receipt
+              return {
+          """
+          replacement = """    transport.finalize(digest)
+              receipt = transport.receipt
+              payload_evidence = transport.payload_evidence
+              return {
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('public finalize anchor changed')
+          text = text.replace(anchor, replacement)
+          anchor = """        "raw_payload_ref": {
+                      "sha256": digest,
+                      "cache_key": receipt["request_key"],
+                      "retained_in_cache": receipt["cache_state"]
+                      in {"miss", "refreshed", "hit", "revalidated"},
+                  },
+          """
+          replacement = """        "raw_payload_ref": {
+                      "sha256": digest,
+                      "cache_key": receipt["request_key"],
+                      "retained_in_cache": payload_evidence["state"] == "retained",
+                      "payload_evidence": payload_evidence,
+                  },
+          """
+          if text.count(anchor) != 1:
+              raise SystemExit('public payload-ref anchor changed')
+          public.write_text(text.replace(anchor, replacement), encoding='utf-8')
+          PY
+
+          cat > docs/adult-illustration/SOURCE-PAYLOAD-EVIDENCE.md <<'MD'
+          # Immutable provider payload evidence
+
+          Issue: #694. Parent transport stack: #579 → #687.
+
+          ## Two stores with different authority
+
+          The conditional-GET request cache remains mutable. Its request-key record holds the
+          latest exact 200 response, validators and route evidence needed for cache hits and 304
+          revalidation. Replacing that record does not preserve history.
+
+          Successful validated provider JSON is additionally retained under
+          `payloads/<sha256>.json`. This path is content-addressed, published from a fully written
+          same-filesystem temporary file through an exclusive hard link, and never replaced.
+          Equal bodies deduplicate. Changed bodies for the same provider/version receive different
+          paths, so an old exported result cannot resolve silently to newer bytes.
+
+          New `raw_payload_ref` records retain the request cache key for source/request provenance
+          and add `payload_evidence` with a stable schema, digest, byte count, relative content key
+          and one of three states:
+
+          - `retained`: exact validated bytes are present;
+          - `unavailable`: bytes are absent or retention was disabled;
+          - `corrupt`: a digest path is present but unreadable, unsafe, malformed or mismatched.
+
+          `retained_in_cache` remains for compatibility, but is true only when immutable payload
+          evidence was confirmed. It no longer infers history from the mutable request-key file.
+
+          ## Compatibility
+
+          Existing request-cache records remain readable. A later cache hit or 304 is a new
+          observation and retains its current exact body immutably before exporting a new result.
+          Old exported references that lack `payload_evidence` remain mutable-cache hints only;
+          the system does not invent historical bytes for them.
+
+          A validated network 200 retains its content-addressed body before the mutable request
+          record is replaced. If immutable publication fails, finalization fails and the old
+          request record remains unchanged. If later request-record publication fails after the
+          content body was retained, the unreferenced content object may remain safely deduplicated;
+          no successful result is returned.
+
+          ## Bounds and non-authority
+
+          The immutable store accepts only bounded bytes that pass the existing strict provider
+          JSON decoder. Symlinks, path escape, size drift, unreadable files and digest mismatch are
+          refused or surfaced as corrupt. It stores metadata only—never model files, credentials,
+          packages or generated media—and every evidence record retains the existing false
+          download/install/execution/generation/training flags.
+
+          This slice does **not** define quota, pruning or evidence-lifetime policy. Explicit
+          pruning and quota admission remain open in #694; until then retained objects are not
+          deleted automatically and no permanent-retention guarantee is claimed.
+          MD
+      - name: Verify focused and programme contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONPATH="$PWD/tests${PYTHONPATH:+:$PYTHONPATH}"
+          python -m unittest tests.test_adult_illustration_payload_evidence -v | tee /tmp/provider-payload-green.log
+          python -m unittest \
+            tests.test_adult_illustration_source_transport \
+            tests.test_adult_illustration_source_transport_cli \
+            tests.test_adult_illustration_source_transport_hardening \
+            tests.test_adult_illustration_source_transport_incomplete_read -v \
+            | tee /tmp/provider-transport-green.log
+          python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v \
+            | tee /tmp/adult-programme-green.log
+          python -m py_compile \
+            studio_prompt/_adult_illustration_source_transport_payloads.py \
+            studio_prompt/_adult_illustration_source_transport_cache.py \
+            studio_prompt/_adult_illustration_source_transport_http.py \
+            studio_prompt/adult_illustration_source_transport.py \
+            tests/test_adult_illustration_payload_evidence.py
+          python scripts/validate-repo.py | tee /tmp/provider-validator.log
+          git diff --check
+      - name: Package exact tested files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifact/studio_prompt artifact/tests artifact/docs/adult-illustration artifact/evidence
+          cp studio_prompt/_adult_illustration_source_transport_payloads.py artifact/studio_prompt/
+          cp studio_prompt/_adult_illustration_source_transport_cache.py artifact/studio_prompt/
+          cp studio_prompt/_adult_illustration_source_transport_http.py artifact/studio_prompt/
+          cp studio_prompt/adult_illustration_source_transport.py artifact/studio_prompt/
+          cp tests/test_adult_illustration_payload_evidence.py artifact/tests/
+          cp docs/adult-illustration/SOURCE-PAYLOAD-EVIDENCE.md artifact/docs/adult-illustration/
+          cp /tmp/provider-payload-red.log artifact/evidence/red.log
+          cp /tmp/provider-payload-green.log artifact/evidence/focused-green.log
+          cp /tmp/provider-transport-green.log artifact/evidence/transport-green.log
+          cp /tmp/adult-programme-green.log artifact/evidence/programme-green.log
+          cp /tmp/provider-validator.log artifact/evidence/validator.log
+          git diff -- \
+            studio_prompt/_adult_illustration_source_transport_payloads.py \
+            studio_prompt/_adult_illustration_source_transport_cache.py \
+            studio_prompt/_adult_illustration_source_transport_http.py \
+            studio_prompt/adult_illustration_source_transport.py \
+            tests/test_adult_illustration_payload_evidence.py \
+            docs/adult-illustration/SOURCE-PAYLOAD-EVIDENCE.md \
+            > artifact/evidence/change.patch
+          (cd artifact && find . -type f -print0 | sort -z | xargs -0 sha256sum) > artifact/evidence/SHA256SUMS.txt
+          printf '%s\n' \
+            'parent=4b659470ae20a74787ed503d1e7d624e1187ef67' \
+            'issue=694' \
+            'scope=immutable content-addressed provider payload retention; quota/pruning excluded' \
+            > artifact/evidence/MANIFEST.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: immutable-provider-payloads
+          path: artifact
+          if-no-files-found: error
+          retention-days: 7
