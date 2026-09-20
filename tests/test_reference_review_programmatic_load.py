@@ -1,4 +1,4 @@
-"""Programmatic reference-review loads immediately revoke stale mutation evidence."""
+"""Programmatic reference-review loads suspend stale evidence until they commit."""
 import json
 from pathlib import Path
 import shutil
@@ -9,7 +9,7 @@ import unittest
 
 class ReferenceReviewProgrammaticLoadTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
-    def test_programmatic_load_disarms_prior_undo_and_receipt_before_await(self):
+    def test_programmatic_load_suspends_restores_and_commits_evidence(self):
         from test_reference_review import ReferenceReviewTests
 
         fixture = ReferenceReviewTests()
@@ -34,7 +34,7 @@ class ReferenceReviewProgrammaticLoadTests(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn(
-            'Programmatic reference-review load disarmed prior mutation evidence',
+            'Programmatic reference-review loads suspend, restore, and commit evidence correctly',
             result.stdout,
         )
 
