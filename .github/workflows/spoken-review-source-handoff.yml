@@ -1,0 +1,26 @@
+name: Spoken review source handoff
+on:
+  push:
+    branches: [codex/spoken-brief-review-continuation]
+    paths: [.github/workflows/spoken-review-source-handoff.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 78fa29006925d312b6b420abeab2c15b0ca6575b
+          persist-credentials: false
+      - name: Archive exact parent
+        run: |
+          mkdir -p /tmp/spoken-review-source
+          git archive --format=zip HEAD -o /tmp/spoken-review-source/source.zip
+          git rev-parse HEAD > /tmp/spoken-review-source/head.txt
+          git rev-parse HEAD^{tree} > /tmp/spoken-review-source/tree.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spoken-review-parent-78fa2900
+          path: /tmp/spoken-review-source/
+          retention-days: 1
