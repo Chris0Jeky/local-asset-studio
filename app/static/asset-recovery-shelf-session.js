@@ -1,41 +1,17 @@
 /* Bridge the existing tab journal to optional persistent snapshots. No network owner. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./asset-recovery-shelf.js'):root.StudioAssetRecoveryShelf);if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecoveryShelfSession=api;})(globalThis,function(Core){
   'use strict';
-  const TAB_STATE_KEY='studio.asset-recovery.shelf.tab.v1';
-  const validRecordId=value=>typeof value==='string'&&/^[0-9a-f]{32}$/.test(value);
-  function create({journal,store,crypto=globalThis.crypto,now=Date.now,onStatus=()=>{},tabStorage=null}){
+  function create({journal,store,crypto=globalThis.crypto,now=Date.now,onStatus=()=>{}}){
     let enabled=false,tail=Promise.resolve(),scheduled=false;
     const pending=new Map(),writers=new Map(),errors=new Map();
     const serial=work=>{const result=tail.catch(()=>{}).then(work);tail=result.catch(()=>{});return result;};
     const status=(text,error=false)=>onStatus(text,error);
     const copy=v=>JSON.parse(JSON.stringify(v));
     const identifier=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),v=>v.toString(16).padStart(2,'0')).join('');
-    const tabTarget=()=>typeof tabStorage==='function'?tabStorage():tabStorage;
-    function tabState(){
-      try{
-        const target=tabTarget(),raw=target?.getItem?.(TAB_STATE_KEY);
-        if(raw===null||raw===undefined)return {};
-        const value=JSON.parse(raw);if(!value||typeof value!=='object'||Array.isArray(value))return {};
-        return Object.fromEntries(['detail','library'].filter(slot=>validRecordId(value[slot])).map(slot=>[slot,value[slot]]));
-      }catch(_){return {};}
-    }
-    function remember(slot,id){
-      try{const target=tabTarget();if(!target?.setItem)return;const next=tabState();next[slot]=id;target.setItem(TAB_STATE_KEY,JSON.stringify(next));}catch(_){/* A missing tab binding only disables reuse; it never loses the shelf record. */}
-    }
-    function forget(slot,id){
-      try{const target=tabTarget();if(!target?.setItem)return;const next=tabState();if(next[slot]!==id)return;delete next[slot];target.setItem(TAB_STATE_KEY,JSON.stringify(next));}catch(_){/* Best effort; future capture validates the bound record before reuse. */}
-    }
     async function capture(slot,input){
       const payload=Core.project(slot,input);let prior=writers.get(slot);
       if(prior&&(prior.workspace_id!==(payload.workspace_id||null)||slot==='detail'&&prior.payload.id!==payload.id))prior=null;
       if(prior?.payload.operation&&Core.canonical(prior.payload.operation)!==Core.canonical(payload.operation))prior=null;
-      if(!prior){
-        // Exact snapshots can be reused after reload only through this tab's
-        // sessionStorage binding. Shared shelf contents are never ownership proof.
-        const boundId=tabState()[slot];
-        prior=boundId?(await store.list()).find(r=>r.id===boundId&&r.slot===slot&&Core.canonical(r.payload)===Core.canonical(payload)):null;
-        if(prior){writers.set(slot,prior);return prior;}
-      }
       if(prior&&Core.canonical(prior.payload)===Core.canonical(payload)){
         const current=(await store.list()).find(r=>r.id===prior.id);
         if(current?.sha256!==prior.sha256)throw Error('Recovery changed in another tab; inspect both viewpoints before saving.');
@@ -43,7 +19,7 @@
       }
       const time=Math.max(0,Math.floor(now()),prior?.updated_at||0);
       const record=await Core.seal(slot,payload,{id:prior?.id||identifier(),created_at:prior?.created_at??time,updated_at:time,generation:(prior?.generation||0)+1},crypto);
-      await store.put(record,prior?.sha256||null);writers.set(slot,record);remember(slot,record.id);return record;
+      await store.put(record,prior?.sha256||null);writers.set(slot,record);return record;
     }
     async function checkpoint(slot,input){
       try{const result=await capture(slot,input);errors.delete(slot);const other=errors.values().next().value;status(other?'Device recovery failed: '+other.message:'Device recovery checkpoint verified. Clearing browser data still removes it.',!!other);return result;}
@@ -88,13 +64,13 @@
         }
         const local=journal.read(record.slot);
         if(local&&Core.canonical(Core.project(record.slot,local))!==Core.canonical(record.payload))throw Error('This tab has a different local viewpoint. Both are retained; inspect/export or explicitly discard one first.');
-        writers.set(record.slot,copy(record));remember(record.slot,record.id);journal.write(record.slot,value);return value;
+        writers.set(record.slot,copy(record));journal.write(record.slot,value);return value;
       },
       async discard(record){return serial(async()=>{
         await store.remove(record.id,record.sha256);
-        for(const [slot,r] of writers)if(r.id===record.id){writers.delete(slot);pending.delete(slot);errors.delete(slot);forget(slot,record.id);}
+        for(const [slot,r] of writers)if(r.id===record.id){writers.delete(slot);pending.delete(slot);errors.delete(slot);}
       });},
-      forget(recordId){for(const [slot,r] of writers)if(r.id===recordId){writers.delete(slot);forget(slot,recordId);}}
+      forget(recordId){for(const [slot,r] of writers)if(r.id===recordId)writers.delete(slot);}
     };
   }
   return {create};
