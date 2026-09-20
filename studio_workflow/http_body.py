@@ -89,6 +89,9 @@ def drain_declared_body(handler) -> bool:
 
 
 def reject_json(handler, status: int, value: dict):
-    """Drain a safe declared body, then preserve the owner's JSON refusal."""
-    drain_declared_body(handler)
+    """Drain one safe declared body, closing after ambiguous or incomplete input."""
+    if not drain_declared_body(handler):
+        # A remaining or ambiguously framed body cannot be distinguished from
+        # the start of the next request on a persistent connection.
+        handler.close_connection = True
     return handler._json(status, value)
