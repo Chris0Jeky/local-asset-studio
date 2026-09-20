@@ -1,0 +1,78 @@
+name: Publish observation persistence fix v2
+
+on:
+  push:
+    branches:
+      - audit/703-observation-publication
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify bounded publication branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "637f3f468838cd46d10af264297344829f487ac0"
+          test "$(git rev-parse HEAD^^)" = "716e549182e1488192bf50add8f4c4a59ee52464"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/publish-703-observation-publication-v2.yml"
+          test "$(git hash-object .github/workflows/publish-703-observation-publication.yml)" = "d8993a8726d75f00c6ced929670ce0c550f46b26"
+      - name: Install focused test dependencies
+        run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Execute corrected bounded publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          old_path = Path('.github/workflows/publish-703-observation-publication.yml')
+          text = old_path.read_text(encoding='utf-8')
+          marker = '''      - name: Reproduce, correct, verify, and publish
+                  shell: bash
+                  run: |
+          '''
+          if text.count(marker) != 1:
+              raise SystemExit('bounded publisher step not found exactly once')
+          block = text.split(marker, 1)[1]
+          lines = []
+          for line in block.splitlines():
+              if line and not line.startswith('          '):
+                  raise SystemExit('unexpected publisher indentation')
+              lines.append(line[10:] if line else '')
+          script = '\n'.join(lines) + '\n'
+          script = script.replace(
+              'set -euo pipefail\n',
+              'set -euo pipefail\nexport PYTHONPATH="$PWD/tests${PYTHONPATH:+:$PYTHONPATH}"\n',
+              1,
+          )
+          script = script.replace(
+              "grep -Eq 'FAILED|ERROR' /tmp/observation-red.log\n",
+              "grep -Eq 'FAILED|ERROR' /tmp/observation-red.log\n"
+              "! grep -q 'Failed to import test module' /tmp/observation-red.log\n"
+              "grep -q 'test_failure_before_state_replace_keeps_live_and_durable_state_retryable' /tmp/observation-red.log\n",
+              1,
+          )
+          script = script.replace(
+              'rm .github/workflows/publish-703-observation-publication.yml\n',
+              'rm .github/workflows/publish-703-observation-publication.yml .github/workflows/publish-703-observation-publication-v2.yml\n',
+              1,
+          )
+          script = script.replace(
+              'git add app/server.py tests/test_observation_resume_persistence.py docs/revision-commands/703-OBSERVATION-PUBLICATION.md .github/workflows/publish-703-observation-publication.yml\n',
+              'git add app/server.py tests/test_observation_resume_persistence.py docs/revision-commands/703-OBSERVATION-PUBLICATION.md .github/workflows/publish-703-observation-publication.yml .github/workflows/publish-703-observation-publication-v2.yml\n',
+              1,
+          )
+          Path('/tmp/publish-703.sh').write_text(script, encoding='utf-8')
+          PY
+          bash /tmp/publish-703.sh
