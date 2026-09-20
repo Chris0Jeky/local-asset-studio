@@ -8,6 +8,7 @@ run the file), a basename that is only a tail of a longer one (`core.cjs` inside
 and this module's own text, which is excluded so its sentinels cannot vouch for a contract. A trailing
 comment after real code does still count — the known hole, pinned in MatchingRules rather than claimed shut."""
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,7 +17,8 @@ SELF = Path(__file__).resolve().relative_to(ROOT).as_posix()
 CONTRACT_GLOBS = ('tests/**/*.cjs', 'docs/**/*.cjs')
 RUNNER_GLOBS = ('tests/**/*.py', 'scripts/**/*.py', '.github/workflows/*.yml', '.github/workflows/*.yaml')
 CONTRACT_FLOOR = 40  # a glob that stops matching must fail loudly, not pass vacuously
-SENTINELS = ('tests/frontend_handoffs.cjs', 'tests/continuation_core.cjs')
+SENTINELS = ('tests/frontend_handoffs.cjs', 'tests/continuation_core.cjs',
+             'tools/gltf-validation/validate.cjs')
 
 
 def contracts():
@@ -79,9 +81,20 @@ class ContractDiscoveryTests(unittest.TestCase):
         self.assertEqual(orphans, [], 'these .cjs contracts are never executed — nothing under tests/, scripts/ or .github/workflows/ names them, so they are silently green: '
                          + ', '.join(orphans) + '. Wire each into a Python wrapper (see tests/test_workbench_handoff_guards.py) or a workflow step, or delete it.')
 
+    def test_untracked_contracts_do_not_enter_the_repository_gate(self):
+        """Scratch files and ignored node_modules trees are not repository contracts."""
+        handle = tempfile.NamedTemporaryFile(dir=ROOT / 'tests', suffix='.cjs', delete=False)
+        path = Path(handle.name)
+        try:
+            handle.write(b"throw new Error('untracked scratch');\n"); handle.close()
+            relative = path.relative_to(ROOT).as_posix()
+            self.assertNotIn(relative, contracts())
+        finally:
+            handle.close(); path.unlink(missing_ok=True)
+
 
 class MatchingRules(unittest.TestCase):
-    """The three ways this gate could vouch for a contract nothing runs."""
+    """Ways this gate could vouch for a contract nothing runs."""
 
     def test_a_basename_is_never_read_out_of_a_longer_one(self):
         self.assertEqual(names('subprocess.run([node, "tests/continuation_core.cjs"])'), {'continuation_core.cjs'})
@@ -96,10 +109,13 @@ class MatchingRules(unittest.TestCase):
         lane = "on:\n  pull_request:\n    paths:\n      - 'tests/probe.cjs'\n      - \"tests/other.cjs\"\njobs:\n  x:\n    steps:\n      - run: node tests/real.cjs\n"
         self.assertEqual(names(executable_text(lane, False)), {'real.cjs'})
 
-    def test_a_trailing_comment_is_a_known_hole(self):
-        """Only whole-line comments are stripped; a trailing note still vouches. Documented, not claimed
-        otherwise, and cheap to spot in review — tracked rather than parsed."""
-        self.assertEqual(names(executable_text('real = 1  # tests/probe.cjs is wired below\n', True)), {'probe.cjs'})
+    def test_a_trailing_comment_is_not_wiring(self):
+        self.assertEqual(names(executable_text('real = 1  # tests/probe.cjs is wired below\n', True)), set())
+        self.assertEqual(names(executable_text('run: true  # node tests/probe.cjs\n', False)), set())
+
+    def test_python_docstrings_are_not_wiring(self):
+        source = '"""tests/probe.cjs is documented here."""\nsubprocess.run([node, "tests/real.cjs"])\n'
+        self.assertEqual(names(executable_text(source, True)), {'real.cjs'})
 
 
 if __name__ == '__main__': unittest.main()
