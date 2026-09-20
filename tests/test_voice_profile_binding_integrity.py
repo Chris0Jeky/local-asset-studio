@@ -77,6 +77,23 @@ class VoiceProfileBindingIntegrityTests(unittest.TestCase):
         ):
             qualification.validate_report(mutated, report)
 
+    def test_catalog_binding_cannot_be_rewritten_and_fully_rehashed(self):
+        plan = qualification.build_plan("ember-brief-v1")
+        mutated = copy.deepcopy(plan)
+        delivery = mutated["profile"]["delivery"]
+        delivery["instruction"] = "A self-consistent but non-catalogue instruction."
+        delivery["sha256"] = qualification.canonical_digest(
+            {key: value for key, value in delivery.items() if key != "sha256"}
+        )
+        rehash_binding_and_plan(mutated)
+        report = accepted_report(mutated)
+
+        with self.assertRaisesRegex(
+            qualification.QualificationError,
+            "canonical catalogue resolution",
+        ):
+            qualification.validate_report(mutated, report)
+
     def test_rehashed_plan_requires_the_complete_profile_binding_shape(self):
         plan = qualification.build_plan("ember-brief-v1")
         mutated = copy.deepcopy(plan)
