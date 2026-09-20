@@ -78,6 +78,7 @@ async def run(args):
                 if args.inert:
                     await inert_page(page, server.server_port)
                     await page.add_style_tag(content=(ROOT/'app/static/workshop.css').read_text())
+                    await page.add_script_tag(content=(ROOT/'app/static/presentation-context.js').read_text())
                     await page.add_script_tag(content=(ROOT/'app/static/workshop.js').read_text())
                 else: await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
                 await page.wait_for_function('!!catalog && !!selected && schemaAvailable')

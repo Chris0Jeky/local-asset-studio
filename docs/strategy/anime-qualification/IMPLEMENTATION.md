@@ -14,10 +14,10 @@ Use #552 under #313/#14, not a new epic. Preserve HUMAN_TODO decisions, existing
 
 Files: this directory; `docs/strategy/README.md`; `docs/SETTINGS-KNOWLEDGE.md`.
 
-- [ ] Publish page-addressed claims, current divergences, source verification and the accepted-pack reading path.
-- [ ] Correct the stale statement that no Anima LoRAs are installed without overwriting historical results or changing a recipe.
-- [ ] Route each remaining requirement to an existing issue and name its smallest evidence-producing change.
-- [ ] Check relative links, recorded repository identities and source/profile distinctions.
+- [x] Publish page-addressed claims, current divergences, source verification and the accepted-pack reading path.
+- [x] Correct the stale statement that no Anima LoRAs are installed without overwriting historical results or changing a recipe.
+- [x] Route each remaining requirement to an existing issue and name its smallest evidence-producing change.
+- [x] Check relative links, recorded repository identities and source/profile distinctions.
 
 This slice can be reviewed without accepting any proposed runtime, frontend or model change. Its review does not close #313 or imply that #552's implementation programme is finished.
 
@@ -28,12 +28,12 @@ Files: `studio_workflow/guidance.py`; `tests/test_guidance_source_scope.py`; exi
 Consumes: `guidance.validate_claim(value)` and `guidance.explain(preset, template, controls, kb, manifest, today=None)`.
 Produces: an optional `source.scope` declaration in the existing KB claim and a normalized `source_scope` plus visible reason in the existing explanation. No second source store or endpoint.
 
-- [ ] Write a failing real-evaluator test: a legacy claim whose hashes match must report `source_scope == 'unrecorded'`, not exact-version qualification.
-- [ ] Add cases for `family`, `exact_version`, `local_workflow`, invalid/malformed scope, mutable or absent revision, source/hash mismatch, expired source, conflicting advice, detached return values and changed-context identity.
-- [ ] Extend the existing validator, accepting the optional scope only. Missing scope remains unrecorded; exact-version and local-workflow declarations require a content/commit pin or an explicit provider-version identity, not `main` or a retrieval date.
-- [ ] Append the scope explanation to existing `reasons` so the current UI renders it as text. Preserve resource applicability, conflict evaluation and all no-write/no-generation behaviour.
-- [ ] Exercise the actual CLI and existing HTTP/client contracts. Run focused tests, repository validation and the strict full-suite lifetime gate.
-- [ ] Publish the tested diff, record its head/checks and request review. Do not backfill old claims with invented source attestations.
+- [x] Write a failing real-evaluator test: a legacy claim whose hashes match must report `source_scope == 'unrecorded'`, not exact-version qualification.
+- [x] Add cases for `family`, `exact_version`, `local_workflow`, invalid/malformed scope, mutable or absent revision, source/hash mismatch, expired source, conflicting advice, detached return values and changed-context identity.
+- [x] Extend the existing validator, accepting the optional scope only. Missing scope remains unrecorded; exact-version and local-workflow declarations require a content/commit pin or an explicit provider-version identity, not `main` or a retrieval date.
+- [x] Append the scope explanation to existing `reasons` so the current UI renders it as text. Preserve resource applicability, conflict evaluation and all no-write/no-generation behaviour.
+- [x] Exercise the actual CLI and existing HTTP/client contracts. Run focused tests, repository validation and the strict full-suite lifetime gate.
+- [x] Publish the tested diff, record its head/checks and request review. Do not backfill old claims with invented source attestations.
 
 Example acceptance:
 

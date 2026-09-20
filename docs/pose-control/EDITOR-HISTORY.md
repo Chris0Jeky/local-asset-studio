@@ -10,8 +10,8 @@ Each entry snapshots both arrays used by the editor:
 - the current COCO-18 joint coordinates, including `null` for an unknown joint;
 - the remembered home coordinates used when an unknown joint is restored.
 
-The snapshot is copied on entry and exit. A later drag or toggle cannot mutate a saved state through a shared
-object reference.
+The snapshot is copied on entry. Undo and Redo remove the restored snapshot from its stack before returning it,
+so a later drag or toggle cannot mutate a retained history entry through a shared object reference.
 
 ## Timeline rules
 
@@ -19,6 +19,8 @@ object reference.
 - Undo moves the current state to the future stack and restores the newest past state.
 - Redo moves the current state back to the past stack and restores the newest future state.
 - A new authored edit after Undo discards the abandoned future branch.
+- History equality uses the same hundredth-pixel identity as the rendered/requested pose. A typed candidate that
+  the workbench refuses as serialization-equivalent cannot add an Undo entry or erase the existing Redo branch.
 - Joint selection and other non-geometry UI changes do not create or invalidate history.
 - Both stacks are rescaled when the pose canvas dimensions change, so neither direction restores coordinates
   from an obsolete canvas.

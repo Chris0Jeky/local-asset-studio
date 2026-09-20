@@ -5,6 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+const references = fs.readFileSync(path.join(__dirname, '../app/static/references.js'), 'utf8');
+const attachmentSource = references.slice(references.indexOf('const referenceAttachments='), references.indexOf('// The readiness model itself lives'));
 
 function between(start, end) {
   const first = source.indexOf(start);
@@ -80,7 +82,7 @@ function pickerHarness(sourceInput) {
     `const StudioContinuation={sourceInput:()=>${JSON.stringify(sourceInput)},sourceLabel:()=> 'Source'};`,
     "const pendingInputs=new Set(),notices=[];",
     "const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',innerHTML:'',textContent:'',onclick:null});return nodes.get(selector);};",
-    "q('#uxSourceSlot').value='0';",
+    "q('#uxSourceSlot').value='0';const $=q;let referenceEpoch=0,referencePending=0;const updateReady=()=>{};",
     "const button={dataset:{uxPull:'asset-2'},disabled:false};const event={target:{closest:()=>button}};",
     "const post=async()=>({file:'slot.png',parent_asset:'asset-2'});const workbenchStamp=()=> 'stamp';",
     "let renderCount=0,replaceCount=0,saveCount=0,syncCount=0;",
@@ -89,6 +91,7 @@ function pickerHarness(sourceInput) {
     "const nextEmptySlot=()=>-1;const sourceSlotOptions=()=>'';",
     "const picker={closed:false,close(){this.closed=true}};",
     "const announce=(message,error=false)=>notices.push({message,error});",
+    attachmentSource,
     pickerSource,
     "this.run=()=>q('#uxSourceAssets').onclick(event);",
     "this.state=()=>JSON.stringify({uploaded,slot:referenceRecords[0],pickerClosed:picker.closed,buttonDisabled:button.disabled,renderCount,replaceCount,saveCount,syncCount,notices});",

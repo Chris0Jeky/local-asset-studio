@@ -13,6 +13,7 @@ PLAN_IO = frozenset({
     'artifact_missing', 'artifact_unreadable', 'file_changed', 'artifact_too_large',
     'file_not_regular', 'artifact_not_consumed', 'report_too_large',
 })
+SOURCE_INTEGRITY = PLAN_IO - {'report_too_large'}
 
 
 def main(argv=None):
@@ -24,11 +25,16 @@ def main(argv=None):
     except EvidenceError as error:
         # Plan-file I/O and report encoding are not observation completeness.
         state = ('report_unavailable' if error.code in PLAN_IO else 'invalid_plan')
-        print(json.dumps({'schema': SCHEMA, 'state': state,
-                          'integrity': 'incomplete' if error.incomplete else 'invalid',
-                          'reason': error.code, 'qualified_benchmark': False,
-                          'execution_authority': False},
-                         ensure_ascii=True, allow_nan=False, separators=(',', ':')))
+        diagnostic = {
+            'schema': SCHEMA,
+            'state': state,
+            'reason': error.code,
+            'qualified_benchmark': False,
+            'execution_authority': False,
+        }
+        if error.code in SOURCE_INTEGRITY or state == 'invalid_plan':
+            diagnostic['integrity'] = 'incomplete' if error.incomplete else 'invalid'
+        print(json.dumps(diagnostic, ensure_ascii=True, allow_nan=False, separators=(',', ':')))
         return 2
     try:
         data = encode_report(report).decode('ascii')

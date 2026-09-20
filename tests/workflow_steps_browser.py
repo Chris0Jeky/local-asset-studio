@@ -93,29 +93,35 @@ def main():
         assert page.locator('#workflowDiagnostics').is_visible()
         page.get_by_role('checkbox', name='Enable step Refine', exact=True).check(); page.wait_for_function('!WorkflowStudio.snapshot().disabled.length')
         page.get_by_role('button', name='Duplicate step', exact=True).click(); page.wait_for_function('WorkflowStudio.snapshot().steps.length === 2')
+        page.get_by_role('button', name='Duplicate step', exact=True).first.click(); page.wait_for_function('WorkflowStudio.snapshot().steps.length === 3')
         assert page.evaluate('WorkflowStudio.snapshot().outputs') == ['3']
         before_order = page.evaluate('WorkflowStudio.snapshot().steps.map(step => step.id)')
+        reordered = [before_order[1], before_order[0], before_order[2]]
+        appended = [before_order[1], before_order[2], before_order[0]]
         before_effective = page.evaluate('JSON.stringify((({nodes,outputs,disabled,bypass,positions}) => ({nodes,outputs,disabled,bypass,positions}))(WorkflowStudio.snapshot()))')
         reduce_before = len([1 for route_name, body in seen if route_name == PREFIX + '/reduce'])
         assert page.get_by_role('button', name='Move up', exact=True).first.is_disabled()
         assert not page.get_by_role('button', name='Move down', exact=True).first.is_disabled()
         assert not page.get_by_role('button', name='Move up', exact=True).nth(1).is_disabled()
-        assert page.get_by_role('button', name='Move down', exact=True).nth(1).is_disabled()
-        page.get_by_role('button', name='Move up', exact=True).nth(1).focus(); page.keyboard.press('Enter')
-        page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=[before_order[1], before_order[0]])
+        assert not page.get_by_role('button', name='Move down', exact=True).nth(1).is_disabled()
+        assert not page.get_by_role('button', name='Move up', exact=True).nth(2).is_disabled()
+        assert page.get_by_role('button', name='Move down', exact=True).nth(2).is_disabled()
+        page.get_by_role('button', name='Move down', exact=True).first.focus(); page.keyboard.press('Enter')
+        page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=reordered)
         assert len([1 for route_name, body in seen if route_name == PREFIX + '/reduce']) == reduce_before + 1
         assert page.evaluate('JSON.stringify((({nodes,outputs,disabled,bypass,positions}) => ({nodes,outputs,disabled,bypass,positions}))(WorkflowStudio.snapshot()))') == before_effective
         focus = page.evaluate('({step:document.activeElement.closest(\"[data-step-id]\")?.dataset.stepId, move:document.activeElement.dataset.stepMove})')
-        assert focus == {'step': before_order[1], 'move': 'down'}, focus
+        assert focus == {'step': before_order[0], 'move': 'down'}, focus
         assert page.get_by_role('button', name='Move up', exact=True).first.is_disabled()
-        assert page.get_by_role('button', name='Move down', exact=True).nth(1).is_disabled()
+        assert page.get_by_role('button', name='Move down', exact=True).nth(2).is_disabled()
         page.click('#undoWorkflow'); page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=before_order)
-        page.click('#redoWorkflow'); page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=[before_order[1], before_order[0]])
-        page.get_by_role('button', name='Move down', exact=True).first.click()
-        page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=before_order)
+        page.click('#redoWorkflow'); page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=reordered)
+        page.get_by_role('button', name='Move down', exact=True).nth(1).click()
+        page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=appended)
         assert len([1 for route_name, body in seen if route_name == PREFIX + '/reduce']) == reduce_before + 2
+        page.click('#undoWorkflow'); page.wait_for_function('(expected) => JSON.stringify(WorkflowStudio.snapshot().steps.map(step => step.id)) === JSON.stringify(expected)', arg=reordered)
         page.click('#saveSharedWorkflow'); page.wait_for_function('document.querySelector(\"#sharedWorkflowState\").textContent.includes(\"r4 · saved\")')
-        assert [step['id'] for step in studio._workflow_documents.get(original)['document']['steps']] == before_order
+        assert [step['id'] for step in studio._workflow_documents.get(original)['document']['steps']] == reordered
         page.click('#compileWorkflow'); page.wait_for_function('document.querySelector("#workflowStatus").textContent.includes("Connections checked")')
         page.locator('#builder').screenshot(path=str(args.out / 'workflow-steps-desktop.png'))
         page.set_viewport_size({'width': 390, 'height': 844}); page.locator('#builder').screenshot(path=str(args.out / 'workflow-steps-mobile.png'))
@@ -126,7 +132,7 @@ def main():
         assert not errors, errors
         evidence = {'browser': 'inert Chromium DOM', 'synthetic_nodes': True, 'real_sqlite_service': True,
                     'page_errors': errors, 'generation_requests': 0, 'requests': len(seen), 'saved_workflows': 2,
-                    'checks': 'step form/settings/toggle/duplicate/order/keyboard/focus/undo/redo, saved order, graph invariance, stale agent conflict, separate copy, open/history/restore, 390px overflow, Escape'}
+                    'checks': 'step form/settings/toggle/three-step duplicate/interior-and-end order/keyboard/focus/undo/redo, changed saved order, graph invariance, stale agent conflict, separate copy, open/history/restore, 390px overflow, Escape'}
         (args.out / 'evidence.json').write_text(json.dumps(evidence, indent=2) + '\n'); print(json.dumps(evidence)); browser.close()
 
 
