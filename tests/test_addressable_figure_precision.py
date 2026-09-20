@@ -4,6 +4,7 @@ import hashlib
 import io
 import tempfile
 import unittest
+import zlib
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image
@@ -33,6 +34,11 @@ class FigurePrecisionTests(unittest.TestCase):
         return {'workspace_id': self.workspace.snapshot()['workspace_id'], 'request_id': 'precise-figure-request',
                 'asset_id': parent['id'], 'parent_sha256': parent['sha256'], 'rectangles': rectangles,
                 'require_non_overlapping': True}
+
+    @staticmethod
+    def png_chunk(kind, payload=b''):
+        return (len(payload).to_bytes(4, 'big') + kind + payload
+                + (zlib.crc32(kind + payload) & 0xffffffff).to_bytes(4, 'big'))
 
     def test_zero_pixel_crop_is_a_domain_refusal_not_an_expanded_crop(self):
         parent = self.parent((1, 1)); before = self.workspace.snapshot()
@@ -102,6 +108,24 @@ class FigurePrecisionTests(unittest.TestCase):
         with self.assertRaisesRegex(server.WorkspaceError, 'complete supported still image'):
             figures.split_figures(self.workspace, request)
         self.assertEqual(len(self.workspace.snapshot()['assets']), 1)
+
+    def test_ambiguous_or_unknown_critical_png_structure_is_refused(self):
+        stream = io.BytesIO(); Image.new('RGB', (10, 10), 'red').save(stream, 'PNG')
+        raw = stream.getvalue(); after_ihdr = 8 + 12 + 13
+        ihdr = raw[8:after_ihdr]
+        variants = {
+            'unknown-critical': raw[:after_ihdr] + self.png_chunk(b'ABCD') + raw[after_ihdr:],
+            'reserved-bit': raw[:after_ihdr] + self.png_chunk(b'ABcD') + raw[after_ihdr:],
+            'non-letter-type': raw[:after_ihdr] + self.png_chunk(b'A1CD') + raw[after_ihdr:],
+            'duplicate-ihdr': raw[:after_ihdr] + ihdr + raw[after_ihdr:],
+        }
+        for label, forged in variants.items():
+            with self.subTest(label=label):
+                parent = self.parent(raw=forged)
+                request = self.command(parent, [{'x': 0, 'y': 0, 'width': 10000, 'height': 10000}])
+                with self.assertRaisesRegex(server.WorkspaceError, 'complete supported still image'):
+                    figures.split_figures(self.workspace, request)
+        self.assertEqual(len(self.workspace.snapshot()['assets']), len(variants))
 
     def test_shared_raster_boundaries_are_canonical_for_small_sources(self):
         for width in range(1, 35):
