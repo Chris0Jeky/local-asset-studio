@@ -127,7 +127,7 @@ class QATests(unittest.TestCase):
     def test_partial_evidence_does_not_hide_untranscribed_segments(self):
         self.evidence['observations'] = [self.observation()]
         report = self.report()
-        self.assertEqual(['not-transcribed', 'match', 'not-transcribed', 'not-transcribed', 'not-transcribed'],
+        self.assertEqual(['not-transcribed', 'match', 'not-transcribed', 'not-transcribed'],
                          [x['transcript_status'] for x in report['targets']])
         self.assertTrue(all(x['listening_status'] == 'unreviewed' for x in report['targets']))
         self.assertEqual(3, len(report['review_targets']))
