@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import test_asset_metadata_http as fixture
 
@@ -13,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class ConflictEnvelopeContracts(unittest.TestCase):
     def test_editor_contracts(self):
         result = subprocess.run([shutil.which('node'), '--test', str(ROOT / 'tests/asset_conflict_envelope.cjs')],
-                                capture_output=True, text=True, timeout=45)
+                                capture_output=True, text=True, encoding='utf-8', timeout=45)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
@@ -31,7 +32,7 @@ console.log(s.run('JSON.stringify(assetRevisionConflict('+JSON.stringify({status
 """
         result = subprocess.run([shutil.which('node'), '-e', script], cwd=ROOT,
                                 input=json.dumps(dict(status=status, data=data, command=command)),
-                                capture_output=True, text=True, timeout=15)
+                                capture_output=True, text=True, encoding='utf-8', timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return json.loads(result.stdout)
 
@@ -62,3 +63,16 @@ console.log(s.run('JSON.stringify(assetRevisionConflict('+JSON.stringify({status
         self.assertEqual(status, 409)
         self.assertEqual(data['missing_ids'], [self.asset])
         self.assertIsNone(self.project(status, data, command))
+
+    def test_projection_uses_utf8_under_a_legacy_default_codec(self):
+        scope = self.store.snapshot()['workspace_id']
+        command = self.command(workspace_id=scope)
+        current = dict(self.store.metadata(self.asset, scope), metadata_revision=1,
+                       title='界', notes='😀')
+        data = dict(code='asset_revision_conflict', workspace_id=scope,
+                    request_id=command['request_id'], conflict_ids=[self.asset],
+                    missing_ids=[], current=[current])
+        # Inject the Windows default without changing Node's actual UTF-8 bytes.
+        with patch('subprocess._text_encoding', return_value='cp1252'):
+            result = self.project(409, data, command)
+        self.assertEqual(result['current'], [current])
