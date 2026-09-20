@@ -29,8 +29,13 @@
   const option = (value,text) => { const e=document.createElement('option'); e.value=value; e.textContent=text; return e; };
   const seconds = sample => (sample/48000).toFixed(3) + ' s';
   const draftKey = () => session.current && session.current.key + ':' + session.current.snapshot.archive_sha256;
+  function playerReady() {
+    const player=$('player');
+    return !!session.current && playerBinding?.epoch === session.epoch && player.currentSrc === playerBinding.src
+      && player.readyState >= 1 && !pendingSeek && !player.seeking && !player.error && Number.isFinite(player.currentTime);
+  }
   function buttons() {
-    const blocked=session.blocked(); $('savePosition').disabled=blocked; $('saveReview').disabled=blocked;
+    const blocked=session.blocked(); $('savePosition').disabled=blocked || !playerReady(); $('saveReview').disabled=blocked;
     $('loadReport').disabled=!session.current || !$('reportList').value;
     $('loadReview').disabled=!session.current || !$('reviewList').value;
   }
@@ -60,20 +65,22 @@
     const {key,snapshot}=session.current;
     const src=new URL(url('/audio',{key,archive_sha256:snapshot.archive_sha256,target}),document.baseURI).href;
     $('audioTarget').value=target; applyRate();
-    playerBinding={epoch:session.epoch,target,src}; $('player').pause();
+    pendingSeek=null; playerBinding={epoch:session.epoch,target,src}; $('player').pause();
     if ($('player').src !== src) { $('player').src=src; pendingSeek=null; }
     if (seekSample !== null) {
       pendingSeek={src,seconds:seekSample/48000,epoch:session.epoch};
       if ($('player').readyState >= 1 && $('player').currentSrc === src) applySeek();
       else $('player').load();
     }
+    buttons();
   }
   function applySeek() {
     if (!pendingSeek || pendingSeek.epoch !== session.epoch || $('player').currentSrc !== pendingSeek.src) return;
     $('player').currentTime=pendingSeek.seconds; pendingSeek=null;
     $('player').playbackRate=Number($('rate').value);
   }
-  $('player').addEventListener('loadedmetadata', applySeek);
+  $('player').addEventListener('loadedmetadata',()=>{applySeek(); buttons();});
+  for (const event of ['emptied','seeking','seeked','error']) $('player').addEventListener(event,buttons);
   $('player').addEventListener('error',()=>{ if (playerBinding) status('Audio could not be read. Inspect this archive again; no generation or retry was sent.'); });
   $('player').addEventListener('timeupdate',()=>{
     if (loop && playerBinding?.target === 'master' && $('player').currentTime >= loop[1]/48000) $('player').currentTime=loop[0]/48000;
@@ -153,14 +160,23 @@
   };
   $('resume').onclick=()=>selectAudio('master',session.current.snapshot.playback.sample);
   $('savePosition').onclick=async()=>{
-    if (!session.current || !playerBinding) return;
+    if (!playerReady()) { status('Load the selected audio and let seeking finish before saving its position. No save was sent.'); buttons(); return; }
     const a=session.current.snapshot.archive, segment=a.segments.find(x=>x.id===playerBinding.target);
     const sample=Math.min(a.master.samples,Math.max(0,Math.round($('player').currentTime*48000)+(segment?.start_sample||0)));
     const pending=session.bookmark({sample,rate:Number($('rate').value),loop}); buttons();
-    try { const out=await pending; if(out.current) savedText(); status(`Bookmark saved for ${out.key}.`); }
+    try { const out=await pending; if(out.current) savedText(); status(`Bookmark saved for ${out.key}.${out.current ? '' : ' Inspect that archive again before saving.'}`); }
     catch(e) { status(e.message); } finally { buttons(); }
   };
-  $('reportList').onchange=buttons; $('reviewList').onchange=buttons; $('exceptionsOnly').onchange=renderSegments;
+  $('reportList').onchange=()=>{
+    session.clearReport(); $('linkReport').checked=false; $('linkReport').disabled=true;
+    $('machineSummary').textContent='No machine report selected.'; $('reportDetail').textContent='No report selected.';
+    renderSegments(); buttons();
+  };
+  $('reviewList').onchange=()=>{
+    session.clearReview(); chosenReview=null; $('humanSummary').textContent='Unreviewed · no owner record selected.';
+    $('reviewDetail').textContent='No record selected.'; renderSegments(); buttons();
+  };
+  $('exceptionsOnly').onchange=renderSegments;
   $('loadReport').onclick=async()=>{
     $('linkReport').checked=false; $('linkReport').disabled=true;
     $('machineSummary').textContent='Inspecting the selected machine report…'; $('reportDetail').textContent='No report selected.';
@@ -173,7 +189,8 @@
     } catch(e) { $('machineSummary').textContent=e.message; renderSegments(); }
   };
   $('loadReview').onclick=async()=>{
-    chosenReview=null; $('humanSummary').textContent='Inspecting selected owner record…'; renderSegments();
+    chosenReview=null; $('humanSummary').textContent='Inspecting selected owner record…';
+    $('reviewDetail').textContent='No record selected.'; renderSegments();
     try {
       const review=await session.savedReview($('reviewList').value); if(!review) return;
       chosenReview=review; $('humanSummary').textContent=`${review.target}: ${review.decision} · ${review.reviewer}`;
@@ -192,7 +209,11 @@
     const pending=session.review(value); buttons();
     try {
       const out=await pending;
-      if(out.current) { records($('reviewList'),session.current.snapshot.reviews,'Choose an exact owner record'); buttons(); }
+      if(out.current) {
+        const selected=$('reviewList').value;
+        records($('reviewList'),session.current.snapshot.reviews,'Choose an exact owner record');
+        $('reviewList').value=selected; buttons();
+      }
       status(`Listening review saved for ${out.key}: ${out.result.id}. No replacement was started.`);
     } catch(e) { status(e.message); } finally { buttons(); }
   };

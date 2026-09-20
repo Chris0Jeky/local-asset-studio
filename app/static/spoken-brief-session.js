@@ -11,7 +11,7 @@
     }
     async open(key) {
       const epoch = ++this.epoch, recovery = this.unconfirmed.get(key);
-      this.current = null; this.reportValue = null; ++this.reportTicket; ++this.reviewTicket;
+      this.current = null; this.clearReport(); this.clearReview();
       try {
         const snapshot = await this.request('/archive', {key});
         if (epoch !== this.epoch) return null;
@@ -42,12 +42,14 @@
         return value;
       } catch (error) { if (epoch !== this.epoch || ticket !== this[ticketName]) return null; throw error; }
     }
+    clearReport() { ++this.reportTicket; this.reportValue = null; }
+    clearReview() { ++this.reviewTicket; }
     report(id) { return this.readRecord('/report', id, 'reportTicket', 'report_sha256'); }
     savedReview(id) { return this.readRecord('/review', id, 'reviewTicket', 'review_sha256'); }
     async write(route, value) {
       const selected = this.requireCurrent(), epoch = this.epoch, key = selected.key;
       if (this.pending.has(key)) throw Error('A save is already in progress for this archive');
-      if (this.unconfirmed.has(key)) throw Error('Inspect this archive before another save; the previous outcome is unconfirmed');
+      if (this.unconfirmed.has(key)) throw Error('Inspect this archive before another save; the displayed state may precede an earlier save');
       const body = copy(value); body.archive_sha256 = selected.snapshot.archive_sha256;
       if (route === '/bookmark') body.expected_playback_sha256 = selected.snapshot.playback_sha256;
       const token = {}; this.pending.set(key, token);
@@ -59,6 +61,9 @@
               || JSON.stringify(result.playback.loop) !== JSON.stringify(body.loop)) throw Error('Bookmark acknowledgement identity differs');
         } else if (!hash(result.id) || typeof result.reused !== 'boolean') throw Error('Invalid review acknowledgement');
         const current = this.epoch === epoch;
+        // An overlapping inspection may have read before this successful commit.
+        // Only a new inspection begun after completion can restore write authority.
+        if (!current) this.unconfirmed.set(key, token);
         if (current && route === '/bookmark') {
           selected.snapshot.playback = result.playback; selected.snapshot.playback_sha256 = result.playback_sha256;
         } else if (current && !selected.snapshot.reviews.includes(result.id)) selected.snapshot.reviews.push(result.id);
