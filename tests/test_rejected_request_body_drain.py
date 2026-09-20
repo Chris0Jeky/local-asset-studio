@@ -52,6 +52,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 status, _ = handler.do_POST()
                 self.assertEqual(status, 403)
                 self.assertEqual(handler.rfile.read(), b'')
+                self.assertFalse(getattr(handler, 'close_connection', False))
 
     def test_wrong_content_type_refusals_consume_small_declared_bodies(self):
         for path in (
@@ -64,6 +65,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 self.assertEqual(status, 400)
                 self.assertEqual(value['error'], 'application/json required')
                 self.assertEqual(handler.rfile.read(), b'')
+                self.assertFalse(getattr(handler, 'close_connection', False))
 
     def test_oversized_or_malformed_claim_is_never_drained(self):
         for length in (str(DRAIN_LIMIT + 1), '-1', 'not-a-number', '²'):
@@ -82,6 +84,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
 
     def test_duplicate_content_lengths_are_never_drained(self):
         handler = request('/api/prompt/compile', b'ab', safe=True, content_type='text/plain')
@@ -96,6 +99,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
 
     def test_pathological_digit_length_cannot_escape_refusal(self):
         handler = request('/api/prompt/compile', b'x', safe=True, content_type='text/plain')
@@ -106,6 +110,16 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
+
+    def test_failed_drain_marks_connection_non_reusable(self):
+        handler = request('/api/prompt/compile', b'x', safe=True, content_type='text/plain')
+        handler.headers['Content-Length'] = '2'
+        status, value = handler.do_POST()
+        self.assertEqual(status, 400)
+        self.assertEqual(value['error'], 'application/json required')
+        self.assertEqual(handler.rfile.read(), b'')
+        self.assertTrue(handler.close_connection)
 
     def test_exact_bound_and_zero_length_are_supported(self):
         handler = request('/unused', b'x' * DRAIN_LIMIT)
