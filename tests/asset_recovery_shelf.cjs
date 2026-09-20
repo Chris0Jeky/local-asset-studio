@@ -93,3 +93,13 @@ test('a held lock times out without writing or silently falling back to unlocked
   const m=memory(),r=await record(),locks={request(n,o){return new Promise((resolve,reject)=>o.signal.addEventListener('abort',()=>reject(Error('lock wait aborted')),{once:true}));}};
   await assert.rejects(S.create({...m,locks,lockTimeoutMs:10}).put(r,null),/abort|lock/i);assert.equal(m.raw(),null);
 });
+test('server-valid Unicode titles keep code-point limits separate from UTF-8 storage budgets',async()=>{
+  for(const title of ['界'.repeat(200),'😀'.repeat(200)]){
+    const e=envelope('draft',true);
+    for(const v of [e.metadata,e.baseline,e.draft,e.operation.snapshot,e.operation.command])v.title=title;
+    e.operation.body=JSON.stringify(e.operation.command,null,2);
+    const r=await record(e),[decoded]=await S.decode(await S.encode([r],crypto),crypto);
+    assert.equal(decoded.payload.metadata.title,title);assert.equal(decoded.payload.operation.body,e.operation.body);
+  }
+  const e=envelope();e.draft.title='😀'.repeat(201);await assert.rejects(record(e),/bound|limit|invalid/i);
+});

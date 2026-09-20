@@ -12,6 +12,8 @@
   const digest=v=>typeof v==='string'&&/^[0-9a-f]{64}$/.test(v);
   const keys=(v,allowed,required=allowed)=>object(v)&&Object.keys(v).every(k=>allowed.includes(k))&&required.every(k=>Object.hasOwn(v,k));
   const text=(v,max=LIMITS.string)=>typeof v==='string'&&v.length<=max&&bytes(v)<=max;
+  // Server titles count Unicode code points; storage budgets still count UTF-8 bytes.
+  const title=v=>typeof v==='string'&&v.length<=400&&[...v].length<=200;
   const integer=v=>Number.isSafeInteger(v)&&v>=0;
   const reviews=['unreviewed','selected','needs_work','rejected'];
   function canonical(value){
@@ -62,11 +64,11 @@
   const metadataKeys=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
   const formKeys=['title','tags','review','notes'];
   const commandKeys=['ids','action','workspace_id','expected_revisions','request_id','title','notes','tags','favorite','review','collection_id'];
-  function form(v){return keys(v,formKeys)&&text(v.title,200)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
+  function form(v){return keys(v,formKeys)&&title(v.title)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
   function ids(v){return Array.isArray(v)&&v.length<=LIMITS.ids&&v.every(id)&&new Set(v).size===v.length;}
   function metadata(v,w){
     return keys(v,metadataKeys,['id','metadata_revision','title','notes','tags','review','favorite'])&&id(v.id)&&integer(v.metadata_revision)&&
-      (w===null?!Object.hasOwn(v,'workspace_id')||scope(v.workspace_id):v.workspace_id===w)&&text(v.title,200)&&text(v.notes)&&
+      (w===null?!Object.hasOwn(v,'workspace_id')||scope(v.workspace_id):v.workspace_id===w)&&title(v.title)&&text(v.notes)&&
       Array.isArray(v.tags)&&v.tags.length<=200&&v.tags.every(t=>text(t,256))&&reviews.includes(v.review)&&typeof v.favorite==='boolean'&&
       (v.trashed_at==null||typeof v.trashed_at==='number'&&Number.isFinite(v.trashed_at));
   }
@@ -76,7 +78,7 @@
     if(!keys(c,commandKeys,['ids','action','expected_revisions','request_id'])||!ids(c.ids)||!c.ids.length||!id(c.request_id)||c.request_id.length<16||
        (w!==null&&c.workspace_id!==w)||!keys(c.expected_revisions,c.ids)||c.ids.some(k=>!integer(c.expected_revisions[k]))||
        !['edit','trash','restore','add_collection','remove_collection'].includes(c.action)||!text(v.body,128*1024))return false;
-    for(const field of ['title','notes','collection_id'])if(Object.hasOwn(c,field)&&!text(c[field],field==='title'?200:LIMITS.string))return false;
+    for(const field of ['title','notes','collection_id'])if(Object.hasOwn(c,field)&&!(field==='title'?title(c[field]):text(c[field])))return false;
     if(Object.hasOwn(c,'tags')&&(!Array.isArray(c.tags)||c.tags.length>200||c.tags.some(t=>!text(t,256))))return false;
     if(Object.hasOwn(c,'favorite')&&typeof c.favorite!=='boolean')return false;
     if(Object.hasOwn(c,'review')&&!reviews.includes(c.review))return false;
