@@ -61,6 +61,13 @@
         // Canonical bundle key ordering must not alter the retained wire body or
         // the existing journal's command/body equality check.
         if(value.operation)value.operation.command=JSON.parse(value.operation.body);
+        if(record.slot==='detail'){
+          // The existing editor compares JSON-stringified forms. Rebuild only
+          // these in-memory views in its field order; never rewrite wire bytes.
+          const form=v=>({title:v.title,tags:v.tags,review:v.review,notes:v.notes});
+          value.baseline=form(value.baseline);value.draft=form(value.draft);
+          if(value.operation)value.operation.snapshot=form(value.operation.snapshot);
+        }
         const local=journal.read(record.slot);
         if(local&&Core.canonical(Core.project(record.slot,local))!==Core.canonical(record.payload))throw Error('This tab has a different local viewpoint. Both are retained; inspect/export or explicitly discard one first.');
         writers.set(record.slot,copy(record));journal.write(record.slot,value);return value;

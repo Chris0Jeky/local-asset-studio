@@ -12,7 +12,8 @@ class AssetRecoveryShelfContracts(unittest.TestCase):
             [shutil.which('node'), '--test',
              str(Path(__file__).with_name('asset_recovery_shelf.cjs')),
              str(Path(__file__).with_name('asset_recovery_shelf_session.cjs')),
-             str(Path(__file__).with_name('asset_recovery_checkpoint.cjs'))],
+             str(Path(__file__).with_name('asset_recovery_checkpoint.cjs')),
+             str(Path(__file__).with_name('asset_recovery_shelf_restore.cjs'))],
             capture_output=True, text=True, timeout=45,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
