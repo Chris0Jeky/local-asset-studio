@@ -278,7 +278,21 @@ def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
     source = Path(source).resolve()
     if not SPEAKER_RE.fullmatch(speaker_id):
         raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
-    raw = read_source_bytes(source)
+    return compile_snapshot(source, read_source_bytes(source), speaker_id=speaker_id)
+
+
+def compile_snapshot(source: Path, raw: bytes, *, speaker_id: str = 'brief-narrator') -> dict:
+    """Compile already captured bytes without reading, resolving or writing a file.
+
+    The caller owns filesystem confinement and snapshot acquisition. Keeping the
+    lexical absolute source identity also permits previews of retained snapshots
+    after the original source has changed or disappeared.
+    """
+    source = Path(source).absolute()
+    if not isinstance(speaker_id, str) or not SPEAKER_RE.fullmatch(speaker_id):
+        raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
+    if not isinstance(raw, bytes) or not 1 <= len(raw) <= MAX_SOURCE_BYTES:
+        raise SpokenBriefError(f'Markdown source must contain 1 to {MAX_SOURCE_BYTES} bytes')
     try:
         text = raw.decode('utf-8')
     except UnicodeDecodeError as exc:
