@@ -1,0 +1,181 @@
+name: Verify immutable provider payload retention v2
+
+on:
+  push:
+    branches:
+      - audit/694-immutable-provider-payloads
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify bounded retry state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "3fd0d13af17b1650f3acb12b181d2201a65cc9e9"
+          test "$(git rev-parse HEAD^^)" = "4b659470ae20a74787ed503d1e7d624e1187ef67"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/verify-694-immutable-provider-payloads-v2.yml"
+      - name: Install focused dependencies
+        run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Extract verified scripts from the read-only parent workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/workflows/verify-694-immutable-provider-payloads.yml').read_text(encoding='utf-8')
+          names = [
+              'Write regression contracts',
+              'Prove the parent loses historical payload evidence',
+              'Implement immutable content-addressed payload evidence',
+              'Verify focused and programme contracts',
+              'Package exact tested files',
+          ]
+          for index, name in enumerate(names, 1):
+              marker = f'      - name: {name}\n        shell: bash\n        run: |\n'
+              if source.count(marker) != 1:
+                  raise SystemExit(f'workflow step changed: {name}')
+              block = source.split(marker, 1)[1]
+              next_step = block.find('\n      - ')
+              if next_step >= 0:
+                  block = block[:next_step]
+              lines = []
+              for line in block.splitlines():
+                  if line and not line.startswith('          '):
+                      raise SystemExit(f'unexpected indentation in {name}')
+                  lines.append(line[10:] if line else '')
+              Path(f'/tmp/step-{index}.sh').write_text(
+                  '#!/usr/bin/env bash\n' + '\n'.join(lines) + '\n',
+                  encoding='utf-8',
+              )
+          PY
+      - name: Reproduce parent and build first implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash /tmp/step-1.sh
+          bash /tmp/step-2.sh
+          bash /tmp/step-3.sh
+      - name: Make payload-directory publication lazy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('studio_prompt/_adult_illustration_source_transport_payloads.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    def __init__(self, root: str | Path):
+                  self.root = Path(root)
+                  if self.root.is_symlink():
+                      raise ValueError("Provider payload evidence root cannot be a symlink")
+                  self.root.mkdir(exist_ok=True)
+                  self._resolved_root = self.root.resolve(strict=True)
+                  if not self._resolved_root.is_dir():
+                      raise ValueError("Provider payload evidence root must be a directory")
+
+              def _path(self, digest: str) -> Path:
+          '''
+          new = '''    def __init__(self, root: str | Path):
+                  self.root = Path(root)
+                  if self.root.is_symlink():
+                      raise ValueError("Provider payload evidence root cannot be a symlink")
+                  parent = self.root.parent.resolve(strict=True)
+                  self._resolved_root = parent / self.root.name
+                  if self.root.exists():
+                      resolved = self.root.resolve(strict=True)
+                      if resolved != self._resolved_root or not resolved.is_dir():
+                          raise ValueError("Provider payload evidence root must be a directory")
+
+              def _ensure_root(self) -> None:
+                  if self.root.is_symlink():
+                      raise ValueError("Provider payload evidence root cannot be a symlink")
+                  self.root.mkdir(exist_ok=True)
+                  resolved = self.root.resolve(strict=True)
+                  if resolved != self._resolved_root or not resolved.is_dir():
+                      raise ValueError("Provider payload evidence root must be a directory")
+
+              def _path(self, digest: str) -> Path:
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('payload store constructor changed')
+          text = text.replace(old, new)
+          old = '''        path = self._path(digest)
+                  try:
+                      if not path.exists():
+          '''
+          new = '''        path = self._path(digest)
+                  if self.root.is_symlink():
+                      return (
+                          _reference(
+                              digest,
+                              state="corrupt",
+                              byte_count=None,
+                              reason="root-symlink",
+                          ),
+                          None,
+                      )
+                  if not self.root.exists():
+                      return (
+                          _reference(
+                              digest,
+                              state="unavailable",
+                              byte_count=None,
+                              reason="missing",
+                          ),
+                          None,
+                      )
+                  try:
+                      if (
+                          self.root.resolve(strict=True) != self._resolved_root
+                          or not self.root.is_dir()
+                      ):
+                          return (
+                              _reference(
+                                  digest,
+                                  state="corrupt",
+                                  byte_count=None,
+                                  reason="invalid-root",
+                              ),
+                              None,
+                          )
+                      if not path.exists():
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('payload inspect entry changed')
+          text = text.replace(old, new)
+          old = '''        temporary: Path | None = None
+                  try:
+          '''
+          new = '''        self._ensure_root()
+                  temporary: Path | None = None
+                  try:
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('payload publication entry changed')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+      - name: Verify full programme and package exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash /tmp/step-4.sh
+          bash /tmp/step-5.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: immutable-provider-payloads-v2
+          path: artifact
+          if-no-files-found: error
+          retention-days: 7
