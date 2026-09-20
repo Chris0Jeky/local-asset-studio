@@ -64,8 +64,10 @@ cancels, undoes or promises to prevent an in-flight server operation.
 - At most 200 command targets and selection IDs, 128 characters per ID, 64 KiB per
   free-text field, 200-character titles, 16 JSON levels and 20,000 object keys.
 - A 32,000-character inspection preview; export retains complete accepted data.
-- Strict JSON rejects duplicate keys, including escaped duplicates, non-finite
-  numbers, unknown versions/fields, invalid identities and mismatched digests.
+- Import decodes the bounded file bytes as fatal UTF-8 before JSON parsing; malformed
+  byte sequences are refused rather than replacement-normalized. Strict JSON rejects duplicate
+  keys, including escaped duplicates, non-finite numbers, unknown versions/fields, invalid
+  identities and mismatched digests.
 - Import is all-or-nothing; duplicate record or scoped request IDs are refused.
 
 Only whitelisted metadata is projected from server observations. Source paths,

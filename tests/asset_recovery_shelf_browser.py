@@ -166,6 +166,26 @@ async def exercise(args):
                 await page.click('[data-asset-save-retry]'); await page.wait_for_function('!assetDetailBusy && !assetDetailPending')
                 check('SHELF-10 explicit retry preserves exact body and commits once', writes[-1] == retry_wire and store.get(ids[1])['metadata_revision'] == 1)
                 await shelf(page, True)
+                malformed = await page.evaluate('''async()=>{const r=(await assetShelfStore.list()).find(record=>record.slot==='detail'),p=structuredClone(r.payload);
+                  p.draft.notes='Malformed UTF-8 marker \uFFFD';
+                  const sealed=await StudioAssetRecoveryShelf.seal(r.slot,p,{id:'e'.repeat(32),generation:1,created_at:1,updated_at:1},crypto);
+                  return StudioAssetRecoveryShelf.encode([sealed]);}''')
+                malformed_bytes = malformed.encode('utf-8')
+                if b'\xef\xbf\xbd' not in malformed_bytes:
+                    raise AssertionError('Synthetic bundle did not contain the replacement-character UTF-8 bytes')
+                malformed_bytes = malformed_bytes.replace(b'\xef\xbf\xbd', b'\x80', 1)
+                invalid_import_before = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                invalid_import_writes = len(writes)
+                await page.set_input_files('#assetShelfImport', {
+                    'name': 'malformed-utf8-recovery.json', 'mimeType': 'application/json',
+                    'buffer': malformed_bytes})
+                await page.wait_for_function('!assetShelfChanging')
+                check('SHELF-UTF8-01 malformed UTF-8 is refused before replacement decoding',
+                      await page.evaluate('''() => assetShelfImported===null &&
+                        document.querySelector('#assetShelfImportPreview').hidden &&
+                        document.querySelector('#assetShelfStatus').textContent.includes('valid UTF-8')''') and
+                      await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == invalid_import_before and
+                      len(writes) == invalid_import_writes)
                 async with page.expect_download() as download_info:
                     await page.click('#assetShelfExport')
                 download = await download_info.value; exported = Path(await download.path()).read_bytes()

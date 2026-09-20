@@ -12,6 +12,11 @@ function assetShelfDownload(text,name){
   const url=URL.createObjectURL(new Blob([text],{type:'application/json;charset=utf-8'})),a=document.createElement('a');
   a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+async function assetShelfImportText(file){
+  const data=await file.arrayBuffer();
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(data);}
+  catch(_){throw Error('Recovery import must be valid UTF-8 JSON.');}
+}
 function assetShelfSummary(record){
   const payload=record.payload,command=payload.operation?.command;
   return (record.slot==='detail'?payload.draft.title||payload.id:'Library selection ('+command.ids.length+' assets)')+
@@ -100,7 +105,7 @@ function assetShelfInspect(record){
     const file=event.target.files?.[0],epoch=++assetShelfImportEpoch;assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;
     void assetShelfAction(async()=>{
       if(!file)return;if(file.size>StudioAssetRecoveryShelf.LIMITS.total)throw Error('Recovery import exceeds 2 MiB; no content was read.');
-      const records=await StudioAssetRecoveryShelf.decode(await file.text());
+      const records=await StudioAssetRecoveryShelf.decode(await assetShelfImportText(file));
       if(epoch!==assetShelfImportEpoch||!dialog.open)return;
       assetShelfImported=records;const preview=document.getElementById('assetShelfImportPreview');preview.hidden=false;
       preview.querySelector('p').textContent=records.length+' records inspected; nothing stored or sent. '+records.map(assetShelfSummary).join('\n');
