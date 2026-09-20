@@ -251,7 +251,7 @@ class CapturedCompilerTests(unittest.TestCase):
     def test_captured_bytes_compile_without_reading_or_creating_source(self):
         self.assertTrue(hasattr(compiler, 'compile_snapshot'), 'captured-byte compiler is missing')
         with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / 'COMPRESSED.md'; raw = b'# Brief\r\n\r\nStable text.'
+            path = Path(folder).resolve() / 'COMPRESSED.md'; raw = b'# Brief\r\n\r\nStable text.'
             manifest = compiler.compile_snapshot(path, raw)
             self.assertFalse(path.exists())
             path.write_bytes(raw)

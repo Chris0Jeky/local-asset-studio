@@ -64,12 +64,15 @@ def _capture(path: Path, limit: int):
         descriptor = os.open(path, flags)
         with os.fdopen(descriptor, 'rb') as stream:
             opened = os.fstat(stream.fileno())
-            if not stat.S_ISREG(opened.st_mode) or _identity(opened) != _identity(before):
+            # Windows path stat and fstat may expose different ctime meanings.
+            # Compare their common identity here, then each full timestamp
+            # signature against a second observation from the same API.
+            if not stat.S_ISREG(opened.st_mode) or _identity(opened)[:4] != _identity(before)[:4]:
                 raise SpokenBriefError(f'File changed while opening: {path}')
             raw = stream.read(limit + 1)
             after = os.fstat(stream.fileno())
         if (not 1 <= len(raw) <= limit or len(raw) != before.st_size
-                or _identity(before) != _identity(after) or _lineage(path) != lineage
+                or _identity(opened) != _identity(after) or _lineage(path) != lineage
                 or _identity(path.lstat()) != _identity(before)):
             raise SpokenBriefError(f'File changed while reading: {path}')
         return raw, (*_identity(before), digest_bytes(raw))
