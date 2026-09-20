@@ -278,7 +278,7 @@ def _safetensors_header(path: Path):
         value = {}
         for key, item in pairs:
             if key in value:
-                raise ValueError("duplicate safetensors header key: " + key)
+                raise ValueError("duplicate safetensors header key: " + ascii(key[:120]))
             value[key] = item
         return value
 
