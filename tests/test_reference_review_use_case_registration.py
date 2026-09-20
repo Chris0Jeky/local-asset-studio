@@ -12,6 +12,31 @@ import studio_use_cases as runner
 CASE_ID = 'reference-analysis-review-and-apply'
 
 
+class _LivePage:
+    def wait_for_selector(self, *args, **kwargs):
+        return None
+
+
+class _LiveCase:
+    """Read-only case double for the live branch; it never opens a browser or writes."""
+    live = True
+
+    def __init__(self, missing=()):
+        self.page = _LivePage()
+        self.missing = set(missing)
+        self.observations = []
+
+    def goto(self, *args, **kwargs):
+        return None
+
+    def act(self, selector, *args, **kwargs):
+        return {'control_missing': selector in self.missing, 'control_hidden': False}
+
+    def observe(self, description, ok, detail='', note=''):
+        self.observations.append((description, ok, detail or note))
+        return {'control_missing': not ok, 'control_hidden': False}
+
+
 class ReferenceReviewUseCaseRegistration(unittest.TestCase):
     def test_manifest_registers_the_journey(self):
         manifest = json.loads((ROOT / 'research/ux/use-cases.json').read_text(encoding='utf-8'))
@@ -66,6 +91,20 @@ class ReferenceReviewUseCaseRegistration(unittest.TestCase):
 
         probe.headers = {'Host': '127.0.0.1:8191', 'Origin': 'http://127.0.0.1:45678'}
         self.assertFalse(probe._safe_mutation(), 'A mutation must fail its host check too, not only its origin check')
+
+    def test_live_journey_does_not_pass_when_a_registered_control_is_missing(self):
+        case = _LiveCase({'#rr-apply'})
+        passed, detail = runner.DRIVERS[CASE_ID](case)
+        self.assertFalse(passed)
+        self.assertIn('#rr-apply', detail)
+        self.assertFalse(case.observations[-1][1])
+
+    def test_live_journey_passes_only_when_all_registered_controls_exist(self):
+        case = _LiveCase()
+        passed, detail = runner.DRIVERS[CASE_ID](case)
+        self.assertTrue(passed)
+        self.assertIn('registered', detail)
+        self.assertTrue(case.observations[-1][1])
 
 
 if __name__ == '__main__':
