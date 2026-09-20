@@ -113,4 +113,5 @@ def extend_handler(base):
     from studio_workflow.http_extension import extend_handler as workflow_handler
     from .reference_job_http import extend_handler as reference_job_handler
     from .project_http import extend_handler as project_handler
-    return project_handler(reference_job_handler(workflow_handler(PromptHandler)))
+    from studio_spoken.http import extend_handler as spoken_handler
+    return spoken_handler(project_handler(reference_job_handler(workflow_handler(PromptHandler))))
