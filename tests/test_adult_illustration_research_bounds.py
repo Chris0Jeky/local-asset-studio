@@ -14,7 +14,8 @@ class ResearchConsumptionBoundsTests(unittest.TestCase):
     def make_root(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        root = Path(temporary.name)
+        # Match production resolution: Windows temp paths can use short aliases.
+        root = Path(temporary.name).resolve()
         write_fixture(root)
         return root
 
@@ -78,8 +79,9 @@ class ResearchConsumptionBoundsTests(unittest.TestCase):
             if candidate == path and mode == "rb":
                 # Real file growth after stat but before the read. No fake JSON
                 # parser or mocked allocation limit can make this assertion pass.
-                with original_open(candidate, "ab") as writer:
-                    writer.truncate(research.MAX_MANIFEST_BYTES + 128)
+                with original_open(candidate, "r+b") as writer:
+                    writer.seek(research.MAX_MANIFEST_BYTES + 127)
+                    writer.write(b"\0")
                 return Reader(original_open(candidate, mode, *args, **kwargs))
             return original_open(candidate, mode, *args, **kwargs)
 
@@ -87,6 +89,7 @@ class ResearchConsumptionBoundsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 research.list_records(root, "routes")
         self.assertEqual(reads, [research.MAX_MANIFEST_BYTES + 1])
+        self.assertEqual(path.stat().st_size, research.MAX_MANIFEST_BYTES + 128)
 
     def test_deep_json_refuses_as_a_structured_validation_error(self):
         root = self.make_root()
