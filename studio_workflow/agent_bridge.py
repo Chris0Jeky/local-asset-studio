@@ -14,6 +14,8 @@ import threading
 from urllib.error import HTTPError
 
 from .client import Client, ClientError, read_response
+from .asset_read_tools import AssetToolClient, PAGE_ARGUMENTS, SELECTION_ARGUMENTS
+from .asset_reads import normalize_filters, selection_ids
 from .shortlist import GOALS
 from .shortlist_source import SOURCE_ROLES, validate_source_query
 from .core import MAX_BYTES, canonical, decode, digest, need
@@ -41,6 +43,10 @@ def tool(description, properties=None, required=(), mode='read', mutating=False)
 
 
 TOOLS = {
+    'asset_page': tool('Read one bounded asset summary page (default 50, maximum 100). Retain Workspace, filters, limit and non-null cursor for an explicit next call. A stale cursor requires explicit refresh; never mix catalogue revisions. No media reads, automatic paging or generation.',
+        PAGE_ARGUMENTS),
+    'asset_selection': tool('Inspect 1 to 200 unique retained asset IDs in exact order, including off-page, trashed and missing assets. Requires the original Workspace identity. Observation only despite HTTP POST; no metadata writes, media reads, retries or generation.',
+        SELECTION_ARGUMENTS, ('workspace_id', 'ids')),
     'setup_draft_list': tool('List explicitly shared Create drafts. Never reads a browser-local draft or stages files.'),
     'setup_draft_get': tool('Read an immutable shared setup revision without loading it into a browser.',
         {'draft_id': IDENTIFIER, 'revision': {'type':'integer','minimum':1,'maximum':256}}, ('draft_id',)),
@@ -122,6 +128,11 @@ def validate_arguments(spec, arguments):
         rule = fields[key]
         if key == 'sources' and rule['type'] == 'array':
             validate_source_query({'sources': value, 'reference_count': len(value) if type(value) is list else 0})
+        elif key == 'ids' and rule['type'] == 'array':
+            selection_ids(value)
+        elif key == 'filters' and rule['type'] == 'object':
+            need(type(value) is dict, 'Asset filters must be an object')
+            normalize_filters(value)
         elif rule['type'] == 'integer':
             need(type(value) is int and rule['minimum'] <= value <= rule['maximum'], key + ' requires a bounded integer')
         else:
@@ -161,6 +172,9 @@ class AgentBridge:
         context = {}
         def finish(data, error=None):
             return encoded_result(name, data, error, context)
+        def request_started():
+            nonlocal sent
+            sent = True
         def request(path, body=None):
             nonlocal sent
             if body is not None: need(len(canonical(body)) <= MAX_BYTES, 'Studio request exceeds 1 MiB')
@@ -168,10 +182,13 @@ class AgentBridge:
             return self.client.request(path, body)
         try:
             a = validate_arguments(spec, arguments)
-            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision', 'preset_id', 'job_id', 'record_sha256', 'ticket_sha256') if k in a})
+            context.update({k: a[k] for k in ('request_id', 'document_id', 'expected_revision', 'preset_id', 'job_id', 'record_sha256', 'ticket_sha256', 'workspace_id') if k in a})
             def payload(key, typ=dict):
                 result = decode(a[key]); need(type(result) is typ, key + ' has the wrong JSON shape'); return result
-            if name == 'studio_capabilities':
+            if name in ('asset_page', 'asset_selection'):
+                assets = AssetToolClient(self.client, request_started)
+                data = assets.page(**a) if name == 'asset_page' else assets.selection(**a)
+            elif name == 'studio_capabilities':
                 data = {'studio': request(PREFIX + '/capabilities'), 'adapter': {'mode': self.mode,
                         'tools': list(self.definitions()), 'transport': 'stdio', 'automatic_retries': False,
                         'arbitrary_graph_execution': False, 'exact_json_text': True}}
