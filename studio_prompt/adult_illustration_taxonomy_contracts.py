@@ -156,13 +156,17 @@ def _load(root: Path | str, relative: Path, label: str) -> tuple[dict[str, Any],
     if before.st_size > MAX_CONTRACT_BYTES:
         raise ValueError(f"{label} exceeds {MAX_CONTRACT_BYTES} bytes")
     with path.open("rb") as stream:
-        if _file_identity(os.fstat(stream.fileno())) != _file_identity(before):
+        opened = os.fstat(stream.fileno())
+        # Windows stat/fstat can expose different ctime semantics. Compare
+        # device, file ID, size and mtime across APIs; retain ctime when comparing
+        # two observations of the same opened descriptor below.
+        if _file_identity(opened)[:4] != _file_identity(before)[:4]:
             raise ValueError(f"{label} changed before being read")
         raw = stream.read(MAX_CONTRACT_BYTES + 1)
         after = os.fstat(stream.fileno())
     if len(raw) > MAX_CONTRACT_BYTES:
         raise ValueError(f"{label} exceeds {MAX_CONTRACT_BYTES} bytes")
-    if len(raw) != before.st_size or _file_identity(before) != _file_identity(after):
+    if len(raw) != opened.st_size or _file_identity(opened) != _file_identity(after):
         raise ValueError(f"{label} changed while being read")
     try:
         value = json.loads(
