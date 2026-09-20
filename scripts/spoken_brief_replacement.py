@@ -280,7 +280,11 @@ def start(run_dir, request_id, *, poll_seconds=1.0, deadline_seconds=3600):
         environment()
         if state['status'] == 'prepared':
             save(status='creating')
-            environment()
+            try:
+                environment()
+            except (SpokenBriefError, OSError):
+                save(status='prepared')
+                raise
             try:
                 acknowledgement = client.post_json('/api/voice-baseline', {
                     'name': f'Spoken replacement {request_id}', 'speaker_id': request['speaker_id'],
@@ -302,7 +306,11 @@ def start(run_dir, request_id, *, poll_seconds=1.0, deadline_seconds=3600):
             if state['status'] != 'created':
                 raise SpokenBriefError('Start was already attempted; planned observation does not authorize replay')
             environment(); save(status='starting')
-            environment()
+            try:
+                environment()
+            except (SpokenBriefError, OSError):
+                save(status='created')
+                raise
             try: client.post_json(f"/api/production/{state['project_id']}/start", {})
             except StudioRejected as exc:
                 save(status='start-rejected', last_error=str(exc)[:2000]); raise
