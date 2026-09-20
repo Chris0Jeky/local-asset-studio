@@ -32,6 +32,8 @@
       (!value.conflict || (object(value.conflict) && Array.isArray(value.conflict.current)));
   }
   function create(storage){
+    let checkpoint=null;
+    const notify=(slot,value)=>{if(checkpoint?.changed)checkpoint.changed(slot,value);};
     const target=()=>typeof storage==='function'?storage():storage;
     const key=slot=>{if(!['detail','library'].includes(slot))throw Error('Unknown save recovery record.');return PREFIX+slot;};
     function read(slot){
@@ -45,13 +47,24 @@
       const raw=JSON.stringify(value);if(raw.length>LIMIT)throw Error('This draft is too large for save recovery. Keep a copy before leaving this tab.');
       try{const store=target();store.setItem(key(slot),raw);if(store.getItem(key(slot))!==raw)throw Error();}
       catch(_){throw Error('Could not retain this draft for reload recovery. Keep this tab open; no new save can be sent.');}
-      return JSON.parse(raw);
+      const retained=JSON.parse(raw);notify(slot,retained);return retained;
     }
     function clear(slot){
       try{const store=target();store.removeItem(key(slot));if(store.getItem(key(slot))!==null)throw Error();}
       catch(_){throw Error('The save recovery record could not be cleared. Check its receipt again before another save.');}
+      notify(slot,null);
     }
-    return {read,write,clear};
+    function dispatch(slot,operation,send,current=()=>true){
+      if(!checkpoint?.prepare)return send();
+      const retained=read(slot);
+      if(!retained?.operation || retained.operation.body!==operation.body)throw Error('The pending command differs from its retained recovery; no write was sent.');
+      return Promise.resolve().then(()=>checkpoint.prepare(slot,retained)).then(()=>{
+        if(!current() || read(slot)?.operation?.body!==operation.body)throw Error('Recovery context changed while persisting; no write was sent.');
+        return send();
+      });
+    }
+    function connect(value){checkpoint=value;}
+    return {read,write,clear,dispatch,connect};
   }
   return {create,PREFIX,workspace};
 });
