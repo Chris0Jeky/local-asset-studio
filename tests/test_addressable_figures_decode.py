@@ -110,7 +110,7 @@ class AddressableFigureDecodeTests(unittest.TestCase):
                 self.assertEqual(child.getpixel((0, 0))[3], 0)
                 self.assertEqual(child.getpixel((1, 0))[3], 255)
 
-    def test_non_web_image_format_is_refused_before_transform_or_child_creation(self):
+    def test_valid_unsupported_format_names_the_allow_list_before_transform(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             store = server.AssetWorkspace(root)
@@ -128,19 +128,66 @@ class AddressableFigureDecodeTests(unittest.TestCase):
                     "exif_transpose",
                     side_effect=AssertionError("unsupported format reached transform"),
                 ) as transpose,
-                self.assertRaisesRegex(server.WorkspaceError, "supported still image"),
+                self.assertRaisesRegex(server.WorkspaceError, "PNG, JPEG or WebP"),
             ):
                 addressable_figures.split_figures(store, command)
             transpose.assert_not_called()
             self.assertEqual(len(store.snapshot()["assets"]), 1)
 
+    def test_truncated_supported_image_is_refused_before_child_creation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = server.AssetWorkspace(root)
+            source = root / "truncated-sheet.png"
+            Image.new("RGB", (16, 16), "red").save(source, "PNG")
+            raw = source.read_bytes()
+            source.write_bytes(raw[: max(33, len(raw) // 2)])
+            job = {
+                "id": "truncated-sheet-job",
+                "created_at": 123.0,
+                "preset_id": "truncated-sheet",
+                "preset_name": "Truncated sheet",
+                "parent_assets": [],
+                "outputs": [{
+                    "filename": source.name,
+                    "media_type": "image",
+                    "prompt_id": "truncated-sheet-prompt",
+                }],
+            }
+            parent = store.register(job, 0, source)
+            record = store.get(parent)
+            with self.assertRaisesRegex(server.WorkspaceError, "not a complete supported still image"):
+                addressable_figures.split_figures(
+                    store,
+                    payload(
+                        store,
+                        parent,
+                        record["sha256"],
+                        "addressable-truncated-" + uuid.uuid4().hex,
+                    ),
+                )
+            self.assertEqual(len(store.snapshot()["assets"]), 1)
+
+    def test_sub_pixel_rectangle_refuses_the_whole_command(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            store = server.AssetWorkspace(Path(temporary))
+            with self.assertRaisesRegex(server.WorkspaceError, "smaller than one source pixel"):
+                addressable_figures._pixel_box(
+                    store,
+                    {"x": 0, "y": 0, "width": 1, "height": 10000},
+                    3,
+                    1,
+                )
+
     def test_adjacent_basis_point_rectangles_share_one_raster_boundary(self):
-        left = addressable_figures._pixel_box(
-            object(), {"x": 0, "y": 0, "width": 5000, "height": 10000}, 3, 1
-        )
-        right = addressable_figures._pixel_box(
-            object(), {"x": 5000, "y": 0, "width": 5000, "height": 10000}, 3, 1
-        )
+        with tempfile.TemporaryDirectory() as temporary:
+            store = server.AssetWorkspace(Path(temporary))
+            left = addressable_figures._pixel_box(
+                store, {"x": 0, "y": 0, "width": 5000, "height": 10000}, 3, 1
+            )
+            right = addressable_figures._pixel_box(
+                store, {"x": 5000, "y": 0, "width": 5000, "height": 10000}, 3, 1
+            )
         self.assertEqual(left["right"], right["left"])
         self.assertEqual(left["right"] - left["left"], 2)
         self.assertEqual(right["right"] - right["left"], 1)
