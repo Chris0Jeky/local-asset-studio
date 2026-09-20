@@ -1,0 +1,41 @@
+name: Prepare Restyle review blobs
+on:
+  push:
+    branches: [codex/restyle-attachment-ownership-606]
+    paths: [.github/restyle-prepare-606.py, .github/workflows/restyle-prepare-606.yml]
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.repository == 'Chris0Jeky/local-asset-studio' && github.ref == 'refs/heads/codex/restyle-attachment-ownership-606'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify base and reconstruct tested sources
+        run: |
+          test "$(git rev-parse HEAD^)" = f8fcc40f7388c23d13309c20c2776017a20004b2
+          python .github/restyle-prepare-606.py
+          git diff --check
+          node --check app/static/references.js
+          node --check app/static/studio-workbench.js
+      - name: Store immutable Git objects only; no ref or commit writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,urllib.request
+          from pathlib import Path
+          expected={'app/static/references.js':'0d56526b356b46817856d9c49d50c6dc09c78549','app/static/studio-workbench.js':'00f05bbfab8da726b4b971eb53d4426dc672a24e'}
+          for path,sha in expected.items():
+              data=Path(path).read_bytes()
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+              request=urllib.request.Request('https://api.github.com/repos/Chris0Jeky/local-asset-studio/git/blobs',data=json.dumps({'content':data.decode('utf-8'),'encoding':'utf-8'}).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},method='POST')
+              with urllib.request.urlopen(request,timeout=30) as response:
+                  result=json.load(response)
+              assert result['sha']==sha
+              print('VERIFIED_BLOB',path,sha)
+          PY
