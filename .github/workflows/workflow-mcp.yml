@@ -6,6 +6,8 @@ on:
       - 'tests/test_workflow_*'
       - 'scripts/workflow-mcp.py'
       - 'integrations/workflow-mcp/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
       - '.github/workflows/workflow-mcp.yml'
   push:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - 'tests/test_workflow_*'
       - 'scripts/workflow-mcp.py'
       - 'integrations/workflow-mcp/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'tests/requirements-runtime.txt'
       - '.github/workflows/workflow-mcp.yml'
 permissions:
   contents: read
@@ -27,15 +31,20 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - run: git log -1 --format=%H
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -r integrations/workflow-mcp/requirements.txt
+      - run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - name: Require optional SDK (no skipped protocol gate)
         run: python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.28.1'"
       - run: python -m unittest discover -s tests -p test_workflow_wait_budget.py -v
       - run: python -m unittest discover -s tests -p test_workflow_agent_bridge.py -v
       - run: python -m unittest discover -s tests -p test_workflow_mcp.py -v
+      - run: python -m unittest discover -s tests -p test_workflow_asset_mcp.py -v
+      - run: python -m unittest discover -s tests -p test_workflow_asset_reads.py -v
       - run: python -m unittest discover -s tests -p test_workflow_saved_run_clients.py -v
       - run: python -m unittest discover -s tests -p test_workflow_response_framing.py -v
       - run: python -m unittest discover -s tests -p test_workflow_file_input.py -v
