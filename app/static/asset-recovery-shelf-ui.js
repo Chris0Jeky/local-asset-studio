@@ -57,7 +57,8 @@ function assetShelfInspect(record){
   document.getElementById('assetCommandRecovery').before(library);
   const detail=document.createElement('div');detail.className='asset-shelf-launch';
   detail.innerHTML='<button type="button" id="openAssetRecoveryShelfDetails">Local recovery shelf</button><small id="assetShelfDetailStatus" role="status">Keep a device checkpoint before closing this tab.</small>';
-  document.getElementById('assetDetailRecovery').after(detail);
+  // Keep the established Notes → Save keyboard path; the optional shelf follows actions.
+  document.getElementById('saveAssetDetails').parentElement.after(detail);
   const dialog=document.createElement('dialog');dialog.id='assetRecoveryShelfDialog';dialog.setAttribute('aria-labelledby','assetShelfTitle');
   dialog.innerHTML='<div class="asset-shelf-heading"><h2 id="assetShelfTitle">Local recovery shelf</h2><button type="button" id="closeAssetRecoveryShelf" aria-label="Close local recovery shelf">Close</button></div>'+
     '<p>Optional review-text recovery on this browser origin, including drafts and exact unconfirmed metadata commands. No media or model files are included. Clearing browser data removes it. Export files contain your review text; store them privately.</p>'+
