@@ -105,7 +105,7 @@ class SetupHistory:
             # At most 257 scalar rows, including one excess-row sentinel. The
             # primary key supplies order; no unbounded aggregate is materialized.
             revisions = db.execute('''SELECT CASE WHEN typeof(revision)='integer' THEN revision END AS revision
-                FROM setup_versions_v1 WHERE draft_id=? ORDER BY revision DESC LIMIT ?''',
+                FROM setup_versions_v1 WHERE draft_id=? ORDER BY setup_versions_v1.revision DESC LIMIT ?''',
                 (key, MAX_REVISIONS + 1)).fetchall()
             _corrupt([row['revision'] for row in revisions] == list(range(head, 0, -1)),
                      'Stored setup history is not contiguous; retained rows were not changed')

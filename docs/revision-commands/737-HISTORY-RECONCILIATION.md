@@ -93,8 +93,15 @@ head decoding, and real HTTP expected-head/corruption/request-boundary behavior.
 
 The regression checkpoint ran 23 tests against hash-matched #724 modules:
 35 assertion failures, zero import errors. After correction the combined suite
-runs 45 history tests. Passing counts and final-head hosted results belong in the
-PR evidence, not a prediction in this document.
+ran 45 history tests. A later self-review added two query-plan/work-budget
+regressions in `test_reviewed_setup_history_query_plan.py`, for 47 total. Both
+failed before qualifying ORDER BY with the stored column: the projected CASE
+alias forced a temporary sort, and 10,000 corrupt excess rows exhausted a
+10,000-instruction SQLite budget instead of producing bounded refusal. The
+indexed correction preserves all 10,000 rows and refuses from the first bounded
+revision walk. This deterministic VM budget is test evidence, not a wall-clock
+or universal database-performance guarantee. Final-head hosted results belong
+in the PR evidence.
 
 ## Integration and remaining scope
 
