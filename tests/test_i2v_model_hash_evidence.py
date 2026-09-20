@@ -3,6 +3,8 @@ import hashlib
 import importlib.util
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -104,6 +106,37 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
         for field in ("bytes", "mtime_ns", "ctime_ns", "device", "inode"):
             with self.subTest(field=field):
                 self.assertIn(field, retained)
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX FIFO contract")
+    def test_fifo_candidate_is_rejected_without_waiting_for_a_writer(self):
+        fifo = self.model_directory / "blocked.safetensors"
+        os.mkfifo(fifo)
+        program = """
+import importlib.util
+import json
+import sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('i2v_fifo_child', sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+print(json.dumps(module._cached_file_hash(Path(sys.argv[2]), {}, require_current=True)))
+"""
+        try:
+            completed = subprocess.run(
+                [sys.executable, "-c", program, str(ROOT / "app" / "i2v_diagnostics.py"), str(fifo)],
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            self.fail("FIFO model candidate blocked instead of failing closed")
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertTrue(result["present"])
+        self.assertNotIn("sha256", result)
+        self.assertIn("regular file", result["error"].lower())
 
     @unittest.skipIf(os.name == "nt", "Windows denies replacement of this open-file fixture")
     def test_path_replacement_during_hashing_cannot_publish_the_old_digest_as_current(self):
