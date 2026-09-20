@@ -38,13 +38,15 @@ A structurally invalid manifest creates no output file. A valid manifest with on
 still produces the complete requested report (including that missing row) and exits 2. JSON is compact
 so the same 1 MiB report limit applies to file and stdout output. There is no HTML rendering path.
 
-CLI diagnostics for a refused plan (no report file) use two independent fields. `state` is
+CLI diagnostics for a refused plan (no report file) use separate dimensions. `state` is
 `invalid_plan` when the file opened and failed the manifest contract, and `report_unavailable` when
 the plan path could not be read, changed during the guarded read, or the report could not be
-represented. `integrity` preserves the underlying evidence-reader classification as `invalid` or
-`incomplete`; it does not turn the plan/report disposition into an observation row. A missing or
-mistyped plan path therefore remains `state: report_unavailable`, while its unavailable source is
-reported as `integrity: incomplete`. Observation-level incomplete rows live inside a written report.
+represented. When the refusal establishes a source-reader classification, `integrity` records
+`invalid` or `incomplete`; it does not turn the plan/report disposition into an observation row.
+A genuinely absent plan path is therefore `state: report_unavailable` and `integrity: incomplete`.
+An existing directory or other non-regular path is `integrity: invalid`. A post-inspection report-size
+refusal has no `integrity` field because it makes no new claim about the already-read source evidence.
+Observation-level incomplete rows live inside a written report.
 
 Rows whose received prompt identity is reused keep their pair slot with `reused_prompt_evidence`;
 the observation payload is omitted. The report limitation names that drop so it is not mistaken for
@@ -138,6 +140,4 @@ python scripts/validate-repo.py
 Tests create actual recorder artifact sets with synthetic sensor/source data. They exercise all
 sixteen maximum observations, pin changes, duplicate jobs and prompts, corrupted/missing evidence,
 unknown/zero coverage, failed/uncertain results, cold/warm declarations, mismatched graphs/samplers,
-parent links and standalone CLI no-overwrite/no-live-dependency behavior. These are contract and
-resource-bound tests, not a Windows GPU benchmark. Exact-head results and historical failures live
-on the implementation PRs.
+output write failures and compact-report retention. No model, runtime or job is created.
