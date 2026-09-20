@@ -103,12 +103,16 @@ revision walk. This deterministic VM budget is test evidence, not a wall-clock
 or universal database-performance guarantee.
 
 A subsequent review added two invalid-UTF-8 SQLite `TEXT` regressions for the
-stored record and digest. The reader now materializes those bounded fields as
-blobs and performs strict UTF-8/ASCII decoding inside its typed corruption
-boundary. Both cases retain byte-for-byte hex evidence and return
-`setup_history_corrupt` rather than leaking a driver `OperationalError` that an
-HTTP adapter would misclassify as storage unavailability. The combined history
-suite therefore has 49 tests. Final-head hosted results belong in the PR evidence.
+stored record and digest. The first correction materialized database-encoding
+blobs, which correctly contained malformed UTF-8 but falsely rejected valid
+UTF-16LE/BE databases. The final reader temporarily selects SQLite's UTF-8 text
+representation as bytes, restores the connection text factory, and performs
+strict UTF-8/ASCII decoding inside its typed corruption boundary. The malformed
+cases retain byte-for-byte evidence and return `setup_history_corrupt` rather
+than leaking a driver `OperationalError`; a non-ASCII canonical draft now also
+round-trips through both supported UTF-16 encodings without rewriting any row.
+The combined hosted history suite therefore has 50 tests. Final-head hosted
+results belong in the PR evidence.
 
 ## Integration and remaining scope
 

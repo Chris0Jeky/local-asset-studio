@@ -117,11 +117,22 @@ class SetupHistory:
     @staticmethod
     def _read(db, key, revision):
         # Bound both text and scalar columns before Python materializes a corrupt row.
-        row = db.execute('''SELECT
-            CASE WHEN typeof(record)='text' AND length(CAST(record AS BLOB))<=? THEN CAST(record AS BLOB) END AS record,
-            CASE WHEN typeof(sha256)='text' AND length(CAST(sha256 AS BLOB))=64 THEN CAST(sha256 AS BLOB) END AS sha256,
-            CASE WHEN typeof(bytes)='integer' AND bytes BETWEEN 1 AND ? THEN bytes END AS bytes
-            FROM setup_versions_v1 WHERE draft_id=? AND revision=?''', (MAX_COMMAND, MAX_COMMAND, key, revision)).fetchone()
+        factory = db.text_factory
+        try:
+            # bytes asks sqlite3 for SQLite's UTF-8 text representation without
+            # decoding it. This is independent of the database's UTF-8/UTF-16
+            # storage encoding and keeps malformed text inside our typed boundary.
+            db.text_factory = bytes
+            row = db.execute('''SELECT
+                CASE WHEN typeof(record)='text' AND length(record)<=?
+                    AND length(CAST(record AS BLOB))<=? THEN record END AS record,
+                CASE WHEN typeof(sha256)='text' AND length(sha256)=64
+                    AND length(CAST(sha256 AS BLOB))<=128 THEN sha256 END AS sha256,
+                CASE WHEN typeof(bytes)='integer' AND bytes BETWEEN 1 AND ? THEN bytes END AS bytes
+                FROM setup_versions_v1 WHERE draft_id=? AND revision=?''',
+                (MAX_COMMAND, 2 * MAX_COMMAND, MAX_COMMAND, key, revision)).fetchone()
+        finally:
+            db.text_factory = factory
         if row is None:
             raise HistoryReadError('setup_not_found', 'Reviewed setup revision not found', 404)
         try:

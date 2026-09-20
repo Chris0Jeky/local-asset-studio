@@ -70,12 +70,17 @@ invalid revision accounting is refused rather than silently skipped. Returned
 rows and bytes are bounded; database execution time is not an OS resource quota.
 
 Stored record text and scalar columns are SQL-bounded before Python allocation.
-Record and digest text are materialized as bounded blobs and decoded explicitly
-inside the typed corruption boundary, so invalid UTF-8 cannot escape as a generic
-storage outage. Canonical JSON, digest, stored byte length and supported fields
-are then checked. Malformed/oversized head or selected records refuse the whole
-read. Other unselected revision payloads are not decoded. Listing is not a full
-audit of every historical payload.
+The reader temporarily asks `sqlite3` for SQLite's UTF-8 text representation as
+bytes, regardless of whether the database stores UTF-8, UTF-16LE or UTF-16BE.
+It restores the connection's original text factory immediately after the row is
+materialized. Strict UTF-8/ASCII decoding then occurs inside the typed corruption
+boundary, so malformed text cannot escape as a generic storage outage and valid
+UTF-16 workspaces retain the canonical UTF-8 byte/hash identity written by the
+setup owner. The SQL storage bound allows the maximum two-byte expansion of
+valid UTF-8 text in SQLite's UTF-16 encodings. Canonical JSON, digest, stored byte
+length and supported fields are then checked. Malformed/oversized head or
+selected records refuse the whole read. Other unselected revision payloads are
+not decoded. Listing is not a full audit of every historical payload.
 
 ## Comparison and export
 
