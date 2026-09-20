@@ -274,6 +274,17 @@ def _contact_sheet(directory: Path, frames, target: Path):
 
 
 def _safetensors_header(path: Path):
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("duplicate safetensors header key: " + ascii(key[:120]))
+            value[key] = item
+        return value
+
+    def reject_constant(value):
+        raise ValueError("non-finite JSON constant in safetensors header: " + value)
+
     try:
         size = path.stat().st_size
         with path.open("rb") as stream:
@@ -283,7 +294,16 @@ def _safetensors_header(path: Path):
             header_length = struct.unpack("<Q", raw_length)[0]
             if header_length > size - 8 or header_length > 128 * 1024 * 1024:
                 raise ValueError("safetensors header exceeds file bounds")
-            header = json.loads(stream.read(header_length).decode("utf-8"))
+            raw_header = stream.read(header_length)
+            if len(raw_header) != header_length:
+                raise ValueError("truncated safetensors header")
+            header = json.loads(
+                raw_header.decode("utf-8"),
+                object_pairs_hook=unique_object,
+                parse_constant=reject_constant,
+            )
+        if not isinstance(header, dict):
+            raise ValueError("safetensors header must be a JSON object")
         data_start = 8 + header_length
         tensor_count = 0
         for name, entry in header.items():
@@ -292,7 +312,7 @@ def _safetensors_header(path: Path):
             if not isinstance(entry, dict) or not isinstance(entry.get("data_offsets"), list) or len(entry["data_offsets"]) != 2:
                 raise ValueError("invalid tensor data offsets")
             start, end = entry["data_offsets"]
-            if not isinstance(start, int) or not isinstance(end, int) or start < 0 or end < start or data_start + end > size:
+            if type(start) is not int or type(end) is not int or start < 0 or end < start or data_start + end > size:
                 raise ValueError("tensor data offset exceeds file bounds")
             tensor_count += 1
         return {"status": "valid", "header_bytes": header_length, "tensor_count": tensor_count}
