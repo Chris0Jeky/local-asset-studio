@@ -206,18 +206,17 @@ class ReferenceHoldObservationAdmissionTests(unittest.TestCase):
             self.assertTrue(studio.queue.empty())
             self.assertEqual(job["status"], "uncertain")
 
-    def test_resume_job_keeps_the_hold_for_an_ordinary_resume(self) -> None:
-        """Tracking that was never stopped is ordinary new work, hold and all."""
+    def test_resume_job_observes_an_ordinary_known_prompt_through_a_retained_hold(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             studio = ObservationStudio(Path(temporary), held=True)
             job = stopped_job()
             job.pop("tracking_disposition")
             studio.jobs[job["id"]] = job
+            studio._save = lambda value: studio._write_json_atomic(studio.runs / value["id"] / "state.json", value)
 
-            with self.assertRaisesRegex(ValueError, "Reference analysis may still own resources"):
-                studio.resume_job(job["id"])
-            self.assertEqual(studio.reference_jobs.calls, 1)
-            self.assertTrue(studio.queue.empty())
+            self.assertEqual(studio.resume_job(job["id"])["status"], "queued")
+            self.assertEqual(studio.reference_jobs.calls, 0)
+            self.assertEqual(studio.queue.get_nowait(), ("observe", job["id"]))
 
     def test_resume_job_keeps_the_hold_for_an_unknown_job_id(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

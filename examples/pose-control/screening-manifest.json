@@ -98,9 +98,9 @@
   "routes": [
     {
       "backend_id": "primary",
-      "detector_behavior": "route-native",
+      "detector_behavior": "not-applicable",
       "id": "klein-geometry",
-      "input_representation": "skeleton",
+      "input_representation": "precomputed-skeleton",
       "mechanism": "klein-geometry-reference",
       "noise_seeds": {"counterfactual": 1003, "replicate_a": 1001, "replicate_b": 1002},
       "pins": {
@@ -156,6 +156,6 @@
     }
   ],
   "same_defect_repeat_limit": 2,
-  "schema": "studio.pose-screening-manifest/v1",
+  "schema": "studio.pose-screening-manifest/v2",
   "stop_conditions": ["uncertain_dispatch", "invalid_binding", "runtime_instability", "candidate_cap_exhausted"]
 }

@@ -18,7 +18,7 @@ Each production profile should eventually pin checkpoint lineage, prediction typ
 
 For LoRAs, use a compatibility tuple and source-backed trigger metadata. Never invent a trigger token because a file has a descriptive name. Add adapters independently and compare them against an unchanged base. Tags, phrase weighting, prompt scheduling and regional conditioning require the exact parser/node implementation; syntax resembling another tool's convention is not proof of support.
 
-The shipped nine profiles are reviewed projections and contain scope notes. They are not pinned model-install locks or universal claims about every derivative. Unknown profiles and incompatible tasks fail rather than falling back to generic prose. A syntax profile's success cannot remove an existing runtime block such as H3's crash guard.
+The shipped 12 profiles are reviewed projections and contain scope notes. They are not pinned model-install locks or universal claims about every derivative. Unknown profiles and incompatible tasks fail rather than falling back to generic prose. A syntax profile's success cannot remove an existing runtime block such as H3's crash guard.
 
 ## Reference roles and reverse prompting
 

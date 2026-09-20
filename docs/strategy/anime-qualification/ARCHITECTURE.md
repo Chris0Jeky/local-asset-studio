@@ -34,7 +34,7 @@ A model may be installed, have a working loader and still be slow, unreliable, u
 
 Unknown is a value, not a failure to be overwritten with a plausible default. A known failure remains attached to its exact configuration; it is not silently generalized to the whole model family. Recommendations can choose a next experiment but cannot mutate these facts.
 
-The first software slice uses the existing resource-guidance evaluator. Optional `source.scope` distinguishes `family`, `exact_version`, `local_workflow` and `unrecorded`. Specific declarations require a pinned locator identity. Explanations separately report resource applicability and source scope, using existing UI reasons. Even a declared exact scope is not authenticated merely because it passes schema validation.
+The first software slice uses the existing resource-guidance evaluator. Optional `source.scope` distinguishes `family`, `exact_version`, `local_workflow` and `unrecorded`. Specific declarations require a pinned `source.revision` identity. Explanations separately report resource applicability and source scope, using existing UI reasons. Even a declared exact scope is not authenticated merely because it passes schema validation.
 
 ## ADR 3: native contracts, not architecture-by-name
 

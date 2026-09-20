@@ -4,8 +4,11 @@ import hashlib
 import json
 import re
 
-MANIFEST_SCHEMA = 'studio.pose-screening-manifest/v1'
-PLAN_SCHEMA = 'studio.pose-screening-plan/v1'
+from . import pose_route_contract
+
+MANIFEST_SCHEMA = 'studio.pose-screening-manifest/v2'
+PLAN_SCHEMA = 'studio.pose-screening-plan/v2'
+LEGACY_MANIFEST_SCHEMA = 'studio.pose-screening-manifest/v1'
 REVIEW_AXES = (
     'hard_constraints', 'body_pose', 'camera', 'identity', 'outfit', 'style',
     'hands_contact_support', 'anatomy_occlusion', 'ignored_facet_leakage',
@@ -18,18 +21,7 @@ STOP_CONDITIONS = (
 
 _HASH = re.compile(r'[0-9a-f]{64}\Z')
 _ID = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?\Z')
-_COMMON_PINS = frozenset({
-    'model', 'encoder', 'vae', 'graph', 'nodes', 'runtime',
-    'reference_transform', 'prompt_dialect',
-})
-_ROUTE_SPECS = (
-    ('klein-geometry', 'klein-geometry-reference', 'skeleton', 'route-native',
-     frozenset({'renderer'})),
-    ('copy-pose', 'copy-pose-rgb', 'rgb-pose-donor', 'not-applicable',
-     frozenset({'lora'})),
-    ('sdxl-corrected-skeleton', 'sdxl-precomputed-skeleton', 'precomputed-skeleton',
-     'bypass-precomputed-guide', frozenset({'controlnet', 'renderer'})),
-)
+_COMMON_PINS = pose_route_contract.COMMON_PINS
 _CASE_SPECS = (
     ('familiar-difficult-bend', 'development', 'replicated-seeds',
      ('body_pose', 'camera')),
@@ -92,14 +84,13 @@ def _title(value):
 def _route(value, expected):
     _keys(value, ('id', 'mechanism', 'input_representation', 'backend_id',
                   'detector_behavior', 'pins', 'noise_seeds'))
-    expected_id, mechanism, representation, detector, special_pins = expected
     route_id = _id(value['id'], 'route id')
-    if (route_id != expected_id or value['mechanism'] != mechanism or
-            value['input_representation'] != representation or
-            value['detector_behavior'] != detector):
+    if (route_id != expected['id'] or value['mechanism'] != expected['mechanism'] or
+            value['input_representation'] != expected['input_representation'] or
+            value['detector_behavior'] != expected['detector_behavior']):
         raise ValueError('route identity, mechanism, representation and detector behavior disagree')
-    backend_id = _id(value['backend_id'], 'backend id')
-    required_pins = _COMMON_PINS | special_pins
+    backend_id = pose_route_contract.validate_backend(route_id, value['backend_id'])
+    required_pins = _COMMON_PINS | expected['pins']
     _keys(value['pins'], required_pins)
     pins = {key: _hash(value['pins'][key]) for key in sorted(required_pins)}
     _keys(value['noise_seeds'], ('replicate_a', 'replicate_b', 'counterfactual'))
@@ -109,10 +100,10 @@ def _route(value, expected):
         raise ValueError('route-local replicate and counterfactual seeds must be distinct')
     return {
         'id': route_id,
-        'mechanism': mechanism,
-        'input_representation': representation,
+        'mechanism': expected['mechanism'],
+        'input_representation': expected['input_representation'],
         'backend_id': backend_id,
-        'detector_behavior': detector,
+        'detector_behavior': expected['detector_behavior'],
         'pins': pins,
         'noise_seeds': seeds,
     }
@@ -167,6 +158,8 @@ def validate_manifest(manifest):
         'same_defect_repeat_limit', 'routes', 'cases', 'review_axes',
         'stop_conditions',
     ))
+    if manifest['schema'] == LEGACY_MANIFEST_SCHEMA:
+        raise ValueError('pose screening manifest v1 used contradictory Klein route vocabulary; regenerate it as v2')
     if (manifest['schema'] != MANIFEST_SCHEMA or manifest['authority'] != 'none' or
             manifest['execution_authorized'] is not False or
             manifest['generation_submitted'] is not False):
@@ -183,8 +176,10 @@ def validate_manifest(manifest):
         raise ValueError('stop conditions changed')
     if not isinstance(manifest['routes'], list) or len(manifest['routes']) != 3:
         raise ValueError('exactly three frozen routes are required')
-    routes = [_route(value, expected)
-              for value, expected in zip(manifest['routes'], _ROUTE_SPECS)]
+    routes = [
+        _route(value, pose_route_contract.screening_projection(route_id))
+        for value, route_id in zip(manifest['routes'], pose_route_contract.ROUTE_IDS)
+    ]
     if len({route['id'] for route in routes}) != len(routes):
         raise ValueError('route ids must be unique')
     if not isinstance(manifest['cases'], list) or len(manifest['cases']) != 8:

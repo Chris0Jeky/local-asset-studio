@@ -140,8 +140,8 @@ compiler/conditional-planner migration is tracked through #34/#144; the
 workflow choices and actual executions. Anima takes a negative channel but does not accept SDXL
 LoRA/IP-Adapter/ControlNet weights merely because they share a node label.
 
-Weights have CircleStone model-use terms distinct from generated-output conditions. Preserve the
-recorded private-experiment decision and per-file provenance; a recipe or byte hash is not a rights grant.
+The weights use the CircleStone Labs Non-Commercial weights terms, distinct from generated-output conditions.
+Preserve the recorded private-experiment decision and per-file provenance; a recipe or byte hash is not a rights grant.
 
 ## SDXL, Z-Image Turbo, FLUX.2 Klein, Qwen Image Edit
 
