@@ -7,7 +7,13 @@ from .setup_drafts import SetupDrafts, SetupError, PREFIX, MAX_COMMAND
 
 
 def route(path,value,studio):
-    parsed=urlsplit(path);need(not parsed.query and not parsed.fragment,'Setup draft routes do not accept query parameters')
+    parsed=urlsplit(path)
+    from .setup_history import READ_ACTIONS, read_route
+    parts=parsed.path[len(PREFIX)+1:].split('/') if parsed.path.startswith(PREFIX+'/') else []
+    if len(parts)==2 and parts[1] in READ_ACTIONS:
+        need(value is None, 'Setup history is read-only')
+        return read_route(path,studio.assets)
+    need(not parsed.query and not parsed.fragment,'Setup draft routes do not accept query parameters')
     repository=SetupDrafts(studio)
     if parsed.path==PREFIX:return repository.list() if value is None else repository.command(value)
     need(value is None and parsed.path.startswith(PREFIX+'/'),'Unknown setup draft operation')
