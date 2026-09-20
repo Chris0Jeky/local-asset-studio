@@ -7,7 +7,6 @@ from http.client import HTTPException
 import time
 from typing import Any, Callable, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from ._adult_illustration_source_transport_cache import SnapshotResponseCache
@@ -24,6 +23,7 @@ from ._adult_illustration_source_transport_common import (
     WireResponse,
     cached_headers,
     endpoint_provider,
+    metadata_redirect_url,
     normalise_headers,
     parse_provider_json,
     request_key,
@@ -258,7 +258,7 @@ class BoundedProviderTransport:
             location = wire.headers.get("location")
             if not isinstance(location, str) or not location:
                 raise ValueError("Provider redirect is missing a Location header")
-            destination = urljoin(current.url, location)
+            destination = metadata_redirect_url(current.url, location)
             target_provider = endpoint_provider(destination, "redirect URL")
             if target_provider != provider:
                 raise ValueError("Cross-provider redirect is not allowed")
