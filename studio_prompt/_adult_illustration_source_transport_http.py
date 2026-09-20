@@ -199,6 +199,7 @@ class BoundedProviderTransport:
         self.refresh = refresh
         self.sleeper = sleeper
         self._fetch_lock = Lock()
+        self._awaiting_finalization = False
         self._receipt: dict[str, Any] | None = None
         self._pending: tuple[HttpRequest, HttpResponse] | None = None
 
@@ -210,7 +211,7 @@ class BoundedProviderTransport:
         try:
             # A raw caller may already own a response awaiting finalization.
             # Refusing this new fetch must not abort that caller's pending data.
-            if self._pending is not None:
+            if self._pending is not None or self._awaiting_finalization:
                 raise RuntimeError("Previous provider response was not finalized")
             self._receipt = None
             try:
@@ -307,7 +308,7 @@ class BoundedProviderTransport:
         return response, wire, total_attempts, tuple(redirects)
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        if self._pending is not None:
+        if self._pending is not None or self._awaiting_finalization:
             raise RuntimeError("Previous provider response was not finalized")
         provider = validate_base_request(request)
         key = request_key(request)
@@ -327,6 +328,7 @@ class BoundedProviderTransport:
                 validators=(),
                 wire_status=200,
             )
+            self._awaiting_finalization = True
             return cached
 
         validators = _validator_headers(cached)
@@ -361,6 +363,7 @@ class BoundedProviderTransport:
             validators=tuple(sorted(validators)),
             wire_status=wire.status,
         )
+        self._awaiting_finalization = True
         return response
 
     def _make_receipt(
@@ -394,7 +397,7 @@ class BoundedProviderTransport:
             "max_redirects": self.policy.max_redirects,
             "max_response_bytes": self.policy.max_response_bytes,
             "validators_sent": list(validators),
-            "wire_status": wire_status,
+            "wire_status": wire.status,
             "effective_status": response.status,
             "final_url": response.final_url,
             "response_payload_sha256": hashlib.sha256(response.body).hexdigest(),
@@ -411,7 +414,7 @@ class BoundedProviderTransport:
             or raw_payload_sha256
             != self._receipt["response_payload_sha256"]
         ):
-            self._pending = None
+            self.abort()
             raise ValueError("Parsed snapshot payload identity does not match transport")
         if self._pending is not None:
             request, response = self._pending
@@ -421,7 +424,9 @@ class BoundedProviderTransport:
             if stored_key != self._receipt["request_key"]:
                 raise ValueError("Stored cache identity changed during finalization")
             self._pending = None
+        self._awaiting_finalization = False
 
     def abort(self) -> None:
+        self._awaiting_finalization = False
         self._pending = None
         self._receipt = None
