@@ -10,8 +10,10 @@ import hashlib
 import json
 import math
 import mimetypes
+import os
 import re
 import shutil
+import stat
 import struct
 import subprocess
 import time
@@ -320,19 +322,75 @@ def _safetensors_header(path: Path):
         return {"status": "invalid", "error": str(exc)[:300]}
 
 
-def _cached_file_hash(path: Path, cache):
+_FILE_IDENTITY_FIELDS = ("bytes", "mtime_ns", "ctime_ns", "device", "inode")
+
+
+def _file_identity(observed):
+    return {
+        "bytes": observed.st_size,
+        "mtime_ns": observed.st_mtime_ns,
+        "ctime_ns": observed.st_ctime_ns,
+        "device": observed.st_dev,
+        "inode": observed.st_ino,
+    }
+
+
+def _open_model_candidate(path: Path):
+    """Open one candidate without letting a FIFO or device block this thread."""
+    return open(
+        path,
+        "rb",
+        opener=lambda candidate, flags: os.open(
+            candidate,
+            flags | getattr(os, "O_NONBLOCK", 0),
+        ),
+    )
+
+
+def _hash_open_file(path: Path):
+    """Hash one stable regular-file descriptor and bind it to its current path."""
     key = str(path)
+    identity = None
     try:
-        identity = {"bytes": path.stat().st_size, "mtime_ns": path.stat().st_mtime_ns}
+        with _open_model_candidate(path) as stream:
+            before = os.fstat(stream.fileno())
+            identity = _file_identity(before)
+            if not stat.S_ISREG(before.st_mode):
+                return {"path": key, "present": True, **identity, "error": "Model path is not a regular file"}
+            digest = hashlib.sha256()
+            for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                digest.update(chunk)
+            after = _file_identity(os.fstat(stream.fileno()))
+            if after != identity:
+                return {"path": key, "present": True, **after, "error": "Model file changed while hashing"}
+            current = _file_identity(path.stat())
+            if current != after:
+                return {"path": key, "present": True, **after, "error": "Model path changed while hashing"}
+            return {"path": key, "present": True, **after, "sha256": digest.hexdigest()}
     except OSError as exc:
-        return {"path": key, "present": False, "error": str(exc)[:200]}
-    previous = cache.get(key)
-    if isinstance(previous, dict) and all(previous.get(k) == v for k, v in identity.items()) and previous.get("sha256"):
-        digest = previous["sha256"]
+        result = {"path": key, "present": identity is not None, "error": str(exc)[:200]}
+        if identity is not None:
+            result.update(identity)
+        return result
+
+
+def _cached_file_hash(path: Path, cache, require_current=False):
+    key = str(path)
+    if not require_current:
+        try:
+            identity = _file_identity(path.stat())
+        except OSError as exc:
+            return {"path": key, "present": False, "error": str(exc)[:200]}
+        previous = cache.get(key)
+        if isinstance(previous, dict) and all(previous.get(field) == identity[field] for field in _FILE_IDENTITY_FIELDS) and previous.get("sha256"):
+            return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
+    observed = _hash_open_file(path)
+    if observed.get("sha256"):
+        cache[key] = {field: observed[field] for field in _FILE_IDENTITY_FIELDS}
+        cache[key]["sha256"] = observed["sha256"]
     else:
-        digest = sha256_file(path)
-        cache[key] = dict(identity, sha256=digest)
-    return {"path": key, "present": True, **identity, "sha256": digest}
+        cache.pop(key, None)
+    return observed
 
 
 def model_records(studio, graph, directory: Path):
@@ -357,8 +415,8 @@ def model_records(studio, graph, directory: Path):
                 continue
             seen.add(relative)
             path = (Path(getattr(studio, "comfy_root", "")) / "models" / relative).resolve()
-            identity = _cached_file_hash(path, cache) if path.is_file() else {"path": str(path), "present": False}
             pin = pins.get(relative) or next((entry for key, entry in pins.items() if Path(key).name == Path(value).name), None)
+            identity = _cached_file_hash(path, cache, require_current=pin is not None)
             expected_bytes = pin.get("bytes") if pin else None
             expected_hash = pin.get("sha256") if pin else None
             size_matches = bool(identity.get("present") and expected_bytes == identity.get("bytes")) if pin else None
@@ -377,7 +435,9 @@ def model_records(studio, graph, directory: Path):
                 "hash_matches_pin": hash_matches,
                 "pin_status": "verified" if size_matches and hash_matches else "mismatch" if pin and identity.get("present") else "missing" if pin else "unPinned",
             }
-            if identity.get("present") and Path(value).suffix.lower() == ".safetensors":
+            if identity.get("error"):
+                record["hash_error"] = identity["error"]
+            if identity.get("sha256") and Path(value).suffix.lower() == ".safetensors":
                 record["container_header"] = _safetensors_header(path)
             if pin:
                 record["pin_source"] = {key: pin.get(key) for key in ("id", "source", "revision", "url") if pin.get(key) is not None}
