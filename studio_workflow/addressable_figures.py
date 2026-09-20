@@ -129,6 +129,11 @@ def _verify_png_container(raw):
     try:
         offset = len(_PNG_SIGNATURE)
         seen_ihdr = False
+        seen_plte = False
+        seen_idat = False
+        idat_closed = False
+        bit_depth = None
+        color_type = None
         while offset < len(data):
             if len(data) - offset < 12:
                 raise SyntaxError("PNG chunk is incomplete")
@@ -155,15 +160,41 @@ def _verify_png_container(raw):
             if not seen_ihdr:
                 if chunk_type != b"IHDR" or size != 13:
                     raise SyntaxError("PNG must begin with one 13-byte IHDR chunk")
+                bit_depth = int(data[chunk_data_start + 8])
+                color_type = int(data[chunk_data_start + 9])
+                if color_type not in (0, 2, 3, 4, 6):
+                    raise SyntaxError("PNG IHDR uses an unsupported colour type")
                 seen_ihdr = True
             elif chunk_type == b"IHDR":
                 raise SyntaxError("PNG contains more than one IHDR chunk")
             if not (chunk_type[0] & 0x20) and chunk_type not in _PNG_CRITICAL_CHUNKS:
                 raise SyntaxError("PNG contains an unsupported critical chunk")
-            if chunk_type == b"IEND":
+            if chunk_type == b"PLTE":
+                if seen_plte:
+                    raise SyntaxError("PNG contains more than one PLTE chunk")
+                if seen_idat:
+                    raise SyntaxError("PNG PLTE appears after IDAT")
+                if color_type in (0, 4):
+                    raise SyntaxError("PNG colour type forbids PLTE")
+                if size == 0 or size > 768 or size % 3:
+                    raise SyntaxError("PNG PLTE has an invalid length")
+                if color_type == 3 and size // 3 > 1 << bit_depth:
+                    raise SyntaxError("PNG PLTE exceeds the indexed bit depth")
+                seen_plte = True
+            elif chunk_type == b"IDAT":
+                if idat_closed:
+                    raise SyntaxError("PNG IDAT chunks are not consecutive")
+                if color_type == 3 and not seen_plte:
+                    raise SyntaxError("Indexed PNG is missing PLTE before IDAT")
+                seen_idat = True
+            elif chunk_type == b"IEND":
+                if not seen_idat:
+                    raise SyntaxError("PNG has no IDAT data")
                 if size != 0 or chunk_end != len(data):
                     raise SyntaxError("PNG IEND is not the complete terminal chunk")
                 return
+            elif seen_idat:
+                idat_closed = True
             offset = chunk_end
         raise SyntaxError("PNG has no terminal IEND chunk")
     finally:
