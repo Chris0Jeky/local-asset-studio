@@ -28,8 +28,17 @@ HEX_64_RE = re.compile(r'[0-9a-f]{64}\Z')
 MODEL_REVISION_RE = re.compile(r'(?:[0-9a-f]{40}|[0-9a-f]{64})\Z')
 ID_RE = re.compile(r'[a-z][a-z0-9-]{0,63}\Z')
 FIELD_RE = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
+SPEAKER_RE = re.compile(r'[a-z][a-z0-9_-]{0,63}\Z')
 PERMISSION_RE = re.compile(r'[a-z][a-z0-9._-]{0,127}\Z')
 REFERENCE_REQUIREMENTS = {'none', 'required'}
+PROFILE_STATUSES = {'control', 'experimental', 'accepted', 'rejected'}
+PROFILE_SOURCES = {'catalog', 'local-registry'}
+PROFILE_BINDING_FIELDS = (
+    'schema_version', 'id', 'revision', 'name', 'status', 'source',
+    'profile_sha256', 'identity', 'adapter', 'runnable', 'speaker_id',
+    'speaker_id_source', 'delivery', 'lexicon', 'mix', 'acceptance',
+    'binding_sha256',
+)
 
 
 class QualificationError(ValueError):
@@ -127,6 +136,40 @@ def _positive_revision(value, label) -> int:
     if type(value) is not int or not 1 <= value <= 1_000_000:
         raise QualificationError(f'{label} must be a positive integer revision')
     return value
+
+
+def _validate_profile_binding(value) -> dict:
+    label = 'qualification plan profile binding'
+    _fields(value, PROFILE_BINDING_FIELDS, label)
+    claimed = _hash(value.get('binding_sha256'), f'{label} SHA-256')
+    unsigned = {key: item for key, item in value.items() if key != 'binding_sha256'}
+    try:
+        actual = canonical_digest(unsigned)
+    except VoiceProfileError as exc:
+        raise QualificationError(str(exc)) from exc
+    if actual != claimed:
+        raise QualificationError('Qualification plan profile binding SHA-256 is invalid')
+    if value.get('schema_version') != 1:
+        raise QualificationError('Qualification plan profile binding has an unsupported schema version')
+    _stable_id(value.get('id'), f'{label}.id')
+    _positive_revision(value.get('revision'), f'{label}.revision')
+    _text(value.get('name'), f'{label}.name', 160)
+    if value.get('status') not in PROFILE_STATUSES:
+        raise QualificationError(f'{label}.status is unsupported')
+    if value.get('source') not in PROFILE_SOURCES:
+        raise QualificationError(f'{label}.source is unsupported')
+    _hash(value.get('profile_sha256'), f'{label}.profile_sha256')
+    for field in ('identity', 'delivery', 'lexicon', 'mix', 'acceptance'):
+        if not isinstance(value.get(field), dict):
+            raise QualificationError(f'{label}.{field} must be an object')
+    _stable_id(value.get('adapter'), f'{label}.adapter')
+    if type(value.get('runnable')) is not bool:
+        raise QualificationError(f'{label}.runnable must be a boolean')
+    speaker_id = value.get('speaker_id')
+    if not isinstance(speaker_id, str) or not SPEAKER_RE.fullmatch(speaker_id):
+        raise QualificationError(f'{label}.speaker_id must be stable speaker metadata')
+    _stable_id(value.get('speaker_id_source'), f'{label}.speaker_id_source')
+    return copy.deepcopy(value)
 
 
 def _read_json(path: Path, label: str):
@@ -386,9 +429,7 @@ def _validate_plan(plan: dict) -> dict:
         raise QualificationError('Qualification plan SHA-256 is invalid')
     if plan.get('generation_submitted') is not False:
         raise QualificationError('Qualification planning must record zero submitted generation')
-    profile = plan.get('profile')
-    if not isinstance(profile, dict) or not isinstance(profile.get('id'), str):
-        raise QualificationError('Qualification plan profile binding is invalid')
+    profile = _validate_profile_binding(plan.get('profile'))
 
     policy = load_policy()
     evaluation = _load_evaluation_set()
