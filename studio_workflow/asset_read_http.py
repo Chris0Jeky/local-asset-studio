@@ -56,11 +56,12 @@ def _body(handler):
         while remaining:
             seconds = deadline - time.monotonic()
             require(seconds > 0, 'Asset observation body timed out', status=408)
-            handler.connection.settimeout(seconds)
+            handler.connection.settimeout(seconds if prior_timeout is None else min(seconds, prior_timeout))
             chunk = handler.rfile.read1(min(remaining, 8192))
             require(bool(chunk), 'Incomplete asset observation body')
             chunks.append(chunk)
             remaining -= len(chunk)
+        require(time.monotonic() <= deadline, 'Asset observation body timed out', status=408)
         value = decode(b''.join(chunks).decode('utf-8'))
     finally:
         handler.connection.settimeout(prior_timeout)
@@ -99,7 +100,9 @@ def extend_handler(base):
             if not self._safe_mutation():
                 self.close_connection = True
                 return reject_json(self, 403, _error(ValueError('Local same-origin request required')))
-            if self.path.split('?', 1)[0] != SELECTION:
+            if self.path.split('?', 1)[0] != PAGE:
+                pass
+            else:
                 self.close_connection = True
                 return reject_json(self, 405, _error(ValueError('Asset pages require GET')))
             started = False
