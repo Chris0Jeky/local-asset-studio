@@ -96,6 +96,19 @@ class SpokenBrowserTests(unittest.TestCase):
         self.assertEqual(1, len([m for m, _ in self.traffic if m == 'POST']))
         self.assert_no_inference()
 
+    def test_saved_rate_is_applied_to_native_playback_and_segment_switches(self):
+        from spoken_brief_exports import save_playback
+        save_playback(self.f.directory, sample=0, rate=1.75)
+        self.inspect()
+        self.assertEqual('1.75', self.page.locator('#rate').input_value())
+        self.assertEqual(1.75, self.page.locator('#player').evaluate('(a)=>a.playbackRate'))
+        self.page.locator('#audioTarget').select_option('segment-0001')
+        self.page.locator('#player').evaluate('(a)=>a.play()')
+        self.page.wait_for_function("document.querySelector('#player').currentTime > 0")
+        self.assertEqual(1.75, self.page.locator('#player').evaluate('(a)=>a.playbackRate'))
+        self.assertFalse(any(m == 'POST' for m, _ in self.traffic))
+        self.assert_no_inference()
+
     def test_report_and_listening_review_remain_separate(self):
         self.inspect(); self.page.locator('#reportList').select_option(self.report_id)
         self.page.locator('#loadReport').click(); self.page.wait_for_function("document.querySelector('#machineSummary').textContent.includes('not-transcribed')")

@@ -48,11 +48,18 @@
     return true; // In-tab drafts are bounded; never evict silently.
   }
   function resetPlayer() { $('player').pause(); $('player').removeAttribute('src'); $('player').load(); playerBinding=null; pendingSeek=null; }
+  function applyRate() {
+    const rate=Number($('rate').value);
+    if (Number.isFinite(rate) && rate>=.5 && rate<=3) {
+      // load() restores defaultPlaybackRate; keep both properties in sync.
+      $('player').defaultPlaybackRate=rate; $('player').playbackRate=rate;
+    }
+  }
   function selectAudio(target, seekSample=null) {
     if (!session.current) return;
     const {key,snapshot}=session.current;
     const src=new URL(url('/audio',{key,archive_sha256:snapshot.archive_sha256,target}),document.baseURI).href;
-    $('audioTarget').value=target;
+    $('audioTarget').value=target; applyRate();
     playerBinding={epoch:session.epoch,target,src}; $('player').pause();
     if ($('player').src !== src) { $('player').src=src; pendingSeek=null; }
     if (seekSample !== null) {
@@ -72,7 +79,7 @@
     if (loop && playerBinding?.target === 'master' && $('player').currentTime >= loop[1]/48000) $('player').currentTime=loop[0]/48000;
   });
   $('audioTarget').onchange=()=>selectAudio($('audioTarget').value);
-  $('rate').onchange=()=>{ const rate=Number($('rate').value); if (Number.isFinite(rate) && rate>=.5 && rate<=3) $('player').playbackRate=rate; };
+  $('rate').onchange=applyRate;
   function loopText() { $('loopStatus').textContent=loop ? `Local loop: ${loop[0]}–${loop[1]} samples. Save position to retain it.` : 'No listening loop selected.'; }
   $('clearLoop').onclick=()=>{loop=null; loopText();};
   function savedText() {
