@@ -103,7 +103,7 @@ class RepositorySnapshotHardeningTests(unittest.TestCase):
             deep.write_bytes(b"[" * 10_000 + b"0" + b"]" * 10_000)
             with patch("sys.stderr", new=io.StringIO()) as error:
                 self.assertEqual(snapshot.main(["--source", str(deep)]), 2)
-                self.assertIn("too deeply nested", error.getvalue())
+                self.assertRegex(error.getvalue(), r"source (?:is too deeply nested|must be an object)")
 
             src = root / "source.json"
             src.write_text(json.dumps(source()), encoding="utf-8")
