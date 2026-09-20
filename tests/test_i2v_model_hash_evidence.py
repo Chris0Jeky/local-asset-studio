@@ -147,7 +147,7 @@ print(json.dumps(module._cached_file_hash(Path(sys.argv[2]), {}, require_current
         model = self.model
         before = model.stat()
         replacement = model.with_name("replacement.safetensors")
-        real_open = Path.open
+        real_open = i2v._open_model_candidate
         replaced = False
 
         class ReplacingStream:
@@ -176,13 +176,17 @@ print(json.dumps(module._cached_file_hash(Path(sys.argv[2]), {}, require_current
                     replaced = True
                 return self.stream.read(*args, **kwargs)
 
-        def opening(candidate, *args, **kwargs):
-            stream = real_open(candidate, *args, **kwargs)
-            if candidate == model and args and args[0] == "rb":
+        def opening(candidate):
+            stream = real_open(candidate)
+            if Path(candidate) == model:
                 return ReplacingStream(stream)
             return stream
 
-        with mock.patch.object(Path, "open", autospec=True, side_effect=opening):
+        with mock.patch.object(
+            i2v,
+            "_open_model_candidate",
+            side_effect=opening,
+        ):
             result = i2v._cached_file_hash(model, {})
 
         self.assertTrue(replaced)
