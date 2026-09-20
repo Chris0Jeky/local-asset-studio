@@ -15,6 +15,11 @@ test('opt-in mirrors drafts, coalesces typing and preserves immutable command by
 test('a cleared or replaced command never erases the earlier unresolved identity',async()=>{
   const s=setup();await s.session.enable();s.journal.write('detail',value('snapshot',true));await s.session.flush();s.journal.clear('detail');s.journal.write('detail',value('next'));await s.session.flush();const records=await s.store.list();assert.equal(records.length,2);assert.ok(records.some(r=>r.payload.operation));
 });
+test('a new command after clearing a non-command snapshot retains both shelf records',async()=>{
+  const s=setup();await s.session.enable();s.journal.write('detail',value('first'));await s.session.flush();const [first]=await s.store.list();
+  s.journal.clear('detail');s.journal.write('detail',value('next',true));await s.session.flush();const records=await s.store.list();
+  assert.equal(records.length,2);assert.ok(records.some(r=>r.id===first.id&&!r.payload.operation));assert.ok(records.some(r=>r.payload.operation));
+});
 test('restore refuses foreign Workspace and occupied local viewpoints; inspection changes nothing',async()=>{
   const s=setup();s.journal.write('detail',value('saved view'));await s.session.enable();const [r]=await s.store.list();s.journal.clear('detail');
   assert.throws(()=>s.session.restore(r,'2'.repeat(32)),/Workspace/i);assert.equal(s.journal.read('detail'),null);

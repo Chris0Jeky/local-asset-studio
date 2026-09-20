@@ -39,7 +39,7 @@
     }
     function changed(slot,value){
       if(!enabled)return;
-      if(value===null){pending.delete(slot);return;} // Never delete shelf evidence on session clear.
+      if(value===null){pending.delete(slot);writers.delete(slot);return;} // Never delete shelf evidence on session clear.
       pending.set(slot,copy(value));schedule();
     }
     function prepare(slot,value){
