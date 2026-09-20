@@ -315,12 +315,24 @@ def _file_identity(observed):
     }
 
 
+def _open_model_candidate(path: Path):
+    """Open one candidate without letting a FIFO or device block this thread."""
+    return open(
+        path,
+        "rb",
+        opener=lambda candidate, flags: os.open(
+            candidate,
+            flags | getattr(os, "O_NONBLOCK", 0),
+        ),
+    )
+
+
 def _hash_open_file(path: Path):
     """Hash one stable regular-file descriptor and bind it to its current path."""
     key = str(path)
     identity = None
     try:
-        with path.open("rb") as stream:
+        with _open_model_candidate(path) as stream:
             before = os.fstat(stream.fileno())
             identity = _file_identity(before)
             if not stat.S_ISREG(before.st_mode):
