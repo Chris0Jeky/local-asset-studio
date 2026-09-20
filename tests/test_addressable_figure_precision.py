@@ -40,6 +40,14 @@ class FigurePrecisionTests(unittest.TestCase):
         return (len(payload).to_bytes(4, 'big') + kind + payload
                 + (zlib.crc32(kind + payload) & 0xffffffff).to_bytes(4, 'big'))
 
+    @staticmethod
+    def png_bytes(mode):
+        image = Image.new(mode, (10, 10), 1 if mode == 'P' else 128)
+        if mode == 'P':
+            image.putpalette([255, 0, 0] + [0, 0, 0] * 255)
+        stream = io.BytesIO(); image.save(stream, 'PNG'); image.close()
+        return stream.getvalue()
+
     def test_zero_pixel_crop_is_a_domain_refusal_not_an_expanded_crop(self):
         parent = self.parent((1, 1)); before = self.workspace.snapshot()
         request = self.command(parent, [{'x': 0, 'y': 0, 'width': 1, 'height': 10000}])
@@ -118,6 +126,28 @@ class FigurePrecisionTests(unittest.TestCase):
             'reserved-bit': raw[:after_ihdr] + self.png_chunk(b'ABcD') + raw[after_ihdr:],
             'non-letter-type': raw[:after_ihdr] + self.png_chunk(b'A1CD') + raw[after_ihdr:],
             'duplicate-ihdr': raw[:after_ihdr] + ihdr + raw[after_ihdr:],
+        }
+        for label, forged in variants.items():
+            with self.subTest(label=label):
+                parent = self.parent(raw=forged)
+                request = self.command(parent, [{'x': 0, 'y': 0, 'width': 10000, 'height': 10000}])
+                with self.assertRaisesRegex(server.WorkspaceError, 'complete supported still image'):
+                    figures.split_figures(self.workspace, request)
+        self.assertEqual(len(self.workspace.snapshot()['assets']), len(variants))
+
+    def test_invalid_palette_multiplicity_order_and_colour_type_are_refused(self):
+        palette = self.png_bytes('P')
+        plte_type = palette.index(b'PLTE')
+        plte_start = plte_type - 4
+        plte_size = int.from_bytes(palette[plte_start:plte_type], 'big')
+        plte_end = plte_type + 4 + plte_size + 4
+        plte = palette[plte_start:plte_end]
+        grayscale = self.png_bytes('L')
+        after_ihdr = 8 + 12 + 13
+        variants = {
+            'duplicate-plte': palette[:plte_end] + plte + palette[plte_end:],
+            'plte-after-idat': palette[:plte_start] + palette[plte_end:-12] + plte + palette[-12:],
+            'plte-for-grayscale': grayscale[:after_ihdr] + plte + grayscale[after_ihdr:],
         }
         for label, forged in variants.items():
             with self.subTest(label=label):
