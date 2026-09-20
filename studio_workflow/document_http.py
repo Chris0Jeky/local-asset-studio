@@ -91,10 +91,10 @@ def extend_handler(base):
         def do_POST(self):
             if not self._document_route(): return super().do_POST()
             if not self._safe_mutation(): return reject_json(self, 403, {'error': 'Local same-origin request required'})
+            if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                return reject_json(self, 400, {'error': 'application/json required', 'code': 'invalid_request',
+                                               'generation_submitted': False})
             try:
-                if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
-                    return reject_json(self, 400, {'error': 'application/json required', 'code': 'invalid_request',
-                                                   'generation_submitted': False})
                 value = decode(self.rfile.read(self._content_length(1048576)))
                 need(isinstance(value, dict), 'JSON object required')
             except (ValueError, OSError, RecursionError) as exc:
