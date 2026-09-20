@@ -12,7 +12,7 @@
 #assetRecoveryShelfDialog input[type=file]{max-width:100%;margin:.5rem 0}
 .asset-shelf-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
 #assetRecoveryShelfDialog button{white-space:normal;max-width:100%;font-size:.85rem;min-height:2.5rem}
-.asset-shelf-record,#assetShelfImportPreview,#assetShelfInspection{border:1px solid var(--line);border-radius:.5rem;padding:.8rem;margin:.8rem 0}
-#assetShelfInspection pre{font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:24rem;overflow:auto}
+.asset-shelf-record,#assetShelfImportPreview,#assetShelfInspection,#assetLifecycleInspection{border:1px solid var(--line);border-radius:.5rem;padding:.8rem;margin:.8rem 0}
+#assetShelfInspection pre,#assetLifecycleInspection pre{font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:24rem;overflow:auto}
 #assetRecoveryShelfDialog :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 @media(max-width:480px){#assetRecoveryShelfDialog{padding:.65rem}.asset-shelf-actions button{flex:1 1 7rem}.asset-shelf-record{padding:.5rem}}
