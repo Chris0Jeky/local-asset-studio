@@ -1,14 +1,12 @@
-"""Hold the two enumerations of runtime output folders in step.
+"""Hold runtime-output rules and the curated experiments payload boundary in step.
 
 `.gitignore` keeps generated `experiments/` output out of the working tree; `scripts/validate-repo.py`
-refuses to see the same paths tracked in Git. Both lists are hand-written, and #589 recorded what happens
-when only one of them learns about a new folder: #570's `experiments/pose-artifacts/` was in neither, so a
-pose render dirtied `git status` with untracked user data that a `git add -A` would have committed.
-
-Green means every ignored `experiments/` folder is also refused by the payload guard and vice versa. It does
-not prove that either list is complete with respect to the code that writes those folders.
+refuses the same paths in Git and independently enforces that `experiments/curated/` is the only tracked
+experiments subtree. #589 recorded what happens when a generated folder reaches neither enumerated list;
+#614 makes the declared curated-only rule executable rather than relying on enumeration completeness.
 """
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -63,6 +61,24 @@ class RuntimeFolderParity(unittest.TestCase):
         self.assertIsNotNone(directory, 'pose_artifact_store.py no longer declares DIRECTORY')
         prefix = 'experiments/' + directory.group(1) + '/'
         self.assertIn(prefix, ignored_experiment_dirs()); self.assertIn(prefix, guarded_prefixes())
+
+    def test_validator_enforces_curated_as_the_only_tracked_experiments_tree(self):
+        source = VALIDATOR.read_text(encoding='utf-8')
+        self.assertRegex(
+            source,
+            r"assert not name\.startswith\('experiments/'\) or name\.startswith\('experiments/curated/'\)",
+        )
+
+    def test_current_tracked_experiments_payload_is_nonempty_and_curated_only(self):
+        result = subprocess.run(
+            ['git', 'ls-files', '-z', 'experiments/'],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        names = [name.decode('utf-8') for name in result.stdout.split(b'\0') if name]
+        self.assertTrue(names, 'the assertion must be exercised against the existing curated corpus')
+        self.assertTrue(all(name.startswith('experiments/curated/') for name in names), names[:10])
 
 
 if __name__ == '__main__':
