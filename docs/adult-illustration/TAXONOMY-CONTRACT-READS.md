@@ -8,11 +8,17 @@ The shared loader now checks size before opening, binds the opened descriptor to
 
 Both JSON nesting recursion errors and lone-surrogate taxonomy text now fail through controlled ValueError validation rather than escaping later through parser recursion or UTF-8 hashing. Valid non-ASCII display text remains supported. There is no replacement-character repair or normalization of retained source bytes.
 
+## Native Windows correction
+
+The first hosted Windows run rejected some valid freshly rewritten files as concurrent changes. A regression recorded the compared tuples: device, file ID, size and modification time matched, while `st_ctime_ns` differed between path `stat()` and descriptor `fstat()`.
+
+The corrected loader compares the first four identity dimensions across those APIs, then compares all five dimensions, including change time, between the two observations of the same descriptor. It does not round timestamps, add retries or skip Windows tests. The native closed-write regression remains in ordinary discovery, alongside a deterministic guard test proving file-ID changes and descriptor change-time changes are still rejected.
+
 ## Tests
 
-Six regressions cover pre-open oversize refusal, real growth during read, a same-size edit with a changed modification timestamp, exact-limit/raw-hash acceptance, deeply nested JSON and invalid Unicode scalar text. Handles must close on both success and failure.
+Eight new methods cover pre-open oversize refusal, real growth during read, a same-size edit with a changed modification timestamp, exact-limit/raw-hash acceptance, deeply nested JSON, invalid Unicode scalar text, repeated closed writes and descriptor drift. Handles must close on both success and failure.
 
-The unchanged parent produces six assertion failures and one parser RecursionError. With the correction, 143 adult-illustration tests complete successfully with one existing retained-source test skipped. Exact-head hosted/full-suite results are recorded in the PR rather than inferred from these focused checks.
+The first six tests produce six assertion failures and one parser RecursionError against the unchanged parent. Native Windows then reproduced the additional cross-API change-time failure before its correction. The final local focused suite runs 145 adult-illustration tests successfully, with one existing retained-source test skipped. Exact-head hosted/full-suite results are recorded in the PR rather than inferred from these focused checks.
 
 ```sh
 python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
