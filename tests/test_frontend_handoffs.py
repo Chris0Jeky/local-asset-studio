@@ -68,6 +68,15 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('Voice recovery controls require', result.stdout, result.stdout + result.stderr)
 
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_exact_profile_blockers_use_actionable_wording(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('prompt_profile_blockers.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('PASS: exact-profile blocker wording', result.stdout, result.stdout + result.stderr)
+
 
 class ProductionClockFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
