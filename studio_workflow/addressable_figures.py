@@ -11,6 +11,7 @@ import os
 import re
 import time
 import uuid
+import zlib
 from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -31,6 +32,7 @@ _ALLOWED_FIELDS = {
     "require_non_overlapping",
 }
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 def workspace_error_type(workspace):
@@ -118,6 +120,38 @@ def _parent_row(workspace, db, asset_id, parent_sha256):
     return row
 
 
+def _verify_png_container(raw):
+    """Require checked chunk CRCs and the first IEND to end the bounded file."""
+    if not raw.startswith(_PNG_SIGNATURE):
+        raise SyntaxError("PNG signature is invalid")
+    data = memoryview(raw)
+    try:
+        offset = len(_PNG_SIGNATURE)
+        while offset < len(data):
+            if len(data) - offset < 12:
+                raise SyntaxError("PNG chunk is incomplete")
+            size = int.from_bytes(data[offset : offset + 4], "big")
+            chunk_type_start = offset + 4
+            chunk_data_start = offset + 8
+            chunk_data_end = chunk_data_start + size
+            chunk_end = chunk_data_end + 4
+            if chunk_end > len(data):
+                raise SyntaxError("PNG chunk exceeds the bounded file")
+            chunk_type = bytes(data[chunk_type_start:chunk_data_start])
+            expected_crc = int.from_bytes(data[chunk_data_end:chunk_end], "big")
+            actual_crc = zlib.crc32(data[chunk_type_start:chunk_data_end]) & 0xFFFFFFFF
+            if actual_crc != expected_crc:
+                raise SyntaxError("PNG chunk checksum does not match")
+            if chunk_type == b"IEND":
+                if size != 0 or chunk_end != len(data):
+                    raise SyntaxError("PNG IEND is not the complete terminal chunk")
+                return
+            offset = chunk_end
+        raise SyntaxError("PNG has no terminal IEND chunk")
+    finally:
+        data.release()
+
+
 def _read_parent(workspace, asset_id, expected_sha256):
     path = workspace.file(asset_id)
     try:
@@ -141,6 +175,13 @@ def _read_parent(workspace, asset_id, expected_sha256):
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
             if getattr(opened, "n_frames", 1) != 1:
                 raise _error(workspace, "Animated images cannot be split into figure children")
+            # Pixel decode alone accepts some PNGs with missing IEND or damaged
+            # chunk CRCs. Walk the bounded chunk stream so the first IEND must be
+            # terminal, then let Pillow verify image semantics on the same bytes.
+            if opened.format == "PNG":
+                _verify_png_container(raw)
+            opened.verify()
+        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
             has_transparency = "A" in opened.getbands() or "transparency" in opened.info
             oriented = ImageOps.exif_transpose(opened)
             oriented.load()
@@ -149,7 +190,7 @@ def _read_parent(workspace, asset_id, expected_sha256):
             if oriented is not opened:
                 oriented.close()
     except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as error:
-        raise _error(workspace, "Parent asset is not a complete supported still image") from error
+        raise _error(workspace, "Parent asset is not a complete supported still image (PNG, JPEG or WebP)") from error
     return canvas
 
 
@@ -287,6 +328,8 @@ def split_figures(workspace, payload):
                 "operation": "figure-crop",
                 "parent_asset_id": asset_id,
                 "parent_sha256": parent_sha256,
+                "parent_metadata_revision": parent["metadata_revision"],
+                "crop_coordinate_policy": "basis-points-nearest-half-up/v1",
                 "request_id": request_id,
                 "crop_basis_points": rectangle,
                 "crop_pixels": box,
