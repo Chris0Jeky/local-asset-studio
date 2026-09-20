@@ -561,7 +561,7 @@ class Studio:
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
         result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
-        result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._known_prompt_error(job) is None
+        result["can_resume_tracking"] = Studio._tracking_stopped(job) and Studio._observation_error(job) is None
         result["has_pending_submission"] = "pending_submission" in job
         result["never_submitted"] = submission_evidence.never_submitted(job)
         result["mixed_batch"] = mixed_batch.snapshot(job)
@@ -949,7 +949,7 @@ class Studio:
         return tokens
 
     @staticmethod
-    def _known_prompt_error(job):
+    def _known_prompt_error(job, *, allow_terminal=False):
         if job.get("pending_submission"): return "A submission outcome is still unknown"
         prompt_ids = job.get("prompt_ids")
         submissions = job.get("submissions")
@@ -965,8 +965,24 @@ class Studio:
             submission_ids.append(prompt_id)
         if set(submission_ids) != set(prompt_ids) or len(set(submission_ids)) != len(submission_ids):
             return "Known prompt IDs are inconsistent"
-        if not any(submission.get("status") not in ("completed", "failed") for submission in submissions):
+        if not allow_terminal and not any(submission.get("status") not in ("completed", "failed") for submission in submissions):
             return "No unresolved known prompt IDs are available to observe"
+        return None
+
+    @staticmethod
+    def _observation_error(job):
+        """One admission/capability rule; terminal reconciliation is ordinary-only."""
+        if not isinstance(job, dict) or not job: return "Unknown job"
+        if job.get('status') == 'abandoned' or 'pending_submission' in job:
+            return 'An abandoned or unknown submission cannot be resumed as a known prompt'
+        stopped = Studio._tracking_stopped(job)
+        if stopped and job.get("status") != "uncertain": return "Only an uncertain job can resume observation"
+        if job.get("status") in ("queued", "waiting", "submitting", "running"):
+            return "This job is already queued or being observed; wait for it to settle"
+        error = Studio._known_prompt_error(job, allow_terminal=not stopped)
+        if error: return error
+        if not stopped and all(s.get("status") == "completed" for s in job["submissions"]) and job.get("status") not in ("uncertain", "partial"):
+            return "No known prompt IDs are available to resume"
         return None
 
     def _stop_tracking_error(self, job):
@@ -999,8 +1015,7 @@ class Studio:
 
     def _resume_tracking(self, job):
         self.require_worker_observation()
-        if job.get("status") != "uncertain": raise StudioError("Only an uncertain job can resume observation")
-        error = self._known_prompt_error(job)
+        error = Studio._observation_error(job)
         if error: raise StudioError(error)
         history = self._tracking_history(job)
         resumed = dict(job["tracking_disposition"])
@@ -1522,18 +1537,15 @@ class Studio:
 
     def _queue_observation(self, job_id):
         job = self.jobs.get(job_id)
-        # Only a stopped job with known, unresolved prompt IDs takes the liveness-only guard; every
-        # other resume still asks for full new-work admission, including the reference hold (#458).
-        if job is not None and job.get("status") == "uncertain" and "pending_submission" not in job and self._tracking_stopped(job) and self._known_prompt_error(job) is None: self.require_worker_observation()
-        else: self.require_worker()
-        if not job: raise StudioError("Unknown job")
-        if job.get('status') == 'abandoned' or 'pending_submission' in job:
-            raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
+        # Reads of retained prompt IDs and terminal receipt reconciliation do not
+        # request new-work admission. Invalid/unknown state never earns a bypass.
+        error = Studio._observation_error(job)
+        if error is None: self.require_worker_observation()
+        else:
+            self.require_worker()
+            raise StudioError(error)
         if self._tracking_stopped(job): return self._resume_tracking(job)
-        if job.get("status") in ("queued", "waiting", "submitting", "running"): raise StudioError("This job is already queued or being observed; wait for it to settle")
-        pending = [s for s in job.get("submissions", []) if s.get("status") != "completed" and s.get("prompt_id")]
-        # Every retained receipt terminal: _resume reconciles the job's own status without any ComfyUI request.
-        if not pending and not (job.get("submissions") and job.get("status") in ("uncertain", "partial")): raise StudioError("No known prompt IDs are available to resume")
+        pending = [s for s in job["submissions"] if s.get("status") != "completed"]
         if not pending: job["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}  # what the queued reconciliation started from
         job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
 
