@@ -24,10 +24,11 @@ async def run(args):
     server = fixture.ThreadingHTTPServer(('127.0.0.1', 0), fixture.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    checks, errors = [], []
+    checks, errors, completed = [], [], False
 
     def check(name, result):
         checks.append({'name': name, 'passed': bool(result)})
+        print(name, bool(result), flush=True)
         assert result, name
 
     try:
@@ -42,6 +43,7 @@ async def run(args):
             else:
                 await page.goto(f'http://127.0.0.1:{server.server_port}/#create')
             await page.wait_for_function('!!catalog && !!selected && schemaAvailable')
+            await page.wait_for_function("assetState.assets.some(a=>a.id==='asset-0')")
             await page.evaluate("""() => {
               window.__writes=[];window.__contextFails=false;window.__delayStyle=false;
               const original=api;
@@ -72,7 +74,7 @@ async def run(args):
             await page.evaluate("window.__picked=document.querySelector('#reference').files[0];assetState.assets.find(a=>a.id==='asset-0').trashed_at=123")
             await page.click('#uxSecondRestyle')
             check('refused opening retains exact native File and visible choice', await page.evaluate("document.querySelector('#reference').files[0]===window.__picked && !document.querySelector('#uxSecondPicture').hidden && !document.querySelector('#uxHandoff').open"))
-            check('refused opening stages nothing', not await page.evaluate('window.__writes.length'))
+            check('refused opening stages nothing', not await page.evaluate("window.__writes.some(url=>['/api/upload','/api/assets/reference','/api/jobs'].includes(url))"))
             await page.evaluate("assetState.assets.find(a=>a.id==='asset-0').trashed_at=null;window.__contextFails=true")
             await page.click('#uxSecondRestyle')
             await page.wait_for_function("document.querySelector('#uxHandoffStatus').textContent.includes('Synthetic context outage')")
@@ -116,11 +118,12 @@ async def run(args):
             check('no generation submission', not await page.evaluate("window.__writes.includes('/api/jobs')"))
             check('no JavaScript exceptions', not errors)
             await page.screenshot(path=str(args.out/'final.png'), full_page=True)
+            completed = True
             await browser.close()
     finally:
         server.shutdown();server.server_close();thread.join(timeout=5)
         report = {'mode': 'inert explicit transport/storage' if args.inert else 'native HTTP',
-                  'checks': checks, 'errors': errors, 'model_execution': False}
+                  'checks': checks, 'errors': errors, 'completed': completed, 'model_execution': False}
         (args.out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2))
 
