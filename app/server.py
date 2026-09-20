@@ -1546,8 +1546,22 @@ class Studio:
             raise StudioError(error)
         if self._tracking_stopped(job): return self._resume_tracking(job)
         pending = [s for s in job["submissions"] if s.get("status") != "completed"]
-        if not pending: job["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}  # what the queued reconciliation started from
-        job["status"] = "queued"; job["message"] = "Queued to resume observation; no image will be resubmitted."; self._save(job); self.queue.put(("observe", job_id)); return self.public(job)
+        prospective = dict(job)
+        if not pending:
+            prospective["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}
+        prospective.update(status="queued", message="Queued to resume observation; no image will be resubmitted.")
+        state = {key: value for key, value in prospective.items() if key != "graph"}
+        state_path = self.runs / job_id / "state.json"
+        try:
+            self._write_json_atomic(state_path, state)
+        except OSError:
+            # Replacement may have committed before a later filesystem error.
+            # Only exact durable evidence earns in-memory/queue publication.
+            if read_json(state_path) != state:
+                raise
+        job.update(prospective)
+        self.queue.put(("observe", job_id))
+        return self.public(job)
 
     def _resume(self, job):
         with self.lock:
