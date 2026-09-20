@@ -73,6 +73,22 @@ class SafetensorsHeaderTests(unittest.TestCase):
         self.assertEqual(report["status"], "invalid")
         self.assertIn("duplicate", report["error"].lower())
 
+    def test_duplicate_surrogate_key_error_remains_utf8_report_safe(self):
+        path = self.write_raw(
+            "duplicate-surrogate.safetensors",
+            b'{"\\ud800":1,"\\ud800":2}',
+        )
+
+        report = _safetensors_header(path)
+
+        self.assertEqual(report["status"], "invalid")
+        self.assertIn("duplicate", report["error"].lower())
+        self.assertNotIn("\ud800", report["error"])
+        encoded = json.dumps(
+            {"container_header": report}, ensure_ascii=False
+        ).encode("utf-8")
+        self.assertIn(b"duplicate", encoded)
+
     def test_non_finite_json_constants_are_rejected(self):
         header = (
             b'{"__metadata__":{"score":NaN},'
