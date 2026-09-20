@@ -73,9 +73,9 @@ def extend_handler(base):
             path = urlparse(self.path).path
             if path == '/api/assets/split-figures':
                 if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 try:
-                    if self.headers.get('Content-Type','').split(';')[0]!='application/json':
-                        return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                     body=self.rfile.read(self._content_length(1024*1024))
                     return self._json(201,split_figures(self.studio.assets,decode(body)))
                 except sqlite3.Error:
@@ -95,9 +95,9 @@ def extend_handler(base):
                     return self._json(400,{'error':str(exc),'generation_submitted':False})
             if not path.startswith('/api/prompt/'): return super().do_POST()
             if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+            if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
-                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
-                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 # Only reference review accepts four original images; every source
                 # has its own byte/pixel cap and no input is persisted or executed.
                 limit = 1024*1024
