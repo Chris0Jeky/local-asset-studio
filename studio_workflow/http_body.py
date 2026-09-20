@@ -1,6 +1,8 @@
 """Bounded transport hygiene for early local HTTP refusals."""
 from __future__ import annotations
 
+import time
+
 DRAIN_LIMIT = 1024 * 1024
 DRAIN_CHUNK = 64 * 1024
 DRAIN_TIMEOUT_SECONDS = 1.0
@@ -11,8 +13,8 @@ def drain_declared_body(handler) -> bool:
 
     This is best-effort transport cleanup after the request has already been
     rejected. It never reads a missing, malformed, chunked or oversized body,
-    and it temporarily bounds socket waiting so an early refusal cannot become
-    an unbounded local read.
+    and it applies one total socket-backed deadline so trickle progress cannot
+    turn an early refusal into an unbounded local read.
     """
     headers = handler.headers
     get_all = getattr(headers, 'get_all', None)
@@ -51,15 +53,27 @@ def drain_declared_body(handler) -> bool:
     connection = getattr(handler, 'connection', None)
     old_timeout = None
     restore_timeout = False
+    reader = getattr(handler.rfile, 'read1', None)
+    if not callable(reader):
+        reader = handler.rfile.read
+    deadline = time.monotonic() + DRAIN_TIMEOUT_SECONDS
     try:
-        if connection is not None and hasattr(connection, 'gettimeout') and hasattr(connection, 'settimeout'):
+        has_socket_timeout = (connection is not None and hasattr(connection, 'gettimeout')
+                              and hasattr(connection, 'settimeout'))
+        if has_socket_timeout:
             old_timeout = connection.gettimeout()
-            if old_timeout is None or old_timeout > DRAIN_TIMEOUT_SECONDS:
-                connection.settimeout(DRAIN_TIMEOUT_SECONDS)
-                restore_timeout = True
         remaining = size
         while remaining:
-            chunk = handler.rfile.read(min(DRAIN_CHUNK, remaining))
+            budget = deadline - time.monotonic()
+            if budget <= 0:
+                return False
+            if has_socket_timeout:
+                connection.settimeout(budget if old_timeout is None else min(old_timeout, budget))
+                restore_timeout = True
+            # BufferedReader.read() may perform multiple socket reads and reset a
+            # relative timeout after every trickled byte. read1() performs at most
+            # one raw read, giving the absolute deadline a chance to run each time.
+            chunk = reader(min(DRAIN_CHUNK, remaining))
             if not chunk:
                 return False
             remaining -= len(chunk)
