@@ -23,6 +23,19 @@ class NativeFileTests(unittest.TestCase):
                               f'fstat={inbox._identity(os.fstat(stream.fileno()))}')
             self.assertEqual(b'Ordinary source.', raw)
 
+    def test_captures_atomically_replaced_state(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / 'root'; root.mkdir()
+            state = Path(folder) / 'inbox.json'
+            instance = inbox.Inbox(root, state)
+            instance.scan()
+            try:
+                inbox._capture(state, inbox.MAX_STATE_BYTES)
+            except compiler.SpokenBriefError as exc:
+                with state.open('rb') as stream:
+                    self.fail(f'{exc}; lstat={inbox._identity(state.lstat())}; '
+                              f'fstat={inbox._identity(os.fstat(stream.fileno()))}')
+
     def test_captured_compiler_does_not_resolve_or_open_paths(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder).resolve() / 'missing.md'
