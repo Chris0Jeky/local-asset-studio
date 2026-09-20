@@ -169,10 +169,11 @@ async function performAssetSave(operation, observe=false) {
     if(!current())return;
     if(error.data?.code==='asset_workspace_conflict'){
       assetDetailStatus('The server is using a different Workspace. No changes were applied there. The exact save is retained for the original Workspace.',true);
-    } else if(error.status===409 && error.data?.code==='asset_revision_conflict' && error.data.workspace_id===command.workspace_id){
+    } else if(error.status===409 && error.data?.code==='asset_revision_conflict' && error.data.workspace_id===command.workspace_id && !error.data.missing_ids?.length){
       assetDetailPending=null;assetDetailConflict=error.data;renderAssetConflict();assetDetailStatus('Conflict: this asset changed elsewhere. Compare the saved values with your draft before saving again.',true);
     } else if(!observe && error.status>=400 && error.status<500){
-      assetDetailPending=null;assetDetailStatus('Not saved. '+error.message+' Your edits remain here.',true);
+      // A refusal describes this attempt, not the outcome of an earlier lost response.
+      assetDetailStatus('This attempt was refused. '+error.message+' The exact command and your draft remain retained. Check its receipt, or close and explicitly discard local recovery before a different save.',true);
     } else {
       assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
     }
@@ -541,7 +542,7 @@ async function performLibraryCommand(operation,observe=false) {
     }
     void refreshAssets(true);assetMessage('Library update confirmed.');return result;
   } catch(error) {
-    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){assetRecovery.clear('library');assetLibraryPending=null;throw Error(error.message+' Refresh the library and review the selection before trying again.');}
+    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
   } finally {
     clearTimeout(timer);
