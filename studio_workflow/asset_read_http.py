@@ -100,9 +100,7 @@ def extend_handler(base):
             if not self._safe_mutation():
                 self.close_connection = True
                 return reject_json(self, 403, _error(ValueError('Local same-origin request required')))
-            if self.path.split('?', 1)[0] != PAGE:
-                pass
-            else:
+            if self.path.split('?', 1)[0] != SELECTION:
                 self.close_connection = True
                 return reject_json(self, 405, _error(ValueError('Asset pages require GET')))
             started = False
