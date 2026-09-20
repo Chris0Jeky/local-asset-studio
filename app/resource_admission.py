@@ -386,7 +386,7 @@ class ReservationLedger:
                     totals[key] += record["reservation"][key]
             return {"owners": sorted(owners), "totals": totals}
 
-    def admit(self, owner_id, identity, profile, observation):
+    def admit(self, owner_id, identity, profile, observation, publish=None):
         with self.lock:
             previous = self.reservations.get(owner_id)
             if (previous is not None
@@ -436,20 +436,12 @@ class ReservationLedger:
                     if profile["basis"] == "observed"
                     else "estimated_safe"
                 )
+            safe = decision in ("observed_safe", "estimated_safe")
             reservation = {
                 dimension: max(stage[dimension] for stage in profile["stages"])
                 for dimension in DIMENSIONS
             }
-            if decision in ("observed_safe", "estimated_safe"):
-                self.reservations[owner_id] = {
-                    "identity_sha256": identity["identity_sha256"],
-                    "reservation": reservation,
-                }
-            retained = (
-                self.reservations.get(owner_id)
-                if decision not in ("observed_safe", "estimated_safe")
-                else None
-            )
+            retained = previous if not safe else None
             receipt = {
                 "schema": SCHEMA,
                 "owner_id": owner_id,
@@ -465,18 +457,22 @@ class ReservationLedger:
                 "stage_evaluations": evaluations,
                 "decision": decision,
                 "reservation": (
-                    reservation
-                    if decision in ("observed_safe", "estimated_safe")
+                    reservation if safe
                     else copy.deepcopy((retained or {}).get("reservation"))
                 ),
-                "state": (
-                    "reserved"
-                    if decision in ("observed_safe", "estimated_safe")
-                    else "retained" if retained else "refused"
-                ),
+                "state": "reserved" if safe else "retained" if retained else "refused",
                 "contract": "Studio concurrency reservation; not a physical-memory guarantee",
             }
             receipt["receipt_sha256"] = _digest(receipt)
+            if publish is not None:
+                if not callable(publish):
+                    raise ValueError("Resource admission receipt publisher must be callable")
+                publish(copy.deepcopy(receipt))
+            if safe:
+                self.reservations[owner_id] = {
+                    "identity_sha256": identity["identity_sha256"],
+                    "reservation": reservation,
+                }
             return receipt
 
 
@@ -487,12 +483,19 @@ class AdmissionController:
         self.ledger = ledger or ReservationLedger()
         self._restored = False
 
-    def _record(self, job, receipt):
-        history = job.setdefault("resource_admission", [])
+    @staticmethod
+    def _ensure_record_capacity(job):
+        history = job.get("resource_admission")
+        if history is None:
+            return
         if not isinstance(history, list):
             raise ValueError("Stored resource admission history is invalid")
         if len(history) >= MAX_RECEIPTS:
             raise ValueError("Resource admission receipt retention is full")
+
+    def _record(self, job, receipt):
+        self._ensure_record_capacity(job)
+        history = job.setdefault("resource_admission", [])
         candidate = _validated_receipt(receipt, str(job.get("id", "")))
         _canonical(candidate)
         history.append(candidate)
@@ -550,6 +553,7 @@ class AdmissionController:
 
     def admit(self, job, preset, graph):
         self.reconcile()
+        self._ensure_record_capacity(job)
         observation = self.observer(self.studio)
         identity = workflow_identity(
             self.studio,
@@ -596,7 +600,12 @@ class AdmissionController:
             )
         try:
             receipt = self.ledger.admit(
-                owner_id, identity, profile, observation)
+                owner_id,
+                identity,
+                profile,
+                observation,
+                publish=lambda candidate: self._record(job, candidate),
+            )
         except ValueError as exc:
             receipt = refusal(str(exc))
             raise AdmissionError(
@@ -604,7 +613,6 @@ class AdmissionController:
                 + ". Existing capacity remains retained; no prompt was submitted.",
                 receipt,
             ) from exc
-        self._record(job, receipt)
         if receipt["decision"] in ("observed_safe", "estimated_safe"):
             return copy.deepcopy(receipt)
         failing = next((
