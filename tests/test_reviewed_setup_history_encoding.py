@@ -15,9 +15,13 @@ class HistoryDatabaseEncodingTests(unittest.TestCase):
         root = Path(temporary.name)
         database = root / 'workspace' / 'assets.sqlite3'
         database.parent.mkdir(parents=True)
-        with sqlite3.connect(database) as db:
+        db = sqlite3.connect(database)
+        try:
             db.execute("PRAGMA encoding='" + encoding + "'")
             db.execute('CREATE TABLE encoding_seed(value TEXT)')
+            db.commit()
+        finally:
+            db.close()
         adapter = SetupAdapter(root)
         adapter.draft['recipe']['controls']['positive'] = 'Café · 雪 · 😀'
         adapter.create()
