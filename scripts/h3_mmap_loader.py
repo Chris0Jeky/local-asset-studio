@@ -15,13 +15,13 @@ import warnings
 def _unique_object(pairs):
     value={}
     for key,item in pairs:
-        if key in value:raise ValueError('Duplicate safetensors header key: '+key)
+        if key in value:raise ValueError('duplicate safetensors header key: '+key)
         value[key]=item
     return value
 
 
 def _reject_constant(value):
-    raise ValueError('Non-finite JSON constant in safetensors header: '+value)
+    raise ValueError('non-finite JSON constant in safetensors header: '+value)
 
 
 def checked_header(stream, size, dtypes):
