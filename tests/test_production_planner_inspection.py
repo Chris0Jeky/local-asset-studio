@@ -71,6 +71,14 @@ class PlannerInspectionTests(unittest.TestCase):
         self.assertFalse(plan['generation_submitted']); self.assertFalse(plan['reservation_created'])
 
 
+class PlannerDocumentationTests(unittest.TestCase):
+    def test_advanced_panel_docs_name_all_three_actions(self):
+        text=(Path(__file__).parents[1]/'docs/EXPERIMENTS.md').read_text(encoding='utf-8')
+        self.assertIn('Three actions under **Advanced: plan several settings from the library**',text)
+        for action in ('Inspect available settings','Plan from settings library','Remix LoRA weights'):
+            self.assertIn('**'+action+'**',text)
+
+
 class PlannerInspectionFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node required for actual frontend contract')
     def test_inspection_retains_drafts_and_ignores_late_replies(self):

@@ -60,10 +60,34 @@ const inspect = {mode:'inspect', variants:[], axes_available:[], axes_withheld:[
   dropped.resolve({...inspect, mode:'grid', variants:saved}); await wait;
   assert.equal(run('plannedVariants'), null, 'A removed candidate must not reappear from an old plan');
   setup();
-  // An unavailable inspection leaves the local plan intact, not silently cleared.
+  // An unavailable inspection leaves the local plan intact, but clears hidden axis IDs.
+  run("plannerAxisIds=['stale-axis']");
   wait = run('requestPlan("inspect")'); requests.shift().reject(new Error('Inspection unavailable')); await wait;
   assert.equal(run('JSON.stringify(plannedVariants)'), JSON.stringify(saved));
+  assert.equal(run('JSON.stringify(plannerAxisIds)'), '[]', 'Failed inspection cannot retain invisible axis selection');
   assert.equal($('#experimentStatus').textContent, 'Inspection unavailable');
   assert.doesNotMatch($('#plannerLimits').innerHTML, /&lt;script&gt;/, 'Stale reasons must not survive a failed read');
-  console.log('Planner inspection: explicit read, retained variants, escaped reasons, latest-action/context/close guards passed.');
+
+  // Clearing while a plan is in flight supersedes it and replaces the transient reading status.
+  setup();
+  wait = run('requestPlan("grid")'); const cleared = requests.shift();
+  assert.match($('#experimentStatus').textContent, /Reading/);
+  $('#clearPlanned').onclick();
+  const clearedStatus = $('#experimentStatus').textContent;
+  assert.equal(clearedStatus, 'Planned variants cleared. Nothing was reserved or submitted.');
+  cleared.resolve({...inspect, mode:'grid', variants:saved}); await wait;
+  assert.equal(run('plannedVariants'), null);
+  assert.equal($('#experimentStatus').textContent, clearedStatus, 'Stale reply cannot restore a reading status');
+
+  // Removing one candidate has the same latest-action status ownership.
+  setup();
+  run(`plannedVariants=${JSON.stringify([saved[0],{label:'Second',controls:{seed:8},rationale:'Retained',sources:[]}])};renderPlanner()`);
+  wait = run('requestPlan("grid")'); const removed = requests.shift();
+  $('#plannedVariants').onclick({target:{closest:()=>({dataset:{dropVariant:'0'}})}});
+  const removedStatus = $('#experimentStatus').textContent;
+  assert.equal(removedStatus, '1 planned variant remains. Nothing was reserved or submitted.');
+  removed.resolve({...inspect, mode:'grid', variants:saved}); await wait;
+  assert.equal(run('plannedVariants.length'), 1);
+  assert.equal($('#experimentStatus').textContent, removedStatus);
+  console.log('Planner inspection: explicit read, retained variants, escaped reasons, latest-action/context/status guards passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

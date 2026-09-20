@@ -108,6 +108,17 @@ class AcceleratorPlannerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'non-accelerator'):
             planner.plan_remix(self.p, self.k, {})
 
+    def test_disabled_accelerator_does_not_claim_held_provenance(self):
+        self.p['lora3'] = ['12', 'strength_model']
+        self.p['lora3_name'] = ['12', 'lora_name']
+        self.p['defaults'].update(lora=0, lora2=0.9, lora3=0.8,
+                                  lora3_name='b.safetensors')
+        rows = planner.plan_remix(self.p, self.k, {'lora': 0})
+        blend = rows[-1]
+        self.assertEqual(blend['label'], 'All active LoRAs at 0.8')
+        self.assertNotIn('selected accelerator', blend['rationale'])
+        self.assertTrue(all('selected accelerator' not in row['rationale'] for row in rows))
+
     def test_anima_generic_steps_exclude_conditional_turbo_value(self):
         kb, _ = planner.load_kb(ROOT)
         steps = next(a for a in kb['families']['Anima']['axes'] if a['id'] == 'steps')

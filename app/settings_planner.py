@@ -220,8 +220,9 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
         # Freeze omitted authored values explicitly as well as caller overrides.
         if item['value'] is not None:base.setdefault(slot,item['value'])
         base.setdefault(slot+'_name',item['entry']['file'])
-    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if held else '')
-    counted=active+[slot for slot,item in held.items() if not item['inactive']]
+    active_held={slot:item for slot,item in held.items() if not item['inactive']}
+    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if active_held else '')
+    counted=active+list(active_held)
     entries={slot:_slot_entry(slot,base,defaults,kb) for slot in active}
     warn=rules.get('warn_total_strength');notes=[n for n in (rules.get('notes') or []) if isinstance(n,str)]
     variants=[]
@@ -237,7 +238,7 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
         controls=dict(base)
         for other in active:controls[other]=steps[1]
         rationale=f"Every remixed adapter at the ladder's middle step {steps[1]}"+(' · '+'; '.join(notes) if notes else '')
-        variants.append({'label':f"All {'non-accelerator' if held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
+        variants.append({'label':f"All {'non-accelerator' if active_held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
                          'sources':_merge_sources([entries[slot].get('source') for slot in active])})
     return variants[:limit]
 

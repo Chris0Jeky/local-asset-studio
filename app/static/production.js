@@ -99,9 +99,9 @@ function plannerBlock(){
     $('#inspectSettings').onclick=()=>requestPlan('inspect');
     $('#planFromKnowledge').onclick=()=>requestPlan('grid');
     $('#planRemix').onclick=()=>requestPlan('remix');
-    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();};
+    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();$('#experimentStatus').textContent='Planned variants cleared. Nothing was reserved or submitted.';};
     $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
-    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
+    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();const remaining=plannedVariants?.length||0;$('#experimentStatus').textContent=remaining+ ' planned variant'+(remaining===1?' remains':'s remain')+'. Nothing was reserved or submitted.';};
   }
   return block;
 }
@@ -179,7 +179,7 @@ async function requestPlan(mode){
   }catch(err){
     if(!current())return;
     if(mode!=='inspect')plannedVariants=null;
-    plannerAxes=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
+    plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
   }
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}

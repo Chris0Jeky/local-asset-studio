@@ -313,6 +313,20 @@ class PlannedSweepTests(unittest.TestCase):
         after={str(p.relative_to(self.root)):p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
         self.assertEqual(before,after)
 
+    def test_no_axis_refusal_names_accelerators_only_when_effective(self):
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        with self.assertRaises(ValueError) as ordinary:
+            lab.plan({'preset_id':'demo','mode':'grid'})
+        self.assertEqual(str(ordinary.exception),
+                         'The settings library documents no axis this recipe can change')
+        kb=json.loads(self.kb_bytes);kb['loras']['a.safetensors']['role']='accelerator'
+        (self.root/'presets/settings-kb.json').write_text(json.dumps(kb))
+        with self.assertRaisesRegex(ValueError,'selected accelerator settings'):
+            lab.plan({'preset_id':'planned','mode':'grid',
+                      'controls':{'lora':1,'lora_name':'a.safetensors'}})
+        self.assertEqual(lab.list(),[]);self.assertFalse(studio.jobs)
+        self.assertEqual(studio.queue.qsize(),0)
+
     def test_a_missing_knowledge_base_plans_nothing_and_records_no_digest(self):
         (self.root/'presets/settings-kb.json').unlink()
         studio=FakeStudio(self.root,[]);lab=studio.production

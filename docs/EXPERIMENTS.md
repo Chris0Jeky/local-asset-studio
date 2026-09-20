@@ -22,8 +22,8 @@ reserved`) and a total below the candidate count is refused before the plan is
 prepared. The estimate is a reading of Create's measurement, never a second
 estimator: with no measured history the summary says so instead of guessing.
 
-Two buttons under **Advanced: plan several settings from the library** plan
-several documented settings at once, through `POST /api/experiments/plan`. **Plan from settings library** reads the family
+Three actions under **Advanced: plan several settings from the library** inspect or plan
+documented settings through `POST /api/experiments/plan`. **Inspect available settings** reads the family entry without replacing existing variants. **Plan from settings library** reads the family
 entry for this recipe in `presets/settings-kb.json` and offers a grid of the
 axes the recipe can actually change — steps, sampler, scheduler, LoRA strengths
 — with the first axis varying slowest and at most eight candidates. **Remix
