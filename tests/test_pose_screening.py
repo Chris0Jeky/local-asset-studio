@@ -30,7 +30,7 @@ def route(route_id, mechanism, representation, seed_base):
     }
     if mechanism == 'klein-geometry-reference':
         pins['renderer'] = digest('8')
-        detector_behavior = 'route-native'
+        detector_behavior = 'not-applicable'
     elif mechanism == 'copy-pose-rgb':
         pins['lora'] = digest('9')
         detector_behavior = 'not-applicable'
@@ -95,7 +95,7 @@ def manifest():
         'additional_image_attempt_cap': 0,
         'same_defect_repeat_limit': 2,
         'routes': [
-            route('klein-geometry', 'klein-geometry-reference', 'skeleton', 1000),
+            route('klein-geometry', 'klein-geometry-reference', 'precomputed-skeleton', 1000),
             route('copy-pose', 'copy-pose-rgb', 'rgb-pose-donor', 2000),
             route('sdxl-corrected-skeleton', 'sdxl-precomputed-skeleton', 'precomputed-skeleton', 3000),
         ],
@@ -185,6 +185,9 @@ class PoseScreeningTests(unittest.TestCase):
         source = manifest(); source['routes'][0]['noise_seeds']['replicate_b'] = source['routes'][0]['noise_seeds']['replicate_a']; variants.append(source)
         source = manifest(); source['routes'][0]['noise_seeds']['counterfactual'] = True; variants.append(source)
         source = manifest(); source['routes'][0]['pins']['unexpected'] = digest('c'); variants.append(source)
+        source = manifest(); source['routes'][0]['backend_id'] = 'primry'; variants.append(source)
+        source = manifest(); source['routes'][0]['detector_behavior'] = 'route-native'; variants.append(source)
+        source = manifest(); source['routes'][0]['input_representation'] = 'skeleton'; variants.append(source)
         for source in variants:
             with self.subTest(route=source['routes'][0]['id']), self.assertRaises(ValueError):
                 pose_screening.compile_plan(source)
@@ -198,6 +201,11 @@ class PoseScreeningTests(unittest.TestCase):
         source = manifest(); source['routes'].append(copy.deepcopy(source['routes'][0])); variants.append(source)
         for source in variants:
             with self.assertRaises(ValueError): pose_screening.compile_plan(source)
+
+    def test_v1_manifest_requires_explicit_regeneration(self):
+        source = manifest(); source['schema'] = pose_screening.LEGACY_MANIFEST_SCHEMA
+        with self.assertRaisesRegex(ValueError, 'regenerate.*v2'):
+            pose_screening.compile_plan(source)
 
     def cli(self, *args):
         return subprocess.run([sys.executable, str(ROOT / 'scripts/pose_screening.py'), *map(str, args)],

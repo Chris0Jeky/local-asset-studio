@@ -441,7 +441,7 @@ function applySaved(s){
   const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
   // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
   // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
-  const saved=s.parent_by_input,mapped=saved&&typeof saved==='object'&&!Array.isArray(saved)&&Object.keys(saved).length?saved:null;
+  const savedMapping=s.parent_by_input,mapped=savedMapping&&typeof savedMapping==='object'&&!Array.isArray(savedMapping)&&Object.keys(savedMapping).length?savedMapping:null;
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
   else if(!selected.reference_slots?.length&&parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
