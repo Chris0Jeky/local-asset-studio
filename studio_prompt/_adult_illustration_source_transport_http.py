@@ -1,11 +1,13 @@
 """Bounded GET-only HTTP machinery for adult-illustration metadata."""
 from __future__ import annotations
 
+from contextlib import contextmanager
 import copy
 import hashlib
 from http.client import HTTPException
+from threading import Lock
 import time
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterator, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
@@ -196,8 +198,28 @@ class BoundedProviderTransport:
         self.cache = cache
         self.refresh = refresh
         self.sleeper = sleeper
+        self._fetch_lock = Lock()
         self._receipt: dict[str, Any] | None = None
         self._pending: tuple[HttpRequest, HttpResponse] | None = None
+
+    @contextmanager
+    def _fetch_scope(self) -> Iterator[None]:
+        """Own a complete facade fetch, including parsing and receipt capture."""
+        if not self._fetch_lock.acquire(blocking=False):
+            raise RuntimeError("Provider metadata transport is already in use")
+        try:
+            # A raw caller may already own a response awaiting finalization.
+            # Refusing this new fetch must not abort that caller's pending data.
+            if self._pending is not None:
+                raise RuntimeError("Previous provider response was not finalized")
+            self._receipt = None
+            try:
+                yield
+            except BaseException:
+                self.abort()
+                raise
+        finally:
+            self._fetch_lock.release()
 
     @property
     def receipt(self) -> dict[str, Any]:
@@ -402,3 +424,4 @@ class BoundedProviderTransport:
 
     def abort(self) -> None:
         self._pending = None
+        self._receipt = None
