@@ -154,13 +154,54 @@ def normalize_repair_png(encoded: bytes) -> tuple[bytes, dict]:
         'neural_inference': False, 'review_state': 'unreviewed'}
 
 
+def _capture_identity(info):
+    # Windows path/descriptor APIs need not agree on ctime. Compare change time
+    # only within one API domain below; device/inode/size/mtime join the domains.
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns
+
+
+def _capture_signature(info):
+    return (*_capture_identity(info), info.st_ctime_ns)
+
+
 def read_bounded(path: Path, limit: int, *, reject_symlink: bool = False) -> bytes:
-    if reject_symlink and path.is_symlink(): raise ValueError('Packet member must not be a symlink')
-    if not path.is_file(): raise ValueError('Expected a regular input file')
-    with path.open('rb') as stream:
-        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode): raise ValueError('Expected a regular input file')
-        data = stream.read(limit + 1)
+    """Capture one stable regular-file observation, not a lease on its future bytes.
+
+    Cooperating/local races are refused. A hostile writer able to restore file
+    metadata or change parent traversal is outside this non-sandboxed boundary.
+    """
+    if type(limit) is not int or limit < 0: raise ValueError('Invalid input byte limit')
+    path = Path(path)
+    try: before = path.stat(follow_symlinks=not reject_symlink)
+    except FileNotFoundError: raise ValueError('Expected a regular input file') from None
+    if reject_symlink and (stat.S_ISLNK(before.st_mode) or getattr(before, 'st_file_attributes', 0) & 0x400):
+        raise ValueError('Packet member must not be a symlink or reparse point')
+    if not stat.S_ISREG(before.st_mode): raise ValueError('Expected a regular input file')
+    if before.st_size > limit: raise ValueError('Input exceeds byte limit')
+    flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NONBLOCK', 0)
+    if reject_symlink: flags |= getattr(os, 'O_NOFOLLOW', 0)
+    fd = None
+    try:
+        fd = os.open(path, flags)
+        opened = os.fstat(fd)
+        if not stat.S_ISREG(opened.st_mode) or _capture_identity(opened) != _capture_identity(before):
+            raise ValueError('Input changed during capture')
+        if reject_symlink and getattr(opened, 'st_file_attributes', 0) & 0x400:
+            raise ValueError('Packet member must not be a symlink or reparse point')
+        stream = os.fdopen(fd, 'rb'); fd = None
+        with stream:
+            data = stream.read(limit + 1)
+            after = os.fstat(stream.fileno())
+    except FileNotFoundError:
+        raise ValueError('Input changed during capture') from None
+    finally:
+        if fd is not None: os.close(fd)
     if len(data) > limit: raise ValueError('Input exceeds byte limit')
+    try: final = path.stat(follow_symlinks=not reject_symlink)
+    except FileNotFoundError: raise ValueError('Input changed during capture') from None
+    if (len(data) != before.st_size or _capture_signature(after) != _capture_signature(opened)
+            or _capture_signature(final) != _capture_signature(before)):
+        raise ValueError('Input changed during capture')
     return data
 
 

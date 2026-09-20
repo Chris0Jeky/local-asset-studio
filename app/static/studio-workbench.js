@@ -87,7 +87,7 @@
   after('applySaved',()=>{if(!restoring)draftDirty=true;hydrateContinuation();});after('applyRecipe',()=>{draftDirty=true;syncReady();saveDraft();});
   const originalSelectPreset=selectPreset;selectPreset=function(...args){saveDraft();return originalSelectPreset(...args);};
   after('renderSelected',syncCreate);after('updateReady',syncReady);
-  const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch;await originalUploadRoleFile(...args);if(epoch===referenceEpoch){draftDirty=true;saveDraft();}};
+  const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
@@ -533,8 +533,12 @@
   q('#uxSecondKeep').onclick=()=>{dismissSecondPicture();q('#reference').value='';syncReady();announce('Kept the source. The extra picture was not attached.');};
   const useSecondPicture=intent=>()=>{
     const item=secondPicture,dest=boardDestination(intent);if(!item||!dest||!continuationState)return;
-    dismissSecondPicture();q('#reference').value='';pendingStyle=item;syncReady();
-    if(!openHandoff(continuationState.source_asset_id,dest.id,undefined,intent))pendingStyle=null;
+    // Keep the choice and native File until Prepare commits (selectPreset clears both).
+    // A refused opening, failed context read or cancelled modal must not consume the picture.
+    pendingStyle=null;
+    try{if(openHandoff(continuationState.source_asset_id,dest.id,undefined,intent))pendingStyle=item;}
+    catch(error){announce('Could not open the handoff. '+error.message,true);}
+    syncReady();
   };
   q('#uxSecondRestyle').onclick=useSecondPicture('restyle');q('#uxSecondCombine').onclick=useSecondPicture('combine');
   q('#uxSecondReplace').onclick=async()=>{
@@ -632,21 +636,17 @@
   q('#uxPullAsset').onclick=async()=>{if(!takesSource()){announce(NO_SOURCE_SLOT);return;}const epoch=selectionEpoch;await refreshAssets();if(epoch!==selectionEpoch||view!=='create')return;q('#uxSourceSearch').value='';q('#uxPickerStatus').textContent='Attach a copy. The original stays in your library.';q('#uxSourceSlot').innerHTML=sourceSlotOptions();const first=nextEmptySlot();if(first>=0)q('#uxSourceSlot').value=String(first);renderSources();picker.showModal();};
   q('#uxSourceSearch').oninput=renderSources;
   after('selectPreset',()=>{if(picker.open)picker.close();});
-  async function pullIntoSlot(index,id,stamp=workbenchStamp()){
-    try{
-      const result=await post('/api/assets/reference',{id});
-      if(stamp!==workbenchStamp())throw Error('The workbench changed while the picture was being copied. It was not applied.');
-      const slot=referenceRecords[index];if(!slot)throw Error('The destination slot is no longer available.');
-      const previous=slot.parent_asset;Object.assign(slot,result,{missing:false});
-      if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
-      renderReferenceSlots();replaceParentAsset('reference',previous,id);draftDirty=true;saveDraft();syncCreate();return true;
-    }catch(error){announce('The second picture was not attached. '+error.message,true);return false;}
+  async function pullIntoSlot(index,id){
+    try{await attachReferenceAsset(index,id);draftDirty=true;saveDraft();syncCreate();return true;}
+    catch(error){announce('The second picture was not attached. '+error.message,true);return false;}
   }
   q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
         if(isSource&&!selected.reference_slots?.length){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
-      const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');let previous=null;if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else if(selected.reference_slots?.length){previous=referenceRecords[Number(slot)].parent_asset;Object.assign(referenceRecords[Number(slot)],result,{missing:false});if(Number(slot)===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;renderReferenceSlots();}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',previous,id);draftDirty=true;saveDraft();syncCreate();
+      if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
+      else{const stamp=workbenchStamp(),result=await post('/api/assets/reference',{id});if(stamp!==workbenchStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
+      draftDirty=true;saveDraft();syncCreate();
       const filled=referenceRecords.filter(r=>r.file&&!r.missing).length,boardDone=!!selected.reference_board&&filled>=(selected.reference_board.min??1);
       const remaining=boardDone?-1:nextEmptySlot();
       if(remaining<0){picker.close();announce('Saved source attached. No generation submitted.');}

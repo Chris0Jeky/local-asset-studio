@@ -39,9 +39,12 @@ def pins(route_id):
     if route_id == 'copy-pose':
         values['lora'] = digest('9')
     elif route_id == 'klein-geometry':
-        values['renderer'] = digest('a')
+        values['renderer'] = pose_raster.renderer_sha256()
     else:
-        values.update(controlnet=digest('b'), renderer=digest('c'))
+        values.update(
+            controlnet=digest('b'),
+            renderer=pose_raster.renderer_sha256(),
+        )
     return values
 
 
