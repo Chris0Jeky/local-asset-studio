@@ -16,10 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def optional_wai():
-    preset = next(p for p in json.loads((ROOT / 'presets/catalog.json').read_text())['presets']
+    preset = next(p for p in json.loads((ROOT / 'presets/catalog.json').read_text(encoding='utf-8'))['presets']
                   if p['id'] == 'restyle-wai')
     preset['reference_board']['min'] = 0  # Fixture only: the owner has not changed q-27.
-    return preset, json.loads((ROOT / preset['graph']).read_text())
+    return preset, json.loads((ROOT / preset['graph']).read_text(encoding='utf-8'))
 
 
 class OptionalBoardCompilerTests(unittest.TestCase):
@@ -120,9 +120,9 @@ class OptionalBoardContinuationTests(unittest.TestCase):
         graph_path = self.root / preset['graph']
         shutil.copyfile(ROOT / preset['graph'], graph_path)
         catalog_path = self.root / 'presets/catalog.json'
-        catalog = json.loads(catalog_path.read_text())
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
         catalog['presets'].append(preset)
-        catalog_path.write_text(json.dumps(catalog))
+        catalog_path.write_text(json.dumps(catalog), encoding='utf-8')
         claim = dict(self.claim, intent='restyle', preset_id=preset['id'],
                      template_sha256=hashlib.sha256(graph_path.read_bytes()).hexdigest())
         payload = dict(preset_id=preset['id'], parent_assets=[self.asset_id],
@@ -169,6 +169,6 @@ class OptionalBoardFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is unavailable')
     def test_frontend_optional_board_contracts(self):
         result = subprocess.run(['node', '--test', str(ROOT / 'tests/optional_style_board.cjs')],
-                                cwd=ROOT, capture_output=True, text=True, timeout=30)
+                                cwd=ROOT, capture_output=True, text=True, encoding='utf-8', timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('# pass 5', result.stdout)
