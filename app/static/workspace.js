@@ -1,8 +1,10 @@
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
-let assetSignature = '', assetRefreshing = false;
+let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
 let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending = null, assetLibraryBusy = false;
+// Async completions own one request, not whichever editor or Workspace is visible later.
+let assetDetailRequest = null, assetLibraryRequest = null;
 const assetFormIds = {title:'assetTitle',tags:'assetTags',review:'assetReview',notes:'assetNotes'};
 const assetRecovery = StudioAssetRecovery.create(()=>sessionStorage);
 let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError = '', assetRetainedSelection = null;
@@ -93,9 +95,23 @@ function assetDetailCanLeave() {
 }
 function closeAssetDetails() { if(assetDetailCanLeave())$('#assetDialog').close(); }
 function assetDetailContextCurrent(id,epoch) { return $('#assetDialog').open && activeAsset?.id===id && assetDetailEpoch===epoch; }
+// Replace only the recovery view. Return focus only when this render removes the
+// focused recovery control; late results must never steal focus from newer typing.
+function renderAssetRecoveryPanel(panel,html,hidden,selectors,fallback) {
+  const focused=document.activeElement;
+  const selector=focused && panel.contains?.(focused)?selectors.find(value=>focused.matches(value)):null;
+  panel.hidden=hidden;
+  if(panel.innerHTML!==html)panel.innerHTML=html;
+  if(selector && (hidden || !focused.isConnected)){
+    const target=!hidden && panel.querySelector(selector);
+    (target||fallback)?.focus();
+  }
+}
 function renderAssetSaveRecovery() {
-  const panel=$('#assetDetailRecovery');panel.hidden=!assetDetailPending;
-  panel.innerHTML=assetDetailPending?'<p>The earlier save is unconfirmed. Check its receipt or retry that exact request; newer typing is not sent.</p><code>'+esc(assetDetailPending.command.request_id)+'</code><div class="asset-detail-actions"><button data-asset-save-check>Check save status</button><button data-asset-save-retry>Retry exact save</button></div>':'';
+  const panel=$('#assetDetailRecovery');
+  const html=assetDetailPending?'<p>The earlier save is unconfirmed. Check its receipt or retry that exact request; newer typing is not sent.</p><code>'+esc(assetDetailPending.command.request_id)+'</code><div class="asset-detail-actions"><button data-asset-save-check>Check save status</button><button data-asset-save-retry>Retry exact save</button></div>':'';
+  const fallback=assetDetailConflict?$('#assetDetailConflict').querySelector?.('[data-asset-rebase]')||$('#assetNotes'):$('#saveAssetDetails');
+  renderAssetRecoveryPanel(panel,html,!assetDetailPending,['[data-asset-save-check]','[data-asset-save-retry]'],$('#assetDialog').open?fallback:null);
 }
 function renderAssetConflict() {
   const panel=$('#assetDetailConflict');panel.hidden=!assetDetailConflict;
@@ -125,11 +141,15 @@ function resolveAssetConflict(keepEdits) {
   $('#saveAssetDetails').focus();
 }
 async function performAssetSave(operation, observe=false) {
-  if(assetDetailBusy)return;
+  if(assetDetailBusy || assetDetailPending!==operation || !assetDetailContextCurrent(operation.id,operation.epoch))return;
   try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return;}
   if(!retainAssetDraft())return;
   const {id,epoch,command,body}=operation,controller=new AbortController();
-  const current=()=>assetDetailContextCurrent(id,epoch);
+  const request={},workspaceEpoch=assetWorkspaceEpoch;
+  assetDetailRequest=request;
+  const ownsRequest=()=>assetDetailRequest===request;
+  const ownsEditor=()=>assetDetailContextCurrent(id,epoch) && assetDetailPending===operation && activeAsset.workspace_id===command.workspace_id;
+  const current=()=>ownsRequest() && ownsEditor() && assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch;
   assetDetailBusy=true;assetDetailDiscarding=['trash','restore'].includes(command.action);assetDetailControls();
   assetDetailStatus(observe?'Checking the earlier save receipt…':'Saving this snapshot… Newer typing stays in your draft.');
   const timer=setTimeout(()=>controller.abort(),15000);
@@ -153,8 +173,20 @@ async function performAssetSave(operation, observe=false) {
       assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
     }
   } finally {
-    clearTimeout(timer);assetDetailBusy=false;assetDetailDiscarding=false;assetDetailControls();renderAssetSaveRecovery();
-    if(current())retainAssetDraft();
+    clearTimeout(timer);
+    if(ownsRequest()){
+      assetDetailRequest=null;assetDetailBusy=false;assetDetailDiscarding=false;
+      // A confirmed result clears Pending before finally; retain the same editor's
+      // newer typing, but never let a stale completion touch a replacement view.
+      if(!$('#assetDialog').open)assetDetailControls();
+      else if(assetDetailContextCurrent(id,epoch) && activeAsset.workspace_id===command.workspace_id &&
+         assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch &&
+         (!assetDetailPending || assetDetailPending===operation)){
+        assetDetailControls();renderAssetSaveRecovery();retainAssetDraft();
+      }else if(ownsEditor()){
+        assetDetailControls();renderAssetSaveRecovery();assetDetailStatus('The Workspace changed while this request was pending. The original recovery is retained; return to its Workspace and check status explicitly.',true);
+      }
+    }
   }
 }
 // A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
@@ -241,6 +273,7 @@ async function refreshAssets(force=false) {
   try {
     const data=await api('/api/workspace'), signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
+    if(previousScope!==data.workspace_id)assetWorkspaceEpoch++;
     assetState=data;
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
     renderLibraryRecovery();
@@ -469,35 +502,46 @@ async function bulkReviewSelected(review) {
 }
 function renderLibraryRecovery() {
   if(assetRetainedSelection && StudioAssetRecovery.workspace(assetLibraryPending?.command.workspace_id) && assetLibraryPending.command.workspace_id===assetState.workspace_id){assetSelection=new Set(assetRetainedSelection);assetRetainedSelection=null;}
-  const panel=$('#assetCommandRecovery');panel.hidden=!assetLibraryPending && !assetRetainedDetail && !assetRecoveryError;
+  const panel=$('#assetCommandRecovery');
   const detail=assetRetainedDetail?'<p>This tab has a retained asset draft'+(assetRetainedDetail.operation?' and an unconfirmed save':'')+'. Reloading sends no save.</p><button data-asset-recover-open>Review retained draft</button><details><summary>Retained draft text</summary><pre>'+esc(JSON.stringify(assetRetainedDetail.draft,null,2))+'</pre></details>':'';
   const scopeProblem=assetRetainedDetail?recoveryScopeMessage(assetRetainedDetail.workspace_id):assetLibraryPending?recoveryScopeMessage(assetLibraryPending.command.workspace_id):'';
   const discard=(assetRetainedDetail?'<button data-asset-recovery-discard="detail">Discard local draft and recovery</button>':'')+(assetLibraryPending?'<button data-asset-recovery-discard="library">Discard local update recovery</button>':'');
-  panel.innerHTML=(assetRecoveryError?'<p>'+esc(assetRecoveryError)+'</p>':'')+(scopeProblem?'<p>'+esc(scopeProblem)+'</p>':'')+detail+discard+(assetLibraryPending?'<p>The earlier library update is unconfirmed. Selection is retained.</p><code>'+esc(assetLibraryPending.command.request_id)+'</code><details><summary>Retained update details</summary><pre>'+esc(JSON.stringify(assetLibraryPending.command,null,2))+'</pre></details><div class="asset-detail-actions"><button data-asset-batch-check>Check update status</button><button data-asset-batch-retry>Retry exact update</button></div>':'');
+  const html=(assetRecoveryError?'<p>'+esc(assetRecoveryError)+'</p>':'')+(scopeProblem?'<p>'+esc(scopeProblem)+'</p>':'')+detail+discard+(assetLibraryPending?'<p>The earlier library update is unconfirmed. Selection is retained.</p><code>'+esc(assetLibraryPending.command.request_id)+'</code><details><summary>Retained update details</summary><pre>'+esc(JSON.stringify(assetLibraryPending.command,null,2))+'</pre></details><div class="asset-detail-actions"><button data-asset-batch-check>Check update status</button><button data-asset-batch-retry>Retry exact update</button></div>':'');
+  renderAssetRecoveryPanel(panel,html,!assetLibraryPending && !assetRetainedDetail && !assetRecoveryError,
+    ['[data-asset-recover-open]','[data-asset-batch-check]','[data-asset-batch-retry]','[data-asset-recovery-discard=\"detail\"]','[data-asset-recovery-discard=\"library\"]'],$('#workspaceRefresh'));
 }
 async function performLibraryCommand(operation,observe=false) {
   if(assetLibraryBusy)throw Error('A library update is still pending.');
-  assetLibraryBusy=true;const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000),command=operation.command;
+  if(assetLibraryPending!==operation)throw Error('This update no longer owns the library recovery. No request was sent.');
+  const request={},workspaceEpoch=assetWorkspaceEpoch,command=operation.command;
+  assetLibraryRequest=request;
+  const ownsRequest=()=>assetLibraryRequest===request;
+  const current=()=>ownsRequest() && assetLibraryPending===operation && assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch;
+  assetLibraryBusy=true;const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try {
     if(assetRecoveryLoadError)throw Error(assetRecoveryLoadError);
     requireAssetScope(command.workspace_id);
     assetRecovery.write('library',{version:2,workspace_id:command.workspace_id,operation,selection:operation.selection||[...assetSelection]});
-    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal}),()=>assetLibraryPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
+    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal}),()=>current() && !controller.signal.aborted));
+    if(!current())throw Error('The library or Workspace changed while this request was pending. Its original recovery is retained.');
     if(observe && result?.status==='unknown')throw Error('No receipt yet; the earlier update may still complete. No retry was sent.');
     validateAssetReceipt(result,command);assetRecovery.clear('library');assetLibraryPending=null;
     // A confirmed snapshot is not a new permission to overwrite another client's later changes.
     for(const id of command.ids){
       const asset=assetState.assets.find(a=>a.id===id);
-      if(asset && asset.metadata_revision===command.expected_revisions[id]){
+      if(asset && asset.workspace_id===command.workspace_id && asset.metadata_revision===command.expected_revisions[id]){
         asset.metadata_revision=result.revisions[id];
         if(['edit','trash','restore'].includes(command.action))Object.assign(asset,result.applied);
       }
     }
     void refreshAssets(true);assetMessage('Library update confirmed.');return result;
   } catch(error) {
-    if(!observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){assetRecovery.clear('library');assetLibraryPending=null;throw Error(error.message+' Refresh the library and review the selection before trying again.');}
+    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){assetRecovery.clear('library');assetLibraryPending=null;throw Error(error.message+' Refresh the library and review the selection before trying again.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
-  } finally {clearTimeout(timer);assetLibraryBusy=false;renderLibraryRecovery();}
+  } finally {
+    clearTimeout(timer);
+    if(ownsRequest()){assetLibraryRequest=null;assetLibraryBusy=false;if(!assetLibraryPending || assetLibraryPending===operation)renderLibraryRecovery();}
+  }
 }
 async function mutateAssets(payload) {
   if(assetLibraryPending || assetLibraryBusy)throw Error('Resolve the earlier library update before starting another. Use Check update status or Retry exact update.');
