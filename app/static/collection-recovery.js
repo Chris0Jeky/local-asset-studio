@@ -78,6 +78,9 @@
     discard(id){this._change(entries=>{const at=entries.findIndex(entry=>entry.draft.id===id);if(at>=0)entries.splice(at,1);},true);}
     reset(){this.storage.removeItem(this.key);need(this.storage.getItem(this.key)===null,'Local recovery discard could not be verified');}
   }
+  // Match the existing Python transaction's str.strip(), not JS trim (NEL/FS and FEFF differ).
+  // Only the expected result is normalized; retained command bytes and their hash never change.
+  const serverText=value=>value.replace(/^[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/g,'');
   async function digest(raw,crypto){need(crypto?.subtle,'Secure receipt verification is unavailable');return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw)))].map(n=>n.toString(16).padStart(2,'0')).join('');}
   async function verifyReceipt(reply,pendingValue,crypto=globalThis.crypto){
     const command=parsed(pendingValue.body,MAX_COMMAND);validateCommand(command);
@@ -92,7 +95,7 @@
     need(command.action==='create'?scope(result.id):result.id===command.id);
     need(integer(result.revision)&&result.revision===(command.action==='create'?1:command.expected_revision+1));
     need(result.deleted===(command.action==='delete'));
-    if(command.action!=='delete')need(result.name===command.name&&result.description===command.description,'Receipt does not contain the clicked snapshot');
+    if(command.action!=='delete')need(result.name===serverText(command.name)&&result.description===serverText(command.description),'Receipt does not contain the clicked snapshot');
     return receipt;
   }
   return Object.freeze({Journal,pending,canonical,verifyReceipt,PREFIX,MAX_ENTRIES,MAX_SCOPES,MAX_BYTES});
