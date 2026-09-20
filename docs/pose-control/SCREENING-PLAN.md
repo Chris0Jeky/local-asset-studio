@@ -23,10 +23,21 @@ The compiler accepts only this campaign shape:
 - zero repair, retry, warm-up or other image-producing slots;
 - zero execution authority and zero generation submission.
 
+`studio_workflow/pose_route_contract.py` is the one source of truth for route ID, mechanism, source
+representation, detector behavior, native slot, accepted formats, backend IDs and route-specific pins.
+Screening and native binding consume separate projections of that contract. Neither module owns a second
+route table.
+
+The manifest uses `studio.pose-screening-manifest/v2`. Version 1 is rejected with an explicit regeneration
+message because it froze contradictory Klein vocabulary. Klein now consistently means an already rendered
+`precomputed-skeleton` bound to the geometry-reference slot, with detector behavior `not-applicable`. The
+binding compiler performs zero detector calls. Copy Pose remains an RGB donor with no detector concept, and
+SDXL remains `bypass-precomputed-guide` so a corrected guide cannot silently re-enter a detector.
+
 The manifest must pin model, encoder, VAE, graph, node-set, runtime, reference-transform and prompt-dialect
 identities. Klein also pins its renderer, Copy Pose pins its LoRA, and SDXL pins both ControlNet and renderer.
-The SDXL route is accepted only as `bypass-precomputed-guide`; silently running the corrected guide back
-through a pose detector is a contract failure.
+Only backend IDs admitted by the canonical route contract are accepted; a typo cannot become hash-sealed
+campaign evidence.
 
 The checked-in manifest is deliberately synthetic. Repeated-character hashes are not provider evidence or
 installed-runtime qualification. Real source bytes remain outside Git. Before a campaign can run, a reviewed
@@ -47,6 +58,9 @@ manifest and requires exact equality, including campaign identity, route-block o
 pair-specific donor binding, pair grouping and deterministic identities. Every success and error record states
 that execution is unauthorized and generation was not submitted. Successful receipts retain the campaign ID
 alongside the plan and manifest identities.
+
+A v1 manifest is not upgraded in memory. Regenerate and review a v2 manifest so the changed Klein route facts
+produce a new manifest hash, plan hash and cell identities.
 
 ## Data boundary
 

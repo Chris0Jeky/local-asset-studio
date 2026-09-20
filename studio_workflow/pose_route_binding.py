@@ -12,7 +12,7 @@ from typing import Any
 
 from PIL import Image, UnidentifiedImageError
 
-from . import pose_artifact, pose_raster
+from . import pose_artifact, pose_raster, pose_route_contract
 
 REQUEST_SCHEMA = 'studio.pose-route-binding-request/v1'
 BINDING_SCHEMA = 'studio.pose-route-binding/v1'
@@ -22,36 +22,7 @@ MAX_PIXELS = 16_777_216
 _HASH = re.compile(r'[0-9a-f]{64}\Z')
 _ID = re.compile(r'[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?\Z')
 _COMPONENT_ID = re.compile(r'[a-z0-9](?:[a-z0-9._/-]{0,126}[a-z0-9])?\Z')
-_COMMON_PINS = frozenset({
-    'model', 'encoder', 'vae', 'graph', 'nodes', 'runtime',
-    'reference_transform', 'prompt_dialect',
-})
-_ROUTE_SPECS = {
-    'klein-geometry': {
-        'mechanism': 'klein-geometry-reference',
-        'source_kind': 'precomputed-skeleton',
-        'detector_behavior': 'not-applicable',
-        'native_slot': 'geometry-reference',
-        'formats': ('PNG',),
-        'pins': frozenset({'renderer'}),
-    },
-    'copy-pose': {
-        'mechanism': 'copy-pose-rgb',
-        'source_kind': 'rgb-pose-donor',
-        'detector_behavior': 'not-applicable',
-        'native_slot': 'pose-donor-image-2',
-        'formats': ('PNG', 'JPEG', 'WEBP'),
-        'pins': frozenset({'lora'}),
-    },
-    'sdxl-corrected-skeleton': {
-        'mechanism': 'sdxl-precomputed-skeleton',
-        'source_kind': 'precomputed-skeleton',
-        'detector_behavior': 'bypass-precomputed-guide',
-        'native_slot': 'control-image',
-        'formats': ('PNG',),
-        'pins': frozenset({'controlnet', 'renderer'}),
-    },
-}
+_COMMON_PINS = pose_route_contract.COMMON_PINS
 
 
 def canonical(value: Any) -> bytes:
@@ -179,11 +150,13 @@ def _image(data: bytes, expected: dict[str, Any], formats: tuple[str, ...], skel
                     raise ValueError('source image canvas does not match the declaration')
                 if mode not in ('RGB', 'RGBA'):
                     raise ValueError('pose source must be RGB or RGBA without implicit conversion')
-                if image.getexif().get(274, 1) != 1:
-                    raise ValueError('pose source EXIF orientation must be identity')
                 if skeleton and (mode != 'RGB' or 'transparency' in image.info):
                     raise ValueError('precomputed skeleton guide must be opaque RGB')
+                # Loading before reading EXIF also discovers PNG eXIf chunks placed
+                # after IDAT; transform evidence must bind the visibly oriented file.
                 image.load()
+                if image.getexif().get(274, 1) != 1:
+                    raise ValueError('pose source EXIF orientation must be identity')
                 non_black = None
                 if skeleton:
                     pixels = (image.get_flattened_data() if hasattr(image, 'get_flattened_data') else image.getdata())
@@ -207,13 +180,11 @@ def _route(value: Any) -> tuple[dict[str, Any], dict[str, Any]]:
     _keys(value, ('id', 'mechanism', 'source_kind', 'detector_behavior',
                   'native_slot', 'backend_id', 'target_canvas', 'pins'))
     route_id = _identifier(value['id'], 'route id')
-    spec = _ROUTE_SPECS.get(route_id)
-    if spec is None:
-        raise ValueError('unsupported pose route')
+    spec = pose_route_contract.binding_projection(route_id)
     for key in ('mechanism', 'source_kind', 'detector_behavior', 'native_slot'):
         if value[key] != spec[key]:
             raise ValueError('route identity and native binding contract disagree')
-    backend_id = _identifier(value['backend_id'], 'backend id')
+    backend_id = pose_route_contract.validate_backend(route_id, value['backend_id'])
     target = _canvas(value['target_canvas'], 'route target canvas')
     pins = _COMMON_PINS | spec['pins']
     _keys(value['pins'], pins)
@@ -271,6 +242,9 @@ def validate_request(request: Any, *, artifact: dict[str, Any] | None) -> dict[s
         renderer_sha256 = _sha256(source['renderer_sha256'], 'renderer pin')
         if renderer_sha256 != route['pins']['renderer']:
             raise ValueError('source renderer identity does not match the route renderer pin')
+        if (renderer_id == pose_raster.RENDERER and
+                renderer_sha256 != pose_raster.renderer_sha256()):
+            raise ValueError('local preview renderer identity does not match the current Pillow/zlib encoder')
         threshold = _number(source['threshold'], 0, 1, 'joint threshold')
         if source['format'] != 'PNG':
             raise ValueError('precomputed skeleton routes require PNG bytes')
@@ -352,14 +326,17 @@ def compile_binding(request: Any, source_bytes: bytes, *, artifact: dict[str, An
             if source_bytes != expected_bytes:
                 raise ValueError('local preview renderer bytes do not match the pose artifact')
             diagnostics['renderer_validation'] = 'recomputed-exact'
+            diagnostics['renderer_identity'] = pose_raster.renderer_identity()
         else:
             diagnostics['renderer_validation'] = 'receipt-bound-not-recomputed'
+            diagnostics['renderer_identity'] = None
     else:
         diagnostics.update({
             'filtered_joints': [],
             'drawable_limbs': None,
             'non_black_pixels': None,
             'renderer_validation': 'not-applicable',
+            'renderer_identity': None,
         })
     request_content = copy.deepcopy(normalized)
     request_sha256 = hashlib.sha256(canonical(request_content)).hexdigest()
