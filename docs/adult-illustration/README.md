@@ -21,7 +21,7 @@ This foundation is non-executing:
 - no generation or training allowance is created;
 - no private reference or artwork is committed;
 - no route is called installed, 16 GB compatible, unrestricted or promoted;
-- no planning, taxonomy or prompt-projection record grants runtime authority;
+- no planning, taxonomy, prompt-projection or benchmark-result record grants runtime or promotion authority;
 - validation, import, startup and CI never contact a model provider;
 - the separate live metadata CLI requires an explicit `--allow-network` flag and can reach only reviewed JSON metadata endpoints without credentials;
 - the acquisition-plan CLI reads retained local snapshots only and emits exact dry-run arguments without invoking a downloader.
@@ -30,11 +30,12 @@ It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence,
 
 ## Validate the foundation
 
-Run the standard-library-only offline gates before changing a programme manifest, deterministic prompt profile or taxonomy review:
+Run the standard-library-only offline gates before changing a programme manifest, deterministic prompt profile, taxonomy review or benchmark-result contract:
 
 ```console
 python scripts/validate_adult_illustration.py
 python scripts/validate_adult_illustration_intelligence.py
+python scripts/validate_adult_illustration_benchmark_result.py
 python scripts/studio_adult_illustration_research.py programme-status
 python scripts/studio_adult_illustration_prompt.py profiles
 python scripts/studio_adult_illustration_taxonomy.py source
@@ -43,7 +44,7 @@ python scripts/studio_adult_illustration_acquisition_plan.py --help
 python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, adapter sweep bounds and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. The prompt compiler adds deterministic route-specific text while keeping non-prompt controls unresolved. The taxonomy intake separates the exact upstream CSV identity from a finite Studio review and grants no blanket compilation authority. The source-fetch and acquisition-plan help commands exercise argument registration only and perform no provider access. None inspects installed models, calls a provider, downloads bytes or submits generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. The benchmark-result validator binds the result to exact corpus and route-manifest Git blobs, requires complete candidate retention and accounting, keeps failure classes distinct, preserves null-versus-zero measurement semantics, and refuses synthetic or machine-only promotion. The prompt compiler adds deterministic route-specific text while keeping non-prompt controls unresolved. The taxonomy intake separates the exact upstream CSV identity from a finite Studio review and grants no blanket compilation authority. The source-fetch and acquisition-plan help commands exercise argument registration only and perform no provider access. None inspects installed models, calls a provider, downloads bytes or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -82,12 +83,13 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Technique candidates/watchlist | [`technique-candidates.json`](../../research/adult-illustration/technique-candidates.json) |
 | Source-intake contract examples | [`source-intake-example.json`](../../research/adult-illustration/source-intake-example.json) |
 | Held-out task declarations | [`benchmark-corpus.json`](../../research/adult-illustration/benchmark-corpus.json) |
+| Result/accounting contract example | [`benchmark-result-example.json`](../../research/adult-illustration/benchmark-result-example.json) |
 | Composable genre starts | [`genre-packs.json`](../../research/adult-illustration/genre-packs.json) |
 | Adapter qualification template | [`lora-qualification-example.json`](../../research/adult-illustration/lora-qualification-example.json) |
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, provider/source provenance, prompt dialect/vocabulary contracts, finite corpus, validators and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, provider/source provenance, prompt dialect/vocabulary contracts, 21-case finite corpus, result/accounting contract, validators and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
