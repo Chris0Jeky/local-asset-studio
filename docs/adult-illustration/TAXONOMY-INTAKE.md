@@ -101,6 +101,37 @@ The intake rejects:
 
 The generated index sorts by canonical source name and has a deterministic `index_id`. It preserves all source rows for diagnostics while making review and compilation eligibility explicit per row.
 
+## Prompt compiler integration
+
+The stacked prompt integration in PR #555 reads only the two checked-in contracts. It does not read the retained CSV or the generated 4.6 MB index.
+
+For tag and hybrid profiles, resolution is deterministic:
+
+1. normalize the input term;
+2. inspect the finite reviewed taxonomy first;
+3. enforce compilation acceptance, polarity, deprecation and exact profile support;
+4. follow only reviewed compatible implications;
+5. emit the pinned upstream `source_name` for tag profiles or the reviewed display form for hybrid profiles;
+6. consult the smaller profile-owned proof vocabulary only when no taxonomy entry matches;
+7. retain unknown or rejected terms as diagnostics instead of silently dropping uncertainty.
+
+A taxonomy match is authoritative even when rejected. The compiler therefore cannot bypass a review decision by falling back to a similarly named proof-vocabulary entry.
+
+Each compiled record contains:
+
+- the exact taxonomy source SHA-256 and immutable revision;
+- source and review manifest hashes;
+- the reviewed-entry count;
+- `source_bytes_loaded: false` and `generated_index_loaded: false`;
+- one bounded `vocabulary_resolutions` record per positive or negative input;
+- the source, match kind, status, reviewed entry IDs, emitted forms and semantic facets.
+
+Changing valid review-manifest bytes changes derived output and causes retained prompt validation to fail closed.
+
+Instruction profiles keep tags visible in `vocabulary_resolutions` but do not dump them into the natural-language instruction. Explicit avoidance terms remain instruction exclusions.
+
+Because compilation deliberately does not load full source membership, an unmatched term is reported as unknown at this layer. Distinguishing a source-known but unreviewed term from a genuinely absent term still requires an explicitly validated index or compact membership handoff.
+
 ## Adult/content boundary
 
 The taxonomy must never establish that a subject is an adult, that a scene is consensual, or that a content envelope is permitted. Those facts come only from reviewed user/canon intent and the existing adult-illustration projection contract. Character/rating rows and model/tagger outputs are not substitutes for that declaration.
@@ -122,8 +153,8 @@ These results establish software and provenance contracts only. They do not esta
 
 ## Remaining #437 gates
 
-1. Integrate only reviewed eligible entries into prompt-profile diagnostics without silently promoting the full source.
-2. Distinguish known-but-unreviewed, unknown, deprecated, and profile-incompatible terms in compiler output.
+1. Review and merge the immutable intake and stacked prompt-integration slices in order.
+2. Add an explicit validated index or compact membership handoff before distinguishing source-known-but-unreviewed terms from genuinely unknown terms during compilation.
 3. Pin exact installed tokenizer identities before reporting exact token counts; use bounded estimates otherwise.
 4. Expand the review overlay only through evidence-backed diffs, never model-authored bulk acceptance.
 5. Compare unchanged/manual/taxonomy-assisted prompts under #37/#409 with exact routes, settings, outputs, failures, and human acceptance.
