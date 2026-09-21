@@ -5,7 +5,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from .adult_illustration_prompt_common import (
     AUTHORITY, MANIFEST, MAX_ENTRIES, MAX_MANIFEST_BYTES, MAX_PROFILES,
@@ -184,8 +184,9 @@ def _alias_map(entries: dict[str, dict[str, Any]]) -> dict[str, str]:
 
 
 def _validate_implications(entries: dict[str, dict[str, Any]]) -> None:
+    known_ids = set(entries)
     for entry_id, entry in entries.items():
-        unknown = set(entry["implications"]) - set(entries)
+        unknown = set(entry["implications"]) - known_ids
         if unknown:
             raise ValueError(f"Entry {entry_id!r} implies unknown vocabulary: {sorted(unknown)}")
         source_profiles = set(entry["profile_ids"])
@@ -206,19 +207,29 @@ def _validate_implications(entries: dict[str, dict[str, Any]]) -> None:
     visiting: set[str] = set()
     visited: set[str] = set()
 
-    def visit(entry_id: str) -> None:
-        if entry_id in visiting:
-            raise ValueError(f"Vocabulary implication cycle contains {entry_id!r}")
-        if entry_id in visited:
-            return
-        visiting.add(entry_id)
-        for target in entries[entry_id]["implications"]:
-            visit(target)
-        visiting.remove(entry_id)
-        visited.add(entry_id)
-
+    # Explicit DFS frames preserve recursion's active-path cycle semantics while
+    # accepting every graph within the manifest/entry bounds, independent of the
+    # interpreter's call-stack limit. Shared tails are validated only once.
     for entry_id in entries:
-        visit(entry_id)
+        if entry_id in visited:
+            continue
+        visiting.add(entry_id)
+        stack: list[tuple[str, Iterator[str]]] = [
+            (entry_id, iter(entries[entry_id]["implications"]))
+        ]
+        while stack:
+            current, children = stack[-1]
+            target = next(children, None)
+            if target is None:
+                stack.pop()
+                visiting.remove(current)
+                visited.add(current)
+                continue
+            if target in visiting:
+                raise ValueError(f"Vocabulary implication cycle contains {target!r}")
+            if target not in visited:
+                visiting.add(target)
+                stack.append((target, iter(entries[target]["implications"])))
 
 
 def load_catalog(root: Path | str) -> dict[str, Any]:
