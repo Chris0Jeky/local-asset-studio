@@ -48,6 +48,8 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m playwright install --with-deps chromium
+      - name: Focused ordered-source keyboard contract
+        run: python tests/recipe_shortlist_keyboard_browser.py --out .runtime/shortlist-native/keyboard
       - name: Native HTTP and actual Studio shell, synthetic dependencies
         run: python tests/recipe_shortlist_browser.py --out .runtime/shortlist-native
       - name: Explicit setup application and recovery, no model execution

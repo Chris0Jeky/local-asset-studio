@@ -18,6 +18,30 @@ CONTROLS = ('positive', 'negative', 'width', 'height', 'seed', 'steps', 'cfg',
             'denoise', 'sampler', 'scheduler') + tuple(
     name for slot in ('lora', 'lora2', 'lora3', 'lora4', 'lora5', 'lora6')
     for name in (slot, slot + '_name'))
+
+# The keys by which a preset declares that the user supplies the picture. Single source of truth for
+# `project_document` below, `studio_workflow.guidance.project`, `scripts/validate-repo.py`'s catalog sweep and
+# the browser bundle guard in `app/static/bundle-workflow-core.js`, whose copy is held to this tuple by
+# tests/test_source_key_invariant.py. `project_document` and the bundle check the graph for an image input as
+# well; guidance and the browser's reference staging read these keys alone, which is why the catalog sweep
+# exists to keep the keys a faithful description of the graphs.
+SOURCE_KEYS = ('reference', 'last_reference', 'reference_slots', 'requires_rgba_mask')
+# The API-graph classes that read a picture the user is meant to choose. Only `LoadImage` appears in
+# workflows/api/; `ImageOnlyCheckpointLoader` loads weights, not a picture, and is deliberately absent.
+IMAGE_INPUT_CLASSES = ('LoadImage',)
+
+
+def missing_source_key(preset, graph):
+    """Graph nodes that load a picture while `preset` declares no source key; empty when the preset is sound.
+
+    A graph that loads a picture under no declared key is invisible to every caller that reads SOURCE_KEYS
+    without also inspecting the graph, and the authored example gets bound in place of the user's image
+    (#600). `scripts/validate-repo.py` calls this over the whole catalog.
+    """
+    if any(preset.get(key) for key in SOURCE_KEYS): return []
+    return sorted(node for node, body in graph.items() if body.get('class_type') in IMAGE_INPUT_CLASSES)
+
+
 VERSION = 'studio.preset-projection/v1'
 
 
@@ -47,8 +71,8 @@ def project_document(value, preset, template, schema):
     need(doc['schema_sha256'] == schema['schema_sha256'],
          'Node schema changed; refresh, review and explicitly accept it before preparing')
     need(preset.get('modality') == 'image', 'This adapter supports registered image recipes only')
-    need(not any(preset.get(k) for k in ('reference', 'last_reference', 'reference_slots', 'requires_rgba_mask'))
-         and not any(n.get('class_type') == 'LoadImage' for n in template.values()),
+    need(not any(preset.get(k) for k in SOURCE_KEYS)
+         and not any(n.get('class_type') in IMAGE_INPUT_CLASSES for n in template.values()),
          'Reference workflows need an asset-lineage adapter; use Create and its registered recipe instead')
     need(not doc['disabled'],
          'Disabled nodes require the authored-graph executor; for a registered LoRA use its strength control at zero')

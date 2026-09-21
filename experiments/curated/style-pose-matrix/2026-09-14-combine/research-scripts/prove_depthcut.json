@@ -1,0 +1,40 @@
+{
+ "id": "b57c6f3f-0d12-430d-863e-02e0bd0ebaa0",
+ "status": "completed",
+ "preset_id": "combine-klein-9b-depth",
+ "prompt_ids": [
+  "7769c72d-602d-49cc-b4f0-41238d09fd03"
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-depth_00003_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026091441,
+   "prompt_id": "7769c72d-602d-49cc-b4f0-41238d09fd03",
+   "media_type": "image",
+   "asset_id": "5149f52ab755542f98f32ace59f8ef76"
+  }
+ ],
+ "elapsed_seconds": 122.94454789161682,
+ "error": null,
+ "references": [
+  {
+   "file": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg",
+   "sha256": "1c7b7fba6abc2b31c4bc1202a5754218adaae0ad05c53fb1fa29f96f0a85167c",
+   "bytes": 216501,
+   "width": 992,
+   "height": 1500,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+ "seed": 2026091441,
+ "depth_cut": 86
+}

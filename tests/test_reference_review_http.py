@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest.mock import Mock, patch
 from studio_prompt import reference_review
 from studio_prompt.http_extension import extend_handler
+from test_server import server
 import test_reference_review as fixtures
 
 
@@ -16,13 +17,10 @@ class ReferenceReviewHttpTests(unittest.TestCase):
         self.fixture = fixtures.ReferenceReviewTests(); self.fixture.setUp()
         self.studio = Mock()
         class Base(BaseHTTPRequestHandler):
+            _safe_host = server.Handler._safe_host
+            _safe_mutation = server.Handler._safe_mutation
+            _content_length = server.Handler._content_length
             def log_message(self, *args): pass
-            def _safe_host(self): return self.headers.get('Host') == 'localhost:8191'
-            def _safe_mutation(self): return self._safe_host() and self.headers.get('Origin') == 'http://localhost:8191'
-            def _content_length(self, limit):
-                n = int(self.headers.get('Content-Length', '-1'))
-                if not 0 <= n <= limit: raise ValueError('Request exceeds route limit')
-                return n
             def _json(self, status, value):
                 raw = json.dumps(value).encode(); self.send_response(status)
                 self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw)
@@ -50,7 +48,33 @@ class ReferenceReviewHttpTests(unittest.TestCase):
                 self.assertEqual(self.call(route, b'', **{'Content-Length': str(len(raw))})[0], 400)
     def test_route_header_cap_refuses_before_reading_body(self):
         status, result = self.call('reference-review/preview', b'', **{'Content-Length': str(reference_review.HTTP_LIMIT+1)})
-        self.assertEqual(status, 400); self.assertIn('limit', result['error'])
+        self.assertEqual(status, 400); self.assertIn('large', result['error'])
+    def test_fixture_accepts_both_production_loopback_origins(self):
+        raw = json.dumps(self.fixture.payload).encode()
+        status, result = self.call(
+            'reference-review/preview',
+            raw,
+            Host='127.0.0.1:8191',
+            Origin='http://127.0.0.1:8191',
+        )
+        self.assertEqual(status, 200, result)
+        self.assertTrue(result['source_bytes_verified'])
+    def test_fixture_uses_production_content_length_errors(self):
+        status, result = self.call(
+            'reference-review/preview',
+            b'',
+            **{'Content-Length': 'not-an-integer'},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(result['error'], 'Valid Content-Length required')
+
+        status, result = self.call(
+            'reference-review/preview',
+            b'',
+            **{'Content-Length': str(reference_review.HTTP_LIMIT + 1)},
+        )
+        self.assertEqual(status, 400)
+        self.assertEqual(result['error'], 'Request body is too large')
     def test_origin_host_and_content_type_are_required(self):
         raw = json.dumps(self.fixture.payload).encode()
         for headers, code in (({'Host':'evil.invalid'},403), ({'Origin':'http://evil.invalid'},403), ({'Content-Type':'text/plain'},400)):

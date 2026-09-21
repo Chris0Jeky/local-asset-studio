@@ -3,11 +3,11 @@
 Prints a `.runtime/downloads/receipts.json` receipt and a `models/library.json` entry stub. Standard
 library only; nothing is installed unless the SHA-256 matches what the repository tree advertises.
 """
-import argparse,hashlib,json,re,sys,time
+import argparse,hashlib,json,re,stat,sys,time
 from pathlib import Path,PurePosixPath
 from urllib.error import HTTPError,URLError
 from urllib.parse import quote
-from urllib.request import Request,urlopen
+from urllib.request import Request,build_opener,urlopen
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'app'))
@@ -79,20 +79,67 @@ def fetch_json(url,timeout=60):
  except HTTPError as error:raise SystemExit(f'{url} returned HTTP {error.code}')
  except URLError as error:raise SystemExit(f'{url} is unreachable: {error.reason}')
 
-def download(url,target,expected_size=None,expected_sha=None,headers=None,chunk=4*1024**2):
- """Stream to <target>.part, hash while writing, and only rename after the checksum matches."""
+def _resume_partial(part,target,expected_size,expected_sha):
+ if not part.exists() and not part.is_symlink():raise SystemExit(f'--resume requires an existing partial file: {part}')
+ try:info=part.lstat()
+ except OSError as error:raise SystemExit(f'Cannot inspect the partial download: {part} ({error})')
+ if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode) or getattr(info,'st_nlink',1)!=1:
+  raise SystemExit(f'Resume requires an unshared regular partial file: {part}')
+ if part.resolve().parent!=target.parent.resolve():
+  raise SystemExit(f'Partial download is outside the intended model directory: {part}')
+ if expected_size is None:raise SystemExit('Cannot resume without the pinned file size')
+ if not expected_sha:raise SystemExit('Cannot resume without the pinned SHA-256')
+ if info.st_size>expected_size:
+  raise SystemExit(f'Partial download is larger than the pinned size ({info.st_size} > {expected_size}): {part}')
+ digest=hashlib.sha256();size=0
+ with part.open('rb') as stream:
+  while block:=stream.read(4*1024**2):digest.update(block);size+=len(block)
+ if size!=info.st_size:raise SystemExit(f'Partial download changed while it was being hashed: {part}')
+ return size,digest
+
+
+def _validate_resume_response(response,offset,expected_size):
+ if getattr(response,'status',None)!=206:
+  raise SystemExit(f'Resume server response must be HTTP 206, got {getattr(response,"status",None)}; partial file preserved')
+ content_range=response.headers.get('Content-Range','')
+ expected_range=f'bytes {offset}-{expected_size-1}/{expected_size}'
+ if content_range!=expected_range:
+  raise SystemExit(f'Resume Content-Range mismatch ({content_range!r} != {expected_range!r}); partial file preserved')
+ try:content_length=int(response.headers.get('Content-Length',''))
+ except (TypeError,ValueError):content_length=-1
+ if content_length!=expected_size-offset:
+  raise SystemExit(f'Resume Content-Length mismatch ({content_length} != {expected_size-offset}); partial file preserved')
+ if response.headers.get('Content-Encoding','').strip().lower() not in ('','identity'):
+  raise SystemExit('Resume requires identity content encoding; partial file preserved')
+
+
+def download(url,target,expected_size=None,expected_sha=None,headers=None,chunk=4*1024**2,resume=False,opener=None):
+ """Stream to <target>.part, optionally resume, and publish only after pinned verification."""
  if target.exists():raise SystemExit('Destination already exists; nothing downloaded: '+str(target))
  target.parent.mkdir(parents=True,exist_ok=True)
  part=target.with_suffix(target.suffix+'.part')
- if part.exists():raise SystemExit('A partial download is already in place; inspect it first: '+str(part))
- digest=hashlib.sha256();size=0;start=time.time()
+ if (part.exists() or part.is_symlink()) and not resume:raise SystemExit('A partial download is already in place; inspect it first: '+str(part))
+ start=time.time()
+ if resume:size,digest=_resume_partial(part,target,expected_size,expected_sha)
+ else:size,digest=0,hashlib.sha256()
+ if resume and size==expected_size:
+  actual=digest.hexdigest()
+  if actual!=expected_sha:raise SystemExit('SHA-256 mismatch for complete partial; partial file preserved: '+str(part))
+  if target.exists():raise SystemExit('Destination appeared during resume; both files preserved')
+  part.rename(target)
+  return size,actual,round(time.time()-start,1)
+ request_headers=dict(AGENT);request_headers.update(headers or {});request_headers['Accept-Encoding']='identity'
+ if resume:request_headers['Range']=f'bytes={size}-'
+ opener=opener or build_opener()
  try:
-  with urlopen(Request(url,headers=dict(AGENT,**(headers or {}))),timeout=120) as response,part.open('xb') as stream:
-   while block:=response.read(chunk):
-    stream.write(block);digest.update(block);size+=len(block)
- except HTTPError as error:part.unlink(missing_ok=True);raise SystemExit(f'Download failed with HTTP {error.code}')
- except URLError as error:part.unlink(missing_ok=True);raise SystemExit(f'Download failed: {error.reason}')
- if expected_size and size!=expected_size:raise SystemExit(f'Size mismatch ({size} != {expected_size}); partial file preserved: {part}')
+  with opener.open(Request(url,headers=request_headers),timeout=120) as response:
+   if resume:_validate_resume_response(response,size,expected_size)
+   with part.open('ab' if resume else 'xb') as stream:
+    while block:=response.read(chunk):
+     stream.write(block);digest.update(block);size+=len(block)
+ except HTTPError as error:raise SystemExit(f'Download failed with HTTP {error.code}; partial file preserved: {part}')
+ except URLError as error:raise SystemExit(f'Download failed: {error.reason}. Partial file preserved: {part}')
+ if expected_size is not None and size!=expected_size:raise SystemExit(f'Size mismatch ({size} != {expected_size}); partial file preserved: {part}')
  if expected_sha and digest.hexdigest()!=expected_sha:raise SystemExit('SHA-256 mismatch; partial file preserved: '+str(part))
  if target.exists():raise SystemExit('Destination appeared during the download; both files preserved')
  part.rename(target)
@@ -108,6 +155,7 @@ def main(argv=None):
  parser.add_argument('--family',default='',help='model family recorded in the library stub')
  parser.add_argument('--trigger',default='',help='trigger word recorded in the library stub')
  parser.add_argument('--dry-run',action='store_true')
+ parser.add_argument('--resume',action='store_true',help='resume an existing .part file after strict range validation; never starts a fresh transfer')
  args=parser.parse_args(argv)
  name=safe_name(args.name or PurePosixPath(args.path).name)
  target=destination(load_config()['comfy_root'],args.dest_folder,name)
@@ -116,7 +164,7 @@ def main(argv=None):
  if expected_sha is None:print('WARNING: the repository tree advertises no LFS sha256 for this path; the download cannot be verified against the source.')
  print(json.dumps({'url':url,'destination':str(target),'expected_sha256':expected_sha,'expected_bytes':expected_size},indent=2))
  if args.dry_run:return 0
- size,digest,seconds=download(url,target,expected_size,expected_sha)
+ size,digest,seconds=download(url,target,expected_size,expected_sha,resume=args.resume)
  receipt={'file':name,'repo':args.repo,'path':args.path,'url':url,'bytes':size,'sha256':digest,
           'expected_sha256':expected_sha,'verified':bool(expected_sha) and digest==expected_sha,'seconds':seconds,
           'licence':'TODO: read the model card','fetched':time.strftime('%Y-%m-%dT%H:%M:%S')}
