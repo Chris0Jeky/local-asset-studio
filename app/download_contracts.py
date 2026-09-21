@@ -8,7 +8,7 @@ import re
 import socket
 import time
 import uuid
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 from urllib.request import HTTPRedirectHandler, build_opener
 
 
@@ -103,6 +103,12 @@ def download_source_provider(url):
     """Validate the curated origin without performing DNS for offline reuse paths."""
     parsed=_parsed_https_url(url);provider=_SOURCE_PROVIDERS.get(parsed.hostname.lower())
     if provider is None:raise ValueError('Automatic installation requires a curated HTTPS model source')
+    # Initial sources identify a version transfer, not an HTML page or metadata API.
+    # SplitResult retains semicolons (including empty parameters) in the path.
+    # Redirects keep their existing provider-specific storage-host policy.
+    if provider=='civitai' and (not re.fullmatch(r'/api/download/models/[1-9][0-9]*',urlsplit(url).path)
+                               or parsed.fragment):
+        raise ValueError('Civitai installation requires an exact version download endpoint')
     return provider
 
 
