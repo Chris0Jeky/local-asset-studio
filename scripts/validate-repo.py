@@ -115,6 +115,10 @@ if recipe_path.is_file():
                 value=recipe['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (recipe['id'],key,value,'outside dimension_limits or off the dimension_multiple grid')
         assert recipe.get('status') in {'executed','unverified'}, (recipe['id'],recipe.get('status'))
         assert isinstance(recipe.get('sources',[]),list), recipe['id']
+wildcard_dir=root/'presets/wildcards'
+if wildcard_dir.is_dir():
+    for path in wildcard_dir.glob('*.txt'):
+        assert re.fullmatch(r'[A-Za-z0-9_-]{1,64}', path.stem), 'wildcard filename must match the expander: '+path.name
 library=json.loads((root/'models/library.json').read_text(encoding='utf-8'))
 assert len({a['id'] for a in library['assets']})==len(library['assets'])
 for asset in library['assets']:
@@ -132,12 +136,41 @@ for asset in library['assets']:
     curated=asset['url'].startswith(('https://huggingface.co/','https://civitai.com/','https://civitai.red/'))
     assert curated or asset['url']=='', (asset['id'],'url must be a curated source or empty')
     assert curated or asset.get('terms'), (asset['id'],'an unsourced pin must say so in terms')
+# Local-only example media: examples/<folder>/MANIFEST.json is the tracked record, the pictures never are.
+# A /api/examples/<folder>/<file> reference must have a manifest entry; presence on this PC is not required,
+# because a fresh clone has no JPEGs until scripts/lab-media.py restore runs.
+LOCAL_MEDIA=('nsfw-lab','civitai-intake')
+IMAGE_SUFFIXES={'.jpg','.jpeg','.png','.webp','.gif','.bmp','.tif','.tiff','.avif'}
+manifest_files={}
+for folder in LOCAL_MEDIA:
+    manifest_path=root/'examples'/folder/'MANIFEST.json'
+    manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+    assert manifest.get('version')==1 and isinstance(manifest.get('entries'),list), folder+' manifest must be version 1 with entries'
+    names=set()
+    for entry in manifest['entries']:
+        assert re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',str(entry.get('file',''))), (folder,entry.get('file'),'manifest file must be a plain name in the folder')
+        assert entry['file'] not in names, (folder,entry['file'],'duplicate manifest entry')
+        assert re.fullmatch('[a-f0-9]{64}',str(entry.get('sha256',''))), (folder,entry['file'],'manifest entry needs a sha256')
+        assert isinstance(entry.get('bytes'),int) and entry['bytes']>0, (folder,entry['file'],'manifest entry needs a byte count')
+        assert str(entry.get('note','')).strip(), (folder,entry['file'],'manifest entry needs an inspection note')
+        names.add(entry['file'])
+    manifest_files[folder]=names
+referenced=0
+for source in ('presets/nsfw-intel.json','presets/recipes.json','app/static/bundle-showcase.json'):
+    source_path=root/source
+    if not source_path.is_file(): continue
+    for folder,name in re.findall(r'/api/examples/('+'|'.join(LOCAL_MEDIA)+r')/([A-Za-z0-9][A-Za-z0-9._-]*)',source_path.read_text(encoding='utf-8')):
+        assert name in manifest_files[folder], (source,folder+'/'+name,'referenced picture is missing from examples/'+folder+'/MANIFEST.json')
+        referenced+=1
+print(f'Local-only media: {sum(len(v) for v in manifest_files.values())} manifest entries, {referenced} references checked.')
 files=subprocess.check_output(['git','ls-files','-z'],cwd=root).decode().split('\0')
 for name in filter(None,files):
     path=root/name
+    assert not (name.startswith(tuple('examples/'+folder+'/' for folder in LOCAL_MEDIA)) and path.suffix.lower() in IMAGE_SUFFIXES), 'Local-only lab picture committed to Git: '+name
     assert path.stat().st_size<=10*1024*1024, 'Tracked file exceeds 10 MiB: '+name
     assert path.suffix.lower() not in {'.safetensors','.gguf','.ckpt','.onnx','.pt','.pth','.bin','.exe','.dll','.zip'}, 'Dependency/weight in Git: '+name
     assert not name.startswith(OPERATIONAL_PREFIXES), 'Operational output in Git: '+name
+    assert not name.startswith('experiments/') or name.startswith('experiments/curated/'), 'Operational output in Git: '+name
     assert name!='config/local.json' and not path.name.startswith('.env'), 'Local config/secret file in Git'
 print(f'PASS: {len(catalog)} preset graphs/bindings; {len(library["assets"])} pinned assets; {len(list(filter(None,files)))} tracked paths checked.')
 # Every LoRA a preset, variant or recipe names must be a known, installed adapter (KB entry not marked uninstalled, or a pinned library file).

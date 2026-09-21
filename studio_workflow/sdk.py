@@ -18,6 +18,11 @@ class WorkflowClient(Client):
         from .setup_proposal import observe
         return observe(self.request, request)
 
+    def setup_compatibility(self, request: dict) -> dict:
+        """Evaluate retained setup context without reading or mutating Studio."""
+        from .setup_context_client import observe
+        return observe(self.request, request)
+
     def shortlist(self, goal: str, *, reference_count: int | None = None, limit: int = 6,
                   offset: int = 0, expected_snapshot: str | None = None, source_asset_id: str | None = None,
                   source_sha256: str | None = None, source_role: str | None = None, sources: list[dict] | None = None) -> dict:

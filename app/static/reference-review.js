@@ -8,20 +8,21 @@
   const roles={identity:['subject'],costume:['subject'],pose:['action','composition'],
     style:['style','palette','lighting','mood'],composition:['composition','camera','setting'],geometry:['subject']};
   const limit=8*1024*1024;
-  let previewInFlight=false;
+  let previewInFlight=false, loadingEpoch=null;
   let epoch=0, report=null, review=null, originals=null, pending=null, prepared=null, applied=null, receipt=null;
   const urls=new Set();
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
+    const loading=loadingEpoch!==null;
     el('rr-originals').disabled=!report;
     el('rr-preview').disabled=!report||!originals||previewInFlight;
     el('rr-apply').disabled=!prepared;
-    el('rr-undo').disabled=!applied;
-    el('rr-export').disabled=!receipt;
+    el('rr-undo').disabled=loading||!applied;
+    el('rr-export').disabled=loading||!receipt;
   }
-  function changed(){epoch++;prepared=null;pending=null;el('rr-diff').replaceChildren();el('rr-change-summary').textContent='';controls();}
+  function changed(){epoch++;loadingEpoch=null;prepared=null;pending=null;el('rr-diff').replaceChildren();el('rr-change-summary').textContent='';controls();}
   async function post(path,body){
     const response=await fetch('/api/prompt/reference-review/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const value=await response.json();
@@ -99,27 +100,31 @@
       message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
     },load:async(analysis,files=[])=>{
     if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
-    changed();const current=epoch;
-    const result=await post('inspect',{analysis});
-    if(current!==epoch)throw Error('The reference review changed during loading; newer work was retained.');
-    if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
-    const selected=new Map();
-    for(const file of files){
-      if(file.size>limit)throw Error('Reference exceeds 8 MiB.');
-      const bytes=await file.arrayBuffer();
-      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
-      selected.set(hash,file);
+    changed();const current=epoch;loadingEpoch=current;controls();
+    try{
+      const result=await post('inspect',{analysis});
+      if(current!==epoch)throw Error('The reference review changed during loading; newer work was retained.');
+      if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
+      const selected=new Map();
+      for(const file of files){
+        if(file.size>limit)throw Error('Reference exceeds 8 MiB.');
+        const bytes=await file.arrayBuffer();
+        const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
+        selected.set(hash,file);
+      }
+      if(current!==epoch)throw Error('The reference review changed during image checks; newer work was retained.');
+      applied=null;receipt=null;
+      report=result.analysis;review=result.review;originals=null;el('rr-adopt').checked=false;
+      const refs=report.request.references;
+      if(refs.every(ref=>selected.has(ref.sha256))&&selected.size===files.length&&selected.size===new Set(refs.map(ref=>ref.sha256)).size)originals=refs.map(ref=>selected.get(ref.sha256));
+      el('rr-originals').value='';
+      el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
+      showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
+      document.dispatchEvent(new CustomEvent('studio-prompt-state'));
+      return report.report_sha256;
+    }finally{
+      if(loadingEpoch===current){loadingEpoch=null;controls();}
     }
-    if(current!==epoch)throw Error('The reference review changed during image checks; newer work was retained.');
-    applied=null;receipt=null;
-    report=result.analysis;review=result.review;originals=null;el('rr-adopt').checked=false;
-    const refs=report.request.references;
-    if(refs.every(ref=>selected.has(ref.sha256))&&selected.size===files.length&&selected.size===new Set(refs.map(ref=>ref.sha256)).size)originals=refs.map(ref=>selected.get(ref.sha256));
-    el('rr-originals').value='';
-    el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
-    showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
-    document.dispatchEvent(new CustomEvent('studio-prompt-state'));
-    return report.report_sha256;
   }});
   el('rr-analysis').addEventListener('change',async event=>{
     changed();const current=epoch;

@@ -1,0 +1,163 @@
+{
+  "format": "studio.adult-illustration.intent/v1",
+  "id": "hot-spring-study",
+  "task": "image",
+  "brief": "Create a controlled, sensual but non-explicit anime fashion illustration of an approved adult original character on a private hot-spring veranda.",
+  "content": {
+    "class": "sensual_non_explicit",
+    "adult_assertion": "reviewed_owner_or_canon",
+    "consent_context": "not_applicable",
+    "coverage": "opaque_critical_coverage"
+  },
+  "subjects": [
+    {
+      "id": "adult-a",
+      "description": "An approved adult original character with a mature face, short black bob, amber eyes and an athletic curvy build.",
+      "adult_assertion": "reviewed_owner_or_canon"
+    }
+  ],
+  "facets": {
+    "body": "athletic curvy silhouette with coherent adult proportions",
+    "pose": "seated sideways with natural weight support, torso turned toward the viewer and one arm raised to tie her hair",
+    "wardrobe": "opaque dark towel beneath a loosely draped short silk robe",
+    "expression": "relaxed, confident gaze",
+    "setting": "private hot-spring veranda at night with steam",
+    "composition": "single subject with readable negative space and no copied source background",
+    "camera": "vertical three-quarter full-body framing, slightly below eye level",
+    "lighting": "warm lantern rim light balanced by cool moonlight",
+    "style": "clean high-quality anime illustration with controlled linework",
+    "palette": "charcoal, amber and cool blue",
+    "mood": "quiet, intimate and composed",
+    "material": "soft silk, opaque towel, steam and restrained water droplets"
+  },
+  "tags": [
+    "solo",
+    "steam"
+  ],
+  "avoid": [
+    "text",
+    "watermark",
+    "copied background"
+  ],
+  "controls": [
+    {
+      "id": "pose-guide",
+      "target": "pose.action",
+      "mechanism": "geometry_artifact",
+      "priority": "hard",
+      "description": "Bind a reviewed full-body pose artifact with visible support and hand placement."
+    },
+    {
+      "id": "silhouette-guide",
+      "target": "body.silhouette",
+      "mechanism": "geometry_artifact",
+      "priority": "hard",
+      "description": "Bind a reviewed silhouette artifact rather than relying on body adjectives alone."
+    },
+    {
+      "id": "identity-binding",
+      "target": "subject.identity",
+      "mechanism": "reference_binding",
+      "priority": "hard",
+      "description": "Bind the character reference only to identity and body-design contributions."
+    },
+    {
+      "id": "outfit-binding",
+      "target": "wardrobe.construction",
+      "mechanism": "reference_binding",
+      "priority": "hard",
+      "description": "Bind the wardrobe reference only to robe, towel and material construction."
+    },
+    {
+      "id": "coverage-review",
+      "target": "wardrobe.coverage",
+      "mechanism": "review_decision",
+      "priority": "hard",
+      "description": "Retain opaque critical coverage in the reviewed result."
+    }
+  ],
+  "references": [
+    {
+      "id": "character-canon",
+      "roles": [
+        "identity",
+        "body_design"
+      ],
+      "kind": "image",
+      "path": "references/approved-character.png",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "take": [
+        "face design",
+        "hair construction",
+        "eye colour",
+        "body design"
+      ],
+      "ignore": [
+        "source outfit",
+        "source pose",
+        "source background"
+      ],
+      "subject_id": "adult-a",
+      "region_id": null
+    },
+    {
+      "id": "robe-study",
+      "roles": [
+        "outfit",
+        "material"
+      ],
+      "kind": "image",
+      "path": "references/robe-study.png",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "take": [
+        "robe construction",
+        "towel layering",
+        "silk drape"
+      ],
+      "ignore": [
+        "source person",
+        "source pose",
+        "source background"
+      ],
+      "subject_id": "adult-a",
+      "region_id": "wardrobe"
+    },
+    {
+      "id": "pose-study",
+      "roles": [
+        "pose",
+        "camera"
+      ],
+      "kind": "image",
+      "path": "references/pose-study.png",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "take": [
+        "weight distribution",
+        "torso turn",
+        "camera elevation"
+      ],
+      "ignore": [
+        "source identity",
+        "source clothing",
+        "source background"
+      ],
+      "subject_id": "adult-a",
+      "region_id": "full-body"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "bench-contact",
+      "text": "Maintain visible and anatomically coherent contact with the seating surface.",
+      "mechanism": "guide",
+      "priority": "hard"
+    }
+  ],
+  "locked": [
+    "content",
+    "subjects",
+    "references"
+  ],
+  "execution_authorized": false,
+  "generation_submitted": false
+}

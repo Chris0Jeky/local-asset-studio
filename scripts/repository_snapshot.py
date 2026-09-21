@@ -50,6 +50,8 @@ def _decode(raw: bytes, label: str):
         raise ValueError(f"{label} must be UTF-8 JSON") from exc
     except json.JSONDecodeError as exc:
         raise ValueError(f"{label} is invalid JSON: {exc.msg}") from exc
+    except RecursionError as exc:
+        raise ValueError(f"{label} is too deeply nested") from exc
 
 
 def _read_bytes(path: Path, label: str):
@@ -91,6 +93,13 @@ def _text(value, label, limit=240):
     return value.strip()
 
 
+def _title(value, label):
+    text = _text(value, label, 300)
+    if "\n" in text or "\r" in text:
+        raise ValueError(f"{label} must be single-line text")
+    return text
+
+
 def _sha(value, label="source_sha"):
     if type(value) is not str or not _SHA.fullmatch(value):
         raise ValueError(f"{label} must be a lowercase 40-character Git SHA")
@@ -122,12 +131,7 @@ def _validate_repository(value):
 
 def load_source(path: Path):
     value = _read_json(path, "source")
-    _fields(value, ("schema_version", "captured_at", "repository", "pull_requests", "issues", "next_ready"), "source")
-    if value["schema_version"] != 1:
-        raise ValueError("Unsupported source schema_version")
-    _timestamp(value["captured_at"])
-    _validate_repository(value["repository"])
-    _validate_work(value)
+    _validate_source_object(value)
     return value
 
 
@@ -141,15 +145,19 @@ def _validate_work(value):
         raise ValueError("next_ready must be a bounded list")
     pr_numbers = set()
     pr_by_number = {}
+    pr_by_head = {}
     for row in prs:
         _fields(row, ("number", "title", "head", "base", "type", "readiness", "stack_parent", "owner_run"), "pull request")
         number = _integer(row["number"], "pull request number", 1)
         if number in pr_numbers:
             raise ValueError("Duplicate pull request number")
         pr_numbers.add(number); pr_by_number[number] = row
-        _text(row["title"], "pull request title", 300)
-        _text(row["head"], "pull request head", 200)
+        _title(row["title"], "pull request title")
+        head = _text(row["head"], "pull request head", 200)
         _text(row["base"], "pull request base", 200)
+        if head in pr_by_head:
+            raise ValueError(f"Duplicate pull request head: {head}")
+        pr_by_head[head] = row
         if row["type"] not in ALLOWED_TYPES:
             raise ValueError(f"Unknown work type: {row['type']}")
         if row["readiness"] not in ALLOWED_READINESS:
@@ -162,15 +170,49 @@ def _validate_work(value):
             raise ValueError(f"owner_run and readiness disagree for #{number}")
         if row["owner_run"] and row["stack_parent"] is not None:
             raise ValueError(f"Owner-run PR #{number} cannot also be a stack child")
+
+    def stack_root(number):
+        seen = set()
+        current = number
+        while True:
+            if current in seen:
+                raise ValueError(f"Stack parent cycle includes PR #{current}")
+            seen.add(current)
+            current_row = pr_by_number.get(current)
+            if current_row is None:
+                raise ValueError(f"Stack parent PR #{current} is missing")
+            parent = current_row["stack_parent"]
+            if parent is None:
+                return current
+            current = parent
+
     for row in prs:
         parent = row["stack_parent"]
-        if parent is None:
+        if parent is not None:
+            if parent not in pr_numbers or parent == row["number"]:
+                raise ValueError(f"Stack parent for #{row['number']} is missing or self-referential")
+            root = stack_root(parent)
+            if parent != root:
+                raise ValueError(
+                    f"Stack parent for #{row['number']} must name root PR #{root}, "
+                    f"not nested parent #{parent}"
+                )
+        base_row = pr_by_head.get(row["base"])
+        if base_row is row:
+            raise ValueError(f"Pull request #{row['number']} cannot use its own head as its base")
+        if base_row is None:
+            if parent is not None:
+                raise ValueError(
+                    f"Stack child #{row['number']} base {row['base']!r} "
+                    "does not identify a captured PR head"
+                )
             continue
-        if parent not in pr_numbers or parent == row["number"]:
-            raise ValueError(f"Stack parent for #{row['number']} is missing or self-referential")
-        parent_row = pr_by_number[parent]
-        if parent_row["stack_parent"] is not None:
-            raise ValueError(f"Stack parent for #{row['number']} must name root PR #{parent_row['stack_parent']}, not nested parent #{parent}")
+        expected_root = stack_root(base_row["number"])
+        if parent != expected_root:
+            raise ValueError(
+                f"Pull request #{row['number']} based on captured PR #{base_row['number']} "
+                f"must name root PR #{expected_root} as stack_parent"
+            )
     issue_numbers = set()
     issue_by_number = {}
     for row in issues:
@@ -179,7 +221,7 @@ def _validate_work(value):
         if number in issue_numbers:
             raise ValueError("Duplicate issue number")
         issue_numbers.add(number); issue_by_number[number] = row
-        _text(row["title"], "issue title", 300)
+        _title(row["title"], "issue title")
         if row["type"] not in ALLOWED_TYPES:
             raise ValueError(f"Unknown work type: {row['type']}")
         if row["readiness"] not in ALLOWED_READINESS:
@@ -308,7 +350,11 @@ def build_snapshot(root: Path, source, test_receipt=None, validation_receipt=Non
     if isinstance(source, (str, Path)):
         source = load_source(Path(source))
     else:
-        source = json.loads(json.dumps(source)); _validate_source_object(source)
+        try:
+            source = json.loads(json.dumps(source))
+        except (TypeError, ValueError, RecursionError) as exc:
+            raise ValueError("source must be bounded JSON data") from exc
+        _validate_source_object(source)
     tests = _load_receipt(test_receipt, "tests")
     validation = _load_receipt(validation_receipt, "validation")
     repository = source["repository"]
@@ -370,6 +416,10 @@ def _measurement_text(value, kind):
             f"{provenance}.")
 
 
+def _markdown_cell(value):
+    return str(value).replace("\r", " ").replace("\n", " ").replace("|", r"\|")
+
+
 def render_markdown(value):
     repository = value["repository"]
     lines = [
@@ -386,7 +436,10 @@ def render_markdown(value):
     for row in value["work"]["pull_requests"]:
         line = (f"stacked on #{row['stack_parent']}" if row["stack_parent"] is not None
                 else "owner-run" if row["owner_run"] else "independent")
-        lines.append(f"| #{row['number']} | {row['type']} | {row['readiness']} | {line} | {row['title']} |")
+        lines.append(
+            f"| #{row['number']} | {row['type']} | {row['readiness']} | {line} | "
+            f"{_markdown_cell(row['title'])} |"
+        )
     work = value["work"]
     limits = work["wip_limits"]
     verdict = "within" if work["within_wip_limit"] else "over"
@@ -402,14 +455,15 @@ def render_markdown(value):
     if work["next_ready"]:
         lines += ["| Issue | Type | Title |", "| --- | --- | --- |"]
         for number in work["next_ready"]:
-            row = issue_map[number]; lines.append(f"| #{number} | {row['type']} | {row['title']} |")
+            row = issue_map[number]
+            lines.append(f"| #{number} | {row['type']} | {_markdown_cell(row['title'])} |")
     else:
         lines.append("No unblocked ready item was declared in this capture.")
     lines += [
         "", "## Recorded receipts", "",
         "| Fact | Value |", "| --- | --- |",
-        f"| Tests | {_measurement_text(value['measurements']['tests'], 'tests')} |",
-        f"| Repository validation | {_measurement_text(value['measurements']['validation'], 'validation')} |",
+        f"| Tests | {_markdown_cell(_measurement_text(value['measurements']['tests'], 'tests'))} |",
+        f"| Repository validation | {_markdown_cell(_measurement_text(value['measurements']['validation'], 'validation'))} |",
         "", "## Taxonomy counts", "",
         "Types: " + ", ".join(f"{key} {count}" for key, count in value["issues"]["by_type"].items()) + ".",
         "", "Readiness: " + ", ".join(f"{key} {count}" for key, count in value["issues"]["by_readiness"].items()) + ".",
@@ -447,8 +501,12 @@ def render_json(value):
 
 
 def _write(path: Path, text: str):
-    path = Path(path); path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    path = Path(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8", newline="\n")
+    except OSError as exc:
+        raise ValueError(f"Cannot write output {path}: {exc}") from exc
 
 
 def main(argv=None):

@@ -42,12 +42,14 @@ def load_kb(root):
 
 def _number(value,fallback=None):
     if isinstance(value,bool):value=None
-    try:result=Decimal(str(value))
-    except (InvalidOperation,ValueError,TypeError):result=None
-    if result is None or not result.is_finite():
+    try:
+        result=Decimal(str(value));converted=float(result)
+    except (InvalidOperation,ValueError,TypeError,OverflowError):result=converted=None
+    if result is None or not result.is_finite() or not math.isfinite(converted):
         if fallback is None:raise ValueError('Expected a finite number, got '+repr(value)[:60])
-        return float(fallback)
-    return float(result)
+        converted=float(fallback)
+        if not math.isfinite(converted):raise ValueError('Expected a finite fallback number')
+    return converted
 
 
 def _cap(limit):
@@ -55,9 +57,15 @@ def _cap(limit):
     return limit
 
 
+def _binding(value):
+    return (isinstance(value,(list,tuple)) and len(value)==2
+            and isinstance(value[0],(str,int)) and isinstance(value[1],str))
+
+
 def _bound(preset,control):
     """A control is usable when the catalog binds it, primary or companion."""
-    return bool(preset.get(control)) or bool((preset.get('bindings_extra') or {}).get(control))
+    extras=(preset.get('bindings_extra') or {}).get(control,[])
+    return _binding(preset.get(control)) or any(_binding(pair) for pair in extras)
 
 
 def family_entry(preset,kb):
@@ -84,46 +92,68 @@ def accelerator_slots(preset,kb,base_controls=None):
 
 
 def _control_pairs(preset,control):
-    primary=[preset[control]] if preset.get(control) else []
-    return {tuple(pair) for pair in primary+(preset.get('bindings_extra') or {}).get(control,[])}
+    primary=[preset[control]] if _binding(preset.get(control)) else []
+    extras=(preset.get('bindings_extra') or {}).get(control,[])
+    return {tuple(pair) for pair in primary+list(extras) if _binding(pair)}
+
+
+def _bound_controls(preset):
+    extras=preset.get('bindings_extra') or {}
+    keys=set(preset)|set(extras if isinstance(extras,dict) else {})
+    return {key for key in keys if isinstance(key,str) and _bound(preset,key)}
 
 
 def _held_controls(preset,held):
     blocked=set(held)
     if any(not item['inactive'] for item in held.values()):blocked.update(SCHEDULE_CONTROLS)
     pairs=set().union(*[_control_pairs(preset,key) for key in blocked]) if blocked else set()
-    # Companion bindings can make a differently named control write a held input.
-    return blocked | {key for key in SETTING_KEYS if _control_pairs(preset,key) & pairs}
+    # Any catalog control can alias a held physical input; compatibility
+    # policy cannot be limited to the planner's display-key allowlist.
+    return blocked | {key for key in _bound_controls(preset) if _control_pairs(preset,key) & pairs}
 
 
-def _family_axes(preset,kb):
-    """Bound family axes before applying the shared accelerator policy."""
+def _family_axis_records(preset,kb):
+    """Bound family axes plus explicit reasons documented choices are unavailable."""
     result=[]
     for axis in family_entry(preset,kb).get('axes') or []:
         if not isinstance(axis,dict):continue
         control=axis.get('control')
         if not isinstance(control,str) or not _bound(preset,control):continue
-        values=[v for v in (axis.get('values') or []) if not isinstance(v,(dict,list))]
+        documented=[]
+        for value in axis.get('values') or []:
+            if not isinstance(value,(dict,list)) and value not in documented:documented.append(value)
+        if not documented:continue
+        record={'id':axis.get('id') or control,'control':control,
+                'rationale':axis.get('rationale') or '','sources':list(axis.get('sources') or [])}
         if control in CHOICE_CONTROLS:
-            allowed=(preset.get('choices') or {}).get(control) or []
-            values=[v for v in values if v in allowed]
-        seen=[]
-        for value in values:
-            if value not in seen:seen.append(value)
-        if not seen:continue
-        result.append({'id':axis.get('id') or control,'control':control,'values':seen,
-                       'rationale':axis.get('rationale') or '','sources':list(axis.get('sources') or [])})
+            offered=[]
+            for value in ((preset.get('choices') or {}).get(control) or []):
+                if not isinstance(value,(dict,list)) and value not in offered:offered.append(value)
+            values=[value for value in documented if value in offered]
+            if not values:
+                result.append(('withheld',{'id':record['id'],'control':control,
+                    'code':'unsupported_choice_values','accelerator_slots':[],'accelerator_files':[],
+                    'documented_values':documented,'offered_values':offered,
+                    'message':"None of the documented values are offered by this recipe's current choices."}))
+                continue
+        else:values=documented
+        result.append(('available',dict(record,values=values)))
     return result
 
 
+def _family_axes(preset,kb):
+    """Bound, currently offered family axes before the accelerator policy."""
+    return [axis for disposition,axis in _family_axis_records(preset,kb) if disposition=='available']
+
 
 def inspect_axes(preset,kb,base_controls=None):
-    """Explain the existing holds, without selecting variants or changing inputs."""
+    """Explain existing holds and unsupported choices without changing inputs."""
     held=accelerator_slots(preset,kb,base_controls)
     blocked=_held_controls(preset,held)
     causes={slot:_held_controls(preset,{slot:item}) for slot,item in held.items()}
     available=[];withheld=[]
-    for axis in _family_axes(preset,kb):
+    for disposition,axis in _family_axis_records(preset,kb):
+        if disposition=='withheld':withheld.append(axis);continue
         control=axis['control']
         if control not in blocked:
             available.append(axis);continue
@@ -207,11 +237,12 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
     base=dict(base_controls or {});defaults=preset.get('defaults') or {}
     active=[slot for slot in slots if _bound(preset,slot) and _number(base.get(slot,defaults.get(slot,0)),0)>0]
     held=accelerator_slots(preset,kb,base)
+    active_held={slot:item for slot,item in held.items() if not item['inactive']}
     if not active:raise ValueError('Turn on at least one LoRA slot before remixing its weights')
     blocked=_held_controls(preset,held)
     active=[slot for slot in active if slot not in blocked]
     if not active:raise ValueError('Turn on a non-accelerator LoRA slot to remix; acceleration settings stay unchanged')
-    for slot,item in held.items():
+    for slot,item in active_held.items():
         try:known=math.isfinite(_number(item['value']))
         except (ValueError,OverflowError):known=False
         if not known:raise ValueError('Set a finite accelerator strength explicitly before remixing; authored strength is unknown')
@@ -220,8 +251,8 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
         # Freeze omitted authored values explicitly as well as caller overrides.
         if item['value'] is not None:base.setdefault(slot,item['value'])
         base.setdefault(slot+'_name',item['entry']['file'])
-    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if held else '')
-    counted=active+[slot for slot,item in held.items() if not item['inactive']]
+    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if active_held else '')
+    counted=active+list(active_held)
     entries={slot:_slot_entry(slot,base,defaults,kb) for slot in active}
     warn=rules.get('warn_total_strength');notes=[n for n in (rules.get('notes') or []) if isinstance(n,str)]
     variants=[]
@@ -237,7 +268,7 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
         controls=dict(base)
         for other in active:controls[other]=steps[1]
         rationale=f"Every remixed adapter at the ladder's middle step {steps[1]}"+(' · '+'; '.join(notes) if notes else '')
-        variants.append({'label':f"All {'non-accelerator' if held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
+        variants.append({'label':f"All {'non-accelerator' if active_held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
                          'sources':_merge_sources([entries[slot].get('source') for slot in active])})
     return variants[:limit]
 
