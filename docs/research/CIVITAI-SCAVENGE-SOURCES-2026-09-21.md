@@ -74,72 +74,67 @@ Includes: LoRA/ckpt dumps, workflows, articles, krea2, ipa2, creators_agg.json, 
 
 ## Batch 2 queries (~01:27–01:35 BST 2026-09-21)
 
-UA: `LAS-scavenge/1.0`. Base: `https://civitai.com/api/v1/models`. No weight downloads. List/search only (avoid direct id 1015).
+UA: `LAS-scavenge/1.0`. Base: `https://civitai.com/api/v1/models`. No auth. No weight downloads. List/search only (avoid direct id 1015).
 
 ### FLUX.2 / Klein
 ```
-types=LORA&query=Klein&sort=Highest Rated&period=Year&limit=40
-types=LORA&query=FLUX.2|Flux.2&sort=Highest Rated|Most Liked&period=Year
-types=LORA&query=Klein&sort=Most Liked&period=Month
-types=LORA&query=Klein anatomy|Klein detail&sort=Most Liked&period=Year
-query=Klein GGUF&sort=Most Liked&period=Year
-baseModels=Flux.2 | Flux.2 Klein  → empty (API rejects)
+types=LORA&query=Klein&sort=Highest%20Rated&period=Year&limit=40
+types=LORA&query=FLUX.2|Flux.2&sort=Highest%20Rated|Most%20Liked&period=Year
+types=LORA&query=Klein&sort=Most%20Liked&period=Month
+types=LORA&query=Klein%20anatomy|Klein%20detail&sort=Most%20Liked&period=Year
+query=Klein%20GGUF&sort=Most%20Liked&period=Year
+baseModels=Flux.2 | Flux.2%20Klein  → empty (API rejects / no match)
 ```
-Manual filter on `modelVersions[].baseModel` containing Klein / Flux.2 / FLUX.2.
+Manual filter: keep versions whose `baseModel` contains Klein / Flux.2 / FLUX.2; reject pure Flux.1 D unless Klein also listed.
 
 ### Z-Image
 ```
-query=z-image|Z Image Turbo&sort=Most Liked&period=Year
-types=LORA&query=Z-Image&sort=Highest Rated&period=Year
-types=Workflows&query=Z-Image&sort=Most Liked&period=Year
-types=Checkpoint&query=Z-Image&sort=Most Liked&period=Year
-types=Workflows&query=Z-Image low VRAM|low VRAM&sort=Most Liked&period=Year
+query=z-image|Z%20Image%20Turbo&sort=Most%20Liked&period=Year
+types=LORA&query=Z-Image&sort=Highest%20Rated&period=Year
+types=Workflows&query=Z-Image&sort=Most%20Liked&period=Year
+types=Checkpoint&query=Z-Image&sort=Most%20Liked&period=Year
+types=Workflows&query=Z-Image%20low%20VRAM|low%20VRAM&sort=Most%20Liked&period=Year
 ```
 
 ### Animagine XL 4
 ```
-types=LORA&query=Animagine&sort=Highest Rated&period=Year  → empty page1 (cursor)
-types=LORA&query=Animagine&sort=Most Liked&period=AllTime&limit=40
-types=LORA&query=Animagine XL 4.0&sort=Most Liked&period=AllTime
-types=Workflows&query=Animagine&sort=Most Liked&period=Year
-query=Animagine XL 4&sort=Most Liked&period=Year
+types=LORA&query=Animagine&sort=Highest%20Rated&period=Year  → empty page1 (cursor=40)
+types=LORA&query=Animagine&sort=Most%20Liked&period=AllTime&limit=40
+types=LORA&query=Animagine%20XL%204.0&sort=Most%20Liked&period=AllTime
+types=Workflows&query=Animagine&sort=Most%20Liked&period=Year
 baseModels=Animagine → empty
 ```
 
 ### RealVis
 ```
 types=LORA&query=RealVis|RealVisXL → ~1 item (portrait)
-types=LORA&baseModels=SDXL 1.0&query=cinematic|skin detail|photorealistic&sort=Highest Rated|Most Liked
+types=LORA&baseModels=SDXL%201.0&query=cinematic|skin%20detail|photorealistic&sort=Highest%20Rated|Most%20Liked
 ```
 
 ### Qwen-Image-2.1
 ```
-types=LORA&query=Qwen-Image-2.1|Qwen 2.1|Qwen2.1
-types=Workflows&query=Qwen-Image-2.1|Qwen2.1|Qwen GGUF
-query=Qwen 2.1&sort=Most Liked&period=Year
+types=LORA&query=Qwen-Image-2.1|Qwen%202.1|Qwen2.1
+types=Workflows&query=Qwen-Image-2.1|Qwen2.1|Qwen%20GGUF
+query=Qwen%202.1&sort=Most%20Liked&period=Year
 ```
 Keep only name/base suggesting 2.1 / `Qwen 2`; reject pure 2511.
 
 ### Pixel art
 ```
-types=LORA&query=pixel art&sort=Highest Rated|Most Liked&period=Year
-query=pixel Z-Image|pixel Qwen|Pixel Art Refiner
+types=LORA&query=pixel%20art&sort=Highest%20Rated|Most%20Liked&period=Year
+query=pixel%20Z-Image|pixel%20Qwen|Pixel%20Art%20Refiner
 ```
 
 ### Creators (`username=` supported)
 ```
-username=EauDeNoire|VelvetS|motimalu|YeiYeiArt|reakaakasky&sort=Most Liked&period=AllTime&limit=20
+username=EauDeNoire|VelvetS|motimalu|YeiYeiArt|reakaakasky
+&sort=Most%20Liked&period=AllTime&limit=20
 ```
 
 ### AMD-safe workflows
 ```
-types=Workflows&query=GGUF|FP8 low VRAM|Klein GGUF|Z-Image low VRAM|Qwen GGUF|low VRAM
+types=Workflows&query=GGUF|FP8%20low%20VRAM|Klein%20GGUF|Z-Image%20low%20VRAM|Qwen%20GGUF|low%20VRAM
 ```
 
 ### Raw snapshots
-`raw/batch2_*.json` (+ `raw/batch2/flux2_klein_lora.json` early partial).
-
----
-
-### Also dumped under `raw/batch2/` (executor pass)
-Sequential re-fetches: `flux2_klein_lora.json`, `zimage_all.json`, `zimage_turbo.json`, `animagine_*.json`, `sdxl_realism.json`, `qwen21_*.json`, `pixel_*.json`, `creator_*.json`, `amd_wf.json`, `sage_strip.json`, `klein_wf.json`, `selected_ids.json`. Same UA/filters as above.
+`raw/batch2_*.json` (50+ files) + `raw/batch2/flux2_klein_lora.json` early partial.

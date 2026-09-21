@@ -95,183 +95,138 @@ Host note: `civitai.red` rendered the same Civitai UI. Prefer `civitai.com` URLs
 
 ## Batch 2
 
+Host: prefer `civitai.com`. No weight URLs.
+
 
 ### FLUX.2 / Klein
 
-- https://civitai.com/models/2324991 — Klein Anatomy / Quality Fixer (Klein 9B v1.5)
-- https://civitai.com/models/2324315 — Klein 4B/9B Base to Turbo LoRA (9B rank 128)
-- https://civitai.com/models/2121900 — [Flux2Klein 9B] Anything2Real (F2K 9B Anything2Real A)
-- https://civitai.com/models/2067704 — Portrait Engine (Klein / Z-Image) (V 4.0_Flux_klein)
-- https://civitai.com/models/2343188 — Flux2 Klein_Anything to Real Characters (v1.0)
-- https://civitai.com/models/2334190 — Klein Detail Slider (Klein 9B)
-- https://civitai.com/models/2442399 — Elusarca Detail Enhancer Klein 9B (v1.0)
-- https://civitai.com/models/2438659 — [KLEIN 9b] Detail Slider (v1.0)
-- https://civitai.com/models/2406218 — Klein-9b-Turn2Real (v1.5)
-- https://civitai.com/models/929497 — Aesthetic Masterpiece (Klein 4B ver) (v3.1 [klein-4b]) — batch1 id; NEW Klein version
-- https://civitai.com/models/1132089 — Flat Color (Klein 4B ver) (v2.1 [klein-4b]) — batch1 id; NEW Klein version
-- https://civitai.com/models/144684 — PixelArtRedmond (Flux klein 9b ver) (v1.0 - Flux klein 9b)
-- https://civitai.com/models/2213699 — FLUX2 Klein_9b Pro Grade WF (Hi/Lo VRAM) (v10.0.1)
-- https://civitai.com/models/2325916 — Klein 4B GGUF Simple Fast WF (Flux2k_4B_GGUF_CCDB_v1) — AMD-friendly
-- https://civitai.com/models/2400928 — Unsloth FLUX.2-Klein-4B-GGUF (Distilled) — AMD GGUF
+- https://civitai.com/models/2324991 — Klein Anatomy / Quality Fixer
+- https://civitai.com/models/2324315 — Klein 4B/9B Base to Turbo Lora
+- https://civitai.com/models/2121900 — [Flux2Klein 9B] Anything2Real lrzjason
+- https://civitai.com/models/2067704 — Portrait Engine FLUX / FLUX 2 KLEIN / Z-Image, Detailed Skin - [LORA]
+- https://civitai.com/models/2343188 — Flux2 Klein_Anything to Real Characters
+- https://civitai.com/models/2334190 — Klein Detail Slider
+- https://civitai.com/models/2442399 — Elusarca's Detail Enhancer | Flux Klein 9B
+- https://civitai.com/models/2438659 — [KLEIN 9b] Detail Slider
+- https://civitai.com/models/2406218 — Klein-9b-Turn2Real
+- https://civitai.com/models/2213699 — FLUX2 Klein_9b Pro Grade Workflow (High & Low VRAM), w/ Controlnet, GG
+- https://civitai.com/models/2325916 — ComfyUI beginner friendly Flux.2 Klein 4B GGUF Simple Fast Consistent 
+- https://civitai.com/models/2400928 — Unsloth - FLUX.2-Klein-4B-GGUF (Distilled)
+- https://civitai.com/models/2464133 — Rebels Flux Klein 9B-KV (GGUF+fp8)
+- https://civitai.com/models/929497 — Aesthetic Quality Modifiers - Masterpiece (batch1 cross-ref)
+- https://civitai.com/models/1132089 — Flat Color - Style (batch1 cross-ref)
+- https://civitai.com/models/144684 — PixelArtRedmond - Pixel Art Loras
 
 ### Z-Image
 
-- https://civitai.com/models/2169712 — Z-Image Turbo Quantized (low VRAM) (fp8_scaled_e4m3fn_KJ / svdq-int4) — 16GB AMD pick
-- https://civitai.com/models/2172944 — Z-Image [fp8] (reakaakasky) (Turbo rev1.1)
-- https://civitai.com/models/2170391 — Z-Image Turbo FP8 [Kijai] (FP8 Scaled e4m3fn)
-- https://civitai.com/models/2259646 — Z-Image-Turbo-Anime AIO (AIO-BF16)
-- https://civitai.com/models/2184844 — Z-Image Base & Turbo Pro WF (Lo/Hi VRAM) (v27.1) — batch1
-- https://civitai.com/models/2253524 — Moody Simple Zimage Turbo (—) — batch1
-- https://civitai.com/models/2186721 — Z Image Turbo WF (Stable_Yogi) (—)
-- https://civitai.com/models/2170193 — Z_image_turbo t2i/i2i (6G VRAM) (v2.1) — low VRAM
-- https://civitai.com/models/2343982 — Z-Image GGUF + Detail Daemon (v1.0) — AMD GGUF
-- https://civitai.com/models/2344616 — Z-Image-Base GGUF (v1.0)
-- https://civitai.com/models/2197598 — Z-Image-Turbo_clear (BF16)
-- https://civitai.com/models/2600919 — Lonecat Simple WFs (ZIT/Klein/Krea) (Simple ZIT v2.0)
+- https://civitai.com/models/2169712 — Z-Image Turbo - Quantized for low VRAM
+- https://civitai.com/models/2172944 — Z-Image [fp8]
+- https://civitai.com/models/2170391 — Z-Image Turbo FP8 [Kijai]
+- https://civitai.com/models/2259646 — Z-Image-Turbo-Anime
+- https://civitai.com/models/2184844 — Z-Image Base & Turbo Pro Grade Workflow I2I/T2I (Low or High VRAM) (batch1 cross-ref)
+- https://civitai.com/models/2186721 — Z Image Turbo Workflow by Stable_Yogi🔥
+- https://civitai.com/models/2170193 — Z_image_turbo t2i  i2i workflows (6G VRAM can run it!)
+- https://civitai.com/models/2343982 — Z-Image GGUF with Detail Daemon
+- https://civitai.com/models/2600919 — Lonecat's Simple Workflows (MiniMax H3, Krea 2, ZIT, Klein_9b, Illustr
+- https://civitai.com/models/2197598 — Z-Image-Turbo_clear
 
 ### Animagine XL 4
 
-- https://civitai.com/models/1003636 — Aesthetic Complete (Animagine v4 ver) (v3.0 [animagine v4]) — motimalu
-- https://civitai.com/models/977115 — Aesthetic Best Quality (Illu/Noob) (v1.0 [Illustrious]) — cross-use on Animagine family
-- https://civitai.com/models/1319919 — Stabilizer AnimagineXL 4.0 (zero v0.10) — batch1
-- https://civitai.com/models/321576 — Animagine XL V3 Detail Enhancer (v1.0) — V3; test on 4.0 Opt
-- https://civitai.com/models/1621455 — Blink universal WF (incl. Animagine) (—) — batch1 WF; only Animagine WF hit
+- https://civitai.com/models/1003636 — Aesthetic Quality Modifiers - Complete
+- https://civitai.com/models/977115 — Aesthetic Quality Modifiers - Best Quality
+- https://civitai.com/models/1319919 — Stabilizer AnimagineXL 4.0 (batch1 cross-ref)
+- https://civitai.com/models/321576 — Animagine XL V3 Detail Enhancer
+- https://civitai.com/models/1621455 — Blink's universal workflow | CivitAI metadata, upscaling, FaceDetailer (batch1 cross-ref)
 
 ### RealVis companions
 
-- https://civitai.com/models/580857 — Realistic Skin Texture (EauDeNoire) (skin texture XL v4) — batch1; RealVis daily
-- https://civitai.com/models/1426727 — Realistic Skin & Face Pro Photography (SDXL) — NEW photoreal companion
-- https://civitai.com/models/432586 — Cinematic Shot (XL v1.0) — batch1
-- https://civitai.com/models/214956 — Cinematic Photography Style (EauDeNoire) (Cinematic Film XL v2) — NEW; SDXL/RealVis usable
-- https://civitai.com/models/562884 — Skin Tone Glamour (EauDeNoire) (skin tone XL v4) — gallery-heavy
-- https://civitai.com/models/2605632 — Sofia Photoreal Portrait (RealVis-tagged) (v1.0) — thin signal; tagged RealVisXL
-- https://civitai.com/models/411088 — Detailed Perfection (Perfection SDXL v1.0) — batch1
+- https://civitai.com/models/580857 — Realistic Skin Texture style (Detailed Skin) XL + SD1.5 + F1D + Pony + (batch1 cross-ref)
+- https://civitai.com/models/1426727 — Realistic Skin & Face - Professional_photography
+- https://civitai.com/models/432586 — Cinematic Shot ✨ (batch1 cross-ref)
+- https://civitai.com/models/214956 — Cinematic Photography Style XL + F1D + Illu + Pony + zit
+- https://civitai.com/models/562884 — Skin Tone (Glamour Photography) Style (Human skin color) XL + F1D + SD
+- https://civitai.com/models/2605632 — Sofia – Photorealistic Portrait LoRA | Olive Skin, Brown Eyes | SDXL /
+- https://civitai.com/models/411088 — Detailed Perfection style (Hands + Feet + Face + Body + All in one) XL (batch1 cross-ref)
+- https://civitai.com/models/280472 — Chiaroscuro (Contrasted) Lighting Style XL + F1D + Illu + Pony + zit +
+- https://civitai.com/models/280454 — Rembrandt (Low-Key) Lighting Style XL + SD1.5 + F1D + Illu + Pony + zi
+- https://civitai.com/models/289500 — Cinematic Volumetric (God Rays) Lighting Style XL + F1D + Illu + Pony
 
 ### Qwen-Image-2.1
 
-- https://civitai.com/models/579280 — Qwen image 2.1 WF collection (QW21加速器) — batch1; strip NV nodes
-- https://civitai.com/models/2951890 — Qwen Image 2.1 T2I+Edit (SageAttention) (v1.1) — batch1 appendix
-- https://civitai.com/models/2952100 — Qwen Image 2.1 GGUF WFs (EDIT / T2I) — batch1 appendix
-- https://civitai.com/models/2952547 — Qwen Image 2.1 GGUF ckpt (v1.0) — batch1 appendix
-- https://civitai.com/models/2951557 — Qwen Image 2.1 INT8/INT4 (INT4 (W4A8)) — batch1 appendix; 16GB pick
-- https://civitai.com/models/2951814 — qwen 2.1 + prompt enhancer (v1.1) — NEW
-- https://civitai.com/models/2952715 — Qwen 2.1 2K Upscale WF (v1.0) — NEW
+- https://civitai.com/models/579280 — Qwen image 2.1 | LTX25 | MM H3 | Krea2 | ideogram 4 WF collection (batch1 cross-ref)
+- https://civitai.com/models/2951890 — Qwen Image 2.1 Workflows (T2I + Edit) with SageAttention (batch1 cross-ref)
+- https://civitai.com/models/2952100 — Qwen Image 2.1 GGUFs (batch1 cross-ref)
+- https://civitai.com/models/2952547 — Qwen Image 2.1 GGUF (batch1 cross-ref)
+- https://civitai.com/models/2951557 — Qwen Image 2.1 INT8/INT4 (batch1 cross-ref)
+- https://civitai.com/models/2951814 — qwen 2.1 with prompt enchancer - 100% of understanding.
+- https://civitai.com/models/2952715 — Qwen 2.1 2K Upscale Workflow
 
 ### Pixel art
 
-- https://civitai.com/models/10706 — Z-IMAGE AND QWEN! PIXEL ART REFINER (Z-IMAGETURBO / QWEN! V2) — primary refiner
-- https://civitai.com/models/144684 — PixelArtRedmond (multi incl. Klein/Qwen) (v1.0 - QWEN IMAGE / Flux klein 9b)
-- https://civitai.com/models/681332 — Hard Edge Pixel Art (Z-Image ver) (Z-Image v1.0)
-- https://civitai.com/models/685038 — Soft Pixel Art (Z-Image) (Z-Image v1)
-- https://civitai.com/models/620687 — Retro Game CPS II Pixel (Illu/Pony) (- Illustrious XL -) — YeiYeiArt; matches Pixel Art XL stack
-- https://civitai.com/models/2190363 — Elusarca Detailed Pixel Art (Z-Image) (v1.0)
-- https://civitai.com/models/1487247 — Game Boy Camera Pixel (ZIT/Flux/Qwen) (Krea2 Turbo / Qwen)
-- https://civitai.com/models/1770073 — Pixel Art Style LoRA (Z-Image/Qwen) (v1.0 - Z Image Turbo)
+- https://civitai.com/models/10706 — [LuisaP❤️] Z-IMAGE AND QWEN! PIXEL ART REFINER
+- https://civitai.com/models/144684 — PixelArtRedmond - Pixel Art Loras
+- https://civitai.com/models/681332 — Hard Edge Pixel Art
+- https://civitai.com/models/685038 — Soft Pixel Art
+- https://civitai.com/models/620687 — Retro Game (CPS II) - Pixel Art - STYLE - | Illustrious XL | Pony XL |
+- https://civitai.com/models/2190363 — Elusarca's Detailed Pixel Art LoRA for Z-Image
+- https://civitai.com/models/1487247 — Game Boy Camera Pixel Style - ZIT, Flux, & Qwen
+- https://civitai.com/models/1770073 — Pixel Art Style Lora
 
 ### AMD-safe GGUF/FP8/low VRAM
 
-- https://civitai.com/models/2169712 — Z-Image Turbo Quantized low VRAM (fp8 / int4)
-- https://civitai.com/models/2184844 — Z-Image Pro WF Low/High VRAM (v27.1) — batch1
-- https://civitai.com/models/2213699 — FLUX2 Klein_9b Pro Grade Hi/Lo VRAM (v10.0.1) — GGUF+CN
-- https://civitai.com/models/2325916 — Klein 4B GGUF Simple Fast (GGUF)
-- https://civitai.com/models/2400928 — Unsloth Klein-4B-GGUF (Distilled)
-- https://civitai.com/models/2464133 — Rebels Flux Klein 9B-KV (GGUF+fp8) (—)
-- https://civitai.com/models/2343982 — Z-Image GGUF + Detail Daemon (v1.0)
-- https://civitai.com/models/2170193 — Z_image_turbo 6G VRAM WF (v2.1)
-- https://civitai.com/models/2952100 — Qwen Image 2.1 GGUF WFs (EDIT/T2I) — batch1 appendix
-- https://civitai.com/models/2951557 — Qwen Image 2.1 INT4 (INT4 W4A8) — batch1 appendix
-- https://civitai.com/models/2172944 — Z-Image [fp8] (Turbo rev1.1)
+- https://civitai.com/models/2169712 — Z-Image Turbo - Quantized for low VRAM
+- https://civitai.com/models/2184844 — Z-Image Base & Turbo Pro Grade Workflow I2I/T2I (Low or High VRAM) (batch1 cross-ref)
+- https://civitai.com/models/2213699 — FLUX2 Klein_9b Pro Grade Workflow (High & Low VRAM), w/ Controlnet, GG
+- https://civitai.com/models/2325916 — ComfyUI beginner friendly Flux.2 Klein 4B GGUF Simple Fast Consistent 
+- https://civitai.com/models/2400928 — Unsloth - FLUX.2-Klein-4B-GGUF (Distilled)
+- https://civitai.com/models/2464133 — Rebels Flux Klein 9B-KV (GGUF+fp8)
+- https://civitai.com/models/2343982 — Z-Image GGUF with Detail Daemon
+- https://civitai.com/models/2170193 — Z_image_turbo t2i  i2i workflows (6G VRAM can run it!)
+- https://civitai.com/models/2952100 — Qwen Image 2.1 GGUFs (batch1 cross-ref)
+- https://civitai.com/models/2951557 — Qwen Image 2.1 INT8/INT4 (batch1 cross-ref)
+- https://civitai.com/models/2172944 — Z-Image [fp8]
+- https://civitai.com/models/2170391 — Z-Image Turbo FP8 [Kijai]
 
 ### Creator keepers (batch 2)
 
 
 #### EauDeNoire
 
-- https://civitai.com/models/289500 — Cinematic Volumetric God Rays
-- https://civitai.com/models/214956 — Cinematic Photography Style
-- https://civitai.com/models/280472 — Chiaroscuro Lighting
-- https://civitai.com/models/280454 — Rembrandt Low-Key Lighting
-- https://civitai.com/models/290860 — Warm Light 3200k
+- https://civitai.com/models/289500 — Cinematic Volumetric (God Rays) Lighting Style XL + F1D + Illu + Pony
+- https://civitai.com/models/214956 — Cinematic Photography Style XL + F1D + Illu + Pony + zit
+- https://civitai.com/models/280472 — Chiaroscuro (Contrasted) Lighting Style XL + F1D + Illu + Pony + zit +
+- https://civitai.com/models/280454 — Rembrandt (Low-Key) Lighting Style XL + SD1.5 + F1D + Illu + Pony + zi
+- https://civitai.com/models/290860 — Cinematic "Warm Light" 3200k Lighting Style XL + F1D + Illu + Pony
 
 #### VelvetS
 
-- https://civitai.com/models/632900 — Space Marines Warhammer 40K
-- https://civitai.com/models/679697 — Jinx Arcane (FLUX+Zimage)
-- https://civitai.com/models/954220 — Queen Marika Elden Ring
-- https://civitai.com/models/690505 — Fangs Concept FLUX
-- https://civitai.com/models/1119858 — Adepta Sororitas 40K
+- https://civitai.com/models/632900 — The Space Marines Warhammer 40K | Flux + Pony + illustrious + Anima + 
+- https://civitai.com/models/679697 — Jinx (Arcane / League of legends) | FLUX + Zimage
+- https://civitai.com/models/954220 — Queen Marika (Elden Ring) | FLUX + Z-Image Turbo
+- https://civitai.com/models/690505 — Fangs Concept | FLUX
+- https://civitai.com/models/1119858 — Adepta Sororitas (Sisters of Battle) Warhammer 40K | Flux + Anima + Kr
 
 #### motimalu
 
-- https://civitai.com/models/977115 — Aesthetic Best Quality
-- https://civitai.com/models/1003636 — Aesthetic Complete
-- https://civitai.com/models/333139 — Frieren
-- https://civitai.com/models/337060 — Anime Style Backgrounds (Pony)
-- https://civitai.com/models/293472 — Granblue Fantasy Style
+- https://civitai.com/models/977115 — Aesthetic Quality Modifiers - Best Quality
+- https://civitai.com/models/1003636 — Aesthetic Quality Modifiers - Complete
+- https://civitai.com/models/333139 — Frieren フリーレン  - 葬送のフリーレン
+- https://civitai.com/models/337060 — Anime Style Backgrounds for Pony Diffusion
+- https://civitai.com/models/293472 — Granblue Fantasy Style [SDXL+Pony]
 
 #### YeiYeiArt
 
-- https://civitai.com/models/100435 — Character Design Sheet
-- https://civitai.com/models/35930 — Alice In Wonderland Disney
-- https://civitai.com/models/404277 — Definitive Disney Studios STYLE
-- https://civitai.com/models/42668 — Elsa Frozen
-- https://civitai.com/models/620687 — Retro Game CPS II Pixel
+- https://civitai.com/models/100435 — Character Design Sheet (HELPER) (3-PERSPECTIVES)+(COLOR PALETTE) - Z-I
+- https://civitai.com/models/35930 — Alice In Wonderland! Disney - FLUX | SD 1.5 | XL PONY | Illustrious XL
+- https://civitai.com/models/404277 — Definitive Disney Studios - STYLE - Z-IMAGE TURBO | Illustrious XL | P
+- https://civitai.com/models/46315 — Ariel (The Little Mermaid) Disney Princess - | Illustrious XL | XL PON
+- https://civitai.com/models/620687 — Retro Game (CPS II) - Pixel Art - STYLE - | Illustrious XL | Pony XL |
 
 #### reakaakasky
 
 - https://civitai.com/models/971952 — Stabilizer IL/NAI/CK
-- https://civitai.com/models/2356447 — RDBT | Anima (ckpt)
+- https://civitai.com/models/2356447 — RDBT | Anima
 - https://civitai.com/models/2364703 — RDBT | Anima [lora]
 - https://civitai.com/models/1523055 — Contrast Controller [IL/NAI]
 - https://civitai.com/models/1519509 — Style Strength Controller [IL/NAI]
-
----
-
-## Batch 2 link index
-See `BATCH2.md` and `LINKS-CHAT.md` § BATCH 2 for full categorized URLs. Primary new hubs: Klein LoRA `2121900`, ZIT quant `2169712`, Pixel XL `277680`, RealVis lighting `391036`/`214956`, Animagine depth `260267`/`321576`, Qwen2 LoRA `2493065`.
-
-
-## Batch 2 browser pass (2026-09-21)
-
-Verified in-browser. No 2.1-specific LoRA exists yet (2952100 T2I version: base model selector has no 2.1). Nunchaku/SVDQ on 2169712 is NVIDIA-only.
-
-### Klein / Flux.2 (explicit base, not Flux.1)
-
-- https://civitai.com/models/2474084 — Ultimate Upscaler Klein-9b (4-step fast variant)
-- https://civitai.com/models/2859218 — Klein-9b turbo detail/upscale + workflow (fp8)
-- https://civitai.com/models/2662689 — Flux2 Klein 9B Realistic Detail
-- https://civitai.com/models/2327604 — Klein Chiaroscuro Slider
-- https://civitai.com/models/2413760 — Flux 2 Klein skeleton pose extractor
-- https://civitai.com/models/2413450 — Retro comic PULPKHOR (Flux.2 Klein 9B)
-- https://civitai.com/models/2680498 — Airbrush it! (Flux.2 Klein 9B)
-- https://civitai.com/models/2515526 — Flux 2 Klein 4B outpaint
-- https://civitai.com/models/2367207 — Anime to Real slider (Klein 9B-base)
-- https://civitai.com/models/2343298 — Arcane style (Klein 9B)
-
-### Z-Image low VRAM
-
-- https://civitai.com/models/2168935 — official Z Image Turbo (page says 16 GB / 8 NFE)
-- https://civitai.com/models/2176468 — workflow titled 16GB VRAM
-- https://civitai.com/models/2588499 — High/Low VRAM + 4k + Detail Daemon
-- https://civitai.com/models/2172270 — simple GGUF T2I/I2I/upscale
-- https://civitai.com/models/2193133 — GGUF workflow (base tag wrongly SD 1.5)
-- https://civitai.com/models/2439528 — GGUF LoRA one-click + upscaler
-- https://civitai.com/models/2170134 — Turbo & Base workflow
-- https://civitai.com/models/2362961 — Fun Distill for Z-Image **Base** (CFG 1, avoid SageAttention)
-- https://civitai.com/models/2409672 — Z-Image Turbo Lightning (4–8 steps)
-- https://civitai.com/models/2190193 — UltraReal workflow
-
-### Animagine / RealVis / pixel
-
-- https://civitai.com/models/1337270 — Animagine XL 4 saturated LoRA (thin)
-- https://civitai.com/models/2110148 — Animagine XL 4.0 Opt clear checkpoint
-- https://civitai.com/models/1208930 — Animagine XL 4.0 ControlNet
-- https://civitai.com/models/139562 — RealVisXL V5.0 (Turbo/Lightning sampler notes)
-- https://civitai.com/models/122359 — Detail Tweaker XL (SDXL companion, not RealVis-named)
-- https://civitai.com/models/1317134 — DetailN_XL
-- https://civitai.com/models/43820 — Illustrious Pixel Art XL
-- https://civitai.com/models/1288970 — Pixel art style LoRa Illustrious
-- https://civitai.com/models/888939 — pixel art Style Illustrious GLora
-- https://civitai.com/models/1130279 — Vixon detailed pixel Illustrious
-- https://civitai.com/models/2481158 — PixelArt Perfect Z-Image Turbo (8 steps, CFG 1)
-- https://civitai.com/models/2182113 — PC-98 style Z-Image Turbo
+- https://civitai.com/models/2172944 — Z-Image [fp8]
