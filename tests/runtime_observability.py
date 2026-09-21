@@ -143,10 +143,9 @@ class AtexitCallbackObserver:
     def _callbacks_equal(left, right) -> bool:
         if left is right:
             return True
-        try:
-            return bool(left == right)
-        except BaseException:
-            return False
+        # Match atexit.unregister's equality contract, including propagation of
+        # callback-defined comparison errors instead of silently retaining work.
+        return bool(left == right)
 
     def _register(self, callback, *args, **kwargs):
         original_register = self._original_register
