@@ -58,7 +58,7 @@ Weights are **not** in git; LAS `models/installed-manifest.json` is the curated 
 ## License / policy flags
 - NoobAI: non-commercial including generated products (Fair-AI Public License 1.0-SD)
 - WAI: commercial/auth terms unresolved (HF mirror hashes ≠ creator authentication)
-- **Hunyuan3D 2.1 / HY-Motion 1.0:** Tencent Hunyuan Community licence. Repo docs record **UK use excluded** (, ). Community grant commonly also excludes the **EU** and **South Korea**. Operator is London (UK) → default **not cleared**. Installation / on-disk weight is **not** blanket licence clearance; only a specific owner-confirmed authorized scope (if recorded) applies. Treat as territorial-gated.
+- **Hunyuan3D 2.1 / HY-Motion 1.0:** Tencent Hunyuan Community licence. Repo docs record **UK use excluded** (CLAUDE.md, docs/ANIME-FANTASY-ATELIER.md). Community grant commonly also excludes the **EU** and **South Korea**. Operator is London (UK) → default **not cleared**. Installation / on-disk weight is **not** blanket licence clearance; only a specific owner-confirmed authorized scope (if recorded) applies. Treat as territorial-gated.
 - Always treat NSFW LoRAs as explicit-queue only (align with local LLM Uncensored policy)
 - A completed render is neither art acceptance nor licence clearance
 
