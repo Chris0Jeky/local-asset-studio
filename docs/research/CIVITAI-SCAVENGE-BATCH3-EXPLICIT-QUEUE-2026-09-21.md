@@ -131,3 +131,13 @@ Strip SageAttention / Triton / DLSS / RTX VSR from imported WFs. No weight URLs 
 - Noob month character quarantine: 9 (+ utilities noted)  
 - Weight downloads: **0**  
 - Kept fully separate from `BATCH3.md`
+
+---
+
+## Batch 4 deepen pointer (2026-09-21)
+
+Fuller **tag skeletons** (WAI `general/sensitive/nsfw/explicit`, Pony `rating_explicit` + `score_9` stack, NoobAI/e621 hobby NC), more wildcards/WFs/LoRAs, and expanded month quarantine live in:
+
+→ **`BATCH4_EXPLICIT.md`**
+
+Notable B4 ids: NSFW MASTER `667086`, Smooth Detailer `1145743`, Detailed Perfection `411088`, Create Concept `1324671`, Krea2 Uncensored enhancer `2738703`, ANIMA Pro Grade NSFW WF `2382239`, Pose/Action wildcards `2908018`. Keep both quarantine files; do not merge into SFW docs.

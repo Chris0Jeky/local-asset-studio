@@ -1,18 +1,14 @@
 # Scavenge queue
 
 ## Done
-- Batch 1 — catalog + quality ranking + 2.1 appendix → PR #756 / issues #757–#764
-- Batch 2 — done → report to Grok for PR #756 (BATCH2.md)
-- Batch 3 — done → SFW playbook `BATCH3.md` + quarantined `BATCH3_EXPLICIT.md`; FINDINGS/LINKS/SOURCES/COMPRESSED appended; raw/batch3/; report to Grok for PR #756 (**no new issues**)
+- Batch 1 — catalog + 2.1 appendix → PR #756 / #757–#764
+- Batch 2 — Klein / Z-Image / creators / browser verify
+- Batch 3 — SFW tags/prompts/wildcards (`BATCH3.md`) + explicit quarantine (`BATCH3_EXPLICIT.md`)
+- Batch 4 — SFW leftovers (`BATCH4.md`) + explicit deepen (`BATCH4_EXPLICIT.md`) + **`PRESETS.md`**
 
-## Next (optional — Chris)
-- Batch 4 TBD (browser verify key articles / ingest wildcards into LAS presets / AMD WF strip pass)
-- Mirror desktop pack if requested
+## Next
+- Grok Bot: PR #756 update + full TLDR to Chris (no new issues)
 
-### Batch 3 constraints (met)
-- No weight downloads
-- Explicit never mixed into SFW defaults
-- Quality/thumbs + article bookmarks over downloads
-- Match bases: WAI v170, NoobAI, Pony, Animagine, RealVis
-- 16GB AMD CUDA-strip notes on WFs
-- PR #756 only
+## NSFW deliverables (quarantine)
+- `BATCH3_EXPLICIT.md` · `BATCH4_EXPLICIT.md`
+- PR paths under `docs/research/` (Grok)

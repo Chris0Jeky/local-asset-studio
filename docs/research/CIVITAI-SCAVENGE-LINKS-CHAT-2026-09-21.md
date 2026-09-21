@@ -182,3 +182,51 @@
 - https://civitai.com/models/2282970 — Illu/Pony/SDXL Pro Grade Low/High VRAM
 - https://civitai.com/models/2189190 — Pro Grade WF
 - https://civitai.com/models/2421536 — Eazy Illustrious
+
+---
+
+## Batch 4 — SFW leftovers + presets (2026-09-21)
+
+Playbook: `BATCH4.md` · Presets: **`PRESETS.md`** · Explicit: `BATCH4_EXPLICIT.md` (quarantine)
+
+### Presets / guides
+- https://civitai.com/articles/11432 — Realistic SDXL prompts (RealVis depth)
+- https://civitai.com/articles/17080 — Simple ComfyUI SDXL/Pony/Illu/Flux
+- https://civitai.com/articles/2054 — Comprehensive SD guide
+- https://huggingface.co/cagliostrolab/animagine-xl-4.0 — Animagine Opt settings
+- https://wiki.monai.art/en/models/wai_illustrious_15 — WAI rating tags
+
+### Tag dicts / SFW wildcards (new)
+- https://civitai.com/models/950325 — Danbooru/e621 autocomplete (736👍 SFW)
+- https://civitai.com/models/2018479 — Danbooru tag csv
+- https://civitai.com/models/2151015 — Random SFW Poses Illu
+- https://civitai.com/models/1095284 — Sunvibe Time/Weather
+- https://civitai.com/models/2765483 — BUNNY SFW Wildcards ~16k
+- https://civitai.com/models/2717968 — Wildcard Prompt Suite
+- https://civitai.com/models/1752893 — Wildcards du Jour
+- https://civitai.com/models/2231696 — Portrait/Selfie Wildcards SFW (Qwen/ZIT)
+- https://civitai.com/models/2012099 — Anime boys wildcard
+- https://civitai.com/models/611924 — Wildcard Gallery Extension
+
+### RealVis / Animagine depth
+- https://civitai.com/models/580857 — Realistic Skin Texture (7513👍)
+- https://civitai.com/models/321576 — Animagine Detail Enhancer
+- https://civitai.com/models/2110148 — Animagine XL4 Opt clear
+- https://civitai.com/models/1208930 — Animagine XL4 ControlNet
+- https://civitai.com/models/1319919 — Stabilizer AnimagineXL 4.0
+
+### Stack gaps / WFs (SFW prompts; strip CUDA)
+- https://civitai.com/models/810000 — NEW FANTASY CORE
+- https://civitai.com/models/1400090 — People's Works SDXL (Noob)
+- https://civitai.com/models/669571 — Pony Add more details
+- https://civitai.com/models/633524 — Background Detail Enhancer
+- https://civitai.com/models/1647230 — Lighting temperature slider Illu
+- https://civitai.com/models/502254 — Lighting Slider Pony
+- https://civitai.com/models/870368 — SDXL TXT2IMG (UmeAiRT)
+- https://civitai.com/models/871897 — SDXL INPAINT
+- https://civitai.com/models/2047895 — Consistency characters Illu
+- https://civitai.com/models/2861120 — Character/Location sheets (SFW)
+- https://civitai.com/models/2515418 — Expression Editing Qwen 2511
+
+### Explicit (quarantine — do not SendToAgent into SFW channel)
+See `BATCH4_EXPLICIT.md`: `667086` NSFW MASTER · `1145743` Smooth Detailer · `411088` Detailed Perfection · `2738703` Krea2 Uncensored · `2382239` ANIMA Pro Grade NSFW · `2908018` Pose/Action WC · Enigmata Noob month (hobby NC).

@@ -640,3 +640,42 @@ See **`BATCH3_EXPLICIT.md`**: WAI rating tags general/sensitive/nsfw/explicit; N
 - Sheet/angle/outfit/fantasy ids: ~40  
 - Explicit quarantine ids: ~20  
 - Weight downloads: 0 · New GH issues: 0
+
+---
+
+## Batch 4 — SFW leftovers + PRESETS + explicit deepen (2026-09-21 ~01:38–01:50 BST)
+
+**Deliverables:** `BATCH4.md` · `BATCH4_EXPLICIT.md` · **`PRESETS.md`** (1-page SFW copy-paste) · raw `raw/batch4/` · B3 explicit pointer updated.  
+**No weight downloads. No new issues.** Grok updates PR #756 only.
+
+### Ranking reminder
+Thumbs + bookmarks/collects + creator signal over downloads. SFW vs NSFW via `nsfwLevel` + quarantine split (`*_EXPLICIT.md` only).
+
+### PRESETS.md (immediate LAS use)
+| Base | Quality / rating | CFG / sampler / steps |
+|---|---|---|
+| WAI v170 | masterpiece… + `general` | Euler a · 5–7 · 25–40 |
+| NoobAI 1.1 | masterpiece… newest + `safe` | Euler · V-Pred 4–5 / EPS 5–7 · 28–35 |
+| Pony V6 | score_9 stack + `rating_safe` | Euler a · 6–8 · 20–30 |
+| Animagine Opt | high/great score **at END** | Euler a · CFG 5 · 28 |
+| RealVis V5 | NL photo language | DPM++/Euler · 5–7 · 25–40 |
+
+Explicit skeletons → `BATCH4_EXPLICIT.md` / `BATCH3_EXPLICIT.md` only.
+
+### SFW leftovers (not B3 primary)
+Tag dicts: Danbooru/e621 autocomplete `950325` (736👍 SFW) · tag csv `2018479`.  
+Wildcards: Random SFW Poses `2151015` · Sunvibe Time/Weather `1095284` · BUNNY SFW `2765483` · Prompt Suite `2717968` · du Jour `1752893` · Portrait/Selfie SFW `2231696` · anime boys `2012099` · Gallery ext `611924`.  
+RealVis depth: article `11432` (collected~178) · skin `580857` (7513👍).  
+Animagine depth: HF CFG5/28/Euler a lock · Detail Enhancer `321576` · Opt clear `2110148` · CN `1208930` · Stabilizer `1319919`.  
+Stack gaps: Fantasy Core `810000` · People's Works Noob `1400090` · Pony details `669571` · BG enhancer `633524` · Illu temp lighting `1647230` · Pony lighting slider `502254`.  
+WFs: UmeAiRT SDXL suite `870368`/`871897`/`872149`/`956162` · article `17080` · consistency `2047895` · sheets `2861120` · expression edit `2515418`.
+
+### Explicit quarantine deepen
+Fuller skeletons: WAI `general/sensitive/nsfw/explicit` · Pony `rating_explicit`+score · NoobAI+e621 hobby NC.  
+New ids: NSFW MASTER `667086` · Smooth Detailer `1145743` · Smooth Lighting `1204179` · Detailed Perfection `411088` · Create Concept `1324671` · Krea2 Uncensored `2738703` · ANIMA Pro Grade NSFW WF `2382239` · Pose/Action WC `2908018` · Hentai MC concept `1084513`. Enigmata month list retained; + jirai/artist NSFW-gallery notes.
+
+### Batch 4 counts
+- New SFW wildcard/tag/WF/LoRA ids cited: ~35  
+- Articles new vs B3 table: 3 (`11432`, `17080`, `2054`)  
+- Explicit deepen ids: ~15 beyond B3  
+- Weight downloads: **0** · New GH issues: **0** · PR target: **#756**

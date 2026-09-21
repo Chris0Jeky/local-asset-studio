@@ -175,3 +175,46 @@ civitai.red /api/v1/models?query=WAI-illustrious
 
 ### Raw
 `raw/batch3/` — articles_*.json, article_*.json, wildcards_*.json, wf_*.json, lora_*.json, explicit_*.json, red_wai_api.json, summary_batch3.json
+
+## Batch 4 queries (~01:38–01:50 BST 2026-09-21)
+
+UA: `LAS-scavenge/1.0`. Base: `https://civitai.com/api/v1/models` + `/articles`. No auth. No weight downloads. List/search only (`--data-urlencode`). Note: `types=Wildcard` is **invalid** on API (ZodError) — use `query=wildcard|…`.
+
+### Wildcards / prompts
+```
+query=wildcard|Dynamic Prompts|wildcard Illustrious|wildcard Pony|artist wildcard|SFW prompt|danbooru wildcard|clothing/outfit/lighting/hair wildcard|tag list|Random SFW|fantasy core
+```
+
+### Workflows
+```
+types=Workflows&query=Illustrious|Animagine|Pony|NoobAI|character sheet|RealVis|SDXL photoreal|NSFW workflow
+```
+
+### RealVis / Animagine / stack
+```
+query=RealVisXL|RealVis|photorealistic SDXL|skin detail|cinematic lighting SDXL
+query=Animagine XL 4|Animagine XL 4.0 Opt|Animagine stabilizer
+types=LORA&baseModels=Illustrious|NoobAI|Pony + query=hands|anatomy|detail|style|artist|lighting|pose
+types=LORA&baseModels=Illustrious|Pony|NoobAI&sort=Most Liked&period=Month
+types=TextualInversion&query=negative
+```
+
+### Articles
+```
+GET /api/v1/articles?sort=Most Bookmarks&limit=30
+query=prompt|Illustrious|wildcard|negative prompt|Animagine|realistic prompt
+GET /api/v1/articles/{11432,2054,3527,17080,1250,23210}
+```
+
+### Explicit quarantine
+```
+query=NSFW wildcard|hentai pose|NSFW pose|NSFW prompt|NSFW MASTER|undress|ahegao
+types=LORA&baseModels=NoobAI&period=Month
+civitai.red … Illustrious|Pony|NoobAI&period=Month
+```
+
+### External HTML snapshots
+MonAI WAI · HF Animagine XL 4.0 · Cagliostro Opt post · HF NoobAI 1.1 · RealVis model page
+
+### Raw
+`raw/batch4/` — wildcards_*.json, wf_*.json, articles_*.json, article_*.json, realvis_*.json, animagine_*.json, illu_*.json, noob_*.json, pony_*.json, explicit_*.json, red_*.json, summary_batch4.json

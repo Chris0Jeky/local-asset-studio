@@ -253,3 +253,26 @@ Playbook: `BATCH3.md`. Explicit quarantine: `BATCH3_EXPLICIT.md` (do not flatten
 
 ### Illu WFs
 - https://civitai.com/models/2282970 · https://civitai.com/models/2189190 · https://civitai.com/models/2349309 · https://civitai.com/models/2421536
+
+## Batch 4 — SFW leftovers / presets / explicit quarantine (2026-09-21)
+
+Playbook: `BATCH4.md` · **`PRESETS.md`** · Explicit: `BATCH4_EXPLICIT.md` (+ B3 explicit pointer).
+
+### Guides
+- https://civitai.com/articles/11432 · https://civitai.com/articles/17080 · https://civitai.com/articles/2054
+- https://huggingface.co/cagliostrolab/animagine-xl-4.0 · https://wiki.monai.art/en/models/wai_illustrious_15
+
+### Tag dicts / wildcards (new vs B3)
+- https://civitai.com/models/950325 · https://civitai.com/models/2018479 · https://civitai.com/models/2151015 · https://civitai.com/models/1095284 · https://civitai.com/models/2765483 · https://civitai.com/models/2717968 · https://civitai.com/models/1752893 · https://civitai.com/models/2231696 · https://civitai.com/models/2012099 · https://civitai.com/models/611924 · https://civitai.com/models/2812454
+
+### RealVis / Animagine
+- https://civitai.com/models/580857 · https://civitai.com/models/321576 · https://civitai.com/models/2110148 · https://civitai.com/models/1208930 · https://civitai.com/models/1319919 · https://civitai.com/models/139562
+
+### Stack / lighting / fantasy
+- https://civitai.com/models/810000 · https://civitai.com/models/1400090 · https://civitai.com/models/669571 · https://civitai.com/models/633524 · https://civitai.com/models/1647230 · https://civitai.com/models/502254 · https://civitai.com/models/1204179
+
+### WFs
+- https://civitai.com/models/870368 · https://civitai.com/models/871897 · https://civitai.com/models/872149 · https://civitai.com/models/956162 · https://civitai.com/models/2047895 · https://civitai.com/models/2861120 · https://civitai.com/models/2515418
+
+### Explicit quarantine ids (see BATCH4_EXPLICIT.md — do not flatten)
+- https://civitai.com/models/667086 · https://civitai.com/models/1145743 · https://civitai.com/models/411088 · https://civitai.com/models/1324671 · https://civitai.com/models/2738703 · https://civitai.com/models/2382239 · https://civitai.com/models/2908018 · https://civitai.com/models/1084513 · https://civitai.com/models/1215102
