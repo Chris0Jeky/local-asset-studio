@@ -1,0 +1,8 @@
+# Companion list for Times Lazy lazyprompts3 (__Breastsrandom__).
+# The original companion file was not in the download folder; these are the
+# usual Danbooru size tags so the nested wildcard expands instead of staying literal.
+flat chest
+small breasts
+medium breasts
+large breasts
+huge breasts

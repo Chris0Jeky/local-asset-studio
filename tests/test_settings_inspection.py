@@ -22,10 +22,13 @@ class SettingsInspectionTests(unittest.TestCase):
         before = copy.deepcopy((self.p, self.k))
         report = self.inspect()
         self.assertEqual(report['axes_available'], F.planner.axes_for(self.p, self.k))
-        self.assertEqual([r['id'] for r in report['axes_withheld']], ['steps', 'sampler', 'accelerator'])
+        self.assertEqual([r['id'] for r in report['axes_withheld']], ['steps', 'sampler', 'empty', 'accelerator'])
         self.assertEqual([r['code'] for r in report['axes_withheld']],
-                         ['accelerator_schedule', 'accelerator_schedule', 'accelerator_strength'])
-        self.assertTrue(all(r['accelerator_slots'] == ['lora'] for r in report['axes_withheld']))
+                         ['accelerator_schedule', 'accelerator_schedule', 'unsupported_choice_values', 'accelerator_strength'])
+        held=[r for r in report['axes_withheld'] if r['code']!='unsupported_choice_values']
+        self.assertTrue(all(r['accelerator_slots'] == ['lora'] for r in held))
+        unavailable=next(r for r in report['axes_withheld'] if r['id']=='empty')
+        self.assertEqual((unavailable['documented_values'],unavailable['offered_values']),(['karras'],['simple','beta']))
         self.assertIn('not installed-byte', report['notice'])
         self.assertEqual((self.p, self.k), before)
         report['axes_available'][0]['values'].clear()
@@ -33,7 +36,7 @@ class SettingsInspectionTests(unittest.TestCase):
 
     def test_explicit_zero_restores_schedule_but_not_accelerator_strength_sweep(self):
         report = self.inspect({'lora': '0'})
-        self.assertEqual([r['id'] for r in report['axes_withheld']], ['accelerator'])
+        self.assertEqual([r['id'] for r in report['axes_withheld']], ['empty', 'accelerator'])
         self.assertEqual(report['axes_available'], F.planner.axes_for(self.p, self.k, {'lora': '0'}))
 
     def test_shared_binding_hold_identifies_the_actual_accelerator(self):
@@ -51,14 +54,16 @@ class SettingsInspectionTests(unittest.TestCase):
                 self.assertIn('inactivity is not established', row['message'])
         # Unknown filenames do not receive invented accelerator identities.
         report = self.inspect({'lora_name': 'unknown.safetensors'})
-        self.assertEqual(report['axes_withheld'], [])
+        self.assertEqual([r['id'] for r in report['axes_withheld']], ['empty'])
         self.assertIn('unknown files', report['notice'].lower())
 
     def test_only_bound_offered_axes_are_classified_and_report_is_deterministic(self):
         self.assertEqual(self.inspect(), self.inspect())
         ids = [r['id'] for r in self.inspect()['axes_withheld']]
         self.assertNotIn('frames', ids)
-        self.assertNotIn('empty', ids)
+        self.assertIn('empty', ids)
+        self.assertEqual(next(r for r in self.inspect()['axes_withheld'] if r['id']=='empty')['code'],
+                         'unsupported_choice_values')
 
 
 if __name__ == '__main__': unittest.main()
