@@ -1,5 +1,7 @@
 # Source ledger, reconciliation and maintenance
 
+**Historical snapshot:** the intake and source checks below are from 18 September 2026. See the [21 September reconciliation](RECONCILIATION-2026-09-21.md) and [dated review ledger](source-review-2026-09-21.json) for later evidence, delivered profiles and the superseded programme hold. The original PDF hash was not recomputed in that continuation.
+
 ## Supplied research artifact
 
 - Title: *Anime generation and multi-reference editing qualification for local-asset-studio*.
