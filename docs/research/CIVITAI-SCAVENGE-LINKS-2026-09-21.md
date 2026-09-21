@@ -230,3 +230,26 @@ Host: prefer `civitai.com`. No weight URLs.
 - https://civitai.com/models/1523055 — Contrast Controller [IL/NAI]
 - https://civitai.com/models/1519509 — Style Strength Controller [IL/NAI]
 - https://civitai.com/models/2172944 — Z-Image [fp8]
+
+## Batch 3 — SFW prompts / tags / wildcards (2026-09-21)
+
+Playbook: `BATCH3.md`. Explicit quarantine: `BATCH3_EXPLICIT.md` (do not flatten into SFW lists).
+
+### Guides
+- https://civitai.com/articles/23210 · https://civitai.com/articles/4248 · https://civitai.com/articles/8547 · https://civitai.com/articles/6555 · https://civitai.com/articles/5102 · https://civitai.com/articles/10242 · https://civitai.com/articles/7972 · https://civitai.com/articles/7484 · https://civitai.com/articles/3296 · https://civitai.com/articles/1250
+- https://wiki.monai.art/en/models/wai_illustrious_15
+- https://cagliostrolab.net/posts/optimizing-animagine-xl-40-in-depth-guideline-and-update
+- https://huggingface.co/cagliostrolab/animagine-xl-4.0 · https://huggingface.co/Laxhar/noobai-XL-1.1
+- https://civitai.red/models/827184 — WAI mirror (rating tags)
+
+### Wildcards (SFW keepers)
+- https://civitai.com/models/45448 · https://civitai.com/models/138970 · https://civitai.com/models/83971 · https://civitai.com/models/24940 · https://civitai.com/models/615967 · https://civitai.com/models/949270 · https://civitai.com/models/1051581 · https://civitai.com/models/1062164 · https://civitai.com/models/2409619 · https://civitai.com/models/1994536 · https://civitai.com/models/1926228 · https://civitai.com/models/422735 · https://civitai.com/models/1952576 · https://civitai.com/models/48601 · https://civitai.com/models/125114
+
+### Sheets / angles / outfits
+- https://civitai.com/models/100435 · https://civitai.com/models/368139 · https://civitai.com/models/1041336 · https://civitai.com/models/1774438 · https://civitai.com/models/2925755 · https://civitai.com/models/2194148 · https://civitai.com/models/2078957 · https://civitai.com/models/2300308 · https://civitai.com/models/2096307 · https://civitai.com/models/2303045 · https://civitai.com/models/2111450 · https://civitai.com/models/2322506 · https://civitai.com/models/2349397
+
+### Fantasy / lighting
+- https://civitai.com/models/599757 · https://civitai.com/models/1819791 · https://civitai.com/models/580163 · https://civitai.com/models/92654 · https://civitai.com/models/2171000 · https://civitai.com/models/2392248 · https://civitai.com/models/1227404 · https://civitai.com/models/1280702 · https://civitai.com/models/1020411 · https://civitai.com/models/1754132 · https://civitai.com/models/661736
+
+### Illu WFs
+- https://civitai.com/models/2282970 · https://civitai.com/models/2189190 · https://civitai.com/models/2349309 · https://civitai.com/models/2421536

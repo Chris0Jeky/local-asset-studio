@@ -594,3 +594,49 @@ Hard confirmations (browser pass):
 - Extra 16GB Z-Image WFs: `2176468`, `2588499`.
 - Pixel Illustrious: `43820` (trigger `pixel`); ZIT shader `2481158` (8 steps, CFG 1).
 - Thin 2.1 WFs also cited in tables: `2951814`, `2952715`.
+
+
+---
+
+## Batch 3 — tags / prompts / wildcards / SFW workflows (2026-09-21 ~01:32–01:45 BST)
+
+**Deliverables:** `BATCH3.md` (SFW anime+fantasy playbook) · `BATCH3_EXPLICIT.md` (quarantined hentai queue) · raw snapshots `raw/batch3/`.  
+**No weight downloads. No new issues.** Grok updates PR #756 only.
+
+### Ranking reminder
+Quality = thumbs + like-ratio + **article bookmarks** + creator signal. Downloads noted only. SFW vs NSFW from `nsfwLevel` + quarantine file split.
+
+### Tag-order standard (LAS)
+`quality → subject → artist/style → general` (+ pose → clothes → bg → lighting → `highres`/`absurdres`).  
+**Never** put Pony `score_9*` on Illu/WAI/Animagine/Noob.
+
+| Base | Quality block | Neg highlight | Sampler/CFG |
+|---|---|---|---|
+| WAI v170 | masterpiece, best quality, amazing quality + `general` | bad/worst quality + **nsfw, explicit** | Euler a · 5–7 · 25–40 |
+| NoobAI 1.1 | masterpiece, best quality, newest, absurdres, highres, safe | + furry suppress for human anime | Euler · V-Pred CFG 4–5 |
+| Pony V6 | score_9, score_8_up, score_7_up | rating_explicit in neg for SFW | Euler a · 6–8 |
+| Animagine Opt | masterpiece, high score, great score, absurdres **at END** | low/bad/average score… | Euler a · CFG 5 · 28 |
+
+Guides: Illu `articles/23210` · Pony score `4248`/`8547` · Pony tips `6555` · Illu chars `10242` · BG tags `7972` · wildcards `1250` · samplers `7484` · Animagine HF/Cagliostro · Noob HF Laxhar · WAI MonAI / civitai.red.
+
+### SFW wildcard keepers (ingest: Dynamic Prompts `__name__` / Comfy wildcard nodes)
+Fantasy chars `45448` (3846👍) · Billions `138970` · Poses `83971` · Camera Views `24940` · Pony Vault `615967` · Noob artist `949270` · Sunvibe poses/locations `1051581`/`1062164` · Posing Dynamics `1994536` · **SFW Prompt Pack** `2409619` · Fantasy Pony origins `422735` · Statement Outfits `1952576`.
+
+### SFW workflows
+Character sheet: YeiYei `100435` (11463👍 SFW) · Illu sheets `1041336`/`1774438`/`2925755` · WF `2194148` · Qwen lazy sheet `2078957`.  
+Multi-angle: Edit LoRA `2300308` · Storyboard `2096307` · Dataset WF `2303045` · Klein `2349397`.  
+Outfit (non-explicit): `2367983` · Transfer Helper `2111450` · Easy Swap `2322506`.  
+Illu daily WF: `2282970`/`2189190` (lvl 31 galleries — SFW prompts only in this lane).
+
+### Fantasy deepen
+Velvet Mythic `599757` (+ Illu deepen `1819791`) · Graphite Fantasy `580163` · armored dress `92654` · Armored Maiden `2171000` · Magical Princess `1227404` · Lighting/darkness slider Illu `1280702` (5694👍) · GOBO `1020411` · Pony Dramatic Lighting `661736`.
+
+### Explicit quarantine
+See **`BATCH3_EXPLICIT.md`**: WAI rating tags general/sensitive/nsfw/explicit; NSFW pose wildcards `289285`; Noob **month** Enigmata character-NSFW list (hobby NC only). Never mixed into BATCH3.md.
+
+### Batch 3 counts
+- Articles / guides cited: ~15 Civitai + 4 external  
+- SFW wildcard packs: ~18  
+- Sheet/angle/outfit/fantasy ids: ~40  
+- Explicit quarantine ids: ~20  
+- Weight downloads: 0 · New GH issues: 0

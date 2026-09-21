@@ -115,3 +115,70 @@
 - motimalu: 977115 · 1003636 · 333139 · 337060 · 1252497
 - YeiYeiArt: 100435 · 35930 · 404277 · 42668 · 2030402
 - reakaakasky: 971952 · 2172944 · 2356447 · 1523055 · 1519509
+
+
+---
+
+## BATCH 3 additions (2026-09-21 BST) — SFW prompt/tag playbook · see BATCH3.md
+**Explicit / hentai → BATCH3_EXPLICIT.md only (not listed below).**
+
+### Articles / guides (high signal)
+- https://civitai.com/articles/23210 — Illustrious prompt guide (Arctenox)
+- https://civitai.com/articles/4248 — Pony score_9
+- https://civitai.com/articles/8547 — score_/source_/rating_ syntax
+- https://civitai.com/articles/6555 — Pony tips (chars/clothes/styles)
+- https://civitai.com/articles/5102 — Pony recognized characters
+- https://civitai.com/articles/10242 — Illustrious recognized characters
+- https://civitai.com/articles/7972 — BG tags Pony + Illustrious
+- https://civitai.com/articles/7484 — Samplers
+- https://civitai.com/articles/3296 — Camera angles
+- https://civitai.com/articles/1250 — Wildcards + Dynamic Prompts
+- https://wiki.monai.art/en/models/wai_illustrious_15 — WAI rating tags / CFG
+- https://cagliostrolab.net/posts/optimizing-animagine-xl-40-in-depth-guideline-and-update
+- https://huggingface.co/cagliostrolab/animagine-xl-4.0
+- https://huggingface.co/Laxhar/noobai-XL-1.1
+
+### SFW wildcards
+- https://civitai.com/models/45448 — Full Feature Fantasy Prompts (3846👍)
+- https://civitai.com/models/138970 — Billions of Wildcards
+- https://civitai.com/models/83971 — Female Poses 400 (SFW-usable)
+- https://civitai.com/models/24940 — Camera Views (SFW)
+- https://civitai.com/models/615967 — PonyXL Wildcards Vault
+- https://civitai.com/models/949270 — artist style wildcards NoobXL
+- https://civitai.com/models/1051581 — Sunvibe Danbooru Poses
+- https://civitai.com/models/1062164 — Sunvibe Danbooru Locations
+- https://civitai.com/models/2409619 — SFW Prompt Pack (Illu/Noob/Pony)
+- https://civitai.com/models/1994536 — Posing Dynamics
+- https://civitai.com/models/1926228 — Poses/Angles/BG/Clothing
+- https://civitai.com/models/422735 — Fantasy origins Pony
+- https://civitai.com/models/1952576 — Statement Outfits
+
+### Character sheet / multi-angle / outfit (SFW)
+- https://civitai.com/models/100435 — Character Design Sheet (11463👍, SFW)
+- https://civitai.com/models/1041336 — Character Sheet Illustrious
+- https://civitai.com/models/1774438 — GC-Character Sheet
+- https://civitai.com/models/2925755 — Turnaround Generator Illu (SFW)
+- https://civitai.com/models/2194148 — 3-View Consistency Sheet WF
+- https://civitai.com/models/2078957 — Qwen Edit Lazy Character Sheet
+- https://civitai.com/models/2300308 — Multiple-Angles LoRA (Qwen Edit)
+- https://civitai.com/models/2096307 — Qwen Multi-angle Storyboard
+- https://civitai.com/models/2303045 — Multi-Angle Dataset WF (SFW)
+- https://civitai.com/models/2111450 — Outfit Transfer Helper (SFW)
+- https://civitai.com/models/2367983 — Outfit try-on (Qwen+Klein)
+- https://civitai.com/models/2322506 — Flux2 Easy Swap outfit
+
+### Fantasy / lighting (SFW-leaning)
+- https://civitai.com/models/599757 — Velvet Mythic Fantasy Styles
+- https://civitai.com/models/1819791 — Velvet Mythic Style Illu
+- https://civitai.com/models/580163 — Fantasy Graphite Sketch
+- https://civitai.com/models/92654 — armored dress
+- https://civitai.com/models/2171000 — Armored Maiden Core
+- https://civitai.com/models/1227404 — Magical Princess (SFW)
+- https://civitai.com/models/1280702 — Lighting/darkness slider Illu (5694👍)
+- https://civitai.com/models/1020411 — GOBO Lighting
+- https://civitai.com/models/661736 — S1 Dramatic Lighting Pony
+
+### Illustrious WFs (prompt SFW; strip CUDA nodes)
+- https://civitai.com/models/2282970 — Illu/Pony/SDXL Pro Grade Low/High VRAM
+- https://civitai.com/models/2189190 — Pro Grade WF
+- https://civitai.com/models/2421536 — Eazy Illustrious

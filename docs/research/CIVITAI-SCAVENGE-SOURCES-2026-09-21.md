@@ -138,3 +138,40 @@ types=Workflows&query=GGUF|FP8%20low%20VRAM|Klein%20GGUF|Z-Image%20low%20VRAM|Qw
 
 ### Raw snapshots
 `raw/batch2_*.json` (50+ files) + `raw/batch2/flux2_klein_lora.json` early partial.
+
+## Batch 3 queries (~01:32–01:45 BST 2026-09-21)
+
+UA: `LAS-scavenge/1.0`. No weight downloads. List/search + article-by-id.
+
+### Articles
+```
+GET /api/v1/articles?limit=50&sort=Most%20Bookmarks
+GET /api/v1/articles/{23210,4248,6555,7484,7972,10242,5102,3296,3527,7036,8547,1250,5545,19251,…}
+```
+Article `query=` filters returned empty/unusable; relied on Most Bookmarks + known ids + WebSearch.
+
+### Wildcards / workflows / LoRAs
+```
+types=Wildcards&sort=Most Liked|Highest Rated&period=AllTime|Year
+types=Wildcards&query=SFW|fantasy|lighting|artist|wildcard|Dynamic Prompts
+types=Workflows&query=character sheet|multi angle|outfit|Illustrious
+types=LORA&query=character sheet|fantasy|armor|magic|lighting|Velvet Mythic|multi angle|outfit change
+baseModels=Illustrious where noted
+username not required (Velvet via query)
+```
+
+### Explicit quarantine
+```
+types=Wildcards&query=NSFW pose
+types=LORA&baseModels=NoobAI&sort=Most Liked&period=Month
+civitai.red /api/v1/models?query=WAI-illustrious
+```
+
+### WebSearch / external
+- Illustrious / Danbooru tag order (SeaArt, Tensor.Art, WhatLab, Arctenox 23210)
+- WAI rating tags (MonAI, lilting.ch v17 review)
+- Animagine XL 4 Opt (CagliostroLab + HF README)
+- NoobAI XL 1.1 (HF Laxhar README)
+
+### Raw
+`raw/batch3/` — articles_*.json, article_*.json, wildcards_*.json, wf_*.json, lora_*.json, explicit_*.json, red_wai_api.json, summary_batch3.json
