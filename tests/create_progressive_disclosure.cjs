@@ -26,7 +26,7 @@ assert.equal(result.recipe.tagName,'DETAILS');
 assert.equal(result.recipe.open,false);
 assert.equal(result.recipe.hidden,true,'An empty recipe explanation must not leave an empty disclosure');
 assert.equal(result.recipe.children[0].tagName,'SUMMARY');
-assert.equal(result.recipe.children[0].textContent,'Why this recipe?');
+assert.equal(result.recipe.children[0].textContent,'Recipe details, provenance and sources');
 assert.equal(result.recipe.children[1],recipeNotes,'The existing recipeNotes owner must be preserved');
 assert.equal(result.references.id,'referenceBoardHelp');
 assert.equal(result.references.open,false);

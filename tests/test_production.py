@@ -297,6 +297,22 @@ class PlannedSweepTests(unittest.TestCase):
         self.assertEqual(len(project['stages']),2)
         self.assertEqual(project['variants'][0]['controls'],{'seed':3,'steps':8,'sampler':'euler'})
 
+    def test_plan_uses_effective_accelerator_state_without_jobs_or_reservations(self):
+        kb=json.loads(self.kb_bytes);kb['loras']['a.safetensors']['role']='accelerator'
+        (self.root/'presets/settings-kb.json').write_text(json.dumps(kb))
+        studio=FakeStudio(self.root,[]);lab=studio.production
+        before={str(p.relative_to(self.root)):p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        with self.assertRaisesRegex(ValueError,'documents no axis'):
+            lab.plan({'preset_id':'planned','controls':{'lora':1,'lora_name':'a.safetensors'}})
+        offer=lab.plan({'preset_id':'planned','controls':{'lora':0,'lora_name':'a.safetensors'}})
+        self.assertEqual([a['id'] for a in offer['axes_available']],['steps','sampler'])
+        self.assertTrue(all(v['controls']['lora']==0 for v in offer['variants']))
+        with self.assertRaisesRegex(ValueError,'non-accelerator'):
+            lab.plan({'preset_id':'planned','mode':'remix','controls':{'lora':1,'lora_name':'a.safetensors'}})
+        self.assertEqual(lab.list(),[]);self.assertFalse(studio.jobs);self.assertEqual(studio.queue.qsize(),0)
+        after={str(p.relative_to(self.root)):p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        self.assertEqual(before,after)
+
     def test_a_missing_knowledge_base_plans_nothing_and_records_no_digest(self):
         (self.root/'presets/settings-kb.json').unlink()
         studio=FakeStudio(self.root,[]);lab=studio.production

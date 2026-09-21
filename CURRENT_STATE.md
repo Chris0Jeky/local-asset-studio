@@ -1,4 +1,264 @@
-# Current state — 15 September 2026
+# Current state — 18 September 2026
+
+## Merge queue drain: fourteen PRs shipped — 18 September 2026 (05:14)
+
+A Grok session reviewed and merged the independent Codex fix queue plus the Create-workshop stack. Work was in isolated worktrees; the Studio checkout on 8191 (pid 34696, identity workspace `...\local-asset-studio`) was not switched, pulled, or restarted.
+
+Merged (merge commits, never squash):
+
+| PR | Merge SHA | Issue | What changed |
+| --- | --- | --- | --- |
+| #531 | `d1a30c79` | Fixes #464 | Fixture writer poll deadline 5s→30s on slow Windows runners |
+| #534 | `5d9ba9ba` | Fixes #484 | Same-tick same-length rewrite caught by content digest |
+| #526 | `8661a2f8` | Fixes #463 | Control preview compares live schema identity so stale-schema diagnostics render |
+| #527 | `36306e55` | Fixes #489 | Multi-contributor facet text is semantic; provenance stays on transfers/take |
+| #530 | `f1d56068` | Fixes #459 | Reference analysis admits terminal partial / stop-tracked uncertain history |
+| #528 | `70502117` | Fixes #457 | Programmatic reference-review load announces `studio-prompt-state` |
+| #536 | `0dc9df95` | Fixes #455 | Retirement tombstones get a separate 64-record / 512 KiB budget |
+| #533 | `664190ea` | Refs #490 | Observer `finished_at` is the hard sample bound; overshoot withholds comparison arithmetic |
+| #535 | `eb3fc1e1` | Fixes #468; Refs #477 | Early HTTP refusals drain bounded declared bodies |
+| #529 | `96607b1b` | Fixes #491 | Rejected analysis load keeps Undo/Export visible inside `#rr-review` |
+| #537 | `537fa2be` | Fixes #456 | Historical prompt-project revisions open as detached drafts |
+| #540 | `7fc585d2` | Refs #539 | Focus Create workshop; I2V hold note stays a full-row `#controls` child |
+| #542 | `193d7f44` | Refs #446 | Deterministic 48-cell corrected-pose screening plans; CLI JSON unauthorized receipts |
+| #541 | `cf25df38` | Refs #539 | Studio layout + Arcade/Sakura skins; heading art inlined because Handler refuses `.svg` |
+
+Each merge had hosted Check studio SUCCESS at the merged head, law-2 review with no untriaged CRITICAL/HIGH, and the three-minute aging floor. Stack: #540 then retarget #541 onto main; stacked base `codex/create-workshop-focus` was not deleted.
+
+**Correction, 18 September 2026:** Check studio was not the full hosted oracle for the Create workshop stack. #540 head `09d3448` had Production storage safety (`mixed_batch_browser`) and Preset model readiness (`control_layout_browser`) FAILURE before merge `7fc585d2`. #541 head `313938d` merged `cf25df38` while Production storage browser was still running (same mixed-batch click timeout). Follow-up **#565** `837dda30` (head `286ebfa9`): `#jobProblems` renders into `#jobProblemsHost` outside closed Recent runs; Seed is a full-width row; the Generate dock no longer intercepts control hits. Hosted Check studio, Production storage safety, and Preset model readiness were SUCCESS at that head before merge. Refs #539 (still open).
+
+Follow-ups filed this pass: #543 (retirement-cap docs; draft #554 exists), #545 (composed-handler drains; draft #553 exists), #546 (pose_screening CLI JSON receipts; closed by #542).
+
+Left unmerged by policy: HUMAN_TODO q-29 adult-illustration stack (#416→#417→#419→#420→#434→#436→#441 plus mid-session #550/#555/#562); parked-red #340; draft #532 closed unmerged at 04:13 (superseded by draft #558). Mid-session PRs not in the start inventory were not merged here (#547–#562).
+
+Not verified: live click-through on 8191 (still serving the pre-session checkout); art acceptance; licence clearance. HUMAN_TODO items were not ticked.
+
+## Easier-issue drain: eight named defects closed — 16 September 2026 (19:35)
+
+A Grok session drained the first easier-issue queue (one named failing scenario, no owner creative/licence decision, no GPU). Work was in isolated worktrees; the Studio checkout on 8191 was not switched or restarted.
+
+Merged (merge commits, never squash):
+
+| PR | Merge SHA | Issue | What changed |
+| --- | --- | --- | --- |
+| #516 | `4dddecaa` | #513 | Paired-observation doc allows exact shared `(job_id, result_sha256, directory)` triples; partial reuse still refused |
+| #518 | `9538a432` | #487 #488 | Missing plan path is `report_unavailable`, not `incomplete`; reused-prompt payload drop is named in limitations |
+| #517 | `2d75f847` | #511 | Reference-assistant runbook workspace is `.runtime/reference-session` |
+| #520 | `ae33f911` | #460 | `PromptProjects.list()` SQL-projects rows; one unreadable head no longer 503s the whole list |
+| #519 | `6c9442b7` | #454 | Analyze release acknowledgement clears on handle change, new analysis, and successful release |
+| #515 | `f4a0a484` | #512 | Deleted listed sidecar is `invalid`, not `incomplete`; incomplete is unfinished evidence, not “still writing” |
+| #521 | `27eb2e25` | #493 | Pose canvas refresh before readiness; exponential coordinates accepted; `aria-invalid` per axis |
+
+Each PR had green hosted checks at merge (one mixed-batch lifetime red on #517 reran green), law-2 review (Codex and/or one independent pass; no untriaged CRITICAL/HIGH), and the three-minute aging floor. Local proving logs are in the session scratch, not Git.
+
+Easier items still open (parked, not silently dropped): #490 sample-window overshoot bound; #484 same-tick rewrite (content digest already in `resource_receipts._capture_file` after #471 — needs an explicit regression test before closing); prompt/reference UI #456 #457 #463 #489 #491.
+
+**Correction, 18 September 2026:** #484 #456 #457 #463 #489 #491 and the #490 comparison-withhold half were closed by the merge table in the 05:14 section above. #490 remains open for the remaining producer-timestamp/probe-span work.
+
+Untouched on purpose: adult-illustration stack (HUMAN_TODO q-29); q-7/q-25/q-27/q-28/q-30; parked #340/#461; #373 suite budget; Combine remaining owner-acceptance (#422/#444/#445/#446).
+
+Not verified: live click-through on 8191 (still serving the older checkout); art acceptance; licence clearance. HUMAN_TODO items were not ticked.
+
+## Replace pose picture no longer keeps the old pose wording — 16 September 2026 (18:40)
+
+**Replace pose picture with drawing** still swaps Picture 1 for the rendered stick figure and selects the skeleton recipe, and who/clothes still transfer. The pose fill is now cleared and left as a bracket, so Generate stays blocked until the drawing is described (issue #492). Redrawing while already on the skeleton recipe keeps the pose wording written for that drawing. Native fixture driver: 8/8 cases, 190 assertions, zero generation submissions. Docs for the use-case matrix and Style + Pose name the Replace action and the one-way return to a pose picture. Not verified: a click-through on the live Studio at 8191; art acceptance (HUMAN_TODO q-28).
+
+## The face route: a character into a picture that keeps its pose and scene; the idle release measured; the night's evidence — 16 September 2026 (03:20-05:15)
+
+- **Replace character is a recipe (PR #481, built by a worker, proved through the Studio by the coordinator):** `combine-klein-9b-replace`, fourth on
+  the Combine route for a 9B picture: the shipped 9B graph with the civitai `replace_character_v1_klein` LoRA at 1.0 (strength and file as Studio
+  controls). The picture to keep is image 1 (board slot *Picture to put them in*, role `composition`: its pose, camera, composition, background,
+  lighting and clothes stay), the character is image 2 (*Character to keep*, the picture you continue from; only its face, hair and expression are
+  taken). Three fills in reading order: image 1's pose and camera, who is in image 2, image 1's outfit and its colours; the outfit fill has its own
+  meaning (`outfit`) so an engine switch never carries a character's clothes into it, and the Combine guidance says so for this recipe only (two
+  review MEDIUMs fixed in the PR, the same two Codex raised). Proving jobs `7051b297…` (seed 2026091301, 832x1216, 104.9 s)
+  and `2752190c…` (seed 2026091302, the default 1024x1536 canvas; 624 s from submission, most of it waiting behind a
+  research render): the fantasy pack's portrait face, fringe and gold earrings on its full-body scene with coat, scarf, satchel, lantern, boots and
+  platform kept. Research first, straight against ComfyUI: 3 of 3 seeds on that pair (116-132 s); 3 of 3 restoring the face on the depth Combine's
+  own output, so the pack's posed full body is *pose route, then face route* and identity no longer depends on the seed; 2 of 2 carrying the owner's
+  anime SHARK character into the painterly station scene in image 1's clothes (one stray glyph on one seed). Sheets in `examples/fantasy-pack/`
+  (`full-body-keeps-face.jpg`, `pose-then-face.jpg`, `replace-cross-style.jpg`, `replace-through-the-studio.jpg`), recipes 7 and 8 in the pack
+  folder, HUMAN_TODO q-30 (f) and (g).
+- **The idle cache release works end to end (PR #470):** the Studio restarted on main at 03:47; after the last job ended at 04:04 the release fired at
+  04:14:32 (`/api/health` `cache_release`: count 1, no error); ComfyUI's python went from 5.3 GB resident with the 9B models loaded to 463 MB. The
+  first job after a release pays the model reload: measured after the second release (04:40:36, ComfyUI at 441 MB), one `combine-klein-9b-replace` job at
+  832x1216 (`60b161cb…`, seed 2026091303) took 121.1 s against 104.9 s warm, ComfyUI back at 12984 MB. `idle_cache_release_minutes` in `config/local.json`
+  (default 10, 0 = off).
+- **The night audition (PR #473):** on the owner's pair `depth_cut` 80, 86 and 92 all gave bare feet (92 loses the least of the figure; the hint says
+  86-92; the values between were not run); the page-rendered guide held the drawn pose on 3 of 3 seeds; Copy Pose held on 3 of 3 through the
+  Studio; a stricter instruction gave the surprised look as asked, so the earlier grin was the wording's doing. The audition script now persists
+  each accepted job ID before polling (a Codex P1). `.claude/rules/evidence-docs.md` gained one rule: clock times come from receipts or Git only,
+  after two section headers tonight were written more than an hour late and corrected from `state.json`.
+- **Flakes and follow-ups:** PR #479 merged (the trace-file test forces a later mtime; #467 closed); Codex's point that a same-tick same-length
+  rewrite is invisible to the metadata signature became #484. #477 filed (a transport test erred once in a full run, green in isolation). #373 got a
+  data point: two runs of one head hit the 420 s lifetime on a slow runner while seven sibling runs took 270-323 s, and the suite is about 2,800
+  tests now.
+- **Codex stacks landed by the merge worker:** #389, #390, #396, #398, #402, #415, #418, #421; its queue continues with the rest of the 15 September
+  backlog and the seven PRs a concurrent Codex session opened tonight (#471, #472, #474, #476, #478, #475 → #480); the adult programme stack is
+  untouched (HUMAN_TODO q-29).
+- **Operations:** the main checkout is on main with the Studio running from it (pid in `.runtime/server.pid`); the worktrees of merged PRs are removed.
+  The Studio's own guard declined one proving job while a research batch held ComfyUI (`02d7c0e4…`, never submitted, abandoned from the page, its
+  recipe retained); renders under three concurrent test suites took 250-350 s instead of about 100 s, which is CPU contention, not the slow state.
+
+- **The merge worker's final report (05:15):** fourteen Codex PRs merged tonight (#389, #396, #398, #418, #421, #390, #402, #415, #383, #428,
+  #426, #442, #471, #472), each reviewed (one fresh-context pass for ten of them; the worker's own review for #383, #426, #428 and #442, with the Codex findings on #426
+  and #428 verified), CI green at its head and a full local suite where the change warranted it; four defects fixed inside three PRs (#415's
+  preview guard rejected every seed because it re-checked the installed schema's bounds; #428's canvas contracts had no Python wrapper so the suite
+  never ran them; #442 claimed a job cancellation that does not exist and called the Combine routes qualified against this file's own evidence). #340 parked (#461, eight failures with one
+  root cause); #472 merged last (`f1cbf50`) after its rerun proved the red was #373's budget again; #474, #475, #476, #478 and #480 reviewed and left open, #480 conflicting with #475 in
+  `studio-workbench.js` so it waits for #475; the adult programme stack untouched (q-29). Seventeen issues filed. Three findings to act on:
+  reference analysis is inert on this host as merged (#459: 185 run records, of which the two uncertain ones carry no disposition and, with one still running, block its idle check); a
+  negative-path HTTP test family fails with WinError 10053 when the suite runs as a batch, reproduced on plain main (#468); the 420 s suite lifetime
+  (#373) now costs a rerun every few PRs. Ledger `.runtime/merge-queue-20260916.md`. The Studio was restarted on c2cfba8 right after #485 merged, while the
+  owner was working; #426, #442, #471 and #472 landed after that, so the next idle restart picks them up.
+
+Reviews: #481 one fresh-context adversarial pass (no CRITICAL/HIGH; two MEDIUMs fixed in-PR) plus a scoped second pass on the fix diff (one stale
+doc sentence fixed), and the Codex connector's two threads (the same findings, resolved); #470's three Codex P2s were already fixed in its review
+commit; #473 and #479 Codex clean after a fix and a tracked decline. Not verified: the replace recipe clicked through the browser; characters beyond
+the two tried; portrait-scale fidelity; art acceptance (HUMAN_TODO q-28, q-30); licence clearance (the 9B model is non-commercial, the adapter's
+civitai flags are recorded, not granted).
+
+## Combine: Copy Pose is a recipe, the ankle cut is a control, a pose editor on the page; the Codex stacks landed — 16 September 2026 (from 01:40)
+
+Every generation below went through the Studio's own path (POST /api/jobs: prepare -> worker -> ComfyUI) on the owner's pair; receipts in the
+receipts root, exact recipes committed beside the scripts, sheets in `examples/style-pose/`.
+
+- **Copy Pose is a recipe (PR #452):** `combine-klein-9b-copypose`, second on the Combine route: the shipped 9B graph with the civitai Copy Pose LoRA
+  at 1.0 (strength and file as Studio controls), the order turned round (the character is image 1 and keeps its own background and framing; the
+  pose picture is image 2). Proving run job `61dd5375…` (prompt `1fbea73e…`, 58.5 s warm, seed 2026091471): the deep bend, crossed legs and look-back
+  with the character's light background kept, bare feet, no tights, heels or tail; the lettering partly hidden by the bend. The three fills carry
+  across recipes by meaning (who / clothes / pose) although this recipe's reading order differs; the engine switch offers it as *Klein 9B · Copy
+  Pose*; the Combine guidance names what it keeps (a review finding fixed in the same PR).
+- **The ankle cut is a control (PR #453, #427):** *Cut the depth map below (%)* on `combine-klein-9b-depth` paints the map black below that fraction
+  of its height inside the graph (SolidMask band -> MaskComposite -> ImageCompositeMasked on the ~1 MP map, no reframe, no re-estimation); 100 keeps
+  all, the variant *Cut below the ankles (86 %)* is the round-three edit. Proving run job `b57c6f3f…` (122.9 s on a fresh ComfyUI, seed 2026091441,
+  cut 86): both feet bare where the uncut run of the same seed (`22ff6394…`) had a heel; the default (100) run `216239b8…` reproduced the uncut
+  output byte for byte, so the added nodes change nothing until the control is set. `depth_cut` is a new 0-100 whole-number control key (server,
+  validator, page, bundle key lists).
+- **Pose editor (PR #466, #444 minimal slice, by a worker):** *Draw the pose* on the Combine screen: COCO-18 joints dragged with mouse, touch or
+  keyboard, a per-joint unknown toggle, two starting figures (standing; the round-three bent-forward one), mirror, undo; *Use this pose* renders the
+  guide on the server (`POST /api/pose/render` -> `studio_workflow.pose_raster`, stored like an upload, every joint manual with no detector
+  confidence) and puts it on Picture 1 of `combine-klein-9b-skeleton` through the engine-switch path. Proved: a guide rendered by that
+  endpoint from the bent-forward starting figure gave the drawn pose through the skeleton recipe (job `8b571dd4…`, 66.5 s, the same figure and
+  seed as the hand-drawn run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`): thin 8 px strokes carry the pose as well as the
+  14 px research figure. The worker filed #467 (a Windows clock-tick dependency in a trace-stream test).
+- **Failed jobs say when a retry is safe (PR #465, #350):** an IndexError whose traceback names ComfyUI's `free_memory` (the first load of a different
+  model family in a session) is recorded as `model_swap_fault` with the action *run the same job again with the same seed*; nothing is retried
+  automatically; a loader's own IndexError stays a plain execution error.
+- **The fantasy pack's four steps exist** (separate entry below; HUMAN_TODO q-30).
+- **The RAM the owner saw is ComfyUI's model cache, not a leak (measured between the 02:48 pose-editor run and the 02:57 night audition):** with an idle queue ComfyUI's process held 25.8 GB committed
+  (11.4 GB working set; 1.1 GB physical free of 31.7) after a night of Klein 9B, Qwen3 8B, Anima and Klein 4B runs, the Studio server 40 MB;
+  one `POST /free` (`unload_models` + `free_memory`) on the idle queue took ComfyUI to 5.7 GB committed / 0.44 GB working set and physical
+  free RAM to 16.7 GB (commit 51.9 -> 32 GB of 95.7). PR #470 makes the Studio send that release once per idle stretch
+  (`idle_cache_release_minutes`, default 10) and reports it in `/api/health`.
+- **Operations:** a merge-queue worker reviewed and merged the Codex feature stacks that had waited since 15 September (its report lists them);
+  the Codex "controlled adult illustration programme" stack (#416…#441) was left untouched for the owner (HUMAN_TODO q-29). Issue #464 records a
+  5-second fixture deadline in the resource-receipt tests that fails on a slow windows-latest runner (rerun passed).
+
+Reviews: one fresh-context adversarial pass per PR plus the Codex connector, no CRITICAL/HIGH on any; findings fixed in-PR were the guidance
+text (#452), the free_memory claim gated on the traceback (#465), committed recipes and the skip-completed guard (#462). Not verified: the recipes,
+the control and the editor by clicking through the page (the API runs use the page's prepare and worker path); any pose picture other than the
+owner's; art acceptance (HUMAN_TODO q-28, q-30).
+
+## Fantasy pack: the brief's four steps exist as one review batch — 16 September 2026 (02:07-02:10)
+
+The G2 slice open since 13 September ran: look B (`anima-v1-baseline`, slot 1 at 1.0, seed 2026091301, 832x1216) through the brief's four steps as four Studio jobs on the page's own path (`experiments/curated/fantasy-pack-20260916/pack_lookb.py`): portrait with both hands on the lantern (`ca5c5082…`, 34.3 s with the model load), full body with the lantern and a satchel (`373d0b35…`, 18.2 s), the surprised-smile variation (`053f6cf5…`, 18.2 s), and Anime Detail Fix on the portrait through the repair path (`009eddad…`, 70.5 s). Inspected: the costume reads across all three renders; the seed did not carry identity (the hair changed on the expression render); the detail pass repainted the face (eyes brown to grey-blue) and left the slightly odd lantern grip. Sheet `examples/fantasy-pack/first-batch.jpg`; the four assets are unreviewed in the review queue (HUMAN_TODO q-30). **Identity follow-up (02:55-03:00):** *Change one thing* on the portrait kept the identity in full with a new (broader than asked) smile (`d0e8524e…`, 64.5 s); the depth Combine from the portrait into the batch's full-body pose carried pose and costume but lost the face and the painterly finish at full-body scale (`18a4f441…`, 107.1 s). Rule for the pack from here: variations are edits of one reference portrait; a body-pose change needs a route that keeps the face at that scale. Not verified: art acceptance; a useful hand correction; Copy Pose as the full-body route for this character.
+
+## Combine experiment loop and local pose tools — 16 September 2026
+
+Issue #422 now has a tested on-screen experiment loop in PR #451: switch compatible recipes in one click while retaining both pictures and the named answers; recover each recipe's hand-edited wording when switching back; see matching seed results beside their source pair; mark keeper/needs-work through the existing Workspace revision contract; and prepare the saved recipe with the same or a new seed before an explicit Generate click. Skeleton/picture mismatches and missing or excess references block switching. Historical failed or uncertain jobs sit under Problems, with their recovery controls retained.
+
+Full suite at `415d038`: 2,622 offline unit tests in 332.494 s (72 skips). Browser proof: 13/13 Chromium fixture journeys with zero generation requests or page errors, full browser smoke, and mixed-batch keyboard/desktop/mobile recovery checks. After integrating main through #449, the same-pair/second-engine journey passed again (one click to change engine, zero generation requests or page errors), alongside 92 focused unit tests, 19 continuation policy checks, 3 route-lead checks and repository validation. These checks prove interaction and saved-recipe handling; they do not prove new inference quality or GPU timing. Timing labels use existing completed local runs where available.
+
+Related groundwork merged: #447 documents pose-artifact boundaries, #448 adds local pose import/correction/export tools, #449 adds fixed-canvas post-depth erasure with input-format checks, and #425 restores the intended Combine route leader. The expanded #422 acceptance remains open: draggable geometry controls (#444), native guide routing (#445), artistic comparison (#446), and owner acceptance in HUMAN_TODO q-28. No model download or real generation was needed for this UI slice.
+
+## Pose round three: the slow state is a restart, the words move the hands, a drawn skeleton carries the pose, four LoRAs measured — 15 September 2026 (03:40-05:30)
+
+Same two pictures, seeds 2026091411-13, every render tabled with prompt IDs in
+`experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` (section "Pose round three"), scripts next to it
+(`pose_sources.py`, `lora_pose.py`, `restart_probe.py`, `twopass.py`, `prove_skeleton.py`, `sheet_round3.py`), sheet
+`examples/style-pose/combine-pose-round3.jpg`.
+
+- **The slow state (Klein 9B at 53-63 s/step instead of 6.5) is a ComfyUI-process condition that only a restart clears.** Two of the
+  night's three Qwen runs were followed by fast Klein renders, the third by slow ones that survived a 20-minute idle gap; `POST /free`
+  released 11 GB of host memory and changed nothing (377 s); stopping ComfyUI (`Stop-ComfyUI.ps1`) brought the same graph back to 95 s
+  on the replacement process (`restart_probe.json`), which the Studio's own backend recovery launched 15 s after the stop
+  (`.runtime/backends/20260915-035844-recovery-*.log`; the launcher run afterwards exited 0 on it while its own child died on the port
+  clash). Rule: a Klein render over ~3 minutes means stop ComfyUI on an idle queue and let it come back; run Qwen last.
+- **Cutting the depth map below the ankles removes the heel-shaped foot (3 of 3 seeds, #427)**; painting the tail and skirt out too
+  changes nothing. The depth recipe's hint now says to crop the pose picture above the ankles when a shoe shape appears; the control that
+  does it in the graph is specified on #427.
+- **Hand and camera words move the hands and the camera on the depth route (3 of 3):** the lollipop hand at the lips, a hand on the hip,
+  a low camera from behind, with the bend kept. The depth recipe's pose fill now asks for the hands and the camera.
+- **A crude PIL-drawn OpenPose stick figure as image 1 carries the pose on 3 of 3 seeds, including an arm drawn in the wrong place**;
+  a PIL capsule mannequin with a ball head is drawn literally (faceless sphere, grey limbs). Thin lines carry a pose, solid crude shapes
+  are copied. Shipped: **Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)**
+  (`combine-klein-9b-skeleton`, the 9B graph with skeleton wording, third on the Combine route), proved through the Studio
+  (`prove_skeleton.py`: POST /api/upload, POST /api/jobs; job `26448d58-c1bb-41a5-a49f-74c4db4fec89`, 68.7 s, the drawn pose with the
+  raised arm; lettering garbled on that seed). A keypoint pose editor is now worth wiring.
+- **Four civitai LoRAs for Klein 9B** (downloaded, SHA-256-verified, pinned in `models/library.json`): *Copy Pose* (character = image 1,
+  pose picture = image 2) is a second strong route, 3 of 3 with nothing leaking and the character's own background kept, but fails with a
+  depth map; *replace-character* (pose picture kept as image 1) gives the most exact pose and camera and the best identity swap, at the
+  price of image 1's finish, ground, tail and sometimes outfit; *RefControl* adds nothing visible over the base model; the *Mannequin*
+  LoRA turns a pose picture into a clean CGI mannequin in 68 s that works as the depth recipe's pose picture with the hand on the hip
+  carried (3 of 3), heeled feet aside. 8 steps changes nothing. **The Q8_0 GGUF of Klein 9B (downloaded, verified, pinned) does not fit the 16 GB card beside the text encoder's
+  5 GB residue: "loaded partially" (9.5 of 9.7 GB), 40-45 s per step, 6 minutes per render** against 75-95 s for Q6_K in the same process;
+  not a lever here.
+- **Two passes as one Studio journey, 136 s:** the depth Combine with the hands-and-camera fill (job `c31e7777…`, 88.8 s) then Change one
+  thing (Klein 4B) on its output staged as Continue with this does (job `b92dae0c…`, 44.3 s): the heel became a bare foot, everything
+  else unchanged (`twopass.json`).
+
+Studio side: **slice A of #422 merged (PR #430)**: the two pictures side by side in the model's reading order, three named fields that
+write the prepared wording (the paragraph stays editable, a hand edit is preserved until *Rebuild*), no disabled role select on fixed
+boards, the recipe card cut to its first sentence plus a disclosure; the Combine journey re-measured at the same 5 clicks with 955 words
+on screen (from 1082). Two Codex P2s and the fresh-context review's findings were fixed in the same PR (fills keyed on recipe and source
+picture; `{source}` resolved on the plain route). Slices B, C and D remain (#422).
+
+Not verified: the skeleton recipe by clicking through the page (the API run uses the same prepare and worker path); any pose or character
+other than the owner's; the ankle crop as a Studio control (specified on #427, not built); art acceptance (HUMAN_TODO q-28).
+
+## Combine gets its second baseline: the depth map carries the pose (FLUX.2 Klein 9B) — 15 September 2026 (02:00-03:25)
+
+The owner's verdict on the pose-first result: "so so", a much bigger step but not the complete pose change they meant; of the round-one
+renders the Qwen one most resembled the objective, at 14.5 minutes; and the Studio's workflow itself is in doubt for this kind of experimenting.
+Round two, same two pictures, every render tabled with prompt IDs in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md`
+(section "Pose round two"), sheet `examples/style-pose/combine-pose-round2.jpg`, scripts next to the README (`qwen_pose2.py`,
+`klein_skeleton.py`, `sheet_round2.py`, `prove_depth.py`):
+
+- **Qwen's time is the model's weight path, not the references.** The log shows 65 s of loading and 10-13 min of four Lightning steps;
+  halving both references saved one minute (14:29 -> 12:52). With a depth map as picture 2 Qwen followed the pose exactly but drew every
+  shape in the silhouette (heels, frill, tail) and distorted the face, in 10:40. Not a lever on this GPU.
+- **Both 2D skeleton detectors fail on the pose picture** (OpenPose at 1024 and 1536, DWPose downloaded tonight): scrambled fragments,
+  which also means round one's "structural" route ran on a wrong skeleton. **Depth Anything V2 Large gives the whole silhouette.**
+- **A blank canvas as image 1 gives perfect identity and lettering but never the deep bend** (2 seeds): the words do not carry an extreme
+  pose, the structural image does.
+- **Depth map as image 1, character as image 2, on FLUX.2 Klein 9B: 3 of 4 seeds held the deep bend and crossed legs** with face, hair,
+  crop top, lettering and pink shorts kept, bare feet, no tights and no tail, 90-115 s warm (seeds 11, 12, 14; seed 13 bent moderately
+  and brought the source's speech bubble back). Residual: a heel in the silhouette can shape a foot.
+
+Shipped: **Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** (named "…, nothing leaks" when merged in #424; renamed after the late review because a heel or skirt in the silhouette still shapes the figure, #427)
+(`combine-klein-9b-depth`, graph `workflows/api/combine-klein-9b-depth-api.json`: the shipped 9B graph with a `DepthAnythingV2Preprocessor`
+between the board picture and its reference latent) now leads *Continue with this -> Combine*; the pose-first 9B recipe is second, the 4B
+third. Annotator checkpoints (fetched by comfyui_controlnet_aux into its own folder) are excluded from model readiness through
+`ANNOTATOR_SELECTIONS` in `studio_workflow/model_contracts.py`. Proving run through the Studio's own path (POST /api/jobs, the page's
+prepare/worker path): job `22ff6394-11ad-490a-bfea-6304e53f5d24`, prompt `9047dc60-a99e-4eb5-94f8-4615de1b90fe`, seed 2026091441, output
+`Combine/Klein-9B-depth_00001_.png`: deep bend, crossed legs, look-back, lettering intact, bare feet, one heel-shaped foot. 448.7 s: after the
+night's Qwen run every Klein render (seeds 13, 14, the proving run) sampled in 6-7 minutes instead of about one; `POST /free` with
+`unload_models` did not restore it and VRAM read 15.2 GB free between jobs. Not diagnosed; a ComfyUI restart is the next thing to try.
+
+Two copy defects found by walking the page as a first-time user and fixed: the board summary stated the 4B reference order on the 9B
+recipe (`references.js` `boardSummaryLabel` now reads the order from the labels' "(image N)" parentheticals, Node test added) and the attach
+message read "Picture 1 of Picture 1". What the walk found about *experimenting* on the page (sources never side by side, three facts as
+bracketed spans in a paragraph, a disabled role select, a research-report recipe card, results in a flat list with old engine errors, an
+engine switch that restarts the journey) is issue #422 with a four-slice proposal. Not verified: the depth recipe by clicking through the
+page (the API run uses the same prepare and worker path); any pose or character other than the owner's; a 3D-mannequin render as the
+pose source (proposed, untested); art acceptance (HUMAN_TODO q-28).
+
+Late review of #424 (after the merge): no CRITICAL or HIGH; the guidance projection now honours `ANNOTATOR_SELECTIONS` too, the recipe name and board label were tightened, the shared Combine guidance sentence is recipe-aware, the round-two timing basis is stated (`round2_history.json` is the record), q-26 is narrowed to the owner's words.
+
+Owner decisions recorded tonight (HUMAN_TODO): the Klein 9B non-commercial licence "is not an issue"; later, "disregard the licenses
+issues for now, we're just experimenting and plus there is no commercial plans to begin with" (recorded as the owner's statement about
+this private experimental use; the licence facts in `models/library.json` and the catalog notes stay as recorded).
 
 ## Combine gets a baseline: pose first on FLUX.2 Klein 9B — 15 September 2026 (early hours)
 
