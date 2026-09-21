@@ -71,3 +71,75 @@ Includes: LoRA/ckpt dumps, workflows, articles, krea2, ipa2, creators_agg.json, 
 ## Explicitly not done
 - No safetensors / GGUF / CKPT downloads
 - No login / scraping of private endpoints
+
+## Batch 2 queries (~01:27–01:35 BST 2026-09-21)
+
+UA: `LAS-scavenge/1.0`. Base: `https://civitai.com/api/v1/models`. No weight downloads. List/search only (avoid direct id 1015).
+
+### FLUX.2 / Klein
+```
+types=LORA&query=Klein&sort=Highest Rated&period=Year&limit=40
+types=LORA&query=FLUX.2|Flux.2&sort=Highest Rated|Most Liked&period=Year
+types=LORA&query=Klein&sort=Most Liked&period=Month
+types=LORA&query=Klein anatomy|Klein detail&sort=Most Liked&period=Year
+query=Klein GGUF&sort=Most Liked&period=Year
+baseModels=Flux.2 | Flux.2 Klein  → empty (API rejects)
+```
+Manual filter on `modelVersions[].baseModel` containing Klein / Flux.2 / FLUX.2.
+
+### Z-Image
+```
+query=z-image|Z Image Turbo&sort=Most Liked&period=Year
+types=LORA&query=Z-Image&sort=Highest Rated&period=Year
+types=Workflows&query=Z-Image&sort=Most Liked&period=Year
+types=Checkpoint&query=Z-Image&sort=Most Liked&period=Year
+types=Workflows&query=Z-Image low VRAM|low VRAM&sort=Most Liked&period=Year
+```
+
+### Animagine XL 4
+```
+types=LORA&query=Animagine&sort=Highest Rated&period=Year  → empty page1 (cursor)
+types=LORA&query=Animagine&sort=Most Liked&period=AllTime&limit=40
+types=LORA&query=Animagine XL 4.0&sort=Most Liked&period=AllTime
+types=Workflows&query=Animagine&sort=Most Liked&period=Year
+query=Animagine XL 4&sort=Most Liked&period=Year
+baseModels=Animagine → empty
+```
+
+### RealVis
+```
+types=LORA&query=RealVis|RealVisXL → ~1 item (portrait)
+types=LORA&baseModels=SDXL 1.0&query=cinematic|skin detail|photorealistic&sort=Highest Rated|Most Liked
+```
+
+### Qwen-Image-2.1
+```
+types=LORA&query=Qwen-Image-2.1|Qwen 2.1|Qwen2.1
+types=Workflows&query=Qwen-Image-2.1|Qwen2.1|Qwen GGUF
+query=Qwen 2.1&sort=Most Liked&period=Year
+```
+Keep only name/base suggesting 2.1 / `Qwen 2`; reject pure 2511.
+
+### Pixel art
+```
+types=LORA&query=pixel art&sort=Highest Rated|Most Liked&period=Year
+query=pixel Z-Image|pixel Qwen|Pixel Art Refiner
+```
+
+### Creators (`username=` supported)
+```
+username=EauDeNoire|VelvetS|motimalu|YeiYeiArt|reakaakasky&sort=Most Liked&period=AllTime&limit=20
+```
+
+### AMD-safe workflows
+```
+types=Workflows&query=GGUF|FP8 low VRAM|Klein GGUF|Z-Image low VRAM|Qwen GGUF|low VRAM
+```
+
+### Raw snapshots
+`raw/batch2_*.json` (+ `raw/batch2/flux2_klein_lora.json` early partial).
+
+---
+
+### Also dumped under `raw/batch2/` (executor pass)
+Sequential re-fetches: `flux2_klein_lora.json`, `zimage_all.json`, `zimage_turbo.json`, `animagine_*.json`, `sdxl_realism.json`, `qwen21_*.json`, `pixel_*.json`, `creator_*.json`, `amd_wf.json`, `sage_strip.json`, `klein_wf.json`, `selected_ids.json`. Same UA/filters as above.
