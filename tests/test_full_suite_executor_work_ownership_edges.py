@@ -19,6 +19,7 @@ from executor_work_observability import (  # noqa: E402
 )
 from runtime_observability import (  # noqa: E402
     ThreadOwnershipObserver,
+    current_thread_origin,
     set_current_test,
 )
 
@@ -98,6 +99,46 @@ class ExecutorWorkOwnershipEdgeTests(unittest.TestCase):
         self.assertEqual(origin["submitted_during_test"], victim)
         self.assertEqual(origin["ownership_source"], "thread-origin")
         self.assertEqual(origin["submitter_thread"], "retained-submitter")
+
+    def test_thread_started_inside_reused_work_inherits_work_owner(self):
+        thread_observer = ThreadOwnershipObserver(
+            work_origin_provider=current_work_origin,
+        )
+        work_observer = ExecutorWorkObserver()
+        thread_observer.install()
+        work_observer.install()
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="handoff-pool")
+        origins = queue.Queue()
+
+        creator = "fixture.Creator.test_01_prime_pool"
+        submitter = "fixture.Submitter.test_02_start_child"
+        set_current_test(creator)
+        executor.submit(lambda: None).result(timeout=5)
+        set_current_test(submitter)
+
+        def start_child():
+            child = threading.Thread(
+                target=lambda: origins.put(current_thread_origin()),
+                name="work-owned-child",
+                daemon=True,
+            )
+            child.start()
+            child.join(timeout=5)
+            self.assertFalse(child.is_alive())
+
+        try:
+            executor.submit(start_child).result(timeout=5)
+            origin = origins.get(timeout=5)
+        finally:
+            executor.shutdown(wait=True, cancel_futures=True)
+            work_observer.restore()
+            thread_observer.restore()
+
+        self.assertEqual(origin["status"], "observed")
+        self.assertEqual(origin["owner_test"], submitter)
+        self.assertEqual(origin["started_during_test"], submitter)
+        self.assertEqual(origin["ownership_source"], "parent-work")
+        self.assertTrue(origin["parent_thread"].startswith("handoff-pool"))
 
     def test_nested_observers_restore_outer_submit_hook_in_lifo_order(self):
         outer = ExecutorWorkObserver()
