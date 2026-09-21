@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NSFW lab collection — Local Asset Studio</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .lab-wrap{max-width:1400px;margin:0 auto;padding:24px 20px 60px}
+    .lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .lab-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+    .lab-card img{width:100%;height:320px;object-fit:cover;background:#0f1117;display:block}
+    .lab-card p{margin:0;padding:10px 12px 12px;font-size:11px;color:var(--muted)}
+    .lab-card b{display:block;color:var(--text);font-size:12px;margin-bottom:4px}
+    .lab-filters{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px}
+    .lab-filters button.active{background:var(--accent);color:#20291a;border-color:var(--accent)}
+    .lab-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+    .lab-compare img{width:100%;max-height:520px;object-fit:contain;background:#0f1117;border-radius:10px}
+    .caveat{font-size:12px;color:var(--muted);max-width:720px}
+    .lab-gone{height:320px;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:10px 12px;background:#0f1117;border-bottom:1px dashed var(--line);font-size:11px;color:var(--muted);text-align:center}
+    .lab-gone b{color:var(--text)}
+    .lab-gone code{font-size:10px;word-break:break-all}
+  </style>
+</head>
+<body>
+  <div class="lab-wrap">
+    <p class="eyebrow">LOCAL LAB</p>
+    <h1>Anime NSFW collection</h1>
+    <p class="caveat">One-seed Studio cells. Generated, not accepted, not licensed. Adult original characters plus adult-coded franchise tags (wave C onwards). Filter by axis, then open two cards to compare.</p>
+    <p class="caveat">The pictures themselves are local-only: they are gitignored and live in <code>examples/nsfw-lab/</code> on this PC, listed in <code>examples/nsfw-lab/MANIFEST.json</code>. A tile with no picture is a missing local file, not a broken lab: run <code>python scripts/lab-media.py restore</code>.</p>
+    <p><a href="/">Back to Studio</a> · <a href="/static/nsfw-lab.html#findings">Findings</a></p>
+    <div class="lab-filters" id="filters"></div>
+    <div class="lab-compare" id="compare" hidden></div>
+    <div class="lab-grid" id="grid"><p class="muted">Loading lab notes…</p></div>
+    <section id="findings">
+      <h2>What to read</h2>
+      <p class="caveat">The Create workbench has a hideable “NSFW lab notes” panel on anime families. Full receipts live in <code>experiments/curated/nsfw-lab-20260921/</code>.</p>
+    </section>
+  </div>
+  <script>
+    const selected = [];
+    function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));}
+    function card(ex){
+      return '<button type="button" class="lab-card" data-id="'+esc(ex.id)+'" data-axis="'+esc(ex.axis||'')+'">'
+        +'<img loading="lazy" src="'+esc(ex.url)+'" alt="'+esc(ex.id)+'" data-job="'+esc(ex.job_id||'unknown')+'">'
+        +'<p><b>'+esc(ex.id)+'</b>'+esc(ex.note||ex.axis||'')+'</p></button>';
+    }
+    // A missing file is expected: the JPEGs are gitignored local media. Never leave a broken image.
+    function placeholder(img){
+      const box = document.createElement('div');
+      box.className = 'lab-gone';
+      const name = document.createElement('b'); name.textContent = img.alt || 'missing image';
+      const job = document.createElement('span'); job.textContent = 'job ' + (img.dataset.job || 'unknown');
+      const why = document.createElement('span'); why.textContent = 'local file not on this PC';
+      const how = document.createElement('code'); how.textContent = 'python scripts/lab-media.py restore';
+      box.append(name, job, why, how);
+      img.replaceWith(box);
+    }
+    function guard(root){
+      root.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', () => placeholder(img), {once:true});
+        if (img.complete && !img.naturalWidth) placeholder(img);
+      });
+    }
+    function render(examples, axis){
+      const list = axis==='all' ? examples : examples.filter(e => e.axis===axis);
+      const grid = document.getElementById('grid');
+      grid.innerHTML = list.map(card).join('') || '<p class="muted">No harvested examples for this filter yet.</p>';
+      guard(grid);
+    }
+    function compare(examples){
+      const box = document.getElementById('compare');
+      if (selected.length<2){box.hidden=true;box.innerHTML='';return;}
+      const pair = selected.slice(-2).map(id => examples.find(e=>e.id===id)).filter(Boolean);
+      box.hidden = pair.length<2;
+      box.innerHTML = pair.map(e => '<div><img src="'+esc(e.url)+'" alt="'+esc(e.id)+'" data-job="'+esc(e.job_id||'unknown')+'"><p><b>'+esc(e.id)+'</b>'+esc(e.note||'')+'</p></div>').join('');
+      guard(box);
+    }
+    fetch('/api/knowledge').then(r=>r.json()).then(data => {
+      const lab = data.nsfw_lab || {};
+      const examples = lab.examples || [];
+      const axes = ['all', ...new Set(examples.map(e => e.axis).filter(Boolean))];
+      const filters = document.getElementById('filters');
+      filters.innerHTML = axes.map((a,i)=>'<button type="button" class="'+(i?'':'active')+'" data-axis="'+esc(a)+'">'+esc(a)+'</button>').join('');
+      let axis = 'all';
+      filters.onclick = e => {
+        const btn = e.target.closest('[data-axis]'); if(!btn) return;
+        axis = btn.dataset.axis;
+        [...filters.querySelectorAll('button')].forEach(b=>b.classList.toggle('active', b===btn));
+        render(examples, axis);
+      };
+      document.getElementById('grid').onclick = e => {
+        const btn = e.target.closest('.lab-card'); if(!btn) return;
+        selected.push(btn.dataset.id);
+        compare(examples);
+      };
+      render(examples, 'all');
+    }).catch(() => { document.getElementById('grid').innerHTML = '<p class="error">Could not load /api/knowledge.</p>'; });
+  </script>
+</body>
+</html>
