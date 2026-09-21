@@ -69,6 +69,7 @@ def callable_identity(callback) -> str:
 class _Registration:
     identifier: int
     callback: Callable
+    identity: str
     wrapper: Callable
     registered_thread: str
     stack: list[dict]
@@ -168,6 +169,7 @@ class AtexitCallbackObserver:
             registration = _Registration(
                 identifier=self._next_identifier,
                 callback=callback,
+                identity=callable_identity(callback),
                 wrapper=lambda: None,
                 registered_thread=threading.current_thread().name[:_MAX_TEXT],
                 stack=bounded_call_stack(
@@ -231,7 +233,7 @@ class AtexitCallbackObserver:
         **extra,
     ) -> None:
         payload = {
-            "callback": callable_identity(registration.callback),
+            "callback": registration.identity,
             "id": registration.identifier,
         }
         if include_origin:

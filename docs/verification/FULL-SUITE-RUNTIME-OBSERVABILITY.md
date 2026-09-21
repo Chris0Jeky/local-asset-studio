@@ -25,7 +25,7 @@ LIFETIME ATEXIT ENTER: {"callback":"test_module.block_at_shutdown","id":1,...}
 LIFETIME ATEXIT EXIT: {"callback":"test_module.clean_up","id":2,"outcome":"returned"}
 ```
 
-An `ENTER` record without the matching `EXIT` record identifies the callback in progress when the parent lifetime budget expires. Raised callbacks record only the exception type, not its message.
+An `ENTER` record without the matching `EXIT` record identifies the callback in progress when the parent lifetime budget expires. Raised callbacks record only the exception type, not its message. Callback identity is snapshotted when it is registered, so finalization never has to evaluate callback-controlled metadata before writing the `ENTER` marker.
 
 The observer preserves the public behavior relied on by tests:
 
