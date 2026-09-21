@@ -170,12 +170,25 @@
     for (const key of step.nodes) { while (used.has(String(index))) index++; mapping[key] = String(index); used.add(String(index++)); }
     await reduce([{op: 'duplicate_step', id: step.id, new_id: uuid(), name, node_ids: mapping}]);
   }
+  async function moveStep(step, direction) {
+    const doc = W.snapshot(), steps = doc?.steps || [], index = steps.findIndex(item => item.id === step.id);
+    if (index < 0) throw Error('This step is no longer in the current draft.');
+    if (direction === 'up' && index === 0 || direction === 'down' && index === steps.length - 1) return;
+    const before = direction === 'up' ? steps[index - 1].id : steps[index + 2]?.id ?? null;
+    await reduce([{op: 'move_step', id: step.id, before}]);
+    const card = [...stepsPanel.querySelectorAll('[data-step-id]')].find(item => item.dataset.stepId === step.id);
+    const preferred = card?.querySelector(`[data-step-move="${direction}"]:not(:disabled)`);
+    const available = card?.querySelector('[data-step-move]:not(:disabled)');
+    (preferred || available || card)?.focus({preventScroll: true});
+    const position = (W.snapshot()?.steps || []).findIndex(item => item.id === step.id) + 1;
+    say(`Moved ${step.name} to step ${position}. Save to Workspace to share this order; nothing was queued.`);
+  }
   function renderSteps() {
     if (mode !== 'steps') return;
     const doc = W.snapshot(); stepsPanel.replaceChildren(el('p', 'Steps are named groups over the same nodes. Disabling a step never guesses a bypass. Save and check the graph explicitly.'));
     if (!doc?.steps?.length) { stepsPanel.append(el('p', 'No named steps yet. Create one by selecting its nodes and the settings you want to expose.')); return; }
     for (const [index, step] of doc.steps.entries()) {
-      const card = el('article', null, {class: 'wf-panel wf-step-card', 'data-step-id': step.id});
+      const card = el('article', null, {class: 'wf-panel wf-step-card', 'data-step-id': step.id, tabindex: '-1'});
       card.append(el('small', `STEP ${index + 1} · ${step.nodes.length} NODES`), el('h3', step.name), el('p', step.description));
       const label = el('label', null, {class: 'wf-check'}), toggle = el('input', null, {type: 'checkbox', 'aria-label': 'Enable step ' + step.name});
       const count = step.nodes.filter(id => !doc.disabled.includes(id)).length;
@@ -183,7 +196,10 @@
       toggle.onchange = guard(() => reduce([{op: 'set_step_enabled', id: step.id, enabled: toggle.checked}])); label.append(toggle, document.createTextNode('Enable this step')); card.append(label);
       for (const c of step.controls) { const setting = el('section', null, {class: 'wf-step-setting', 'aria-label': c.name}); setting.append(el('h4', c.name)); W.field(setting, c.node, c.input); card.append(setting); }
       const actions = el('div', null, {class: 'wf-toolbar'});
-      actions.append(btn('Edit step', () => configure(step)), btn('Duplicate step', () => duplicate(step)), btn('Remove grouping', () => reduce([{op: 'remove_step', id: step.id}])));
+      const up = btn('Move up', () => moveStep(step, 'up')), down = btn('Move down', () => moveStep(step, 'down'));
+      up.dataset.stepMove = 'up'; down.dataset.stepMove = 'down';
+      up.disabled = index === 0; down.disabled = index === doc.steps.length - 1;
+      actions.append(up, down, btn('Edit step', () => configure(step)), btn('Duplicate step', () => duplicate(step)), btn('Remove grouping', () => reduce([{op: 'remove_step', id: step.id}])));
       for (const id of step.nodes) actions.append(btn('Inspect node ' + id, () => { view('nodes'); W.inspect(id); }));
       card.append(actions); stepsPanel.append(card);
     }

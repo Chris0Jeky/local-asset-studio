@@ -53,6 +53,9 @@ def run(output):
                     page.wait_for_function('!!selected && schemaAvailable')
                     page.evaluate("showView('create');selectPreset('anima-portrait')")
                     page.wait_for_selector('#dependencies [data-install="curated"]', state='attached')
+                    page.wait_for_selector('#workshopInspect', state='attached')
+                    page.locator('#workshopInspect > summary').click()
+                    page.evaluate("document.querySelector('#dependencies').closest('details').open=true")
                     panel = page.locator('#dependencies')
                     assert panel.locator('[data-install]').count() == 1
                     assert panel.locator('[data-install="manual-patch"]').count() == 0

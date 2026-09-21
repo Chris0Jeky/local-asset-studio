@@ -22,7 +22,7 @@ function openCollection(id=null){
   const col=id?assetState.collections.find(c=>c.id===id):null;
   if(id&&!col){if($('#collectionDialog').open)collectionStatus('This collection is no longer in the loaded Workspace. Your current edits were kept.',true);else assetMessage('Collection unavailable. Refresh the library to check it.',true);return false;}
   if($('#collectionDialog').open){if(collectionSession?.id===id)return true;if(!collectionCanLeave())return false;}
-  const s={id,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},busy:false,uncertain:false};
+  const s={id,revision:col?.revision,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},busy:false,uncertain:false};
   collectionSession=s;collectionEditing=id;
   // A close event from the previous session may still be queued. The new session owns its control state.
   $('#collectionName').disabled=$('#collectionDescription').disabled=false;
@@ -43,7 +43,11 @@ async function saveCollectionChange(action){
     const text='Remove collection “'+s.baseline.name+'”? This removes its grouping, including membership links, but keeps all original assets and recipes.'+(collectionDirty(s)?' Unsaved name and description edits will be discarded.':'');
     if(!window.confirm(text))return;
   }
-  const payload={action:action==='delete'?'delete':s.id?'rename':'create',id:s.id,workspace_id:s.scope,...(action==='delete'?{}:saved)};
+  if(s.id&&(!Number.isSafeInteger(s.revision)||s.revision<1||s.revision>=Number.MAX_SAFE_INTEGER)){collectionStatus('A valid writable collection revision is unavailable. Keep these edits, then refresh and inspect the saved collection before reopening it.',true);return;}
+  if(typeof crypto.randomUUID!=='function'){collectionStatus('A secure request identity is unavailable. Open the local Studio in a supported secure browser context; no save was sent.',true);return;}
+  const payload={format:'studio.collection-command/v1',request_id:crypto.randomUUID(),workspace_id:s.scope,
+    action:action==='delete'?'delete':s.id?'rename':'create',...(s.id?{id:s.id,expected_revision:s.revision}:{}),...(action==='delete'?{}:saved)};
+  s.pending=payload; // Session-only evidence; durable browser recovery remains a separate workflow.
   s.busy=true;collectionControls();
   // Pause destructive writes; ordinary saves preserve any newer typing separately.
   $('#collectionName').disabled=$('#collectionDescription').disabled=action==='delete';
@@ -52,9 +56,16 @@ async function saveCollectionChange(action){
   try{
     const request=api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
     const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{const e=Error('The request timed out.');e.name='AbortError';reject(e);controller.abort();},15000);});
-    const result=await Promise.race([request,deadline]);
+    const reply=await Promise.race([request,deadline]);
     if(!collectionCurrent(s))return;
-    if(!result||result.workspace_id!==s.scope||!/^[0-9a-f]{32}$/.test(result.id||'')||(s.id&&result.id!==s.id)||(action==='delete'?result.deleted!==true:result.name!==saved.name||result.description!==saved.description))throw Error('The response did not confirm the expected collection change.');
+    const receipt=reply?.receipt,result=receipt?.result;
+    if(reply?.format!=='studio.collection-result/v1'||reply.workspace_id!==s.scope||reply.request_id!==payload.request_id||reply.status!=='committed'
+      ||receipt?.format!=='studio.collection-receipt/v1'||receipt.workspace_id!==s.scope||receipt.request_id!==payload.request_id||receipt.action!==payload.action||receipt.status!=='committed'
+      ||typeof reply.receipt_json!=='string'||!/^[0-9a-f]{64}$/.test(reply.receipt_sha256||'')||!/^[0-9a-f]{64}$/.test(receipt.request_sha256||'')
+      ||!result||!/^[0-9a-f]{32}$/.test(result.id||'')||(s.id&&result.id!==s.id)||!Number.isSafeInteger(result.revision)||result.revision!==(s.id?s.revision+1:1)
+      ||(action==='delete'?result.deleted!==true:result.deleted!==false||result.name!==saved.name||result.description!==saved.description))throw Error('The response did not confirm the expected collection change.');
+    // Adopt only the historical receipt, never the independently observed current row.
+    s.pending=null;
     if(assetState.workspace_id!==s.scope){s.uncertain=true;collectionStatus('A change was confirmed in the original Workspace, but this page now shows a different Workspace. Return there to inspect it; no automatic repeat was sent.',true);return;}
     if(action==='delete'){
       s.baseline=collectionValues();$('#collectionDialog').close();
@@ -62,7 +73,7 @@ async function saveCollectionChange(action){
       assetMessage('Collection removed. Its original assets and recipes remain in the library.');
     }else{
       const unchanged=JSON.stringify(collectionValues())===JSON.stringify(snapshot);
-      s.id=result.id;collectionEditing=result.id;s.baseline=saved;
+      s.id=result.id;s.revision=result.revision;collectionEditing=result.id;s.baseline=saved;
       if(unchanged){$('#collectionName').value=saved.name;$('#collectionDescription').value=saved.description;}
       $('#collectionDialogTitle').textContent='Edit collection';
       collectionStatus(collectionDirty(s)?'Snapshot saved. Your newer collection edits are still unsaved.':'Collection saved. Close to keep browsing, or show this collection. Your asset selection has not changed.');
@@ -70,9 +81,10 @@ async function saveCollectionChange(action){
     void refreshAssets(true);
   }catch(e){
     if(collectionCurrent(s)){
-      // Only the existing server's pre-commit validation/scope refusals are definite.
-      s.uncertain=![400,403,409].includes(e.status);
-      collectionStatus(s.uncertain?'Change not confirmed. '+(e.name==='AbortError'?'The request timed out.':e.message)+' Your edits remain here. It may already be saved; no retry was sent. Close and inspect the collection list before trying again.':'Change refused: '+e.message+' Your edits remain here.',true);
+      // Only explicit pre-commit validation, scope, CAS and quota refusals are definite.
+      s.uncertain=![400,403,404,409,428,507].includes(e.status);
+      if(!s.uncertain)s.pending=null;
+      collectionStatus(s.uncertain?'Change not confirmed. '+(e.name==='AbortError'?'The request timed out.':e.message)+' Your edits remain here. It may already be saved; no retry was sent. Request '+payload.request_id+'. Inspect its receipt and the collection list before trying again.':'Change refused: '+e.message+' Your edits remain here.',true);
     }
   }finally{
     clearTimeout(timer);s.busy=false;
