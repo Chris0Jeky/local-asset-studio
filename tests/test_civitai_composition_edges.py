@@ -95,11 +95,12 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertEqual(row['hashes']['sha256'], FILE_SHA.casefold())
         self.assertEqual(row['identity'], 'sha256:' + FILE_SHA.casefold())
 
-    def test_sensitive_authorization_prefix_is_refused(self):
-        value = page(query={'modelVersionId': '101', 'withMeta': 'true',
-                            'AuthorizationBearer': 'secret'})
-        with self.assertRaisesRegex(ValueError, 'sensitive query'):
-            C.normalize(request([value]))
+    def test_sensitive_query_name_variants_are_refused(self):
+        for key in ('AuthorizationBearer', 'AccessToken', 'api_key', 'password'):
+            with self.subTest(key=key):
+                value = page(query={'modelVersionId': '101', 'withMeta': 'true', key: 'secret'})
+                with self.assertRaisesRegex(ValueError, 'sensitive query'):
+                    C.normalize(request([value]))
 
     def test_identical_duplicate_image_merges_receipts_with_one_observation(self):
         first = page([image()], sha='c' * 64)
@@ -120,6 +121,43 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertEqual(len(result['combinations']), 2)
         self.assertNotIn('conflicting_duplicate_image',
                          [item['code'] for item in result['diagnostics']])
+
+    def test_cursor_pages_share_one_scope_and_complete_a_retained_chain(self):
+        first = page([image()], query={'modelVersionId': '101', 'withMeta': 'true',
+                                      'browsingLevel': '31', 'limit': 1}, sha='c' * 64)
+        first['payload']['metadata']['nextCursor'] = 'next-page'
+        second = page([copy.deepcopy(image())],
+                      query={'modelVersionId': '101', 'withMeta': 'true',
+                             'browsingLevel': '31', 'limit': 1, 'cursor': 'next-page'},
+                      sha='d' * 64)
+        result = C.normalize(request([first, second]))
+        self.assertTrue(result['coverage_complete'])
+        self.assertEqual(len(result['image_observations']), 1)
+        self.assertEqual(len(result['combinations']), 1)
+        scope_query = result['combinations'][0]['source_scope']['query']
+        self.assertNotIn('cursor', scope_query); self.assertNotIn('limit', scope_query)
+        self.assertEqual(result['combinations'][0]['receipt_sha256s'],
+                         ['c' * 64, 'd' * 64])
+        self.assertNotIn('pagination_incomplete',
+                         [item['code'] for item in result['diagnostics']])
+
+    def test_missing_pagination_metadata_is_unknown_not_complete(self):
+        value = page(); del value['payload']['metadata']
+        result = C.normalize(request([value]))
+        self.assertFalse(result['coverage_complete'])
+        self.assertIn('pagination_metadata_missing',
+                      [item['code'] for item in result['diagnostics']])
+
+    def test_unknown_source_outcome_is_retained_as_incomplete(self):
+        result = C.normalize(request([page([], outcome='unknown')]))
+        self.assertFalse(result['coverage_complete'])
+        self.assertIn('source_unknown', [item['code'] for item in result['diagnostics']])
+        self.assertEqual(result['source_receipts'][1]['outcome'], 'unknown')
+
+    def test_direct_input_is_bounded_like_the_cli(self):
+        value = request(); value['model_version']['payload']['ignored'] = 'x' * C.MAX_INPUT_BYTES
+        with self.assertRaisesRegex(ValueError, 'exceeds 1 MiB'):
+            C.normalize(value)
 
 
 if __name__ == '__main__': unittest.main()
