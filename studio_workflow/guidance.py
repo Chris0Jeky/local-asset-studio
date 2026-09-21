@@ -16,8 +16,8 @@ import re
 from urllib.parse import urlsplit
 
 from .core import canonical, decode, digest, need
-from .model_contracts import FOLDERS, MODEL_INPUT_FOLDERS
-from .preset_adapter import CONTROLS, equivalent, graph_inputs
+from .model_contracts import ANNOTATOR_SELECTIONS, FOLDERS, MODEL_INPUT_FOLDERS
+from .preset_adapter import CONTROLS, SOURCE_KEYS, equivalent, graph_inputs
 
 FORMAT = 'studio.settings-guidance/v1'
 KINDS = {'creator_documentation', 'local_observation', 'controlled_experiment', 'authored_hypothesis'}
@@ -27,6 +27,13 @@ FILE_FIELDS = {'ckpt_name': 'checkpoints', 'unet_name': 'diffusion_models',
                'control_net_name': 'controlnet', 'clip_vision_name': 'clip_vision'}
 LORA_TYPES = {'LoraLoader', 'LoraLoaderModelOnly'}
 MAX_CLAIMS = 128
+SOURCE_SCOPES = {
+    'unrecorded': 'Source scope is unrecorded; matching catalog pins do not establish exact-version guidance.',
+    'family': 'Family-level guidance is not exact-version qualification, even when catalog pins match.',
+    'exact_version': 'Declared exact-version source scope is not source authentication, runtime evidence or artistic acceptance.',
+    'local_workflow': 'Declared local-workflow scope is not source authentication or an upstream model-version recommendation.',
+}
+SOURCE_PIN = re.compile(r'(?:[a-f0-9]{40}|(?:sha256:)?[a-f0-9]{64}|civitai-version:[1-9][0-9]{0,19})')
 
 
 def text(value, limit=2000):
@@ -115,9 +122,15 @@ def validate_claim(value):
         for key in ('recommended', 'tested'):
             if setting[key] is not None: band(setting[key])
     source = value['source']
-    need(isinstance(source, dict) and set(source) == {'kind', 'locator', 'url', 'revision', 'retrieved_at'}, 'Invalid source record')
+    source_fields = {'kind', 'locator', 'url', 'revision', 'retrieved_at'}
+    need(isinstance(source, dict) and source_fields <= set(source) <= source_fields | {'scope'}, 'Invalid source record')
     need(source['kind'] in KINDS and text(source['locator'], 1000), 'Source kind and locator required')
     need(source['revision'] is None or text(source['revision'], 160), 'Invalid source revision')
+    scope = source.get('scope', 'unrecorded')
+    need(isinstance(scope, str) and scope in SOURCE_SCOPES, 'Invalid source scope')
+    if scope in ('exact_version', 'local_workflow'):
+        need(isinstance(source['revision'], str) and SOURCE_PIN.fullmatch(source['revision']),
+             'Specific source scope needs a commit/content pin or explicit provider-version identity')
     if source['url'] is not None:
         need(text(source['url'], 2000), 'Invalid source URL')
         url = urlsplit(source['url'])
@@ -148,8 +161,8 @@ def bindings(preset):
 
 def project(preset, template, controls):
     """Apply only declared scalar edits for explanation, not runtime preparation."""
-    need(preset.get('modality') == 'image' and not any(preset.get(k) for k in
-         ('reference', 'last_reference', 'reference_slots', 'requires_rgba_mask')), 'Guidance currently covers non-reference image presets')
+    need(preset.get('modality') == 'image' and not any(preset.get(k) for k in SOURCE_KEYS),
+         'Guidance currently covers non-reference image presets')
     need(isinstance(template, dict) and 0 < len(template) <= 256, 'Invalid registered graph')
     need(isinstance(controls, dict), 'Controls must be an object')
     mapped = bindings(preset); need(set(controls) <= set(mapped), 'Unsupported guidance controls')
@@ -211,6 +224,7 @@ def resource_context(graph, manifest, preset):
 
     for node, data in graph.items():
         for field, name in data.get('inputs', {}).items():
+            if (data.get('class_type'), field) in ANNOTATOR_SELECTIONS: continue  # fetched by the node into its own folder, never a library file
             folder = MODEL_INPUT_FOLDERS.get((data.get('class_type'), field), FILE_FIELDS.get(field))
             if folder is None or not isinstance(name, str) or not name: continue
             try: path = file_key(folder + '/' + name.replace('\\', '/'))
@@ -259,7 +273,8 @@ def explain(preset, template, controls, kb, manifest, today=None):
         except (ValueError, TypeError) as exc:
             diagnostics.append(str(exc)); continue
         if not any(r['file'] in by_file for r in claim['resources']): continue
-        reasons, state = [], 'applies'
+        scope = claim['source'].get('scope', 'unrecorded')
+        reasons, state = [SOURCE_SCOPES[scope]], 'applies'
         for pin in claim['resources']:
             rows = by_file.get(pin['file'], [])
             if not rows: reasons.append('Required resource is not selected: ' + pin['file']); state = 'not_applicable'
@@ -297,7 +312,7 @@ def explain(preset, template, controls, kb, manifest, today=None):
                                'assessment': 'observation_only' if setting['recommended'] is None else
                                'within' if contains(setting['recommended'], target['current']) else 'outside'})
         due = claim['review_after'] is not None and now > date.fromisoformat(claim['review_after'])
-        report = {**claim, 'applicability': state, 'reasons': reasons, 'checks': checks, 'review_due': due}
+        report = {**claim, 'applicability': state, 'reasons': reasons, 'checks': checks, 'review_due': due, 'source_scope': scope}
         claims.append(report)
         if state == 'applies':
             covered.update(r['file'] for r in claim['resources'])

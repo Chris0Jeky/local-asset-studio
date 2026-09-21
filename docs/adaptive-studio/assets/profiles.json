@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "production_status": "planned",
+  "asset_bytes_present": false,
+  "authority": "Future session must select a finite batch explicitly; this inventory performs no acquisition.",
+  "worlds": {
+    "atelier": "Atelier: warm walnut drafting desk, brushed metal lamp, linen and cream paper, evening amber light; tactile and quiet, not luxury-office photography.",
+    "arcade": "Arcade: an original indigo arcade workshop with cyan cabinet light, restrained violet trim and abstract horizon graphics; no game logos, screen text or recognizable cabinets.",
+    "sakura": "Sakura: an original plum-and-rose illustration room with a distant blossom courtyard, dark ink timber and a few drifting petals; restrained botanical atmosphere.",
+    "retro-anime": "Retro Anime / Night Shift: an original late-night animation workshop above a rain-washed city; soft CRT light, distant rail line, rose/cyan reflections, warm desk lamp and a quiet text-safe wall. Quiet Morning keeps the camera and architecture.",
+    "minimal-pro": "Minimal Pro: graphite architectural surfaces, ivory paper and diffuse daylight; almost monochrome, precise and calm, with no character or neon decoration.",
+    "sci-fi-noir": "Sci-Fi Noir: an original observatory workshop with architectural shadows, weathered steel and a remote orbital horizon; muted blue-grey with a small warm instrument glow.",
+    "shared": "Shared functional language: original geometric folio, frame, light and star motifs; neutral line work with replaceable theme accents. All real labels and state semantics stay in HTML."
+  },
+  "profiles": {
+    "scene": {
+      "master": "3840x2160 landscape target; confirm actual provider size support before generation.",
+      "deliverables": [
+        "Lossless approved scene master",
+        "1280x720 and 960x540 WebP/AVIF previews",
+        "Composition notes and normalized focal point"
+      ],
+      "safe_zone": "Keep the middle-left 60% low-detail and low-contrast. Main interest lives near the right edge; allow 12% crop overscan.",
+      "fallback": "CSS token surface until an accepted local poster exists.",
+      "budget": "Runtime preview <=300 KiB; master retained outside the runtime bundle.",
+      "motion": "Still. No status text, UI buttons, glyphs or logos."
+    },
+    "hero": {
+      "master": "3840x1600 wide crop/extension target from the approved scene, not an unrelated composition.",
+      "deliverables": [
+        "Wide lossless master",
+        "1920x800 and 960x400 encoded variants",
+        "Separate portrait crop plan"
+      ],
+      "safe_zone": "Left 60% for real HTML heading. Protect focal subject at normalized x=.78; never crop essential anatomy.",
+      "fallback": "Accepted local poster then token-only header.",
+      "budget": "Visible rendition <=250 KiB.",
+      "motion": "Still; no baked titles."
+    },
+    "wall": {
+      "master": "2400x1600 panel-wall adaptation target from the approved master.",
+      "deliverables": [
+        "Wall master",
+        "1200x800 and 600x400 low-detail renditions"
+      ],
+      "safe_zone": "Central 70% quiet; edge motifs only. No fake gauges, chart values or active controls.",
+      "fallback": "Theme background token.",
+      "budget": "Runtime <=180 KiB.",
+      "motion": "Still; texture must not reduce text contrast."
+    },
+    "quiet": {
+      "master": "3840x2160 edit target, same lens/architecture as scene anchor.",
+      "deliverables": [
+        "Quiet/daylight alternative",
+        "1280x720 local poster",
+        "Registration comparison against anchor"
+      ],
+      "safe_zone": "Preserve anchor focal zones and silhouette positions; quiet must not look like an error.",
+      "fallback": "Theme token surface.",
+      "budget": "Runtime <=300 KiB.",
+      "motion": "Still; offline-capable, also selectable while connected."
+    },
+    "poster": {
+      "master": "Extract a representative frame/crop from the approved scene or loop; do not generate independently.",
+      "deliverables": [
+        "1280x720 WebP",
+        "640x360 lightweight fallback",
+        "Focal point and source identity"
+      ],
+      "safe_zone": "Match the loop camera and object placement so fallback does not jump.",
+      "fallback": "Theme token surface with unchanged layout.",
+      "budget": "Large <=220 KiB; small <=90 KiB.",
+      "motion": "Still, suitable for reduced motion and active generation."
+    },
+    "layer": {
+      "master": "3840x2160 aligned RGBA target, matching the scene canvas; include hidden-background repair.",
+      "deliverables": [
+        "Lossless RGBA layer",
+        "1024px-wide runtime layer",
+        "Layer transform origin, depth order and coverage notes"
+      ],
+      "safe_zone": "12% overscan; aligned pixel coordinates and shared vanishing point; no baked checkerboard.",
+      "fallback": "Flattened approved poster.",
+      "budget": "Runtime layer <=220 KiB; at most three active layers; measure decoded memory.",
+      "motion": "Future transform-only displacement 2/4/6 px; off for reduced motion/coarse pointers."
+    },
+    "loop": {
+      "master": "6-10 second fixed-camera video target from the approved anchor; 1920x1080 preferred when supported.",
+      "deliverables": [
+        "Clean video master",
+        "1280x720 24fps muted MP4 and optional WebM",
+        "Matching local poster",
+        "Loop seam comparison and motion mask notes"
+      ],
+      "safe_zone": "No movement behind text-safe zones; only environmental rain/light/distant motion. No camera cuts or UI-like progress.",
+      "fallback": "Matching local poster is required before activation.",
+      "budget": "Runtime loop <=4 MiB; one decorative video maximum.",
+      "motion": "No audio track; no flashes; user pause; pause while jobs active/uncertain or tab hidden."
+    },
+    "card": {
+      "master": "1024x1024 square crop target of accepted scene; retain a distinct silhouette.",
+      "deliverables": [
+        "512x512 WebP preview",
+        "256x256 thumbnail"
+      ],
+      "safe_zone": "No text; tiny-size contrast and coherent crop across skins.",
+      "fallback": "Theme swatch plus HTML skin name.",
+      "budget": "512px <=80 KiB; 256px <=30 KiB.",
+      "motion": "Still."
+    },
+    "workflow": {
+      "master": "1200x900 original conceptual vignette, consistent camera and accent family.",
+      "deliverables": [
+        "Lossless master",
+        "600x450 WebP",
+        "Separate caption and concept-only provenance"
+      ],
+      "safe_zone": "Simple silhouette and quiet lower third for HTML caption; never depict a fake successful output.",
+      "fallback": "Semantic icon plus real task name.",
+      "budget": "Runtime <=100 KiB.",
+      "motion": "Still; later tutorial is a separate real capture."
+    },
+    "empty": {
+      "master": "768x512 isolated original geometric illustration on true alpha.",
+      "deliverables": [
+        "RGBA master",
+        "384x256 WebP/PNG",
+        "Alt/caption recommendation based on actual placement"
+      ],
+      "safe_zone": "No text, sad/error anthropomorphism or hidden instructions. State remains an HTML label.",
+      "fallback": "CSS icon/label.",
+      "budget": "Runtime <=60 KiB.",
+      "motion": "Still by default; no looping loading spin baked into an image."
+    },
+    "reference": {
+      "master": "1024x1024 or 1024x1536 canonical original example target depending on subject.",
+      "deliverables": [
+        "Master",
+        "320px thumbnail",
+        "Role, crop and example-not-evidence caption"
+      ],
+      "safe_zone": "Clear subject; neutral framing; no template lettering. Any person is an original adult.",
+      "fallback": "Role icon plus upload control.",
+      "budget": "Thumbnail <=50 KiB.",
+      "motion": "Still; not a biometric or pose-accuracy claim."
+    },
+    "foundation": {
+      "master": "Editable code/vector source, not a generated raster image.",
+      "deliverables": [
+        "Semantic HTML/CSS or hand-authored SVG",
+        "Token/variant specification",
+        "Keyboard, contrast and forced-colors checks"
+      ],
+      "safe_zone": "Do not encode labels, state or focus rings into raster art.",
+      "fallback": "Native semantic element.",
+      "budget": "Measure actual source/build cost; no image payload required.",
+      "motion": "CSS/WAAPI only when needed; immediate reduced-motion alternative."
+    },
+    "guide": {
+      "master": "768x768 original nonhuman folio-and-star companion, true alpha, consistent silhouette.",
+      "deliverables": [
+        "Layered/vector or RGBA master",
+        "192px and 96px renderings",
+        "Expression-state sheet with separate labels"
+      ],
+      "safe_zone": "No speech baked into art. Do not sit over buttons or validation. Avoid visual age/sexualization ambiguity by using a nonhuman motif.",
+      "fallback": "Small abstract accent or no companion.",
+      "budget": "192px <=40 KiB.",
+      "motion": "Still; optional expression transition, never required to understand help."
+    },
+    "tutorial": {
+      "master": "Actual UI recording after the named workflow exists and is qualified; target 1280x720.",
+      "deliverables": [
+        "15-40 second silent/manual-play clip",
+        "WebVTT captions and plain transcript",
+        "Poster, exact app commit and synthetic/public fixture provenance"
+      ],
+      "safe_zone": "No private prompts, paths, tokens or user images; pointer/focus must be readable at half size.",
+      "fallback": "Text steps and still poster.",
+      "budget": "Target <=8 MiB per clip; lazy-load after explicit play.",
+      "motion": "Record the real UI. No generated fake software demonstration or claimed inference."
+    },
+    "promo": {
+      "master": "2400x1260 original marketing composition target or truthful assembled product capture.",
+      "deliverables": [
+        "Master with separate editable text layer",
+        "1200x630 and 1600x900 variants",
+        "Source/claim review notes"
+      ],
+      "safe_zone": "Reserve left 55% for typeset copy; examples clearly labelled; no fabricated capability badges.",
+      "fallback": "Typography and theme tokens.",
+      "budget": "Runtime <=250 KiB.",
+      "motion": "Still unless explicitly commissioned as a separate clip."
+    },
+    "audio": {
+      "master": "Optional original mono/stereo 48kHz WAV master with conservative headroom.",
+      "deliverables": [
+        "Lossless master",
+        "Small Ogg/MP3 rendition",
+        "Duration, peak/loudness and permission receipt"
+      ],
+      "safe_zone": "No speech, recognizable music, startling peaks or hidden alerts; semantic feedback also visible.",
+      "fallback": "Silence; audio defaults off.",
+      "budget": "Cue target <=80 KiB encoded; ambient bed <=2 MiB.",
+      "motion": "Separate opt-in playback; respect mute; never autoplay with a theme."
+    },
+    "motion": {
+      "master": "Declarative motion token/timeline and code example, not a mandatory video asset.",
+      "deliverables": [
+        "Editable CSS/WAAPI specification",
+        "Reduced-motion equivalent",
+        "Lifecycle/pause/cleanup test cases"
+      ],
+      "safe_zone": "No scroll hijack, changing hit targets, flashing or state encoded only by motion.",
+      "fallback": "Immediate static state transition.",
+      "budget": "No extra rendering library without measured need.",
+      "motion": "Use the durations and resource precedence in ../AMBIENCE.md."
+    },
+    "sample": {
+      "master": "Original public-safe controlled sample set; target 1024px images with documented shared anchors.",
+      "deliverables": [
+        "Source masters and thumbnails",
+        "Manifest of roles and intended comparisons",
+        "Example-only captions and any actual execution receipts separately"
+      ],
+      "safe_zone": "Original adult characters where present; no copyrighted franchise, private input or implied model qualification.",
+      "fallback": "Text/diagram explaining the workflow.",
+      "budget": "Lazy thumbnails <=60 KiB each; masters outside app bundle.",
+      "motion": "Stills unless the individual request explicitly asks for a recorded sequence."
+    }
+  }
+}

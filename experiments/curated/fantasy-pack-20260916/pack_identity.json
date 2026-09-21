@@ -1,0 +1,89 @@
+[
+ {
+  "id": "d0e8524e-173c-4a26-99bc-d5e4fdb80197",
+  "status": "completed",
+  "preset_id": "flux-edit",
+  "prompt_ids": [
+   "aac58ca7-f12b-4591-816b-2933f391fb82"
+  ],
+  "outputs": [
+   {
+    "filename": "FLUX-Edit_00010_.png",
+    "subfolder": "Verified",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "aac58ca7-f12b-4591-816b-2933f391fb82",
+    "media_type": "image",
+    "asset_id": "0c499b4602f35af7b0910905736cc98c"
+   }
+  ],
+  "elapsed_seconds": 64.49946355819702,
+  "error": null,
+  "parent_assets": [
+   "021731c057d955b4a2487395a37fadf6"
+  ],
+  "references": [],
+  "step": "expression",
+  "controls": {
+   "positive": "Change one thing: change her expression to a warm, surprised smile with raised eyebrows and the mouth slightly open. Keep everything else exactly as it is: the character, the pose, the face and expression, the hair, the clothing and its colours, the background and the rendering style.",
+   "reference": "d15b782c2fa045269c8f79cec19d3908_Anima-v1-Baseline_00004_.png.png",
+   "seed": 2026091301,
+   "width": 832,
+   "height": 1216
+  },
+  "source_asset": "021731c057d955b4a2487395a37fadf6"
+ },
+ {
+  "id": "18a4f441-b504-44cf-9a1b-9baca4480fe0",
+  "status": "completed",
+  "preset_id": "combine-klein-9b-depth",
+  "prompt_ids": [
+   "a257dc56-5f1f-43f4-a6c2-b83b0a0fe05a"
+  ],
+  "outputs": [
+   {
+    "filename": "Klein-9B-depth_00005_.png",
+    "subfolder": "Combine",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "a257dc56-5f1f-43f4-a6c2-b83b0a0fe05a",
+    "media_type": "image",
+    "asset_id": "7a8a5d27c1975ced96ff3d04f2fc7d03"
+   }
+  ],
+  "elapsed_seconds": 107.11719226837158,
+  "error": null,
+  "parent_assets": [
+   "021731c057d955b4a2487395a37fadf6",
+   "025678cadf5750bf9a3bfa8ed62e6590"
+  ],
+  "references": [
+   {
+    "file": "9c880763266a454091725b57ad392762_Anima-v1-Baseline_00005_.png.png",
+    "sha256": "71a348c0cb92e77d1bc242ba142965c185761b43f8d2d0c4f4c643cbfbd88b4f",
+    "bytes": 1158496,
+    "width": 832,
+    "height": 1216,
+    "role": "pose",
+    "slot": 1,
+    "contribution": "",
+    "avoid": "",
+    "transform": {
+     "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+    }
+   }
+  ],
+  "step": "fullbody",
+  "controls": {
+   "positive": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: standing upright facing the viewer, full body from head to boots, holding a brass lantern down at her right side, her left hand on the strap of a satchel over her shoulder; the camera at chest height, straight on. Draw the dark-haired woman in the navy coat from image 2, the same face, hair and earrings from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a navy double-breasted travelling coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+   "last_reference": "d15b782c2fa045269c8f79cec19d3908_Anima-v1-Baseline_00004_.png.png",
+   "seed": 2026091301,
+   "width": 1024,
+   "height": 1536
+  },
+  "source_assets": [
+   "021731c057d955b4a2487395a37fadf6",
+   "025678cadf5750bf9a3bfa8ed62e6590"
+  ]
+ }
+]

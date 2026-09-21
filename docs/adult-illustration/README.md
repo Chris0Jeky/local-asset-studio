@@ -1,6 +1,6 @@
 # Controlled adult illustration
 
-Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`.
+Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The foundation source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`; the prompt/source-intelligence continuation is based on `d73f67db48257e635def2170b67cefd6a3165098`, the read-only discovery continuation is based on `88d777bca26ec36e248e2606834789e19cbece08`, the immutable taxonomy intake is based on `e2d6970a5852c923738892714c1b75567a018b44`, and the explicit provider-metadata transport is layered on that same source-snapshot baseline.
 
 The objective is not a single “best” checkpoint or style LoRA. The Studio should turn a short brief and optional references into an inspectable plan that separates:
 
@@ -21,21 +21,30 @@ This foundation is non-executing:
 - no generation or training allowance is created;
 - no private reference or artwork is committed;
 - no route is called installed, 16 GB compatible, unrestricted or promoted;
-- no planning or benchmark-result record grants runtime or promotion authority.
+- no planning, taxonomy, prompt-projection or benchmark-result record grants runtime or promotion authority;
+- validation, import, startup and CI never contact a model provider;
+- the separate live metadata CLI requires an explicit `--allow-network` flag and can reach only reviewed JSON metadata endpoints without credentials;
+- the acquisition-plan CLI reads retained local snapshots only and emits exact dry-run arguments without invoking a downloader.
 
 It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence, Workflow Studio, Production, character consistency and Repair Studio. It does not add another model registry, workflow store, queue, executor, review database or painting canvas.
 
 ## Validate the foundation
 
-Run the standard-library-only offline gates before changing a programme manifest or benchmark-result contract:
+Run the standard-library-only offline gates before changing a programme manifest, deterministic prompt profile, taxonomy review or benchmark-result contract:
 
 ```console
 python scripts/validate_adult_illustration.py
+python scripts/validate_adult_illustration_intelligence.py
 python scripts/validate_adult_illustration_benchmark_result.py
+python scripts/studio_adult_illustration_research.py programme-status
+python scripts/studio_adult_illustration_prompt.py profiles
+python scripts/studio_adult_illustration_taxonomy.py source
+python scripts/studio_adult_illustration_source_fetch.py --help
+python scripts/studio_adult_illustration_acquisition_plan.py --help
 python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The benchmark-result validator additionally binds the result to exact corpus and route-manifest Git blobs, requires complete candidate retention and accounting, keeps failure classes distinct, preserves null-versus-zero measurement semantics, and refuses synthetic or machine-only promotion. Neither validator inspects installed models, calls the network or submits generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. The benchmark-result validator binds the result to exact corpus and route-manifest Git blobs, requires complete candidate retention and accounting, keeps failure classes distinct, preserves null-versus-zero measurement semantics, and refuses synthetic or machine-only promotion. The prompt compiler adds deterministic route-specific text while keeping non-prompt controls unresolved. The taxonomy intake separates the exact upstream CSV identity from a finite Studio review and grants no blanket compilation authority. The source-fetch and acquisition-plan help commands exercise argument registration only and perform no provider access. None inspects installed models, calls a provider, downloads bytes or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -45,14 +54,34 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | --- | --- |
 | Product and component boundaries | [Architecture](ARCHITECTURE.md) |
 | Independent creative controls | [Control ontology](CONTROL-ONTOLOGY.md) |
+| Practical art direction, route stages, LoRA arsenal and genres | [Controlled art direction](CONTROLLED-ART-DIRECTION.md) |
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
+| Prompt dialects, vocabulary and analyzers | [Prompt and tag intelligence](PROMPT-AND-TAG-INTELLIGENCE.md) |
+| Deterministic Animagine/Anima/Qwen profile compiler | [Prompt profiles](PROMPT-PROFILES.md) |
+| Immutable anime taxonomy source and finite review | [Taxonomy intake](TAXONOMY-INTAKE.md) |
+| Inspect compiled terms against retained source membership | [Taxonomy membership inspection](TAXONOMY-MEMBERSHIP-INSPECTION.md) |
+| Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
+| Offline bounded provider-response snapshot adapters | [Source snapshots](SOURCE-SNAPSHOTS.md) |
+| Explicit bounded public provider-metadata GETs and cache | [Source transport](SOURCE-TRANSPORT.md) |
+| Deterministic local snapshot-to-acquisition planning | [Acquisition handoff](ACQUISITION-HANDOFF.md) |
+| Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
+| Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
+| Adult intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
+| Read-only catalogs and comparison plans | [Research discovery](RESEARCH-DISCOVERY.md) |
 | Delivery order and issue ownership | [Implementation plan](IMPLEMENTATION-PLAN.md) |
 | Primary-source ledger | [Sources](SOURCES.md) |
 | Machine-readable navigation | [`research/adult-illustration/programme.json`](../../research/adult-illustration/programme.json) |
 | Control vocabulary | [`control-ontology.json`](../../research/adult-illustration/control-ontology.json) |
 | Route research candidates | [`route-candidates.json`](../../research/adult-illustration/route-candidates.json) |
+| Prompt dialect candidates | [`prompt-dialects.json`](../../research/adult-illustration/prompt-dialects.json) |
+| Pinned first prompt profiles and proof vocabulary | [`prompt-profile-vocabulary.json`](../../research/adult-illustration/prompt-profile-vocabulary.json) |
+| Immutable taxonomy source contract | [`taxonomy-source.json`](../../research/adult-illustration/taxonomy-source.json) |
+| Finite Studio taxonomy review | [`taxonomy-review.json`](../../research/adult-illustration/taxonomy-review.json) |
+| Tag-vocabulary contract | [`tag-vocabulary-example.json`](../../research/adult-illustration/tag-vocabulary-example.json) |
+| Technique candidates/watchlist | [`technique-candidates.json`](../../research/adult-illustration/technique-candidates.json) |
+| Source-intake contract examples | [`source-intake-example.json`](../../research/adult-illustration/source-intake-example.json) |
 | Held-out task declarations | [`benchmark-corpus.json`](../../research/adult-illustration/benchmark-corpus.json) |
 | Result/accounting contract example | [`benchmark-result-example.json`](../../research/adult-illustration/benchmark-result-example.json) |
 | Composable genre starts | [`genre-packs.json`](../../research/adult-illustration/genre-packs.json) |
@@ -60,11 +89,11 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 
 ## Programme gates
 
-1. **A0 — contracts:** intent/control ontology, source-evidence candidates, 21-case finite corpus, result/accounting contract, validators and agent runbook.
+1. **A0 — contracts:** intent/control ontology, source-reviewed candidates, provider/source provenance, prompt dialect/vocabulary contracts, 21-case finite corpus, result/accounting contract, validators and agent runbook.
 2. **A1 — controlled vertical slice:** one approved adult original character; authored pose and silhouette; role-separated appearance; fast-preview versus quality comparison.
 3. **A2 — modular controls:** qualified identity, outfit, body/proportion, expression, style/material and acceleration adapters plus authored geometry.
 4. **A3 — multi-reference and multi-subject:** explicit slot ownership, regional plans and one accepted two-adult contact/prop scene.
-5. **A4 — genre portfolio:** transparent packs for editorial, fashion, swim, hot-spring, lounge, fantasy, sci-fi, street, comedy, action, manga, sheets and repair.
+5. **A4 — genre portfolio:** transparent packs for editorial, fashion, swim, hot-spring, lounge, athletic/stretch, fantasy, sci-fi, street, comedy, action, manga, sheets and repair.
 6. **A5 — training and finishing:** one justified isolated LoRA experiment and one accepted repair/upscale/export chain.
 7. **A6 — shared operation:** revisioned UI/CLI/SDK/MCP parity with explicit approval and durable evidence.
 
@@ -74,6 +103,13 @@ These are evidence gates, not dates.
 
 Every programme intent must declare unambiguous adult subject status through reviewed user/canon metadata. A vision model or visual appearance cannot establish age or consent. Ambiguous or youthful identity is refused instead of “fixed” through negative prompting. Multi-adult intimate test cases additionally require an explicit consent-context declaration. Public fixtures are synthetic and non-explicit; broader content classes remain route-specific reviewed declarations.
 
-## Next useful slice
+## Next useful slices
 
-Map the validated ontology onto the existing `CreativeIntent` and reviewed setup contracts (#404). Do not begin with downloads or a broad model shelf. The first runtime work is a finite comparison of existing routes plus a small Anima/SDXL/Qwen shortlist under #405 and #409, using the existing coordinator and exact evidence rules.
+1. Review/merge the stacked foundation, validator, intent-projection, offline CLI, intelligence, discovery, source-snapshot, explicit source-transport and acquisition-handoff PRs in order.
+2. Review the #437 immutable taxonomy, taxonomy-aware compiler and optional membership-inspection slices in stack order. Pin exact installed tokenizers before exact token-count claims.
+3. Compile only explicitly reviewed source selections into the [zero-authority acquisition-plan boundary](ACQUISITION-HANDOFF.md). A transport receipt, snapshot or plan is not download authority.
+4. Qualify unchanged/manual/taxonomy-assisted prompts under #37/#409; software tests alone do not prove artistic benefit.
+5. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact evidence work; do not treat a plan as authorization.
+6. Reconcile installed routes and execute the finite Anima/SDXL/Qwen campaign only through #405/#439 and the existing coordinator.
+7. Qualify LoRA/slider intervals and interference under #406/#440 before exposing continuous Studio controls.
+8. Build the first transparent Guided genre journey under #410 from promoted modules rather than an opaque mega-prompt.

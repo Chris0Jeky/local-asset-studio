@@ -1,6 +1,7 @@
 """Finite, descriptive comparisons of pinned job observations; no execution path."""
 from __future__ import annotations
 
+import copy
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,53 @@ MAX_REPORT_BYTES = 1024 * 1024
 CONDITIONS = ('unspecified', 'cold_process', 'cold_first_generation', 'warm_same_model', 'model_switch')
 
 
+def encode_report(report):
+    """Serialize exactly the bytes enforced by the report-size contract and CLI."""
+    return (json.dumps(report, ensure_ascii=True, allow_nan=False, separators=(',', ':')) + '\n').encode('utf-8')
+
+
+def _compact_row(row):
+    return {'expected_job_id': row['expected_job_id'],
+            'expected_result_sha256': row['expected_result_sha256'],
+            'state': row['state'], 'reasons': list(row['reasons']), 'observation': None}
+
+
+def _compact_comparison(value):
+    warnings = sorted(set(value['warnings']) | {'report_metrics_omitted'})
+    return {'state': value['state'], 'blockers': list(value['blockers']), 'warnings': warnings,
+            'observed_differences': list(value['observed_differences']), 'host_metrics': {}, 'devices': [],
+            'coordinator_elapsed_delta_seconds': value['coordinator_elapsed_delta_seconds']}
+
+
+def _compact_report(result):
+    compact = {key: value for key, value in result.items() if key != 'pairs'}
+    compact['report_compacted'] = True
+    compact['pairs'] = [
+        {'id': pair['id'], 'declared_condition': pair['declared_condition'],
+         'condition_verified': pair['condition_verified'], 'qualified_benchmark': pair['qualified_benchmark'],
+         'baseline': _compact_row(pair['baseline']), 'candidate': _compact_row(pair['candidate']),
+         'comparison': _compact_comparison(pair['comparison'])}
+        for pair in result['pairs']
+    ]
+    compact['limitations'] = list(compact['limitations']) + [
+        'Detailed observation payloads and metric tables were omitted to keep the retained row report within its byte bound.'
+    ]
+    return compact
+
+
+def _fit_report(result):
+    if len(encode_report(result)) <= MAX_REPORT_BYTES:
+        return result
+    compact = _compact_report(result)
+    require(len(encode_report(compact)) <= MAX_REPORT_BYTES, 'report_too_large')
+    return compact
+
+
+def _trial_identity(trial):
+    return (trial['job_id'], trial['result_sha256'],
+            os.path.normcase(os.path.abspath(trial['directory'])))
+
+
 def _manifest(raw, parent):
     plan = parse_document(raw)
     require(isinstance(plan, dict) and set(plan) == {'schema', 'generation_allowance', 'pairs'}
@@ -23,12 +71,14 @@ def _manifest(raw, parent):
             and plan['generation_allowance'] == 0, 'plan_invalid')
     pairs = plan['pairs']
     require(isinstance(pairs, list) and 1 <= len(pairs) <= MAX_PAIRS, 'pair_limit_invalid')
-    ids, jobs, pins, paths = set(), set(), set(), set()
+    ids = set()
+    component_owners = {'job_id': {}, 'result_sha256': {}, 'directory': {}}
     for pair in pairs:
         require(isinstance(pair, dict) and set(pair) == {'id', 'condition', 'baseline', 'candidate'}
                 and is_id(pair['id']) and pair['id'] not in ids
                 and pair['condition'] in CONDITIONS, 'pair_invalid')
         ids.add(pair['id'])
+        pair_identities = {}
         for side in ('baseline', 'candidate'):
             trial = pair[side]
             require(isinstance(trial, dict) and set(trial) == {'directory', 'result_sha256', 'job_id'}
@@ -38,12 +88,15 @@ def _manifest(raw, parent):
             path = Path(trial['directory'])
             if not path.is_absolute(): path = parent / path
             # Do not resolve symlinks: the inspector must still see and refuse them.
-            path = path.absolute()
-            normalized = os.path.normcase(os.path.abspath(path))
-            require(trial['job_id'] not in jobs and trial['result_sha256'] not in pins
-                    and normalized not in paths, 'duplicate_trial_evidence')
-            jobs.add(trial['job_id']); pins.add(trial['result_sha256']); paths.add(normalized)
-            trial['directory'] = path
+            trial['directory'] = path.absolute()
+            identity = _trial_identity(trial)
+            for component, value in (('job_id', identity[0]), ('result_sha256', identity[1]),
+                                     ('directory', identity[2])):
+                previous = component_owners[component].get(value)
+                require(previous is None or previous == identity, 'duplicate_trial_evidence')
+                component_owners[component][value] = identity
+            pair_identities[side] = identity
+        require(pair_identities['baseline'] != pair_identities['candidate'], 'duplicate_trial_evidence')
     return pairs
 
 
@@ -65,14 +118,18 @@ def _reject_reused_prompts(pairs):
         for side in ('baseline', 'candidate'):
             row = pair[side]
             if row['state'] != 'verified': continue
+            identity = (row['expected_job_id'], row['expected_result_sha256'])
             for item in row['observation']['submissions']:
                 pin = item['prompt_id_sha256']
-                if pin is not None: owners.setdefault(pin, []).append(row)
-    for rows in owners.values():
-        if len(rows) > 1:
-            for row in rows:
-                row['state'] = 'invalid'
-                if 'reused_prompt_evidence' not in row['reasons']: row['reasons'].append('reused_prompt_evidence')
+                if pin is not None: owners.setdefault(pin, {}).setdefault(identity, []).append(row)
+    for identities in owners.values():
+        if len(identities) > 1:
+            for rows in identities.values():
+                for row in rows:
+                    row['state'] = 'invalid'
+                    row['observation'] = None
+                    if 'reused_prompt_evidence' not in row['reasons']:
+                        row['reasons'].append('reused_prompt_evidence')
 
 
 def _metric(a, b):
@@ -98,7 +155,9 @@ def _compare(a, b):
     if _workload(left) != _workload(right): result['blockers'].append('saved_workload_mismatch')
     if not sa['sampling']['observed'] or not sb['sampling']['observed']: result['blockers'].append('no_observed_samples')
     if sa['source']['sampler_sha256'] != sb['source']['sampler_sha256']: result['blockers'].append('sampler_source_mismatch')
-    if any('intent_sequence_gap' in r['warnings'] for r in (left, right)): result['blockers'].append('intent_sequence_gap')
+    for warning in ('intent_sequence_gap', 'sample_window_overshoot'):
+        if any(warning in report['warnings'] for report in (left, right)):
+            result['blockers'].append(warning)
     if ra is None or rb is None or ra['lost'] or rb['lost']: result['blockers'].append('runtime_bracket_unavailable')
     if sa['sampling']['interval_seconds_after_completion'] != sb['sampling']['interval_seconds_after_completion']:
         result['warnings'].append('different_sampling_interval')
@@ -135,11 +194,21 @@ def compare_observations(manifest: str | Path) -> dict:
     path = Path(manifest).absolute()
     raw = read_evidence_file(path, MAX_PLAN_BYTES)
     requested = _manifest(raw, path.parent)
+    inspected = {}
+
+    def inspect_once(trial):
+        identity = _trial_identity(trial)
+        if identity not in inspected: inspected[identity] = _inspect(trial)
+        return copy.deepcopy(inspected[identity])
     pairs = [{'id': pair['id'], 'declared_condition': pair['condition'], 'condition_verified': False,
-              'qualified_benchmark': False, 'baseline': _inspect(pair['baseline']), 'candidate': _inspect(pair['candidate'])}
+              'qualified_benchmark': False, 'baseline': inspect_once(pair['baseline']),
+              'candidate': inspect_once(pair['candidate'])}
              for pair in requested]
     _reject_reused_prompts(pairs)
-    counts = {'requested_pairs': len(pairs), 'requested_observations': 2 * len(pairs), 'verified_observations': 0,
+    dropped_prompt = any('reused_prompt_evidence' in pair[side]['reasons']
+                         for pair in pairs for side in ('baseline', 'candidate'))
+    counts = {'requested_pairs': len(pairs), 'requested_observations': 2 * len(pairs),
+              'unique_observations': len(inspected), 'verified_observations': 0,
               'invalid_observations': 0, 'incomplete_observations': 0, 'descriptive_pairs': 0, 'withheld_pairs': 0}
     for pair in pairs:
         for side in ('baseline', 'candidate'): counts[pair[side]['state'] + '_observations'] += 1
@@ -148,6 +217,7 @@ def compare_observations(manifest: str | Path) -> dict:
     result = {'schema': SCHEMA, 'manifest_sha256': sha256(raw), 'counts': counts, 'pairs': pairs,
               'evidence_complete': counts['verified_observations'] == counts['requested_observations'],
               'qualified_benchmark': False, 'execution_authority': False, 'generation_allowance_added': 0,
+              'report_compacted': False,
               'limitations': [
                   'All differences are descriptive candidate minus baseline observations, not causal gains or policy.',
                   'Cold/warm labels are caller declarations, never verified starting conditions.',
@@ -155,9 +225,11 @@ def compare_observations(manifest: str | Path) -> dict:
                   'Sample counts and timing differ; sampled extrema can miss peaks and do not reserve resources.',
                   'Device indices do not prove identical hardware; working sets and memory domains are not summed.',
                   'Coordinator snapshots are not authoritative final outcomes; elapsed time is not inference phase time.',
-                  'Every requested observation is retained; no success-only averages or pooled performance claims.',
+                  'Every requested pair slot is retained; exact shared bindings are inspected once and reported in each pair.',
+                  'No success-only averages or pooled performance claims are produced.',
                   'Finite benchmark execution and full trial identity remain separate from this offline report.'
               ]}
-    require(len(json.dumps(result, ensure_ascii=True, allow_nan=False).encode('utf-8')) <= MAX_REPORT_BYTES,
-            'report_too_large')
-    return result
+    if dropped_prompt:
+        result['limitations'].append(
+            'Observation payloads were omitted on rows whose received prompt identity was reused; those rows keep reasons including reused_prompt_evidence.')
+    return _fit_report(result)

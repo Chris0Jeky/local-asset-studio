@@ -88,7 +88,7 @@ def run(output):
                         expect(page.locator('#rr-apply')).to_be_disabled()
                         page.locator('#rr-preview').click(); expect(page.locator('#rr-apply')).to_be_enabled()
                         page.locator('#rr-apply').focus(); page.keyboard.press('Enter')
-                        expect(page.locator('#style')).to_have_value('picture-1: bold expressive ink')
+                        expect(page.locator('#style')).to_have_value('bold expressive ink')
                         expect(page.locator('#brief')).to_have_value('A newer instruction')
                         assert len(page.evaluate('StudioPromptDraft.capture().intent.references')) == 2
                         with page.expect_download() as download:
