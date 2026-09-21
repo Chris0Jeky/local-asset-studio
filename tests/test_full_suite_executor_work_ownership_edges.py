@@ -24,6 +24,12 @@ from runtime_observability import (  # noqa: E402
 
 
 class ExecutorWorkOwnershipEdgeTests(unittest.TestCase):
+    def setUp(self):
+        set_current_test(self.id())
+
+    def tearDown(self):
+        set_current_test("<between tests>")
+
     def test_cancelled_queued_work_releases_observation_capacity(self):
         observer = ExecutorWorkObserver(max_tasks=2)
         observer.install()
