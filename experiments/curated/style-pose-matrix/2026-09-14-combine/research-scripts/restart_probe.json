@@ -1,0 +1,138 @@
+{
+ "started": "2026-09-15 03:51:53",
+ "steps": [
+  {
+   "label": "waiting for the queue",
+   "t": "03:51:53"
+  },
+  {
+   "label": "idle before /free",
+   "pid": 19812,
+   "os_available_gb": 10.9,
+   "os_percent": 65.6,
+   "swap_used_gb": 7.2,
+   "rss_gb": 0.45,
+   "private_gb": 17.01,
+   "pagefile_gb": 17.01,
+   "page_faults": 1018766170,
+   "vram_free_gb": 14.9,
+   "t": "03:51:53"
+  },
+  {
+   "label": "after /free",
+   "pid": 19812,
+   "os_available_gb": 15.7,
+   "os_percent": 50.4,
+   "swap_used_gb": 3.5,
+   "rss_gb": 0.45,
+   "private_gb": 6.16,
+   "pagefile_gb": 6.16,
+   "page_faults": 1018776595,
+   "vram_free_gb": 14.9,
+   "t": "03:52:09"
+  },
+  {
+   "label": "afterfree",
+   "prompt_id": "3c3c3ba9-dfc8-46bd-ba18-46bcddea1999",
+   "status": "success",
+   "seconds": 377.3,
+   "files": [
+    "probe-speed-afterfree_00001_.png"
+   ],
+   "steps": "05:19",
+   "rate": "53.3 s/it",
+   "t": "03:58:26"
+  },
+  {
+   "label": "after render 1",
+   "pid": 19812,
+   "os_available_gb": 8.3,
+   "os_percent": 73.7,
+   "swap_used_gb": 6.3,
+   "rss_gb": 2.06,
+   "private_gb": 25.9,
+   "pagefile_gb": 25.9,
+   "page_faults": 1047397826,
+   "vram_free_gb": 14.9,
+   "t": "03:58:26"
+  },
+  {
+   "label": "stop",
+   "rc": 0,
+   "out": "",
+   "err": "",
+   "t": "03:58:27"
+  },
+  {
+   "label": "stopped",
+   "gone": true,
+   "seconds": 2.1,
+   "t": "03:58:29"
+  },
+  {
+   "label": "self-relaunch check",
+   "relaunched_by_studio": false,
+   "t": "03:59:15"
+  },
+  {
+   "label": "start",
+   "rc": 0,
+   "out": "",
+   "err": "",
+   "t": "03:59:36"
+  },
+  {
+   "label": "studio health after restart",
+   "recovery": {
+    "status": "healthy",
+    "attempts": 0,
+    "events": [],
+    "message": "Selected backend is healthy.",
+    "updated_at": 1789441174.8419876,
+    "endpoint_identity": "5df5c8148b74883158c244f9aa25a5d5271c1c87c4e999be2c6e6757ea3a5bb9",
+    "enabled": true,
+    "active_backend": "primary"
+   },
+   "t": "03:59:36"
+  },
+  {
+   "label": "after restart, idle",
+   "pid": 20392,
+   "os_available_gb": 13.7,
+   "os_percent": 56.7,
+   "swap_used_gb": 3.0,
+   "rss_gb": 0.85,
+   "private_gb": 4.44,
+   "pagefile_gb": 4.44,
+   "page_faults": 278155,
+   "vram_free_gb": 15.8,
+   "t": "03:59:36"
+  },
+  {
+   "label": "afterrestart",
+   "prompt_id": "49e5f4db-b81a-419a-a981-a4cac4b9df08",
+   "status": "success",
+   "seconds": 95.2,
+   "files": [
+    "probe-speed-afterrestart_00001_.png"
+   ],
+   "steps": null,
+   "rate": null,
+   "t": "04:01:12"
+  },
+  {
+   "label": "after render 2",
+   "pid": 20392,
+   "os_available_gb": 9.7,
+   "os_percent": 69.4,
+   "swap_used_gb": 7.2,
+   "rss_gb": 0.45,
+   "private_gb": 16.0,
+   "pagefile_gb": 16.0,
+   "page_faults": 10441840,
+   "vram_free_gb": 15.4,
+   "t": "04:01:12"
+  }
+ ],
+ "finished": "2026-09-15 04:01:12"
+}

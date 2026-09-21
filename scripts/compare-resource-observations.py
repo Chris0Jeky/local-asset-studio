@@ -7,7 +7,13 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'app'), str(ROOT)]
-from resource_comparison import EvidenceError, SCHEMA, compare_observations
+from resource_comparison import EvidenceError, SCHEMA, compare_observations, encode_report
+
+PLAN_IO = frozenset({
+    'artifact_missing', 'artifact_unreadable', 'file_changed', 'artifact_too_large',
+    'file_not_regular', 'artifact_not_consumed', 'report_too_large',
+})
+SOURCE_INTEGRITY = PLAN_IO - {'report_too_large'}
 
 
 def main(argv=None):
@@ -17,11 +23,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try: report = compare_observations(args.manifest)
     except EvidenceError as error:
-        print(json.dumps({'schema': SCHEMA, 'reason': error.code, 'state': 'invalid_plan',
-                          'qualified_benchmark': False, 'execution_authority': False}))
+        # Plan-file I/O and report encoding are not observation completeness.
+        state = ('report_unavailable' if error.code in PLAN_IO else 'invalid_plan')
+        diagnostic = {
+            'schema': SCHEMA,
+            'state': state,
+            'reason': error.code,
+            'qualified_benchmark': False,
+            'execution_authority': False,
+        }
+        if error.code in SOURCE_INTEGRITY or state == 'invalid_plan':
+            diagnostic['integrity'] = 'incomplete' if error.incomplete else 'invalid'
+        print(json.dumps(diagnostic, ensure_ascii=True, allow_nan=False, separators=(',', ':')))
         return 2
     try:
-        data = json.dumps(report, ensure_ascii=True, allow_nan=False, separators=(',', ':')) + '\n'
+        data = encode_report(report).decode('ascii')
         if args.output is None: sys.stdout.write(data)
         else:
             with args.output.open('x', encoding='utf-8', newline='\n') as stream: stream.write(data)

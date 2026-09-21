@@ -10,6 +10,7 @@ from unittest.mock import patch
 from unittest.mock import Mock
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
+from queue import Empty
 from PIL import Image
 
 def png():
@@ -443,6 +444,91 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(s.public(job)["failure"],job["failure"])
         self.assertEqual(self.studio().jobs[job["id"]]["failure"]["detail"],"bad allocation")
 
+    def test_model_swap_fault_is_labelled_as_retry_safe(self):
+        """The first load of another model family can die in ComfyUI's free_memory (#350); the record says so and names the safe next step."""
+        trace=["Traceback (most recent call last):","  File \"comfy/model_management.py\", line 560, in free_memory","    if current_loaded_models[i].model.is_dynamic():","IndexError: list index out of range"]
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"swap-failed"},
+                 {"swap-failed":{"status":{"status_str":"error","messages":[
+                     ["execution_error",{"node_id":"1","node_type":"CheckpointLoaderSimple","exception_type":"IndexError","exception_message":"list index out of range","traceback":trace}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual((job["status"],job["failure"]["kind"],job["failure"]["node_type"]),("failed","model_swap_fault","CheckpointLoaderSimple"))
+        self.assertIn("free_memory",job["failure"]["summary"]); self.assertIn("same seed",job["failure"]["action"]); self.assertIn("not retried automatically",job["failure"]["action"])
+        self.assertTrue(job["message"].startswith("ComfyUI model-swap fault; running the same job again is safe: CheckpointLoaderSimple")); self.assertIn("free_memory is in the traceback",job["failure"]["summary"])
+        self.assertEqual(len([x for x in s.requests if x[0][0]=="/prompt"]),1)
+        # The same exception text inside a sampler, with no free_memory frame, stays a plain execution error.
+        replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"sampler-index"},
+                 {"sampler-index":{"status":{"status_str":"error","messages":[
+                     ["execution_error",{"node_id":"7","node_type":"KSampler","exception_type":"IndexError","exception_message":"list index out of range","traceback":["IndexError: list index out of range"]}]]}}}]
+        s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+        with self.assertRaises(server.StudioError): s._run(job)
+        self.assertEqual(job["failure"]["kind"],"execution_error"); self.assertTrue(job["message"].startswith("ComfyUI reported an execution error: KSampler"))
+        # A loader's own IndexError (a corrupt or incompatible file) is not the cache fault, with or without a traceback, and a
+        # traceback sent as one string or absent never crashes the record: only the free_memory frame earns the retry-safe label.
+        for detail,kind in (({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range","traceback":["  File \"gguf.py\", line 9, in load","IndexError: list index out of range"]},"execution_error"),
+                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range"},"execution_error"),
+                            ({"node_type":"UnetLoaderGGUF","exception_type":"IndexError","exception_message":"list index out of range","traceback":"IndexError: list index out of range"},"execution_error"),
+                            ({"node_type":"VAEDecode","exception_type":"IndexError","exception_message":"list index out of range","traceback":["  File \"comfy/model_management.py\", line 560, in free_memory","IndexError: list index out of range"]},"model_swap_fault")):
+            replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"p"},{"p":{"status":{"status_str":"error","messages":[["execution_error",detail]]}}}]
+            s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{}}); job=s.jobs[created["id"]]
+            with self.assertRaises(server.StudioError): s._run(job)
+            self.assertEqual(job["failure"]["kind"],kind,detail)
+            if kind=="model_swap_fault": self.assertIn("while running VAEDecode",job["failure"]["summary"])
+
+    def test_idle_tick_releases_the_comfy_cache_once_per_idle_stretch(self):
+        """After the configured idle minutes on an empty ComfyUI queue the worker posts /free once; activity re-arms it; a busy queue or 0 disables it."""
+        s=FakeStudio(self.root,[{"queue_running":[],"queue_pending":[]},{"ok":True},{"queue_running":[],"queue_pending":[]},{"ok":True}])
+        self.assertEqual(s.idle_release_minutes,10.0); self.assertFalse(s._idle_tick())        # not idle long enough
+        s._last_activity-=11*60
+        self.assertTrue(s._idle_tick()); self.assertEqual([r[0][0] for r in s.requests],["/queue","/free"])
+        self.assertEqual(s.requests[1][1].get("method"),"POST"); self.assertEqual(s.requests[1][1].get("data"),{"unload_models":True,"free_memory":True})
+        self.assertEqual(s.cache_release["count"],1); self.assertIsNone(s.cache_release["last_error"]); self.assertFalse(s.cache_release_status()["pending"])
+        self.assertFalse(s._idle_tick()); self.assertEqual(len(s.requests),2)                  # once per idle stretch
+        s._last_activity=server.time.monotonic()-11*60; s._released_since_activity=False        # a job ran and the stretch restarted
+        self.assertTrue(s._idle_tick()); self.assertEqual(s.cache_release["count"],2)
+        busy=FakeStudio(self.root,[{"queue_running":[["x"]],"queue_pending":[]}]); busy._last_activity-=11*60
+        self.assertFalse(busy._idle_tick()); self.assertEqual(len(busy.requests),1); self.assertTrue(busy.cache_release_status()["pending"])
+        (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy"),"idle_cache_release_minutes":0}))
+        off=FakeStudio(self.root,[]); off._last_activity-=60*60
+        self.assertFalse(off._idle_tick()); self.assertEqual(off.requests,[]); self.assertFalse(off.cache_release_status()["pending"])
+        # A ComfyUI that cannot be reached is recorded, not retried every tick.
+        (self.root/"config/local.json").write_text(json.dumps({"comfy_root":str(self.root/"fake-comfy")}))
+        down=FakeStudio(self.root,[URLError("refused")]); down._last_activity-=11*60
+        self.assertFalse(down._idle_tick()); self.assertIn("refused",down.cache_release["last_error"]); self.assertFalse(down._idle_tick()); self.assertEqual(len(down.requests),1)
+
+    def test_empty_comfy_response_is_only_allowed_for_free(self):
+        """An empty 200 is the /free contract, not a global substitute for required JSON."""
+        s=self.studio()
+        with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+            with self.assertRaises(json.JSONDecodeError): s._request('/system_stats')
+        with patch.object(server,'urlopen',return_value=self._http_response(b'')):
+            self.assertIsNone(s._request('/free',method='POST',data={},allow_empty=True))
+
+    def test_idle_release_survives_comfys_empty_free_body_and_the_worker_loop_ticks(self):
+        """ComfyUI answers /free with 200 and no body; a bounded queue wait ticks the release from the real loop; config edge cases."""
+        s=self.studio()
+        replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),self._http_response(b'')]
+        s._last_activity-=11*60
+        with patch.object(server,'urlopen',side_effect=replies): self.assertTrue(s._idle_tick())
+        self.assertEqual((s.cache_release['count'],s.cache_release['last_error']),(1,None))
+        # The real loop: an empty wait ticks, a dequeued job re-arms and stamps activity, and the loop survives a tick that raises.
+        s=self.studio(); calls=[]
+        with patch.object(s.queue,'get',side_effect=[Empty(),Empty(),KeyboardInterrupt()]), patch.object(s,'_idle_tick',side_effect=[RuntimeError('boom'),True]) as tick:
+            with self.assertRaises(KeyboardInterrupt): s._work()
+        self.assertEqual(tick.call_count,2)
+        s=self.studio(); before=s._last_activity-1000; s._last_activity=before; s._released_since_activity=True
+        with patch.object(s.queue,'get',side_effect=[('generate','missing-job'),KeyboardInterrupt()]):
+            with self.assertRaises(KeyboardInterrupt): s._work()
+        self.assertGreater(s._last_activity,before); self.assertFalse(s._released_since_activity)
+        # A malformed queue answer is not evidence of an idle queue.
+        s=FakeStudio(self.root,[{'queue_running':None,'queue_pending':[]}]); s._last_activity-=11*60
+        self.assertFalse(s._idle_tick()); self.assertEqual(len(s.requests),1); self.assertEqual(s.cache_release['count'],0)
+        # Config: a negative value switches the release off, a non-finite value falls back to the default.
+        for value,expected in ((-5,0.0),(1e999,10.0),('nan',10.0),(True,10.0),(2.5,2.5)):
+            (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'idle_cache_release_minutes':value}))
+            self.assertEqual(self.studio().idle_release_minutes,expected,value)
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy')}))
+
     def test_batches_get_distinct_seed_and_durable_exact_graph(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"one"},{"one":{"status":{"status_str":"success"},"outputs":{}}},{"prompt_id":"two"},{"two":{"status":{"status_str":"success"},"outputs":{}}}]
         s=FakeStudio(self.root,replies); created=s.create_job({"preset_id":"demo","controls":{"seed":40},"batch_count":2}); job=s.jobs[created["id"]]; s._run(job)
@@ -487,6 +573,23 @@ class ServerTests(unittest.TestCase):
         _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'frames':22,'last_reference':upload}})
         self.assertEqual(bound['1']['inputs']['frames'],22)
         self.assertEqual(bound['1']['inputs']['last_reference'],upload)
+
+    def test_depth_cut_binds_as_a_whole_percentage(self):
+        """The depth Combine recipe exposes the mask row that cuts the depth map as a 0-100 whole-number control."""
+        preset=dict(PRESET, depth_cut=["1","y"])
+        graph=json.loads(json.dumps(GRAPH)); graph['1']['inputs']['y']=100
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        self.assertEqual(next(p for p in s.catalog()['presets'] if p['id']=='demo')['defaults']['depth_cut'],100)
+        with self.assertRaisesRegex(server.StudioError,'between 0 and 100'): s.prepare({'preset_id':'demo','controls':{'depth_cut':101}})
+        with self.assertRaisesRegex(server.StudioError,'must be a number'): s.prepare({'preset_id':'demo','controls':{'depth_cut':'ankles'}})
+        with self.assertRaisesRegex(server.StudioError,'finite integer'): s.prepare({'preset_id':'demo','controls':{'depth_cut':86.5}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'depth_cut':'86'}})
+        self.assertEqual(bound['1']['inputs']['y'],86)
+        # Unbound elsewhere: the catalog stays the allow-list.
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
+        with self.assertRaises(server.StudioError): self.studio().prepare({'preset_id':'demo','controls':{'depth_cut':86}})
 
     def test_style_weight_and_pose_strength_bind_through_the_catalog(self):
         """The Style + Pose recipes expose IP-Adapter weight and ControlNet strength as plain 0-2 controls."""
@@ -726,6 +829,13 @@ class ServerTests(unittest.TestCase):
         offline=FakeStudio(self.root,[URLError('offline')]).options(discover=True)
         self.assertEqual(offline,{'loras':[],'samplers':[],'schedulers':[],'source':'unavailable'})
 
+    def test_catalog_lists_wildcard_files_for_the_create_chips(self):
+        cards=self.root/'presets/wildcards';cards.mkdir(parents=True)
+        (cards/'lighting.txt').write_text('# skip\nbacklighting\nrim lighting\n')
+        (cards/'lazy_color_character.txt').write_text('1girl, __Breastsrandom__\n')
+        listed=self.studio().catalog()['wildcards']
+        self.assertEqual(listed,[{'name':'lazy_color_character','count':1},{'name':'lighting','count':2}])
+
     def test_wildcards_expand_per_batch_member_and_controls_keep_the_template(self):
         cards=self.root/'presets/wildcards';cards.mkdir(parents=True)
         (cards/'lighting.txt').write_text('backlighting\nrim lighting\ndappled sunlight\n')
@@ -744,6 +854,9 @@ class ServerTests(unittest.TestCase):
         (self.root/'presets/settings-kb.json').write_text(json.dumps({'version':1,'families':{},'loras':{}}))
         (self.root/'presets/recipes.json').write_text(json.dumps({'version':1,'recipes':[{'id':'r','preset_id':'demo','controls':{'lora_name':'first.safetensors'}}]}))
         knowledge=s.knowledge();self.assertTrue(knowledge['available']);self.assertEqual(len(knowledge['sha256']),64)
+        self.assertNotIn('nsfw_lab', knowledge)
+        (self.root/'presets/nsfw-intel.json').write_text(json.dumps({'version':1,'families':{'Anima':{'undress':'local note'}}}))
+        self.assertEqual(s.knowledge()['nsfw_lab']['families']['Anima']['undress'],'local note')
         self.assertIsNone(s.recipes()['recipes'][0]['available'])
         schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['other.safetensors'],{}]}}}}
         live=FakeStudio(self.root,[schema]);live.node_info()
@@ -754,10 +867,11 @@ class ServerTests(unittest.TestCase):
         handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,[URLError('offline')])
         handler.headers={'Host':'127.0.0.1:8191'};sent=[]
         handler._json=lambda status,obj:sent.append((status,obj))
-        for path in ('/api/options','/api/knowledge','/api/recipes'):
+        for path in ('/api/options','/api/knowledge','/api/recipes','/api/wildcards'):
             handler.path=path;handler.do_GET()
-        self.assertEqual([s for s,_ in sent],[200,200,200])
+        self.assertEqual([s for s,_ in sent],[200,200,200,200])
         self.assertEqual(sent[0][1]['source'],'unavailable');self.assertFalse(sent[1][1]['available']);self.assertEqual(sent[2][1]['recipes'],[])
+        self.assertEqual(sent[3][1]['wildcards'],[])
         handler.headers={'Host':'evil.example:8191'};sent.clear();handler.path='/api/knowledge';handler.do_GET()
         self.assertEqual(sent[0][0],403)
 

@@ -59,6 +59,8 @@ async def run(args):
             async def click_existing(selector,keyboard=False):
                 item=page.locator(selector).first
                 if not await item.count():return False
+                if not await item.is_visible():
+                    await page.evaluate('selector=>document.querySelector("#createView").__workshop?.reveal(document.querySelector(selector))',selector)
                 if keyboard:await item.focus();await page.keyboard.press('Enter')
                 else:await item.click()
                 return True
@@ -93,7 +95,7 @@ async def run(args):
             # Same readiness rendering must retain a focused button (periodic health used to rebuild text).
             action=page.locator('[data-ux-resolve="references"]')
             if await action.count():
-                await action.focus();await page.evaluate('updateReady();updateReady()')
+                await page.click('#workshopReview');await action.focus();await page.evaluate('updateReady();updateReady()')
             check('READY-12','Identical readiness refresh preserves keyboard focus on the action',await page.evaluate("document.activeElement.dataset.uxResolve==='references'"))
             state.health['online']=False;state.health['schema_available']=False
             await page.evaluate('health()');before=await stamp()

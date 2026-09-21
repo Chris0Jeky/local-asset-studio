@@ -15,6 +15,13 @@ CHOICE = re.compile(r"\{([^{}]*)\}")
 DEPTH = 4
 LIMIT = 16000
 
+def names(root):
+    """Stem names of presets/wildcards/*.txt that the expander will actually read."""
+    if root is None: return []
+    folder = Path(root) / "presets/wildcards"
+    if not folder.is_dir(): return []
+    return sorted(path.stem for path in folder.glob("*.txt") if NAME.fullmatch(path.stem))
+
 def options(root, name):
     """Lines of presets/wildcards/<name>.txt; '#' comments and blanks dropped."""
     if root is None or not isinstance(name, str) or not NAME.fullmatch(name): return []

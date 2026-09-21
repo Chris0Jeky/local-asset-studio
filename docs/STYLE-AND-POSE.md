@@ -42,8 +42,36 @@ said in words.
 
 ## From a finished picture: Continue with this → Combine
 
-**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** leads the route since 15 September
-2026 and is the recipe to reach for when the pose is strong (a deep bend, a crouch, a lean seen from an angle). It works
+**Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)** leads the
+route since 15 September 2026 (later that night). The graph turns the pose picture into a Depth Anything V2 depth map and
+that map is image 1, so only the body position reaches the model: the person, costume, shoes and colours of the pose
+picture never do. On the owner's own pair (the SHARK crop-top character, the bent-over maid picture) FLUX.2 Klein 9B held
+the deep waist bend and the crossed legs on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept,
+bare feet, no tights and no tail, in 90-115 s warm (`examples/style-pose/combine-pose-round2.jpg`; the fourth seed bent
+only moderately). Proved through the Studio's own path: job `22ff6394…`, output `Combine/Klein-9B-depth_00001_.png`. Two things the
+research settled: both 2D skeleton detectors (OpenPose, DWPose) fail on that pose picture, the depth map does not; and a
+blank image 1 plus the pose in words gives perfect identity but never the deep bend, so the structural image, not the
+wording, carries the pose. The same three fills as the pose-first recipe. What the silhouette contains is drawn, so a
+heel can still shape a foot: the control **Cut the depth map below (%)** (16 September 2026) paints the map black below that
+fraction of its height inside the graph (a 100-row mask band resized onto the ~1 MP map, composited with a black source before the
+VAE), 100 keeps all of it and the variant *Cut below the ankles (86 %)* reproduces the round-three edit that gave bare feet on 3 of 3
+seeds (`pose_sources.py` painted the map from row 0.86·h down). Audition three seeds. The depth model is CC-BY-NC-4.0, the 9B model non-commercial.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)** is second on the
+route (16 September 2026). It runs the shipped 9B graph with the civitai *Copy Pose* LoRA (`KleinBase9B_PoseTransfer`, strength 1.0,
+model only) and turns the order round: **your character is image 1** and is kept, with its own background, framing and rendering,
+and **the pose picture is image 2**, from which only the pose is taken. On the owner's pair (pose round three,
+`examples/style-pose/combine-pose-round3.jpg`) 3 of 3 seeds held the deep bend, crossed legs and look-back with the face,
+lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking, 75-80 s warm. It wants the
+real pose picture: a depth map as image 2 copied the map's black ground and a grey ghost figure on 3 of 3 seeds. Three fills in the
+wording's reading order: who is in image 1, image 1's clothes and colours, image 2's pose with the hands and the camera. Choose it
+over the depth recipe when the character's own picture should stay the picture; choose the depth recipe when the pose picture's
+framing is wanted. The LoRA's civitai flags read Rent only (no Image, no Sell) and its description says non-commercial; the 9B
+model is non-commercial. Proving run through the Studio: see the catalog `execution_note` once recorded.
+
+**Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)** is third on the route and is the
+recipe to reach for when the pose picture's camera, framing and background should be kept as well as the pose (the depth
+recipe keeps only the body position). It is the recipe for a strong pose (a deep bend, a crouch, a lean seen from an angle). It works
 the other way round from the 4B recipe: the **pose picture is image 1** and is kept (pose, camera, framing, background),
 and **your character is image 2** and is swapped into it. Three bracketed fills: who is in image 2, image 1's pose in a
 few words, and your character's clothes and colours. The last one is not optional: without it image 1's black shorts and
@@ -53,6 +81,49 @@ can garble; audition three seeds. About 100-200 s warm; the 9B model is non-comm
 this order: the Klein models keep image 1's structure, so the 4B recipe below (character first, pose in words) can only
 give a mild pose, and putting the pose picture first on 4B just brings the character's own pose back; the research table
 in `experiments/curated/style-pose-matrix/2026-09-14-combine/README.md` shows all 22 renders.
+
+### Put a character into a picture you already have (16 September 2026)
+
+**Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)** is
+fourth on the Combine route for a 9B picture (after the 4B recipe when the picture came from a 4B one) and is the one recipe there that does not move a pose. It runs the shipped 9B graph with the pinned
+civitai *replace character* LoRA (`replace_character_v1_klein`, strength 1.0, model only) and keeps the other 9B recipes' image
+order: the **picture to keep is image 1** - its pose, action, camera angle, composition, background, lighting *and clothes* all
+stay - and **your character is image 2**, from which only the face, hair and expression are taken. Three fills in the wording's
+reading order: image 1's pose and camera, who is in image 2, image 1's outfit and its colours (that last fill is the scene's outfit, so an engine switch never carries a character's clothes into it). Reach for it when the picture is right
+and the face is wrong; reach for the depth or Copy Pose recipes when the pose is what you want moved. Proved on the fantasy pack's
+own pair (the pack's full-body render as image 1, its portrait as image 2, `experiments/curated/fantasy-pack-20260916/README.md`,
+sheet `examples/fantasy-pack/full-body-keeps-face.jpg`): 3 of 3 seeds carried the portrait's fringe, gold earrings, face shape and
+calm expression into the full-body scene with the coat, scarf, satchel, lantern, boots, platform and light of image 1 kept, 116-132 s
+at 832x1216. That is the slice the depth recipe could not give: at full-body scale it lost the face entirely. Those three renders are
+**research straight against ComfyUI**, not the Studio's own path; the catalog entry is `verified: true` since two Studio runs the same
+night (jobs `7051b297...` at 832x1216 and `2752190c...` at the default canvas) were recorded in its `execution_note`. The LoRA's civitai flags read Image/RentCivit/Rent with no Sell; the 9B model is non-commercial.
+
+### Draw the pose (16 September 2026)
+
+**Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)** takes a
+coloured stick figure on black as image 1, and since #444 you draw it on the Combine screen instead of elsewhere:
+a **Draw the pose** panel appears whenever a Combine recipe is open (a continuation, or one chosen straight from
+the library). Drag the 18 COCO-18 joints with a mouse or a finger, or pick one in the joint list and nudge it with the arrow keys (1 % of the canvas, 5 % with
+Shift); *Start from* loads a plain standing figure, the bent-forward research figure or a left-right mirror of what
+is on the canvas; a joint can be marked unknown, which leaves it and every limb touching it out of the drawing (a
+missing joint is omitted, never coordinate zero); Undo steps back one change. On the skeleton recipe **Use this pose**
+posts the joints to `POST /api/pose/render`, which validates them through `studio_workflow.pose_artifact` (every joint
+recorded as manual with no detector confidence), renders the PNG with `studio_workflow.pose_raster.render_png` and
+stores it the way an uploaded picture is stored, then attaches it to Picture 1. On a picture-based Combine the same
+control reads **Replace pose picture with drawing** and takes an explicit replacement path: Picture 1 becomes the
+drawing, the skeleton recipe is selected, who/clothes stay, and the pose fill is cleared so Generate waits for a
+description of this drawing. The endpoint submits nothing to ComfyUI and creates no job. Ordinary engine buttons still
+apply `combineSwitchReason`: a skeleton and a pose picture remain different inputs, so after a replacement you re-pull
+a pose picture to return to depth or Copy Pose.
+
+The rendered guide is `studio.coco18-lines/v1`: the same limb list and colours as the hand-drawn research figure but
+thinner strokes (`stroke = min(w, h) // 128`, so 8 px on a 1024×1536 canvas against the research figure's 14 px
+lines and 12 px joint dots). **Proved 16 September (04:10):** a guide rendered by this endpoint from the bent-forward
+starting figure put the character into the drawn pose through the skeleton recipe on the Studio's own path (job `8b571dd4…`, 66.5 s,
+seed 2026091461, the same figure and seed as the hand-drawn proving run `26448d58…`; sheet `examples/style-pose/pose-editor-proving.jpg`):
+the thin 8 px strokes carried the pose as well as the 14 px research figure did. The research figure itself carried the pose on 3 of 3
+seeds. Not yet measured: drawing in the panel by hand and pressing *Use this pose* then Generate as one browser journey (the use-case
+driver covers the panel up to the attached guide with zero generations; the proving run submitted the same request shape by API).
 
 **Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
 what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
