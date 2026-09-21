@@ -1,0 +1,144 @@
+{
+  "advertised_activities": [
+    "CPU"
+  ],
+  "arithmetic_verified": true,
+  "code": null,
+  "device_architecture": null,
+  "device_name_sha256": null,
+  "driver_identity": null,
+  "generation_jobs_submitted": 0,
+  "inference_performance_qualified": false,
+  "interpreter_path_sha256": "975703467de559cbd0f8a272f88f1983db8e5b30292d43171db9a3a68ddadb42",
+  "job_binding": "unbound",
+  "last_stage": "complete",
+  "limits": {
+    "hard_producer_output_limit": null,
+    "hard_worker_memory_limit": null,
+    "post_export_trace_bytes": 1048576,
+    "state_bytes": 16384,
+    "timeout_seconds": 30.0
+  },
+  "profiler_overhead_qualified": false,
+  "requested_device": "cpu",
+  "schema": "studio.profiler-probe/v1",
+  "scope": "fixed_16x16_arithmetic_probe",
+  "status": "cpu_observed",
+  "summary": {
+    "causal_speedup_qualified": false,
+    "device_timing": {
+      "coverage": null,
+      "reason": "no_supported_device_spans",
+      "status": "unavailable"
+    },
+    "ignored_events": 11,
+    "input_bytes": 3683,
+    "input_events": 19,
+    "input_sha256": "42fb4939d43b8737e13cbff98e9ef52001147a0525c9f898cf53ffceeb12e29a",
+    "job_binding": "unbound",
+    "job_wall_time_ns": null,
+    "lanes": [
+      {
+        "active_union_ns": 450746,
+        "category": "cpu_op",
+        "events": 8,
+        "identity_sha256": "cee4f4baa6b1565cd1c1069788fcd259e526f9ffd3d4c19f0903a546d224a0a4",
+        "inclusive_duration_ns": 840371,
+        "kind": "host_operator",
+        "span_ns": 504966
+      }
+    ],
+    "limitations": [
+      "inclusive_durations_can_overlap",
+      "lanes_are_not_additive_wall_time",
+      "operator_totals_aggregate_across_lanes",
+      "capture_completeness_and_clock_alignment_unverified",
+      "no_job_runtime_or_model_identity_inferred",
+      "unknown_labels_redacted"
+    ],
+    "omitted_operator_rows": 0,
+    "operators": [
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 1,
+        "identity_sha256": "6e85fa418cf0b187821b4a920ba76d727412a852e50418547433865fa12e13ff",
+        "inclusive_duration_ns": 331500,
+        "label": "aten::matmul",
+        "lane_count": 1,
+        "max_duration_ns": 331500
+      },
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 1,
+        "identity_sha256": "763a83fdddff5bad8bba8ffdb9a7aacc3c1a47b47c03f6f59a5a8a2791463efc",
+        "inclusive_duration_ns": 296357,
+        "label": "aten::mm",
+        "lane_count": 1,
+        "max_duration_ns": 296357
+      },
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 1,
+        "identity_sha256": "e8f41951031a1a0a160368614e9b6677660edc5673c086fb1c92e25f341579bd",
+        "inclusive_duration_ns": 119246,
+        "label": "aten::clone",
+        "lane_count": 1,
+        "max_duration_ns": 119246
+      },
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 1,
+        "identity_sha256": "59da4eff080b79fa69318def3847b090150424b7c2c17a2cf54c788d295c818c",
+        "inclusive_duration_ns": 71776,
+        "label": "aten::copy_",
+        "lane_count": 1,
+        "max_duration_ns": 71776
+      },
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 1,
+        "identity_sha256": "d943a21519d3e05b07e8925b472458808e35dcc332ce6d1184a1bbf715d1a98f",
+        "inclusive_duration_ns": 15092,
+        "label": "redacted",
+        "lane_count": 1,
+        "max_duration_ns": 15092
+      },
+      {
+        "aggregation": "category_and_name_across_lanes",
+        "category": "cpu_op",
+        "events": 3,
+        "identity_sha256": "0a98ef2b81e35f6e27085b5be67412d79237606c679e99fc6761b0d95fa31cb3",
+        "inclusive_duration_ns": 6400,
+        "label": "redacted",
+        "lane_count": 1,
+        "max_duration_ns": 6129
+      }
+    ],
+    "producer_identity": "unverified",
+    "reader_format": "pytorch-kineto-chrome-x/v1",
+    "recognized_events": 8,
+    "schema": "studio.inference-trace-summary/v2",
+    "status": "observed_subset",
+    "unsupported_duration_events": 1
+  },
+  "supervision": {
+    "child_reaped": true,
+    "code": null,
+    "elapsed_ms": 3075.821,
+    "retained_stdout_stderr_bytes": 0,
+    "returncode": 0
+  },
+  "temporary_cleanup": "removed",
+  "versions": {
+    "cuda_build": null,
+    "hip": null,
+    "python": "3.13.5",
+    "torch": "2.10.0+cpu"
+  },
+  "worker_source_sha256": "155c3989bea0b22ad3af2698578cab69b2441087ebd61e6daeaf160df3f44c84"
+}

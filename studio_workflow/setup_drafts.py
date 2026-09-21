@@ -14,7 +14,9 @@ import time
 import uuid
 
 from .commands import identifier
-from .core import canonical, decode, digest, need
+from .core import canonical, decode, need
+from .revision_consistency import (RequestState, byte_budget, canonical_value,
+                                   classify_request, compare_head, stored_value)
 from .setup_proposal import validate_draft, validate_reply, request as build_proposal
 
 PREFIX='/api/workflow-studio/setup-drafts'
@@ -84,11 +86,11 @@ class SetupDrafts:
         row=db.execute('''SELECT v.*,d.head FROM setup_drafts_v1 d JOIN setup_versions_v1 v
             ON v.draft_id=d.id AND v.revision=COALESCE(?,d.head) WHERE d.id=?''',(revision,key)).fetchone()
         if row is None:raise SetupError('setup_not_found','Setup draft or revision not found',404)
-        record=decode(row['record'])
-        need(digest(record)==row['sha256'],'Stored setup revision failed its integrity check; retain it for inspection')
-        validate_draft(record['draft'])
+        stored=stored_value(row['record'],row['sha256'])
+        need(stored.matches,'Stored setup revision failed its integrity check; retain it for inspection')
+        record=stored.value;validate_draft(record['draft'])
         return {'draft_id':key,'revision':row['revision'],'head_revision':row['head'],**record,
-                'draft_sha256':digest(record['draft']),'record_sha256':row['sha256'],'record_json':row['record'],
+                'draft_sha256':canonical_value(record['draft']).sha256,'record_sha256':row['sha256'],'record_json':row['record'],
                 'workspace_id':self.workspace._workspace_id(db),'generation_submitted':False}
 
     def get(self,key,revision=None):
@@ -106,8 +108,8 @@ class SetupDrafts:
     def _operation(self,db,key):
         row=db.execute('SELECT * FROM setup_operations_v1 WHERE request_id=?',(identifier(key),)).fetchone()
         if row is None:return None
-        receipt=decode(row['receipt'])
-        need(digest(receipt)==row['sha256'] and receipt['request_id']==key and receipt['draft_id']==row['draft_id'],
+        stored=stored_value(row['receipt'],row['sha256']);receipt=stored.value
+        need(stored.matches and receipt['request_id']==key and receipt['draft_id']==row['draft_id'],
              'Stored setup receipt failed its integrity check; retain it for inspection')
         return row,receipt
 
@@ -118,7 +120,8 @@ class SetupDrafts:
             return self._result(db,previous[1],True)
 
     def _result(self,db,receipt,replayed=False):
-        result={**receipt,'receipt_json':canonical(receipt).decode(),'receipt_sha256':digest(receipt),'replayed':replayed,'workspace_id':self.workspace._workspace_id(db),'generation_submitted':False}
+        bound=canonical_value(receipt)
+        result={**receipt,'receipt_json':bound.raw.decode(),'receipt_sha256':bound.sha256,'replayed':replayed,'workspace_id':self.workspace._workspace_id(db),'generation_submitted':False}
         if receipt.get('revision'):
             result.update(self._read(db,receipt['draft_id'],receipt['revision']))
         return result
@@ -126,18 +129,19 @@ class SetupDrafts:
     def _budget(self,db,extra):
         used=sum(db.execute(f'SELECT COALESCE(SUM(bytes),0) FROM {table}').fetchone()[0]
                  for table in ('setup_versions_v1','setup_operations_v1'))
-        need(used+extra<=MAX_STORAGE,'Setup history budget reached; no history or source files were removed')
+        need(byte_budget(used,extra,MAX_STORAGE).fits,'Setup history budget reached; no history or source files were removed')
 
     def _save_receipt(self,db,receipt,request_sha):
-        raw=canonical(receipt);old=db.execute('SELECT bytes FROM setup_operations_v1 WHERE request_id=?',(receipt['request_id'],)).fetchone()
-        self._budget(db,len(raw)-(old[0] if old else 0))
+        bound=canonical_value(receipt);old=db.execute('SELECT bytes FROM setup_operations_v1 WHERE request_id=?',(receipt['request_id'],)).fetchone()
+        self._budget(db,bound.bytes-(old[0] if old else 0))
         db.execute('''INSERT INTO setup_operations_v1 VALUES(?,?,?,?,?,?) ON CONFLICT(request_id)
             DO UPDATE SET receipt=excluded.receipt,sha256=excluded.sha256,bytes=excluded.bytes''',
-            (receipt['request_id'],request_sha,receipt['draft_id'],raw.decode(),digest(receipt),len(raw)))
+            (receipt['request_id'],request_sha,receipt['draft_id'],bound.raw.decode(),bound.sha256,bound.bytes))
 
     def _guard(self,db,key,expected,owned=None):
         self._revision(expected);current=self._read(db,key)
-        if current['revision']!=expected:raise SetupError('setup_revision_conflict','The shared setup revision changed; inspect before choosing what to keep')
+        if not compare_head(expected,current['revision'],current['record_sha256']).matches:
+            raise SetupError('setup_revision_conflict','The shared setup revision changed; inspect before choosing what to keep')
         for row in db.execute('SELECT request_id FROM setup_operations_v1 WHERE draft_id=?',(key,)):
             _,receipt=self._operation(db,row['request_id'])
             if receipt['status'] in ACTIVE and row['request_id']!=owned:
@@ -145,8 +149,8 @@ class SetupDrafts:
         return current
 
     def _append(self,db,key,revision,record):
-        self._revision(revision);raw=canonical(record);self._budget(db,len(raw))
-        db.execute('INSERT INTO setup_versions_v1 VALUES(?,?,?,?,?)',(key,revision,raw.decode(),digest(record),len(raw)))
+        self._revision(revision);bound=canonical_value(record);self._budget(db,bound.bytes)
+        db.execute('INSERT INTO setup_versions_v1 VALUES(?,?,?,?,?)',(key,revision,bound.raw.decode(),bound.sha256,bound.bytes))
         db.execute('UPDATE setup_drafts_v1 SET head=? WHERE id=?',(revision,key))
 
     def _inputs(self,draft):
@@ -193,15 +197,16 @@ class SetupDrafts:
             return {**saved,'inputs_available':True}
 
     def command(self,value):
-        value=validate_command(value);action=value['action'];sha=digest(value)
+        value=validate_command(value);action=value['action'];sha=canonical_value(value).sha256
         # All calls use the same existing runtime lock; no new GPU semaphore.
         with self.studio.lock:
             with self.workspace.connection() as db:
                 db.execute('BEGIN IMMEDIATE');scope=self.workspace._check_scope(db,value['workspace_id'])
                 old=self._operation(db,value['request_id'])
-                if old:
-                    if old[0]['request_sha256']!=sha:raise SetupError('setup_request_conflict','Request ID already has different content')
-                    return self._result(db,old[1],True)
+                request_state=classify_request(None if old is None else old[0]['request_sha256'],sha)
+                if request_state is RequestState.CONFLICT:
+                    raise SetupError('setup_request_conflict','Request ID already has different content')
+                if request_state is RequestState.REPLAY:return self._result(db,old[1],True)
                 key=uuid.uuid5(NAMESPACE,scope+':'+value['request_id']).hex if action=='create' else identifier(value['draft_id'])
                 if action!='create':current=self._guard(db,key,value['expected_revision'],value.get('operation_id') if action=='abandon' else None)
                 if action=='create':

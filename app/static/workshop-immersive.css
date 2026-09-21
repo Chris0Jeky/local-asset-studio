@@ -1,0 +1,98 @@
+@import url('workshop-immersive-core.css');
+
+/* Desktop presentation controls remain fluid under browser zoom. The imported core
+   keeps the complete visual system; this entrypoint owns narrow corrective overrides. */
+@media (min-width:1280px) {
+  .workshop .wk-toolbar {
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+    padding:14px 18px;
+    min-width:0;
+  }
+  .workshop .wk-select-controls {min-width:0}
+  .workshop .wk-select-control {flex:1 1 150px;min-width:0}
+  .workshop .wk-select-control select,
+  .workshop .wk-native-skin-select select {min-width:0;width:100%}
+  .workshop .wk-skin-control {min-width:0}
+  .workshop .wk-setup-rail {
+    grid-template-columns:minmax(0,1.15fr) minmax(0,.9fr) minmax(0,.7fr) auto;
+    padding:5px 14px;
+  }
+  .workshop .wk-setup-rail .wk-recipe {min-width:0;flex-wrap:wrap}
+  .workshop .wk-setup-status {min-width:0;overflow-wrap:anywhere}
+  .workshop .wk-setup-review {white-space:normal;overflow-wrap:anywhere;min-width:0}
+}
+
+/* Prompt Lab owns this handoff panel. Add a grid row only while it is visible, so
+   normal Create views retain their original spacing and the Apply action stays near
+   the top instead of being auto-placed after every named workshop row. */
+.studio-main #createView.workshop:has(> #uxTransfer:not([hidden])) > #uxTransfer {
+  grid-area:transfer;
+}
+.studio-main #createView.workshop:has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "heading"
+    "transfer"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.studio-main #createView.workshop:is([data-workshop-layout="focus"],[data-workshop-layout="studio"]):not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "heading"
+    "transfer"
+    "hero"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+.studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
+  grid-template-areas:
+    "hero"
+    "modes"
+    "transfer"
+    "toolbar"
+    "setup"
+    "editor"
+    "guidance"
+    "problems"
+    "results";
+}
+
+@media (min-width:1280px) {
+  .studio-main #createView.workshop[data-workshop-layout="studio"]:has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading"
+      "transfer transfer"
+      "toolbar toolbar"
+      "setup setup"
+      "editor results"
+      "problems problems";
+  }
+  .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading"
+      "transfer transfer"
+      "hero hero"
+      "toolbar toolbar"
+      "setup setup"
+      "editor results"
+      "problems problems";
+  }
+  .studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
+    grid-template-areas:
+      "heading heading heading"
+      "hero hero hero"
+      "modes modes modes"
+      "transfer transfer transfer"
+      "toolbar toolbar toolbar"
+      "setup editor guidance"
+      "problems problems problems"
+      ". results .";
+  }
+}

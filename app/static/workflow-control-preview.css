@@ -1,0 +1,16 @@
+.wf-control-preview { margin: 1rem 0; min-width: 0; }
+.wf-control-preview > summary { cursor: pointer; font-weight: 650; padding: .65rem; }
+.wf-control-body { display: grid; gap: .8rem; padding: .8rem; min-width: 0; }
+.wf-control-body label { display: grid; gap: .35rem; min-width: 0; }
+.wf-control-picks { display: flex; gap: .65rem; align-items: end; flex-wrap: wrap; min-width: 0; }
+.wf-control-picks label { flex: 1 1 13rem; }
+.wf-control-body input:not([type=checkbox]), .wf-control-body select, .wf-control-body textarea { width: 100%; min-width: 0; max-width: 100%; }
+.wf-control-body button { width: fit-content; max-width: 100%; white-space: normal; }
+#controlTargets { display: grid; gap: .4rem; padding-inline-start: 1.3rem; margin: 0; }
+#controlTargets li { overflow-wrap: anywhere; }
+#controlTargets button { margin-inline-start: .7rem; }
+#controlPreviewResult { min-width: 0; overflow-wrap: anywhere; }
+#controlPreviewResult article { border: 1px solid; border-radius: .4rem; padding: .6rem; margin-block: .5rem; }
+#controlPreviewResult pre { max-height: 18rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+#controlPreviewPanel :focus-visible { outline: 2px solid; outline-offset: 3px; }
+@media (max-width: 600px) { .wf-control-picks { display: grid; } }
