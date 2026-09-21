@@ -69,3 +69,35 @@ No runtime, model, provider, licensing, real generation or art acceptance is cla
 #539 and all HUMAN_TODO creative/owner acceptance remain open. A concurrent library
 refresh returns an explicit non-success; the picker asks the user to reopen rather
 than pretending cached data is freshly loaded or starting an automatic retry.
+
+## Review continuation
+
+The earlier update did not publish the scheduler correction. At recovered PR head
+`ced420e3a43d085d24026170499dc7fad490aadb`, the complete reconstructed tree was
+`f7e35b00d0b39e24b842d1798e13f952c9958cca`. Three fresh regressions reproduced the
+lost result: direct/coalesced ReadPoller calls returned undefined, the actual
+app.js wrapper returned undefined for a successful workspace read, and the
+native picker rendered zero cards after a successful scheduled read.
+
+ReadPoller now returns the task result after releasing the lane. Coalesced
+callers still share one follow-up read and its result; false and unknown remain
+non-success, and exception containment/cadence/disposal policy is unchanged.
+The full-page driver waits until StudioReadPoller is configured, so it cannot
+accidentally qualify the unwrapped startup path instead.
+
+The Overview launcher also tolerates a late workbench host through the existing
+setup-ready event. A held-host renderer fixture reproduced the missing launcher;
+repeated readiness signals produce only one launcher and one explorer. This
+is explicit ordering hardening, not a measurement of real network/cache timing.
+Normal parser ordering already benefits from the DOMContentLoaded guard.
+
+The #790 prototype review is addressed in the parent: shared recipe chrome rules
+now live in the Workshop presentation stylesheet, not the separately loaded
+navigation stylesheet. The exported prototype checks one visible recipe label
+and long-name bounds in all three layouts at 1440px and 390px with no network
+requests. The #793 child preserves its additional 320px presentation correction.
+
+Local evidence remains synthetic renderer/Node/Python evidence. The local browser
+still refuses loopback navigation with ERR_BLOCKED_BY_ADMINISTRATOR; no policy
+bypass was attempted. Final hosted native-HTTP results and exact heads belong in
+the PR. #539 and HUMAN_TODO q-7 remain owner-run acceptance.

@@ -2,12 +2,6 @@
 .studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none}
 .studio-quick-create[hidden] {display:none!important}
 @media(max-width:480px){.studio-globalbar .studio-breadcrumb{display:none}.studio-globalbar{gap:8px}}
-#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
-/* The actionable recipe name replaces the duplicate static label. Let it wrap
-   within the rail instead of squeezing that second label to zero width. */
-.workshop .wk-recipe>div {display:none}
-.workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
-.workshop .wk-recipe button {flex:1;min-width:0}
 /* Overview record actions retain the row layout used by navigation links. */
 button.ux-desk-row {width:100%;text-align:left;font:inherit}
 #uxJobInspector pre {white-space:pre-wrap;overflow-wrap:anywhere}

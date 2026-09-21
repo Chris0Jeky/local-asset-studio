@@ -33,7 +33,7 @@ def main():
                     page = browser.new_page(viewport={'width': width, 'height': 900})
                     page.on('pageerror', lambda error: errors.append(str(error)))
                     page.goto(origin+'/#home')
-                    page.wait_for_function('!!selected && schemaAvailable')
+                    page.wait_for_function('!!selected && schemaAvailable && !!window.StudioReadPoller')
                     page.wait_for_selector('[data-ux-inspect-job="allocation-failure"]')
                     original = page.evaluate('JSON.stringify([selected.id,values(),parentAssets])')
                     page.click('#bundleHomeLauncher')

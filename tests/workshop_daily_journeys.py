@@ -38,6 +38,26 @@ class DailyJourneys(entry.EntryPoints):
                 self.assertTrue(self.page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement'))
                 self.assertEqual(self.page.evaluate('calls'), [])
 
+    def test_overview_launcher_mounts_when_the_host_arrives_later(self):
+        html = BUNDLE_HTML
+        for name in ('bundle-core.js', 'bundle-explorer.js'):
+            html = html.replace('<script src="/app/static/'+name+'"></script>', entry.script(name))
+        self.page.set_content(html)
+        self.assertEqual(self.page.locator('#bundleLauncher').count(), 1)
+        self.assertEqual(self.page.locator('#bundleHomeLauncher').count(), 0)
+        self.page.evaluate("""() => {
+          document.querySelector('main').insertAdjacentHTML('afterbegin',
+            '<section id="homeView"><div class="ux-home-heading">Overview</div></section>');
+          document.dispatchEvent(new Event('studio:setup-draft-ready'));
+          document.dispatchEvent(new Event('studio:setup-draft-ready'));
+        }""")
+        self.assertEqual(self.page.locator('#bundleHomeLauncher').count(), 1)
+        self.page.click('#bundleHomeLauncher')
+        self.assertTrue(self.page.locator('#bundleExplorer').evaluate('(n)=>n.open'))
+        self.page.keyboard.press('Escape')
+        self.assertTrue(self.page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement'))
+        self.assertEqual(self.page.evaluate('calls'), [])
+
     def test_empty_results_explain_generate_import_and_continue(self):
         render = region(source('app.js'), 'function renderJobs(', '\nasync function refreshJobs')
         self.page.set_content('<div id="gallery"></div><div id="jobProblemsHost"></div><script>const $=s=>document.querySelector(s);let jobs=[],jobsSignature=null;function renderCompare(){}'+render+';renderJobs();</script>')
@@ -58,6 +78,22 @@ const takesSource=()=>!!selected.reference,NO_SOURCE_SLOT='Choose a reference re
 function announce(){}function after(){}function syncReady(){}function assetPreview(){return '';}
 window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.push(resolve));}
 </script><script>'''+production+'</script>')
+
+    def test_library_success_survives_the_production_read_scheduler(self):
+        self.load_picker()
+        self.page.add_script_tag(content=source('read-poller.js'))
+        self.page.evaluate('''() => {
+          const readAssets=refreshAssets;
+          window.pickerPoller=new ReadPoller();
+          pickerPoller.register('assets',{interval:15000,task:readAssets});
+          refreshAssets=(...args)=>pickerPoller.refresh('assets',...args);
+        }''')
+        self.page.click('#uxPullAsset')
+        self.page.evaluate('pending.shift()(true)')
+        self.page.wait_for_function('!pickerLoading')
+        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
+        self.assertTrue(self.page.locator('#uxSourceSearch').is_enabled())
+        self.page.evaluate('pickerPoller.dispose()')
 
     def test_library_opens_immediately_and_refuses_failed_cached_results(self):
         self.load_picker()

@@ -97,6 +97,14 @@
   }
 }
 
+/* Recipe chrome is shared by every layout and the standalone prototype. */
+#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+/* The actionable recipe name replaces the duplicate static label. Let it wrap
+   within the rail instead of squeezing that second label to zero width. */
+.workshop .wk-recipe>div {display:none}
+.workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
+.workshop .wk-recipe button {flex:1;min-width:0}
+
 /* Two compact selectors must fit the available width, including 320px / zoom. */
 @media(max-width:600px) {
   .workshop .wk-select-controls {grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
