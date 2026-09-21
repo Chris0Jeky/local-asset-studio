@@ -94,6 +94,7 @@ class ThreadOwnershipObserver:
         self._origins = weakref.WeakKeyDictionary()
         self._preexisting = weakref.WeakSet()
         self._root_thread = None
+        self._previous_observer = None
         self._overflow = 0
         self._installed = False
         self._original_start = None
@@ -104,9 +105,9 @@ class ThreadOwnershipObserver:
         if self._installed:
             raise RuntimeError("thread ownership observer is already installed")
         with _THREAD_OBSERVER_STATE_LOCK:
-            if _ACTIVE_THREAD_OBSERVER is not None:
-                raise RuntimeError("another thread ownership observer is already installed")
+            self._previous_observer = _ACTIVE_THREAD_OBSERVER
             self._original_start = threading.Thread.start
+            self._overflow = 0
 
             def start_proxy(thread, *args, **kwargs):
                 return self._start(thread, *args, **kwargs)
@@ -126,12 +127,15 @@ class ThreadOwnershipObserver:
             if threading.Thread.start is self._start_proxy:
                 threading.Thread.start = self._original_start
             if _ACTIVE_THREAD_OBSERVER is self:
-                _ACTIVE_THREAD_OBSERVER = None
+                _ACTIVE_THREAD_OBSERVER = self._previous_observer
             self._installed = False
         with self._lock:
             self._origins.clear()
             self._preexisting.clear()
             self._root_thread = None
+            self._previous_observer = None
+            self._original_start = None
+            self._start_proxy = None
 
     def _prune_finished_locked(self) -> None:
         for thread in list(self._origins):
