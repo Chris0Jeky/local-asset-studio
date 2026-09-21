@@ -173,14 +173,16 @@ def main(argv=None) -> int:
     start_dir = Path(args.start_dir).resolve()
     # Install before discovery so threads, pooled tasks and module-level atexit
     # registrations created while importing tests are attributed, while importing
-    # this worker itself remains side-effect free for focused contract tests.
+    # this worker itself remains side-effect free for focused contract tests. The
+    # atexit observer precedes the lazy executor import so import-time callbacks
+    # remain inside the finalization evidence boundary.
     set_current_test("<discovery>")
     thread_observer = ThreadOwnershipObserver()
     thread_observer.install()
-    work_observer = ExecutorWorkObserver()
-    work_observer.install()
     atexit_observer = AtexitCallbackObserver()
     atexit_observer.install()
+    work_observer = ExecutorWorkObserver()
+    work_observer.install()
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
     diagnostics = LifetimeDiagnostics(args.traceback_after)
     diagnostics.arm()
