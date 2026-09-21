@@ -18,6 +18,9 @@ class PromptingTests(unittest.TestCase):
     def test_comments_and_blank_lines_are_not_options(self):
         self.assertEqual(prompting.options(self.root, "lighting"), ["backlighting", "rim lighting", "dappled sunlight"])
         self.assertEqual(prompting.options(self.root, "missing"), [])
+        self.assertEqual(prompting.names(self.root), ["lighting", "mood"])
+        (self.root / "presets/wildcards" / "bad name.txt").write_text("x\n", encoding="utf-8")
+        self.assertEqual(prompting.names(self.root), ["lighting", "mood"])
 
     def test_wildcard_name_cannot_escape_the_wildcard_folder(self):
         self.assertEqual(prompting.options(self.root, "../catalog"), [])
