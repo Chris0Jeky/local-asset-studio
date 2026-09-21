@@ -3,9 +3,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
-import subprocess
 import sys
-import tempfile
 import unittest
 
 from PIL import Image
@@ -30,13 +28,13 @@ def artifact(width=256, height=256, missing=()):
     return pose_artifact.import_openpose(raw,width=width,height=height,coordinate_space='pixels')
 
 
-def pins(route_id):
+def pins(route_id, renderer_pin=None):
     values={key:digest(char) for key,char in (
         ('model','1'),('encoder','2'),('vae','3'),('graph','4'),('nodes','5'),
         ('runtime','6'),('reference_transform','7'),('prompt_dialect','8'))}
     if route_id=='copy-pose': values['lora']=digest('9')
-    elif route_id=='klein-geometry': values['renderer']=digest('a')
-    else: values.update(controlnet=digest('b'),renderer=digest('c'))
+    elif route_id=='klein-geometry': values['renderer']=renderer_pin or pose_raster.renderer_sha256()
+    else: values.update(controlnet=digest('b'),renderer=renderer_pin or pose_raster.renderer_sha256())
     return values
 
 
@@ -44,13 +42,14 @@ def transform(source,target,kind='identity'):
     return binding.expected_transform(kind,source,target)
 
 
-def skeleton_request(pose,data,route_id='sdxl-corrected-skeleton',target=None,renderer_id=pose_raster.RENDERER):
+def skeleton_request(pose,data,route_id='sdxl-corrected-skeleton',target=None,
+                     renderer_id=pose_raster.RENDERER, renderer_pin=None):
     canvas=pose['canvas']; target=target or canvas
     if route_id=='sdxl-corrected-skeleton':
         mechanism='sdxl-precomputed-skeleton'; detector='bypass-precomputed-guide'; slot='control-image'
     else:
         mechanism='klein-geometry-reference'; detector='not-applicable'; slot='geometry-reference'
-    threshold=.3
+    threshold=.3; route_pins=pins(route_id, renderer_pin)
     filtered=[]
     for name in pose_artifact.JOINTS:
         point=pose['joints'][name]
@@ -60,10 +59,10 @@ def skeleton_request(pose,data,route_id='sdxl-corrected-skeleton',target=None,re
         'binding_name':'synthetic-pose-binding',
         'route':{'id':route_id,'mechanism':mechanism,'source_kind':'precomputed-skeleton',
                  'detector_behavior':detector,'native_slot':slot,'backend_id':'primary',
-                 'target_canvas':target,'pins':pins(route_id)},
+                 'target_canvas':target,'pins':route_pins},
         'source':{'kind':'precomputed-skeleton','sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data),
                   'format':'PNG','canvas':canvas,'artifact_id':pose['id'],'renderer_id':renderer_id,
-                  'renderer_sha256':pins(route_id)['renderer'],'threshold':threshold,'expected_filtered_joints':filtered},
+                  'renderer_sha256':route_pins['renderer'],'threshold':threshold,'expected_filtered_joints':filtered},
         'transform':transform(canvas,target,'identity' if canvas==target else 'contain-pad'),
     }
 
@@ -95,6 +94,7 @@ class PoseRouteBindingTests(unittest.TestCase):
         self.assertEqual(result['route']['native_slot'],'control-image')
         self.assertEqual(result['diagnostics']['detector_invocations'],0)
         self.assertEqual(result['diagnostics']['renderer_validation'],'recomputed-exact')
+        self.assertEqual(result['diagnostics']['renderer_identity'],pose_raster.renderer_identity())
         self.assertIn('right_ear',result['diagnostics']['filtered_joints'])
         self.assertGreater(result['diagnostics']['drawable_limbs'],0)
         self.assertGreater(result['diagnostics']['non_black_pixels'],0)
@@ -104,10 +104,12 @@ class PoseRouteBindingTests(unittest.TestCase):
         self.assertRegex(result['binding_id'],r'^[0-9a-f]{64}$')
 
     def test_klein_external_renderer_is_receipt_bound_but_not_qualified(self):
-        pose=artifact(); data=pose_raster.render_png(pose); req=skeleton_request(pose,data,'klein-geometry',renderer_id='installed-aux-renderer')
+        pose=artifact(); data=pose_raster.render_png(pose)
+        req=skeleton_request(pose,data,'klein-geometry',renderer_id='installed-aux-renderer',renderer_pin=digest('a'))
         result=binding.compile_binding(req,data,artifact=pose)
         self.assertEqual(result['route']['native_slot'],'geometry-reference')
         self.assertEqual(result['diagnostics']['renderer_validation'],'receipt-bound-not-recomputed')
+        self.assertIsNone(result['diagnostics']['renderer_identity'])
         self.assertFalse(result['diagnostics']['route_qualified'])
 
     def test_copy_pose_binds_rgb_donor_to_exact_second_slot_without_artifact(self):
@@ -126,6 +128,9 @@ class PoseRouteBindingTests(unittest.TestCase):
         self.assertEqual(binding.expected_transform('contain-pad',{'width':320,'height':240},{'width':512,'height':512}),{
             'kind':'contain-pad','source_canvas':{'width':320,'height':240},'target_canvas':{'width':512,'height':512},
             'scaled_canvas':{'width':512,'height':384},'pad':{'left':0,'top':64,'right':0,'bottom':64}})
+        self.assertEqual(binding.expected_transform('contain-pad',{'width':100,'height':300},{'width':512,'height':256}),{
+            'kind':'contain-pad','source_canvas':{'width':100,'height':300},'target_canvas':{'width':512,'height':256},
+            'scaled_canvas':{'width':85,'height':256},'pad':{'left':213,'top':0,'right':214,'bottom':0}})
         data=rgb_bytes(); req=copy_request(data,target={'width':512,'height':512})
         self.assertEqual(binding.compile_binding(req,data)['transform']['pad']['top'],64)
 
@@ -146,6 +151,7 @@ class PoseRouteBindingTests(unittest.TestCase):
         req=skeleton_request(pose,data); req['route']['pins']['renderer']='bad'; variants.append(req)
         req=skeleton_request(pose,data); req['source']['renderer_sha256']=digest('f'); variants.append(req)
         req=skeleton_request(pose,data); req['route']['backend_id']=''; variants.append(req)
+        req=skeleton_request(pose,data); req['route']['backend_id']='primry'; variants.append(req)
         for req in variants:
             with self.assertRaises(ValueError): binding.compile_binding(req,data,artifact=pose)
 
@@ -160,7 +166,7 @@ class PoseRouteBindingTests(unittest.TestCase):
         donor=rgb_bytes(fmt='PNG'); req=copy_request(donor,fmt='JPEG')
         with self.assertRaises(ValueError): binding.compile_binding(req,donor)
         gray=Image.new('L',(256,256),255); out=io.BytesIO(); gray.save(out,format='PNG'); gray.close(); gray_data=out.getvalue()
-        req=skeleton_request(pose,gray_data,renderer_id='external')
+        req=skeleton_request(pose,gray_data,renderer_id='external',renderer_pin=digest('d'))
         with self.assertRaises(ValueError): binding.compile_binding(req,gray_data,artifact=pose)
         req=skeleton_request(pose,data); req['source']['canvas']['width']=255
         with self.assertRaises(ValueError): binding.compile_binding(req,data,artifact=pose)
@@ -168,7 +174,7 @@ class PoseRouteBindingTests(unittest.TestCase):
         gif=out.getvalue(); req=copy_request(gif,32,32,fmt='PNG')
         with self.assertRaises(ValueError): binding.compile_binding(req,gif)
         blank=Image.new('RGB',(256,256),(0,0,0)); out=io.BytesIO(); blank.save(out,format='PNG'); blank.close(); blank_data=out.getvalue()
-        req=skeleton_request(pose,blank_data,renderer_id='external')
+        req=skeleton_request(pose,blank_data,renderer_id='external',renderer_pin=digest('e'))
         with self.assertRaises(ValueError): binding.compile_binding(req,blank_data,artifact=pose)
 
     def test_local_renderer_requires_exact_artifact_bytes(self):
@@ -177,6 +183,12 @@ class PoseRouteBindingTests(unittest.TestCase):
         req['source']['sha256']=hashlib.sha256(changed_data).hexdigest(); req['source']['bytes']=len(changed_data)
         with self.assertRaisesRegex(ValueError,'local preview renderer'):
             binding.compile_binding(req,changed_data,artifact=pose)
+
+    def test_local_renderer_requires_current_encoder_identity(self):
+        pose=artifact(); data=pose_raster.render_png(pose)
+        req=skeleton_request(pose,data,renderer_pin=digest('f'))
+        with self.assertRaisesRegex(ValueError,'renderer identity'):
+            binding.compile_binding(req,data,artifact=pose)
 
     def test_rejects_artifact_identity_canvas_filter_and_drawable_limb_drift(self):
         pose=artifact(missing=('right_ear',)); data=pose_raster.render_png(pose); req=skeleton_request(pose,data)

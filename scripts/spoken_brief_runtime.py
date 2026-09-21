@@ -1,6 +1,7 @@
 """Coordinate bounded Voice baseline projects into one spoken handoff."""
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 import re
 import time
@@ -8,6 +9,25 @@ import time
 from spoken_brief_compile import *
 from spoken_brief_transport import *
 from spoken_brief_transport import _completed_result, _project_name, _wav_details
+from voice_profile import VoiceProfileError, require_executable, resolve_profile
+
+DEFAULT_PROFILE_ID = 'kokoro-af-heart-control-v1'
+DEFAULT_DELIVERY_ID = 'calm-brief'
+
+
+def _resolve_voice_profile(profile_id, delivery_id, profile_registry, speaker_id, *, executable):
+    try:
+        binding = resolve_profile(
+            profile_id,
+            delivery_id,
+            registry_path=Path(profile_registry) if profile_registry is not None else None,
+            speaker_id=speaker_id,
+        )
+        if executable:
+            require_executable(binding)
+        return binding
+    except VoiceProfileError as exc:
+        raise SpokenBriefError(str(exc)) from exc
 
 
 def _confirm_environment(client: StudioClient, state: dict, state_path: Path, manifest: dict) -> dict:
@@ -52,14 +72,28 @@ def _adopt_project(project: dict, identifier: str, batch: list[dict], speaker_id
     return provenance
 
 
-def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
+def run(pack, *, base_url='http://127.0.0.1:8191',
+        profile_id=DEFAULT_PROFILE_ID, delivery_id=DEFAULT_DELIVERY_ID,
+        profile_registry=None, speaker_id=None,
         poll_seconds=1.0, deadline_seconds=3600) -> dict:
+    binding = _resolve_voice_profile(
+        profile_id,
+        delivery_id,
+        profile_registry,
+        speaker_id,
+        executable=True,
+    )
+    effective_speaker = binding['speaker_id']
     if not isinstance(poll_seconds, (int, float)) or not 0 < poll_seconds <= 30:
         raise SpokenBriefError('Poll interval must be greater than zero and at most 30 seconds')
     if not isinstance(deadline_seconds, (int, float)) or not 1 <= deadline_seconds <= 24 * 3600:
         raise SpokenBriefError('Deadline must be from 1 second to 24 hours')
     source = resolve_source(pack)
-    manifest = compile_source(source, speaker_id=speaker_id)
+    manifest = compile_source(
+        source,
+        speaker_id=effective_speaker,
+        voice_profile=binding,
+    )
     run_dir = run_directory(source, manifest['manifest_sha256'])
     run_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = run_dir / 'manifest.json'
@@ -68,6 +102,10 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
     output = run_dir / (source.stem + '.spoken.wav')
     completed = _completed_result(receipt_path, manifest['manifest_sha256'], output)
     if completed:
+        retained_receipt = read_json(receipt_path)
+        if retained_receipt.get('voice_profile') != binding:
+            raise SpokenBriefError('Completed receipt voice profile differs from this manifest binding')
+        completed['voice_profile'] = copy.deepcopy(binding)
         return completed
     claim = acquire_run_claim(run_dir, manifest['manifest_sha256'])
     try:
@@ -94,7 +132,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             if project is None:
                 payload = {
                     'name': _project_name(source, manifest['manifest_sha256'], batch_index, len(batches)),
-                    'speaker_id': speaker_id,
+                    'speaker_id': effective_speaker,
                     'lines': [{'id': line['id'], 'text': line['text']} for line in batch],
                 }
                 batch_state['status'] = 'creating'
@@ -130,7 +168,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             if 'plan' not in project:
                 _confirm_environment(client, state, state_path, manifest)
                 project = client.get_json(f'/api/production/{identifier}')
-            _adopt_project(project, identifier, batch, speaker_id, batch_state, state, state_path)
+            _adopt_project(project, identifier, batch, effective_speaker, batch_state, state, state_path)
             status = project.get('state', {}).get('status')
             if status == 'planned':
                 _confirm_environment(client, state, state_path, manifest)
@@ -152,7 +190,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                 write_json(state_path, state)
                 _confirm_environment(client, state, state_path, manifest)
                 project = client.get_json(f'/api/production/{identifier}')
-                _adopt_project(project, identifier, batch, speaker_id, batch_state, state, state_path)
+                _adopt_project(project, identifier, batch, effective_speaker, batch_state, state, state_path)
                 status = project.get('state', {}).get('status')
                 batch_state['status'] = status
                 write_json(state_path, state)
@@ -167,7 +205,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                 time.sleep(poll_seconds)
                 _confirm_environment(client, state, state_path, manifest)
                 project = client.get_json(f'/api/production/{identifier}')
-                _adopt_project(project, identifier, batch, speaker_id, batch_state, state, state_path)
+                _adopt_project(project, identifier, batch, effective_speaker, batch_state, state, state_path)
                 status = project.get('state', {}).get('status')
                 batch_state['status'] = status
                 write_json(state_path, state)
@@ -178,7 +216,7 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
                 write_json(state_path, state)
                 raise SpokenBriefError(message + '; no replacement voice project was created')
             _confirm_environment(client, state, state_path, manifest)
-            _adopt_project(project, identifier, batch, speaker_id, batch_state, state, state_path)
+            _adopt_project(project, identifier, batch, effective_speaker, batch_state, state, state_path)
             segment_dir = run_dir / 'segments'
             segment_dir.mkdir(exist_ok=True)
             for line in batch:
@@ -236,7 +274,8 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
             'schema_version': SCHEMA_VERSION,
             'manifest_sha256': manifest['manifest_sha256'],
             'source': manifest['source'],
-            'speaker_id': speaker_id,
+            'speaker_id': effective_speaker,
+            'voice_profile': copy.deepcopy(binding),
             'studio': state['studio'] or identity_record,
             'producer_sha256': state['producer_sha256'],
             'projects': projects,
@@ -254,14 +293,32 @@ def run(pack, *, base_url='http://127.0.0.1:8191', speaker_id='brief-narrator',
         write_json(receipt_path, receipt)
         state.update(status='completed', output=output_receipt)
         write_json(state_path, state)
-        return {'output': str(output), 'receipt': str(receipt_path), 'projects': projects, 'reused': False}
+        return {
+            'output': str(output),
+            'receipt': str(receipt_path),
+            'projects': projects,
+            'voice_profile': copy.deepcopy(binding),
+            'reused': False,
+        }
     finally:
         release_run_claim(claim)
 
 
-def plan(pack, *, speaker_id='brief-narrator') -> dict:
+def plan(pack, *, profile_id=DEFAULT_PROFILE_ID, delivery_id=DEFAULT_DELIVERY_ID,
+         profile_registry=None, speaker_id=None) -> dict:
+    binding = _resolve_voice_profile(
+        profile_id,
+        delivery_id,
+        profile_registry,
+        speaker_id,
+        executable=False,
+    )
     source = resolve_source(pack)
-    manifest = compile_source(source, speaker_id=speaker_id)
+    manifest = compile_source(
+        source,
+        speaker_id=binding['speaker_id'],
+        voice_profile=binding,
+    )
     directory = run_directory(source, manifest['manifest_sha256'])
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / 'manifest.json'
@@ -271,5 +328,6 @@ def plan(pack, *, speaker_id='brief-narrator') -> dict:
         'segments': len(manifest['segments']),
         'batches': len(batch_segments(manifest['segments'])),
         'source': str(source),
+        'voice_profile': copy.deepcopy(binding),
         'generation_submitted': False,
     }

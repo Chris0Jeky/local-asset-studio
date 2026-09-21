@@ -10,6 +10,8 @@ import hashlib
 import re
 from pathlib import Path
 
+import resource_admission
+
 
 OUTPUTS = {"SaveImage", "SaveAnimatedWEBP", "SaveAnimatedPNG", "SaveVideo", "SaveGLB", "VHS_VideoCombine"}
 INSTRUCTION_NODES = {"TextEncodeQwenImageEditPlus", "HiDreamO1Conditioning", "ReferenceLatent"}
@@ -178,7 +180,9 @@ def source_context(studio, asset_id):
 def validate(studio, payload, preset, graph, check_runtime=False):
     """Validate an opt-in continuation during preparation and before dispatch."""
     claim = payload.get("continuation")
-    if claim is None: return None
+    if claim is None:
+        if check_runtime: resource_admission.pre_submit(studio, payload, preset, graph)
+        return None
     fields = {"version", "intent", "source_asset_id", "source_sha256", "preset_id", "reference_file", "template_sha256"}
     if not isinstance(claim, dict) or set(claim) != fields or type(claim.get("version")) is not int or claim["version"] != 1:
         raise ValueError("Invalid continuation context. Reopen Continue with this asset.")
@@ -256,4 +260,5 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         left = unfilled(preset, text)
         if left:
             raise ValueError("Fill in the wording: replace %s before running." % " and ".join("“%s”" % item for item in left))
+    if check_runtime: resource_admission.pre_submit(studio, payload, preset, graph)
     return dict(claim)

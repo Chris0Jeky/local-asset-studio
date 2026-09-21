@@ -445,6 +445,7 @@ async function boardContinuationSourceHasItsOwnLineageClaim() {
   assert.deepEqual(saved.parent_by_input, {lastReference:'source-asset'});
   assert.deepEqual(saved.parent_assets, ['source-asset']);
   s.run(`selectPreset('plain');applySaved(${JSON.stringify(saved)});`);
+  await flush(); // Settle the saved role availability check before the replacement upload.
   assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')),
     {lastReference:'source-asset'}, 'Reloading a board setup must restore the named continuation-source claim');
   assert.equal(s.run('lastUploaded'), 'continuation-source.png');

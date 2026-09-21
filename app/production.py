@@ -203,7 +203,12 @@ class Production:
             if 'axes' in payload or 'limit' in payload:raise ValueError('Inspection does not select axes or variants')
             variants=[]
         elif mode=='grid':
-            if not available:raise ValueError('The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
+            if not available:
+                message='The settings library documents no axis this recipe can change'
+                held=settings_planner.accelerator_slots(preset,kb,controls)
+                if any(not item['inactive'] for item in held.values()):
+                    message+='; selected accelerator settings need a reviewed exact-configuration comparison'
+                raise ValueError(message)
             identifiers=payload.get('axes') or [axis['id'] for axis in available[:2]]
             if not isinstance(identifiers,list):raise ValueError('axes must be a list of documented axis identifiers')
             variants=settings_planner.plan_grid(preset,kb,controls,identifiers,**extra)
