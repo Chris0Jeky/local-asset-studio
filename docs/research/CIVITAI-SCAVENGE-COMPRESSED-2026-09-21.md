@@ -23,3 +23,6 @@ Seven. NSFW: many top LoRAs are nsfw-false but level fifteen or thirty-one — g
 Eight. civitai.red is up; use as NSFW-leaning mirror. Direct model-id API got Cloudflare ten-fifteen briefly; search API was fine.
 
 Full tables and PR-ready links live in FINDINGS.md. Sources in SOURCES.md.
+
+
+**Addendum — Qwen-Image-2.1 (browser pass):** Seven-B DiT, native about four megapixels, up to ten refs, RGBA. On sixteen gig AMD use GGUF Q4_K_M or INT4, strip SageAttention / Triton / DLSS / RTX VSR. Preset often twenty-five steps, CFG one, euler, simple. Do not put two-five-one-one Lightning or angle LoRAs on two-point-one until tested. Keep edit lane one-eight-nine-zero-three-eight-five / one-nine-nine-eight-nine-nine-eight / two-two-five-seven-two-five-nine. Key ids five-seven-nine-two-eight-zero, two-nine-five-one-eight-nine-zero, two-nine-five-two-one-zero-zero, two-nine-five-two-five-four-seven, two-nine-five-one-five-five-seven.

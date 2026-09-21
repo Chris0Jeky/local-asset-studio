@@ -324,7 +324,7 @@ Also: Pixel Art Refiner Z-Image/Qwen `10706` (1503👍) · PixelArtRedmond `1446
 - Direct `GET /api/v1/models/{id}` intermittently Cloudflare **1015**; list/search OK — stats from those live responses (~01:17–01:19 BST).  
 - civitai.red **up**; WAI HTML + red API LoRA sample OK.  
 - Xinsir barely on Civitai — low-👍 mirror ≠ quality.  
-- Qwen-Image-**2.1** thinner than Edit-2511; WF `579280` main breadcrumb.  
+- Qwen-Image-**2.1** has a follow-up appendix below (GGUF/INT4, samplers, AMD reject list). `579280` is still the traffic hub but is NVIDIA-accelerated.  
 - First batch — not exhaustive; `raw/` retained.
 
 ---
@@ -335,3 +335,30 @@ Also: Pixel Art Refiner Z-Image/Qwen `10706` (1503👍) · PixelArtRedmond `1446
 - **Creators highlighted:** 15  
 - **API JSON snapshots in `raw/`:** 50+  
 - **Weight downloads attempted:** 0
+
+
+---
+
+## Appendix — Qwen-Image-2.1 depth (added after the catalog scrape)
+
+LAS #739. These pages are the ones that are actually **base model “Qwen 2” / Qwen-Image-2.1**, not the 20B 2511 edit line in the tables above. 2.1 is a **7B** visual DiT (32 single-stream layers): T2I and edit together, **up to 10 reference images**, local edits (mask / paint / circle), **native RGBA**. Native canvas is about **2K (~4 MP)**, not 1024.
+
+| Find | id | Type | Why it matters on 16GB AMD | URL |
+|---|---:|---|---|---|
+| 2.1 WF collection (EasyCache build dated 09/21, also Krea2 graphs) | 579280 | workflow | Up to 10 refs, batch LoRA controller, 2K grain cleanup. **Strip Nvidia RTX VSR and DLSS5** (20–50 series nodes). Browse card shows a **Paid** badge — confirm the JSON is free. | https://civitai.com/models/579280 |
+| T2I + Edit templates, v1.1 | 2951890 | workflow | Resolution selector + prompt enhancers. Weights pointer: `Comfy-Org/Qwen-Image-2.1`. Author portable is **CUDA 13 + SageAttention + Triton** — do not install that build. | https://civitai.com/models/2951890 |
+| GGUF T2I + EDIT workflows | 2952100 | workflow | Converted from Comfy-Org BF16, native tensor layout `qwen_image`. **Q4_K_M** called the balance quant; Q5/Q6 higher; Q3/Q2 quality-risky. Diffusion only — still need TE + VAE. | https://civitai.com/models/2952100 |
+| GGUF checkpoint + templates | 2952547 | checkpoint | **25 steps, CFG 1, euler, simple.** ~4 GB published GGUF. Edit prompts address refs **by index**. Canvas far from the resized ref **shifts the edit** (same failure as article 19251). Loader: `molbal/ComfyUI-GGUF`. | https://civitai.com/models/2952547 |
+| INT8 / INT4 (W4A8) | 2951557 | checkpoint | INT4 diffusion ~**4 GB** is the 16GB pick. INT8 diffusion ~6.9 GB plus an ~8.9 GB text file will not coexist with VAE. ConvRot — needs the matching node. | https://civitai.com/models/2951557 |
+
+**Do not attach 2511 Lightning / multiple-angles / try-on LoRAs to 2.1** until a compatibility note exists. Keep the Edit-2511 graph in the tables above (Multi Gen `1890385`, Plus `1998998`, segment `2257259`, angles `2300308`) as the pose/try-on lane. On 16GB the 8 GB authors say you may **disable Lightning** and try ~20 steps, CFG ~2.5 — that advice is for 2511, not a 2.1 license.
+
+**OpenPose on Qwen** today is still the 2509 graph `2030628` (`comfyui_controlnet_aux`) plus factory `2264596` (DW or Depth). Pony Union workflow `876576` states the **OpenPose preprocessor does not work on Pony** — use Xinsir / Illustrious OpenPose `1359846` / Noob OpenPose `962537` on the matching base instead.
+
+**WAI 4-step vs normal WAI:** catalog recipe stays Euler a, CFG 5–7 (confirmed on civitai.red WAI HTML). Rectified 4-step LoRA `1355945` is a different mode: **steps 4, CFG 1–1.5, Euler or DPM (not Euler a), schedule Simple**. **A2/A3 for WAI v14–v17** (base became Illustrious 1.0 at v14); A1 is only ≤ v13.
+
+**civitai.red:** browser session showed the same Civitai SPA as civitai.com (including model `2951890`). Non-browser `curl` to the red host returned **403**; the catalog scrape still pulled red HTML/API (`raw/red_wai.html`, `raw/red_lora.json`). Treat red as an alias that sometimes serves the NSFW-leaning mirror, not a second model family. Direct model-id API on civitai.com also **1015’d** during the first scrape; later GETs for `827184` (WAI, `nsfw: true`, v17 ~6.46 GB) and `257749` succeeded.
+
+**Upscale after a ~1 MP Qwen edit:** SeedVR2 workflow `2024056` is what factory graphs call, and authors say it wants a lot of memory — run it **after** the DiT is freed. SUPIR `364115` or SDXL tile ControlNet is the fallback. Clothing workflow `1944963` states the 1 MP ceiling is the model, not the graph; denoise 0.2–0.3 for photo, 0 for digital.
+
+No weights downloaded in either pass.
