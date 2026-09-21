@@ -18,6 +18,8 @@ SOURCE_FORMAT = 'studio.source-composition-evidence/v1'
 MAX_INPUT_BYTES = 1048576
 SHA256 = re.compile(r'[a-f0-9]{64}\Z')
 REVIEW_REVISION = re.compile(r'sha256:[a-f0-9]{64}\Z')
+AIR_CIVITAI_VERSION = re.compile(
+    r'urn:air:[^:]+:[^:]+:civitai:[1-9][0-9]*@([1-9][0-9]*)\Z')
 ZERO_AUTHORITY_FIELDS = (
     'network_performed', 'model_downloaded', 'image_downloaded',
     'installation_authorized', 'generation_submitted',
@@ -118,20 +120,39 @@ def select_file(resource: dict[str, Any], file_identity: str) -> dict[str, Any]:
     return selected
 
 
-def receipt_date(report: dict[str, Any], host: str, fallback: str) -> str:
-    values = []
-    for item in report['source_receipts']:
-        if not isinstance(item, dict) or item.get('host') != host:
-            continue
-        retrieved = item.get('retrieved_at')
-        if isinstance(retrieved, str) and len(retrieved) >= 10:
-            candidate = retrieved[:10]
-            try:
-                date.fromisoformat(candidate)
-            except ValueError:
-                continue
-            values.append(candidate)
-    return min(values) if values else fallback
+def receipt_date(receipt: dict[str, Any], label: str) -> str:
+    retrieved = receipt.get('retrieved_at')
+    need(isinstance(retrieved, str) and len(retrieved) >= 10,
+         label + ' needs a retained retrieval date')
+    candidate = retrieved[:10]
+    try:
+        date.fromisoformat(candidate)
+    except ValueError as exc:
+        raise ValueError(label + ' has an invalid retrieval date') from exc
+    return candidate
+
+
+def resolve_receipt(report: dict[str, Any], response_sha256: Any, host: str,
+                    route: str, label: str) -> dict[str, Any]:
+    response_identity = sha256(response_sha256, label)
+    matches = [item for item in report['source_receipts']
+               if isinstance(item, dict)
+               and item.get('response_sha256') == response_identity
+               and item.get('host') == host
+               and item.get('route') == route
+               and item.get('outcome') == 'ok']
+    need(len(matches) == 1,
+         label + ' must resolve to exactly one successful retained receipt')
+    retained = copy.deepcopy(matches[0])
+    receipt_date(retained, label)
+    return retained
+
+
+def civitai_version(identity: str) -> int | None:
+    if identity.startswith('civitai-version:'):
+        return int(identity.removeprefix('civitai-version:'))
+    match = AIR_CIVITAI_VERSION.fullmatch(identity)
+    return int(match.group(1)) if match else None
 
 
 def provider_diagnostics(resource: dict[str, Any], candidate: dict[str, Any],
@@ -171,30 +192,36 @@ def combination_key(value: dict[str, Any]) -> tuple[Any, ...]:
     scope = scope if isinstance(scope, dict) else {}
     query = scope.get('query') if isinstance(scope.get('query'), dict) else {}
     versions = value.get('version_ids') if isinstance(value, dict) else []
-    versions = tuple(versions) if isinstance(versions, list) else ()
-    return (str(scope.get('host', '')), json.dumps(query, sort_keys=True,
-            separators=(',', ':'), ensure_ascii=False),
+    versions = tuple(sorted(versions)) if isinstance(versions, list) else ()
+    return (str(scope.get('host', '')), str(scope.get('route', '')),
+            json.dumps(query, sort_keys=True, separators=(',', ':'), ensure_ascii=False),
             str(scope.get('scope_sha256', '')), versions)
 
 
 def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
-                   reviewed_at: str,
                    diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
                                                                 list[dict[str, Any]]]:
-    observations = sorted(copy.deepcopy(report['combinations']), key=combination_key)
+    observations = copy.deepcopy(report['combinations'])
+    need(all(isinstance(item, dict) for item in observations),
+         'Source combination must be an object')
+    keys = [combination_key(item) for item in observations]
+    need(len(set(keys)) == len(keys), 'Duplicate gallery evidence combination')
+    observations.sort(key=combination_key)
     claims: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     for item in observations:
-        need(isinstance(item, dict), 'Source combination must be an object')
         scope = item.get('source_scope')
         need(isinstance(scope, dict), 'Source combination scope is required')
         host = scope.get('host')
         need(host in ('civitai.com', 'civitai.red'), 'Unsupported gallery source host')
+        route = scope.get('route')
+        need(route == '/api/v1/images', 'Unsupported gallery source route')
         scope_identity = sha256(scope.get('scope_sha256'), 'Gallery source scope')
         versions = item.get('version_ids')
-        need(isinstance(versions, list)
+        need(isinstance(versions, list) and len(versions) == len(set(versions))
              and all(type(entry) is int and entry > 0 for entry in versions),
              'Invalid gallery version identities')
+        item['version_ids'] = sorted(versions)
         if version_id not in versions:
             diagnostics.append({'code': 'gallery_target_missing',
                                 'message': 'Gallery observation does not include the reviewed source version.',
@@ -205,18 +232,37 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
              and item.get('quality_proven') is False,
              'Gallery source must remain non-authoritative co-use evidence')
         observations_count = item.get('distinct_observations')
-        uploaders = item.get('distinct_uploaders')
+        uploader_count = item.get('distinct_uploaders')
         need(type(observations_count) is int and observations_count > 0,
              'Gallery observations must be positive')
-        need(type(uploaders) is int and uploaders >= 0,
+        need(type(uploader_count) is int and uploader_count >= 0,
              'Gallery uploader breadth must be non-negative')
-        need(uploaders <= observations_count,
+        need(uploader_count <= observations_count,
              'Gallery uploader breadth cannot exceed distinct observations')
-        if uploaders == 0:
+        uploaders = item.get('uploaders')
+        need(isinstance(uploaders, list) and len(uploaders) <= 1000
+             and all(token(entry, 300) for entry in uploaders),
+             'Gallery uploader identities must be a bounded text list')
+        need(len(uploaders) == len(set(uploaders)),
+             'Gallery uploader identities must be distinct')
+        need(uploader_count == len(uploaders),
+             'Gallery distinct uploader count must match retained uploader identities')
+        item['uploaders'] = sorted(uploaders)
+        if uploader_count == 0:
             diagnostics.append({'code': 'gallery_independence_unknown',
                                 'message': 'Gallery observation has no retained independent-uploader breadth.',
                                 'scope_sha256': scope_identity})
             continue
+        receipt_hashes = item.get('receipt_sha256s')
+        need(isinstance(receipt_hashes, list) and 1 <= len(receipt_hashes) <= 64,
+             'Gallery claim needs at least one retained receipt')
+        receipt_hashes = [sha256(entry, 'Gallery receipt') for entry in receipt_hashes]
+        need(len(receipt_hashes) == len(set(receipt_hashes)),
+             'Gallery receipt identities must be distinct')
+        item['receipt_sha256s'] = sorted(receipt_hashes)
+        retained = [resolve_receipt(report, entry, host, route, 'Gallery receipt')
+                    for entry in receipt_hashes]
+        retrieved_at = min(receipt_date(entry, 'Gallery receipt') for entry in retained)
         claim_identity = digest({'candidate_id': candidate_id,
                                  'scope_sha256': scope_identity,
                                  'version_ids': sorted(versions)})
@@ -228,10 +274,10 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
             'resource_identity': None, 'kind': 'gallery_co_use',
             'scope': 'family', 'direction': 'supports',
             'objective': 'compatibility', 'observations': observations_count,
-            'independent_sources': uploaders,
+            'independent_sources': uploader_count,
             'source': {'locator': 'Retained ' + host + ' gallery composition',
                        'revision': 'sha256:' + report['context_sha256'],
-                       'retrieved_at': receipt_date(report, host, reviewed_at)},
+                       'retrieved_at': retrieved_at},
         })
     claims.sort(key=lambda item: (item['source']['locator'], item['id']))
     return observations, claims
@@ -254,11 +300,17 @@ def adapt(value: Any) -> dict[str, Any]:
     version_id = resource.get('version_id')
     need(type(version_id) is int and version_id > 0,
          'Source version identity is required')
+    pinned_version = civitai_version(mapping['resource_identity'])
+    need(pinned_version is None or pinned_version == version_id,
+         'Source version_id conflicts with the canonical resource identity version')
     source_host = resource.get('source_host')
     need(source_host in ('civitai.com', 'civitai.red'),
          'Unsupported source resource host')
     receipt_identity = sha256(resource.get('receipt_sha256'),
                               'Source resource receipt')
+    provider_receipt = resolve_receipt(
+        report, receipt_identity, source_host,
+        '/api/v1/model-versions/' + str(version_id), 'Source resource model-version receipt')
     selected = select_file(resource, mapping['file_identity'])
     candidate = mapping['candidate']
     diagnostics = provider_diagnostics(resource, candidate, selected)
@@ -269,7 +321,6 @@ def adapt(value: Any) -> dict[str, Any]:
                         'inspectable, but missing records cannot establish absence.'),
         })
     source_diagnostics = copy.deepcopy(report['diagnostics'])
-    reviewed_at = mapping['review']['reviewed_at']
     provider_identity = digest({'candidate_id': candidate['id'],
                                 'resource_identity': mapping['resource_identity'],
                                 'file_identity': mapping['file_identity']})
@@ -282,11 +333,12 @@ def adapt(value: Any) -> dict[str, Any]:
         'observations': 1, 'independent_sources': 1,
         'source': {'locator': 'Retained Civitai model-version metadata',
                    'revision': 'sha256:' + receipt_identity,
-                   'retrieved_at': receipt_date(report, source_host, reviewed_at)},
+                   'retrieved_at': receipt_date(
+                       provider_receipt, 'Source resource model-version receipt')},
     }
     provider_evidence = compatibility.validate_evidence(provider_evidence)
     source_observations, gallery = gallery_claims(
-        report, candidate['id'], version_id, reviewed_at, diagnostics)
+        report, candidate['id'], version_id, diagnostics)
     evidence = [provider_evidence] + [
         compatibility.validate_evidence(item) for item in gallery
     ]
