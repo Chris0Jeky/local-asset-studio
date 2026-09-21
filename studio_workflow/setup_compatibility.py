@@ -16,7 +16,7 @@ REPORT_FORMAT = 'studio.setup-compatibility-report/v1'
 MAX_CANDIDATES = 256
 MAX_EVIDENCE = 1024
 ID = re.compile(r'[a-z0-9][a-z0-9_.-]{0,95}\Z')
-GENERIC_IDENTITY = re.compile(r'[a-z][a-z0-9_-]{0,31}:[A-Za-z0-9][A-Za-z0-9._/@+-]{0,259}\Z')
+GENERIC_IDENTITY = re.compile(r'[a-z][a-z0-9_-]{0,31}:[A-Za-z0-9][A-Za-z0-9._/@+:-]{0,259}\Z')
 KINDS = {'creator_documentation', 'controlled_run', 'local_observation',
          'gallery_co_use', 'provider_metadata', 'authored_hypothesis'}
 STRONG = {'creator_documentation', 'controlled_run'}
