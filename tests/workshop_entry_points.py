@@ -92,6 +92,23 @@ class EntryPoints(unittest.TestCase):
                 self.assertEqual(self.page.locator('#workshopRecipeChange').inner_text(), 'Change: Ink illustration')
                 self.assertIn('Ink illustration', self.page.locator('#workshopRecipeChange').get_attribute('aria-label'))
 
+    def test_long_recipe_names_do_not_collapse_or_overflow_the_rail(self):
+        self.load_workshop()
+        for width in (1440, 390, 320):
+            self.page.set_viewport_size({'width': width, 'height': 900})
+            for layout in ('focus', 'studio', 'immersive'):
+                with self.subTest(width=width, layout=layout):
+                    self.page.select_option('#workshopLayout', layout)
+                    self.page.evaluate("selected.name='Combine • FLUX.2 Klein 9B — Copy pose and preserve identity';document.querySelector('#createView').__workshop.sync()")
+                    chip = self.page.locator('.wk-recipe').bounding_box()
+                    change = self.page.locator('#workshopRecipeChange').bounding_box()
+                    self.assertLessEqual(chip['height'], 150)
+                    self.assertGreater(change['width'], 120)
+                    self.assertLessEqual(change['x'] + change['width'], width)
+                    if width >= 390:
+                        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
+                    self.assertIn('Copy pose and preserve identity', self.page.locator('#workshopRecipeChange').inner_text())
+
     def test_native_modal_focus_escape_and_cancel_preserve_draft(self):
         self.load_workshop()
         self.page.fill('#positive', 'Keep my edited draft')
