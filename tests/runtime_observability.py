@@ -16,6 +16,7 @@ from typing import Callable, TextIO
 _MAX_RAW_STACK = 64
 _MAX_TEXT = 160
 _MAX_IDENTITY = 2 * _MAX_TEXT + 1
+_CANCEL_TOKEN_TAG = "local-asset-studio::atexit-observer-cancel::v1"
 
 
 def _outside_stdlib(filename: str) -> bool:
@@ -135,9 +136,16 @@ class _ObservedCallback:
         return self.observer._invoke(self.registration, args, kwargs)
 
     def __eq__(self, other):
-        # Focused-test cleanup unregisters the private proxies themselves. Keep
-        # proxy-to-proxy comparison identity-only so cleanup cannot execute another
-        # registered callback's user-defined equality or leak it into later tests.
+        # Cancellation uses an exact built-in tuple. This avoids exposing a proxy as
+        # the unregister query: unrelated callbacks can return NotImplemented and
+        # reflect comparison into the query object's __eq__ before the target entry.
+        if (
+            type(other) is tuple
+            and len(other) == 2
+            and type(other[0]) is str
+            and other[0] == _CANCEL_TOKEN_TAG
+        ):
+            return self is other[1]
         if isinstance(other, _ObservedCallback):
             return self is other
         equal = self.observer._callbacks_equal(self.registration.callback, other)
@@ -211,7 +219,9 @@ class AtexitCallbackObserver:
                 registrations = list(self._registrations)
                 self._registrations.clear()
             for registration in registrations:
-                original_unregister(registration.wrapper)
+                original_unregister(
+                    (_CANCEL_TOKEN_TAG, registration.wrapper)
+                )
         self._installed = False
 
     @staticmethod
