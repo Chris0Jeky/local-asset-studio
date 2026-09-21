@@ -13,6 +13,7 @@ import re
 import sys
 import tempfile
 
+from strict_json import StrictJsonError, load_bounded_json
 from voice_profile import (
     MAX_PROFILE_JSON_BYTES,
     VoiceProfileError,
@@ -22,18 +23,13 @@ from voice_profile import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EVALUATION_SET = ROOT / 'research' / 'voice-profiles' / 'evaluation-set.json'
+DEFAULT_POLICY = ROOT / 'research' / 'voice-profiles' / 'qualification-policy.json'
 HEX_64_RE = re.compile(r'[0-9a-f]{64}\Z')
+MODEL_REVISION_RE = re.compile(r'(?:[0-9a-f]{40}|[0-9a-f]{64})\Z')
 ID_RE = re.compile(r'[a-z][a-z0-9-]{0,63}\Z')
-METRIC_FIELDS = (
-    'load_seconds',
-    'first_audio_seconds',
-    'generation_seconds',
-    'peak_host_bytes',
-    'peak_vram_bytes',
-    'generated_seconds',
-    'accepted_seconds',
-    'correction_seconds',
-)
+FIELD_RE = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
+PERMISSION_RE = re.compile(r'[a-z][a-z0-9._-]{0,127}\Z')
+REFERENCE_REQUIREMENTS = {'none', 'required'}
 
 
 class QualificationError(ValueError):
@@ -70,9 +66,27 @@ def _stable_id(value, label) -> str:
     return value
 
 
+def _field_id(value, label) -> str:
+    if not isinstance(value, str) or not FIELD_RE.fullmatch(value):
+        raise QualificationError(f'{label} must be a lowercase field ID')
+    return value
+
+
 def _hash(value, label) -> str:
     if not isinstance(value, str) or not HEX_64_RE.fullmatch(value):
         raise QualificationError(f'{label} must be a lowercase SHA-256')
+    return value
+
+
+def _model_revision(value, label) -> str:
+    if not isinstance(value, str) or not MODEL_REVISION_RE.fullmatch(value):
+        raise QualificationError(f'{label} must be a full lowercase 40- or 64-character model_revision')
+    return value
+
+
+def _permission_scope(value, label) -> str:
+    if not isinstance(value, str) or not PERMISSION_RE.fullmatch(value):
+        raise QualificationError(f'{label} must be a stable non-path permission_scope')
     return value
 
 
@@ -109,24 +123,21 @@ def _count(value, label) -> int:
     return value
 
 
+def _positive_revision(value, label) -> int:
+    if type(value) is not int or not 1 <= value <= 1_000_000:
+        raise QualificationError(f'{label} must be a positive integer revision')
+    return value
+
+
 def _read_json(path: Path, label: str):
-    path = Path(path)
     try:
-        size = path.stat().st_size
-    except OSError as exc:
-        raise QualificationError(f'Cannot inspect {label}: {path}') from exc
-    if not 1 <= size <= MAX_PROFILE_JSON_BYTES:
-        raise QualificationError(f'{label} exceeds its bounded JSON byte limit')
-    try:
-        raw = path.read_bytes()
-    except OSError as exc:
-        raise QualificationError(f'Cannot read {label}: {path}') from exc
-    if len(raw) != size:
-        raise QualificationError(f'{label} changed while it was read')
-    try:
-        return json.loads(raw.decode('utf-8'))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise QualificationError(f'{label} must be UTF-8 JSON') from exc
+        return load_bounded_json(
+            Path(path),
+            label=label,
+            maximum_bytes=MAX_PROFILE_JSON_BYTES,
+        )
+    except StrictJsonError as exc:
+        raise QualificationError(str(exc)) from exc
 
 
 def _load_evaluation_set(path: Path | None = None) -> dict:
@@ -136,8 +147,7 @@ def _load_evaluation_set(path: Path | None = None) -> dict:
     if value.get('schema_version') != 1:
         raise QualificationError('Evaluation set has an unsupported schema version')
     _stable_id(value.get('id'), 'evaluation set id')
-    if type(value.get('revision')) is not int or not 1 <= value['revision'] <= 1_000_000:
-        raise QualificationError('Evaluation set revision must be a positive integer')
+    _positive_revision(value.get('revision'), 'evaluation set revision')
     _text(value.get('name'), 'evaluation set name', 160)
     lines = value.get('lines')
     if not isinstance(lines, list) or not 8 <= len(lines) <= 64:
@@ -164,37 +174,170 @@ def _load_evaluation_set(path: Path | None = None) -> dict:
     }
 
 
-def _candidate_plan() -> list[dict]:
-    return [
-        {
-            'id': 'qwen3-voice-design-v1',
-            'name': 'Qwen3-TTS VoiceDesign exploration',
-            'role': 'original-identity-exploration',
-            'control': False,
-            'required': True,
-        },
-        {
-            'id': 'qwen3-reusable-reference-v1',
-            'name': 'Qwen3-TTS reusable accepted-reference route',
-            'role': 'reusable-identity-candidate',
-            'control': False,
-            'required': True,
-        },
-        {
-            'id': 'indextts-2-5-expressive-v1',
-            'name': 'IndexTTS 2.5 expressive comparison',
-            'role': 'independent-expressive-candidate',
-            'control': False,
-            'required': False,
-        },
-        {
-            'id': 'kokoro-af-heart-control-v1',
-            'name': 'Kokoro af_heart CPU control',
-            'role': 'cheap-built-in-control',
-            'control': True,
-            'required': True,
-        },
-    ]
+def _validate_policy_candidate(value, index):
+    label = f'qualification policy candidate {index}'
+    _fields(
+        value,
+        (
+            'id', 'name', 'role', 'producer_family', 'adapter',
+            'control', 'selectable', 'required', 'reference_requirement',
+        ),
+        label,
+    )
+    identifier = _stable_id(value.get('id'), f'{label}.id')
+    _text(value.get('name'), f'{label}.name', 160)
+    _stable_id(value.get('role'), f'{label}.role')
+    _stable_id(value.get('producer_family'), f'{label}.producer_family')
+    _stable_id(value.get('adapter'), f'{label}.adapter')
+    for field in ('control', 'selectable', 'required'):
+        if type(value.get(field)) is not bool:
+            raise QualificationError(f'{label}.{field} must be a boolean')
+    if value.get('reference_requirement') not in REFERENCE_REQUIREMENTS:
+        raise QualificationError(f'{label}.reference_requirement is unsupported')
+    if value['control'] and value['selectable']:
+        raise QualificationError(f'{label} control cannot be selectable')
+    return copy.deepcopy(value)
+
+
+def load_policy(path: Path | None = None) -> dict:
+    source = DEFAULT_POLICY if path is None else Path(path)
+    value = _read_json(source, 'voice qualification policy')
+    _fields(
+        value,
+        (
+            'schema_version', 'id', 'revision', 'candidates',
+            'measurement_fields', 'long_form', 'delivery_contrast',
+        ),
+        'qualification policy',
+    )
+    if value.get('schema_version') != 1:
+        raise QualificationError('Qualification policy has an unsupported schema version')
+    _stable_id(value.get('id'), 'qualification policy id')
+    _positive_revision(value.get('revision'), 'qualification policy revision')
+
+    candidates = value.get('candidates')
+    if not isinstance(candidates, list) or not 3 <= len(candidates) <= 32:
+        raise QualificationError('Qualification policy must contain 3 to 32 candidates')
+    validated_candidates = []
+    seen = set()
+    controls = []
+    selectable = []
+    for index, candidate in enumerate(candidates):
+        validated = _validate_policy_candidate(candidate, index)
+        if validated['id'] in seen:
+            raise QualificationError(
+                f'Qualification policy has duplicate candidate ID {validated["id"]}'
+            )
+        seen.add(validated['id'])
+        if validated['control']:
+            controls.append(validated['id'])
+        if validated['selectable'] and not validated['control']:
+            selectable.append(validated['id'])
+        validated_candidates.append(validated)
+    if len(controls) != 1:
+        raise QualificationError('Qualification policy must identify exactly one control')
+    if not selectable:
+        raise QualificationError('Qualification policy needs a selectable non-control candidate')
+
+    measurements = value.get('measurement_fields')
+    if not isinstance(measurements, list) or not measurements:
+        raise QualificationError('Qualification policy measurement_fields must be non-empty')
+    validated_measurements = []
+    measurement_seen = set()
+    for index, field in enumerate(measurements):
+        field = _field_id(field, f'qualification policy measurement_fields[{index}]')
+        if field in measurement_seen:
+            raise QualificationError(f'Qualification policy has duplicate measurement field {field}')
+        measurement_seen.add(field)
+        validated_measurements.append(field)
+
+    long_form = value.get('long_form')
+    _fields(
+        long_form,
+        (
+            'minimum_seconds', 'maximum_seconds',
+            'requires_owner_end_to_end_review',
+            'requires_identity_consistency_review',
+            'requires_pronunciation_review',
+        ),
+        'qualification policy long_form',
+    )
+    minimum = _finite_nonnegative(long_form.get('minimum_seconds'), 'long_form.minimum_seconds')
+    maximum = _finite_nonnegative(long_form.get('maximum_seconds'), 'long_form.maximum_seconds')
+    if minimum <= 0 or maximum < minimum:
+        raise QualificationError('Qualification policy long-form bounds are invalid')
+    for field in (
+        'requires_owner_end_to_end_review',
+        'requires_identity_consistency_review',
+        'requires_pronunciation_review',
+    ):
+        if type(long_form.get(field)) is not bool:
+            raise QualificationError(f'qualification policy long_form.{field} must be a boolean')
+
+    contrast = value.get('delivery_contrast')
+    _fields(
+        contrast,
+        ('calm_line_id', 'spark_line_id', 'calm_delivery_id', 'spark_delivery_id'),
+        'qualification policy delivery_contrast',
+    )
+    for field in contrast:
+        _stable_id(contrast.get(field), f'qualification policy delivery_contrast.{field}')
+    if contrast['calm_line_id'] == contrast['spark_line_id']:
+        raise QualificationError('Qualification policy delivery contrast line IDs must differ')
+    if contrast['calm_delivery_id'] == contrast['spark_delivery_id']:
+        raise QualificationError('Qualification policy delivery contrast deliveries must differ')
+
+    return {
+        'schema_version': 1,
+        'id': value['id'],
+        'revision': value['revision'],
+        'candidates': validated_candidates,
+        'measurement_fields': validated_measurements,
+        'long_form': copy.deepcopy(long_form),
+        'delivery_contrast': copy.deepcopy(contrast),
+    }
+
+
+def policy_digest(policy: dict) -> str:
+    try:
+        return canonical_digest(policy)
+    except VoiceProfileError as exc:
+        raise QualificationError(str(exc)) from exc
+
+
+def _validate_contrast_against_evaluation(policy: dict, evaluation: dict) -> None:
+    contrast = policy['delivery_contrast']
+    lines = {item['id']: item for item in evaluation['lines']}
+    try:
+        calm = lines[contrast['calm_line_id']]
+        spark = lines[contrast['spark_line_id']]
+    except KeyError as exc:
+        raise QualificationError('Canonical evaluation is missing a delivery contrast line') from exc
+    if calm['text'] != spark['text']:
+        raise QualificationError('Canonical evaluation delivery contrast text must be identical')
+    if calm['delivery_id'] != contrast['calm_delivery_id']:
+        raise QualificationError('Canonical evaluation calm delivery contrast ID is invalid')
+    if spark['delivery_id'] != contrast['spark_delivery_id']:
+        raise QualificationError('Canonical evaluation spark delivery contrast ID is invalid')
+    if calm['delivery_id'] == spark['delivery_id']:
+        raise QualificationError('Canonical evaluation delivery contrast deliveries must differ')
+
+
+def _canonical_plan_policy(policy: dict) -> dict:
+    return {
+        'id': policy['id'],
+        'revision': policy['revision'],
+        'sha256': policy_digest(policy),
+    }
+
+
+def _canonical_plan_evaluation(evaluation: dict) -> dict:
+    return {
+        'id': evaluation['id'],
+        'revision': evaluation['revision'],
+        'sha256': canonical_digest(evaluation),
+        'lines': copy.deepcopy(evaluation['lines']),
+    }
 
 
 def build_plan(profile_id: str, *, registry_path: Path | None = None) -> dict:
@@ -206,26 +349,19 @@ def build_plan(profile_id: str, *, registry_path: Path | None = None) -> dict:
         )
     except VoiceProfileError as exc:
         raise QualificationError(str(exc)) from exc
+    policy = load_policy()
     evaluation = _load_evaluation_set()
+    _validate_contrast_against_evaluation(policy, evaluation)
     plan = {
         'schema_version': 1,
         'kind': 'voice-profile-qualification',
         'profile': profile,
-        'evaluation': {
-            'id': evaluation['id'],
-            'revision': evaluation['revision'],
-            'sha256': canonical_digest(evaluation),
-            'lines': copy.deepcopy(evaluation['lines']),
-        },
-        'candidates': _candidate_plan(),
-        'measurement_fields': list(METRIC_FIELDS),
-        'long_form': {
-            'minimum_seconds': 300,
-            'maximum_seconds': 600,
-            'requires_owner_end_to_end_review': True,
-            'requires_identity_consistency_review': True,
-            'requires_pronunciation_review': True,
-        },
+        'policy': _canonical_plan_policy(policy),
+        'evaluation': _canonical_plan_evaluation(evaluation),
+        'candidates': copy.deepcopy(policy['candidates']),
+        'measurement_fields': copy.deepcopy(policy['measurement_fields']),
+        'long_form': copy.deepcopy(policy['long_form']),
+        'delivery_contrast': copy.deepcopy(policy['delivery_contrast']),
         'generation_submitted': False,
     }
     plan['plan_sha256'] = canonical_digest(plan)
@@ -236,15 +372,9 @@ def _validate_plan(plan: dict) -> dict:
     _fields(
         plan,
         (
-            'schema_version',
-            'kind',
-            'profile',
-            'evaluation',
-            'candidates',
-            'measurement_fields',
-            'long_form',
-            'generation_submitted',
-            'plan_sha256',
+            'schema_version', 'kind', 'profile', 'policy', 'evaluation',
+            'candidates', 'measurement_fields', 'long_form',
+            'delivery_contrast', 'generation_submitted', 'plan_sha256',
         ),
         'qualification plan',
     )
@@ -259,42 +389,35 @@ def _validate_plan(plan: dict) -> dict:
     profile = plan.get('profile')
     if not isinstance(profile, dict) or not isinstance(profile.get('id'), str):
         raise QualificationError('Qualification plan profile binding is invalid')
-    evaluation = plan.get('evaluation')
-    _fields(evaluation, ('id', 'revision', 'sha256', 'lines'), 'qualification plan evaluation')
-    _hash(evaluation.get('sha256'), 'qualification plan evaluation SHA-256')
-    lines = evaluation.get('lines')
-    if not isinstance(lines, list) or not lines:
-        raise QualificationError('Qualification plan evaluation lines are invalid')
-    line_ids = []
-    for line in lines:
-        if not isinstance(line, dict) or not isinstance(line.get('id'), str):
-            raise QualificationError('Qualification plan evaluation line is invalid')
-        line_ids.append(line['id'])
-    if len(line_ids) != len(set(line_ids)):
-        raise QualificationError('Qualification plan has duplicate evaluation line IDs')
-    candidates = plan.get('candidates')
-    if not isinstance(candidates, list) or not candidates:
-        raise QualificationError('Qualification plan candidates are invalid')
-    candidate_ids = []
-    control_ids = []
-    for candidate in candidates:
-        if not isinstance(candidate, dict) or not isinstance(candidate.get('id'), str):
-            raise QualificationError('Qualification plan candidate is invalid')
-        candidate_ids.append(candidate['id'])
-        if candidate.get('control') is True:
-            control_ids.append(candidate['id'])
-    if len(candidate_ids) != len(set(candidate_ids)):
-        raise QualificationError('Qualification plan has duplicate candidate IDs')
-    if len(control_ids) != 1:
-        raise QualificationError('Qualification plan must identify exactly one control')
+
+    policy = load_policy()
+    evaluation = _load_evaluation_set()
+    _validate_contrast_against_evaluation(policy, evaluation)
+    if plan.get('policy') != _canonical_plan_policy(policy):
+        raise QualificationError('Qualification plan does not match the canonical policy identity')
+    for field in ('candidates', 'measurement_fields', 'long_form', 'delivery_contrast'):
+        if plan.get(field) != policy[field]:
+            raise QualificationError(
+                f'Qualification plan {field} does not match the canonical policy'
+            )
+    canonical_evaluation = _canonical_plan_evaluation(evaluation)
+    if plan.get('evaluation') != canonical_evaluation:
+        raise QualificationError('Qualification plan does not match the canonical evaluation')
+
+    candidate_map = {item['id']: item for item in policy['candidates']}
+    control_id = next(item['id'] for item in policy['candidates'] if item['control'])
     return {
         'profile_id': profile['id'],
-        'evaluation_sha256': evaluation['sha256'],
-        'line_ids': line_ids,
-        'candidate_ids': candidate_ids,
-        'control_id': control_ids[0],
-        'minimum_seconds': plan['long_form'].get('minimum_seconds'),
-        'maximum_seconds': plan['long_form'].get('maximum_seconds'),
+        'evaluation_sha256': canonical_evaluation['sha256'],
+        'line_ids': [item['id'] for item in canonical_evaluation['lines']],
+        'candidate_map': candidate_map,
+        'candidate_ids': list(candidate_map),
+        'control_id': control_id,
+        'required_ids': {item['id'] for item in policy['candidates'] if item['required']},
+        'measurement_fields': list(policy['measurement_fields']),
+        'minimum_seconds': policy['long_form']['minimum_seconds'],
+        'maximum_seconds': policy['long_form']['maximum_seconds'],
+        'delivery_contrast': copy.deepcopy(policy['delivery_contrast']),
     }
 
 
@@ -326,22 +449,80 @@ def _validate_line_owner(value, label):
     _text(value.get('notes'), f'{label}.notes', 4000)
 
 
-def _validate_candidate(value, expected_line_ids, candidate_ids, index):
+def _validate_producer(value, policy, label):
+    _fields(value, ('family', 'adapter', 'model_id', 'model_revision', 'runtime_sha256'), label)
+    family = _stable_id(value.get('family'), f'{label}.family')
+    if family != policy['producer_family']:
+        raise QualificationError(f'{label} producer family does not match canonical policy')
+    adapter = _stable_id(value.get('adapter'), f'{label}.adapter')
+    if adapter != policy['adapter']:
+        raise QualificationError(f'{label} adapter does not match canonical policy')
+    _text(value.get('model_id'), f'{label}.model_id', 240)
+    _model_revision(value.get('model_revision'), f'{label}.model_revision')
+    _hash(value.get('runtime_sha256'), f'{label}.runtime_sha256')
+    return copy.deepcopy(value)
+
+
+def _validate_reference(value, policy, label):
+    requirement = policy['reference_requirement']
+    if requirement == 'none':
+        if value is not None:
+            raise QualificationError(f'{label} reference must be null for this candidate')
+        return None
+    if not isinstance(value, dict):
+        raise QualificationError(f'{label} reference evidence is required')
+    _fields(value, ('audio_sha256', 'transcript_sha256', 'permission_scope'), f'{label} reference')
+    _hash(value.get('audio_sha256'), f'{label}.reference.audio_sha256')
+    _hash(value.get('transcript_sha256'), f'{label}.reference.transcript_sha256')
+    _permission_scope(value.get('permission_scope'), f'{label}.reference.permission_scope')
+    return copy.deepcopy(value)
+
+
+def _validate_delivery_contrast(value, contrast, label):
+    _fields(
+        value,
+        (
+            'calm_line_id', 'spark_line_id', 'identity_consistency',
+            'delivery_control', 'accepted', 'notes',
+        ),
+        f'{label}.delivery_contrast',
+    )
+    if (
+        value.get('calm_line_id') != contrast['calm_line_id']
+        or value.get('spark_line_id') != contrast['spark_line_id']
+    ):
+        raise QualificationError(f'{label} delivery contrast does not use the canonical line pair')
+    _rating(value.get('identity_consistency'), f'{label}.delivery_contrast.identity_consistency')
+    _rating(value.get('delivery_control'), f'{label}.delivery_contrast.delivery_control')
+    if type(value.get('accepted')) is not bool:
+        raise QualificationError(f'{label}.delivery_contrast.accepted must be a boolean')
+    _text(value.get('notes'), f'{label}.delivery_contrast.notes', 4000)
+    return copy.deepcopy(value)
+
+
+def _validate_candidate(value, plan_info, index):
     label = f'qualification report candidate {index}'
     _fields(
         value,
-        ('id', 'status', 'configuration_sha256', 'metrics', 'lines', 'notes'),
+        (
+            'id', 'status', 'producer', 'configuration_sha256', 'reference',
+            'metrics', 'lines', 'delivery_contrast', 'notes',
+        ),
         label,
     )
     identifier = _stable_id(value.get('id'), f'{label}.id')
-    if identifier not in candidate_ids:
-        raise QualificationError(f'{label} is not declared by the qualification plan')
+    try:
+        policy = plan_info['candidate_map'][identifier]
+    except KeyError as exc:
+        raise QualificationError(f'{label} is not declared by the qualification plan') from exc
     if value.get('status') != 'measured':
         raise QualificationError(f'{label}.status must be measured for submitted candidate evidence')
+    producer = _validate_producer(value.get('producer'), policy, label)
     _hash(value.get('configuration_sha256'), f'{label}.configuration_sha256')
+    reference = _validate_reference(value.get('reference'), policy, label)
     metrics = value.get('metrics')
-    _fields(metrics, METRIC_FIELDS, f'{label}.metrics')
-    for field in METRIC_FIELDS:
+    _fields(metrics, plan_info['measurement_fields'], f'{label}.metrics')
+    for field in plan_info['measurement_fields']:
         _finite_nonnegative(metrics.get(field), field)
     lines = value.get('lines')
     if not isinstance(lines, list):
@@ -354,10 +535,21 @@ def _validate_candidate(value, expected_line_ids, candidate_ids, index):
         _hash(line.get('audio_sha256'), f'{line_label}.audio_sha256')
         _validate_machine(line.get('machine'), f'{line_label}.machine')
         _validate_line_owner(line.get('owner'), f'{line_label}.owner')
-    if actual_ids != expected_line_ids:
+    if actual_ids != plan_info['line_ids']:
         raise QualificationError(f'{label} must cover the exact ordered evaluation lines')
+    contrast = _validate_delivery_contrast(
+        value.get('delivery_contrast'),
+        plan_info['delivery_contrast'],
+        label,
+    )
     _text(value.get('notes'), f'{label}.notes', 4000)
-    return identifier
+    return {
+        'id': identifier,
+        'policy': policy,
+        'producer': producer,
+        'reference': reference,
+        'contrast': contrast,
+    }
 
 
 def _validate_long_form(value, bounds, measured_non_control):
@@ -377,20 +569,14 @@ def _validate_long_form(value, bounds, measured_non_control):
     _fields(
         owner,
         (
-            'listened_end_to_end',
-            'identity_consistent',
-            'pronunciation_reviewed',
-            'accepted',
-            'fatigue',
-            'notes',
+            'listened_end_to_end', 'identity_consistent', 'pronunciation_reviewed',
+            'accepted', 'fatigue', 'notes',
         ),
         'long_form.owner',
     )
     for field in (
-        'listened_end_to_end',
-        'identity_consistent',
-        'pronunciation_reviewed',
-        'accepted',
+        'listened_end_to_end', 'identity_consistent',
+        'pronunciation_reviewed', 'accepted',
     ):
         if type(owner.get(field)) is not bool:
             raise QualificationError(f'long_form.owner.{field} must be a boolean')
@@ -406,13 +592,8 @@ def validate_report(plan: dict, report: dict) -> dict:
     _fields(
         report,
         (
-            'schema_version',
-            'plan_sha256',
-            'profile_id',
-            'evaluation_set_sha256',
-            'candidates',
-            'long_form',
-            'decision',
+            'schema_version', 'plan_sha256', 'profile_id',
+            'evaluation_set_sha256', 'candidates', 'long_form', 'decision',
         ),
         'qualification report',
     )
@@ -428,19 +609,13 @@ def validate_report(plan: dict, report: dict) -> dict:
     candidates = report.get('candidates')
     if not isinstance(candidates, list) or not candidates:
         raise QualificationError('Qualification report candidates must be a non-empty list')
-    measured = []
-    seen = set()
+    measured = {}
     for index, candidate in enumerate(candidates):
-        identifier = _validate_candidate(
-            candidate,
-            plan_info['line_ids'],
-            set(plan_info['candidate_ids']),
-            index,
-        )
-        if identifier in seen:
+        validated = _validate_candidate(candidate, plan_info, index)
+        identifier = validated['id']
+        if identifier in measured:
             raise QualificationError(f'Qualification report has duplicate candidate ID {identifier}')
-        seen.add(identifier)
-        measured.append(identifier)
+        measured[identifier] = validated
 
     if plan_info['control_id'] not in measured:
         raise QualificationError('Qualification report must include the measured control')
@@ -449,6 +624,11 @@ def validate_report(plan: dict, report: dict) -> dict:
     }
     if len(measured_non_control) < 2:
         raise QualificationError('Qualification report needs at least two measured non-control candidates')
+    missing_required = sorted(plan_info['required_ids'] - set(measured))
+    if missing_required:
+        raise QualificationError(
+            'Qualification report is missing required candidate ' + ', '.join(missing_required)
+        )
 
     long_form_candidate = _validate_long_form(
         report.get('long_form'),
@@ -469,16 +649,36 @@ def validate_report(plan: dict, report: dict) -> dict:
     _timestamp(decision.get('owner_reviewed_at'), 'qualification decision owner_reviewed_at')
 
     selected = decision.get('candidate_id')
+    selected_record = None
+    independent_families = []
     if decision['state'] == 'accepted':
         if selected not in measured:
             raise QualificationError('Accepted qualification decision must select a measured candidate')
-        if selected == plan_info['control_id']:
+        selected_record = measured[selected]
+        policy = selected_record['policy']
+        if policy['control']:
             raise QualificationError('Accepted qualification decision must select a non-control candidate')
+        if not policy['selectable']:
+            raise QualificationError('Accepted qualification decision must select a selectable candidate')
         if selected != long_form_candidate:
             raise QualificationError('Accepted candidate must match the long-form reviewed candidate')
         owner = report['long_form']['owner']
         if not owner['accepted'] or not owner['identity_consistent'] or not owner['pronunciation_reviewed']:
             raise QualificationError('Accepted profile needs positive long-form owner evidence')
+        if not selected_record['contrast']['accepted']:
+            raise QualificationError('Accepted candidate needs accepted delivery contrast evidence')
+        selected_family = selected_record['producer']['family']
+        independent_families = sorted({
+            item['producer']['family']
+            for identifier, item in measured.items()
+            if identifier != selected
+            and not item['policy']['control']
+            and item['producer']['family'] != selected_family
+        })
+        if not independent_families:
+            raise QualificationError(
+                'Accepted qualification decision needs an independent producer family comparison'
+            )
     elif selected is not None:
         raise QualificationError('A none-ready decision must not select a candidate')
 
@@ -491,6 +691,11 @@ def validate_report(plan: dict, report: dict) -> dict:
         'state': decision['state'],
         'profile_id': plan_info['profile_id'],
         'candidate_id': selected,
+        'selected_producer_family': (
+            selected_record['producer']['family'] if selected_record else None
+        ),
+        'independent_producer_families': independent_families,
+        'reference': copy.deepcopy(selected_record['reference']) if selected_record else None,
         'qualification_report_sha256': report_sha256,
         'long_form_manifest_sha256': report['long_form']['manifest_sha256'],
         'long_form_audio_sha256': report['long_form']['audio_sha256'],
