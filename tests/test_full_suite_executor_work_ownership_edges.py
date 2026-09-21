@@ -13,10 +13,12 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from runtime_observability import (  # noqa: E402
+from executor_work_observability import (  # noqa: E402
     ExecutorWorkObserver,
-    ThreadOwnershipObserver,
     current_work_origin,
+)
+from runtime_observability import (  # noqa: E402
+    ThreadOwnershipObserver,
     set_current_test,
 )
 
