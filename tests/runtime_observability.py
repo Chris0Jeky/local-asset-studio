@@ -93,6 +93,7 @@ class ThreadOwnershipObserver:
         self._lock = threading.RLock()
         self._origins = weakref.WeakKeyDictionary()
         self._preexisting = weakref.WeakSet()
+        self._root_thread = None
         self._overflow = 0
         self._installed = False
         self._original_start = None
@@ -111,6 +112,7 @@ class ThreadOwnershipObserver:
                 return self._start(thread, *args, **kwargs)
 
             self._start_proxy = start_proxy
+            self._root_thread = threading.current_thread()
             self._preexisting = weakref.WeakSet(threading.enumerate())
             threading.Thread.start = start_proxy
             _ACTIVE_THREAD_OBSERVER = self
@@ -129,6 +131,7 @@ class ThreadOwnershipObserver:
         with self._lock:
             self._origins.clear()
             self._preexisting.clear()
+            self._root_thread = None
 
     def _prune_finished_locked(self) -> None:
         for thread in list(self._origins):
@@ -139,6 +142,33 @@ class ThreadOwnershipObserver:
             if finished:
                 self._origins.pop(thread, None)
 
+    def _parent_origin_locked(self, parent, started_during: str) -> dict:
+        if parent is self._root_thread:
+            return {
+                "status": "observed",
+                "owner_test": started_during,
+            }
+        origin = self._origins.get(parent)
+        if origin is not None:
+            return origin
+        if parent in self._preexisting:
+            reason = "started-before-observer"
+        elif self._overflow:
+            reason = "observer-capacity"
+        else:
+            reason = "unobserved-thread-start"
+        return {
+            "status": "unobserved",
+            "reason": reason,
+        }
+
+    @staticmethod
+    def _descendant_reason(parent_origin: dict) -> str:
+        reason = parent_origin.get("reason", "unobserved-thread-start")
+        if reason.startswith("ancestor-"):
+            return reason
+        return f"ancestor-{reason}"
+
     def _start(self, thread, *args, **kwargs):
         original_start = self._original_start
         if original_start is None:
@@ -147,25 +177,31 @@ class ThreadOwnershipObserver:
         parent = threading.current_thread()
         started_during = current_test()
         with self._lock:
-            parent_origin = self._origins.get(parent)
-            owner_test = (
-                parent_origin["owner_test"]
-                if parent_origin is not None
-                else started_during
-            )
             self._prune_finished_locked()
+            parent_origin = self._parent_origin_locked(parent, started_during)
+            record = {
+                "status": parent_origin["status"],
+                "started_during_test": started_during,
+                "parent_thread": _safe_text(parent.name),
+                "start_stack": bounded_call_stack(
+                    skip_files=(Path(__file__).name,),
+                    max_frames=self.max_frames,
+                ),
+            }
+            if parent_origin["status"] == "observed":
+                record["owner_test"] = parent_origin["owner_test"]
+            else:
+                record.update(
+                    {
+                        "reason": self._descendant_reason(parent_origin),
+                        "max_threads": self.max_threads,
+                        "unattributed_starts": self._overflow,
+                    }
+                )
+
             recorded = len(self._origins) < self.max_threads
             if recorded:
-                self._origins[thread] = {
-                    "status": "observed",
-                    "owner_test": owner_test,
-                    "started_during_test": started_during,
-                    "parent_thread": _safe_text(parent.name),
-                    "start_stack": bounded_call_stack(
-                        skip_files=(Path(__file__).name,),
-                        max_frames=self.max_frames,
-                    ),
-                }
+                self._origins[thread] = record
             else:
                 self._overflow += 1
 
