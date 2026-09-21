@@ -76,20 +76,24 @@ def bounded_call_stack(*, skip_files=(), max_frames: int = 12) -> list[dict]:
 
 
 class ThreadOwnershipObserver:
-    """Attribute later thread starts to the active test and parent thread."""
+    """Attribute later thread starts to the active test and parent work."""
 
     def __init__(
         self,
         *,
         max_threads: int = 512,
         max_frames: int = 12,
+        work_origin_provider: Callable[[], dict | None] | None = None,
     ):
         if type(max_threads) is not int or not 1 <= max_threads <= 4096:
             raise ValueError("max_threads must be an integer from 1 to 4096")
         if type(max_frames) is not int or not 1 <= max_frames <= 32:
             raise ValueError("max_frames must be an integer from 1 to 32")
+        if work_origin_provider is not None and not callable(work_origin_provider):
+            raise TypeError("work_origin_provider must be callable or None")
         self.max_threads = max_threads
         self.max_frames = max_frames
+        self.work_origin_provider = work_origin_provider
         self._lock = threading.RLock()
         self._origins = weakref.WeakKeyDictionary()
         self._preexisting = weakref.WeakSet()
@@ -149,15 +153,74 @@ class ThreadOwnershipObserver:
             if finished:
                 self._origins.pop(thread, None)
 
-    def _parent_origin_locked(self, parent, started_during: str) -> dict:
+    def _work_origin(self) -> dict | None:
+        provider = self.work_origin_provider
+        if provider is None:
+            return None
+        try:
+            origin = provider()
+        except BaseException:
+            return {
+                "status": "unobserved",
+                "reason": "work-origin-provider-error",
+                "ownership_source": "parent-work",
+            }
+        if origin is None:
+            return None
+        if not isinstance(origin, dict):
+            return {
+                "status": "unobserved",
+                "reason": "work-origin-invalid",
+                "ownership_source": "parent-work",
+            }
+        if origin.get("status") == "observed" and isinstance(
+            origin.get("owner_test"),
+            str,
+        ):
+            return {
+                "status": "observed",
+                "owner_test": _safe_text(
+                    origin["owner_test"],
+                    limit=_MAX_TEST_ID,
+                ),
+                "ownership_source": "parent-work",
+            }
+        reason = origin.get("reason", "unobserved-work-origin")
+        if not isinstance(reason, str) or not reason:
+            reason = "unobserved-work-origin"
+        return {
+            "status": "unobserved",
+            "reason": _safe_text(reason),
+            "ownership_source": "parent-work",
+        }
+
+    def _parent_origin_locked(
+        self,
+        parent,
+        started_during: str,
+        work_origin: dict | None,
+    ) -> dict:
+        if work_origin is not None:
+            return work_origin
         if parent is self._root_thread:
             return {
                 "status": "observed",
                 "owner_test": started_during,
+                "ownership_source": "runner-thread",
             }
         origin = self._origins.get(parent)
         if origin is not None:
-            return origin
+            if origin.get("status") == "observed":
+                return {
+                    "status": "observed",
+                    "owner_test": origin["owner_test"],
+                    "ownership_source": "parent-thread",
+                }
+            return {
+                "status": "unobserved",
+                "reason": origin.get("reason", "unobserved-thread-start"),
+                "ownership_source": "parent-thread",
+            }
         if parent in self._preexisting:
             reason = "started-before-observer"
         elif self._overflow:
@@ -167,6 +230,7 @@ class ThreadOwnershipObserver:
         return {
             "status": "unobserved",
             "reason": reason,
+            "ownership_source": "parent-thread",
         }
 
     @staticmethod
@@ -183,13 +247,19 @@ class ThreadOwnershipObserver:
 
         parent = threading.current_thread()
         started_during = current_test()
+        work_origin = self._work_origin()
         with self._lock:
             self._prune_finished_locked()
-            parent_origin = self._parent_origin_locked(parent, started_during)
+            parent_origin = self._parent_origin_locked(
+                parent,
+                started_during,
+                work_origin,
+            )
             record = {
                 "status": parent_origin["status"],
                 "started_during_test": started_during,
                 "parent_thread": _safe_text(parent.name),
+                "ownership_source": parent_origin["ownership_source"],
                 "start_stack": bounded_call_stack(
                     skip_files=(Path(__file__).name,),
                     max_frames=self.max_frames,
