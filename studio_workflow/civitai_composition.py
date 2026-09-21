@@ -15,7 +15,7 @@ from .core import canonical, decode, digest, need
 INPUT_FORMAT = 'studio.civitai-composition-input/v1'
 REPORT_FORMAT = 'studio.source-composition-evidence/v1'
 HOSTS = {'civitai.com', 'civitai.red'}
-OUTCOMES = {'ok', 'filtered', 'blocked'}
+OUTCOMES = {'ok', 'filtered', 'blocked', 'unknown'}
 AUTH_CONTEXTS = {'anonymous', 'credentialed'}
 MAX_PAGES = 32
 MAX_IMAGES = 1000
@@ -23,14 +23,16 @@ MAX_FILES = 256
 MAX_RESOURCES = 128
 MAX_QUERY = 64
 MAX_BYTES = (1 << 63) - 1
+MAX_INPUT_BYTES = 1048576
 SHA256 = re.compile(r'[a-fA-F0-9]{64}\Z')
 VERSION_ROUTE = re.compile(r'/api/v1/model-versions/([1-9][0-9]{0,19})\Z')
 AIR = re.compile(
     r'urn:air:[a-z0-9][a-z0-9._-]{0,63}:[a-z0-9][a-z0-9._-]{0,63}:'
     r'civitai:([1-9][0-9]{0,19})@([1-9][0-9]{0,19})\Z', re.IGNORECASE)
-SENSITIVE_QUERY = {'apikey', 'api_key', 'api-key', 'token', 'access_token',
-                   'access-token', 'authorization', 'key'}
-REACTIONS = {'cryCount', 'laughCount', 'likeCount', 'dislikeCount', 'heartCount'}
+SENSITIVE_QUERY = {'apikey', 'token', 'accesstoken', 'authorization', 'key',
+                   'secret', 'password'}
+PAGINATION_QUERY = {'cursor', 'page', 'limit'}
+REACTIONS = ('cryCount', 'dislikeCount', 'heartCount', 'laughCount', 'likeCount')
 
 
 def text(value: Any, limit: int = 300) -> bool:
@@ -79,8 +81,8 @@ def normalize_query(value: Any) -> dict[str, Any]:
     result: dict[str, Any] = {}
     for key, raw in value.items():
         need(token(key, 128), 'Invalid source query key')
-        folded = key.casefold()
-        need(folded not in SENSITIVE_QUERY and not folded.startswith('authorization'),
+        compact = re.sub(r'[^a-z0-9]', '', key.casefold())
+        need(compact not in SENSITIVE_QUERY and not compact.startswith('authorization'),
              'Source receipt cannot retain a sensitive query parameter')
         if isinstance(raw, list):
             need(len(raw) <= 64, 'Source query list is oversized')
@@ -167,7 +169,10 @@ def file_facts(raw: Any, version_id: int, seen_ids: set[int]) -> dict[str, Any]:
 
 
 def source_claim(value: Any, label: str) -> Any:
-    if value is None or isinstance(value, (bool, str)): return value
+    if value is None or isinstance(value, bool): return value
+    if isinstance(value, str):
+        need(token(value, 500), 'Invalid provider ' + label + ' claim')
+        return value
     raise ValueError('Invalid provider ' + label + ' claim')
 
 
@@ -213,7 +218,9 @@ def normalize_model(value: Any, diagnostics: list[dict[str, Any]]) -> tuple[dict
 
 
 def source_scope(receipt: dict[str, Any]) -> dict[str, Any]:
-    scope = {'host': receipt['host'], 'route': receipt['route'], 'query': copy.deepcopy(receipt['query']),
+    query = {key: copy.deepcopy(value) for key, value in receipt['query'].items()
+             if key.casefold() not in PAGINATION_QUERY}
+    scope = {'host': receipt['host'], 'route': receipt['route'], 'query': query,
              'auth_context': receipt['auth_context']}
     scope['scope_sha256'] = digest(scope); return scope
 
@@ -342,7 +349,7 @@ def semantic_observation(value: dict[str, Any]) -> bytes:
 
 def collect_observations(pages: list[Any], version_id: int, diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], bool]:
     need(len(pages) <= MAX_PAGES, 'Use at most 32 retained image pages')
-    receipts, seen, total, coverage = [], {}, 0, bool(pages)
+    receipts, normalized, seen, total, coverage = [], [], {}, 0, bool(pages)
     for index, raw_page in enumerate(pages):
         receipt, payload = snapshot(raw_page); receipts.append(receipt)
         need(receipt['route'] == '/api/v1/images', 'Image receipt must use /api/v1/images')
@@ -351,7 +358,15 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         with_meta = receipt['query'].get('withMeta')
         need(with_meta is True or isinstance(with_meta, str) and with_meta.casefold() == 'true',
              'Image receipt must request metadata explicitly')
-        scope = source_scope(receipt)
+        cursor = receipt['query'].get('cursor')
+        if cursor not in (None, ''): need(token(cursor, 1000), 'Image cursor must be a bounded string')
+        normalized.append((index, receipt, payload, source_scope(receipt)))
+    available_cursors: dict[str, set[str]] = {}
+    for _, receipt, _, scope in normalized:
+        cursor = receipt['query'].get('cursor')
+        if receipt['outcome'] == 'ok' and cursor not in (None, ''):
+            available_cursors.setdefault(scope['scope_sha256'], set()).add(cursor)
+    for index, receipt, payload, scope in normalized:
         if receipt['outcome'] != 'ok':
             coverage = False
             diagnostics.append({'code': 'source_' + receipt['outcome'],
@@ -361,12 +376,25 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         need(isinstance(items, list), 'Civitai image payload items must be a list')
         total += len(items); need(total <= MAX_IMAGES, 'Use at most 1,000 retained image records')
         metadata = payload.get('metadata')
-        if metadata is not None:
+        if metadata is None:
+            coverage = False
+            diagnostics.append({'code': 'pagination_metadata_missing',
+                                'message': 'Image page omitted pagination metadata; coverage is unknown.',
+                                'page': index, 'host': receipt['host']})
+        else:
             need(isinstance(metadata, dict), 'Civitai image page metadata must be an object')
-            if metadata.get('nextCursor') not in (None, ''):
-                coverage = False
-                diagnostics.append({'code': 'pagination_incomplete', 'message': 'A retained image page reports another cursor.',
-                                    'page': index, 'host': receipt['host']})
+            next_cursor = metadata.get('nextCursor')
+            if next_cursor not in (None, ''):
+                if not token(next_cursor, 1000):
+                    coverage = False
+                    diagnostics.append({'code': 'invalid_pagination_cursor',
+                                        'message': 'Image page reported an invalid next cursor.',
+                                        'page': index, 'host': receipt['host']})
+                elif next_cursor not in available_cursors.get(scope['scope_sha256'], set()):
+                    coverage = False
+                    diagnostics.append({'code': 'pagination_incomplete',
+                                        'message': 'A retained image page advertises a cursor that was not retained.',
+                                        'page': index, 'host': receipt['host'], 'next_cursor': next_cursor})
         for raw in items:
             item = normalize_image(raw, scope, receipt, diagnostics)
             if item is None: continue
@@ -438,6 +466,7 @@ def aggregate(observations: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def normalize(value: Any) -> dict[str, Any]:
     need(isinstance(value, dict) and set(value) == {'format', 'model_version', 'image_pages'},
          'Supply format, model_version and image_pages')
+    need(len(canonical(value)) <= MAX_INPUT_BYTES, 'Civitai composition input exceeds 1 MiB')
     need(value['format'] == INPUT_FORMAT, 'Unsupported Civitai composition input')
     need(isinstance(value['image_pages'], list), 'image_pages must be a list')
     diagnostics: list[dict[str, Any]] = []
@@ -454,7 +483,7 @@ def normalize(value: Any) -> dict[str, Any]:
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    with path.open('rb') as stream: raw = stream.read(1048577)
+    with path.open('rb') as stream: raw = stream.read(MAX_INPUT_BYTES + 1)
     return decode(raw)
 
 
