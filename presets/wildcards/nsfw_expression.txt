@@ -1,0 +1,10 @@
+# Adult expression tags. Pair with 1girl, solo, adult. Expand with __nsfw_expression__.
+naughty face, half-closed eyes, blush
+ahegao, rolling eyes, tongue out, blush
+embarrassed, blush, looking away
+seductive smile, half-closed eyes
+open mouth, panting, blush
+smirk, looking at viewer
+bedroom eyes, parted lips
+drunk blush, heavy lidded eyes
+teary eyes, blush, open mouth

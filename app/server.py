@@ -168,7 +168,12 @@ class Studio:
             preset["missing_loras"] = sorted(name for name in authored if name not in loras) if loras else []
             for key in LORA_NAME_KEYS:
                 if preset.get(key) or (preset.get("bindings_extra") or {}).get(key): preset.setdefault("choices", {})[key] = list(loras)
+        result["wildcards"] = self.wildcards()
         return result
+
+    def wildcards(self):
+        """Insertable __name__ lists from presets/wildcards; count is the live option count."""
+        return [{"name": name, "count": len(prompting.options(self.root, name))} for name in prompting.names(self.root)]
 
     def options(self, refresh=False, discover=False):
         """Installed LoRA files and sampler/scheduler names from the node schema.
@@ -202,7 +207,13 @@ class Studio:
         if not path.is_file(): return {"available": False, "version": 0, "families": {}, "loras": {}, "sha256": None}
         data = read_json(path)
         if not isinstance(data, dict): raise StudioError("Invalid presets/settings-kb.json")
-        return dict(data, available=True, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        result = dict(data, available=True, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        intel = self.root / "presets/nsfw-intel.json"
+        if intel.is_file():
+            extra = read_json(intel)
+            if not isinstance(extra, dict): raise StudioError("Invalid presets/nsfw-intel.json")
+            result["nsfw_lab"] = extra
+        return result
 
     def recipes(self):
         """Authored recipes annotated against the installed LoRA inventory."""
@@ -1748,6 +1759,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
+            if path == "/api/wildcards": return self._json(200, {"wildcards": self.studio.wildcards()})
             if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))
             if path == "/api/knowledge": return self._json(200, self.studio.knowledge())
             if path == "/api/recipes": return self._json(200, self.studio.recipes())

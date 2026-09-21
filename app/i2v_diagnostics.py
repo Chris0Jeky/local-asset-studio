@@ -323,6 +323,19 @@ def _safetensors_header(path: Path):
 
 
 _FILE_IDENTITY_FIELDS = ("bytes", "mtime_ns", "ctime_ns", "device", "inode")
+# Windows path stat can report birth time as st_ctime_ns while descriptor stat reports change time, so the two
+# values are not comparable across the APIs and are not merely imprecise: for a real model written over minutes
+# they differ by the whole download. Measured here on 21 September 2026, 4,000 freshly written files: 331 had a
+# path/descriptor divergence and in every one of them st_ctime_ns was the only differing field - size, mtime,
+# device, inode and birth time all agreed. Compare ctime only within one API domain, as app/resource_receipts.py
+# already does; across domains carry birth time instead. A path swapped to another file still moves device,
+# inode, size, mtime or birth time.
+_PATH_IDENTITY_FIELDS = ("bytes", "mtime_ns", "device", "inode", "birthtime_ns")
+
+
+def _same_file(first, second):
+    """True when two identity mappings describe the same file across a path stat and a descriptor stat."""
+    return all(first.get(field) == second.get(field) for field in _PATH_IDENTITY_FIELDS)
 
 
 def _file_identity(observed):
@@ -332,6 +345,9 @@ def _file_identity(observed):
         "ctime_ns": observed.st_ctime_ns,
         "device": observed.st_dev,
         "inode": observed.st_ino,
+        # Absent on Linux, where both sides of a cross-API comparison are then None; present on Windows and
+        # macOS, where it is the field that survives the ctime domain difference described above.
+        "birthtime_ns": getattr(observed, "st_birthtime_ns", None),
     }
 
 
@@ -364,7 +380,7 @@ def _hash_open_file(path: Path):
             if after != identity:
                 return {"path": key, "present": True, **after, "error": "Model file changed while hashing"}
             current = _file_identity(path.stat())
-            if current != after:
+            if not _same_file(current, after):
                 return {"path": key, "present": True, **after, "error": "Model path changed while hashing"}
             return {"path": key, "present": True, **after, "sha256": digest.hexdigest()}
     except OSError as exc:
@@ -382,6 +398,9 @@ def _cached_file_hash(path: Path, cache, require_current=False):
         except OSError as exc:
             return {"path": key, "present": False, "error": str(exc)[:200]}
         previous = cache.get(key)
+        # Unchanged on purpose: this comparison keeps the full field set, ctime included, so an in-place
+        # rewrite that preserves size and mtime still misses the cache wherever ctime is a change time.
+        # (On Windows it is the creation time and the cross-API gap below makes this branch miss anyway.)
         if isinstance(previous, dict) and all(previous.get(field) == identity[field] for field in _FILE_IDENTITY_FIELDS) and previous.get("sha256"):
             return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
     observed = _hash_open_file(path)

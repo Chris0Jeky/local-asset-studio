@@ -1,0 +1,9 @@
+# Adult-safe settings (original locations, not named IPs). Expand with __nsfw_setting__.
+bedroom, rumpled sheets, warm lamp
+bathroom, steamy mirror, tiled wall
+onsen, wooden bath, rising steam
+hotel room, large window, city night
+dressing room, vanity lights
+rooftop at night, city bokeh
+sunlit bedroom, sheer curtains
+dim studio, single key light
