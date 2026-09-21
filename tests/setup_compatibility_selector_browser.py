@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import os
 from pathlib import Path
 import shutil
@@ -85,7 +84,7 @@ async def run(out: Path) -> None:
               <option value='extra'>Unreviewed extra</option>
             </select><div id='compatibility'></div></main>
             <script>window.selectionEvents=0;candidate.addEventListener('change',()=>selectionEvents++);</script>
-            </body></html>"
+            </body></html>"""
         )
         await page.add_style_tag(content=(ROOT / "app/static/setup-compatibility-selector.css").read_text(encoding="utf-8"))
         await page.add_script_tag(content=(ROOT / "app/static/setup-compatibility-selector.js").read_text(encoding="utf-8"))
