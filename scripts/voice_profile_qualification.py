@@ -24,12 +24,27 @@ from voice_profile import (
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_EVALUATION_SET = ROOT / 'research' / 'voice-profiles' / 'evaluation-set.json'
 DEFAULT_POLICY = ROOT / 'research' / 'voice-profiles' / 'qualification-policy.json'
+HEX_40_RE = re.compile(r'[0-9a-f]{40}\Z')
 HEX_64_RE = re.compile(r'[0-9a-f]{64}\Z')
 MODEL_REVISION_RE = re.compile(r'(?:[0-9a-f]{40}|[0-9a-f]{64})\Z')
 ID_RE = re.compile(r'[a-z][a-z0-9-]{0,63}\Z')
 FIELD_RE = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
+SPEAKER_RE = re.compile(r'[a-z][a-z0-9_-]{0,63}\Z')
+ASSET_ID_RE = re.compile(r'asset-[a-z0-9][a-z0-9._-]{0,127}\Z')
 PERMISSION_RE = re.compile(r'[a-z][a-z0-9._-]{0,127}\Z')
 REFERENCE_REQUIREMENTS = {'none', 'required'}
+PROFILE_STATUSES = {'control', 'experimental', 'accepted', 'rejected'}
+PROFILE_SOURCES = {'catalog', 'local-registry'}
+DELIVERY_STATUSES = {'metadata-only', 'qualified', 'rejected'}
+ACCEPTANCE_STATES = {'control', 'unreviewed', 'accepted', 'rejected'}
+OWNER_REVIEWS = {'not-applicable', 'unreviewed', 'accepted', 'rejected'}
+SPEAKER_SOURCES = {'profile', 'cli-metadata-override'}
+PROFILE_BINDING_FIELDS = (
+    'schema_version', 'id', 'revision', 'name', 'status', 'source',
+    'profile_sha256', 'identity', 'adapter', 'runnable', 'speaker_id',
+    'speaker_id_source', 'delivery', 'lexicon', 'mix', 'acceptance',
+    'binding_sha256',
+)
 
 
 class QualificationError(ValueError):
@@ -76,6 +91,12 @@ def _hash(value, label) -> str:
     if not isinstance(value, str) or not HEX_64_RE.fullmatch(value):
         raise QualificationError(f'{label} must be a lowercase SHA-256')
     return value
+
+
+def _optional_hash(value, label):
+    if value is None:
+        return None
+    return _hash(value, label)
 
 
 def _model_revision(value, label) -> str:
@@ -127,6 +148,176 @@ def _positive_revision(value, label) -> int:
     if type(value) is not int or not 1 <= value <= 1_000_000:
         raise QualificationError(f'{label} must be a positive integer revision')
     return value
+
+
+def _validate_binding_reference(value, label):
+    if value is None:
+        return None
+    _fields(value, ('asset_id', 'sha256', 'transcript_sha256', 'permission_scope'), label)
+    asset_id = value.get('asset_id')
+    if not isinstance(asset_id, str) or not ASSET_ID_RE.fullmatch(asset_id):
+        raise QualificationError(f'{label}.asset_id must be a local content-addressed asset ID')
+    _hash(value.get('sha256'), f'{label}.sha256')
+    _hash(value.get('transcript_sha256'), f'{label}.transcript_sha256')
+    _permission_scope(value.get('permission_scope'), f'{label}.permission_scope')
+    return copy.deepcopy(value)
+
+
+def _validate_binding_identity(value, label):
+    _fields(
+        value,
+        ('kind', 'model_id', 'model_revision', 'voice', 'language', 'original', 'reference'),
+        label,
+    )
+    _stable_id(value.get('kind'), f'{label}.kind')
+    _text(value.get('model_id'), f'{label}.model_id', 240)
+    _text(value.get('model_revision'), f'{label}.model_revision', 160)
+    _text(value.get('voice'), f'{label}.voice', 160)
+    _text(value.get('language'), f'{label}.language', 32)
+    if type(value.get('original')) is not bool:
+        raise QualificationError(f'{label}.original must be a boolean')
+    _validate_binding_reference(value.get('reference'), f'{label}.reference')
+    return copy.deepcopy(value)
+
+
+def _validate_binding_delivery(value, label):
+    _fields(value, ('id', 'name', 'instruction', 'status', 'sha256'), label)
+    _stable_id(value.get('id'), f'{label}.id')
+    _text(value.get('name'), f'{label}.name', 120)
+    _text(value.get('instruction'), f'{label}.instruction', 2000)
+    if value.get('status') not in DELIVERY_STATUSES:
+        raise QualificationError(f'{label}.status is unsupported')
+    claimed = _hash(value.get('sha256'), f'{label} SHA-256')
+    unsigned = {key: item for key, item in value.items() if key != 'sha256'}
+    if canonical_digest(unsigned) != claimed:
+        raise QualificationError(f'{label} SHA-256 is invalid')
+    return copy.deepcopy(value)
+
+
+def _validate_binding_lexicon(value, label):
+    _fields(value, ('revision', 'sha256'), label)
+    _positive_revision(value.get('revision'), f'{label}.revision')
+    _hash(value.get('sha256'), f'{label}.sha256')
+    return copy.deepcopy(value)
+
+
+def _validate_binding_mix(value, label):
+    _fields(value, ('revision', 'recipe', 'sha256'), label)
+    _positive_revision(value.get('revision'), f'{label}.revision')
+    _stable_id(value.get('recipe'), f'{label}.recipe')
+    claimed = _hash(value.get('sha256'), f'{label} SHA-256')
+    unsigned = {'revision': value['revision'], 'recipe': value['recipe']}
+    if canonical_digest(unsigned) != claimed:
+        raise QualificationError(f'{label} SHA-256 is invalid')
+    return copy.deepcopy(value)
+
+
+def _validate_binding_acceptance(value, label):
+    _fields(
+        value,
+        (
+            'state', 'owner_review', 'qualification_report_sha256',
+            'long_form_manifest_sha256', 'long_form_audio_sha256', 'accepted_at',
+        ),
+        label,
+    )
+    if value.get('state') not in ACCEPTANCE_STATES:
+        raise QualificationError(f'{label}.state is unsupported')
+    if value.get('owner_review') not in OWNER_REVIEWS:
+        raise QualificationError(f'{label}.owner_review is unsupported')
+    for field in (
+        'qualification_report_sha256', 'long_form_manifest_sha256',
+        'long_form_audio_sha256',
+    ):
+        _optional_hash(value.get(field), f'{label}.{field}')
+    if value.get('accepted_at') is not None:
+        _timestamp(value.get('accepted_at'), f'{label}.accepted_at')
+    return copy.deepcopy(value)
+
+
+def _validate_profile_binding(value) -> dict:
+    label = 'qualification plan profile binding'
+    _fields(value, PROFILE_BINDING_FIELDS, label)
+    claimed = _hash(value.get('binding_sha256'), f'{label} SHA-256')
+    unsigned = {key: item for key, item in value.items() if key != 'binding_sha256'}
+    try:
+        actual = canonical_digest(unsigned)
+    except VoiceProfileError as exc:
+        raise QualificationError(str(exc)) from exc
+    if actual != claimed:
+        raise QualificationError('Qualification plan profile binding SHA-256 is invalid')
+    if value.get('schema_version') != 1:
+        raise QualificationError('Qualification plan profile binding has an unsupported schema version')
+    _stable_id(value.get('id'), f'{label}.id')
+    _positive_revision(value.get('revision'), f'{label}.revision')
+    _text(value.get('name'), f'{label}.name', 120)
+    status = value.get('status')
+    if status not in PROFILE_STATUSES:
+        raise QualificationError(f'{label}.status is unsupported')
+    source = value.get('source')
+    if source not in PROFILE_SOURCES:
+        raise QualificationError(f'{label}.source is unsupported')
+    _hash(value.get('profile_sha256'), f'{label}.profile_sha256')
+    identity = _validate_binding_identity(value.get('identity'), f'{label}.identity')
+    delivery = _validate_binding_delivery(value.get('delivery'), f'{label} delivery')
+    _validate_binding_lexicon(value.get('lexicon'), f'{label}.lexicon')
+    _validate_binding_mix(value.get('mix'), f'{label} mix')
+    acceptance = _validate_binding_acceptance(value.get('acceptance'), f'{label}.acceptance')
+    adapter = _stable_id(value.get('adapter'), f'{label}.adapter')
+    runnable = value.get('runnable')
+    if type(runnable) is not bool:
+        raise QualificationError(f'{label}.runnable must be a boolean')
+    if runnable and adapter == 'unbound':
+        raise QualificationError(f'{label} cannot mark an unbound adapter runnable')
+    speaker_id = value.get('speaker_id')
+    if not isinstance(speaker_id, str) or not SPEAKER_RE.fullmatch(speaker_id):
+        raise QualificationError(f'{label}.speaker_id must be stable speaker metadata')
+    speaker_source = value.get('speaker_id_source')
+    if speaker_source not in SPEAKER_SOURCES:
+        raise QualificationError(f'{label}.speaker_id_source is unsupported')
+
+    if status == 'control':
+        if acceptance['state'] != 'control' or acceptance['owner_review'] != 'not-applicable':
+            raise QualificationError('Control profile binding needs control acceptance metadata')
+        if not runnable:
+            raise QualificationError('Control profile binding must be runnable')
+    elif status == 'experimental':
+        if acceptance['state'] != 'unreviewed' or acceptance['owner_review'] != 'unreviewed':
+            raise QualificationError('Experimental profile binding needs unreviewed acceptance metadata')
+    elif status == 'accepted':
+        if acceptance['state'] != 'accepted' or acceptance['owner_review'] != 'accepted':
+            raise QualificationError('An accepted profile binding needs explicit owner acceptance')
+        for field in (
+            'qualification_report_sha256', 'long_form_manifest_sha256',
+            'long_form_audio_sha256', 'accepted_at',
+        ):
+            if acceptance.get(field) is None:
+                raise QualificationError('An accepted profile binding needs complete acceptance evidence')
+        if identity['reference'] is None:
+            raise QualificationError('An accepted profile binding needs retained reference evidence')
+        if not HEX_40_RE.fullmatch(identity['model_revision']):
+            raise QualificationError('An accepted profile binding must pin a full model revision')
+        if not runnable:
+            raise QualificationError('An accepted profile binding must be runnable')
+        if delivery['status'] != 'qualified':
+            raise QualificationError('An accepted profile binding needs a qualified delivery')
+    elif acceptance['state'] != 'rejected' or acceptance['owner_review'] != 'rejected':
+        raise QualificationError('Rejected profile binding needs rejected acceptance metadata')
+
+    if source == 'catalog':
+        try:
+            expected = resolve_profile(
+                value['id'],
+                delivery['id'],
+                speaker_id=speaker_id if speaker_source == 'cli-metadata-override' else None,
+            )
+        except VoiceProfileError as exc:
+            raise QualificationError(str(exc)) from exc
+        if value != expected:
+            raise QualificationError(
+                'Qualification plan catalog profile binding does not match the canonical catalogue resolution'
+            )
+    return copy.deepcopy(value)
 
 
 def _read_json(path: Path, label: str):
@@ -386,9 +577,7 @@ def _validate_plan(plan: dict) -> dict:
         raise QualificationError('Qualification plan SHA-256 is invalid')
     if plan.get('generation_submitted') is not False:
         raise QualificationError('Qualification planning must record zero submitted generation')
-    profile = plan.get('profile')
-    if not isinstance(profile, dict) or not isinstance(profile.get('id'), str):
-        raise QualificationError('Qualification plan profile binding is invalid')
+    profile = _validate_profile_binding(plan.get('profile'))
 
     policy = load_policy()
     evaluation = _load_evaluation_set()
