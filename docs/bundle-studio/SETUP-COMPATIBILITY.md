@@ -257,6 +257,28 @@ name.
 5. Controlled runs and accepted owner review can add new exact evidence without
    rewriting historical source claims.
 
+## Read-only transport seam
+
+The live-context adapter is exposed through the existing loopback boundary as
+`POST /api/workflow-studio/setup-compatibility`. The route evaluates only the
+caller-supplied versioned request; it does not read the Studio object, inspect a
+provider or file, refresh a schema, install a resource, switch a backend, change a
+selection or submit generation. Capability discovery reports
+`setup_context_compatibility: true`.
+
+`WorkflowClient.setup_compatibility(request)` and the read-mode agent tool
+`setup_compatibility` use that same route. Before transport, the client snapshots
+the request and computes the deterministic expected report with the pure evaluator.
+It accepts only a byte-equivalent canonical report with every zero-authority flag
+still false. A stale, tampered or version-skewed response is therefore refused
+instead of becoming selection authority. The agent accepts at most 1 MiB of strict
+JSON text and returns the normal exact-JSON envelope; it exposes no ticket, command
+or apply operation.
+
+This seam remains advice only. A later selector/application slice must bind the
+report fingerprint and preconditions to the current draft, inventory, backend and
+schema, then recheck them atomically before any mutation.
+
 ## Verification
 
 The test-only commit `47786e8` preceded the implementation commit and deliberately
