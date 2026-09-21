@@ -82,7 +82,10 @@ async def run(out: Path) -> None:
               <option value='alpha'>Alpha</option><option value='beta' selected>Beta</option>
               <option value='gamma'>Gamma</option><option value='delta'>Delta</option>
               <option value='extra'>Unreviewed extra</option>
-            </select><div id='compatibility'></div></main>
+            </select><div id='compatibility'></div>
+            <label id='wrappedLabel'>Wrapped adapter<select id='wrappedCandidate'>
+              <option value='alpha' selected>Alpha</option><option value='gamma'>Gamma</option>
+            </select></label></main>
             <script>window.selectionEvents=0;candidate.addEventListener('change',()=>selectionEvents++);</script>
             </body></html>"""
         )
@@ -96,18 +99,18 @@ async def run(out: Path) -> None:
         assert await page.locator("#candidate").get_attribute("aria-describedby")
         assert await page.locator("[data-compatibility-status]").get_attribute("role") == "status"
         assert "Possible" in await page.locator("[data-compatibility-status]").inner_text()
-        assert await page.locator("option[value=gamma]").is_disabled()
+        assert await page.locator("option[value=gamma]").first.is_disabled()
         assert await page.locator("option[value=delta]").is_disabled()
         assert await page.locator("option[value=extra]").is_disabled()
         assert await page.evaluate("selectionEvents") == 0
         assert await page.locator("#unsafe").count() == 0
         assert "<img" in await page.locator("option[value=delta]").inner_text()
 
-        expert = page.get_by_role("checkbox", name="Show Needs review choices for expert review")
+        expert = page.get_by_role("checkbox", name="Show Needs review choices for expert review").first
         await expert.focus()
         await page.keyboard.press("Space")
         assert await expert.is_checked()
-        assert not await page.locator("option[value=gamma]").is_disabled()
+        assert not await page.locator("option[value=gamma]").first.is_disabled()
         assert await page.locator("option[value=delta]").is_disabled()
         assert await page.locator("option[value=extra]").is_disabled()
         assert await page.evaluate("selectionEvents") == 0
@@ -116,15 +119,21 @@ async def run(out: Path) -> None:
         assert await page.evaluate("selectionEvents") == 1
         assert "Needs review" in await page.locator("[data-compatibility-status]").inner_text()
 
+        await page.evaluate("([report])=>{window.wrappedPresenter=StudioSetupCompatibilitySelector.mount(wrappedCandidate,report);}", [report()])
+        assert await page.locator("#wrappedLabel [data-setup-compatibility]").count() == 0
+        assert await page.locator("#wrappedLabel + div [data-setup-compatibility]").count() == 1
+        assert await page.locator("#wrappedCandidate").input_value() == "alpha"
+
         await page.evaluate("document.documentElement.style.zoom='2'")
         overflow = await page.evaluate("document.documentElement.scrollWidth-document.documentElement.clientWidth")
         assert overflow <= 1, f"selector presenter overflowed by {overflow}px at 390px / 200% zoom"
         await page.screenshot(path=out / "selector-390-zoom-200.png", full_page=True)
 
-        await page.evaluate("presenter.destroy()")
+        await page.evaluate("wrappedPresenter.destroy();presenter.destroy()")
         assert await page.locator("[data-setup-compatibility]").count() == 0
         assert await page.locator("option[value=delta]").inner_text() == "Delta"
         assert not await page.locator("option[value=delta]").is_disabled()
+        assert await page.locator("#wrappedCandidate option[value=gamma]").inner_text() == "Gamma"
         assert errors == [], errors
         await browser.close()
 
