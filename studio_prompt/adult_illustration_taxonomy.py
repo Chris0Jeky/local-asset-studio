@@ -99,6 +99,8 @@ def _acyclic(graph: dict[str, list[str]], label: str, maximum_depth: int) -> Non
         cached = subtree_depth.get(node)
         if cached is not None:
             return cached
+        if len(visiting) >= maximum_depth:
+            raise ValueError(f"Taxonomy {label} graph exceeds depth {maximum_depth}")
         visiting.add(node)
         try:
             result = 1
@@ -114,12 +116,46 @@ def _acyclic(graph: dict[str, list[str]], label: str, maximum_depth: int) -> Non
             raise ValueError(f"Taxonomy {label} graph exceeds depth {maximum_depth}")
 
 
+def _validate_reviewed_displays(
+    source_names: set[str], reviews: list[dict[str, Any]],
+) -> None:
+    """Keep compiler display/alias ownership consistent with full-source lookup.
+
+    The compiler deliberately loads only the reviewed overlay. Index construction
+    and saved-index re-entry also know the unreviewed canonical namespace, so they
+    must reject a reviewed display that would select a different source identity.
+    """
+    canonical_owner = {normalise_term(name): name for name in source_names}
+    display_owner: dict[str, str] = {}
+    for entry in reviews:
+        name = entry["source_name"]
+        display = normalise_term(entry["display"])
+        if not display:
+            raise ValueError(f"Taxonomy display for {name!r} is empty after normalisation")
+        owner = canonical_owner.get(display) or display_owner.get(display)
+        if owner is not None and owner != name:
+            raise ValueError(
+                f"Taxonomy display collision between {owner!r} and {name!r}"
+            )
+        display_owner[display] = name
+    # Check after collecting every display: source/review ordering cannot decide
+    # whether an alias is valid. The compiler also refuses own-display aliases.
+    for entry in reviews:
+        for alias in entry["aliases"]:
+            owner = display_owner.get(normalise_term(alias))
+            if owner is not None:
+                raise ValueError(
+                    f"Taxonomy alias {alias!r} collides with display owned by {owner!r}"
+                )
+
+
 def _validate_review(
     source_rows: list[dict[str, Any]],
     reviews: list[dict[str, Any]],
     contract: dict[str, Any],
 ) -> None:
     source_names = {row["source_name"] for row in source_rows}
+    _validate_reviewed_displays(source_names, reviews)
     source_normalised = {row["normalised"]: row["source_name"] for row in source_rows}
     by_name = {entry["source_name"]: entry for entry in reviews}
     alias_owner: dict[str, str] = {}
@@ -376,6 +412,9 @@ def _validate_index_structure(index: dict[str, Any]) -> None:
         accepted_count += int(accepted)
         alias_count += len(aliases)
 
+    _validate_reviewed_displays(
+        canonical_names, [entry for entry in entries if entry["reviewed"]]
+    )
     alias_owner: dict[str, str] = {}
     for entry in entries:
         source_name = entry["source_name"]
