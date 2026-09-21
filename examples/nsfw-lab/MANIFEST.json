@@ -273,10 +273,10 @@
       "bytes": 110643,
       "width": 832,
       "height": 1216,
-      "job_id": null,
-      "prompt_id": null,
+      "job_id": "5f379c2b-0cf6-44ba-80cc-412f612df6ba",
+      "prompt_id": "9432b10d-610a-41b1-9e0b-286fdada5972",
       "cell": "b-hairless",
-      "source_png": null,
+      "source_png": "Studio/Anima-v1-Baseline_00058_.png",
       "note": "Wave B (Anima combos, AniFox, WAI glossy). No per-cell inspection line in FINDINGS.md."
     },
     {
@@ -611,8 +611,8 @@
       "bytes": 105878,
       "width": 832,
       "height": 1216,
-      "job_id": null,
-      "prompt_id": null,
+      "job_id": "707ee719-2c3a-4960-9bcf-79c1c92812dd",
+      "prompt_id": "cf84f2b0-c398-405f-82c2-89ac29db5ddf",
       "cell": "d-aroused-afterglow",
       "source_png": "Studio/JANIMA-v1-Baseline_00013_.png",
       "note": "Wave D (anatomy grid, seed 2026092180, 2B lock). No per-cell inspection line in FINDINGS.md."
@@ -780,8 +780,8 @@
       "bytes": 85157,
       "width": 832,
       "height": 1216,
-      "job_id": null,
-      "prompt_id": null,
+      "job_id": "468cc286-3ed7-4a49-8449-9c103ec738ea",
+      "prompt_id": "e11ea82a-4185-47a6-be17-131e8a1bbaeb",
       "cell": "d-wildcard-anatomy",
       "source_png": "Studio/JANIMA-v1-Baseline_00014_.png",
       "note": "Wave D (anatomy grid, seed 2026092180, 2B lock). No per-cell inspection line in FINDINGS.md."
@@ -949,8 +949,8 @@
       "bytes": 102835,
       "width": 832,
       "height": 1216,
-      "job_id": null,
-      "prompt_id": null,
+      "job_id": "325884cb-42e7-419e-86f7-0cc4898efc49",
+      "prompt_id": "8a7105ad-f4fd-4c13-ab3b-86d1244bb058",
       "cell": "f-janima-2b-spread",
       "source_png": "Studio/JANIMA-v1-Baseline_00015_.png",
       "note": "Wave F (family and LoRA combos on the same 2B explicit prompt; identity and pose held, extra fingers everywhere, glossy the cleanest finish). No per-cell inspection line in FINDINGS.md."
@@ -1131,8 +1131,8 @@
       "bytes": 124472,
       "width": 832,
       "height": 1216,
-      "job_id": null,
-      "prompt_id": null,
+      "job_id": "b0bdfe1f-fc6a-4aaf-8e93-a21f57949337",
+      "prompt_id": "d8c25610-312d-4300-b7c6-6584c3cb935d",
       "cell": "g-aqua-tavern-janima",
       "source_png": "Studio/JANIMA-v1-Baseline_00016_.png",
       "note": "Same beat, strapless dress. Extra fingers."
@@ -1540,5 +1540,11 @@
       "source_png": "Studio/WAI-Illustration_00058_.png",
       "note": "Wave I (more places, costumes and families on the wave-G recipe; WAI most reliable). No per-cell inspection line in FINDINGS.md."
     }
-  ]
+  ],
+  "encoding": {
+    "format": "JPEG",
+    "quality": 85,
+    "optimize": true,
+    "note": "Pillow save(quality=85, optimize=True) on the RGB source PNG reproduces each file byte for byte; 147 of 148 were re-proved that way on 21 September 2026."
+  }
 }

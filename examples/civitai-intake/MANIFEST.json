@@ -396,5 +396,11 @@
       "source_png": "Studio/YumeFlux-ILv1-Baseline_00002_.png",
       "note": "Black hair, red eyes, black X pasties. Extra fingers on both hands."
     }
-  ]
+  ],
+  "encoding": {
+    "format": "JPEG",
+    "quality": 85,
+    "optimize": true,
+    "note": "Pillow save(quality=85, optimize=True) on the RGB source PNG reproduces each file byte for byte; 147 of 148 were re-proved that way on 21 September 2026."
+  }
 }
