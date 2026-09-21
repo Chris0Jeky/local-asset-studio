@@ -1,6 +1,8 @@
 """Create immutable figure-crop child assets; never submit generation work."""
 from __future__ import annotations
 
+from contextlib import closing
+
 import hashlib
 import importlib
 import io
@@ -9,6 +11,7 @@ import os
 import re
 import time
 import uuid
+import zlib
 from pathlib import Path
 
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -19,6 +22,7 @@ MAX_COMMAND_BYTES = 128 * 1024
 MAX_PARENT_BYTES = 64 * 1024 * 1024
 MAX_PARENT_PIXELS = 40_000_000
 MAX_AGGREGATE_CROP_PIXELS = 80_000_000
+SUPPORTED_IMAGE_FORMATS = ("PNG", "JPEG", "WEBP")
 _ALLOWED_FIELDS = {
     "workspace_id",
     "request_id",
@@ -28,6 +32,7 @@ _ALLOWED_FIELDS = {
     "require_non_overlapping",
 }
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 def workspace_error_type(workspace):
@@ -115,6 +120,38 @@ def _parent_row(workspace, db, asset_id, parent_sha256):
     return row
 
 
+def _verify_png_container(raw):
+    """Require checked chunk CRCs and the first IEND to end the bounded file."""
+    if not raw.startswith(_PNG_SIGNATURE):
+        raise SyntaxError("PNG signature is invalid")
+    data = memoryview(raw)
+    try:
+        offset = len(_PNG_SIGNATURE)
+        while offset < len(data):
+            if len(data) - offset < 12:
+                raise SyntaxError("PNG chunk is incomplete")
+            size = int.from_bytes(data[offset : offset + 4], "big")
+            chunk_type_start = offset + 4
+            chunk_data_start = offset + 8
+            chunk_data_end = chunk_data_start + size
+            chunk_end = chunk_data_end + 4
+            if chunk_end > len(data):
+                raise SyntaxError("PNG chunk exceeds the bounded file")
+            chunk_type = bytes(data[chunk_type_start:chunk_data_start])
+            expected_crc = int.from_bytes(data[chunk_data_end:chunk_end], "big")
+            actual_crc = zlib.crc32(data[chunk_type_start:chunk_data_end]) & 0xFFFFFFFF
+            if actual_crc != expected_crc:
+                raise SyntaxError("PNG chunk checksum does not match")
+            if chunk_type == b"IEND":
+                if size != 0 or chunk_end != len(data):
+                    raise SyntaxError("PNG IEND is not the complete terminal chunk")
+                return
+            offset = chunk_end
+        raise SyntaxError("PNG has no terminal IEND chunk")
+    finally:
+        data.release()
+
+
 def _read_parent(workspace, asset_id, expected_sha256):
     path = workspace.file(asset_id)
     try:
@@ -132,12 +169,19 @@ def _read_parent(workspace, asset_id, expected_sha256):
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
         raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
-        with Image.open(io.BytesIO(raw)) as opened:
+        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
             width, height = opened.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
             if getattr(opened, "n_frames", 1) != 1:
                 raise _error(workspace, "Animated images cannot be split into figure children")
+            # Pixel decode alone accepts some PNGs with missing IEND or damaged
+            # chunk CRCs. Walk the bounded chunk stream so the first IEND must be
+            # terminal, then let Pillow verify image semantics on the same bytes.
+            if opened.format == "PNG":
+                _verify_png_container(raw)
+            opened.verify()
+        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
             has_transparency = "A" in opened.getbands() or "transparency" in opened.info
             oriented = ImageOps.exif_transpose(opened)
             oriented.load()
@@ -146,15 +190,21 @@ def _read_parent(workspace, asset_id, expected_sha256):
             if oriented is not opened:
                 oriented.close()
     except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as error:
-        raise _error(workspace, "Parent asset is not a complete supported still image") from error
+        raise _error(workspace, "Parent asset is not a complete supported still image (PNG, JPEG or WebP)") from error
     return canvas
 
 
 def _pixel_box(workspace, rectangle, width, height):
-    left = rectangle["x"] * width // BASIS_POINTS
-    top = rectangle["y"] * height // BASIS_POINTS
-    right = ((rectangle["x"] + rectangle["width"]) * width + BASIS_POINTS - 1) // BASIS_POINTS
-    bottom = ((rectangle["y"] + rectangle["height"]) * height + BASIS_POINTS - 1) // BASIS_POINTS
+    # Project every normalized edge through the same nearest-pixel rule. Using
+    # floor for leading edges and ceil for trailing edges makes adjacent source
+    # rectangles overlap whenever their shared edge falls between two pixels.
+    def edge(value, dimension):
+        return (value * dimension + BASIS_POINTS // 2) // BASIS_POINTS
+
+    left = edge(rectangle["x"], width)
+    top = edge(rectangle["y"], height)
+    right = edge(rectangle["x"] + rectangle["width"], width)
+    bottom = edge(rectangle["y"] + rectangle["height"], height)
     right, bottom = min(width, right), min(height, bottom)
     if left >= right or top >= bottom:
         raise _error(workspace, "A marked figure is smaller than one source pixel")
@@ -162,25 +212,33 @@ def _pixel_box(workspace, rectangle, width, height):
 
 
 def _encode_crops(workspace, canvas, rectangles):
+    """Consume the canvas; retain only ordered snapshot metadata, not PNG bytes."""
     width, height = canvas.size
-    encoded = []
+    planned = []
     pixels = 0
     try:
+        # Validate every box and the total before allocating a crop or publishing.
         for rectangle in rectangles:
             box = _pixel_box(workspace, rectangle, width, height)
             pixels += (box["right"] - box["left"]) * (box["bottom"] - box["top"])
             if pixels > MAX_AGGREGATE_CROP_PIXELS:
                 raise _error(workspace, "Figure crops exceed the 80-megapixel aggregate limit")
-            with canvas.crop((box["left"], box["top"], box["right"], box["bottom"])) as crop:
-                stream = io.BytesIO()
-                crop.save(stream, format="PNG", optimize=False, compress_level=6)
-                data = stream.getvalue()
-            if not data:
-                raise _error(workspace, "A figure crop encoded as an empty image")
-            encoded.append((rectangle, box, data))
+            planned.append((rectangle, box))
+        snapshots = []
+        for rectangle, box in planned:
+            with closing(canvas.crop((box["left"], box["top"], box["right"], box["bottom"]))) as crop:
+                with io.BytesIO() as stream:
+                    crop.save(stream, format="PNG", optimize=False, compress_level=6)
+                    # A borrowed view avoids an extra encoded-byte copy. Release
+                    # it before closing the buffer or starting the next crop.
+                    with stream.getbuffer() as data:
+                        if not data:
+                            raise _error(workspace, "A figure crop encoded as an empty image")
+                        snapshot = _snapshot_png(workspace, data)
+            snapshots.append((rectangle, box, snapshot))
+        return (width, height), snapshots
     finally:
         canvas.close()
-    return (width, height), encoded
 
 
 def _snapshot_png(workspace, data):
@@ -228,7 +286,6 @@ def split_figures(workspace, payload):
 
     canvas = _read_parent(workspace, asset_id, parent_sha256)
     source_size, crops = _encode_crops(workspace, canvas, rectangles)
-    snapshots = [_snapshot_png(workspace, data) for _, _, data in crops]
     child_ids = [
         uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:figure:{identity}:{request_id}:{index}").hex
         for index in range(len(crops))
@@ -263,14 +320,16 @@ def split_figures(workspace, payload):
         stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(parent["filename"]).stem)[:80] or "figure"
         job_id = "figure-crop:" + request_id
         figures = []
-        for index, ((rectangle, box, _), snapshot, child_id) in enumerate(
-            zip(crops, snapshots, child_ids), 1
+        for index, ((rectangle, box, snapshot), child_id) in enumerate(
+            zip(crops, child_ids), 1
         ):
             path, digest, size = snapshot
             source = {
                 "operation": "figure-crop",
                 "parent_asset_id": asset_id,
                 "parent_sha256": parent_sha256,
+                "parent_metadata_revision": parent["metadata_revision"],
+                "crop_coordinate_policy": "basis-points-nearest-half-up/v1",
                 "request_id": request_id,
                 "crop_basis_points": rectangle,
                 "crop_pixels": box,

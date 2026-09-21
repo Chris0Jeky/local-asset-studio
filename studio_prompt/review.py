@@ -60,6 +60,12 @@ def bind_graph(artifact, graph, binding):
     need(not artifact['errors'] and not artifact['reference_map'], 'Resolve errors/reference binding before text-only handoff')
     fields(binding, ('preset_id', 'profile_sha256', 'graph_sha256', 'bindings'))
     need(binding['profile_sha256'] == artifact['profile_sha256'] and binding['graph_sha256'] == digest(graph), 'Stale or wrong graph/profile')
+    templates = artifact['profile'].get('template_bindings')
+    if templates is not None:
+        matches = [t for t in templates if t['preset_id'] == binding['preset_id']]
+        need(len(matches) == 1 and matches[0]['graph_sha256'] == digest(graph)
+             and matches[0]['bindings'] == binding['bindings'],
+             'Exact profile template or text binding changed; review the registered template/profile contract')
     need(set(artifact['fields']) <= {'positive', 'negative'} and set(artifact['fields']) == set(binding['bindings']), 'Incomplete or non-text handoff')
     q = copy.deepcopy(graph); used = set()
     for key, target in binding['bindings'].items():

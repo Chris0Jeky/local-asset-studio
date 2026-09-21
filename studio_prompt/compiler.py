@@ -1,5 +1,6 @@
 """Pure model-specific projections; no graph execution or model inference."""
 import copy
+import re
 from .schema import validate, profiles, need, digest, VERSION, FACETS
 
 
@@ -67,6 +68,20 @@ def compile_brief(b, profile_id):
         for x in ledger:
             if 'description' in x['destination']: x['destination'] = 'input-image preparation / acceptance'
     else: raise ValueError('Unsupported profile dialect')
+    check = p.get('dialect_check')
+    if check in ('anima_aesthetic', 'animagine_opt'):
+        for channel in ('positive', 'negative'):
+            if re.search(r'(?<!\w)score_[a-z0-9_]+', out.get(channel, ''), re.IGNORECASE):
+                issue('MODEL_SCORE_TOKEN_CONFLICT', f'{channel}: score_* tokens need a reviewed rewrite or a different profile; text is retained unchanged', True)
+    if check == 'animagine_opt':
+        quality = {'masterpiece', 'high score', 'great score', 'absurdres'}
+        tail = False
+        for tag in out['positive'].split(','):
+            is_quality = tag.strip().lower() in quality
+            if tail and not is_quality:
+                issue('MODEL_TAG_ORDER_CONFLICT', 'Quality terms must form a final tail in this profile; review the existing order, no tags were moved', True)
+                break
+            tail = tail or is_quality
     consumed_params = {'voice': {'language'}, 'music': {'instrumental', 'duration_seconds', 'bpm', 'key', 'meter'}}.get(dialect, set())
     for k in sorted(b['parameters'].keys() - consumed_params):
         record('parameters.' + k, 'workflow parameter handoff')

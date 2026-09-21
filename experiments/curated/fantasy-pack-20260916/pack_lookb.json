@@ -1,0 +1,169 @@
+[
+ {
+  "id": "ca5c5082-7268-46cc-a99d-e88646b1b10e",
+  "status": "completed",
+  "preset_id": "anima-v1-baseline",
+  "prompt_ids": [
+   "f7c3e345-f15d-40a6-b9d4-64480217c08c"
+  ],
+  "outputs": [
+   {
+    "filename": "Anima-v1-Baseline_00004_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "f7c3e345-f15d-40a6-b9d4-64480217c08c",
+    "media_type": "image",
+    "asset_id": "021731c057d955b4a2487395a37fadf6"
+   }
+  ],
+  "elapsed_seconds": 34.26044416427612,
+  "error": null,
+  "parent_assets": [],
+  "references": [],
+  "step": "portrait",
+  "attempt": 1,
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, her face in focus with a calm, attentive expression, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "seed": 2026091301,
+   "width": 832,
+   "height": 1216,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 1.0,
+   "lora_name": "nsfw_girls_anima.safetensors",
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  }
+ },
+ {
+  "id": "373d0b35-421c-4749-956f-377f19b98ce6",
+  "status": "completed",
+  "preset_id": "anima-v1-baseline",
+  "prompt_ids": [
+   "f42084d8-9883-46a5-a1f2-d3d9b2b6058c"
+  ],
+  "outputs": [
+   {
+    "filename": "Anima-v1-Baseline_00005_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "f42084d8-9883-46a5-a1f2-d3d9b2b6058c",
+    "media_type": "image",
+    "asset_id": "025678cadf5750bf9a3bfa8ed62e6590"
+   }
+  ],
+  "elapsed_seconds": 18.24727702140808,
+  "error": null,
+  "parent_assets": [],
+  "references": [],
+  "step": "fullbody",
+  "attempt": 1,
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Full body, standing calmly on a rain-washed station platform, one hand holding a brass lantern at her side, the other resting on the strap of a leather satchel, boots and coat hem visible, soft evening light, detailed modern anime illustration, cinematic composition.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "seed": 2026091301,
+   "width": 832,
+   "height": 1216,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 1.0,
+   "lora_name": "nsfw_girls_anima.safetensors",
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  }
+ },
+ {
+  "id": "053f6cf5-aa70-482f-aecb-3021235cd560",
+  "status": "completed",
+  "preset_id": "anima-v1-baseline",
+  "prompt_ids": [
+   "9dec5e14-60d2-4bd7-9174-0f380a1f75fc"
+  ],
+  "outputs": [
+   {
+    "filename": "Anima-v1-Baseline_00006_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "9dec5e14-60d2-4bd7-9174-0f380a1f75fc",
+    "media_type": "image",
+    "asset_id": "60b1b58f87435dc48e5d32ca06c2ac92"
+   }
+  ],
+  "elapsed_seconds": 18.222656726837158,
+  "error": null,
+  "parent_assets": [],
+  "references": [],
+  "step": "expression",
+  "attempt": 1,
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, a warm surprised smile with raised eyebrows as she looks slightly to the side, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition.",
+   "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+   "seed": 2026091301,
+   "width": 832,
+   "height": 1216,
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "lora": 1.0,
+   "lora_name": "nsfw_girls_anima.safetensors",
+   "lora2": 0,
+   "lora3": 0,
+   "lora4": 0,
+   "lora5": 0,
+   "lora6": 0
+  }
+ },
+ {
+  "id": "009eddad-f90d-4435-bffb-8f5c98a3305d",
+  "status": "completed",
+  "preset_id": "anime-detail-fix",
+  "prompt_ids": [
+   "8933d238-53e6-40f3-9397-b8c31d43564d"
+  ],
+  "outputs": [
+   {
+    "filename": "anime-detail-fix_00003_.png",
+    "subfolder": "Studio",
+    "type": "output",
+    "seed": 2026091301,
+    "prompt_id": "8933d238-53e6-40f3-9397-b8c31d43564d",
+    "media_type": "image",
+    "asset_id": "97432e2fc7d25cc2a834267a66283c7f"
+   }
+  ],
+  "elapsed_seconds": 70.54118585586548,
+  "error": null,
+  "parent_assets": [
+   "021731c057d955b4a2487395a37fadf6"
+  ],
+  "references": [],
+  "step": "fix",
+  "source_step": "portrait",
+  "source_job": "ca5c5082-7268-46cc-a99d-e88646b1b10e",
+  "source_asset": "021731c057d955b4a2487395a37fadf6",
+  "staged": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "controls": {
+   "positive": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, her face in focus with a calm, attentive expression, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition.",
+   "reference": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+   "seed": 2026091301
+  }
+ }
+]

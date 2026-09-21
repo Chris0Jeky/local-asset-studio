@@ -1,0 +1,18 @@
+/* Demo art and copy only. Layout/skin styles come from the production workshop styles. */
+.studio-sidebar .studio-logo{display:flex;gap:10px;align-items:center;font-size:12px;font-weight:700;letter-spacing:.05em}
+.studio-sidebar nav{margin-top:32px}.studio-sidebar nav a{padding:12px;font-size:12px;margin:3px -4px}
+.studio-sidebar .sidebar-bottom{margin-top:50px;font-size:11px;line-height:1.8}
+.studio-globalbar .pill{font:10px ui-monospace,monospace;color:var(--muted);letter-spacing:.03em}
+.workshop .demo-result{margin:0}.demo-result-art{background:var(--wk-input);overflow:hidden}
+.workshop .demo-result-art img{width:100%;max-height:450px;display:block;object-fit:cover;object-position:center 27%}
+.demo-result-caption{padding:20px}.demo-result-caption h3{font-size:22px;font-weight:500;margin:8px 0}
+.demo-result-caption p{font-size:12px;color:var(--muted);line-height:1.7;margin:7px 0 18px}
+.demo-art-choices{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.demo-art-choices button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+#demoContinue{width:100%;text-align:left;background:var(--wk-soft);font-size:12px}
+#demoSource{display:block;max-height:150px;border-radius:10px;margin:12px 0;max-width:100%}
+.demo-adapter{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px;border:1px solid var(--line);border-radius:12px}
+.demo-adapter label{font-size:12px}.demo-adapter select{width:100%;margin-top:8px}.demo-adapter input{width:100%;margin-top:16px}
+#demoStrength{display:block;color:var(--muted);font-size:11px}
+.prototype-gallery{display:block}.workshop[data-workshop-layout=studio] #gallery{max-height:calc(100dvh - var(--workshop-dock-space) - 185px)}
+#demoNotice{position:fixed;z-index:80;top:74px;left:50%;transform:translateX(-50%);max-width:min(540px,90vw);background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:14px 20px;box-shadow:var(--wk-shadow);font-size:12px}
+@media(max-width:600px){.studio-globalbar{padding:18px 16px}.studio-globalbar .pill{font-size:8px}.studio-breadcrumb{gap:18px}.demo-adapter{grid-template-columns:1fr}.workshop .demo-result-art img{max-height:360px}}
