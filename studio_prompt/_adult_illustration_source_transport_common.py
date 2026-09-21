@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Mapping
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import SplitResult, parse_qs, unquote, urljoin, urlsplit
 
 from . import _adult_illustration_source_intake_impl as _source
 
@@ -48,7 +48,7 @@ TRANSIENT_STATUSES = {429, 502, 503, 504}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 HF_METADATA_PATH = re.compile(
     r"/api/models/[A-Za-z0-9][A-Za-z0-9._-]{0,95}/"
-    r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}/revision/[^/]+"
+    r"[A-Za-z0-9][A-Za-z0-9._-]{0,95}/revision/(?:[A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+"
 )
 CIVITAI_METADATA_PATH = re.compile(r"/api/v1/model-versions/[1-9][0-9]*")
 
@@ -60,17 +60,48 @@ def normalise_headers(headers: Mapping[str, str], label: str) -> dict[str, str]:
         raise ValueError(f"Invalid {label}: {exc}") from exc
 
 
-def endpoint_provider(url: str, label: str = "metadata URL") -> str:
+def _url_reference(url: str, label: str) -> SplitResult:
+    """Reject spelling changes before urllib can strip or resolve them."""
     if not isinstance(url, str) or not url or len(url) > 4_096:
         raise ValueError(f"{label} is invalid")
-    parsed = urlparse(url)
+    if (
+        not url.isascii()
+        or any(ord(char) <= 32 or ord(char) == 127 for char in url)
+        or "\\" in url
+        or "#" in url
+        or re.search(r"%(?![0-9A-Fa-f]{2})", url)
+    ):
+        raise ValueError(f"{label} has an unsafe URL spelling")
+    parsed = urlsplit(url)  # Keep semicolon parameters in the path allowlist.
+    if any(
+        part in {".", ".."}
+        for segment in parsed.path.split("/")
+        for part in unquote(segment).split("/")
+    ):
+        raise ValueError(f"{label} cannot contain dot segments")
+    return parsed
+
+
+def metadata_redirect_url(current_url: str, location: str) -> str:
+    """Validate a redirect reference before joining erases its original form."""
+    parsed = _url_reference(location, "redirect Location")
+    if parsed.scheme and (parsed.scheme != "https" or not parsed.netloc):
+        raise ValueError("Redirect Location must be relative or absolute HTTPS")
+    if location.startswith("//") and not parsed.netloc:
+        raise ValueError("Redirect Location has an invalid authority")
+    return urljoin(current_url, location)
+
+
+def endpoint_provider(url: str, label: str = "metadata URL") -> str:
+    parsed = _url_reference(url, label)
     if (
         parsed.scheme != "https"
         or not parsed.hostname
-        or parsed.username
-        or parsed.password
-        or parsed.fragment
-        or (parsed.port is not None and parsed.port != 443)
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.netloc.casefold() not in {
+            parsed.hostname.casefold(), f"{parsed.hostname.casefold()}:443",
+        }
     ):
         raise ValueError(f"{label} must be credential-free HTTPS")
     host = parsed.hostname.casefold()
