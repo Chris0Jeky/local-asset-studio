@@ -24,10 +24,14 @@ class SetupContextCompatibilityCliBoundTests(unittest.TestCase):
     def test_cli_reads_only_limit_plus_sentinel_before_refusing_oversized_input(self):
         stream = _GuardedStream(b'{' + b' ' * L.MAX_INPUT_BYTES + b'}')
         output = io.StringIO()
-        with mock.patch.object(Path, 'read_bytes',
-                               side_effect=AssertionError('unbounded read_bytes used')),
-             mock.patch.object(Path, 'open', return_value=stream),
-             mock.patch('sys.stdout', output):
+        with (
+            mock.patch.object(
+                Path, 'read_bytes',
+                side_effect=AssertionError('unbounded read_bytes used'),
+            ),
+            mock.patch.object(Path, 'open', return_value=stream),
+            mock.patch('sys.stdout', output),
+        ):
             code = L.main(['oversized.json'])
 
         self.assertEqual(code, 2)
