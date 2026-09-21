@@ -218,7 +218,9 @@ def _read_parent(workspace, asset_id, expected_sha256):
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
         raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
-        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
+        with Image.open(io.BytesIO(raw)) as opened:
+            if opened.format not in SUPPORTED_IMAGE_FORMATS:
+                raise _error(workspace, "Parent image format must be PNG, JPEG or WebP")
             width, height = opened.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
                 raise _error(workspace, "Parent image must be at most 40 megapixels")
