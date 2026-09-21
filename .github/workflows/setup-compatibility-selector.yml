@@ -10,16 +10,6 @@ on:
       - 'tests/test_setup_compatibility_selector.py'
       - 'tests/setup_compatibility_selector_browser.py'
       - '.github/workflows/setup-compatibility-selector.yml'
-  push:
-    branches: [codex/setup-compatibility-selector-presenter]
-    paths:
-      - 'app/static/setup-compatibility-selector.js'
-      - 'app/static/setup-compatibility-selector.css'
-      - 'app/static/studio-shell.js'
-      - 'tests/setup_compatibility_selector.cjs'
-      - 'tests/test_setup_compatibility_selector.py'
-      - 'tests/setup_compatibility_selector_browser.py'
-      - '.github/workflows/setup-compatibility-selector.yml'
 
 permissions:
   contents: read
