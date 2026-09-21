@@ -82,6 +82,16 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertEqual(result['image_observations'][0]['version_ids'], [101, 202])
         self.assertEqual(result['combinations'][0]['version_ids'], [101, 202])
 
+    def test_gallery_observation_without_queried_version_is_excluded(self):
+        value = image(meta={'civitaiResources': [
+            {'type': 'checkpoint', 'modelVersionId': 202},
+            {'type': 'lora', 'modelVersionId': 303, 'weight': 0.7}]})
+        value['modelVersionIds'] = [202, 303]
+        result = C.normalize(request([page([value])]))
+        self.assertEqual(result['image_observations'], [])
+        self.assertEqual(result['combinations'], [])
+        self.assertIn('target_version_missing', [item['code'] for item in result['diagnostics']])
+
     def test_invalid_or_mismatched_air_falls_back_to_exact_version_identity(self):
         for air in ('bad air value', 'urn:air:sdxl:lora:civitai:10@999',
                     'urn:air:sdxl:lora:civitai:99@101'):
@@ -95,8 +105,21 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertEqual(row['hashes']['sha256'], FILE_SHA.casefold())
         self.assertEqual(row['identity'], 'sha256:' + FILE_SHA.casefold())
 
+    def test_list_valued_commercial_permissions_are_retained_bounded(self):
+        payload = model(); payload['model']['allowCommercialUse'] = ['Image', 'RentCivit', 'Rent']
+        result = C.normalize(request(payload=payload))
+        self.assertEqual(result['resource']['terms']['allow_commercial_use'],
+                         ['Image', 'RentCivit', 'Rent'])
+        payload['model']['allowCommercialUse'] = ['Image', 'Image']
+        self.assertEqual(C.normalize(request(payload=payload))['resource']['terms']['allow_commercial_use'],
+                         ['Image'])
+        payload['model']['allowCommercialUse'] = ['x'] * 65
+        with self.assertRaisesRegex(ValueError, 'allowCommercialUse'):
+            C.normalize(request(payload=payload))
+
     def test_sensitive_query_name_variants_are_refused(self):
-        for key in ('AuthorizationBearer', 'AccessToken', 'api_key', 'password'):
+        for key in ('AuthorizationBearer', 'AccessToken', 'api_key', 'password',
+                    'client_secret', 'access_key', 'refresh-token', 'privateKey'):
             with self.subTest(key=key):
                 value = page(query={'modelVersionId': '101', 'withMeta': 'true', key: 'secret'})
                 with self.assertRaisesRegex(ValueError, 'sensitive query'):
@@ -140,6 +163,24 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
                          ['c' * 64, 'd' * 64])
         self.assertNotIn('pagination_incomplete',
                          [item['code'] for item in result['diagnostics']])
+
+    def test_orphan_cursor_page_is_not_complete(self):
+        orphan = page(query={'modelVersionId': '101', 'withMeta': 'true',
+                             'browsingLevel': '31', 'cursor': 'orphan'})
+        result = C.normalize(request([orphan]))
+        self.assertFalse(result['coverage_complete'])
+        self.assertIn('pagination_root_missing', [item['code'] for item in result['diagnostics']])
+
+    def test_cursor_cycle_is_not_complete(self):
+        root = page(query={'modelVersionId': '101', 'withMeta': 'true',
+                           'browsingLevel': '31'}, sha='c' * 64)
+        root['payload']['metadata']['nextCursor'] = 'loop'
+        loop = page(query={'modelVersionId': '101', 'withMeta': 'true',
+                           'browsingLevel': '31', 'cursor': 'loop'}, sha='d' * 64)
+        loop['payload']['metadata']['nextCursor'] = 'loop'
+        result = C.normalize(request([root, loop]))
+        self.assertFalse(result['coverage_complete'])
+        self.assertIn('pagination_cycle', [item['code'] for item in result['diagnostics']])
 
     def test_missing_pagination_metadata_is_unknown_not_complete(self):
         value = page(); del value['payload']['metadata']
