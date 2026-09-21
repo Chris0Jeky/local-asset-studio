@@ -94,504 +94,581 @@
       "axis": "body",
       "url": "/api/examples/nsfw-lab/a-body-small.jpg",
       "prompt_id": "efd8e8f4-7453-4c8e-ae06-569497537736",
-      "note": "Slim small-chest sitting nude. Tag works. Extra fingers on the bed hand."
+      "note": "Slim small-chest sitting nude. Tag works. Extra fingers on the bed hand.",
+      "job_id": "9c58e09e-b3cc-49eb-ba2e-e4567317067a"
     },
     {
       "id": "a-body-medium",
       "axis": "body",
       "url": "/api/examples/nsfw-lab/a-body-medium.jpg",
       "prompt_id": "923640f3-2f53-4566-9631-503364097842",
-      "note": "Medium bust at the same seed/face."
+      "note": "Medium bust at the same seed/face.",
+      "job_id": "fc724b0a-9053-4d54-a24d-3f9337f63dc7"
     },
     {
       "id": "a-body-large",
       "axis": "body",
       "url": "/api/examples/nsfw-lab/a-body-large.jpg",
       "prompt_id": "13fd80f2-8e1d-483e-aaf5-f7a729e51315",
-      "note": "Full bust, thicker thighs. Extra fingers."
+      "note": "Full bust, thicker thighs. Extra fingers.",
+      "job_id": "44059f09-379b-42bb-bd04-1a2b8396cc7d"
     },
     {
       "id": "a-body-huge",
       "axis": "body",
       "url": "/api/examples/nsfw-lab/a-body-huge.jpg",
       "prompt_id": "3ff78657-43f5-4d6b-ba25-183b202c4341",
-      "note": "Voluptuous; large ass rotated the pose to 3/4 rear."
+      "note": "Voluptuous; large ass rotated the pose to 3/4 rear.",
+      "job_id": "de47c189-bba7-4fa9-8102-9649ff5dc6da"
     },
     {
       "id": "a-pose-behind",
       "axis": "pose",
       "url": "/api/examples/nsfw-lab/a-pose-behind.jpg",
       "prompt_id": "5f69ad1a-488b-47d2-af41-1b72b0e71a00",
-      "note": "Standing rear view, looking back. Ass focus fired."
+      "note": "Standing rear view, looking back. Ass focus fired.",
+      "job_id": "1bc9af6a-8b15-41fd-8899-c385e6107d82"
     },
     {
       "id": "a-pose-lying",
       "axis": "pose",
       "url": "/api/examples/nsfw-lab/a-pose-lying.jpg",
       "prompt_id": "65c3223d-1b1a-462c-aaa6-8bbb8e1e5f99",
-      "note": "On her back from above. Extra fingers on chest hands."
+      "note": "On her back from above. Extra fingers on chest hands.",
+      "job_id": "86946d9d-5310-4884-92e1-af990c9de04b"
     },
     {
       "id": "a-pose-allfours",
       "axis": "pose",
       "url": "/api/examples/nsfw-lab/a-pose-allfours.jpg",
       "prompt_id": "eaced76b-a114-4aeb-9578-1cb8fbc3e216",
-      "note": "Drifted to a 3/4 rear lean, not textbook all-fours."
+      "note": "Drifted to a 3/4 rear lean, not textbook all-fours.",
+      "job_id": "9c6e3445-ff50-4e6e-8b1d-cffa0c9deaa0"
     },
     {
       "id": "a-pose-frombelow",
       "axis": "pose",
       "url": "/api/examples/nsfw-lab/a-pose-frombelow.jpg",
       "prompt_id": "0e67c442-9ee8-4d1b-8e71-43f08a045b5e",
-      "note": "Standing low camera. Pubic hair appeared unasked."
+      "note": "Standing low camera. Pubic hair appeared unasked.",
+      "job_id": "30d8855f-b02a-42e5-ae5f-5e01054b3bf7"
     },
     {
       "id": "a-detail-shiny",
       "axis": "detail",
       "url": "/api/examples/nsfw-lab/a-detail-shiny.jpg",
       "prompt_id": "da24a931-76d9-46c7-b1d8-b5eb33db4a96",
-      "note": "Wet highlights, selfie arm, extra fingers."
+      "note": "Wet highlights, selfie arm, extra fingers.",
+      "job_id": "acf3cbc7-ba02-43e5-9e64-f02eabfdf640"
     },
     {
       "id": "a-hands-positive",
       "axis": "hands",
       "url": "/api/examples/nsfw-lab/a-hands-positive.jpg",
       "prompt_id": "6717f1bc-2bb3-405d-ac64-330367d1249c",
-      "note": "Hands on thighs with five fingers. Best hands of wave A."
+      "note": "Hands on thighs with five fingers. Best hands of wave A.",
+      "job_id": "921e4884-4b05-4de2-82c1-7f9af34264dc"
     },
     {
       "id": "a-complex",
       "axis": "prompt",
       "url": "/api/examples/nsfw-lab/a-complex.jpg",
       "prompt_id": "bc66469d-6dae-4a19-86da-c5735dccac26",
-      "note": "Warm lamp, messy hair, parted lips. Sexiest Anima lighting."
+      "note": "Warm lamp, messy hair, parted lips. Sexiest Anima lighting.",
+      "job_id": "224348bb-9662-41e0-ab67-b1be84b211df"
     },
     {
       "id": "a-wildcard-pose",
       "axis": "wildcard",
       "url": "/api/examples/nsfw-lab/a-wildcard-pose.jpg",
       "prompt_id": "3a1ba6e7-5ae2-451d-8a05-55d8edbaea9f",
-      "note": "Wildcard became rear view under a studio key light."
+      "note": "Wildcard became rear view under a studio key light.",
+      "job_id": "9101eb26-3b67-4d16-9b50-039378d7cee5"
     },
     {
       "id": "a-wai-nsfw-tag",
       "axis": "rating",
       "url": "/api/examples/nsfw-lab/a-wai-nsfw-tag.jpg",
       "prompt_id": "2841c5a1-c009-499e-9420-305d966087bc",
-      "note": "WAI nude. Rating tag present."
+      "note": "WAI nude. Rating tag present.",
+      "job_id": "f6ee0717-ab7d-453c-8ffd-cc35225ba5b6"
     },
     {
       "id": "a-wai-explicit-tag",
       "axis": "rating",
       "url": "/api/examples/nsfw-lab/a-wai-explicit-tag.jpg",
       "prompt_id": "b7439383-e959-4d68-bb7c-5add433ee943",
-      "note": "Nearly identical to nsfw tag when nude is already in the prompt."
+      "note": "Nearly identical to nsfw tag when nude is already in the prompt.",
+      "job_id": "f157a5cb-be89-438d-a94b-416d28beef97"
     },
     {
       "id": "a-wai-no-rating",
       "axis": "rating",
       "url": "/api/examples/nsfw-lab/a-wai-no-rating.jpg",
       "prompt_id": "bc07332a-1548-48e6-bd4f-87b5204fa928",
-      "note": "Same again. Rating tags optional if anatomy is tagged."
+      "note": "Same again. Rating tags optional if anatomy is tagged.",
+      "job_id": "e283194b-6d28-41cd-9efa-9c5152d2be99"
     },
     {
       "id": "a-onsen-steam",
       "axis": "setting",
       "url": "/api/examples/nsfw-lab/a-onsen-steam.jpg",
       "prompt_id": "892f021c-044c-42bb-b475-18133b9ddbc5",
-      "note": "Wooden bath, steam, snow. Strongest setting change."
+      "note": "Wooden bath, steam, snow. Strongest setting change.",
+      "job_id": "12999f4f-4e9f-4eba-857a-3c226d279371"
     },
     {
       "id": "b-keeper-complex-hands",
       "axis": "combo",
       "url": "/api/examples/nsfw-lab/b-keeper-complex-hands.jpg",
       "prompt_id": "3808a5d1-8565-45e5-bead-938986bf67c9",
-      "note": "Warm lamp + messy hair. Hands went to the mouth, extra fingers."
+      "note": "Warm lamp + messy hair. Hands went to the mouth, extra fingers.",
+      "job_id": "fd456764-9e8a-4f32-bd9a-d869c2af6504"
     },
     {
       "id": "b-esearu-soft",
       "axis": "adapter",
       "url": "/api/examples/nsfw-lab/b-esearu-soft.jpg",
       "prompt_id": "34b29307-9e1c-43a3-97e6-6db767f34e02",
-      "note": "Esearu 0.55, medium breasts, five-finger thighs."
+      "note": "Esearu 0.55, medium breasts, five-finger thighs.",
+      "job_id": "732a0905-79f5-4899-8fc6-616002635e08"
     },
     {
       "id": "b-petiflow-half",
       "axis": "adapter",
       "url": "/api/examples/nsfw-lab/b-petiflow-half.jpg",
       "prompt_id": "64584d1d-9d4e-4cda-a05c-f6b1fe1d553c",
-      "note": "Flat background, full nude this time."
+      "note": "Flat background, full nude this time.",
+      "job_id": "3819a1c0-cc81-4e09-ba32-14ef487cf6d9"
     },
     {
       "id": "b-wai-glossy-below",
       "axis": "adapter",
       "url": "/api/examples/nsfw-lab/b-wai-glossy-below.jpg",
       "prompt_id": "6efa90c8-2c2a-4934-8cee-1e7843b5057b",
-      "note": "Glossy from-below 3/4. Strongest sexy camera of wave B."
+      "note": "Glossy from-below 3/4. Strongest sexy camera of wave B.",
+      "job_id": "ee0d9558-49cf-4f7b-ab26-d6c77a1fc66b"
     },
     {
       "id": "b-lingerie-implied",
       "axis": "clothing",
       "url": "/api/examples/nsfw-lab/b-lingerie-implied.jpg",
       "prompt_id": "47b56221-97ae-4cc8-b99c-d47df935c058",
-      "note": "Sheer unbuttoned shirt. Implied can beat full nude."
+      "note": "Sheer unbuttoned shirt. Implied can beat full nude.",
+      "job_id": "f743d3fe-3d10-4d5f-ad9a-80653d2960c8"
     },
     {
       "id": "b-wai-onsen",
       "axis": "setting",
       "url": "/api/examples/nsfw-lab/b-wai-onsen.jpg",
       "prompt_id": "93712e8a-5727-4e4c-a4d2-022f02fd9800",
-      "note": "Leaning in the bath. Extra fingers on the deck."
+      "note": "Leaning in the bath. Extra fingers on the deck.",
+      "job_id": "78e60c55-1f85-479a-a16b-4416234ea329"
     },
     {
       "id": "b-hourglass-below",
       "axis": "body",
       "url": "/api/examples/nsfw-lab/b-hourglass-below.jpg",
       "prompt_id": "3a9ec96e-6f46-4549-a311-6600f673da0d",
-      "note": "The word hourglass spawned a prop."
+      "note": "The word hourglass spawned a prop.",
+      "job_id": "7c4b2e01-9e8d-4796-9c60-1290acc8734c"
     },
     {
       "id": "b-anifox-ringeko-behind",
       "axis": "adapter",
       "url": "/api/examples/nsfw-lab/b-anifox-ringeko-behind.jpg",
       "prompt_id": "a614b2ed-c21c-45fb-b7b5-1b69eca92d3b",
-      "note": "Excellent rear view. White-hime trigger did not dominate."
+      "note": "Excellent rear view. White-hime trigger did not dominate.",
+      "job_id": "e636b67b-955a-48ac-ba73-5a13a8de7e6d"
     },
     {
       "id": "c-2b-dildo-behind",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-2b-dildo-behind.jpg",
       "prompt_id": "2e66a09f-4c4c-4c68-9785-35d8cbb717a1",
-      "note": "2B likeness, looking back, dildo. Closest to the owner JANIMA stills."
+      "note": "2B likeness, looking back, dildo. Closest to the owner JANIMA stills.",
+      "job_id": "394bd2a9-0fdf-4fb2-8084-4c1f9046db18"
     },
     {
       "id": "c-kafka-ahegao-masturbate",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-kafka-ahegao-masturbate.jpg",
       "prompt_id": "923d1048-0a12-4894-8f4f-0c271b286ab6",
-      "note": "Kafka sunglasses + ahegao + fingering. Extra fingers."
+      "note": "Kafka sunglasses + ahegao + fingering. Extra fingers.",
+      "job_id": "9c09f67e-5ebd-46f5-8b42-ca2790860a11"
     },
     {
       "id": "c-darkness-spread-embarrassed",
       "axis": "franchise-expression",
       "url": "/api/examples/nsfw-lab/c-darkness-spread-embarrassed.jpg",
       "prompt_id": "5e449a71-3971-4e14-a957-db2e8f5f2534",
-      "note": "Darkness blush, covering. Extra fingers."
+      "note": "Darkness blush, covering. Extra fingers.",
+      "job_id": "20f7e9c5-1b57-4596-951c-d836b83a76d2"
     },
     {
       "id": "c-aqua-casual-undress",
       "axis": "franchise-casual",
       "url": "/api/examples/nsfw-lab/c-aqua-casual-undress.jpg",
       "prompt_id": "c756368d-9bcb-42a2-8d87-5e331061f6a2",
-      "note": "Aqua open shirt and blue skirt. Extra fingers."
+      "note": "Aqua open shirt and blue skirt. Extra fingers.",
+      "job_id": "a4a55a82-b022-4bd5-8c6c-7c727dffc98f"
     },
     {
       "id": "c-cynthia-behind-naughty",
       "axis": "franchise-expression",
       "url": "/api/examples/nsfw-lab/c-cynthia-behind-naughty.jpg",
       "prompt_id": "b3c3b90b-9dda-4b25-94be-7658c081225e",
-      "note": "Cynthia hair clip, looking back. Extra fingers."
+      "note": "Cynthia hair clip, looking back. Extra fingers.",
+      "job_id": "9554b24d-674f-4255-b2b6-f24887b2bfb3"
     },
     {
       "id": "c-asuna-lingerie-smirk",
       "axis": "franchise-casual",
       "url": "/api/examples/nsfw-lab/c-asuna-lingerie-smirk.jpg",
       "prompt_id": "90de8c98-c26c-4a03-8e7f-740daccba4dd",
-      "note": "Asuna orange hair, black lace, smirk."
+      "note": "Asuna orange hair, black lace, smirk.",
+      "job_id": "380f6ddb-75a7-489a-a423-b7953142059d"
     },
     {
       "id": "c-yelan-masturbate-tongue",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-yelan-masturbate-tongue.jpg",
       "prompt_id": "cedef238-1936-4ccc-abe7-4cace276b56b",
-      "note": "Yelan-like, tongue out, fingering. Extra fingers."
+      "note": "Yelan-like, tongue out, fingering. Extra fingers.",
+      "job_id": "a38bfc85-dcfa-4519-8490-153bffcf935c"
     },
     {
       "id": "c-2b-selfie-casual",
       "axis": "franchise-casual",
       "url": "/api/examples/nsfw-lab/c-2b-selfie-casual.jpg",
       "prompt_id": "adb0a51b-45b9-4eb9-b343-856576965068",
-      "note": "2B latex hotel selfie. Casual sexy."
+      "note": "2B latex hotel selfie. Casual sexy.",
+      "job_id": "8d450821-5be0-42b3-a3d4-7416085fb2b6"
     },
     {
       "id": "c-darkness-dildo-owner-style",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-darkness-dildo-owner-style.jpg",
       "prompt_id": "37d8ba9c-b3be-4bbc-8097-ee76f20312a8",
-      "note": "Red room, Darkness, dildo. Owner 00045 language."
+      "note": "Red room, Darkness, dildo. Owner 00045 language.",
+      "job_id": "6f23a6ca-43d4-4ff0-aac9-26159f47e28d"
     },
     {
       "id": "c-raiden-frombelow-halflid",
       "axis": "franchise-expression",
       "url": "/api/examples/nsfw-lab/c-raiden-frombelow-halflid.jpg",
       "prompt_id": "01eef038-91ac-4d16-a1de-e789b61499fd",
-      "note": "Raiden braid, from below, half-lidded."
+      "note": "Raiden braid, from below, half-lidded.",
+      "job_id": "2d934d94-fd8f-4ebe-bd3c-7ee6ed46cc05"
     },
     {
       "id": "c-2b-expr-ahegao",
       "axis": "expression",
       "url": "/api/examples/nsfw-lab/c-2b-expr-ahegao.jpg",
       "prompt_id": "74f11c52-a3de-474a-ae02-9487054b965f",
-      "note": "Same seed as naughty/embarrassed. Tongue-out ahegao."
+      "note": "Same seed as naughty/embarrassed. Tongue-out ahegao.",
+      "job_id": "6d7681d2-d10c-4a04-89e1-d9b173f6a4c1"
     },
     {
       "id": "c-2b-expr-naughty",
       "axis": "expression",
       "url": "/api/examples/nsfw-lab/c-2b-expr-naughty.jpg",
       "prompt_id": "5adffb14-d3e2-45bc-82f3-3bf300881bcc",
-      "note": "Half-lid smirk. Same seed as ahegao."
+      "note": "Half-lid smirk. Same seed as ahegao.",
+      "job_id": "95966bda-4da6-4645-9a76-69624b4eb24e"
     },
     {
       "id": "c-2b-expr-embarrassed",
       "axis": "expression",
       "url": "/api/examples/nsfw-lab/c-2b-expr-embarrassed.jpg",
       "prompt_id": "6fcfe9dc-84ad-47c9-b05f-613cebb0ec8a",
-      "note": "Looking away, blush. Same seed as ahegao."
+      "note": "Looking away, blush. Same seed as ahegao.",
+      "job_id": "d8275fe4-87ea-4941-8462-d4e6624088c9"
     },
     {
       "id": "c-2b-fingering",
       "axis": "franchise-explicit",
       "url": "/api/examples/nsfw-lab/c-2b-fingering.jpg",
       "prompt_id": "8ebd8f64-ec17-4ada-896e-a6a2d7997800",
-      "note": "Explicit solo. Extra fingers on the active hand."
+      "note": "Explicit solo. Extra fingers on the active hand.",
+      "job_id": "c160689d-3e0c-464f-ad5c-0aebec542ada"
     },
     {
       "id": "c-tifa-onsen",
       "axis": "franchise-casual",
       "url": "/api/examples/nsfw-lab/c-tifa-onsen.jpg",
       "prompt_id": "594d2103-befb-4440-b299-702e91bf9d28",
-      "note": "Tifa-like onsen, naughty smile. Extra fingers."
+      "note": "Tifa-like onsen, naughty smile. Extra fingers.",
+      "job_id": "bec57b3a-d85d-4642-9d4c-6ab6287fa807"
     },
     {
       "id": "c-wildcard-character-act",
       "axis": "wildcard",
       "url": "/api/examples/nsfw-lab/c-wildcard-character-act.jpg",
       "prompt_id": "af225b7f-7978-465f-b1ba-fe2ee9f7491f",
-      "note": "Wildcard all-fours looking back. Extra fingers."
+      "note": "Wildcard all-fours looking back. Extra fingers.",
+      "job_id": "8e37e17f-06ae-4431-988c-dd7fc69fdd5c"
     },
     {
       "id": "d-pussy-closed",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-pussy-closed.jpg",
       "prompt_id": "65c652b5-9228-4cc6-97cb-f45a9adfeaa7",
-      "note": "Closed tag still shows a slit. Weak against the NSFW adapter."
+      "note": "Closed tag still shows a slit. Weak against the NSFW adapter.",
+      "job_id": "26b1e3fb-1218-4c5d-b737-eec3c345ca03"
     },
     {
       "id": "d-pussy-spread",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-pussy-spread.jpg",
       "prompt_id": "b25b319b-9f05-4a87-b6b4-29a61f4931b0",
-      "note": "Spreading fingers, extra digits. Opening is real."
+      "note": "Spreading fingers, extra digits. Opening is real.",
+      "job_id": "c74ea597-b0ce-48af-834d-93660a48e475"
     },
     {
       "id": "d-labia-small",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-labia-small.jpg",
       "prompt_id": "793892f2-e3ef-47cf-b336-cfbac115a8bf",
-      "note": "Still spread. Small labia does not make an innie."
+      "note": "Still spread. Small labia does not make an innie.",
+      "job_id": "52680f90-485e-4a37-bcd8-fbfe5cb7ba80"
     },
     {
       "id": "d-labia-plump",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-labia-plump.jpg",
       "prompt_id": "0db01c82-9280-4f5c-814d-459d6d5eddb6",
-      "note": "More open than small, still gaping."
+      "note": "More open than small, still gaping.",
+      "job_id": "dce7a4f9-6c9e-4ce4-bb4b-f219245ab2f0"
     },
     {
       "id": "d-clitoris",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-clitoris.jpg",
       "prompt_id": "a8368b21-92db-4962-95fe-2d0e2caca4ca",
-      "note": "Clit visible. Extra fingers on spreading hands."
+      "note": "Clit visible. Extra fingers on spreading hands.",
+      "job_id": "42a06836-13e5-43a8-8211-b8b6e404acba"
     },
     {
       "id": "d-gaping-wet",
       "axis": "anatomy-pussy",
       "url": "/api/examples/nsfw-lab/d-gaping-wet.jpg",
       "prompt_id": "a434b92b-9235-4798-82bd-ea61a0ab3bc1",
-      "note": "Fluids and a pubic tuft. Strong aroused look."
+      "note": "Fluids and a pubic tuft. Strong aroused look.",
+      "job_id": "687ef5e0-6507-437a-a00b-161f001b343c"
     },
     {
       "id": "d-anus-puckered",
       "axis": "anatomy-anus",
       "url": "/api/examples/nsfw-lab/d-anus-puckered.jpg",
       "prompt_id": "600cde78-97ef-46ed-b6d7-cfae49a66572",
-      "note": "Closed ring. Clear vs spread."
+      "note": "Closed ring. Clear vs spread.",
+      "job_id": "a49133a7-853c-41c6-a172-8d0add5db060"
     },
     {
       "id": "d-anus-spread",
       "axis": "anatomy-anus",
       "url": "/api/examples/nsfw-lab/d-anus-spread.jpg",
       "prompt_id": "0a33d906-7b6f-4534-9185-41544a411c8a",
-      "note": "Open hole. Clear vs puckered."
+      "note": "Open hole. Clear vs puckered.",
+      "job_id": "ffb3ac9a-948c-4fef-a963-5976efa2f522"
     },
     {
       "id": "d-nipples-puffy",
       "axis": "anatomy-breast",
       "url": "/api/examples/nsfw-lab/d-nipples-puffy.jpg",
       "prompt_id": "d182dec4-f2d8-42e1-b303-47445211e84f",
-      "note": "Protruding nipples, large areolae."
+      "note": "Protruding nipples, large areolae.",
+      "job_id": "70b418a6-c5ad-4571-8a55-ea90948be89e"
     },
     {
       "id": "d-nipples-inverted",
       "axis": "anatomy-breast",
       "url": "/api/examples/nsfw-lab/d-nipples-inverted.jpg",
       "prompt_id": "5ab99e86-0a02-44e5-9998-7ac07e928975",
-      "note": "Flatter nipples. Blindfold returned."
+      "note": "Flatter nipples. Blindfold returned.",
+      "job_id": "323c0035-ebd4-483d-ba43-58a7a67c00d0"
     },
     {
       "id": "d-breasts-hanging",
       "axis": "anatomy-breast",
       "url": "/api/examples/nsfw-lab/d-breasts-hanging.jpg",
       "prompt_id": "497f1f0c-6dbe-4636-83b7-7d5f516095e9",
-      "note": "Gravity from below. Extra fingers on arms."
+      "note": "Gravity from below. Extra fingers on arms.",
+      "job_id": "9cf9b541-1f39-4508-92d6-7274a804ff50"
     },
     {
       "id": "d-mouth-uvula",
       "axis": "anatomy-mouth",
       "url": "/api/examples/nsfw-lab/d-mouth-uvula.jpg",
       "prompt_id": "815f087e-5c3a-44f7-a31d-a3810f8e1564",
-      "note": "Teeth, tongue, throat, saliva."
+      "note": "Teeth, tongue, throat, saliva.",
+      "job_id": "a041a148-f4ca-413d-b480-eb300ea8fc9c"
     },
     {
       "id": "d-fingers-spread",
       "axis": "anatomy-hands",
       "url": "/api/examples/nsfw-lab/d-fingers-spread.jpg",
       "prompt_id": "ce232e15-5267-40d5-a1de-77f5f08e3974",
-      "note": "Palms toward camera, still six fingers each."
+      "note": "Palms toward camera, still six fingers each.",
+      "job_id": "cf85fcf5-abe8-432c-9d7f-fb9d13d1b2be"
     },
     {
       "id": "d-feet-spread-toes",
       "axis": "anatomy-feet",
       "url": "/api/examples/nsfw-lab/d-feet-spread-toes.jpg",
       "prompt_id": "a22ff799-65e0-4586-9065-1090ee4c6205",
-      "note": "Five toes, spread. Feet beat hands."
+      "note": "Five toes, spread. Feet beat hands.",
+      "job_id": "b991ea76-a20e-40d7-9dba-f0b83b0aa77c"
     },
     {
       "id": "g-aqua-tavern-skirt",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-aqua-tavern-skirt.jpg",
       "prompt_id": "285418f4-bfd2-49bf-af3b-87a796d8672b",
-      "note": "Aqua tavern, patrons facing away, smirk, skirt up. Hits the request. Extra fingers."
+      "note": "Aqua tavern, patrons facing away, smirk, skirt up. Hits the request. Extra fingers.",
+      "job_id": "816113ee-b00a-4413-9382-fc55509ff6bf"
     },
     {
       "id": "g-aqua-tavern-complex",
       "axis": "masterpiece",
       "url": "/api/examples/nsfw-lab/g-aqua-tavern-complex.jpg",
       "prompt_id": "c261da2d-df0b-49b4-a57f-249677998fea",
-      "note": "Best tavern composition: leaning on the bar, costume on, smirk."
+      "note": "Best tavern composition: leaning on the bar, costume on, smirk.",
+      "job_id": "1c239d2a-82a5-4019-8b30-b3ecb9b3148f"
     },
     {
       "id": "g-darkness-armor-peek",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-darkness-armor-peek.jpg",
       "prompt_id": "22f6cbbc-0e59-4644-8375-969bc9c3d79d",
-      "note": "Armor plus skirt up, embarrassed, tavern crowd."
+      "note": "Armor plus skirt up, embarrassed, tavern crowd.",
+      "job_id": "60611e63-43c3-4b8d-aedc-b352c914a5df"
     },
     {
       "id": "g-2b-hotel-corridor",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-2b-hotel-corridor.jpg",
       "prompt_id": "e306a3b0-0a02-4582-8f5a-1db04ad57e83",
-      "note": "2B smirk, dress hiked, city night."
+      "note": "2B smirk, dress hiked, city night.",
+      "job_id": "a7c9869a-fe19-4190-938d-bc2ffe52a08e"
     },
     {
       "id": "g-2b-corridor-complex",
       "axis": "masterpiece",
       "url": "/api/examples/nsfw-lab/g-2b-corridor-complex.jpg",
       "prompt_id": "e76b298f-2547-41e6-b962-13bd96c3194b",
-      "note": "Stronger corridor, clothes on."
+      "note": "Stronger corridor, clothes on.",
+      "job_id": "9b5367c8-a240-45bf-8299-62e2121ef1fd"
     },
     {
       "id": "g-tifa-bar-shorts",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-tifa-bar-shorts.jpg",
       "prompt_id": "bcd6ea72-377b-4b40-b399-db20698634de",
-      "note": "Shorts pulled down. A patron looked \u2014 omit the crowd or face them away."
+      "note": "Shorts pulled down. A patron looked \u2014 omit the crowd or face them away.",
+      "job_id": "29470e32-ec4f-4aa9-868d-4873af8766fd"
     },
     {
       "id": "g-tifa-bar-complex",
       "axis": "masterpiece",
       "url": "/api/examples/nsfw-lab/g-tifa-bar-complex.jpg",
       "prompt_id": "49084473-fd0c-4bb8-a08d-4d057f87db96",
-      "note": "Cleaner bar, no extra patron."
+      "note": "Cleaner bar, no extra patron.",
+      "job_id": "b5e25caf-d8b3-4142-a4da-a3af501a6128"
     },
     {
       "id": "g-kafka-bar-booth",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-kafka-bar-booth.jpg",
       "prompt_id": "1c78f710-df60-41d6-bb8d-039cfb175e34",
-      "note": "Kafka identity. Jacket-open did not undress."
+      "note": "Kafka identity. Jacket-open did not undress.",
+      "job_id": "84910d84-cfd1-4e32-a3e4-d01e0122dbb2"
     },
     {
       "id": "g-asuna-inn",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-asuna-inn.jpg",
       "prompt_id": "7957f35b-b567-4f57-b22b-604019ef9718",
-      "note": "Nightgown smirk. Modest."
+      "note": "Nightgown smirk. Modest.",
+      "job_id": "d63da220-fc56-427f-93ab-06ac386431a7"
     },
     {
       "id": "g-raiden-shrine",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-raiden-shrine.jpg",
       "prompt_id": "506a303f-dd10-4353-86c0-f843dd7a9b1c",
-      "note": "Kimono hiked at a shrine at night."
+      "note": "Kimono hiked at a shrine at night.",
+      "job_id": "48624c82-084c-4bab-b8ca-4fefde108fd5"
     },
     {
       "id": "g-2b-onsen-towel",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/g-2b-onsen-towel.jpg",
       "prompt_id": "73c6b2a3-1a2d-4d40-9ea5-7328151535fe",
-      "note": "Towel slipping, locker room."
+      "note": "Towel slipping, locker room.",
+      "job_id": "2e62856e-4f50-4bc1-b5d2-60904025eea9"
     },
     {
       "id": "i-asuna-tavern",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-asuna-tavern.jpg",
       "prompt_id": "41e39c07-9d64-47ae-baa8-e5554bf1757d",
-      "note": "Asuna tavern, skirt up, smirk, crowd facing away."
+      "note": "Asuna tavern, skirt up, smirk, crowd facing away.",
+      "job_id": "bcbab259-2c33-4cec-8e51-405e1e735088"
     },
     {
       "id": "i-kafka-train-lift",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-kafka-train-lift.jpg",
       "prompt_id": "64827bd6-ed48-4819-8229-86539cc7d0a6",
-      "note": "Night train, skirt up, city lights."
+      "note": "Night train, skirt up, city lights.",
+      "job_id": "00578c06-28be-4751-ab6d-af78aa581cf9"
     },
     {
       "id": "i-yelan-teahouse-lift",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-yelan-teahouse-lift.jpg",
       "prompt_id": "18032515-4794-41ee-8a56-e96e2f43e786",
-      "note": "Qipao slit, smirk, lanterns."
+      "note": "Qipao slit, smirk, lanterns.",
+      "job_id": "2d51c028-7517-406a-9aee-fd439c7743c1"
     },
     {
       "id": "i-2b-library",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-2b-library.jpg",
       "prompt_id": "eb5ce8de-da5e-4024-a769-9998eb3767ca",
-      "note": "Library aisle, dress hiked."
+      "note": "Library aisle, dress hiked.",
+      "job_id": "6a3f54c2-a89f-4c93-b399-fb48bad1714b"
     },
     {
       "id": "i-tifa-bar-janima",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-tifa-bar-janima.jpg",
       "prompt_id": "a2e1e2b3-d902-408c-8d43-c6c5a4957191",
-      "note": "Shorts pulled down, no extra patron."
+      "note": "Shorts pulled down, no extra patron.",
+      "job_id": "dd961eea-1142-47ae-8211-1e71e0b3aef3"
     },
     {
       "id": "i-aqua-standing-bar",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-aqua-standing-bar.jpg",
       "prompt_id": "3edb785e-5f40-4b65-8047-84b25d29b908",
-      "note": "Standing lean. Crowd is looking."
+      "note": "Standing lean. Crowd is looking.",
+      "job_id": "e8d3c530-2694-4ae2-8c5e-0b458953a3e9"
     },
     {
       "id": "i-aqua-tavern-janima-bar",
       "axis": "scene",
       "url": "/api/examples/nsfw-lab/i-aqua-tavern-janima-bar.jpg",
       "prompt_id": "d2983779-7096-4422-be3b-ee6aef3b68b5",
-      "note": "JANIMA Aqua. Hands became pointing fingers."
+      "note": "JANIMA Aqua. Hands became pointing fingers.",
+      "job_id": "a1e21b71-80b2-452f-a585-ce1bd9bf5bbc"
     }
-  ]
+  ],
+  "media": {
+    "folder": "examples/nsfw-lab",
+    "manifest": "examples/nsfw-lab/MANIFEST.json",
+    "policy": "The JPEGs are local-only and gitignored. Missing tiles are expected on a fresh clone; rebuild them with python scripts/lab-media.py restore."
+  }
 }
