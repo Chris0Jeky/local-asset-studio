@@ -368,6 +368,11 @@ def comparison_plan(
             gaps.append(f"{prefix}: immutable source revision is unresolved")
     for technique in techniques:
         prefix = f"technique {technique['id']}"
+        # Derive every gap from this selected capture, whose byte digest is
+        # retained below. Re-reading a manifest can mix revisions under one hash.
+        revision = technique.get("source_revision")
+        if not isinstance(revision, str) or not revision.strip() or _moving(revision):
+            gaps.append(f"{prefix}: immutable source revision is unresolved")
         for blocker in technique.get("promotion_blockers", []):
             _append_gap(gaps, prefix, blocker)
         if technique.get("ready_for_qualification") is not True:
