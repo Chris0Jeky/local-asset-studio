@@ -110,11 +110,11 @@
       if(row){
         option.textContent=row.label;
         option.disabled=expert?!row.expertSelectable:!row.normalSelectable;
-        if(option.dataset)option.dataset.compatibilityStatus=row.status;
+        if(option.dataset)option.dataset.compatibilityDecision=row.status;
       }else{
         option.textContent=`Needs review · ${base}`;
         option.disabled=true;
-        if(option.dataset)option.dataset.compatibilityStatus='unreported';
+        if(option.dataset)option.dataset.compatibilityDecision='unreported';
       }
     }
     const selectedOption=options.find(option=>String(option.value)===String(select.value))||options.find(option=>option.selected);
@@ -189,8 +189,8 @@
       disabled:option.disabled,
       label:option.dataset.compatibilityLabel,
       hadLabel:Object.hasOwn(option.dataset,'compatibilityLabel'),
-      status:option.dataset.compatibilityStatus,
-      hadStatus:Object.hasOwn(option.dataset,'compatibilityStatus'),
+      decision:option.dataset.compatibilityDecision,
+      hadDecision:Object.hasOwn(option.dataset,'compatibilityDecision'),
     }));
     select.classList.add('setup-compatibility-select');
     expertLabel.hidden=!report.compatibility.candidates.some(row=>row.status==='needs_review');
@@ -214,8 +214,8 @@
           snapshot.option.disabled=snapshot.disabled;
           if(snapshot.hadLabel)snapshot.option.dataset.compatibilityLabel=snapshot.label;
           else delete snapshot.option.dataset.compatibilityLabel;
-          if(snapshot.hadStatus)snapshot.option.dataset.compatibilityStatus=snapshot.status;
-          else delete snapshot.option.dataset.compatibilityStatus;
+          if(snapshot.hadDecision)snapshot.option.dataset.compatibilityDecision=snapshot.decision;
+          else delete snapshot.option.dataset.compatibilityDecision;
         }
         restoreAttribute(select,'aria-describedby',selectSnapshot.describedBy);
         restoreAttribute(select,'aria-invalid',selectSnapshot.invalid);
