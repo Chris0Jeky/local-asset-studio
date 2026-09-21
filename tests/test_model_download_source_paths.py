@@ -45,6 +45,32 @@ class CuratedSourcePathTests(unittest.TestCase):
             )
         resolver.assert_not_called()
 
+    def test_noncanonical_version_paths_refuse_before_dns(self):
+        paths = (
+            '/api/download/models/', '/api/download/models/0',
+            '/api/download/models/-1', '/api/download/models/0456',
+            '/api/download/models/456/', '/api/download/models/456/extra',
+            '/api/download/models/456;', '/api/download/models/456;ignored',
+            '/api/download/models/%34%35%36', '/api/download/models/４５６',
+            '//api/download/models/456', '/api/download/models/456.json',
+            '/api/download/models/456#preview',
+        )
+        for host in ('civitai.com', 'civitai.red'):
+            for path in paths:
+                with self.subTest(host=host, path=path):
+                    resolver = Mock(side_effect=AssertionError('DNS must not run'))
+                    with self.assertRaisesRegex(ValueError, 'download endpoint'):
+                        contracts.validate_download_url('https://' + host + path, resolver=resolver)
+                    resolver.assert_not_called()
+
+    def test_storage_urls_remain_redirect_targets_not_initial_sources(self):
+        url = 'https://b2.civitai.com/file/civitai-modelfiles/model/fixture'
+        resolver = Mock(return_value=[(2, 1, 6, '', ('93.184.216.34', 443))])
+        with self.assertRaisesRegex(ValueError, 'curated HTTPS model source'):
+            contracts.download_source_provider(url)
+        self.assertEqual(contracts.validate_download_url(url, 'civitai', resolver), 'civitai')
+        resolver.assert_called_once()
+
     def test_huggingface_curated_source_contract_is_unchanged(self):
         self.assertEqual(
             contracts.download_source_provider(

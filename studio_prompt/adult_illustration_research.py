@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from itertools import islice
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -37,7 +38,12 @@ def _read_manifest(root: Path | str, filename: str) -> tuple[dict[str, Any], str
         raise ValueError(
             f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
         )
-    data = resolved.read_bytes()
+    with resolved.open("rb") as stream:
+        data = stream.read(MAX_MANIFEST_BYTES + 1)
+    if len(data) > MAX_MANIFEST_BYTES:
+        raise ValueError(
+            f"Research manifest exceeds {MAX_MANIFEST_BYTES} bytes: {filename}"
+        )
     if len(data) != info.st_size:
         raise ValueError(f"Research manifest changed while being read: {filename}")
     try:
@@ -51,6 +57,7 @@ def _read_manifest(root: Path | str, filename: str) -> tuple[dict[str, Any], str
         json.JSONDecodeError,
         DuplicateKeyError,
         ValueError,
+        RecursionError,
     ) as exc:
         raise ValueError(f"Invalid research manifest {filename}: {exc}") from exc
     if not isinstance(value, dict):
@@ -80,6 +87,14 @@ list_records = _base.list_records
 get_record = _base.get_record
 
 
+def _bounded_ids(name: str, values: Iterable[str], maximum: int) -> list[str]:
+    """Consume only enough input to accept its size or prove it exceeds the cap."""
+    result = list(islice(values, maximum + 1))
+    if len(result) > maximum:
+        raise ValueError(f"{name} must contain at most {maximum} ids")
+    return result
+
+
 def comparison_plan(
     root: Path | str,
     *,
@@ -90,34 +105,17 @@ def comparison_plan(
 ) -> dict[str, Any]:
     """Build a zero-authority plan while retaining technique revision gaps."""
 
-    cases = list(case_ids)
-    routes = list(route_ids)
-    dialects = list(dialect_ids)
-    techniques = list(technique_ids)
-    result = _base.comparison_plan(
+    cases = _bounded_ids("case_ids", case_ids, MAX_CASES)
+    routes = _bounded_ids("route_ids", route_ids, MAX_ROUTES)
+    dialects = _bounded_ids("dialect_ids", dialect_ids, MAX_OPTIONAL)
+    techniques = _bounded_ids("technique_ids", technique_ids, MAX_OPTIONAL)
+    return _base.comparison_plan(
         root,
         case_ids=cases,
         route_ids=routes,
         dialect_ids=dialects,
         technique_ids=techniques,
     )
-    selected, _ = _base._selected(root, "techniques", result["techniques"])
-    gaps = set(result["compatibility_gaps"])
-    for technique in selected:
-        revision = technique.get("source_revision")
-        if (
-            not isinstance(revision, str)
-            or not revision.strip()
-            or _base._moving(revision)
-        ):
-            gaps.add(
-                f"technique {technique['id']}: immutable source revision is unresolved"
-            )
-    result["compatibility_gaps"] = sorted(gaps)
-    unsigned = dict(result)
-    unsigned.pop("plan_id", None)
-    result["plan_id"] = hashlib.sha256(_base._canonical_bytes(unsigned)).hexdigest()
-    return result
 
 
 __all__ = [

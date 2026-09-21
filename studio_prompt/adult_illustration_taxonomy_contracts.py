@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 from typing import Any
@@ -62,6 +63,8 @@ def text(value: Any, label: str, maximum: int = 4096) -> str:
         raise ValueError(f"{label} must be trimmed")
     if any(ord(character) < 32 and character not in "\n\t\r" for character in value):
         raise ValueError(f"{label} contains a control character")
+    if any(0xD800 <= ord(character) <= 0xDFFF for character in value):
+        raise ValueError(f"{label} contains invalid Unicode scalar text")
     return value
 
 
@@ -143,15 +146,33 @@ def _repo_file(root: Path | str, relative: Path, label: str) -> Path:
     return resolved
 
 
+def _file_identity(info: os.stat_result) -> tuple[int, ...]:
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
 def _load(root: Path | str, relative: Path, label: str) -> tuple[dict[str, Any], str]:
-    raw = _repo_file(root, relative, label).read_bytes()
+    path = _repo_file(root, relative, label)
+    before = path.stat()
+    if before.st_size > MAX_CONTRACT_BYTES:
+        raise ValueError(f"{label} exceeds {MAX_CONTRACT_BYTES} bytes")
+    with path.open("rb") as stream:
+        opened = os.fstat(stream.fileno())
+        # Windows stat/fstat can expose different ctime semantics. Compare
+        # device, file ID, size and mtime across APIs; retain ctime when comparing
+        # two observations of the same opened descriptor below.
+        if _file_identity(opened)[:4] != _file_identity(before)[:4]:
+            raise ValueError(f"{label} changed before being read")
+        raw = stream.read(MAX_CONTRACT_BYTES + 1)
+        after = os.fstat(stream.fileno())
     if len(raw) > MAX_CONTRACT_BYTES:
         raise ValueError(f"{label} exceeds {MAX_CONTRACT_BYTES} bytes")
+    if len(raw) != opened.st_size or _file_identity(opened) != _file_identity(after):
+        raise ValueError(f"{label} changed while being read")
     try:
         value = json.loads(
             raw.decode("utf-8"), object_pairs_hook=pairs, parse_constant=reject_constant
         )
-    except (UnicodeDecodeError, json.JSONDecodeError, DuplicateKeyError, ValueError) as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError, DuplicateKeyError, ValueError, RecursionError) as exc:
         raise ValueError(f"Invalid {label}: {exc}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"{label} top level must be an object")

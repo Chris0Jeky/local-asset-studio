@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "id": "kokoro-af-heart-control-v1",
+      "revision": 1,
+      "name": "Kokoro af_heart control",
+      "status": "control",
+      "identity": {
+        "kind": "built-in-control",
+        "model_id": "hexgrad/Kokoro-82M",
+        "model_revision": "pinned-by-voice-baseline-bundle",
+        "voice": "af_heart",
+        "language": "en-US",
+        "original": false,
+        "reference": null
+      },
+      "producer": {
+        "adapter": "voice-baseline",
+        "runnable": true,
+        "speaker_id": "brief-narrator"
+      },
+      "deliveries": [
+        {
+          "id": "calm-brief",
+          "name": "Calm brief",
+          "instruction": "Warm, attentive, measured, and lightly upbeat; prioritise clarity and low fatigue.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "dense-technical",
+          "name": "Dense technical",
+          "instruction": "Slightly slower, restrained in pitch range, and deliberate around paths, numbers, and caveats.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "spark-recap",
+          "name": "Spark recap",
+          "instruction": "Brighter and more animated for summaries and wins, while remaining clear and controlled.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "risk-review",
+          "name": "Risk review",
+          "instruction": "Calm, grounded, and precise, without theatrical alarm.",
+          "status": "metadata-only"
+        }
+      ],
+      "lexicon": {
+        "revision": 1,
+        "entries": []
+      },
+      "mix": {
+        "revision": 1,
+        "recipe": "voice-baseline-scene-wav"
+      },
+      "acceptance": {
+        "state": "control",
+        "owner_review": "not-applicable",
+        "qualification_report_sha256": null,
+        "long_form_manifest_sha256": null,
+        "long_form_audio_sha256": null,
+        "accepted_at": null
+      }
+    },
+    {
+      "id": "ember-brief-v1",
+      "revision": 1,
+      "name": "Ember Brief",
+      "status": "experimental",
+      "identity": {
+        "kind": "original-designed",
+        "model_id": "unbound",
+        "model_revision": "unbound",
+        "voice": "unbound",
+        "language": "en-US",
+        "original": true,
+        "reference": null
+      },
+      "producer": {
+        "adapter": "unbound",
+        "runnable": false,
+        "speaker_id": "ember-brief"
+      },
+      "deliveries": [
+        {
+          "id": "calm-brief",
+          "name": "Calm brief",
+          "instruction": "Warm, attentive, measured, and lightly upbeat; prioritise clarity and low fatigue.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "dense-technical",
+          "name": "Dense technical",
+          "instruction": "Slightly slower, restrained in pitch range, and deliberate around paths, numbers, and caveats.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "spark-recap",
+          "name": "Spark recap",
+          "instruction": "Brighter and more animated for summaries and wins, while retaining the same identity.",
+          "status": "metadata-only"
+        },
+        {
+          "id": "risk-review",
+          "name": "Risk review",
+          "instruction": "Calm, grounded, and precise, without theatrical alarm.",
+          "status": "metadata-only"
+        }
+      ],
+      "lexicon": {
+        "revision": 1,
+        "entries": []
+      },
+      "mix": {
+        "revision": 1,
+        "recipe": "dry-unprocessed"
+      },
+      "acceptance": {
+        "state": "unreviewed",
+        "owner_review": "unreviewed",
+        "qualification_report_sha256": null,
+        "long_form_manifest_sha256": null,
+        "long_form_audio_sha256": null,
+        "accepted_at": null
+      }
+    }
+  ]
+}

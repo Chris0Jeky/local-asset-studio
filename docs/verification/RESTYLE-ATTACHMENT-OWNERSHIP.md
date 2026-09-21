@@ -52,3 +52,19 @@ is exercised by the existing frontend handoff and continuation parent-claim cont
 It does not qualify models, change Restyle routes, make boards optional, or settle the
 owner's aesthetic choices in #343, #351 and #357. #610's shared readiness projection
 remains authoritative; this is not another reference-readiness model.
+
+## Availability observations
+
+A pending saved-reference check is an observation, not permission to change a newer
+attachment. It captures each record's identity, filename and content hash. A newer check
+or successfully committed attachment supersedes earlier checks on that record. Failed
+uploads leave observations of unchanged bytes current. Both successful
+and failed responses apply only to observations still current in the same reference epoch.
+No observation tokens are persisted or added to the readiness projection.
+
+An obsolete failure must not mark a newly uploaded or copied image missing. Conversely,
+a current missing-file result, hash mismatch or failed check still blocks readiness for
+that filled record. Empty optional positions do not become missing files on transport
+failure. The check releases its own pending count without interfering with a later reset.
+These cases run through the real reference owner and the shared readiness projection in
+`tests/reference_restore_observations.cjs` (also discovered by the Python suite).

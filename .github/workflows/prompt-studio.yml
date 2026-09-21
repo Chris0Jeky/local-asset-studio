@@ -1,10 +1,10 @@
 name: Prompt Studio
 on:
   pull_request:
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_taxonomy.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'research/adult-illustration/taxonomy-*.json', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', 'tests/test_exact_anime_profiles.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'scripts/studio_adult_illustration_acquisition_plan.py', 'scripts/studio_adult_illustration_taxonomy.py', 'scripts/validate_adult_illustration_benchmark_result.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'research/adult-illustration/taxonomy-*.json', 'research/adult-illustration/benchmark-result-example.json', 'docs/adult-illustration/README.md', 'docs/adult-illustration/SOURCE-INTAKE.md', 'docs/adult-illustration/ACQUISITION-HANDOFF.md', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', 'tests/test_exact_anime_profiles.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
   push:
     branches: [main]
-    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_taxonomy.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'research/adult-illustration/taxonomy-*.json', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', 'tests/test_exact_anime_profiles.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
+    paths: ['studio_prompt/**', 'scripts/studio_prompt.py', 'scripts/start_prompt_studio.py', 'scripts/studio_adult_illustration_prompt.py', 'scripts/studio_adult_illustration_source_snapshot.py', 'scripts/studio_adult_illustration_source_fetch.py', 'scripts/studio_adult_illustration_acquisition_plan.py', 'scripts/studio_adult_illustration_taxonomy.py', 'scripts/validate_adult_illustration_benchmark_result.py', 'app/static/prompt-lab.*', 'app/static/reference-review.*', 'app/static/reference-analyze.*', 'app/static/prompt-projects.*', 'tests/test_reference_*.py', 'tests/reference_review*', 'tests/reference_analyze*', 'research/prompt-studio/**', 'research/adult-illustration/prompt-profile-vocabulary.json', 'research/adult-illustration/taxonomy-*.json', 'research/adult-illustration/benchmark-result-example.json', 'docs/adult-illustration/README.md', 'docs/adult-illustration/SOURCE-INTAKE.md', 'docs/adult-illustration/ACQUISITION-HANDOFF.md', 'tests/test_studio_prompt*.py', 'tests/test_adult_illustration*.py', 'tests/test_exact_anime_profiles.py', 'tests/test_prompt_projects*.py', 'tests/prompt_projects*', '.github/workflows/prompt-studio.yml']
 permissions:
   contents: read
 jobs:
@@ -25,9 +25,12 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_reference_*.py' -v
       - run: python -m unittest discover -s tests -p 'test_adult_illustration*.py' -v
       - run: python -m unittest discover -s tests -p 'test_prompt_projects*.py' -v
+      - run: python scripts/validate_adult_illustration_benchmark_result.py
       - run: python scripts/studio_prompt.py compile examples/prompt-studio/portrait.json --profile sdxl-prose-v1
       - run: python scripts/studio_adult_illustration_prompt.py profiles
       - run: python scripts/studio_adult_illustration_taxonomy.py source
+      - run: python scripts/studio_adult_illustration_source_fetch.py --help
+      - run: python scripts/studio_adult_illustration_acquisition_plan.py --help
       - run: python scripts/start_prompt_studio.py --help
   browser:
     runs-on: ubuntu-latest
