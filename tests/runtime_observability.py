@@ -119,6 +119,29 @@ class _Registration:
     wrapper: Callable
     registered_thread: str
     stack: list[dict]
+    active: bool = True
+
+
+class _ObservedCallback:
+    """Callable proxy whose equality mirrors the registered callback."""
+
+    __slots__ = ("observer", "registration")
+
+    def __init__(self, observer: "AtexitCallbackObserver", registration: _Registration):
+        self.observer = observer
+        self.registration = registration
+
+    def __call__(self, *args, **kwargs):
+        return self.observer._invoke(self.registration, args, kwargs)
+
+    def __eq__(self, other):
+        equal = self.observer._callbacks_equal(self.registration.callback, other)
+        if equal:
+            # CPython deletes this proxy immediately after the successful equality
+            # result. Record that decision so a later comparison error still leaves
+            # earlier matches removed from the observer's registry as well.
+            self.registration.active = False
+        return equal
 
 
 class AtexitCallbackObserver:
@@ -224,12 +247,8 @@ class AtexitCallbackObserver:
                 ),
             )
             self._next_identifier += 1
-
-            def observed_callback(*callback_args, **callback_kwargs):
-                return self._invoke(registration, callback_args, callback_kwargs)
-
-            registration.wrapper = observed_callback
-            original_register(observed_callback, *args, **kwargs)
+            registration.wrapper = _ObservedCallback(self, registration)
+            original_register(registration.wrapper, *args, **kwargs)
             self._registrations.append(registration)
         return callback
 
@@ -238,22 +257,21 @@ class AtexitCallbackObserver:
         if original_unregister is None:
             raise RuntimeError("atexit callback observer is not installed")
         with self._lock:
-            matches = [
-                registration
-                for registration in self._registrations
-                if self._callbacks_equal(registration.callback, callback)
-            ]
-            matched = {id(registration) for registration in matches}
-            self._registrations = [
-                registration
-                for registration in self._registrations
-                if id(registration) not in matched
-            ]
-            for registration in matches:
-                original_unregister(registration.wrapper)
-            # Preserve callbacks registered before observation began.
-            original_unregister(callback)
-        return None
+            try:
+                # Let CPython perform its one ordered comparison pass. The callable
+                # proxies delegate equality to the original callbacks, preserving
+                # pre-observer ordering and incremental deletion before errors.
+                return original_unregister(callback)
+            finally:
+                retained = []
+                for registration in self._registrations:
+                    if registration.active:
+                        retained.append(registration)
+                    else:
+                        # Break the registration/proxy cycle once CPython has
+                        # removed the proxy from its callback array.
+                        registration.wrapper = lambda: None
+                self._registrations = retained
 
     def _invoke(self, registration: _Registration, args, kwargs):
         self._emit_registration("ENTER", registration, include_origin=True)

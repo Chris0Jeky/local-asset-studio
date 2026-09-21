@@ -30,7 +30,7 @@ An `ENTER` record without the matching `EXIT` record identifies the callback in 
 The observer preserves the public behavior relied on by tests:
 
 - `atexit.register(...)` returns the original callback, including decorator use;
-- `atexit.unregister(callback)` removes every observed equal callback and still delegates for callbacks registered before observation;
+- `atexit.unregister(callback)` delegates one ordered comparison pass to CPython, so pre-observer callbacks keep their native position and matches removed before a later equality error remain removed;
 - callback positional and keyword arguments are delegated but never retained or printed;
 - callback diagnostics cannot prevent the callback from running if the diagnostic stream itself fails.
 
