@@ -1,0 +1,40 @@
+name: Setup compatibility selector
+
+on:
+  pull_request:
+    paths:
+      - 'app/static/setup-compatibility-selector.js'
+      - 'app/static/setup-compatibility-selector.css'
+      - 'app/static/studio-shell.js'
+      - 'tests/setup_compatibility_selector.cjs'
+      - 'tests/test_setup_compatibility_selector.py'
+      - 'tests/setup_compatibility_selector_browser.py'
+      - '.github/workflows/setup-compatibility-selector.yml'
+  push:
+    branches: [codex/setup-compatibility-selector-presenter]
+    paths:
+      - 'app/static/setup-compatibility-selector.js'
+      - 'app/static/setup-compatibility-selector.css'
+      - 'app/static/studio-shell.js'
+      - 'tests/setup_compatibility_selector.cjs'
+      - 'tests/test_setup_compatibility_selector.py'
+      - 'tests/setup_compatibility_selector_browser.py'
+      - '.github/workflows/setup-compatibility-selector.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/setup_compatibility_selector.cjs
+      - run: python -m unittest discover -s tests -p 'test_setup_compatibility_selector.py' -v
+      - run: python scripts/validate-repo.py
