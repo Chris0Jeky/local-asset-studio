@@ -230,19 +230,22 @@ def _validate_binding(value: Any) -> dict:
             value['required_node_classes'],
             'binding required node classes',
             MAX_BINDING_NODES,
-            allow_empty=False,
+            allow_empty=True,
         )),
     }
 
 
-def _required_nodes(candidate: dict) -> set[str]:
+def _required_nodes(candidate: dict, selected_loader: str) -> set[str]:
     result = {
         requirement[len('node:'):]
         for requirement in candidate['requires']
         if requirement.startswith('node:') and len(requirement) > len('node:')
     }
-    for loader in candidate['loaders']:
-        node_class = loader.split('.', 1)[0]
+    # Candidate loaders are alternatives. Only the loader selected by this slot
+    # becomes an implicit node requirement; explicit node:* companions remain
+    # mandatory regardless of loader selection.
+    if selected_loader in candidate['loaders']:
+        node_class = selected_loader.split('.', 1)[0]
         if node_class:
             result.add(node_class)
     return result
@@ -372,7 +375,7 @@ def _project(
              'Candidate resource identity does not match bound asset SHA-256 identity')
         need(binding['file'] == asset['file'],
              'binding file does not match the selected local asset')
-        required_nodes = _required_nodes(candidate)
+        required_nodes = _required_nodes(candidate, slot['loader'])
         need(required_nodes <= set(binding['required_node_classes']),
              'Candidate binding omits a reviewed required node class')
 
