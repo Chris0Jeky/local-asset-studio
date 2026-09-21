@@ -3,9 +3,9 @@
 The audit wraps ``socket.create_connection`` only while a fixture test is active,
 records calls to one exact numeric loopback host/port, and delegates every network
 operation unchanged. It stores no request bodies, headers, response bytes or socket
-objects. Retained caller and thread-start stacks contain only file basenames, line
-numbers and function names so a CI failure can identify an owner without leaking
-machine paths.
+objects. Retained caller, thread-start and pooled-work stacks contain only file
+basenames, line numbers and function names so a CI failure can identify an owner
+without leaking machine paths.
 """
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ import socket
 import threading
 from unittest.mock import patch
 
+from executor_work_observability import current_work_origin
 from runtime_observability import (
     bounded_call_stack,
     current_test,
@@ -98,6 +99,7 @@ class LoopbackTransportAudit:
                 "thread": threading.current_thread().name[:160],
                 "active_test": current_test(),
                 "thread_origin": current_thread_origin(),
+                "work_origin": current_work_origin(),
                 "stack": self._stack(),
             }
             with self._lock:
