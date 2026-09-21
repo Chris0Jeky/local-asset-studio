@@ -30,7 +30,8 @@ AIR = re.compile(
     r'urn:air:[a-z0-9][a-z0-9._-]{0,63}:[a-z0-9][a-z0-9._-]{0,63}:'
     r'civitai:([1-9][0-9]{0,19})@([1-9][0-9]{0,19})\Z', re.IGNORECASE)
 SENSITIVE_QUERY = {'apikey', 'token', 'accesstoken', 'authorization', 'key',
-                   'secret', 'password'}
+                   'secret', 'password', 'clientsecret', 'accesskey',
+                   'refreshtoken', 'privatekey'}
 PAGINATION_QUERY = {'cursor', 'page', 'limit'}
 REACTIONS = ('cryCount', 'dislikeCount', 'heartCount', 'laughCount', 'likeCount')
 
@@ -82,7 +83,8 @@ def normalize_query(value: Any) -> dict[str, Any]:
     for key, raw in value.items():
         need(token(key, 128), 'Invalid source query key')
         compact = re.sub(r'[^a-z0-9]', '', key.casefold())
-        need(compact not in SENSITIVE_QUERY and not compact.startswith('authorization'),
+        need(compact not in SENSITIVE_QUERY and not compact.startswith('authorization')
+             and not compact.endswith(('token', 'secret', 'password')),
              'Source receipt cannot retain a sensitive query parameter')
         if isinstance(raw, list):
             need(len(raw) <= 64, 'Source query list is oversized')
@@ -173,6 +175,8 @@ def source_claim(value: Any, label: str) -> Any:
     if isinstance(value, str):
         need(token(value, 500), 'Invalid provider ' + label + ' claim')
         return value
+    if isinstance(value, list):
+        return bounded_strings(value, 'provider ' + label + ' claim', 64)
     raise ValueError('Invalid provider ' + label + ' claim')
 
 
@@ -347,6 +351,75 @@ def semantic_observation(value: dict[str, Any]) -> bytes:
     return canonical({key: item for key, item in value.items() if key != 'receipt_sha256s'})
 
 
+def cursor_chain_coverage(normalized: list[tuple[int, dict[str, Any], dict[str, Any], dict[str, Any]]],
+                          diagnostics: list[dict[str, Any]]) -> bool:
+    complete = True
+    scopes: dict[str, list[tuple[int, dict[str, Any], dict[str, Any]]]] = {}
+    for index, receipt, payload, scope in normalized:
+        if receipt['outcome'] == 'ok':
+            scopes.setdefault(scope['scope_sha256'], []).append((index, receipt, payload))
+    for rows in scopes.values():
+        has_cursor = any(receipt['query'].get('cursor') not in (None, '')
+                         for _, receipt, _ in rows)
+        advertises_cursor = any(isinstance(payload.get('metadata'), dict)
+                                and payload['metadata'].get('nextCursor') not in (None, '')
+                                for _, _, payload in rows)
+        if not has_cursor and not advertises_cursor: continue
+        by_cursor: dict[str | None, list[tuple[int, dict[str, Any], dict[str, Any]]]] = {}
+        for row in rows:
+            cursor = row[1]['query'].get('cursor')
+            by_cursor.setdefault(None if cursor in (None, '') else cursor, []).append(row)
+        roots = by_cursor.get(None, [])
+        if not roots:
+            complete = False
+            diagnostics.append({'code': 'pagination_root_missing',
+                                'message': 'Retained cursor pages have no root page.',
+                                'host': rows[0][1]['host']})
+            continue
+        if len(roots) > 1:
+            complete = False
+            diagnostics.append({'code': 'pagination_root_ambiguous',
+                                'message': 'Retained cursor pages have more than one root page.',
+                                'host': roots[0][1]['host']})
+        for cursor, entries in by_cursor.items():
+            if cursor is not None and len(entries) > 1:
+                complete = False
+                diagnostics.append({'code': 'pagination_cursor_duplicate',
+                                    'message': 'A retained cursor identifies more than one page.',
+                                    'host': entries[0][1]['host']})
+        current: str | None = None
+        visited: set[str | None] = set()
+        while current in by_cursor and by_cursor[current]:
+            if current in visited:
+                complete = False
+                diagnostics.append({'code': 'pagination_cycle',
+                                    'message': 'Retained cursor pages contain a cycle.',
+                                    'host': by_cursor[current][0][1]['host']})
+                break
+            visited.add(current)
+            index, receipt, payload = by_cursor[current][0]
+            metadata = payload.get('metadata')
+            if not isinstance(metadata, dict): break
+            next_cursor = metadata.get('nextCursor')
+            if next_cursor in (None, ''): break
+            if not token(next_cursor, 1000): break
+            if next_cursor in visited:
+                complete = False
+                diagnostics.append({'code': 'pagination_cycle',
+                                    'message': 'Retained cursor pages contain a cycle.',
+                                    'page': index, 'host': receipt['host']})
+                break
+            if next_cursor not in by_cursor: break
+            current = next_cursor
+        disconnected = [cursor for cursor in by_cursor if cursor is not None and cursor not in visited]
+        if disconnected:
+            complete = False
+            diagnostics.append({'code': 'pagination_disconnected',
+                                'message': 'A retained cursor page is not reachable from the root page.',
+                                'host': rows[0][1]['host'], 'page_count': len(disconnected)})
+    return complete
+
+
 def collect_observations(pages: list[Any], version_id: int, diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], bool]:
     need(len(pages) <= MAX_PAGES, 'Use at most 32 retained image pages')
     receipts, normalized, seen, total, coverage = [], [], {}, 0, bool(pages)
@@ -361,6 +434,7 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         cursor = receipt['query'].get('cursor')
         if cursor not in (None, ''): need(token(cursor, 1000), 'Image cursor must be a bounded string')
         normalized.append((index, receipt, payload, source_scope(receipt)))
+    coverage = cursor_chain_coverage(normalized, diagnostics) and coverage
     available_cursors: dict[str, set[str]] = {}
     for _, receipt, _, scope in normalized:
         cursor = receipt['query'].get('cursor')
@@ -398,6 +472,11 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         for raw in items:
             item = normalize_image(raw, scope, receipt, diagnostics)
             if item is None: continue
+            if version_id not in item['version_ids']:
+                diagnostics.append({'code': 'target_version_missing',
+                                    'message': 'Image did not identify the queried model version and was excluded.',
+                                    'image_id': item['image_id'], 'host': receipt['host']})
+                continue
             key = (scope['scope_sha256'], item['image_id'])
             if key not in seen: seen[key] = item; continue
             prior = seen[key]
