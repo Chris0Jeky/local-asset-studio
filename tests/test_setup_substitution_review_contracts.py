@@ -40,9 +40,9 @@ class SetupSubstitutionReviewContracts(unittest.TestCase):
         description = spec['description'].lower()
         self.assertIn('substitute', description)
         self.assertIn('proposal', description)
-        self.assertIn('hash', description)
+        self.assertIn('sha-256', description)
         self.assertIn('revision', description)
-        self.assertIn('never generates', description)
+        self.assertIn('never generate', description)
         self.assertTrue(spec['mutating'])
         self.assertEqual(spec['mode'], 'author')
 
