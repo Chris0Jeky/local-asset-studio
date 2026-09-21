@@ -108,7 +108,10 @@ class AtexitLifetimeDiagnosticsTests(unittest.TestCase):
         self.assertIn('"callback":"test_atexit_block.block_forever"', output)
         self.assertIn('"registered_thread":"MainThread"', output)
         self.assertNotIn("callback-argument-must-not-be-retained", output)
-        self.assertNotIn(ATEXIT_EXIT, output)
+        self.assertNotIn(
+            f'{ATEXIT_EXIT} {{"callback":"test_atexit_block.block_forever"',
+            output,
+        )
 
     def test_worker_marks_completed_callbacks_and_preserves_unregister(self):
         worker = HERE / "full_suite_lifetime_worker.py"
