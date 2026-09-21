@@ -73,10 +73,21 @@ class ProcessCapture:
         if self.process.poll() is None:
             self.process.kill()
         returncode = self.process.wait(timeout=5)
+        stuck = []
         for thread in self._threads:
             thread.join(timeout=5)
             if thread.is_alive():
-                raise AssertionError("child output reader did not terminate")
+                stuck.append(thread)
+        if stuck:
+            message = (
+                "child output reader did not terminate"
+                if len(stuck) == 1
+                else f"{len(stuck)} child output readers did not terminate"
+            )
+            active = sys.exception()
+            if active is None:
+                raise AssertionError(message)
+            active.add_note(message)
         return returncode, self.output()
 
 
