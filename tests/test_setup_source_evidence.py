@@ -14,35 +14,60 @@ from studio_workflow import source_compatibility as S
 FILE_ID = 'sha256:' + 'a' * 64
 CONTEXT = 'b' * 64
 RECEIPT = 'c' * 64
+GALLERY_RECEIPT = 'f' * 64
 REVIEW = 'sha256:' + 'd' * 64
 
 
-def source_scope(host='civitai.com', browsing='1'):
+def source_scope(host='civitai.com', browsing='1', version_id=101):
     return {'host': host, 'route': '/api/v1/images',
-            'query': {'browsingLevel': browsing, 'modelVersionId': '101', 'withMeta': 'true'},
+            'query': {'browsingLevel': browsing, 'modelVersionId': str(version_id), 'withMeta': 'true'},
             'auth_context': 'anonymous', 'scope_sha256': ('e' if host == 'civitai.com' else 'f') * 64}
 
 
 def report(*, resource_identity='urn:air:sdxl:lora:civitai:10@101',
            base_model='Illustrious', model_type='LORA', combinations=None,
            file_identity=FILE_ID, file_format='SafeTensor'):
+    version_id = (int(resource_identity.removeprefix('civitai-version:'))
+                  if resource_identity.startswith('civitai-version:')
+                  else int(resource_identity.rsplit('@', 1)[1]))
     if combinations is None:
         combinations = [{
-            'source_scope': source_scope(), 'version_ids': [101, 202],
+            'source_scope': source_scope(version_id=version_id),
+            'version_ids': [version_id, 202],
             'distinct_observations': 4, 'distinct_posts': 4, 'distinct_uploaders': 2,
             'post_ids': [11, 12, 13, 14], 'uploaders': ['alice', 'bob'],
-            'receipt_sha256s': [RECEIPT], 'resource_usages': [
-                {'version_id': 101, 'types': ['lora'], 'weights': [0.8]},
+            'receipt_sha256s': [GALLERY_RECEIPT], 'resource_usages': [
+                {'version_id': version_id, 'types': ['lora'], 'weights': [0.8]},
                 {'version_id': 202, 'types': ['checkpoint'], 'weights': []}],
             'settings': [{'steps': 24, 'cfg': 5, 'count': 4}],
             'engagement': {'reaction_total': 999999, 'comment_total': 5000},
             'reported_co_use': True, 'compatibility_proven': False, 'quality_proven': False,
         }]
+    source_receipts = [{
+        'host': 'civitai.com', 'route': '/api/v1/model-versions/' + str(version_id),
+        'query': {}, 'retrieved_at': '2026-09-21T00:00:00Z',
+        'response_sha256': RECEIPT, 'etag': None, 'last_modified': None,
+        'outcome': 'ok', 'auth_context': 'anonymous',
+    }]
+    for item in combinations:
+        scope = item['source_scope']
+        for response_sha in item['receipt_sha256s']:
+            key = (response_sha, scope['host'], scope['route'])
+            existing = {(row['response_sha256'], row['host'], row['route'])
+                        for row in source_receipts}
+            if key not in existing:
+                source_receipts.append({
+                    'host': scope['host'], 'route': scope['route'], 'query': {},
+                    'retrieved_at': '2026-09-21T00:00:00Z',
+                    'response_sha256': response_sha, 'etag': None,
+                    'last_modified': None, 'outcome': 'ok',
+                    'auth_context': 'anonymous',
+                })
     return {
         'format': 'studio.source-composition-evidence/v1', 'provider': 'civitai',
         'context_sha256': CONTEXT,
         'resource': {
-            'source_host': 'civitai.com', 'model_id': 10, 'version_id': 101,
+            'source_host': 'civitai.com', 'model_id': 10, 'version_id': version_id,
             'identity': resource_identity, 'model_name': 'Example', 'version_name': 'v1',
             'model_type': model_type, 'base_model': base_model,
             'base_model_type': 'Standard', 'trained_words': ['example'],
@@ -57,11 +82,7 @@ def report(*, resource_identity='urn:air:sdxl:lora:civitai:10@101',
                 'scan': {'pickle': 'Success', 'virus': 'Success', 'scanned_at': '2026-09-02'},
             }], 'receipt_sha256': RECEIPT,
         },
-        'source_receipts': [{
-            'host': 'civitai.com', 'route': '/api/v1/model-versions/101', 'query': {},
-            'retrieved_at': '2026-09-21T00:00:00Z', 'response_sha256': RECEIPT,
-            'etag': None, 'last_modified': None, 'outcome': 'ok', 'auth_context': 'anonymous',
-        }],
+        'source_receipts': source_receipts,
         'image_observations': [], 'combinations': combinations,
         'coverage_complete': True, 'diagnostics': [],
         'network_performed': False, 'model_downloaded': False, 'image_downloaded': False,
