@@ -109,30 +109,13 @@ def comparison_plan(
     routes = _bounded_ids("route_ids", route_ids, MAX_ROUTES)
     dialects = _bounded_ids("dialect_ids", dialect_ids, MAX_OPTIONAL)
     techniques = _bounded_ids("technique_ids", technique_ids, MAX_OPTIONAL)
-    result = _base.comparison_plan(
+    return _base.comparison_plan(
         root,
         case_ids=cases,
         route_ids=routes,
         dialect_ids=dialects,
         technique_ids=techniques,
     )
-    selected, _ = _base._selected(root, "techniques", result["techniques"])
-    gaps = set(result["compatibility_gaps"])
-    for technique in selected:
-        revision = technique.get("source_revision")
-        if (
-            not isinstance(revision, str)
-            or not revision.strip()
-            or _base._moving(revision)
-        ):
-            gaps.add(
-                f"technique {technique['id']}: immutable source revision is unresolved"
-            )
-    result["compatibility_gaps"] = sorted(gaps)
-    unsigned = dict(result)
-    unsigned.pop("plan_id", None)
-    result["plan_id"] = hashlib.sha256(_base._canonical_bytes(unsigned)).hexdigest()
-    return result
 
 
 __all__ = [
