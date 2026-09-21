@@ -26,6 +26,8 @@ def _validate_graph(graph: dict[str, list[str]], label: str, limit: int) -> None
             raise ValueError(f"Taxonomy prompt {label} graph contains a cycle at {node!r}")
         if node in depths:
             return depths[node]
+        if len(visiting) >= limit:
+            raise ValueError(f"Taxonomy prompt {label} graph exceeds depth {limit}")
         visiting.add(node)
         depth = max(
             [1, *(1 + visit(target) for target in graph.get(node, []))]

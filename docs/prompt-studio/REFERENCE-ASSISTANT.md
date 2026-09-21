@@ -1,5 +1,9 @@
 # Run the local reference assistant
 
+For the browser path, use [Analyze pictures in Prompt Lab](REFERENCE-ANALYZE-UI.md).
+This CLI remains independent of Studio scheduling; do not run it concurrently
+against the same helper.
+
 This is the operator/agent entry point for the
 [reference-intelligence design](REFERENCE-INTELLIGENCE.md). It describes up to
 four images in one local vision call, preserves metadata separately and creates
@@ -21,9 +25,16 @@ an HTTP request. The helper requests unload after the response; actual resource
 release still needs workstation observation. Four-image semantic quality and
 Windows/9070 XT memory/latency have not been measured by these software tests.
 
-Examples below use a workspace `C:/AI/reference-session` containing `refs/style.png`
-and `refs/pose.png`. Run from the repository root; replace `INSTALLED_VISION_MODEL`
+Examples below use a disposable workspace at `.runtime/reference-session`
+(gitignored with the rest of `.runtime/`), containing `refs/style.png` and
+`refs/pose.png`. Run from the repository root; replace `INSTALLED_VISION_MODEL`
 with the exact installed local model name. Output files must not already exist.
+In PowerShell, bind the workspace once so the same commands work regardless of
+the repository's drive or parent folder:
+
+```powershell
+$Workspace = Join-Path (Get-Location) '.runtime/reference-session'
+```
 
 ## Minimal path
 
@@ -32,7 +43,7 @@ all `--role` arguments lets the model propose each image's primary contribution;
 use one role per image to provide an explicit hint instead.
 
 ```powershell
-python -m studio_prompt.reference_assistant init --workspace C:/AI/reference-session --image refs/style.png --image refs/pose.png --brief "same feeling, use this pose" --output C:/AI/reference-session/request.json
+python -m studio_prompt.reference_assistant init --workspace "$Workspace" --image refs/style.png --image refs/pose.png --brief "same feeling, use this pose" --output (Join-Path $Workspace 'request.json')
 ```
 
 Optional deterministic metadata inspection uses the existing PNG/JPEG/WebP
@@ -40,19 +51,22 @@ recipe inspector. Recovered claims are not passed to the vision model or treated
 as authenticated original settings. There is no inference in this step.
 
 ```powershell
-python -m studio_prompt.reference_assistant inspect --workspace C:/AI/reference-session --request C:/AI/reference-session/request.json --output C:/AI/reference-session/metadata.json
+python -m studio_prompt.reference_assistant inspect --workspace "$Workspace" --request (Join-Path $Workspace 'request.json') --output (Join-Path $Workspace 'metadata.json')
 ```
 
 Explicit analysis sends all selected images in **one** request. The shared helper
 checks the installed model digest, uses the same workspace lock and cache, and
 never retries a failed/ambiguous response automatically. Exact-request caching is
-on for this CLI; `--no-cache` disables it. A changed model, input, description,
-reference order, role hint or request template invalidates reuse. The existing
-64-entry cache cap remains; eviction is explicit.
+on for this CLI. By default, derived local data is stored under
+`<workspace>/.runtime/prompt-cache/`; treat that directory as disposable cache
+evidence rather than an input/reference folder. `--no-cache` disables both lookup
+and insertion for the call. A changed model, input, description, reference order,
+role hint or request template invalidates reuse. The existing 64-entry cache cap
+remains; eviction is explicit.
 
 ```powershell
-python -m studio_prompt.reference_assistant analyze --workspace C:/AI/reference-session --request C:/AI/reference-session/request.json --model INSTALLED_VISION_MODEL --idle-confirmed --output C:/AI/reference-session/analysis.json
-python -m studio_prompt.reference_assistant review --analysis C:/AI/reference-session/analysis.json --output C:/AI/reference-session/review.json
+python -m studio_prompt.reference_assistant analyze --workspace "$Workspace" --request (Join-Path $Workspace 'request.json') --model INSTALLED_VISION_MODEL --idle-confirmed --output (Join-Path $Workspace 'analysis.json')
+python -m studio_prompt.reference_assistant review --analysis (Join-Path $Workspace 'analysis.json') --output (Join-Path $Workspace 'review.json')
 ```
 
 Read `analysis.json`: summary, assumptions, questions and each image's description,
@@ -72,7 +86,7 @@ require an explicit user description. Edit the review rather than changing the
 immutable analysis report; modified/stale reports are rejected.
 
 ```powershell
-python -m studio_prompt.reference_assistant draft --workspace C:/AI/reference-session --analysis C:/AI/reference-session/analysis.json --review C:/AI/reference-session/review.json --output C:/AI/reference-session/draft.json
+python -m studio_prompt.reference_assistant draft --workspace "$Workspace" --analysis (Join-Path $Workspace 'analysis.json') --review (Join-Path $Workspace 'review.json') --output (Join-Path $Workspace 'draft.json')
 ```
 
 `draft.json` contains a standard CreativeIntent at `intent`, plus source/analysis
@@ -85,13 +99,16 @@ intent through the existing Prompt Lab editing/revision flow after inspection.
 For headless callers the shared compiler can consume the intent directly:
 
 ```python
+from pathlib import Path
+
 from studio_prompt.schema import read_json, write_new
 from studio_prompt.compiler import compile_brief
 
-reviewed = read_json("C:/AI/reference-session/draft.json")
+workspace = Path('.runtime/reference-session')
+reviewed = read_json(workspace / 'draft.json')
 # This profile formats text; it is NOT a reference-binding or generation action.
-compiled = compile_brief(reviewed["intent"], "sdxl-prose-v1")
-write_new("C:/AI/reference-session/compiled-preview.json", compiled)
+compiled = compile_brief(reviewed['intent'], 'sdxl-prose-v1')
+write_new(workspace / 'compiled-preview.json', compiled)
 ```
 
 Inspect the compiler's errors/warnings/reference requirements. Do not drop a

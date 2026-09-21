@@ -6395,6 +6395,338 @@
       "description": "Keep a character and put it in the pose of another picture, in about 30 seconds. Measured 14 September 2026 on the owner's throne witch with a fan picture as the pose: FLUX.2 Klein 4B kept the witch's face, hat, robe and rendering style and took only the pose (leaning forward, hand on hip, hand held out); a third picture leaked its shorts and lettering, so the board takes one picture by default. The background follows the pose picture unless the wording says otherwise."
     },
     {
+      "id": "combine-klein-9b-depth",
+      "name": "Put this character into another picture's pose (FLUX.2 Klein 9B, depth map: strongest pose)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-depth-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-15 03:16 through the Studio (POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_depth.py): the owner's bent-over fan picture on Pose picture (image 1, read as a depth map), the SHARK crop-top character on Picture to keep (image 2), the three bracketed fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091441: job 22ff6394-11ad-490a-bfea-6304e53f5d24 (prompt 9047dc60-a99e-4eb5-94f8-4615de1b90fe, 448.7 s in the slow state ComfyUI was in after the night's Qwen run; the same graph sampled in 90-115 s before it), output Combine/Klein-9B-depth_00001_.png: deep bend, crossed legs, look-back, SHARK lettering intact, pink shorts, bare feet, one foot heel-shaped. Research before it: 3 of 4 seeds held the deep bend (README round two). Not run by clicking through the page yet; not art acceptance. Cut control proved 2026-09-16 02:02 through the same path (research-scripts/prove_depthcut.py): same pair, fills and seed 2026091441 with depth_cut 86 (the 'Cut below the ankles (86 %)' variant): job b57c6f3f-0d12-430d-863e-02e0bd0ebaa0 (prompt 7769c72d-602d-49cc-b4f0-41238d09fd03, 122.9 s including the model load on a fresh ComfyUI), output Combine/Klein-9B-depth_00003_.png, submitted graph node 33 y = 86: the same deep bend, crossed legs and look-back, both feet bare on tiptoe where the uncut run of the same seed had one heel-shaped foot; face, hair, SHARK lettering and pink shorts kept; sheet examples/style-pose/combine-depth-cut-control.jpg. Default checked 2026-09-16 02:22: the same seed at depth_cut 100 (job 216239b8-981f-426a-9d50-b2b02ef8f7fb, 90.5 s) reproduced Klein-9B-depth_00001_.png byte for byte, so the cut nodes change nothing until the control is set.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. The depth map comes from Depth Anything V2 Large (depth-anything/Depth-Anything-V2-Large, licence cc-by-nc-4.0 read from the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node on first use). A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "depth_cut": [
+        "33",
+        "y"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "20",
+        "image"
+      ],
+      "last_reference_label": "Picture to keep (image 2)",
+      "last_reference_hint": "Your character: face, hair, outfit, colours and rendering style come from this picture. It is image 2 here on purpose: the 9B model keeps image 1's structure, and image 1 is the pose picture's depth map. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "14",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents: the pose picture is turned into a Depth Anything V2 depth map in the graph and that map is image 1 (its body position is kept, nothing else of the picture reaches the model); your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Depth map of the pose picture (image 1)",
+      "reference_board_hint": "The picture whose pose you want. The graph reads only its depth map (a grey silhouette), so the person, costume, shoes and colours in it never reach the model; extreme poses that 2D skeleton detectors miss still come through. What the silhouette contains is drawn: a heel or a shoe becomes a foot shape on some seeds. Cut the depth map below (%) paints the map black below that fraction of its height, from the top: 100 keeps all of it; on the owner's full-body picture 80, 86 and 92 all removed the heels and gave bare feet (16 September 2026, same seed as the uncut run with its heel), and 92 loses the least of the figure, so try 86-92; the variant sets 86. Name the hands and the camera in the pose fill: the map fixes the body, the words move the hands and the viewpoint.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]",
+        "[image 1's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind and below, one hand on the hip, the other raised to the lips, looking back over the shoulder; the camera is low and behind her]",
+        "[image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1: the pose picture's Depth Anything V2 depth map (vitl, 1024 px; the 1.3 GB weights are fetched by the comfyui_controlnet_aux node into its own folder on first use, which readiness cannot see), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
+        "Wording: the depth map gives the body position, the pose fill names the hands and the camera, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 100-200 s warm on the 9070 XT",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Cut below the ankles (86 %)",
+          "controls": {
+            "depth_cut": 86
+          }
+        },
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "description": "Put your character into another picture's pose with nothing of that picture leaking: the graph turns the pose picture into a depth map first, so only the body position reaches the model. Measured 15 September 2026 on the owner's Ellen Joe pictures (research, straight against ComfyUI): FLUX.2 Klein 9B held the deep waist bend and crossed legs of the pose picture on 3 of 4 seeds with the face, hair, crop top, lettering and pink shorts kept, bare feet, no tights and no tail, in 90-115 s warm (the fourth seed bent only moderately); the pose-first recipe let a shoe or stocking ghost in on 3 of 4 seeds. Both 2D skeleton detectors (OpenPose, DWPose) failed on that pose picture; the depth map did not. A heel in the silhouette can still shape a foot; audition three seeds."
+    },
+    {
+      "id": "combine-klein-9b-copypose",
+      "name": "Put this character into another picture's pose (FLUX.2 Klein 9B, Copy Pose: keeps its own framing)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-copypose-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-16 02:05 through the Studio (POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_copypose.py): the SHARK crop-top character on Picture to keep (image 1), the owner's bent-over fan picture on Pose picture (image 2), the three fills replaced in reading order (Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet; bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder), seed 2026091471: job 61dd5375-aa6c-42ca-b1e0-12466689857e (prompt 1fbea73e-e37c-4753-b94c-039552b2640c, 58.5 s warm), output Combine/Klein-9B-copypose_00001_.png, submitted graph node 40 = the Copy Pose LoRA at 1.0 ahead of the guider, node 14 = the character, node 20 = the pose picture: the deep bend, crossed legs and look-back with the character's own light background kept, bare feet, no tights, heels or tail; face, hair and pink shorts kept, the lettering partly hidden by the bend, the character picture's speech bubble kept (as in research). Research before it: 3 of 3 seeds (README pose round three). Sheet examples/style-pose/combine-copypose-proving.jpg. Not run by clicking through the page yet; not art acceptance.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The Copy Pose LoRA (civitai model 2380153, 'Copy Pose [Qwen & Klein]' by ReltivlyObjectv) carries civitai per-file flags read on 2026-09-15: Rent only, no Image, no Sell, and its description says non-commercial use only (models/library.json). Every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "14",
+        "image"
+      ],
+      "last_reference_label": "Picture to keep (image 1)",
+      "last_reference_hint": "Your character: face, hair, outfit, colours, rendering style and its own background and framing all stay. It is image 1 here: the Copy Pose LoRA re-poses the character in image 1 to match image 2. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "20",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents with the Copy Pose LoRA at 1.0: your character is image 1 (kept, re-posed), the pose picture is image 2 (only its pose is taken), each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Pose picture (image 2)",
+      "reference_board_hint": "The real picture whose pose you want, as image 2. Measured 15 September 2026 on the owner's pair: the character took the picture's deep bend, crossed legs and look-back on 3 of 3 seeds with her own white background and framing kept and nothing of the pose picture leaking (no tights, heels or tail), about 75-80 s warm. Use a picture, not a depth map: with a depth map as image 2 the map's black ground and a grey ghost figure were copied on 3 of 3 seeds. The author notes subject bleed can occur; audition three seeds.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is [who is in image 1, e.g. Ellen Joe, a girl with short black hair with red tips]; keep that character's face, hair and rendering style and the clothes with their colours ([image 1's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]); only the pose and framing change, to image 2's: [image 2's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind, legs crossed, looking back over the shoulder]. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[who is in image 1, e.g. Ellen Joe, a girl with short black hair with red tips]",
+        "[image 1's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]",
+        "[image 2's pose, the hands and the camera in a few words, e.g. bent forward deeply at the waist, seen from behind, legs crossed, looking back over the shoulder]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Copy Pose LoRA (KleinBase9B_PoseTransfer, strength 1.0, model only) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1 (your character, kept and re-posed) and image 2 (the pose picture): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
+        "Wording: the LoRA's trigger sentence, then who is in image 1 and their clothes and colours, then image 2's pose, hands and camera (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 75-80 s warm on the 9070 XT in research",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://civitai.com/models/2380153?modelVersionId=2701726",
+      "description": "Put your character into another picture's pose while keeping the character's own picture: its background, framing and rendering stay, only the body moves. Measured 15 September 2026 on the owner's Ellen Joe pictures (research renders, README pose round three): with the Copy Pose LoRA, character as image 1 and the pose picture as image 2, 3 of 3 seeds held the deep waist bend, crossed legs and look-back with the face, lettering, pink shorts and the character's white background kept and nothing of the pose picture leaking. The depth-map recipe gives the pose picture's framing instead; this one gives your character's. Audition three seeds.",
+      "lora": [
+        "40",
+        "strength_model"
+      ],
+      "lora_name": [
+        "40",
+        "lora_name"
+      ]
+    },
+    {
+      "id": "combine-klein-9b-replace",
+      "name": "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-replace-api.json",
+      "verified": true,
+      "execution_note": "Verified 2026-09-16 through the Studio (POST /api/jobs): job 7051b297-a569-4dba-9a88-558bc867a5df, seed 2026091301 at 832x1216, prompt 5bb9f587-6e37-492f-b712-b4afe36f6e38, 104.9 s, output Combine/Klein-9B-replace_00002_.png; job 2752190c-3681-4130-a5d2-6f96ec63d5fb, seed 2026091302 at the default 1024x1536 canvas, prompt bc74e671-d71d-45e1-840d-0d2fc92acdd5, 624.2 s, output Combine/Klein-9B-replace_00001_.png; the fantasy pack's portrait as the character (image 2) and its full-body render on the board (image 1): the same transfer as the research render at this seed: the fringe, a gold earring and the calm face on the full-body scene with coat, scarf, satchel, lantern, boots and platform kept; not pixel-identical to the research render because the recipe's template words the sentences differently, but the same picture. Research first (POST /prompt straight against ComfyUI, experiments/curated/fantasy-pack-20260916/pack_replacechar.py and pack_replacechar_chain.py): 3 of 3 seeds on that pair, 3 of 3 restoring the face on the depth Combine's own output (pose route then face route), 2 of 2 carrying an anime character into the painterly scene; sheets examples/fantasy-pack/full-body-keeps-face.jpg, pose-then-face.jpg, replace-cross-style.jpg, replace-through-the-studio.jpg.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The replace-character LoRA (civitai model 2829085, '[klein 9b] replace character' by iDvDi) carries civitai per-file flags read on 2026-09-15: allowCommercialUse Image/RentCivit/Rent, no Sell, derivatives yes, no credit required; the version payload (3192138) carries no flags of its own, so read the model page before any commercial use (models/library.json). Every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "20",
+        "image"
+      ],
+      "last_reference_label": "Character to keep (image 2)",
+      "last_reference_hint": "Your character: the face, hair and expression in this picture are what the recipe keeps. Its clothes, background and framing are not - those come from image 1. It is image 2 here on purpose: the 9B model keeps image 1's structure, and image 1 is the picture you are putting this character into. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "composition",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "14",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents with the replace-character LoRA at 1.0: the picture to put the character into is image 1 (its pose, action, camera, composition, background, lighting and clothes all stay, only the person in it changes), your character follows as image 2 and only its face, hair and expression are taken, each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Picture to put them in (image 1)",
+      "reference_board_hint": "The picture you want to keep, as image 1: its pose, action, camera angle, composition, background, lighting and clothes all stay and only the person in it is replaced. Measured 16 September 2026 on the fantasy pack's own pair (research, straight against ComfyUI): the portrait's centre-parted fringe, gold earrings, face shape and calm expression arrived in the full-body scene on 3 of 3 seeds with image 1's navy coat, teal scarf, satchel, lantern, boots, platform and evening light kept, 116-132 s at 832x1216. Name image 1's outfit and its colours in the wording: they are what the figure goes on wearing. Audition three seeds.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting ([image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]). The character in image 2 is [who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: [image 1's outfit and its colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[image 1's pose and the camera in a few words, e.g. standing on a station platform, walking towards the camera, full body]",
+        "[who is in image 2, e.g. a woman with long centre-parted dark hair, brown eyes and small gold earrings]",
+        "[image 1's outfit and its colours, e.g. a navy double-breasted coat with brass buttons, a teal scarf, dark trousers, brown lace-up boots]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + replace-character LoRA (replace_character_v1_klein, strength 1.0, model only) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1 (the picture to keep: its pose, camera, composition, background, lighting and clothes) and image 2 (the character whose face, hair and expression go in): each scaled to ~1 megapixel, VAE-encoded and attached to the prompt as reference latents in that order",
+        "Wording: replace image 1's person while keeping everything else about image 1, naming image 1's pose and camera, who is in image 2, and image 1's outfit and its colours (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); 116-132 s at 832x1216 in research on the 9070 XT",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://civitai.com/models/2829085?modelVersionId=3192138",
+      "description": "Put your character's face into a picture you already have and change nothing else about that picture: image 1 keeps its pose, action, camera angle, composition, background, lighting and clothes, and only the person in it becomes the character from image 2. Measured 16 September 2026 on the fantasy pack's own pair (research renders, straight against ComfyUI, pack_replacechar.py): with the pack's full-body render as image 1 and its portrait as image 2, 3 of 3 seeds carried the portrait's centre-parted fringe, gold earrings, face shape and calm expression into the full-body scene with the navy coat, teal scarf, satchel, lantern, boots, platform and evening light of image 1 kept, in 116-132 s at 832x1216. This is the route the depth Combine could not give: at full-body scale it lost the face. Choose it when the picture is right and the face is wrong; choose the depth or Copy Pose recipes when the pose is what you are after. Audition three seeds.",
+      "lora": [
+        "40",
+        "strength_model"
+      ],
+      "lora_name": [
+        "40",
+        "lora_name"
+      ]
+    },
+    {
       "id": "combine-klein-9b",
       "name": "Put this character into another picture's pose (FLUX.2 Klein 9B, follows the pose)",
       "category": "Characters",
@@ -6495,6 +6827,108 @@
       ],
       "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
       "description": "Put your character into another picture's pose, including a strong pose the 4B recipe cannot follow, in about 2-3 minutes. Measured 15 September 2026 on the owner's Ellen Joe pictures: with the pose picture first (kept) and the character swapped in, FLUX.2 Klein 9B held a deep waist bend on 4 of 4 seeds, kept the hair, face, crop top and pink shorts and dropped the tail once the wording named the clothes and colours; without the colours named, image 1's black shorts and heels leaked. Lettering can garble and a shoe or stocking from image 1 can ghost in; audition three seeds."
+    },
+    {
+      "id": "combine-klein-9b-skeleton",
+      "name": "Put this character into a drawn pose skeleton (FLUX.2 Klein 9B, stick figure in, nothing else copied)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/combine-klein-9b-skeleton-api.json",
+      "verified": true,
+      "execution_note": "Executed 2026-09-15 05:06 through the Studio (POST /api/upload for the drawn skeleton, then POST /api/jobs, the same prepare/worker path the page uses; research-scripts/prove_skeleton.py): the hand-drawn 17-keypoint stick figure on Pose skeleton (image 1), the SHARK crop-top character on Picture to keep (image 2), the three fills replaced (bent forward deeply at the waist, seen from behind, legs crossed, one arm raised behind the head, looking back over her shoulder; Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker; a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet), seed 2026091461: job 26448d58-c1bb-41a5-a49f-74c4db4fec89 (prompt 977e450f-46ba-485f-a0f4-9a0a45204dc2, 68.7 s), output Combine/Klein-9B-skeleton_00001_.png: the drawn pose (deep bend, the raised arm, one leg straight and one crossing, look-back), bare feet, face and hair kept, pink shorts; the lettering came out garbled on this seed. Research before it: 3 of 3 seeds followed the drawing straight against ComfyUI (README table, pose round three). Not run by clicking through the page yet. Page-rendered guide proved 2026-09-16 04:10 (research-scripts/prove_pose_editor.py): the Draw the pose panel's endpoint rendered the bent-forward starting figure (POST /api/pose/render, studio.coco18-lines/v1) and the same recipe, fills and seed 2026091461 gave job 8b571dd4-ba0f-403b-9f3d-35019cb1e3a3 (prompt 2a80b266-d1cd-46df-8ccd-32a8ed7a65e1, 66.5 s), output Combine/Klein-9B-skeleton_00002_.png: the drawn pose again (deep bend, raised arm, crossed leg, look-back), bare feet, identity kept, lettering hidden by the bend; sheet examples/style-pose/pose-editor-proving.jpg.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards; every picture you attach keeps its own terms. A successful render is not legal clearance.",
+      "positive": [
+        "4",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "noise_seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "width": [
+        "10",
+        "width"
+      ],
+      "height": [
+        "10",
+        "height"
+      ],
+      "bindings_extra": {
+        "width": [
+          [
+            "9",
+            "width"
+          ]
+        ],
+        "height": [
+          [
+            "9",
+            "height"
+          ]
+        ]
+      },
+      "dimension_multiple": 16,
+      "last_reference": [
+        "20",
+        "image"
+      ],
+      "last_reference_label": "Picture to keep (image 2)",
+      "last_reference_hint": "Your character: face, hair, outfit, colours and rendering style come from this picture. It is image 2 here on purpose: the 9B model keeps image 1's structure, and image 1 is the drawn skeleton. Continue with this -> Combine puts it here.",
+      "reference_slots": [
+        {
+          "role": "pose",
+          "contribution": "",
+          "avoid": "",
+          "binding": [
+            "14",
+            "image"
+          ]
+        }
+      ],
+      "reference_board": {
+        "min": 1,
+        "policy": "FLUX.2 Klein reference latents: the drawn skeleton is image 1 (its body position is followed), your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+      },
+      "reference_board_label": "Pose skeleton (image 1)",
+      "reference_board_hint": "A stick figure on black: an OpenPose-style drawing from any pose editor (coloured limbs on a black canvas, as ComfyUI's openpose editor or a hand-drawn one exports it). Thin lines carry the body position and nothing else is copied: measured 15 September 2026, a crude 17-keypoint drawing put the character into its pose on 3 of 3 seeds, including an arm drawn in the wrong place. A solid mannequin or a photo is drawn literally (a ball head became a faceless sphere): for pictures use the depth-map recipe.",
+      "continuation_operation": "combine",
+      "continuation_prompt": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: [image 1's pose, the hands and the camera in a few words, e.g. bent forward at the waist, one hand on the hip, looking back over the shoulder]. Draw [who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips] from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: [image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+      "continuation_placeholder": [
+        "[who is in image 2, e.g. Ellen Joe, a girl with short black hair with red tips]",
+        "[image 1's pose, the hands and the camera in a few words, e.g. bent forward at the waist, one hand on the hip, looking back over the shoulder]",
+        "[image 2's clothes and colours, e.g. a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet]"
+      ],
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Image 1: a drawn pose skeleton (a stick figure on black), scaled to ~1 megapixel and VAE-encoded; image 2: your character, the same way; attached as reference latents in that order",
+        "Wording: the skeleton gives the body position, the pose fill names the hands and the camera, your character from image 2 is drawn into it, the clothes and colours are named (three bracketed fills); no source description is appended",
+        "6 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); about 75-100 s warm on the 9070 XT",
+        "1024x1536 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "More steps (8)",
+          "controls": {
+            "steps": 8
+          }
+        },
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "description": "Put your character into a pose you drew: a stick figure on black (any OpenPose-style pose editor, or a hand drawing) is image 1 and the model follows it without copying anything else. Measured 15 September 2026 on the owner's Ellen Joe picture (research, straight against ComfyUI, research-scripts/pose_sources.py): a crude 17-keypoint drawing gave the deep bend, the crossed legs, the look-back and even a wrongly drawn raised arm on 3 of 3 seeds, with the face, crop top and pink shorts kept and bare feet, in 75 s warm. 2D skeleton detectors fail on extreme anime poses, so draw or edit the skeleton yourself; a solid mannequin drawing is copied literally and is not a substitute."
     },
     {
       "id": "restyle-klein-picture",

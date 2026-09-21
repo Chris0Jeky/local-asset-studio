@@ -35,12 +35,13 @@
       "camera"
     ],
     "pairwise_with": [],
-    "evidence_state": "template",
+    "evidence_state": "discovered",
     "promoted": false,
     "authorized_candidate_cap": 0
   },
   "notes": [
     "This record demonstrates required fields only and is not a real adapter claim.",
+    "Its discovered state records only that the synthetic template exists; it carries no source-review or execution evidence.",
     "A continuous UI slider requires measured ordered response over a bounded promoted interval."
   ]
 }

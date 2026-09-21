@@ -8,20 +8,21 @@
   const roles={identity:['subject'],costume:['subject'],pose:['action','composition'],
     style:['style','palette','lighting','mood'],composition:['composition','camera','setting'],geometry:['subject']};
   const limit=8*1024*1024;
-  let previewInFlight=false;
+  let previewInFlight=false, loadingEpoch=null;
   let epoch=0, report=null, review=null, originals=null, pending=null, prepared=null, applied=null, receipt=null;
   const urls=new Set();
   const n=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;};
   const message=text=>{el('rr-status').textContent=text;};
   function releaseUrls(){for(const url of urls)URL.revokeObjectURL(url);urls.clear();}
   function controls(){
+    const loading=loadingEpoch!==null;
     el('rr-originals').disabled=!report;
     el('rr-preview').disabled=!report||!originals||previewInFlight;
     el('rr-apply').disabled=!prepared;
-    el('rr-undo').disabled=!applied;
-    el('rr-export').disabled=!receipt;
+    el('rr-undo').disabled=loading||!applied;
+    el('rr-export').disabled=loading||!receipt;
   }
-  function changed(){epoch++;prepared=null;pending=null;el('rr-diff').replaceChildren();el('rr-change-summary').textContent='';controls();}
+  function changed(){epoch++;loadingEpoch=null;prepared=null;pending=null;el('rr-diff').replaceChildren();el('rr-change-summary').textContent='';controls();}
   async function post(path,body){
     const response=await fetch('/api/prompt/reference-review/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const value=await response.json();
@@ -85,16 +86,58 @@
     else message('Analysis loaded. Choose the exact originals to review changes.');
     renderCards();controls();
   }
+  // Completed worker observations enter this same review owner. Loading never applies intent.
+  globalThis.StudioReferenceReview=Object.freeze({
+    capture:()=>({version:epoch,context:report?{analysis:clone(report),review:clone(review)}:null}),
+    restore:context=>{
+      // The persistence service validated this context. Original pixels are not saved.
+      changed();report=context?clone(context.analysis):null;review=context?clone(context.review):null;
+      originals=null;applied=null;receipt=null;releaseUrls();el('rr-cards').replaceChildren();
+      el('rr-originals').value='';el('rr-analysis').value='';el('rr-adopt').checked=false;
+      el('rr-review').hidden=!report;
+      if(report)showReport();
+      el('rr-source-status').textContent='Reselect the exact originals before previewing another reference transfer.';
+      message(report?'Saved descriptions restored; original pictures must be reselected.':'No reference review stored with this brief.');controls();
+    },load:async(analysis,files=[])=>{
+    if(previewInFlight)throw Error('A reference preview is still in flight; finish observing it first.');
+    changed();const current=epoch;loadingEpoch=current;controls();
+    try{
+      const result=await post('inspect',{analysis});
+      if(current!==epoch)throw Error('The reference review changed during loading; newer work was retained.');
+      if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
+      const selected=new Map();
+      for(const file of files){
+        if(file.size>limit)throw Error('Reference exceeds 8 MiB.');
+        const bytes=await file.arrayBuffer();
+        const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
+        selected.set(hash,file);
+      }
+      if(current!==epoch)throw Error('The reference review changed during image checks; newer work was retained.');
+      applied=null;receipt=null;
+      report=result.analysis;review=result.review;originals=null;el('rr-adopt').checked=false;
+      const refs=report.request.references;
+      if(refs.every(ref=>selected.has(ref.sha256))&&selected.size===files.length&&selected.size===new Set(refs.map(ref=>ref.sha256)).size)originals=refs.map(ref=>selected.get(ref.sha256));
+      el('rr-originals').value='';
+      el('rr-source-status').textContent=originals?refs.length+' originals matched by SHA-256.':'Reselect the exact analyzed originals to preview changes.';
+      showReport();if(originals)message('Analysis and originals are ready. Review descriptions, then preview their changes.');
+      document.dispatchEvent(new CustomEvent('studio-prompt-state'));
+      return report.report_sha256;
+    }finally{
+      if(loadingEpoch===current){loadingEpoch=null;controls();}
+    }
+  }});
   el('rr-analysis').addEventListener('change',async event=>{
-    changed();const current=epoch;report=null;review=null;originals=null;releaseUrls();el('rr-cards').replaceChildren();
-    el('rr-review').hidden=true;el('rr-originals').value='';el('rr-adopt').checked=false;el('rr-source-status').textContent='Open an analysis first.';controls();
+    changed();const current=epoch;
     try{
       const file=event.target.files[0];if(!file||file.size>128*1024)throw Error('Choose an analysis JSON no larger than 128 KiB.');
       message('Reading saved observations…');const text=await file.text();if(current!==epoch)return;
       // Parse on the server so duplicate keys are never normalized away by JSON.parse.
       const result=await post('inspect',{analysis_json:text});if(current!==epoch)return;
       if(result.format!=='studio.reference-review/v1')throw Error('Unsupported reference review response.');
-      report=result.analysis;review=result.review;el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
+      applied=null;receipt=null;
+      report=result.analysis;review=result.review;originals=null;releaseUrls();el('rr-cards').replaceChildren();
+      el('rr-originals').value='';el('rr-adopt').checked=false;controls();
+      el('rr-source-status').textContent='Choose '+report.request.references.length+' exact originals; order and filenames do not matter.';showReport();
     }catch(error){if(current===epoch)message(error.message);}
   });
   el('rr-originals').addEventListener('change',async event=>{
@@ -143,9 +186,15 @@
     if(!prepared)return;const chosen=prepared;
     try{
       if(chosen.epoch!==epoch)throw Error('The selection changed. Preview again.');
+      // Disarm the prepared ticket before owner.apply announces its guarded
+      // write, so this panel does not mistake its own synchronous event for a
+      // newer external draft and erase the evidence just reviewed.
+      prepared=null;pending=null;controls();
       const application=owner.apply(chosen.snapshot,chosen.result);
       applied=application;receipt={format:'studio.reference-review-receipt/v1',analysis:clone(report),preview:chosen.result,application};
-      prepared=null;pending=null;controls();message('Applied to this brief. Reference files are not bound to a generator; export the receipt to retain the review.');
+      const fields=chosen.result.changes.length;
+      el('rr-change-summary').textContent=chosen.result.intent.references.length+' reference records applied; '+fields+' field'+(fields===1?'':'s')+' changed. The reviewed diff is retained below.';
+      controls();message('Applied to this brief. Reference files are not bound to a generator; export the receipt to retain the review.');
     }catch(error){changed();message(error.message);}
   });
   el('rr-undo').addEventListener('click',()=>{

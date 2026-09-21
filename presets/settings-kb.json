@@ -771,11 +771,10 @@
           "id": "steps",
           "control": "steps",
           "values": [
-            8,
             20,
             30
           ],
-          "rationale": "30 is the template and reference value; 8 only with the official turbo LoRA at cfg 1; 20 for a quick study.",
+          "rationale": "30 is the template and reference value; 20 for a quick study. The conditional 8-step accelerator schedule is separate resource-scoped authored guidance, not a family sweep value.",
           "sources": [
             "https://huggingface.co/circlestone-labs/Anima"
           ]

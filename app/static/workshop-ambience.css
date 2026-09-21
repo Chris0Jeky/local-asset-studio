@@ -1,0 +1,27 @@
+/* Effective ambience state. Requested appearance remains owned by workshop.js. */
+body.workshop-active[data-workshop-ambience-render="tokens"] .wk-immersive-hero::after,
+body.workshop-active[data-workshop-ambience-render="suspended"] .wk-immersive-hero::after,
+#createView[data-workshop-ambience-render="tokens"] .wk-immersive-hero::after,
+#createView[data-workshop-ambience-render="suspended"] .wk-immersive-hero::after {
+  background-image:none!important;
+}
+
+.wk-ambience-status {
+  margin:11px 0 0;
+  max-width:540px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.55;
+}
+
+body.workshop-active[data-workshop-ambience-render="poster"] .wk-ambience-status {
+  color:color-mix(in srgb,var(--muted) 88%,var(--text));
+}
+
+body.workshop-active[data-workshop-ambience-render="tokens"] .wk-ambience-status {
+  color:var(--muted);
+}
+
+@media(forced-colors:active) {
+  .wk-ambience-status {color:CanvasText}
+}
