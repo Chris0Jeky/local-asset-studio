@@ -1,11 +1,11 @@
-name: Atomic substitution input integrity
+name: Apply atomic substitution input integrity fix
 on:
   push:
     branches: [codex/atomic-setup-substitution]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  contract:
+  patch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,4 +13,21 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
-      - run: python -m unittest discover -s tests -p 'test_setup_substitution_input_integrity.py' -v
+      - name: Apply guarded staged-input fix
+        run: python scripts/apply_atomic_substitution_input_integrity.py
+      - name: Verify atomic and adjacent contracts
+        run: |
+          python -m unittest discover -s tests -p 'test_setup_substitution*.py' -v
+          python -m unittest discover -s tests -p 'test_recipe_shortlist_apply.py' -v
+          python -m unittest discover -s tests -p 'test_setup_compatibility.py' -v
+          python -m unittest discover -s tests -p 'test_setup_source_evidence.py' -v
+          python scripts/validate-repo.py
+      - name: Remove temporary patch helpers
+        run: rm .github/workflows/atomic-substitution-input-integrity.yml scripts/apply_atomic_substitution_input_integrity.py
+      - name: Commit verified staged-input integrity fix
+        run: |
+          git config user.name 'Cristian Tcaci'
+          git config user.email '59696583+Chris0Jeky@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: preserve staged inputs across setup substitutions'
+          git push origin HEAD:codex/atomic-setup-substitution
