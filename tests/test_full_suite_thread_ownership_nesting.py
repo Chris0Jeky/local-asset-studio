@@ -64,6 +64,27 @@ class ThreadOwnershipNestingTests(unittest.TestCase):
             "thread_ownership.outer_after_restore",
         )
 
+    def test_out_of_order_restore_is_refused_without_corrupting_the_stack(self):
+        outer = ThreadOwnershipObserver()
+        inner = ThreadOwnershipObserver()
+        outer.install()
+        inner.install()
+        try:
+            with self.assertRaisesRegex(RuntimeError, "LIFO"):
+                outer.restore()
+
+            set_current_test("thread_ownership.inner_still_active")
+            origin = self._capture_origin("inner-after-refused-restore")
+        finally:
+            inner.restore()
+            outer.restore()
+
+        self.assertEqual(origin["status"], "observed")
+        self.assertEqual(
+            origin["owner_test"],
+            "thread_ownership.inner_still_active",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
