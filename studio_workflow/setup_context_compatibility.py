@@ -112,9 +112,11 @@ def _validate_source_report(value: Any) -> dict:
         value['source_context_sha256'], 'retained source context fingerprint')
     need(type(value['source_coverage_complete']) is bool,
          'source_coverage_complete must be boolean')
-    result['review_revision'] = compatibility.identity(value['review_revision'])
-    need(result['review_revision'] is not None,
-         'Reviewed mapping revision is required')
+    need(isinstance(value['review_revision'], str)
+         and source_compatibility.REVIEW_REVISION.fullmatch(
+             value['review_revision']) is not None,
+         'Reviewed mapping revision must remain a sha256:<64 lowercase hex> review pin')
+    result['review_revision'] = value['review_revision']
     result['candidate'] = compatibility.validate_candidate(value['candidate'])
     need(isinstance(value['evidence'], list)
          and len(value['evidence']) <= compatibility.MAX_EVIDENCE,
