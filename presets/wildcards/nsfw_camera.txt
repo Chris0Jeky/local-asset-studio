@@ -1,0 +1,13 @@
+# Camera and crop for adult illustration. Expand with __nsfw_camera__.
+cowboy shot
+upper body
+full body
+close-up
+from below
+from above
+dutch angle
+profile
+three-quarter view
+over the shoulder
+low angle
+eye-level

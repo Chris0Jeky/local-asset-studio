@@ -1,6 +1,6 @@
-# Agent tooling for ComfyUI — Claude Code and Codex
+# Agent tooling for ComfyUI — Claude Code, Codex and Grok
 
-Measured and configured on the owner's PC on 13 September 2026. This page records how the two coding
+Measured and configured on the owner's PC on 13 September 2026. This page records how the three coding
 agents reach the local ComfyUI outside the Studio, which skills they carry, and what they must not do
 with those tools. Studio's own agent surface (Workflow Studio MCP, AV and game-asset commands) is
 documented under `docs/workflow-studio/`, `docs/av-studio/` and `docs/game-assets/`; this page is only
@@ -15,17 +15,19 @@ about the official Comfy toolchain.
 | Default workspace | `C:\AI\ComfyUI_windows_portable\ComfyUI` | set 13 Sep 2026 | Before this the default pointed at a non-existent `Documents\comfy\ComfyUI`; `comfy which` now reports the portable install. |
 | Live server | `http://127.0.0.1:8188` | ComfyUI 0.35.0 | Auto-detected. Only the primary backend; the isolated HiDream (8192) and H3 (8194) environments need `COMFY_LOCAL_URL=http://127.0.0.1:<port>`. |
 
-Both agents are wired to the same server binary:
+All three agents are wired to the same server binary:
 
 | Client | Registration | Where declared |
 | --- | --- | --- |
 | Codex | `comfy-local` (stdio, `COMFY_BIN` env) and `comfy-cloud` (`https://cloud.comfy.org/mcp`, OAuth completed by the owner) | `~/.codex/config.toml`, user scope |
 | Claude Code | `comfy-local` (stdio, `COMFY_BIN` and `COMFY_WHERE=local` env) | `~/.claude.json`, user scope (`claude mcp get comfy-local` → Connected) |
+| Grok | `comfy-local` (stdio, `COMFY_BIN` and `COMFY_WHERE=local` env) | `~/.grok/config.toml`, user scope (replaces the Claude-compat copy of the same name; `MCP_DOCKER` stays disabled in Grok until the gateway handshakes) |
 
 The repository carries no `.mcp.json` on purpose: the paths are machine-specific and the estate rule is one
-declaration per server per runtime. The cloud connection is not registered for Claude; add it with
-`claude mcp add -s user --transport http comfy-cloud https://cloud.comfy.org/mcp` and authenticate through
-`/mcp` if Comfy Cloud runs are ever wanted.
+declaration per server per runtime. Grok's project `.grok/config.toml` therefore has permissions only.
+The cloud connection is not registered for Claude or Grok; add it with
+`claude mcp add -s user --transport http comfy-cloud https://cloud.comfy.org/mcp` or the Grok equivalent
+and authenticate through `/mcp` if Comfy Cloud runs are ever wanted.
 
 ## Skills
 
@@ -33,7 +35,7 @@ Three sources were compared on 13 September 2026:
 
 | Source | What it is | Installed? |
 | --- | --- | --- |
-| comfy-cli bundled skills (`comfy skills install`) | `comfy`, `comfy-debug`, `comfy-relay`, `comfy-director`, `comfy-build`, `comfy-deploy`: the local CLI/MCP knowledge (envelope contract, routing, template → fragment → raw JSON hierarchy, job handling) | Yes, Claude `~/.claude/skills/` and Codex `~/.agents/skills/`; `comfy skills status` reports all `current` for the 1.20.0 package |
+| comfy-cli bundled skills (`comfy skills install`) | `comfy`, `comfy-debug`, `comfy-relay`, `comfy-director`, `comfy-build`, `comfy-deploy`: the local CLI/MCP knowledge (envelope contract, routing, template → fragment → raw JSON hierarchy, job handling) | Yes, Claude `~/.claude/skills/` and Codex `~/.agents/skills/`; Grok loads the Claude copies via compatibility. `comfy skills status` reports all `current` for the 1.20.0 package |
 | [jtydhr88/comfyui-custom-node-skills](https://github.com/jtydhr88/comfyui-custom-node-skills) | nine `comfyui-node-*` skills for writing custom nodes against the V3 API (last upstream sync 27 Jul 2026, ComfyUI 0.28) | Yes, both scopes, byte-identical to upstream |
 | [Comfy-Org/comfy-skills](https://github.com/Comfy-Org/comfy-skills) and [docs.comfy.org/agent-tools/skills](https://docs.comfy.org/agent-tools/skills) | the `comfy-cloud` Claude Code plugin (hosted MCP plus `/comfy-cloud:*` slash commands) and a frozen legacy command set; the CLI skills moved out of this repo into comfy-cli on 26 Aug 2026 | Not installed for Claude: it targets Comfy Cloud, and the owner generates locally |
 
@@ -55,7 +57,7 @@ Pack) all returned `ok` envelopes. No workflow was submitted through the MCP ser
 ## Rules for these tools in this repository
 
 These tools reach the shared portable ComfyUI directly, bypassing the Studio's evidence trail and the
-runtime rules in `CLAUDE.md`. Both agents follow these rules; they are listed in `CLAUDE.md` and `AGENTS.md`.
+runtime rules in `CLAUDE.md`. All three agents follow these rules; they are listed in `CLAUDE.md` and `AGENTS.md`.
 
 - **Read-only tools are free**: `server_info`, `which`, `system_stats`, `nodes`, `node_dependencies`,
   `workflow_deps`, `search_models`, `search_templates`, `get_template`, `validate_workflow`,
@@ -70,6 +72,8 @@ runtime rules in `CLAUDE.md`. Both agents follow these rules; they are listed in
   submit work through `run_workflow`, `run_template`, `generate_image`, `emit_partner_workflow` or
   `upload_file` against the shared install: they bypass the Studio's evidence trail, its admission gates
   and its uncertain-submission handling. `partner_generate` additionally spends Comfy Cloud credits.
-- `free_memory` (ComfyUI's `/free`) is not something the Studio calls. It was measured once by hand on an
-  idle queue and is recorded in `docs/RUNTIME-PRECONDITIONS.md` as unreliable on its own; treat it as a
-  manual, idle-queue-only operator action, never part of an agent routine.
+- `free_memory` (ComfyUI's `/free`) is what the Studio itself sends once per idle stretch (`idle_cache_release_minutes`, default 10,
+  see `docs/OPERATIONS.md`): after ten idle minutes on an empty ComfyUI queue the models cached in host RAM are released and the next
+  job reloads them. Agents do not call it themselves; if the models unloaded between jobs, the Studio's `/api/health` `cache_release`
+  field says when. The older note in `docs/RUNTIME-PRECONDITIONS.md` that `/free` is unreliable on its own was about commit headroom
+  after a native allocation failure, not about this cache.

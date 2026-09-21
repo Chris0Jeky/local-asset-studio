@@ -1,11 +1,13 @@
 """Bounded GET-only HTTP machinery for adult-illustration metadata."""
 from __future__ import annotations
 
+from contextlib import contextmanager
 import copy
 import hashlib
 from http.client import HTTPException
+from threading import Lock
 import time
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterator, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
@@ -41,7 +43,46 @@ class _NoRedirectHandler(HTTPRedirectHandler):
         return None
 
 
+def _declared_body_length(stream: Any, maximum: int) -> int | None:
+    """Validate raw framing before headers are collapsed into a mapping.
+
+    HTTPResponse.read(amt) does not raise on a short Content-Length body.
+    Treat that separately from JSON validity. Duplicate lengths, even equal
+    ones, are intentionally refused rather than repaired by this client.
+    """
+    status = getattr(stream, "status", getattr(stream, "code", 200))
+    if status in {204, 304} or 100 <= status < 200:
+        # A 304 may advertise the full representation length but has no body.
+        return 0
+    headers = getattr(stream, "headers", None)
+    if headers is None:
+        return None
+    lengths = []
+    codings = []
+    for name, value in headers.items():
+        if name.casefold() == "content-length":
+            lengths.append(value)
+        elif name.casefold() == "transfer-encoding":
+            codings.append(value)
+    if len(lengths) > 1 or len(codings) > 1 or (lengths and codings):
+        raise ValueError("Provider response has ambiguous HTTP body framing")
+    if codings and codings[0].strip().casefold() != "chunked":
+        raise ValueError("Provider response has unsupported Transfer-Encoding")
+    if not lengths:
+        return None
+    value = lengths[0].strip(" \t")
+    if not value or not value.isascii() or not value.isdigit():
+        raise ValueError("Provider response Content-Length is invalid")
+    # Compare decimal strings before conversion, including pathological lengths.
+    digits = value.lstrip("0") or "0"
+    limit = str(maximum)
+    if len(digits) > len(limit) or (len(digits) == len(limit) and digits > limit):
+        raise ValueError(f"Provider response exceeds {maximum} bytes")
+    return int(digits)
+
+
 def _read_bounded_stream(stream: Any, maximum: int) -> bytes:
+    expected = _declared_body_length(stream, maximum)
     try:
         data = stream.read(maximum + 1)
     except HTTPException as exc:
@@ -52,6 +93,8 @@ def _read_bounded_stream(stream: Any, maximum: int) -> bytes:
         raise ValueError("HTTP response reader did not return bytes")
     if len(data) > maximum:
         raise ValueError(f"Provider response exceeds {maximum} bytes")
+    if expected is not None and len(data) != expected:
+        raise ConnectionError("Provider metadata response body is incomplete")
     return data
 
 
@@ -196,8 +239,29 @@ class BoundedProviderTransport:
         self.cache = cache
         self.refresh = refresh
         self.sleeper = sleeper
+        self._fetch_lock = Lock()
+        self._awaiting_finalization = False
         self._receipt: dict[str, Any] | None = None
         self._pending: tuple[HttpRequest, HttpResponse] | None = None
+
+    @contextmanager
+    def _fetch_scope(self) -> Iterator[None]:
+        """Own a complete facade fetch, including parsing and receipt capture."""
+        if not self._fetch_lock.acquire(blocking=False):
+            raise RuntimeError("Provider metadata transport is already in use")
+        try:
+            # A raw caller may already own a response awaiting finalization.
+            # Refusing this new fetch must not abort that caller's pending data.
+            if self._pending is not None or self._awaiting_finalization:
+                raise RuntimeError("Previous provider response was not finalized")
+            self._receipt = None
+            try:
+                yield
+            except BaseException:
+                self.abort()
+                raise
+        finally:
+            self._fetch_lock.release()
 
     @property
     def receipt(self) -> dict[str, Any]:
@@ -285,7 +349,7 @@ class BoundedProviderTransport:
         return response, wire, total_attempts, tuple(redirects)
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        if self._pending is not None:
+        if self._pending is not None or self._awaiting_finalization:
             raise RuntimeError("Previous provider response was not finalized")
         provider = validate_base_request(request)
         key = request_key(request)
@@ -305,6 +369,7 @@ class BoundedProviderTransport:
                 validators=(),
                 wire_status=200,
             )
+            self._awaiting_finalization = True
             return cached
 
         validators = _validator_headers(cached)
@@ -339,6 +404,7 @@ class BoundedProviderTransport:
             validators=tuple(sorted(validators)),
             wire_status=wire.status,
         )
+        self._awaiting_finalization = True
         return response
 
     def _make_receipt(
@@ -389,7 +455,7 @@ class BoundedProviderTransport:
             or raw_payload_sha256
             != self._receipt["response_payload_sha256"]
         ):
-            self._pending = None
+            self.abort()
             raise ValueError("Parsed snapshot payload identity does not match transport")
         if self._pending is not None:
             request, response = self._pending
@@ -399,6 +465,9 @@ class BoundedProviderTransport:
             if stored_key != self._receipt["request_key"]:
                 raise ValueError("Stored cache identity changed during finalization")
             self._pending = None
+        self._awaiting_finalization = False
 
     def abort(self) -> None:
+        self._awaiting_finalization = False
         self._pending = None
+        self._receipt = None

@@ -7,7 +7,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 MANIFEST = Path("research/adult-illustration/prompt-profile-vocabulary.json")
-FORMAT = "studio.adult-illustration.prompt-projection/v1"
+FORMAT = "studio.adult-illustration.prompt-projection/v2"
 MAX_MANIFEST_BYTES = 1_048_576
 MAX_ENTRIES = 4096
 MAX_PROFILES = 32

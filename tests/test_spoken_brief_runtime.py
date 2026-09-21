@@ -1,0 +1,140 @@
+import hashlib
+import json
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+import wave
+
+sys.path.insert(0, str(Path(__file__).parents[1] / 'scripts'))
+import spoken_brief
+import spoken_brief_transport
+from spoken_brief_fixture import Fixture, wav_bytes
+
+
+class SpokenBriefTests(unittest.TestCase):
+    def test_assembly_inserts_exact_silence_without_reencoding(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); first = root / 'a.wav'; second = root / 'b.wav'; output = root / 'joined.wav'
+            first.write_bytes(wav_bytes(100, 11)); second.write_bytes(wav_bytes(200, 22))
+            receipt = spoken_brief.assemble_wav([
+                {'path': first, 'id': 'a', 'pause_after_ms': 100},
+                {'path': second, 'id': 'b', 'pause_after_ms': 0},
+            ], output)
+            with wave.open(str(output), 'rb') as joined:
+                self.assertEqual(joined.getparams()[:4], (1, 2, 48000, 5100))
+                frames = joined.readframes(joined.getnframes())
+            self.assertEqual(frames[:200], (11).to_bytes(2, 'little', signed=True) * 100)
+            self.assertEqual(frames[200:200 + 9600], b'\0' * 9600)
+            self.assertEqual(frames[-400:], (22).to_bytes(2, 'little', signed=True) * 200)
+            self.assertEqual(receipt['samples'], 5100)
+            self.assertEqual(receipt['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
+
+    def test_assembly_receipt_hashes_the_exact_input_snapshot_it_used(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary); source = root / 'source.wav'; output = root / 'joined.wav'
+            original = wav_bytes(100, 11); replacement = wav_bytes(100, 22)
+            source.write_bytes(original)
+            real_digest_file = spoken_brief_transport.digest_file
+
+            def mutate_before_late_hash(path, chunk_size=1024 * 1024):
+                path = Path(path)
+                if path == source:
+                    source.write_bytes(replacement)
+                return real_digest_file(path, chunk_size)
+
+            with patch.object(spoken_brief_transport, 'digest_file', side_effect=mutate_before_late_hash):
+                receipt = spoken_brief.assemble_wav([
+                    {'path': source, 'id': 'source', 'pause_after_ms': 0},
+                ], output)
+
+            self.assertEqual(receipt['inputs'][0]['sha256'], hashlib.sha256(original).hexdigest())
+            with wave.open(str(output), 'rb') as joined:
+                self.assertEqual(joined.readframes(joined.getnframes()),
+                                 (11).to_bytes(2, 'little', signed=True) * 100)
+
+    def test_one_run_uses_voice_projects_and_produces_one_received_wav(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir()
+            (pack / 'COMPRESSED.md').write_text('# Brief\n\nFirst decision. Second decision.\n\n## Risks\n\nOne risk remains.', encoding='utf-8')
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            output = Path(result['output'])
+            self.assertTrue(output.is_file()); self.assertEqual(output.suffix, '.wav')
+            self.assertTrue(Path(result['receipt']).is_file())
+            posts = [request for request in fixture.requests if request[0] == 'POST']
+            self.assertEqual([path for _, path, _, _ in posts].count('/api/voice-baseline'), len(result['projects']))
+            self.assertTrue(all(origin == fixture.base_url for method, _, origin, _ in posts if method == 'POST'))
+            self.assertTrue(all(body['speaker_id'] == 'brief-narrator' for method, path, _, body in posts if path == '/api/voice-baseline'))
+            receipt = json.loads(Path(result['receipt']).read_text(encoding='utf-8'))
+            self.assertEqual(receipt['studio'], {'base_url': fixture.base_url, 'identity': fixture.identity})
+            self.assertEqual(receipt['source']['sha256'], hashlib.sha256((pack / 'COMPRESSED.md').read_bytes()).hexdigest())
+            self.assertEqual(receipt['output']['sha256'], hashlib.sha256(output.read_bytes()).hexdigest())
+
+    def test_successful_create_body_is_reconciled_through_the_retained_project_id(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        identifier = 'c' * 32
+        fixture.create_id_override = identifier
+        fixture.create_response_override = {'id': identifier, 'state': []}
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir()
+            (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertTrue(Path(result['output']).is_file())
+            creates = [item for item in fixture.requests if item[0] == 'POST' and item[1] == '/api/voice-baseline']
+            reads = [item for item in fixture.requests if item[0] == 'GET' and item[1] == f'/api/production/{identifier}']
+            self.assertEqual((len(creates), len(reads) >= 1), (1, True))
+
+    def test_successful_start_body_is_reconciled_through_the_known_project(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        fixture.start_response_override = {'accepted': True, 'state': []}
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir()
+            (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertTrue(Path(result['output']).is_file())
+            starts = [item for item in fixture.requests if item[0] == 'POST' and item[1].endswith('/start')]
+            self.assertEqual(len(starts), 1)
+
+    def test_explicit_client_rejection_can_be_fixed_and_retried_without_uncertainty(self):
+        fixture = Fixture(); self.addCleanup(fixture.close); fixture.create_rejection = 400
+        with tempfile.TemporaryDirectory() as temporary:
+            pack = Path(temporary) / 'handoff'; pack.mkdir(); (pack / 'COMPRESSED.md').write_text('Only one sentence.', encoding='utf-8')
+            with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'voice bundle is not configured'):
+                spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            fixture.create_rejection = None
+            result = spoken_brief.run(pack, base_url=fixture.base_url, poll_seconds=0.01, deadline_seconds=5)
+            self.assertTrue(Path(result['output']).is_file())
+            creates = [request for request in fixture.requests if request[0] == 'POST' and request[1] == '/api/voice-baseline']
+            self.assertEqual(len(creates), 2)
+
+    def test_powershell_wrapper_is_a_thin_argument_safe_adapter(self):
+        wrapper = Path(__file__).parents[1] / 'scripts' / 'speak-handoff.ps1'
+        text = wrapper.read_text(encoding='utf-8')
+        self.assertIn('spoken_brief.py', text)
+        self.assertIn('& $python', text)
+        self.assertIn("$command = 'plan'", text)
+        self.assertIn('InvariantCulture', text)
+        self.assertNotIn('Invoke-Expression', text)
+
+    def test_loopback_client_does_not_follow_redirects(self):
+        fixture = Fixture(); self.addCleanup(fixture.close); fixture.identity_redirect = '/redirected-identity'
+        client = spoken_brief.StudioClient(fixture.base_url)
+        with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'HTTP 302'):
+            client.get_json('/api/identity')
+        self.assertEqual([path for method, path, _, _ in fixture.requests if method == 'GET'], ['/api/identity'])
+
+    def test_loopback_json_response_is_bounded(self):
+        fixture = Fixture(); self.addCleanup(fixture.close)
+        client = spoken_brief.StudioClient(fixture.base_url)
+        with patch.object(spoken_brief_transport, 'MAX_JSON_BYTES', 32):
+            with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'response limit'):
+                client.get_json('/oversized-json')
+
+    def test_non_loopback_studio_url_is_rejected(self):
+        with self.assertRaisesRegex(spoken_brief.SpokenBriefError, 'loopback'):
+            spoken_brief.StudioClient('https://example.test')
+
+
+if __name__ == '__main__': unittest.main()

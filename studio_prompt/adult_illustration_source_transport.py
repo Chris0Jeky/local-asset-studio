@@ -60,12 +60,9 @@ def fetch_huggingface(
     """Fetch and parse one explicit Hugging Face metadata snapshot."""
     if not isinstance(transport, BoundedProviderTransport):
         raise TypeError("transport must be BoundedProviderTransport")
-    try:
+    with transport._fetch_scope():
         snapshot = snapshot_huggingface(repo_id, revision, transport)
         return _fetch_result(snapshot, transport)
-    except Exception:
-        transport.abort()
-        raise
 
 
 def fetch_civitai(
@@ -75,12 +72,9 @@ def fetch_civitai(
     """Fetch and parse one explicit Civitai model-version metadata snapshot."""
     if not isinstance(transport, BoundedProviderTransport):
         raise TypeError("transport must be BoundedProviderTransport")
-    try:
+    with transport._fetch_scope():
         snapshot = snapshot_civitai(version_id, transport)
         return _fetch_result(snapshot, transport)
-    except Exception:
-        transport.abort()
-        raise
 
 
 __all__ = [
