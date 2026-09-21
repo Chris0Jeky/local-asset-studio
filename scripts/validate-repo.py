@@ -115,6 +115,10 @@ if recipe_path.is_file():
                 value=recipe['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (recipe['id'],key,value,'outside dimension_limits or off the dimension_multiple grid')
         assert recipe.get('status') in {'executed','unverified'}, (recipe['id'],recipe.get('status'))
         assert isinstance(recipe.get('sources',[]),list), recipe['id']
+wildcard_dir=root/'presets/wildcards'
+if wildcard_dir.is_dir():
+    for path in wildcard_dir.glob('*.txt'):
+        assert re.fullmatch(r'[A-Za-z0-9_-]{1,64}', path.stem), 'wildcard filename must match the expander: '+path.name
 library=json.loads((root/'models/library.json').read_text(encoding='utf-8'))
 assert len({a['id'] for a in library['assets']})==len(library['assets'])
 for asset in library['assets']:
