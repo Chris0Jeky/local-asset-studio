@@ -108,6 +108,7 @@ metadata, rationale and an optional review date. One schematic example:
   }],
   "source": {
     "kind": "authored_hypothesis",
+    "scope": "unrecorded",
     "locator": "An explicit design reference",
     "url": null, "revision": null, "retrieved_at": null
   },

@@ -29,6 +29,8 @@ Required lanes include:
 
 All subjects are declared adult through reviewed metadata. Public briefs remain non-explicit.
 
+Named genre cases also bind fixed scenario outcomes; generic control IDs alone cannot qualify a pack. The street-fashion case requires one composed street outfit, a recognizable street-level urban setting, mixed urban practical lighting affecting subject and scene, and framing that keeps the outfit readable.
+
 ## Route smoke test
 
 For every exact candidate configuration:

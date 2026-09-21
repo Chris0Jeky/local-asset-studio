@@ -1,0 +1,62 @@
+name: Repository state
+
+on:
+  push:
+    paths:
+      - 'scripts/repository_snapshot.py'
+      - 'research/repository-state/**'
+      - 'docs/generated/REPOSITORY-STATE.md'
+      - 'docs/PROJECT-OPERATING-MODEL.md'
+      - 'tests/test_repository_snapshot*.py'
+      - '.github/workflows/repository-state.yml'
+  pull_request:
+    paths:
+      - 'scripts/repository_snapshot.py'
+      - 'research/repository-state/**'
+      - 'docs/generated/REPOSITORY-STATE.md'
+      - 'docs/PROJECT-OPERATING-MODEL.md'
+      - 'tests/test_repository_snapshot*.py'
+      - '.github/workflows/repository-state.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-state-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run focused contracts
+        run: python -m unittest discover -s tests -p 'test_repository_snapshot*.py'
+      # The drift gate reads only committed capture evidence. presets/catalog.json and
+      # HUMAN_TODO.md are deliberately absent from the trigger and from the projection:
+      # both move during ordinary work, so pinning them made this gate unsatisfiable (#461).
+      - name: Verify committed factual projection
+        run: |
+          python scripts/repository_snapshot.py \
+            --source research/repository-state/active-work.json \
+            --test-receipt research/repository-state/test-receipt.json \
+            --validation-receipt research/repository-state/validation-receipt.json \
+            --format markdown --check docs/generated/REPOSITORY-STATE.md
+      - name: Report checkout-derived facts (never gating)
+        continue-on-error: true
+        run: |
+          python scripts/repository_snapshot.py \
+            --source research/repository-state/active-work.json \
+            --test-receipt research/repository-state/test-receipt.json \
+            --validation-receipt research/repository-state/validation-receipt.json \
+            --format markdown --local-facts \
+            >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-state
+          path: docs/generated/REPOSITORY-STATE.md
+          if-no-files-found: error
+          retention-days: 7

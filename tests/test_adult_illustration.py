@@ -117,12 +117,33 @@ class AdultIllustrationManifestTests(unittest.TestCase):
         errors = self.validate_mutation("lora-qualification-example.json", mutate)
         self.assert_has_error(errors, "tested_weights", "increasing", "bounded")
 
-    def test_promoted_adapter_requires_a_promoted_interval(self):
+    def test_synthetic_adapter_cannot_be_promoted_even_with_interval(self):
         def mutate(payload):
             payload["adapter"]["promoted"] = True
-            payload["adapter"]["promoted_interval"] = None
+            payload["adapter"]["promoted_interval"] = [0.1, 0.9]
         errors = self.validate_mutation("lora-qualification-example.json", mutate)
-        self.assert_has_error(errors, "promoted_interval")
+        self.assert_has_error(errors, "promoted", "remain false")
+
+    def test_non_finite_adapter_sweep_weights_are_rejected(self):
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                def mutate(payload, value=value):
+                    payload["adapter"]["tested_weights"] = [0.0, value, 1.0]
+                errors = self.validate_mutation("lora-qualification-example.json", mutate)
+                self.assert_has_error(errors, "tested_weights", "finite")
+
+    def test_programme_issue_owners_are_pinned(self):
+        cases = (
+            ("routes", 405),
+            ("prompt_dialects", 432),
+            ("source_intake", 433),
+        )
+        for key, expected in cases:
+            with self.subTest(key=key):
+                def mutate(payload, key=key):
+                    payload["issues"][key] = 999
+                errors = self.validate_mutation("programme.json", mutate)
+                self.assert_has_error(errors, key, str(expected))
 
     def test_pack_must_reference_known_benchmark_cases(self):
         def mutate(payload):

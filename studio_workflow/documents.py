@@ -4,10 +4,11 @@ No network/schema discovery, media writes, model calls or queue ownership. All
 writes and request receipts share one transaction with an expected-revision check.
 """
 from __future__ import annotations
-import json
 import time
 import uuid
-from .core import document, canonical, decode, digest, need
+from .core import document, decode, need
+from .revision_consistency import (RequestState, byte_budget, canonical_sha256,
+                                   canonical_value, classify_request, compare_head, stored_value)
 from .commands import apply_commands, changes, execution_inputs_sha256, identifier, fields
 
 MAX_DOCUMENTS = 256
@@ -52,8 +53,9 @@ class WorkflowDocuments:
             WHERE d.id=?''', (revision, key)).fetchone()
         if row is None: raise DocumentError('not_found', 'Workflow or revision not found', 404)
         try:
-            doc = document(decode(row['document']))
-            need(digest(doc) == row['sha256'], 'Stored workflow integrity check failed')
+            stored = stored_value(row['document'], row['sha256'])
+            need(stored.matches, 'Stored workflow integrity check failed')
+            doc = document(stored.value)
             origin = decode(row['origin']); need(isinstance(origin, dict), 'Invalid stored workflow origin')
         except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
             raise DocumentError('storage_unavailable', 'Stored workflow integrity check failed', 503,
@@ -92,8 +94,9 @@ class WorkflowDocuments:
 
     def _replay(self, db, request_id, sha):
         previous = db.execute('SELECT * FROM workflow_requests_v1 WHERE request_id=?', (request_id,)).fetchone()
-        if previous is None: return None
-        if previous['sha256'] != sha:
+        state = classify_request(None if previous is None else previous['sha256'], sha)
+        if state is RequestState.ABSENT: return None
+        if state is RequestState.CONFLICT:
             raise DocumentError('request_conflict', 'Request ID was already used for different content', 409)
         return {**self._read(db, previous['document_id'], previous['revision']), 'replayed': True}
 
@@ -101,23 +104,25 @@ class WorkflowDocuments:
     def _request(value, required):
         fields(value, required)
         identifier(value['request_id'])
-        return decode(canonical(value))
+        return canonical_value(value).value
 
     def _append(self, db, key, revision, doc, request_id, request_sha, kind, summary):
         need(revision <= MAX_REVISIONS, 'Workflow revision limit reached; export before archiving or forking')
-        doc = document({**doc, 'revision': revision}); raw = canonical(doc)
+        doc = document({**doc, 'revision': revision}); bound = canonical_value(doc)
         used = db.execute('SELECT COALESCE(SUM(bytes),0) FROM workflow_revisions_v1').fetchone()[0]
-        need(used + len(raw) <= MAX_HISTORY_BYTES, 'Workflow history storage budget reached; no history was removed')
+        need(byte_budget(used, bound.bytes, MAX_HISTORY_BYTES).fits,
+             'Workflow history storage budget reached; no history was removed')
         db.execute('INSERT INTO workflow_revisions_v1 VALUES (?,?,?,?,?,?)',
-                   (key, revision, raw.decode('utf-8'), digest(doc), time.time(), len(raw)))
+                   (key, revision, bound.raw.decode('utf-8'), bound.sha256, time.time(), bound.bytes))
         db.execute('INSERT INTO workflow_requests_v1 VALUES (?,?,?,?,?,?)',
-                   (request_id, request_sha, key, revision, kind, canonical(summary).decode('utf-8')))
+                   (request_id, request_sha, key, revision, kind,
+                    canonical_value(summary).raw.decode('utf-8')))
         db.execute('UPDATE workflow_documents_v1 SET head=?,name=? WHERE id=?', (revision, doc['name'], key))
         return {**self._read(db, key), 'replayed': False}
 
     def create(self, value):
         value = self._request(value, ('request_id', 'document'))
-        doc = document(value['document']); sha = digest({'action': 'create', **value})
+        doc = document(value['document']); sha = canonical_sha256({'action': 'create', **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
@@ -128,12 +133,13 @@ class WorkflowDocuments:
         count = db.execute('SELECT COUNT(*) FROM workflow_documents_v1').fetchone()[0]
         need(count < MAX_DOCUMENTS, 'Workflow count limit reached; no document was removed')
         key = str(uuid.uuid5(NAMESPACE, request_id))
-        db.execute('INSERT INTO workflow_documents_v1 VALUES (?,?,?,?)', (key, 1, canonical(origin).decode('utf-8'), doc['name']))
+        db.execute('INSERT INTO workflow_documents_v1 VALUES (?,?,?,?)',
+                   (key, 1, canonical_value(origin).raw.decode('utf-8'), doc['name']))
         return self._append(db, key, 1, doc, request_id, sha, 'fork' if origin else 'create', {})
 
     def fork(self, key, value):
         identifier(key); value = self._request(value, ('request_id', 'revision', 'name'))
-        self._revision(value['revision']); sha = digest({'action': 'fork', 'id': key, **value})
+        self._revision(value['revision']); sha = canonical_sha256({'action': 'fork', 'id': key, **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
@@ -145,16 +151,17 @@ class WorkflowDocuments:
 
     def _current(self, db, key, expected):
         self._revision(expected); current = self._read(db, key)
-        if current['revision'] != expected:
+        comparison = compare_head(expected, current['revision'], current['document_sha256'])
+        if not comparison.matches:
             raise DocumentError('revision_conflict', 'Workflow changed; inspect the current revision before applying', 409,
-                                id=key, expected_revision=expected, current_revision=current['revision'],
-                                current_sha256=current['document_sha256'])
+                                id=key, expected_revision=comparison.expected, current_revision=comparison.current,
+                                current_sha256=comparison.current_sha256)
         return current
 
     def command(self, key, value, restore=False):
         identifier(key); field = 'revision' if restore else 'commands'
         value = self._request(value, ('request_id', 'expected_revision', field))
-        sha = digest({'action': 'restore' if restore else 'command', 'id': key, **value})
+        sha = canonical_sha256({'action': 'restore' if restore else 'command', 'id': key, **value})
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             repeated = self._replay(db, value['request_id'], sha)
@@ -167,6 +174,25 @@ class WorkflowDocuments:
             return self._append(db, key, current['revision'] + 1, next_doc, value['request_id'], sha,
                                 'restore' if restore else 'command', summary)
 
+    def plan(self, key, value):
+        from .command_plan import plan_commands
+        fields(value, ('expected_revision', 'commands'))
+        with self.workspace.connection() as db:
+            current = self._current(db, key, value['expected_revision'])
+        need(current['revision'] < MAX_REVISIONS, 'Workflow revision limit reached; export before archiving or forking')
+        result = plan_commands(current['document'], value['commands'])
+        result['document']['revision'] = current['revision'] + 1
+        sha = canonical_value(result['document']).sha256
+        return {**result, 'id': key, 'expected_revision': current['revision'],
+                'document_sha256': sha, 'after_document_sha256': sha}
+
+    def export_module(self, key, step_id, revision):
+        from .modules import export_module
+        self._revision(revision)
+        saved = self.get(key, revision)
+        module = export_module(saved['document'], step_id, document_id=key)
+        return {'module': module, 'module_sha256': canonical_value(module).sha256, 'generation_submitted': False}
+
     def preview(self, key, value):
         fields(value, ('expected_revision', 'commands'))
         with self.workspace.connection() as db:
@@ -174,7 +200,7 @@ class WorkflowDocuments:
         doc = apply_commands(current['document'], value['commands'])
         doc['revision'] = current['revision'] + 1
         return {'id': key, 'expected_revision': current['revision'], 'document': doc,
-                'document_sha256': digest(doc), 'changes': changes(current['document'], doc),
+                'document_sha256': canonical_value(doc).sha256, 'changes': changes(current['document'], doc),
                 'committed': False, 'generation_submitted': False}
 
 

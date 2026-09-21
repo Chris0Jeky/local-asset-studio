@@ -62,9 +62,9 @@ async def run(out,inert=False):
             page.set_default_timeout(10000)
             if inert:
                 await inert_page(page,http.server_port)
-                for name in ('recipe-shortlist.css','setup-proposal.css'):await page.add_style_tag(content=(ROOT/'app/static'/name).read_text())
+                for name in ('recipe-shortlist.css','setup-proposal.css','workshop.css'):await page.add_style_tag(content=(ROOT/'app/static'/name).read_text())
                 await page.expose_function('__qaHash',lambda text:hashlib.sha256(text.encode()).hexdigest())
-                for name in ('recipe-shortlist.js','setup-apply.js','setup-proposal.js'):await page.add_script_tag(content=(ROOT/'app/static'/name).read_text())
+                for name in ('recipe-shortlist.js','setup-apply.js','setup-proposal.js','workshop.js'):await page.add_script_tag(content=(ROOT/'app/static'/name).read_text())
                 await page.evaluate('StudioSetupApply.mount(window,{hashText:__qaHash,withLock:fn=>fn(),uuid:(()=>{let i=0;return()=>"fixture-command-"+(++i)})()});StudioSetupProposal.mount(window,{hashText:__qaHash})')
             else:await page.goto(origin+'/#create')
             await page.wait_for_function("typeof selected!=='undefined'&&!!selected&&!!StudioSetupApply.controller")
@@ -75,6 +75,8 @@ async def run(out,inert=False):
             await page.click('#uxFindSelectedRecipes')
             for i,role in enumerate(('identity','pose','style')):await page.select_option('#shortlistRole'+str(i+1),role)
             async def build():
+                if not await page.locator('#workshopRecipeDialog').evaluate('n=>n.open'):
+                    await page.click('#workshopRecipeChange')
                 await page.click('#checkStartingRecipes');await page.wait_for_selector('[data-setup-proposal="qwen-3ref"]')
                 await page.click('[data-setup-proposal="qwen-3ref"]');await page.fill('#proposalPositive','Reviewed identity, pose and ink style')
                 await page.fill('#proposalNegative','');await page.fill('#proposalContribution1','face and costume');await page.fill('#proposalAvoid2','identity')
@@ -102,7 +104,9 @@ async def run(out,inert=False):
             check(s.upload_count==3 and [q['action'] for q in COMMANDS]==['create','apply'],'one checkpoint and application copy exactly three sources')
             for row in applied['recipe']['references']:
                 check((s.comfy_root/'input'/row['file']).read_bytes()==s.assets.file(row['parent_asset']).read_bytes(),'staged bytes match reviewed source '+row['role'])
-            if await page.locator('#setupProposalDialog').evaluate('n=>n.open'):await page.keyboard.press('Escape')
+            check(not await page.locator('#setupProposalDialog').evaluate('n=>n.open') and not await page.locator('#workshopRecipeDialog').evaluate('n=>n.open'),'successful reviewed setup closes both review and recipe dialogs')
+            await page.wait_for_function("document.activeElement===document.querySelector('#sharedSetupStatus')")
+            check(await page.locator('#sharedSetupStatus').is_visible(),'applied setup status receives visible editor focus')
             await page.locator('#sharedSetupPanel').scroll_into_view_if_needed();await page.screenshot(path=str(out/'apply-desktop.png'))
             await page.set_viewport_size({'width':390,'height':844});await page.locator('#sharedSetupPanel').scroll_into_view_if_needed()
             check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'shared setup recovery fits the 390px shell');await page.screenshot(path=str(out/'apply-mobile.png'))
@@ -116,7 +120,9 @@ async def run(out,inert=False):
             await page.wait_for_function("!!StudioSetupApply.controller.state.pending&&!StudioSetupApply.controller.running")
             pending=await page.evaluate('StudioSetupApply.controller.state.pending');check('Original request:' in await page.locator('#setupApplyStatus').inner_text(),'unknown result and original request are visible inside the open review');check(s.upload_count==6,'response failure occurs after the second application copied its three inputs')
             check(await page.evaluate('StudioSetupDraft.capture()')==before,'unknown application outcome never replaces Create')
-            await page.keyboard.press('Escape');writes=len(COMMANDS)
+            await page.keyboard.press('Escape')
+            if await page.locator('#workshopRecipeDialog').evaluate('n=>n.open'):await page.keyboard.press('Escape')
+            writes=len(COMMANDS)
             if not inert:
                 await page.reload();await page.wait_for_function("!!StudioSetupApply.controller&&!!selected")
                 check(await page.evaluate('StudioSetupApply.controller.state.pending.request_id')==pending['request_id'],'native reload retains the exact pending request ID')

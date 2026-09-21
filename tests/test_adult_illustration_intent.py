@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from studio_prompt import adult_illustration as ai
-from studio_prompt.schema import digest, validate as validate_creative
+from studio_prompt.schema import canonical, digest, validate as validate_creative
 
 
 def subject(identifier="adult-a", description="An approved adult original character."):
@@ -273,6 +273,100 @@ class AdultIllustrationProjectionTests(unittest.TestCase):
         self.assertEqual(
             creative["locked"],
             ["brief", "constraints", "facets", "references", "verbatim"],
+        )
+
+    def test_composite_facets_over_creative_limits_block_cleanly(self):
+        cases = (
+            (
+                "subject",
+                lambda intent: intent["subjects"][0].update(description="s" * 1000),
+            ),
+            (
+                "style",
+                lambda intent: intent["facets"].update(
+                    style="s" * 600,
+                    material="m" * 600,
+                ),
+            ),
+        )
+        for expected_facet, mutate in cases:
+            with self.subTest(facet=expected_facet):
+                intent = copy.deepcopy(self.intent)
+                mutate(intent)
+                ai.validate_intent(intent)
+                result = ai.project(intent)
+                self.assertEqual(result["state"], "blocked")
+                self.assertIsNone(result["creative_intent"])
+                matches = [
+                    item
+                    for item in result["diagnostics"]
+                    if item["code"] == "CREATIVE_FACET_LIMIT"
+                    and item["facet"] == expected_facet
+                ]
+                self.assertEqual(len(matches), 1)
+                self.assertGreater(matches[0]["actual_length"], 1000)
+
+    def test_projection_has_an_independent_budget_for_large_valid_intents(self):
+        intent = copy.deepcopy(self.intent)
+        intent["controls"] = [
+            {
+                "id": f"control-{index}",
+                "target": "pose.action",
+                "mechanism": "geometry_artifact",
+                "priority": "hard",
+                "description": f"{index:02d}" + "c" * 498,
+            }
+            for index in range(32)
+        ]
+        intent["constraints"] = [
+            {
+                "id": f"constraint-{index}",
+                "text": f"{index:02d}" + "v" * 498,
+                "mechanism": "verify",
+                "priority": "soft",
+            }
+            for index in range(20)
+        ]
+        intent["tags"] = [
+            f"tag-{index:02d}-" + "t" * 112 for index in range(80)
+        ]
+        ai.validate_intent(intent)
+
+        result = ai.project(intent)
+
+        self.assertEqual(result["state"], "requires_binding")
+        self.assertIsNotNone(result["creative_intent"])
+        self.assertGreater(len(canonical(result)), 65_536)
+        self.assertLessEqual(len(canonical(result)), ai.PROJECTION_MAX_BYTES)
+        self.assertEqual(ai.validate_projection(result), result)
+
+    def test_creative_intent_byte_overflow_blocks_instead_of_raising(self):
+        intent = copy.deepcopy(self.intent)
+        references = []
+        for source_index in range(3):
+            item = reference(
+                f"source-{source_index}",
+                roles=["identity", "outfit", "pose", "style"],
+            )
+            item["take"] = [
+                f"take-{entry_index:02d}-" + "t" * 240
+                for entry_index in range(12)
+            ]
+            item["ignore"] = [
+                f"ignore-{entry_index:02d}-" + "i" * 238
+                for entry_index in range(12)
+            ]
+            references.append(item)
+        intent["references"] = references
+        ai.validate_intent(intent)
+
+        result = ai.project(intent)
+
+        self.assertEqual(result["state"], "blocked")
+        self.assertIsNone(result["creative_intent"])
+        self.assertIn(
+            "CREATIVE_INTENT_LIMIT",
+            {item["code"] for item in result["diagnostics"]},
         )
 
     def test_changed_intent_changes_projection_identity(self):

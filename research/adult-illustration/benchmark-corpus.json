@@ -281,6 +281,38 @@
       "real_sources_in_git": false
     },
     {
+      "id": "adult-street-fashion-urban-night",
+      "kind": "genre",
+      "public_fixture": "synthetic_manifest_only",
+      "content_class": "sensual_non_explicit",
+      "subjects": [
+        {
+          "id": "adult-a",
+          "adult_assertion": "reviewed_required"
+        }
+      ],
+      "consent_context": "not_applicable",
+      "fixed_scenario": {
+        "wardrobe": "composed_street_fashion_outfit",
+        "environment": "recognizable_street_level_urban_setting",
+        "lighting": "mixed_urban_practicals_affect_subject_and_scene",
+        "framing": "outfit_readable_editorial_frame"
+      },
+      "required_controls": [
+        "subject.identity",
+        "subject.adult_assertion",
+        "wardrobe.construction",
+        "wardrobe.coverage",
+        "camera.composition",
+        "scene.environment",
+        "lighting.palette",
+        "style.rendering"
+      ],
+      "proposed_smoke_candidates": 2,
+      "authorized_candidate_cap": 0,
+      "real_sources_in_git": false
+    },
+    {
       "id": "adult-action-fanservice",
       "kind": "genre",
       "public_fixture": "synthetic_manifest_only",

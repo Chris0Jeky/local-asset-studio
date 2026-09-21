@@ -47,7 +47,8 @@ def main(argv=None):
             elif a.command=='experiment':value=experiment_plan(brief,a.profile,a.seed,a.max_jobs)
             elif a.command=='request-helper':value=request_payload(brief,a.model,a.workspace,a.images)
             else:value=run_local(brief,a.model,a.port,a.workspace,a.images,a.idle_confirmed,a.cache)
-        write_new(a.out,value) if getattr(a,'out',None) else print(__import__('json').dumps(value,indent=2,ensure_ascii=False))
+        # JSON escapes preserve Unicode values in ASCII-compatible Windows pipes.
+        write_new(a.out,value) if getattr(a,'out',None) else print(__import__('json').dumps(value,indent=2,ensure_ascii=True))
         return 0
     except (ValueError,KeyError,TypeError,OSError,RecursionError,http.client.HTTPException) as exc:
         print(__import__('json').dumps({'error':str(exc),'generation_submitted':False}),file=sys.stderr);return 2
