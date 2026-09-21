@@ -18,11 +18,19 @@ reinterpreted as Qwen prompt guidance.
 Applying an approved proposal stages only the supplied pictures, then stores a
 reference record for every authored slot. Unfilled positions are retained as
 explicit `file: null`, `pruned: true` placeholders so save, reload, undo and later
-compilation preserve slot order. Board drafts do not invent
+compilation preserve slot order. These proposal/shared-draft records do not invent
 `controls.reference` or `controls.last_reference`; those controls belong to the
 older singular/two-input routes. Workspace parent assets are retained, while
-`parent_by_input` stays empty because a style board is represented by positional
-reference records rather than those singular input names.
+`parent_by_input` stays empty in this proposal lane because its board pictures are
+represented by positional reference records rather than singular input names.
+
+The ordinary Create continuation lane is different: a board recipe can also carry
+a separate picture to keep on `last_reference`. Create records that source as
+`parent_by_input.lastReference` while each board slot retains its own `parent_asset`.
+Save and reload preserve both claims. Removing a board slot must not release an
+asset still claimed by the named continuation source. The server computes
+`source_input: "last_reference"` only for a consumed board with an authored
+`last_reference` binding; a stored capability object cannot invent that binding.
 
 Proposal construction and application remain separate explicit actions. Neither
 operation submits generation, validates artistic usefulness, approves model terms

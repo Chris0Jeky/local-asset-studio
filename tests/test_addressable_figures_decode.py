@@ -1,4 +1,4 @@
-"""Decode-order and alpha contracts for addressable-figure source intake."""
+"""Decode-order, format and raster-boundary contracts for figure source intake."""
 from __future__ import annotations
 
 import tempfile
@@ -23,6 +23,26 @@ def payload(store, parent, sha256, request_id):
         "rectangles": [{"x": 0, "y": 0, "width": 10000, "height": 10000}],
         "require_non_overlapping": True,
     }
+
+
+def register_image(store, root, filename, image_format):
+    source = Path(root) / filename
+    Image.new("RGB", (3, 1), "red").save(source, image_format)
+    job = {
+        "id": "format-" + image_format.lower(),
+        "created_at": 123.0,
+        "preset_id": "format-fixture",
+        "preset_name": "Format fixture",
+        "parent_assets": [],
+        "outputs": [
+            {
+                "filename": source.name,
+                "media_type": "image",
+                "prompt_id": "format-prompt-" + image_format.lower(),
+            }
+        ],
+    }
+    return store.register(job, 0, source)
 
 
 class AddressableFigureDecodeTests(unittest.TestCase):
@@ -89,6 +109,45 @@ class AddressableFigureDecodeTests(unittest.TestCase):
                 self.assertEqual(child.mode, "RGBA")
                 self.assertEqual(child.getpixel((0, 0))[3], 0)
                 self.assertEqual(child.getpixel((1, 0))[3], 255)
+
+    def test_non_web_image_format_is_refused_before_transform_or_child_creation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            store = server.AssetWorkspace(root)
+            parent = register_image(store, root, "unsupported-sheet.bmp", "BMP")
+            record = store.get(parent)
+            command = payload(
+                store,
+                parent,
+                record["sha256"],
+                "addressable-format-" + uuid.uuid4().hex,
+            )
+            with (
+                patch.object(
+                    addressable_figures.ImageOps,
+                    "exif_transpose",
+                    side_effect=AssertionError("unsupported format reached transform"),
+                ) as transpose,
+                self.assertRaisesRegex(server.WorkspaceError, "supported still image"),
+            ):
+                addressable_figures.split_figures(store, command)
+            transpose.assert_not_called()
+            self.assertEqual(len(store.snapshot()["assets"]), 1)
+
+    def test_adjacent_basis_point_rectangles_share_one_raster_boundary(self):
+        left = addressable_figures._pixel_box(
+            object(), {"x": 0, "y": 0, "width": 5000, "height": 10000}, 3, 1
+        )
+        right = addressable_figures._pixel_box(
+            object(), {"x": 5000, "y": 0, "width": 5000, "height": 10000}, 3, 1
+        )
+        self.assertEqual(left["right"], right["left"])
+        self.assertEqual(left["right"] - left["left"], 2)
+        self.assertEqual(right["right"] - right["left"], 1)
+        self.assertEqual(
+            (left["right"] - left["left"]) + (right["right"] - right["left"]),
+            3,
+        )
 
 
 if __name__ == "__main__":

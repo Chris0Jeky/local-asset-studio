@@ -344,6 +344,17 @@ class ContinuationTests(unittest.TestCase):
         result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_core.cjs")], capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
+    def test_client_canvas_limits(self):
+        result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_canvas_limits.cjs")], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")
+    def test_client_route_lead_policy(self):
+        result = subprocess.run([shutil.which("node"), str(ROOT / "tests/continuation_route_lead.cjs")], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Continuation route lead contracts passed", result.stdout, result.stdout + result.stderr)
+
 
 class ShippedCatalogCapabilityTests(unittest.TestCase):
     def test_every_shipped_preset_yields_a_capability_and_defaults(self):
@@ -352,7 +363,7 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
         control must read a default back from its graph."""
         root = Path(__file__).resolve().parents[1]
         catalog = json.loads((root / "presets/catalog.json").read_text(encoding="utf-8"))["presets"]
-        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength")
+        keys = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "style_weight", "pose_strength", "depth_cut")
         for preset in catalog:
             graph = json.loads((root / preset["graph"]).read_text(encoding="utf-8"))
             result = continuation.capability(preset, graph)
@@ -388,6 +399,59 @@ class ShippedCatalogCapabilityTests(unittest.TestCase):
                 self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
                 self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
                 self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+            elif preset["id"] == "combine-klein-9b-depth":
+                # Depth first: the board slot (node 14) feeds a Depth Anything V2 map (node 30) that is image 1; the character stays
+                # last_reference on image 2 (node 20); loaders, chain and wording identity as on the 9B pose-first recipe.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["30"]["class_type"], graph["30"]["inputs"]["image"], graph["15"]["inputs"]["image"], graph["21"]["inputs"]["image"]), ("DepthAnythingV2Preprocessor", ["14", 0], ["30", 0], ["20", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("depth map", preset["continuation_prompt"]); self.assertIn("cc-by-nc-4.0", preset["commercial_note"])
+                # Cut below (%): a 100x100 mask whose band starts at row y (node 33, the depth_cut control) is applied through a black source
+                # resized to the 1 MP map (node 35) before the VAE sees it; y = 100 authored means nothing is cut, the ankle variant sets 86.
+                self.assertEqual(preset["depth_cut"], ["33", "y"]); self.assertEqual(graph["16"]["inputs"]["pixels"], ["35", 0])
+                self.assertEqual((graph["33"]["class_type"], graph["33"]["inputs"]["destination"], graph["33"]["inputs"]["source"], graph["33"]["inputs"]["y"], graph["33"]["inputs"]["operation"]), ("MaskComposite", ["31", 0], ["32", 0], 100, "add"))
+                self.assertEqual((graph["31"]["inputs"]["value"], graph["32"]["inputs"]["value"], graph["31"]["inputs"]["height"], graph["32"]["inputs"]["height"]), (0.0, 1.0, 100, 100))
+                self.assertEqual((graph["35"]["class_type"], graph["35"]["inputs"]["destination"], graph["35"]["inputs"]["source"], graph["35"]["inputs"]["mask"], graph["35"]["inputs"]["resize_source"], graph["34"]["inputs"]["color"]), ("ImageCompositeMasked", ["15", 0], ["34", 0], ["33", 0], True, 0))
+                self.assertEqual(preset["variants"][0], {"name": "Cut below the ankles (86 %)", "controls": {"depth_cut": 86}})
+            elif preset["id"] == "combine-klein-9b-copypose":
+                # Copy Pose LoRA: the order turns round. The character is last_reference on image 1 (node 14, kept and re-posed), the
+                # board slot is the pose picture on image 2 (node 20); the LoRA sits between the GGUF loader and the guider, model only,
+                # and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["14", "image"], [["20", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "KleinBase9B_PoseTransfer.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("change the actions and poses in Image 1 to match those in Image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 1)", preset["last_reference_label"]); self.assertIn("(image 2)", preset["reference_board_label"]); self.assertIn("Rent only", preset["commercial_note"])
+            elif preset["id"] == "combine-klein-9b-replace":
+                # Replace character: the board slot is the picture to keep on image 1 (node 14: its pose, camera, scene and clothes stay),
+                # the character whose face goes in stays last_reference on image 2 (node 20); the LoRA sits between the GGUF loader and the
+                # guider, model only, and its strength and file are Studio controls. The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual((graph["40"]["class_type"], graph["40"]["inputs"]["lora_name"], graph["40"]["inputs"]["strength_model"], graph["40"]["inputs"]["model"], graph["6"]["inputs"]["model"]), ("LoraLoaderModelOnly", "replace_character_v1_klein.safetensors", 1.0, ["1", 0], ["40", 0]))
+                self.assertEqual((preset["lora"], preset["lora_name"]), (["40", "strength_model"], ["40", "lora_name"]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertTrue(preset["continuation_prompt"].startswith("Replace the person in image 1 with the character in image 2")); self.assertNotIn("30", graph)
+                # The fills transfer across the Combine recipes by meaning (who / clothes / pose) and follow the wording's reading order.
+                self.assertEqual([preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]], sorted(preset["continuation_prompt"].index(item) for item in preset["continuation_placeholder"]))
+                self.assertIn("(image 2)", preset["last_reference_label"]); self.assertIn("(image 1)", preset["reference_board_label"]); self.assertIn("no Sell", preset["commercial_note"])
+                # The board policy names the adapter: continuation-core's combine guidance keys the replace wording on it; `verified` is
+                # true only when the execution note opens with a Studio run (research against ComfyUI is not a Studio proving run); the
+                # third fill is image 1's outfit (meaning "outfit", never carried by an engine switch as the character's clothes).
+                self.assertIn("replace-character LoRA", preset["reference_board"]["policy"]); self.assertEqual(preset["verified"], "through the Studio (POST /api/jobs): job" in preset["execution_note"])
+                self.assertTrue(preset["continuation_placeholder"][2].startswith("[image 1's outfit and its colours"))
+            elif preset["id"] == "combine-klein-9b-skeleton":
+                # Skeleton in: the 9B pose-first graph with skeleton wording; the board slot (node 14) is the drawn stick figure on image 1,
+                # the character stays last_reference on image 2 (node 20). The graph text and the catalog wording must stay one text.
+                self.assertEqual((preset["last_reference"], [slot["binding"] for slot in preset["reference_slots"]], graph["6"]["inputs"]["positive"]), (["20", "image"], [["14", "image"]], ["23", 0]))
+                self.assertEqual(graph["23"]["inputs"]["conditioning"], ["17", 0]); self.assertEqual((graph["1"]["class_type"], graph["2"]["inputs"]["clip_name"]), ("UnetLoaderGGUF", "qwen_3_8b_fp8mixed.safetensors"))
+                self.assertNotIn("{source}", preset["continuation_prompt"]); self.assertEqual(preset["continuation_prompt"], graph["4"]["inputs"]["text"]); self.assertEqual(len(preset["continuation_placeholder"]), 3)
+                self.assertIn("pose skeleton", preset["continuation_prompt"]); self.assertIn("skeleton", preset["reference_board_label"].lower()); self.assertNotIn("30", graph)
             elif preset["id"] == "flux-edit":
                 self.assertEqual((result["operation"], preset["continuation_prompt"].count("{source}")), ("instruction-edit", 1))
             elif preset["id"] == "restyle-klein":

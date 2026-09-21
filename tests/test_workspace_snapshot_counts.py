@@ -22,7 +22,7 @@ class WorkspaceSnapshotCountsTests(unittest.TestCase):
     def test_sparse_dense_empty_and_trashed_memberships(self):
         populate(self.store, 23, 7, 4)
         with self.store.connection() as db:
-            db.execute("INSERT INTO collections VALUES ('empty','Empty', '',0)")
+            db.execute("INSERT INTO collections (id,name,description,created_at) VALUES ('empty','Empty', '',0)")
             db.execute("UPDATE assets SET trashed_at=0 WHERE id='a0'")  # Preserve legacy truthiness.
         before = self.store.snapshot()
         self.assert_counts(before)

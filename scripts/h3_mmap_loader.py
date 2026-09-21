@@ -6,9 +6,22 @@ The normal loader remains in use for every other file and every GPU load.
 import json
 import math
 import mmap
+import os
 from pathlib import Path
 import struct
 import warnings
+
+
+def _unique_object(pairs):
+    value={}
+    for key,item in pairs:
+        if key in value:raise ValueError('duplicate safetensors header key: '+key)
+        value[key]=item
+    return value
+
+
+def _reject_constant(value):
+    raise ValueError('non-finite JSON constant in safetensors header: '+value)
 
 
 def checked_header(stream, size, dtypes):
@@ -16,7 +29,9 @@ def checked_header(stream, size, dtypes):
     if len(prefix)!=8:raise ValueError('Incomplete safetensors prefix')
     length=struct.unpack('<Q',prefix)[0]
     if not 2<=length<=16*1024**2 or 8+length>size:raise ValueError('Invalid safetensors header length')
-    header=json.loads(stream.read(length));base=8+length;spans=[]
+    raw=stream.read(length)
+    if len(raw)!=length:raise ValueError('Incomplete safetensors header')
+    header=json.loads(raw,object_pairs_hook=_unique_object,parse_constant=_reject_constant);base=8+length;spans=[]
     if not isinstance(header,dict):raise ValueError('Invalid safetensors header')
     for name,entry in header.items():
         if name=='__metadata__':continue
@@ -38,7 +53,7 @@ def checked_header(stream, size, dtypes):
 def load_cpu(path, torch, dtypes, read_only=False):
     path=Path(path).resolve()
     with path.open('rb') as stream:
-        header,base=checked_header(stream,path.stat().st_size,dtypes)
+        header,base=checked_header(stream,os.fstat(stream.fileno()).st_size,dtypes)
         # Copy-on-write protects the original file while giving Torch writable storage.
         mapping=mmap.mmap(stream.fileno(),0,access=mmap.ACCESS_READ if read_only else mmap.ACCESS_COPY)
     state={}
