@@ -44,7 +44,10 @@ def main():
                     assert page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement')
                     page.click('[data-ux-inspect-job="allocation-failure"]')
                     content = page.locator('#uxJobInspector').inner_text()
-                    assert 'allocation-failure' in content and 'fixture-prompt' in content and 'Memory allocation' in content, content
+                    failed_job = next(job for job in fixture.JOBS if job['id'] == 'allocation-failure')
+                    assert failed_job['id'] in content and failed_job['prompt_ids'][0] in content, content
+                    assert failed_job['failure']['summary'] in content, content
+                    assert failed_job['failure']['action'] in content, content
                     page.screenshot(path=str(output/f'job-inspector-{width}.png'))
                     page.keyboard.press('Escape')
                     page.wait_for_function('!document.querySelector("#uxJobInspector").open')
