@@ -44,7 +44,7 @@ When that thread connects to a fixture while a later test is active, the retaine
 }
 ```
 
-Nested threads inherit the root owner test while retaining their own `started_during_test`, parent thread and start stack. This distinguishes the test observing leaked work from the test that launched it. Threads already alive before observation are reported as `started-before-observer`; a capacity refusal is reported as `observer-capacity` rather than silently claiming complete attribution.
+Nested observed threads inherit the root owner test while retaining their own `started_during_test`, parent thread and start stack. This distinguishes the test observing leaked work from the test that launched it. The observer treats the thread that installed it as the trusted unittest runner root; other threads already alive at installation remain unobserved. Children of an unobserved parent retain an `ancestor-*` reason instead of being reassigned to the current test, including parents skipped because the evidence capacity was full. Nested observers compose in LIFO order so focused contracts can run inside the full-suite worker without replacing its outer ownership state.
 
 ## `atexit` marker contract
 
