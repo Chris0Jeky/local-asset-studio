@@ -3,16 +3,19 @@ from __future__ import annotations
 
 import atexit
 from dataclasses import dataclass
+import functools
 import json
 from pathlib import Path
 import sys
 import sysconfig
 import threading
 import traceback
+import types
 from typing import Callable, TextIO
 
 _MAX_RAW_STACK = 64
 _MAX_TEXT = 160
+_MAX_IDENTITY = 2 * _MAX_TEXT + 1
 
 
 def _outside_stdlib(filename: str) -> bool:
@@ -46,23 +49,66 @@ def bounded_call_stack(*, skip_files=(), max_frames: int = 12) -> list[dict]:
     ]
 
 
-def callable_identity(callback) -> str:
-    """Name a callback without invoking repr() or retaining callback arguments."""
-    try:
-        module = getattr(callback, "__module__", None)
-        qualname = getattr(callback, "__qualname__", None) or getattr(
-            callback,
-            "__name__",
-            None,
-        )
-    except BaseException:
-        module = None
-        qualname = None
+def _identity_text(module, qualname, fallback_module: str, fallback_name: str) -> str:
     if not isinstance(module, str) or not module:
-        module = type(callback).__module__
+        module = fallback_module
     if not isinstance(qualname, str) or not qualname:
-        qualname = type(callback).__qualname__
-    return f"{module}.{qualname}"[: 2 * _MAX_TEXT + 1]
+        qualname = fallback_name
+    return f"{module}.{qualname}"[:_MAX_IDENTITY]
+
+
+def _type_parts(callback_type: type) -> tuple[str, str]:
+    """Read class metadata without dispatching through a custom metaclass."""
+    try:
+        module = type.__getattribute__(callback_type, "__module__")
+        qualname = type.__getattribute__(callback_type, "__qualname__")
+    except BaseException:
+        return "builtins", "type"
+    if not isinstance(module, str) or not module:
+        module = "builtins"
+    if not isinstance(qualname, str) or not qualname:
+        qualname = "type"
+    return module, qualname
+
+
+def _type_identity(callback_type: type) -> str:
+    module, qualname = _type_parts(callback_type)
+    return _identity_text(module, qualname, "builtins", "type")
+
+
+def callable_identity(callback) -> str:
+    """Name a callback without repr() or callback-controlled attribute access."""
+    if isinstance(callback, functools.partial):
+        try:
+            target = object.__getattribute__(callback, "func")
+        except BaseException:
+            return _type_identity(type(callback))
+        return f"functools.partial({callable_identity(target)})"[:_MAX_IDENTITY]
+
+    if isinstance(callback, types.MethodType):
+        callback = callback.__func__
+
+    if isinstance(
+        callback,
+        (types.FunctionType, types.BuiltinFunctionType, types.BuiltinMethodType),
+    ):
+        fallback_module, fallback_name = _type_parts(type(callback))
+        try:
+            module = callback.__module__
+            qualname = callback.__qualname__ or callback.__name__
+        except BaseException:
+            module = None
+            qualname = None
+        return _identity_text(
+            module,
+            qualname,
+            fallback_module,
+            fallback_name,
+        )
+
+    if isinstance(callback, type):
+        return _type_identity(callback)
+    return _type_identity(type(callback))
 
 
 @dataclass

@@ -25,7 +25,7 @@ LIFETIME ATEXIT ENTER: {"callback":"test_module.block_at_shutdown","id":1,...}
 LIFETIME ATEXIT EXIT: {"callback":"test_module.clean_up","id":2,"outcome":"returned"}
 ```
 
-An `ENTER` record without the matching `EXIT` record identifies the callback in progress when the parent lifetime budget expires. Raised callbacks record only the exception type, not its message. Callback identity is snapshotted when it is registered, so finalization never has to evaluate callback-controlled metadata before writing the `ENTER` marker.
+An `ENTER` record without the matching `EXIT` record identifies the callback in progress when the parent lifetime budget expires. Raised callbacks record only the exception type, not its message. Callback identity is snapshotted when it is registered, so finalization never has to inspect callback metadata before writing the `ENTER` marker. Identity projection also avoids `repr()` and callback-controlled instance attributes: functions and methods use their built-in metadata records, while callable objects use their type identity.
 
 The observer preserves the public behavior relied on by tests:
 
