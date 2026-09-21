@@ -84,6 +84,8 @@ def validate_slot(value):
         need(token(value[key], 160), 'Setup slot ' + key + ' is required')
     need(value['base_lineage'] is None or token(value['base_lineage'], 160), 'Invalid base lineage')
     need(type(value['strict_lineage']) is bool, 'strict_lineage must be boolean')
+    need(not value['strict_lineage'] or value['base_lineage'] is not None,
+         'strict lineage requires an explicit base_lineage')
     formats = strings(value['formats'], 'formats', 32, allow_empty=False)
     capabilities = strings(value['capabilities'], 'capabilities', 256)
     absent = strings(value['known_absent_capabilities'], 'known absent capabilities', 256)
@@ -129,6 +131,9 @@ def validate_evidence(value):
     if value['kind'] == 'gallery_co_use':
         need(value['observations'] > 0 and value['independent_sources'] > 0,
              'Gallery evidence needs bounded observations and independent sources')
+    if value['kind'] == 'controlled_run':
+        need(value['observations'] > 0,
+             'Controlled run evidence needs at least one observation')
     return result
 
 
@@ -229,6 +234,9 @@ def evaluate(value):
          'Use 1–256 setup candidates')
     candidates = [validate_candidate(item) for item in value['candidates']]
     ids = [item['id'] for item in candidates]; need(len(set(ids)) == len(ids), 'Duplicate candidate ID')
+    resource_identities = [item['identity'] for item in candidates if item['identity'] is not None]
+    need(len(set(resource_identities)) == len(resource_identities),
+         'Duplicate candidate resource identity')
     need(isinstance(value['evidence'], list) and len(value['evidence']) <= MAX_EVIDENCE,
          'Use at most 1,024 evidence records')
     diagnostics, claims = [], []
