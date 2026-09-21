@@ -1,0 +1,289 @@
+diff --git a/.github/workflows/workshop-ui.yml b/.github/workflows/workshop-ui.yml
+index 3135e4e..ed5d14c 100644
+--- a/.github/workflows/workshop-ui.yml
++++ b/.github/workflows/workshop-ui.yml
+@@ -52,0 +53,2 @@ jobs:
++      - name: Recipe and shared-shell keyboard entry points
++        run: python tests/workshop_entry_points.py
+ diff --git a/app/static/studio-navigation.css b/app/static/studio-navigation.css
+new file mode 100644
+index 0000000..4b05d73
+--- /dev/null
++++ b/app/static/studio-navigation.css
+@@ -0,0 +1,5 @@
++/* Shared entry points for the main Studio and independently served tools. */
++.studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none}
++.studio-quick-create[hidden] {display:none!important}
++@media(max-width:480px){.studio-globalbar .studio-breadcrumb{display:none}.studio-globalbar{gap:8px}}
++#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+diff --git a/app/static/studio-shell.js b/app/static/studio-shell.js
+index 7ff2a4d..dc2252c 100644
+--- a/app/static/studio-shell.js
++++ b/app/static/studio-shell.js
+@@ -5,0 +6 @@
++  if(!$('#studioNavigationStyles')){const css=document.createElement('link');css.id='studioNavigationStyles';css.rel='stylesheet';css.href='/static/studio-navigation.css';document.head.append(css);}
+@@ -11 +12 @@
+-  const header=document.createElement('div');header.className='studio-globalbar';header.innerHTML='<button id="studioNavToggle" aria-controls="studioSidebar" aria-expanded="false">Menu</button><div class="studio-breadcrumb"><span>Studio</span><span aria-hidden="true">/</span><strong id="studioPageTitle">Overview</strong></div><button id="studioJump" class="studio-jump">Jump to a tool <kbd>Ctrl K</kbd></button><div id="studioConnection"></div>';
++  const header=document.createElement('div');header.className='studio-globalbar';header.innerHTML='<button id="studioNavToggle" aria-controls="studioSidebar" aria-expanded="false">Menu</button><div class="studio-breadcrumb"><span>Studio</span><span aria-hidden="true">/</span><strong id="studioPageTitle">Overview</strong></div><a id="studioQuickCreate" class="studio-quick-create" href="/#create" hidden>Create</a><button id="studioJump" class="studio-jump">Jump to a tool <kbd>Ctrl K</kbd></button><div id="studioConnection"></div>';
+@@ -20 +21,14 @@
+-  function closeNav(){document.body.classList.remove('studio-nav-open');$('#studioNavToggle').setAttribute('aria-expanded','false');}
++  function syncNavigation(){
++    const compact=getComputedStyle($('#studioNavToggle')).display!=='none';
++    if(!compact)document.body.classList.remove('studio-nav-open');
++    const open=compact&&document.body.classList.contains('studio-nav-open');
++    $('#studioNavToggle').setAttribute('aria-expanded',String(open));
++    $('#studioQuickCreate').hidden=!compact;
++    sidebar.inert=compact&&!open;sidebar.setAttribute('aria-hidden',String(sidebar.inert));
++    if(sidebar.inert&&sidebar.contains(document.activeElement))main.focus({preventScroll:true});
++  }
++  function closeNav(){document.body.classList.remove('studio-nav-open');syncNavigation();}
++  window.addEventListener('resize',syncNavigation);
++  sidebar.addEventListener('focusout',()=>queueMicrotask(()=>{
++    if(!sidebar.contains(document.activeElement)&&document.activeElement!==$('#studioNavToggle'))closeNav();
++  }));
+@@ -31 +45 @@
+-  $('#studioNavToggle').onclick=()=>{const open=document.body.classList.toggle('studio-nav-open');$('#studioNavToggle').setAttribute('aria-expanded',String(open));};
++  $('#studioNavToggle').onclick=()=>{const open=document.body.classList.toggle('studio-nav-open');syncNavigation();if(open)(sidebar.querySelector('[aria-current=page]')||sidebar.querySelector('nav a'))?.focus({preventScroll:true});};
+diff --git a/app/static/workshop.js b/app/static/workshop.js
+index 484ddb6..9b4cf7c 100644
+--- a/app/static/workshop.js
++++ b/app/static/workshop.js
+@@ -165,0 +166 @@
++    change.setAttribute('aria-expanded', 'false');
+@@ -188,0 +190,8 @@
++    function syncPicker() {
++      const open = recipeDialog.open;
++      change.setAttribute('aria-expanded', String(open));
++      // Native dialog already excludes closed content. Make that state explicit for
++      // accessibility inspection and retain it if a future style changes display.
++      if (drawer) { drawer.inert = !open; drawer.setAttribute('aria-hidden', String(!open)); }
++    }
++    syncPicker();
+@@ -196 +205,2 @@
+-      recipeDialog.showModal(); change.setAttribute('aria-expanded','true'); q('#presetSearch')?.focus({preventScroll:true});
++      if (drawer) { drawer.inert = false; drawer.removeAttribute('aria-hidden'); }
++      recipeDialog.showModal(); syncPicker(); q('#presetSearch')?.focus({preventScroll:true});
+@@ -199 +209,3 @@
+-      change.setAttribute('aria-expanded','false');
++      // close is deferred: an older event must not make a newly reopened picker inert.
++      if (recipeDialog.open) return;
++      syncPicker();
+@@ -450 +462,5 @@
+-      text(recipeName, recipe?.name || q('#uxRecipeLabel')?.textContent || 'Choose a starting point');
++      syncPicker();
++      const name = recipe ? String(recipe.name || recipe.id) : '';
++      text(recipeName, name || 'Choose a starting point');
++      text(change, name ? 'Change: '+name : 'Choose recipe');
+diff --git a/docs/workshop/UX-ENTRY-POINTS-2026-09-21.md b/docs/workshop/UX-ENTRY-POINTS-2026-09-21.md
+new file mode 100644
+index 0000000..dc1f8b7
+--- /dev/null
++++ b/docs/workshop/UX-ENTRY-POINTS-2026-09-21.md
+@@ -0,0 +1,57 @@
++# Create entry points — 21 September 2026
++
++## Scope and provenance
++
++This implements the first bounded slice of QA tracker #772, using the issue reports
++rather than the owner's unmounted workstation screenshots. Source baseline is
++`f22b56bbeee0ecd907aa71b22e4071cc0dde4dde`, tree
++`2096e26aa02e9054eb1e1d3379fe27c44033937e`. The uploaded GitHub archive was
++reconciled to that tree, including its Windows-script export line endings and the
++intentionally retained CRLF test file. No runtime or user configuration was read.
++
++## User stories and disposition
++
++- **#771 / #776:** A creator sees `Choose recipe` when none is selected and
++  `Change: <active recipe>` otherwise. The accessible name preserves the full name.
++- **#767:** The existing native modal still owns focus containment and Escape.
++  Its closed inner drawer now explicitly advertises `inert` / `aria-hidden=true`,
++  and its trigger starts with `aria-expanded=false`. A deferred old close event
++  cannot make a newly reopened picker inert.
++- **#768:** Mobile users can enter Create directly beside Menu. Menu focuses its
++  active route (or first route), Escape returns to Menu, and closed off-canvas
++  navigation is inert. Resizing restores desktop navigation. The same code serves
++  standalone tools, whose CSS breakpoint differs from the main Studio.
++- **#769:** The skip link already existed on this baseline. Native keyboard tests
++  verify that it is first and moves focus to the main landmark in both shells;
++  this PR does not invent another skip link or claim the old one was missing.
++
++All changes are presentation/navigation only. Existing recipe selection, draft
++confirmation, source binding and Generate handlers retain ownership.
++
++## Reproduction and validation
++
++`python tests/workshop_entry_points.py` initially failed eight subcases across
++five test methods: empty/active labels, initial disclosure state and mobile Create
++entry. Existing native Escape/cancellation and skip-link tests passed before the
++fix. All five methods now pass, with Focus/Studio/Immersive and both shell variants
++covered by subtests. The driver uses exact production scripts and native Chromium
++focus behavior over an explicitly synthetic DOM; it never submits a job.
++
++Also run locally:
++
++```console
++python tests/workshop_browser.py --output .runtime/ux-daily-loop/component
++python -m unittest discover -s tests -p test_workshop_frontend.py
++python scripts/validate-repo.py
++```
++
++The existing Workshop UI workflow now includes the new keyboard driver alongside
++its full-application HTTP/storage tests. Hosted results must be checked against
++the current PR head; a component fixture is not a substitute for those results.
++
++## Boundaries
++
++Local Chromium refused loopback navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`.
++That restriction was not bypassed. Local renderer-only results do not establish
++HTTP, persisted-origin storage, model readiness, GPU execution, art quality or
++owner acceptance. #539 stays open. HUMAN_TODO decisions remain unchanged.
+diff --git a/tests/workshop_entry_points.py b/tests/workshop_entry_points.py
+new file mode 100644
+index 0000000..9777ace
+--- /dev/null
++++ b/tests/workshop_entry_points.py
+@@ -0,0 +1,144 @@
++"""Native keyboard/layout tests over exact presentation scripts; no HTTP or generation.
++
++Run: python tests/workshop_entry_points.py
++Full application integration remains in workshop_application.py / GitHub Actions.
++"""
++import os
++from pathlib import Path
++import re
++import shutil
++import unittest
++
++from playwright.sync_api import sync_playwright
++from workshop_browser_core import immersive_css
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def script(name):
++    return '<script>' + (ROOT / 'app/static' / name).read_text(encoding='utf-8').replace('</script', '<\\/script') + '</script>'
++
++
++def workshop_html():
++    html = (ROOT / 'tests/workshop_fixture.html').read_text(encoding='utf-8')
++    html = re.sub(r'<script src="[^"]+"></script>', '', html)
++    styles = '<style id="workshopStyles">' + (ROOT / 'app/static/workshop.css').read_text(encoding='utf-8') + '</style>'
++    styles += '<style id="workshopImmersiveStyles">' + immersive_css() + '</style>'
++    styles += navigation_css()
++    html = html.replace('</style>', '</style>' + styles, 1)
++    return html.replace('</body>', ''.join(script(name) for name in ('reference-model.js', 'presentation-context.js', 'workshop.js')) + '</body>')
++
++
++def navigation_css():
++    return '<style id="studioNavigationStyles">' + (ROOT / 'app/static/studio-navigation.css').read_text(encoding='utf-8') + '</style>'
++
++
++def shell_html(workflow=False):
++    css = (ROOT / 'app/static' / ('workflow-studio.css' if workflow else 'studio.css')).read_text(encoding='utf-8')
++    return ('<!doctype html><html lang="en"><meta charset="utf-8"><style>' + css + '</style>'
++             + navigation_css() + '<body class="' + ('workflow-page' if workflow else '') + '"><main id="toolMain"><button>Inside the tool</button></main>'
++            + script('studio-shell.js') + '</body></html>')
++
++
++class EntryPoints(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.playwright = sync_playwright().start()
++        executable = os.environ.get('STUDIO_BROWSER_EXECUTABLE') or shutil.which('chromium')
++        cls.browser = cls.playwright.chromium.launch(**({'executable_path': executable} if executable else {}))
++
++    @classmethod
++    def tearDownClass(cls):
++        cls.browser.close()
++        cls.playwright.stop()
++
++    def setUp(self):
++        self.page = self.browser.new_page(viewport={'width': 1440, 'height': 900})
++        self.errors = []
++        self.page.on('pageerror', lambda error: self.errors.append(str(error)))
++        self.page.set_default_timeout(3000)
++
++    def tearDown(self):
++        self.page.close()
++        self.assertEqual(self.errors, [])
++
++    def load_workshop(self):
++        self.page.set_content(workshop_html())
++        self.page.wait_for_selector('#workshopRecipeChange')
++
++    def test_closed_picker_has_explicit_accessibility_state(self):
++        self.load_workshop()
++        for layout in ('focus', 'studio', 'immersive'):
++            with self.subTest(layout=layout):
++                self.page.select_option('#workshopLayout', layout)
++                self.assertEqual(self.page.locator('#workshopRecipeChange').get_attribute('aria-expanded'), 'false')
++                self.assertTrue(self.page.locator('.ux-recipe-drawer').evaluate('(n)=>n.inert'))
++                self.assertEqual(self.page.locator('.ux-recipe-drawer').get_attribute('aria-hidden'), 'true')
++                # .tabIndex == 0 alone is NOT proof of a tab stop in a closed native dialog.
++                self.page.focus('#workshopRecipeChange')
++                self.page.locator('#presetList button').first.evaluate('(n)=>n.focus()')
++                self.assertTrue(self.page.locator('#workshopRecipeChange').evaluate('(n)=>n===document.activeElement'))
++                self.page.keyboard.press('Tab')
++                self.assertFalse(self.page.evaluate("!!document.activeElement.closest('#workshopRecipeDialog')"))
++
++    def test_recipe_labels_follow_empty_and_active_state(self):
++        self.load_workshop()
++        for layout in ('focus', 'studio', 'immersive'):
++            with self.subTest(layout=layout):
++                self.page.select_option('#workshopLayout', layout)
++                self.page.evaluate("selected=null;document.querySelector('#createView').__workshop.sync()")
++                self.assertEqual(self.page.locator('#workshopRecipeChange').inner_text(), 'Choose recipe')
++                self.page.evaluate("selectPreset('ink');document.querySelector('#createView').__workshop.sync()")
++                self.assertEqual(self.page.locator('#workshopRecipeChange').inner_text(), 'Change: Ink illustration')
++                self.assertIn('Ink illustration', self.page.locator('#workshopRecipeChange').get_attribute('aria-label'))
++
++    def test_native_modal_focus_escape_and_cancel_preserve_draft(self):
++        self.load_workshop()
++        self.page.fill('#positive', 'Keep my edited draft')
++        for layout in ('focus', 'studio', 'immersive'):
++            with self.subTest(layout=layout):
++                self.page.select_option('#workshopLayout', layout)
++                self.page.click('#workshopRecipeChange')
++                self.assertFalse(self.page.locator('.ux-recipe-drawer').evaluate('(n)=>n.inert'))
++                self.assertTrue(self.page.locator('#presetSearch').evaluate('(n)=>n===document.activeElement'))
++                self.page.focus('#positive')
++                self.assertTrue(self.page.evaluate("!!document.activeElement.closest('#workshopRecipeDialog')"))
++                self.page.once('dialog', lambda dialog: dialog.dismiss())
++                self.page.locator('#presetList [data-id="refine"]').click()
++                self.assertEqual(self.page.locator('#positive').input_value(), 'Keep my edited draft')
++                self.page.keyboard.press('Escape')
++                self.page.wait_for_function("!document.querySelector('#workshopRecipeDialog').open")
++                self.assertTrue(self.page.locator('#workshopRecipeChange').evaluate('(n)=>n===document.activeElement'))
++                self.assertEqual(self.page.evaluate('submitted'), 0)
++
++    def test_existing_skip_link_is_first_and_focuses_main(self):
++        for workflow in (False, True):
++            with self.subTest(workflow=workflow):
++                self.page.set_content(shell_html(workflow))
++                self.page.keyboard.press('Tab')
++                self.assertTrue(self.page.locator('.studio-skip').evaluate('(n)=>n===document.activeElement'))
++                self.page.keyboard.press('Enter')
++                self.assertTrue(self.page.locator('main').evaluate('(n)=>n===document.activeElement'))
++
++    def test_mobile_create_and_sidebar_focus_for_each_shell(self):
++        self.page.set_viewport_size({'width': 390, 'height': 844})
++        for workflow in (False, True):
++            with self.subTest(workflow=workflow):
++                self.page.set_content(shell_html(workflow))
++                self.assertEqual(self.page.locator('#studioQuickCreate').count(), 1)
++                self.assertTrue(self.page.locator('#studioQuickCreate').is_visible())
++                self.assertEqual(self.page.locator('#studioQuickCreate').get_attribute('href'), '/#create')
++                self.assertTrue(self.page.locator('#studioSidebar').evaluate('(n)=>n.inert'))
++                self.page.click('#studioNavToggle')
++                self.assertTrue(self.page.evaluate("!!document.activeElement.closest('#studioSidebar')"))
++                self.assertFalse(self.page.locator('#studioSidebar').evaluate('(n)=>n.inert'))
++                self.page.keyboard.press('Escape')
++                self.assertTrue(self.page.locator('#studioNavToggle').evaluate('(n)=>n===document.activeElement'))
++                self.assertTrue(self.page.locator('#studioSidebar').evaluate('(n)=>n.inert'))
++                self.page.set_viewport_size({'width': 1440, 'height': 900})
++                self.page.wait_for_function("!document.querySelector('#studioSidebar').inert")
++                self.page.set_viewport_size({'width': 390, 'height': 844})
++
++
++if __name__ == '__main__':
++    unittest.main(verbosity=2)

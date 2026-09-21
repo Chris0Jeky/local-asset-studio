@@ -11,49 +11,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          path: transfer
+      - uses: actions/checkout@v4
+        with:
           ref: f22b56bbeee0ecd907aa71b22e4071cc0dde4dde
-          fetch-depth: 1
-      - name: Verify exact patch, parent and tree; publish only the scoped branch
-        env:
-          PATCH_ZLIB_B64: >-
-            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
+          path: source
+      - name: Verify exact source tree before non-force publication
+        working-directory: source
         run: |
           python - <<'PY'
-          import os, base64, zlib, hashlib, pathlib, subprocess
-          patch = zlib.decompress(base64.b64decode(os.environ['PATCH_ZLIB_B64']))
-          assert hashlib.sha256(patch).hexdigest() == '7afde1fa28833a5b691bef0dac592299f315f81899697c071530a2f8a546dc59'
-          assert subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip() == 'f22b56bbeee0ecd907aa71b22e4071cc0dde4dde'
-          subprocess.run(['git','apply','--index','--whitespace=error-all','-'], input=patch, check=True)
-          tree = subprocess.check_output(['git','write-tree'], text=True).strip()
+          from pathlib import Path
+          import subprocess, os
+          parent = 'f22b56bbeee0ecd907aa71b22e4071cc0dde4dde'
+          assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == parent
+          patch = Path('../transfer/.github/ux-source.patch').read_bytes()
+          patch = patch.replace(b'\n diff --git ', b'\ndiff --git ')
+          needle = b"+      text(change, name ? 'Change: '+name : 'Choose recipe');\n"
+          assert patch.count(needle) == 1
+          patch = patch.replace(needle, needle + b"+      change.setAttribute('aria-label', name ? 'Change recipe: '+name : 'Choose recipe');\n")
+          subprocess.run(['git','apply','--index','--unidiff-zero','--whitespace=error-all','-'],input=patch,check=True)
+          tree = subprocess.check_output(['git','write-tree'],text=True).strip()
           assert tree == '863d971867870f01dee1d24394faa8033fdd53aa', tree
-          subprocess.run(['git','config','user.name','OpenAI'], check=True)
-          subprocess.run(['git','config','user.email','noreply@openai.com'], check=True)
-          commit = subprocess.check_output(['git','commit-tree',tree,'-p','f22b56bbeee0ecd907aa71b22e4071cc0dde4dde','-m','fix: make recipe and mobile Create entry points explicit and accessible'], text=True).strip()
-          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-create-entry-points'], check=True)
-          pathlib.Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Published '+commit+'\n\nVerified tree: '+tree+'\n')
+          subprocess.run(['git','config','user.name','OpenAI'],check=True)
+          subprocess.run(['git','config','user.email','noreply@openai.com'],check=True)
+          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: make recipe and mobile Create entry points explicit and accessible'],text=True).strip()
+          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-create-entry-points'],check=True)
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Published '+commit+'\nVerified tree: '+tree+'\n')
           PY
