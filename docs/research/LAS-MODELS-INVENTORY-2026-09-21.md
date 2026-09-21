@@ -1,8 +1,8 @@
 # LAS / Comfy model inventory — 2026-09-21
 
-**Studio (active checkout):**   
+**Studio (active checkout):** `C:\Users\jekyt\Desktop\Printer Config\Others\Git\local-asset-studio`  
 **Stale checkout (do not use — frozen at PR #7):** `C:\Users\jekyt\source\local-asset-studio`  
-**Comfy:** `C:\AI\ComfyUI_windows_portable\ComfyUI` (`config/local.json`)  
+**Comfy:** `C:\AI\ComfyUI_windows_portable\ComfyUI` (`config/local.json` in the **active** Studio)  
 **GPU context:** RX 9070 XT 16 GB (VRAM arbitration vs Spoken Briefs / local LLM)
 
 Weights are **not** in git; LAS `models/installed-manifest.json` is the curated registry. Live Comfy `models/` has additional downloads beyond that registry.
