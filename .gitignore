@@ -46,3 +46,17 @@ _spoken/
 research/ux/use-case-matrix.json
 /.idea
 /.worktrees
+
+# Local-only example media (adult lab, 21 September 2026). The JPEGs stay on this PC and are
+# served from disk by /api/examples/...; examples/<folder>/MANIFEST.json is the tracked record
+# and scripts/lab-media.py verifies, restores and indexes them.
+examples/nsfw-lab/*.jpg
+examples/nsfw-lab/*.jpeg
+examples/nsfw-lab/*.png
+examples/nsfw-lab/*.webp
+examples/nsfw-lab/index.html
+examples/civitai-intake/*.jpg
+examples/civitai-intake/*.jpeg
+examples/civitai-intake/*.png
+examples/civitai-intake/*.webp
+examples/civitai-intake/index.html
