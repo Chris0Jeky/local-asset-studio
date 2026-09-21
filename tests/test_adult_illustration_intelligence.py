@@ -183,5 +183,73 @@ class AdultIllustrationIntelligenceValidatorTests(unittest.TestCase):
         self.assertTrue(any("immutable revision" in error for error in errors))
 
 
+    def test_checked_in_intelligence_manifests_are_valid(self):
+        self.assertEqual(self.validator.validate_paths(ROOT), [])
+
+    def test_non_string_array_members_fail_closed(self):
+        def mutate(docs):
+            docs["prompt-dialects.json"]["profiles"][0]["source_urls"] = [{}]
+
+        errors = self.validate(mutate)
+        self.assertTrue(any("source URLs" in error for error in errors))
+
+    def test_accepted_vocabulary_requires_verified_immutable_provenance(self):
+        def mutate(docs):
+            vocabulary = docs["tag-vocabulary-example.json"]
+            vocabulary["accepted_for_compilation"] = True
+            vocabulary["entries"][0]["accepted"] = True
+
+        errors = self.validate(mutate)
+        joined = " | ".join(errors)
+        self.assertIn("verified status", joined)
+        self.assertIn("immutable source provenance", joined)
+
+    def test_canonical_provider_url_must_match_recorded_identity(self):
+        def mutate_hf(docs):
+            docs["source-intake-example.json"]["records"][0][
+                "provider_model_id"
+            ] = "other-org/other-model"
+
+        hf_errors = self.validate(mutate_hf)
+        self.assertTrue(
+            any("canonical URL identity" in error for error in hf_errors)
+        )
+
+        def mutate_civitai(docs):
+            docs["source-intake-example.json"]["records"][1][
+                "canonical_url"
+            ] = "https://civitai.com/models/999999?modelVersionId=111111"
+
+        civitai_errors = self.validate(mutate_civitai)
+        self.assertTrue(
+            any("canonical URL identity" in error for error in civitai_errors)
+        )
+
+    def test_source_intake_rejects_duplicate_normalized_file_paths(self):
+        def mutate(docs):
+            files = docs["source-intake-example.json"]["records"][0]["files"]
+            duplicate = copy.deepcopy(files[0])
+            duplicate["id"] = "weights-copy"
+            duplicate["path"] = "folder/../model.safetensors"
+            files[0]["path"] = "model.safetensors"
+            files.append(duplicate)
+
+        errors = self.validate(mutate)
+        joined = " | ".join(errors)
+        self.assertIn("file path is unsafe", joined)
+
+        def mutate_exact(docs):
+            files = docs["source-intake-example.json"]["records"][0]["files"]
+            duplicate = copy.deepcopy(files[0])
+            duplicate["id"] = "weights-copy"
+            files.append(duplicate)
+
+        exact_errors = self.validate(mutate_exact)
+        self.assertTrue(
+            any("duplicate file path" in error for error in exact_errors)
+        )
+
+
+
 if __name__ == "__main__":
     unittest.main()

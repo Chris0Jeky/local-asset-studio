@@ -126,5 +126,62 @@ class AdultIllustrationCliTests(unittest.TestCase):
             self.assertFalse(result["generation_submitted"])
 
 
+    def test_large_valid_projection_round_trips_beyond_source_budget(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "large-intent.json"
+            projection = Path(tmp) / "large-projection.json"
+            value = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+            value["controls"] = [
+                {
+                    "id": f"control-{index}",
+                    "target": "pose.action",
+                    "mechanism": "geometry_artifact",
+                    "priority": "hard",
+                    "description": f"{index:02d}" + "c" * 498,
+                }
+                for index in range(32)
+            ]
+            value["constraints"] = [
+                {
+                    "id": f"constraint-{index}",
+                    "text": f"{index:02d}" + "v" * 498,
+                    "mechanism": "verify",
+                    "priority": "soft",
+                }
+                for index in range(20)
+            ]
+            value["tags"] = [
+                f"tag-{index:02d}-" + "t" * 112 for index in range(80)
+            ]
+            source.write_text(json.dumps(value), encoding="utf-8")
+
+            code, stdout, stderr = self.run_cli(
+                ["project", str(source), "--out", str(projection)]
+            )
+            self.assertEqual(code, 0, stderr)
+            self.assertEqual(stdout, "")
+            saved = json.loads(projection.read_text(encoding="utf-8"))
+            canonical = json.dumps(
+                saved,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                allow_nan=False,
+            ).encode("utf-8")
+            self.assertGreater(len(canonical), 65_536)
+
+            code, stdout, stderr = self.run_cli(
+                ["validate-projection", str(projection)]
+            )
+            self.assertEqual(code, 0, stderr)
+            rebuilt = json.loads(stdout)
+            self.assertEqual(
+                rebuilt["projection_sha256"], saved["projection_sha256"]
+            )
+            self.assertFalse(rebuilt["execution_authorized"])
+            self.assertFalse(rebuilt["generation_submitted"])
+
+
+
 if __name__ == "__main__":
     unittest.main()

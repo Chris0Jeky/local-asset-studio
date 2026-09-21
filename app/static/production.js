@@ -1,6 +1,7 @@
 let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false, productionActionPending=false;
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
+let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
@@ -71,7 +72,7 @@ function renderProduction(){
   $('#productionDetail').innerHTML=html;
 }
 async function openComparison(parent=null){
-  if(!selected)return;comparisonParent=parent;
+  if(!selected)return;++plannerRequestId;comparisonParent=parent;
   uploaded=(await uploadInput('reference'))||uploaded;lastUploaded=(await uploadInput('lastReference'))||lastUploaded;
   comparisonRecipe={preset_id:selected.id,...continuationPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:[...parentAssets],expected_template_sha256:recipeTemplateHash};
   const axes=[['seed','Seed'],['lora','LoRA strength'],['cfg','Guidance'],['steps','Steps'],['denoise','Denoise']].filter(([key])=>selected[key]&&!(key==='lora'&&typeof selected.defaults?.lora==='string'));
@@ -80,7 +81,7 @@ async function openComparison(parent=null){
   $('#experimentAxis').disabled=!axes.length;
   $('#experimentBudget').disabled=!!parent;$('#experimentBudget').value=parent?.budget.allowance||4;
   $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
-  plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerBlock();renderPlanner();
+  plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';plannerBlock();renderPlanner();
   if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
   sizeBudgetToCandidates();
   renderPlannerSummary();
@@ -93,13 +94,14 @@ function plannerBlock(){
   let block=$('#plannerBlock');
   if(!block){
     block=document.createElement('div');block.id='plannerBlock';block.className='planner';
-    block.innerHTML='<details id="plannerAdvanced" class="planner-advanced"><summary>Advanced: plan several settings from the library</summary><p class="muted">The settings library holds values documented for this model family. Planning from it replaces the single-setting comparison above and still reserves nothing until you prepare the plan.</p><div class="production-actions"><button type="button" id="planFromKnowledge">Plan from settings library</button><button type="button" id="planRemix">Remix LoRA weights</button><button type="button" id="clearPlanned" hidden>Clear planned variants</button></div><div id="plannerAxes" class="planner-axes"></div></details><div id="plannedVariants" class="variants"></div>';
+    block.innerHTML='<details id="plannerAdvanced" class="planner-advanced"><summary>Advanced: plan several settings from the library</summary><p class="muted">The settings library holds values documented for this model family. Planning from it replaces the single-setting comparison above and still reserves nothing until you prepare the plan.</p><div class="production-actions"><button type="button" id="inspectSettings">Inspect available settings</button><button type="button" id="planFromKnowledge">Plan from settings library</button><button type="button" id="planRemix">Remix LoRA weights</button><button type="button" id="clearPlanned" hidden>Clear planned variants</button></div><div id="plannerLimits" class="muted" role="status"></div><div id="plannerAxes" class="planner-axes"></div></details><div id="plannedVariants" class="variants"></div>';
     $('#experimentStatus').before(block);
+    $('#inspectSettings').onclick=()=>requestPlan('inspect');
     $('#planFromKnowledge').onclick=()=>requestPlan('grid');
     $('#planRemix').onclick=()=>requestPlan('remix');
-    $('#clearPlanned').onclick=()=>{plannedVariants=null;renderPlanner();};
+    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();};
     $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
-    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
+    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
   }
   return block;
 }
@@ -113,15 +115,16 @@ function variantChanges(variant,base){
   const stated=key=>new RegExp('(^|[^a-z0-9_])'+String(key+'='+controls[key]).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![0-9.])','i').test(label);
   return Object.keys(controls).sort().filter(key=>!PLANNER_PROSE.has(key)&&String(controls[key])!==String(from[key]??'')&&!stated(key)).map(key=>key+'='+controls[key]);
 }
-function renderPlanner(){
+function renderPlanner(resizeBudget=true){
   const planned=plannedVariants||[];
+  $('#plannerLimits').innerHTML=(plannerWithheld.length?'<p><b>Settings held for acceleration</b></p><ul>'+plannerWithheld.map(a=>'<li><b>'+esc(a.id)+'</b>: '+esc(a.message)+' ('+esc((a.accelerator_slots||[]).join(', '))+')</li>').join('')+'</ul>':'')+(plannerNotice?'<p>'+esc(plannerNotice)+'</p>':'');
   $('#plannerAxes').innerHTML=plannerAxes.length?'<small>Settings to vary</small>'+plannerAxes.map(a=>'<label class="planner-axis"><input type="checkbox" value="'+esc(a.id)+'" '+(plannerAxisIds.includes(a.id)?'checked':'')+'> '+esc(a.id)+' · '+esc(a.values.join(', '))+'</label>').join(''):'';
   $('#plannedVariants').innerHTML=planned.map((v,i)=>{const changes=variantChanges(v,comparisonRecipe?.controls);
     return '<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button>'+(changes.length?'<small>'+esc(changes.join(', '))+'</small>':'')+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>';}).join('');
   $('#clearPlanned').hidden=!planned.length;
   $('#experimentValues').required=!planned.length;$('#experimentValues').disabled=!!planned.length;
   $('#experimentAxis').disabled=!!planned.length||!$('#experimentAxis').value;
-  if(planned.length&&!comparisonParent)sizeBudgetToCandidates();
+  if(resizeBudget&&planned.length&&!comparisonParent)sizeBudgetToCandidates();
   $('#prepareExperiment').disabled=!planned.length&&!$('#experimentAxis').value;
   if(planned.length&&$('#plannerAdvanced'))$('#plannerAdvanced').open=true;
   renderPlannerSummary();
@@ -160,23 +163,31 @@ function renderPlannerSummary(){
 }
 async function requestPlan(mode){
   if(!comparisonRecipe)return;
+  const ticket=++plannerRequestId,recipe=comparisonRecipe,snapshot=JSON.stringify(recipe);
+  const current=()=>ticket===plannerRequestId&&comparisonRecipe===recipe&&JSON.stringify(recipe)===snapshot&&$('#experimentDialog').open;
   $('#experimentStatus').textContent='Reading the documented settings for this family…';
   try{
-    const body={preset_id:comparisonRecipe.preset_id,controls:comparisonRecipe.controls,mode};
-    if(mode==='grid'&&plannerAxisIds.length)body.axes=plannerAxisIds;
+    const body={preset_id:recipe.preset_id,controls:recipe.controls,mode};
+    if(mode==='grid'&&plannerAxisIds.length)body.axes=[...plannerAxisIds];
     const offer=await post('/api/experiments/plan',body);
-    plannerAxes=offer.axes_available||[];plannedVariants=offer.variants||[];
+    if(!current())return;
+    plannerAxes=offer.axes_available||[];plannerWithheld=offer.axes_withheld||[];plannerNotice=offer.notice||'';
+    if(mode!=='inspect')plannedVariants=offer.variants||[];
     if(mode==='grid'&&!plannerAxisIds.length)plannerAxisIds=[...new Set(plannedVariants.flatMap(v=>Object.keys(v.controls||{})))].filter(k=>plannerAxes.some(a=>a.control===k)).map(k=>plannerAxes.find(a=>a.control===k).id);
-    renderPlanner();
-    $('#experimentStatus').textContent=plannedVariants.length+' documented variants planned. Nothing is reserved until you prepare the plan.';
-  }catch(err){plannedVariants=null;renderPlanner();$('#experimentStatus').textContent=err.message;}
+    renderPlanner(mode!=='inspect');
+    $('#experimentStatus').textContent=mode==='inspect'?plannerAxes.length+' settings available; '+plannerWithheld.length+' held. Existing variants are unchanged. Nothing was reserved or submitted.':plannedVariants.length+' documented variants planned. Nothing is reserved until you prepare the plan.';
+  }catch(err){
+    if(!current())return;
+    if(mode!=='inspect')plannedVariants=null;
+    plannerAxes=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
+  }
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}
 // The planner must not propose candidates it then refuses to run: the allowance follows its own
 // proposal. It only ever rises, so a total the operator raised is never reduced, and a branch that
 // shares its parent's budget (a disabled allowance) is left alone (#278 friction 5).
 function sizeBudgetToCandidates(){const field=$('#experimentBudget');if(!field||field.disabled)return;const need=(plannedVariants||[]).length||plannedValues().length;if(need>(Number(field.value)||0))field.value=need;}
-$('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>$('#experimentDialog').close();
+$('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>{++plannerRequestId;$('#experimentDialog').close();};
 $('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=renderPlannerSummary;
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));

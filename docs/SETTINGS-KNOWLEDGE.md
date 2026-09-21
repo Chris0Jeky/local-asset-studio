@@ -122,13 +122,26 @@ style. Keep the negative short. Defaults euler_ancestral / normal, 30 steps, cfg
 25/30, cfg 6/7, sampler euler_ancestral or dpmpp_2m_sde, scheduler normal or karras. Pony LoRAs are their own
 ecosystem: Illustrious and SDXL-base adapters do not transfer reliably.
 
-## Anima (Anima Aesthetic 1.1)
+## Anima: Aesthetic 1.1, Base 1.0 and native adapters
 
-Prose first, tags after: the compact Qwen encoder reads sentences. This family *does* take a negative prompt
-(node 5 in the authored graphs). The authored graph is euler / simple, 30 steps, cfg 4.0 at 768x1152, and the
-preset's own variants bracket it at 20 and 36 steps; cfg above 5 drifts toward plastic shading. No
-Anima-compatible LoRA is installed, and the presets bind no LoRA slot. Weights are CircleStone Labs
-Non-Commercial, with separate terms for outputs.
+The `Anima` family contains distinct configurations. The Aesthetic portrait graph uses euler / simple,
+30 steps, cfg 4.0 at 768x1152, with its own authored variants. Base 1.0 and the native artist-stack and
+turbo-LoRA routes also exist: `models/library.json`, `presets/catalog.json` and the
+[atelier execution records](../experiments/curated/anime-fantasy-atelier/README.md) are the current owners
+of their identities and measured runs. The earlier statement that no Anima-compatible LoRA was installed
+is obsolete. Aesthetic-substituted probes are not Base-run evidence, and Base plus turbo LoRA v0.2 is not
+standalone Turbo v1.1.
+
+The family card's Aesthetic advice avoids `score_*` tokens in both positive and negative text. The current
+family KB also retains Base-template negative and conditional accelerated-step advice; these are not
+universal Aesthetic settings. Do not silently copy or remove terms in an existing user brief. Exact-version
+compiler/conditional-planner migration is tracked through #34/#144; the
+[research integration](strategy/anime-qualification/README.md) distinguishes family guidance, local
+workflow choices and actual executions. Anima takes a negative channel but does not accept SDXL
+LoRA/IP-Adapter/ControlNet weights merely because they share a node label.
+
+The weights use the CircleStone Labs Non-Commercial weights terms, distinct from generated-output conditions.
+Preserve the recorded private-experiment decision and per-file provenance; a recipe or byte hash is not a rights grant.
 
 ## SDXL, Z-Image Turbo, FLUX.2 Klein, Qwen Image Edit
 
