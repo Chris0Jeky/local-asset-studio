@@ -122,5 +122,25 @@ class SourceCompatibilityBridgeEdgeTests(unittest.TestCase):
         result = S.adapt(request(source=report(diagnostics=diagnostics)))
         self.assertEqual(result['source_diagnostics'], diagnostics)
 
+    def test_incomplete_coverage_preserves_exact_mapping_and_positive_observations(self):
+        source = report(diagnostics=[{
+            'code': 'pagination_incomplete',
+            'message': 'An advertised cursor was not retained.',
+        }])
+        source['coverage_complete'] = False
+        result = S.adapt(request(source=source))
+        self.assertEqual(result['candidate']['identity'], FILE_ID)
+        self.assertFalse(result['source_coverage_complete'])
+        self.assertEqual(len(result['source_observations']), 1)
+        self.assertEqual(len([item for item in result['evidence']
+                              if item['kind'] == 'gallery_co_use']), 1)
+        self.assertIn('source_coverage_incomplete',
+                      [item['code'] for item in result['diagnostics']])
+
+    def test_coverage_complete_must_be_boolean(self):
+        source = report(); source['coverage_complete'] = 'yes'
+        with self.assertRaisesRegex(ValueError, 'coverage'):
+            S.adapt(request(source=source))
+
 
 if __name__ == '__main__': unittest.main()
