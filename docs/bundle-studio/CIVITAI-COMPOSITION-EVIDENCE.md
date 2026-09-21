@@ -49,7 +49,8 @@ companion checks have passed.
 
 ## Input contract
 
-The CLI accepts `studio.civitai-composition-input/v1` with:
+The CLI accepts a bounded `studio.civitai-composition-input/v1` document of at most
+1 MiB with:
 
 - one exact model-version snapshot;
 - zero to 32 retained image pages;
@@ -58,7 +59,9 @@ The CLI accepts `studio.civitai-composition-input/v1` with:
 
 Every receipt contains the exact source host, route, sorted query, retrieval time,
 response SHA-256, cache validators, outcome and broad authentication context. It
-must not contain credentials or secret query parameters.
+must not contain credentials or secret query parameters. Common case and separator
+variants such as `api_key`, `AccessToken`, `AuthorizationBearer` and `password` are
+refused rather than copied into evidence.
 
 Supported hosts are exactly:
 
@@ -66,8 +69,10 @@ Supported hosts are exactly:
 - `civitai.red`.
 
 The hosts are never aliases. Their observations remain in different source scopes.
-The image query and browsing/filter parameters are also part of the scope, so a
-safe-only query is not silently combined with a broader query.
+Browsing and filtering parameters are part of the scope, so a safe-only query is
+not silently combined with a broader query. Traversal-only `cursor`, `page` and
+`limit` values stay in the exact receipts but are excluded from the evidence scope,
+allowing pages from one bounded crawl to deduplicate and aggregate together.
 
 A model-version snapshot must:
 
@@ -82,8 +87,8 @@ Every image page must:
 - explicitly request `withMeta=true`;
 - carry a bounded, credential-free query.
 
-A `filtered` or `blocked` page remains a retained receipt with a diagnostic. It is
-not interpreted as an empty authoritative result.
+A `filtered`, `blocked` or `unknown` page remains a retained receipt with a
+diagnostic. It is not interpreted as an empty authoritative result.
 
 The response SHA-256 is a retained transport receipt. This offline parser cannot
 recreate a raw byte hash from a parsed JSON object. The eventual capture command
@@ -95,12 +100,13 @@ reviewed bounded transport rather than duplicating provider access here.
 The normalizer retains bounded fields needed for later review:
 
 - model ID and version ID;
-- AIR when syntactically usable, otherwise `civitai-version:<id>`;
+- canonical AIR only when its embedded model/version IDs match the payload,
+  otherwise `civitai-version:<id>` plus a diagnostic;
 - provider model/version names and type;
 - `baseModel` and `baseModelType` claims;
 - trained words;
 - creation, update and publication strings;
-- provider permission claims;
+- bounded provider permission claims;
 - exact provider file ID, name, byte count, primary flag and file type;
 - format, precision and size-class metadata;
 - provider hashes and scan-result claims.
@@ -134,16 +140,18 @@ Malformed optional metadata does not erase valid top-level version IDs. Invalid
 individual resource rows are skipped with diagnostics rather than promoting their
 claims. Prompt text is never retained.
 
-Identical duplicate image records within one source scope are deduplicated. If the
-same source scope and image ID produce conflicting semantic records, all versions
-of that image are excluded from evidence; the parser does not pick a first or last
-winner.
+Identical duplicate image records within one normalized source scope are
+deduplicated, including duplicates repeated across cursor pages. Their response
+receipts are preserved together. If the same source scope and image ID produce
+conflicting semantic records, all versions of that image are excluded from
+evidence; the parser does not pick a first or last winner.
 
 ## Combination aggregation
 
 An unordered exact-version combination is emitted only when at least two version
-IDs were reported together. Aggregation is scoped by host, route, query and auth
-context.
+IDs were reported together. Aggregation is scoped by host, route, filter/browsing
+query and auth context. Pagination controls do not split the same crawl into
+artificially independent evidence groups.
 
 Breadth is deliberately conservative:
 
@@ -173,13 +181,17 @@ does not itself label an image successful or a combination optimal.
 `coverage_complete` is false when:
 
 - no image page was retained;
-- a page was filtered or blocked;
-- a retained page reports an unfetched `nextCursor`.
+- a page was filtered, blocked or has unknown outcome;
+- an otherwise successful page omitted pagination metadata;
+- a page reported an invalid `nextCursor`;
+- a page advertised a `nextCursor` that is absent from the retained pages in the
+  same normalized source scope.
 
-It does not claim that `true` proves universal Civitai coverage. It means only that
-the supplied bounded receipt set did not itself expose one of those incompleteness
-conditions. Provider moderation, deletion, authentication, region, indexing and API
-behaviour may still limit visibility.
+When every advertised cursor is retained, all pages share one scope and the bounded
+chain may report complete. This still does not claim universal Civitai coverage. It
+means only that the supplied receipt set did not itself expose one of those
+incompleteness conditions. Provider moderation, deletion, authentication, region,
+indexing and API behaviour may still limit visibility.
 
 `.com` and `.red` can expose different visible subsets. Those differences are data
 to inspect, not records to merge away. A later research report can compare source
@@ -218,18 +230,19 @@ The test-only commit `eff448a` preceded the implementation and intentionally fai
 because the module did not exist. Focused coverage is:
 
 ```sh
-python -m unittest discover -s tests -p 'test_civitai_composition.py' -v
+python -m unittest discover -s tests -p 'test_civitai_composition*.py' -v
 python -m studio_workflow.civitai_composition --help
 python -m unittest discover -s tests
 python scripts/validate-repo.py
 ```
 
-Fixtures cover exact version/file facts, AIR/SHA identity, same-name files, typed
-resource weights, scalar settings, post-level deduplication, uploader breadth,
-`.com`/`.red` separation, browsing-level separation, blocked/filtered pages,
-incomplete cursors, absent/malformed metadata, invalid resource rows, conflicting
-duplicate images, hostile text omission, query/host/route refusal, immutable input,
-bounds and CLI zero-authority output.
+Fixtures cover exact version/file facts, AIR/SHA identity, mismatched AIR fallback,
+same-name files, typed resource weights, scalar settings, post-level deduplication,
+uploader breadth, cursor-chain scope/deduplication, `.com`/`.red` separation,
+browsing-level separation, blocked/filtered/unknown pages, missing and incomplete
+pagination, absent/malformed metadata, invalid resource rows, conflicting duplicate
+images, hostile text omission, sensitive query variants, query/host/route refusal,
+immutable input, bounds and CLI zero-authority output.
 
 ## Follow-up integration
 
