@@ -1,0 +1,327 @@
+{
+  "schema": "studio.adult-illustration-genre-packs/v0",
+  "kind": "non-executing-pack-candidates",
+  "executable": false,
+  "authority": "none",
+  "research_date": "2026-09-15",
+  "source_baseline": "b29205cfc95ca4e64d72ae38d53df30c83968997",
+  "issue": 410,
+  "packs": [
+    {
+      "id": "editorial-pinup",
+      "title": "Pin-up and fashion editorial",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-editorial-pinup"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "fashion-lingerie",
+      "title": "Fashion and lingerie construction study",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-canon-new-outfit",
+        "adult-material-lighting"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "swim-beach",
+      "title": "Swimwear and beach scene",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-material-lighting"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "hot-spring-steam",
+      "title": "Hot-spring, towel/robe and steam",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-swim-hot-spring"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "lounge-sleepwear",
+      "title": "Lounge and sleepwear",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-canon-new-outfit"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "fantasy-glamour",
+      "title": "Fantasy glamour",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-fantasy-glamour"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "scifi-cyber",
+      "title": "Sci-fi and cyber fashion",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-scifi-cyber"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "street-fashion",
+      "title": "Street fashion and urban lighting",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-street-fashion-urban-night"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "comedy-fanservice",
+      "title": "Comedy/fanservice composition",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-editorial-pinup"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "action-dynamic",
+      "title": "Dynamic action with controlled framing",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-action-fanservice",
+        "adult-foreshortened-camera"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "manga-panel",
+      "title": "Manga/panel sequence",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-three-pose-sheet"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "character-sheet",
+      "title": "Adult character pose/expression sheet",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-three-pose-sheet"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "two-adult-scene",
+      "title": "Two-adult relationship/contact scene",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "two-adult-shared-prop"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    },
+    {
+      "id": "repair-refine",
+      "title": "Scoped repair and finishing",
+      "executable": false,
+      "content_class": "sensual_non_explicit",
+      "adult_assertion_required": true,
+      "compatible_routes": [],
+      "benchmark_cases": [
+        "adult-local-contact-repair",
+        "adult-local-wardrobe-edit"
+      ],
+      "modules": [
+        "draft_composition",
+        "lock_geometry",
+        "preserve_identity_outfit",
+        "quality_render",
+        "review",
+        "scoped_repair",
+        "finish_export"
+      ],
+      "defaults_evidence": "unqualified",
+      "authorized_candidate_cap": 0
+    }
+  ],
+  "notes": [
+    "A genre pack is a transparent module selection, never an opaque prompt or executor.",
+    "Compatible routes stay empty until exact qualification and reviewed binding.",
+    "No pack authorizes generation or claims installation."
+  ]
+}
