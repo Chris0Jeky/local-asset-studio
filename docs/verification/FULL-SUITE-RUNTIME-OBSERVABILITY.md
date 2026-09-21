@@ -7,12 +7,44 @@ Local Asset Studio's lifetime lane keeps causal evidence when a test process beh
 | Surface | Evidence retained | Trigger |
 | --- | --- | --- |
 | Test execution | `START` / `END` test IDs plus the current-test watchdog and Python thread dump | A test exceeds the worker's pre-timeout deadline |
-| Loopback transport | Exact numeric fixture endpoint, caller thread and bounded basename-only stack | The instrumented fixture receives a connection |
+| Thread starts | Root owner test, test active at `Thread.start()`, parent thread and bounded basename-only start stack | A later observed action runs on a thread started after worker observation began |
+| Loopback transport | Exact numeric fixture endpoint, active test, caller thread, thread-start owner and bounded current/start stacks | The instrumented fixture receives a connection |
 | Python thread shutdown | Current test state and every Python thread stack | A non-daemon thread retains the worker after the suite completes |
 | Multiprocessing shutdown | Direct-child name, PID, daemon state and exit code, followed by the shutdown watchdog | `multiprocessing.active_children()` still contains a live child |
 | `atexit` finalization | Callback identity, registration thread and bounded registration stack before invocation; return/exception outcome after invocation | A callback registered after worker observation starts is invoked |
 
 The parent process owns one hard lifetime budget. Startup/test completion is recognized by the explicit `LIFETIME SUITE COMPLETE` marker; shutdown observation starts from that signal rather than from a fixed sleep or an assumed startup duration.
+
+## Cross-test thread ownership
+
+The worker installs `ThreadOwnershipObserver` immediately before unittest discovery and publishes each active test ID through the same shared module used by the transport audit. A standard `threading.Thread.start()` therefore records:
+
+```json
+{
+  "status": "observed",
+  "owner_test": "test_a.StartsWorker.test_start",
+  "started_during_test": "test_a.StartsWorker.test_start",
+  "parent_thread": "MainThread",
+  "start_stack": [
+    {"file": "test_a.py", "line": 42, "function": "test_start"}
+  ]
+}
+```
+
+When that thread connects to a fixture while a later test is active, the retained transport row keeps both identities:
+
+```json
+{
+  "active_test": "test_b.UsesFixture.test_contract",
+  "thread": "retained-worker",
+  "thread_origin": {
+    "owner_test": "test_a.StartsWorker.test_start",
+    "started_during_test": "test_a.StartsWorker.test_start"
+  }
+}
+```
+
+Nested threads inherit the root owner test while retaining their own `started_during_test`, parent thread and start stack. This distinguishes the test observing leaked work from the test that launched it. Threads already alive before observation are reported as `started-before-observer`; a capacity refusal is reported as `observer-capacity` rather than silently claiming complete attribution.
 
 ## `atexit` marker contract
 
@@ -36,7 +68,7 @@ The observer preserves the public behavior relied on by tests:
 
 ## Bounds and privacy
 
-Retained stacks contain only file basenames, line numbers and function names. Absolute machine paths, callback arguments, request bodies, headers, response bytes, socket objects and exception messages are excluded. Frame counts, text fields, observed loopback calls and fully attributed callback registrations are capped. Hitting the callback-registration cap emits an explicit `SATURATED` marker instead of silently pretending coverage remains complete.
+Retained stacks contain only file basenames, line numbers and function names. Absolute machine paths, callback arguments, request bodies, headers, response bytes, socket objects and exception messages are excluded. Frame counts, text fields, observed loopback calls, live thread origins and fully attributed callback registrations are capped. Capacity loss remains explicit in the retained evidence rather than silently pretending coverage remains complete.
 
 `ProcessCapture.reap()` also preserves the primary failure. If an output-reader thread fails to terminate while cleanup is already unwinding another exception, the reader failure is attached as an exception note; it is raised directly only when no primary exception exists.
 
@@ -60,4 +92,6 @@ The hosted lifetime workflow runs the focused contracts on Ubuntu and Windows an
 
 ## Deliberate boundary
 
-This observer covers Python callbacks registered through `atexit.register` after observation begins. Native-extension finalizers, callbacks registered before the worker installs observation, detached grandchildren and external processes are not claimed as covered. Those remain distinct follow-up classes under #609 rather than being hidden behind a broader timeout.
+Thread ownership covers standard Python threads whose `threading.Thread.start()` runs after observation begins. Threads created by native extensions, threads already alive before observation, and custom thread implementations that bypass `Thread.start()` are reported as unobserved rather than attributed speculatively.
+
+The finalization observer covers Python callbacks registered through `atexit.register` after observation begins. Native-extension finalizers, callbacks registered before the worker installs observation, detached grandchildren and external processes are not claimed as covered. Those remain separate evidence classes rather than being hidden behind a broader timeout.

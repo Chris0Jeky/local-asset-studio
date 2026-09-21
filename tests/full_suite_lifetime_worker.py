@@ -3,9 +3,9 @@
 The parent process owns the hard lifetime budget. This worker names every test as
 it starts and arms a slightly earlier marker plus faulthandler dump so a hung
 fixture leaves the current test ID and every Python thread stack in captured CI
-output before the parent terminates it. After the suite completes it also records
-active multiprocessing children and wraps later atexit registrations so retained
-interpreter-finalization work has an owner and bounded registration stack.
+output before the parent terminates it. It attributes thread starts to the active
+test, records active child processes and wraps later atexit registrations so
+retained runtime work has an owner and bounded origin evidence.
 """
 from __future__ import annotations
 
@@ -21,7 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from runtime_observability import AtexitCallbackObserver  # noqa: E402
+from runtime_observability import (  # noqa: E402
+    AtexitCallbackObserver,
+    ThreadOwnershipObserver,
+    current_test,
+    set_current_test,
+)
 
 # faulthandler walks every thread's frames from C without the GIL. The hosted
 # Windows runner crashed the worker with an access violation (0xC0000005, run
@@ -29,19 +34,6 @@ from runtime_observability import AtexitCallbackObserver  # noqa: E402
 # the C dump traversed it. Keep the two writers a real interval apart instead of
 # a fraction of a deadline that is only milliseconds long in a focused fixture.
 MARKER_SEPARATION_SECONDS = 0.25
-_CURRENT_TEST = "<not started>"
-_CURRENT_LOCK = threading.Lock()
-
-
-def set_current_test(value: str) -> None:
-    global _CURRENT_TEST
-    with _CURRENT_LOCK:
-        _CURRENT_TEST = value
-
-
-def current_test() -> str:
-    with _CURRENT_LOCK:
-        return _CURRENT_TEST
 
 
 def emit_current_test(stream=sys.stderr, prefix: str = "LIFETIME") -> None:
@@ -96,7 +88,14 @@ class LifetimeDiagnostics:
         # and its timer thread finished before the C-level all-thread dump traverses
         # it. The START line remains the fallback if a test monopolizes the GIL and
         # the Python timer cannot run.
-        marker_delay = max(0.0, self.seconds - max(MARKER_SEPARATION_SECONDS, min(1.0, self.seconds / 3.0)))
+        marker_delay = max(
+            0.0,
+            self.seconds
+            - max(
+                MARKER_SEPARATION_SECONDS,
+                min(1.0, self.seconds / 3.0),
+            ),
+        )
         self.marker = threading.Timer(
             marker_delay,
             emit_current_test,
@@ -171,9 +170,12 @@ def parse_args(argv=None):
 def main(argv=None) -> int:
     args = parse_args(argv)
     start_dir = Path(args.start_dir).resolve()
-    # Install before discovery so module-level registrations made while importing
-    # tests are attributed, but keep import-time loading of this worker side-effect
-    # free for the focused contract tests that inspect its helper functions.
+    # Install before discovery so threads and module-level atexit registrations
+    # created while importing tests are attributed, while importing this worker
+    # itself remains side-effect free for its focused contract tests.
+    set_current_test("<discovery>")
+    thread_observer = ThreadOwnershipObserver()
+    thread_observer.install()
     atexit_observer = AtexitCallbackObserver()
     atexit_observer.install()
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
