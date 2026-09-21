@@ -76,11 +76,12 @@ def _current(value, adopt_brief):
         check['brief'] = 'Pending reviewed instruction'
     validate(check)
     need(check['task'] in ('image', 'edit'), 'Reference review currently supports image/edit briefs only')
-    return copy.deepcopy(value)
+    return check
 
 
 def preview(value):
     fields(value, ('analysis', 'review', 'images', 'intent', 'adopt_brief'))
+    captured = copy.deepcopy(value['intent'])
     current = _current(value['intent'], value['adopt_brief'])
     report = _report(value['analysis'])
     source = draft(report, value['review'], source_bytes=_images(report, value['images']))
@@ -97,7 +98,8 @@ def preview(value):
         need(not any(field == lock or field.startswith(lock + '.') for lock in current['locked']), 'Locked field: ' + field)
         changes.append({'field': field, 'before': copy.deepcopy(before), 'after': copy.deepcopy(after)})
     validate(result)
-    envelope = {'format': 'studio.reference-transfer-preview/v1', 'base_sha256': digest(current), 'base_intent': current,
+    # Browser matches base_intent to the captured snapshot; placeholder normalization stays internal.
+    envelope = {'format': 'studio.reference-transfer-preview/v1', 'base_sha256': digest(captured), 'base_intent': captured,
                 'intent': result, 'intent_sha256': digest(result), 'reference_draft': source,
                 'changes': changes, 'source_bytes_verified': True, 'inference_submitted': False,
                 'generation_submitted': False, 'execution_authorized': False,

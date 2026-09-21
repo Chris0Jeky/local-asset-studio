@@ -31,6 +31,23 @@ class WorkflowClient(Client):
             if item is not None: value[key] = item
         return observe(self.request, value)
 
+    def preview_control(self, document: dict, control: dict, value, *, expected_revision: int) -> dict:
+        """Inspect one proposed literal across explicit targets; never applies or runs it."""
+        from urllib.error import HTTPError
+        from .client import read_response
+        from .core import decode, MAX_BYTES
+        try:
+            return self.request('/api/workflow-studio/control-preview',
+                                {'document': document, 'control': control, 'value': value,
+                                 'expected_revision': expected_revision})
+        except HTTPError as exc:
+            with exc:
+                raw = read_response(exc, MAX_BYTES)
+            try: result = decode(raw)
+            except (ValueError, UnicodeError):
+                result = {'code': 'control_preview_invalid_response', 'error': 'Invalid control preview error response'}
+            raise ClientError(exc.code, result) from exc
+
     def documents(self) -> dict:
         return self.request(PREFIX)
 

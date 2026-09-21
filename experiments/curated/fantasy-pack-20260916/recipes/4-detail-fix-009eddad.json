@@ -1,0 +1,397 @@
+{
+ "version": 2,
+ "preset_id": "anime-detail-fix",
+ "controls": {
+  "positive": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, her face in focus with a calm, attentive expression, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition.",
+  "reference": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png",
+  "seed": 2026091301
+ },
+ "batch_count": 1,
+ "created_at": 1789520918.1707225,
+ "workflow": {
+  "1": {
+   "class_type": "CheckpointLoaderSimple",
+   "inputs": {
+    "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+   }
+  },
+  "2": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, her face in focus with a calm, attentive expression, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition."
+   }
+  },
+  "3": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, deformed hands, blurry, text, watermark"
+   }
+  },
+  "4": {
+   "class_type": "LoadImage",
+   "inputs": {
+    "image": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png"
+   }
+  },
+  "5": {
+   "class_type": "CLIPTextEncode",
+   "inputs": {
+    "clip": [
+     "1",
+     1
+    ],
+    "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, same character, same colours"
+   }
+  },
+  "10": {
+   "class_type": "UltralyticsDetectorProvider",
+   "inputs": {
+    "model_name": "bbox/face_yolov8s.pt"
+   }
+  },
+  "11": {
+   "class_type": "UltralyticsDetectorProvider",
+   "inputs": {
+    "model_name": "bbox/hand_yolov8n.pt"
+   }
+  },
+  "12": {
+   "class_type": "FaceDetailer",
+   "inputs": {
+    "image": [
+     "4",
+     0
+    ],
+    "model": [
+     "1",
+     0
+    ],
+    "clip": [
+     "1",
+     1
+    ],
+    "vae": [
+     "1",
+     2
+    ],
+    "guide_size": 512,
+    "guide_size_for": true,
+    "max_size": 1024,
+    "seed": 2026091301,
+    "steps": 24,
+    "cfg": 5.0,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "positive": [
+     "2",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "denoise": 0.4,
+    "feather": 5,
+    "noise_mask": true,
+    "force_inpaint": true,
+    "bbox_threshold": 0.5,
+    "bbox_dilation": 10,
+    "bbox_crop_factor": 3.0,
+    "sam_detection_hint": "center-1",
+    "sam_dilation": 0,
+    "sam_threshold": 0.93,
+    "sam_bbox_expansion": 0,
+    "sam_mask_hint_threshold": 0.7,
+    "sam_mask_hint_use_negative": "False",
+    "drop_size": 10,
+    "bbox_detector": [
+     "10",
+     0
+    ],
+    "wildcard": "",
+    "cycle": 1
+   }
+  },
+  "13": {
+   "class_type": "FaceDetailer",
+   "inputs": {
+    "image": [
+     "12",
+     0
+    ],
+    "model": [
+     "1",
+     0
+    ],
+    "clip": [
+     "1",
+     1
+    ],
+    "vae": [
+     "1",
+     2
+    ],
+    "guide_size": 512,
+    "guide_size_for": true,
+    "max_size": 1024,
+    "seed": 2026091301,
+    "steps": 24,
+    "cfg": 5.0,
+    "sampler_name": "dpmpp_2m",
+    "scheduler": "karras",
+    "positive": [
+     "5",
+     0
+    ],
+    "negative": [
+     "3",
+     0
+    ],
+    "denoise": 0.45,
+    "feather": 5,
+    "noise_mask": true,
+    "force_inpaint": true,
+    "bbox_threshold": 0.35,
+    "bbox_dilation": 10,
+    "bbox_crop_factor": 2.5,
+    "sam_detection_hint": "center-1",
+    "sam_dilation": 0,
+    "sam_threshold": 0.93,
+    "sam_bbox_expansion": 0,
+    "sam_mask_hint_threshold": 0.7,
+    "sam_mask_hint_use_negative": "False",
+    "drop_size": 10,
+    "bbox_detector": [
+     "11",
+     0
+    ],
+    "wildcard": "",
+    "cycle": 1
+   }
+  },
+  "14": {
+   "class_type": "SaveImage",
+   "inputs": {
+    "images": [
+     "13",
+     0
+    ],
+    "filename_prefix": "Studio/anime-detail-fix"
+   }
+  }
+ },
+ "submissions": [
+  {
+   "index": 0,
+   "prompt_id": "8933d238-53e6-40f3-9397-b8c31d43564d",
+   "seed": 2026091301,
+   "graph": {
+    "1": {
+     "class_type": "CheckpointLoaderSimple",
+     "inputs": {
+      "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+     }
+    },
+    "2": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "A fully clothed adult original character with long dark hair wears a tailored navy travelling coat with brass buttons, a high-neck shirt, trousers and leather boots, teal scarf. Three-quarter portrait, upper body, her face in focus with a calm, attentive expression, both hands visible holding a small brass lantern in front of her, soft evening light on a rain-washed station platform, detailed modern anime illustration, cinematic composition."
+     }
+    },
+    "3": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, deformed hands, blurry, text, watermark"
+     }
+    },
+    "4": {
+     "class_type": "LoadImage",
+     "inputs": {
+      "image": "aa93fb465e364532a33d40dfb21894a9_Anima-v1-Baseline_00004_.png.png"
+     }
+    },
+    "5": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "1",
+       1
+      ],
+      "text": "masterpiece, best quality, amazing quality, detailed hand, five fingers, natural hand pose, same character, same colours"
+     }
+    },
+    "10": {
+     "class_type": "UltralyticsDetectorProvider",
+     "inputs": {
+      "model_name": "bbox/face_yolov8s.pt"
+     }
+    },
+    "11": {
+     "class_type": "UltralyticsDetectorProvider",
+     "inputs": {
+      "model_name": "bbox/hand_yolov8n.pt"
+     }
+    },
+    "12": {
+     "class_type": "FaceDetailer",
+     "inputs": {
+      "image": [
+       "4",
+       0
+      ],
+      "model": [
+       "1",
+       0
+      ],
+      "clip": [
+       "1",
+       1
+      ],
+      "vae": [
+       "1",
+       2
+      ],
+      "guide_size": 512,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 2026091301,
+      "steps": 24,
+      "cfg": 5.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "positive": [
+       "2",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "denoise": 0.4,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3.0,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "bbox_detector": [
+       "10",
+       0
+      ],
+      "wildcard": "",
+      "cycle": 1
+     }
+    },
+    "13": {
+     "class_type": "FaceDetailer",
+     "inputs": {
+      "image": [
+       "12",
+       0
+      ],
+      "model": [
+       "1",
+       0
+      ],
+      "clip": [
+       "1",
+       1
+      ],
+      "vae": [
+       "1",
+       2
+      ],
+      "guide_size": 512,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 2026091301,
+      "steps": 24,
+      "cfg": 5.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "positive": [
+       "5",
+       0
+      ],
+      "negative": [
+       "3",
+       0
+      ],
+      "denoise": 0.45,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.35,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 2.5,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "bbox_detector": [
+       "11",
+       0
+      ],
+      "wildcard": "",
+      "cycle": 1
+     }
+    },
+    "14": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "13",
+       0
+      ],
+      "filename_prefix": "Studio/anime-detail-fix"
+     }
+    }
+   },
+   "status": "completed"
+  }
+ ],
+ "outputs": [
+  {
+   "filename": "anime-detail-fix_00003_.png",
+   "subfolder": "Studio",
+   "type": "output",
+   "seed": 2026091301,
+   "prompt_id": "8933d238-53e6-40f3-9397-b8c31d43564d",
+   "media_type": "image",
+   "asset_id": "97432e2fc7d25cc2a834267a66283c7f"
+  }
+ ],
+ "parent_assets": [
+  "021731c057d955b4a2487395a37fadf6"
+ ],
+ "references": [],
+ "preparation": null,
+ "native_recipe": null,
+ "continuation": null
+}
