@@ -125,7 +125,8 @@ function assetShelfInspect(record){
         await assetShelfRefresh();assetShelfStatus('Local record discarded. No server change was made.');document.getElementById('assetShelfRefresh').focus();return;
       }
       if(document.getElementById('assetDialog').open||assetDetailBusy||assetLibraryBusy)throw Error('Close the asset editor before restoring. Its current typing must not be replaced.');
-      await assetShelfSession.flush();const latest=(await assetShelfStore.list()).find(r=>r.id===record.id);
+      // Restore is a local journal operation. Re-read and compare the selected record without flushing unrelated checkpoints; a stale error must not block a still-current restore.
+      const latest=(await assetShelfStore.list()).find(r=>r.id===record.id);
       if(latest?.sha256!==record.sha256)throw Error('Recovery changed since inspection. Refresh to compare it; no draft was replaced.');
       if(!dialog.open||document.getElementById('assetDialog').open||assetDetailBusy||assetLibraryBusy)throw Error('The editor changed during inspection; no draft was replaced.');
       const value=assetShelfSession.restore(record,assetState.workspace_id);

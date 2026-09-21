@@ -17,6 +17,18 @@
         if(current?.sha256!==prior.sha256)throw Error('Recovery changed in another tab; inspect both viewpoints before saving.');
         return prior;
       }
+      if(!prior&&payload.operation){
+        const persisted=await store.list(),workspaceId=payload.version===2?payload.workspace_id:null,requestId=payload.operation.command.request_id;
+        const matches=persisted.filter(r=>r.slot===slot&&r.workspace_id===workspaceId&&r.payload.operation?.command.request_id===requestId);
+        if(matches.length>1)throw Error('Duplicate pending request identity; inspect both viewpoints before saving.');
+        const found=matches[0];
+        if(found){
+          if(Core.canonical(found.payload.operation)!==Core.canonical(payload.operation))throw Error('The pending command differs from its retained recovery; inspect both viewpoints before saving.');
+          if(Core.canonical(found.payload)===Core.canonical(payload)){writers.set(slot,found);return found;}
+          if(found.workspace_id!==(payload.workspace_id||null)||slot==='detail'&&found.payload.id!==payload.id)throw Error('The pending command differs from its retained recovery; inspect both viewpoints before saving.');
+          prior=found;
+        }else if(persisted.some(r=>r.workspace_id===workspaceId&&r.payload.operation?.command.request_id===requestId))throw Error('Duplicate pending request identity; inspect both viewpoints before saving.');
+      }
       const time=Math.max(0,Math.floor(now()),prior?.updated_at||0);
       const record=await Core.seal(slot,payload,{id:prior?.id||identifier(),created_at:prior?.created_at??time,updated_at:time,generation:(prior?.generation||0)+1},crypto);
       await store.put(record,prior?.sha256||null);writers.set(slot,record);return record;
