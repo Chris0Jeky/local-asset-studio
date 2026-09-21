@@ -17,6 +17,7 @@ _MAX_RAW_STACK = 64
 _MAX_TEXT = 160
 _MAX_IDENTITY = 2 * _MAX_TEXT + 1
 _CANCEL_TOKEN_TAG = "local-asset-studio::atexit-observer-cancel::v1"
+_PROXY_TYPE_TAG = "local-asset-studio::atexit-observer-proxy::v1"
 
 
 def _outside_stdlib(filename: str) -> bool:
@@ -77,6 +78,15 @@ def _type_identity(callback_type: type) -> str:
     return _identity_text(module, qualname, "builtins", "type")
 
 
+def _is_observed_proxy(value) -> bool:
+    """Recognize LAS observer proxies without invoking instance or metaclass code."""
+    try:
+        marker = type.__getattribute__(type(value), "_las_atexit_proxy_tag")
+    except (AttributeError, TypeError):
+        return False
+    return type(marker) is str and marker == _PROXY_TYPE_TAG
+
+
 def callable_identity(callback) -> str:
     """Name a callback without repr() or callback-controlled attribute access."""
     if isinstance(callback, functools.partial):
@@ -127,6 +137,7 @@ class _ObservedCallback:
     """Callable proxy whose equality mirrors the registered callback."""
 
     __slots__ = ("observer", "registration")
+    _las_atexit_proxy_tag = _PROXY_TYPE_TAG
 
     def __init__(self, observer: "AtexitCallbackObserver", registration: _Registration):
         self.observer = observer
@@ -145,7 +156,17 @@ class _ObservedCallback:
             and type(other[0]) is str
             and other[0] == _CANCEL_TOKEN_TAG
         ):
-            return self is other[1]
+            if self is other[1]:
+                return True
+            callback = self.registration.callback
+            if _is_observed_proxy(callback):
+                equal = bool(callback == other)
+                if equal:
+                    # A nested observer owns the target proxy. CPython removes this
+                    # outer proxy, so its registry must forget the same entry.
+                    self.registration.active = False
+                return equal
+            return False
         if isinstance(other, _ObservedCallback):
             return self is other
         equal = self.observer._callbacks_equal(self.registration.callback, other)
