@@ -288,7 +288,12 @@ class SetupDrafts:
                 self._save_receipt(db,receipt,sha)
                 return self._result(db,receipt)
         except (ValueError,KeyError,TypeError,OSError,sqlite3.Error,RecursionError) as exc:
-            receipt.update(status='failed',message=str(exc)[:500])
+            # A commit-receipt failure rolls the SQLite transaction back, including
+            # the appended revision. Do not persist metadata for that nonexistent
+            # revision in the independent failed-operation receipt.
+            for key in ('previous_revision','approved_proposal_sha256','changes'):
+                receipt.pop(key,None)
+            receipt.update(status='failed',revision=None,message=str(exc)[:500])
             self._progress(receipt,sha)
             with self.workspace.connection() as db:return self._result(db,receipt)
 

@@ -156,9 +156,11 @@ The successful planner result contains:
 - false authority flags for provider access, installation, runtime switching,
   selection mutation and generation.
 
-The proposal hash covers the request and all derived output. The shared-draft
-command requires both those exact bytes and the acknowledged SHA-256. It
-recomputes the proposal before writing.
+The proposal hash covers the request and all derived output. Canonical proposal
+bytes are capped at 448 KiB so even worst-case JSON escaping fits the existing
+1 MiB shared-command envelope. The shared-draft command requires both those
+exact bytes and the acknowledged SHA-256. It recomputes the proposal before
+writing.
 
 ## Atomic shared-draft application
 

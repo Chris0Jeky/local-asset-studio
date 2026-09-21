@@ -22,7 +22,9 @@ from . import setup_compatibility as compatibility
 REQUEST_FORMAT = 'studio.setup-substitution-request/v1'
 PROFILE_FORMAT = 'studio.setup-substitution-profile/v1'
 REPORT_FORMAT = 'studio.setup-substitution-report/v1'
-MAX_BYTES = 1024 * 1024
+# Keep the canonical proposal below the shared command envelope even when
+# every byte must be JSON-escaped by the outer setup_draft_command.
+MAX_BYTES = 448 * 1024
 MAX_CHANGES = 128
 CONTROL = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
 SOURCE_STATES = {'current', 'stale', 'blocked'}
@@ -33,7 +35,7 @@ APPLICABLE = {'recommended', 'possible'}
 def _copy_json(value, label):
     try:
         raw = canonical(value)
-        need(len(raw) <= MAX_BYTES, label + ' exceeds the 1 MiB limit')
+        need(len(raw) <= MAX_BYTES, label + ' exceeds the 448 KiB limit')
         return decode(raw)
     except (TypeError, ValueError, OverflowError, RecursionError) as exc:
         raise ValueError('Supply bounded finite JSON for ' + label) from exc
@@ -311,7 +313,7 @@ def request(value):
     }
     exact = canonical(core).decode('utf-8')
     need(len(exact.encode()) <= MAX_BYTES,
-         'Setup substitution proposal exceeds the 1 MiB limit')
+         'Setup substitution proposal exceeds the 448 KiB limit')
     return {**core,
             'proposal_sha256': hashlib.sha256(exact.encode()).hexdigest(),
             'proposal_json': exact}
@@ -323,7 +325,7 @@ def validate_reply(value, expected_request=None):
          'Supply the exact reviewed substitution proposal')
     exact = value['proposal_json']
     need(len(exact.encode()) <= MAX_BYTES,
-         'Setup substitution proposal exceeds the 1 MiB limit')
+         'Setup substitution proposal exceeds the 448 KiB limit')
     need(hashlib.sha256(exact.encode()).hexdigest() == value['proposal_sha256'],
          'Substitution proposal hash does not match the reviewed bytes')
     core = decode(exact)
@@ -348,7 +350,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         raw = args.request.read_bytes()
-        need(len(raw) <= MAX_BYTES, 'Request exceeds the 1 MiB limit')
+        need(len(raw) <= MAX_BYTES, 'Request exceeds the 448 KiB limit')
         result = request(decode(raw))
         print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
         return 0
