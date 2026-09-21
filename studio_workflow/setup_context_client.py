@@ -35,6 +35,8 @@ def validate_reply(result, expected):
 
 def observe(transport, value):
     """Evaluate one immutable snapshot and accept only its exact server report."""
+    need(len(canonical(value)) <= evaluator.MAX_INPUT_BYTES,
+         'Setup context request exceeds 1 MiB')
     query = copy.deepcopy(value)
     expected = evaluator.evaluate(query)
     try:
