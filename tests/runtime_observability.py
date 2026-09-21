@@ -135,6 +135,11 @@ class _ObservedCallback:
         return self.observer._invoke(self.registration, args, kwargs)
 
     def __eq__(self, other):
+        # Focused-test cleanup unregisters the private proxies themselves. Keep
+        # proxy-to-proxy comparison identity-only so cleanup cannot execute another
+        # registered callback's user-defined equality or leak it into later tests.
+        if isinstance(other, _ObservedCallback):
+            return self is other
         equal = self.observer._callbacks_equal(self.registration.callback, other)
         if equal:
             # CPython deletes this proxy immediately after the successful equality
