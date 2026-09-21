@@ -1,0 +1,16 @@
+name: Atomic substitution input integrity
+on:
+  push:
+    branches: [codex/atomic-setup-substitution]
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest tests/test_setup_substitution_input_integrity.py -v
