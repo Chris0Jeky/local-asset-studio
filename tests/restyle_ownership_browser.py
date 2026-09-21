@@ -115,6 +115,20 @@ async def run(args):
             await page.evaluate('window.__finishStyle()')
             await page.wait_for_function('referencePending===0')
             check('newer local upload wins over older library response', await page.evaluate("referenceRecords[0].file==='local-look.png' && !referenceRecords[0].parent_asset && !parentAssets.includes('asset-1') && parentByInput.lastReference==='asset-0'"))
+            # Observe old bytes, then explicitly replace them before the old check responds.
+            await page.evaluate("""() => {
+              const original=api;
+              api=(url,options={})=>url==='/api/references/check'
+                ? new Promise(resolve=>{window.__finishCheck=resolve}) : original(url,options);
+              window.__oldCheck=restoreReferenceSlots();
+            }""")
+            await page.set_input_files('[data-ref-file="0"]', image)
+            await page.wait_for_function('referencePending===1')
+            await page.evaluate("""async() => {
+              window.__finishCheck([{file:'local-look.png',sha256:'b'.repeat(64),available:false}]);
+              await window.__oldCheck;
+            }""")
+            check('stale availability does not invalidate a newly uploaded copy of the same bytes', await page.evaluate("!referenceRecords[0].missing && referencesReady() && referencePending===0 && parentByInput.lastReference==='asset-0'"))
             check('no generation submission', not await page.evaluate("window.__writes.includes('/api/jobs')"))
             check('no JavaScript exceptions', not errors)
             await page.screenshot(path=str(args.out/'final.png'), full_page=True)
