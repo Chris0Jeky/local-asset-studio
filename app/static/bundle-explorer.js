@@ -131,7 +131,7 @@
     };
     for(const launcher of launchers)launcher.onclick=openBundles;
     q('#bundleCards').onclick=e=>{const card=e.target.closest('[data-bundle]');if(card)choose(card.dataset.bundle);};q('#bundleSearch').oninput=cards;q('#bundleFamily').onchange=cards;q('#bundleClose').onclick=()=>dialog.close();
-    dialog.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
+    dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();}else if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
     dialog.addEventListener('close',()=>{guidancePanel?.destroy();guidancePanel=null;epoch++;openEpoch++;if(opener?.isConnected)opener.focus();});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();

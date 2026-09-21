@@ -635,7 +635,9 @@
   function nextEmptySlot(){return selected.reference_slots?.length?referenceRecords.findIndex(r=>!r.file||r.missing):-1;}
   function renderSources(){const query=q('#uxSourceSearch').value.toLowerCase();const assets=assetState.assets.filter(a=>!a.trashed_at&&a.media_type==='image'&&[a.title,a.preset_name,...a.tags].join(' ').toLowerCase().includes(query));q('#uxSourceAssets').innerHTML=assets.map(a=>'<button data-ux-pull="'+a.id+'">'+assetPreview(a)+'<b>'+escape(a.title)+'</b><small>'+escape(a.review)+'</small></button>').join('')||'<p>No matching saved images. Import an image in the Asset library first.</p>';}
   function syncSourceAvailability(){
-    q('#uxPullAsset').disabled=!takesSource()||pickerBusy||pickerLoading;
+    // The modal already blocks duplicate interaction. Keep its opener focusable for native return.
+    q('#uxPullAsset').disabled=!takesSource();
+    q('#uxPullAsset').setAttribute('aria-busy',String(pickerBusy||pickerLoading));
     q('#uxPullAsset').title=takesSource()?'Attach a saved image without changing your recipe':NO_SOURCE_SLOT;
   }
   async function openSourcePicker(){

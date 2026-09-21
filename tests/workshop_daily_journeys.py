@@ -32,8 +32,9 @@ class DailyJourneys(entry.EntryPoints):
                 self.page.click('#bundleHomeLauncher')
                 self.assertEqual(self.page.locator('#bundleExplorer').count(), 1)
                 self.assertTrue(self.page.locator('#bundleSearch').evaluate('(n)=>n===document.activeElement'))
+                self.page.fill('#bundleSearch', 'ink')
                 self.page.keyboard.press('Escape')
-                self.page.wait_for_function('!document.querySelector("#bundleExplorer").open')
+                self.assertFalse(self.page.locator('#bundleExplorer').evaluate('(n)=>n.open'))
                 self.assertTrue(self.page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement'))
                 self.assertEqual(self.page.evaluate('calls'), [])
 
@@ -74,6 +75,7 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
         self.page.click('#uxPullAsset')
         self.page.keyboard.press('Escape')
         self.page.wait_for_function('!picker.open')
+        self.assertTrue(self.page.locator('#uxPullAsset').evaluate('(n)=>n===document.activeElement'))
         self.page.click('#uxPullAsset')
         self.page.evaluate('pending.shift()(true)')
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
@@ -82,6 +84,27 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
         self.page.keyboard.press('Escape')
         self.page.wait_for_function('!picker.open')
+
+    def test_library_loading_keeps_one_read_and_respects_newer_focus(self):
+        self.load_picker()
+        self.page.click('#uxPullAsset')
+        self.page.locator('#uxPullAsset').evaluate('(n)=>n.click()')
+        self.assertEqual(self.page.evaluate('pending.length'), 1)
+        self.page.locator('[data-ux-close="uxSourcePicker"]').focus()
+        self.page.evaluate('pending.shift()(true)')
+        self.page.wait_for_selector('[data-ux-pull]')
+        self.assertTrue(self.page.locator('[data-ux-close="uxSourcePicker"]').evaluate('(n)=>n===document.activeElement'))
+        self.page.keyboard.press('Escape')
+        self.page.wait_for_function('!picker.open')
+        self.assertTrue(self.page.locator('#uxPullAsset').evaluate('(n)=>n===document.activeElement'))
+
+    def test_recipe_change_during_library_read_does_not_render_old_cards(self):
+        self.load_picker()
+        self.page.click('#uxPullAsset')
+        self.page.evaluate('selectionEpoch++; pending.shift()(true)')
+        self.page.wait_for_function('!picker.open')
+        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
+        self.assertFalse(self.page.evaluate('pickerLoading'))
 
     def test_failed_job_inspector_is_specific_escaped_and_read_only(self):
         inspect = region(source('studio-workbench.js'), '  function inspectJob(', '  async function refreshHome(')

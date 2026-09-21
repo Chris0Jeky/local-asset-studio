@@ -38,6 +38,7 @@ def main():
                     original = page.evaluate('JSON.stringify([selected.id,values(),parentAssets])')
                     page.click('#bundleHomeLauncher')
                     page.wait_for_selector('#bundleSearch')
+                    page.fill('#bundleSearch', 'ink')
                     page.keyboard.press('Escape')
                     page.wait_for_function('!document.querySelector("#bundleExplorer").open')
                     assert page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement')
@@ -65,6 +66,7 @@ def main():
                     page.screenshot(path=str(output/f'library-picker-{width}.png'))
                     page.click('[data-ux-close="uxSourcePicker"]')
                     page.wait_for_function('!document.querySelector("#uxSourcePicker").open')
+                    assert page.locator('#uxPullAsset').evaluate('(n)=>n===document.activeElement')
                     fixture.WORKSPACE_DELAY = 0
                     fixture.FAIL_WORKSPACE = True
                     page.click('#uxPullAsset')
