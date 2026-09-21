@@ -71,6 +71,41 @@ class SetupContextCompatibilityReviewFindings(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'review revision|sha256|review pin'):
             L.evaluate(F.request(source=source))
 
+    def test_only_the_selected_loader_is_an_implicit_node_requirement(self):
+        source = F.source_candidate(loaders=[
+            'LoraLoader.lora_name',
+            'AlternativeLoraLoader.lora_name',
+        ])
+        source['context_sha256'] = S.candidate_report_digest(source)
+        live = F.context(node_classes=['LoraLoader'])
+
+        result = L.evaluate(F.request(
+            source=source,
+            live=live,
+            bind=F.binding(required_node_classes=['LoraLoader']),
+        ))
+
+        self.assertEqual(F.row(result)['status'], 'recommended')
+        self.assertNotIn(
+            'node:AlternativeLoraLoader',
+            result['compatibility_input']['candidates'][0]['requires'],
+        )
+
+    def test_unknown_loader_allows_a_truthful_empty_node_binding(self):
+        source = F.source_candidate(loaders=[], requires=[])
+        source['context_sha256'] = S.candidate_report_digest(source)
+
+        result = L.evaluate(F.request(
+            source=source,
+            bind=F.binding(required_node_classes=[]),
+        ))
+
+        self.assertEqual(F.row(result)['status'], 'needs_review')
+        self.assertIn(
+            'loader_unknown',
+            [item['code'] for item in F.row(result)['unknowns']],
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
