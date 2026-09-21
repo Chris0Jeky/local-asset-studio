@@ -1,0 +1,50 @@
+name: Asset recovery shelf protocol
+on:
+  pull_request:
+    paths:
+      - 'app/static/asset-recovery*'
+      - 'app/static/workspace.js'
+      - 'app/static/index.html'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/asset_recovery*'
+      - 'tests/test_asset_recovery*'
+      - 'tests/asset_detail*'
+      - 'tests/studio_browser_smoke.py'
+      - '.github/workflows/asset-recovery-shelf.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-recovery-shelf-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  protocol:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Bounded codecs, journals, checkpoint failure and CAS contracts
+        run: python -m unittest discover -s tests -p test_asset_recovery_shelf.py -v
+      - name: Native browser storage, lost responses and real SQLite
+        run: python tests/asset_recovery_shelf_browser.py --out .runtime/asset-recovery-shelf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-recovery-shelf-${{ matrix.os }}
+          path: .runtime/asset-recovery-shelf
+          retention-days: 7

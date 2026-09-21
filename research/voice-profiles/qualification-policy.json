@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "spoken-brief-qualification-policy-v1",
+  "revision": 1,
+  "candidates": [
+    {
+      "id": "qwen3-voice-design-v1",
+      "name": "Qwen3-TTS VoiceDesign exploration",
+      "role": "original-identity-exploration",
+      "producer_family": "qwen3-tts",
+      "adapter": "qwen3-tts-voice-design",
+      "control": false,
+      "selectable": false,
+      "required": true,
+      "reference_requirement": "none"
+    },
+    {
+      "id": "qwen3-reusable-reference-v1",
+      "name": "Qwen3-TTS reusable accepted-reference route",
+      "role": "reusable-identity-candidate",
+      "producer_family": "qwen3-tts",
+      "adapter": "qwen3-tts-profile",
+      "control": false,
+      "selectable": true,
+      "required": true,
+      "reference_requirement": "required"
+    },
+    {
+      "id": "indextts-2-5-expressive-v1",
+      "name": "IndexTTS 2.5 expressive comparison",
+      "role": "independent-expressive-candidate",
+      "producer_family": "indextts",
+      "adapter": "indextts-2-5",
+      "control": false,
+      "selectable": true,
+      "required": false,
+      "reference_requirement": "required"
+    },
+    {
+      "id": "kokoro-af-heart-control-v1",
+      "name": "Kokoro af_heart CPU control",
+      "role": "cheap-built-in-control",
+      "producer_family": "kokoro",
+      "adapter": "voice-baseline",
+      "control": true,
+      "selectable": false,
+      "required": true,
+      "reference_requirement": "none"
+    }
+  ],
+  "measurement_fields": [
+    "load_seconds",
+    "first_audio_seconds",
+    "generation_seconds",
+    "peak_host_bytes",
+    "peak_vram_bytes",
+    "generated_seconds",
+    "accepted_seconds",
+    "correction_seconds"
+  ],
+  "long_form": {
+    "minimum_seconds": 300,
+    "maximum_seconds": 600,
+    "requires_owner_end_to_end_review": true,
+    "requires_identity_consistency_review": true,
+    "requires_pronunciation_review": true
+  },
+  "delivery_contrast": {
+    "calm_line_id": "contrast-calm",
+    "spark_line_id": "contrast-spark",
+    "calm_delivery_id": "calm-brief",
+    "spark_delivery_id": "spark-recap"
+  }
+}

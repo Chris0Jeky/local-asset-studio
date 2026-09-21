@@ -22,14 +22,16 @@ reserved`) and a total below the candidate count is refused before the plan is
 prepared. The estimate is a reading of Create's measurement, never a second
 estimator: with no measured history the summary says so instead of guessing.
 
-Two buttons under **Advanced: plan several settings from the library** plan
-several documented settings at once, through `POST /api/experiments/plan`. **Plan from settings library** reads the family
-entry for this recipe in `presets/settings-kb.json` and offers a grid of the
-axes the recipe can actually change — steps, sampler, scheduler, LoRA strengths
-— with the first axis varying slowest and at most eight candidates. **Remix
-LoRA weights** re-weights only the adapter slots that are already on: one
+Three actions under **Advanced: plan several settings from the library** use
+`POST /api/experiments/plan`. **Inspect available settings** reads the current
+recipe without replacing a local plan. **Plan from settings library** reads the
+family entry in `presets/settings-kb.json` and offers a grid of the axes the
+recipe can actually change — steps, sampler, scheduler, LoRA strengths — with
+the first axis varying slowest and at most eight candidates. **Remix LoRA
+weights** re-weights only the ordinary adapter slots that are already on: one
 variant per slot at the top of the family ladder while the others support at
-its bottom, plus one blend at the middle step. Slots that are off stay off.
+its bottom, plus one blend at the middle step. Slots that are off stay off and
+are not injected into candidate controls or described as selected.
 
 Each variant carries the rationale and the source URLs of the setting it
 changes, and the plan records the SHA-256 of the knowledge base it was planned
@@ -87,8 +89,9 @@ not executable API commands.
 ## Inspect available settings without planning variants
 
 In **Advanced: plan several settings from the library**, choose **Inspect available settings**.
-The current recipe's bound axes are split into available choices and accelerator holds, with
-reasons for a held strength, a held family schedule, or an alias sharing a held input.
+The current recipe's bound axes are split into available choices and explicit unavailable rows,
+with reasons for a held strength, a held family schedule, an alias sharing a held input,
+or documented combo values that the recipe's current socket choices do not offer.
 Inspection preserves existing variants, selected axes and the owner's budget draft, including an
 invalid budget that still needs correction. It does not reserve or generate anything. Use
 **Plan from settings library** or **Remix LoRA weights** separately to propose replacements.
@@ -105,8 +108,10 @@ and `reservation_created: false`. Inspection rejects `axes` and `limit`, because
 select a grid. Grid and remix responses expose the same explanatory projection; their existing
 refusal and eight-candidate limits remain unchanged.
 
-A hold names its `control`, stable `code`, contributing `accelerator_slots`/`accelerator_files`
-and a plain-text `message`. The inspector and planner use one policy, not two compatibility
+An unavailable row names its `control`, stable `code`, contributing
+`accelerator_slots`/`accelerator_files` and a plain-text `message`. A filtered combo also
+retains its documented and currently offered values, rather than disappearing. The inspector
+and planner use one policy, not two compatibility
 engines. Inactivity must be established for every relevant binding; an unknown strength is not
 silently called zero. Matching a filename to a KB role is not installed-byte attestation, and
 unknown files or embedded acceleration remain outside this correction. Inspection does not
@@ -115,7 +120,9 @@ unchanged.
 
 Browser replies are scoped to the latest plan/inspection request and captured comparison recipe.
 A replaced or closed dialog, cleared plan or removed candidate cannot be overwritten by an older
-reply. A failed inspection keeps existing variants while removing stale advice. No inspection is
+reply. Local clear/remove actions also finish the in-flight status instead of leaving a stale
+“Reading…” message. A failed inspection keeps existing variants while removing stale advice and
+selected axis identities. No inspection is
 started on page load. Contract tests are `test_settings_inspection.py`,
 `test_production_planner_inspection.py` and `production_planner_inspection.cjs`; the HTTP fixture
 uses the production handler with temporary storage and no model execution.

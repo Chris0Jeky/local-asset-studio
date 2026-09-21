@@ -198,6 +198,43 @@ function rememberNegativeCollapse(open) { try { sessionStorage.setItem(NEGATIVE_
 $('#negativeWrap')?.addEventListener('toggle', () => rememberNegativeCollapse($('#negativeWrap').open));
 // A long recipe description is a research report above step 01: the card shows its first sentence and what the recipe
 // asks you to type; the measurements and the licence paragraph stay one disclosure away (#422 slice A).
+function insertWildcard(name) {
+  const field = $('#positive'); if (!field || field.hidden) return;
+  const token = '__' + name + '__';
+  const start = field.selectionStart ?? field.value.length, end = field.selectionEnd ?? start;
+  const before = field.value.slice(0, start), after = field.value.slice(end);
+  const padLeft = before && !/\s$/.test(before) ? ' ' : '';
+  const padRight = after && !/^\s/.test(after) ? ' ' : '';
+  field.value = before + padLeft + token + padRight + after;
+  const cursor = (before + padLeft + token).length;
+  field.focus(); field.setSelectionRange(cursor, cursor);
+  field.dispatchEvent(new Event('input', {bubbles: true}));
+  if (typeof updateReady === 'function') updateReady();
+}
+function renderWildcardChips() {
+  const host = $('#wildcardChips'); if (!host) return;
+  const list = catalog?.wildcards || [];
+  if (!selected?.positive || !list.length) { host.hidden = true; host.innerHTML = ''; return; }
+  host.hidden = false;
+  host.innerHTML = '<p class="muted">Insert a wildcard. Server expands __name__ from presets/wildcards at Generate, one line per batch member.</p>'
+    + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('');
+}
+function renderNsfwIntel() {
+  const box = $('#nsfwIntel'), body = $('#nsfwIntelBody');
+  if (!box || !body) return;
+  const lab = knowledge?.nsfw_lab;
+  const family = selected?.family || '';
+  const entry = lab?.families?.[family];
+  if (!selected?.positive || !lab || !entry) { box.hidden = true; body.innerHTML = ''; return; }
+  box.hidden = false;
+  const wild = (lab.wildcards || []).map(w => '<li><code>__' + esc(w.name) + '__</code> — ' + esc(w.use) + '</li>').join('');
+  body.innerHTML = '<p class="muted">' + esc(lab.caveat || '') + '</p>'
+    + '<p><b>Undress</b> ' + esc(entry.undress || '') + '</p>'
+    + '<p><b>Finish</b> ' + esc(entry.attractive || '') + '</p>'
+    + '<p><b>Watch</b> ' + esc(entry.avoid || '') + '</p>'
+    + (wild ? '<ul>' + wild + '</ul>' : '')
+    + (lab.gallery ? '<p><a href="' + esc(lab.gallery) + '">Open the lab collection</a></p>' : '');
+}
 function recipeCard(preset) {
   const description = String(preset.description || ''), note = String(preset.commercial_note || '');
   const cut = description.length > 260 ? description.search(/\.\s(?=[A-Z])/) : -1;
@@ -211,6 +248,8 @@ function renderSelected() {
   $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2>' + recipeCard(selected);
   $('#positiveWrap').hidden = !selected.positive;
   $('#positive').value = selected.defaults?.positive || ''; $('#negative').value = selected.defaults?.negative || ''; $('#negativeWrap').hidden = !selected.negative;
+  renderWildcardChips();
+  renderNsfwIntel();
   // What to avoid is part of the brief, not an advanced setting: open it whenever the recipe binds it,
   // and keep it collapsible. A manual collapse is remembered for this tab only (#278 friction 3).
   if (selected.negative) $('#negativeWrap').open = !negativeCollapsed();
@@ -487,6 +526,10 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)try{selectPreset(id);}catch(err){message(err.message,true);}};
+$('#wildcardChips')?.addEventListener('click', e => {
+  const name = e.target.closest('[data-wildcard]')?.dataset.wildcard;
+  if (name) insertWildcard(name);
+});
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
 $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};

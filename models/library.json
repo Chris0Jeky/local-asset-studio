@@ -887,7 +887,7 @@
     },
     {
       "id": "krea2-koukouya-style-c1-st3000",
-      "name": "画风 こうこうや koukouya style 【krea2】 / v1.0",
+      "name": "\u753b\u98ce \u3053\u3046\u3053\u3046\u3084 koukouya style \u3010krea2\u3011 / v1.0",
       "file": "loras/krea2_koukouya_style_c1-st3000.safetensors",
       "source": "https://civitai.com/models/2844656?modelVersionId=3211621",
       "url": "https://civitai.com/api/download/models/3211621",
@@ -921,7 +921,7 @@
     },
     {
       "id": "anima-koukouya-v2-step2500",
-      "name": "[Anima] Artist Style: koukouya/こうこうや / v1.0-anima-base1",
+      "name": "[Anima] Artist Style: koukouya/\u3053\u3046\u3053\u3046\u3084 / v1.0-anima-base1",
       "file": "loras/anima-koukouya_v2_step2500.safetensors",
       "source": "https://civitai.com/models/2696189?modelVersionId=3027537",
       "url": "https://civitai.com/api/download/models/3027537",
@@ -938,7 +938,7 @@
     },
     {
       "id": "anima-huashijw-v2-step10000",
-      "name": "[Anima] Artist Style: huashijw/画师jw / v1.0",
+      "name": "[Anima] Artist Style: huashijw/\u753b\u5e08jw / v1.0",
       "file": "loras/anima-huashijw_v2_step10000.safetensors",
       "source": "https://civitai.com/models/2753686?modelVersionId=3098204",
       "url": "https://civitai.com/api/download/models/3098204",
@@ -972,7 +972,7 @@
     },
     {
       "id": "anima-ke-ta-style-v1",
-      "name": "画风 ke-ta style 【anima】 / v1.0",
+      "name": "\u753b\u98ce ke-ta style \u3010anima\u3011 / v1.0",
       "file": "loras/anima-ke-ta_style_v1.safetensors",
       "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
       "url": "https://civitai.com/api/download/models/3221815",
@@ -1808,12 +1808,12 @@
       "id": "anifoxxlv20-anifoxv2",
       "name": "anifoxXLV20_anifoxV2.safetensors",
       "file": "checkpoints/anifoxXLV20_anifoxV2.safetensors",
-      "source": "https://civitai.com/models/2389212?modelVersionId=3081757",
+      "source": "https://civitai.red/models/2389212?modelVersionId=3081757",
       "url": "https://civitai.com/api/download/models/3081757?fileId=2961145",
       "bytes": 6938040706,
       "sha256": "c07eadce03076d02e6ffc38f51a078684f888df599fb84abe3821a048ae43d72",
       "license": "",
-      "terms": "civitai version 3081757 of model 2389212: the version payload carries no permission flags; read https://civitai.com/models/2389212 (or /api/v1/models/2389212) before any commercial use. Base model 'Illustrious'.",
+      "terms": "civitai version 3081757 of model 2389212: the version payload carries no permission flags; read https://civitai.com/models/2389212 (or /api/v1/models/2389212) before any commercial use. Base model 'Illustrious'. The 2026-09-21 local copy was obtained from civitai.red and SHA-256 still matches. civitai.red flags read 2026-09-21: allowCommercialUse RentCivit, Rent, Image, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model Illustrious. nsfw=true on the listing. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
       "family": "Illustrious",
       "trigger": "",
       "strength": [
@@ -2185,6 +2185,159 @@
       "license": "FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B)",
       "terms": "Downloaded 2026-09-15 with curl -C - resume (scripts/fetch-hf.py refuses .gguf names) and SHA-256 verified against the Hugging Face LFS listing (.runtime/downloads/receipts.json). Same licence as the Q6_K file. Measured 2026-09-15 on the 16 GB card (research README, pose round three): the 9.98 GB file loads only partially beside the text encoder's residue ('loaded partially; 9538 MB loaded, 170 MB offloaded'), 40-45 s per step, six minutes per 6-step render against 75-95 s for Q6_K, with figures identical seed for seed; not a lever here. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF).",
       "family": "FLUX.2 Klein 9B"
+    },
+    {
+      "id": "lenovo-krea2",
+      "name": "Lenovo UltraReal / Krea 2 v1.0",
+      "file": "loras/lenovo_krea2.safetensors",
+      "source": "https://civitai.red/models/1662740?modelVersionId=3075606",
+      "url": "https://civitai.red/models/1662740?modelVersionId=3075606",
+      "bytes": 114324736,
+      "sha256": "6967840059e54d0ca6771ae00acdc5979266f761175a8c9380f23f1a3723e9a2",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 1662740 / version 3075606 Lenovo UltraReal v1.0 Krea2: allowCommercialUse RentCivit, Rent, Sell, Image, SellMerge; allowNoCredit false; derivatives NOT allowed; different licence NOT allowed. Base model Krea 2. Training metadata names krea2_raw_lora_v1. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "pearly-esearu-style",
+      "name": "Pearly Esearu style / Anima",
+      "file": "loras/pearly_esearu_style.safetensors",
+      "source": "https://civitai.red/models/2897464?modelVersionId=3275865",
+      "url": "https://civitai.red/models/2897464?modelVersionId=3275865",
+      "bytes": 91892608,
+      "sha256": "926cc59441dca6e3ee428836fa44413f01474201d341e6793f45e687a71ea032",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2897464 / version 3275865 Pearly Esearu style anime v1: allowCommercialUse RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model Anima. Dataset concept esearu. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Anima",
+      "trigger": "esearu",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "pearly-petiflow2",
+      "name": "Pearly Flow style / PetiFlow Anima",
+      "file": "loras/pearly_petiflow2.safetensors",
+      "source": "https://civitai.red/models/2794834?modelVersionId=3151811",
+      "url": "https://civitai.red/models/2794834?modelVersionId=3151811",
+      "bytes": 91863712,
+      "sha256": "1e5b64e9d23d58fd9266e802b1e33505e216626b6e73a44ae7515d7bcea266d5",
+      "license": "Anima / CircleStone Labs",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2794834 / version 3151811 Pearly Flow style PetiFlow: allowCommercialUse RentCivit, Rent; allowNoCredit true; derivatives allowed; different licence allowed. Base model Anima. Listing trigger pearlypetif. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Anima",
+      "trigger": "pearlypetif",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "realism-engine-krea2-v3-1",
+      "name": "Realism Engine Krea 2 / v3.1",
+      "file": "loras/realism_engine_krea2_v3.1.safetensors",
+      "source": "https://civitai.red/models/2688234?modelVersionId=3109006",
+      "url": "https://civitai.red/models/2688234?modelVersionId=3109006",
+      "bytes": 1562410296,
+      "sha256": "a6712629445a2e91a616568e82befa8c8c7518e891a0f7c9918138634b5b54a5",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2688234 / version 3109006 Realism Engine Krea2 v3.0 file realism_engine_krea2_v3.1.safetensors: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence NOT allowed. Base model Krea 2. Listing nsfw=true; quoted strength around 0.7. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        0.7,
+        1.0
+      ]
+    },
+    {
+      "id": "realisticsnapshotkrea2",
+      "name": "Realistic Snapshot / Krea 2 v0.5",
+      "file": "loras/RealisticSnapshotKrea2.safetensors",
+      "source": "https://civitai.red/models/2268008?modelVersionId=3084537",
+      "url": "https://civitai.red/models/2268008?modelVersionId=3084537",
+      "bytes": 228587720,
+      "sha256": "dfd67eb881bec4caeb9409e5b7c127adcb9fb724e6007e1e77165af51e6f908d",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2268008 / version 3084537 Realistic Snapshot Krea2 v0.5: allowCommercialUse Image, RentCivit, Rent, Sell, SellMerge; allowNoCredit true; derivatives allowed; different licence allowed. Base model Krea 2. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Krea 2",
+      "trigger": "",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "ringeko",
+      "name": "Ringeko / UTdT69 artist style",
+      "file": "loras/Ringeko.safetensors",
+      "source": "https://civitai.red/models/2387976?modelVersionId=2685156",
+      "url": "https://civitai.red/models/2387976?modelVersionId=2685156",
+      "bytes": 228486116,
+      "sha256": "b7edfa16d5c173ed0a0ba1d740006069e13984a99a91fa9b2ec29cbc80ef49af",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2387976 / version 2685156 Ringeko | by UTdT69 v1.0: allowCommercialUse Image, RentCivit; allowNoCredit true; derivatives NOT allowed; different licence NOT allowed. Artist-style LoRA (not a character grant). Training concept r1ng3k0. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Illustrious",
+      "trigger": "r1ng3k0",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "robertlu1021-fluorite-arknights-v1-0-epoch-10",
+      "name": "Fluorite (Arknights) / SDXL LoRA epoch 10",
+      "file": "loras/Robertlu1021_fluorite_arknights_v1.0_epoch_10.safetensors",
+      "source": "https://civitai.red/models/2478250?modelVersionId=2786316",
+      "url": "https://civitai.red/models/2478250?modelVersionId=2786316",
+      "bytes": 57435028,
+      "sha256": "9941b93e392af0ca50c35dfcbf42a94971fb1957ac0d792b62269bb09dc82257",
+      "license": "",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2478250 / version 2786316 Fluorite (Arknights: Endfield) v1.0: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Third-party Arknights: Endfield character; likeness not cleared. Intake sanitised parentheses from the original filename. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "SDXL 1.0",
+      "trigger": "fluorite (arknights)",
+      "strength": [
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "oneobsessionanima-v20",
+      "name": "One Obsession Anima / v2.0",
+      "file": "diffusion_models/oneObsessionAnima_v20.safetensors",
+      "source": "https://civitai.red/models/2695493?modelVersionId=3090670",
+      "url": "https://civitai.red/models/2695493?modelVersionId=3090670",
+      "bytes": 4182229969,
+      "sha256": "d1d4fa3de4757bc419bd5dd42ade14024e4886a51e9a0784411ba13375a99255",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2695493 / version 3090670 One obsession_Anima v2.0 file oneObsessionAnima_v20.safetensors: allowCommercialUse RentCivit; allowNoCredit false; derivatives NOT allowed; different licence allowed. Base model Anima. CircleStone Labs non-commercial base terms also apply. UNET goes in diffusion_models with the existing Anima encoder and Qwen VAE. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "pearlyanimamix-v10",
+      "name": "Pearly Anima mix / v1.0",
+      "file": "diffusion_models/pearlyAnimaMix_v10.safetensors",
+      "source": "https://civitai.red/models/2631350?modelVersionId=2954375",
+      "url": "https://civitai.red/models/2631350?modelVersionId=2954375",
+      "bytes": 4436052094,
+      "sha256": "52de310e0eeae07a7f5386801e0ddfa9d538feba0ac3ac9b50acc90038397bd7",
+      "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Owner copy from civitai.red on 2026-09-21; SHA-256 matches the listing. Flags read from https://civitai.red/api/v1/models on 2026-09-21. A hash match is not creator authentication or a grant of rights. civitai.red model 2631350 / version 2954375 Pearly Anima mix v1.0: allowCommercialUse RentCivit, Rent, Image; allowNoCredit true; derivatives allowed; different licence allowed. Base model Anima. CircleStone Labs non-commercial base terms also apply. File also embeds first_stage_model VAE tensors; Studio still loads qwen_image_vae separately. civitai.com API reachable 2026-09-21 (owner VPN): GET /api/v1/models and by-hash agreed with the civitai.red flags and SHA-256. Download origin remains civitai.red.",
+      "family": "Anima",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
     }
   ],
   "collections": [

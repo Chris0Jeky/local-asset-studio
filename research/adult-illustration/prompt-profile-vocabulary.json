@@ -1,0 +1,391 @@
+{
+  "schema": "studio.adult-illustration-prompt-profile-vocabulary/v1",
+  "kind": "prompt-profile-vocabulary",
+  "executable": false,
+  "authority": {
+    "execution_authorized": false,
+    "generation_submitted": false,
+    "download_authorized": false,
+    "install_authorized": false,
+    "training_authorized": false
+  },
+  "research_date": "2026-09-15",
+  "source_baseline": "b9a8d018bc8c1951d14208e7b70bfc53254c45ce",
+  "issue": 437,
+  "profiles": [
+    {
+      "id": "animagine-xl4-ordered-v1",
+      "route_candidate_id": "animagine-xl-4-opt-source-review",
+      "mode": "tag",
+      "source_url": "https://huggingface.co/cagliostrolab/animagine-xl-4.0",
+      "source_revision": "2b7c1b397761bf5bd3cc42e5b39ec99314a75a96",
+      "documentation_url": "https://huggingface.co/cagliostrolab/animagine-xl-4.0/blob/2b7c1b397761bf5bd3cc42e5b39ec99314a75a96/README.md",
+      "documentation_revision": "2b7c1b397761bf5bd3cc42e5b39ec99314a75a96",
+      "separator": ", ",
+      "facet_order": [
+        "subject",
+        "identity",
+        "body",
+        "wardrobe",
+        "pose",
+        "action",
+        "expression",
+        "camera",
+        "composition",
+        "environment",
+        "lighting",
+        "palette",
+        "material",
+        "style",
+        "rating",
+        "quality"
+      ],
+      "facet_sources": {
+        "subject": "subject",
+        "action": "action",
+        "setting": "environment",
+        "composition": "composition",
+        "camera": "camera",
+        "lighting": "lighting",
+        "palette": "palette",
+        "style": "style"
+      },
+      "positive_prefix": [],
+      "positive_suffix": [
+        "masterpiece",
+        "high score",
+        "great score",
+        "absurdres"
+      ],
+      "negative_suffix": [
+        "lowres",
+        "bad anatomy",
+        "bad hands",
+        "text",
+        "watermark",
+        "blurry"
+      ],
+      "natural_language": false,
+      "min_references": 0,
+      "max_references": 12,
+      "tokenizer": "sdxl-clip-l-and-clip-g; exact installed tokenizer identity remains route evidence",
+      "notes": [
+        "Ordered-tag projection only; reference, geometry, adapter and mask controls remain route bindings.",
+        "Formatting is source-reviewed, not evidence of improved artistic output.",
+        "This profile does not add Pony or Anima score/source conventions."
+      ]
+    },
+    {
+      "id": "anima-aesthetic-hybrid-v1",
+      "route_candidate_id": "anima-aesthetic-source-review",
+      "mode": "hybrid",
+      "source_url": "https://huggingface.co/circlestone-labs/Anima",
+      "source_revision": "f7382c4bf9d7ffe4ceea593a0adbb470c56dd79b",
+      "documentation_url": "https://huggingface.co/circlestone-labs/Anima/blob/f7382c4bf9d7ffe4ceea593a0adbb470c56dd79b/README.md",
+      "documentation_revision": "f7382c4bf9d7ffe4ceea593a0adbb470c56dd79b",
+      "separator": ", ",
+      "facet_order": [
+        "quality",
+        "rating",
+        "subject",
+        "identity",
+        "body",
+        "wardrobe",
+        "pose",
+        "action",
+        "expression",
+        "camera",
+        "composition",
+        "environment",
+        "lighting",
+        "palette",
+        "material",
+        "style"
+      ],
+      "facet_sources": {
+        "subject": "subject",
+        "action": "action",
+        "setting": "environment",
+        "composition": "composition",
+        "camera": "camera",
+        "lighting": "lighting",
+        "palette": "palette",
+        "style": "style"
+      },
+      "positive_prefix": [
+        "sensitive"
+      ],
+      "positive_suffix": [
+        "anime coloring"
+      ],
+      "negative_suffix": [
+        "worst quality",
+        "low quality",
+        "artist name",
+        "blurry",
+        "jpeg artifacts",
+        "chromatic aberration"
+      ],
+      "natural_language": true,
+      "min_references": 0,
+      "max_references": 12,
+      "tokenizer": "Qwen3-0.6B text encoder plus Anima LLM adapter; exact installed bundle remains route evidence",
+      "notes": [
+        "Aesthetic profile deliberately omits score tags following the source guidance.",
+        "Tags use lowercase spaces rather than underscores, except score tags if a later profile explicitly enables them.",
+        "The content-envelope tag is a model hint and never proves subject age or output compliance."
+      ]
+    },
+    {
+      "id": "qwen-edit-2511-instruction-v1",
+      "route_candidate_id": "qwen-image-edit-2511-source-review",
+      "mode": "instruction",
+      "source_url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "source_revision": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+      "documentation_url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511/blob/6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9/README.md",
+      "documentation_revision": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+      "separator": null,
+      "facet_order": [
+        "output",
+        "reference_ownership",
+        "requested_edit",
+        "identity",
+        "wardrobe",
+        "pose",
+        "camera",
+        "environment",
+        "style",
+        "preservation",
+        "exclusions"
+      ],
+      "facet_sources": {
+        "subject": "identity",
+        "action": "pose",
+        "setting": "environment",
+        "composition": "camera",
+        "camera": "camera",
+        "lighting": "style",
+        "palette": "style",
+        "style": "style"
+      },
+      "positive_prefix": [],
+      "positive_suffix": [],
+      "negative_suffix": [],
+      "natural_language": true,
+      "min_references": 1,
+      "max_references": 3,
+      "tokenizer": "Qwen Image Edit Plus instruction encoder; exact quantized graph tokenizer remains route evidence",
+      "notes": [
+        "Scoped to the repository's proposed three-image TextEncodeQwenImageEditPlus route, not every Qwen interface.",
+        "Reference order, ownership, take and ignore rules are explicit and never inferred from filenames.",
+        "The profile compiles instructions only and grants no image staging or generation authority."
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "subject-solo",
+      "canonical": "solo",
+      "aliases": ["single subject"],
+      "implications": [],
+      "facet": "subject",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "pose-sitting",
+      "canonical": "sitting",
+      "aliases": ["seated"],
+      "implications": [],
+      "facet": "pose",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "pose-torso-twist",
+      "canonical": "torso twist",
+      "aliases": ["torso_twist", "twisted torso"],
+      "implications": [],
+      "facet": "action",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "gaze-looking-at-viewer",
+      "canonical": "looking at viewer",
+      "aliases": ["looking_at_viewer"],
+      "implications": [],
+      "facet": "expression",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "material-steam",
+      "canonical": "steam",
+      "aliases": ["steamy atmosphere"],
+      "implications": [],
+      "facet": "material",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "scene-hot-spring",
+      "canonical": "hot spring",
+      "aliases": ["hot_spring", "onsen"],
+      "implications": [],
+      "facet": "environment",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "camera-three-quarter-view",
+      "canonical": "three-quarter view",
+      "aliases": ["three_quarter_view"],
+      "implications": [],
+      "facet": "camera",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "camera-from-below",
+      "canonical": "from below",
+      "aliases": ["from_below", "low angle"],
+      "implications": [],
+      "facet": "camera",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "lighting-rim-light",
+      "canonical": "rim lighting",
+      "aliases": ["rim_light", "rim light"],
+      "implications": [],
+      "facet": "lighting",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "lighting-moonlight",
+      "canonical": "moonlight",
+      "aliases": ["moonlit"],
+      "implications": [],
+      "facet": "lighting",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "wardrobe-silk-robe",
+      "canonical": "silk robe",
+      "aliases": ["silk_robe"],
+      "implications": [],
+      "facet": "wardrobe",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "wardrobe-towel",
+      "canonical": "towel",
+      "aliases": ["wrapped towel"],
+      "implications": [],
+      "facet": "wardrobe",
+      "polarity": "positive",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "quality-anime-coloring",
+      "canonical": "anime coloring",
+      "aliases": ["anime_coloring"],
+      "implications": [],
+      "facet": "style",
+      "polarity": "positive",
+      "profile_ids": ["anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-text",
+      "canonical": "text",
+      "aliases": ["unwanted text"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-watermark",
+      "canonical": "watermark",
+      "aliases": ["signature"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-lowres",
+      "canonical": "lowres",
+      "aliases": ["low resolution"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-bad-anatomy",
+      "canonical": "bad anatomy",
+      "aliases": ["bad_anatomy"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-bad-hands",
+      "canonical": "bad hands",
+      "aliases": ["bad_hands"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-blurry",
+      "canonical": "blurry",
+      "aliases": ["blur"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["animagine-xl4-ordered-v1", "anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-jpeg-artifacts",
+      "canonical": "jpeg artifacts",
+      "aliases": ["jpeg_artifacts"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-chromatic-aberration",
+      "canonical": "chromatic aberration",
+      "aliases": ["chromatic_aberration"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["anima-aesthetic-hybrid-v1"]
+    },
+    {
+      "id": "negative-artist-name",
+      "canonical": "artist name",
+      "aliases": ["artist_name"],
+      "implications": [],
+      "facet": "quality",
+      "polarity": "negative",
+      "profile_ids": ["anima-aesthetic-hybrid-v1"]
+    }
+  ],
+  "notes": [
+    "This small checked-in vocabulary exists to prove deterministic projection and review boundaries; it is not a complete anime tag database.",
+    "Subject adulthood comes from reviewed intent/canon metadata, never a tag, captioner or pixel inference.",
+    "Unknown terms remain diagnostics. Geometry, appearance adapters, reference ownership, masks and review decisions never become prompt text merely to avoid an unsupported-control error.",
+    "Prompt formatting and source review are not evidence of better artistic output; issue #37 and #409 own bounded accepted-output qualification."
+  ]
+}
