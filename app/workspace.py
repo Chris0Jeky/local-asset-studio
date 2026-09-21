@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sqlite3
+import threading
 import time
 import uuid
 from contextlib import contextmanager
@@ -30,6 +31,7 @@ class WorkspaceError(ValueError):
 
 
 WAL_INITIALIZATION_TIMEOUT = 15
+_INITIALIZATION_LOCK = threading.Lock()
 MAX_REVISION = 2**53 - 1
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
@@ -49,6 +51,12 @@ class AssetWorkspace:
         self.media = self.root / "media"
         self.media.mkdir(exist_ok=True)
         self.database = self.root / "assets.sqlite3"
+        # One process must not race WAL activation against its own schema migration.
+        # SQLite's bounded BUSY retry remains the cross-process coordination boundary.
+        with _INITIALIZATION_LOCK:
+            self._initialize_database()
+
+    def _initialize_database(self):
         with self.connection() as db:
             self._enable_wal(db)
             db.executescript("""
