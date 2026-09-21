@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from http_refusal_transport import atomic_json_post
 from test_recipe_shortlist import make_studio
 from test_recipe_shortlist_ordered import sources, route, save_graph
 from studio_workflow.http_extension import post
@@ -215,9 +216,19 @@ class SetupProposalTransportTests(unittest.TestCase):
         ShortlistHTTPTests.tearDown(self)
     def send(self,value=None,**extra):
         from http.client import HTTPConnection
+        headers={'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**extra}
+        body=json.dumps(self.q if value is None else value).encode('utf-8')
+        # A Host/Origin/media-type refusal answers before the declared body is read, so the
+        # reply must be read atomically rather than over a reusable http.client connection
+        # the server may close on the unread bytes (#477).
+        if extra:
+            # Only these three reach the wire below, so a later override of anything else must
+            # fail loudly rather than assert a refusal against a request that never carried it.
+            assert set(extra)<={'Host','Origin','Content-Type'},'This fixture forwards only Host, Origin and Content-Type'
+            return atomic_json_post(self.http.server_port,PREFIX,body,host=headers['Host'],origin=headers['Origin'],content_type=headers['Content-Type'])
         c=HTTPConnection('127.0.0.1',self.http.server_port,timeout=10)
         try:
-            c.request('POST',PREFIX,json.dumps(self.q if value is None else value),{'Host':'127.0.0.1:8191','Origin':'http://127.0.0.1:8191','Content-Type':'application/json',**extra})
+            c.request('POST',PREFIX,body,headers)
             r=c.getresponse();return r.status,json.loads(r.read())
         finally:c.close()
     def test_actual_http_sdk_cli_and_read_agent_agree(self):

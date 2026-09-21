@@ -1,0 +1,43 @@
+name: Profiler qualification contracts
+on:
+  pull_request:
+    paths:
+      - 'app/profiler_probe.py'
+      - 'app/inference_trace.py'
+      - 'scripts/profiler_probe_worker.py'
+      - 'scripts/probe-inference-profiler.py'
+      - 'scripts/inspect-inference-trace.py'
+      - 'tests/test_profiler_probe*.py'
+      - 'tests/test_inference_trace*.py'
+      - 'tests/fixtures/inference_trace_cpu.json'
+      - '.github/workflows/profiler-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/profiler_probe.py'
+      - 'app/inference_trace.py'
+      - 'scripts/profiler_probe_worker.py'
+      - 'scripts/probe-inference-profiler.py'
+      - 'scripts/inspect-inference-trace.py'
+      - 'tests/test_profiler_probe*.py'
+      - 'tests/test_inference_trace*.py'
+      - 'tests/fixtures/inference_trace_cpu.json'
+      - '.github/workflows/profiler-probe.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      # No Torch installation, neural workload or GPU needed in these contracts.
+      - run: python -m unittest discover -s tests -p "test_profiler_probe*.py" -v
+      - run: python -m unittest discover -s tests -p "test_inference_trace*.py" -v

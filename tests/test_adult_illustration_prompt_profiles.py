@@ -118,7 +118,7 @@ class PromptProjectionTests(unittest.TestCase):
         result = compile_prompt(sample_projection(), "animagine-xl4-ordered-v1", ROOT)
         positive = result["channels"]["positive"]
         self.assertLess(positive.index("solo"), positive.index("sitting"))
-        self.assertLess(positive.index("sitting"), positive.index("torso twist"))
+        self.assertLess(positive.index("sitting"), positive.index("twisted_torso"))
         self.assertTrue(
             positive.endswith("masterpiece, high score, great score, absurdres")
         )
@@ -140,7 +140,7 @@ class PromptProjectionTests(unittest.TestCase):
         result = compile_prompt(sample_projection(), "anima-aesthetic-hybrid-v1", ROOT)
         positive = result["channels"]["positive"]
         self.assertIn("solo", positive)
-        self.assertIn("torso twist", positive)
+        self.assertIn("twisted torso", positive)
         self.assertNotIn("torso_twist", positive)
         self.assertIn("approved adult original character", positive)
         self.assertIn("private hot-spring veranda", positive)

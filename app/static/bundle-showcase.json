@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updated": "2026-09-13",
-  "scope": "Historical local examples linked to existing recipes. No image was generated for this feature. Exact current resource hashes, full runtime equivalence and representative coverage are not certified by these links.",
+  "updated": "2026-09-21",
+  "scope": "Historical local examples plus thirty 2026-09-21 Studio runs of civitai.red intake recipes (ten wave-1 showcases, twenty wave-2 adapter/combo examples). One seed each. Not a representative benchmark, art acceptance or licence clearance.",
   "examples": {
     "krea-witch-nijisis": {
       "url": "/api/examples/anime-fantasy-atelier/witch-nijisis-baseline.jpg",
       "caption": "Meadow witch and cats: inspect the painted texture, dense foliage and small hand details.",
       "prompt_id": "09dadd6e-3e60-4c37-80d1-9244bb8e848d",
-      "receipt": "experiments/curated/anime-fantasy-atelier/execution-evidence.json · witch-nijisis-baseline",
+      "receipt": "experiments/curated/anime-fantasy-atelier/execution-evidence.json \u00b7 witch-nijisis-baseline",
       "original_sha256": "c51fd1c0a7d3e4dd45163433613a8bd9784b121f66bc88c593cd0d422ccc1083",
       "review": "Owner: potential but imperfect. Not finished-art approval.",
       "coverage": "One selected historical subject/seed; not an adapter ablation."
@@ -18,6 +18,306 @@
       "prompt_id": "a63ca7e1-c87a-4288-bcd9-959ff93d1827",
       "receipt": "experiments/curated/anime-fantasy-atelier/krea-target-stack-koukouya-recipe.json",
       "coverage": "One selected historical subject/seed. Not a representative benchmark; current defaults may differ."
+    },
+    "anifox-v2-showcase": {
+      "url": "/api/examples/civitai-intake/anifox-v2-showcase.jpg",
+      "caption": "Inverted fox-eared original character: inspect extra fingers, extra tail mass and the forest instead of a carnival.",
+      "prompt_id": "cadc8403-bb7c-4ec5-bbbc-852ba0b230f1",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-v2-showcase",
+      "original_sha256": "db80217548a9d7fceb5f95be6f2a92a49646333d40692dab6b76d38b2f2dfe62",
+      "jpeg_sha256": "e330e2e9bc1132962b02631e815912640cfa02f171cab51a01f69b535a464c6f",
+      "review": "Fox girl, inverted pose, extra tail mass, extra fingers; carnival prompt read as a forest night. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anifox-ringeko": {
+      "url": "/api/examples/civitai-intake/anifox-ringeko.jpg",
+      "caption": "White hime cut, red eyes, black cat, cloak. Inspect the extra fingers on the cat-holding hands.",
+      "prompt_id": "18d93d69-ccaf-4715-8966-243091f27142",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-ringeko",
+      "original_sha256": "82b4d552687f2632b60c7ae8e089a7e3ba4bb14a5373e7928491e160bda33168",
+      "jpeg_sha256": "3fff44d53c0cab18345fdfb1d43acba754601f09315eeab2001c1a60e7f3b0ca",
+      "review": "White hime cut, red eyes, black cat, cloak. Extra fingers on the cat-holding hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anifox-fluorite": {
+      "url": "/api/examples/civitai-intake/anifox-fluorite.jpg",
+      "caption": "Green hair, snake tail, hooded jacket and black bodysuit. Character LoRA look; third-party likeness not cleared.",
+      "prompt_id": "607b66d6-90b4-4762-98d7-f686303a3a5d",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-fluorite",
+      "original_sha256": "1900448e47ec5c5c30f0dabfc91537492e9c66a39f0b3b493536c40fd4ef1791",
+      "jpeg_sha256": "bb520df81a50ef9db21f84dd42ca6fd1699c22a44b0c590f2f0c0ec05a9d4055",
+      "review": "Green hair, snake tail, hooded jacket, black bodysuit, pouches: character LoRA fired. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "oneobsession-anima-v20-showcase": {
+      "url": "/api/examples/civitai-intake/oneobsession-anima-v20-showcase.jpg",
+      "caption": "Hanfu, lanterns, plum branch. Inspect eyelashes, jewellery and hand contact with the branch.",
+      "prompt_id": "a5bbe7d9-91ef-4edd-975c-3a82ede5675b",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 oneobsession-anima-v20-showcase",
+      "original_sha256": "12f32ae1eada5209ca7039c89e0d3a3e94359e57e9ef2c295c73b9e6326771e1",
+      "jpeg_sha256": "410606ffda7a2bd720b31ced3d19a558727ffb1446c8f9a6de45cc56fafd9276",
+      "review": "Hanfu, lanterns, plum branch, magazine-cover finish. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "pearly-anima-mix-v10-showcase": {
+      "url": "/api/examples/civitai-intake/pearly-anima-mix-v10-showcase.jpg",
+      "caption": "Pink fluorescent magical girl, dynamic pose. Inspect line edges and glove fingers.",
+      "prompt_id": "a201fd59-b3cc-4101-9e61-6827cc78b8c3",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 pearly-anima-mix-v10-showcase",
+      "original_sha256": "1f99c31c83c6d883e5896a7a4c5cb2fea3fa238ceba5547889c7a1954779c80a",
+      "jpeg_sha256": "a45565b2d31b8f2f583cac4f74384f741e9a8d4ffa3222486f7f4cfb34cc5e09",
+      "review": "Pink fluorescent magical girl, dynamic pose. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-pearly-esearu": {
+      "url": "/api/examples/civitai-intake/anima-pearly-esearu.jpg",
+      "caption": "Halo, blonde, soft colours, white shirt. Inspect body proportions (the LoRA pushed them hard).",
+      "prompt_id": "1ca26902-008e-4e14-b86e-4ba6d606c65b",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-pearly-esearu",
+      "original_sha256": "b839fd6449c0190a9977f5977fbd354cc794f373911d2417709890d6192616c7",
+      "jpeg_sha256": "0cda7656f5fd54645fc61badb1a088cc65790ce0caf3db0baf8d29e5c5415e3f",
+      "review": "Halo, blonde, blue eyes, soft colours. Extreme body proportions. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-pearly-petiflow": {
+      "url": "/api/examples/civitai-intake/anima-pearly-petiflow.jpg",
+      "caption": "Flat pastel close-up, mint hair, frilled dress. Inspect line weight and the missing extra clothing detail.",
+      "prompt_id": "4ba586c7-679c-4846-b249-4b6fae1329a3",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-pearly-petiflow",
+      "original_sha256": "aae62e9256ebbca3c483399860d909b11c9520cc6101d7b711586dc3bf6665a8",
+      "jpeg_sha256": "4674dfd0466c8888faf148ee8baf2bf76e82b0a85720c69050679b9c4ccbb2db",
+      "review": "Flat pastel close-up, green hair, frilled dress. Strong style match. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "krea-realism-engine": {
+      "url": "/api/examples/civitai-intake/krea-realism-engine.jpg",
+      "caption": "Photoreal woman on a wet dusk station. Hands in pockets; inspect coat fabric and rain.",
+      "prompt_id": "aa1b34e0-aa56-49f1-81a3-8bc69dfed2a8",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 krea-realism-engine",
+      "original_sha256": "95c9f530a97886dd46d07ed13ab17de459d661db516a72486b01f64cbf8714fd",
+      "jpeg_sha256": "3d050f18cd7a0c1eec4ce42a9793c27f2706ccabaa40fb01eee91f374a8e41d9",
+      "review": "Photoreal adult woman on a wet station platform at dusk; hands in pockets. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "krea-realistic-snapshot": {
+      "url": "/api/examples/civitai-intake/krea-realistic-snapshot.jpg",
+      "caption": "Candid golden-hour street portrait. Inspect skin texture, bokeh and coat wool.",
+      "prompt_id": "23e6bcc3-14e5-4ebb-ae31-bb87ae40b696",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 krea-realistic-snapshot",
+      "original_sha256": "6c8985d56b02fd99f3de09c600e77a620487efc856e964a3e43f603142c802aa",
+      "jpeg_sha256": "42a192f58d6dc4b5763da4085e82bbfc75243eb35567593e88f2fc08b24b1014",
+      "review": "Candid golden-hour street portrait, travelling coat, sunglasses on head. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "krea-lenovo-ultrareal": {
+      "url": "/api/examples/civitai-intake/krea-lenovo-ultrareal.jpg",
+      "caption": "Amateur bedroom selfie with phone in frame. Inspect noise, indoor tungsten and the phone-hand fingers.",
+      "prompt_id": "4a357043-2a09-4702-a884-b2513e603ce1",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 krea-lenovo-ultrareal",
+      "original_sha256": "5f52b1b4bddab6235336381989d69457f1519e3cc88a20c89cdc900ce794d08a",
+      "jpeg_sha256": "5605b605317a1ac4cd26d8389061a81c1f3fb897465a9317b916d443fe71fe9e",
+      "review": "Amateur bedroom mirror selfie, cropped jumper, phone in frame. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/anima-nsfw-girls.jpg",
+      "caption": "Pink-lavender hair, amber eyes, sitting on a bed. Inspect extra fingers wrapping the chest.",
+      "prompt_id": "c69c3c68-7a53-4271-ac0c-a4c7c3cda5dd",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-nsfw-girls",
+      "original_sha256": "575afeed3496b9a674df1d24df76bbf7a72f4ff7a28e2fb89351f78c28fa09a9",
+      "jpeg_sha256": "8d315bf112163eb41f29cb987fd6ba76766a9525bb31e2cb017385bd478668cc",
+      "review": "Pink-lavender hair, amber eyes, sitting on a bed holding breasts. Extra fingers on both wrapping hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-nsfw-petiflow": {
+      "url": "/api/examples/civitai-intake/anima-nsfw-petiflow.jpg",
+      "caption": "Pastel face-focus blonde. Inspect how the flat-color LoRA beat the full-nude prompt.",
+      "prompt_id": "8ec07340-3c57-476d-acf7-2efdfd1f5ce8",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-nsfw-petiflow",
+      "original_sha256": "c58f831da924454cca292d73855f7adab5fb850948ce9017e2ff498da87c4550",
+      "jpeg_sha256": "59857e170e90b96ad7957b6924d2ae06216e4ad1815103a62f305ba1ec59d386",
+      "review": "Face-focus pastel blonde, aqua eyes, shoulders only. Flat-color style beat the full-nude prompt. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-nsfw-esearu": {
+      "url": "/api/examples/civitai-intake/anima-nsfw-esearu.jpg",
+      "caption": "Halo, blonde, open robe. Inspect body proportions and extra fingers on both fists.",
+      "prompt_id": "54fe1497-bc68-4738-b8c4-18b6421af274",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-nsfw-esearu",
+      "original_sha256": "3f77f44507274c801fc3a822194cf352513b6b437c74a3386936216dd8c99a80",
+      "jpeg_sha256": "8187186b82aac96f4b968005bb1d61e60fedef7e07dad890e3a31c1bff59d114",
+      "review": "Halo, blonde, white robe open. Extreme proportions. Extra fingers on both fists. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-bunnyslop-nsfw": {
+      "url": "/api/examples/civitai-intake/anima-bunnyslop-nsfw.jpg",
+      "caption": "Dark hair, red eyes, bedroom selfie. Inspect extra fingers on the camera arm.",
+      "prompt_id": "cdc1a9ce-7020-4267-a327-7cf2dd2100d9",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-bunnyslop-nsfw",
+      "original_sha256": "5805b1b67da137888cf28f9478dc968429a2606cf0d069d2776c2b976c33b04c",
+      "jpeg_sha256": "98971144862b1dd6c715d7053dca2b564678a1b448d1a93865ccfb30026490d3",
+      "review": "Dark hair, red eyes, bedroom selfie. Extra fingers on the camera-reaching arm. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-xilmo-style": {
+      "url": "/api/examples/civitai-intake/anima-xilmo-style.jpg",
+      "caption": "Clothed painterly parka and scarf. Inspect brush edges; this is a style LoRA, not NSFW.",
+      "prompt_id": "457631f8-ac16-4430-ac87-71119bc30c86",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-xilmo-style",
+      "original_sha256": "5361015aec060dad0300e5f0af5b1d40a189bb0741ac0b5a6a0ee96c35faa5b1",
+      "jpeg_sha256": "9dd8e608acda8ab56e864cb0d0605bd1f69fa8a4c3b4dc69130c6b3606190617",
+      "review": "Clothed painterly parka and scarf portrait. Style LoRA, not an NSFW adapter. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anima-nsfw-artist-combo": {
+      "url": "/api/examples/civitai-intake/anima-nsfw-artist-combo.jpg",
+      "caption": "Short dark hair, gold eyes, bedroom. Inspect extra fingers on both hanging hands.",
+      "prompt_id": "97c916d3-e3f1-4852-85c2-34bba9dc0029",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anima-nsfw-artist-combo",
+      "original_sha256": "ba8e1e667f76f8487b643b52c4e03544723874231acf6b5f5ad664a30dc936da",
+      "jpeg_sha256": "7d3bceaa87b466baa8d5765039fb8775a09aae95e1b69192a1845bada433a01a",
+      "review": "Short dark hair, gold eyes, bedroom. Extra fingers on both hanging hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anifox-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/anifox-nsfw-girls.jpg",
+      "caption": "Black braid, red eyes, bedroom lean. Inspect extra fingers on the near arm.",
+      "prompt_id": "e32514fd-c9fc-4ebc-9a6f-9d8b0a6f4383",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-nsfw-girls",
+      "original_sha256": "9f551d98eb4352d2ecabfd26c41758dc8adffb1e6dcfcc63a23b1471b95f1e7e",
+      "jpeg_sha256": "5a610788c2a443e1ef2606c20aa0ad4c1388484c818a0937a52ff57e6df47ba4",
+      "review": "Black braid, red eyes, bedroom lean. Extra fingers on the near arm. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anifox-nsfw-ringeko": {
+      "url": "/api/examples/civitai-intake/anifox-nsfw-ringeko.jpg",
+      "caption": "White hime cut, red eyes, back view. Inspect extra fingers on the left hand.",
+      "prompt_id": "1009c21b-08f0-4227-9010-1a429ffac6fa",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-nsfw-ringeko",
+      "original_sha256": "3f88a93d6cf1a7f50c8fa7cadfaaf50f6eae7cfe4ac4e5cc426a23a939427582",
+      "jpeg_sha256": "ae21d097756e08e36ef143988ddc051f663bd8823819c9a5100eb5be136d5342",
+      "review": "White hime cut, red eyes, back view on a bed. Extra fingers on the left hand. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "anifox-shiny-nai": {
+      "url": "/api/examples/civitai-intake/anifox-shiny-nai.jpg",
+      "caption": "Blonde, blue eyes, high-gloss wet skin. Inspect extra fingers on both hands.",
+      "prompt_id": "b8f996bf-1442-4761-911f-ced0be69d1df",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 anifox-shiny-nai",
+      "original_sha256": "bcb33d57bd6c8cf29ef89fbc02e50dc0f061e5d052e6110862b60b872740e622",
+      "jpeg_sha256": "89d762b3380b4df125900abb1daf56f0b3d748e06313ca887ebae55ee09b3de0",
+      "review": "Blonde, blue eyes, high-gloss wet skin. Extra fingers on both hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "wai-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/wai-nsfw-girls.jpg",
+      "caption": "Black hair, red eyes, doorway. Inspect extra fingers on the raised left hand.",
+      "prompt_id": "701a3203-d718-4651-a595-dbaf71138268",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 wai-nsfw-girls",
+      "original_sha256": "eef8820f103771e920271c52976573b7c74ec05316ec90e99f26e1d44f46d6ff",
+      "jpeg_sha256": "58e47b94644a29d64b2ab239a5214fe7e914c233e69b12ab8eb5f2ecd0a30c46",
+      "review": "Black hair, red eyes, doorway. Extra fingers on the raised left hand. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "wai-nsfw-glossy": {
+      "url": "/api/examples/civitai-intake/wai-nsfw-glossy.jpg",
+      "caption": "Silver hair, red eyes, arms up. Inspect extra fingers on both raised hands.",
+      "prompt_id": "56251405-3468-46ec-a70e-31531af24b49",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 wai-nsfw-glossy",
+      "original_sha256": "6b46bdf5ea9fd96fffeb59d45862a9c821754dcb74864386d6d3c77b2d964ed6",
+      "jpeg_sha256": "8d59037b9da00e1dbd649c3a7a01f2210be065b385445fe92166d7a28cd5cc27",
+      "review": "Silver hair, red eyes, arms up. Extra fingers on both raised hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "wai-shiny-detail": {
+      "url": "/api/examples/civitai-intake/wai-shiny-detail.jpg",
+      "caption": "Teal-black hair, high gloss. Inspect extra fingers on both hands on the bed edge.",
+      "prompt_id": "cdbbfaa0-aa46-4c51-93d4-799816e56203",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 wai-shiny-detail",
+      "original_sha256": "c6ccc2a61a7d1dcb28bcc40962cc5530c3997001afc6a3aafd6d5bd4271a5063",
+      "jpeg_sha256": "d07543f0bd99d6a8669c5b44505c3dfaf2b76284cfabbf00ad9cbd31cc1dff73",
+      "review": "Teal-black hair, high gloss. Extra fingers on both hands on the bed edge. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "cstati-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/cstati-nsfw-girls.jpg",
+      "caption": "Purple hair, red eyes, doorway. Inspect extra fingers on the door-holding hand.",
+      "prompt_id": "b0dce1f5-6272-4b11-9e7d-a12297dd86ba",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 cstati-nsfw-girls",
+      "original_sha256": "d71a9fd4d0e95006cac02840588f3177627cd1daf58162e103b0660149ca1420",
+      "jpeg_sha256": "ec8fa5a389810d0253412a27aaf59132ca417b211d461d209598424f2592a7a8",
+      "review": "Purple hair, red eyes, doorway. Extra fingers on the door-holding hand. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "yumeflux-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/yumeflux-nsfw-girls.jpg",
+      "caption": "Black hair, red eyes, black X pasties. Inspect extra fingers on both hands.",
+      "prompt_id": "3591a960-3263-4368-a11c-4d5b8702b0f0",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 yumeflux-nsfw-girls",
+      "original_sha256": "90cd3a0a7ce7bcb7a2b3a64b0c28faafb1c14c142832b1163612a27b39a7e013",
+      "jpeg_sha256": "6c9584221a70a592f055a08ca012c11c57968d89fd849f4e04d3eff053c02a77",
+      "review": "Black hair, red eyes, black X pasties. Extra fingers on both hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "janima-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/janima-nsfw-girls.jpg",
+      "caption": "Brown hair, orange eyes, open white shirt. Inspect extra fingers on both hands.",
+      "prompt_id": "84265e0b-704f-4e53-adb6-9b40275372fc",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 janima-nsfw-girls",
+      "original_sha256": "2cecafc0f17d6c9bfc1d280367a1e555c7188a0286d682d507615d6c3f23e059",
+      "jpeg_sha256": "ff365e14729281d9086c8d68cdea101e13b31236c0100a496673bc33e6c0500d",
+      "review": "Brown hair, orange eyes, white shirt open. Extra fingers on both hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "oneobsession-nsfw-petiflow": {
+      "url": "/api/examples/civitai-intake/oneobsession-nsfw-petiflow.jpg",
+      "caption": "Flat pastel blonde, swirl background. Inspect extra fingers on both hands.",
+      "prompt_id": "36bfde78-c0ee-4106-8a4e-0a3df54b898d",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 oneobsession-nsfw-petiflow",
+      "original_sha256": "e99245f0a2485780f82fffc901b8dec6c55a04b5c24a4e6687d067bf4bbb5851",
+      "jpeg_sha256": "d87da9b1489039f2436ce34686daccc49accdd3a417fdd20a51866a8e6559e54",
+      "review": "Flat pastel blonde, swirl background. Extra fingers on both hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "pearlymix-nsfw-esearu": {
+      "url": "/api/examples/civitai-intake/pearlymix-nsfw-esearu.jpg",
+      "caption": "Halo, blonde, extreme proportions. Inspect extra fingers on both hands.",
+      "prompt_id": "97b8af94-c030-44c1-8fac-b86b5be653a6",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 pearlymix-nsfw-esearu",
+      "original_sha256": "98e4923163c2869231d5edcec93ecc67dac02b38d45b53f0bc9c86083bb04db6",
+      "jpeg_sha256": "4e621dbf737062482e6b238f6c2d0b34f82fb63d1dc33a26b9a696c5913402fb",
+      "review": "Halo, blonde, extreme proportions. Extra fingers on both hands. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "animagine-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/animagine-nsfw-girls.jpg",
+      "caption": "Black lingerie bodysuit, not fully nude. Inspect extra fingers on the cheek-side hand.",
+      "prompt_id": "8c38e031-fb32-413f-a5ac-e39ce6b2bb5c",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 animagine-nsfw-girls",
+      "original_sha256": "18f3c7c6a7233c3febab5d36f6e123255564006a3d229fd814de6a124bf4b4a6",
+      "jpeg_sha256": "64c678824f8f45dd58eccbbf25402ff08c02599f1c629cd9df411007373ab8ad",
+      "review": "Black lingerie bodysuit, not fully nude. Extra fingers on the cheek-side hand. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "pony-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/pony-nsfw-girls.jpg",
+      "caption": "Photoreal/3D look; IL adapter is weak on Pony. Inspect extra fingers on the crossed arm.",
+      "prompt_id": "a429bc16-90f9-4020-a9c4-3525bf490955",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 pony-nsfw-girls",
+      "original_sha256": "8c031f8f259854d408ec8812cbc00ca9c50dd9b40a063057d22f9b9771ae2a42",
+      "jpeg_sha256": "b0b1c7792a69bf57dc520d5edbe39cca8690c3807ee83f46eb38dbf3733810ac",
+      "review": "Photoreal/3D look; Illustrious adapter is weak on Pony. Extra fingers on the crossed arm. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
+    },
+    "noob-nsfw-girls": {
+      "url": "/api/examples/civitai-intake/noob-nsfw-girls.jpg",
+      "caption": "Soft/blurry back view. Inspect extra fingers on the hip-side hand.",
+      "prompt_id": "014c1e77-901b-4e67-8b5d-b42f79b7e129",
+      "receipt": "experiments/curated/civitai-intake-20260921/README.md \u00b7 noob-nsfw-girls",
+      "original_sha256": "07f0bad8e0ac4f070bd3a7cf05f8e4e8f08d8307b7a5f22a85c13e1eecd8037b",
+      "jpeg_sha256": "e6a64762fc5a979201d5d000769057a0130f745310dfd9f2e4ee61541a20803a",
+      "review": "Soft/blurry back view. Extra fingers on the hip-side hand. Generated, not accepted.",
+      "coverage": "One local Studio seed. Listing-shaped prompt; not an ablation and not owner-accepted art."
     }
   }
 }

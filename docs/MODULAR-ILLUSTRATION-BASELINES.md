@@ -1,6 +1,6 @@
 # Modular illustration baselines
 
-This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: true` now covers four of the five: the Anima preset after the bounded inspected execution recorded in [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md), and the CSTati v3, YumeFlux ILv1 and JANIMA v1 base recipes after one recorded run each on 13 September 2026 (job and prompt IDs in [the goal-baseline curation](../experiments/curated/goal-baselines-20260913/README.md)). AniFox v2 stays unverified because its checkpoint download is incomplete. A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
+This catalog supplies five non-sexual illustration starting points: three SDXL checkpoints and two Anima-family routes. Offline checks cover bindings, preparation and adapter pruning; `verified: true` now covers four of the five: the Anima preset after the bounded inspected execution recorded in [ANIMA-BASELINE-EXECUTION-2026-09-13.md](ANIMA-BASELINE-EXECUTION-2026-09-13.md), and the CSTati v3, YumeFlux ILv1 and JANIMA v1 base recipes after one recorded run each on 13 September 2026 (job and prompt IDs in [the goal-baseline curation](../experiments/curated/goal-baselines-20260913/README.md)). AniFox v2 stays unverified because no generation has been inspected, but the checkpoint bytes were copied on 21 September 2026 and the SHA-256 matches the existing library pin. A listed resource pin identifies the expected file, while a completed download receipt proves the local file matches it. Neither is art acceptance.
 
 ## Executed boundary — 13 September 2026
 
@@ -34,7 +34,7 @@ field with Tab before checking or saving. No generation was submitted by this wa
 
 ## Where resources belong
 
-The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations. Nine of the ten new files have verified receipts (13 September 2026, evening); only the AniFox v2 checkpoint remains missing.
+The model root on this PC is `C:/AI/ComfyUI_windows_portable/ComfyUI/models/`. Studio's `models/library.json` records the ten new exact source versions, byte sizes and full SHA-256 values. Downloads use temporary `.part` files and are renamed only after their size and hash match. In-progress files are not usable model installations. Nine of the ten new files had verified receipts on 13 September 2026; the AniFox v2 checkpoint was copied from a local download on 21 September 2026 (`intake` receipt `b484fee42cf548d497058e9e6d42c192`, SHA-256 `c07eadce…` matching the pin). Two further Anima-family UNETs (One Obsession v2.0, Pearly Anima Mix v1.0) were copied the same day into `diffusion_models/`.
 
 | Folder | Resources | Why |
 | --- | --- | --- |
