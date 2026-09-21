@@ -4,6 +4,7 @@ on:
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/runtime_observability.py'
       - 'tests/test_full_suite*.py'
       - '.github/workflows/full-suite-lifetime.yml'
   push:
@@ -11,6 +12,7 @@ on:
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/runtime_observability.py'
       - 'tests/test_full_suite*.py'
       - '.github/workflows/full-suite-lifetime.yml'
 permissions:
