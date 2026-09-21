@@ -229,3 +229,49 @@ Host note: `civitai.red` rendered the same Civitai UI. Prefer `civitai.com` URLs
 
 ## Batch 2 link index
 See `BATCH2.md` and `LINKS-CHAT.md` § BATCH 2 for full categorized URLs. Primary new hubs: Klein LoRA `2121900`, ZIT quant `2169712`, Pixel XL `277680`, RealVis lighting `391036`/`214956`, Animagine depth `260267`/`321576`, Qwen2 LoRA `2493065`.
+
+
+## Batch 2 browser pass (2026-09-21)
+
+Verified in-browser. No 2.1-specific LoRA exists yet (2952100 T2I version: base model selector has no 2.1). Nunchaku/SVDQ on 2169712 is NVIDIA-only.
+
+### Klein / Flux.2 (explicit base, not Flux.1)
+
+- https://civitai.com/models/2474084 — Ultimate Upscaler Klein-9b (4-step fast variant)
+- https://civitai.com/models/2859218 — Klein-9b turbo detail/upscale + workflow (fp8)
+- https://civitai.com/models/2662689 — Flux2 Klein 9B Realistic Detail
+- https://civitai.com/models/2327604 — Klein Chiaroscuro Slider
+- https://civitai.com/models/2413760 — Flux 2 Klein skeleton pose extractor
+- https://civitai.com/models/2413450 — Retro comic PULPKHOR (Flux.2 Klein 9B)
+- https://civitai.com/models/2680498 — Airbrush it! (Flux.2 Klein 9B)
+- https://civitai.com/models/2515526 — Flux 2 Klein 4B outpaint
+- https://civitai.com/models/2367207 — Anime to Real slider (Klein 9B-base)
+- https://civitai.com/models/2343298 — Arcane style (Klein 9B)
+
+### Z-Image low VRAM
+
+- https://civitai.com/models/2168935 — official Z Image Turbo (page says 16 GB / 8 NFE)
+- https://civitai.com/models/2176468 — workflow titled 16GB VRAM
+- https://civitai.com/models/2588499 — High/Low VRAM + 4k + Detail Daemon
+- https://civitai.com/models/2172270 — simple GGUF T2I/I2I/upscale
+- https://civitai.com/models/2193133 — GGUF workflow (base tag wrongly SD 1.5)
+- https://civitai.com/models/2439528 — GGUF LoRA one-click + upscaler
+- https://civitai.com/models/2170134 — Turbo & Base workflow
+- https://civitai.com/models/2362961 — Fun Distill for Z-Image **Base** (CFG 1, avoid SageAttention)
+- https://civitai.com/models/2409672 — Z-Image Turbo Lightning (4–8 steps)
+- https://civitai.com/models/2190193 — UltraReal workflow
+
+### Animagine / RealVis / pixel
+
+- https://civitai.com/models/1337270 — Animagine XL 4 saturated LoRA (thin)
+- https://civitai.com/models/2110148 — Animagine XL 4.0 Opt clear checkpoint
+- https://civitai.com/models/1208930 — Animagine XL 4.0 ControlNet
+- https://civitai.com/models/139562 — RealVisXL V5.0 (Turbo/Lightning sampler notes)
+- https://civitai.com/models/122359 — Detail Tweaker XL (SDXL companion, not RealVis-named)
+- https://civitai.com/models/1317134 — DetailN_XL
+- https://civitai.com/models/43820 — Illustrious Pixel Art XL
+- https://civitai.com/models/1288970 — Pixel art style LoRa Illustrious
+- https://civitai.com/models/888939 — pixel art Style Illustrious GLora
+- https://civitai.com/models/1130279 — Vixon detailed pixel Illustrious
+- https://civitai.com/models/2481158 — PixelArt Perfect Z-Image Turbo (8 steps, CFG 1)
+- https://civitai.com/models/2182113 — PC-98 style Z-Image Turbo

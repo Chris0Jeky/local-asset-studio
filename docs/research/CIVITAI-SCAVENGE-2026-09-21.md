@@ -586,3 +586,15 @@ Additional Klein LoRAs/WFs, Animagine/RealVis depth, Pixel XL ckpt, Qwen-2 LoRA,
 
 **Supplement counts:** ~45 net-new ids beyond primary Batch 2 tables · Weight downloads: 0 · No PR / no issue re-seed.
 
+
+---
+
+## Batch 2 browser verification
+
+See `docs/research/CIVITAI-SCAVENGE-BATCH2-BROWSER-2026-09-21.md` (and pack `BATCH2_BROWSER.md`).
+
+Hard confirmations:
+- **No Qwen-Image-2.1 LoRA ecosystem yet** — `2952100` T2I: “2.1 doesnt have a base model available in selection yet.”
+- **Z-Image quant `2169712`:** AMD pick `fp8_scaled_e4m3fn_KJ` ~5.9 GB; **skip Nunchaku/SVDQ** (NVIDIA-only).
+- Extra 16GB Z-Image WFs: `2176468`, `2588499`.
+- Pixel Illustrious: `43820` (trigger `pixel`); ZIT shader `2481158` (8 steps, CFG 1).
