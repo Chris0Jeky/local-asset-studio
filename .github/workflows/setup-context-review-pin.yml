@@ -15,8 +15,6 @@ jobs:
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - name: Apply guarded review-pin validation
         run: python scripts/apply_setup_context_review_pin_fix.py
-      - name: Remove temporary patch helpers
-        run: rm .github/workflows/setup-context-review-pin.yml scripts/apply_setup_context_review_pin_fix.py
       - name: Verify compatibility stack
         run: |
           python -m unittest discover -s tests -p 'test_setup_context_compatibility*.py' -v
@@ -24,6 +22,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_setup_compatibility*.py' -v
           python -m unittest discover -s tests -p 'test_setup_substitution*.py' -v
           python scripts/validate-repo.py
+      - name: Remove temporary patch helpers
+        run: rm .github/workflows/setup-context-review-pin.yml scripts/apply_setup_context_review_pin_fix.py
       - name: Commit verified review-pin fix
         run: |
           git config user.name 'Cristian Tcaci'
