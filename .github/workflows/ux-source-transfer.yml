@@ -1,13 +1,14 @@
-name: Exact-tree UX source transfer
+name: Exact UX recovery snapshots
 on:
   push:
     branches: ['codex/ux-publish-20260921']
+    paths: ['.github/workflows/ux-source-transfer.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
-  publish:
+  capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,23 +16,38 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: c02a2132d4b9955b1c0bda9447c6f594305e7d2d
+          ref: 7b504b902efbb48a0dc1def6a54cedba96b762d9
           path: source
-      - name: Verify exact source tree before scoped publication
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Capture immutable source deltas and retained unpublished patch
         working-directory: source
         run: |
           python - <<'PY'
           from pathlib import Path
-          import subprocess, os
-          parent = 'c02a2132d4b9955b1c0bda9447c6f594305e7d2d'
-          assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == parent
-          patch = Path('../transfer/.github/ux-daily.patch').read_bytes()
-          subprocess.run(['git','apply','--index','--unidiff-zero','--whitespace=error-all','-'],input=patch,check=True)
-          tree = subprocess.check_output(['git','write-tree'],text=True).strip()
-          assert tree == 'db046d436b36eb7b4d4c5618f8ae1e347d647dba', tree
-          subprocess.run(['git','config','user.name','OpenAI'],check=True)
-          subprocess.run(['git','config','user.email','noreply@openai.com'],check=True)
-          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: complete Overview inspection and library entry journeys'],text=True).strip()
-          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-daily-journeys'],check=True)
-          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Published '+commit+'\nVerified tree: '+tree+'\n')
+          import subprocess, json, hashlib
+          out=Path('../capture');out.mkdir()
+          base='f22b56bbeee0ecd907aa71b22e4071cc0dde4dde'
+          refs={'base':base,'main':'7b504b902efbb48a0dc1def6a54cedba96b762d9','entry':'73ec2878888b72e10f4b531276e95a42f7eb0d62','run':'c02a2132d4b9955b1c0bda9447c6f594305e7d2d'}
+          manifest={}
+          for name,sha in refs.items():
+              tree=subprocess.check_output(['git','rev-parse',sha+'^{tree}'],text=True).strip()
+              commit=subprocess.check_output(['git','cat-file','commit',sha])
+              patch=subprocess.check_output(['git','diff','--binary','--full-index','--no-renames',base,sha])
+              listing=subprocess.check_output(['git','ls-tree','-rz',sha])
+              (out/(name+'.commit')).write_bytes(commit)
+              (out/(name+'.patch')).write_bytes(patch)
+              (out/(name+'.tree')).write_bytes(listing)
+              manifest[name]={'commit':sha,'tree':tree,'patch_sha256':hashlib.sha256(patch).hexdigest()}
+          pending=Path('../transfer/.github/ux-daily.patch').read_bytes()
+          (out/'daily.patch').write_bytes(pending)
+          manifest['pending']={'sha256':hashlib.sha256(pending).hexdigest(),'parent':refs['run'],'expected_tree':'db046d436b36eb7b4d4c5618f8ae1e347d647dba'}
+          (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          print(json.dumps(manifest,indent=2))
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ux-recovery-exact-sources
+          path: capture/
+          retention-days: 7
+          if-no-files-found: error
