@@ -266,7 +266,10 @@ class SetupDrafts:
                  'The substitution context changed; inspect a fresh complete diff')
             need(canonical(fresh['after'])==canonical(core['after']),
                  'Derived substitution differs from the reviewed complete diff')
-            record={'draft':fresh['after'],'inputs':copy.deepcopy(current['inputs']),
+            after_inputs=self._inputs(fresh['after'])
+            need(canonical(after_inputs)==canonical(current['inputs']),
+                 'Substitution changes staged inputs; use the explicit staging workflow')
+            record={'draft':fresh['after'],'inputs':after_inputs,
                     'runtime':copy.deepcopy(current['runtime']),
                     'graph_sha256':current['graph_sha256']}
             with self.workspace.connection() as db:
