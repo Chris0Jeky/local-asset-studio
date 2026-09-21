@@ -593,7 +593,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('request', type=Path)
     args = parser.parse_args(argv)
     try:
-        raw = args.request.read_bytes()
+        with args.request.open('rb') as stream:
+            raw = stream.read(MAX_INPUT_BYTES + 1)
         need(len(raw) <= MAX_INPUT_BYTES,
              'Setup context request exceeds 1 MiB')
         result = evaluate(decode(raw))
