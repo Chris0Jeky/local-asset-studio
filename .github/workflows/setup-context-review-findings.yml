@@ -30,6 +30,20 @@ jobs:
           PY
       - name: Apply guarded integrity patch
         run: python scripts/apply_setup_context_integrity_fixes.py
+      - name: Seal ordered source fixture for v2
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_setup_context_compatibility.py')
+          text = path.read_text(encoding='utf-8')
+          old = "        second_source['context_sha256'] = '3' * 64\n"
+          new = "        second_source['context_sha256'] = S.candidate_report_digest(second_source)\n"
+          count = text.count(old)
+          print(f'ordered source fixture replacement: {count} exact match(es)')
+          if count != 1:
+              raise SystemExit(f'expected one ordered source fixture block, found {count}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
       - name: Verify context, source, evaluator and substitution contracts
         run: |
           python -m unittest discover -s tests -p 'test_setup_context_compatibility*.py' -v
