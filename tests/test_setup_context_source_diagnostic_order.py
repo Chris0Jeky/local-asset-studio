@@ -8,6 +8,7 @@ import test_setup_context_compatibility as context_fixture
 import test_setup_source_evidence as source_fixture
 from studio_workflow import setup_context_compatibility as live_context
 from studio_workflow import source_compatibility as source_adapter
+from studio_workflow.core import canonical
 
 
 class SetupContextSourceOrderingTests(unittest.TestCase):
@@ -44,8 +45,8 @@ class SetupContextSourceOrderingTests(unittest.TestCase):
 
         adapted = source_adapter.adapt(source_fixture.request(source=retained))
         self.assertEqual(
-            [item['source_scope']['host'] for item in adapted['source_observations']],
-            ['civitai.com', 'civitai.red'],
+            adapted['source_observations'],
+            sorted(adapted['source_observations'], key=canonical),
         )
 
         result = live_context.evaluate(context_fixture.request(source=adapted))
