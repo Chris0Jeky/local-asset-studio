@@ -1,0 +1,15 @@
+name: Setup context review finding contracts
+on:
+  push:
+    branches: [codex/setup-context-compatibility]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_setup_context_compatibility_review_findings.py' -v
