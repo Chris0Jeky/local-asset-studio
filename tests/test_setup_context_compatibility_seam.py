@@ -2,6 +2,7 @@
 import copy
 import json
 import unittest
+from unittest.mock import patch
 
 from studio_workflow import setup_context_compatibility as evaluator
 from studio_workflow.agent_bridge import AgentBridge
@@ -90,6 +91,21 @@ class SetupContextCompatibilitySeamTests(unittest.TestCase):
             return result
 
         self.assertEqual(observe(transport, value), evaluator.evaluate(captured))
+
+    def test_client_bounds_request_before_copy_or_transport(self):
+        from studio_workflow.setup_context_client import observe
+
+        value = request()
+        value['slot']['goal'] = 'x' * (evaluator.MAX_INPUT_BYTES + 1)
+
+        def transport(*_):
+            self.fail('oversized setup context reached transport')
+
+        with patch(
+            'studio_workflow.setup_context_client.copy.deepcopy',
+            side_effect=AssertionError('unbounded copy used'),
+        ), self.assertRaisesRegex(ValueError, 'exceeds 1 MiB'):
+            observe(transport, value)
 
 
 if __name__ == '__main__':
