@@ -1,6 +1,7 @@
 # LAS / Comfy model inventory — 2026-09-21
 
-**Studio:** `C:\Users\jekyt\source\local-asset-studio`  
+**Studio (active checkout):**   
+**Stale checkout (do not use — frozen at PR #7):** `C:\Users\jekyt\source\local-asset-studio`  
 **Comfy:** `C:\AI\ComfyUI_windows_portable\ComfyUI` (`config/local.json`)  
 **GPU context:** RX 9070 XT 16 GB (VRAM arbitration vs Spoken Briefs / local LLM)
 
@@ -20,7 +21,7 @@ Weights are **not** in git; LAS `models/installed-manifest.json` is the curated 
 
 ### Also on disk (checkpoints, beyond curated note)
 - novaAnimeXL_ilV190, yumefluxXLIllustrious_ilV10, cstatiANIMEV30XL_v30, anifoxXLV20_anifoxV2
-- hunyuan_3d_v2.1 (~6.9 GB)
+- hunyuan_3d_v2.1 (~6.9 GB) — **on disk ≠ licence clearance** (see License / policy)
 - Incomplete `.part` leftovers for anifox (cleanup candidate)
 
 ### Diffusion / DiT / video-ish
@@ -55,9 +56,11 @@ Weights are **not** in git; LAS `models/installed-manifest.json` is the curated 
 - Anime detailing: Impact Pack nodes + face/hand yolov8 (adetailer)
 
 ## License / policy flags
-- NoobAI: non-commercial including generated products
-- WAI: commercial/auth terms unresolved
+- NoobAI: non-commercial including generated products (Fair-AI Public License 1.0-SD)
+- WAI: commercial/auth terms unresolved (HF mirror hashes ≠ creator authentication)
+- **Hunyuan3D 2.1 / HY-Motion 1.0:** Tencent Hunyuan Community licence. Repo docs record **UK use excluded** (, ). Community grant commonly also excludes the **EU** and **South Korea**. Operator is London (UK) → default **not cleared**. Installation / on-disk weight is **not** blanket licence clearance; only a specific owner-confirmed authorized scope (if recorded) applies. Treat as territorial-gated.
 - Always treat NSFW LoRAs as explicit-queue only (align with local LLM Uncensored policy)
+- A completed render is neither art acceptance nor licence clearance
 
 ## Gaps vs seeded interest
 - **Qwen-Image-2.1** not in Comfy yet — LAS #739 (have Edit-2511 + Lightning + angles LoRA)

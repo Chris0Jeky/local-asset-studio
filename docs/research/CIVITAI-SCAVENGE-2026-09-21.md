@@ -1,7 +1,7 @@
 # Civitai / civitai.red FINDINGS pack — 2026-09-21 (BST)
 
 **Audience:** Chris Local Asset Studio (LAS) → PR into `Chris0Jeky/local-asset-studio`  
-**GPU:** AMD RX 9070 XT 16GB · Comfy portable · Studio at `C:\Users\jekyt\source\local-asset-studio`  
+**GPU:** AMD RX 9070 XT 16GB · Comfy portable · Studio at active checkout `C:\Users\jekyt\Desktop\Printer Config\Others\Git\local-asset-studio` (not the stale `source\` PR #7 copy)  
 **Rule:** Model **page URLs + ids + version names + quality signals only**. No weight download URLs.
 
 **nsfwLevel note (Civitai bitmask):** `1` ≈ clean/soft · `3–7` ≈ soft/mature possible · `15–31` ≈ explicit-capable gallery even when `nsfw:false`. Flags below: **SFW-leaning** vs **NSFW-capable**.
@@ -366,6 +366,11 @@ No weights downloaded in either pass.
 ---
 
 ---
+
+
+## Note on early incomplete popularity tables
+
+An initial thin scrape briefly rendered some LoRA tables with `Base=?` and zero download/like counts (API list shape mismatch). Those rows were **superseded** by the quality-ranked Batch 1 tables above (concrete 👍 / DL / baseModel). Do not seed smoke tests from any remnant `?` / `0` popularity stubs — use the Batch 1–4 tables and `PRESETS.md`.
 
 ## Batch 2
 
