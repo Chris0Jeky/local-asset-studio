@@ -80,8 +80,9 @@ def validate_slot(value):
               'loader', 'runtime', 'formats', 'objective', 'capabilities',
               'known_absent_capabilities'}
     need(isinstance(value, dict) and set(value) == fields, 'Invalid setup slot fields')
-    for key in ('role', 'modality', 'architecture', 'loader', 'runtime', 'objective'):
+    for key in ('role', 'modality', 'architecture', 'loader', 'runtime'):
         need(token(value[key], 160), 'Setup slot ' + key + ' is required')
+    objective = identifier(value['objective'])
     need(value['base_lineage'] is None or token(value['base_lineage'], 160), 'Invalid base lineage')
     need(type(value['strict_lineage']) is bool, 'strict_lineage must be boolean')
     need(not value['strict_lineage'] or value['base_lineage'] is not None,
@@ -90,8 +91,8 @@ def validate_slot(value):
     capabilities = strings(value['capabilities'], 'capabilities', 256)
     absent = strings(value['known_absent_capabilities'], 'known absent capabilities', 256)
     need(not set(capabilities) & set(absent), 'A capability cannot be both present and absent')
-    return {**copy.deepcopy(value), 'formats': formats, 'capabilities': capabilities,
-            'known_absent_capabilities': absent}
+    return {**copy.deepcopy(value), 'objective': objective, 'formats': formats,
+            'capabilities': capabilities, 'known_absent_capabilities': absent}
 
 
 def validate_candidate(value):
