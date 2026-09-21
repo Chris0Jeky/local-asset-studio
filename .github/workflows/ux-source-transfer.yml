@@ -15,7 +15,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: d2d5e1c2a7cf9f968f418bcaf355cd889899220f
+          ref: c02a2132d4b9955b1c0bda9447c6f594305e7d2d
           path: source
       - name: Verify exact source tree before scoped publication
         working-directory: source
@@ -23,15 +23,15 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import subprocess, os
-          parent = 'd2d5e1c2a7cf9f968f418bcaf355cd889899220f'
+          parent = 'c02a2132d4b9955b1c0bda9447c6f594305e7d2d'
           assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == parent
-          patch = Path('../transfer/.github/ux-run.patch').read_bytes()
+          patch = Path('../transfer/.github/ux-daily.patch').read_bytes()
           subprocess.run(['git','apply','--index','--unidiff-zero','--whitespace=error-all','-'],input=patch,check=True)
           tree = subprocess.check_output(['git','write-tree'],text=True).strip()
-          assert tree == 'd79735af0658959e7eb69912383c074e1c2446dd', tree
+          assert tree == 'db046d436b36eb7b4d4c5618f8ae1e347d647dba', tree
           subprocess.run(['git','config','user.name','OpenAI'],check=True)
           subprocess.run(['git','config','user.email','noreply@openai.com'],check=True)
-          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: surface comparison and seed decisions in the run dock'],text=True).strip()
-          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-create-run-decisions'],check=True)
+          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: complete Overview inspection and library entry journeys'],text=True).strip()
+          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-daily-journeys'],check=True)
           Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Published '+commit+'\nVerified tree: '+tree+'\n')
           PY
