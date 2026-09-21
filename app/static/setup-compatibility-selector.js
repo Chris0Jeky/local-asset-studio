@@ -151,8 +151,10 @@
     const document=select.ownerDocument;
     const host=container||document.createElement('div');
     if(!container){
-      need(select.parentNode,'Mount requires an attached selector or a container');
-      select.insertAdjacentElement('afterend',host);
+      const enclosingLabel=select.closest?.('label');
+      const anchor=enclosingLabel&&enclosingLabel.contains(select)?enclosingLabel:select;
+      need(anchor.parentNode,'Mount requires an attached selector or a container');
+      anchor.insertAdjacentElement('afterend',host);
     }
     const wrapper=document.createElement('section');
     wrapper.className='setup-compatibility-selector';
