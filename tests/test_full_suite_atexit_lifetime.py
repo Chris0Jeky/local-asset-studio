@@ -1,6 +1,8 @@
 """Finalization diagnostics for retained ``atexit`` callbacks."""
 from __future__ import annotations
 
+import atexit
+import io
 from pathlib import Path
 import subprocess
 import sys
@@ -13,6 +15,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+from runtime_observability import AtexitCallbackObserver  # noqa: E402
 from test_full_suite_lifetime import (  # noqa: E402
     ProcessCapture,
     SUITE_COMPLETE,
@@ -39,7 +42,31 @@ class _StuckReader:
         return True
 
 
+class _ExplosiveEqualityCallback:
+    def __call__(self):
+        pass
+
+    def __eq__(self, other):
+        raise RuntimeError("callback equality failed")
+
+
+class _ComparisonProbe:
+    def __eq__(self, other):
+        return False
+
+
 class AtexitLifetimeDiagnosticsTests(unittest.TestCase):
+    def test_observer_propagates_unregister_equality_errors(self):
+        observer = AtexitCallbackObserver(stream=io.StringIO())
+        registered = _ExplosiveEqualityCallback()
+        observer.install()
+        try:
+            atexit.register(registered)
+            with self.assertRaisesRegex(RuntimeError, "callback equality failed"):
+                atexit.unregister(_ComparisonProbe())
+        finally:
+            observer.restore(cancel=True)
+
     def test_worker_names_blocking_atexit_callback_before_parent_timeout(self):
         worker = HERE / "full_suite_lifetime_worker.py"
         with tempfile.TemporaryDirectory() as directory:
