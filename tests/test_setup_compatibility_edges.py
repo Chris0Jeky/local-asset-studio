@@ -88,6 +88,12 @@ class SetupCompatibilityEdgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'strict lineage'):
             C.evaluate(request(base_lineage=None, strict_lineage=True))
 
+    def test_slot_objective_uses_evidence_identifier_grammar(self):
+        for invalid in ('Quality', 'image quality'):
+            with self.subTest(objective=invalid):
+                with self.assertRaisesRegex(ValueError, 'identifier'):
+                    C.evaluate(request(objective=invalid))
+
     def test_controlled_run_needs_at_least_one_observation(self):
         empty = claim(kind='controlled_run', observations=0, independent_sources=0)
         result = C.evaluate(request([empty]))
