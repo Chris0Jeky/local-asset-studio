@@ -1,0 +1,22 @@
+name: Setup compatibility client bound
+
+on:
+  push:
+    branches: [codex/setup-compatibility-readonly-seam]
+    paths:
+      - tests/test_setup_context_compatibility_seam.py
+      - studio_workflow/setup_context_client.py
+      - .github/workflows/setup-compatibility-client-bound-red.yml
+
+permissions: {}
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run setup compatibility seam contracts
+        run: python -m unittest discover -s tests -p 'test_setup_context_compatibility_seam.py' -v
