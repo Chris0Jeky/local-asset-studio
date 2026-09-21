@@ -13,12 +13,18 @@ Related GitHub (Refs, never Closes until acceptance is complete):
 
 ## Hard rules
 
-- Adult only. Negatives always include `child, loli, shota`. No named franchise characters, no real people.
+- Adult only. Negatives always include `child, loli, shota`. No real people. **As planned: no named franchise
+  characters — not what happened.** From wave C on, the lab used adult-coded Danbooru character tags (2B, Kafka,
+  Darkness, Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa, and Yor and Acheron in `presets/wildcards/nsfw_character.txt`),
+  and they are in `FINDINGS.md`, `presets/nsfw-intel.json` and the media manifests. The adult-only and no-real-people
+  parts held: Megumin and child-coded franchise tags were skipped on purpose. Whether the lab should use named
+  franchise characters at all is an owner decision, raised in `HUMAN_TODO.md`; nothing was deleted to hide the gap.
 - Fast families only: Anima, AniFox, WAI, CSTati, YumeFlux, JANIMA, One Obsession, Pearly Mix, Animagine. Skip Qwen / FLUX.2 32B / H3 / Wan / Hunyuan / Trellis / HiDream / Klein 9B / z-image / extra Krea.
 - One seed per cell unless the cell *is* a seed audition. Never resubmit an uncertain job.
 - Generated ≠ accepted ≠ licensed. Catalog `verified` stays false for new presets.
 - Serving Studio checkout is this tree on 8191. Do not switch it. Restart Studio only when an API/static change needs a reload and the queue is empty.
-- Public remote: keep contact sheets small; no 10 MiB+ binaries.
+- Public remote: keep contact sheets small; no 10 MiB+ binaries. **Superseded 21 September 2026:** the owner decided
+  the lab's JPEGs are not uploaded at all — see `README.md` in this folder for the local-only media policy.
 
 ## Intent
 
@@ -46,7 +52,8 @@ Promote only cells that survive inspection into recipes + Creative Bundles + `pr
 
 - Experiments JSON: `.runtime/nsfw-lab-waveA.json` (untracked submit payload)
 - Receipts: `.runtime/nsfw-lab-receipts.json` (untracked)
-- JPEGs: `examples/nsfw-lab/<id>.jpg`
+- JPEGs: `examples/nsfw-lab/<id>.jpg` — local-only and gitignored; the tracked record is
+  `examples/nsfw-lab/MANIFEST.json` and the tooling is `scripts/lab-media.py` (`README.md` in this folder)
 - Findings: `experiments/curated/nsfw-lab-20260921/FINDINGS.md`
 - Intel: `presets/nsfw-intel.json` (Create panel + gallery)
 - Gallery: `app/static/nsfw-lab.html`
