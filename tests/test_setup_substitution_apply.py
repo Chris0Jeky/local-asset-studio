@@ -4,11 +4,13 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import sqlite3
 import unittest
 from unittest import mock
 
 import test_recipe_shortlist_apply as A
 import test_setup_substitution as F
+from studio_workflow import setup_drafts as D
 from studio_workflow import setup_substitution as S
 from studio_workflow.core import canonical
 
@@ -139,6 +141,46 @@ class AtomicSetupSubstitutionTests(unittest.TestCase):
         self.assertEqual(store.get(current['draft_id'])['revision'], 1)
         self.assertEqual(store.recover('append-failure')['status'], 'failed')
         self.assertEqual(self.s.upload_count, 0)
+
+    def test_receipt_failure_after_append_drops_rolled_back_revision_metadata(self):
+        self.set_controls()
+        current = self.create()
+        report = self.plan()
+        store = self.store()
+        command = {
+            'action': 'substitute', 'workspace_id': self.scope,
+            'request_id': 'receipt-failure', 'draft_id': current['draft_id'],
+            'expected_revision': 1, 'proposal_json': report['proposal_json'],
+            'approved_proposal_sha256': report['proposal_sha256'],
+        }
+        save = store._save_receipt
+
+        def fail_committed(db, receipt, request_sha):
+            if receipt.get('status') == 'committed':
+                raise sqlite3.OperationalError('receipt fixture')
+            return save(db, receipt, request_sha)
+
+        with mock.patch.object(store, '_save_receipt', side_effect=fail_committed):
+            result = store.command(command)
+        self.assertEqual(result['status'], 'failed')
+        self.assertIsNone(result.get('revision'))
+        for key in ('previous_revision', 'approved_proposal_sha256', 'changes'):
+            self.assertNotIn(key, result)
+        self.assertEqual(store.get(current['draft_id'])['revision'], 1)
+        recovered = store.recover('receipt-failure')
+        self.assertEqual(recovered['status'], 'failed')
+        self.assertIsNone(recovered.get('revision'))
+        self.assertEqual(self.s.upload_count, 0)
+
+    def test_declared_proposal_bound_fits_the_setup_command_envelope(self):
+        command = {
+            'action': 'substitute', 'workspace_id': '0' * 32,
+            'request_id': 'bounded-proposal', 'draft_id': 'bounded-draft',
+            'expected_revision': 1, 'proposal_json': '\\' * S.MAX_BYTES,
+            'approved_proposal_sha256': '0' * 64,
+        }
+        self.assertLessEqual(len(canonical(command)), D.MAX_COMMAND)
+        self.assertEqual(D.validate_command(command), command)
 
 
 class AtomicSetupSubstitutionAgentTests(unittest.TestCase):
