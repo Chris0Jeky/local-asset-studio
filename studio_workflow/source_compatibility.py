@@ -341,7 +341,10 @@ def adapt(value: Any) -> dict[str, Any]:
             'message': ('Retained gallery coverage is incomplete; positive observations remain '
                         'inspectable, but missing records cannot establish absence.'),
         })
-    source_diagnostics = copy.deepcopy(report['diagnostics'])
+    source_diagnostics = sorted(
+        copy.deepcopy(report['diagnostics']),
+        key=canonical,
+    )
     provider_identity = digest({'candidate_id': candidate['id'],
                                 'resource_identity': mapping['resource_identity'],
                                 'file_identity': mapping['file_identity']})
