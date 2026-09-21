@@ -1,0 +1,153 @@
+diff --git a/app/static/bundle-explorer.js b/app/static/bundle-explorer.js
+index 92109a8f27a95e77d75e11ca59335ec34aac13b1..21ec1bcc743266b08172870cf7531fd5a6310655 100644
+--- a/app/static/bundle-explorer.js
++++ b/app/static/bundle-explorer.js
+@@ -12,2 +11,0 @@
+-    const launchers=[button],homeHeading=q('#homeView .ux-home-heading');
+-    if(homeHeading){const homeButton=button.cloneNode(true);homeButton.id='bundleHomeLauncher';homeHeading.after(homeButton);launchers.push(homeButton);}
+@@ -132 +130,8 @@
+-    for(const launcher of launchers)launcher.onclick=openBundles;
++    button.onclick=openBundles;
++    function mountHomeLauncher(){
++      if(q('#bundleHomeLauncher'))return;
++      const heading=q('#homeView .ux-home-heading');if(!heading)return;
++      const homeButton=button.cloneNode(true);homeButton.id='bundleHomeLauncher';homeButton.onclick=openBundles;heading.after(homeButton);
++    }
++    mountHomeLauncher();
++    if(!q('#bundleHomeLauncher'))document.addEventListener('studio:setup-draft-ready',mountHomeLauncher,{once:true});
+diff --git a/app/static/studio-navigation.css b/app/static/studio-navigation.css
+index 8f27a8faf691488be1722563c88036ef6705d382..01f482a542307a7cd8ea4d024d0202f4ccb2e04a 100644
+--- a/app/static/studio-navigation.css
++++ b/app/static/studio-navigation.css
+@@ -5,6 +4,0 @@
+-#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+-/* The actionable recipe name replaces the duplicate static label. Let it wrap
+-   within the rail instead of squeezing that second label to zero width. */
+-.workshop .wk-recipe>div {display:none}
+-.workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
+-.workshop .wk-recipe button {flex:1;min-width:0}
+diff --git a/app/static/workshop-immersive.css b/app/static/workshop-immersive.css
+index dd340e1e4eb17eed87251bf0e1a43eff72ce4073..d406c05e351f2b0bd593793ab3414b18e00a0522 100644
+--- a/app/static/workshop-immersive.css
++++ b/app/static/workshop-immersive.css
+@@ -99,0 +100,8 @@
++/* Recipe chrome is shared by every layout and the standalone prototype. */
++#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
++/* The actionable recipe name replaces the duplicate static label. Let it wrap
++   within the rail instead of squeezing that second label to zero width. */
++.workshop .wk-recipe>div {display:none}
++.workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
++.workshop .wk-recipe button {flex:1;min-width:0}
++
+diff --git a/docs/workshop/UX-DAILY-JOURNEYS-2026-09-21.md b/docs/workshop/UX-DAILY-JOURNEYS-2026-09-21.md
+index 84893639dc3cb496a4a99e23ef52f5745b1338a5..c6ef6be61f6978e03246db1a75dbee36dededb11 100644
+--- a/docs/workshop/UX-DAILY-JOURNEYS-2026-09-21.md
++++ b/docs/workshop/UX-DAILY-JOURNEYS-2026-09-21.md
+@@ -71,0 +72,32 @@ than pretending cached data is freshly loaded or starting an automatic retry.
++
++## Review continuation
++
++The earlier update did not publish the scheduler correction. At recovered PR head
++`ced420e3a43d085d24026170499dc7fad490aadb`, the complete reconstructed tree was
++`f7e35b00d0b39e24b842d1798e13f952c9958cca`. Three fresh regressions reproduced the
++lost result: direct/coalesced ReadPoller calls returned undefined, the actual
++app.js wrapper returned undefined for a successful workspace read, and the
++native picker rendered zero cards after a successful scheduled read.
++
++ReadPoller now returns the task result after releasing the lane. Coalesced
++callers still share one follow-up read and its result; false and unknown remain
++non-success, and exception containment/cadence/disposal policy is unchanged.
++The full-page driver waits until StudioReadPoller is configured, so it cannot
++accidentally qualify the unwrapped startup path instead.
++
++The Overview launcher also tolerates a late workbench host through the existing
++setup-ready event. A held-host renderer fixture reproduced the missing launcher;
++repeated readiness signals produce only one launcher and one explorer. This
++is explicit ordering hardening, not a measurement of real network/cache timing.
++Normal parser ordering already benefits from the DOMContentLoaded guard.
++
++The #790 prototype review is addressed in the parent: shared recipe chrome rules
++now live in the Workshop presentation stylesheet, not the separately loaded
++navigation stylesheet. The exported prototype checks one visible recipe label
++and long-name bounds in all three layouts at 1440px and 390px with no network
++requests. The #793 child preserves its additional 320px presentation correction.
++
++Local evidence remains synthetic renderer/Node/Python evidence. The local browser
++still refuses loopback navigation with ERR_BLOCKED_BY_ADMINISTRATOR; no policy
++bypass was attempted. Final hosted native-HTTP results and exact heads belong in
++the PR. #539 and HUMAN_TODO q-7 remain owner-run acceptance.
+diff --git a/tests/workshop_daily_application.py b/tests/workshop_daily_application.py
+index 05b9c632751517c25c84092404397f039ab0b0b2..fbdb4c78af9dfa143c562962dab65322499f066f 100644
+--- a/tests/workshop_daily_application.py
++++ b/tests/workshop_daily_application.py
+@@ -36 +36 @@ def main():
+-                    page.wait_for_function('!!selected && schemaAvailable')
++                    page.wait_for_function('!!selected && schemaAvailable && !!window.StudioReadPoller')
+diff --git a/tests/workshop_daily_journeys.py b/tests/workshop_daily_journeys.py
+index c037a75e7ea482e878ca1a3eb9f123df469eb408..ce3cc5394c5c8a40443cfcef6a3fbde9c24a9a98 100644
+--- a/tests/workshop_daily_journeys.py
++++ b/tests/workshop_daily_journeys.py
+@@ -40,0 +41,20 @@ class DailyJourneys(entry.EntryPoints):
++    def test_overview_launcher_mounts_when_the_host_arrives_later(self):
++        html = BUNDLE_HTML
++        for name in ('bundle-core.js', 'bundle-explorer.js'):
++            html = html.replace('<script src="/app/static/'+name+'"></script>', entry.script(name))
++        self.page.set_content(html)
++        self.assertEqual(self.page.locator('#bundleLauncher').count(), 1)
++        self.assertEqual(self.page.locator('#bundleHomeLauncher').count(), 0)
++        self.page.evaluate("""() => {
++          document.querySelector('main').insertAdjacentHTML('afterbegin',
++            '<section id="homeView"><div class="ux-home-heading">Overview</div></section>');
++          document.dispatchEvent(new Event('studio:setup-draft-ready'));
++          document.dispatchEvent(new Event('studio:setup-draft-ready'));
++        }""")
++        self.assertEqual(self.page.locator('#bundleHomeLauncher').count(), 1)
++        self.page.click('#bundleHomeLauncher')
++        self.assertTrue(self.page.locator('#bundleExplorer').evaluate('(n)=>n.open'))
++        self.page.keyboard.press('Escape')
++        self.assertTrue(self.page.locator('#bundleHomeLauncher').evaluate('(n)=>n===document.activeElement'))
++        self.assertEqual(self.page.evaluate('calls'), [])
++
+@@ -61,0 +82,16 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
++    def test_library_success_survives_the_production_read_scheduler(self):
++        self.load_picker()
++        self.page.add_script_tag(content=source('read-poller.js'))
++        self.page.evaluate('''() => {
++          const readAssets=refreshAssets;
++          window.pickerPoller=new ReadPoller();
++          pickerPoller.register('assets',{interval:15000,task:readAssets});
++          refreshAssets=(...args)=>pickerPoller.refresh('assets',...args);
++        }''')
++        self.page.click('#uxPullAsset')
++        self.page.evaluate('pending.shift()(true)')
++        self.page.wait_for_function('!pickerLoading')
++        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
++        self.assertTrue(self.page.locator('#uxSourceSearch').is_enabled())
++        self.page.evaluate('pickerPoller.dispose()')
++
+diff --git a/tests/workshop_prototype.py b/tests/workshop_prototype.py
+index b8f032be6743359091e5234f878b24b86d45cb84..bbd57824c18c4abb65f9a7bfbeaf85de6f109c36 100644
+--- a/tests/workshop_prototype.py
++++ b/tests/workshop_prototype.py
+@@ -29,0 +30,15 @@ def main():
++        original_name=page.evaluate('selected.name')
++        long_name='A long recipe name with settings, references and an exact version '+('x'*100)
++        for width,height in [(1440,900),(390,844)]:
++            page.set_viewport_size({'width':width,'height':height})
++            for layout in ('focus','studio','immersive'):
++                page.select_option('#workshopLayout',layout)
++                page.evaluate('(name)=>{selected.name=name;document.querySelector("#createView").__workshop.sync()}',long_name)
++                assert not page.locator('.wk-recipe > div').is_visible(), 'the export must not repeat the active recipe label'
++                button=page.locator('#workshopRecipeChange')
++                assert button.inner_text()=='Change: '+long_name
++                box=button.bounding_box()
++                assert box and box['width']>80 and box['x']>=0 and box['x']+box['width']<=width, box
++                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
++        page.evaluate('(name)=>{selected.name=name;document.querySelector("#createView").__workshop.sync()}',original_name)
++        page.set_viewport_size({'width':1440,'height':900})
+@@ -71 +86 @@ def main():
+-    checks=['Immersive + Retro Anime + Night Shift review default','embedded repository and paired local ambience art','guarded recipe replacement','local reference survives presentation switch','demo preview, no submission','adapter input feedback','offline route interception','read-only guidance','mobile geometry']
++    checks=['standalone recipe labels and long-name geometry','Immersive + Retro Anime + Night Shift review default','embedded repository and paired local ambience art','guarded recipe replacement','local reference survives presentation switch','demo preview, no submission','adapter input feedback','offline route interception','read-only guidance','mobile geometry']
+@@ -73 +88 @@ def main():
+-    print('Prototype: 9 checks passed; no network requests or page exceptions')
++    print('Prototype: 10 checks passed; no network requests or page exceptions')
