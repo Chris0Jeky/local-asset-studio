@@ -3607,7 +3607,7 @@
       "collection": "modular-illustration-baselines",
       "graph": "workflows/api/anifox-v2-baseline-api.json",
       "verified": false,
-      "commercial_note": "Source pins are present; local installation and licence terms are separate and remain unverified. A checked graph is not a generation or rights clearance.",
+      "commercial_note": "Checkpoint bytes match the library pin; licence terms remain unverified. A copied file is not a generation or rights clearance.",
       "positive": ["2", "text"], "negative": ["3", "text"], "width": ["4", "width"], "height": ["4", "height"], "seed": ["5", "seed"], "steps": ["5", "steps"], "cfg": ["5", "cfg"], "denoise": ["5", "denoise"], "sampler": ["5", "sampler_name"], "scheduler": ["5", "scheduler"],
       "lora": ["8", "strength_model"], "lora_name": ["8", "lora_name"], "lora2": ["9", "strength_model"], "lora2_name": ["9", "lora_name"],
       "bindings_extra": {"lora": [["8", "strength_clip"]], "lora2": [["9", "strength_clip"]]},
@@ -3615,7 +3615,7 @@
       "modality": "image", "family": "AniFox v2 (SDXL)",
       "description": "Prepared, not rendered. Fixed AniFox v2 checkpoint with the same fully clothed adult original-character control prompt, Karras/euler-ancestral at 30 steps and CFG 5. Both compatible SDXL adapter slots default to 0 and are pruned on submission.",
       "stages": ["AniFox v2 checkpoint", "Two optional SDXL LoRA slots", "Prompt + seed", "30-step sampling", "PNG"],
-      "execution_note": "Schema/contract work only. No model download, live graph validation, generation, quality review or rights acceptance is claimed."
+      "execution_note": "Checkpoint bytes copied 2026-09-21 from a local download; SHA-256 matches the existing library pin. No live generation, quality review or rights acceptance is claimed."
     },
     {
       "id": "anima-v1-baseline",
@@ -3648,6 +3648,38 @@
       "description": "Executed and inspected base control. JANIMA v1 is loaded as a diffusion model with the existing Anima encoder and VAE. Five Anima-family adapter controls default to 0 and are pruned until a deliberate stack recipe enables them. The starting sampler values are an authored, editable control rather than a screenshot transcription.",
       "stages": ["JANIMA v1 diffusion model", "Five optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
       "execution_note": "Executed 2026-09-13: Studio job 78b5e0a3-5890-413a-ae64-ec0b59235879, ComfyUI prompt a9b824cc-f8de-4305-9e8e-43fe57567095, one 832x1216 PNG at seed 2026091301, 30 steps, all LoRA strengths zero. Output inspected; hand detail and leg/foot overlap remain unresolved. Exact recipe, graph, runtime and model/output hashes: experiments/curated/goal-baselines-20260913. Experiment only; no art acceptance, adapter-stack or licensing claim."
+    },
+    {
+      "id": "oneobsession-anima-v20-baseline",
+      "name": "One Obsession Anima v2.0 · modular illustration baseline",
+      "category": "Anime flagship",
+      "collection": "modular-illustration-baselines",
+      "graph": "workflows/api/oneobsession-anima-v20-baseline-api.json",
+      "verified": false,
+      "commercial_note": "Anima-family merge; CircleStone Labs non-commercial base terms and the civitai listing are recorded separately. A copied file is not a generation, art acceptance or rights clearance.",
+      "positive": ["4", "text"], "negative": ["5", "text"], "width": ["6", "width"], "height": ["6", "height"], "seed": ["7", "seed"], "steps": ["7", "steps"], "cfg": ["7", "cfg"], "denoise": ["7", "denoise"], "sampler": ["7", "sampler_name"], "scheduler": ["7", "scheduler"],
+      "lora": ["10", "strength_model"], "lora_name": ["10", "lora_name"], "lora2": ["11", "strength_model"], "lora2_name": ["11", "lora_name"], "lora3": ["12", "strength_model"], "lora3_name": ["12", "lora_name"], "lora4": ["13", "strength_model"], "lora4_name": ["13", "lora_name"], "lora5": ["14", "strength_model"], "lora5_name": ["14", "lora_name"], "lora6": ["15", "strength_model"], "lora6_name": ["15", "lora_name"],
+      "choices": {"sampler": ["euler", "euler_ancestral", "dpmpp_2m_sde_gpu"], "scheduler": ["simple", "normal", "beta"]},
+      "modality": "image", "family": "One Obsession Anima v2.0", "dimension_multiple": 16,
+      "description": "Prepared, not rendered. One Obsession Anima v2.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Six optional model-only adapter slots default to 0 and are pruned until a recipe turns them on.",
+      "stages": ["One Obsession Anima v2.0 diffusion model", "Six optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
+      "execution_note": "Schema/contract work only. The UNET was copied from a local download on 2026-09-21; no live generation, quality review or rights acceptance is claimed."
+    },
+    {
+      "id": "pearly-anima-mix-v10-baseline",
+      "name": "Pearly Anima Mix v1.0 · modular illustration baseline",
+      "category": "Anime flagship",
+      "collection": "modular-illustration-baselines",
+      "graph": "workflows/api/pearly-anima-mix-v10-baseline-api.json",
+      "verified": false,
+      "commercial_note": "Anima-family mix; CircleStone Labs non-commercial base terms and the civitai listing are recorded separately. A copied file is not a generation, art acceptance or rights clearance.",
+      "positive": ["4", "text"], "negative": ["5", "text"], "width": ["6", "width"], "height": ["6", "height"], "seed": ["7", "seed"], "steps": ["7", "steps"], "cfg": ["7", "cfg"], "denoise": ["7", "denoise"], "sampler": ["7", "sampler_name"], "scheduler": ["7", "scheduler"],
+      "lora": ["10", "strength_model"], "lora_name": ["10", "lora_name"], "lora2": ["11", "strength_model"], "lora2_name": ["11", "lora_name"], "lora3": ["12", "strength_model"], "lora3_name": ["12", "lora_name"], "lora4": ["13", "strength_model"], "lora4_name": ["13", "lora_name"], "lora5": ["14", "strength_model"], "lora5_name": ["14", "lora_name"], "lora6": ["15", "strength_model"], "lora6_name": ["15", "lora_name"],
+      "choices": {"sampler": ["euler", "euler_ancestral", "dpmpp_2m_sde_gpu"], "scheduler": ["simple", "normal", "beta"]},
+      "modality": "image", "family": "Pearly Anima Mix v1.0", "dimension_multiple": 16,
+      "description": "Prepared, not rendered. Pearly Anima Mix v1.0 as a diffusion model with the existing Anima encoder and Qwen VAE. Slot 2 and 3 author the Pearly esearu and PetiFlow adapters at strength 0. Strength 0 removes a slot from the submitted graph.",
+      "stages": ["Pearly Anima Mix v1.0 diffusion model", "Six optional Anima adapter slots", "Prompt + seed", "30-step sampling", "Qwen VAE", "PNG"],
+      "execution_note": "Schema/contract work only. The UNET was copied from a local download on 2026-09-21; no live generation, quality review or rights acceptance is claimed."
     },
     {
       "id": "wan22-t2v",
