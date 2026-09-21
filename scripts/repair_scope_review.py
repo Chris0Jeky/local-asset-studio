@@ -142,6 +142,8 @@ def scope_views(source, images, geometry):
                    'protected_pixels': protect.histogram()[255], 'work_protected_pixels': work_protect.histogram()[255],
                    'neural_inference': False, 'semantic_approval': False, 'review_state': 'unreviewed',
                    'candidate_registration': 'not_assessed', 'colour_managed': False}
+    if 'coverage_policy' in geometry:
+        summary['coverage_policy'] = dict(geometry['coverage_policy'])
     return views, summary
 
 
@@ -151,6 +153,8 @@ def render_html(views, summary, identities):
         (VIEW_NAMES[0], 'Final write area on the source', 'Red: effective write support. Blue: protected pixels.'),
         (VIEW_NAMES[1], 'Support changed by resampling', 'Green: added support. Amber: removed support.'),
         (VIEW_NAMES[2], 'Working context and sampler mask', 'Red: sampler coverage. Blue: protection, including padding.')):
+        if name == VIEW_NAMES[1] and 'coverage_policy' in summary:
+            title = 'Support changed by mask processing and resampling'
         data = base64.b64encode(views[name]).decode('ascii')
         cards.append(f'<section><h2>{title}</h2><p>{legend}</p><img alt="{title}" src="data:image/png;base64,{data}"></section>')
     metrics = []
@@ -184,6 +188,10 @@ textarea:focus,summary:focus{outline:3px solid #2165aa;outline-offset:3px}.hando
 <p><code>context.png</code> is the image context. <code>comfy-mask.png</code> is a separate mask carrier: use only its LoadImage <strong>MASK</strong> output. Never use its black RGB output as the context, and never use the context's transparent background as editing permission. Do not invert the exported MASK a second time.</p>
 <p>Matching a mask or canvas does not prove anatomy, identity, candidate alignment or native-model compatibility. A model route still needs its own qualification and explicit Start.</p></details>
 '''
+    if 'coverage_policy' in summary:
+        policy = summary['coverage_policy']
+        body = body.replace('introduced by scaling', 'introduced by mask processing and resampling')
+        body += '<p>' + escape(f"Dilation: {policy['dilate_px']} source pixels; feather: {policy['feather_px']} source pixels.") + '</p>'
     handoff = '<section class="handoff"><h2>Retain the reviewed mask identity</h2><p>After reviewing the full-resolution masks, use this exact value for the separate Apply step. This page does not approve or apply a result.</p><label for="effective-mask-digest">Effective write-mask SHA-256</label><textarea id="effective-mask-digest" readonly rows="2" spellcheck="false">' + mask_pin + '</textarea></section>'
     return (body + '<dl class="metrics">' + ''.join(metrics) + '</dl><div class="views">' + ''.join(cards)
             + '</div>' + limits + handoff + '<details id="raw-evidence"><summary>Technical evidence and file identities</summary><pre>'

@@ -1,5 +1,64 @@
 # UX use-case matrix
 
+## Reference analysis review and Apply — 18 September 2026
+
+`reference-analysis-review-and-apply` now registers the Prompt Lab reference-review pipeline as an
+owner-shaped journey. In fixture mode it loads deterministic exported analysis, supplies the same
+original image bytes under renamed files, edits an approved style facet, prepares the real before/after
+diff through the production reference-review HTTP extension, applies explicitly, and verifies that the
+applied references and diff remain visible. The journey records every step and the global use-case
+harness still rejects any generation-capable request.
+
+This is interface and data-contract evidence, not evidence that a vision model described a real owner
+image well. `tests/reference_review_browser.py` remains the deeper two-viewport proof for undo,
+stale-response handling, receipt export, exact-original refusal and text-zoom layout. The focused CI
+lane runs both that proof and this measured matrix case.
+
+## Draw the pose — 16 September 2026
+
+The Combine screen now draws its own pose skeleton (#444, #475, #480). A **Draw the pose** panel appears for any
+Combine continuation: the 18 COCO-18 joints drag with a mouse or a finger, the joint list picks one for
+the arrow keys (1 % of the canvas, 5 % with Shift), a joint can be marked unknown so it and its limbs
+leave the drawing, *Start from* loads a standing figure, the bent-forward research figure or a mirror,
+and Undo steps back one change. On the skeleton recipe **Use this pose** renders the guide through
+`POST /api/pose/render` and attaches it to Picture 1. On a picture-based Combine (depth, Copy Pose, pose-first)
+the same control reads **Replace pose picture with drawing**: it still renders through that endpoint, then
+replaces Picture 1 and selects the skeleton recipe. The character, seed, canvas and who/clothes answers stay;
+the pose answer is cleared so Generate waits for wording that matches the drawing (#492). Ordinary engine
+buttons still refuse picture/skeleton reinterpretation — getting back to depth or Copy Pose needs a pose
+picture re-pulled from the library. Drawing and rendering submit nothing; Generate stays a separate press.
+
+`python tests/studio_use_cases.py` passed **14/14** journeys in 65.3 s on Windows/Python 3.14, with
+**zero generation submissions and zero page errors**. The new `draw-a-pose-for-combine` journey takes
+8 clicks: four to reach a prepared Combine on the drawn-skeleton recipe, then a starting figure, a
+picked joint, an unknown joint and **Use this pose**; the keyboard nudge is measured by comparing the
+canvas bitmap before and after three arrow presses. The guide route is named in `DRAWING_ROUTES` so it
+is not miscounted as engine work — `tests/test_pose_guide.py` proves it reaches no model and creates no
+job. **This is interface evidence only:** no picture was generated from a guide drawn in this panel,
+and the renderer (`studio.coco18-lines/v1`) draws thinner strokes than the hand-drawn figure the
+research proved. See [Draw the pose](STYLE-AND-POSE.md#draw-the-pose-16-september-2026).
+
+## Combine experiment loop — 16 September 2026
+
+The same source pair now has a result strip with seed tiles, Workspace keeper/needs-work decisions,
+and explicit **Prepare same seed** / **Prepare new seed** actions. Both actions load a checked saved
+recipe; Generate still requires a separate click. Failed and uncertain history sits under **Problems**;
+its observation and recovery controls remain available when expanded.
+
+The compatible Combine recipes switch on the same screen in **one click**, retaining the character,
+pose picture and named answers. Image numbers and graph identity follow the destination recipe.
+Edited wording stays with its original recipe and returns when switching back. Skeleton and RGB
+picture routes are not interchangeable; excess board pictures and missing references block a switch.
+Each choice shows its last completed local timing when available, or says there is no timing yet.
+
+`python tests/studio_use_cases.py --out .runtime/combine-all-use-cases.json` passed **13/13** journeys
+in 69.2 s on Windows/Python 3.14, with **zero generation submissions and zero page errors**. The new
+`combine-same-pair-second-engine` journey checks source/graph identity, cross-recipe results, preserved
+hand edits, two independent review decisions and both seed preparations. It takes 11 clicks in total:
+five to prepare the pair, two recipe switches, two reviews and two seed preparations. These are
+synthetic browser fixtures, not model-quality or owner-acceptance evidence. Geometry editing and
+native guide routing remain separate work under #444/#445; broader #422 stays open.
+
 Ten owner-shaped journeys through the Studio, driven by an agent in a real Chromium and measured
 step by step. The intents live in `research/ux/use-cases.json` (selector-free, in the owner's words);
 the selectors live in `tests/studio_use_cases.py`, one driver per case. Refs #278.
@@ -262,11 +321,20 @@ python tests/studio_use_cases.py --case reference-edit-one-source    # one case
 python tests/studio_use_cases.py --base-url http://127.0.0.1:8191    # live, read-only
 ```
 
+The runner exits non-zero when any journey missed its success condition, the page raised an error, a
+generation was submitted, or nothing ran at all (an unknown `--case` id is refused rather than filtered
+away). **Live mode is the carve-out**: with `--base-url` most journeys stop short because the deny list
+refuses their deciding click by design — see the 3-of-10 live run recorded above — so live journey results
+are advisory and only a submitted generation, a page exception or an empty run turn a live run red. The
+report is written either way, so a red run still leaves its evidence; `verdict()` holds the whole rule and
+`tests/test_use_case_matrix.py` pins it without a browser. Until #611 the runner returned 0 whatever it
+measured, and each lane carried its own hand-copied gate step to compensate.
+
 Needs Playwright and Chromium (`python -m pip install playwright && python -m playwright install chromium`);
 the normal unittest suite needs neither. `.github/workflows/ux-use-cases.yml` runs the offline gate and
 the fixture measurement on every PR that touches `app/static/**`, `presets/catalog.json`,
-`studio_workflow/guides.py`, the case file or the runner, and fails when a case misses its success
-condition. The matrix JSON and the per-step screenshots are uploaded as a CI artifact.
+`studio_workflow/guides.py`, the case file or the runner. The matrix JSON and the per-step screenshots
+are uploaded as a CI artifact.
 
 Two lessons from this suite's own first hosted-CI runs, worth keeping if you add a case:
 
@@ -289,14 +357,30 @@ The owner took a Klein restyle output, opened *Continue with this → Restyle* a
 second image, the face and expression of the third image" into the keep sentence (jobs `3ad01f31…`, `35b548fd…`, same
 seed). That recipe carries one picture and its wording says to keep everything, so the renders were the input again,
 read as "the prompt makes no difference". `combine-character-with-another-pose` (`research/ux/use-cases.json`, driver in
-`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**. Since 15 September the route leads with the FLUX.2
-Klein 9B recipe, which keeps the pose picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
-until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced; the 4B recipe
-(source on image 1, two fills) is second. The row below was measured with the 9B recipe leading.
+`tests/studio_use_cases.py`) is that journey after the fix: a sixth Continue route, **Combine**. Since 15 September the route leads with a FLUX.2
+Klein 9B recipe that keeps the board picture as image 1 (Picture 1) and swaps the source in as image 2, and refuses to run
+until its three bracketed fills (who is in image 2; image 1's pose; the clothes and colours) are replaced: first the depth-map
+variant (`combine-klein-9b-depth`, later that day), then the Copy Pose LoRA recipe (`combine-klein-9b-copypose`, 16 September: character
+as image 1, pose picture as image 2), then the pose-first one, then the replace-character recipe
+(`combine-klein-9b-replace`, 16 September: the picture to keep as image 1, the character whose face goes in as image 2, and no pose
+change), then the 4B recipe (source on image 1, two fills). The
+row below was measured with the pose-first 9B recipe leading; the depth variant has the same slots and fills, and the driver
+matches the fills by their wording, so the journey is the same length (not re-measured by hand; the `ux-use-cases` lane re-runs it).
 
 | Case | int | took | clk | sw | dead | unexp | words | peak | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `combine-character-with-another-pose` | 9 | 10 | 5 | 3 | 0 | 0 | 997 | 824 | PASS |
+| `combine-character-with-another-pose` (15 Sep, slice A of #422) | 9 | 13 | 5 | 3 | 0 | 0 | 955 | 782 | PASS |
+
+**Slice A of #422 (15 September 2026, second row):** the Combine workbench now shows the two pictures side by side above the
+recipe card, in the order the model reads them and with the recipe's own labels (an empty tile offers *Pull it from the
+library* / *Choose your picture*); the three bracketed fills are three short named fields (*Who is in image 2*, *Image 1's
+pose in a few words*, *Image 2's clothes and colours*) that write the prepared wording, which stays visible and editable
+underneath (a hand edit stops the fields from rewriting it until *Rebuild it from the fields*); the disabled *Role for
+Picture 1* select is gone from fixed boards; and a long recipe description shows its first sentence and *You fill in: …*,
+the measurements and licence paragraph behind *More about this recipe*. Same five clicks. The three extra steps are the three
+short fields typed in place of one 630-character paragraph edit, and one read of the side-by-side pictures; the wording on screen
+fell from 997 to 955 words. Measured in fixture mode (12/12 cases pass) before and after the change in the same session.
 
 Fixture mode, `python tests/studio_use_cases.py` (12/12 cases), zero generation requests, zero page errors. The five
 clicks are Continue, Combine, Prepare, Pull from library, the picture; the tenth step is the typed wording. The readiness

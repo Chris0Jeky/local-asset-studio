@@ -1,8 +1,10 @@
 # Local Asset Studio Claude skills
 
 Canonical repo-local skills. `../../.codex/skills/` carries the same bodies with Codex frontmatter and an
-`agents/openai.yaml` each; `tests/test_agent_harness.py` fails when a body drifts. Change here first, then
-port the body verbatim in the same commit. Skills trigger by description; none re-mandates auto-loaded files.
+`agents/openai.yaml` each; Grok loads this tree via Claude compatibility (no `.grok/skills/` copy).
+`tests/test_agent_harness.py` fails when a Codex body drifts or a third skill tree appears. Change here
+first, then port the Codex body verbatim in the same commit. Skills trigger by description; none
+re-mandates auto-loaded files.
 
 | Skill | Use it for | Proving check |
 | --- | --- | --- |

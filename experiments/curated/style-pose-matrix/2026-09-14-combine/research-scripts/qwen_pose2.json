@@ -1,0 +1,31 @@
+[
+ {
+  "variant": "ref05",
+  "seed": 2026091411,
+  "prompt_id": "8d71b5e4-1b73-433d-a51c-f956d98a46a7",
+  "status": "success",
+  "seconds": 775.9,
+  "files": [
+   "qwen2-ref05_00001_.png"
+  ],
+  "error": [],
+  "text": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 shows only the pose to copy. Draw the girl from Picture 1 in exactly the pose of Picture 2: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep Picture 1's face, hair, clothes, colours and clean anime rendering style. Do not copy Picture 2's maid outfit, tights, heels or tail. Plain light background, one figure only.",
+  "mp": 0.5,
+  "order": "identity"
+ },
+ {
+  "variant": "skel05",
+  "seed": 2026091411,
+  "prompt_id": "ace2a0bf-ec6f-480c-9264-f4d8b5e138f4",
+  "status": "success",
+  "seconds": 1126.6,
+  "files": [
+   "qwen2-skeleton_00001_.png",
+   "qwen2-skel05_00001_.png"
+  ],
+  "error": [],
+  "text": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 is a pose skeleton (a stick figure on black) giving the body position to copy. Draw the girl from Picture 1 with her body in exactly the skeleton's pose: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep her face, hair, clothes, colours and clean anime rendering style. Plain light background, one figure only, no skeleton lines in the result.",
+  "mp": 0.5,
+  "order": "identity"
+ }
+]
