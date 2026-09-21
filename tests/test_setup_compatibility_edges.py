@@ -101,6 +101,22 @@ class SetupCompatibilityEdgeTests(unittest.TestCase):
         self.assertEqual(result['candidates'][0]['evidence_summary']['strong_support'], 0)
         self.assertIn('invalid_evidence', [item['code'] for item in result['diagnostics']])
 
+    def test_gallery_source_breadth_cannot_exceed_observations(self):
+        inflated = claim(
+            kind='gallery_co_use', observations=3, independent_sources=4,
+            source={'locator': 'Reviewed retained gallery bundle',
+                    'revision': 'sha256:' + 'b' * 64,
+                    'retrieved_at': '2026-09-21'},
+        )
+        with self.assertRaisesRegex(ValueError, 'independent|observations'):
+            C.validate_evidence(inflated)
+        result = C.evaluate(request([inflated]))
+        self.assertEqual(result['candidates'][0]['status'], 'possible')
+        self.assertEqual(
+            result['candidates'][0]['evidence_summary']['qualified_gallery_claims'], 0)
+        self.assertIn('invalid_evidence',
+                      [item['code'] for item in result['diagnostics']])
+
     def test_duplicate_non_null_resource_identity_refuses_alias_candidates(self):
         duplicate = candidate(id='style-b', name='Style B')
         with self.assertRaisesRegex(ValueError, 'Duplicate candidate resource identity'):

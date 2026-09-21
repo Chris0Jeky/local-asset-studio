@@ -4,7 +4,8 @@ The parent process owns the hard lifetime budget. This worker names every test a
 it starts and arms a slightly earlier marker plus faulthandler dump so a hung
 fixture leaves the current test ID and every Python thread stack in captured CI
 output before the parent terminates it. After the suite completes it also records
-active multiprocessing children that can retain interpreter shutdown.
+active multiprocessing children and wraps later atexit registrations so retained
+interpreter-finalization work has an owner and bounded registration stack.
 """
 from __future__ import annotations
 
@@ -19,6 +20,9 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from runtime_observability import AtexitCallbackObserver  # noqa: E402
+
 # faulthandler walks every thread's frames from C without the GIL. The hosted
 # Windows runner crashed the worker with an access violation (0xC0000005, run
 # 35391373354) when the Python marker timer was still inside its own print as
@@ -167,6 +171,11 @@ def parse_args(argv=None):
 def main(argv=None) -> int:
     args = parse_args(argv)
     start_dir = Path(args.start_dir).resolve()
+    # Install before discovery so module-level registrations made while importing
+    # tests are attributed, but keep import-time loading of this worker side-effect
+    # free for the focused contract tests that inspect its helper functions.
+    atexit_observer = AtexitCallbackObserver()
+    atexit_observer.install()
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
     diagnostics = LifetimeDiagnostics(args.traceback_after)
     diagnostics.arm()
@@ -191,7 +200,8 @@ def main(argv=None) -> int:
     # completed, and only while a resource can actually retain interpreter
     # shutdown. A live multiprocessing child is handled by Python's atexit
     # finalizer even when no non-daemon Python thread remains, so record its
-    # identity before returning into that potentially blocking finalizer.
+    # identity before returning into that potentially blocking finalizer. Atexit
+    # callbacks themselves emit their owner marker immediately before invocation.
     threads = retained_threads()
     processes = retained_processes()
     if not threads and not processes:
