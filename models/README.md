@@ -126,6 +126,25 @@ The CCIP identity model (`model_feat.onnx`, `deepghs/ccip_onnx`, licence `openra
 same evening lives at `C:\AI\asset-tools\ccip\`, outside the ComfyUI model tree. It is a critic
 tool, not a ComfyUI weight, so it is **not** a `library.json` asset; its receipt is the record.
 
+## Local intake — 21 September 2026
+
+Nine weights were copied from `Downloads/temp2` through `scripts/intake-downloads.py`. The owner obtained those files from civitai.red. AniFox v2 was already pinned; the copied SHA-256 matches `c07eadce03076d02…`. The Qwen Image VAE in that folder is byte-identical to the installed `vae/qwen_image_vae.safetensors` and was not copied again. `civitai.com` returned HTTP 451 until a VPN session; at 2026-09-21T01:30 its `/api/v1/models` and by-hash endpoints agreed with the civitai.red flags and SHA-256 values. Download origin remains civitai.red.
+
+| File | Folder | Bytes | SHA-256 (first 12) |
+| --- | --- | ---: | --- |
+| `anifoxXLV20_anifoxV2.safetensors` | `checkpoints/` | 6,938,040,706 | `c07eadce0307` (existing pin) |
+| `oneObsessionAnima_v20.safetensors` | `diffusion_models/` | 4,182,229,969 | `d1d4fa3de475` |
+| `pearlyAnimaMix_v10.safetensors` | `diffusion_models/` | 4,436,052,094 | `52de310e0eea` |
+| `realism_engine_krea2_v3.1.safetensors` | `loras/` | 1,562,410,296 | `a6712629445a` |
+| `RealisticSnapshotKrea2.safetensors` | `loras/` | 228,587,720 | `dfd67eb881be` |
+| `Ringeko.safetensors` | `loras/` | 228,486,116 | `b7edfa16d5c1` |
+| `lenovo_krea2.safetensors` | `loras/` | 114,324,736 | `6967840059e5` |
+| `pearly_esearu_style.safetensors` | `loras/` | 91,892,608 | `926cc59441dc` |
+| `pearly_petiflow2.safetensors` | `loras/` | 91,863,712 | `1e5b64e9d23d` |
+| `Robertlu1021_fluorite_arknights_v1.0_epoch_10.safetensors` | `loras/` | 57,435,028 | `9941b93e392a` |
+
+The two Anima UNETs needed `--dest-folder diffusion_models`: their tensor keys match JANIMA (`model.diffusion_model.blocks…`) rather than the header classifier's `img_in`/`final_layer` backbone signature.
+
 ## Anime & Fantasy adapters
 
 Thirty Krea 2 LoRAs were added on 12 September 2026 for the anime/fantasy atelier work. Every row below is

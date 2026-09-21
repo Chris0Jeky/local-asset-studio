@@ -2,7 +2,7 @@
 
 Implementation slice for [#438](https://github.com/Chris0Jeky/local-asset-studio/issues/438). It turns one retained provider API response into an immutable, zero-authority source proposal. It does **not** download a model, install a node, accept terms, call ComfyUI, select a route, or prove local compatibility.
 
-This is the executable parsing layer beneath [Source intake](SOURCE-INTAKE.md). Network transport remains injected. The included CLI intentionally accepts local response files only, which makes provider fixtures, operator-captured responses, audits and agent dry runs reproducible without silently contacting an external service.
+This is the executable parsing layer beneath [Source intake](SOURCE-INTAKE.md). It accepts an injected transport and is independently usable with the local-response-only CLI for reproducible fixtures, operator-captured responses, audits and agent dry runs. The separate [bounded provider metadata transport](SOURCE-TRANSPORT.md) implements an explicit public GET boundary without changing the parser's authority or provider semantics.
 
 ## Boundary
 
@@ -39,7 +39,7 @@ def transport(request: HttpRequest) -> HttpResponse:
     ...
 ```
 
-They invoke it exactly once. They do not retry, follow redirects themselves, inspect credentials, write files or provide a default network client. A future live transport must independently enforce its credential, proxy, TLS, timeout, redirect, cache and audit boundary before being registered.
+The parser invokes it exactly once. It does not retry, follow redirects itself, inspect credentials, write files or select a default network client. Callers may use a fake transport, the retained-local-response adapter, or the separately reviewed `BoundedProviderTransport`. The transport must satisfy its own credential, TLS, timeout, redirect, cache and audit boundary before returning an `HttpResponse`.
 
 ## Hugging Face proposal
 
@@ -93,6 +93,8 @@ The common response boundary rejects:
 
 Selected response headers are retained in a bounded allowlist. Credentials, cookies and authorization headers are never copied into the snapshot.
 
+The live transport adds stricter endpoint-family validation, explicit timeout/retry/redirect limits, proxy-disabled stdlib exchange, conditional cache validation and a transport receipt. The snapshot parser remains the authority for provider-specific payload semantics.
+
 ## Snapshot structure
 
 Each proposal uses `studio.adult-illustration-source-snapshot/v1` and contains:
@@ -110,7 +112,7 @@ The record is compatible in spirit with `studio.adult-illustration-source-intake
 
 ## Local-response CLI
 
-The CLI never opens a socket. Supply one retained raw provider JSON response:
+The local-response CLI never opens a socket. Supply one retained raw provider JSON response:
 
 ```console
 python scripts/studio_adult_illustration_source_snapshot.py huggingface \
@@ -135,6 +137,8 @@ python scripts/studio_adult_illustration_source_snapshot.py diff \
 
 Output files are exclusive-create. Errors are machine-readable and retain false download/install/execution/generation/training authority.
 
+For explicit live metadata acquisition, use `scripts/studio_adult_illustration_source_fetch.py` only through the controls documented in [Source transport](SOURCE-TRANSPORT.md). It requires `--allow-network`, accepts no credentials and cannot request provider file endpoints.
+
 ## Snapshot diffs
 
 Two snapshots must represent the same provider source identity. The diff records:
@@ -151,14 +155,16 @@ Historical snapshots are never rewritten. A changed source should instead stale 
 
 ## Next implementation gates
 
-1. Add one reviewed live GET transport with injected HTTP implementation, fake-server tests, explicit timeout/redirect/cache policy and a credential-free public mode. Do not put it in generation or startup paths.
-2. Add retained raw-payload storage references rather than embedding provider responses in Git.
-3. Compile reviewed file selections into the existing #356 acquisition plan. Preparation downloads nothing.
-4. Reconcile acquired bytes through #9/#144 inventory and bundle ownership.
-5. Run graph/runtime/creative qualification under #405/#406/#409/#439.
+1. Review and merge the offline parser and stacked bounded transport in order.
+2. Compile reviewed file selections into the existing #356 acquisition plan. Preparation downloads nothing.
+3. Reconcile acquired bytes through #9/#144 inventory and bundle ownership.
+4. Run graph/runtime/creative qualification under #405/#406/#409/#439.
+5. Preserve provider terms and intended-use decisions for human review.
 
 No later gate should mutate the source snapshot into evidence it did not originally contain.
 
 ## Verification
 
-Focused tests cover provider identity, immutable revision resolution, file hashes and AIR, gated/private metadata, cross-provider redirects, content type/status, duplicate/non-finite/deep/oversized JSON, unsafe and duplicate files, no retry, immutable diffs, local-only CLI operation and exclusive output.
+Focused parser tests cover provider identity, immutable revision resolution, file hashes and AIR, gated/private metadata, cross-provider redirects, content type/status, duplicate/non-finite/deep/oversized JSON, unsafe and duplicate files, immutable diffs, local-only CLI operation and exclusive output.
+
+The live-transport tests use injected fake exchanges only and additionally cover exact cache hits, ETag revalidation, retries, redirect endpoint families, credentials, cache corruption, output preflight and transport receipts. CI never contacts a provider.

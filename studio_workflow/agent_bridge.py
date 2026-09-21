@@ -23,6 +23,13 @@ DOCUMENTS = PREFIX + '/documents'
 MAX_REPLY = 2 * 1024 * 1024
 MODES = {'read': 0, 'author': 1, 'execute': 2}
 TEXT = {'type': 'string', 'maxLength': MAX_BYTES}
+SETUP_COMMAND_JSON = {
+    'type': 'string', 'maxLength': MAX_BYTES,
+    'description': ('Persisted setup command JSON. action is create, replace, apply, '
+                    'substitute, restore or abandon. apply and substitute require an '
+                    'expected revision, exact reviewed proposal JSON and its approved '
+                    'SHA-256; neither command submits generation.'),
+}
 IDENTIFIER = {'type': 'string', 'pattern': r'^[A-Za-z0-9_.-]{1,96}$', 'maxLength': 96}
 REVISION = {'type': 'integer', 'minimum': 1, 'maximum': 2**53 - 1}
 HASH = {'type': 'string', 'pattern': r'^[0-9a-f]{64}$', 'maxLength': 64}
@@ -46,8 +53,8 @@ TOOLS = {
         {'draft_id': IDENTIFIER, 'revision': {'type':'integer','minimum':1,'maximum':256}}, ('draft_id',)),
     'setup_draft_recover': tool('Read the original setup request receipt. Never repeats staging, application or generation.',
         {'request_id': IDENTIFIER}, ('request_id',)),
-    'setup_draft_command': tool('Explicit Workspace setup create/replace/apply/restore/abandon. Requires exact workspace/request identity and revisions; apply also requires the exact acknowledged proposal. Apply copies source files through Studio but NEVER generates. Persist command JSON before calling; recover by original request ID after any unknown reply.',
-        {'command_json': TEXT}, ('command_json',), 'author', True),
+    'setup_draft_command': tool('Explicit Workspace setup create/replace/apply/substitute/restore/abandon. Requires exact workspace/request identity and revisions. Apply and substitute require the exact acknowledged proposal and SHA-256; substitute appends one complete reviewed draft revision without staging, while apply may copy reviewed source files. Both NEVER generate. Persist command JSON before calling; recover by original request ID after any unknown reply.',
+        {'command_json': SETUP_COMMAND_JSON}, ('command_json',), 'author', True),
     'recipe_setup_proposal': tool('Preview a source-bound setup diff against a caller-declared browser draft. Read-only; no staging, application, saving or execution. Draft hashes are not server revisions.',
         {'request_json': {'type':'string','maxLength':131072}}, ('request_json',)),
     'studio_capabilities': tool('Discover Studio capabilities and this adapter permission scope. Does not run or install anything.'),

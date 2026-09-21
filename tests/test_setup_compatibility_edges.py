@@ -88,12 +88,34 @@ class SetupCompatibilityEdgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'strict lineage'):
             C.evaluate(request(base_lineage=None, strict_lineage=True))
 
+    def test_slot_objective_uses_evidence_identifier_grammar(self):
+        for invalid in ('Quality', 'image quality'):
+            with self.subTest(objective=invalid):
+                with self.assertRaisesRegex(ValueError, 'identifier'):
+                    C.evaluate(request(objective=invalid))
+
     def test_controlled_run_needs_at_least_one_observation(self):
         empty = claim(kind='controlled_run', observations=0, independent_sources=0)
         result = C.evaluate(request([empty]))
         self.assertEqual(result['candidates'][0]['status'], 'possible')
         self.assertEqual(result['candidates'][0]['evidence_summary']['strong_support'], 0)
         self.assertIn('invalid_evidence', [item['code'] for item in result['diagnostics']])
+
+    def test_gallery_source_breadth_cannot_exceed_observations(self):
+        inflated = claim(
+            kind='gallery_co_use', observations=3, independent_sources=4,
+            source={'locator': 'Reviewed retained gallery bundle',
+                    'revision': 'sha256:' + 'b' * 64,
+                    'retrieved_at': '2026-09-21'},
+        )
+        with self.assertRaisesRegex(ValueError, 'independent|observations'):
+            C.validate_evidence(inflated)
+        result = C.evaluate(request([inflated]))
+        self.assertEqual(result['candidates'][0]['status'], 'possible')
+        self.assertEqual(
+            result['candidates'][0]['evidence_summary']['qualified_gallery_claims'], 0)
+        self.assertIn('invalid_evidence',
+                      [item['code'] for item in result['diagnostics']])
 
     def test_duplicate_non_null_resource_identity_refuses_alias_candidates(self):
         duplicate = candidate(id='style-b', name='Style B')

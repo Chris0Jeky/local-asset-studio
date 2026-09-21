@@ -829,6 +829,13 @@ class ServerTests(unittest.TestCase):
         offline=FakeStudio(self.root,[URLError('offline')]).options(discover=True)
         self.assertEqual(offline,{'loras':[],'samplers':[],'schedulers':[],'source':'unavailable'})
 
+    def test_catalog_lists_wildcard_files_for_the_create_chips(self):
+        cards=self.root/'presets/wildcards';cards.mkdir(parents=True)
+        (cards/'lighting.txt').write_text('# skip\nbacklighting\nrim lighting\n')
+        (cards/'lazy_color_character.txt').write_text('1girl, __Breastsrandom__\n')
+        listed=self.studio().catalog()['wildcards']
+        self.assertEqual(listed,[{'name':'lazy_color_character','count':1},{'name':'lighting','count':2}])
+
     def test_wildcards_expand_per_batch_member_and_controls_keep_the_template(self):
         cards=self.root/'presets/wildcards';cards.mkdir(parents=True)
         (cards/'lighting.txt').write_text('backlighting\nrim lighting\ndappled sunlight\n')
@@ -847,6 +854,9 @@ class ServerTests(unittest.TestCase):
         (self.root/'presets/settings-kb.json').write_text(json.dumps({'version':1,'families':{},'loras':{}}))
         (self.root/'presets/recipes.json').write_text(json.dumps({'version':1,'recipes':[{'id':'r','preset_id':'demo','controls':{'lora_name':'first.safetensors'}}]}))
         knowledge=s.knowledge();self.assertTrue(knowledge['available']);self.assertEqual(len(knowledge['sha256']),64)
+        self.assertNotIn('nsfw_lab', knowledge)
+        (self.root/'presets/nsfw-intel.json').write_text(json.dumps({'version':1,'families':{'Anima':{'undress':'local note'}}}))
+        self.assertEqual(s.knowledge()['nsfw_lab']['families']['Anima']['undress'],'local note')
         self.assertIsNone(s.recipes()['recipes'][0]['available'])
         schema={'LoraLoaderModelOnly':{'input':{'required':{'lora_name':[['other.safetensors'],{}]}}}}
         live=FakeStudio(self.root,[schema]);live.node_info()
@@ -857,10 +867,11 @@ class ServerTests(unittest.TestCase):
         handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,[URLError('offline')])
         handler.headers={'Host':'127.0.0.1:8191'};sent=[]
         handler._json=lambda status,obj:sent.append((status,obj))
-        for path in ('/api/options','/api/knowledge','/api/recipes'):
+        for path in ('/api/options','/api/knowledge','/api/recipes','/api/wildcards'):
             handler.path=path;handler.do_GET()
-        self.assertEqual([s for s,_ in sent],[200,200,200])
+        self.assertEqual([s for s,_ in sent],[200,200,200,200])
         self.assertEqual(sent[0][1]['source'],'unavailable');self.assertFalse(sent[1][1]['available']);self.assertEqual(sent[2][1]['recipes'],[])
+        self.assertEqual(sent[3][1]['wildcards'],[])
         handler.headers={'Host':'evil.example:8191'};sent.clear();handler.path='/api/knowledge';handler.do_GET()
         self.assertEqual(sent[0][0],403)
 
