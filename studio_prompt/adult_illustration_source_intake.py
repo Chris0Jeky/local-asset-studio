@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import math
 from typing import Any, Mapping
+from urllib.parse import quote
 
 from . import _adult_illustration_source_intake_impl as _base
 
@@ -42,10 +43,48 @@ def snapshot_huggingface(
 ) -> dict[str, Any]:
     """Create a snapshot with path-stable Hugging Face file identities."""
 
-    snapshot = _base.snapshot_huggingface(repo_id, revision, transport)
+    def guarded(request: HttpRequest) -> HttpResponse:
+        response = transport(request)
+        payload = _base._validate_response(
+            request, response, _PROVIDER_HOSTS["huggingface"]
+        )
+        requested = revision.strip()
+        if _base._SHA40.fullmatch(requested) is not None and (
+            not isinstance(payload.get("sha"), str)
+            or payload["sha"].casefold() != requested.casefold()
+        ):
+            raise ValueError("Hugging Face response commit conflicts with requested revision")
+        files = payload.get("siblings", [])
+        if not isinstance(files, list) or len(files) > _base.MAX_FILES:
+            raise ValueError("Hugging Face file list must be bounded")
+        for item in files:
+            if not isinstance(item, dict):
+                raise ValueError("Hugging Face file must be an object")
+            lfs = item.get("lfs")
+            if lfs is None:
+                lfs = {}
+            if not isinstance(lfs, dict):
+                raise ValueError("Hugging Face LFS metadata must be an object")
+            sizes = [
+                _base._optional_nonnegative_int(row.get("size"), "Hugging Face byte count")
+                for row in (item, lfs)
+            ]
+            hashes = [
+                _base._sha256(row.get("sha256"), "Hugging Face SHA-256")
+                for row in (item, lfs)
+            ]
+            if any(size is not None and size > _MAX_FILE_BYTES for size in sizes):
+                raise ValueError("Hugging Face byte count exceeds the snapshot bound")
+            for label, values in (("byte count", sizes), ("SHA-256", hashes)):
+                known = {value for value in values if value is not None}
+                if len(known) > 1:
+                    raise ValueError(f"Hugging Face file has conflicting {label} claims")
+        return response
+
+    snapshot = _base.snapshot_huggingface(repo_id, revision, guarded)
     for item in snapshot["record"]["files"]:
         item["id"] = _hf_file_id(item["path"])
-    return snapshot
+    return _validate_snapshot(snapshot)
 
 
 def _bounded_civitai_size(size_kb: Any, path: str) -> int:
@@ -83,6 +122,10 @@ def snapshot_civitai(version_id: int, transport: Transport) -> dict[str, Any]:
             response,
             _PROVIDER_HOSTS["civitai"],
         )
+        _base._positive_int(payload.get("id"), "Civitai returned version ID")
+        model = payload.get("model")
+        if isinstance(model, dict) and model.get("id") is not None:
+            _base._positive_int(model["id"], "Civitai returned model ID")
         files = payload.get("files", [])
         if not isinstance(files, list) or len(files) > _base.MAX_FILES:
             raise ValueError(
@@ -95,7 +138,7 @@ def snapshot_civitai(version_id: int, transport: Transport) -> dict[str, Any]:
             _bounded_civitai_size(item.get("sizeKB"), path)
         return response
 
-    return _base.snapshot_civitai(version_id, guarded)
+    return _validate_snapshot(_base.snapshot_civitai(version_id, guarded))
 
 
 def _require_false_authority(value: Mapping[str, Any], label: str) -> None:
@@ -120,7 +163,11 @@ def _validate_stored_http(snapshot: Mapping[str, Any], provider: str) -> None:
         raise ValueError("Stored source snapshot cannot retain credential headers")
 
     response = snapshot.get("response")
-    if not isinstance(response, dict) or response.get("status") != 200:
+    if (
+        not isinstance(response, dict)
+        or type(response.get("status")) is not int
+        or response["status"] != 200
+    ):
         raise ValueError("Stored source snapshot response must be HTTP 200")
     if _base._require_https(
         response.get("final_url"), "stored final URL"
@@ -135,6 +182,21 @@ def _validate_stored_http(snapshot: Mapping[str, Any], provider: str) -> None:
     response_headers = _base._normalise_headers(response.get("headers", {}))
     if not set(response_headers).issubset(_base._HEADER_ALLOWLIST):
         raise ValueError("Stored response contains an unsupported header")
+
+
+def _validate_record_routes(
+    snapshot: Mapping[str, Any], expected_request: str, allowed_routes: set[str],
+) -> None:
+    """A provider host alone cannot bind a response to the selected source."""
+    if snapshot["request"]["url"] != expected_request:
+        raise ValueError("Stored request source identity does not match its record")
+    response = snapshot["response"]
+    final = response["final_url"]
+    redirects = response["redirect_chain"]
+    if final not in allowed_routes or any(url not in allowed_routes for url in redirects):
+        raise ValueError("Snapshot response route does not match its source identity")
+    if final != (redirects[-1] if redirects else expected_request):
+        raise ValueError("Snapshot final URL does not match its observed redirect chain")
 
 
 def _validate_claims(record: Mapping[str, Any]) -> None:
@@ -302,8 +364,20 @@ def _validate_snapshot(value: Any) -> dict[str, Any]:
         if not isinstance(revision, str) or _base._SHA40.fullmatch(revision) is None:
             raise ValueError("Stored Hugging Face immutable revision is invalid")
         requested = record.get("requested_revision")
-        if not isinstance(requested, str) or not requested or len(requested) > 200:
+        if (
+            not isinstance(requested, str) or not requested or len(requested) > 200
+            or requested != requested.strip()
+        ):
             raise ValueError("Stored Hugging Face requested revision is invalid")
+        if _base._SHA40.fullmatch(requested) is not None and (
+            requested.casefold() != revision.casefold()
+        ):
+            raise ValueError("Stored immutable revision conflicts with requested commit")
+        metadata = f"https://huggingface.co/api/models/{repo_id}/revision/"
+        expected_request = f"{metadata}{quote(requested, safe='')}?blobs=true"
+        allowed_routes = {
+            expected_request, f"{metadata}{revision.casefold()}?blobs=true",
+        }
         expected_id = (
             f"huggingface-{repo_id.replace('/', '--').casefold()}-"
             f"{revision.casefold()[:12]}"
@@ -325,6 +399,10 @@ def _validate_snapshot(value: Any) -> dict[str, Any]:
         )
         if record.get("immutable_revision") != str(version_id):
             raise ValueError("Stored Civitai immutable revision is inconsistent")
+        expected_request = f"https://civitai.com/api/v1/model-versions/{version_id}"
+        allowed_routes = {
+            expected_request, f"https://www.civitai.com/api/v1/model-versions/{version_id}",
+        }
         expected_id = f"civitai-{model_id}-{version_id}"
         expected_url = (
             f"https://civitai.com/models/{model_id}?modelVersionId={version_id}"
@@ -335,6 +413,7 @@ def _validate_snapshot(value: Any) -> dict[str, Any]:
         ):
             raise ValueError("Stored Civitai source identity is inconsistent")
 
+    _validate_record_routes(value, expected_request, allowed_routes)
     _validate_files(record, provider)
     return value
 

@@ -12,14 +12,13 @@ import ipaddress
 import json
 from pathlib import Path
 import socket
-import sysconfig
 import threading
-import traceback
 from unittest.mock import patch
+
+from runtime_observability import bounded_call_stack
 
 
 _MAX_ROUTE_ROWS = 32
-_MAX_RAW_STACK = 64
 
 
 class LoopbackTransportAudit:
@@ -80,36 +79,11 @@ class LoopbackTransportAudit:
         except (TypeError, ValueError):
             return False
 
-    @staticmethod
-    def _outside_stdlib(filename: str) -> bool:
-        try:
-            path = Path(filename).resolve()
-            stdlib = Path(sysconfig.get_paths()["stdlib"]).resolve()
-            path.relative_to(stdlib)
-            return "site-packages" in path.parts
-        except (KeyError, OSError, RuntimeError, ValueError):
-            return True
-
     def _stack(self) -> list[dict]:
-        own_file = Path(__file__).name
-        frames = [
-            frame
-            for frame in traceback.extract_stack(limit=_MAX_RAW_STACK)[:-1]
-            if Path(frame.filename).name != own_file
-        ]
-        # Transport-library frames are usually the most recent frames and can push
-        # the actual fixture/test caller out of a small retained tail. Prefer code
-        # outside the Python standard library, falling back to the complete stack
-        # when all frames are standard-library internals.
-        caller_frames = [frame for frame in frames if self._outside_stdlib(frame.filename)] or frames
-        return [
-            {
-                "file": Path(frame.filename).name[:160],
-                "line": frame.lineno,
-                "function": frame.name[:160],
-            }
-            for frame in caller_frames[-self.max_frames :]
-        ]
+        return bounded_call_stack(
+            skip_files=(Path(__file__).name,),
+            max_frames=self.max_frames,
+        )
 
     def _connect(self, address, *args, **kwargs):
         if self._matches(address):
