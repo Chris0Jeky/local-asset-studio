@@ -134,7 +134,7 @@ async function performAssetSave(operation, observe=false) {
   assetDetailStatus(observe?'Checking the earlier save receipt…':'Saving this snapshot… Newer typing stays in your draft.');
   const timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const result=await api(observe?assetReceiptURL(command):'/api/assets/update',observe?{signal:controller.signal}:{method:'POST',headers:{'Content-Type':'application/json'},body,signal:controller.signal});
+    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('detail',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body,signal:controller.signal}),()=>current() && assetDetailPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
     if(!current())return;
     if(result?.workspace_id!==command.workspace_id)throw Error('The response belongs to a different Workspace; the original recovery is retained.');
     if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return;}
@@ -482,7 +482,7 @@ async function performLibraryCommand(operation,observe=false) {
     if(assetRecoveryLoadError)throw Error(assetRecoveryLoadError);
     requireAssetScope(command.workspace_id);
     assetRecovery.write('library',{version:2,workspace_id:command.workspace_id,operation,selection:operation.selection||[...assetSelection]});
-    const result=await api(observe?assetReceiptURL(command):'/api/assets/update',observe?{signal:controller.signal}:{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal});
+    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal}),()=>assetLibraryPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
     if(observe && result?.status==='unknown')throw Error('No receipt yet; the earlier update may still complete. No retry was sent.');
     validateAssetReceipt(result,command);assetRecovery.clear('library');assetLibraryPending=null;
     // A confirmed snapshot is not a new permission to overwrite another client's later changes.
