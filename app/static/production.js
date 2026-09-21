@@ -99,9 +99,9 @@ function plannerBlock(){
     $('#inspectSettings').onclick=()=>requestPlan('inspect');
     $('#planFromKnowledge').onclick=()=>requestPlan('grid');
     $('#planRemix').onclick=()=>requestPlan('remix');
-    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();};
+    $('#clearPlanned').onclick=()=>{++plannerRequestId;plannedVariants=null;renderPlanner();$('#experimentStatus').textContent='Planned variants cleared locally. Nothing was reserved or submitted.';};
     $('#plannerAxes').onchange=()=>{plannerAxisIds=[...$('#plannerAxes').querySelectorAll('input:checked')].map(i=>i.value);requestPlan('grid');};
-    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();};
+    $('#plannedVariants').onclick=e=>{const drop=e.target.closest('[data-drop-variant]');if(!drop)return;++plannerRequestId;plannedVariants.splice(Number(drop.dataset.dropVariant),1);if(!plannedVariants.length)plannedVariants=null;renderPlanner();$('#experimentStatus').textContent='Variant removed locally. Nothing was reserved or submitted.';};
   }
   return block;
 }
@@ -117,7 +117,7 @@ function variantChanges(variant,base){
 }
 function renderPlanner(resizeBudget=true){
   const planned=plannedVariants||[];
-  $('#plannerLimits').innerHTML=(plannerWithheld.length?'<p><b>Settings held for acceleration</b></p><ul>'+plannerWithheld.map(a=>'<li><b>'+esc(a.id)+'</b>: '+esc(a.message)+' ('+esc((a.accelerator_slots||[]).join(', '))+')</li>').join('')+'</ul>':'')+(plannerNotice?'<p>'+esc(plannerNotice)+'</p>':'');
+  $('#plannerLimits').innerHTML=(plannerWithheld.length?'<p><b>Settings unavailable for this recipe</b></p><ul>'+plannerWithheld.map(a=>{const slots=a.accelerator_slots||[];return '<li><b>'+esc(a.id)+'</b>: '+esc(a.message)+(slots.length?' ('+esc(slots.join(', '))+')':'')+'</li>';}).join('')+'</ul>':'')+(plannerNotice?'<p>'+esc(plannerNotice)+'</p>':'');
   $('#plannerAxes').innerHTML=plannerAxes.length?'<small>Settings to vary</small>'+plannerAxes.map(a=>'<label class="planner-axis"><input type="checkbox" value="'+esc(a.id)+'" '+(plannerAxisIds.includes(a.id)?'checked':'')+'> '+esc(a.id)+' · '+esc(a.values.join(', '))+'</label>').join(''):'';
   $('#plannedVariants').innerHTML=planned.map((v,i)=>{const changes=variantChanges(v,comparisonRecipe?.controls);
     return '<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button>'+(changes.length?'<small>'+esc(changes.join(', '))+'</small>':'')+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>';}).join('');
@@ -175,11 +175,11 @@ async function requestPlan(mode){
     if(mode!=='inspect')plannedVariants=offer.variants||[];
     if(mode==='grid'&&!plannerAxisIds.length)plannerAxisIds=[...new Set(plannedVariants.flatMap(v=>Object.keys(v.controls||{})))].filter(k=>plannerAxes.some(a=>a.control===k)).map(k=>plannerAxes.find(a=>a.control===k).id);
     renderPlanner(mode!=='inspect');
-    $('#experimentStatus').textContent=mode==='inspect'?plannerAxes.length+' settings available; '+plannerWithheld.length+' held. Existing variants are unchanged. Nothing was reserved or submitted.':plannedVariants.length+' documented variants planned. Nothing is reserved until you prepare the plan.';
+    $('#experimentStatus').textContent=mode==='inspect'?plannerAxes.length+' settings available; '+plannerWithheld.length+' unavailable. Existing variants are unchanged. Nothing was reserved or submitted.':plannedVariants.length+' documented variants planned. Nothing is reserved until you prepare the plan.';
   }catch(err){
     if(!current())return;
     if(mode!=='inspect')plannedVariants=null;
-    plannerAxes=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
+    plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';renderPlanner(mode!=='inspect');$('#experimentStatus').textContent=err.message;
   }
 }
 function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=Number(comparisonRecipe?.controls?.[axis]??selected.defaults?.[axis]??1);$('#experimentValues').value=(axis==='seed'?[value,value+1,value+2]:axis==='steps'?[Math.max(1,value-2),value,value+2]:[Math.max(0,value*0.7),value,value*1.2]).map(v=>Number(v.toFixed(3))).join(', ');}
