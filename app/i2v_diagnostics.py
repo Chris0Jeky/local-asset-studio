@@ -323,6 +323,16 @@ def _safetensors_header(path: Path):
 
 
 _FILE_IDENTITY_FIELDS = ("bytes", "mtime_ns", "ctime_ns", "device", "inode")
+# Windows returns st_ctime_ns at a different precision from os.stat() than from os.fstat(), so comparing a
+# path stat against a descriptor stat on that field reports "changed while hashing" for a file nobody touched
+# (and makes the digest cache never hit). Compare only the fields both calls agree on: a path swapped to another
+# file still changes device, inode, size or mtime.
+_PATH_IDENTITY_FIELDS = ("bytes", "mtime_ns", "device", "inode")
+
+
+def _same_file(first, second):
+    """True when two identity mappings describe the same file across a path stat and a descriptor stat."""
+    return all(first.get(field) == second.get(field) for field in _PATH_IDENTITY_FIELDS)
 
 
 def _file_identity(observed):
@@ -364,7 +374,7 @@ def _hash_open_file(path: Path):
             if after != identity:
                 return {"path": key, "present": True, **after, "error": "Model file changed while hashing"}
             current = _file_identity(path.stat())
-            if current != after:
+            if not _same_file(current, after):
                 return {"path": key, "present": True, **after, "error": "Model path changed while hashing"}
             return {"path": key, "present": True, **after, "sha256": digest.hexdigest()}
     except OSError as exc:
@@ -382,7 +392,7 @@ def _cached_file_hash(path: Path, cache, require_current=False):
         except OSError as exc:
             return {"path": key, "present": False, "error": str(exc)[:200]}
         previous = cache.get(key)
-        if isinstance(previous, dict) and all(previous.get(field) == identity[field] for field in _FILE_IDENTITY_FIELDS) and previous.get("sha256"):
+        if isinstance(previous, dict) and _same_file(previous, identity) and previous.get("sha256"):
             return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
     observed = _hash_open_file(path)
     if observed.get("sha256"):

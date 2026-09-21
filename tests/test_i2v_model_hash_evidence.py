@@ -107,6 +107,29 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
             with self.subTest(field=field):
                 self.assertIn(field, retained)
 
+    def test_a_ctime_only_difference_is_the_same_file(self):
+        """Windows reports st_ctime_ns differently from os.stat() and os.fstat(); that is not a swapped path."""
+        descriptor = {"bytes": 64, "mtime_ns": 5, "ctime_ns": 5, "device": 1, "inode": 2}
+        by_path = dict(descriptor, ctime_ns=descriptor["ctime_ns"] - 1000000)
+        self.assertTrue(i2v._same_file(by_path, descriptor))
+        self.assertNotIn("ctime_ns", i2v._PATH_IDENTITY_FIELDS)
+
+    def test_a_swapped_file_is_still_rejected(self):
+        descriptor = {"bytes": 64, "mtime_ns": 5, "ctime_ns": 5, "device": 1, "inode": 2}
+        for field, value in (("inode", 99), ("device", 99), ("bytes", 65), ("mtime_ns", 6)):
+            with self.subTest(field=field):
+                self.assertFalse(i2v._same_file(dict(descriptor, **{field: value}), descriptor))
+
+    def test_a_freshly_written_file_hashes_instead_of_reporting_a_change(self):
+        """The regression this guards: no digest at all, because the path stat disagreed about ctime."""
+        for attempt in range(25):
+            with self.subTest(attempt=attempt):
+                target = self.model_directory / ("fresh-%d.safetensors" % attempt)
+                target.write_bytes(b"fixture %d" % attempt)
+                observed = i2v._hash_open_file(target.resolve())
+                self.assertNotIn("error", observed, observed)
+                self.assertEqual(observed["sha256"], hashlib.sha256(b"fixture %d" % attempt).hexdigest())
+
     @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX FIFO contract")
     def test_fifo_candidate_is_rejected_without_waiting_for_a_writer(self):
         fifo = self.model_directory / "blocked.safetensors"
