@@ -208,13 +208,18 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
              'Gallery observations must be positive')
         need(type(uploaders) is int and uploaders >= 0,
              'Gallery uploader breadth must be non-negative')
+        need(uploaders <= observations_count,
+             'Gallery uploader breadth cannot exceed distinct observations')
         if uploaders == 0:
             diagnostics.append({'code': 'gallery_independence_unknown',
                                 'message': 'Gallery observation has no retained independent-uploader breadth.',
                                 'scope_sha256': scope_identity})
             continue
-        claim_id = 'gallery-' + scope_identity[:24]
-        need(claim_id not in seen_ids, 'Duplicate gallery evidence scope')
+        claim_identity = digest({'candidate_id': candidate_id,
+                                 'scope_sha256': scope_identity,
+                                 'version_ids': sorted(versions)})
+        claim_id = 'gallery-' + claim_identity[:24]
+        need(claim_id not in seen_ids, 'Duplicate gallery evidence combination')
         seen_ids.add(claim_id)
         claims.append({
             'id': claim_id, 'candidate_id': candidate_id, 'resource_identity': None,
@@ -243,18 +248,25 @@ def adapt(value: Any) -> dict[str, Any]:
          'Retained source resource identity does not match the reviewed mapping')
     version_id = resource.get('version_id')
     need(type(version_id) is int and version_id > 0, 'Source version identity is required')
+    source_host = resource.get('source_host')
+    need(source_host in ('civitai.com', 'civitai.red'), 'Unsupported source resource host')
+    receipt_identity = sha256(resource.get('receipt_sha256'), 'Source resource receipt')
     selected = select_file(resource, mapping['file_identity'])
     candidate = mapping['candidate']
     diagnostics = provider_diagnostics(resource, candidate, selected)
+    source_diagnostics = copy.deepcopy(report['diagnostics'])
     reviewed_at = mapping['review']['reviewed_at']
+    provider_identity = digest({'candidate_id': candidate['id'],
+                                'resource_identity': mapping['resource_identity'],
+                                'file_identity': mapping['file_identity']})
     provider_evidence = {
-        'id': 'source-provider', 'candidate_id': candidate['id'],
+        'id': 'provider-' + provider_identity[:24], 'candidate_id': candidate['id'],
         'resource_identity': candidate['identity'], 'kind': 'provider_metadata',
         'scope': 'exact_resource', 'direction': 'supports', 'objective': 'compatibility',
         'observations': 1, 'independent_sources': 1,
         'source': {'locator': 'Retained Civitai model-version metadata',
-                   'revision': 'sha256:' + resource.get('receipt_sha256', report['context_sha256']),
-                   'retrieved_at': receipt_date(report, resource.get('source_host', 'civitai.com'), reviewed_at)},
+                   'revision': 'sha256:' + receipt_identity,
+                   'retrieved_at': receipt_date(report, source_host, reviewed_at)},
     }
     provider_evidence = compatibility.validate_evidence(provider_evidence)
     source_observations, gallery = gallery_claims(
@@ -264,12 +276,13 @@ def adapt(value: Any) -> dict[str, Any]:
     basis = {'format': INPUT_FORMAT, 'source_context': report['context_sha256'],
              'review': mapping['review'], 'candidate': candidate, 'selected_file': selected,
              'evidence': evidence, 'source_observations': source_observations,
-             'diagnostics': diagnostics}
+             'source_diagnostics': source_diagnostics, 'diagnostics': diagnostics}
     return {'format': REPORT_FORMAT, 'context_sha256': digest(basis),
             'source_context_sha256': report['context_sha256'],
             'review_revision': mapping['review']['revision'],
             'candidate': copy.deepcopy(candidate), 'evidence': evidence,
-            'source_observations': source_observations, 'diagnostics': diagnostics,
+            'source_observations': source_observations,
+            'source_diagnostics': source_diagnostics, 'diagnostics': diagnostics,
             'provider_claims': {'model_type': copy.deepcopy(resource.get('model_type')),
                                 'base_model': copy.deepcopy(resource.get('base_model')),
                                 'base_model_type': copy.deepcopy(resource.get('base_model_type')),
