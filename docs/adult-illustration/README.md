@@ -23,7 +23,8 @@ This foundation is non-executing:
 - no route is called installed, 16 GB compatible, unrestricted or promoted;
 - no planning, taxonomy or prompt-projection record grants runtime authority;
 - validation, import, startup and CI never contact a model provider;
-- the separate live metadata CLI requires an explicit `--allow-network` flag and can reach only reviewed JSON metadata endpoints without credentials.
+- the separate live metadata CLI requires an explicit `--allow-network` flag and can reach only reviewed JSON metadata endpoints without credentials;
+- the acquisition-plan CLI reads retained local snapshots only and emits exact dry-run arguments without invoking a downloader.
 
 It extends the existing anime atelier (#14), Prompt Lab, Reference Intelligence, Workflow Studio, Production, character consistency and Repair Studio. It does not add another model registry, workflow store, queue, executor, review database or painting canvas.
 
@@ -38,10 +39,11 @@ python scripts/studio_adult_illustration_research.py programme-status
 python scripts/studio_adult_illustration_prompt.py profiles
 python scripts/studio_adult_illustration_taxonomy.py source
 python scripts/studio_adult_illustration_source_fetch.py --help
+python scripts/studio_adult_illustration_acquisition_plan.py --help
 python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, adapter sweep bounds and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. The prompt compiler adds deterministic route-specific text while keeping non-prompt controls unresolved. The taxonomy intake separates the exact upstream CSV identity from a finite Studio review and grants no blanket compilation authority. The source-fetch help command exercises argument registration only and performs no provider access. None inspects installed models, calls a provider, downloads bytes or submits generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, adapter sweep bounds and duplicate IDs. The intelligence validator checks prompt dialect isolation, vocabulary provenance and collisions, technique availability, provider-specific source identity, immutable revisions and hash-pinned file selection. The prompt compiler adds deterministic route-specific text while keeping non-prompt controls unresolved. The taxonomy intake separates the exact upstream CSV identity from a finite Studio review and grants no blanket compilation authority. The source-fetch and acquisition-plan help commands exercise argument registration only and perform no provider access. None inspects installed models, calls a provider, downloads bytes or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -60,6 +62,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Hugging Face/Civitai provenance and acquisition handoff | [Source intake](SOURCE-INTAKE.md) |
 | Offline bounded provider-response snapshot adapters | [Source snapshots](SOURCE-SNAPSHOTS.md) |
 | Explicit bounded public provider-metadata GETs and cache | [Source transport](SOURCE-TRANSPORT.md) |
+| Deterministic local snapshot-to-acquisition planning | [Acquisition handoff](ACQUISITION-HANDOFF.md) |
 | Operational candidates and research watchlist | [Technique portfolio](TECHNIQUE-PORTFOLIO.md) |
 | Intelligence delivery sequence | [Intelligence implementation plan](INTELLIGENCE-IMPLEMENTATION-PLAN.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
@@ -100,9 +103,9 @@ Every programme intent must declare unambiguous adult subject status through rev
 
 ## Next useful slices
 
-1. Review/merge the stacked foundation, validator, intent-projection, offline CLI, intelligence, discovery, source-snapshot and explicit source-transport PRs in order.
+1. Review/merge the stacked foundation, validator, intent-projection, offline CLI, intelligence, discovery, source-snapshot, explicit source-transport and acquisition-handoff PRs in order.
 2. Review the #437 immutable taxonomy, taxonomy-aware compiler and optional membership-inspection slices in stack order. Pin exact installed tokenizers before exact token-count claims.
-3. Compile only explicitly reviewed source selections into the #356 acquisition-plan boundary. A transport or snapshot receipt is not download authority.
+3. Compile only explicitly reviewed source selections into the [zero-authority acquisition-plan boundary](ACQUISITION-HANDOFF.md). A transport receipt, snapshot or plan is not download authority.
 4. Qualify unchanged/manual/taxonomy-assisted prompts under #37/#409; software tests alone do not prove artistic benefit.
 5. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact evidence work; do not treat a plan as authorization.
 6. Reconcile installed routes and execute the finite Anima/SDXL/Qwen campaign only through #405/#439 and the existing coordinator.
