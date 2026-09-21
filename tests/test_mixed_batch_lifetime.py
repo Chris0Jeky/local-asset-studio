@@ -93,21 +93,27 @@ class MixedBatchLifetimeTests(unittest.TestCase):
                 self.assertIn(expected, stdout.getvalue())
                 self.assertIn("attempt 2/2", stderr.getvalue())
 
-    def test_success_keeps_two_fresh_interpreter_checks_and_original_budget(self):
+    def test_success_starts_tracemalloc_after_site_then_runs_two_fresh_checks(self):
         result = subprocess.CompletedProcess(["synthetic-child"], 0, "stdout\n", "stderr\n")
         stdout = io.StringIO()
-        with patch.object(gate.subprocess, "run", return_value=result) as run:
-            with redirect_stdout(stdout):
-                self.assertEqual(gate.main(), 0)
+        with patch.dict(gate.os.environ, {"PYTHONTRACEMALLOC": "99"}):
+            with patch.object(gate.subprocess, "run", return_value=result) as run:
+                with redirect_stdout(stdout):
+                    self.assertEqual(gate.main(), 0)
         self.assertEqual(run.call_count, 2)
         for call in run.call_args_list:
             self.assertEqual(call.args[0], [
-                sys.executable, "-W", "always::ResourceWarning", "-m", "unittest",
-                "discover", "-s", "tests", "-p", "test_mixed_batch_http.py", "-v",
+                sys.executable, "-W", "always::ResourceWarning", "-c", gate.CHILD_CODE,
             ])
             self.assertEqual(call.kwargs["timeout"], 45)
-            self.assertEqual(call.kwargs["env"]["PYTHONTRACEMALLOC"], "25")
+            self.assertNotIn("PYTHONTRACEMALLOC", call.kwargs["env"])
             self.assertEqual(call.kwargs["cwd"], gate.ROOT)
+        self.assertLess(
+            gate.CHILD_CODE.index("tracemalloc.start(25)"),
+            gate.CHILD_CODE.index("unittest.main(module=None)"),
+        )
+        self.assertIn("test_mixed_batch_http.py", gate.CHILD_CODE)
+        self.assertNotIn('"-S"', gate.CHILD_CODE)
         self.assertIn("gate passed 2 fresh-interpreter attempts", stdout.getvalue())
 
     def test_child_failure_and_resource_warnings_remain_fatal_without_retry(self):

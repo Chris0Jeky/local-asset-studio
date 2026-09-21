@@ -41,7 +41,8 @@ def make_observation(root, job_id='fixture-job', *, status='completed', elapsed=
     job = {'id': job_id, 'comfy_url': 'http://127.0.0.1:8188', 'controls': {}, 'references': []}
     manager.intent(producer.event_snapshot('intent', job, index=0, graph={'seed': 1}))
     try:
-        deadline = time.monotonic() + 5
+        # Loaded Windows runners can spend several seconds scheduling the writer thread.
+        deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
             directory = manager.last.path
             if directory and (directory / 'profile.jsonl').is_file():
@@ -153,16 +154,41 @@ class ReceiptTests(unittest.TestCase):
         write(self.directory / 'result.json', original)
         self.assertEqual(self.inspect()['integrity'], 'verified')
 
-    def test_missing_result_or_artifact_is_incomplete_not_a_success(self):
-        for name in ('result.json', 'summary.json', 'context.json'):
+    def test_missing_result_or_manifest_entry_is_incomplete_not_a_success(self):
+        path = self.directory / 'result.json'; raw = path.read_bytes(); path.unlink()
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertTrue(caught.exception.incomplete); path.write_bytes(raw)
+
+        result = read(path)
+        del result['artifact_hashes']['summary.json']
+        result['summary_available'] = False
+        write(path, result)
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertTrue(caught.exception.incomplete)
+
+    def test_missing_manifest_listed_artifact_is_invalid(self):
+        for name in ('summary.json', 'context.json'):
             path = self.directory / name; raw = path.read_bytes(); path.unlink()
             with self.subTest(name=name), self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
-            self.assertTrue(caught.exception.incomplete); path.write_bytes(raw)
-        (self.directory / 'summary.json').unlink(); rehash(self.directory)
-        result = read(self.directory / 'result.json'); result['summary_available'] = False
-        write(self.directory / 'result.json', result)
+            self.assertEqual(caught.exception.code, 'artifact_missing')
+            self.assertFalse(caught.exception.incomplete); path.write_bytes(raw)
+
+    def test_operator_doc_splits_incomplete_capture_from_deleted_listed_sidecar(self):
+        text = (ROOT / 'docs/performance/RECEIPT-INTEGRITY.md').read_text(encoding='utf-8')
+        self.assertNotIn('with `incomplete=True` for missing\nartifacts.', text)
+        self.assertIn('complete four-name manifest whose', text)
+        self.assertIn('listed sidecar is gone', text)
+        self.assertIn('incomplete=False', text)
+        path = self.directory / 'result.json'; raw = path.read_bytes(); path.unlink()
         with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
-        self.assertTrue(caught.exception.incomplete)
+        self.assertTrue(caught.exception.incomplete, 'missing result.json must stay incomplete')
+        path.write_bytes(raw)
+        sidecar = self.directory / 'summary.json'; sidecar.unlink()
+        with self.assertRaises(self.api.EvidenceError) as caught: self.inspect()
+        self.assertEqual(caught.exception.code, 'artifact_missing')
+        self.assertFalse(caught.exception.incomplete, 'deleted listed sidecar must be invalid')
 
     def test_artifact_names_cannot_escape_fixed_set(self):
         result = read(self.directory / 'result.json')

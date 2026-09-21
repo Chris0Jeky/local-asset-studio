@@ -89,7 +89,11 @@ def _text(value: Any, limit: int = 500) -> bool:
 
 
 def _strings(value: Any, cap: int, limit: int = 500) -> bool:
-    return isinstance(value, list) and len(value) <= cap and len(value) == len(set(value)) and all(_text(x, limit) for x in value)
+    if not isinstance(value, list) or len(value) > cap:
+        return False
+    if not all(_text(item, limit) for item in value):
+        return False
+    return len(value) == len(set(value))
 
 
 def _id(value: Any) -> bool:
@@ -254,11 +258,29 @@ def _vocabulary(value: dict[str, Any], profile_ids: set[str], errors: list[str])
             errors.append(f"{label}: entry {eid!r} source must be an object")
             source = {}
         status = entry.get("status")
-        if status in {"verified", "deprecated"}:
-            if not _https(source.get("url")) or not _immutable(source.get("revision")):
-                errors.append(f"{label}: verified entry {eid!r} needs immutable source revision")
-        if entry.get("accepted") and not value.get("accepted_for_compilation"):
-            errors.append(f"{label}: accepted entry {eid!r} needs top-level compilation approval")
+        source_provenance = (
+            _text(source.get("kind"), 100)
+            and source.get("kind") != "contract_example"
+            and _https(source.get("url"))
+            and _immutable(source.get("revision"))
+        )
+        if status in {"verified", "deprecated"} and not source_provenance:
+            errors.append(
+                f"{label}: verified entry {eid!r} needs immutable source revision"
+            )
+        if entry.get("accepted"):
+            if not value.get("accepted_for_compilation"):
+                errors.append(
+                    f"{label}: accepted entry {eid!r} needs top-level compilation approval"
+                )
+            if status != "verified":
+                errors.append(
+                    f"{label}: accepted entry {eid!r} needs verified status"
+                )
+            if not source_provenance:
+                errors.append(
+                    f"{label}: accepted entry {eid!r} needs immutable source provenance"
+                )
     return ids
 
 

@@ -20,7 +20,10 @@ registered recipe/API document, or create an empty workflow. Nothing is generate
 4. **Duplicate step** copies its nodes, controls, bypasses and layout with explicit
    new IDs. Internal connections follow the copy; external sources stay shared.
    Copies of output nodes are NOT selected outputs. No outside consumer is rewired.
-5. **Save to Workspace** creates a saved document or commits a revision-checked edit.
+5. **Move up** and **Move down** change only the named-step presentation order through
+   one shared `move_step` command per action. Boundary moves are disabled, keyboard focus
+   follows the moved step, and the compiled graph/execution identity stays unchanged.
+6. **Save to Workspace** creates a saved document or commits a revision-checked edit.
    **Refresh saved → Open current** opens server state, while **Export document file**
    remains a portable local JSON download. Browser draft autosave is still local;
    server saves are explicit.
@@ -82,8 +85,9 @@ Absent optional/unsupported fields can remain annotated in a draft, but they are
 advertised as executable without the matching schema/adapter. Presentation does not
 change the compiled graph hash; enable/value/connection edits do.
 
-New reducer commands are `put_step`, `remove_step`, `set_step_enabled`, and
-`duplicate_step`. They are accepted by the shared SDK/CLI `apply`/`preview` contract
+New reducer commands are `put_step`, `remove_step`, `set_step_enabled`,
+`duplicate_step`, and `move_step`. They are accepted by the shared SDK/CLI
+`apply`/`preview` contract
 from SHARED-DOCUMENTS.md. `duplicate_step` requires a complete explicit `node_ids`
 map, a fresh `new_id`, and a name; collisions are rejected. Node removal prunes group
 membership and its exposed-control references, while preserving consumer graph errors.
@@ -121,8 +125,9 @@ The opt-in fixture `tests/workflow_steps_browser.py` exercises the actual new HT
 CSS and three JavaScript files in Chromium with synthetic node definitions and the
 real SQLite/shared command service. It passes step creation with a readable setting
 label, editing, save, intervening agent conflict, separate copy, explicit current
-load, history/restore, disable diagnostics, duplication, undo/redo, 390px no page
-overflow, and dialog Escape. Zero page errors and zero generation requests.
+load, history/restore, disable diagnostics, duplication, keyboard step ordering,
+boundary states, focus retention, undo/redo, saved order, compiled-graph invariance,
+390px no page overflow, and dialog Escape. Zero page errors and zero generation requests.
 
 The fixture uses simulated transport, storage and (on an insecure blank page) UUIDs.
 It does **not** establish native shell navigation, true browser-origin/session-storage

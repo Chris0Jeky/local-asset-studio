@@ -66,3 +66,17 @@ Follow-ups: [#143](https://github.com/Chris0Jeky/local-asset-studio/issues/143)
 representative portfolios; [#144](https://github.com/Chris0Jeky/local-asset-studio/issues/144)
 version-scoped recommendations and atomic module changes. These extend #9, #10,
 #14, #16, #36 and #118–#120; they do not close those broader workstreams.
+
+## Source scope is not resource identity
+
+Read-only guidance now distinguishes the advice source from the resource hashes it targets. An optional
+`source.scope` in the existing settings-KB claim accepts `family`, `exact_version`, `local_workflow` or
+`unrecorded`. Legacy records remain unrecorded; matching model pins never fills that gap automatically.
+Specific scopes require a commit/content pin or an explicit `civitai-version:<id>` source identity, not
+`main`, a version label or a retrieval date. These are checked declarations, not source authentication.
+
+HTTP, CLI and the current panel receive normalized `source_scope` and the same explanation through
+existing `reasons`. Resource applicability, conflict handling, review-due flags and all no-write/no-generation
+boundaries remain unchanged. No old source was silently reclassified. The
+[research adaptation](../strategy/anime-qualification/ARCHITECTURE.md) explains the distinction and the
+remaining exact-version compiler migration.

@@ -148,15 +148,17 @@ def _entry_closure(
     result: list[tuple[str, dict[str, Any]]] = []
     seen: set[str] = set()
 
-    def visit(current: str) -> None:
+    pending = [entry_id]
+    while pending:
+        current = pending.pop()
         if current in seen:
-            return
+            continue
         seen.add(current)
         result.append((current, entries[current]))
-        for implied in entries[current]["implications"]:
-            visit(implied)
+        # A stack visits the last pushed child first; reverse to preserve the
+        # original left-to-right depth-first prompt and trace ordering.
+        pending.extend(reversed(entries[current]["implications"]))
 
-    visit(entry_id)
     return result
 
 
@@ -263,6 +265,22 @@ def _catalog_resolution(
     )
 
 
+class _ResolutionBudget:
+    """Count the exact JSON trace subtree before accumulating more expansions."""
+
+    def __init__(self) -> None:
+        self.bytes = 2  # Opening and closing array brackets.
+        self.count = 0
+
+    def admit(self, trace: dict[str, Any]) -> None:
+        size = len(_canonical(trace).encode("utf-8"))
+        total = self.bytes + size + int(self.count > 0)
+        if total > MAX_OUTPUT_BYTES:
+            raise ValueError("Prompt projection exceeds the 128 KiB contract")
+        self.bytes = total
+        self.count += 1
+
+
 def _resolve_terms(
     raw_terms: list[str],
     *,
@@ -272,6 +290,7 @@ def _resolve_terms(
     catalog: dict[str, Any],
     taxonomy: dict[str, Any],
     diagnostics: list[dict[str, Any]],
+    budget: _ResolutionBudget,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     resolved: list[dict[str, Any]] = []
     resolutions: list[dict[str, Any]] = []
@@ -314,6 +333,7 @@ def _resolve_terms(
                 trace = _resolution(channel, raw, "none", "unknown")
             else:
                 candidates, trace = catalog_result
+        budget.admit(trace)
         for entry in candidates:
             key = (entry["source"], entry["id"])
             if key not in seen:
@@ -459,6 +479,7 @@ def _compile_tag_channels(
     taxonomy: dict[str, Any],
     diagnostics: list[dict[str, Any]],
 ) -> tuple[dict[str, str | None], list[dict[str, Any]]]:
+    budget = _ResolutionBudget()
     positive_entries, positive_resolutions = _resolve_terms(
         creative["tags"],
         channel="positive",
@@ -467,6 +488,7 @@ def _compile_tag_channels(
         catalog=catalog,
         taxonomy=taxonomy,
         diagnostics=diagnostics,
+        budget=budget,
     )
     negative_entries, negative_resolutions = _resolve_terms(
         creative["avoid"],
@@ -476,6 +498,7 @@ def _compile_tag_channels(
         catalog=catalog,
         taxonomy=taxonomy,
         diagnostics=diagnostics,
+        budget=budget,
     )
     positive_items = _dedupe(
         [

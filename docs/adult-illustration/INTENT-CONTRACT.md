@@ -21,6 +21,7 @@ The projection deliberately keeps several records separate:
 
 ```python
 from studio_prompt.adult_illustration import (
+    PROJECTION_MAX_BYTES,
     new_intent,
     validate_intent,
     project,
@@ -30,7 +31,7 @@ from studio_prompt.adult_illustration import (
 
 - `new_intent(brief, subjects, ..., consent_context, coverage)` creates a minimal reviewed source intent.
 - `validate_intent(value)` applies strict fields, bounds and adult/content requirements and returns a detached copy.
-- `project(value)` emits a deterministic projection without mutating the source.
+- `project(value)` emits a deterministic projection without mutating the source; a valid source that cannot fit the existing `CreativeIntent` returns `blocked` evidence rather than raising or truncating.
 - `validate_projection(value)` recomputes the projection so changed or stale derived records fail closed.
 
 A multi-subject intent is invalid unless the caller explicitly supplies `consent_context="reviewed_consensual"`. Adult status comes from reviewed owner/canon metadata; the module never infers it from an image.
@@ -65,9 +66,15 @@ Subject- or region-scoped references likewise retain their ownership in `referen
 
 - `review_required`: all current semantics are representable and no route-specific binding remains.
 - `requires_binding`: a CreativeIntent exists, but geometry/adapters/reference scope or another typed control still needs an exact compatible route.
-- `blocked`: the current projection would lose a source role, exceed CreativeIntent reference limits or otherwise misrepresent the source intent.
+- `blocked`: the current projection would lose a source role, exceed a composed CreativeIntent facet/reference/byte limit or otherwise misrepresent the source intent.
 
 None of these states means generated, accepted, rights-cleared or promoted.
+
+## Size contracts
+
+The reviewed source intent remains capped at 64 KiB. The derived projection has its own `PROJECTION_MAX_BYTES` envelope of 256 KiB because it deliberately retains the complete source intent beside derived control, reference, diagnostic and optional CreativeIntent records.
+
+The existing Prompt Lab `CreativeIntent` keeps its own 1,000-character facet and 64 KiB document limits. Subject/body/wardrobe/expression and style/material are composed during projection, while references can expand by role. When those honest derived records exceed an existing Prompt Lab limit, projection returns `state: blocked`, preserves the full reviewed source, emits `CREATIVE_FACET_LIMIT` or `CREATIVE_INTENT_LIMIT`, and never truncates content.
 
 ## Example
 
@@ -75,7 +82,7 @@ None of these states means generated, accepted, rights-cleared or promoted.
 
 ## Offline CLI
 
-The stacked CLI slice exposes the pure operations without importing model, graph or runtime services:
+The stacked CLI exposes the pure operations without importing model, graph, workspace or production services:
 
 ```console
 python scripts/studio_adult_illustration.py validate-intent examples/adult-illustration/hot-spring-study.json
@@ -83,8 +90,8 @@ python scripts/studio_adult_illustration.py project examples/adult-illustration/
 python scripts/studio_adult_illustration.py validate-projection experiments/runs/hot-spring-projection.json
 ```
 
-`--out` uses exclusive creation and never overwrites evidence. Validation errors are JSON on stderr with `execution_authorized: false` and `generation_submitted: false`. A structurally valid `blocked` projection exits successfully because it is an inspectable planning result, not a generation failure.
+`--out` uses exclusive creation and never overwrites retained evidence. Validation failures are emitted as JSON on stderr with `execution_authorized: false` and `generation_submitted: false`. A valid `blocked` projection exits successfully because it is an inspectable planning result, not a generation failure. The CLI can round-trip projections above the source intent's 64 KiB budget up to `PROJECTION_MAX_BYTES` without weakening either source or CreativeIntent limits.
 
 ## Next integration
 
-Map the projection onto existing revisioned Prompt/Setup commands, then bind exact route capabilities. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.
+Map retained projections onto existing revisioned Prompt/Setup commands, then bind exact route capabilities. Route binding belongs to #405/#407/#408 and execution remains under #10/#22/#122.
