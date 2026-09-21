@@ -8,3 +8,6 @@
 .workshop .wk-recipe>div {display:none}
 .workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
 .workshop .wk-recipe button {flex:1;min-width:0}
+/* Overview record actions retain the row layout used by navigation links. */
+button.ux-desk-row {width:100%;text-align:left;font:inherit}
+#uxJobInspector pre {white-space:pre-wrap;overflow-wrap:anywhere}
