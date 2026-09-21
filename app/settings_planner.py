@@ -6,8 +6,10 @@ the documented setting it changes, so a sweep records why it was run and an
 undocumented number can never enter a plan by accident.
 """
 from __future__ import annotations
+import copy
 import hashlib
 import itertools
+import math
 import json
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -17,6 +19,7 @@ CHOICE_CONTROLS=('sampler','scheduler')
 LORA_SLOTS=('lora','lora2','lora3','lora4','lora5','lora6')
 SETTING_KEYS=set(LORA_SLOTS)|{s+'_name' for s in LORA_SLOTS}|{'steps','cfg','denoise','width','height','seed','frames','fps','sampler','scheduler'}
 DEFAULT_LADDER=[1.0,0.8,0.6]
+SCHEDULE_CONTROLS={'steps','cfg','sampler','scheduler','denoise'}
 EMPTY={'version':0,'families':{},'loras':{}}
 
 
@@ -61,8 +64,40 @@ def family_entry(preset,kb):
     return ((kb or {}).get('families') or {}).get(preset.get('family')) or {}
 
 
-def axes_for(preset,kb):
-    """Documented axes of the preset's family that this preset can actually change."""
+def accelerator_slots(preset,kb,base_controls=None):
+    """Known KB roles only, not installed-byte or compatibility attestation."""
+    base=base_controls or {};defaults=preset.get('defaults') or {};result={}
+    for slot in LORA_SLOTS:
+        if not _bound(preset,slot):continue
+        entry=_slot_entry(slot,base,defaults,kb)
+        if entry.get('role')!='accelerator':continue
+        value=base.get(slot,defaults.get(slot))
+        # Only explicit finite zero proves inactivity. Unknown and negative
+        # strengths must not let a generic family schedule through.
+        try:inactive=_number(value)==0
+        except ValueError:inactive=False
+        # A primary default does not describe potentially different authored
+        # companion strengths. An explicit control edit writes every binding.
+        if slot not in base and (preset.get('bindings_extra') or {}).get(slot):inactive=False
+        result[slot]={'entry':entry,'value':value,'inactive':inactive}
+    return result
+
+
+def _control_pairs(preset,control):
+    primary=[preset[control]] if preset.get(control) else []
+    return {tuple(pair) for pair in primary+(preset.get('bindings_extra') or {}).get(control,[])}
+
+
+def _held_controls(preset,held):
+    blocked=set(held)
+    if any(not item['inactive'] for item in held.values()):blocked.update(SCHEDULE_CONTROLS)
+    pairs=set().union(*[_control_pairs(preset,key) for key in blocked]) if blocked else set()
+    # Companion bindings can make a differently named control write a held input.
+    return blocked | {key for key in SETTING_KEYS if _control_pairs(preset,key) & pairs}
+
+
+def _family_axes(preset,kb):
+    """Bound family axes before applying the shared accelerator policy."""
     result=[]
     for axis in family_entry(preset,kb).get('axes') or []:
         if not isinstance(axis,dict):continue
@@ -81,6 +116,39 @@ def axes_for(preset,kb):
     return result
 
 
+
+def inspect_axes(preset,kb,base_controls=None):
+    """Explain the existing holds, without selecting variants or changing inputs."""
+    held=accelerator_slots(preset,kb,base_controls)
+    blocked=_held_controls(preset,held)
+    causes={slot:_held_controls(preset,{slot:item}) for slot,item in held.items()}
+    available=[];withheld=[]
+    for axis in _family_axes(preset,kb):
+        control=axis['control']
+        if control not in blocked:
+            available.append(axis);continue
+        slots=[slot for slot,controls in causes.items() if control in controls]
+        if control in held:
+            code='accelerator_strength'
+            message='Acceleration strength is not a style sweep; use a reviewed exact-configuration comparison to change it.'
+        elif control in SCHEDULE_CONTROLS and any(not item['inactive'] for item in held.values()):
+            code='accelerator_schedule'
+            message='Accelerator inactivity is not established for every bound input; inspect exact-configuration guidance rather than a generic family schedule.'
+        else:
+            code='shared_accelerator_input'
+            message='This control shares an input with held acceleration settings; use a reviewed exact-configuration comparison.'
+        withheld.append({'id':axis['id'],'control':control,'code':code,'accelerator_slots':slots,
+                         'accelerator_files':[held[slot]['entry']['file'] for slot in slots], 'message':message})
+    return copy.deepcopy({'axes_available':available,'axes_withheld':withheld,
+                          'notice':'Known settings-library roles only, not installed-byte or compatibility attestation. '
+                                   'Unknown files and embedded acceleration are not covered. Inspection does not validate existing variants.'})
+
+
+def axes_for(preset,kb,base_controls=None):
+    """Keep the existing list projection and the inspection policy identical."""
+    return inspect_axes(preset,kb,base_controls)['axes_available']
+
+
 def _merge_sources(parts):
     result=[]
     for source in parts:
@@ -96,7 +164,7 @@ def plan_grid(preset,kb,base_controls,axis_ids,limit=8):
     never exceed the comparison ceiling.
     """
     limit=_cap(limit)
-    available={axis['id']:axis for axis in axes_for(preset,kb)}
+    available={axis['id']:axis for axis in axes_for(preset,kb,base_controls)}
     if not isinstance(axis_ids,(list,tuple)) or not axis_ids:raise ValueError('Choose at least one documented axis')
     chosen=[]
     for identifier in axis_ids:
@@ -130,7 +198,7 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
 
     Only slots the preset binds and whose base strength is above zero take part:
     an off slot stays off, because turning one on is a different question than
-    re-weighting the stack.
+    re-weighting the stack. Known accelerator slots are held, never remixed.
     """
     limit=_cap(limit)
     rules=family_entry(preset,kb).get('lora_rules') or {}
@@ -138,7 +206,22 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
     if len(steps)<2:raise ValueError('A remix ladder needs at least two strengths')
     base=dict(base_controls or {});defaults=preset.get('defaults') or {}
     active=[slot for slot in slots if _bound(preset,slot) and _number(base.get(slot,defaults.get(slot,0)),0)>0]
+    held=accelerator_slots(preset,kb,base)
     if not active:raise ValueError('Turn on at least one LoRA slot before remixing its weights')
+    blocked=_held_controls(preset,held)
+    active=[slot for slot in active if slot not in blocked]
+    if not active:raise ValueError('Turn on a non-accelerator LoRA slot to remix; acceleration settings stay unchanged')
+    for slot,item in held.items():
+        try:known=math.isfinite(_number(item['value']))
+        except (ValueError,OverflowError):known=False
+        if not known:raise ValueError('Set a finite accelerator strength explicitly before remixing; authored strength is unknown')
+        if slot not in base and len(_control_pairs(preset,slot))>1:
+            raise ValueError('Set the accelerator strength explicitly before remixing; companion defaults may differ')
+        # Freeze omitted authored values explicitly as well as caller overrides.
+        if item['value'] is not None:base.setdefault(slot,item['value'])
+        base.setdefault(slot+'_name',item['entry']['file'])
+    held_note=('; selected accelerator strengths and sampling settings remain unchanged' if held else '')
+    counted=active+[slot for slot,item in held.items() if not item['inactive']]
     entries={slot:_slot_entry(slot,base,defaults,kb) for slot in active}
     warn=rules.get('warn_total_strength');notes=[n for n in (rules.get('notes') or []) if isinstance(n,str)]
     variants=[]
@@ -148,13 +231,13 @@ def plan_remix(preset,kb,base_controls,slots=LORA_SLOTS,ladder=None,limit=8):
         entry=entries[slot]
         rationale=' · '.join([p for p in [f"{entry['label']} leads at {steps[0]}; the rest support at {steps[-1]}",
                                           entry.get('role') or '','; '.join(entry.get('notes') or [])] if p])
-        variants.append({'label':f"{entry['label']} lead","controls":controls,'rationale':_warned(rationale,controls,active,warn),
+        variants.append({'label':f"{entry['label']} lead","controls":controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
                          'sources':_merge_sources([entry.get('source'),entry.get('mirror')])})
     if len(active)>1 and len(variants)<limit:
         controls=dict(base)
         for other in active:controls[other]=steps[1]
-        rationale=f"Every active adapter at the ladder's middle step {steps[1]}"+(' · '+'; '.join(notes) if notes else '')
-        variants.append({'label':f'All active LoRAs at {steps[1]}','controls':controls,'rationale':_warned(rationale,controls,active,warn),
+        rationale=f"Every remixed adapter at the ladder's middle step {steps[1]}"+(' · '+'; '.join(notes) if notes else '')
+        variants.append({'label':f"All {'non-accelerator' if held else 'active'} LoRAs at {steps[1]}",'controls':controls,'rationale':_warned(rationale+held_note,controls,counted,warn),
                          'sources':_merge_sources([entries[slot].get('source') for slot in active])})
     return variants[:limit]
 

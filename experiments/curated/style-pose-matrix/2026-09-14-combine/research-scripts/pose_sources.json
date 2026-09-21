@@ -1,0 +1,310 @@
+[
+ {
+  "variant": "depth-feet",
+  "seed": 2026091411,
+  "prompt_id": "399c7b94-30ca-4c5b-aea3-7f4747e26e53",
+  "status": "success",
+  "seconds": 5.0,
+  "files": [
+   "pose3-depth-feet_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-feet.png"
+ },
+ {
+  "variant": "depth-feet",
+  "seed": 2026091412,
+  "prompt_id": "df442f10-2781-4915-9ba7-fb6ee4b6a11b",
+  "status": "success",
+  "seconds": 95.1,
+  "files": [
+   "pose3-depth-feet_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-feet.png"
+ },
+ {
+  "variant": "depth-feet",
+  "seed": 2026091413,
+  "prompt_id": "96cb2353-cbb3-4aac-955c-cf6eb621ca2a",
+  "status": "success",
+  "seconds": 85.1,
+  "files": [
+   "pose3-depth-feet_00004_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-feet.png"
+ },
+ {
+  "variant": "depth-painted",
+  "seed": 2026091411,
+  "prompt_id": "20f6383d-94d4-41d8-9ab5-8b7a80807d20",
+  "status": "success",
+  "seconds": 85.7,
+  "files": [
+   "pose3-depth-painted_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-painted.png"
+ },
+ {
+  "variant": "depth-painted",
+  "seed": 2026091412,
+  "prompt_id": "c4b86e9b-3041-4351-8ffc-320fdb1eec45",
+  "status": "success",
+  "seconds": 75.3,
+  "files": [
+   "pose3-depth-painted_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-painted.png"
+ },
+ {
+  "variant": "depth-painted",
+  "seed": 2026091413,
+  "prompt_id": "90b911f0-6252-4c96-8b60-2d47a5b42a15",
+  "status": "success",
+  "seconds": 75.4,
+  "files": [
+   "pose3-depth-painted_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-painted.png"
+ },
+ {
+  "variant": "hands-camera",
+  "seed": 2026091411,
+  "prompt_id": "e16a1a63-9d54-49a9-ae62-38c484353cb3",
+  "status": "success",
+  "seconds": 95.2,
+  "files": [
+   "pose3-hands-camera_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind and below, legs crossed, her right hand resting on her hip, her left hand raised to her lips holding a lollipop, looking back over her shoulder at the viewer. The camera is low and behind her, looking up. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "hands-camera",
+  "seed": 2026091412,
+  "prompt_id": "534a141d-ef01-401c-9f43-f89857d883ef",
+  "status": "success",
+  "seconds": 95.4,
+  "files": [
+   "pose3-hands-camera_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind and below, legs crossed, her right hand resting on her hip, her left hand raised to her lips holding a lollipop, looking back over her shoulder at the viewer. The camera is low and behind her, looking up. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "hands-camera",
+  "seed": 2026091413,
+  "prompt_id": "e0d5db92-020f-4543-9cd7-00e4e24023c8",
+  "status": "success",
+  "seconds": 96.6,
+  "files": [
+   "pose3-hands-camera_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind and below, legs crossed, her right hand resting on her hip, her left hand raised to her lips holding a lollipop, looking back over her shoulder at the viewer. The camera is low and behind her, looking up. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "skeleton-drawn",
+  "seed": 2026091411,
+  "prompt_id": "64dd730c-2f80-4c51-9b27-36899780fb11",
+  "status": "success",
+  "seconds": 75.8,
+  "files": [
+   "pose3-skeleton-drawn_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-skeleton-drawn.png"
+ },
+ {
+  "variant": "skeleton-drawn",
+  "seed": 2026091412,
+  "prompt_id": "7c6d7971-fe2d-47f2-b0d2-bcc8f1ebdf61",
+  "status": "success",
+  "seconds": 75.3,
+  "files": [
+   "pose3-skeleton-drawn_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-skeleton-drawn.png"
+ },
+ {
+  "variant": "skeleton-drawn",
+  "seed": 2026091413,
+  "prompt_id": "3daae932-133e-4218-8dd5-43c1f0c591e1",
+  "status": "success",
+  "seconds": 75.2,
+  "files": [
+   "pose3-skeleton-drawn_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-skeleton-drawn.png"
+ },
+ {
+  "variant": "mannequin-drawn",
+  "seed": 2026091411,
+  "prompt_id": "b64ca00a-a094-49ad-bfb8-3846c4a548bd",
+  "status": "success",
+  "seconds": 75.4,
+  "files": [
+   "pose3-mannequin-drawn_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a grey mannequin silhouette on black giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-mannequin-drawn.png"
+ },
+ {
+  "variant": "mannequin-drawn",
+  "seed": 2026091412,
+  "prompt_id": "514f1d1e-3a95-4247-8f4e-db207a00bec9",
+  "status": "success",
+  "seconds": 75.4,
+  "files": [
+   "pose3-mannequin-drawn_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a grey mannequin silhouette on black giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-mannequin-drawn.png"
+ },
+ {
+  "variant": "mannequin-drawn",
+  "seed": 2026091413,
+  "prompt_id": "9ee8a5e4-ddf5-4703-894f-d80ed9f8f1db",
+  "status": "success",
+  "seconds": 75.4,
+  "files": [
+   "pose3-mannequin-drawn_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a grey mannequin silhouette on black giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-mannequin-drawn.png"
+ },
+ {
+  "variant": "depth-8steps",
+  "seed": 2026091411,
+  "prompt_id": "a12392e3-1e5b-4942-8f74-1b1fabe8866c",
+  "status": "success",
+  "seconds": 105.6,
+  "files": [
+   "pose3-depth-8steps_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 8,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-8steps",
+  "seed": 2026091412,
+  "prompt_id": "de42d7f0-a0bc-4dc9-ad0a-66ab075acf5f",
+  "status": "success",
+  "seconds": 105.3,
+  "files": [
+   "pose3-depth-8steps_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 8,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-8steps",
+  "seed": 2026091413,
+  "prompt_id": "6554b1d9-cbfa-4d68-b736-b34607a91fa1",
+  "status": "success",
+  "seconds": 100.3,
+  "files": [
+   "pose3-depth-8steps_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 8,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-q8",
+  "seed": 2026091411,
+  "prompt_id": "88c5c1c8-72e7-453d-a39f-869e00a463e7",
+  "status": "success",
+  "seconds": 342.3,
+  "files": [
+   "pose3-depth-q8_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-q8",
+  "seed": 2026091412,
+  "prompt_id": "99a2bd93-7c58-417a-8819-e0d38ba43b89",
+  "status": "success",
+  "seconds": 365.6,
+  "files": [
+   "pose3-depth-q8_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-q8",
+  "seed": 2026091413,
+  "prompt_id": "d1edaa07-e24e-46a8-8ab8-110c1d50b3d2",
+  "status": "success",
+  "seconds": 365.7,
+  "files": [
+   "pose3-depth-q8_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+ },
+ {
+  "variant": "depth-feet",
+  "seed": 2026091414,
+  "prompt_id": "0e72710a-f081-4f7f-921b-42f6a319f9e0",
+  "status": "success",
+  "seconds": 85.1,
+  "files": [
+   "pose3-depth-feet_00005_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "image1": "pose3-depth-feet.png"
+ }
+]

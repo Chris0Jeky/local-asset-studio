@@ -193,20 +193,24 @@ class Production:
         controls=payload.get('controls') or {}
         if not isinstance(controls,dict):raise ValueError('controls must be an object')
         mode=payload.get('mode','grid')
-        if mode not in ('grid','remix'):raise ValueError('Choose the settings grid or a LoRA remix')
+        if mode not in ('inspect','grid','remix'):raise ValueError('Choose settings inspection, the settings grid or a LoRA remix')
         kb,digest=settings_planner.load_kb(self.studio.root)
-        available=settings_planner.axes_for(preset,kb)
+        inspection=settings_planner.inspect_axes(preset,kb,controls)
+        available=inspection['axes_available']
         limit=payload.get('limit')
         extra={} if limit is None else {'limit':limit}
-        if mode=='grid':
-            if not available:raise ValueError('The settings library documents no axis this recipe can change')
+        if mode=='inspect':
+            if 'axes' in payload or 'limit' in payload:raise ValueError('Inspection does not select axes or variants')
+            variants=[]
+        elif mode=='grid':
+            if not available:raise ValueError('The settings library documents no axis this recipe can change; selected accelerator settings need a reviewed exact-configuration comparison')
             identifiers=payload.get('axes') or [axis['id'] for axis in available[:2]]
             if not isinstance(identifiers,list):raise ValueError('axes must be a list of documented axis identifiers')
             variants=settings_planner.plan_grid(preset,kb,controls,identifiers,**extra)
         else:
             variants=settings_planner.plan_remix(preset,kb,controls,**extra)
         return {'mode':mode,'variants':[dict(v,description=settings_planner.describe(v)) for v in variants],
-                'axes_available':available,'knowledge_sha256':digest}
+                **inspection,'knowledge_sha256':digest,'generation_submitted':False,'reservation_created':False}
 
     @staticmethod
     def _variants(variants):

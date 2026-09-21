@@ -12,7 +12,7 @@
   function payload(snapshot){
     if(!snapshot?.preset||!snapshot.graph)throw Error('Resource inspection is not available yet.');
     const p=snapshot.preset, expected_bindings={};
-    const keys=['positive','negative','width','height','seed','steps','cfg','denoise','style_weight','pose_strength','sampler','scheduler',...['lora','lora2','lora3','lora4','lora5','lora6'].flatMap(k=>[k,k+'_name'])];
+    const keys=['positive','negative','width','height','seed','steps','cfg','denoise','style_weight','pose_strength','depth_cut','sampler','scheduler',...['lora','lora2','lora3','lora4','lora5','lora6'].flatMap(k=>[k,k+'_name'])];
     for(const key of keys){const pairs=[...(p[key]?[p[key]]:[]),...(p.bindings_extra?.[key]||[])];if(pairs.length)expected_bindings[key]=pairs;}
     const value={preset_id:p.id,controls:snapshot.controls,expected_graph:snapshot.graph,expected_bindings};bounded(value);
     if(new TextEncoder().encode(JSON.stringify(value)).length>1048576)throw Error('Guidance request exceeds 1 MiB.');

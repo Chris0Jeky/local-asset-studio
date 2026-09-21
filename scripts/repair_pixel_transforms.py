@@ -22,6 +22,7 @@ from scripts.character_edit import check_plan, digest
 from scripts.character_edit_pixels import changed_mask, validate_coverage, verify_references
 from scripts.repair_proposal import transform
 from scripts import repair_source as rs
+from scripts import repair_mask_policy as mp
 from scripts.character_study import artifact, canonical, inside, keys, relative, sha
 
 VERSION = 'straight-rgba-bilinear-v1'
@@ -39,9 +40,11 @@ def require(condition, message):
 
 
 def compile_transform(source_size, spec):
-    require(type(spec) is dict and set(spec) == {'version', 'box', 'scale', 'padding', 'alignment'},
-            'Declare the exact raster transform fields')
-    require(spec['version'] == VERSION, 'Unsupported raster transform version')
+    require(type(spec) is dict, 'Declare the exact raster transform fields')
+    strict = spec.get('version') == mp.VERSION
+    expected = {'version', 'box', 'scale', 'padding', 'alignment'} | ({'coverage'} if strict else set())
+    require(set(spec) == expected, 'Declare the exact raster transform fields')
+    require(spec['version'] in (VERSION, mp.VERSION), 'Unsupported raster transform version')
     # The existing declaration checker owns rational coordinate arithmetic. This
     # call alone performs no raster operation and never makes v0 proposals jobs.
     geometry = transform(source_size, {key: spec[key] for key in ('box', 'scale', 'padding', 'alignment')})
@@ -49,12 +52,16 @@ def compile_transform(source_size, spec):
     require(geometry['work_size'][0] * geometry['work_size'][1] <= MAX_PIXELS,
             'Working canvas exceeds raster pixel limit')
     require(Fraction(1, 4) <= Fraction(*spec['scale']) <= 4, 'Supported raster scale is one quarter through four')
-    return {**geometry, 'version': VERSION, 'source_size': list(source_size),
+    result = {**geometry, 'version': spec['version'], 'source_size': list(source_size),
             'context_box': list(spec['box']), 'requested_scale': list(spec['scale']),
             'image_filter': 'bilinear-per-straight-RGBA-channel', 'coverage_filter': 'bilinear',
             'blend': 'Pillow-encoded-sample-L-coverage', 'coverage_operations': 'forward-then-inverse; no dilation or feather',
             'protection_projection': 'conservative-square-max-before-nearest',
             'pillow_version': Image.__version__}
+    if strict:
+        result['coverage_policy'] = mp.compile_policy(spec['coverage'], source_size, MAX_PIXELS)
+        result['coverage_operations'] = 'source-dilate-then-feather-then-forward-then-inverse'
+    return result
 
 
 def _resize_rgba(image, size):
@@ -106,7 +113,10 @@ def prepare_pixels(source, authored_write, protect, spec):
     inner = _resize_rgba(crop, resized)
     context = Image.new('RGBA', work_size, (0, 0, 0, 0)); context.paste(inner, (left, top))
     context.info = source.info.copy()
-    work_inner = authored_write.crop(box).resize(resized, Image.Resampling.BILINEAR)
+    processed = (mp.process_coverage(authored_write, geometry['coverage_policy'])
+                 if geometry['version'] == mp.VERSION else authored_write)
+    _scope(processed, protect, geometry)
+    work_inner = processed.crop(box).resize(resized, Image.Resampling.BILINEAR)
     work_write = Image.new('L', work_size, 0); work_write.paste(work_inner, (left, top))
     effective = Image.new('L', source.size, 0)
     effective.paste(work_inner.resize(crop.size, Image.Resampling.BILINEAR), box[:2])
@@ -115,10 +125,13 @@ def prepare_pixels(source, authored_write, protect, spec):
     require(ImageChops.multiply(work_inner.point(lambda value: 255 if value else 0), inner_protect).getbbox() is None,
             'Conservative work protection overlaps sampler coverage; revise scope or scale')
     work_protect = Image.new('L', work_size, 255); work_protect.paste(inner_protect, (left, top))
+    if geometry['version'] == mp.VERSION:
+        mp.interior_anchor_count(work_write, geometry)
     return {'geometry': {**geometry, 'resampling_performed': True},
             'images': {'context': context, 'work_write': work_write, 'work_protect': work_protect,
                        'authored_write': authored_write.copy(), 'effective_write': effective,
-                       'source_protect': protect.copy()}}
+                       'source_protect': protect.copy(),
+                       **({'processed_write': processed} if geometry['version'] == mp.VERSION else {})}}
 
 
 def render_pixels(source, authored_write, protect, spec, candidate):
@@ -130,6 +143,8 @@ def render_pixels(source, authored_write, protect, spec, candidate):
     require(not candidate.info.get('exif') and 'transparency' not in candidate.info, 'Candidate orientation/alpha is not normalized')
     left, top, _, _ = geometry['padding_ltrb']; width, height = geometry['resized_size']
     inner_box = (left, top, left + width, top + height)
+    context_check = (mp.verify_context(images['context'], candidate, images['work_write'], geometry)
+                     if geometry['version'] == mp.VERSION else None)
     candidate_inner = candidate.crop(inner_box)
     no_op = candidate_inner.tobytes() == images['context'].crop(inner_box).tobytes()
     result = source.copy(); box = tuple(geometry['context_box'])
@@ -146,7 +161,8 @@ def render_pixels(source, authored_write, protect, spec, candidate):
     require(outside == 0 and protected == 0, 'Pixel preservation invariant failed')
     return {'result': result, 'delta': delta, 'effective_write': images['effective_write'],
             'geometry': geometry, 'outside_changes': outside, 'protected_changes': protected,
-            'no_op': delta.getbbox() is None, 'neural_inference': False, 'semantic_approval': False}
+            'no_op': delta.getbbox() is None, 'neural_inference': False, 'semantic_approval': False,
+            **({'candidate_context': context_check} if context_check is not None else {})}
 
 
 def _folder(root, name, *, new=False):
@@ -220,7 +236,9 @@ def _prepare(root, plan, request):
     prepared = prepare_pixels(source, write, protect, request['transform'])
     validate_coverage(plan, prepared['images']['effective_write'], protect)
     artifacts, files = {}, {}
-    for key, name in PREPARED_FILES.items():
+    members = {**PREPARED_FILES, **({'processed_write': 'processed-write.png'}
+               if geometry['version'] == mp.VERSION else {})}
+    for key, name in members.items():
         image = prepared['images'][key]; data = _encode(image, colours)
         artifacts[name] = data; files[name] = _facts(data, image)
     receipt = {'schema': BUNDLE_SCHEMA, 'request_sha256': sha(request), 'request': request,
@@ -286,6 +304,8 @@ def apply(root, plan, request, bundle, candidate, output, *, expected_effective_
               'candidate_origin': 'supplied_separately_not_verified_by_this_command',
               'candidate_registration': 'not_proven_by_matching_canvas',
               'warnings': ['No pixel change detected; do not call this a successful correction'] if rendered['no_op'] else []}
+    if 'candidate_context' in rendered:
+        result['candidate_context'] = rendered['candidate_context']
     return rs.publish_packet(destination, artifacts, result)
 
 
