@@ -1,0 +1,62 @@
+[
+ {
+  "variant": "9b-depth-first",
+  "seed": 2026091411,
+  "prompt_id": "185101f3-0f41-4db2-943d-4727a496787e",
+  "status": "success",
+  "seconds": 196.6,
+  "files": [
+   "klein-9b-depth-first-ref_00001_.png",
+   "klein-9b-depth-first_00001_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "annotator": "depth"
+ },
+ {
+  "variant": "9b-depth-first",
+  "seed": 2026091412,
+  "prompt_id": "83c2046a-fda0-4864-a2d1-9a00e05a7825",
+  "status": "success",
+  "seconds": 205.3,
+  "files": [
+   "klein-9b-depth-first-ref_00002_.png",
+   "klein-9b-depth-first_00002_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "annotator": "depth"
+ },
+ {
+  "variant": "9b-depth-first",
+  "seed": 2026091413,
+  "prompt_id": "190422c8-0f8f-4b76-9736-b99eb6cfd22a",
+  "status": "success",
+  "seconds": 1039.3,
+  "files": [
+   "klein-9b-depth-first-ref_00003_.png",
+   "klein-9b-depth-first_00003_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "annotator": "depth"
+ },
+ {
+  "variant": "9b-depth-first",
+  "seed": 2026091414,
+  "prompt_id": "5da5f797-ff2f-4caf-8b8b-5fd3684b31d4",
+  "status": "success",
+  "seconds": 462.8,
+  "files": [
+   "klein-9b-depth-first-ref_00004_.png",
+   "klein-9b-depth-first_00004_.png"
+  ],
+  "error": [],
+  "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+  "steps": 6,
+  "annotator": "depth"
+ }
+]

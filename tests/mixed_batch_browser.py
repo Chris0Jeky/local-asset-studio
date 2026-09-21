@@ -52,6 +52,11 @@ def run(output):
                 page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda exc:errors.append(str(exc)))
                 page.goto(f'http://127.0.0.1:{target.server_port}');page.wait_for_function('!!selected')
                 page.evaluate("showView('create')")
+                page.wait_for_selector('#jobProblems')
+                assert page.locator('#createView').get_attribute('data-workshop-layout')=='focus'
+                assert not page.locator('#workshopResults').evaluate('(el)=>el.open'), 'Focus must not hide recovery behind Recent runs'
+                assert page.evaluate("!document.querySelector('#workshopResults').contains(document.querySelector('#jobProblems'))")
+                page.locator('#jobProblems > summary').click()
                 box=page.locator('.mixedBatchControls');box.locator('summary').click()
                 assert not mutations
                 assert 'unknown submission outcome' in box.inner_text()
@@ -80,7 +85,7 @@ def run(output):
                     result.setdefault('stacked_layout',[]).append(layout)
                     assert layout['setupBottom']<=layout['galleryTop']+1,'Recipe and Gallery panels overlap: '+str(layout)
                 box.locator('[data-mixed-action="dispose"]').focus();box.locator('[data-mixed-action="dispose"]').press('Enter')
-                page.wait_for_function("document.querySelector('#gallery')?.textContent.includes('Batch abandoned locally')")
+                page.wait_for_function("document.querySelector('#jobProblems')?.textContent.includes('Batch abandoned locally')")
                 assert len(mutations)==2 and mutations[1]['payload']['acknowledge_unknown'] is True
                 assert page.locator('[data-mixed-action]').count()==0
                 page.evaluate("showView('production');productionId='"+identifier+"';renderProduction()")
