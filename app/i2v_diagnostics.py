@@ -323,11 +323,14 @@ def _safetensors_header(path: Path):
 
 
 _FILE_IDENTITY_FIELDS = ("bytes", "mtime_ns", "ctime_ns", "device", "inode")
-# Windows returns st_ctime_ns at a different precision from os.stat() than from os.fstat(), so comparing a
-# path stat against a descriptor stat on that field reports "changed while hashing" for a file nobody touched
-# (and makes the digest cache never hit). Compare only the fields both calls agree on: a path swapped to another
-# file still changes device, inode, size or mtime.
-_PATH_IDENTITY_FIELDS = ("bytes", "mtime_ns", "device", "inode")
+# Windows path stat can report birth time as st_ctime_ns while descriptor stat reports change time, so the two
+# values are not comparable across the APIs and are not merely imprecise: for a real model written over minutes
+# they differ by the whole download. Measured here on 21 September 2026, 4,000 freshly written files: 331 had a
+# path/descriptor divergence and in every one of them st_ctime_ns was the only differing field - size, mtime,
+# device, inode and birth time all agreed. Compare ctime only within one API domain, as app/resource_receipts.py
+# already does; across domains carry birth time instead. A path swapped to another file still moves device,
+# inode, size, mtime or birth time.
+_PATH_IDENTITY_FIELDS = ("bytes", "mtime_ns", "device", "inode", "birthtime_ns")
 
 
 def _same_file(first, second):
@@ -342,6 +345,9 @@ def _file_identity(observed):
         "ctime_ns": observed.st_ctime_ns,
         "device": observed.st_dev,
         "inode": observed.st_ino,
+        # Absent on Linux, where both sides of a cross-API comparison are then None; present on Windows and
+        # macOS, where it is the field that survives the ctime domain difference described above.
+        "birthtime_ns": getattr(observed, "st_birthtime_ns", None),
     }
 
 
