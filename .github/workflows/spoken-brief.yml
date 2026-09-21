@@ -1,0 +1,51 @@
+name: Spoken brief contracts
+on:
+  push:
+    paths:
+      - 'scripts/spoken_brief*.py'
+      - 'scripts/speak-handoff.ps1'
+      - 'tests/spoken_brief_fixture.py'
+      - 'tests/test_spoken_brief*.py'
+      - 'docs/spoken-briefs/**'
+      - '.github/workflows/spoken-brief.yml'
+  pull_request:
+    paths:
+      - 'scripts/spoken_brief*.py'
+      - 'scripts/speak-handoff.ps1'
+      - 'tests/spoken_brief_fixture.py'
+      - 'tests/test_spoken_brief*.py'
+      - 'docs/spoken-briefs/**'
+      - '.github/workflows/spoken-brief.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Focused offline contracts
+        run: python -m unittest discover -s tests -p "test_spoken_brief*.py" -v
+      - name: CLI contract
+        run: python scripts/spoken_brief.py --help
+      - name: Parse PowerShell wrapper
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'scripts/speak-handoff.ps1'),
+            [ref]$tokens,
+            [ref]$errors
+          )
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }

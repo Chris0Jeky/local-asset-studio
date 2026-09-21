@@ -1,0 +1,39 @@
+name: Adaptive Studio specifications
+on:
+  pull_request:
+    paths:
+      - 'docs/adaptive-studio/**'
+      - '.github/workflows/adaptive-studio-spec.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Planned asset inventory and read-only brief contracts
+        run: |
+          python docs/adaptive-studio/assets/brief.py validate
+          python docs/adaptive-studio/assets/test_brief.py
+      - name: Exact inline behavior policy
+        run: node --test docs/adaptive-studio/lab/policy.test.cjs
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Native-file interaction specification, no media or screenshots
+        run: python docs/adaptive-studio/lab/browser_test.py --output .runtime/adaptive-spec/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adaptive-spec-browser-report
+          path: .runtime/adaptive-spec/report.json
+          retention-days: 7
+          if-no-files-found: ignore

@@ -38,7 +38,7 @@ class CompilerTests(unittest.TestCase):
         for description,task in (('', 'image'),('hello','unknown')):
             with self.assertRaises(ValueError):c.new_brief(description,task)
     def test_registry_unique_and_tasks(self):
-        registry=c.profiles();self.assertEqual(len(registry),9)
+        registry=c.profiles();self.assertEqual(len(registry),12)
         for p in registry.values(): self.assertTrue(p['source'].startswith('https://'));self.assertGreater(p['max_chars'],0)
     def test_deterministic_pure_compile(self):
         before=copy.deepcopy(self.b);a=c.compile_brief(self.b,'sdxl-prose-v1');self.assertEqual(a,c.compile_brief(self.b,'sdxl-prose-v1'));self.assertEqual(before,self.b);self.assertFalse(a['generation_submitted'])
@@ -277,7 +277,7 @@ class ServiceTests(unittest.TestCase):
             if origin:headers['Origin']='http://localhost:8191'
             client.request('POST' if body is not None else 'GET',path,json.dumps(body) if body is not None else None,headers);r=client.getresponse();data=json.loads(r.read());client.close();return r.status,data
         try:
-            self.assertTrue(call('/')[1]['existing_route']);self.assertEqual(len(call('/api/prompt/profiles')[1]['profiles']),9)
+            self.assertTrue(call('/')[1]['existing_route']);self.assertEqual(len(call('/api/prompt/profiles')[1]['profiles']),12)
             body={'intent':c.new_brief('Keeper'),'profile_id':'sdxl-prose-v1'}
             self.assertEqual(call('/api/prompt/compile',body)[0],200);self.assertEqual(call('/api/prompt/compile',body,False)[0],403)
         finally:server.shutdown();t.join();server.server_close()

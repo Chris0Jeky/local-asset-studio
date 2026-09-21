@@ -4,11 +4,17 @@ from __future__ import annotations
 import copy
 from collections import OrderedDict
 
-from .adult_illustration_schema import bounded, validate_intent
+from .adult_illustration_schema import (
+    MAX_BYTES as INTENT_MAX_BYTES,
+    validate_intent,
+)
 from .schema import canonical, digest, fields, need, validate
 
 
 PROJECTION_FORMAT = "studio.adult-illustration.projection/v1"
+CREATIVE_FACET_MAX_CHARS = 1_000
+CREATIVE_INTENT_MAX_BYTES = 65_536
+PROJECTION_MAX_BYTES = 4 * INTENT_MAX_BYTES
 ROLE_MAP = {
     "identity": "identity",
     "body_design": "identity",
@@ -106,6 +112,49 @@ def _project_facets(intent):
     if style:
         result["style"] = "; ".join(style)
     return result
+
+
+def _creative_representation_blocked(facets, candidate, diagnostics):
+    blocked = False
+    for facet, value in sorted(facets.items()):
+        actual = len(value)
+        if actual <= CREATIVE_FACET_MAX_CHARS:
+            continue
+        blocked = True
+        diagnostics.append(
+            {
+                "code": "CREATIVE_FACET_LIMIT",
+                "severity": "error",
+                "message": (
+                    f"Projected CreativeIntent facet {facet} has {actual} characters; "
+                    f"the existing contract allows {CREATIVE_FACET_MAX_CHARS}. "
+                    "The source intent is retained and nothing is truncated."
+                ),
+                "facet": facet,
+                "actual_length": actual,
+                "maximum_length": CREATIVE_FACET_MAX_CHARS,
+            }
+        )
+    if blocked:
+        return True
+
+    actual_bytes = len(canonical(candidate))
+    if actual_bytes <= CREATIVE_INTENT_MAX_BYTES:
+        return False
+    diagnostics.append(
+        {
+            "code": "CREATIVE_INTENT_LIMIT",
+            "severity": "error",
+            "message": (
+                f"Projected CreativeIntent requires {actual_bytes} bytes; the existing "
+                f"contract allows {CREATIVE_INTENT_MAX_BYTES}. The source intent is "
+                "retained and expanded records are not truncated."
+            ),
+            "actual_bytes": actual_bytes,
+            "maximum_bytes": CREATIVE_INTENT_MAX_BYTES,
+        }
+    )
+    return True
 
 
 def _project_locks(locks):
@@ -248,12 +297,13 @@ def project(value):
     )
     creative_intent = None
     if not blocking:
-        creative_intent = {
+        projected_facets = _project_facets(intent)
+        candidate = {
             "schema_version": 1,
             "id": intent["id"],
             "task": intent["task"],
             "brief": intent["brief"],
-            "facets": _project_facets(intent),
+            "facets": projected_facets,
             "tags": copy.deepcopy(intent["tags"]),
             "avoid": copy.deepcopy(intent["avoid"]),
             "constraints": _content_constraints(intent) + copy.deepcopy(intent["constraints"]),
@@ -262,7 +312,11 @@ def project(value):
             "parameters": {},
             "locked": _project_locks(intent["locked"]),
         }
-        validate(creative_intent)
+        if _creative_representation_blocked(projected_facets, candidate, diagnostics):
+            blocking = True
+        else:
+            validate(candidate)
+            creative_intent = candidate
 
     state = (
         "blocked"
@@ -288,9 +342,12 @@ def project(value):
             "Adult status, consent, artistic acceptance and rights remain reviewed external facts.",
         ],
     }
-    result = bounded(result)
+    result = copy.deepcopy(result)
     result["projection_sha256"] = digest(result)
-    need(len(canonical(result)) <= 65536, "Adult illustration projection exceeds 64 KiB")
+    need(
+        len(canonical(result)) <= PROJECTION_MAX_BYTES,
+        f"Adult illustration projection exceeds {PROJECTION_MAX_BYTES} bytes",
+    )
     return result
 
 

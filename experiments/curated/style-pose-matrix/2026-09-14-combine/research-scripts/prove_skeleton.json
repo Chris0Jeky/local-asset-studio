@@ -1,0 +1,47 @@
+{
+ "id": "26448d58-c1bb-41a5-a49f-74c4db4fec89",
+ "status": "completed",
+ "preset_id": "combine-klein-9b-skeleton",
+ "prompt_ids": [
+  "977e450f-46ba-485f-a0f4-9a0a45204dc2"
+ ],
+ "outputs": [
+  {
+   "filename": "Klein-9B-skeleton_00001_.png",
+   "subfolder": "Combine",
+   "type": "output",
+   "seed": 2026091461,
+   "prompt_id": "977e450f-46ba-485f-a0f4-9a0a45204dc2",
+   "media_type": "image",
+   "asset_id": "33c35ab7c83d5cbfba1b16e2362ffbee"
+  }
+ ],
+ "elapsed_seconds": 68.74283480644226,
+ "error": null,
+ "references": [
+  {
+   "file": "8a4ef24296a441a6a53133a66fad5ebd_pose3-skeleton-drawn.png.png",
+   "sha256": "1e759133a3737f41c8bc67cba0081385d8a493d9356ea8b11b3b79a332a3d165",
+   "bytes": 16262,
+   "width": 1024,
+   "height": 1536,
+   "role": "pose",
+   "slot": 1,
+   "contribution": "",
+   "avoid": "",
+   "transform": {
+    "policy": "FLUX.2 Klein reference latents: the drawn skeleton is image 1 (its body position is followed), your character follows as image 2, each scaled to ~1 megapixel and VAE-encoded"
+   }
+  }
+ ],
+ "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, one arm raised behind the head, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+ "seed": 2026091461,
+ "skeleton_upload": {
+  "file": "8a4ef24296a441a6a53133a66fad5ebd_pose3-skeleton-drawn.png.png",
+  "sha256": "1e759133a3737f41c8bc67cba0081385d8a493d9356ea8b11b3b79a332a3d165",
+  "bytes": 16262,
+  "width": 1024,
+  "height": 1536,
+  "original_name": "pose3-skeleton-drawn.png"
+ }
+}
