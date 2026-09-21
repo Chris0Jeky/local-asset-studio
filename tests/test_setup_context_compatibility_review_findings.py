@@ -6,6 +6,7 @@ import unittest
 
 import test_setup_context_compatibility as F
 from studio_workflow import setup_context_compatibility as L
+from studio_workflow import source_compatibility as S
 
 
 class SetupContextCompatibilityReviewFindings(unittest.TestCase):
@@ -60,6 +61,14 @@ class SetupContextCompatibilityReviewFindings(unittest.TestCase):
         source['candidate']['base_lineage'] = 'flux.1-dev'
 
         with self.assertRaisesRegex(ValueError, 'fingerprint|context|tamper'):
+            L.evaluate(F.request(source=source))
+
+    def test_review_revision_must_remain_a_content_addressed_review_pin(self):
+        source = F.source_candidate()
+        source['review_revision'] = 'civitai-version:101'
+        source['context_sha256'] = S.candidate_report_digest(source)
+
+        with self.assertRaisesRegex(ValueError, 'review revision|sha256|review pin'):
             L.evaluate(F.request(source=source))
 
 
