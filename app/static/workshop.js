@@ -163,6 +163,7 @@
     const recipeInfo = el('div'); recipeInfo.append(el('small', '', 'ACTIVE RECIPE'));
     const recipeName = el('strong', '', 'Choose a starting point'); recipeName.id = 'workshopRecipeName'; recipeInfo.append(recipeName);
     const change = button('workshopRecipeChange', 'Change recipe', () => openRecipes());
+    change.setAttribute('aria-expanded', 'false');
     change.setAttribute('aria-haspopup', 'dialog'); change.setAttribute('aria-controls', 'workshopRecipeDialog');
     recipeChip.append(recipeMark, recipeInfo, change);
     const quickTune = button('workshopTune', 'Fine-tune the recipe', () => reveal(parameters));
@@ -186,6 +187,14 @@
     const pickerStatus = el('p', 'wk-picker-status'); pickerStatus.setAttribute('role','status');
     recipeDialog.append(dialogHeading, pickerStatus, setup); create.append(recipeDialog);
     const drawer = setup.querySelector('.ux-recipe-drawer'); if (drawer) drawer.open = true;
+    function syncPicker() {
+      const open = recipeDialog.open;
+      change.setAttribute('aria-expanded', String(open));
+      // Native dialog already excludes closed content. Make that state explicit for
+      // accessibility inspection and retain it if a future style changes display.
+      if (drawer) { drawer.inert = !open; drawer.setAttribute('aria-hidden', String(!open)); }
+    }
+    syncPicker();
     function openRecipes() {
       if (create.hidden || recipeDialog.open) return;
       // Do not stack our picker above a source, proposal, or other owned modal.
@@ -193,10 +202,13 @@
       opener = d.activeElement; pageScroll = {left:w.scrollX, top:w.scrollY};
       if (drawer) drawer.open = true;
       pickerStatus.textContent = '';
-      recipeDialog.showModal(); change.setAttribute('aria-expanded','true'); q('#presetSearch')?.focus({preventScroll:true});
+      if (drawer) { drawer.inert = false; drawer.removeAttribute('aria-hidden'); }
+      recipeDialog.showModal(); syncPicker(); q('#presetSearch')?.focus({preventScroll:true});
     }
     recipeDialog.addEventListener('close', () => {
-      change.setAttribute('aria-expanded','false');
+      // close is deferred: an older event must not make a newly reopened picker inert.
+      if (recipeDialog.open) return;
+      syncPicker();
       if (!create.hidden) {
         const target = opener?.isConnected && opener.getClientRects().length ? opener : change;
         target.focus({preventScroll:true}); if (pageScroll) w.scrollTo(pageScroll);
@@ -447,7 +459,11 @@
       d.body.classList.toggle('workshop-active', active);
       if (!active && recipeDialog.open) recipeDialog.close();
       const recipe = bridge.recipe?.();
-      text(recipeName, recipe?.name || q('#uxRecipeLabel')?.textContent || 'Choose a starting point');
+      syncPicker();
+      const name = recipe ? String(recipe.name || recipe.id) : '';
+      text(recipeName, name || 'Choose a starting point');
+      text(change, name ? 'Change: '+name : 'Choose recipe');
+      change.setAttribute('aria-label', name ? 'Change recipe: '+name : 'Choose recipe');
       // One-time presentation migration, after the first real recipe has rendered.
       // Existing negative-wrap toggle handling remains the session preference owner.
       if (recipe && (initialiseDisclosure || persistInitialPresentation)) {

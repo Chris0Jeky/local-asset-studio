@@ -1,0 +1,5 @@
+/* Shared entry points for the main Studio and independently served tools. */
+.studio-quick-create {display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 10px;border:1px solid currentColor;border-radius:7px;font-size:12px;text-decoration:none;flex:none}
+.studio-quick-create[hidden] {display:none!important}
+@media(max-width:480px){.studio-globalbar .studio-breadcrumb{display:none}.studio-globalbar{gap:8px}}
+#workshopRecipeChange {max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
