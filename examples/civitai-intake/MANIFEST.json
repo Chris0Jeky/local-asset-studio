@@ -401,6 +401,9 @@
     "format": "JPEG",
     "quality": 85,
     "optimize": true,
-    "note": "Pillow save(quality=85, optimize=True) on the RGB source PNG reproduces each file byte for byte; 147 of 148 were re-proved that way on 21 September 2026."
+    "pillow": "12.1.1",
+    "libjpeg": "8.0",
+    "python": "3.14",
+    "note": "Pillow save(quality=85, optimize=True) on the RGB source PNG reproduced each file byte for byte on 21 September 2026 with the recorded Pillow/libjpeg build; 147 of 148 were re-proved that way and the 148th was identified by the same test. A different libjpeg build may re-encode differently, in which case scripts/lab-media.py restore reports a hash mismatch and refuses to write - use --from-ref instead."
   }
 }

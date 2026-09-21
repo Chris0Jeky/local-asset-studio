@@ -142,13 +142,36 @@ class LabMediaTool(unittest.TestCase):
         page=(self.folder/'index.html').read_text(encoding='utf-8')
         self.assertIn('a-cell.jpg',page);self.assertIn('job-1',page)
         self.assertIn('lab-media.py restore',page);self.assertIn('Extra fingers on the bed hand.',page)
-        self.assertIn('onerror=',page)
+        # The placeholder is built from DOM text nodes by one delegated script, never an inline onerror string,
+        # so no manifest value is ever parsed as markup or as JavaScript.
+        self.assertNotIn('onerror=',page);self.assertIn("addEventListener('error'",page)
 
     def test_index_escapes_manifest_text_instead_of_emitting_markup(self):
         self.write([dict(self.entry,note='<script>alert(1)</script>')])
         run('index','--repo-root',str(self.root),'--folder','nsfw-lab')
         page=(self.folder/'index.html').read_text(encoding='utf-8')
         self.assertNotIn('<script>alert(1)</script>',page);self.assertIn('&lt;script&gt;',page)
+
+    def test_index_escapes_every_interpolated_field_not_just_the_note(self):
+        """id, job id, prompt id, source PNG and the numbers all reach the page; a quote must never break out."""
+        hostile="a'\"><img src=x onerror=alert(1)>"
+        self.write([dict(self.entry,id=hostile,job_id=hostile,prompt_id=hostile,source_png=hostile,width=hostile,height=hostile,bytes=hostile)])
+        run('index','--repo-root',str(self.root),'--folder','nsfw-lab')
+        page=(self.folder/'index.html').read_text(encoding='utf-8')
+        self.assertNotIn('<img src=x',page,'the hostile value stayed markup')
+        self.assertEqual(page.count('<img '),1,'exactly the one card image, no injected element')
+        self.assertIn('&lt;img src=x onerror=alert(1)&gt;',page,'and it is still shown, escaped')
+
+    def test_a_manifest_entry_may_not_name_a_path_outside_its_folder(self):
+        for name in ('../escape.jpg','sub/escape.jpg','C:/escape.jpg','.hidden.jpg',''):
+            with self.subTest(name=name):
+                self.write([dict(self.entry,file=name)])
+                with self.assertRaises(SystemExit): run('verify','--repo-root',str(self.root),'--folder','nsfw-lab')
+        self.assertFalse((self.root/'escape.jpg').exists())
+
+    def test_a_git_ref_that_looks_like_an_option_is_refused(self):
+        code,report=run('restore','--repo-root',str(self.root),'--folder','nsfw-lab','--from-ref=--upload-pack=touch')
+        self.assertEqual(code,1,report);self.assertIn('may not start with -',report)
 
     def git_repo(self):
         """Commit the picture in a throwaway repo so --from-ref has a ref to read it from."""

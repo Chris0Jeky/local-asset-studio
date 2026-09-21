@@ -11,7 +11,7 @@ verify and index are stdlib only. Restoring from a PNG re-encodes it with Pillow
 manifest's encoding block (quality 85, optimize) and then re-verifies the sha256, so a
 successful restore is byte-identical to the file the manifest describes.
 """
-import argparse, hashlib, html, json, subprocess, sys
+import argparse, hashlib, html, json, re, subprocess, sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -30,9 +30,15 @@ def manifest(root,folder):
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
+def target(root,folder,entry):
+    """The one path a manifest entry may name: a plain file inside examples/<folder>."""
+    name=str(entry.get('file') or '')
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',name): raise SystemExit('Manifest entry is not a plain file name in examples/%s: %r'%(folder,name))
+    return root/'examples'/folder/name
+
 def status(root,folder,entry):
     """'ok', 'missing' or 'corrupt' for one manifest entry."""
-    path=root/'examples'/folder/entry['file']
+    path=target(root,folder,entry)
     if not path.is_file(): return 'missing'
     return 'ok' if digest(path)==entry['sha256'] else 'corrupt'
 
@@ -45,7 +51,8 @@ def comfy_output(root):
 
 def from_ref(root,ref,folder,entry):
     """Exact bytes of the file as it was committed on another git ref."""
-    result=subprocess.run(['git','show','%s:examples/%s/%s'%(ref,folder,entry['file'])],cwd=root,capture_output=True)
+    if ref.startswith('-'): return None,'a git ref may not start with - (it would be read as an option)'
+    result=subprocess.run(['git','show','%s:examples/%s/%s'%(ref,folder,target(root,folder,entry).name)],cwd=root,capture_output=True)
     if result.returncode!=0: return None,(result.stderr.decode('utf-8','replace').strip() or 'git show failed')
     return result.stdout,None
 
@@ -86,7 +93,7 @@ def restore(args):
             raw,error=from_ref(root,args.from_ref,folder,entry) if args.from_ref else from_png(output,encoding,entry)
             if raw is None: print('FAILED   %s/%s: %s'%(folder,entry['file'],error));broke+=1;continue
             if hashlib.sha256(raw).hexdigest()!=entry['sha256']: print('FAILED   %s/%s: rebuilt bytes do not match the manifest sha256'%(folder,entry['file']));broke+=1;continue
-            path=root/'examples'/folder/entry['file'];path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(raw)
+            path=target(root,folder,entry);path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(raw)
             print('RESTORED %s/%s'%(folder,entry['file']));done+=1
         failed+=broke;print('%s: %d restored, %d already present, %d failed'%(folder,done,skipped,broke))
     return verify(args) or (1 if failed else 0)
@@ -112,9 +119,25 @@ code{{font-size:11px;color:#9fd0ff;word-break:break-all}}
 <ul>
 {cards}
 </ul>
+<script>
+// A missing file is expected: the pictures are gitignored local media. Build the placeholder from DOM text
+// nodes rather than an inline onerror string, so no manifest value is ever parsed as markup or as JavaScript.
+document.querySelectorAll('img').forEach(function(img){{
+  function gone(){{
+    var box=document.createElement('div');box.className='gone';
+    [('missing: '+img.alt),('job '+(img.dataset.job||'unknown')),'local file not on this PC','python scripts/lab-media.py restore'].forEach(function(line,i){{
+      if(i)box.appendChild(document.createElement('br'));
+      box.appendChild(document.createTextNode(line));
+    }});
+    img.replaceWith(box);
+  }}
+  img.addEventListener('error',gone,{{once:true}});
+  if(img.complete&&!img.naturalWidth)gone();
+}});
+</script>
 """
 CARD="""<li>
-<img src="{file}" alt="{id}" loading="lazy" onerror="this.outerHTML='<div class=&quot;gone&quot;>missing: {id}<br>job {job}<br>python scripts/lab-media.py restore</div>'">
+<img src="{file}" alt="{id}" loading="lazy" data-job="{job}">
 <b>{id}</b>
 <div class="note">{note}</div>
 <div class="meta">job {job}<br>prompt {prompt}<br>{width}&times;{height}, {bytes} bytes<br>examples/{folder}/{file}<br>source PNG {png}</div>
@@ -127,8 +150,9 @@ def index(args):
         for entry in data['entries']:
             cards.append(CARD.format(folder=html.escape(folder),file=html.escape(entry['file']),id=html.escape(entry['id']),
                 note=html.escape(entry.get('note') or ''),job=html.escape(entry.get('job_id') or 'unknown'),
-                prompt=html.escape(entry.get('prompt_id') or 'unknown'),width=entry.get('width'),height=entry.get('height'),
-                bytes=entry.get('bytes'),png=html.escape(entry.get('source_png') or 'unknown')))
+                prompt=html.escape(entry.get('prompt_id') or 'unknown'),width=html.escape(str(entry.get('width'))),
+                height=html.escape(str(entry.get('height'))),bytes=html.escape(str(entry.get('bytes'))),
+                png=html.escape(entry.get('source_png') or 'unknown')))
         lede=('%d images. The files themselves are local-only and gitignored; this page and the JPEGs beside it are '
               'never committed. Missing tiles show the restore command. Generated is not accepted art and not licence clearance.'%len(data['entries']))
         page=PAGE.format(title=html.escape('%s — local example media'%folder),lede=html.escape(lede),cards='\n'.join(cards))

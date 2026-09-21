@@ -35,9 +35,11 @@ python scripts/lab-media.py index                      # write examples/<folder>
 ```
 
 `restore` from a PNG re-encodes with Pillow at quality 85 with `optimize`, which reproduces the recorded
-sha256 byte for byte — 147 of the 148 were re-proved that way on 21 September 2026, and the 148th
+sha256 byte for byte on the build in the manifest's `encoding` block (Pillow 12.1.1, libjpeg 8.0, Python 3.14) — 147 of the 148 were re-proved that way on 21 September 2026, and the 148th
 (`b-hairless`) was identified by the same re-encode test after its job record was ambiguous. A rebuilt
-file that does not match its manifest hash is reported and **not** written.
+file that does not match its manifest hash is reported and **not** written — so a future Pillow or libjpeg
+upgrade that encodes differently fails loudly rather than writing a wrong file, and `--from-ref` remains the
+byte-exact path for as long as a ref still holds the bytes.
 
 `index` writes a local, gitignored contact sheet per folder: thumbnail, id, note, job id, prompt id,
 file path and source PNG, with a labelled placeholder where a file is missing. The Studio gallery
@@ -61,8 +63,9 @@ manifest hashes still identify what was lost and `--from-ref` is the remaining r
 `ORCHESTRATOR.md` was written with a hard rule "No named franchise characters, no real people". Waves
 C and onwards did not follow it: they use adult-coded Danbooru character tags (2B, Kafka, Darkness,
 Aqua, Cynthia, Asuna, Yelan, Raiden, Tifa), `presets/wildcards/nsfw_character.txt` lists them, and
-they appear in `FINDINGS.md`, in `presets/nsfw-intel.json` and in the manifests. The no-real-people and
+they appear in `FINDINGS.md`, in `presets/nsfw-intel.json` and in the manifests (`nsfw_character.txt` also
+lists Yor Briar and Acheron). The no-real-people and
 adult-only parts of the rule were kept: Megumin and child-coded franchise tags were explicitly skipped.
 Nothing has been deleted here — the record now says what actually ran. Whether the lab should use
-named franchise characters at all is an owner decision, raised in `HUMAN_TODO.md`, not one an agent
-takes.
+named franchise characters at all is an owner decision for `HUMAN_TODO.md` — the session closeout for this
+work is what puts it there — not one an agent takes.
