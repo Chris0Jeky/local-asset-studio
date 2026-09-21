@@ -15,6 +15,13 @@ FOLDERS = {
     "vae_approx": "Fast latent previewers",
 }
 
+# Annotator checkpoints that a preprocessor node fetches into its own custom-node folder
+# (comfyui_controlnet_aux `ckpts/`) on first use. They never live in the models library,
+# so readiness must not project them as missing model files; the node reports its own failure.
+ANNOTATOR_SELECTIONS = {
+    ("DepthAnythingV2Preprocessor", "ckpt_name"),
+}
+
 # Reviewed class/input storage roles used by this catalog. This is not a universal
 # custom-node inference engine; new loaders need a declaration or reviewed adapter.
 MODEL_INPUT_FOLDERS = {

@@ -1,0 +1,24 @@
+{
+  "scope": "standalone synthetic behavior specification; no production adapter or actual media",
+  "checks": [
+    "desktop default shows brief and review control; no media elements",
+    "task lens preserves route; cancelled/accepted example change returns correct focus",
+    "required-source action reveals the real scenario field; overflow never truncates",
+    "uncertain receipt and draft conflict remain visible in Expert",
+    "internet/backend distinction; local loop eligibility does not require internet",
+    "user, OS, visibility, economy and active-job motion precedence",
+    "remote permission, poster prerequisite and nonblocking media failure",
+    "delayed A-B-A asset result is rejected without any media request",
+    "36 layout/skin/viewport combinations preserve draft identity and keep review reachable",
+    "200% zoom retains page width",
+    "zero page errors and zero network requests"
+  ],
+  "passed": 11,
+  "page_errors": [],
+  "network_requests": [],
+  "screenshots_created": false,
+  "document_mode": "injected exact HTML",
+  "html_sha256": "330d8242a1491a30e2c40861aec4cee219b3cd35a306df95d6533255f90648c7",
+  "policy_tests_passed": 15,
+  "asset_brief_tests_passed": 11
+}

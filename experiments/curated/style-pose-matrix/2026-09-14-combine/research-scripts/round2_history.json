@@ -1,0 +1,3102 @@
+[
+ {
+  "prompt_id": "9047dc60-a99e-4eb5-94f8-4615de1b90fe",
+  "status": "success",
+  "comfyui_execution_seconds": 446.6,
+  "outputs": [
+   "Klein-9B-depth_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs crossed, looking back over her shoulder. Draw Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker from image 2 with the body exactly in that silhouette's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091441
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Combine/Klein-9B-depth",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "30": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "7fc87b50-e96a-4c18-8a90-743abcbead57",
+  "status": "success",
+  "comfyui_execution_seconds": 90.0,
+  "outputs": [
+   "klein-9b-blank-first-ref_00001_.png",
+   "klein-9b-blank-first_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a blank canvas. Draw this body position on it: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. No tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091411
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-blank-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "EmptyImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1,
+     "color": 0
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-blank-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "e6b5d737-8dcd-4930-982f-9b9cca5f5729",
+  "status": "success",
+  "comfyui_execution_seconds": 87.0,
+  "outputs": [
+   "klein-9b-blank-first-ref_00002_.png",
+   "klein-9b-blank-first_00002_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a blank canvas. Draw this body position on it: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. No tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091412
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-blank-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "EmptyImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1,
+     "color": 0
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-blank-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "185101f3-0f41-4db2-943d-4727a496787e",
+  "status": "success",
+  "comfyui_execution_seconds": 115.3,
+  "outputs": [
+   "klein-9b-depth-first-ref_00001_.png",
+   "klein-9b-depth-first_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091411
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "83c2046a-fda0-4864-a2d1-9a00e05a7825",
+  "status": "success",
+  "comfyui_execution_seconds": 113.9,
+  "outputs": [
+   "klein-9b-depth-first-ref_00002_.png",
+   "klein-9b-depth-first_00002_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091412
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "190422c8-0f8f-4b76-9736-b99eb6cfd22a",
+  "status": "success",
+  "comfyui_execution_seconds": 440.0,
+  "outputs": [
+   "klein-9b-depth-first-ref_00003_.png",
+   "klein-9b-depth-first_00003_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091413
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "5da5f797-ff2f-4caf-8b8b-5fd3684b31d4",
+  "status": "success",
+  "comfyui_execution_seconds": 460.3,
+  "outputs": [
+   "klein-9b-depth-first-ref_00004_.png",
+   "klein-9b-depth-first_00004_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a depth map (a grey silhouette on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly in that silhouette's position, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. Nothing of the depth map's grey remains, no tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091414
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-depth-first-ref",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "4cce14a5-f46c-4453-bcd1-56b316cc1f70",
+  "status": "success",
+  "comfyui_execution_seconds": 99.3,
+  "outputs": [
+   "klein-skeleton_00001_.png",
+   "klein-9b-skel-first_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+     "type": "flux2",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "flux2-vae.safetensors"
+    }
+   },
+   "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "Image 1 is a pose skeleton (a stick figure on black) giving the exact body position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Draw Ellen Joe from image 2, a girl with short black hair with red tips, red eyes and a black choker, with her body exactly on that skeleton, in image 2's clean anime rendering style. She wears image 2's clothes with image 2's colours: a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs, bare feet. Replace the black background with a plain light background. No skeleton lines in the result, no tail. One figure only, nobody else in the picture.",
+     "clip": [
+      "2",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "CFGGuider",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ],
+     "positive": [
+      "23",
+      0
+     ],
+     "negative": [
+      "18",
+      0
+     ],
+     "cfg": 1.0
+    }
+   },
+   "7": {
+    "class_type": "RandomNoise",
+    "inputs": {
+     "noise_seed": 2026091411
+    }
+   },
+   "8": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+     "sampler_name": "euler"
+    }
+   },
+   "9": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+     "steps": 6,
+     "width": 1024,
+     "height": 1536
+    }
+   },
+   "10": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+     "width": 1024,
+     "height": 1536,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+     "noise": [
+      "7",
+      0
+     ],
+     "guider": [
+      "6",
+      0
+     ],
+     "sampler": [
+      "8",
+      0
+     ],
+     "sigmas": [
+      "9",
+      0
+     ],
+     "latent_image": [
+      "10",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-9b-skel-first",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "15": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "30",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "16": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "15",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "4",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "5",
+      0
+     ],
+     "latent": [
+      "16",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "21": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "image": [
+      "20",
+      0
+     ],
+     "upscale_method": "lanczos",
+     "megapixels": 1.0,
+     "resolution_steps": 1
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "21",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "17",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "OpenposePreprocessor",
+    "inputs": {
+     "detect_hand": "enable",
+     "detect_body": "enable",
+     "detect_face": "enable",
+     "resolution": 1024,
+     "scale_stick_for_xinsr_cn": "disable",
+     "image": [
+      "14",
+      0
+     ]
+    }
+   },
+   "31": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/klein-skeleton",
+     "images": [
+      "30",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "c7fd9881-4d98-4106-851a-4443107932e4",
+  "status": "success",
+  "comfyui_execution_seconds": 381.5,
+  "outputs": [
+   "probe-dwpose_00001_.png",
+   "probe-depth_00001_.png",
+   "probe-openpose1536_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "2": {
+    "class_type": "DWPreprocessor",
+    "inputs": {
+     "detect_hand": "enable",
+     "detect_body": "enable",
+     "detect_face": "disable",
+     "resolution": 1024,
+     "bbox_detector": "yolox_l.torchscript.pt",
+     "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+     "image": [
+      "1",
+      0
+     ]
+    }
+   },
+   "3": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/probe-dwpose",
+     "images": [
+      "2",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "OpenposePreprocessor",
+    "inputs": {
+     "detect_hand": "disable",
+     "detect_body": "enable",
+     "detect_face": "disable",
+     "resolution": 1536,
+     "scale_stick_for_xinsr_cn": "disable",
+     "image": [
+      "1",
+      0
+     ]
+    }
+   },
+   "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/probe-openpose1536",
+     "images": [
+      "4",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "1",
+      0
+     ]
+    }
+   },
+   "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/probe-depth",
+     "images": [
+      "6",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "1233cf2b-f052-4459-9b3d-d0f73612315d",
+  "status": "success",
+  "comfyui_execution_seconds": 640.4,
+  "outputs": [
+   "qwen2-depth05-ref_00001_.png",
+   "qwen2-depth05_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_vae.safetensors"
+    }
+   },
+   "8": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+     "strength_model": 1.0,
+     "model": [
+      "1",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "shift": 3.1,
+     "model": [
+      "8",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "16": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "5": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "4",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "17",
+      0
+     ]
+    }
+   },
+   "21": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "5",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "18",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 is a depth map (a grey silhouette on black) giving the body position to copy. Draw the girl from Picture 1 with her body exactly in that silhouette's position: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep her face, hair, clothes, colours and clean anime rendering style. Plain light background, one figure only, nothing of the depth map's grey remains, bare legs, bare feet, no tail.",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "7": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "6",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "24": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "23",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "25": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "7",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "26": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "25",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "24",
+      0
+     ]
+    }
+   },
+   "15": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "26",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1248,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "KSampler",
+    "inputs": {
+     "seed": 2026091411,
+     "steps": 4,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0,
+     "model": [
+      "9",
+      0
+     ],
+     "positive": [
+      "14",
+      0
+     ],
+     "negative": [
+      "15",
+      0
+     ],
+     "latent_image": [
+      "20",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "tile_size": 256,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8,
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/qwen2-depth05",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": {
+     "ckpt_name": "depth_anything_v2_vitl.pth",
+     "resolution": 1024,
+     "image": [
+      "16",
+      0
+     ]
+    }
+   },
+   "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/qwen2-depth05-ref",
+     "images": [
+      "17",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "8d71b5e4-1b73-433d-a51c-f956d98a46a7",
+  "status": "success",
+  "comfyui_execution_seconds": 772.7,
+  "outputs": [
+   "qwen2-ref05_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_vae.safetensors"
+    }
+   },
+   "8": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+     "strength_model": 1.0,
+     "model": [
+      "1",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "shift": 3.1,
+     "model": [
+      "8",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "16": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "5": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "4",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "16",
+      0
+     ]
+    }
+   },
+   "21": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "5",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "18",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 shows only the pose to copy. Draw the girl from Picture 1 in exactly the pose of Picture 2: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep Picture 1's face, hair, clothes, colours and clean anime rendering style. Do not copy Picture 2's maid outfit, tights, heels or tail. Plain light background, one figure only.",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "7": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "6",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "24": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "23",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "25": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "7",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "26": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "25",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "24",
+      0
+     ]
+    }
+   },
+   "15": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "26",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1248,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "KSampler",
+    "inputs": {
+     "seed": 2026091411,
+     "steps": 4,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0,
+     "model": [
+      "9",
+      0
+     ],
+     "positive": [
+      "14",
+      0
+     ],
+     "negative": [
+      "15",
+      0
+     ],
+     "latent_image": [
+      "20",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "tile_size": 256,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8,
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/qwen2-ref05",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   }
+  }
+ },
+ {
+  "prompt_id": "ace2a0bf-ec6f-480c-9264-f4d8b5e138f4",
+  "status": "success",
+  "comfyui_execution_seconds": 1121.7,
+  "outputs": [
+   "qwen2-skeleton_00001_.png",
+   "qwen2-skel05_00001_.png"
+  ],
+  "prompt": {
+   "1": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+     "unet_name": "qwen-image-edit-2511-Q4_K_M.gguf"
+    }
+   },
+   "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+     "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+     "type": "qwen_image",
+     "device": "default"
+    }
+   },
+   "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+     "vae_name": "qwen_image_vae.safetensors"
+    }
+   },
+   "8": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+     "strength_model": 1.0,
+     "model": [
+      "1",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+     "shift": 3.1,
+     "model": [
+      "8",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "e71a593a0fc04452b231b278c62eb31b_yande.re_1252703_sample_bluefield_ellen_joe_tail_zenless_zone_zero.jpg.jpg"
+    }
+   },
+   "16": {
+    "class_type": "LoadImage",
+    "inputs": {
+     "image": "6895e9e00de94178892b56d1d59dd21a_yande.re_1250070_sample_ass_ellen_joe_floralmi_heels_maid_pantsu_pantyhose_see_through_skirt_lift_ta.jpg"
+    }
+   },
+   "5": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "4",
+      0
+     ]
+    }
+   },
+   "18": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+     "upscale_method": "lanczos",
+     "megapixels": 0.5,
+     "resolution_steps": 1,
+     "image": [
+      "17",
+      0
+     ]
+    }
+   },
+   "21": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "5",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "22": {
+    "class_type": "VAEEncode",
+    "inputs": {
+     "pixels": [
+      "18",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "6": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "Picture 1 shows Ellen Joe, a girl with short black hair with red tips, red eyes and a black choker, wearing a black long-sleeved crop top with red SHARK lettering, bright pink shorts, bare legs. Picture 2 is a pose skeleton (a stick figure on black) giving the body position to copy. Draw the girl from Picture 1 with her body in exactly the skeleton's pose: bent forward deeply at the waist, seen from behind, legs straight, one hand on the hip, looking back over her shoulder. Keep her face, hair, clothes, colours and clean anime rendering style. Plain light background, one figure only, no skeleton lines in the result.",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "7": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+     "prompt": "",
+     "clip": [
+      "2",
+      0
+     ],
+     "image1": [
+      "5",
+      0
+     ],
+     "image2": [
+      "18",
+      0
+     ]
+    }
+   },
+   "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "6",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "24": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "23",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "25": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "7",
+      0
+     ],
+     "latent": [
+      "21",
+      0
+     ]
+    }
+   },
+   "26": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+     "conditioning": [
+      "25",
+      0
+     ],
+     "latent": [
+      "22",
+      0
+     ]
+    }
+   },
+   "14": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "24",
+      0
+     ]
+    }
+   },
+   "15": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+     "reference_latents_method": "index_timestep_zero",
+     "conditioning": [
+      "26",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+     "width": 832,
+     "height": 1248,
+     "batch_size": 1
+    }
+   },
+   "11": {
+    "class_type": "KSampler",
+    "inputs": {
+     "seed": 2026091411,
+     "steps": 4,
+     "cfg": 1.0,
+     "sampler_name": "euler",
+     "scheduler": "simple",
+     "denoise": 1.0,
+     "model": [
+      "9",
+      0
+     ],
+     "positive": [
+      "14",
+      0
+     ],
+     "negative": [
+      "15",
+      0
+     ],
+     "latent_image": [
+      "20",
+      0
+     ]
+    }
+   },
+   "12": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+     "tile_size": 256,
+     "overlap": 64,
+     "temporal_size": 64,
+     "temporal_overlap": 8,
+     "samples": [
+      "11",
+      0
+     ],
+     "vae": [
+      "3",
+      0
+     ]
+    }
+   },
+   "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/qwen2-skel05",
+     "images": [
+      "12",
+      0
+     ]
+    }
+   },
+   "17": {
+    "class_type": "OpenposePreprocessor",
+    "inputs": {
+     "detect_hand": "enable",
+     "detect_body": "enable",
+     "detect_face": "enable",
+     "resolution": 1024,
+     "scale_stick_for_xinsr_cn": "disable",
+     "image": [
+      "16",
+      0
+     ]
+    }
+   },
+   "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "filename_prefix": "Research/qwen2-skeleton",
+     "images": [
+      "17",
+      0
+     ]
+    }
+   }
+  }
+ }
+]

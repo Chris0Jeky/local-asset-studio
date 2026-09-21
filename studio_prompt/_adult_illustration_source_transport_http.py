@@ -43,7 +43,46 @@ class _NoRedirectHandler(HTTPRedirectHandler):
         return None
 
 
+def _declared_body_length(stream: Any, maximum: int) -> int | None:
+    """Validate raw framing before headers are collapsed into a mapping.
+
+    HTTPResponse.read(amt) does not raise on a short Content-Length body.
+    Treat that separately from JSON validity. Duplicate lengths, even equal
+    ones, are intentionally refused rather than repaired by this client.
+    """
+    status = getattr(stream, "status", getattr(stream, "code", 200))
+    if status in {204, 304} or 100 <= status < 200:
+        # A 304 may advertise the full representation length but has no body.
+        return 0
+    headers = getattr(stream, "headers", None)
+    if headers is None:
+        return None
+    lengths = []
+    codings = []
+    for name, value in headers.items():
+        if name.casefold() == "content-length":
+            lengths.append(value)
+        elif name.casefold() == "transfer-encoding":
+            codings.append(value)
+    if len(lengths) > 1 or len(codings) > 1 or (lengths and codings):
+        raise ValueError("Provider response has ambiguous HTTP body framing")
+    if codings and codings[0].strip().casefold() != "chunked":
+        raise ValueError("Provider response has unsupported Transfer-Encoding")
+    if not lengths:
+        return None
+    value = lengths[0].strip(" \t")
+    if not value or not value.isascii() or not value.isdigit():
+        raise ValueError("Provider response Content-Length is invalid")
+    # Compare decimal strings before conversion, including pathological lengths.
+    digits = value.lstrip("0") or "0"
+    limit = str(maximum)
+    if len(digits) > len(limit) or (len(digits) == len(limit) and digits > limit):
+        raise ValueError(f"Provider response exceeds {maximum} bytes")
+    return int(digits)
+
+
 def _read_bounded_stream(stream: Any, maximum: int) -> bytes:
+    expected = _declared_body_length(stream, maximum)
     try:
         data = stream.read(maximum + 1)
     except HTTPException as exc:
@@ -54,6 +93,8 @@ def _read_bounded_stream(stream: Any, maximum: int) -> bytes:
         raise ValueError("HTTP response reader did not return bytes")
     if len(data) > maximum:
         raise ValueError(f"Provider response exceeds {maximum} bytes")
+    if expected is not None and len(data) != expected:
+        raise ConnectionError("Provider metadata response body is incomplete")
     return data
 
 

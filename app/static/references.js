@@ -1,9 +1,37 @@
 let referenceRecords=[], referenceEpoch=0, referencePending=0;
 const referenceRoles=['identity','pose','style','costume','composition','geometry','motion','mask'];
 function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceRecords=(selected?.reference_slots||[]).map(s=>({role:s.role,contribution:s.contribution,avoid:s.avoid,file:null}));}
-function referencesReady(){if(!selected?.reference_slots?.length)return true;if(referencePending||referenceRecords.length!==selected.reference_slots.length)return false;const filled=referenceRecords.filter(r=>r.file&&!r.missing).length;return selected.reference_board?filled>=(selected.reference_board.min??1)&&!referenceRecords.some(r=>r.missing):filled===referenceRecords.length;}
+// Transient attachment intent belongs to the slot owner, not prompt/settings snapshots.
+// Epoch changes invalidate structural edits; the per-record token also rejects an older
+// upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
+const referenceAttachments=new WeakMap();
+function beginReferenceAttachment(index){
+  const slot=referenceRecords[index];
+  if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
+  const epoch=referenceEpoch,token={};let finished=false;
+  referenceAttachments.set(slot,token);referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
+  return {
+    current:()=>!finished&&epoch===referenceEpoch&&referenceRecords[index]===slot&&referenceAttachments.get(slot)===token,
+    finish(){if(finished)return;finished=true;if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
+  };
+}
+async function attachReferenceAsset(index,id){
+  const attachment=beginReferenceAttachment(index);
+  try{
+    const result=await post('/api/assets/reference',{id});
+    if(!attachment.current())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
+    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});
+    if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+    replaceParentAsset('reference',previous,id);return result;
+  }finally{attachment.finish();}
+}
+// The readiness model itself lives in reference-model.js so presentation cannot re-derive a second copy of it (#610).
+// referenceProjection() is the read-only view: {mode, slots, references, board, pendingFiles, hasSources, ready, blockers}.
+function referenceProjection(){return StudioReferenceModel.live(typeof window!=='undefined'?window:null);}
+function referencesReady(){return referenceProjection().ready;}
 // A recipe that names its board (reference_board_label, e.g. "Pose picture (image 2)") describes it in its own words; the IP-Adapter sentence is the fallback (#367 shipped the labels without rendering them).
-function boardSummaryLabel(preset){const label=String(preset.reference_board_label||'').replace(/\s*\(.*\)\s*$/,'').toLowerCase();return preset.last_reference?'image 1 is the picture you keep, a '+label+' on the board follows it as image 2 (and 3)':label+'s only';}
+// The labels' "(image N)" parentheticals carry the reference order: the 4B Combine keeps its source as image 1, the 9B Combine puts the board picture first (pose first, character swapped in).
+function boardSummaryLabel(preset){const label=String(preset.reference_board_label||'').replace(/\s*\(.*\)\s*$/,'').toLowerCase();if(!preset.last_reference)return label+'s only';const boardImage=/\(image (\d)\)/.exec(String(preset.reference_board_label||''))?.[1],keepImage=/\(image (\d)\)/.exec(String(preset.last_reference_label||''))?.[1];return boardImage&&keepImage&&Number(boardImage)<Number(keepImage)?'the '+label+' on the board is image '+boardImage+' (its structure is kept), the picture you keep follows it as image '+keepImage:'image 1 is the picture you keep, a '+label+' on the board follows it as image 2 (and 3)';}
 function renderReferenceSlots(){
   const panel=$('#roleReferences');if(!panel)return;
   panel.hidden=!selected?.reference_slots?.length;
@@ -11,20 +39,21 @@ function renderReferenceSlots(){
   $('#referenceWrap').hidden=true;
   $('#referenceMode').value=String(selected.reference_slots.length);const modeLabel=$('#referenceMode').parentElement;if(modeLabel)modeLabel.hidden=!!selected.reference_board;
   const note=$('#referenceBoardNote');if(note)note.textContent=selected.reference_board?(selected.reference_board_hint||'Attach one to three pictures whose look you want. Each is read by the image encoder at 224 px (centre crop) and the embeddings are averaged; empty slots are skipped. The output size comes from Width and Height.'):'Give each image a role and describe what to carry over. Every reference is scaled to 1.0 MP with its aspect kept; the output size comes from Width and Height, not from a reference.';
-  $('#referenceCards').innerHTML=referenceRecords.map((r,i)=>'<article class="reference-card" data-ref-drop="'+i+'"><div class="section-title"><b>Picture '+(i+1)+'</b><div><button type="button" data-ref-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move Picture '+(i+1)+' earlier">↑</button><button type="button" data-ref-down="'+i+'" '+(i===referenceRecords.length-1?'disabled':'')+' aria-label="Move Picture '+(i+1)+' later">↓</button><button type="button" data-ref-clear="'+i+'">Clear</button></div></div><label>Role for Picture '+(i+1)+'<select data-ref-role="'+i+'"'+(selected.reference_board?' disabled':'')+'>'+referenceRoles.map(role=>'<option '+(r.role===role?'selected':'')+'>'+role+'</option>').join('')+'</select></label><label class="reference-drop">'+(r.file&&!r.missing?'<img src="/api/uploads/'+encodeURIComponent(r.file)+'" alt="Picture '+(i+1)+' reference"><span>'+r.width+' × '+r.height+'</span>':'<span>'+(r.missing?'Reference missing. Attach it again.':'Drop or choose an image')+'</span>')+'<input type="file" data-ref-file="'+i+'" accept="image/png,image/jpeg,image/webp" aria-label="Upload Picture '+(i+1)+'"></label>'+(selected.reference_board?'':'<label>Use from Picture '+(i+1)+'<textarea rows="2" data-ref-contribution="'+i+'">'+esc(r.contribution)+'</textarea></label><label>Avoid copying<textarea rows="2" data-ref-avoid="'+i+'">'+esc(r.avoid)+'</textarea></label>')+'</article>').join('');
+  $('#referenceCards').innerHTML=referenceRecords.map((r,i)=>'<article class="reference-card" data-ref-drop="'+i+'"><div class="section-title"><b>Picture '+(i+1)+'</b><div><button type="button" data-ref-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move Picture '+(i+1)+' earlier">↑</button><button type="button" data-ref-down="'+i+'" '+(i===referenceRecords.length-1?'disabled':'')+' aria-label="Move Picture '+(i+1)+' later">↓</button><button type="button" data-ref-clear="'+i+'">Clear</button></div></div>'+(selected.reference_board?'':'<label>Role for Picture '+(i+1)+'<select data-ref-role="'+i+'">'+referenceRoles.map(role=>'<option '+(r.role===role?'selected':'')+'>'+role+'</option>').join('')+'</select></label>')+'<label class="reference-drop">'+(r.file&&!r.missing?'<img src="/api/uploads/'+encodeURIComponent(r.file)+'" alt="Picture '+(i+1)+' reference"><span>'+r.width+' × '+r.height+'</span>':'<span>'+(r.missing?'Reference missing. Attach it again.':'Drop or choose an image')+'</span>')+'<input type="file" data-ref-file="'+i+'" accept="image/png,image/jpeg,image/webp" aria-label="Upload Picture '+(i+1)+'"></label>'+(selected.reference_board?'':'<label>Use from Picture '+(i+1)+'<textarea rows="2" data-ref-contribution="'+i+'">'+esc(r.contribution)+'</textarea></label><label>Avoid copying<textarea rows="2" data-ref-avoid="'+i+'">'+esc(r.avoid)+'</textarea></label>')+'</article>').join('');
   const filled=referenceRecords.filter(r=>r.file&&!r.missing).length;
   $('#referenceSummary').textContent=referencePending?'Uploading and validating…':selected.reference_board?(selected.reference_board_label?filled+' / '+referenceRecords.length+' on the board · '+boardSummaryLabel(selected)+' · empty slots are skipped · output size follows width and height':filled+' / '+referenceRecords.length+' style pictures on the board · the adapter blends them; empty slots are skipped · output size follows width and height'):filled+' / '+referenceRecords.length+' attached · each scaled to 1.0 MP; output size follows width and height';
   updateReady();
 }
 async function uploadRoleFile(index,file){
-  if(!file)return;const epoch=referenceEpoch;
-  referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
+  if(!file)return false;let attachment;
   try{
+    attachment=beginReferenceAttachment(index);
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
-    if(epoch===referenceEpoch){const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);}
-  }catch(e){message(e.message,true);$('#referenceSummary').textContent=e.message;}
-  finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}else{$('#referenceSummary').textContent='The slot changed while that image was uploading; it was not attached. Drop it again.';}}
+    if(!attachment.current())return false;
+    const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);return true;
+  }catch(e){if(!attachment||attachment.current()){message(e.message,true);$('#referenceSummary').textContent=e.message;}return false;}
+  finally{attachment?.finish();}
 }
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;

@@ -68,6 +68,8 @@ class ResponseSecurityTests(unittest.TestCase):
                 if path.endswith('.js'):self.assertIn(headers['content-type'],('text/javascript','application/javascript'))
                 if path.endswith('.css'):self.assertEqual(headers['content-type'],'text/css')
         self.secured(self.request('/missing-security-fixture.html'),404)
+        self.secured(self.request('/static/workshop-assets/arcade-horizon.svg'),404)
+        self.secured(self.request('/static/workshop-assets/sakura-branch.svg'),404)
     def test_json_and_composed_prompt_routes_share_headers(self):
         for path in ('/api/identity','/api/jobs','/api/prompt/profiles'):
             with self.subTest(path=path):
