@@ -55,3 +55,12 @@ Local Chromium refused loopback navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`.
 That restriction was not bypassed. Local renderer-only results do not establish
 HTTP, persisted-origin storage, model readiness, GPU execution, art quality or
 owner acceptance. #539 stays open. HUMAN_TODO decisions remain unchanged.
+
+## Integration correction
+
+Hosted tests exposed long active names collapsing the adjacent duplicate label to
+zero width. The button now provides the single visible recipe name; its shrinkable
+width preserves wrapping and the full accessible label. A sixth native regression
+covers long names across the three layouts at 1440, 390 and 320 pixels. Before this
+correction the chip reached 855 pixels in height and escaped the narrow viewport.
+The existing full-application 1700-pixel budget is not relaxed.
