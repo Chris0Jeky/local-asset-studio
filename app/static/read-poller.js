@@ -41,10 +41,11 @@
     }
     _run(lane,args) {
       if(lane.inFlight)return lane.inFlight;
-      lane.inFlight=Promise.resolve().then(()=>lane.task(...args)).catch(()=>undefined).then(()=>{
+      lane.inFlight=Promise.resolve().then(()=>lane.task(...args)).catch(()=>undefined).then(result=>{
         lane.inFlight=null;const queued=lane.queued;lane.queued=null;
         if(queued){this._run(lane,queued.args).then(queued.resolve);}
         else this._schedule(lane);
+        return result;
       });
       return lane.inFlight;
     }
