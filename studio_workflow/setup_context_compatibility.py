@@ -14,11 +14,12 @@ import re
 from typing import Any
 
 from . import setup_compatibility as compatibility
+from . import source_compatibility
 from .core import canonical, decode, digest, need
 
 INPUT_FORMAT = 'studio.setup-context-compatibility/v1'
 REPORT_FORMAT = 'studio.setup-context-compatibility-report/v1'
-SOURCE_FORMAT = 'studio.setup-source-candidate/v1'
+SOURCE_FORMAT = source_compatibility.REPORT_FORMAT
 MAX_INPUT_BYTES = 1024 * 1024
 MAX_ASSETS = 2048
 MAX_NODE_CLASSES = 2048
@@ -140,6 +141,8 @@ def _validate_source_report(value: Any) -> dict:
     need(compatibility.text(value['notice'], 1000)
          and value['notice'].strip() == value['notice'],
          'Source candidate notice is required')
+    need(result['context_sha256'] == source_compatibility.candidate_report_digest(result),
+         'Source candidate report fingerprint does not match retained fields; regenerate the reviewed report')
     return result
 
 
@@ -328,8 +331,15 @@ def _project(
     source_by_id = {item['candidate']['id']: item for item in sources}
     binding_by_id = {item['candidate_id']: item for item in bindings}
     asset_by_id = {item['asset_id']: item for item in context['assets']}
-    observed = set(slot['capabilities'])
-    absent = set(slot['known_absent_capabilities'])
+    def adapter_owned(capability: str) -> bool:
+        return capability.startswith(('local-file:', 'backend:', 'node:'))
+
+    # These namespaces are observations owned by this adapter. Caller claims
+    # cannot turn an unverified file, backend transition or partial schema into
+    # false presence or false absence.
+    observed = {item for item in slot['capabilities'] if not adapter_owned(item)}
+    absent = {item for item in slot['known_absent_capabilities']
+              if not adapter_owned(item)}
     candidates: list[dict] = []
     local_evidence: list[dict] = []
     observations: list[dict] = []

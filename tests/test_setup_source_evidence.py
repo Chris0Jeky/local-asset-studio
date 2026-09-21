@@ -135,7 +135,8 @@ class SourceCompatibilityBridgeTests(unittest.TestCase):
         value = request(); before = copy.deepcopy(value)
         result = S.adapt(value)
         self.assertEqual(value, before)
-        self.assertEqual(result['format'], 'studio.setup-source-candidate/v1')
+        self.assertEqual(result['format'], S.REPORT_FORMAT)
+        self.assertEqual(result['context_sha256'], S.candidate_report_digest(result))
         self.assertEqual(result['candidate'], {
             'id': 'example-style', 'name': 'Example style', 'role': 'lora',
             'modality': 'image', 'architecture': 'sdxl', 'base_lineage': 'illustrious',

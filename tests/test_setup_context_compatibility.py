@@ -8,6 +8,7 @@ import unittest
 from unittest import mock
 
 from studio_workflow import setup_context_compatibility as L
+from studio_workflow import source_compatibility as S
 
 
 FILE_HASH = 'a' * 64
@@ -51,8 +52,8 @@ def source_candidate(**candidate_updates):
             'retrieved_at': '2026-09-21',
         },
     }]
-    return {
-        'format': 'studio.setup-source-candidate/v1',
+    result = {
+        'format': S.REPORT_FORMAT,
         'context_sha256': SOURCE_CONTEXT,
         'source_context_sha256': '1' * 64,
         'source_coverage_complete': True,
@@ -71,6 +72,8 @@ def source_candidate(**candidate_updates):
         'generation_submitted': False,
         'notice': 'retained evidence only',
     }
+    result['context_sha256'] = S.candidate_report_digest(result)
+    return result
 
 
 def context(**updates):
@@ -252,12 +255,12 @@ class SetupContextCompatibilityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'zero authority'):
             L.evaluate(request(source=source))
 
-    def test_live_context_cannot_contradict_declared_slot_runtime_or_capabilities(self):
+    def test_live_context_runtime_conflict_refuses_but_projected_claims_are_context_owned(self):
         with self.assertRaisesRegex(ValueError, 'runtime'):
             L.evaluate(request(target=slot(runtime='other-runtime')))
         target = slot(known_absent_capabilities=['node:LoraLoader'])
-        with self.assertRaisesRegex(ValueError, 'contradicts'):
-            L.evaluate(request(target=target))
+        result = L.evaluate(request(target=target))
+        self.assertEqual(row(result)['status'], 'recommended')
 
     def test_context_identity_changes_when_live_revision_changes(self):
         first = L.evaluate(request())
@@ -272,7 +275,7 @@ class SetupContextCompatibilityTests(unittest.TestCase):
             id='second-style', name='Second style',
             identity='sha256:' + '2' * 64,
             requires=['node:LoraLoader'])
-        second_source['context_sha256'] = '3' * 64
+        second_source['context_sha256'] = S.candidate_report_digest(second_source)
         live = context()
         live['assets'].append({
             'asset_id': 'second-style',

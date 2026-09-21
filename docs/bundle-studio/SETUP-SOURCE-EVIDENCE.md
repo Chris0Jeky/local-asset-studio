@@ -32,7 +32,7 @@ retained Civitai/Civitai.red snapshots
                                  v
              studio_workflow.source_compatibility
                                  |
-             studio.setup-source-candidate/v1
+             studio.setup-source-candidate/v2
                       | candidate + evidence
                       v
              studio_workflow.setup_compatibility
@@ -134,7 +134,12 @@ never affect evidence breadth or ordering.
 
 ## Output contract
 
-A successful `studio.setup-source-candidate/v1` result contains:
+A successful `studio.setup-source-candidate/v2` result contains a reproducible
+fingerprint over every retained field trusted by downstream compatibility. Editing
+candidate facts, evidence, diagnostics, provider claims or authority flags without
+regenerating the reviewed report is refused.
+
+It contains:
 
 - `candidate` — the provider-neutral candidate accepted by the setup evaluator;
 - `evidence` — one exact provider claim plus any qualified family-scoped gallery

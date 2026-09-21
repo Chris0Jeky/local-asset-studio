@@ -13,7 +13,7 @@ from . import setup_compatibility as compatibility
 from .core import canonical, decode, digest, need
 
 INPUT_FORMAT = 'studio.setup-source-adapter/v1'
-REPORT_FORMAT = 'studio.setup-source-candidate/v1'
+REPORT_FORMAT = 'studio.setup-source-candidate/v2'
 SOURCE_FORMAT = 'studio.source-composition-evidence/v1'
 MAX_INPUT_BYTES = 1048576
 SHA256 = re.compile(r'[a-f0-9]{64}\Z')
@@ -24,6 +24,27 @@ ZERO_AUTHORITY_FIELDS = (
     'network_performed', 'model_downloaded', 'image_downloaded',
     'installation_authorized', 'generation_submitted',
 )
+REPORT_FINGERPRINT_FIELDS = (
+    'format', 'source_context_sha256', 'source_coverage_complete',
+    'review_revision', 'candidate', 'evidence', 'source_observations',
+    'source_diagnostics', 'diagnostics', 'provider_claims',
+    'provider_accessed', 'file_hashed', 'model_downloaded',
+    'selection_changed', 'installation_authorized',
+    'generation_submitted', 'notice',
+)
+
+
+def candidate_report_basis(value: Any) -> dict[str, Any]:
+    need(isinstance(value, dict), 'Source candidate report must be an object')
+    missing = [field for field in REPORT_FINGERPRINT_FIELDS if field not in value]
+    need(not missing,
+         'Source candidate report fingerprint fields are missing: ' + ', '.join(missing))
+    return {field: copy.deepcopy(value[field]) for field in REPORT_FINGERPRINT_FIELDS}
+
+
+def candidate_report_digest(value: Any) -> str:
+    # Fingerprint every retained field trusted by downstream compatibility.
+    return digest(candidate_report_basis(value))
 
 
 def text(value: Any, limit: int = 300) -> bool:
@@ -343,21 +364,8 @@ def adapt(value: Any) -> dict[str, Any]:
         compatibility.validate_evidence(item) for item in gallery
     ]
     diagnostics.sort(key=lambda item: canonical(item))
-    basis = {
-        'format': INPUT_FORMAT,
-        'source_context': report['context_sha256'],
-        'source_coverage_complete': report['coverage_complete'],
-        'review': mapping['review'],
-        'candidate': candidate,
-        'selected_file': selected,
-        'evidence': evidence,
-        'source_observations': source_observations,
-        'source_diagnostics': source_diagnostics,
-        'diagnostics': diagnostics,
-    }
-    return {
+    result = {
         'format': REPORT_FORMAT,
-        'context_sha256': digest(basis),
         'source_context_sha256': report['context_sha256'],
         'source_coverage_complete': report['coverage_complete'],
         'review_revision': mapping['review']['revision'],
@@ -383,6 +391,8 @@ def adapt(value: Any) -> dict[str, Any]:
                    'Reviewed mappings supply compatibility facts; no provider, setup, '
                    'model, runtime or queue was changed.'),
     }
+    result['context_sha256'] = candidate_report_digest(result)
+    return result
 
 
 def read_json(path: Path) -> dict[str, Any]:
