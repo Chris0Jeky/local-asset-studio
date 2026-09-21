@@ -27,6 +27,7 @@ REPORT_FORMAT = 'studio.setup-substitution-report/v1'
 MAX_BYTES = 448 * 1024
 MAX_CHANGES = 128
 CONTROL = re.compile(r'[a-z][a-z0-9_]{0,63}\Z')
+REVIEW_REVISION = re.compile(r'sha256:[a-f0-9]{64}\Z')
 SOURCE_STATES = {'current', 'stale', 'blocked'}
 DOWNLOAD_STATES = {'required', 'already_present', 'unknown'}
 APPLICABLE = {'recommended', 'possible'}
@@ -146,9 +147,10 @@ def validate_profile(value):
     result = copy.deepcopy(value)
     result['id'] = compatibility.identifier(value['id'])
     result['candidate_id'] = compatibility.identifier(value['candidate_id'])
-    result['review_revision'] = compatibility.identity(value['review_revision'])
-    need(result['review_revision'] is not None,
-         'Substitution profile needs an immutable review revision')
+    need(type(value['review_revision']) is str
+         and REVIEW_REVISION.fullmatch(value['review_revision']) is not None,
+         'Substitution profile review revision must be sha256:<64 lowercase hex>')
+    result['review_revision'] = value['review_revision']
     result['resource_identity'] = compatibility.identity(value['resource_identity'])
     result['component_role'] = compatibility.identifier(value['component_role'])
     requested = value['requested_changes']
@@ -344,14 +346,19 @@ def validate_reply(value, expected_request=None):
     return fresh
 
 
+def read_json(path: Path):
+    with path.open('rb') as stream:
+        raw = stream.read(MAX_BYTES + 1)
+    need(len(raw) <= MAX_BYTES, 'Request exceeds the 448 KiB limit')
+    return decode(raw)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Plan a zero-side-effect atomic setup substitution')
     parser.add_argument('request', type=Path)
     args = parser.parse_args(argv)
     try:
-        raw = args.request.read_bytes()
-        need(len(raw) <= MAX_BYTES, 'Request exceeds the 448 KiB limit')
-        result = request(decode(raw))
+        result = request(read_json(args.request))
         print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
         return 0
     except (OSError, ValueError, TypeError, KeyError, RecursionError) as exc:

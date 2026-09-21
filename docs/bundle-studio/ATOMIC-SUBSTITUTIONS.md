@@ -52,7 +52,9 @@ selected Create recipe, copies an input or submits generation.
 
 ## Input contract
 
-The planner accepts `studio.setup-substitution-request/v1` with exactly:
+The planner accepts `studio.setup-substitution-request/v1` with exactly. The CLI
+reads at most 448 KiB plus one sentinel byte before decoding, so an oversized local
+file is refused without an unbounded allocation:
 
 - `draft` — the complete setup draft that the user is reviewing;
 - `compatibility_request` — the typed target slot, candidates and retained
@@ -80,7 +82,8 @@ content. A changed or hand-edited report is refused.
 The profile also retains:
 
 - candidate and exact resource identity;
-- a content-addressed review revision;
+- a content-addressed `sha256:<64 lowercase hex>` review revision; mutable
+  labels such as `review:latest` are refused;
 - component role;
 - download status and byte estimate;
 - memory-delta estimate;
