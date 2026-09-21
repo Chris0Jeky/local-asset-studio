@@ -26,6 +26,7 @@ The worker installs `ThreadOwnershipObserver` immediately before unittest discov
   "owner_test": "test_a.StartsWorker.test_start",
   "started_during_test": "test_a.StartsWorker.test_start",
   "parent_thread": "MainThread",
+  "ownership_source": "runner-thread",
   "start_stack": [
     {"file": "test_a.py", "line": 42, "function": "test_start"}
   ]
@@ -45,7 +46,7 @@ When that thread connects to a fixture while a later test is active, the retaine
 }
 ```
 
-Nested observed threads inherit the root owner test while retaining their own `started_during_test`, parent thread and start stack. This distinguishes the test observing leaked work from the test that launched it. The observer treats the thread that installed it as the trusted unittest runner root; other threads already alive at installation remain unobserved. Children of an unobserved parent retain an `ancestor-*` reason instead of being reassigned to the current test, including parents skipped because the evidence capacity was full. Nested observers compose in LIFO order so focused contracts can run inside the full-suite worker without replacing its outer ownership state.
+Nested observed threads inherit the root owner test while retaining their own `started_during_test`, parent thread and start stack. This distinguishes the test observing leaked work from the test that launched it. The observer treats the thread that installed it as the trusted unittest runner root; other threads already alive at installation remain unobserved. Children of an unobserved parent retain an `ancestor-*` reason instead of being reassigned to the current test, including parents skipped because the evidence capacity was full. When an observed executor task starts a child thread, the active work owner takes precedence over the reusable worker thread's older creator, and the child records `ownership_source: parent-work`. Nested observers compose in LIFO order so focused contracts can run inside the full-suite worker without replacing its outer ownership state.
 
 ## Reused executor work ownership
 
@@ -65,7 +66,7 @@ A thread pool deliberately reuses workers, so the test that created a worker is 
 }
 ```
 
-The loopback row retains this as `work_origin` separately from `thread_origin`. A reused worker can therefore report that its thread began in test A while its current task was submitted by test B. Submissions made by an observed retained thread inherit that thread's root owner rather than being reassigned to whichever test happens to be active. Nested executor tasks inherit their parent work owner. Cancelled queued futures release their observation capacity without running the task.
+The loopback row retains this as `work_origin` separately from `thread_origin`. A reused worker can therefore report that its thread began in test A while its current task was submitted by test B. Submissions made by an observed retained thread inherit that thread's root owner rather than being reassigned to whichever test happens to be active. Nested executor tasks inherit their parent work owner. If an observed task starts a new thread, that thread inherits the task owner rather than the pool worker's creation owner. Cancelled queued futures release their observation capacity without running the task.
 
 Task arguments, keyword arguments and return values are never copied into the diagnostic record. The observer stores only a safe callable identity and bounded submit metadata. Capacity-exhausted submissions remain explicit as `observer-capacity`; they are not assigned a speculative owner.
 
