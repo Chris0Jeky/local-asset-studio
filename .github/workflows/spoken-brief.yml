@@ -4,16 +4,22 @@ on:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'scripts/voice_profile*.py'
       - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
+      - 'tests/test_voice_profile*.py'
+      - 'research/voice-profiles/**'
       - 'docs/spoken-briefs/**'
       - '.github/workflows/spoken-brief.yml'
   pull_request:
     paths:
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
+      - 'scripts/voice_profile*.py'
       - 'tests/spoken_brief_fixture.py'
       - 'tests/test_spoken_brief*.py'
+      - 'tests/test_voice_profile*.py'
+      - 'research/voice-profiles/**'
       - 'docs/spoken-briefs/**'
       - '.github/workflows/spoken-brief.yml'
 permissions:
@@ -30,10 +36,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Focused offline contracts
+      - name: Voice profile contracts
+        run: python -m unittest discover -s tests -p "test_voice_profile*.py" -v
+      - name: Spoken brief contracts
         run: python -m unittest discover -s tests -p "test_spoken_brief*.py" -v
-      - name: CLI contract
+      - name: Spoken brief CLI contract
         run: python scripts/spoken_brief.py --help
+      - name: Voice qualification CLI contract
+        run: python scripts/voice_profile_qualification.py --help
       - name: Parse PowerShell wrapper
         if: runner.os == 'Windows'
         shell: pwsh
