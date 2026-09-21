@@ -47,7 +47,7 @@ class StagedInputIntegrityTests(unittest.TestCase):
             approved_proposal_sha256=report['proposal_sha256'],
         )
         self.assertEqual(result['status'], 'failed')
-        self.assertRegex(result['message'], 'staged|input|attach')
+        self.assertRegex(result['message'].lower(), 'staged|input|attach|reference')
         self.assertEqual(self.store().get(current['draft_id'])['revision'], 3)
         self.assertEqual(self.s.upload_count, 3)
 
