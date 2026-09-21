@@ -124,10 +124,13 @@ class ThreadOwnershipObserver:
         if not self._installed:
             return
         with _THREAD_OBSERVER_STATE_LOCK:
+            if _ACTIVE_THREAD_OBSERVER is not self:
+                raise RuntimeError(
+                    "thread ownership observers must be restored in LIFO order"
+                )
             if threading.Thread.start is self._start_proxy:
                 threading.Thread.start = self._original_start
-            if _ACTIVE_THREAD_OBSERVER is self:
-                _ACTIVE_THREAD_OBSERVER = self._previous_observer
+            _ACTIVE_THREAD_OBSERVER = self._previous_observer
             self._installed = False
         with self._lock:
             self._origins.clear()
