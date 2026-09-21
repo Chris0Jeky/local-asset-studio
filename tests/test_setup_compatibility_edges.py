@@ -84,6 +84,26 @@ class SetupCompatibilityEdgeTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'both present and absent'):
             C.evaluate(request(known_absent_capabilities=['node:LoraLoader']))
 
+    def test_strict_lineage_requires_an_explicit_target_lineage(self):
+        with self.assertRaisesRegex(ValueError, 'strict lineage'):
+            C.evaluate(request(base_lineage=None, strict_lineage=True))
+
+    def test_controlled_run_needs_at_least_one_observation(self):
+        empty = claim(kind='controlled_run', observations=0, independent_sources=0)
+        result = C.evaluate(request([empty]))
+        self.assertEqual(result['candidates'][0]['status'], 'possible')
+        self.assertEqual(result['candidates'][0]['evidence_summary']['strong_support'], 0)
+        self.assertIn('invalid_evidence', [item['code'] for item in result['diagnostics']])
+
+    def test_duplicate_non_null_resource_identity_refuses_alias_candidates(self):
+        duplicate = candidate(id='style-b', name='Style B')
+        with self.assertRaisesRegex(ValueError, 'Duplicate candidate resource identity'):
+            C.evaluate(request(candidates=[candidate(), duplicate]))
+        unknowns = [candidate(id='unknown-a', name='Unknown A', identity=None),
+                    candidate(id='unknown-b', name='Unknown B', identity=None)]
+        result = C.evaluate(request(candidates=unknowns))
+        self.assertEqual(result['counts']['needs_review'], 2)
+
     def test_canonical_air_can_identify_an_exact_resource(self):
         air = 'urn:air:sdxl:lora:civitai:12345@67890'
         value = candidate(identity=air)
