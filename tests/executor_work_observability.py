@@ -1,7 +1,6 @@
 """Bounded task-submission ownership for reused ``ThreadPoolExecutor`` workers."""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import contextvars
 import json
 from pathlib import Path
@@ -30,6 +29,14 @@ def _clone(value: dict) -> dict:
     return json.loads(json.dumps(value))
 
 
+def _executor_type():
+    # Import only when observation is installed. The lifetime worker installs its
+    # atexit observer first so import-time finalizers remain observable.
+    from concurrent.futures import ThreadPoolExecutor
+
+    return ThreadPoolExecutor
+
+
 def current_work_origin() -> dict | None:
     """Return bounded ownership for the executor task running on this context."""
     origin = _WORK_CONTEXT.get()
@@ -52,6 +59,7 @@ class ExecutorWorkObserver:
         self._inflight = 0
         self._overflow = 0
         self._installed = False
+        self._executor_type = None
         self._original_submit = None
         self._submit_proxy = None
 
@@ -60,8 +68,10 @@ class ExecutorWorkObserver:
         if self._installed:
             raise RuntimeError("executor work observer is already installed")
         with _WORK_OBSERVER_STATE_LOCK:
+            executor_type = _executor_type()
             self._previous_observer = _ACTIVE_WORK_OBSERVER
-            self._original_submit = ThreadPoolExecutor.submit
+            self._executor_type = executor_type
+            self._original_submit = executor_type.submit
             self._root_thread = threading.current_thread()
             self._inflight = 0
             self._overflow = 0
@@ -70,7 +80,7 @@ class ExecutorWorkObserver:
                 return self._submit(executor, fn, args, kwargs)
 
             self._submit_proxy = submit_proxy
-            ThreadPoolExecutor.submit = submit_proxy
+            executor_type.submit = submit_proxy
             _ACTIVE_WORK_OBSERVER = self
             self._installed = True
 
@@ -83,13 +93,15 @@ class ExecutorWorkObserver:
                 raise RuntimeError(
                     "executor work observers must be restored in LIFO order"
                 )
-            if ThreadPoolExecutor.submit is self._submit_proxy:
-                ThreadPoolExecutor.submit = self._original_submit
+            executor_type = self._executor_type
+            if executor_type is not None and executor_type.submit is self._submit_proxy:
+                executor_type.submit = self._original_submit
             _ACTIVE_WORK_OBSERVER = self._previous_observer
             self._installed = False
         with self._lock:
             self._root_thread = None
             self._previous_observer = None
+            self._executor_type = None
             self._original_submit = None
             self._submit_proxy = None
 
