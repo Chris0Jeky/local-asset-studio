@@ -38,19 +38,38 @@ A structurally invalid manifest creates no output file. A valid manifest with on
 still produces the complete requested report (including that missing row) and exits 2. JSON is compact
 so the same 1 MiB report limit applies to file and stdout output. There is no HTML rendering path.
 
+CLI diagnostics for a refused plan (no report file) use separate dimensions. `state` is
+`invalid_plan` when the file opened and failed the manifest contract, and `report_unavailable` when
+the plan path could not be read, changed during the guarded read, or the report could not be
+represented. When the refusal establishes a source-reader classification, `integrity` records
+`invalid` or `incomplete`; it does not turn the plan/report disposition into an observation row.
+A genuinely absent plan path is therefore `state: report_unavailable` and `integrity: incomplete`.
+An existing directory or other non-regular path is `integrity: invalid`. A post-inspection report-size
+refusal has no `integrity` field because it makes no new claim about the already-read source evidence.
+Observation-level incomplete rows live inside a written report.
+
+Rows whose received prompt identity is reused keep their pair slot with `reused_prompt_evidence`;
+the observation payload is omitted. The report limitation names that drop so it is not mistaken for
+full payload retention.
+
 ## Manifest contract
 
 `studio.resource-comparison-plan/v1` has exactly `schema`, `generation_allowance: 0`, and `pairs`.
 Each pair has exactly `id`, `condition`, `baseline`, `candidate`. Each side names one `directory`,
-`result_sha256` and `job_id`. Pair IDs, job IDs, result pins and normalized directory identities must
-not repeat. The entire manifest is validated before any observation directory is read.
+`result_sha256` and `job_id`. Pair IDs must not repeat. Exact `(job_id, result_sha256, directory)`
+triples may be shared across pairs; those bindings are inspected once and reported in each pair
+that names them. Reusing only some of those three components (same job with a different pin or
+directory, same pin with a different job, or same directory with a different identity) is still
+`duplicate_trial_evidence` and is refused before any observation is read. The entire manifest is
+validated before any observation directory is read.
 
 There are at most eight pairs / sixteen observations, and the input is at most 64 KiB. Each side
 inherits the inspector's bounded reads and fixed five-file capture; histories are not scanned.
 One pair cannot silently adopt the other side's receipt. Reuse of an actual received prompt identity
 also invalidates **all** affected rows, even when copied/rehashed artifacts have different job labels.
-Explicit duplicate-job refusal is intentionally conservative; multiple windows of one job are not
-independent trials. Grouping such windows needs a different explicit protocol.
+Partial-component reuse is still refused: the same job ID with a different pin or directory is
+not two independent trials. Grouping distinct windows of one job needs a different explicit
+protocol.
 
 Conditions are `unspecified`, `cold_process`, `cold_first_generation`, `warm_same_model` or
 `model_switch`. They remain caller declarations: every pair says `condition_verified: false`.
@@ -112,7 +131,7 @@ changing runtime flags remains the design basis.
 ## Verification
 
 ```powershell
-python -m unittest discover -s tests -p "test_resource_comparison.py" -v
+python -m unittest discover -s tests -p "test_resource_comparison*.py" -v
 python -m unittest discover -s tests -p "test_resource_receipts*.py" -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
@@ -121,6 +140,4 @@ python scripts/validate-repo.py
 Tests create actual recorder artifact sets with synthetic sensor/source data. They exercise all
 sixteen maximum observations, pin changes, duplicate jobs and prompts, corrupted/missing evidence,
 unknown/zero coverage, failed/uncertain results, cold/warm declarations, mismatched graphs/samplers,
-parent links and standalone CLI no-overwrite/no-live-dependency behavior. These are contract and
-resource-bound tests, not a Windows GPU benchmark. Exact-head results and historical failures live
-on the implementation PRs.
+output write failures and compact-report retention. No model, runtime or job is created.

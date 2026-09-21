@@ -5,14 +5,20 @@ import sqlite3
 from urllib.parse import urlparse
 
 from studio_workflow.addressable_figures import split_figures
-try:
-    from workspace import WorkspaceError
-except ModuleNotFoundError as error:
-    if error.name != 'workspace':
-        raise
-    from app.workspace import WorkspaceError
+from studio_workflow.http_body import reject_json
+from studio_workflow.preset_adapter import SOURCE_KEYS
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
+
+
+def _typed_value_error(exc):
+    """Return a domain HTTP response without relying on one exception class identity."""
+    response = getattr(exc, 'response', None)
+    status = getattr(exc, 'status', None)
+    if not callable(response) or type(status) is not int or not 400 <= status <= 599:
+        return None
+    value = response()
+    return (status, value) if isinstance(value, dict) else None
 
 
 def dispatch(path, value, studio=None):
@@ -41,7 +47,12 @@ def dispatch(path, value, studio=None):
                              value.get('output_node'))
     if path == '/api/prompt/bind':
         fields(value, ('compiled','binding')); need(studio is not None,'Studio binding context unavailable')
-        binding=value['binding']; preset=studio.preset(binding['preset_id']); graph,path=studio.graph_for(preset)
+        binding=value['binding']; preset=studio.preset(binding['preset_id'])
+        need((preset.get('modality') or 'image') == 'image'
+             and not any(preset.get(k) for k in SOURCE_KEYS)
+             and not any((preset.get('bindings_extra') or {}).get(k) for k in ('reference','last_reference')),
+             'Reference-bearing and non-image presets require an explicit source handoff; text-only binding is unavailable')
+        graph,path=studio.graph_for(preset)
         for key,target in binding['bindings'].items():
             need(preset.get(key)==target and not preset.get('bindings_extra',{}).get(key),'Binding differs from registered preset or has unhandled companions')
         raw=path.read_bytes(); need(decode(raw)==graph,'Template changed during binding')
@@ -63,13 +74,12 @@ def extend_handler(base):
         def do_POST(self):
             path = urlparse(self.path).path
             if path == '/api/assets/split-figures':
-                if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
+                if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 try:
-                    need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
                     body=self.rfile.read(self._content_length(1024*1024))
                     return self._json(201,split_figures(self.studio.assets,decode(body)))
-                except WorkspaceError as exc:
-                    return self._json(exc.status,exc.response())
                 except sqlite3.Error:
                     return self._json(503,{
                         'error':'Asset storage could not confirm this request. Check its receipt before retrying the exact command.',
@@ -79,12 +89,17 @@ def extend_handler(base):
                 except OSError as exc:
                     return self._json(500,{'error':'Local figure split failed: '+str(exc)[:200],
                                            'generation_submitted':False})
-                except (ValueError,KeyError,TypeError,IndexError,RecursionError) as exc:
+                except ValueError as exc:
+                    domain = _typed_value_error(exc)
+                    if domain is not None: return self._json(*domain)
+                    return self._json(400,{'error':str(exc),'generation_submitted':False})
+                except (KeyError,TypeError,IndexError,RecursionError) as exc:
                     return self._json(400,{'error':str(exc),'generation_submitted':False})
             if not path.startswith('/api/prompt/'): return super().do_POST()
-            if not self._safe_mutation(): return self._json(403,{'error':'Local same-origin request required'})
+            if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+            if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
-                need(self.headers.get('Content-Type','').split(';')[0]=='application/json','application/json required')
                 # Only reference review accepts four original images; every source
                 # has its own byte/pixel cap and no input is persisted or executed.
                 limit = 1024*1024
@@ -98,4 +113,6 @@ def extend_handler(base):
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
     # Compose at the existing extension seam; no second server or worker.
     from studio_workflow.http_extension import extend_handler as workflow_handler
-    return workflow_handler(PromptHandler)
+    from .reference_job_http import extend_handler as reference_job_handler
+    from .project_http import extend_handler as project_handler
+    return project_handler(reference_job_handler(workflow_handler(PromptHandler)))

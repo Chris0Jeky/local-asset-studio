@@ -1,6 +1,14 @@
 # Addressable figure crops
 
-The first slice of issue #252 turns marked regions of one immutable Workspace image into ordinary child image assets. It is a local file operation. It does not start ComfyUI, submit a prompt, load a model or modify the parent asset.
+Issue #252 turns marked regions of one immutable Workspace image into ordinary child image assets. It is a local file operation. It does not start ComfyUI, submit a prompt, load a model or modify the parent asset.
+
+## Asset-library editor
+
+Open an active image in **Workspace**, then choose **Split figures**. The editor supports both pointer drawing and exact keyboard entry in integer basis points. Rectangles stay in the numbered list order used for child assets; each row can move earlier or later, be removed, or be restored with **Undo last change**. **Clear rectangles** is also undoable.
+
+The review line states the child count, ordering and non-generating boundary before submission. Non-overlap is required by default and can be relaxed explicitly for artwork whose figures cross panel boundaries. A submitted command is frozen under one request ID. If its response is uncertain, the editor locks geometry and offers only **Check split status** or **Retry exact split**, preventing a new request from accidentally duplicating children.
+
+After a confirmed receipt, the new child buttons open ordinary Workspace assets. Their generation, repair and artistic review remain separate actions.
 
 ## Endpoint
 
@@ -24,7 +32,9 @@ Host: 127.0.0.1:8191
 }
 ```
 
-Rectangle coordinates are integer basis points on the displayed source: `0` is the top/left edge and `10000` is the bottom/right edge. This keeps a retained draft independent of browser CSS pixels and zoom. Width and height must be positive, every rectangle must stay inside the source, and one command may create at most 32 children. Touching edges are allowed. Overlap is rejected when `require_non_overlapping` is true.
+Rectangle coordinates are integer basis points on the displayed source: `0` is the top/left edge and `10000` is the bottom/right edge. This keeps a retained request independent of browser CSS pixels and zoom. Width and height must be positive, every rectangle must stay inside the source, and one command may create at most 32 children. Touching edges are allowed. Overlap is rejected when `require_non_overlapping` is true.
+
+Each normalized edge is projected once to the nearest source-pixel boundary. Adjacent basis-point rectangles therefore share one raster boundary instead of receiving the same pixel. A rectangle that becomes empty at the source resolution is refused rather than expanded into a neighbouring figure.
 
 ## Durable identity and retries
 
@@ -56,12 +66,12 @@ The parent file, title, collections, review state and metadata revision are unch
 
 ## Safety and resource bounds
 
-The route is available only through the existing same-origin loopback handler composition. Inputs are strict JSON. It accepts still image assets only, rejects trashed or changed parents, limits source bytes to 64 MiB, source dimensions to 40 megapixels, and aggregate crop area to 80 megapixels. Media publication uses no-clobber content-addressed files; database failures leave no child rows or success receipt.
+The route is available only through the existing same-origin loopback handler composition. Inputs are strict JSON. It accepts single-frame PNG, JPEG and WebP assets only; ambient Pillow decoders for formats such as BMP or TIFF do not widen that contract. It rejects trashed or changed parents, limits source bytes to 64 MiB, source dimensions to 40 megapixels, and aggregate crop area to 80 megapixels. Media publication uses no-clobber content-addressed files; database failures leave no child rows or success receipt.
 
 ## Remaining issue #252 work
 
-This slice intentionally does not claim the full issue complete. Remaining acceptance includes:
+The repository now contains the crop/lineage primitive and Asset-library rectangle editor. The remaining acceptance is runtime evidence rather than another speculative code path:
 
-1. an Asset-library rectangle editor with keyboard-accessible ordering, removal and clear undo/review behavior;
-2. applying `anime-detail-fix` or another compatible repair route to one child through the existing continuation flow;
-3. an owner-reviewed real sheet proving that useful figures can be isolated and repaired without changing the parent.
+1. split one owner-reviewed real multi-figure sheet;
+2. route one resulting child through `anime-detail-fix` or another compatible repair recipe;
+3. retain the parent/child hashes, prompt ID and reviewed outcome in `experiments/curated/`.

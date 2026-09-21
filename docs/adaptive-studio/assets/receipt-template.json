@@ -1,0 +1,32 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "unfilled-template",
+  "requested_asset_id": null,
+  "brief_revision": null,
+  "production": {
+    "method": null,
+    "provider": null,
+    "tool_action": null,
+    "reported_model": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": []
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [],
+  "file_entry_instructions": "For each actual file record relative_path, sha256, bytes, width, height, format, duration_seconds and codec when applicable. Unknown fields stay null with a reason. Do not insert hypothetical files.",
+  "transformations": [],
+  "art_review": {"status": "not-reviewed", "reviewer": null, "notes": null},
+  "rendition_review": {"status": "not-reviewed", "checks": []},
+  "runtime_review": {"status": "not-qualified", "app_commit": null, "device": null, "checks": []},
+  "release_selection": {"status": "not-selected", "selected_by": null},
+  "unknowns": ["No asset bytes or production result exist in this template."]
+}
