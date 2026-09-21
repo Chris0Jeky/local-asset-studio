@@ -1,258 +1,337 @@
-# Civitai / civitai.red scavenge FINDINGS
+# Civitai / civitai.red FINDINGS pack — 2026-09-21 (BST)
 
-_Scraped 2026-09-21 from public Civitai API. Popularity ≠ quality. No weights downloaded._
+**Audience:** Chris Local Asset Studio (LAS) → PR into `Chris0Jeky/local-asset-studio`  
+**GPU:** AMD RX 9070 XT 16GB · Comfy portable · Studio at `C:\Users\jekyt\source\local-asset-studio`  
+**Rule:** Model **page URLs + ids + version names + quality signals only**. No weight download URLs.
 
-## Match to this machine
+**nsfwLevel note (Civitai bitmask):** `1` ≈ clean/soft · `3–7` ≈ soft/mature possible · `15–31` ≈ explicit-capable gallery even when `nsfw:false`. Flags below: **SFW-leaning** vs **NSFW-capable**.
 
-Installed families (see also `docs/research/LAS-MODELS-INVENTORY-2026-09-21.md`):
-- **Illustrious / WAI v170**, Animagine XL4, NoobAI 1.1 (non-commercial), Pony v6, RealVisXL v5, SDXL base
-- **Qwen-Image-Edit-2511** Q4 + Lightning 4-step + multiple-angles LoRA; **2.1 not installed** (issue track separately)
-- **FLUX.2** Klein 4B/9B + dev Q4 GGUF; **Z-Image Turbo**; **Krea2** + many style LoRAs on disk
-- ControlNet: Xinsir OpenPose + Union; IP-Adapter SDXL; anime RealESRGAN
+---
 
-## Rules of thumb
+## Executive TLDR
 
-1. Prefer LoRAs whose **Base** column matches the checkpoint family you load.
-2. Do not assume Qwen-Image-Edit-2511 LoRAs work on **Qwen-Image-2.1**.
-3. NoobAI outputs stay hobby/research; WAI commercial terms unresolved.
-4. civitai.red / ⚠NSFW rows → explicit queue only.
-5. Rankings are download/like snapshots — smoke-test before promoting into LAS presets.
+1. **Quality-first ranking works:** Highest Rated / Most Liked + thumbsUp/(up+down) (≥0.99 on top Illustrious LoRAs) beats raw download volume for LAS picks.
+2. **WAI Illustrious v170 (installed)** pairs best with utility LoRAs: Hands (`200255`), Stabilizer (`971952`), Aesthetic Masterpiece (`929497`), USNR style (`176554`) — multi-base, ≥10k thumbs.
+3. **NoobAI-XL** (`833294`, L_A_X, ~18.7k👍 / 315k DL, nsfwLevel 31) remains hobby/non-commercial anime base; match EPS vs V-Pred LoRAs; add Noob CNs (`929685`, `962537`).
+4. **Pony V6** (`257749`, PurpleSmartAI, 76.8k👍 / 1.08M DL) still dominates; use `score_9` article (`/articles/4248`) — do **not** paste score tags into Illustrious/WAI.
+5. **Qwen-Image-Edit-2511** is edit-first (LAS #739): Multi Gen WF `1890385`, Plus 8-step `1998998`, Segment/inpaint `2257259`, Multiple-Angles LoRA `2300308`; Lightning 4-step = CFG 1 / 4 steps.
+6. **FLUX.2 Klein** official (`2322332`, `2165902`) + FP8/GGUF fit 16GB; many community LoRAs still say `Flux.1 D` — verify base before load.
+7. **Xinsir Union/OpenPose** barely mirrored on Civitai (`2943879` low signal); keep installed HF weights; use SDXL Union WFs (`565145`, `1023999`, `1024555`).
+8. **Krea2** surged: Turbo ckpt `2726029` (2.2k👍), Identity Edit `2761113`, Detail Slider `2729908`; bridges to Qwen/Z-Image.
+9. **civitai.red reachable** (WAI v17 confirms Euler a, CFG 5–7, quality tags); treat as NSFW-leaning mirror.
+10. **16GB AMD:** Prefer FP8 / GGUF Q4–Q5 / Lightning 4-step for Qwen+FLUX; SDXL+Xinsir+1–2 LoRAs as daily driver; avoid BF16 Qwen Edit + heavy TE + CN all at once.
 
-## Illustrious-tagged LoRAs (WAI-adjacent)
+---
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB | ? | 0 | 0 | https://civitai.com/models/200255 |
-| Velvet's Mythic Fantasy Styles / Flux + Pony + illustrious + ZiT + Anima + Krea2 | ? | 0 | 0 | https://civitai.com/models/599757 |
-| Aesthetic Quality Modifiers - Masterpiece | ? | 0 | 0 | https://civitai.com/models/929497 |
-| Character Design Sheet (HELPER) (3-PERSPECTIVES)+(COLOR PALETTE) - Z-IMAGE TURBO / Illust… | ? | 0 | 0 | https://civitai.com/models/100435 |
-| Stabilizer IL/NAI/CK | ? | 0 | 0 | https://civitai.com/models/971952 |
-| 薄塗り / USNR STYLE | ? | 0 | 0 | https://civitai.com/models/176554 |
-| Smooth Detailer Booster (Anima/SDXL/Pony) | ? | 0 | 0 | https://civitai.com/models/1145743 |
-| AIイラストおじさん | ? | 0 | 0 | https://civitai.com/models/481765 |
-| Add Micro Details - Concept (Illustrious / Pony / NoobAI) | ? | 0 | 0 | https://civitai.com/models/1377820 |
-| Sagging Breasts | ? | 0 | 0 | https://civitai.com/models/139131 |
+## Ranking method (quality / reviews / creators)
 
-## NoobAI-tagged LoRAs
+| Signal | Weight | How used |
+|---|---|---|
+| thumbsUpCount | Primary | Sort within baseModel |
+| thumbsUp / (up+down) | Primary | Prefer ≥0.995 |
+| commentCount / article bookmarks | Secondary | Guides & WF trust |
+| downloadCount | Noted only | Popularity ≠ quality |
+| Creator multi-base presence | Secondary | EauDeNoire, VelvetS, motimalu, YeiYeiArt, CitronLegacy, L_A_X, PurpleSmartAI, WAI0731 |
+| nsfwLevel | Flag | Every rec tagged |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Aesthetic Quality Modifiers - Masterpiece | ? | 0 | 0 | https://civitai.com/models/929497 |
-| Stabilizer IL/NAI/CK | ? | 0 | 0 | https://civitai.com/models/971952 |
-| 薄塗り / USNR STYLE | ? | 0 | 0 | https://civitai.com/models/176554 |
-| Add Micro Details - Concept (Illustrious / Pony / NoobAI) | ? | 0 | 0 | https://civitai.com/models/1377820 |
-| Flat Color - Style | ? | 0 | 0 | https://civitai.com/models/1132089 |
-| People's Works: SDXL | ? | 0 | 0 | https://civitai.com/models/1400090 |
-| MeMaXL Flat Anime Style - Noob/Illustrious/Pony/XL | ? | 0 | 0 | https://civitai.com/models/269772 |
-| AI styles dump (Anima/Illustrious/RouWei/Noob) | ? | 0 | 0 | https://civitai.com/models/723360 |
-| Zankuro (Artist Style) [Illustrious & Noob AI & Pony & Flux] | ? | 0 | 0 | https://civitai.com/models/185558 |
-| Afrobull (Artist Style) [ANIMA v1 / IL / Pony] | ? | 0 | 0 | https://civitai.com/models/178169 |
+Period: **Year** for evergreen utilities; **Month** noted when used. Sorts: `Highest Rated` then cross-check `Most Liked`. Live API scrape ~01:17–01:19 BST 2026-09-21.
 
-## Pony-tagged LoRAs
+---
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB | ? | 0 | 0 | https://civitai.com/models/200255 |
-| Vixon's Anima/Pony Styles - Gothic Neon | ? | 0 | 0 | https://civitai.com/models/888231 |
-| Velvet's Mythic Fantasy Styles / Flux + Pony + illustrious + ZiT + Anima + Krea2 | ? | 0 | 0 | https://civitai.com/models/599757 |
-| Character Design Sheet (HELPER) (3-PERSPECTIVES)+(COLOR PALETTE) - Z-IMAGE TURBO / Illust… | ? | 0 | 0 | https://civitai.com/models/100435 |
-| AIイラストおじさん | ? | 0 | 0 | https://civitai.com/models/481765 |
-| Thicc (slider) | ? | 0 | 0 | https://civitai.com/models/217340 |
-| Sagging Breasts | ? | 0 | 0 | https://civitai.com/models/139131 |
-| CAT - Citron Styles | ? | 0 | 0 | https://civitai.com/models/362745 |
-| S1 Dramatic Lighting | ? | 0 | 0 | https://civitai.com/models/661736 |
-| Dynamic Poses slider PONYXL | ? | 0 | 0 | https://civitai.com/models/438059 |
+## Categorized model links (PR-ready)
 
-## SDXL LoRAs
+### WAI / Illustrious
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB | ? | 0 | 0 | https://civitai.com/models/200255 |
-| Realistic Skin Texture style (Detailed Skin) XL + SD1.5 + F1D + Pony + Illu + ZIT + ZIB | ? | 0 | 0 | https://civitai.com/models/580857 |
-| Sagging Breasts | ? | 0 | 0 | https://civitai.com/models/139131 |
-| Detailed Perfection style (Hands + Feet + Face + Body + All in one) XL + F1D + SD1.5 + Po… | ? | 0 | 0 | https://civitai.com/models/411088 |
-| People's Works: SDXL | ? | 0 | 0 | https://civitai.com/models/1400090 |
-| Cyberpunk Anime Style | ? | 0 | 0 | https://civitai.com/models/128568 |
-| Feet XL + SD 1.5 + F1D + Pony + Illustrious + zit | ? | 0 | 0 | https://civitai.com/models/200251 |
-| Cinematic Shot ✨ | ? | 0 | 0 | https://civitai.com/models/432586 |
-| Logo.Redmond - Logo Lora | ? | 0 | 0 | https://civitai.com/models/124609 |
-| AI styles dump (Anima/Illustrious/RouWei/Noob) | ? | 0 | 0 | https://civitai.com/models/723360 |
+| Model | id | Version (API) | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| WAI-illustrious-SDXL (canonical; Chris has v170) | 827184 | v17.x family | — | — | **NSFW-capable** (rating tags; red lists NSFW forks) | https://civitai.com/models/827184 · https://civitai.red/models/827184 |
+| WAI-illustrious-HSWQ | 2698106 | v17.0 base | 322 | 4.5k | NSFW-capable (lvl 31) | https://civitai.com/models/2698106 |
+| WAI-Simple-Illustrious | 2904237 | v1.0 | 241 | 1.6k | NSFW-capable (lvl 7) | https://civitai.com/models/2904237 |
+| Hands XL… (Illustrious ver) | 200255 | Hands Illu v1.1 | 16372 | 306k | NSFW-capable (lvl 31) utility | https://civitai.com/models/200255 |
+| Aesthetic Quality Modifiers - Masterpiece | 929497 | v3.0 [illustrious] | 11911 | 162k | NSFW-capable (lvl 31) | https://civitai.com/models/929497 |
+| Stabilizer IL/NAI/CK | 971952 | illus01 v1.198 | 10919 | 156k | SFW-leaning (lvl 3) | https://civitai.com/models/971952 |
+| 薄塗り / USNR STYLE | 176554 | USNR_STYLE_ILL_V1.0 | 10861 | 90k | Soft/mature (lvl 7) | https://civitai.com/models/176554 |
+| Smooth Detailer Booster | 1145743 | Smooth Booster v5 | 9878 | 98k | NSFW-capable (lvl 31) | https://civitai.com/models/1145743 |
+| Add Micro Details | 1377820 | v7.0_Illustrious | 7919 | 100k | NSFW-capable (lvl 31) | https://civitai.com/models/1377820 |
+| Velvet's Mythic Fantasy Styles | 599757 | illustrious Colorful Line | 14680 | 239k | Soft (lvl 15) | https://civitai.com/models/599757 |
+| Character Design Sheet | 100435 | -Illustrious XL- | 11463 | 100k | **SFW** (lvl 3) | https://civitai.com/models/100435 |
+| Illustrious-XL ControlNet Openpose | 1359846 | v1.0 | 1013 | 34k | **SFW** | https://civitai.com/models/1359846 |
 
-## FLUX LoRAs
+**Creator:** WAI0731. Prompt (red/docs): `masterpiece, best quality, amazing quality` · neg `bad quality, worst quality, worst detail` · Euler a · CFG 5–7 · steps 25–40 · safety tags `general/sensitive/nsfw/explicit`.
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB | ? | 0 | 0 | https://civitai.com/models/200255 |
-| Velvet's Mythic Fantasy Styles / Flux + Pony + illustrious + ZiT + Anima + Krea2 | ? | 0 | 0 | https://civitai.com/models/599757 |
-| Character Design Sheet (HELPER) (3-PERSPECTIVES)+(COLOR PALETTE) - Z-IMAGE TURBO / Illust… | ? | 0 | 0 | https://civitai.com/models/100435 |
-| Realistic Skin Texture style (Detailed Skin) XL + SD1.5 + F1D + Pony + Illu + ZIT + ZIB | ? | 0 | 0 | https://civitai.com/models/580857 |
-| 娜乌斯嘉nwsj_realistic | ? | 0 | 0 | https://civitai.com/models/53601 |
-| Detailed Perfection style (Hands + Feet + Face + Body + All in one) XL + F1D + SD1.5 + Po… | ? | 0 | 0 | https://civitai.com/models/411088 |
-| NSFW MASTER | ? | 0 | 0 | https://civitai.com/models/667086 |
-| Lenovo UltraReal | ? | 0 | 0 | https://civitai.com/models/1662740 |
-| Neurocore Anime Shadow Circuit by ChronoKnight - [FLUX, IL, ZIT, FLUX2 KLEIN 9B] | ? | 0 | 0 | https://civitai.com/models/938811 |
-| Cyberpunk Anime Style | ? | 0 | 0 | https://civitai.com/models/128568 |
+### NoobAI
 
-## Lightning / speed LoRAs
+| Model | id | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| NoobAI-XL (NAI-XL) | 833294 | V-Pred-1.0-Version (also EPS) | 18718 | 315k | **NSFW-capable** (lvl 31) · hobby/non-commercial | https://civitai.com/models/833294 |
+| Aesthetic Masterpiece (Noob ver) | 929497 | v2.3 [noobai-v-pred-1] | 11911 | 162k | NSFW-capable | https://civitai.com/models/929497 |
+| Stabilizer (Noob ver) | 971952 | cknb02 v0.304a | 10919 | 156k | SFW-leaning | https://civitai.com/models/971952 |
+| Flat Color - Style | 1132089 | v2.0 [noobai-v-pred-1] | 5985 | 52k | SFW-leaning style | https://civitai.com/models/1132089 |
+| MeMaXL Flat Anime | 269772 | v6.0 A-E [Noob1-Vpred] | 4360 | 61k | SFW-leaning · 16 comments | https://civitai.com/models/269772 |
+| People's Works: SDXL | 1400090 | v10.5_NoobVv1.0 | 5780 | 63k | Mixed | https://civitai.com/models/1400090 |
+| NoobAI-XL ControlNet | 929685 | eps-blur | 1430 | 57k | **SFW** | https://civitai.com/models/929685 |
+| NoobAI-XL ControlNet-OPENPOSE | 962537 | openpose model | 1298 | 28k | Soft (lvl 5) | https://civitai.com/models/962537 |
+| NoobAI Inpainting ControlNet | 1376234 | v1.0 | 698 | 11k | **SFW** | https://civitai.com/models/1376234 |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Lightning (Claire Farron) - Final Fantasy XIII - Character LoRA ⚠NSFW | Ernie | 3229 | 426 | https://civitai.com/models/56586 |
-| Lightning from Final Fantasy [IllustriousXL] ⚠NSFW | Illustrious | 1346 | 177 | https://civitai.com/models/1563802 |
-| lightning (FF13) ⚠NSFW | Illustrious | 414 | 74 | https://civitai.com/models/758007 |
-| Lightning Glare ⚠NSFW | Illustrious | 303 | 72 | https://civitai.com/models/2399005 |
+**Creator:** L_A_X. Month-liked Noob LoRAs skew NSFW character (Enigmata) — quarantine for SFW queues.
 
-## Pixel-art related
+### Pony
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| [LuisaP❤️] Z-IMAGE AND QWEN! PIXEL ART REFINER | ZImageTurbo | 11257 | 1503 | https://civitai.com/models/10706 |
-| PixelArtRedmond - Pixel Art Loras ⚠NSFW | Qwen | 10809 | 821 | https://civitai.com/models/144684 |
-| Hard Edge Pixel Art | ZImageTurbo | 4444 | 409 | https://civitai.com/models/681332 |
+| Model | id | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| Pony Diffusion V6 XL (installed) | 257749 | V6 (start with this one) | 76822 | 1.08M | Soft/mature (lvl 7); community NSFW-heavy | https://civitai.com/models/257749 |
+| Pony V7 base | 1901521 | v7.0 | 1055 | 12k | NSFW-capable (lvl 11) | https://civitai.com/models/1901521 |
+| Vixon's Gothic Neon | 888231 | gothic neon v1.0 | 16161 | 108k | SFW-leaning style | https://civitai.com/models/888231 |
+| Velvet Mythic Fantasy (Pony ver) | 599757 | Pony Portrait Style | 14680 | 239k | Soft (lvl 15) | https://civitai.com/models/599757 |
+| Character Design Sheet (Pony) | 100435 | -PONY XL- | 11463 | 100k | **SFW** (lvl 3) | https://civitai.com/models/100435 |
+| S1 Dramatic Lighting | 661736 | Pony v3 | 6425 | 58k | SFW-leaning · **31 comments** | https://civitai.com/models/661736 |
+| Dynamic Poses slider | 438059 | Pony | 5819 | 42k | Utility · check gallery | https://civitai.com/models/438059 |
+| Hands (Pony ver) | 200255 | Hand Pony v1.0 | 16372 | 306k | Utility NSFW-capable gallery | https://civitai.com/models/200255 |
 
-## Z-Image related
+**Guides:** https://civitai.com/articles/4248 (`score_9`) · https://civitai.com/articles/6555 (Pony tips).
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Z Image Turbo ⚠NSFW | ZImageTurbo | 95089 | 8652 | https://civitai.com/models/2168935 |
-| Z-Image Turbo - Quantized for low VRAM ⚠NSFW | ZImageTurbo | 37000 | 1075 | https://civitai.com/models/2169712 |
-| Z-Image Base & Turbo Pro Grade Workflow I2I/T2I (Low or High VRAM) ⚠NSFW | ZImageTurbo | 33615 | 848 | https://civitai.com/models/2184844 |
-| Z Image Turbo Workflow by Stable_Yogi🔥 ⚠NSFW | ZImageTurbo | 28576 | 558 | https://civitai.com/models/2186721 |
-| Z Image Base | ZImageBase | 19162 | 1273 | https://civitai.com/models/2342797 |
-| Z Image (Turbo & Base) Workflow ⚠NSFW | ZImageTurbo | 12494 | 317 | https://civitai.com/models/2170134 |
-| Z-Image Uncensored Text Encoder - Abliterated Huihui Qwen3 4B v2 (Q_8 GGUF) | ZImageTurbo | 11095 | 216 | https://civitai.com/models/2193783 |
-| Z-Image Turbo UltraReal workflow ⚠NSFW | ZImageTurbo | 10474 | 274 | https://civitai.com/models/2190193 |
-| Z-Image [fp8] | ZImageTurbo | 9930 | 382 | https://civitai.com/models/2172944 |
-| Z Image Turbo Workflow ⚠NSFW | ZImageTurbo | 8939 | 203 | https://civitai.com/models/2169035 |
+### Animagine
 
-## Qwen-related models
+| Model | id | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| Animagine XL 4.0 (Chris has Opt) | 1188071 | v4 Opt | 4699 | 98k | SFW-leaning official | https://civitai.com/models/1188071 |
+| Animagine-XL_4.0_Opt_clear | 2110148 | FP16 | 60 | 2.5k | **SFW** (lvl 1) | https://civitai.com/models/2110148 |
+| Stabilizer AnimagineXL 4.0 | 1319919 | zero v0.10 | 194 | 1.8k | Utility | https://civitai.com/models/1319919 |
+| Animagine XL 4.0 ControlNet | 1208930 | canny | 35 | 1k | **SFW** | https://civitai.com/models/1208930 |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Qwen-Image ⚠NSFW | Qwen | 50063 | 1002 | https://civitai.com/models/1864281 |
-| Qwen image 2.1 / LTX25 / MM H3 / Krea2 / ideogram 4 WF collection ⚠NSFW | Qwen 2 | 36303 | 686 | https://civitai.com/models/579280 |
-| Qwen-Image-Edit | Qwen | 25110 | 489 | https://civitai.com/models/1884704 |
-| Qwen-Image-Boreal (Boring Reality LoRA for Qwen) | Qwen | 17239 | 498 | https://civitai.com/models/1927710 |
-| Qwen Image Edit Multi Gen ⚠NSFW | Qwen | 15179 | 510 | https://civitai.com/models/1890385 |
-| Qwen-Image VAE | Qwen | 13311 | 107 | https://civitai.com/models/1912333 |
-| Qwen-Image-2512 ⚠NSFW | Qwen | 13075 | 666 | https://civitai.com/models/2268063 |
-| Qwen-Image-Edit 2511 | Qwen | 11618 | 276 | https://civitai.com/models/2247803 |
-| QWEN Image Edit 2511 Segment Inpaint, swap, local edit | Qwen | 7055 | 114 | https://civitai.com/models/2257259 |
-| Qwen-Image-Edit F2P | Qwen | 6939 | 200 | https://civitai.com/models/2094349 |
+Cross-use Illustrious/SDXL utilities when versions list Animagine.
 
-## Qwen / Lightning search
+### RealVis
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Qwen-Image-Edit 2511 | Qwen | 11618 | 276 | https://civitai.com/models/2247803 |
-| QWEN Image Edit 2511 Segment Inpaint, swap, local edit | Qwen | 7055 | 114 | https://civitai.com/models/2257259 |
-| Qwen-Image-Edit-2511-Multiple-Angles-LoRA | Qwen | 4617 | 229 | https://civitai.com/models/2300308 |
-| Qwen Image Edit 2511 Ultimate ⚠NSFW | Qwen | 3885 | 97 | https://civitai.com/models/2301814 |
-| Qwen Image Edit 2511 Native Shift Fix Version(NSFW Included) ⚠NSFW | Qwen | 3402 | 70 | https://civitai.com/models/2254361 |
-| Qwen-Image-Edit-2511_clear ⚠NSFW | Qwen | 2606 | 49 | https://civitai.com/models/2285329 |
-| Qwen Image Edit 2511 GGUF ⚠NSFW | Qwen | 2423 | 34 | https://civitai.com/models/2248736 |
-| Qwen Image Edit 2511 Custom Shift Fix Version(NSFW Included) ⚠NSFW | Qwen | 2325 | 48 | https://civitai.com/models/2254346 |
-| Qwen Image Edit 2511 Sharp workflow with SeedVR2 upscale | Qwen | 1415 | 35 | https://civitai.com/models/2252418 |
-| Qwen-Image-Edit-2511 - Manga to anime Coloring Flat Color ⚠NSFW | Qwen | 1377 | 104 | https://civitai.com/models/2272945 |
+| Model | id | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| RealVisXL V5.0 (Chris has fp16) | 139562 | V5.0 Lightning (BakedVAE) top listing | 18111 | 690k | Soft gallery possible; photoreal SFW-usable | https://civitai.com/models/139562 |
+| Realistic Skin Texture (EauDeNoire) | 580857 | skin texture XL v4 | 7513 | 186k | Soft · often NSFW gallery | https://civitai.com/models/580857 |
+| Detailed Perfection | 411088 | Perfection SDXL v1.0 | 6760 | 133k | Soft · **39 comments** | https://civitai.com/models/411088 |
+| Cinematic Shot | 432586 | XL v1.0 | 4219 | 57k | **SFW-leaning** | https://civitai.com/models/432586 |
 
-## WAI checkpoint hits
+### Qwen-Image-Edit + Qwen-Image-2.1 interest (LAS #739)
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| WAI-illustrious-HSWQ ⚠NSFW | Illustrious | 4585 | 322 | https://civitai.com/models/2698106 |
-| WAI-illustrious-Mix-FP8 ⚠NSFW | Illustrious | 1486 | 74 | https://civitai.com/models/2451718 |
-| (WAI-IllustriousXL) Cyrene/大昔涟 （ultra detailed 细节增强）Honkai:Star Rail 崩坏：星穹铁道 | Illustrious | 1230 | 81 | https://civitai.com/models/2254661 |
-| (WAI-IllustriousXL) The Herta/大黑塔 LoRA (Detail enhanced 细节增强) Honkai:Star Rail 崩坏：星穹铁道 ⚠NSFW | Illustrious | 1176 | 92 | https://civitai.com/models/2262851 |
-| (WAI-IllustriousXL) Silver Wolf LV.999 / 银狼LV.999/狼尊 (detailed 细节增强）Honkai: Star Rail 崩坏：… ⚠NSFW | Illustrious | 861 | 81 | https://civitai.com/models/2525859 |
-| WAI-illustrious-GGUF ⚠NSFW | Illustrious | 731 | 44 | https://civitai.com/models/2449605 |
-| WAI-illustrious-SD1.5 | SD 1.5 | 692 | 27 | https://civitai.com/models/2174578 |
-| (WAI-IllustriousXL) Yaoguang / 爻光 Honkai:Star Rail 崩坏：星穹铁道 ⚠NSFW | Illustrious | 674 | 42 | https://civitai.com/models/2283496 |
-| (WAI-IllustriousXL) Nefer/奈芙尔 LoRA (details enhanced 细节增强) Genshin Impact 原神 ⚠NSFW | Illustrious | 538 | 25 | https://civitai.com/models/2257329 |
-| (WAI-IllustriousXL) Pearl / 真珠 (detailed 细节增强) Honkai: Star Rail 崩坏：星穹铁道 | Illustrious | 426 | 36 | https://civitai.com/models/2426553 |
+| Model | id | Type | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---|---:|---:|---|---|
+| Qwen-Image-Edit 2511 | 2247803 | Checkpoint | FP8 | 276 | 11k | **SFW** (lvl 1) | https://civitai.com/models/2247803 |
+| Qwen Edit 2509 | 1981702 | Checkpoint | fp16 | 373 | 12k | **SFW** | https://civitai.com/models/1981702 |
+| Qwen-Image-2512 | 2268063 | Checkpoint | fp8_e4m3fn | 666 | 13k | Soft (lvl 3) | https://civitai.com/models/2268063 |
+| Qwen image 2.1 WF collection | 579280 | Workflows | QW21加速器 | 686 | 36k | NSFW-capable (lvl 31) · **2.1 interest** | https://civitai.com/models/579280 |
+| Qwen Image Edit Multi Gen | 1890385 | Workflows | 2511 v1 | 510 | 15k | Soft (lvl 3) | https://civitai.com/models/1890385 |
+| Qwen Image Edit Plus (2511) 8steps | 1998998 | Workflows | Qwen Edit 2511 v1.0 | 182 | 6.8k | **SFW** | https://civitai.com/models/1998998 |
+| QWEN Segment Inpaint/swap/local | 2257259 | Workflows | v1.0 | 114 | 7k | **SFW** | https://civitai.com/models/2257259 |
+| Qwen Image Edit 2511 Ultimate | 2301814 | Workflows | v1.0 | 97 | 3.8k | Soft (lvl 7) | https://civitai.com/models/2301814 |
+| Multiple-Angles-LoRA | 2300308 | LORA | v1.0 | 229 | 4.6k | **SFW** | https://civitai.com/models/2300308 |
+| Emotional Photography LoRA | 1869530 | LORA | v2.0 | 315 | 3.7k | Soft | https://civitai.com/models/1869530 |
+| Lightning 4steps bf16 (community) | 2689441 | LORA | v1.0 | 10 | 722 | **SFW** · prefer installed official Lightning | https://civitai.com/models/2689441 |
+| Qwen-image_union ControlNet WF | 2048956 | Workflows | — | 8 | 148 | **SFW** early | https://civitai.com/models/2048956 |
 
-## Animagine-related
+**Edit recipe:** BF16 → CFG 4 / ~40 · FP8 → CFG 4 / ~20 · **+ Lightning → CFG 1 / 4 steps** · keep Edit Model Reference Method nodes · match `<image N>` / multi-image mode to slot count · don’t stack Lightning LoRA on fused FP8 Lightning ckpt.
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Animagine XL 4.0 ⚠NSFW | SDXL 1.0 | 98329 | 4699 | https://civitai.com/models/1188071 |
-| Animagine-XL_4.0_Opt_clear | SDXL 1.0 | 2504 | 60 | https://civitai.com/models/2110148 |
-| Stabilizer AnimagineXL 4.0 | SDXL 1.0 | 1844 | 194 | https://civitai.com/models/1319919 |
-| Animagine XL 4.0 finetuned ⚠NSFW | SDXL 1.0 | 1720 | 31 | https://civitai.com/models/1866935 |
-| [Animagine XL 4.0] Enma Ai/阎魔爱 《JigokuShoujo》/《Hell Girl》/《地狱少女》 - TV Animation Character… ⚠NSFW | SDXL 1.0 | 1529 | 152 | https://civitai.com/models/275687 |
-| Animagine XL 4.0 ControlNet | SDXL 1.0 | 1002 | 35 | https://civitai.com/models/1208930 |
-| [Animagine XL 4.0] Iris (Megaman X4) /爱丽丝 (洛克人X4) RockmanX4 -Character Style | SDXL 1.0 | 347 | 26 | https://civitai.com/models/1322937 |
-| Animagine XL 4.0 / CC0216 Style ⚠NSFW | SDXL 1.0 | 217 | 6 | https://civitai.com/models/2575732 |
-| animagine-xl-4.0-nishiki asumi | SDXL 1.0 | 62 | 4 | https://civitai.com/models/2627912 |
-| animagine-xl-4.0-Mankai_Kaika ⚠NSFW | SDXL 1.0 | 21 | 2 | https://civitai.com/models/2909004 |
+### FLUX.2 / Klein
 
-## Xinsir / ControlNet
+| Model | id | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| Flux.2 Klein (official) | 2322332 | 9B-Base | 1472 | 36k | Soft (lvl 3) | https://civitai.com/models/2322332 |
+| Flux.2 (Dev official) | 2165902 | Dev | 778 | 11k | Soft | https://civitai.com/models/2165902 |
+| Flux2-Klein-9B-True | 2339723 | v2.0-bf16 | 662 | 13k | Soft/mature (lvl 7) | https://civitai.com/models/2339723 |
+| Flux Klein FP8 | 2311742 | flux-2-klein-base-9b-fp8 | 271 | 18k | **SFW** · **25 comments** | https://civitai.com/models/2311742 |
+| FLUXTRAIT | 2086049 | Klein_9b_V3 | 636 | 16k | Soft/mature | https://civitai.com/models/2086049 |
+| Hands (Flux.1 D ver — verify for F2) | 200255 | Hand F1D v2.0 | 16372 | 306k | Utility | https://civitai.com/models/200255 |
+| Velvet Mythic (Flux ver) | 599757 | Flux Sharp Lines | 14680 | 239k | Soft | https://civitai.com/models/599757 |
+| Neurocore Anime Shadow Circuit | 938811 | lists FLUX2 KLEIN 9B | high | — | Soft · cross Klein | https://civitai.com/models/938811 |
+| Flux Union Controlnet Pro WF | 709352 | — | 320 | 12k | **SFW** | https://civitai.com/models/709352 |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| xinsir ControlNet OpenPose - SDXL 1.0. ⚠NSFW | SDXL 1.0 | 81 | 2 | https://civitai.com/models/2943879 |
+### Krea2 LoRAs / related
 
-## Workflow-tagged
+| Model | id | Type | Version | 👍 | DL | Flag | URL |
+|---|---:|---|---|---:|---:|---|---|
+| Krea 2 Turbo Official Comfy-Org | 2726029 | Checkpoint | krea2_turbo_int8_convrot | 2199 | 44k | **SFW** (lvl 1) | https://civitai.com/models/2726029 |
+| Krea2 TextFusion Refusal-Reduction | 2775340 | LORA | v1.0 | 2027 | 35k | **SFW** (policy-bypass — use carefully) | https://civitai.com/models/2775340 |
+| Krea 2 Identity Edit | 2761113 | LORA | v1.2 | 1127 | 23k | Soft (lvl 3) · edit-adjacent | https://civitai.com/models/2761113 |
+| [KREA 2] Detail Slider | 2729908 | LORA | v1.0 | 921 | 18k | Soft | https://civitai.com/models/2729908 |
+| [KREA 2] Realism Slider | 2781697 | LORA | v1.0 | 456 | 8.4k | Soft/mature | https://civitai.com/models/2781697 |
+| Krea2 / Flux - Vividly Surreal | 930804 | LORA | Krea2 | 539 | 4.7k | Soft | https://civitai.com/models/930804 |
+| Krea2+Qwen2511+Z-Image Illustria Anime | 2174309 | LORA | v1.0 Krea 2 | 451 | 6.8k | Soft/mature · **cross-stack** | https://civitai.com/models/2174309 |
+| Krea2 [SFW/NSFW] Uncensored WF | 2738703 | Workflows | v1.0 | 741 | 31k | **Explicit dual** | https://civitai.com/models/2738703 |
+| Velvet Mythic (+ Krea2 in name) | 599757 | multi | — | 14680 | 239k | Soft | https://civitai.com/models/599757 |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Pony Diffusion V6 XL ⚠NSFW | Pony | 1088277 | 76822 | https://civitai.com/models/257749 |
-| CyberRealistic Pony ⚠NSFW | Pony | 773406 | 32333 | https://civitai.com/models/443821 |
-| CyberRealistic ⚠NSFW | SD 1.5 | 639846 | 24875 | https://civitai.com/models/15003 |
-| epiCRealism XL ⚠NSFW | SDXL 1.0 | 595566 | 13214 | https://civitai.com/models/277058 |
-| Nova Anime XL ⚠NSFW | Illustrious | 481477 | 19047 | https://civitai.com/models/376130 |
-| ✨ Lazy Embeddings for ALL illustrious NoobAI Pony SDXL models LazyPositive LazyNegative (… ⚠NSFW | Illustrious | 438758 | 14297 | https://civitai.com/models/1302719 |
-| RedCraft / 红潮 / Hybrid H3 & Krea2DUAL MASO ver 双权重 ⚠NSFW | MiniMax H3 | 370811 | 11631 | https://civitai.com/models/958009 |
-| Realism By Stable Yogi (Pony) ⚠NSFW | Pony | 364439 | 18412 | https://civitai.com/models/166609 |
-| Hands XL + SD 1.5 + F1D + Pony + Illustrious + zit + ZIB ⚠NSFW | ZImageBase | 306292 | 16372 | https://civitai.com/models/200255 |
-| PerfectDeliberate ⚠NSFW | Illustrious | 295214 | 23235 | https://civitai.com/models/24350 |
+### OpenPose / Union ControlNet
 
-## civitai.red LoRA sample (treat as NSFW-leaning)
+| Model | id | Notes | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| xinsir ControlNet OpenPose SDXL (Civitai mirror) | 2943879 | Low thumbs — prefer installed HF | 2 | 81 | **SFW** | https://civitai.com/models/2943879 |
+| ControlNet Union for SDXL WF | 565145 | “1 Model Does it All” | 96 | 6.3k | **SFW** | https://civitai.com/models/565145 |
+| [SDXL] Controlnet-Union Workflow (Basic) | 1023999 | a01demort | 33 | 1.2k | **SFW** | https://civitai.com/models/1023999 |
+| [SDXL] IP-Adapter + Controlnet union | 1024555 | combo | 58 | 2.6k | **SFW** | https://civitai.com/models/1024555 |
+| Illustrious Openpose CN | 1359846 | WAI-matched | 1013 | 34k | **SFW** | https://civitai.com/models/1359846 |
+| NoobAI Openpose CN | 962537 | Noob-matched | 1298 | 28k | Soft | https://civitai.com/models/962537 |
+| TTPLanet SDXL Tile Realistic | 330313 | tile companion | 1889 | 36k | Soft | https://civitai.com/models/330313 |
+| HF Union SDXL 1.0 (provenance) | — | xinsir/controlnet-union-sdxl-1.0 | — | — | **SFW** tooling | https://huggingface.co/xinsir/controlnet-union-sdxl-1.0 |
+| HF OpenPose SDXL | — | xinsir/controlnet-openpose-sdxl-1.0 | — | — | **SFW** | https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0 |
 
-| Name | Base | Downloads | Likes | URL |
-|---|---|---:|---:|---|
-| Velvet's Mythic Fantasy Styles / Flux + Pony + illustrious + ZiT + Anima + Krea2 ⚠NSFW | Illustrious | 239169 | 14680 | https://civitai.com/models/599757 |
-| Aesthetic Quality Modifiers - Masterpiece ⚠NSFW | Illustrious | 162493 | 11911 | https://civitai.com/models/929497 |
-| Stabilizer IL/NAI/CK ⚠NSFW | Illustrious | 156708 | 10919 | https://civitai.com/models/971952 |
-| Add Micro Details - Concept (Illustrious / Pony / NoobAI) ⚠NSFW | Illustrious | 100461 | 7919 | https://civitai.com/models/1377820 |
-| Smooth Detailer Booster (Anima/SDXL/Pony) ⚠NSFW | Illustrious | 98829 | 9878 | https://civitai.com/models/1145743 |
-| 薄塗り / USNR STYLE ⚠NSFW | Illustrious | 90978 | 10861 | https://civitai.com/models/176554 |
-| People's Works: SDXL ⚠NSFW | Illustrious | 63831 | 5780 | https://civitai.com/models/1400090 |
-| Niji semi realism ⚠NSFW | Illustrious | 53803 | 6502 | https://civitai.com/models/534506 |
-| AIイラストおじさん ⚠NSFW | Illustrious | 50076 | 8469 | https://civitai.com/models/481765 |
-| Lighting / darkness slider ⚠NSFW | Illustrious | 46107 | 5694 | https://civitai.com/models/1280702 |
+**LAS tip:** Xinsir Union daily for SDXL/WAI/Pony/RealVis; Illustrious/Noob OpenPose CNs when anime pose drifts.
 
-## Suggested smoke shortlist (SFW-leaning, popularity filter)
+### IP-Adapter
 
-| Name | Base | DL | URL |
-|---|---|---:|---|
-| [LuisaP❤️] Z-IMAGE AND QWEN! PIXEL ART REFINER | ZImageTurbo | 11257 | https://civitai.com/models/10706 |
-| Hard Edge Pixel Art | ZImageTurbo | 4444 | https://civitai.com/models/681332 |
-| Z Image Base | ZImageBase | 19162 | https://civitai.com/models/2342797 |
-| Z-Image Uncensored Text Encoder - Abliterated Huihui Qwen3 4B v2 (Q_8 GGUF) | ZImageTurbo | 11095 | https://civitai.com/models/2193783 |
-| Z-Image [fp8] | ZImageTurbo | 9930 | https://civitai.com/models/2172944 |
-| Qwen-Image-Edit | Qwen | 25110 | https://civitai.com/models/1884704 |
-| Qwen-Image-Boreal (Boring Reality LoRA for Qwen) | Qwen | 17239 | https://civitai.com/models/1927710 |
-| Qwen-Image VAE | Qwen | 13311 | https://civitai.com/models/1912333 |
-| Qwen-Image-Edit 2511 | Qwen | 11618 | https://civitai.com/models/2247803 |
-| QWEN Image Edit 2511 Segment Inpaint, swap, local edit | Qwen | 7055 | https://civitai.com/models/2257259 |
-| Qwen-Image-Edit F2P | Qwen | 6939 | https://civitai.com/models/2094349 |
-| Qwen-Image-Edit-2511-Multiple-Angles-LoRA | Qwen | 4617 | https://civitai.com/models/2300308 |
-| Qwen Image Edit 2511 Sharp workflow with SeedVR2 upscale | Qwen | 1415 | https://civitai.com/models/2252418 |
-| (WAI-IllustriousXL) Cyrene/大昔涟 （ultra detailed 细节增强）Honkai:Star Rail 崩坏：星穹铁道 | Illustrious | 1230 | https://civitai.com/models/2254661 |
-| Animagine-XL_4.0_Opt_clear | SDXL 1.0 | 2504 | https://civitai.com/models/2110148 |
-| Stabilizer AnimagineXL 4.0 | SDXL 1.0 | 1844 | https://civitai.com/models/1319919 |
-| Animagine XL 4.0 ControlNet | SDXL 1.0 | 1002 | https://civitai.com/models/1208930 |
+| Model | id | Type | 👍 | DL | Flag | URL |
+|---|---:|---|---:|---:|---|---|
+| IP-Adapter-FaceID | 301776 | Controlnet listing | 282 | 30k | **SFW** | https://civitai.com/models/301776 |
+| IP Adapter Models for SDXL | 157698 | bundle listing | 174 | 20k | **SFW** | https://civitai.com/models/157698 |
+| Style IPAdapter for NoobAI-XL | 1233692 | Controlnet | 187 | 3.3k | **SFW** · Noob match | https://civitai.com/models/1233692 |
+| IP-Adapter Flux | 670387 | LORA (xlabs_ai) | 91 | 2.6k | **SFW** | https://civitai.com/models/670387 |
+| IP Adapter Bundle | 907545 | Other | 69 | 2.2k | **SFW** | https://civitai.com/models/907545 |
+| Blink's universal WF (IPA+CN+Illu/Noob/Pony/Animagine) | 1621455 | Workflows | 75 | 1.8k | Check gallery | https://civitai.com/models/1621455 |
+| [SDXL] IP-Adapter + Union WF | 1024555 | Workflows | 58 | 2.6k | **SFW** | https://civitai.com/models/1024555 |
 
-## Follow-ups for LAS
+---
 
-- [ ] Smoke 5 Illustrious LoRAs on **WAI v170**
-- [ ] Smoke 3 NoobAI LoRAs (non-commercial gate)
-- [ ] Smoke 3 Pony LoRAs on Pony v6
-- [ ] Catalog which **Krea2** LoRAs on disk still have upstream pages / dead links
-- [ ] Find Comfy workflows pairing **Xinsir OpenPose/Union** with WAI/Animagine
-- [ ] Qwen-Image-2.1 bring-up remains #739 — keep Edit-2511 Lightning stack documented here
-- [ ] Delete incomplete `*.part` checkpoint downloads under Comfy `models/checkpoints`
+## Workflows (high-signal for installed stack)
 
-## Provenance
+| Workflow | id | What it does | 👍 / DL | SFW/NSFW | URL |
+|---|---:|---|---|---|---|
+| ComfyUI Image Workflows | 1386234 | Broad image pack | 2926 / 91k | NSFW-capable (31) | https://civitai.com/models/1386234 |
+| Smooth Workflow (txt2img) | 1598938 | DigitalPastel smooth | 1262 / 22k | NSFW-capable | https://civitai.com/models/1598938 |
+| SDXL PONY ILLUSTRIOUS DMD2 (Stable Yogi) | 1215102 | Multi-base SDXL family | 950 / 33k | NSFW-capable (29) | https://civitai.com/models/1215102 |
+| Moody Simple Zimage Turbo | 2253524 | Z-Image Turbo daily | 957 / 47k | NSFW-capable | https://civitai.com/models/2253524 |
+| Z-Image Base & Turbo Pro (Low/High VRAM) | 2184844 | Explicit VRAM paths | 848 / 33k | NSFW-capable | https://civitai.com/models/2184844 |
+| Qwen 2.1 WF collection | 579280 | **2.1 + accelerators** | 686 / 36k | NSFW-capable | https://civitai.com/models/579280 |
+| Qwen Edit Multi Gen | 1890385 | Multi-image edit | 510 / 15k | Soft | https://civitai.com/models/1890385 |
+| Qwen Edit Plus 8-step | 1998998 | Multi edit 2511 | 182 / 6.8k | SFW | https://civitai.com/models/1998998 |
+| Qwen Segment Inpaint/swap | 2257259 | Local edit | 114 / 7k | SFW | https://civitai.com/models/2257259 |
+| ControlNet Union SDXL | 565145 | Union how-to | 96 / 6.3k | SFW | https://civitai.com/models/565145 |
+| IP-Adapter + Union SDXL | 1024555 | Face/style + pose | 58 / 2.6k | SFW | https://civitai.com/models/1024555 |
+| GonzaLomo Z-Image Refiner | 2172100 | Refine pass | 573 / 17k | NSFW-capable | https://civitai.com/models/2172100 |
 
-Raw API JSON retained locally under handoffs `civitai-scavenge-2026-09-21/raw/` (not committed).
+---
+
+## LoRA combos per base
+
+Prefer **one style + one utility** before stacking three.
+
+### WAI Illustrious (v170) — SFW default
+1. Stabilizer `971952` @ 0.4–0.7  
+2. Hands Illu `200255` @ 0.6–1.0 when hands fail  
+3. Aesthetic Masterpiece `929497` @ 0.3–0.6 **or** USNR `176554` @ 0.6–0.9  
+4. Optional Micro Details `1377820` @ 0.3–0.5  
+**NSFW:** use WAI safety tags (`nsfw` in neg to stay clean).
+
+### NoobAI 1.1 — SFW
+1. Stabilizer Noob ver `971952`  
+2. Flat Color `1132089` **or** MeMaXL `269772`  
+3. Hands / Micro Details matching Noob version tags  
+**NSFW:** Month chart flooded with explicit character LoRAs — quarantine.
+
+### Pony V6 — SFW
+1. `score_9, score_8_up, score_7_up` (article 4248) — **Pony only**  
+2. Gothic Neon `888231` or Velvet Portrait `599757`  
+3. Dramatic Lighting `661736`  
+4. Hands Pony ver `200255`  
+**NSFW:** body-concept LoRAs (`139131`, `217340`) explicit-leaning — flag.
+
+### Animagine XL 4.0 Opt — SFW
+1. Stabilizer Animagine `1319919` if needed  
+2. Shared SDXL Hands / Cinematic Shot `432586`  
+3. Danbooru-like prompts; **no** Pony score tags.
+
+### RealVisXL V5 — SFW photoreal
+1. Skin Texture `580857` lightly (0.3–0.6)  
+2. Cinematic Shot `432586`  
+3. Detailed Perfection `411088` if anatomy breaks  
+4. Xinsir OpenPose/Union for pose lock.
+
+### FLUX.2 Klein / FLUX — SFW
+1. Prefer Klein-tagged versions (Neurocore `938811`) over blind Flux.1 D  
+2. Velvet Flux Sharp Lines `599757`  
+3. Character Design Sheet Flux ver `100435`  
+4. Union Pro WF `709352`.
+
+### Qwen-Image-Edit — SFW edit-first
+1. Installed Lightning 4-step @ 1.0 with CFG 1 / 4 steps  
+2. Multiple-Angles `2300308` for re-shoot  
+3. Emotional Photography `1869530` for mood  
+4. Cross: Krea2+Qwen Illustria `2174309` experimental — verify base.
+
+### Pixel (installed Pixel Art XL)
+Also: Pixel Art Refiner Z-Image/Qwen `10706` (1503👍) · PixelArtRedmond `144684`.
+
+---
+
+## ControlNet stacks (Xinsir + LAS)
+
+**Daily (SDXL family: WAI / Pony / RealVis / Animagine / SDXL):** Xinsir Union 1.0 → OpenPose/Depth/Canny · strength 0.6–0.85 · optional Xinsir OpenPose-only · Tile TTPLanet `330313` for refine.
+
+**Anime specialist:** Illustrious OpenPose `1359846` on WAI · Noob OpenPose `962537` + pack `929685` on NoobAI.
+
+**Identity:** IP-Adapter FaceID `301776` or SDXL IPA `157698` + Union WF `1024555` · Noob style IPA `1233692`.
+
+**Qwen/FLUX:** separate Union WFs (`2048956`, `709352`) — do not load SDXL Xinsir into those graphs.
+
+---
+
+## Tips (prompting / sampler / Lightning / edit)
+
+- **WAI / Illustrious:** Danbooru tags; quality tags at end if prompt long; CFG often ≤6–7; Euler a; **no** `score_9`. https://civitai.com/articles/23210  
+- **Pony:** `score_9` system https://civitai.com/articles/4248  
+- **NoobAI:** Danbooru + E621; match EPS vs V-Pred LoRA versions  
+- **Qwen Edit 2511:** Lightning → CFG **1**, steps **4**; without Lightning FP8 CFG 4 / ~20; Reference Method nodes on; ~1MP inputs; align multi-image count with `<image N>`  
+- **Z-Image Turbo:** Low/High VRAM WF `2184844` / Moody `2253524`  
+- **Samplers:** https://civitai.com/articles/7484  
+
+---
+
+## VRAM notes — RX 9070 XT 16GB (AMD)
+
+| Stack | Practical mode | Notes |
+|---|---|---|
+| SDXL + Xinsir Union + 1–2 LoRA | FP16 daily | Headroom for FaceDetailer/upscale |
+| WAI / Pony / Noob / Animagine / RealVis | FP16 | Same family profile |
+| FLUX.2 Klein 4B FP8 (installed) | FP8 | Prefer over BF16 |
+| FLUX.2-dev GGUF Q4_K_M (installed) | GGUF | Watch Mistral-Small 24B Q4 TE offload |
+| Qwen-Image-Edit Q4_K_M GGUF (installed) | GGUF Q4 | Some guides prefer FP8 Lightning fused vs Q4 |
+| Qwen + Lightning 4-step | Low steps | Wall-clock win; don’t raise CFG |
+| Z-Image Turbo BF16 (installed) | BF16 | Use Low VRAM graph branches; quant mirrors `2169712` |
+| Krea2 Turbo int8/FP8 | Quant | `2726029` int8 is 16GB-friendly |
+| Avoid | BF16 Qwen Edit + full VL TE + Union + IPA | Spill/thrash — serialize passes |
+
+---
+
+## Top creators to watch
+
+| Username | Why | Flag bias |
+|---|---|---|
+| WAI0731 | Illustrious checkpoint line Chris runs | Mixed; NSFW forks |
+| L_A_X | NoobAI-XL + Noob ControlNets | NSFW-capable base |
+| PurpleSmartAI | Pony V6/V7 + score_9 article | Mixed |
+| EauDeNoire | Cross-base Hands / Skin / Perfection (~16k👍 Hands) | Galleries often mature |
+| VelvetS | Mythic Fantasy multi-base incl. Krea2/Flux/Illu | Soft–mature |
+| motimalu | Aesthetic Masterpiece + Flat Color | Mixed |
+| YeiYeiArt | Character Design Sheet multi-base | SFW-leaning |
+| reakaakasky | Stabilizer IL/NAI + Z-Image fp8 | Utility / SFW-leaning |
+| CitronLegacy | Style packs across Noob/Illu/Pony | Mixed |
+| gabrielx / yorgash | Qwen Edit workflows | Mostly SFW tooling |
+| a01demort | SDXL Union + IPA workflows | SFW tooling |
+| CagliostroLab | Animagine XL 4.0 | SFW-leaning |
+| SG_161222 | RealVisXL V5 | Photoreal mixed |
+| alcaitiff / Capitan01R / conrad_locke | Krea2 sliders / identity / refusal | Mixed; policy LoRAs caution |
+| DigitalPastel | Smooth Detailer + Smooth WF | Mixed |
+
+---
+
+## Blockers / caveats
+
+- Direct `GET /api/v1/models/{id}` intermittently Cloudflare **1015**; list/search OK — stats from those live responses (~01:17–01:19 BST).  
+- civitai.red **up**; WAI HTML + red API LoRA sample OK.  
+- Xinsir barely on Civitai — low-👍 mirror ≠ quality.  
+- Qwen-Image-**2.1** thinner than Edit-2511; WF `579280` main breadcrumb.  
+- First batch — not exhaustive; `raw/` retained.
+
+---
+
+## Counts (this pack)
+
+- **Unique model page URLs cited:** ~95+  
+- **Creators highlighted:** 15  
+- **API JSON snapshots in `raw/`:** 50+  
+- **Weight downloads attempted:** 0
