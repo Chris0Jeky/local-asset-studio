@@ -1,13 +1,14 @@
 """Bounded GET-only HTTP machinery for adult-illustration metadata."""
 from __future__ import annotations
 
+from contextlib import contextmanager
 import copy
 import hashlib
 from http.client import HTTPException
+from threading import Lock
 import time
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Iterator, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 from ._adult_illustration_source_transport_cache import SnapshotResponseCache
@@ -24,6 +25,7 @@ from ._adult_illustration_source_transport_common import (
     WireResponse,
     cached_headers,
     endpoint_provider,
+    metadata_redirect_url,
     normalise_headers,
     parse_provider_json,
     request_key,
@@ -237,8 +239,29 @@ class BoundedProviderTransport:
         self.cache = cache
         self.refresh = refresh
         self.sleeper = sleeper
+        self._fetch_lock = Lock()
+        self._awaiting_finalization = False
         self._receipt: dict[str, Any] | None = None
         self._pending: tuple[HttpRequest, HttpResponse] | None = None
+
+    @contextmanager
+    def _fetch_scope(self) -> Iterator[None]:
+        """Own a complete facade fetch, including parsing and receipt capture."""
+        if not self._fetch_lock.acquire(blocking=False):
+            raise RuntimeError("Provider metadata transport is already in use")
+        try:
+            # A raw caller may already own a response awaiting finalization.
+            # Refusing this new fetch must not abort that caller's pending data.
+            if self._pending is not None or self._awaiting_finalization:
+                raise RuntimeError("Previous provider response was not finalized")
+            self._receipt = None
+            try:
+                yield
+            except BaseException:
+                self.abort()
+                raise
+        finally:
+            self._fetch_lock.release()
 
     @property
     def receipt(self) -> dict[str, Any]:
@@ -299,7 +322,7 @@ class BoundedProviderTransport:
             location = wire.headers.get("location")
             if not isinstance(location, str) or not location:
                 raise ValueError("Provider redirect is missing a Location header")
-            destination = urljoin(current.url, location)
+            destination = metadata_redirect_url(current.url, location)
             target_provider = endpoint_provider(destination, "redirect URL")
             if target_provider != provider:
                 raise ValueError("Cross-provider redirect is not allowed")
@@ -326,7 +349,7 @@ class BoundedProviderTransport:
         return response, wire, total_attempts, tuple(redirects)
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        if self._pending is not None:
+        if self._pending is not None or self._awaiting_finalization:
             raise RuntimeError("Previous provider response was not finalized")
         provider = validate_base_request(request)
         key = request_key(request)
@@ -346,6 +369,7 @@ class BoundedProviderTransport:
                 validators=(),
                 wire_status=200,
             )
+            self._awaiting_finalization = True
             return cached
 
         validators = _validator_headers(cached)
@@ -380,6 +404,7 @@ class BoundedProviderTransport:
             validators=tuple(sorted(validators)),
             wire_status=wire.status,
         )
+        self._awaiting_finalization = True
         return response
 
     def _make_receipt(
@@ -430,7 +455,7 @@ class BoundedProviderTransport:
             or raw_payload_sha256
             != self._receipt["response_payload_sha256"]
         ):
-            self._pending = None
+            self.abort()
             raise ValueError("Parsed snapshot payload identity does not match transport")
         if self._pending is not None:
             request, response = self._pending
@@ -440,6 +465,9 @@ class BoundedProviderTransport:
             if stored_key != self._receipt["request_key"]:
                 raise ValueError("Stored cache identity changed during finalization")
             self._pending = None
+        self._awaiting_finalization = False
 
     def abort(self) -> None:
+        self._awaiting_finalization = False
         self._pending = None
+        self._receipt = None
