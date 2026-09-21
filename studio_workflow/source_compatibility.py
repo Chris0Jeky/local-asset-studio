@@ -45,13 +45,6 @@ def reviewed_date(value: Any) -> str:
     return value
 
 
-def bounded_tokens(value: Any, label: str, maximum: int) -> list[str]:
-    need(isinstance(value, list) and len(value) <= maximum, label + ' must be a bounded list')
-    need(all(token(item, 300) for item in value), 'Invalid ' + label)
-    need(len(set(value)) == len(value), 'Duplicate ' + label)
-    return list(value)
-
-
 def normalize_format(value: str) -> str:
     compact = re.sub(r'[^a-z0-9]', '', value.casefold())
     aliases = {'safetensor': 'safetensors', 'safetensors': 'safetensors'}
@@ -97,7 +90,8 @@ def validate_report(value: Any) -> dict[str, Any]:
     context = sha256(value['context_sha256'], 'Source context')
     for field in ZERO_AUTHORITY_FIELDS:
         need(value[field] is False, 'Source report must retain zero authority: ' + field)
-    need(value['coverage_complete'] is True, 'Source coverage is incomplete')
+    need(type(value['coverage_complete']) is bool,
+         'Source coverage_complete must be boolean')
     need(isinstance(value['resource'], dict), 'Source resource must be an object')
     need(isinstance(value['source_receipts'], list) and len(value['source_receipts']) <= 64,
          'Source receipts must be a bounded list')
@@ -127,12 +121,15 @@ def select_file(resource: dict[str, Any], file_identity: str) -> dict[str, Any]:
 def receipt_date(report: dict[str, Any], host: str, fallback: str) -> str:
     values = []
     for item in report['source_receipts']:
-        if not isinstance(item, dict) or item.get('host') != host: continue
+        if not isinstance(item, dict) or item.get('host') != host:
+            continue
         retrieved = item.get('retrieved_at')
         if isinstance(retrieved, str) and len(retrieved) >= 10:
             candidate = retrieved[:10]
-            try: date.fromisoformat(candidate)
-            except ValueError: continue
+            try:
+                date.fromisoformat(candidate)
+            except ValueError:
+                continue
             values.append(candidate)
     return min(values) if values else fallback
 
@@ -176,11 +173,14 @@ def combination_key(value: dict[str, Any]) -> tuple[Any, ...]:
     versions = value.get('version_ids') if isinstance(value, dict) else []
     versions = tuple(versions) if isinstance(versions, list) else ()
     return (str(scope.get('host', '')), json.dumps(query, sort_keys=True,
-            separators=(',', ':'), ensure_ascii=False), str(scope.get('scope_sha256', '')), versions)
+            separators=(',', ':'), ensure_ascii=False),
+            str(scope.get('scope_sha256', '')), versions)
 
 
 def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
-                   reviewed_at: str, diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+                   reviewed_at: str,
+                   diagnostics: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
+                                                                list[dict[str, Any]]]:
     observations = sorted(copy.deepcopy(report['combinations']), key=combination_key)
     claims: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
@@ -192,14 +192,16 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
         need(host in ('civitai.com', 'civitai.red'), 'Unsupported gallery source host')
         scope_identity = sha256(scope.get('scope_sha256'), 'Gallery source scope')
         versions = item.get('version_ids')
-        need(isinstance(versions, list) and all(type(entry) is int and entry > 0 for entry in versions),
+        need(isinstance(versions, list)
+             and all(type(entry) is int and entry > 0 for entry in versions),
              'Invalid gallery version identities')
         if version_id not in versions:
             diagnostics.append({'code': 'gallery_target_missing',
                                 'message': 'Gallery observation does not include the reviewed source version.',
                                 'scope_sha256': scope_identity})
             continue
-        need(item.get('reported_co_use') is True and item.get('compatibility_proven') is False
+        need(item.get('reported_co_use') is True
+             and item.get('compatibility_proven') is False
              and item.get('quality_proven') is False,
              'Gallery source must remain non-authoritative co-use evidence')
         observations_count = item.get('distinct_observations')
@@ -222,8 +224,9 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
         need(claim_id not in seen_ids, 'Duplicate gallery evidence combination')
         seen_ids.add(claim_id)
         claims.append({
-            'id': claim_id, 'candidate_id': candidate_id, 'resource_identity': None,
-            'kind': 'gallery_co_use', 'scope': 'family', 'direction': 'supports',
+            'id': claim_id, 'candidate_id': candidate_id,
+            'resource_identity': None, 'kind': 'gallery_co_use',
+            'scope': 'family', 'direction': 'supports',
             'objective': 'compatibility', 'observations': observations_count,
             'independent_sources': uploaders,
             'source': {'locator': 'Retained ' + host + ' gallery composition',
@@ -237,8 +240,10 @@ def gallery_claims(report: dict[str, Any], candidate_id: str, version_id: int,
 def adapt(value: Any) -> dict[str, Any]:
     need(isinstance(value, dict) and set(value) == {'format', 'report', 'mapping'},
          'Supply format, report and mapping')
-    need(len(canonical(value)) <= MAX_INPUT_BYTES, 'Source mapping input exceeds 1 MiB')
-    need(value['format'] == INPUT_FORMAT, 'Unsupported setup source adapter request')
+    need(len(canonical(value)) <= MAX_INPUT_BYTES,
+         'Source mapping input exceeds 1 MiB')
+    need(value['format'] == INPUT_FORMAT,
+         'Unsupported setup source adapter request')
     report = validate_report(value['report'])
     mapping = validate_mapping(value['mapping'])
     need(report['context_sha256'] == mapping['expected_source_context'],
@@ -247,22 +252,33 @@ def adapt(value: Any) -> dict[str, Any]:
     need(resource.get('identity') == mapping['resource_identity'],
          'Retained source resource identity does not match the reviewed mapping')
     version_id = resource.get('version_id')
-    need(type(version_id) is int and version_id > 0, 'Source version identity is required')
+    need(type(version_id) is int and version_id > 0,
+         'Source version identity is required')
     source_host = resource.get('source_host')
-    need(source_host in ('civitai.com', 'civitai.red'), 'Unsupported source resource host')
-    receipt_identity = sha256(resource.get('receipt_sha256'), 'Source resource receipt')
+    need(source_host in ('civitai.com', 'civitai.red'),
+         'Unsupported source resource host')
+    receipt_identity = sha256(resource.get('receipt_sha256'),
+                              'Source resource receipt')
     selected = select_file(resource, mapping['file_identity'])
     candidate = mapping['candidate']
     diagnostics = provider_diagnostics(resource, candidate, selected)
+    if not report['coverage_complete']:
+        diagnostics.append({
+            'code': 'source_coverage_incomplete',
+            'message': ('Retained gallery coverage is incomplete; positive observations remain '
+                        'inspectable, but missing records cannot establish absence.'),
+        })
     source_diagnostics = copy.deepcopy(report['diagnostics'])
     reviewed_at = mapping['review']['reviewed_at']
     provider_identity = digest({'candidate_id': candidate['id'],
                                 'resource_identity': mapping['resource_identity'],
                                 'file_identity': mapping['file_identity']})
     provider_evidence = {
-        'id': 'provider-' + provider_identity[:24], 'candidate_id': candidate['id'],
-        'resource_identity': candidate['identity'], 'kind': 'provider_metadata',
-        'scope': 'exact_resource', 'direction': 'supports', 'objective': 'compatibility',
+        'id': 'provider-' + provider_identity[:24],
+        'candidate_id': candidate['id'],
+        'resource_identity': candidate['identity'],
+        'kind': 'provider_metadata', 'scope': 'exact_resource',
+        'direction': 'supports', 'objective': 'compatibility',
         'observations': 1, 'independent_sources': 1,
         'source': {'locator': 'Retained Civitai model-version metadata',
                    'revision': 'sha256:' + receipt_identity,
@@ -271,44 +287,78 @@ def adapt(value: Any) -> dict[str, Any]:
     provider_evidence = compatibility.validate_evidence(provider_evidence)
     source_observations, gallery = gallery_claims(
         report, candidate['id'], version_id, reviewed_at, diagnostics)
-    evidence = [provider_evidence] + [compatibility.validate_evidence(item) for item in gallery]
+    evidence = [provider_evidence] + [
+        compatibility.validate_evidence(item) for item in gallery
+    ]
     diagnostics.sort(key=lambda item: canonical(item))
-    basis = {'format': INPUT_FORMAT, 'source_context': report['context_sha256'],
-             'review': mapping['review'], 'candidate': candidate, 'selected_file': selected,
-             'evidence': evidence, 'source_observations': source_observations,
-             'source_diagnostics': source_diagnostics, 'diagnostics': diagnostics}
-    return {'format': REPORT_FORMAT, 'context_sha256': digest(basis),
-            'source_context_sha256': report['context_sha256'],
-            'review_revision': mapping['review']['revision'],
-            'candidate': copy.deepcopy(candidate), 'evidence': evidence,
-            'source_observations': source_observations,
-            'source_diagnostics': source_diagnostics, 'diagnostics': diagnostics,
-            'provider_claims': {'model_type': copy.deepcopy(resource.get('model_type')),
-                                'base_model': copy.deepcopy(resource.get('base_model')),
-                                'base_model_type': copy.deepcopy(resource.get('base_model_type')),
-                                'file_format': copy.deepcopy(selected.get('format')),
-                                'terms': copy.deepcopy(resource.get('terms'))},
-            'provider_accessed': False, 'file_hashed': False, 'model_downloaded': False,
-            'selection_changed': False, 'installation_authorized': False,
-            'generation_submitted': False,
-            'notice': 'Provider metadata and gallery co-use remain retained evidence only. Reviewed mappings supply compatibility facts; no provider, setup, model, runtime or queue was changed.'}
+    basis = {
+        'format': INPUT_FORMAT,
+        'source_context': report['context_sha256'],
+        'source_coverage_complete': report['coverage_complete'],
+        'review': mapping['review'],
+        'candidate': candidate,
+        'selected_file': selected,
+        'evidence': evidence,
+        'source_observations': source_observations,
+        'source_diagnostics': source_diagnostics,
+        'diagnostics': diagnostics,
+    }
+    return {
+        'format': REPORT_FORMAT,
+        'context_sha256': digest(basis),
+        'source_context_sha256': report['context_sha256'],
+        'source_coverage_complete': report['coverage_complete'],
+        'review_revision': mapping['review']['revision'],
+        'candidate': copy.deepcopy(candidate),
+        'evidence': evidence,
+        'source_observations': source_observations,
+        'source_diagnostics': source_diagnostics,
+        'diagnostics': diagnostics,
+        'provider_claims': {
+            'model_type': copy.deepcopy(resource.get('model_type')),
+            'base_model': copy.deepcopy(resource.get('base_model')),
+            'base_model_type': copy.deepcopy(resource.get('base_model_type')),
+            'file_format': copy.deepcopy(selected.get('format')),
+            'terms': copy.deepcopy(resource.get('terms')),
+        },
+        'provider_accessed': False,
+        'file_hashed': False,
+        'model_downloaded': False,
+        'selection_changed': False,
+        'installation_authorized': False,
+        'generation_submitted': False,
+        'notice': ('Provider metadata and gallery co-use remain retained evidence only. '
+                   'Reviewed mappings supply compatibility facts; no provider, setup, '
+                   'model, runtime or queue was changed.'),
+    }
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    with path.open('rb') as stream: raw = stream.read(MAX_INPUT_BYTES + 1)
+    with path.open('rb') as stream:
+        raw = stream.read(MAX_INPUT_BYTES + 1)
     return decode(raw)
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mapping', type=Path,
-                        help='Retained source report plus reviewed mapping; no provider request is made')
+    parser.add_argument(
+        'mapping', type=Path,
+        help='Retained source report plus reviewed mapping; no provider request is made')
     args = parser.parse_args(argv)
-    try: result = adapt(read_json(args.mapping))
-    except (ValueError, TypeError, KeyError, OSError, UnicodeError, json.JSONDecodeError) as exc:
-        print(json.dumps({'error': {'code': 'invalid_source_mapping', 'message': str(exc)[:500]}},
-                         ensure_ascii=False, allow_nan=False)); return 2
-    print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False)); return 0
+    try:
+        result = adapt(read_json(args.mapping))
+    except (ValueError, TypeError, KeyError, OSError, UnicodeError,
+            json.JSONDecodeError) as exc:
+        print(json.dumps({
+            'error': {
+                'code': 'invalid_source_mapping',
+                'message': str(exc)[:500],
+            },
+        }, ensure_ascii=False, allow_nan=False))
+        return 2
+    print(json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False))
+    return 0
 
 
-if __name__ == '__main__': raise SystemExit(main())
+if __name__ == '__main__':
+    raise SystemExit(main())
