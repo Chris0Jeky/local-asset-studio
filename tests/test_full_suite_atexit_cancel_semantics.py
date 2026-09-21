@@ -49,6 +49,25 @@ class AtexitCancelSemanticsTests(unittest.TestCase):
 
         self.assertEqual(callback.comparisons, 1)
 
+    def test_inner_cancel_unwinds_the_outer_observer_registration(self):
+        outer = AtexitCallbackObserver(stream=io.StringIO())
+        inner = AtexitCallbackObserver(stream=io.StringIO())
+        callback = _ExplosiveEqualityCallback()
+        outer.install()
+        try:
+            inner.install()
+            try:
+                atexit.register(callback)
+            finally:
+                inner.restore(cancel=True)
+
+            self.assertEqual(outer._registrations, [])
+            self.assertEqual(callback.comparisons, 0)
+        finally:
+            if inner._installed:
+                inner.restore(cancel=True)
+            outer.restore(cancel=True)
+
 
 if __name__ == "__main__":
     unittest.main()
