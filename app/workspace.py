@@ -81,6 +81,8 @@ class AssetWorkspace:
             db.execute("INSERT OR IGNORE INTO workspace_identity VALUES (1,?)", (uuid.uuid4().hex,))
             if "metadata_revision" not in {r["name"] for r in db.execute("PRAGMA table_info(assets)")}:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
+            from studio_workflow.collection_commands import migrate
+            migrate(db)
 
     @staticmethod
     def _enable_wal(db):
@@ -222,36 +224,22 @@ class AssetWorkspace:
         return value.strip()
 
     def collection(self, payload):
-        action = payload.get("action", "create")
-        identifier = payload.get("id")
-        with self.connection() as db:
-            db.execute("BEGIN IMMEDIATE")
-            identity = self._check_scope(db, self._validate_scope(payload["workspace_id"]) if "workspace_id" in payload else None)
-            scope = {"workspace_id": identity} if "workspace_id" in payload else {}
-            if action in ("rename", "delete"):
-                if not db.execute("SELECT id FROM collections WHERE id=?", (identifier,)).fetchone():
-                    raise WorkspaceError("Collection not found")
-                if action == "delete":
-                    if db.execute("SELECT 1 FROM assets WHERE metadata_revision>=? AND id IN "
-                                  "(SELECT asset_id FROM collection_assets WHERE collection_id=?)", (MAX_REVISION, identifier)).fetchone():
-                        raise WorkspaceError("Asset revision limit reached; collection was preserved")
-                    db.execute("UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN "
-                               "(SELECT asset_id FROM collection_assets WHERE collection_id=?)", (identifier,))
-                    db.execute("DELETE FROM collections WHERE id=?", (identifier,))
-                    return {"id": identifier, "deleted": True, **scope}
-            elif action == "create":
-                identifier = uuid.uuid4().hex
-            else:
-                raise WorkspaceError("Unknown collection action")
-            name = self.text(payload.get("name"), "Collection name", 100)
-            if not name:
-                raise WorkspaceError("Give the collection a name")
-            description = self.text(payload.get("description", ""), "Description", 1000)
-            if action == "create":
-                db.execute("INSERT INTO collections VALUES (?,?,?,?)", (identifier, name, description, time.time()))
-            else:
-                db.execute("UPDATE collections SET name=?,description=? WHERE id=?", (name, description, identifier))
-        return {"id": identifier, "name": name, "description": description, **scope}
+        from studio_workflow.collection_commands import CollectionCommands, CollectionError
+        try:
+            service = CollectionCommands(self)
+            versioned = isinstance(payload, dict) and bool(set(payload) & {"format", "workspace_id", "request_id", "expected_revision"})
+            return service.command(payload) if versioned else service.legacy(payload)
+        except CollectionError as exc:
+            result = exc.response()
+            raise WorkspaceError(result.pop("error"), status=exc.status, code=result.pop("code"), **result) from exc
+
+    def collection_status(self, request_id, expected_workspace_id):
+        from studio_workflow.collection_commands import CollectionCommands, CollectionError
+        try:
+            return CollectionCommands(self).status(request_id, expected_workspace_id)
+        except CollectionError as exc:
+            result = exc.response()
+            raise WorkspaceError(result.pop("error"), status=exc.status, code=result.pop("code"), **result) from exc
 
     @staticmethod
     def request_id(value):

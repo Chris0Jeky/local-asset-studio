@@ -21,9 +21,16 @@ const presets = ['plain', 'gentle-variation', 'qwen-1ref', 'qwen-3ref', 'wan22-i
   continuation_capability: {consumes_source: id !== 'plain', operation: operation(id), prompt_role: id.startsWith('qwen') ? 'instruction' : id === 'wan22-i2v' ? 'motion' : 'description', requires_mask: false, reference_count: id.startsWith('qwen') ? (id === 'qwen-1ref' ? 1 : 3) : 1, template_sha256: templateSha},
 })).concat([{id: 'h3-first-last', name: 'h3-first-last', modality: 'video', reference: ['4', 'image'], last_reference: ['5', 'image']}]);
 
-presets[presets.length - 1].positive = ['1', 'text'];
-presets[presets.length - 1].defaults = {};
-presets[presets.length - 1].continuation_capability = {consumes_source: true, operation: 'image-to-video', prompt_role: 'motion', requires_mask: false, reference_count: 2, template_sha256: templateSha};
+// Two Combine boards with opposite reference orders: the 4B keeps its source as image 1, the 9B puts the board picture first.
+for (const [id, boardLabel, keepLabel] of [['combine-4b', 'Pose picture (image 2)', 'Picture to keep (image 1)'], ['combine-9b', 'Pose picture (image 1)', 'Picture to keep (image 2)']]) {
+  presets.push({id, name: id, modality: 'image', positive: ['1', 'text'], defaults: {}, last_reference: ['20', 'image'], last_reference_label: keepLabel,
+    reference_board: {min: 1}, reference_board_label: boardLabel, reference_slots: [{role: 'pose', contribution: '', avoid: ''}],
+    continuation_capability: {consumes_source: true, operation: 'combine', prompt_role: 'description', requires_mask: false, reference_count: 2, template_sha256: templateSha}});
+}
+
+presets[presets.length - 3].positive = ['1', 'text'];
+presets[presets.length - 3].defaults = {};
+presets[presets.length - 3].continuation_capability = {consumes_source: true, operation: 'image-to-video', prompt_role: 'motion', requires_mask: false, reference_count: 2, template_sha256: templateSha};
 
 function sourceAttachment(file, parent = 'source-asset', sha256 = 'a'.repeat(64)) {
   return {file, sha256, width: 512, height: 768, parent_asset: parent, context: {
@@ -64,7 +71,7 @@ function sandbox(attached, local, availability = null, diagnostic = null) {
       return {ok: !(url.includes('/i2v-diagnostic') && diagnostic?.error), json: async () => data, blob: async () => new Blob(['image'], {type: 'image/png'})};
     },
   });
-  for (const name of ['app.js', 'references.js', 'workspace.js']) {
+  for (const name of ['app.js', 'reference-model.js', 'references.js', 'workspace.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8'), context);
   }
   const run = source => vm.runInContext(source, context);
@@ -168,6 +175,17 @@ async function swapDropsHandoffLineage(handoffPreset) {
   assert.equal(requests.some(r => r.url === '/api/setups'), false, 'An unstaged replacement cannot be reported saved');
   assert.match(element('#setupStatus').textContent,/not uploaded/);
   assert.deepEqual(parents(), [], 'The unsaved replacement still drops the old source');
+}
+
+// The board summary states the reference order the recipe's own labels declare: the 9B Combine keeps the board
+// picture as image 1 and the source follows; the 4B keeps the source as image 1 (the summary used to say the 4B
+// order for both, contradicting the 9B recipe's labels on the same screen).
+async function boardSummaryFollowsTheRecipeOrder() {
+  const {run, element} = sandbox(sourceAttachment('a'.repeat(32) + '_from-asset-a.png'), {file: 'own.png', sha256: 'c'.repeat(64), width: 512, height: 768});
+  run(`selectPreset('combine-9b')`);
+  assert.match(element('#referenceSummary').textContent, /the pose picture on the board is image 1 \(its structure is kept\), the picture you keep follows it as image 2/);
+  run(`selectPreset('combine-4b')`);
+  assert.match(element('#referenceSummary').textContent, /image 1 is the picture you keep, a pose picture on the board follows it as image 2 \(and 3\)/);
 }
 
 // On a role board the lineage is per slot: replacing one image drops only that image's source.
@@ -408,6 +426,34 @@ async function unstagedLocalFilesCannotBeSaved() {
 }
 
 
+// #345: a board recipe has a named continuation source and role slots at the same time.
+// Copying that same asset into a role slot must not let clearing the slot erase the source lineage.
+async function boardContinuationSourceHasItsOwnLineageClaim() {
+  const attached = sourceAttachment('source-copy.png', 'source-asset');
+  const local = {file: 'replacement.png', sha256: 'c'.repeat(64), width: 640, height: 640};
+  const s = sandbox(attached, local);
+  s.run(`selectPreset('combine-9b');
+    lastUploaded='continuation-source.png';
+    claimInputParent('lastReference','source-asset');
+    Object.assign(referenceRecords[0],{file:'source-copy.png',sha256:'a'.repeat(64),width:512,height:768,parent_asset:'source-asset',missing:false});
+    parentAssets=['source-asset'];renderReferenceSlots();`);
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')),
+    {lastReference:'source-asset'}, 'The continuation source needs an independent named-input claim on board recipes');
+  s.element('#saveName').value = 'Board continuation lineage';
+  await s.element('#save').onclick();
+  const saved = s.requests.find(request => request.url === '/api/setups').data.recipe;
+  assert.deepEqual(saved.parent_by_input, {lastReference:'source-asset'});
+  assert.deepEqual(saved.parent_assets, ['source-asset']);
+  s.run(`selectPreset('plain');applySaved(${JSON.stringify(saved)});`);
+  await flush(); // Settle the saved role availability check before the replacement upload.
+  assert.deepEqual(JSON.parse(s.run('JSON.stringify(parentByInput)')),
+    {lastReference:'source-asset'}, 'Reloading a board setup must restore the named continuation-source claim');
+  assert.equal(s.run('lastUploaded'), 'continuation-source.png');
+  await s.run(`uploadRoleFile(0,${JSON.stringify(localFile('replacement.png'))})`);
+  assert.deepEqual(s.parents(), ['source-asset'], 'Replacing the matching board slot must retain the reloaded continuation source parent');
+  assert.equal(s.run('lastUploaded'), 'continuation-source.png');
+}
+
 // The recipe picker stays interactive while /api/upload is in flight; a swap in that window must not submit.
 async function recipeSwapDuringUploadNeverSubmits() {
   const s = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
@@ -456,6 +502,8 @@ async function recipeSwapDuringUploadNeverSubmits() {
   }
   for (const target of ['anime-detail-fix', 'krea-refine']) await swapDropsHandoffLineage(target);
   await slotSwapKeepsTheOtherSlots();
+  await boardContinuationSourceHasItsOwnLineageClaim();
+  await boardSummaryFollowsTheRecipeOrder();
   await firstLastFramesAttributeSeparately();
   await savedSetupCarriesPerInputAttribution();
   await legacySetupWithoutAttributionIsUnchanged();

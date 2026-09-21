@@ -4,7 +4,7 @@ const safeUrl = url => { try { const u = new URL(url); return ['http:','https:']
 const gib = n => (Number(n || 0) / 1024 ** 3).toFixed(2) + ' GiB';
 const loraSlotKeys = ['lora','lora2','lora3','lora4','lora5','lora6'];
 const loraNameKey = key => key + '_name';
-const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','sampler','scheduler'];
+const controlKeys = ['seed','steps','cfg','width','height','denoise','lora','lora2','lora3','lora4','lora5','lora6','lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler'];
 let catalog, selected, online = null, schemaAvailable = false, workerAlive = true, healthError = false, missingByPreset = {}, jobs = [], pinned = [], uploaded = null, lastUploaded = null, library, mode = 'all', submitting = false, view = 'create', jobsSignature = '', jobsDataSignature = '', activeJobId = null, readPoller = null;
 let recipeTemplateHash = null, parentAssets = [], parentByInput = {}, serverSetups = [], knowledge = null, atelierRecipes = [], installedLoras = [];
 let continuationState = null, continuationSource = null;
@@ -99,15 +99,15 @@ function scheduleTimeEstimate() {
 }
 const referenceHint = () => selected?.requires_rgba_mask ? 'Required: upload a real RGBA PNG; retain the image RGB, make the repair region transparent, and use width and height divisible by 8.' : (selected?.reference_hint || "PNG, JPG or WebP · up to 20 MiB. The recipe's example is used until replaced.");
 function clearReference() { uploaded = lastUploaded = null; parentAssets=[]; parentByInput={}; if(typeof resetReferenceSlots==='function')resetReferenceSlots(); $('#reference').value = ''; $('#lastReference').value = ''; $('#referenceHint').textContent = referenceHint(); }
-// Lineage is attributed per attachment point. A slot-less input records its source in parentByInput;
-// a role slot records it on the reference record itself (parent_asset, supplied by
+// Lineage is attributed per attachment point. A slot-less input and a board's distinct lastReference
+// source record their claim in parentByInput; a role slot records it on its reference record (parent_asset, supplied by
 // /api/assets/reference). A parent survives while any attachment point still claims it, and a parent
 // with no attribution anywhere - a job-exported recipe, a production branch - is never dropped by an
 // edit: only the point that changed may release what that point claimed.
 function parentClaimed(id) { const attached=typeof attachedReferencePayload==='function'?attachedReferencePayload():[]; return Object.values(parentByInput).includes(id)||attached.some(r=>r.file&&!r.missing&&r.parent_asset===id); }
 function releaseParentAsset(id) { if(id&&!parentClaimed(id))parentAssets=parentAssets.filter(p=>p!==id); }
 function releaseInputParent(input) { if(!(input in parentByInput))return; const id=parentByInput[input]; delete parentByInput[input]; releaseParentAsset(id); }
-function claimInputParent(input, id) { releaseInputParent(input); if(!id)return; if(!selected?.reference_slots?.length)parentByInput[input]=id; if(!parentAssets.includes(id))parentAssets=[...parentAssets,id]; }
+function claimInputParent(input, id) { releaseInputParent(input); if(!id)return; if(!selected?.reference_slots?.length||input==='lastReference')parentByInput[input]=id; if(!parentAssets.includes(id))parentAssets=[...parentAssets,id]; }
 // Pulling a saved source into one attachment point replaces whatever that point held before.
 function replaceParentAsset(input, previous, id) { releaseParentAsset(previous); claimInputParent(input, id); }
 // A handoff declares the whole lineage: this run descends from one source, on one input.
@@ -196,11 +196,60 @@ const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
 function rememberNegativeCollapse(open) { try { sessionStorage.setItem(NEGATIVE_COLLAPSE_KEY, open ? '0' : '1'); } catch (e) {} }
 $('#negativeWrap')?.addEventListener('toggle', () => rememberNegativeCollapse($('#negativeWrap').open));
+// A long recipe description is a research report above step 01: the card shows its first sentence and what the recipe
+// asks you to type; the measurements and the licence paragraph stay one disclosure away (#422 slice A).
+function insertWildcard(name) {
+  const field = $('#positive'); if (!field || field.hidden) return;
+  const token = '__' + name + '__';
+  const start = field.selectionStart ?? field.value.length, end = field.selectionEnd ?? start;
+  const before = field.value.slice(0, start), after = field.value.slice(end);
+  const padLeft = before && !/\s$/.test(before) ? ' ' : '';
+  const padRight = after && !/^\s/.test(after) ? ' ' : '';
+  field.value = before + padLeft + token + padRight + after;
+  const cursor = (before + padLeft + token).length;
+  field.focus(); field.setSelectionRange(cursor, cursor);
+  field.dispatchEvent(new Event('input', {bubbles: true}));
+  if (typeof updateReady === 'function') updateReady();
+}
+function renderWildcardChips() {
+  const host = $('#wildcardChips'); if (!host) return;
+  const list = catalog?.wildcards || [];
+  if (!selected?.positive || !list.length) { host.hidden = true; host.innerHTML = ''; return; }
+  host.hidden = false;
+  host.innerHTML = '<p class="muted">Insert a wildcard. Server expands __name__ from presets/wildcards at Generate, one line per batch member.</p>'
+    + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('');
+}
+function renderNsfwIntel() {
+  const box = $('#nsfwIntel'), body = $('#nsfwIntelBody');
+  if (!box || !body) return;
+  const lab = knowledge?.nsfw_lab;
+  const family = selected?.family || '';
+  const entry = lab?.families?.[family];
+  if (!selected?.positive || !lab || !entry) { box.hidden = true; body.innerHTML = ''; return; }
+  box.hidden = false;
+  const wild = (lab.wildcards || []).map(w => '<li><code>__' + esc(w.name) + '__</code> — ' + esc(w.use) + '</li>').join('');
+  body.innerHTML = '<p class="muted">' + esc(lab.caveat || '') + '</p>'
+    + '<p><b>Undress</b> ' + esc(entry.undress || '') + '</p>'
+    + '<p><b>Finish</b> ' + esc(entry.attractive || '') + '</p>'
+    + '<p><b>Watch</b> ' + esc(entry.avoid || '') + '</p>'
+    + (wild ? '<ul>' + wild + '</ul>' : '')
+    + (lab.gallery ? '<p><a href="' + esc(lab.gallery) + '">Open the lab collection</a></p>' : '');
+}
+function recipeCard(preset) {
+  const description = String(preset.description || ''), note = String(preset.commercial_note || '');
+  const cut = description.length > 260 ? description.search(/\.\s(?=[A-Z])/) : -1;
+  if (cut < 40) return '<p>' + esc(description) + '</p><small>' + esc(note) + '</small>';
+  const fills = typeof StudioContinuation !== 'undefined' ? StudioContinuation.fills(preset, preset.continuation_prompt) : [];
+  const typing = fills.length ? '<p class="recipe-typing">You fill in: ' + esc(fills.map(f => f.label.toLowerCase()).join(' · ')) + '.</p>' : '';
+  return '<p>' + esc(description.slice(0, cut + 1)) + '</p>' + typing + '<details class="create-context-help recipe-more"><summary>More about this recipe</summary><p>' + esc(description.slice(cut + 1).trim()) + '</p><small>' + esc(note) + '</small></details>';
+}
 function renderSelected() {
   if (!selected) return;
-  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2><p>' + esc(selected.description) + '</p><small>' + esc(selected.commercial_note) + '</small>';
+  $('#selectedPreset').innerHTML = '<span class="badge">' + esc(selected.family || selected.category) + '</span> <span class="badge ' + (selected.verified ? 'tested' : '') + '">' + (selected.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</span><h2>' + esc(selected.name) + '</h2>' + recipeCard(selected);
   $('#positiveWrap').hidden = !selected.positive;
   $('#positive').value = selected.defaults?.positive || ''; $('#negative').value = selected.defaults?.negative || ''; $('#negativeWrap').hidden = !selected.negative;
+  renderWildcardChips();
+  renderNsfwIntel();
   // What to avoid is part of the brief, not an advanced setting: open it whenever the recipe binds it,
   // and keep it collapsible. A manual collapse is remembered for this tab only (#278 friction 3).
   if (selected.negative) $('#negativeWrap').open = !negativeCollapsed();
@@ -208,7 +257,7 @@ function renderSelected() {
   const variants = selected.variants || [{name:'3-seed audition',batch_count:3}];
   $('#variants').innerHTML = variants.map((v,i) => '<button data-variant="' + i + '"><b>' + esc(v.name) + '</b>' + (selected.reference && typeof StudioContinuation !== 'undefined' ? '<small>' + esc(StudioContinuation.variantHelp(selected,v)) + '</small>' : '') + '</button>').join('');
   const i2vModeControl = selected.i2v_modes?.length ? '<label>I2V mode<select id="i2vMode" data-key="mode">' + selected.i2v_modes.map(spec => '<option value="' + esc(spec.id) + '">' + esc(spec.name || spec.id) + '</option>').join('') + '</select><small id="i2vModeNote"></small></label>' : '';
-  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['style_weight','Style weight','number','min="0" max="2" step="0.05"'],['pose_strength','Pose strength','number','min="0" max="2" step="0.05"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
+  const specs = [['seed','Seed','number','min="0" max="9007199254740991" step="1"'],['steps','Steps','number','min="1" max="150"'],['cfg','Guidance (CFG)','number','min="0" max="30" step="0.1"'],['width','Width','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['height','Height','number','min="64" max="' + ((selected.dimension_limits || [])[1] || 1536) + '" step="' + (selected.dimension_multiple || 8) + '"'],['denoise','Denoise','number','min="0" max="1" step="0.01"'],['style_weight','Style weight','number','min="0" max="2" step="0.05"'],['pose_strength','Pose strength','number','min="0" max="2" step="0.05"'],['depth_cut','Cut the depth map below (% of its height; 100 = keep all)','number','min="0" max="100" step="1"'],['lora','LoRA strength','number','min="0" max="2" step="0.05"'],['lora2','LoRA 2 strength','number','min="0" max="2" step="0.05"'],['lora3','LoRA 3 strength','number','min="0" max="2" step="0.05"'],['lora4','LoRA 4 strength','number','min="0" max="2" step="0.05"'],['lora5','LoRA 5 strength','number','min="0" max="2" step="0.05"'],['lora6','LoRA 6 strength','number','min="0" max="2" step="0.05"'],['frames','Frames','number','min="5" max="365" step="' + (selected.frame_grid || 1) + '"'],['fps','Frames per second','number','min="1" max="60" step="1"'],['sampler','Sampler','select',''],['scheduler','Schedule','select','']];
   const inStack = new Set(activeLoraSlots().flatMap(k => [k, loraNameKey(k)]));
   $('#controls').innerHTML = i2vModeControl + specs.filter(([k]) => (selected[k] || selected.bindings_extra?.[k]) && !inStack.has(k)).map(([key,label,type,attrs]) => {
     if(['width','height'].includes(key)&&selected.dimension_limits)attrs='min="'+selected.dimension_limits[0]+'" max="'+selected.dimension_limits[1]+'" step="'+(selected.dimension_multiple||8)+'"';
@@ -350,7 +399,7 @@ async function mixedBatchAction(button) {
 function renderJobs(signature=JSON.stringify(jobs)) {
   if(signature===jobsSignature)return; jobsSignature=signature;
   const mixedDrafts=new Map([...document.querySelectorAll('.mixedBatchControls')].map(box=>[box.dataset.job,{revision:box.dataset.revision,open:box.open,reason:box.querySelector('[data-mixed-reason]')?.value,ack:box.querySelector('[data-mixed-ack]')?.checked}]));
-  const cards=[];
+  const cards=[],problems=[],problemsOpen=$('#jobProblems')?.open;
   jobs.forEach(job=>{
     if(job.status!=='completed'){
       const stopped=job.tracking_disposition?.status==='stopped', promptIds=(job.prompt_ids||[]).join(', ');
@@ -362,11 +411,15 @@ function renderJobs(signature=JSON.stringify(jobs)) {
       const stop=job.can_stop_tracking?'<label>Reason for stopping tracking<input class="stopTrackingReason" data-stop-tracking-reason="'+esc(job.id)+'" maxlength="1000" required></label><button class="stopTracking" data-job="'+esc(job.id)+'">Stop tracking</button>':'';
       const abandonNote=job.abandonment?'<p><b>Abandoned locally</b>: '+esc(job.abandonment.reason)+'<br><small>'+esc(job.abandonment.basis==='never_submitted'?'No submission was recorded.':'Remote outcome remains unknown; no cancellation was sent.')+'</small></p>':'';
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
-      cards.push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
+      (['failed','partial','uncertain','abandoned'].includes(job.status)?problems:cards).push('<article class="jobStatus '+esc(job.status)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button></article>');
     }
     job.outputs?.forEach((o,i)=>{if(cards.length>=10)return;const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(!a?.trashed_at)cards.push(mediaCard(job,i,o));});
   });
-  $('#gallery').className=cards.length?'gallery':'galleryEmpty'; $('#gallery').innerHTML=cards.length?cards.join(''):'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>' ;
+  const problemMarkup=problems.length?'<details id="jobProblems" class="job-problems" '+(problemsOpen?'open':'')+'><summary>Problems · '+problems.length+' run(s)</summary>'+problems.join('')+'</details>':'';
+  const host=document.getElementById?.('jobProblemsHost')||null;
+  $('#gallery').className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
+  $('#gallery').innerHTML=(cards.length?cards.join(''):(problems.length&&!host)?'':'The next good idea starts here.<small>Your outputs and recipes stay on this computer.</small>')+(host?'':problemMarkup);
+  if(host)host.innerHTML=problemMarkup;
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
   renderCompare();
 }
@@ -419,18 +472,17 @@ function applySaved(s){
   Object.entries(s.controls||{}).forEach(([k,v])=>{if(k==='mode')return;const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
-  // A saved setup round-trips each role record's parent_asset and, since #108, the slot-less mapping
-  // itself. Restore the recorded mapping rather than re-deriving it; only a legacy record that carries
-  // no mapping falls back to the unambiguous single-parent, single-input guess. A job-exported recipe
-  // has neither, and an unattributed parent is never dropped by a later edit.
-  if(!selected.reference_slots?.length){
-    const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
-    // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
-    // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
-    const saved=s.parent_by_input,mapped=saved&&typeof saved==='object'&&!Array.isArray(saved)&&Object.keys(saved).length?saved:null;
-    if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
-    else if(parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
-  }
+  // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
+  // Board recipes still have a named lastReference continuation source, independent of their role slots.
+  // Restore recorded mappings rather than re-deriving them; only a legacy slot-less record with no mapping
+  // falls back to the unambiguous single-parent, single-input guess. A job-exported recipe has neither,
+  // and an unattributed parent is never dropped by a later edit.
+  const filled=[['reference',uploaded],['lastReference',lastUploaded]].filter(([,file])=>file);
+  // An empty mapping is absence, not a recorded "nothing": a draft or setup written before #112 has
+  // no attribution to restore, and reading {} as one would make the legacy fallback unreachable.
+  const savedMapping=s.parent_by_input,mapped=savedMapping&&typeof savedMapping==='object'&&!Array.isArray(savedMapping)&&Object.keys(savedMapping).length?savedMapping:null;
+  if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
+  else if(!selected.reference_slots?.length&&parentAssets.length===1&&filled.length===1)parentByInput={[filled[0][0]]:parentAssets[0]};
   $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
@@ -474,6 +526,10 @@ document.querySelector('nav').onclick=e=>{if(e.target.dataset.view)showView(e.ta
 $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPresets;
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)try{selectPreset(id);}catch(err){message(err.message,true);}};
+$('#wildcardChips')?.addEventListener('click', e => {
+  const name = e.target.closest('[data-wildcard]')?.dataset.wildcard;
+  if (name) insertWildcard(name);
+});
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
 $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};

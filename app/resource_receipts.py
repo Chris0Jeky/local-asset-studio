@@ -89,7 +89,64 @@ def _directories(path):
         require(_plain(parent.lstat(), stat.S_ISDIR), 'directory_not_plain')
 
 
-def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
+class _BoundedRead:
+    """Non-seekable consumer view; byte count and real EOF belong to the reader."""
+    def __init__(self, stream, limit):
+        self.stream, self.limit = stream, limit
+        self.count, self.eof, self.after = 0, False, None
+        self.digest = hashlib.sha256()
+
+    def read(self, count):
+        require(type(count) is int and 0 <= count <= 65536, 'stream_read_invalid')
+        if count == 0: return b''
+        data = self.stream.read(min(count, self.limit - self.count + 1))
+        self.count += len(data)
+        require(self.count <= self.limit, 'artifact_too_large')
+        self.digest.update(data)
+        self.eof = not data
+        if self.eof:
+            # A consumer may perform a replacement after it has parsed the
+            # complete source. Close the descriptor at verified EOF so that
+            # Windows can complete that rename; retain the descriptor stat
+            # for the identity bracket below.
+            self.after = os.fstat(self.stream.fileno())
+            self.stream.close()
+        return data
+
+
+def _content_fingerprint(path: Path, limit: int) -> tuple[int, str]:
+    """Re-read one bounded plain file without retaining its bytes."""
+    try:
+        _directories(path.parent)
+        before = path.lstat()
+        require(_plain(before, stat.S_ISREG) and before.st_size <= limit, 'file_changed')
+        flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0)
+        fd = os.open(path, flags)
+        try:
+            opened = os.fstat(fd)
+            require(_plain(opened, stat.S_ISREG) and _cross_signature(opened) == _cross_signature(before), 'file_changed')
+            digest, count = hashlib.sha256(), 0
+            while True:
+                data = os.read(fd, min(65536, limit - count + 1))
+                if not data: break
+                count += len(data)
+                require(count <= limit, 'file_changed')
+                digest.update(data)
+            after = os.fstat(fd)
+        finally:
+            os.close(fd)
+        require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
+                and count == before.st_size, 'file_changed')
+        return count, digest.hexdigest()
+    except EvidenceError:
+        raise
+    except FileNotFoundError:
+        raise EvidenceError('file_changed') from None
+    except OSError:
+        raise EvidenceError('artifact_unreadable') from None
+
+
+def _capture_file(path: Path, limit: int, consume=None) -> tuple[object, tuple]:
     """Bound the actual read and bracket one regular file with identity checks.
 
     This is not a filesystem lease or an OS sandbox against hostile parent races.
@@ -108,21 +165,50 @@ def _capture_file(path: Path, limit: int) -> tuple[bytes, tuple]:
             require(_plain(opened, stat.S_ISREG) and _cross_signature(opened) == _cross_signature(before), 'file_changed')
             stream = os.fdopen(fd, 'rb'); fd = None
             with stream:
-                data = stream.read(limit + 1)
-                after = os.fstat(stream.fileno())
+                if consume is None:
+                    data = stream.read(limit + 1)
+                    count = len(data)
+                    source_digest = sha256(data)
+                else:
+                    reader = _BoundedRead(stream, limit)
+                    data = consume(reader)
+                    require(reader.eof, 'artifact_not_consumed')
+                    count = reader.count
+                    source_digest = reader.digest.hexdigest()
+                    after = reader.after
+                if consume is None:
+                    after = os.fstat(stream.fileno())
         finally:
             if fd is not None: os.close(fd)
-        require(len(data) <= limit, 'artifact_too_large')
+        require(count <= limit, 'artifact_too_large')
         require(_signature(after) == _signature(opened) and _signature(before) == _signature(path.lstat())
-                and len(data) == before.st_size, 'file_changed')
+                and count == before.st_size, 'file_changed')
+        verified_count, verified_digest = _content_fingerprint(path, limit)
+        require((verified_count, verified_digest) == (count, source_digest), 'file_changed')
         return data, _signature(before)
     except FileNotFoundError: raise EvidenceError('artifact_missing', incomplete=True) from None
     except OSError: raise EvidenceError('artifact_unreadable') from None
 
 
+def _capture_manifest_artifact(path: Path, limit: int) -> tuple[object, tuple]:
+    """Capture one artifact whose presence is promised by a final result manifest."""
+    try:
+        return _capture_file(path, limit)
+    except EvidenceError as error:
+        if error.code == 'artifact_missing':
+            raise EvidenceError('artifact_missing') from None
+        raise
+
+
 def read_evidence_file(path: Path, limit: int) -> bytes:
     """Capture one bounded file; the public byte-reader contract stays unchanged."""
     return _capture_file(path, limit)[0]
+
+
+def read_evidence_stream(path: Path, limit: int, consume):
+    """Run a bounded consumer; return only after EOF and original identity checks."""
+    require(callable(consume), 'stream_consumer_invalid')
+    return _capture_file(path, limit, consume)[0]
 
 
 def _context(value, job_id):
@@ -223,6 +309,18 @@ def _runtime(value, summary):
     return {'epoch': epoch, 'profile_sha256': profile, 'lost': value['lost'], 'last_bracket_at': last}
 
 
+def _verify_sample_window(records, finish, finished, sampling, warnings):
+    """Keep samples inside observer lifetime; disclose coordinator overshoot."""
+    if not sampling['observed']:
+        return
+    start = _timestamp(records[0]['recorded_at'])
+    first = _timestamp(sampling['first_observed_at'])
+    last = _timestamp(sampling['last_observed_at'])
+    require(start <= first and last <= finished, 'samples_outside_window')
+    if finish is not None and last > _timestamp(finish['recorded_at']):
+        warnings.append('sample_window_overshoot')
+
+
 def inspect_observation(directory: str | Path, *, expected_result_sha256: str | None = None,
                         expected_job_id: str | None = None) -> dict:
     """Verify one explicitly nominated v1 artifact set. No directory scanning/writes.
@@ -252,7 +350,7 @@ def inspect_observation(directory: str | Path, *, expected_result_sha256: str | 
         entry = manifest[name]
         require(isinstance(entry, dict) and set(entry) == {'sha256', 'bytes'} and is_hash(entry.get('sha256'))
                 and type(entry.get('bytes')) is int and 0 <= entry['bytes'] <= limit, 'artifact_manifest_invalid')
-        raw, signature = _capture_file(directory / name, limit)
+        raw, signature = _capture_manifest_artifact(directory / name, limit)
         require(len(raw) == entry['bytes'] and sha256(raw) == entry['sha256'], 'artifact_hash_mismatch')
         captured[name] = raw
         signatures[name] = signature
@@ -267,10 +365,7 @@ def inspect_observation(directory: str | Path, *, expected_result_sha256: str | 
     require(sampling['requested'] == limits['samples'] and sampling['interval_seconds_after_completion'] == limits['interval_seconds'],
             'sampling_contract_mismatch')
     require(_timestamp(records[-1]['recorded_at']) <= finished, 'timestamp_invalid')
-    if sampling['observed']:
-        end = _timestamp(finish['recorded_at']) if finish else finished
-        require(_timestamp(records[0]['recorded_at']) <= _timestamp(sampling['first_observed_at'])
-                and _timestamp(sampling['last_observed_at']) <= end, 'samples_outside_window')
+    _verify_sample_window(records, finish, finished, sampling, warnings)
     runtime = _runtime(result.get('runtime_binding'), summary)
     if not sampling['complete']: warnings.append('sampling_incomplete')
     if finish is None: warnings.append('coordinator_exit_missing')

@@ -1,14 +1,14 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {setup}=require('./asset_detail_contracts.cjs');
+const {setup,collectionReceipt}=require('./collection_editor_fixture.cjs');
 const source=path.join(__dirname,'../app/static/collection-editor.js');
 const A='a'.repeat(32),B='b'.repeat(32),W='1'.repeat(32);
 
 function page(){
   const s=setup({autoOpen:false});
   s.run(`assetState.collections=[
-    {id:'${A}',name:'Remove me',description:'',count:0},
-    {id:'${B}',name:'Open next',description:'Retained',count:0}
+    {id:'${A}',name:'Remove me',description:'',count:0,revision:1},
+    {id:'${B}',name:'Open next',description:'Retained',count:0,revision:1}
   ];assetScope='all';assetSelection=new Set();`);
   s.run(fs.readFileSync(source,'utf8'));
   return {...s,open:id=>s.run(`openCollection(${JSON.stringify(id)})`)};
@@ -24,7 +24,7 @@ function page(){
   const pending=s.el('#removeCollection').onclick();
   const payload=s.payload(0);
   assert.equal(payload.action,'delete');
-  s.writes[0].resolve({id:A,deleted:true,workspace_id:W});
+  s.writes[0].resolve(collectionReceipt(payload,A));
   await pending;
 
   assert.equal(closeRequested,true,'delete must request dialog close');

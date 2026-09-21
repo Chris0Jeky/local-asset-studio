@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Tier: daily-driver (T2) — authority: push free / merge free. Declared in `.agent-harness/tier.json`; read it live.
-Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter.
+Global laws auto-load from `~/.claude/CLAUDE.md`; nothing global is restated here. `AGENTS.md` is the Codex adapter; `.grok/` is the Grok adapter.
 
 ## What this is
 
@@ -13,7 +13,7 @@ a Radeon, no deploy, no other consumers. Models, ComfyUI and generated outputs l
 ## Run it
 
 ```bash
-python -m unittest discover -s tests          # 1674 tests, 2-3 minutes, offline; budget minutes, not seconds
+python -m unittest discover -s tests          # ~3,000 tests, 11-15 minutes on this PC, offline; budget minutes, not seconds
 python scripts/validate-repo.py                # catalog/graph bindings, model pins, Git payload rules, ~1 s
 python app/server.py --repo-root .             # needs config/local.json (copy config/example.json); ComfyUI on 8188
 ```
@@ -21,7 +21,7 @@ python app/server.py --repo-root .             # needs config/local.json (copy c
 On the configured PC use `Start Studio.cmd` or `scripts/Start-Studio.ps1` (starts ComfyUI if needed, opens
 `http://127.0.0.1:8191`). Restart the server to reload `presets/catalog.json`. No build step, no linter, no
 package manager: Python 3.12+ (CI pins 3.12; this PC's shell runs 3.14) + Pillow/psutil; plain JS in `app/static/`
-with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`).
+with a vendored model-viewer. Skips are environment-dependent (72 on 19 Sep 2026; fewer with FFmpeg/Godot/Node on `PATH`; the run is the record).
 
 ## Proving checks (narrowest command per seam)
 
@@ -32,18 +32,18 @@ with a vendored model-viewer. Skips are environment-dependent (54 on 13 Sep 2026
 | `app/static/*.js` | `node --check app/static/app.js` then `python -m unittest tests.test_frontend_handoffs` (skips without Node); when clicks or steps move, `python tests/studio_use_cases.py` (Playwright, ~40 s) and compare with `docs/UX-USE-CASE-MATRIX.md` |
 | `scripts/game_asset_*.py`, `research/game-assets/**` | `python -m unittest discover -s tests -p "test_game_asset_*.py"` (own CI lane) |
 | `scripts/krita_roundtrip.py`, `godot_asset_adapter.py`, `articulated_prop.py` | `tests.test_krita_roundtrip`, `tests.test_godot_asset_adapter`, `tests.test_articulated_*` |
-| `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets + Claude/Codex skill parity) |
+| `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.codex/**`, `.grok/**`, `tier.json` | `python -m unittest tests.test_agent_harness` (budgets, Claude/Codex skill parity, Grok thin adapter) |
 | Docs only | nothing to run; `validate-repo.py` still guards the Git payload |
 
 Use the `discover -s tests -p` form by default: any module that imports a sibling test or fixture unqualified
-(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`; measured
-14 Sep 2026 that is 49 of 130 modules, including `test_production`, `test_backends`, `test_review_desk`,
-`test_voice_baseline`, `test_failed_job_timing` and part of each `test_workflow_*`/`test_character_*` family. Eight `app/` modules have no same-named test file:
+(`rg "^(from|import) (test_|review_fixture)" tests`) dies on import as `python -m unittest tests.<name>`. Run that
+command for the current list instead of a stored module count. Examples include `test_production`, `test_backends`, `test_review_desk`,
+`test_voice_baseline`, `test_failed_job_timing` and parts of the `test_workflow_*`/`test_character_*` families. Eight `app/` modules have no same-named test file:
 `articulated.py` → `test_articulated_operation`, `backend_contracts.py` → `test_backend_safety`, `download_contracts.py` →
 `test_model_install_safety`/`test_model_redirects`, `review_media.py` → `test_review_desk`, `host_memory.py` → `test_server`,
 `model_requirements.py` → `test_preset_model_readiness`, `project_storage.py` → `test_production_storage`, `submission_evidence.py` → `test_submission_recovery`.
 
-CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 19 further
+CI: `.github/workflows/check.yml` runs the full suite plus `validate-repo.py` on every push and PR; 29 further
 path-filtered lanes in the same folder (browser drivers, graph validation, model intake/readiness, workflow MCP, …) run
 only when their files change. Agent tooling outside the Studio (comfy-cli, comfy-mcp, skills): `docs/AGENT-TOOLING.md`.
 
@@ -87,7 +87,7 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 
 ## Repo-local skills and rules
 
-`.claude/skills/` (canonical; `.codex/skills/` is the Codex adapter, body-identical, parity-tested):
+`.claude/skills/` (canonical; `.codex/skills/` Codex adapter, parity-tested; Grok loads this tree via Claude compatibility):
 `studio-preset-slice`, `studio-execution-evidence`, `studio-native-adapter`, `studio-runtime-models`,
 `studio-session-closeout`. Path rules auto-load from `.claude/rules/` for catalog and evidence-doc edits.
 `HUMAN_TODO.md` holds subjective creative choices: surface them in every summary, never tick them.

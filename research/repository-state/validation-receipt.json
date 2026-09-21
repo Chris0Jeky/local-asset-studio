@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source_sha": "9df20ed8dad91647b16198e353b709db03ce5dd7",
+  "run_at": "2026-09-14T12:20:00Z",
+  "result": "pass",
+  "graphs": 71,
+  "pins": 129,
+  "tracked_paths": 1359,
+  "loras": 96
+}
