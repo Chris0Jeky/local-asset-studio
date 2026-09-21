@@ -363,6 +363,7 @@ def adapt(value: Any) -> dict[str, Any]:
     provider_evidence = compatibility.validate_evidence(provider_evidence)
     source_observations, gallery = gallery_claims(
         report, candidate['id'], version_id, diagnostics)
+    source_observations = sorted(source_observations, key=canonical)
     evidence = [provider_evidence] + [
         compatibility.validate_evidence(item) for item in gallery
     ]
