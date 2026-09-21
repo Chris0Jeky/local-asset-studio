@@ -392,7 +392,10 @@ def _cached_file_hash(path: Path, cache, require_current=False):
         except OSError as exc:
             return {"path": key, "present": False, "error": str(exc)[:200]}
         previous = cache.get(key)
-        if isinstance(previous, dict) and _same_file(previous, identity) and previous.get("sha256"):
+        # Unchanged on purpose: this comparison keeps the full field set, ctime included, so an in-place
+        # rewrite that preserves size and mtime still misses the cache wherever ctime is a change time.
+        # (On Windows it is the creation time and the cross-API gap below makes this branch miss anyway.)
+        if isinstance(previous, dict) and all(previous.get(field) == identity[field] for field in _FILE_IDENTITY_FIELDS) and previous.get("sha256"):
             return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
     observed = _hash_open_file(path)
     if observed.get("sha256"):
