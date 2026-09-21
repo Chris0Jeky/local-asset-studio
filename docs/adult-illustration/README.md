@@ -70,6 +70,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Adult intent and Prompt Lab projection | [Intent contract](INTENT-CONTRACT.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
 | Read-only catalogs and comparison plans | [Research discovery](RESEARCH-DISCOVERY.md) |
+| Executed local NSFW prompt/adapter lab, local-only media manifests | [NSFW lab 2026-09-21](../../experiments/curated/nsfw-lab-20260921/README.md) |
 | Delivery order and issue ownership | [Implementation plan](IMPLEMENTATION-PLAN.md) |
 | Primary-source ledger | [Sources](SOURCES.md) |
 | Machine-readable navigation | [`research/adult-illustration/programme.json`](../../research/adult-illustration/programme.json) |
@@ -105,11 +106,12 @@ Every programme intent must declare unambiguous adult subject status through rev
 
 ## Next useful slices
 
-1. Review/merge the stacked foundation, validator, intent-projection, offline CLI, intelligence, discovery, source-snapshot, explicit source-transport and acquisition-handoff PRs in order.
-2. Review the #437 immutable taxonomy, taxonomy-aware compiler and optional membership-inspection slices in stack order. Pin exact installed tokenizers before exact token-count claims.
-3. Compile only explicitly reviewed source selections into the [zero-authority acquisition-plan boundary](ACQUISITION-HANDOFF.md). A transport receipt, snapshot or plan is not download authority.
-4. Qualify unchanged/manual/taxonomy-assisted prompts under #37/#409; software tests alone do not prove artistic benefit.
-5. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact evidence work; do not treat a plan as authorization.
-6. Reconcile installed routes and execute the finite Anima/SDXL/Qwen campaign only through #405/#439 and the existing coordinator.
-7. Qualify LoRA/slider intervals and interference under #406/#440 before exposing continuous Studio controls.
-8. Build the first transparent Guided genre journey under #410 from promoted modules rather than an opaque mega-prompt.
+Slices 1 and 2 of the earlier list landed on 21 September 2026: the foundation, validator, intent-projection, offline CLI, intelligence, discovery, source-snapshot, source-transport, acquisition-handoff, taxonomy-intake, taxonomy-aware compiler and membership-inspection stacks are merged with their hardening leaves (`CURRENT_STATE.md`, 21 September). Merged code is not qualification, art acceptance or licence clearance.
+
+1. Compile only explicitly reviewed source selections into the [zero-authority acquisition-plan boundary](ACQUISITION-HANDOFF.md). A transport receipt, snapshot or plan is not download authority.
+2. Qualify unchanged/manual/taxonomy-assisted prompts under #37/#409; software tests alone do not prove artistic benefit. The executed [NSFW lab](../../experiments/curated/nsfw-lab-20260921/FINDINGS.md) is measured evidence for #439/#440/#432, not acceptance; its renders are local-only by owner decision.
+3. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact evidence work; do not treat a plan as authorization.
+4. Reconcile installed routes and execute the finite Anima/SDXL/Qwen campaign only through #405/#439 and the existing coordinator.
+5. Qualify LoRA/slider intervals and interference under #406/#440 before exposing continuous Studio controls.
+6. Build the first transparent Guided genre journey under #410 from promoted modules rather than an opaque mega-prompt.
+7. Close the merged stacks' tracked follow-ups before building on them: #808 (endpoint-spelling guard admits a bare `?`), #785, #800, #803, #804, #807.
