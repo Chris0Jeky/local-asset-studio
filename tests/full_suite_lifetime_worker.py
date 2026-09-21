@@ -21,7 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from executor_work_observability import ExecutorWorkObserver  # noqa: E402
+from executor_work_observability import (  # noqa: E402
+    ExecutorWorkObserver,
+    current_work_origin,
+)
 from runtime_observability import (  # noqa: E402
     AtexitCallbackObserver,
     ThreadOwnershipObserver,
@@ -175,9 +178,12 @@ def main(argv=None) -> int:
     # registrations created while importing tests are attributed, while importing
     # this worker itself remains side-effect free for focused contract tests. The
     # atexit observer precedes the lazy executor import so import-time callbacks
-    # remain inside the finalization evidence boundary.
+    # remain inside the finalization evidence boundary. Thread starts also consult
+    # active executor work so a test-owned task can hand ownership to child threads.
     set_current_test("<discovery>")
-    thread_observer = ThreadOwnershipObserver()
+    thread_observer = ThreadOwnershipObserver(
+        work_origin_provider=current_work_origin,
+    )
     thread_observer.install()
     atexit_observer = AtexitCallbackObserver()
     atexit_observer.install()
