@@ -132,6 +132,8 @@ def validate_evidence(value):
     if value['kind'] == 'gallery_co_use':
         need(value['observations'] > 0 and value['independent_sources'] > 0,
              'Gallery evidence needs bounded observations and independent sources')
+        need(value['independent_sources'] <= value['observations'],
+             'Gallery independent sources cannot exceed observations')
     if value['kind'] == 'controlled_run':
         need(value['observations'] > 0,
              'Controlled run evidence needs at least one observation')
