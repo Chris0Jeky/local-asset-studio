@@ -1,0 +1,167 @@
+diff --git a/app/static/workshop-immersive.css b/app/static/workshop-immersive.css
+index ff4e543..dd340e1 100644
+--- a/app/static/workshop-immersive.css
++++ b/app/static/workshop-immersive.css
+@@ -98,0 +99,7 @@
++
++/* Two compact selectors must fit the available width, including 320px / zoom. */
++@media(max-width:600px) {
++  .workshop .wk-select-controls {grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
++  .workshop .wk-select-control,.workshop .wk-skin-control {min-width:0}
++  .workshop .wk-native-skin-select select {min-width:0}
++}
+diff --git a/app/static/workshop.css b/app/static/workshop.css
+index 1f89690..76e20e4 100644
+--- a/app/static/workshop.css
++++ b/app/static/workshop.css
+@@ -236,0 +237,10 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
++
++/* Secondary decisions stay reachable without competing with Generate. */
++.workshop .wk-run-tools {grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
++.workshop .wk-run-tools button {font-size:11px;min-height:36px;padding:5px 10px;background:transparent}
++@media(max-width:600px){.workshop .wk-run-tools{grid-row:3}.workshop .wk-run-dock .actions{grid-row:2}}
++@media(min-width:1100px){
++  .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto}
++  .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
++  .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
++}
+diff --git a/app/static/workshop.js b/app/static/workshop.js
+index 9b4cf7c..d392968 100644
+--- a/app/static/workshop.js
++++ b/app/static/workshop.js
+@@ -279 +279,3 @@
+-    for (const selector of ['#variants','#recipeWrap','#randomSeed']) { const node = q(selector); if (node) parameterExtras.append(node); }
++    for (const selector of ['#variants','#recipeWrap']) { const node = q(selector); if (node) parameterExtras.append(node); }
++    const variantLabel = q('#recipeWrap');
++    if (variantLabel?.firstChild?.nodeType === 3) variantLabel.firstChild.textContent = 'Recipe variants';
+@@ -285,3 +286,0 @@
+-    // Remove only the now-empty legacy caption, not controls injected by another feature.
+-    const caption = [...editor.children].find(n => n.classList.contains('section-title'));
+-    if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
+@@ -307 +306,7 @@
+-    const compare = q('#planComparison'); if (compare) runBox.append(compare);
++    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
++    const compare = q('#planComparison'), newSeed = q('#randomSeed');
++    for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
++    actions.after(runTools);
++    // Remove only the now-empty legacy caption, not controls injected by another feature.
++    const caption = [...editor.children].find(n => n.classList.contains('section-title'));
++    if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
+@@ -478,0 +484 @@
++      if (newSeed) { newSeed.hidden = !q('[data-key=seed]'); newSeed.title = seed ? seed+' · choose a new seed without generating' : 'This recipe has no seed control'; }
+diff --git a/docs/workshop/UX-RUN-DECISIONS-2026-09-21.md b/docs/workshop/UX-RUN-DECISIONS-2026-09-21.md
+new file mode 100644
+index 0000000..fc6d782
+--- /dev/null
++++ b/docs/workshop/UX-RUN-DECISIONS-2026-09-21.md
+@@ -0,0 +1,41 @@
++# Reachable run decisions — 21 September 2026
++
++Child of the entry-point pass (#790), from tracker #772.
++
++## Changes and issue boundaries
++
++- **#778 / #779:** The existing Plan comparison and New seed buttons move into the
++  persistent run dock. Their identities and handlers are retained. Planning does
++  not submit a job; choosing a seed does not replace the prompt. A recipe without
++  a bound seed control hides the otherwise dead New seed action.
++- **#775:** There was already one fixed Generate dock with readiness and ETA.
++  This pass retains that owner and adds regression coverage at 1440×900,
++  1280×720, 640×360, 390×844 and 320×568, with long errors and blockers. It does
++  not add another dock or infer readiness from appearance.
++- **#770:** The top-level recipe picker stays unique. The authored variations
++  selector is labelled Recipe variants, not a second undifferentiated Recipes
++  picker. It remains under Fine-tune because it changes the authored control set.
++- **Additional mobile defect:** The two appearance selectors had 145px minimums
++  that forced a 300px grid into a narrower content box. The corrective entrypoint
++  now uses shrinkable tracks and controls at compact widths.
++
++The desktop dock puts secondary tools inline rather than adding vertical bulk.
++Compact layouts use a separate wrapping secondary row. Existing reserved space,
++Generate disabling, status ownership and readiness resolution are unchanged.
++
++## Evidence
++
++`python tests/workshop_run_decisions.py` reproduces hidden seed/comparison actions
++before implementation, then passes all 8 methods (including the inherited
++entry-point regressions). Tests cover all three presentations and five viewport
++sizes, original node/event-handler retention, unchanged wording, disabled Generate,
++visible ETA, no job submission, and the no-seed case. Native renderer fixtures are
++synthetic, not owner/runtime acceptance.
++
++The existing `workshop_browser.py` component/geometry matrix also passes. Its
++1700px desktop height budget is unchanged: the dock is compacted rather than
++weakening the regression. The new driver runs in Workshop UI next to the existing
++real HTTP/storage application suite; exact-head hosted results belong in the PR.
++
++#539 and all HUMAN_TODO acceptance decisions remain open. No models, environments,
++provider requests, actual generation, user data, or execution policy are changed.
+diff --git a/tests/workshop_run_decisions.py b/tests/workshop_run_decisions.py
+new file mode 100644
+index 0000000..11471fd
+--- /dev/null
++++ b/tests/workshop_run_decisions.py
+@@ -0,0 +1,63 @@
++"""Run decisions remain reachable without replacing execution owners (#770/#775/#778/#779)."""
++import workshop_entry_points as entry
++from workshop_entry_points import workshop_html, script
++
++
++class RunDecisions(entry.EntryPoints):
++    def load_workshop(self):
++        html = workshop_html().replace(script('workshop.js'), '''<script>
++window.runOriginals=Object.fromEntries(['generate','batch','randomSeed','planComparison'].map(id=>[id,document.getElementById(id)]));
++window.comparisonPlans=0;
++document.getElementById('randomSeed').onclick=()=>{document.querySelector('[data-key="seed"]').value=43;document.dispatchEvent(new Event('studio:recipe'));};
++document.getElementById('planComparison').onclick=()=>comparisonPlans++;
++</script>''' + script('workshop.js'))
++        self.page.set_content(html)
++        self.page.wait_for_selector('#workshopRecipeChange')
++
++    def test_secondary_decisions_are_visible_and_keep_original_handlers(self):
++        self.load_workshop()
++        self.page.fill('#positive', 'My untouched idea')
++        for layout in ('focus', 'studio', 'immersive'):
++            with self.subTest(layout=layout):
++                self.page.select_option('#workshopLayout', layout)
++                for identity in ('generate', 'batch', 'randomSeed', 'planComparison'):
++                    self.assertEqual(self.page.locator('#'+identity).count(), 1)
++                    self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>n===runOriginals[n.id]'))
++                    self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
++                self.assertFalse(self.page.locator('#workshopChecks').evaluate('(n)=>n.open'))
++                self.page.click('#randomSeed')
++                self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
++                self.page.click('#planComparison')
++                self.assertEqual(self.page.locator('#positive').input_value(), 'My untouched idea')
++                self.assertEqual(self.page.evaluate('submitted'), 0)
++        self.assertEqual(self.page.evaluate('comparisonPlans'), 3)
++
++    def test_decisions_fit_short_and_narrow_viewports_with_long_blockers(self):
++        self.load_workshop()
++        self.page.evaluate("document.querySelector('#uxBlockers p').textContent='A long readiness reason '.repeat(30);document.querySelector('#status').textContent='Details '.repeat(200);document.querySelector('#estimateValue').textContent='~42s'")
++        for width, height in ((1440, 900), (1280, 720), (640, 360), (390, 844), (320, 568)):
++            self.page.set_viewport_size({'width': width, 'height': height})
++            for layout in ('focus', 'studio', 'immersive'):
++                with self.subTest(width=width, height=height, layout=layout):
++                    self.page.select_option('#workshopLayout', layout)
++                    for identity in ('generate', 'randomSeed', 'planComparison', 'workshopEta'):
++                        self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
++                        box = self.page.locator('#'+identity).bounding_box()
++                        self.assertGreaterEqual(box['x'], 0, identity)
++                        self.assertGreaterEqual(box['y'], 0, identity)
++                        self.assertLessEqual(box['x']+box['width'], width, identity)
++                        self.assertLessEqual(box['y']+box['height'], height, identity)
++                    self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
++                    self.assertTrue(self.page.locator('#generate').is_disabled())
++                    self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
++
++    def test_no_seed_control_has_no_dead_randomize_button(self):
++        self.load_workshop()
++        self.page.locator('[data-key=seed]').evaluate('(n)=>n.remove()')
++        self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
++        self.assertFalse(self.page.locator('#randomSeed').is_visible())
++
++
++if __name__ == '__main__':
++    import unittest
++    unittest.main(verbosity=2)

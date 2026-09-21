@@ -12,29 +12,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: transfer
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: f22b56bbeee0ecd907aa71b22e4071cc0dde4dde
+          ref: d2d5e1c2a7cf9f968f418bcaf355cd889899220f
           path: source
-      - name: Verify exact source tree before non-force publication
+      - name: Verify exact source tree before scoped publication
         working-directory: source
         run: |
           python - <<'PY'
           from pathlib import Path
           import subprocess, os
-          parent = 'f22b56bbeee0ecd907aa71b22e4071cc0dde4dde'
+          parent = 'd2d5e1c2a7cf9f968f418bcaf355cd889899220f'
           assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == parent
-          patch = Path('../transfer/.github/ux-source.patch').read_bytes()
-          patch = patch.replace(b'\n diff --git ', b'\ndiff --git ')
-          needle = b"+      text(change, name ? 'Change: '+name : 'Choose recipe');\n"
-          assert patch.count(needle) == 1
-          patch = patch.replace(needle, needle + b"+      change.setAttribute('aria-label', name ? 'Change recipe: '+name : 'Choose recipe');\n")
+          patch = Path('../transfer/.github/ux-run.patch').read_bytes()
           subprocess.run(['git','apply','--index','--unidiff-zero','--whitespace=error-all','-'],input=patch,check=True)
           tree = subprocess.check_output(['git','write-tree'],text=True).strip()
-          assert tree == '863d971867870f01dee1d24394faa8033fdd53aa', tree
+          assert tree == 'd79735af0658959e7eb69912383c074e1c2446dd', tree
           subprocess.run(['git','config','user.name','OpenAI'],check=True)
           subprocess.run(['git','config','user.email','noreply@openai.com'],check=True)
-          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: make recipe and mobile Create entry points explicit and accessible'],text=True).strip()
-          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-create-entry-points'],check=True)
+          commit = subprocess.check_output(['git','commit-tree',tree,'-p',parent,'-m','fix: surface comparison and seed decisions in the run dock'],text=True).strip()
+          subprocess.run(['git','push','origin',commit+':refs/heads/codex/ux-create-run-decisions'],check=True)
           Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Published '+commit+'\nVerified tree: '+tree+'\n')
           PY
