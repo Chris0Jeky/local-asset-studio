@@ -25,6 +25,9 @@ MAX_QUERY = 64
 MAX_BYTES = (1 << 63) - 1
 SHA256 = re.compile(r'[a-fA-F0-9]{64}\Z')
 VERSION_ROUTE = re.compile(r'/api/v1/model-versions/([1-9][0-9]{0,19})\Z')
+AIR = re.compile(
+    r'urn:air:[a-z0-9][a-z0-9._-]{0,63}:[a-z0-9][a-z0-9._-]{0,63}:'
+    r'civitai:([1-9][0-9]{0,19})@([1-9][0-9]{0,19})\Z', re.IGNORECASE)
 SENSITIVE_QUERY = {'apikey', 'api_key', 'api-key', 'token', 'access_token',
                    'access-token', 'authorization', 'key'}
 REACTIONS = {'cryCount', 'laughCount', 'likeCount', 'dislikeCount', 'heartCount'}
@@ -184,8 +187,13 @@ def normalize_model(value: Any, diagnostics: list[dict[str, Any]]) -> tuple[dict
     files.sort(key=lambda item: item['provider_file_id'])
     air = payload.get('air'); identity = f'civitai-version:{version_id}'
     if air is not None:
-        if token(air, 300) and not any(ch.isspace() for ch in air): identity = air
-        else: diagnostics.append({'code': 'invalid_air', 'message': 'Provider AIR was invalid; version identity was retained instead.'})
+        air_match = AIR.fullmatch(air) if isinstance(air, str) else None
+        if (air_match is not None and int(air_match.group(1)) == model_id
+                and int(air_match.group(2)) == version_id):
+            identity = air
+        else:
+            diagnostics.append({'code': 'invalid_air',
+                'message': 'Provider AIR was invalid or targeted another model/version; exact version identity was retained instead.'})
     terms = {key: source_claim(model.get(provider), provider) for key, provider in (
         ('allow_no_credit', 'allowNoCredit'), ('allow_commercial_use', 'allowCommercialUse'),
         ('allow_derivatives', 'allowDerivatives'), ('allow_different_license', 'allowDifferentLicense'))}
