@@ -1,6 +1,6 @@
 # Controlled adult illustration
 
-Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The foundation source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`; the prompt/source-intelligence research was prepared against `d73f67db48257e635def2170b67cefd6a3165098` and is rebased here without changing those evidence claims.
+Architecture, research and delivery programme for high-control, high-fidelity **adult-only sensual/anime illustration** in Local Asset Studio. Programme: [#403](https://github.com/Chris0Jeky/local-asset-studio/issues/403). Research freeze: 15 September 2026. The foundation source baseline is `b29205cfc95ca4e64d72ae38d53df30c83968997`; the prompt/source-intelligence research was prepared against `d73f67db48257e635def2170b67cefd6a3165098`, and the read-only discovery continuation is based on `88d777bca26ec36e248e2606834789e19cbece08`.
 
 The objective is not a single “best” checkpoint or style LoRA. The Studio should turn a short brief and optional references into an inspectable plan that separates:
 
@@ -32,13 +32,12 @@ Run the standard-library-only offline gates before changing a programme manifest
 ```console
 python scripts/validate_adult_illustration.py
 python scripts/validate_adult_illustration_intelligence.py
-python -m unittest discover -s tests -p "test_adult_illustration.py" -v
-python -m unittest discover -s tests -p "test_adult_illustration_intent.py" -v
-python -m unittest discover -s tests -p "test_adult_illustration_cli.py" -v
-python -m unittest discover -s tests -p "test_adult_illustration_intelligence.py" -v
+python scripts/studio_adult_illustration_research.py programme-status
+python scripts/studio_adult_illustration_research.py catalogs
+python -m unittest discover -s tests -p "test_adult_illustration*.py" -v
 ```
 
-The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The programme owner map pins prompt-dialect work to #432 and source-intake work to #433 in addition to the core #404–#413 sequence; missing, unknown or reassigned owners fail closed. The intelligence validator additionally checks prompt-dialect isolation, verified immutable vocabulary provenance, provider URL/ID agreement, unique source file paths, technique availability and hash-pinned selection. The intent and CLI suites cover total bounded projection, exclusive-create evidence, duplicate-key rejection, tamper detection and structured zero-authority errors. None inspects installed models, contacts a provider, downloads bytes, binds a route or submits generation.
+The foundation validator checks authority, adult/content declarations, route evidence states, control and benchmark references, zero authorized candidate caps, synthetic adapter non-promotion, finite adapter sweeps, pinned issue ownership and duplicate IDs. The programme owner map pins prompt-dialect work to #432, source-intake work to #433 and read-only discovery to #435 in addition to the core #404–#413 sequence; missing, unknown or reassigned owners fail closed. The intelligence validator additionally checks prompt-dialect isolation, verified immutable vocabulary provenance, provider URL/ID agreement, unique source file paths, technique availability and hash-pinned selection. The intent and CLI suites cover total bounded projection, exclusive-create evidence, duplicate-key rejection, tamper detection and structured zero-authority errors. Research discovery rejects oversized manifests before allocating their contents and retains unresolved immutable technique revisions in comparison plans. None inspects installed models, contacts a provider, downloads bytes, binds a route or submits generation.
 
 Development agents should also read [`agent-skills/adult-illustration/SKILL.md`](../../agent-skills/adult-illustration/SKILL.md).
 
@@ -57,6 +56,7 @@ Development agents should also read [`agent-skills/adult-illustration/SKILL.md`]
 | Model, adapter, geometry, training and finishing landscape | [Model and technique landscape](MODEL-AND-TECHNIQUE-LANDSCAPE.md) |
 | Finite qualification and acceptance | [Evaluation](EVALUATION.md) |
 | Human/agent command and authority contract | [Agent contract](AGENT-CONTRACT.md) |
+| Read-only catalogs and comparison plans | [Research discovery](RESEARCH-DISCOVERY.md) |
 | Delivery order and issue ownership | [Implementation plan](IMPLEMENTATION-PLAN.md) |
 | Primary-source ledger | [Sources](SOURCES.md) |
 | Machine-readable navigation | [`research/adult-illustration/programme.json`](../../research/adult-illustration/programme.json) |
@@ -89,7 +89,7 @@ Every programme intent must declare unambiguous adult subject status through rev
 ## Next useful slices
 
 1. Review the stacked foundation, validator, intent-projection, offline CLI and intelligence PRs in order.
-2. Add read-only programme/dialect/technique/source discovery and zero-authority comparison-plan commands under #413.
+2. Use the #435 read-only catalogs and zero-authority comparison plans to choose exact follow-up evidence work; do not treat a plan as authorization.
 3. Build a fake-transport provider snapshot adapter under #433; do not download anything.
 4. Pin one taxonomy source and implement one route profile at a time under #432.
 5. Begin runtime work only through a finite comparison of existing routes under #405/#409, using the existing coordinator and exact evidence rules.
