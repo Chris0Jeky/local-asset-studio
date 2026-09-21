@@ -1,0 +1,161 @@
+{
+  "additional_image_attempt_cap": 0,
+  "authority": "none",
+  "campaign_id": "corrected-pose-screening-synthetic",
+  "candidate_cap": 48,
+  "cases": [
+    {
+      "id": "familiar-difficult-bend",
+      "ordinal": 1,
+      "required_observations": ["body_pose", "camera"],
+      "scope": "development",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-1",
+      "title": "Familiar difficult bend"
+    },
+    {
+      "id": "unseen-crossed-legs",
+      "ordinal": 2,
+      "required_observations": ["body_pose", "anatomy_occlusion"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-2",
+      "title": "Unseen crossed-leg configuration"
+    },
+    {
+      "id": "seated-support",
+      "ordinal": 3,
+      "required_observations": ["body_pose", "hands_contact_support"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-3",
+      "title": "Seated support pose"
+    },
+    {
+      "id": "overhead-reach",
+      "ordinal": 4,
+      "required_observations": ["body_pose", "anatomy_occlusion"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-4",
+      "title": "Overhead reach"
+    },
+    {
+      "id": "strong-camera-foreshortening",
+      "ordinal": 5,
+      "required_observations": ["body_pose", "camera"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-5",
+      "title": "Strong camera foreshortening"
+    },
+    {
+      "id": "hand-prop-contact",
+      "ordinal": 6,
+      "required_observations": ["body_pose", "hands_contact_support"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-6",
+      "title": "Hand and prop contact"
+    },
+    {
+      "id": "second-character-unseen-pose",
+      "ordinal": 7,
+      "required_observations": ["body_pose", "identity", "outfit"],
+      "scope": "held-out",
+      "slot_mode": "replicated-seeds",
+      "source_ref": "local-source-7",
+      "title": "Second character in unseen pose"
+    },
+    {
+      "id": "irrelevant-donor-counterfactual",
+      "ordinal": 8,
+      "pair_labels": ["baseline", "variant"],
+      "required_observations": ["body_pose", "ignored_facet_leakage"],
+      "scope": "held-out",
+      "slot_mode": "paired-counterfactual",
+      "source_refs": {
+        "baseline": "local-source-8-baseline",
+        "variant": "local-source-8-variant"
+      },
+      "title": "Irrelevant donor attribute counterfactual"
+    }
+  ],
+  "execution_authorized": false,
+  "generation_submitted": false,
+  "review_axes": [
+    "hard_constraints",
+    "body_pose",
+    "camera",
+    "identity",
+    "outfit",
+    "style",
+    "hands_contact_support",
+    "anatomy_occlusion",
+    "ignored_facet_leakage",
+    "owner_acceptance"
+  ],
+  "routes": [
+    {
+      "backend_id": "primary",
+      "detector_behavior": "not-applicable",
+      "id": "klein-geometry",
+      "input_representation": "precomputed-skeleton",
+      "mechanism": "klein-geometry-reference",
+      "noise_seeds": {"counterfactual": 1003, "replicate_a": 1001, "replicate_b": 1002},
+      "pins": {
+        "encoder": "2222222222222222222222222222222222222222222222222222222222222222",
+        "graph": "4444444444444444444444444444444444444444444444444444444444444444",
+        "model": "1111111111111111111111111111111111111111111111111111111111111111",
+        "nodes": "5555555555555555555555555555555555555555555555555555555555555555",
+        "prompt_dialect": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "reference_transform": "7777777777777777777777777777777777777777777777777777777777777777",
+        "renderer": "8888888888888888888888888888888888888888888888888888888888888888",
+        "runtime": "6666666666666666666666666666666666666666666666666666666666666666",
+        "vae": "3333333333333333333333333333333333333333333333333333333333333333"
+      }
+    },
+    {
+      "backend_id": "primary",
+      "detector_behavior": "not-applicable",
+      "id": "copy-pose",
+      "input_representation": "rgb-pose-donor",
+      "mechanism": "copy-pose-rgb",
+      "noise_seeds": {"counterfactual": 2003, "replicate_a": 2001, "replicate_b": 2002},
+      "pins": {
+        "encoder": "2222222222222222222222222222222222222222222222222222222222222222",
+        "graph": "4444444444444444444444444444444444444444444444444444444444444444",
+        "lora": "9999999999999999999999999999999999999999999999999999999999999999",
+        "model": "1111111111111111111111111111111111111111111111111111111111111111",
+        "nodes": "5555555555555555555555555555555555555555555555555555555555555555",
+        "prompt_dialect": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "reference_transform": "7777777777777777777777777777777777777777777777777777777777777777",
+        "runtime": "6666666666666666666666666666666666666666666666666666666666666666",
+        "vae": "3333333333333333333333333333333333333333333333333333333333333333"
+      }
+    },
+    {
+      "backend_id": "primary",
+      "detector_behavior": "bypass-precomputed-guide",
+      "id": "sdxl-corrected-skeleton",
+      "input_representation": "precomputed-skeleton",
+      "mechanism": "sdxl-precomputed-skeleton",
+      "noise_seeds": {"counterfactual": 3003, "replicate_a": 3001, "replicate_b": 3002},
+      "pins": {
+        "controlnet": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "encoder": "2222222222222222222222222222222222222222222222222222222222222222",
+        "graph": "4444444444444444444444444444444444444444444444444444444444444444",
+        "model": "1111111111111111111111111111111111111111111111111111111111111111",
+        "nodes": "5555555555555555555555555555555555555555555555555555555555555555",
+        "prompt_dialect": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "reference_transform": "7777777777777777777777777777777777777777777777777777777777777777",
+        "renderer": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "runtime": "6666666666666666666666666666666666666666666666666666666666666666",
+        "vae": "3333333333333333333333333333333333333333333333333333333333333333"
+      }
+    }
+  ],
+  "same_defect_repeat_limit": 2,
+  "schema": "studio.pose-screening-manifest/v2",
+  "stop_conditions": ["uncertain_dispatch", "invalid_binding", "runtime_instability", "candidate_cap_exhausted"]
+}

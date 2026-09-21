@@ -6,18 +6,21 @@ from .guides import guides
 from .execution import prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
+from .http_body import reject_json
+from . import pose_artifact_store
 
 PREFIX = '/api/workflow-studio'
+POSE_ARTIFACT_PREFIX = '/api/pose/artifacts/'
 
 
 def capabilities():
-    return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True,
+    return {'version': 1, 'guides': True, 'installed_nodes': True, 'api_graph_authoring': True, 'multi_target_control_preview': True,
             'recipe_setup_proposal': True, 'recipe_setup_apply': True, 'shared_setup_drafts': True, 'setup_request_recovery': True, 'recipe_shortlist': True, 'recipe_shortlist_source': True, 'recipe_shortlist_ordered_sources': True, 'resource_scoped_guidance': True, 'saved_run_exact_review': True, 'saved_run_hash_dispatch': True,
             'registered_recipe_tickets': True, 'preset_document_tickets': True, 'arbitrary_graph_execution': False,
             'native_visual_roundtrip': False, 'server_saved_workflow_documents': True,
             'shared_document_commands': True, 'named_steps': True, 'agent_sdk': True, 'mcp': False,
             'custom_frontend_widgets': False, 'shared_worker': True, 'saved_revision_run_records': True,
-            'limits': {'document_bytes': 1048576, 'nodes': 256, 'graph_invocations_per_ticket': 1},
+            'limits': {'document_bytes': 1048576, 'nodes': 256, 'graph_invocations_per_ticket': 1, 'control_targets': 32},
             'generation_submitted': False}
 
 
@@ -88,6 +91,22 @@ def extend_handler(base):
     class WorkflowHandler(base):
         def do_GET(self):
             path = urlparse(self.path).path
+            if path.startswith(POSE_ARTIFACT_PREFIX):
+                if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
+                try:
+                    parts = path.split('/')
+                    need(len(parts) == 5 and parts[4], 'Unknown pose artifact route')
+                    raw = pose_artifact_store.read(self.studio.experiments, parts[4])
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Content-Length', str(len(raw)))
+                    self.send_header('X-Content-Type-Options', 'nosniff')
+                    self.end_headers()
+                    try: self.wfile.write(raw)
+                    except (BrokenPipeError, ConnectionResetError): pass
+                    return
+                except (ValueError, OSError) as exc:
+                    return self._json(400, {'error': str(exc), 'generation_submitted': False})
             if not path.startswith(PREFIX + '/'): return super().do_GET()
             if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
             try:
@@ -98,10 +117,14 @@ def extend_handler(base):
         def do_POST(self):
             path = urlparse(self.path).path
             if not path.startswith(PREFIX + '/'): return super().do_POST()
-            if not self._safe_mutation(): return self._json(403, {'error': 'Local same-origin request required'})
+            if not self._safe_mutation(): return reject_json(self, 403, {'error': 'Local same-origin request required'})
             is_run = path == PREFIX + '/run'
+            if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                result = {'error': 'application/json required'}
+                if not is_run: result['generation_submitted'] = False
+                else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
+                return reject_json(self, 400, result)
             try:
-                need(self.headers.get('Content-Type', '').split(';')[0] == 'application/json', 'application/json required')
                 value = decode(self.rfile.read(self._content_length(1048576)))
                 result = post(path, value, self.studio)
                 return self._json(200, result)
@@ -112,4 +135,6 @@ def extend_handler(base):
                 else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
                 return self._json(400, result)
     from .setup_draft_http import extend_handler as extend_setups
-    return extend_setups(extend_run_records(extend_documents(WorkflowHandler)))
+    from .control_http import extend_handler as extend_controls
+    from .collection_http import extend_handler as extend_collections
+    return extend_collections(extend_controls(extend_setups(extend_run_records(extend_documents(WorkflowHandler)))))

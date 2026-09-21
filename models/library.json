@@ -887,7 +887,7 @@
     },
     {
       "id": "krea2-koukouya-style-c1-st3000",
-      "name": "\u753b\u98ce \u3053\u3046\u3053\u3046\u3084 koukouya style \u3010krea2\u3011 / v1.0",
+      "name": "画风 こうこうや koukouya style 【krea2】 / v1.0",
       "file": "loras/krea2_koukouya_style_c1-st3000.safetensors",
       "source": "https://civitai.com/models/2844656?modelVersionId=3211621",
       "url": "https://civitai.com/api/download/models/3211621",
@@ -921,7 +921,7 @@
     },
     {
       "id": "anima-koukouya-v2-step2500",
-      "name": "[Anima] Artist Style: koukouya/\u3053\u3046\u3053\u3046\u3084 / v1.0-anima-base1",
+      "name": "[Anima] Artist Style: koukouya/こうこうや / v1.0-anima-base1",
       "file": "loras/anima-koukouya_v2_step2500.safetensors",
       "source": "https://civitai.com/models/2696189?modelVersionId=3027537",
       "url": "https://civitai.com/api/download/models/3027537",
@@ -938,7 +938,7 @@
     },
     {
       "id": "anima-huashijw-v2-step10000",
-      "name": "[Anima] Artist Style: huashijw/\u753b\u5e08jw / v1.0",
+      "name": "[Anima] Artist Style: huashijw/画师jw / v1.0",
       "file": "loras/anima-huashijw_v2_step10000.safetensors",
       "source": "https://civitai.com/models/2753686?modelVersionId=3098204",
       "url": "https://civitai.com/api/download/models/3098204",
@@ -972,7 +972,7 @@
     },
     {
       "id": "anima-ke-ta-style-v1",
-      "name": "\u753b\u98ce ke-ta style \u3010anima\u3011 / v1.0",
+      "name": "画风 ke-ta style 【anima】 / v1.0",
       "file": "loras/anima-ke-ta_style_v1.safetensors",
       "source": "https://civitai.com/models/2852885?modelVersionId=3221815",
       "url": "https://civitai.com/api/download/models/3221815",
@@ -2102,6 +2102,88 @@
       "sha256": "abad16806e0cbabc54e0325d6565847443fe396d5f0be38bb3cd3fe75a1201d6",
       "license": "Apache-2.0 (Qwen3 8B, per the Qwen3 model card as recorded; the Comfy-Org repackaging card was not re-read)",
       "terms": "Downloaded 2026-09-15 with curl -C - resume and SHA-256 verified against the installed file (.runtime/downloads/receipts.json).",
+      "family": "FLUX.2 Klein 9B"
+    },
+    {
+      "id": "kleinbase9b-posetransfer",
+      "name": "KleinBase9B_PoseTransfer.safetensors",
+      "file": "loras/KleinBase9B_PoseTransfer.safetensors",
+      "source": "https://civitai.com/models/2380153?modelVersionId=2701726",
+      "url": "https://civitai.com/api/download/models/2701726",
+      "bytes": 82866728,
+      "sha256": "b2148be5556e620d25f41f744430d200d1b37e7163f04f90e75e0e6ae857d0c1",
+      "license": "civitai per-file permission flags (see terms); private experiments only",
+      "terms": "civitai model 2380153 'Copy Pose [Qwen & Klein]' (creator ReltivlyObjectv) flags read 2026-09-15: allowCommercialUse RentCivit/Rent (no Image, no Sell), derivatives yes, noCredit yes; the description states 'provided for non-commercial use only'. Trained on synthetic image sets. Image 1 = the character to re-pose, image 2 = the pose; trigger 'change the actions and poses in Image 1 to match those in Image 2'; the author notes subject bleed on Klein 9B. civitai version 2701726 of model 2380153: the version payload carries no permission flags; read https://civitai.com/models/2380153 (or /api/v1/models/2380153) before any commercial use. Base model 'Flux.2 Klein 9B-base'.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "change the actions and poses in Image 1 to match those in Image 2",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "replace-character-v1-klein",
+      "name": "replace_character_v1_klein.safetensors",
+      "file": "loras/replace_character_v1_klein.safetensors",
+      "source": "https://civitai.com/models/2829085?modelVersionId=3192138",
+      "url": "https://civitai.com/api/download/models/3192138",
+      "bytes": 165704712,
+      "sha256": "75d3390223da203f42756b4f3e04da077061ccd4f7c735b230f0b61e66a98bba",
+      "license": "civitai per-file permission flags (see terms); private experiments only",
+      "terms": "civitai model 2829085 '[klein 9b] replace character' (creator iDvDi) flags read 2026-09-15: allowCommercialUse Image/RentCivit/Rent (no Sell), derivatives yes, noCredit yes. Image 1 = the scene whose pose, outfit, camera and background are kept, image 2 = the identity to transfer; no trigger word; recommended strength 1.0 (0.8-1.2); the author's prompt: 'Replace the adult woman in image 1 with the adult woman in image 2, while keeping the same pose, action, facial expression, outfit, camera angle, composition, background, and lighting as in image 1.' civitai version 3192138 of model 2829085: the version payload carries no permission flags; read https://civitai.com/models/2829085 (or /api/v1/models/2829085) before any commercial use. Base model 'Flux.2 Klein 9B'.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "mannequin-v1-f29b",
+      "name": "Mannequin_V1_F29B.safetensors",
+      "file": "loras/Mannequin_V1_F29B.safetensors",
+      "source": "https://civitai.com/models/2191265?modelVersionId=2689061",
+      "url": "https://civitai.com/api/download/models/2689061",
+      "bytes": 126670744,
+      "sha256": "363227e0fda601d9cda160c6be1d6dd09f532d23cef2d6be6ef8656565b86af1",
+      "license": "civitai per-file permission flags (see terms); private experiments only",
+      "terms": "civitai model 2191265 'Mannequins / Pose References' (creator VV24) flags read 2026-09-15: allowCommercialUse Image/RentCivit/Rent/Sell, derivatives yes, noCredit yes. One reference picture in, CGI mannequins in its pose out (the author's sample prompt is in research-scripts/lora_pose.py); the author recommends the Qwen-Image-Edit 2509 version over this Klein one for anatomy. civitai version 2689061 of model 2191265: the version payload carries no permission flags; read https://civitai.com/models/2191265 (or /api/v1/models/2191265) before any commercial use. Base model 'Flux.2 Klein 9B-base'.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "refcontrol-v2-poses",
+      "name": "refcontrol_v2_poses.safetensors",
+      "file": "loras/refcontrol_v2_poses.safetensors",
+      "source": "https://civitai.com/models/2732076?modelVersionId=3071631",
+      "url": "https://civitai.com/api/download/models/3071631",
+      "bytes": 165704416,
+      "sha256": "a22ec6a5406ccdb7a247684a40f96b52a83520efa00ebe56528cf54d0e5d473b",
+      "license": "civitai per-file permission flags (see terms); private experiments only",
+      "terms": "civitai model 2732076 'RefControl FLUX.2 Klein 9B - Reference Pose LoRA' (creator thedeoxen) flags read 2026-09-15: allowCommercialUse Image/RentCivit/Rent/Sell, derivatives yes, noCredit yes. Image 1 = a pose control map (skeleton / keypoints, the author uses DWPose), image 2 = the reference; trigger 'apply pose from image 1 with reference from image 2'; strength 0.8-1.0. civitai version 3071631 of model 2732076: the version payload carries no permission flags; read https://civitai.com/models/2732076 (or /api/v1/models/2732076) before any commercial use. Base model 'Flux.2 Klein 9B-base'.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "apply pose from image 1 with reference from image 2",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "flux2-klein-9b-q8",
+      "name": "FLUX.2 Klein 9B / Q8_0 GGUF",
+      "file": "diffusion_models/flux-2-klein-9b-Q8_0.gguf",
+      "repo": "unsloth/FLUX.2-klein-9B-GGUF",
+      "revision": "main",
+      "source": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF",
+      "url": "https://huggingface.co/unsloth/FLUX.2-klein-9B-GGUF/resolve/main/flux-2-klein-9b-Q8_0.gguf",
+      "bytes": 9978304800,
+      "sha256": "dfa8908dd58c5af6479b944f80558e226ee40a8fe0903729309e8d1b98fe5297",
+      "license": "FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B)",
+      "terms": "Downloaded 2026-09-15 with curl -C - resume (scripts/fetch-hf.py refuses .gguf names) and SHA-256 verified against the Hugging Face LFS listing (.runtime/downloads/receipts.json). Same licence as the Q6_K file. Measured 2026-09-15 on the 16 GB card (research README, pose round three): the 9.98 GB file loads only partially beside the text encoder's residue ('loaded partially; 9538 MB loaded, 170 MB offloaded'), 40-45 s per step, six minutes per 6-step render against 75-95 s for Q6_K, with figures identical seed for seed; not a lever here. Needs the ComfyUI-GGUF loader (UnetLoaderGGUF).",
       "family": "FLUX.2 Klein 9B"
     }
   ],
