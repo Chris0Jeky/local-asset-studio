@@ -23,6 +23,7 @@ MAX_INPUT_BYTES = 1024 * 1024
 MAX_ASSETS = 2048
 MAX_NODE_CLASSES = 2048
 MAX_DIAGNOSTICS = 2048
+MAX_BINDING_NODES = 64
 SHA256 = re.compile(r'[a-f0-9]{64}\Z')
 ZERO_AUTHORITY_FIELDS = (
     'provider_accessed',
@@ -54,8 +55,17 @@ def _safe_file(value: Any) -> str:
     need(compatibility.token(value, 500), 'Invalid binding file')
     need('\\' not in value and not value.startswith('/'), 'Invalid binding file')
     path = PurePosixPath(value)
-    need(path.parts and all(part not in ('', '.', '..') for part in path.parts),
+    parts = value.split('/')
+    need(path.parts and path.as_posix() == value
+         and all(part not in ('', '.', '..') for part in parts),
          'Invalid binding file')
+    for part in parts:
+        stem = part.split('.', 1)[0]
+        need(part[-1:] not in ('.', ' ')
+             and re.search(r'[<>:"|?*\x00-\x1f]', part) is None
+             and re.fullmatch(r'(con|prn|aux|nul|com[1-9]|lpt[1-9])',
+                              stem, re.I) is None,
+             'Invalid binding file')
     return value
 
 
@@ -214,7 +224,7 @@ def _validate_binding(value: Any) -> dict:
         'required_node_classes': sorted(compatibility.strings(
             value['required_node_classes'],
             'binding required node classes',
-            128,
+            MAX_BINDING_NODES,
             allow_empty=False,
         )),
     }
@@ -364,6 +374,8 @@ def _project(
         requirements.add(file_capability)
         requirements.add(backend_capability)
         requirements.update(node_capabilities)
+        need(len(requirements) <= 64,
+             'Projected candidate requirements exceed evaluator limit')
         candidate['requires'] = sorted(requirements)
 
         if asset['present'] and asset['verified']:
@@ -461,13 +473,15 @@ def _project(
                 ))
         candidates.append(candidate)
 
+    need(not observed & absent,
+         'Live context capability observations contradict each other')
+    need(len(observed) <= 256 and len(absent) <= 256,
+         'Projected live capabilities exceed evaluator limit')
     projected_slot = {
         **copy.deepcopy(slot),
         'capabilities': sorted(observed),
         'known_absent_capabilities': sorted(absent),
     }
-    need(not observed & absent,
-         'Live context capability observations contradict each other')
     return (
         projected_slot,
         sorted(candidates, key=lambda item: item['id']),
@@ -478,6 +492,8 @@ def _project(
 
 
 def evaluate(value: Any) -> dict:
+    need(len(canonical(value)) <= MAX_INPUT_BYTES,
+         'Setup context request exceeds 1 MiB')
     original = copy.deepcopy(value)
     slot, sources, bindings, context, extra_evidence = _validate_request(value)
     projected_slot, candidates, local_evidence, observations, diagnostics = _project(
@@ -489,6 +505,8 @@ def evaluate(value: Any) -> dict:
     evidence.extend(copy.deepcopy(extra_evidence))
     evidence.extend(copy.deepcopy(local_evidence))
     evidence = sorted(evidence, key=lambda item: item['id'])
+    need(len(evidence) <= compatibility.MAX_EVIDENCE,
+         'Combined setup evidence exceeds evaluator limit')
     evidence_ids = [item['id'] for item in evidence]
     need(len(set(evidence_ids)) == len(evidence_ids),
          'Duplicate evidence ID across setup context inputs')
