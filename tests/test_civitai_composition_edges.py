@@ -82,10 +82,13 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertEqual(result['image_observations'][0]['version_ids'], [101, 202])
         self.assertEqual(result['combinations'][0]['version_ids'], [101, 202])
 
-    def test_invalid_air_falls_back_to_exact_version_identity(self):
-        result = C.normalize(request(payload=model('bad air value')))
-        self.assertEqual(result['resource']['identity'], 'civitai-version:101')
-        self.assertIn('invalid_air', [item['code'] for item in result['diagnostics']])
+    def test_invalid_or_mismatched_air_falls_back_to_exact_version_identity(self):
+        for air in ('bad air value', 'urn:air:sdxl:lora:civitai:10@999',
+                    'urn:air:sdxl:lora:civitai:99@101'):
+            with self.subTest(air=air):
+                result = C.normalize(request(payload=model(air)))
+                self.assertEqual(result['resource']['identity'], 'civitai-version:101')
+                self.assertIn('invalid_air', [item['code'] for item in result['diagnostics']])
 
     def test_sha256_is_normalized_and_becomes_file_identity(self):
         row = C.normalize(request())['resource']['files'][0]
