@@ -293,7 +293,7 @@ $('#importAssets').onchange=async e=>{
 };
 function assetMessage(text, error=false) { const el=$('#assetMessage'); el.textContent=text; el.classList.toggle('error',error); }
 async function refreshAssets(force=false) {
-  if(assetRefreshing)return;
+  if(assetRefreshing)return false;
   assetRefreshing=true;
   try {
     const data=await api('/api/workspace'), signature=JSON.stringify(data);
@@ -302,7 +302,8 @@ async function refreshAssets(force=false) {
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
     renderLibraryRecovery();
     if(force||signature!==assetSignature){assetSignature=signature;renderAssets();jobsSignature='';renderJobs();}
-  } catch(e) { assetMessage(e.message,true); }
+    return true;
+  } catch(e) { assetMessage(e.message,true); return false; }
   finally {assetRefreshing=false;}
 }
 // Scope, filters and checkbox selection are separate projections over the loaded Workspace.

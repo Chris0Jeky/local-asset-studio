@@ -14,8 +14,11 @@ function between(start, end) {
   return source.slice(first, last);
 }
 
+// Match the event boundary, not whichever action happens to be dispatched first.
+const clickMarker = "  document.addEventListener('click',async e=>{try{";
+assert.equal(source.split(clickMarker).length, 2, 'expected one delegated click owner');
 const clickSource = between(
-  "  document.addEventListener('click',async e=>{try{const close=",
+  clickMarker,
   "\n  // Native file input remains the accessible fallback",
 );
 

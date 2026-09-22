@@ -8,6 +8,7 @@
     const button=document.createElement('button');button.id='bundleLauncher';button.type='button';button.className='bundle-launcher';button.innerHTML='<b>Explore creative bundles</b><span>See the look, ingredients and settings together →</span>';
     const styling=document.createElement('link');styling.rel='stylesheet';styling.href='/static/bundle-tuning.css';document.head.append(styling);
     const anchor=q('#presetSearch');if(!anchor)return;(anchor.closest('label')||anchor).before(button);
+    button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','bundleExplorer');
     const dialog=document.createElement('dialog');dialog.id='bundleExplorer';dialog.className='bundle-explorer';dialog.setAttribute('aria-labelledby','bundleTitle');
     dialog.innerHTML='<header class="bundle-header"><div><span class="eyebrow">CREATIVE BUNDLES</span><h2 id="bundleTitle">Start with a look. Understand the recipe.</h2><p>Browse without changing your work. Apply only after reviewing the differences.</p></div><button id="bundleClose" type="button" aria-label="Close bundle explorer">Close</button></header><div class="bundle-layout"><aside class="bundle-browser"><label for="bundleSearch">Find a look or resource<input id="bundleSearch" type="search" placeholder="Painterly, ink, Anima…"></label><label for="bundleFamily">Model family<select id="bundleFamily"><option value="">All families</option></select></label><p id="bundleCount" role="status"></p><div id="bundleCards"></div></aside><section class="bundle-detail" aria-label="Selected bundle"><p id="bundleStatus" role="status"></p><div id="bundleBody"><p>Choose a bundle to inspect its ingredients and examples.</p></div></section></div>';
     document.body.append(dialog);
@@ -118,7 +119,7 @@
         showView('create');opener=preset.positive?q('#positive'):q('#presetSearch');dialog.close();q('#createView').__workshop?.finishRecipeSelection(opener);opener.focus();message('Bundle applied as an editable setup. Review readiness; Generate is still a separate action.');
       }catch(err){q('#bundleApplyStatus').textContent=err.message;q('#bundleApply').disabled=true;}
     }
-    button.onclick=async()=>{
+    const openBundles=async()=>{
       const opened=++openEpoch;opener=document.activeElement;dialog.showModal();q('#bundleSearch').focus();status('');
       active=null;preset=null;overrides={};inspection=null;showcase={};q('#bundleBody').innerHTML='<p>Choose a bundle to inspect its ingredients and examples.</p>';q('#bundleCards').replaceChildren();
       if(typeof catalog==='undefined'||!catalog?.presets||typeof atelierRecipes==='undefined'||!atelierRecipes.length){status('The recipe catalog is not available yet. Close and reopen after Studio finishes loading.');return;}
@@ -126,8 +127,16 @@
       q('#bundleFamily').innerHTML='<option value="">All families</option>'+[...new Set(items.map(r=>r.family).filter(Boolean))].sort().map(f=>'<option>'+escape(f)+'</option>').join('');q('#bundleSearch').value='';cards();
       try{const data=(await import('/static/bundle-showcase.js')).default;if(opened!==openEpoch||!dialog.open)return;showcase=data;showcaseMessage='';cards();if(active){const preview=q('#bundleBody .bundle-feature figure, #bundleBody .bundle-empty');const sample=record(active.id);if(preview&&sample){const figure=document.createElement('figure');figure.innerHTML='<img src="'+escape(sample.url)+'" alt="'+escape(sample.caption)+'"><figcaption>'+escape(sample.label+' · '+sample.caption+' '+sample.notice)+'</figcaption>';preview.replaceWith(figure);images();}}}catch{if(opened!==openEpoch||!dialog.open)return;showcaseMessage='Example index unavailable. Recipes remain browsable without previews.';status(showcaseMessage);}
     };
+    button.onclick=openBundles;
+    function mountHomeLauncher(){
+      if(q('#bundleHomeLauncher'))return;
+      const heading=q('#homeView .ux-home-heading');if(!heading)return;
+      const homeButton=button.cloneNode(true);homeButton.id='bundleHomeLauncher';homeButton.onclick=openBundles;heading.after(homeButton);
+    }
+    mountHomeLauncher();
+    if(!q('#bundleHomeLauncher'))document.addEventListener('studio:setup-draft-ready',mountHomeLauncher,{once:true});
     q('#bundleCards').onclick=e=>{const card=e.target.closest('[data-bundle]');if(card)choose(card.dataset.bundle);};q('#bundleSearch').oninput=cards;q('#bundleFamily').onchange=cards;q('#bundleClose').onclick=()=>dialog.close();
-    dialog.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
+    dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();}else if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
     dialog.addEventListener('close',()=>{guidancePanel?.destroy();guidancePanel=null;epoch++;openEpoch++;if(opener?.isConnected)opener.focus();});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
