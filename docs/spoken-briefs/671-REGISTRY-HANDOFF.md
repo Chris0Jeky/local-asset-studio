@@ -1,6 +1,15 @@
 # #671 registry writer: draft test and implementation handoff
 
-**This PR is a regression checkpoint, not a shipped writer. Do not merge it.**
+**Checkpoint completed on 22 September 2026:** the retained tests now have an
+implementation in `scripts/voice_profile_registry.py`,
+`voice_profile_registry_io.py` and `voice_profile_registry_cli.py`, with read-only
+resolver integration. See [REGISTRY-CAS.md](REGISTRY-CAS.md) for the current
+contract, commands and measured local proof. The original checkpoint history
+below explains why the tests preceded the implementation; its missing-delivery
+status is superseded. Exact-head review, full-suite and hosted gates are recorded
+on the PR before merge.
+
+## Original checkpoint (superseded delivery status)
 
 Parent: #676 at `2e798f50d3b067445e0be67467465f1f67281969`.
 The branch retains the domain and filesystem tests; the complete locally tested

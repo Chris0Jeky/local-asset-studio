@@ -350,8 +350,21 @@ def load_catalog(path: Path | None = None) -> dict:
 
 def load_registry(path: Path, base_catalog: dict) -> dict:
     base = _validate_collection(copy.deepcopy(base_catalog), 'base voice profile catalogue')
+    # Both formats use a bounded no-link snapshot. Reading never acquires the
+    # writer lock, creates directories, migrates overlays or repairs a journal.
+    import voice_profile_registry as registry
+    raw = registry.io.capture(path, registry.MAX_REGISTRY_BYTES)[0]
+    if raw is None: raise VoiceProfileError('Local voice profile registry does not exist')
+    from strict_json import loads_strict
+    try: value = loads_strict(raw, label='local voice profile registry')
+    except StrictJsonError as exc: raise VoiceProfileError(str(exc)) from exc
+    if isinstance(value, dict) and type(value.get('schema_version')) is int and value['schema_version'] == 2:
+        _, profiles = registry.decode_registry(raw, base)
+        return {'schema_version': 1, 'profiles': profiles}
+    if len(raw) > MAX_PROFILE_JSON_BYTES:
+        raise VoiceProfileError('Local voice profile overlay exceeds its byte capacity')
     local = _validate_collection(
-        _read_json(Path(path), 'local voice profile registry'),
+        value,
         'local voice profile registry',
         allow_supersedes=True,
     )
