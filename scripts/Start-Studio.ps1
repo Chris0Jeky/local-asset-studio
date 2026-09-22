@@ -27,10 +27,11 @@ try { $stats = Invoke-RestMethod ($studioConfig.comfy_url + '/system_stats') -Ti
 $isolatedReady = $false
 try { $isolatedStats = Invoke-RestMethod 'http://127.0.0.1:8192/system_stats' -TimeoutSec 2; $isolatedReady = [bool]$isolatedStats.system } catch { }
 try { $h3Stats = Invoke-RestMethod 'http://127.0.0.1:8194/system_stats' -TimeoutSec 2; $isolatedReady = $isolatedReady -or [bool]$h3Stats.system } catch { }
+try { $qwen21Stats = Invoke-RestMethod 'http://127.0.0.1:8196/system_stats' -TimeoutSec 2; $isolatedReady = $isolatedReady -or [bool]$qwen21Stats.system } catch { }
 $backendStatePath = Join-Path $repoRoot '.runtime\backend-state.json'
 $savedBackend = $null
 if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -LiteralPath $backendStatePath -Raw | ConvertFrom-Json }
-if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3')) {
+if (-not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $studioConfig.comfy_launcher -NoBrowser
     if ($LASTEXITCODE -ne 0) { throw 'ComfyUI did not start; inspect its logs.' }
