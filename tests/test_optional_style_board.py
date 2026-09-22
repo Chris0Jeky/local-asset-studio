@@ -168,7 +168,7 @@ class OptionalBoardContinuationTests(unittest.TestCase):
 class OptionalBoardFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is unavailable')
     def test_frontend_optional_board_contracts(self):
-        result = subprocess.run(['node', '--test', str(ROOT / 'tests/optional_style_board.cjs')],
+        result = subprocess.run(['node', '--test', '--test-reporter=tap', str(ROOT / 'tests/optional_style_board.cjs')],
                                 cwd=ROOT, capture_output=True, text=True, encoding='utf-8', timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('# pass 5', result.stdout)
