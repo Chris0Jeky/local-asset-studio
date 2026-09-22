@@ -95,10 +95,14 @@ class TaxonomyContractReadTests(unittest.TestCase):
         self.assertEqual(reads, [contracts.MAX_CONTRACT_BYTES + 1])
         self.assertTrue(handles and all(handle.closed for handle in handles))
 
-    def test_deep_json_uses_the_validation_error_boundary(self):
-        self.path.write_bytes(b'{"nested":' + b"[" * 10000 + b"0" + b"]" * 10000 + b"}")
-        with self.assertRaisesRegex(ValueError, "Invalid taxonomy fixture"):
-            self.load()
+    def test_parser_recursion_failure_uses_the_validation_error_boundary(self):
+        # Python 3.14 can decode the old 10,000-level fixture successfully.
+        # Fault injection proves the promised exception translation on every runtime.
+        failure = RecursionError('fixture: decoder nesting exhausted')
+        with mock.patch.object(contracts.json, 'loads', side_effect=failure):
+            with self.assertRaisesRegex(ValueError, "Invalid taxonomy fixture") as caught:
+                self.load()
+        self.assertIs(caught.exception.__cause__, failure)
 
     def test_lone_surrogates_cannot_enter_hashable_taxonomy_text(self):
         for value in ("name\ud800", "name\udfff"):
