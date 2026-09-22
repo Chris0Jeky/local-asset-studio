@@ -7,9 +7,10 @@ prospective `state.json` before changing the live job or adding one `observe`
 queue item. Recipe/workflow bytes, IDs, resource holds and submission authority
 are unchanged. The command remains serialized by the existing Studio lock.
 
-`app/observation_state.py` is the scoped publication primitive. The historical
-`Studio._write_json_atomic()` helper, Stop tracking itself, mixed-batch writes,
-backend state, abandonment and other save paths are **not** changed. Their wider
+Stop tracking and local abandonment also use `app/observation_state.py` for their
+state-only operator dispositions. Neither command queues work or cancels a remote job.
+The historical `Studio._write_json_atomic()` helper, mixed-batch writes,
+backend state and other save paths are **not** changed. Their wider
 durability review remains open under #716; the umbrella remains open.
 
 ## Publication and failure protocol
@@ -97,3 +98,38 @@ fixture seeds the existing stopped job's state before exercising Resume, just
 as real job creation does. It does not replace the publisher or relax admission.
 The existing observation workflow discovers these tests on Windows and Ubuntu;
 no additional workflow or production persistence owner is introduced.
+
+## Stop tracking and local abandonment
+
+These two operator commands use the same bounded publisher before changing the
+live disposition or acknowledging success. Stop tracking retains known prompt IDs
+and leaves the job uncertain. Abandonment retains its never-submitted versus
+unknown-outcome basis, explicit acknowledgement, receipts and reservations. The
+commands write only `state.json`; recipe/workflow bytes and provider authority do
+not change. The global writer and restart-normalization paths remain separate.
+
+If publication raises after replacement, memory remains unchanged and the visible
+attempt is not rolled back. A subsequent explicit same-reason retry preserves its
+event ID and timestamp only if the entire retained state equals the candidate
+state with that identity. A stop retry also requires the exact prior history and
+matching final event. Historical stopped entries under a current resumed
+disposition are not reused: a new stop creates a new event. A different reason,
+invalid identity, malformed/oversized state or other candidate mismatch refuses.
+
+Reconciliation is a bounded strict read, not evidence that synchronization worked.
+Even when the bytes match, the explicit retry republishes through all required
+barriers before updating memory. Repeated barrier failures retain one attempted
+identity without acknowledging success. Existing acknowledged same-reason calls
+remain idempotent. Restart loads the retained identity and queues nothing; the
+historical restart normalization writer is not migrated or given a stronger
+durability guarantee by this change.
+
+`tests/test_operator_disposition_publication.py` covers both dispositions, including
+never-submitted and unknown-outcome abandonment; pre-replacement failures,
+post-replacement errors, repeated failing barriers, same/different reasons,
+concurrent callers, prior stop/resume history, restart, malformed state, identity
+validation and global-writer exclusion. The first eight regression methods caused
+31 assertion failures on the unchanged production implementation. The dedicated
+observation workflow runs the new suite on both Windows and Ubuntu. #716 remains
+open for multi-file saves/restart normalization, runtime/backend and production
+owners, lower-authority metadata and stronger platform qualification.

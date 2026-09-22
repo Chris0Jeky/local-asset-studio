@@ -1,4 +1,20 @@
-# Current state — 21 September 2026
+# Current state — 22 September 2026
+
+## Operator disposition publication candidate — 22 September 2026
+
+Stop tracking and local abandonment now use the existing scoped observation-state
+publisher before live acknowledgement. Explicit retries preserve an exact visible
+attempt's identity while repeating every required publication barrier; readback
+alone never proves durability. The first eight new regression methods produced
+31 assertion failures before the production fix. Native hosted qualification and
+full-suite results belong to the PR evidence, not this implementation entry.
+See `docs/revision-commands/703-OBSERVATION-PUBLICATION.md` for the retry contract.
+Issue #716 remains open for other state writers and platform qualification.
+No runtime or generation was started; HUMAN_TODO decisions remain open.
+
+Maintenance PR #820 merged as `dea831e7` with all hosted checks green, closing
+#781 and #791. The earlier note below about those unfixed local-suite failures is
+historical. Its cache limitation is tracked separately in #821.
 
 ## q-29 programme stacks merged, NSFW lab landed with local-only media — 21 September 2026 (15:30)
 
