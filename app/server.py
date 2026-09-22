@@ -1007,6 +1007,59 @@ class Studio:
         if job.get("status") != "uncertain": return "Only an uncertain job can stop tracking"
         return Studio._known_prompt_error(job)
 
+    def _retained_operator_disposition(self, job, prospective, field):
+        """Reuse only an exact visible attempt; the caller must still publish it again.
+
+        Readback never proves a failed synchronization barrier. This only keeps an
+        explicit retry from replacing the event identity of an uncertain attempt.
+        The existing per-Studio lock owns these state-only operator commands.
+        """
+        def unique(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result: raise ValueError('Duplicate state field')
+                result[key] = value
+            return result
+
+        def finite_constant(value):
+            raise ValueError('Non-finite state value')
+
+        path = self.runs / job['id'] / 'state.json'
+        with path.open('rb') as stream:
+            raw = stream.read(observation_state.MAX_BYTES + 1)
+        if len(raw) > observation_state.MAX_BYTES:
+            raise StudioError('Retained disposition state exceeds byte budget')
+        try:
+            retained = json.loads(raw.decode('utf-8'), object_pairs_hook=unique,
+                                  parse_constant=finite_constant)
+            if not isinstance(retained, dict) or retained.get('id') != job['id']:
+                raise ValueError('Wrong retained job identity')
+            observation_state._bytes(retained)  # Reject overflowed floats and non-encodable retained values.
+            old = retained.get(field)
+            terminal = (self._tracking_stopped(retained) if field == 'tracking_disposition'
+                        else retained.get('status') == 'abandoned')
+            if not terminal or old == job.get(field): return prospective
+            if not isinstance(old, dict): raise ValueError('Invalid retained disposition')
+            if old.get('reason') != prospective[field]['reason']:
+                raise StudioError('A retained disposition has a different reason; restart to inspect it')
+            event, recorded_at = old.get('event_id'), old.get('recorded_at')
+            if (type(event) is not str or re.fullmatch(r'[0-9a-f]{32}', event) is None
+                    or type(recorded_at) not in (int, float) or not math.isfinite(recorded_at)):
+                raise ValueError('Invalid retained event identity')
+            disposition = copy.deepcopy(prospective[field])
+            disposition.update(event_id=event, recorded_at=recorded_at)
+            if 'history' in disposition:
+                disposition['history'][-1] = {k: v for k, v in disposition.items() if k != 'history'}
+            candidate = dict(prospective, **{field: disposition})
+            expected = {k: v for k, v in candidate.items() if k != 'graph'}
+            # Compare JSON types as well as values (True must not equal 1).
+            if json.dumps(retained, sort_keys=True, allow_nan=False) != json.dumps(expected, sort_keys=True, allow_nan=False):
+                raise StudioError('Retained disposition state changed; restart to inspect it')
+            return candidate
+        except (ValueError, TypeError, RecursionError, UnicodeError, OverflowError) as exc:
+            if isinstance(exc, StudioError): raise
+            raise StudioError('Retained disposition state is invalid; restart to inspect it') from exc
+
     def stop_tracking(self, job_id, reason):
         if type(reason) is not str: raise StudioError("Stop-tracking reason must be text")
         reason = reason.strip()
@@ -1026,8 +1079,9 @@ class Studio:
             disposition = dict(recorded)
             if history: disposition["history"] = history + [dict(recorded)]
             prospective = dict(job); prospective["tracking_disposition"] = disposition
-            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job["tracking_disposition"] = disposition
+            prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job["tracking_disposition"] = prospective['tracking_disposition']
             return self.public(job)
 
     def _resume_tracking(self, job):
@@ -1071,8 +1125,9 @@ class Studio:
             prospective = dict(job, status="abandoned", message=message, abandonment=disposition)
             # Commit one complete disposition before mutating memory. Keep the exact
             # recipe, workflow and pending marker; failure leaves the job recoverable.
-            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job.update(status="abandoned", message=message, abandonment=disposition)
+            prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             return self.public(job)
 
     def _load_jobs(self):
