@@ -48,6 +48,23 @@ function validAssetMetadata(value) {
     typeof value.favorite==='boolean' && ['unreviewed','selected','needs_work','rejected'].includes(value.review) &&
     (value.trashed_at==null || (typeof value.trashed_at==='number' && Number.isFinite(value.trashed_at)));
 }
+// Only a complete, matching POST conflict may release the pending command for
+// explicit comparison. A GET failure or malformed observation is not a refusal
+// receipt. Keep foreign/extra fields out of the retained conflict projection.
+function assetRevisionConflict(error,command) {
+  const data=error?.data,id=command.ids[0];
+  const exactly=(value,ids)=>Array.isArray(value) && value.length===ids.length && value.every((v,i)=>v===ids[i]);
+  if(error.status!==409 || !data || data.code!=='asset_revision_conflict' || command.ids.length!==1 ||
+     data.request_id!==command.request_id || data.workspace_id!==command.workspace_id ||
+     !exactly(data.conflict_ids,[id]) || !exactly(data.missing_ids,[]) || !Array.isArray(data.current) || data.current.length!==1)return null;
+  const row=data.current[0],fields=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
+  const text=(value,max)=>typeof value==='string' && value.length<=max*2 && [...value].length<=max;
+  if(!validAssetMetadata(row) || !fields.every(k=>Object.hasOwn(row,k)) || row.id!==id || row.workspace_id!==command.workspace_id ||
+     row.metadata_revision<=command.expected_revisions[id] || !text(row.title,200) || !text(row.notes,8000) ||
+     row.tags.length>30 || row.tags.some(tag=>!text(tag,60)))return null;
+  const metadata=Object.fromEntries(fields.map(k=>[k,k==='tags'?[...row.tags]:row[k]]));
+  return {code:data.code,workspace_id:data.workspace_id,request_id:data.request_id,conflict_ids:[id],missing_ids:[],current:[metadata]};
+}
 function assetCommand(payload, records, workspaceId=assetState.workspace_id) {
   requireAssetScope(workspaceId);
   const expected_revisions={};
@@ -167,12 +184,16 @@ async function performAssetSave(operation, observe=false) {
     syncAssetAfterSave(operation,result);
   } catch(error) {
     if(!current())return;
+    const conflict=!observe && assetRevisionConflict(error,command);
     if(error.data?.code==='asset_workspace_conflict'){
       assetDetailStatus('The server is using a different Workspace. No changes were applied there. The exact save is retained for the original Workspace.',true);
-    } else if(error.status===409 && error.data?.code==='asset_revision_conflict' && error.data.workspace_id===command.workspace_id){
-      assetDetailPending=null;assetDetailConflict=error.data;renderAssetConflict();assetDetailStatus('Conflict: this asset changed elsewhere. Compare the saved values with your draft before saving again.',true);
+    } else if(conflict){
+      assetDetailPending=null;assetDetailConflict=conflict;renderAssetConflict();assetDetailStatus('Conflict: this asset changed elsewhere. Compare the saved values with your draft before saving again.',true);
+    } else if(error.data?.code==='asset_revision_conflict'){
+      assetDetailStatus('Conflict reply could not be verified for this save. The exact command and your draft remain retained. Check its receipt, inspect lifecycle, or explicitly discard local recovery before a different save. No comparison was loaded.',true);
     } else if(!observe && error.status>=400 && error.status<500){
-      assetDetailPending=null;assetDetailStatus('Not saved. '+error.message+' Your edits remain here.',true);
+      // A refusal describes this attempt, not the outcome of an earlier lost response.
+      assetDetailStatus('This attempt was refused. '+error.message+' The exact command and your draft remain retained. Check its receipt, or close and explicitly discard local recovery before a different save.',true);
     } else {
       assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
     }
@@ -541,7 +562,7 @@ async function performLibraryCommand(operation,observe=false) {
     }
     void refreshAssets(true);assetMessage('Library update confirmed.');return result;
   } catch(error) {
-    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){assetRecovery.clear('library');assetLibraryPending=null;throw Error(error.message+' Refresh the library and review the selection before trying again.');}
+    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
   } finally {
     clearTimeout(timer);
