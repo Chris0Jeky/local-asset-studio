@@ -331,9 +331,11 @@ _FILE_IDENTITY_FIELDS = ("bytes", "mtime_ns", "ctime_ns", "device", "inode")
 # already does; across domains carry birth time instead. A path swapped to another file still moves device,
 # inode, size, mtime or birth time.
 _PATH_IDENTITY_FIELDS = ("bytes", "mtime_ns", "device", "inode", "birthtime_ns")
-# Cache records are produced from descriptor stats and rechecked from path stats. Retain ctime for the
-# descriptor evidence, but compare only the fields that survive that API boundary.
+# Cache records retain descriptor evidence and a separately captured path identity. The latter is compared
+# within the path-stat API domain, so POSIX ctime still detects an in-place rewrite while Windows path ctime
+# remains stable across the next path-stat lookup even though it differs from descriptor ctime.
 _CACHE_RECORD_FIELDS = (*_FILE_IDENTITY_FIELDS, "birthtime_ns")
+_CACHE_PATH_IDENTITY_FIELDS = (*_FILE_IDENTITY_FIELDS, "birthtime_ns")
 
 
 def _same_file(first, second):
@@ -385,7 +387,7 @@ def _hash_open_file(path: Path):
             current = _file_identity(path.stat())
             if not _same_file(current, after):
                 return {"path": key, "present": True, **after, "error": "Model path changed while hashing"}
-            return {"path": key, "present": True, **after, "sha256": digest.hexdigest()}
+            return {"path": key, "present": True, **after, "path_identity": current, "sha256": digest.hexdigest()}
     except OSError as exc:
         result = {"path": key, "present": identity is not None, "error": str(exc)[:200]}
         if identity is not None:
@@ -401,11 +403,15 @@ def _cached_file_hash(path: Path, cache, require_current=False):
         except OSError as exc:
             return {"path": key, "present": False, "error": str(exc)[:200]}
         previous = cache.get(key)
-        if isinstance(previous, dict) and all(previous.get(field) == identity[field] for field in _PATH_IDENTITY_FIELDS) and previous.get("sha256"):
+        previous_path = previous.get("path_identity") if isinstance(previous, dict) else None
+        if isinstance(previous_path, dict) and all(previous_path.get(field) == identity[field] for field in _CACHE_PATH_IDENTITY_FIELDS) and previous.get("sha256"):
             return {"path": key, "present": True, **identity, "sha256": previous["sha256"]}
     observed = _hash_open_file(path)
     if observed.get("sha256"):
         cache[key] = {field: observed[field] for field in _CACHE_RECORD_FIELDS}
+        path_identity = observed.get("path_identity")
+        if isinstance(path_identity, dict):
+            cache[key]["path_identity"] = {field: path_identity[field] for field in _CACHE_PATH_IDENTITY_FIELDS}
         cache[key]["sha256"] = observed["sha256"]
     else:
         cache.pop(key, None)

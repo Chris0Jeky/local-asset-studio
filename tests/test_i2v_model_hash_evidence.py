@@ -106,18 +106,44 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
         for field in ("bytes", "mtime_ns", "ctime_ns", "device", "inode", "birthtime_ns"):
             with self.subTest(field=field):
                 self.assertIn(field, retained)
+                self.assertIn(field, retained["path_identity"])
 
     def test_cache_hit_tolerates_cross_api_ctime_difference(self):
         self.model.write_bytes(b"cached fixture")
         identity = i2v._file_identity(self.model.stat())
         digest = hashlib.sha256(b"cached fixture").hexdigest()
         key = str(self.model)
-        cache = {key: {**identity, "ctime_ns": identity["ctime_ns"] + 1, "sha256": digest}}
+        cache = {
+            key: {
+                **identity,
+                "ctime_ns": identity["ctime_ns"] + 1,
+                "path_identity": identity,
+                "sha256": digest,
+            }
+        }
 
         with mock.patch.object(i2v, "_hash_open_file", side_effect=AssertionError("cache miss")):
             result = i2v._cached_file_hash(self.model, cache)
 
         self.assertEqual(result["sha256"], digest)
+
+    def test_cache_miss_preserves_same_domain_ctime_rewrite_detection(self):
+        self.model.write_bytes(b"rewritten fixture")
+        identity = i2v._file_identity(self.model.stat())
+        key = str(self.model)
+        cache = {
+            key: {
+                **identity,
+                "path_identity": {**identity, "ctime_ns": identity["ctime_ns"] + 1},
+                "sha256": hashlib.sha256(b"old fixture").hexdigest(),
+            }
+        }
+        replacement = {"path": key, "present": True, **identity, "sha256": hashlib.sha256(b"rewritten fixture").hexdigest()}
+        with mock.patch.object(i2v, "_hash_open_file", return_value=replacement) as hashed:
+            result = i2v._cached_file_hash(self.model, cache)
+
+        hashed.assert_called_once_with(self.model)
+        self.assertEqual(result["sha256"], replacement["sha256"])
 
     def test_a_ctime_only_divergence_between_the_two_stat_calls_still_yields_a_digest(self):
         """Deterministic on every platform: inject the Windows domain difference instead of waiting for it.
