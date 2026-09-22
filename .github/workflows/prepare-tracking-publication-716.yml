@@ -1,0 +1,61 @@
+name: Prepare exact stopped-tracking owner blobs
+'on':
+  push:
+    branches:
+    - audit/716-stopped-tracking-publication
+    paths:
+    - .github/workflows/prepare-tracking-publication-716.yml
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.repository == 'Chris0Jeky/local-asset-studio' && github.ref == 'refs/heads/audit/716-stopped-tracking-publication'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+    - name: Verify exact causal RED before preparing owner blobs
+      shell: python
+      run: |
+        import json, pathlib, sys, unittest
+        sys.path.insert(0, str(pathlib.Path('tests').resolve()))
+        suite = unittest.defaultTestLoader.loadTestsFromName('test_observation_tracking_publication')
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+        expected = set(['test_concurrent_retry_publishes_one_resume_event_and_one_queue_item', 'test_exception_after_successful_publication_still_requires_explicit_retry', 'test_failed_parent_barrier_does_not_consume_live_consent', 'test_file_sync_failure_keeps_stop_consent_and_history_retryable', 'test_oversized_state_does_not_fall_back_to_the_global_writer', 'test_parent_barrier_precedes_live_disposition_and_queue_publication', 'test_replacement_failure_keeps_disk_and_live_history', 'test_restart_after_uncertain_publication_keeps_history_without_queue_replay', 'test_success_never_rewrites_recipe_or_uses_the_global_writer'])
+        actual = {test.id().rsplit('.', 1)[-1] for test, _ in result.failures}
+        assert result.testsRun == 12, result.testsRun
+        assert not result.errors and not result.skipped, (result.errors, result.skipped)
+        assert actual == expected, (actual, expected)
+        print('VERIFIED_CAUSAL_RED ' + json.dumps({'tests': result.testsRun, 'failures': sorted(actual), 'errors': 0, 'skips': 0}))
+    - name: Prepare four hash-pinned unreferenced blobs only
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const changes = [{"path":"app/server.py","old_sha":"8cb855a7a36718cc3f3de108ac4e99cb71419317","new_sha":"4c46d12ae6b8d431b3a0bd2a9aa044b6d6453b86","replacements":[["        self._write_json_atomic(self.runs / job[\"id\"] / \"state.json\", {k: v for k, v in prospective.items() if k != \"graph\"})\n","        # Keep the live stop disposition until the supported publication barriers pass.\n        self._write_observation_state(self.runs / job[\"id\"] / \"state.json\", {k: v for k, v in prospective.items() if k != \"graph\"})\n"]]},{"path":"tests/test_reference_hold_observation_admission.py","old_sha":"651425049de9ff89eca82dc8277e98c624071889","new_sha":"1a8658c9df8a242083271a4312c829548b9d32bb","replacements":[["            studio = ObservationStudio(Path(temporary), held=True)\n            job = stopped_job()\n            studio.jobs[job[\"id\"]] = job\n\n","            studio = ObservationStudio(Path(temporary), held=True)\n            job = stopped_job()\n            studio.jobs[job[\"id\"]] = job\n            studio._write_json_atomic(studio.runs / job[\"id\"] / \"state.json\", job)\n\n"]]},{"path":"app/observation_state.py","old_sha":"c349c5431f957612939bab1fdf8c5ba5129b8595","new_sha":"6a0f47cd93df76059b506b2e7cead9d3c02f9639","replacements":[["\"\"\"Scoped publication barriers for ordinary observation admission, not all job saves.\n","\"\"\"Scoped publication barriers for observation admission, not all job saves.\n"]]},{"path":"docs/revision-commands/703-OBSERVATION-PUBLICATION.md","old_sha":"c21f7e92c51d9da35eaf63816275fba8f8854f8c","new_sha":"14b91c5b9bfcdb0733b44e4654030ef5fa743bc2","replacements":[["# Ordinary observation state publication (#703, #716)","# Observation state publication (#703, #716)"],["Ordinary Resume observation owns existing retained prompt IDs. It publishes a","Ordinary and stopped-tracking Resume observation own retained prompt IDs. Each publishes a"],["`Studio._write_json_atomic()` helper, stopped-tracking resume, mixed-batch writes,","`Studio._write_json_atomic()` helper, Stop tracking itself, mixed-batch writes,"],["this slice does not close that issue.","the umbrella remains open."]],"append":"\n## Stopped-tracking Resume continuation\n\nBoth Resume paths now call the same scoped publisher. The stopped-tracking path\nconstructs the prospective resumed disposition and appended history first, but\npublishes neither to the live job nor to the worker queue until the writer\nreturns. A failed attempt does not consume the live stop disposition or append a\nlive resume event. Explicit retry builds from the unchanged live history, not\nfrom visible replacement bytes, so repeated or concurrent attempts publish one\nnew history event and one observation item. Stop-event tokens, retained prompt\nIDs, submissions, recipe/workflow bytes and resource holds remain unchanged.\n\nA failure after replacement can leave the attempted resumed history visible on\ndisk. This is not rolled back and is not evidence that the barrier succeeded.\nExisting recovery loads that retained history, marks queued work uncertain and\nstarts no observation. Another explicit Resume republishes before enqueueing;\nit does not fabricate another stop/resume event from the already retained history.\nThis is deliberately not a two-file consent transaction or a power-loss claim.\n\n`tests/test_observation_tracking_publication.py` covers file and parent-sync\nfaults, replacement/cleanup, an exception after successful publication, barrier\nordering, multiple stop/resume cycles, concurrent retry, restart after uncertain\npublication, worker/evidence refusals and byte-budget refusal. The retained-hold\nfixture seeds the existing stopped job's state before exercising Resume, just\nas real job creation does. It does not replace the publisher or relax admission.\nThe existing observation workflow discovers these tests on Windows and Ubuntu;\nno additional workflow or production persistence owner is introduced.\n"}];
+          const hash = b => crypto.createHash('sha1').update(Buffer.from('blob ' + b.length + '\0')).update(b).digest('hex');
+          if (context.repo.owner !== 'Chris0Jeky' || context.repo.repo !== 'local-asset-studio' || context.ref !== 'refs/heads/audit/716-stopped-tracking-publication') throw new Error('Unexpected repository/ref');
+          for (const change of changes) {
+            const before = fs.readFileSync(change.path);
+            if (before.length > 200000 || hash(before) !== change.old_sha) throw new Error('Unexpected original blob: ' + change.path);
+            let text = before.toString('utf8');
+            for (const [oldText, newText] of change.replacements) {
+              if (text.split(oldText).length !== 2) throw new Error('Replacement is not unique: ' + change.path);
+              text = text.replace(oldText, () => newText);
+            }
+            const after = Buffer.from(text + (change.append || ''), 'utf8');
+            if (hash(after) !== change.new_sha) throw new Error('Unexpected candidate blob: ' + change.path);
+            const response = await github.rest.git.createBlob({...context.repo, content: after.toString('base64'), encoding: 'base64'});
+            if (response.data.sha !== change.new_sha) throw new Error('Published blob mismatch');
+            core.info('PREPARED_BLOB ' + change.path + ' ' + response.data.sha);
+          }
