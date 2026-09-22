@@ -108,7 +108,7 @@ A local profile can overlay a checked-in catalogue profile only when it carries:
 - a strictly higher integer revision than the checked-in profile;
 - `supersedes_profile_sha256` equal to the exact checked-in catalogue profile hash.
 
-This guard detects catalogue drift: a local overlay prepared for different checked-in profile bytes is refused. It is not a mutable registry compare-and-swap operation, a persisted local revision chain, or a concurrent-writer lock. Each resolution starts from the checked-in catalogue and then applies at most one local record per profile ID. Replacing the registry file is an external operator action; competing writers are not serialized by the resolver. Issue #671 tracks a genuine local CAS update boundary if that stronger property is needed.
+This version-1 guard detects catalogue drift: a local overlay prepared for different checked-in profile bytes is refused. Each resolution starts from the checked-in catalogue and applies at most one local record per profile ID. The resolver does not serialize external overlay writers. For durable local predecessor chains and concurrent-writer refusal, use the separate [version-2 registry update command](REGISTRY-CAS.md). Resolution of either format stays read-only; overlays are never migrated implicitly.
 
 New local profile IDs must not claim to supersede an unknown catalogue record.
 
@@ -236,6 +236,6 @@ They do not prove:
 - that an identity sounds original, consistent, pleasant, or low-fatigue;
 - that pronunciation or performance has been accepted;
 - that a custom producer adapter exists;
-- that local registry file writers are serialized or form a durable predecessor chain.
+- that external version-1 overlay writers are serialized or form a durable predecessor chain.
 
-Those require local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641; stronger registry mutation semantics remain #671.
+Voice acceptance requires local retained evidence and human listening. Broader producer, audition, replacement, alignment, and dialogue tooling remains #28; transcript and pronunciation workflow remains #641. The explicit version-2 update command implements #671's registry mutation semantics separately from those voice-acceptance decisions.
