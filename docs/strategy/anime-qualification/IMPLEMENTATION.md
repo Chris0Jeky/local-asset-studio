@@ -1,5 +1,7 @@
 # Integration delivery plan
 
+**21 September update:** #569 and #572 are merged. Read the [current reconciliation](RECONCILIATION-2026-09-21.md) and [route-inspection slice](ROUTE-INSPECTION.md) before treating the original order below as unfinished work.
+
 **Goal:** turn the 15 September report into improvements to the existing accepted-asset loop, beginning with source-scope honesty rather than another model catalogue.
 
 **Architecture:** keep the current Python service, ComfyUI graphs, Workspace, model library, Prompt Lab, resource observer and Experiment Lab. A source record describes the evidence behind advice; a resource pin describes the bytes that advice targets. Neither is execution or acceptance.
@@ -8,7 +10,7 @@
 
 ## Global constraints
 
-Use #552 under #313/#14, not a new epic. Preserve HUMAN_TODO decisions, existing allowances, protected pixels and ambiguous-submit recovery. Keep general anime work independent of the parked #403 stack. No install, runtime restart, driver update, inference, source-art publication or model promotion is part of these software changes. Each implementation is independently reviewable and may stop after its demonstrated improvement.
+Use #552 under #313/#14, not a new epic. Preserve HUMAN_TODO decisions, existing allowances, protected pixels and ambiguous-submit recovery. Keep general anime work independent of #403's content scope; its adoption hold is superseded, not its remaining human decisions. No install, runtime restart, driver update, inference, source-art publication or model promotion is part of these software changes. Each implementation is independently reviewable and may stop after its demonstrated improvement.
 
 ## Slice 0: publish and reconcile the research
 
@@ -46,6 +48,15 @@ assert report['generation_submitted'] is False
 ```
 
 The second assertion deliberately means *catalog pins match*, not *the source verified this version*. Scope is a declared evidence category, not automatic source authentication. Existing UI, CLI and HTTP share this evaluator.
+
+## Delivered continuation and remaining slices
+
+The read-only route inspector joins existing library, graph and profile declarations
+without runtime access. It supplies configuration identity and explicit unknowns,
+not a new registry or qualification verdict. Slice 2 below is **partially delivered**:
+Aesthetic 1.1, Base 1.0 and Animagine Opt have exact template profiles; standalone
+Turbo and native/Q4 reference-aware Qwen remain distinct follow-ups. The subsequent
+rows retain ownership, not a claim that every listed feature is still absent.
 
 ## Subsequent slices, existing owners and acceptance
 

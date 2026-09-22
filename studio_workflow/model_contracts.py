@@ -4,6 +4,8 @@ No model discovery, imports from the installed ComfyUI app, or filesystem probes
 Unknown node classes still need an explicit resource declaration/reviewed adapter.
 """
 
+SUFFIXES = {".safetensors", ".gguf", ".pth", ".pt", ".onnx"}
+
 FOLDERS = {
     "checkpoints": "Complete image models", "diffusion_models": "Diffusion / video / 3D models",
     "text_encoders": "Prompt interpreters", "vae": "Image, video and audio decoders",
