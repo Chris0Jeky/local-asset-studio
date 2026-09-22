@@ -3,6 +3,10 @@ name: Spoken brief contracts
 on:
   push:
     paths:
+      - 'studio_spoken/**'
+      - 'studio_prompt/http_extension.py'
+      - 'app/static/spoken-brief*'
+      - 'tests/spoken_brief_session.cjs'
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
       - 'scripts/strict_json.py'
@@ -15,6 +19,10 @@ on:
       - '.github/workflows/spoken-brief.yml'
   pull_request:
     paths:
+      - 'studio_spoken/**'
+      - 'studio_prompt/http_extension.py'
+      - 'app/static/spoken-brief*'
+      - 'tests/spoken_brief_session.cjs'
       - 'scripts/spoken_brief*.py'
       - 'scripts/speak-handoff.ps1'
       - 'scripts/strict_json.py'
