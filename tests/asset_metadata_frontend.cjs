@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const {setup}=require('./asset_detail_contracts.cjs');
-const conflict=(s,current)=>{const e=Error('Asset changed; nothing applied');e.status=409;e.data={workspace_id:s.run('activeAsset.workspace_id'),code:'asset_revision_conflict',current:[current],conflict_ids:['a'],missing_ids:[]};s.writes.at(-1).reject(e);};
+const conflict=(s,current)=>{const e=Error('Asset changed; nothing applied');e.status=409;e.data={workspace_id:s.run('activeAsset.workspace_id'),code:'asset_revision_conflict',request_id:s.payload(s.writes.length-1).request_id,current:[{trashed_at:null,...current}],conflict_ids:['a'],missing_ids:[]};s.writes.at(-1).reject(e);};
 const saved=(s,fields={})=>({...JSON.parse(s.run('JSON.stringify(activeAsset)')),metadata_revision:1,...fields});
 let count=0;
 async function check(name,fn){await fn();count++;console.log('PASS',name);}
@@ -59,7 +59,8 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const s=setup();s.el('#assetNotes').value='Keep';const p=s.el('#saveAssetDetails').onclick();
     conflict(s,{id:'a',metadata_revision:1,tags:'not an array'});await p;
     assert.doesNotThrow(()=>s.run('resolveAssetConflict(false)'));assert.equal(s.el('#assetNotes').value,'Keep');
-    assert.match(s.el('#assetDetailConflict').innerHTML,/unavailable/);
+    assert.equal(s.run('assetDetailConflict'),null);assert.equal(s.run('assetDetailPending.body'),s.writes[0].options.body);
+    assert.match(s.el('#assetDetailStatus').textContent,/could not be verified/);
   });
   await check('A library receipt does not wait for a stalled refresh',async()=>{
     const s=setup();s.run('refreshAssets=()=>new Promise(()=>{})');
