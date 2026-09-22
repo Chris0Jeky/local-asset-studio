@@ -15,7 +15,8 @@ import warnings
 def _unique_object(pairs):
     value={}
     for key,item in pairs:
-        if key in value:raise ValueError('duplicate safetensors header key: '+key)
+        # ascii() keeps an unpaired-surrogate key encodable wherever the refusal is logged or projected (#736).
+        if key in value:raise ValueError('duplicate safetensors header key: '+ascii(key[:120]))
         value[key]=item
     return value
 

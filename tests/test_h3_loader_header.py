@@ -23,6 +23,20 @@ class LoaderAndSchemaTests(unittest.TestCase):
         base['b']['data_offsets']=[4,9]
         with self.assertRaisesRegex(ValueError,'extent'):check(base)
 
+    def test_duplicate_key_refusal_is_encodable_and_bounded(self):
+        types={'U8':SimpleNamespace(itemsize=1)}
+        def refusal(key):
+            entry='{"dtype":"U8","shape":[1],"data_offsets":[0,1]}'
+            raw=('{"'+key+'":'+entry+',"'+key+'":'+entry+'}').encode();blob=struct.pack('<Q',len(raw))+raw+b'\0'
+            with self.assertRaisesRegex(ValueError,'duplicate safetensors header key') as caught:checked_header(io.BytesIO(blob),len(blob),types)
+            return str(caught.exception)
+        # JSON escapes, so the parsed keys are an unpaired surrogate, a reversed pair, a non-ASCII letter and an overlong name.
+        for key in ('\\ud800','\\udfff\\ud800x','caf\\u00e9','w'*500):
+            with self.subTest(key=key[:20]):
+                message=refusal(key);message.encode('utf-8');json.dumps({'error':message},ensure_ascii=False).encode('utf-8')
+                self.assertTrue(message.isascii());self.assertLess(len(message),200)
+        self.assertEqual(refusal('weight'),"duplicate safetensors header key: 'weight'")
+
     def test_dynamic_reference_only_accepts_dotted_selected_branch(self):
         info={'Image':{'input':{'required':{}},'output':['IMAGE']},'Edit':{'input':{'required':{'image':['COMFY_DYNAMICCOMBO_V3',{'options':[{'key':'0','inputs':{'required':{}}},{'key':'1','inputs':{'required':{'image_1':['IMAGE']}}}]}]}},'output':['IMAGE']}}
         graph={'1':{'class_type':'Image','inputs':{}},'2':{'class_type':'Edit','inputs':{'image':'1','image.image_1':['1',0]}}}
