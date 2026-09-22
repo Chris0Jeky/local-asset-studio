@@ -5,6 +5,7 @@ on:
       - 'app/static/**'
       - 'tests/*reference_attachment*'
       - 'tests/*reference_restore*'
+      - 'tests/*reference_structural*'
       - 'tests/*workbench*'
       - 'tests/restyle_ownership_browser.py'
       - 'tests/studio_browser_smoke.py'
@@ -33,7 +34,7 @@ jobs:
           node-version: '22'
       - run: python -m pip install playwright==1.57.0
       - run: python -m playwright install --with-deps chromium
-      - run: node --test tests/reference_restore_observations.cjs tests/reference_attachment_races.cjs tests/workbench_handoff_guards.cjs tests/workbench_board_source_recovery.cjs
+      - run: node --test tests/reference_structural_observations.cjs tests/reference_restore_observations.cjs tests/reference_attachment_races.cjs tests/workbench_handoff_guards.cjs tests/workbench_board_source_recovery.cjs
       - name: Native File, modal and deferred attachment checks
         run: python tests/restyle_ownership_browser.py --out .runtime/restyle-ownership
       - uses: actions/upload-artifact@v4

@@ -4,7 +4,7 @@ function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceReco
 // Transient attachment intent belongs to the slot owner, not prompt/settings snapshots.
 // Epoch changes invalidate structural edits; the per-record token also rejects an older
 // upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
-const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap();
+const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap(),referenceObservations=new Set();
 function beginReferenceAttachment(index){
   const slot=referenceRecords[index];
   if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
@@ -58,23 +58,25 @@ async function uploadRoleFile(index,file){
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;
   if(Array.isArray(records)&&records.length===selected.reference_slots.length)referenceRecords=records.map(r=>({...r}));
-  const epoch=referenceEpoch,check={};
+  const check={epoch:referenceEpoch};
   // An availability result describes these bytes/records, not whatever later occupies a slot.
   // A new check or committed attachment supersedes this observation even if the filename repeats.
-  const observed=referenceRecords.map((ref,index)=>{
+  const observed=referenceRecords.map(ref=>{
     referenceChecks.set(ref,check);
-    return {ref,index,file:ref.file,sha256:ref.sha256};
+    return {ref,file:ref.file,sha256:ref.sha256};
   });
-  const current=({ref,index,file,sha256})=>referenceRecords[index]===ref&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check;
+  const current=({ref,file,sha256})=>referenceRecords.includes(ref)&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check;
+  check.current=()=>observed.some(item=>item.file&&current(item));
+  referenceObservations.add(check);
   referencePending++;renderReferenceSlots();
   try{
     const status=await post('/api/references/check',{files:observed.filter(r=>r.file).map(r=>r.file)});
-    if(epoch!==referenceEpoch)return;
+    if(check.epoch!==referenceEpoch)return;
     const retained=observed.filter(current);
     for(const {ref} of retained){const found=status.find(r=>r.file===ref.file);ref.missing=!!ref.file&&(!found?.available||(ref.sha256&&ref.sha256!==found.sha256));}
     if(retained.some(({ref})=>ref.missing))message('A saved reference is missing or changed. Reattach it; the recipe and other references remain loaded.',true);
-  }catch(e){if(epoch===referenceEpoch){const retained=observed.filter(current);retained.forEach(({ref})=>ref.missing=!!ref.file);if(retained.some(({ref})=>ref.file))message(e.message,true);}}
-  finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
+  }catch(e){if(check.epoch===referenceEpoch){const retained=observed.filter(current);retained.forEach(({ref})=>ref.missing=!!ref.file);if(retained.some(({ref})=>ref.file))message(e.message,true);}}
+  finally{referenceObservations.delete(check);if(check.epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
 }
 function attachedReferencePayload(){return selected?.reference_slots?.length?referenceRecords.map(r=>({...r})):[];}
 $('#referenceMode').onchange=e=>{
@@ -97,9 +99,15 @@ $('#referenceCards').addEventListener('input',e=>{for(const [key,field] of [['re
 $('#referenceCards').onclick=e=>{
   const up=e.target.closest('[data-ref-up]'),down=e.target.closest('[data-ref-down]'),clear=e.target.closest('[data-ref-clear]');
   if(!up&&!down&&!clear)return;
-  referenceEpoch++;referencePending=0;
+  const epoch=referenceEpoch;referenceEpoch++;referencePending=0;
   if(clear){const i=Number(clear.dataset.refClear),previous=referenceRecords[i].parent_asset;referenceRecords[i]={...referenceRecords[i],file:null,parent_asset:null,missing:false};releaseParentAsset(previous);}
   else{const i=Number((up||down).dataset[up?'refUp':'refDown']),j=i+(up?-1:1);[referenceRecords[i],referenceRecords[j]]=[referenceRecords[j],referenceRecords[i]];}
+  // Writes still belong to the original destination. Availability reads instead follow
+  // retained record identities/bytes, so editing another slot cannot waive their check.
+  for(const check of referenceObservations){
+    if(check.epoch===epoch&&check.current()){check.epoch=referenceEpoch;referencePending++;}
+    else referenceObservations.delete(check);
+  }
   renderReferenceSlots();
 };
 $('#referenceCards').ondragover=e=>{e.preventDefault();};
