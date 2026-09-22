@@ -54,6 +54,13 @@ test('an SDXL skeleton recipe draws in place with its own renderer; Combine reci
   assert.throws(()=>P.guideResponse(reply,body),'a thin-line reply cannot satisfy an OpenPose request');
   assert.throws(()=>P.guideResponse({...reply,renderer:'studio.coco18-openpose-xinsir/v1'},request),'nor the other way round');
 });
+test('the preview shades limbs the way the chosen renderer draws them',()=>{
+  const thin=P.limbColours('studio.coco18-lines/v1'),open=P.limbColours('studio.coco18-openpose-xinsir/v1');
+  assert.deepEqual(thin[0],[1,2,'#ffaa00']);assert.deepEqual(thin[1],[2,3,'#ffff00']);
+  assert.deepEqual(open[0],[1,2,'#990000']);assert.deepEqual(open[1],[1,5,'#993300']);assert.deepEqual(open[2],[2,3,'#996600']);
+  assert.equal(thin.length,17);assert.equal(open.length,17);
+  assert.deepEqual(new Set(thin.map(([a,b])=>a+'-'+b)),new Set(open.map(([a,b])=>a+'-'+b)),'the same seventeen limbs');
+});
 test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>{
   assert.equal(typeof P.positionInput,'function');
   assert.deepEqual(P.positionInput('0','1536',{width:1024,height:1536}),{x:0,y:1536});

@@ -274,8 +274,9 @@
     const sx=el.width/poseCanvas.width,sy=el.height/poseCanvas.height,stroke=Math.max(3,Math.round(Math.min(el.width,el.height)/48));
     ctx.fillStyle='#000';ctx.fillRect(0,0,el.width,el.height);ctx.lineCap='round';ctx.lineWidth=stroke;
     // A joint marked unknown is omitted, and so is every limb that touches it: exactly what the server renders.
-    for(const [from,to] of StudioPoseEditor.LIMBS){const a=posePoints[from],b=posePoints[to];if(!a||!b)continue;
-      ctx.strokeStyle=StudioPoseEditor.COLORS[to];ctx.beginPath();ctx.moveTo(a.x*sx,a.y*sy);ctx.lineTo(b.x*sx,b.y*sy);ctx.stroke();}
+    // Limb colours follow the renderer this recipe's guide is drawn with (the SDXL OpenPose drawing shades each limb).
+    for(const [from,to,colour] of StudioPoseEditor.limbColours(StudioPoseEditor.guideRenderer(selected))){const a=posePoints[from],b=posePoints[to];if(!a||!b)continue;
+      ctx.strokeStyle=colour;ctx.beginPath();ctx.moveTo(a.x*sx,a.y*sy);ctx.lineTo(b.x*sx,b.y*sy);ctx.stroke();}
     posePoints.forEach((point,index)=>{if(!point)return;
       ctx.beginPath();ctx.arc(point.x*sx,point.y*sy,stroke,0,Math.PI*2);ctx.fillStyle=StudioPoseEditor.COLORS[index];ctx.fill();
       if(index===poseJoint){ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=stroke;}});
