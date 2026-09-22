@@ -30,9 +30,21 @@ DEFAULT_FILTERS = {'visibility':'active', 'media_type':None, 'review':None,
                    'favorite':None, 'collection_id':None}
 REVIEWS = ('unreviewed','selected','needs_work','rejected')
 DISPLAY_LIMITS = {'title':200, 'filename':256, 'preset_name':200}
-# SQL bounds strings before they reach Python; no private JSON is decoded.
-PROJECTION = ','.join([
-    *[f"CASE WHEN typeof(a.{key})='text' AND length(CAST(a.{key} AS BLOB))<={limit} "
+EPOCH_VALID = "typeof(epoch)='text' AND length(epoch)=32 AND instr(epoch,char(0))=0 AND epoch NOT GLOB '*[^0-9a-f]*'"
+
+
+def _projection(db):
+    # CAST(TEXT AS BLOB) uses the database encoding, not Python's UTF-8 text
+    # representation. Keep bounds and decoding local to this connection.
+    encoding = {'UTF-8':'utf-8', 'UTF-16le':'utf-16-le', 'UTF-16be':'utf-16-be'}.get(
+        db.execute('PRAGMA encoding').fetchone()[0])
+    require(encoding is not None, 'Unsupported asset catalogue text encoding',
+            code='asset_read_unavailable', status=503)
+    width = 1 if encoding == 'utf-8' else 2
+    # SQL bounds strings before they reach Python; no private JSON is decoded.
+    return ','.join([
+    f"'{encoding}' AS _text_encoding",
+    *[f"CASE WHEN typeof(a.{key})='text' AND length(CAST(a.{key} AS BLOB))<={limit*width} "
       f"THEN a.{key} END AS {key}" for key,limit in
       {'id':128,'sha256':64,'media_type':32,'review':32,'preset_id':128}.items()],
     # SQLite's TEXT substr stops at NUL. Byte prefixes preserve labels and must
@@ -44,7 +56,7 @@ PROJECTION = ','.join([
     *[f"CASE WHEN typeof(a.{key}) IN ('integer','real') THEN a.{key} END AS {key}"
       for key in ('created_at','trashed_at')],
     'a.preset_id IS NULL AS preset_id_null','a.trashed_at IS NULL AS trashed_at_null',
-])
+    ])
 
 
 class AssetReadError(ValueError):
@@ -71,9 +83,9 @@ def _finite(value):
 
 def _state(db):
     try:
-        rows = db.execute("""SELECT singleton,
+        rows = db.execute(f"""SELECT singleton,
             CASE WHEN typeof(version)='integer' THEN version END AS version,
-            CASE WHEN typeof(epoch)='text' AND length(CAST(epoch AS BLOB))=32 THEN epoch END AS epoch,
+            CASE WHEN {EPOCH_VALID} THEN epoch END AS epoch,
             CASE WHEN typeof(revision)='integer' THEN revision END AS revision
             FROM asset_read_state_v1 LIMIT 2""").fetchall()
         row = rows[0] if len(rows) == 1 and rows[0]['singleton'] == 1 else None
@@ -110,7 +122,7 @@ def migrate(db):
                 UPDATE asset_read_state_v1 SET revision=revision+1
                 WHERE singleton=1 AND version=1 AND typeof(revision)='integer'
                 AND revision BETWEEN 0 AND 9007199254740990
-                AND typeof(epoch)='text' AND length(CAST(epoch AS BLOB))=32 AND epoch NOT GLOB '*[^0-9a-f]*';
+                AND {EPOCH_VALID};
                 SELECT CASE WHEN changes()!=1 THEN RAISE(ABORT,'Asset catalogue read state unavailable') END;
                 END''')
 
@@ -173,6 +185,7 @@ def _encode_cursor(scope, stamp, query_hash, limit, asset):
 
 def _summary(row):
     value = dict(row)
+    encoding = value.pop('_text_encoding')
     preset_null, trashed_null = value.pop('preset_id_null'), value.pop('trashed_at_null')
     error = {'code':'asset_read_unavailable','status':503}
     require(_matches(ENTITY,value['id']) and _matches(HEX64,value['sha256'])
@@ -190,11 +203,11 @@ def _summary(row):
         require(type(raw) is bytes and _integer(size) and size >= len(raw),
                 'An asset display label is invalid', **error)
         try:
-            # A bounded prefix may end within a valid UTF-8 scalar. A complete
+            # A bounded prefix may end within a valid Unicode scalar. A complete
             # value must decode completely; only a genuinely cut tail is pending.
-            text = codecs.getincrementaldecoder('utf-8')().decode(raw,final=size==len(raw))
+            text = codecs.getincrementaldecoder(encoding)().decode(raw,final=size==len(raw))
         except UnicodeError as exc:
-            raise AssetReadError('An asset display label is invalid UTF-8', **error) from exc
+            raise AssetReadError('An asset display label has invalid text encoding', **error) from exc
         if len(text) > limit or size > len(raw): value['truncated_fields'].append(key)
         value[key] = text[:limit]
     value['favorite'] = bool(value['favorite'])
@@ -249,7 +262,7 @@ class AssetReads:
             if position is not None:
                 clauses.append('(a.created_at,a.id)<(?,?)'); params.extend(position['last'])
             where = ' WHERE ' + ' AND '.join(clauses) if clauses else ''
-            rows = db.execute('SELECT '+PROJECTION+' FROM assets AS a'+where+
+            rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a'+where+
                               ' ORDER BY a.created_at DESC,a.id DESC LIMIT ?',[*params,limit+1]).fetchall()
             items = [_summary(row) for row in rows[:limit]]
             next_cursor = _encode_cursor(scope,stamp,query_hash,limit,items[-1]) if len(rows)>limit else None
@@ -263,7 +276,7 @@ class AssetReads:
             scope = self.workspace._check_scope(db,workspace_id)
             stamp = _state(db)
             marks = ','.join('?' for _ in ids)
-            rows = db.execute('SELECT '+PROJECTION+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
+            rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
             found = {row['id']:_summary(row) for row in rows}
             items = []
             for key in ids:
