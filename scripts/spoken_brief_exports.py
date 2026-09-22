@@ -18,7 +18,7 @@ import wave
 
 from spoken_brief_archive import (
     CHUNK_BYTES, MAX_MASTER_BYTES, SAMPLE_RATE, checked_directory, checked_json,
-    ffmetadata, file_record, hash_stream, inspect_run, opened_file, wav_parameters,
+    ffmetadata, file_record, hash_stream, inspect_run, opened_file, wav_parameters, require_archive,
 )
 from spoken_brief_compile import SpokenBriefError, canonical_digest, digest_bytes
 from spoken_brief_inbox import HEX, _capture, _lineage
@@ -318,12 +318,21 @@ def load_playback(run_dir) -> dict:
     return _load_playback(directory, inspect_run(directory))[0]
 
 
-def save_playback(run_dir, *, sample: int, rate: float = 1.0, loop=None) -> dict:
+class PlaybackConflict(SpokenBriefError):
+    """A newer saved position must not be overwritten by a stale reader."""
+
+
+def save_playback(run_dir, *, sample: int, rate: float = 1.0, loop=None,
+                  expected_playback_sha256: str | None = None,
+                  expected_archive_sha256: str | None = None) -> dict:
     directory = checked_directory(run_dir)
     sidecar = inspect_run(directory)
+    require_archive(sidecar, expected_archive_sha256)
     value = _playback(sidecar, sample, rate, loop)
     with _claim(directory, sidecar['manifest_sha256']) as verify_claim:
-        _, previous = _load_playback(directory, sidecar)
+        current, previous = _load_playback(directory, sidecar)
+        if expected_playback_sha256 is not None and canonical_digest(current) != expected_playback_sha256:
+            raise PlaybackConflict('Playback state changed; inspect the newer bookmark before saving')
         if inspect_run(directory) != sidecar:
             raise SpokenBriefError('Audio changed before saving playback state')
         verify_claim()

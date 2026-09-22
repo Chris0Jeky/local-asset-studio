@@ -22,6 +22,16 @@ MAX_MASTER_BYTES = 1024 * 1024 * 1024
 CHUNK_BYTES = 1024 * 1024
 
 
+class ArchiveConflict(SpokenBriefError):
+    """The caller's previously verified archive is no longer current."""
+
+
+def require_archive(archive: dict, expected_sha256: str | None) -> None:
+    if expected_sha256 is not None and (not _hash(expected_sha256)
+            or archive['chapters_sha256'] != expected_sha256):
+        raise ArchiveConflict('Archive identity changed; inspect it before another action')
+
+
 def checked_directory(value) -> Path:
     """Keep lexical identity until linked ancestors have been refused."""
     path = Path(os.path.abspath(value))
