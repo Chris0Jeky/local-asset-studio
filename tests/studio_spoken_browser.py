@@ -9,6 +9,7 @@ import threading
 from http.server import ThreadingHTTPServer
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / 'app'), str(ROOT / 'scripts')]
@@ -67,6 +68,11 @@ class SpokenBrowserTests(unittest.TestCase):
         self.page.locator('#inspect').click()
         self.page.locator('#archivePanel').wait_for(state='visible')
 
+    def load_audio(self):
+        self.page.locator('#player').evaluate('(a)=>a.play()')
+        self.page.wait_for_function('document.querySelector("#player").readyState >= 1')
+        self.page.locator('#player').evaluate('(a)=>a.pause()')
+
     def assert_no_inference(self):
         posts = [path for method, path in self.traffic if method == 'POST']
         self.assertTrue(all(path.startswith(('/api/spoken-briefs/bookmark?', '/api/spoken-briefs/review?')) for path in posts), posts)
@@ -124,7 +130,7 @@ class SpokenBrowserTests(unittest.TestCase):
 
     def test_bookmark_conflict_preserves_input_until_explicit_inspection(self):
         from spoken_brief_exports import save_playback
-        self.inspect(); save_playback(self.f.directory, sample=11)
+        self.inspect(); self.load_audio(); save_playback(self.f.directory, sample=11)
         self.page.locator('#savePosition').click(); self.page.wait_for_function("document.querySelector('#status').textContent.includes('Inspect this archive')")
         self.assertTrue(self.page.locator('#savePosition').is_disabled())
         self.assertEqual(11, json.loads((self.f.directory / 'playback.json').read_bytes())['sample'])
@@ -150,6 +156,72 @@ class SpokenBrowserTests(unittest.TestCase):
         self.page.locator('#inspect').click(); self.page.wait_for_function("document.querySelector('#status').textContent !== 'Verifying the retained archive and its actual PCM samples…'")
         self.assertTrue(self.page.locator('#archivePanel').is_hidden())
         self.assertFalse(any(m == 'POST' for m, _ in self.traffic))
+        self.assert_no_inference()
+
+
+    def test_unloaded_audio_cannot_save_a_bookmark_but_can_receive_a_review(self):
+        self.inspect()
+        self.assertTrue(self.page.locator('#savePosition').is_disabled())
+        self.assertFalse(self.page.locator('#saveReview').is_disabled())
+        self.load_audio()
+        self.page.wait_for_function('!document.querySelector("#savePosition").disabled')
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
+    def test_report_selection_clears_previous_evidence_without_implicit_load(self):
+        self.inspect(); self.page.locator('#reportList').select_option(self.report_id)
+        self.page.locator('#loadReport').click()
+        self.page.wait_for_function("!document.querySelector('#linkReport').disabled")
+        self.page.locator('#linkReport').check()
+        before = list(self.traffic)
+        self.page.locator('#reportList').select_option('')
+        self.assertTrue(self.page.locator('#linkReport').is_disabled())
+        self.assertFalse(self.page.locator('#linkReport').is_checked())
+        self.page.get_by_text('Exact report, observations, and normalization', exact=True).click()
+        self.assertEqual('No report selected.', self.page.locator('#reportDetail').inner_text())
+        self.assertEqual('No machine report selected.', self.page.locator('#machineSummary').inner_text())
+        self.assertEqual(before, self.traffic)
+        self.assert_no_inference()
+
+    def test_owner_selection_clears_displayed_judgement_not_saved_record(self):
+        self.inspect(); self.page.locator('#reason').fill('A separate retained owner finding.')
+        self.page.locator('#decision').select_option('keep'); self.page.locator('#saveReview').click()
+        self.page.wait_for_function("document.querySelector('#status').textContent.includes('Listening review saved')")
+        review = next((self.f.directory / 'qa/reviews').glob('*.json')); original = review.read_bytes()
+        self.page.locator('#reviewList').select_option(review.stem); self.page.locator('#loadReview').click()
+        self.page.wait_for_function("document.querySelector('#humanSummary').textContent.includes('keep')")
+        self.page.locator('#reviewList').select_option('')
+        self.page.get_by_text('Exact owner record', exact=True).click()
+        self.assertEqual('No record selected.', self.page.locator('#reviewDetail').inner_text())
+        self.assertIn('Unreviewed', self.page.locator('#humanSummary').inner_text())
+        self.assertEqual(original, review.read_bytes())
+        self.assert_no_inference()
+
+    def test_overlapping_successful_bookmark_requires_a_new_inspection(self):
+        from studio_spoken.core import ArchiveAccess
+        self.inspect(); self.load_audio()
+        self.page.locator('#player').evaluate('(a)=>{a.currentTime=0.01;}')
+        self.page.wait_for_function('!document.querySelector("#savePosition").disabled')
+        entered = threading.Event(); release = threading.Event(); original = ArchiveAccess.bookmark
+        def delayed(access, key, value):
+            entered.set()
+            if not release.wait(8): raise AssertionError('Test did not release its owned bookmark request')
+            return original(access, key, value)
+        with patch.object(ArchiveAccess, 'bookmark', delayed):
+            try:
+                self.page.locator('#savePosition').click()
+                self.assertTrue(entered.wait(3))
+                self.page.locator('#inspect').click()
+                self.page.locator('#archivePanel').wait_for(state='visible')
+                release.set()
+                self.page.wait_for_function("document.querySelector('#status').textContent.includes('Bookmark saved')")
+                self.assertTrue(self.page.locator('#saveReview').is_disabled())
+                self.assertEqual(1, len([method for method, _ in self.traffic if method == 'POST']))
+                self.page.locator('#inspect').click()
+                self.page.locator('#archivePanel').wait_for(state='visible')
+                self.assertFalse(self.page.locator('#saveReview').is_disabled())
+                self.assertIn('480 samples', self.page.locator('#savedPosition').inner_text())
+            finally: release.set()
         self.assert_no_inference()
 
 

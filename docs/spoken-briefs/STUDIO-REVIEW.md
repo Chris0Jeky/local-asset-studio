@@ -36,6 +36,10 @@ those actions writes anything. **Save position** explicitly saves the current
 master-relative sample, speed and loop in `playback.json`. A segment-relative position
 is converted using its verified start sample. Saving zero without a loop is unheard;
 saving the master end is completed, as defined by the existing playback contract.
+**Save position** is unavailable until the selected audio has loaded its metadata,
+its pending seek has finished, and it has no media error. This prevents a pending
+chapter seek or an old media clock from being saved as the new target's position.
+Listening reviews remain available independently of audio loading.
 Use **Seek to saved position** to resume; opening an archive does not autoplay or seek.
 WAV and chapter/transcript JSON downloads are read-only and identity-named. The
 archival WAV is retained; MP3/M4B production remains the explicit CLI export operation.
@@ -44,7 +48,10 @@ The browser submits both the inspected archive digest and its prior playback dig
 The existing playback writer compares the latter under its ownership claim. A second
 tab cannot silently overwrite a newer bookmark. Conflict or an unconfirmed response
 locks additional saves for that archive until explicit inspection; no retry or rebase
-is automatic. A read begun before a failed save cannot clear its uncertainty.
+is automatic. An inspection overlapping a save cannot restore write authority,
+even when that save succeeds: its snapshot could precede the commit. Start a new
+explicit inspection after the save has settled. A successful save for another
+archive never replaces the current archive's state or record list.
 Closing/reloading a tab does **not** checkpoint playback automatically.
 
 ## Machine evidence is not your listening judgement
@@ -53,10 +60,14 @@ Choose an exact machine report ID and **Inspect report**. The server reconstruct
 that report from retained evidence and the verified archive, rather than trusting a
 stored score. The table and exception filter reflect that selected report only.
 Missing transcripts, empty outputs, non-independent alignment and budget-limited
-comparison remain distinct states. No machine report is selected automatically.
+comparison remain distinct states. No machine report is selected automatically. Changing the report choice clears the
+displayed machine evidence and optional report link, and invalidates any pending
+reply for the old choice. The next report still requires **Inspect report**.
 
 Choose an exact owner record to inspect it separately. Record ordering is not a
-“latest” decision or an acceptance policy. The form creates a new immutable record
+“latest” decision or an acceptance policy. Changing that choice clears the old
+judgement and invalidates pending replies without deleting a saved record. Saving
+another review preserves the identity of an already inspected owner record. The form creates a new immutable record
 with explicit target/audio identity, reviewer, reason and four independent findings:
 pronunciation, omissions/repetitions, delivery and fatigue. It can optionally link
 the inspected machine report; that link does not convert word agreement into human
@@ -99,7 +110,10 @@ Stale ownership claims remain subject to the parent CLI's explicit inspection po
 
 The regression suite uses synthetic PCM and inert archives. Real HTTP tests cover
 origin/framing, bounded reads, ranges, stale writes and exact immutable reviews. Node
-executes the shipped request-ownership state machine. The separate Ubuntu/Windows
+executes the shipped request-ownership state machine and page handlers, including
+both completion orders for overlapping inspection/save, delayed record replies,
+unloaded/error/seek-pending media, and preserving a selected owner record on save.
+The small Node DOM fixture is not evidence of native audio decoding. The separate Ubuntu/Windows
 Chromium lane drives the shipped page on the actual composed handler, with no worker.
 
 This supplies the retained-listening/review surface of #638/#640/#641, not all of those
