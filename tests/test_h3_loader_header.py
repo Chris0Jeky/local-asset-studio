@@ -31,7 +31,8 @@ class LoaderAndSchemaTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'duplicate safetensors header key') as caught:checked_header(io.BytesIO(blob),len(blob),types)
             return str(caught.exception)
         # JSON escapes, so the parsed keys are an unpaired surrogate, a reversed pair, a non-ASCII letter and an overlong name.
-        for key in ('\\ud800','\\udfff\\ud800x','caf\\u00e9','w'*500):
+        # The last key is 300 astral characters (a surrogate pair each): ascii() escapes every one to ten characters.
+        for key in ('\\ud800','\\udfff\\ud800x','caf\\u00e9','w'*500,'\\ud83d\\ude00'*300):
             with self.subTest(key=key[:20]):
                 message=refusal(key);message.encode('utf-8');json.dumps({'error':message},ensure_ascii=False).encode('utf-8')
                 self.assertTrue(message.isascii());self.assertLess(len(message),200)
