@@ -4,14 +4,22 @@ on:
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/runtime_observability.py'
+      - 'tests/executor_work_observability.py'
+      - 'tests/loopback_transport_audit.py'
       - 'tests/test_full_suite*.py'
+      - 'tests/test_loopback_transport_audit.py'
       - '.github/workflows/full-suite-lifetime.yml'
   push:
     branches: [main]
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/runtime_observability.py'
+      - 'tests/executor_work_observability.py'
+      - 'tests/loopback_transport_audit.py'
       - 'tests/test_full_suite*.py'
+      - 'tests/test_loopback_transport_audit.py'
       - '.github/workflows/full-suite-lifetime.yml'
 permissions:
   contents: read
@@ -33,6 +41,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       - run: python -m unittest discover -s tests -p 'test_full_suite*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_loopback_transport_audit.py' -v
   windows-full-suite:
     runs-on: windows-latest
     timeout-minutes: 30
@@ -44,8 +53,8 @@ jobs:
       - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
       # The hosted Windows runner needs roughly 800 seconds for the 2,968 offline
       # tests (run 35339291681 started 2,236 of them inside the 600-second default
-      # with no hung test). Raise the hard budget only for this host; the default
-      # guard for every other platform stays at 600 seconds.
+      # with no hung test). Hosted lanes set explicit budgets; the wrapper's
+      # default guard stays at 600 seconds.
       - run: python tests/check_full_suite_lifetime.py
         env:
           FULL_SUITE_LIFETIME_BUDGET_SECONDS: '1500'

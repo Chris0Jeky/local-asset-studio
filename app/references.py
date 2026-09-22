@@ -1,4 +1,5 @@
 """Reference-role compilation and byte-level provenance, independent of inference."""
+import copy
 import hashlib
 import io
 import math
@@ -15,7 +16,7 @@ def board_spec(preset):
     slots=preset.get('reference_slots') or [];board=preset.get('reference_board')
     if not isinstance(board,dict) or not slots:raise ValueError('This recipe has no reference board')
     minimum=board.get('min',1);policy=board.get('policy',BOARD_POLICY)
-    if type(minimum) is not int or not 1<=minimum<=len(slots):raise ValueError('Reference-board minimum must fit its declared slots')
+    if type(minimum) is not int or not 0<=minimum<=len(slots):raise ValueError('Reference-board minimum must fit its declared slots')
     if not isinstance(policy,str) or not policy or len(policy)>500:raise ValueError('Reference-board preprocessing policy is invalid')
     roles=[]
     for slot in slots:
@@ -93,6 +94,94 @@ def prune_missing_slot(graph, node):
     return graph
 
 
+def prune_empty_board(preset, graph):
+    """Bypass a whole native IP-Adapter board, refusing unknown or shared paths.
+
+    This is deliberately narrower than pruning one absent slot: an empty board must
+    never remove a sampler/output or fall back to an undeclared example. Plan on a
+    copy and commit only after all surviving consumers have valid replacements.
+    """
+    def refuse():
+        raise ValueError('Cannot remove this empty optional board safely; its graph needs an explicit supported bypass.')
+
+    def link(value):
+        return (str(value[0]), value[1]) if (isinstance(value, list) and len(value) == 2
+            and isinstance(value[0], (str, int)) and not isinstance(value[0], bool)
+            and type(value[1]) is int and value[1] >= 0) else None
+
+    loaders = set()
+    for slot in preset['reference_slots']:
+        binding = slot.get('binding')
+        if not isinstance(binding, (list, tuple)) or len(binding) != 2: refuse()
+        node, field = str(binding[0]), binding[1]
+        if field != 'image' or node in loaders or graph.get(node, {}).get('class_type') != 'LoadImage': refuse()
+        loaders.add(node)
+    protected = {str(binding[0]) for name in ('reference', 'last_reference')
+                 if isinstance(binding := preset.get(name), (list, tuple)) and binding}
+    loader_outputs = {(key, 0) for key in loaders}
+    embeddings = {key for key, item in graph.items() if item.get('class_type') == 'IPAdapterEncoder'
+                  and link((item.get('inputs') or {}).get('image')) in loader_outputs}
+    # Combine only embeddings owned by this board. Mixed/unknown consumers remain
+    # outside the removal set and are refused by the surviving-link check below.
+    while True:
+        before = len(embeddings)
+        for key, item in graph.items():
+            if key in embeddings or item.get('class_type') != 'IPAdapterCombineEmbeds': continue
+            inputs = item.get('inputs') or {}
+            values = [link(inputs[name]) for name in ('embed1', 'embed2', 'embed3', 'embed4', 'embed5') if name in inputs]
+            if 'embed1' in inputs and values and all(value and value[0] in embeddings and value[1] == 0 for value in values):
+                embeddings.add(key)
+        if len(embeddings) == before: break
+    embedding_outputs = {(key, 0) for key in embeddings}
+    bypass = {key: (item.get('inputs') or {}).get('model') for key, item in graph.items()
+              if item.get('class_type') == 'IPAdapterEmbeds'
+              and link((item.get('inputs') or {}).get('pos_embed')) in embedding_outputs}
+    if not bypass: refuse()
+    removed = loaders | embeddings | set(bypass)
+    # A named input owns its claim independently of every board role, even if a
+    # malformed catalog aliases it to an intermediate node rather than a loader.
+    if removed & protected: refuse()
+    for key, upstream in bypass.items():
+        # Negative-embedding boards need their own explicit contract; do not
+        # silently discard a separately conditioned input while removing this board.
+        if (graph[key].get('inputs') or {}).get('neg_embed') is not None: refuse()
+        bound = link(upstream)
+        if not bound or bound[0] not in graph: refuse()
+        # Contracting a model edge is valid only when it cannot create a cycle.
+        seen, pending = set(), [bound[0]]
+        while pending:
+            node = pending.pop()
+            if node == key: refuse()
+            if node in seen: continue
+            seen.add(node)
+            pending.extend(edge[0] for value in (graph.get(node, {}).get('inputs') or {}).values()
+                           if (edge := link(value)))
+
+    working = copy.deepcopy(graph)
+    for key in removed: working.pop(key)
+    for item in working.values():
+        for field, value in list((item.get('inputs') or {}).items()):
+            edge = link(value)
+            seen = set()
+            while edge and edge[0] in bypass:
+                if edge[1] != 0 or edge[0] in seen: refuse()
+                seen.add(edge[0])
+                value = list(bypass[edge[0]])
+                edge = link(value)
+            if isinstance(value, list) and len(value) == 2 and str(value[0]) in removed: refuse()
+            item['inputs'][field] = value
+    # Remove only now-unused adapter/vision loaders, never a shared model resource.
+    auxiliary = {edge[0] for key in embeddings | set(bypass) for field in ('ipadapter', 'clip_vision')
+                 if (edge := link((graph[key].get('inputs') or {}).get(field)))}
+    used = {edge[0] for item in working.values() for value in (item.get('inputs') or {}).values()
+            if (edge := link(value))}
+    for key in auxiliary - used:
+        if working.get(key, {}).get('class_type') in ('IPAdapterModelLoader', 'CLIPVisionLoader'):
+            working.pop(key)
+    graph.clear()
+    graph.update(working)
+
+
 def compile_board(preset, graph, supplied, uploads):
     """A style board: every slot is optional, missing slots are pruned, no prompt guidance is written."""
     slots=preset.get('reference_slots',[]);spec=board_spec(preset);transform=board_transform(preset)
@@ -102,13 +191,15 @@ def compile_board(preset, graph, supplied, uploads):
     minimum=spec['minimum']
     if sum(1 for r in supplied if isinstance(r,dict) and r.get('file'))<minimum:
         raise ValueError(f'Attach at least {minimum} picture{"s" if minimum!=1 else ""} to the board, or leave the recipe example in place')
+    empty = minimum == 0 and not any(isinstance(r, dict) and r.get('file') for r in supplied)
+    if empty: prune_empty_board(preset, graph)
     records=[]
     for index,(slot,reference) in enumerate(zip(slots,supplied)):
         node,field=slot['binding']
         if not isinstance(reference,dict) or not reference.get('file'):
             # Keep the slot's position in the persisted record: a saved recipe restores by index, so a
             # two-picture board must still come back as three slots with the empty one marked.
-            prune_missing_slot(graph,node)
+            if not empty: prune_missing_slot(graph,node)
             records.append({'slot':index+1,'role':spec['roles'][index],'file':None,'pruned':True,'contribution':'','avoid':''}); continue
         if reference.get('role',slot.get('role')) not in ROLES: raise ValueError('Every reference needs an explicit supported role')
         name=reference['file']

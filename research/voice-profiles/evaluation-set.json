@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "spoken-brief-evaluation-v1",
+  "revision": 2,
+  "name": "Spoken Brief shared voice qualification set",
+  "lines": [
+    {
+      "id": "neutral",
+      "category": "neutral-technical",
+      "delivery_id": "calm-brief",
+      "text": "The implementation is ready for review, and no generation will repeat automatically."
+    },
+    {
+      "id": "question",
+      "category": "question",
+      "delivery_id": "calm-brief",
+      "text": "Should we merge the migration before the queue recovers, or keep the two changes separate?"
+    },
+    {
+      "id": "reaction",
+      "category": "short-reaction",
+      "delivery_id": "spark-recap",
+      "text": "Great, that closes the blocker."
+    },
+    {
+      "id": "names",
+      "category": "proper-names",
+      "delivery_id": "dense-technical",
+      "text": "Taskdeck, NavSentinel, Local Asset Studio, ComfyUI, Qwen three TTS, and pull request six hundred and thirty-six."
+    },
+    {
+      "id": "numbers",
+      "category": "numbers-acronyms",
+      "delivery_id": "dense-technical",
+      "text": "The run produced seventeen segments, forty-eight kilohertz mono audio, and a SHA two hundred and fifty-six receipt."
+    },
+    {
+      "id": "path",
+      "category": "path",
+      "delivery_id": "dense-technical",
+      "text": "Open the handoffs folder, select COMPRESSED dot M D, and inspect the spoken output directory."
+    },
+    {
+      "id": "long",
+      "category": "long-sentence",
+      "delivery_id": "calm-brief",
+      "text": "We selected the review-first coordinator because it preserves every child project identity, blocks duplicate inference after an uncertain response, and allows the final audio to be rebuilt from verified segments, but a real workstation trial is still required before pronunciation, pacing, listener fatigue, or the intended voice identity can be accepted."
+    },
+    {
+      "id": "contrast-calm",
+      "category": "delivery-contrast",
+      "delivery_id": "calm-brief",
+      "text": "The source stayed stable, every contract passed, and the listening file is ready for a careful owner review."
+    },
+    {
+      "id": "contrast-spark",
+      "category": "delivery-contrast",
+      "delivery_id": "spark-recap",
+      "text": "The source stayed stable, every contract passed, and the listening file is ready for a careful owner review."
+    }
+  ]
+}

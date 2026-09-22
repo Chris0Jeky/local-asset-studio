@@ -198,7 +198,12 @@ deterministically from that member's seed — so a recipe and its seed reproduce
 - `__name__` picks a line from `presets/wildcards/name.txt` (one option per line, `#` comments).
   Unknown names are left literal. Recursion stops at depth 4.
 - Available lists: `medium`, `lighting`, `palette`, `composition`, `fantasy_setting`,
-  `fantasy_creature`, `anime_style`, `mood`, `time_of_day`, `weather`.
+  `fantasy_creature`, `anime_style`, `mood`, `time_of_day`, `weather`,
+  `lazy_color_character` (Times Lazy adult-illustration character lines),
+  `Breastsrandom` (nested size tags used by that pack).
+- Create shows one chip per list under the prompt; clicking inserts `__name__`.
+  Recipes **AniFox v2 - lazy color character study** and **Anima v1 - lazy color character study**
+  already use the pack as a four-seed audition.
 
 Example (SDXL): `1girl, solo, __fantasy_creature__, __lighting__, {forest|ruins|library}, scenery`.
 Example (Krea): `… lit by __lighting__, standing in __fantasy_setting__ …`.

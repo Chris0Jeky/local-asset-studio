@@ -234,3 +234,13 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
 @media(forced-colors:active) {
   body.workshop-active[data-workshop-skin] .ux-create-heading {background-image:none}
 }
+
+/* Secondary decisions stay reachable without competing with Generate. */
+.workshop .wk-run-tools {grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
+.workshop .wk-run-tools button {font-size:11px;min-height:36px;padding:5px 10px;background:transparent}
+@media(max-width:600px){.workshop .wk-run-tools{grid-row:3}.workshop .wk-run-dock .actions{grid-row:2}}
+@media(min-width:1100px){
+  .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto}
+  .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
+  .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
+}

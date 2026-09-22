@@ -2,10 +2,13 @@
 """Compile one Markdown handoff into deterministic bounded voice batches."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
 import re
+
+import voice_profile as _voice_profile
 
 SCHEMA_VERSION = 2
 COMPILER_VERSION = 2
@@ -295,14 +298,38 @@ def batch_segments(segments: list[dict]) -> list[list[dict]]:
     return batches
 
 
-def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
-    source = Path(source).resolve()
-    if not SPEAKER_RE.fullmatch(speaker_id):
+def _resolve_binding(*, speaker_id: str | None = None, voice_profile: dict | None = None) -> tuple[dict, str]:
+    if voice_profile is None:
+        try:
+            voice_profile = _voice_profile.resolve_profile(
+                'kokoro-af-heart-control-v1',
+                'calm-brief',
+                speaker_id=speaker_id,
+            )
+        except _voice_profile.VoiceProfileError as exc:
+            raise SpokenBriefError(str(exc)) from exc
+    elif not isinstance(voice_profile, dict):
+        raise SpokenBriefError('Voice profile binding must be an object')
+    effective_speaker = voice_profile.get('speaker_id') if speaker_id is None else speaker_id
+    if not isinstance(effective_speaker, str) or not SPEAKER_RE.fullmatch(effective_speaker):
         raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
-    return compile_snapshot(source, read_source_bytes(source), speaker_id=speaker_id)
+    if voice_profile.get('speaker_id') != effective_speaker:
+        raise SpokenBriefError('Voice profile binding speaker metadata differs from the compiler speaker ID')
+    return voice_profile, effective_speaker
 
 
-def compile_snapshot(source: Path, raw: bytes, *, speaker_id: str = 'brief-narrator') -> dict:
+def compile_source(source: Path, *, speaker_id: str | None = None, voice_profile: dict | None = None) -> dict:
+    source = Path(source).resolve()
+    return compile_snapshot(source, read_source_bytes(source), speaker_id=speaker_id, voice_profile=voice_profile)
+
+
+def compile_snapshot(
+    source: Path,
+    raw: bytes,
+    *,
+    speaker_id: str | None = None,
+    voice_profile: dict | None = None,
+) -> dict:
     """Compile already captured bytes without reading, resolving or writing a file.
 
     The caller owns filesystem confinement and snapshot acquisition. Keeping the
@@ -310,8 +337,7 @@ def compile_snapshot(source: Path, raw: bytes, *, speaker_id: str = 'brief-narra
     after the original source has changed or disappeared.
     """
     source = Path(source).absolute()
-    if not isinstance(speaker_id, str) or not SPEAKER_RE.fullmatch(speaker_id):
-        raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
+    voice_profile, effective_speaker = _resolve_binding(speaker_id=speaker_id, voice_profile=voice_profile)
     if not isinstance(raw, bytes) or not 1 <= len(raw) <= MAX_SOURCE_BYTES:
         raise SpokenBriefError(f'Markdown source must contain 1 to {MAX_SOURCE_BYTES} bytes')
     try:
@@ -323,7 +349,8 @@ def compile_snapshot(source: Path, raw: bytes, *, speaker_id: str = 'brief-narra
         'schema_version': SCHEMA_VERSION,
         'kind': 'spoken-brief',
         'source': {'path': str(source), 'name': source.name, 'bytes': len(raw), 'sha256': digest_bytes(raw)},
-        'speaker_id': speaker_id,
+        'speaker_id': effective_speaker,
+        'voice_profile': copy.deepcopy(voice_profile),
         'compiler': {
             'version': COMPILER_VERSION,
             'target_line_chars': TARGET_LINE_CHARS,

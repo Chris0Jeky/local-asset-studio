@@ -54,6 +54,9 @@ Matching catalog pins is not fresh verification of installed model bytes.
 
 ## Read next
 
+- [Setup compatibility and recommendation intelligence](SETUP-COMPATIBILITY.md)
+- [Retained source evidence to setup compatibility](SETUP-SOURCE-EVIDENCE.md)
+- [Atomic, dependency-aware setup substitutions](ATOMIC-SUBSTITUTIONS.md)
 - [Resource-scoped settings explanations](SCOPED-GUIDANCE.md)
 - [Reusable Steps workflows and retained-save contract](REUSABLE-WORKFLOWS.md)
 - [Guided tuning, reconciliation and tests](GUIDED-TUNING.md)

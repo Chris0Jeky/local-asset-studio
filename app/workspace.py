@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sqlite3
+import threading
 import time
 import uuid
 from contextlib import contextmanager
@@ -30,6 +31,7 @@ class WorkspaceError(ValueError):
 
 
 WAL_INITIALIZATION_TIMEOUT = 15
+_INITIALIZATION_LOCK = threading.Lock()
 MAX_REVISION = 2**53 - 1
 METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
 
@@ -49,6 +51,12 @@ class AssetWorkspace:
         self.media = self.root / "media"
         self.media.mkdir(exist_ok=True)
         self.database = self.root / "assets.sqlite3"
+        # One process must not race WAL activation against its own schema migration.
+        # SQLite's bounded BUSY retry remains the cross-process coordination boundary.
+        with _INITIALIZATION_LOCK:
+            self._initialize_database()
+
+    def _initialize_database(self):
         with self.connection() as db:
             self._enable_wal(db)
             db.executescript("""
@@ -83,6 +91,8 @@ class AssetWorkspace:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
             from studio_workflow.collection_commands import migrate
             migrate(db)
+            from studio_workflow.asset_reads import migrate as migrate_asset_reads
+            migrate_asset_reads(db)
 
     @staticmethod
     def _enable_wal(db):
@@ -114,6 +124,11 @@ class AssetWorkspace:
         try:
             with db:
                 yield db
+        except sqlite3.IntegrityError as exc:
+            if str(exc) == 'Asset catalogue read state unavailable':
+                raise WorkspaceError('Asset catalogue read state is unavailable; nothing changed',
+                                     status=503, code='asset_read_unavailable') from exc
+            raise
         finally:
             db.close()
 
@@ -216,6 +231,20 @@ class AssetWorkspace:
         for collection in collections:
             collection["count"] = counts.get(collection["id"], 0)
         return {"assets": assets, "collections": collections, "workspace_id": identity}
+
+    def asset_page(self, **query):
+        from studio_workflow.asset_reads import AssetReads, AssetReadError
+        try:
+            return AssetReads(self).page(**query)
+        except AssetReadError as exc:
+            raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
+
+    def asset_selection(self, ids, *, workspace_id):
+        from studio_workflow.asset_reads import AssetReads, AssetReadError
+        try:
+            return AssetReads(self).selection(ids, workspace_id=workspace_id)
+        except AssetReadError as exc:
+            raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
 
     @staticmethod
     def text(value, name, maximum):

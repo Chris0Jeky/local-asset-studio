@@ -4,6 +4,8 @@
 
 **Basis:** the owner's 26-page *Anime generation and multi-reference editing qualification for local-asset-studio*, frozen 15 September. This is an adaptation, not a claim that the paper's recommendations have executed. Its repository checkpoint was `b29205cfc95ca4e64d72ae38d53df30c83968997`; this integration inspected `main` at `6cdf6ab09683b37f55e1b55af582e4e28eac8100`.
 
+**Continuation:** [21 September reconciliation](RECONCILIATION-2026-09-21.md) and [read-only route inspection](ROUTE-INSPECTION.md) supersede stale implementation/status assumptions below without changing the research freeze.
+
 ## Direction
 
 Build a studio that turns an ordinary creative intention and a few references into an **accepted, reusable asset with understandable effort and preserved lineage**. The first proof remains one original fantasy-character pack: portrait, full body, expression/pose variation and a repaired/refined derivative. At least one accepted artifact must become a subsequent source through the shipped Studio, and the journey must be repeatable without hidden agent state.
@@ -16,12 +18,14 @@ The report is valuable because it changes the question from “which model looks
 2. **Retain measured baselines.** Current Klein/Combine, pose-then-face, WAI repair and Anima Base evidence stays in the comparison. The paper's preferred Qwen/Animagine portfolio does not erase it.
 3. **Separate priority from qualification.** A useful research recommendation is neither a successful execution nor an accepted image. Exact-version advice, installed-byte verification, runtime reliability, artistic judgement and permitted use remain separate facts.
 4. **Use existing owners.** Prompt syntax belongs in Prompt Lab and its settings knowledge; observations in Reference Intelligence; binding in Workflow Studio; bounded campaigns and comparisons in Experiment Lab; canon/reviews in Workspace; runtime authority in the existing coordinator/backend manager.
-5. **Start small in software.** Expose source scope separately from resource-pin matching in the existing guidance evaluator, and correct the stale Anima documentation. Do not install a comparator or upgrade ROCm to demonstrate document intake.
+5. **Build on delivered software.** #569 added source scope; #572 added exact authored-template anime profiles. The next slice joins those existing owners into a read-only configuration report. Do not install a comparator or upgrade ROCm to demonstrate document intake.
 
 ## Reading path
 
 | Read | Purpose |
 | --- | --- |
+| [RECONCILIATION-2026-09-21.md](RECONCILIATION-2026-09-21.md) | Current delivery audit, dated source checks and concrete next owners |
+| [ROUTE-INSPECTION.md](ROUTE-INSPECTION.md) | Reproducible offline model/graph/profile/reference inspection and CLI |
 | [EXTRACTION.md](EXTRACTION.md) | Page-addressed decomposition of every substantive report section, including uncertainties and examples |
 | [PORTFOLIO.md](PORTFOLIO.md) | Role-based model/configuration choices, prompting, adapters, native controls and purpose-sensitive terms |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Ownership, evidence boundaries, identity/canon, UX and technology decisions |
@@ -37,9 +41,9 @@ Read together with the existing [product thesis](../PRODUCT-THESIS.md), [fantasy
 
 **Repository evidence:** The repository's dated atelier records show Anima Base 1.0 was present and executed for those jobs; this intake did not inspect current workstation files. The report's “not proven” row is a limitation of that review, not evidence of absence. Likewise, the newer Combine/pose-then-face workflows must participate in a matched baseline before replacement is justified.
 
-**Scope:** the parked adult-illustration stack is not required for this general anime integration. HUMAN_TODO q-29 remains an owner decision. The owner has already answered the private-experiment use question; this work preserves terms records without manufacturing a new commercial launch requirement.
+**Scope:** q-29 programme adoption was answered on 20 September and the stack is now merged; remaining content-envelope decisions are still open. General anime qualification remains independent of that programme's scope. Preserve the private-experiment decision and terms records without manufacturing a new commercial launch requirement.
 
-**Compiler:** the current generic profiles and family notes are not yet the exact-version compiler proposed in the paper. In particular, Aesthetic/Base/Turbo distinctions, model-specific negative syntax and native-versus-quantized schedules still need the separately tested migration in #34/#144. Adding a source-scope label does not finish that migration.
+**Compiler:** #572 supplies exact authored-template profiles for Aesthetic 1.1, Base 1.0 and Animagine 4.0 Opt. It preserves legacy records; it does not finish standalone Turbo, reference-aware native-versus-quantized Qwen profiles, upstream-source authentication or workstation qualification. Continue those distinctions under #34/#144 rather than recreating the delivered profiles.
 
 ## What success means
 

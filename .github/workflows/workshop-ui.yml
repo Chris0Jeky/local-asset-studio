@@ -50,6 +50,14 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Recipe and shared-shell keyboard entry points
+        run: python tests/workshop_entry_points.py
+      - name: Reachable run decisions across short and narrow viewports
+        run: python tests/workshop_run_decisions.py
+      - name: Dashboard and library renderer regressions
+        run: python tests/workshop_daily_journeys.py
+      - name: Overview and library journeys on native HTTP
+        run: python tests/workshop_daily_application.py --output .runtime/workshop-daily
       - name: Effective local ambience and fallback policy
         run: python tests/workshop_ambience_browser.py --output .runtime/workshop-ambience
       - name: Native disclosure lifecycle and nested modal handoffs
@@ -68,6 +76,7 @@ jobs:
           name: workshop-browser-evidence
           path: |
             .runtime/workshop-component/
+            .runtime/workshop-daily/
             .runtime/workshop-ambience/
             .runtime/workshop-application/
             .runtime/workshop-handoffs/

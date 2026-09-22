@@ -1,4 +1,42 @@
-# Current state — 18 September 2026
+# Current state — 22 September 2026
+
+## Operator disposition publication candidate — 22 September 2026
+
+Stop tracking and local abandonment now use the existing scoped observation-state
+publisher before live acknowledgement. Explicit retries preserve an exact visible
+attempt's identity while repeating every required publication barrier; readback
+alone never proves durability. The first eight new regression methods produced
+31 assertion failures before the production fix. Native hosted qualification and
+full-suite results belong to the PR evidence, not this implementation entry.
+See `docs/revision-commands/703-OBSERVATION-PUBLICATION.md` for the retry contract.
+Issue #716 remains open for other state writers and platform qualification.
+No runtime or generation was started; HUMAN_TODO decisions remain open.
+
+Maintenance PR #820 merged as `dea831e7` with all hosted checks green, closing
+#781 and #791. The earlier note below about those unfixed local-suite failures is
+historical. Its cache limitation is tracked separately in #821.
+
+## q-29 programme stacks merged, NSFW lab landed with local-only media — 21 September 2026 (15:30)
+
+A Fable coordinator with two Opus 5 workers drained the adult-illustration queue and finished the overnight Grok lab. Work was in isolated worktrees; the Studio and ComfyUI were not started and nothing was generated in this pass.
+
+**Seventeen adult-illustration PRs merged** (merge commits, never squash; every head had 9/9 hosted checks green; one fresh-context adversarial review each, no CRITICAL/HIGH anywhere; oldest first, children retargeted to `main` after each base landed):
+
+| Stack | PR → merge SHA |
+| --- | --- |
+| Taxonomy | #550 `a4fa2631`, #555 `ffa36515`, #562 `ec28f2d0`, #690 `68241a1a`, #733 `0c0b75fa`, #741 `8b67948b`, #745 `0071788b`, #751 `b48b2e5e` |
+| Source | #579 `f83bf5b3`, #580 `9319c1c5`, #687 `330ef10f`, #693 `c74ce62a`, #732 `a0f9e9d7`, #743 `acf4804b`, #747 `023d13b6`, #750 `1c3d3da1` |
+| Standalone | #584 `c956831d` |
+
+Conflict resolutions (#550, #579, #580, #584) were union-shaped on `.github/workflows/prompt-studio.yml`, `docs/adult-illustration/README.md` and, for #584, `agent-skills/adult-illustration/SKILL.md` (`test_agent_harness` 12/12 after). Eight Codex drafts read complete and were marked ready before merge. #561 closed by #562 as intended; #403, #405, #409, #432, #433, #437–#440 stay open. All seventeen head branches were deleted from origin after each was confirmed an ancestor of `main` with no open PR on it. Follow-ups filed: #781 (five Python 3.14 / Node / i2v failures make the local full suite red on unmodified `main`; CI's pinned 3.12 is green), #782, #785, #789, #798, #800, #801 (three exit-124 `checks` timeouts at the 600 s budget, each green on rerun), #803, #804, #807, #808 (confirmed MEDIUM: a bare `?` passes the Civitai endpoint-spelling guard; the network path is inert without `--allow-network`).
+
+**NSFW lab landed as #783 `7b504b90`** from a fresh branch with **zero image blobs in its history** (owner decision, 21 September: lab renders stay off GitHub but remain easy to inspect locally). It carries the Grok branch's recipes, `presets/nsfw-intel.json`, twelve wildcard lists, two baseline graphs, the `/api/knowledge` route and `/static/nsfw-lab.html` gallery, and the evidence docs under `experiments/curated/nsfw-lab-20260921/` and `civitai-intake-20260921/`. Media policy: `examples/nsfw-lab/` and `examples/civitai-intake/` are gitignored for images; a tracked `MANIFEST.json` in each records 148 entries (sha256, bytes, size, job id, prompt id, cell, source PNG, inspection note; 147 reproduce byte-for-byte from their job PNG at Pillow q85, the 148th was matched by hash scan); `python scripts/lab-media.py verify|restore|index` checks, rebuilds (from job PNGs or `--from-ref`) and writes a gitignored `index.html` contact sheet per folder; the gallery shows a labelled placeholder for a missing file; `validate-repo.py` requires a manifest entry for every referenced example URL and refuses tracked binaries there. In the serving checkout: 118/118 and 30/30 verified. `origin/grok/nsfw-hentai-lab` (the only ref holding the blobs) was deleted; the local unpushed tag `local/nsfw-hentai-lab-with-images` (`d7770536`) keeps them for `restore --from-ref`. **#784 `17d84b1e`** fixed a Windows `st_ctime_ns` birth-time/change-time mismatch that had every pinned model reporting `pin_status: "mismatch"` on `main` since `5e81a5fd`.
+
+Recorded from the Grok branch's own state notes (its CURRENT_STATE/HUMAN_TODO edits were not ported): *01:15* nine safetensors copied from `Downloads/temp2` (civitai.red origin) with `scripts/intake-downloads.py`, AniFox v2 hash matches the library pin; *02:08* ten showcase jobs (Anima/SDXL 16–40 s, Krea 2 Turbo ~9–10 min each); *02:54* twenty wave-2 adapter jobs, 14–48 s (Pony photoreal, Animagine stayed in lingerie, YumeFlux added pasties, Noob soft); *03:28* waves A–C (breast-size tags distinguish at a locked seed; `hands on thighs, five fingers, neat hands` gave the first five-finger hands; WAI `nsfw`/`explicit`/none made no difference once `nude` was in the positive; WAI glossy + from below is the strongest camera; a sheer shirt can beat a full nude; `hourglass` spawned a prop; Danbooru character tags fire without LoRAs); *03:40* wave D anatomy (puckered vs spread anus is a clean pair; `small labia` does not make an innie; spread fingers still grew six digits) and wave G costume scenes. Extra fingers remain on any active hand throughout. Generated ≠ accepted ≠ licensed; catalog `verified` stays false.
+
+Housekeeping: three stale detached review worktrees (680, 689, 692) removed after their only differences from the merged heads proved to be line endings and one older assertion; live Codex/Grok worktrees untouched.
+
+Not verified: any browser view of the gallery or contact sheets; owner art acceptance; licence clearance; the five #781 local failures are unfixed. HUMAN_TODO: q-29's content-envelope question stays open, q-31 (franchise character tags) added; nothing ticked.
 
 ## Merge queue drain: fourteen PRs shipped — 18 September 2026 (05:14)
 
