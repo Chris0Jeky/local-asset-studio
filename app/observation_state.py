@@ -1,4 +1,4 @@
-"""Scoped publication barriers for ordinary observation admission, not all job saves.
+"""Scoped publication barriers for observation admission, not all job saves.
 
 A return proves the requested OS operations completed, not physical-media survival.
 Windows has file synchronization and replacement here, but no directory barrier.
