@@ -6,6 +6,7 @@ import re
 from urllib.parse import parse_qsl, urlsplit
 
 from .core import ArchiveAccess, AccessError, digest, fields
+from studio_workflow.http_body import drain_declared_body
 from spoken_brief_archive import ArchiveConflict, require_archive
 from spoken_brief_compile import SpokenBriefError
 from spoken_brief_exports import PlaybackConflict
@@ -44,6 +45,9 @@ def extend_handler(base):
     class SpokenHandler(base):
         def _spoken_error(self, exc):
             self.close_connection = True
+            # Windows resets a socket closed with unread request bytes, which can abort the client before it
+            # reads this refusal (WinError 10053, #837; the other routes fixed it in #196/#468/#545).
+            if not getattr(self, '_spoken_body_consumed', False): drain_declared_body(self)
             status = (409 if isinstance(exc, (ArchiveConflict, PlaybackConflict))
                       else exc.status if isinstance(exc, AccessError) else 400)
             return self._json(status, {'error': str(exc)[:800], 'generation_submitted': False})
@@ -84,6 +88,7 @@ def extend_handler(base):
             previous = self.connection.gettimeout()
             try:
                 self.connection.settimeout(READ_TIMEOUT)
+                self._spoken_body_consumed = True
                 raw = self.rfile.read(length)
             finally: self.connection.settimeout(previous)
             if len(raw) != length: raise AccessError('Incomplete JSON request')
@@ -134,6 +139,7 @@ def extend_handler(base):
                 self.close_connection = True
 
         def _spoken_get(self, *, head=False):
+            self._spoken_body_consumed = False
             if not self._spoken_host(): return self._spoken_error(AccessError('Loopback Host required', 403))
             try:
                 if (self.headers.get_all('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) > 1
@@ -178,6 +184,7 @@ def extend_handler(base):
 
         def do_POST(self):
             if not urlsplit(self.path).path.startswith(PREFIX + '/'): return super().do_POST()
+            self._spoken_body_consumed = False
             if not self._spoken_origin(): return self._spoken_error(AccessError('Exact local same-origin request required', 403))
             try:
                 path, query = self._spoken_query()

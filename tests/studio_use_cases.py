@@ -9,14 +9,18 @@ Fixture mode reuses tests/studio_browser_smoke.py's synthetic API server (import
 copied) and adds only the extra read routes the deeper journeys touch. Live mode is
 read-only navigation and typing: every click is checked against an explicit deny list
 first, and anything that would create server state is recorded as skipped, never pressed.
+Live journeys take the newest matching Workspace picture, Recent-runs output or study the
+page lists, and end with a named outcome instead of a fake dead end (#486): STOP when the
+next step would write (measured, refused, not pressed), SKIP when the live Studio holds
+nothing the journey needs. Fixture mode never skips.
 
 Intents live in research/ux/use-cases.json (selector-free, owner's words). The selectors
 live here, one driver per case id, so the matrix reports the pipeline, not the markup.
 Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
 
 Exit code: 0 only when every measured journey reached its success condition with no page
-error, no generation submitted and at least one case run. In live mode the journey results are
-advisory - the deny list refuses most deciding clicks by design - but a submitted generation, a
+error, no generation submitted and at least one case run. In live mode the journey results
+(PASS/STOP/SKIP/FAIL) are advisory - the deny list refuses most deciding clicks by design - but a submitted generation, a
 page exception or an empty run are still red. The report is written either way, so a red run
 still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
@@ -110,6 +114,59 @@ def friction_points(rows):
     return sorted(rows, key=key)
 
 
+# --------------------------------------------------------------------------------------
+# Live outcomes (#486). A live journey that cannot go on says why, instead of faking a dead end.
+# --------------------------------------------------------------------------------------
+class LiveCaseSkip(Exception):
+    """Live mode ends this journey here on purpose, with a named reason. Two kinds:
+
+    'missing'   - the live Studio holds nothing this journey needs (no image asset, no finished
+                  comparison awaiting review, a recipe it does not install). Reported as SKIP.
+    'read-only' - the journey walked every read-only step and reached a control that would create
+                  server state; the control was measured and refused, never pressed. Reported as STOP.
+
+    Fixture mode never skips: the fixture always has the data, so a skip there is a failure."""
+    KINDS = ('missing', 'read-only')
+
+    def __init__(self, reason, kind='missing'):
+        reason = ' '.join(str(reason or '').split())
+        if not reason or len(reason) > 300: raise ValueError('A live skip needs a short, named reason (1-300 characters)')
+        if kind not in self.KINDS: raise ValueError('Unknown live skip kind: %r' % (kind,))
+        super().__init__(reason)
+        self.reason, self.kind = reason, kind
+
+
+LIVE_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$')  # asset, job and study ids: bounded, selector-safe
+# JS condition on `id` for CaseRun.pick: an image the Workspace still holds (Continue with this takes nothing else).
+LIVE_IMAGE_ASSET = "(a => !!a && a.media_type === 'image' && !a.trashed_at)(assetState.assets.find(a => a.id === id))"
+
+
+def choose_live_value(values, preferred=None, nth=0):
+    """The fixture's own id when the live page lists it, else the nth id the page lists (its own
+    order: newest first wherever the page sorts by date). Blank, duplicate, non-text and
+    selector-unsafe values are ignored. None when the page lists nothing usable."""
+    seen = []
+    for value in values or ():
+        if isinstance(value, str) and LIVE_ID.match(value.strip()) and value.strip() not in seen: seen.append(value.strip())
+    if preferred in seen: return preferred
+    return seen[nth] if len(seen) > nth else None
+
+
+def case_result(row):
+    """PASS, STOP (live: reached the read-only boundary), SKIP (live: prerequisite absent) or FAIL."""
+    if row.get('passed'): return 'PASS'
+    return {'read-only': 'STOP', 'missing': 'SKIP'}.get(row.get('skip_kind') or '', 'FAIL')
+
+
+def outcome_counts(rows):
+    """Matrix counters. Reached = walked to the success condition or to the read-only boundary."""
+    results = [case_result(row) for row in rows]
+    counts = {'passed': results.count('PASS'), 'stopped': results.count('STOP'),
+              'skipped': results.count('SKIP'), 'failed': results.count('FAIL')}
+    counts['reached'] = counts['passed'] + counts['stopped']
+    return counts
+
+
 REPORT_KEYS = ('mode', 'rows', 'generation_submissions', 'page_errors')
 
 
@@ -151,31 +208,72 @@ DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
-DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-bulk', 'data-ux-review', 'data-ux-rerun', 'download')
+DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
+
+# Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
+# the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
+# a recipe card's description says "one run of", an asset's own title can say anything — so a listed
+# control skips the label check. The id and attribute deny lists still bind first. Checked against
+# app/static on 22 Sep 2026; a control that starts writing must leave this list.
+LOCAL_CONTROLS = {
+    '#workshopRecipeChange': 'opens the recipe picker',
+    '#presetList [data-id]': 'loads a recipe into this page (selectPreset); nothing is sent',
+    '#presetList button.preset': 'loads a recipe into this page (selectPreset); nothing is sent',
+    '#negativeWrap > summary': 'opens the optional exclusions disclosure',
+    '#workshopReview': 'reveals the run checks',
+    '#workshopResults > summary': 'opens the recent-runs disclosure',
+    '#gallery .reference-output': 'opens Continue with this; reads the output\'s source context (GET)',
+    '#gallery .reference-output[data-job][data-index]': 'opens Continue with this; reads the output\'s source context (GET)',
+    '#uxHandoffIntents [data-ux-destination]': 'chooses a route inside the handoff dialog',
+    '#uxDestination': 'chooses the destination recipe inside the handoff dialog',
+    '#uxPullAsset': 'opens the saved-picture picker; reads the Workspace (GET)',
+    '[data-ref-role]': 'names a picture slot\'s role in this page',
+    '#assetType': 'filters the Asset library grid',
+    '[data-asset-open]': 'opens a saved picture\'s details',
+    '[data-ux-handoff]': 'opens Continue with this for the open picture; reads its source context (GET)',
+    '[data-asset-check]': 'selects a saved picture in this page',
+    '#productionList [data-project]': 'shows one study\'s details',
+    '#blindComparison': 'hides or shows candidate settings in this page',
+    '#productionDetail [data-candidate-open]': 'opens a candidate at full size; refreshes the Workspace list (GET)',
+    '#loadPreset': 'reads a registered recipe graph into the builder (GET)',
+    '#compileWorkflow': 'checks connections: POST /api/workflow-studio/compile validates and stores nothing',
+}
 
 
-def deny_reason(control_id='', label='', attributes=(), submits=False):
-    """Why this control must not be clicked against a live Studio. Empty string means allowed."""
+def control_kind(selector):
+    """A selector with its attribute values stripped: '[data-asset-open="x"]' -> '[data-asset-open]'."""
+    return re.sub(r'="(?:[^"\\]|\\.)*"', '', (selector or '').strip())
+
+
+def deny_reason(control_id='', label='', attributes=(), submits=False, local=False):
+    """Why this control must not be clicked against a live Studio. Empty string means allowed.
+
+    `submits` means the control would submit a form it belongs to; a button with no form owner
+    submits nothing (PROBE_ELEMENT). A LOCAL_CONTROLS entry skips the label and submit heuristics,
+    never the id or attribute deny lists."""
     if control_id and control_id in DENY_IDS: return 'deny-list id: ' + control_id
-    if label and DENY_LABELS.search(label): return 'deny-list label: ' + ' '.join(label.split())[:60]
     for attribute in attributes:
         if attribute in DENY_ATTRS: return 'deny-list attribute: ' + attribute
+    if local: return ''
+    if label and DENY_LABELS.search(label): return 'deny-list label: ' + ' '.join(label.split())[:60]
     if submits: return 'deny-list: form submit would create server state'
     return ''
 
 
-def live_allows(action, navigation, control_id='', label='', attributes=(), submits=False):
+def live_allows(action, navigation, control_id='', label='', attributes=(), submits=False, selector=''):
     """Live mode default: read-only navigation and typing. Returns '' when allowed.
 
     Reading a control touches nothing, so the deny list never blocks a measurement —
-    it blocks doing. Everything else is denied first, then allowed only for typing
-    and for clicks the driver declared as navigation.
+    it blocks doing. Everything else is denied first, then allowed only for typing,
+    for clicks the driver declared as navigation, and for LOCAL_CONTROLS.
     """
     if action == 'read': return ''
-    reason = deny_reason(control_id, label, attributes, submits)
+    local = action in CLICK_ACTIONS and control_kind(selector) in LOCAL_CONTROLS
+    reason = deny_reason(control_id, label, attributes, submits, local)
     if reason: return reason
     if action in ('goto', 'fill', 'type'): return ''
-    if action in CLICK_ACTIONS and navigation: return ''
+    if action in CLICK_ACTIONS and (navigation or local): return ''
     return 'live mode is read-only: ' + action + ' is not navigation or typing'
 
 
@@ -327,7 +425,8 @@ PROBE_ELEMENT = """(el) => {
   if (holder) for (const hint of holder.querySelectorAll('small,.muted,.hint,[role=status],[role=alert],p'))
     if (!hint.contains(el)) reasons.push(text(hint.textContent));
   const attributes = [...el.attributes].map(a => a.name);
-  const submits = el.type === 'submit' || (el.form != null && el.tagName === 'BUTTON' && el.type !== 'button');
+  // A <button> with no type attribute reports type 'submit' even outside a form, where it submits nothing.
+  const submits = el.form != null && ['submit', 'image'].includes(el.type);
   return {shown, name, disabled, attributes, submits,
     in_viewport: shown && rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth,
     reason: reasons.filter(Boolean).join(' | ').slice(0, 400)};
@@ -418,7 +517,7 @@ class CaseRun:
                       control_hidden=not probe['shown'],
                       enabled=not probe['disabled'], visible_before_scroll=bool(probe['in_viewport']),
                       disabled_reason=probe['reason'] if probe['disabled'] else '')
-        blocked = live_allows(action, navigation, self._identity(selector), probe['name'], probe['attributes'], probe['submits']) if self.live else ''
+        blocked = live_allows(action, navigation, self._identity(selector), probe['name'], probe['attributes'], probe['submits'], selector) if self.live else ''
         if blocked:
             record['skipped_live'] = blocked
             return self._finish(record)
@@ -507,6 +606,77 @@ class CaseRun:
         try: return ' '.join(self.page.locator(selector).inner_text().split())[:120]
         except Exception: return ''
 
+    # -- live prerequisites (#486) --------------------------------------------------------
+    def pick(self, preferred, css, what, keep='', nth=0, timeout=8000):
+        """The id a data-bound step needs. Fixture mode returns the fixture's own id untouched.
+
+        Live mode reads the attribute `css` ends with ('[data-asset-open]') from the controls the
+        page renders, keeps those passing the optional JS condition on `id`, and takes the fixture
+        id if listed, else the nth in page order. None at all ends the journey as a named skip."""
+        if not self.live: return preferred
+        attribute = re.findall(r'\[([a-z][a-z-]*)\]$', css.strip())[0]
+        try: self.page.wait_for_selector(css, state='attached', timeout=timeout)
+        except Exception: pass
+        script = 'nodes => nodes.map(n => n.getAttribute(%s)).filter(id => id && (%s))' % (json.dumps(attribute), keep or 'true')
+        try: values = self.page.eval_on_selector_all(css, script)
+        except Exception: values = []
+        value = choose_live_value(values, preferred, nth)
+        if value is None: raise LiveCaseSkip('no ' + what, 'missing')
+        return value
+
+    def pick_output(self, fixture='#gallery .reference-output', timeout=8000):
+        """The newest Recent-runs output that Continue with this can open: its picture must still be
+        a Workspace image. Fixture mode keeps the fixture selector (its first output)."""
+        if not self.live: return fixture
+        for ready in (fixture, "typeof assetState !== 'undefined' && assetState.assets.length > 0"):
+            try:
+                if ready == fixture: self.page.wait_for_selector(fixture, state='attached', timeout=timeout)
+                else: self.page.wait_for_function(ready, timeout=timeout)
+            except Exception: pass
+        found = self.page.eval_on_selector_all(fixture, """nodes => nodes.map(n => [n.dataset.job || '', n.dataset.index || '']).filter(([job, index]) => {
+          const output = ((typeof jobs !== 'undefined' ? jobs : []).find(j => j.id === job) || {}).outputs?.[Number(index)];
+          const assets = typeof assetState !== 'undefined' && assetState.assets ? assetState.assets : [];
+          const asset = output && output.asset_id && assets.find(a => a.id === output.asset_id);
+          return !!asset && asset.media_type === 'image' && !asset.trashed_at; })""")
+        job, index = next(((job, index) for job, index in found if LIVE_ID.match(job) and index.isdigit()), (None, None))
+        if job is None: raise LiveCaseSkip('no completed image output in Recent runs whose picture is still in the Workspace', 'missing')
+        return '%s[data-job="%s"][data-index="%s"]' % (fixture, job, index)
+
+    def need_recipe(self, preset_id):
+        """Live mode: a journey written for one recipe skips, named, when this Studio does not carry it."""
+        if not self.live: return
+        # boot() can return before /api/catalog answers; an unloaded catalog is not a missing recipe.
+        try: self.page.wait_for_function('typeof catalog !== "undefined" && !!catalog && Array.isArray(catalog.presets)', timeout=10000)
+        except Exception: pass
+        if not self.page.evaluate('id => typeof catalog !== "undefined" && !!catalog && catalog.presets.some(p => p.id === id)', preset_id):
+            raise LiveCaseSkip('recipe %s is not in this Studio\'s catalog' % preset_id, 'missing')
+
+    def need_destination(self, preset_id, timeout=8000):
+        """Live mode: the handoff dialog must offer this destination for the chosen picture."""
+        if not self.live: return
+        try: self.page.wait_for_selector('#uxDestination option[value="%s"]' % preset_id, state='attached', timeout=timeout)
+        except Exception: raise LiveCaseSkip('Continue with this does not offer %s for the chosen picture' % preset_id, 'missing')
+
+    def stop_before(self, record, what, needs=()):
+        """Live mode: the step just measured was refused because it would create server state. The
+        journey ends here as a named STOP; nothing after it can be reached without writing.
+
+        Only a control the person could actually press counts as reached: shown and enabled, with no
+        earlier step whose control was absent, and every step in `needs` performed. Otherwise the
+        journey carries on and its dead end is reported, not hidden behind a STOP (#839 review)."""
+        if not (self.live and record.get('skipped_live')): return record
+        reachable = (not record.get('control_hidden') and record.get('enabled') is not False
+                     and not any(r.get('control_missing') for r in self.records[:-1])
+                     and all(r.get('performed') for r in needs))
+        if reachable: raise LiveCaseSkip('%s (%s)' % (what, record['skipped_live']), 'read-only')
+        return record
+
+    def settle_handoff(self, timeout=8000):
+        """Live mode: wait for Continue with this to read the source before its Prepare is measured."""
+        if not self.live: return
+        try: self.page.wait_for_function("!document.querySelector('#uxPrepareHandoff').disabled", timeout=timeout)
+        except Exception: pass
+
 
 # --------------------------------------------------------------------------------------
 # Drivers. One per case id; the call order must match the intents in use-cases.json.
@@ -549,8 +719,14 @@ def _one_reference(c):
     c.act('#presetSearch', 'fill', typed='Atelier')
     c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')
     c.act('#uxPullAsset')
+    if c.live:
+        try: c.page.wait_for_selector('#uxSourcePicker[open]', timeout=5000)
+        except Exception: pass
     if c.page.locator('#uxSourcePicker[open]').count():
-        if c.live: c.act('[data-ux-pull="asset-0"]', 'read', note='live mode: pulling a reference writes server state; not clicked')
+        if c.live:
+            pulled = c.pick('asset-0', '#uxSourceAssets [data-ux-pull]', 'saved image in the picker to attach')
+            c.stop_before(c.act('[data-ux-pull="%s"]' % pulled, note='live mode measures the pull and stops: it stages a copy'),
+                          'stopped before attaching the saved picture: that stages a copy in the Workspace')
         else:
             try: c.page.click('[data-ux-pull="asset-0"]', timeout=4000); c.page.wait_for_timeout(500)
             except Exception: pass
@@ -562,13 +738,20 @@ def _one_reference(c):
 @driver('three-reference-identity-pose-style')
 def _three_references(c):
     c.boot('#create')
+    c.need_recipe('qwen-3ref')
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="qwen-3ref"]', note='the three-reference Qwen Atelier recipe')
     for index, (role, asset) in enumerate([('identity', 'asset-0'), ('pose', 'asset-1'), ('style', 'asset-4')]):
         c.act('[data-ref-role="%d"]' % index, 'select', typed=role)
         c.act('#uxPullAsset', note='attach picture %d' % (index + 1))
         picked = False
-        if c.page.locator('#uxSourcePicker[open]') .count() and c.live: c.act('[data-ux-pull="%s"]' % asset, 'read', note='live mode: pulling a reference writes server state; not clicked')
+        if c.live:
+            try: c.page.wait_for_selector('#uxSourcePicker[open]', timeout=5000)
+            except Exception: pass
+        if c.page.locator('#uxSourcePicker[open]') .count() and c.live:
+            asset = c.pick(asset, '#uxSourceAssets [data-ux-pull]', 'saved image in the picker to attach')
+            c.stop_before(c.act('[data-ux-pull="%s"]' % asset, note='live mode measures the pull and stops: it stages a copy'),
+                          'stopped before attaching a saved picture: that stages a copy in the Workspace')
         elif c.page.locator('#uxSourcePicker[open]').count():
             try:
                 c.page.select_option('#uxSourceSlot', str(index), timeout=3000)
@@ -587,11 +770,12 @@ def _three_references(c):
 @driver('compare-settings-from-recipe')
 def _compare(c):
     c.boot('#create')
+    c.need_recipe('anima-portrait')
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
     c.act('#workshopReview', note='open run details', supplementary=True)
-    c.act('#planComparison')
+    c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
     # The planner sizes the allowance up to the proposed values (never down); the driver still sets
@@ -611,14 +795,24 @@ def _compare(c):
 def _review(c):
     c.boot('#production')
     c.act('#productionList', 'read', note='%d studies listed' % c.wait_for_studies())
-    c.act('#productionList [data-project="%s"]' % ('c' * 32), note='the finished comparison')
+    # Live: the first study the page lists that is a finished comparison with candidate pictures.
+    study = c.pick('c' * 32, '#productionList [data-project]', 'finished comparison awaiting review with candidate pictures',
+                   keep="(p => !!p && p.kind === 'comparison' && ['awaiting_review', 'reviewed'].includes((p.state || {}).status)"
+                        " && !((p.state || {}).review || {}).desk_url"
+                        " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
+                        "(productionPlans.find(p => p.id === id))")
+    c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
+    if c.live:
+        try: c.page.wait_for_selector('#assetDialog[open]', timeout=5000)
+        except Exception: pass
     if c.page.locator('#assetDialog[open]').count():
         try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
         except Exception: pass
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
-    c.act('#productionDetail [data-choose-candidate]', note='keep the winner')
+    c.stop_before(c.act('#productionDetail [data-choose-candidate]', note='keep the winner'),
+                  'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)
     recorded = 'reviewed' in (c.page.locator('#productionDetail').inner_text().lower() if c.page.locator('#productionDetail').count() else '')
     c.act('#productionDetail', 'read', note='choice recorded=%s' % recorded)
@@ -630,16 +824,19 @@ def _reuse(c):
     c.boot('#assets')
     c.page.wait_for_timeout(600)
     c.act('#assetGrid', 'read', note='saved pictures listed')
-    c.act('[data-asset-open="asset-1"]', note='open the keeper')
-    c.act('[data-ux-handoff="asset-1"]', note='continue with this picture')
+    keeper = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % keeper, note='open the keeper')
+    c.act('[data-ux-handoff="%s"]' % keeper, note='continue with this picture')
+    c.need_destination('qwen-1ref')
     c.act('#uxDestination', 'select', typed='qwen-1ref')
-    c.act('#uxPrepareHandoff')
+    c.settle_handoff()
+    c.stop_before(c.act('#uxPrepareHandoff'), 'stopped before preparing: that attaches a copy of the picture')
     c.page.wait_for_timeout(800)
     lineage = c.page.evaluate('typeof parentAssets !== "undefined" ? parentAssets[0] : null')
     c.act('#uxContinuation', 'read', note='lineage parent=%s' % lineage)
     c.act('#positive', 'fill', typed='Same character at dawn. Keep the face, cloak and lantern unchanged.')
     c.act('#generate', 'read', note='readiness only; never pressed')
-    return lineage == 'asset-1', 'lineage parent=%s, run control enabled=%s' % (lineage, c.ready())
+    return lineage == keeper, 'lineage parent=%s, run control enabled=%s' % (lineage, c.ready())
 
 
 @driver('restyle-recent-output-with-a-look')
@@ -648,13 +845,14 @@ def _restyle(c):
     c.boot('#create')
     c.page.wait_for_timeout(600)
     c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
-    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="restyle"]', note='the route that borrows a look')
     c.act('#uxHandoffDetails', 'read', note='what Restyle does with this picture')
     try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
     except Exception: pass
     c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass')
-    c.act('#uxPrepareHandoff')
+    c.settle_handoff()
+    c.stop_before(c.act('#uxPrepareHandoff'), 'stopped before preparing: that attaches a copy of the output')
     c.page.wait_for_timeout(800)
     board = c.page.evaluate('typeof selected !== "undefined" && !!(selected.continuation_capability && selected.continuation_capability.board_min)')
     if board:
@@ -686,13 +884,14 @@ def _combine(c):
     c.boot('#create')
     c.page.wait_for_timeout(600)
     c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
-    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
     c.act('#uxHandoffDetails', 'read', note='what Combine does with this picture')
     try: c.page.click('#uxHandoff details:has(#uxHandoffPrompt) > summary', timeout=2000)
     except Exception: pass
     c.act('#uxHandoffPrompt', 'read', note='the wording prepared for this pass: image 1, image 2, the bracketed fills')
-    c.act('#uxPrepareHandoff')
+    c.settle_handoff()
+    c.stop_before(c.act('#uxPrepareHandoff'), 'stopped before preparing: that attaches a copy of the output')
     c.page.wait_for_timeout(800)
     c.act('#uxBlockers', 'read', note='what is still missing after preparing: Picture 1 and the fills')
     c.act('#uxPullAsset', note='add the picture whose pose is wanted')
@@ -740,10 +939,12 @@ def _draw_pose(c):
     c.boot('#create')
     c.page.wait_for_timeout(600)
     c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
-    c.act('#gallery .reference-output', note='continue with a recent output')
+    c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
+    c.need_destination('combine-klein-9b-skeleton')
     c.act('#uxDestination', 'select', typed='combine-klein-9b-skeleton', note='the recipe whose image 1 is a drawn skeleton')
-    c.act('#uxPrepareHandoff')
+    c.settle_handoff()
+    c.stop_before(c.act('#uxPrepareHandoff'), 'stopped before preparing: that attaches a copy of the output')
     c.page.wait_for_timeout(800)
     c.act('#uxPoseEditor', 'read', note='the pose is drawn here, beside the two pictures')
     if c.live or not c.page.locator('#uxPoseCanvas').count():
@@ -983,6 +1184,9 @@ def _workflow(c):
         except Exception: pass
     c.act('#loadPreset')
     c.page.wait_for_timeout(500)
+    if c.live:  # live mode never refreshes nodes, so the import loads the installed catalog itself first
+        try: c.page.wait_for_function("!document.querySelector('#compileWorkflow').disabled", timeout=15000)
+        except Exception: pass
     c.act('#compileWorkflow')
     c.page.wait_for_timeout(500)
     c.act('#exportGraph', 'read', note='export availability after the check')
@@ -1000,9 +1204,10 @@ def _native_export(c):
     c.page.wait_for_timeout(600)
     c.act('#assetGrid', 'read', note='saved pictures listed')
     c.act('#assetType', 'select', typed='image', note='images only')
-    c.act('[data-asset-check="asset-0"]', 'check')
-    c.act('[data-asset-check="asset-1"]', 'check')
-    c.act('#nativeExport')
+    first = c.pick('asset-0', '#assetGrid [data-asset-check]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    second = c.pick('asset-1', '#assetGrid [data-asset-check]', 'second image asset in the Asset library', keep=LIVE_IMAGE_ASSET, nth=1)
+    checks = [c.act('[data-asset-check="%s"]' % first, 'check'), c.act('[data-asset-check="%s"]' % second, 'check')]
+    c.stop_before(c.act('#nativeExport'), 'stopped at Native export: live mode never opens the dialog an export is prepared from', needs=checks)
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
     before = c.studies()
@@ -1030,13 +1235,18 @@ def load_cases(path=CASES_PATH):
 
 def run_case(spec, page, origin, live, screenshots):
     run = CaseRun(spec, page, origin, live, screenshots)
-    passed, detail, failure = False, '', ''
+    passed, detail, failure, skip_kind, skip_reason = False, '', '', '', ''
     try: passed, detail = DRIVERS[spec['id']](run)
+    except LiveCaseSkip as skip:
+        # Live: a named end, not a failure and not a dead end. Fixture: the data is always there, so it is one.
+        if live: skip_kind, skip_reason = skip.kind, skip.reason; detail = ('stopped: ' if skip.kind == 'read-only' else 'skipped: ') + skip.reason
+        else: failure = 'fixture mode never skips: ' + skip.reason
     except Exception as error: failure = type(error).__name__ + ': ' + str(error).splitlines()[0][:200]
     row = {'id': spec['id'], 'goal': spec['goal'], 'starting_view': spec['starting_view'],
            'success_condition': spec['success_condition'], 'wrong_turn': bool(spec.get('wrong_turn')),
-           'steps_intended': len(spec['steps']), 'passed': bool(passed) and not failure,
-           'detail': detail, 'failure': failure}
+           'steps_intended': len(spec['steps']), 'passed': bool(passed) and not failure and not skip_kind,
+           'detail': detail, 'failure': failure, 'skip_kind': skip_kind, 'skip_reason': skip_reason}
+    row['result'] = case_result(row)
     row.update(case_totals(run.records))
     row['steps'] = run.records
     return row
@@ -1046,7 +1256,7 @@ def table(rows):
     header = ['case', 'int', 'took', 'clk', 'sw', 'dead', 'unexp', 'words', 'result']
     body = [[row['id'][:34], str(row['steps_intended']), str(row['steps_taken']), str(row['clicks']),
              str(row['page_switches']), str(row['dead_ends']), str(row['unexplained_disabled']),
-             str(row['instruction_words']), 'PASS' if row['passed'] else 'FAIL'] for row in rows]
+             str(row['instruction_words']), case_result(row)] for row in rows]
     widths = [max(len(header[i]), *(len(line[i]) for line in body)) for i in range(len(header))] if body else [len(h) for h in header]
     out = ['  '.join(header[i].ljust(widths[i]) for i in range(len(header))),
            '  '.join('-' * widths[i] for i in range(len(header)))]
@@ -1102,7 +1312,7 @@ def main(argv=None):
                 page.on('request', lambda request: OBSERVED_POSTS.append(urlsplit(request.url).path) if request.method == 'POST' else None)
                 print('--- ' + spec['id'], flush=True)
                 rows.append(run_case(spec, page, origin, live, args.screenshots))
-                print(('PASS ' if rows[-1]['passed'] else 'FAIL ') + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
+                print(case_result(rows[-1]) + ' ' + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
                 page.close()
             browser.close()
     finally:
@@ -1112,8 +1322,9 @@ def main(argv=None):
     submitted = submissions(OBSERVED_POSTS)
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
-              'cases': len(rows), 'passed': len([row for row in rows if row['passed']]),
-              'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS), 'page_errors': errors,
+              'cases': len(rows), **outcome_counts(rows),
+              'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS),
+              'post_routes': sorted(set(OBSERVED_POSTS)), 'page_errors': errors,
               'screenshots': str(args.screenshots.relative_to(ROOT)).replace('\\', '/') if args.screenshots.is_relative_to(ROOT) else str(args.screenshots),
               'rows': rows}
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -1125,7 +1336,14 @@ def main(argv=None):
     for row in friction_points(rows)[:5]:
         print('  %-34s dead=%d clicks=%d unexplained=%d words=%d' % (row['id'], row['dead_ends'], row['clicks'], row['unexplained_disabled'], row['instruction_words']))
     print()
-    print('mode=%s cases=%d passed=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (matrix['mode'], matrix['cases'], matrix['passed'], matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
+    if live:
+        for row in rows:
+            if row['skip_kind']: print('  %-4s %-34s %s' % (case_result(row), row['id'], row['skip_reason']))
+        print()
+    print('mode=%s cases=%d passed=%d stopped=%d skipped=%d failed=%d reached=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (
+        matrix['mode'], matrix['cases'], matrix['passed'], matrix['stopped'], matrix['skipped'], matrix['failed'], matrix['reached'],
+        matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
+    print('POST routes: ' + (', '.join(matrix['post_routes']) or 'none'))
     print('matrix -> ' + str(args.out))
     reasons = verdict(matrix)
     for reason in reasons: print('FAILED: ' + reason, file=sys.stderr, flush=True)

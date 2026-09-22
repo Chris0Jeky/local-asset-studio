@@ -1,15 +1,17 @@
 // Collection-only inert DOM fixture; real HTTP/SQLite and browser checks are separate.
 'use strict';
-const vm=require('node:vm'),crypto=require('node:crypto');
-function setup(){
+const vm=require('node:vm'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path');
+function memoryStorage(){const data=new Map();return {data,get length(){return data.size;},key:i=>[...data.keys()][i]??null,getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};}
+function setup(options={}){
+  const storage=options.storage||memoryStorage();
   const elements=new Map(),writes=[],reads=[],timers=new Map();let approve=false,requests=0,timerId=0;
   const el=id=>{
     if(!elements.has(id))elements.set(id,{value:'',open:false,disabled:false,hidden:false,textContent:'',events:{},classList:{toggle(){}},
       addEventListener(name,fn){(this.events[name]??=[]).push(fn);},emit(name,event={}){for(const fn of this.events[name]||[])fn(event);},
-      showModal(){this.open=true;},close(){this.open=false;this.emit('close');},focus(){}});
+      replaceChildren(...nodes){this.children=nodes;},append(...nodes){(this.children??=[]).push(...nodes);},showModal(){this.open=true;},close(){this.open=false;this.emit('close');},focus(){}});
     return elements.get(id);
   };
-  const context=vm.createContext({console,AbortController,Set,JSON,Date,crypto:crypto.webcrypto,$:el,
+  const context=vm.createContext({console,AbortController,Set,JSON,Date,TextEncoder,crypto:crypto.webcrypto,sessionStorage:storage,$:el,document:{createElement:()=>({})},
     window:{confirm(){requests++;return approve;}},setTimeout(fn){timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);},
     api(url,options={}){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
       const record={url,options,resolve,reject};(options.method==='POST'?writes:reads).push(record);
@@ -17,7 +19,9 @@ function setup(){
     assetMessage(){},refreshAssets:async()=>{}});
   const run=code=>vm.runInContext(code,context);
   run("let assetState={workspace_id:'1'.repeat(32),collections:[]},assetScope='all',assetSelection=new Set(),collectionEditing=null;function setAssetScope(value){assetScope=value;}");
-  return {el,run,writes,reads,timers,payload:index=>JSON.parse(writes[index].options.body),confirmations:()=>requests,approve(value){approve=value;}};
+  const recovery=path.join(__dirname,'../app/static/collection-recovery.js');
+  if(fs.existsSync(recovery))run(fs.readFileSync(recovery,'utf8'));
+  return {el,run,writes,reads,timers,storage,payload:index=>JSON.parse(writes[index].options.body),confirmations:()=>requests,approve(value){approve=value;}};
 }
 const canonical=value=>JSON.stringify(value,function(key,item){return item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(k=>[k,item[k]])):item;});
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
@@ -29,4 +33,4 @@ function collectionReceipt(p,createId='a'.repeat(32)){
   return {format:'studio.collection-result/v1',workspace_id:p.workspace_id,request_id:p.request_id,status:'committed',receipt,receipt_json,
     receipt_sha256:hash(receipt_json),replayed:false,current:result.deleted?null:{id:result.id,name:result.name,description:result.description,revision:result.revision},generation_submitted:false};
 }
-module.exports={setup,collectionReceipt};
+module.exports={setup,collectionReceipt,memoryStorage};
