@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 from studio_workflow.addressable_figures import split_figures
 from studio_workflow.http_body import reject_json
+from studio_workflow.preset_adapter import SOURCE_KEYS
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
 
@@ -47,9 +48,10 @@ def dispatch(path, value, studio=None):
     if path == '/api/prompt/bind':
         fields(value, ('compiled','binding')); need(studio is not None,'Studio binding context unavailable')
         binding=value['binding']; preset=studio.preset(binding['preset_id'])
-        need(not any(preset.get(k) for k in ('reference','last_reference','reference_slots','requires_rgba_mask'))
+        need((preset.get('modality') or 'image') == 'image'
+             and not any(preset.get(k) for k in SOURCE_KEYS)
              and not any((preset.get('bindings_extra') or {}).get(k) for k in ('reference','last_reference')),
-             'Reference-bearing presets require an explicit source handoff; text-only binding is unavailable')
+             'Reference-bearing and non-image presets require an explicit source handoff; text-only binding is unavailable')
         graph,path=studio.graph_for(preset)
         for key,target in binding['bindings'].items():
             need(preset.get(key)==target and not preset.get('bindings_extra',{}).get(key),'Binding differs from registered preset or has unhandled companions')
@@ -73,9 +75,9 @@ def extend_handler(base):
             path = urlparse(self.path).path
             if path == '/api/assets/split-figures':
                 if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 try:
-                    if self.headers.get('Content-Type','').split(';')[0]!='application/json':
-                        return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                     body=self.rfile.read(self._content_length(1024*1024))
                     return self._json(201,split_figures(self.studio.assets,decode(body)))
                 except sqlite3.Error:
@@ -95,9 +97,9 @@ def extend_handler(base):
                     return self._json(400,{'error':str(exc),'generation_submitted':False})
             if not path.startswith('/api/prompt/'): return super().do_POST()
             if not self._safe_mutation(): return reject_json(self,403,{'error':'Local same-origin request required'})
+            if self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
-                if self.headers.get('Content-Type','').split(';')[0]!='application/json':
-                    return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 # Only reference review accepts four original images; every source
                 # has its own byte/pixel cap and no input is persisted or executed.
                 limit = 1024*1024

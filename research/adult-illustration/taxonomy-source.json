@@ -1,0 +1,101 @@
+{
+  "schema": "studio.adult-illustration-taxonomy-source/v1",
+  "kind": "anime-tag-taxonomy-source",
+  "executable": false,
+  "authority": {
+    "execution_authorized": false,
+    "generation_submitted": false,
+    "download_authorized": false,
+    "install_authorized": false,
+    "training_authorized": false
+  },
+  "research_date": "2026-09-18",
+  "source_baseline": "e2d6970a5852c923738892714c1b75567a018b44",
+  "issue": 437,
+  "source": {
+    "provider": "huggingface",
+    "repository": "SmilingWolf/wd-eva02-large-tagger-v3",
+    "revision": "fa2b83fd2d68b3d994e22fed5859d7cc99e1cdb0",
+    "selected_file": "selected_tags.csv",
+    "source_url": "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3",
+    "selected_file_url": "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/blob/fa2b83fd2d68b3d994e22fed5859d7cc99e1cdb0/selected_tags.csv",
+    "download_url": "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/fa2b83fd2d68b3d994e22fed5859d7cc99e1cdb0/selected_tags.csv?download=true",
+    "bytes": 308468,
+    "sha256": "298633d94d0031d2081c0893f29c82eab7f0df00b08483ba8f29d1e979441217",
+    "records": 10861,
+    "columns": [
+      "tag_id",
+      "name",
+      "category",
+      "count"
+    ],
+    "license_claim": {
+      "value": "apache-2.0",
+      "source_url": "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/blob/fa2b83fd2d68b3d994e22fed5859d7cc99e1cdb0/README.md",
+      "reviewed_at": "2026-09-18"
+    }
+  },
+  "categories": [
+    {
+      "source_value": 0,
+      "id": "general",
+      "display": "general"
+    },
+    {
+      "source_value": 4,
+      "id": "character",
+      "display": "character"
+    },
+    {
+      "source_value": 9,
+      "id": "rating",
+      "display": "rating"
+    }
+  ],
+  "published_fields": {
+    "canonical": "name",
+    "source_category": "category",
+    "frequency": "count",
+    "aliases": null,
+    "implications": null,
+    "deprecations": null
+  },
+  "semantic_facets": [
+    "subject",
+    "identity",
+    "body",
+    "wardrobe",
+    "pose",
+    "action",
+    "expression",
+    "camera",
+    "composition",
+    "environment",
+    "lighting",
+    "palette",
+    "material",
+    "style",
+    "rating",
+    "quality"
+  ],
+  "profile_ids": [
+    "animagine-xl4-ordered-v1",
+    "anima-aesthetic-hybrid-v1"
+  ],
+  "bounds": {
+    "max_source_bytes": 1048576,
+    "max_records": 20000,
+    "max_term_length": 256,
+    "max_review_entries": 4096,
+    "max_aliases_per_entry": 16,
+    "max_implications_per_entry": 16,
+    "max_relationship_depth": 8,
+    "max_index_bytes": 16777216
+  },
+  "accepted_for_compilation": false,
+  "notes": [
+    "The retained CSV is source evidence and is not vendored in Git.",
+    "The provider license label is a source claim for review, not automatic redistribution or hosted-service approval.",
+    "Source category and frequency do not establish adulthood, content envelope, prompt suitability or artistic quality."
+  ]
+}

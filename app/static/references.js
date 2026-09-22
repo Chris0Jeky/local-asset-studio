@@ -1,6 +1,30 @@
 let referenceRecords=[], referenceEpoch=0, referencePending=0;
 const referenceRoles=['identity','pose','style','costume','composition','geometry','motion','mask'];
 function resetReferenceSlots(){referenceEpoch++;referencePending=0;referenceRecords=(selected?.reference_slots||[]).map(s=>({role:s.role,contribution:s.contribution,avoid:s.avoid,file:null}));}
+// Transient attachment intent belongs to the slot owner, not prompt/settings snapshots.
+// Epoch changes invalidate structural edits; the per-record token also rejects an older
+// upload/copy on the same unchanged slot. Tokens are never persisted as lineage or readiness.
+const referenceAttachments=new WeakMap(),referenceChecks=new WeakMap();
+function beginReferenceAttachment(index){
+  const slot=referenceRecords[index];
+  if(!Number.isInteger(index)||index<0||!slot||!selected?.reference_slots?.[index])throw Error('The destination slot is no longer available.');
+  const epoch=referenceEpoch,token={};let finished=false;
+  referenceAttachments.set(slot,token);referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
+  return {
+    current:()=>!finished&&epoch===referenceEpoch&&referenceRecords[index]===slot&&referenceAttachments.get(slot)===token,
+    finish(){if(finished)return;finished=true;if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
+  };
+}
+async function attachReferenceAsset(index,id){
+  const attachment=beginReferenceAttachment(index);
+  try{
+    const result=await post('/api/assets/reference',{id});
+    if(!attachment.current())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
+    const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});referenceChecks.delete(slot);
+    if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
+    replaceParentAsset('reference',previous,id);return result;
+  }finally{attachment.finish();}
+}
 // The readiness model itself lives in reference-model.js so presentation cannot re-derive a second copy of it (#610).
 // referenceProjection() is the read-only view: {mode, slots, references, board, pendingFiles, hasSources, ready, blockers}.
 function referenceProjection(){return StudioReferenceModel.live(typeof window!=='undefined'?window:null);}
@@ -21,25 +45,35 @@ function renderReferenceSlots(){
   updateReady();
 }
 async function uploadRoleFile(index,file){
-  if(!file)return;const epoch=referenceEpoch;
-  referencePending++;updateReady();$('#referenceSummary').textContent='Uploading and validating…';
+  if(!file)return false;let attachment;
   try{
+    attachment=beginReferenceAttachment(index);
     if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
     const result=await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});
-    if(epoch===referenceEpoch){const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});releaseParentAsset(previous);}
-  }catch(e){message(e.message,true);$('#referenceSummary').textContent=e.message;}
-  finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}else{$('#referenceSummary').textContent='The slot changed while that image was uploading; it was not attached. Drop it again.';}}
+    if(!attachment.current())return false;
+    const previous=referenceRecords[index].parent_asset;Object.assign(referenceRecords[index],{parent_asset:null},result,{missing:false});referenceChecks.delete(referenceRecords[index]);releaseParentAsset(previous);return true;
+  }catch(e){if(!attachment||attachment.current()){message(e.message,true);$('#referenceSummary').textContent=e.message;}return false;}
+  finally{attachment?.finish();}
 }
 async function restoreReferenceSlots(records){
   if(!selected?.reference_slots?.length)return;
   if(Array.isArray(records)&&records.length===selected.reference_slots.length)referenceRecords=records.map(r=>({...r}));
-  const epoch=referenceEpoch;referencePending++;renderReferenceSlots();
+  const epoch=referenceEpoch,check={};
+  // An availability result describes these bytes/records, not whatever later occupies a slot.
+  // A new check or committed attachment supersedes this observation even if the filename repeats.
+  const observed=referenceRecords.map((ref,index)=>{
+    referenceChecks.set(ref,check);
+    return {ref,index,file:ref.file,sha256:ref.sha256};
+  });
+  const current=({ref,index,file,sha256})=>referenceRecords[index]===ref&&ref.file===file&&ref.sha256===sha256&&referenceChecks.get(ref)===check;
+  referencePending++;renderReferenceSlots();
   try{
-    const status=await post('/api/references/check',{files:referenceRecords.filter(r=>r.file).map(r=>r.file)});
+    const status=await post('/api/references/check',{files:observed.filter(r=>r.file).map(r=>r.file)});
     if(epoch!==referenceEpoch)return;
-    for(const ref of referenceRecords){const found=status.find(r=>r.file===ref.file);ref.missing=!!ref.file&&(!found?.available||(ref.sha256&&ref.sha256!==found.sha256));}
-    if(referenceRecords.some(r=>r.missing))message('A saved reference is missing or changed. Reattach it; the recipe and other references remain loaded.',true);
-  }catch(e){if(epoch===referenceEpoch){referenceRecords.forEach(r=>r.missing=true);message(e.message,true);}}
+    const retained=observed.filter(current);
+    for(const {ref} of retained){const found=status.find(r=>r.file===ref.file);ref.missing=!!ref.file&&(!found?.available||(ref.sha256&&ref.sha256!==found.sha256));}
+    if(retained.some(({ref})=>ref.missing))message('A saved reference is missing or changed. Reattach it; the recipe and other references remain loaded.',true);
+  }catch(e){if(epoch===referenceEpoch){const retained=observed.filter(current);retained.forEach(({ref})=>ref.missing=!!ref.file);if(retained.some(({ref})=>ref.file))message(e.message,true);}}
   finally{if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
 }
 function attachedReferencePayload(){return selected?.reference_slots?.length?referenceRecords.map(r=>({...r})):[];}

@@ -36,6 +36,20 @@ class SpokenBriefTests(unittest.TestCase):
         self.assertEqual(compiled['omissions']['raw_urls'], 1)
         self.assertEqual([item['id'] for item in compiled['segments']], [f'segment-{index:04d}' for index in range(1, len(compiled['segments']) + 1)])
 
+    def test_fenced_code_closes_only_with_matching_marker_length_and_bare_suffix(self):
+        cases = (
+            '''# Brief\n\n````python\nsecret alpha\n```\nsecret beta\n~~~~\nsecret gamma\n````\n\nVisible conclusion.''',
+            '''# Brief\n\n~~~text\nsecret alpha\n```\nsecret beta\n~~~ trailing text\nsecret gamma\n~~~~\n\nVisible conclusion.''',
+        )
+        for source in cases:
+            with self.subTest(source=source):
+                compiled = spoken_brief.compile_markdown(source, source_name='COMPRESSED.md')
+                text = ' '.join(item['text'] for item in compiled['segments'])
+                self.assertIn('Brief', text)
+                self.assertIn('Visible conclusion.', text)
+                self.assertNotIn('secret', text)
+                self.assertEqual(compiled['omissions']['code_blocks'], 1)
+
     def test_segments_and_batches_fit_the_existing_voice_contract(self):
         paragraph = ' '.join('Sentence number %d explains a concrete engineering decision.' % index for index in range(90))
         compiled = spoken_brief.compile_markdown('# Long brief\n\n' + paragraph, source_name='COMPRESSED.md')

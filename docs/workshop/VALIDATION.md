@@ -91,6 +91,20 @@ After the bounded correction, the branch workflow completed all of these command
 
 The production adapter now registers only readiness review, source review, Generate focus and result opening. The wider pure-context vocabulary remains tested but is not presented as production-reachable without matching observations from an existing owner. Normal current-head `Workshop UI` and `Check studio` runs remain the hosted review gate before the stacked PR is marked ready.
 
+## Prompt Lab handoff placement
+
+The Prompt Lab text handoff is owned by `studio-workbench.js` and remains the same direct child, buttons and application path. The presentation layer reserves a named `transfer` grid row only while `#uxTransfer` is visible; hidden handoffs do not add an empty grid track or change ordinary Create spacing.
+
+The regression-first Chromium journey reproduced the previous Focus failure before the CSS correction: the transfer started below the editor at approximately 899 px and its Apply action ended below a 900 px viewport. The corrected contract covers 1440×900 and 390×844 across Focus, Studio and Immersive with both `None` and `Night Shift` ambience. It requires:
+
+- Focus and Studio to place the transfer immediately after the visible Create heading and before ambience or toolbar content;
+- Immersive to place it after the mode bar and before the presentation toolbar;
+- the Apply action to remain in the first viewport;
+- the handoff to remain full-width with no horizontal overflow;
+- zero page exceptions, external requests or execution surfaces.
+
+`Workshop UI` runs this as `python tests/workshop_transfer_handoff.py --output .runtime/workshop-transfer` and retains its screenshots/report with the other workshop browser evidence. The fixture loads the current production style entrypoint and real direct-child order, but it owns no API, model, executor or storage path and therefore cannot prove real generation behavior.
+
 ## Hosted native browser gate
 
 `Workshop UI` runs:
@@ -100,9 +114,10 @@ The production adapter now registers only readiness review, source review, Gener
 3. the dedicated effective-ambience Chromium journey;
 4. native disclosure lifecycle and nested-modal handoffs;
 5. `tests/workshop_application.py` against native HTTP/browser storage and the real frontend with its synthetic API, including the shared 48-case matrix and external-request observation;
-6. the offline prototype and exporter.
+6. the focused Prompt Lab handoff placement journey across presentations and viewports;
+7. the offline prototype and exporter.
 
-The current-head hosted result must be inspected before either stacked PR is marked review-ready. A queued, cancelled, superseded or parent-branch green run is not evidence for the final head. The application lane must continue proving that one explicit Generate reaches the original handler exactly once and that presentation/policy changes never create another submission path.
+The current-head hosted result must be inspected before the PR is marked review-ready. A queued, cancelled, superseded or parent-branch green run is not evidence for the final head. The application lane must continue proving that one explicit Generate reaches the original handler exactly once and that presentation/policy changes never create another submission path.
 
 ## Owner acceptance, not claimed by tests
 

@@ -33,9 +33,12 @@
   function clamp(value,limit){return Math.min(limit,Math.max(0,value));}
   function place(x,y,canvas){return{x:clamp(x,canvas.width),y:clamp(y,canvas.height)};}
   function copy(points){return JOINTS.map((_,i)=>{const p=at(points,i);return p?{x:p.x,y:p.y}:null;});}
+  // The rendered/requested pose is serialized to hundredths of a pixel. History uses the same identity boundary so a
+  // typed edit the workbench refuses as serialization-equivalent cannot silently add Undo or discard Redo.
+  function sameCoordinate(left,right){return Math.round(left*100)===Math.round(right*100);}
   function samePoints(left,right){return JOINTS.every((_,index)=>{
     const a=at(left,index),b=at(right,index);
-    return a===null&&b===null||!!a&&!!b&&a.x===b.x&&a.y===b.y;
+    return a===null&&b===null||!!a&&!!b&&sameCoordinate(a.x,b.x)&&sameCoordinate(a.y,b.y);
   });}
   function publish(source,next,rememberHome){
     if(Array.isArray(source))transitions.set(source,{points:next,rememberHome:rememberHome===true});

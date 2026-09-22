@@ -1,4 +1,4 @@
-"""Revisioned Create drafts and copy-only proposal application in AssetWorkspace.
+"""Revisioned Create drafts, proposal application and atomic setup substitution.
 
 The request journal is committed before staging. A repeated request only observes
 its original receipt. SQL guards drafts across clients; Studio.lock keeps this
@@ -18,6 +18,7 @@ from .core import canonical, decode, need
 from .revision_consistency import (RequestState, byte_budget, canonical_value,
                                    classify_request, compare_head, stored_value)
 from .setup_proposal import validate_draft, validate_reply, request as build_proposal
+from .setup_substitution import validate_reply as validate_substitution_reply
 
 PREFIX='/api/workflow-studio/setup-drafts'
 MAX_DRAFTS=128
@@ -43,6 +44,7 @@ def validate_command(value):
     required={'action','workspace_id','request_id'}
     extra={'create':{'draft'},'replace':{'draft_id','expected_revision','draft'},
            'apply':{'draft_id','expected_revision','proposal_json','approved_proposal_sha256'},
+           'substitute':{'draft_id','expected_revision','proposal_json','approved_proposal_sha256'},
            'restore':{'draft_id','expected_revision','revision'},'abandon':{'draft_id','expected_revision','operation_id'}}
     need(type(action) is str and action in extra and set(value)==required|extra[action],'Unsupported or incomplete setup command')
     need(type(value['workspace_id']) is str and re.fullmatch('[a-f0-9]{32}',value['workspace_id']),'Invalid Workspace identity')
@@ -53,7 +55,7 @@ def validate_command(value):
     if action in ('create','replace'):value['draft']=validate_draft(value['draft'])
     if action=='restore':need(type(value['revision']) is int and 1<=value['revision']<=MAX_REVISIONS,'Invalid prior setup revision')
     if action=='abandon':identifier(value['operation_id'])
-    if action=='apply':
+    if action in ('apply','substitute'):
         need(type(value['proposal_json']) is str and len(value['proposal_json'].encode())<=MAX_COMMAND,'Supply bounded reviewed proposal JSON')
         need(type(value['approved_proposal_sha256']) is str and re.fullmatch('[a-f0-9]{64}',value['approved_proposal_sha256']),'Invalid acknowledged proposal hash')
     return value
@@ -211,7 +213,7 @@ class SetupDrafts:
                 if action!='create':current=self._guard(db,key,value['expected_revision'],value.get('operation_id') if action=='abandon' else None)
                 if action=='create':
                     need(db.execute('SELECT COUNT(*) FROM setup_drafts_v1').fetchone()[0]<MAX_DRAFTS,'Setup draft limit reached; retain existing history')
-                elif action in ('replace','restore','apply'):self._revision(current['revision']+1)
+                elif action in ('replace','restore','apply','substitute'):self._revision(current['revision']+1)
                 need(db.execute('SELECT COUNT(*) FROM setup_operations_v1 WHERE draft_id=?',(key,)).fetchone()[0]<MAX_OPERATIONS,'Setup request history limit reached; retain receipts before starting another draft')
                 # Check ample bounded headroom before any copies, not after the side effect.
                 self._budget(db,4*1024*1024 if action=='apply' else 512*1024)
@@ -233,14 +235,67 @@ class SetupDrafts:
                     if action=='create':db.execute('INSERT INTO setup_drafts_v1 VALUES(?,0)',(key,))
                     self._append(db,key,revision,record);receipt.update(status='committed',revision=revision)
                 self._save_receipt(db,receipt,sha)
-                if action!='apply':return self._result(db,receipt)
-            return self._apply(value,sha,receipt,current)
+                if action not in ('apply','substitute'):return self._result(db,receipt)
+            if action=='apply':return self._apply(value,sha,receipt,current)
+            return self._substitute(value,sha,receipt,current)
 
     def _progress(self,receipt,sha):
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE');old=self._operation(db,receipt['request_id'])
             need(old and old[0]['request_sha256']==sha and old[1]['status'] in ACTIVE,'Setup operation was superseded; copies retained and draft unchanged')
             self._save_receipt(db,receipt,sha)
+
+    def _substitute(self,value,sha,receipt,current):
+        try:
+            exact=value['proposal_json']
+            need(type(exact) is str and len(exact.encode())<=MAX_COMMAND,
+                 'Supply the exact bounded reviewed substitution JSON')
+            need(hashlib.sha256(exact.encode()).hexdigest()==value['approved_proposal_sha256'],
+                 'Approval must name the exact reviewed substitution')
+            core=decode(exact)
+            report={**core,'proposal_json':exact,
+                    'proposal_sha256':value['approved_proposal_sha256']}
+            fresh=validate_substitution_reply(report,core['request'])
+            need(fresh['can_apply'],
+                 'Substitution is inspectable but blocked: '+
+                 ', '.join(row['code'] for row in fresh['blockers']))
+            need(canonical(core['before'])==canonical(current['draft']),
+                 'Reviewed before-state differs from the shared setup revision')
+            self._check_record(current)
+            need(fresh['proposal_sha256']==value['approved_proposal_sha256'],
+                 'The substitution context changed; inspect a fresh complete diff')
+            need(canonical(fresh['after'])==canonical(core['after']),
+                 'Derived substitution differs from the reviewed complete diff')
+            after_inputs=self._inputs(fresh['after'])
+            need(canonical(after_inputs)==canonical(current['inputs']),
+                 'Substitution changes staged inputs; use the explicit staging workflow')
+            record={'draft':fresh['after'],'inputs':after_inputs,
+                    'runtime':copy.deepcopy(current['runtime']),
+                    'graph_sha256':current['graph_sha256']}
+            with self.workspace.connection() as db:
+                db.execute('BEGIN IMMEDIATE')
+                self.workspace._check_scope(db,value['workspace_id'])
+                self._guard(db,current['draft_id'],current['revision'],receipt['request_id'])
+                old=self._operation(db,receipt['request_id'])
+                need(old and old[1]['status'] in ACTIVE,
+                     'Setup substitution no longer owns the draft')
+                revision=current['revision']+1
+                self._append(db,current['draft_id'],revision,record)
+                receipt.update(status='committed',revision=revision,
+                               previous_revision=current['revision'],
+                               approved_proposal_sha256=value['approved_proposal_sha256'],
+                               changes=len(fresh['changes']))
+                self._save_receipt(db,receipt,sha)
+                return self._result(db,receipt)
+        except (ValueError,KeyError,TypeError,OSError,sqlite3.Error,RecursionError) as exc:
+            # A commit-receipt failure rolls the SQLite transaction back, including
+            # the appended revision. Do not persist metadata for that nonexistent
+            # revision in the independent failed-operation receipt.
+            for key in ('previous_revision','approved_proposal_sha256','changes'):
+                receipt.pop(key,None)
+            receipt.update(status='failed',revision=None,message=str(exc)[:500])
+            self._progress(receipt,sha)
+            with self.workspace.connection() as db:return self._result(db,receipt)
 
     def _apply(self,value,sha,receipt,current):
         try:

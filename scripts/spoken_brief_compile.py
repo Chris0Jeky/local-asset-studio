@@ -2,10 +2,13 @@
 """Compile one Markdown handoff into deterministic bounded voice batches."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from pathlib import Path
 import re
+
+import voice_profile as _voice_profile
 
 SCHEMA_VERSION = 2
 COMPILER_VERSION = 2
@@ -23,6 +26,7 @@ ACTIVE_STATUSES = {'queued', 'running', 'observing'}
 SPEAKER_RE = re.compile(r'[a-z][a-z0-9_-]{0,63}\Z')
 URL_RE = re.compile(r'https?://[^\s<>()]+', re.I)
 LINK_RE = re.compile(r'!?(\[[^\]]*\])\((?:[^()]+|\([^)]*\))*\)')
+FENCE_RE = re.compile(r'^( {0,3})(`{3,}|~{3,})(.*)$')
 
 
 class SpokenBriefError(ValueError):
@@ -109,6 +113,24 @@ def _clean_inline(text: str, omissions: dict) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def _opening_fence(raw: str):
+    match = FENCE_RE.fullmatch(raw)
+    if match is None:
+        return None
+    marker, suffix = match.group(2), match.group(3)
+    if marker[0] == '`' and '`' in suffix:
+        return None
+    return marker[0], len(marker)
+
+
+def _closes_fence(raw: str, fence: tuple[str, int]) -> bool:
+    match = FENCE_RE.fullmatch(raw)
+    if match is None:
+        return False
+    marker, suffix = match.group(2), match.group(3)
+    return marker[0] == fence[0] and len(marker) >= fence[1] and not suffix.strip()
+
+
 def _hard_split(text: str, maximum: int) -> list[str]:
     words = text.split()
     result = []
@@ -177,7 +199,7 @@ def compile_markdown(source: str, *, source_name: str = 'brief.md') -> dict:
                 break
     blocks = []
     paragraph = []
-    in_code = False
+    fence = None
 
     def flush(kind='paragraph'):
         if not paragraph:
@@ -189,13 +211,15 @@ def compile_markdown(source: str, *, source_name: str = 'brief.md') -> dict:
 
     for raw in lines:
         stripped = raw.strip()
-        if stripped.startswith('```') or stripped.startswith('~~~'):
-            if not in_code:
-                flush()
-                omissions['code_blocks'] += 1
-            in_code = not in_code
+        if fence is not None:
+            if _closes_fence(raw, fence):
+                fence = None
             continue
-        if in_code:
+        opening = _opening_fence(raw)
+        if opening is not None:
+            flush()
+            omissions['code_blocks'] += 1
+            fence = opening
             continue
         if not stripped:
             flush()
@@ -274,11 +298,48 @@ def batch_segments(segments: list[dict]) -> list[list[dict]]:
     return batches
 
 
-def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
-    source = Path(source).resolve()
-    if not SPEAKER_RE.fullmatch(speaker_id):
+def _resolve_binding(*, speaker_id: str | None = None, voice_profile: dict | None = None) -> tuple[dict, str]:
+    if voice_profile is None:
+        try:
+            voice_profile = _voice_profile.resolve_profile(
+                'kokoro-af-heart-control-v1',
+                'calm-brief',
+                speaker_id=speaker_id,
+            )
+        except _voice_profile.VoiceProfileError as exc:
+            raise SpokenBriefError(str(exc)) from exc
+    elif not isinstance(voice_profile, dict):
+        raise SpokenBriefError('Voice profile binding must be an object')
+    effective_speaker = voice_profile.get('speaker_id') if speaker_id is None else speaker_id
+    if not isinstance(effective_speaker, str) or not SPEAKER_RE.fullmatch(effective_speaker):
         raise SpokenBriefError('Speaker ID must start with a letter and use lowercase letters, numbers, dashes or underscores')
-    raw = read_source_bytes(source)
+    if voice_profile.get('speaker_id') != effective_speaker:
+        raise SpokenBriefError('Voice profile binding speaker metadata differs from the compiler speaker ID')
+    return voice_profile, effective_speaker
+
+
+def compile_source(source: Path, *, speaker_id: str | None = None, voice_profile: dict | None = None) -> dict:
+    source = Path(source).resolve()
+    return compile_snapshot(source, read_source_bytes(source), speaker_id=speaker_id, voice_profile=voice_profile)
+
+
+def compile_snapshot(
+    source: Path,
+    raw: bytes,
+    *,
+    speaker_id: str | None = None,
+    voice_profile: dict | None = None,
+) -> dict:
+    """Compile already captured bytes without reading, resolving or writing a file.
+
+    The caller owns filesystem confinement and snapshot acquisition. Keeping the
+    lexical absolute source identity also permits previews of retained snapshots
+    after the original source has changed or disappeared.
+    """
+    source = Path(source).absolute()
+    voice_profile, effective_speaker = _resolve_binding(speaker_id=speaker_id, voice_profile=voice_profile)
+    if not isinstance(raw, bytes) or not 1 <= len(raw) <= MAX_SOURCE_BYTES:
+        raise SpokenBriefError(f'Markdown source must contain 1 to {MAX_SOURCE_BYTES} bytes')
     try:
         text = raw.decode('utf-8')
     except UnicodeDecodeError as exc:
@@ -288,7 +349,8 @@ def compile_source(source: Path, *, speaker_id: str = 'brief-narrator') -> dict:
         'schema_version': SCHEMA_VERSION,
         'kind': 'spoken-brief',
         'source': {'path': str(source), 'name': source.name, 'bytes': len(raw), 'sha256': digest_bytes(raw)},
-        'speaker_id': speaker_id,
+        'speaker_id': effective_speaker,
+        'voice_profile': copy.deepcopy(voice_profile),
         'compiler': {
             'version': COMPILER_VERSION,
             'target_line_chars': TARGET_LINE_CHARS,

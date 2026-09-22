@@ -81,9 +81,10 @@ class ModelRedirectTests(unittest.TestCase):
 
     def test_allowed_civitai_delivery_worker_hop(self):
         target='https://civitai-delivery-worker-prod.5ac0637cfd0766c97916cefa3764fbdf.r2.cloudflarestorage.com/body'
-        self.server.routes={'/start':(307,{'Location':target},b''),'/body':(200,{},b'civitai inert')}
-        with self.open('https://civitai.com/start') as response:self.assertEqual(response.read(),b'civitai inert')
-        self.assertEqual([path for path,_ in self.server.hits],['/start','/body'])
+        source='/api/download/models/456'
+        self.server.routes={source:(307,{'Location':target},b''),'/body':(200,{},b'civitai inert')}
+        with self.open('https://civitai.com'+source) as response:self.assertEqual(response.read(),b'civitai inert')
+        self.assertEqual([path for path,_ in self.server.hits],[source,'/body'])
 
     def test_forbidden_targets_are_rejected_before_contact(self):
         cases=[

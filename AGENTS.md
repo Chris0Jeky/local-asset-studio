@@ -3,7 +3,7 @@
 Shared facts — what the Studio is, how to run it, the per-seam proving checks, architecture, pitfalls,
 tier and authority — live in **`CLAUDE.md`** and are not repeated here. Global working agreements reach
 Codex through `~/.codex/AGENTS.md` and Grok through `~/.grok/rules/00-global-laws.md` (deployed copy of
-`~/.claude/CLAUDE.md`) plus `~/.grok/AGENTS.md`. `[compat.claude] agents` is off so `~/.claude/AGENTS.md`
+claude-config `rules/laws.md`) plus `~/.grok/AGENTS.md`. `[compat.claude] agents` is off so `~/.claude/AGENTS.md`
 (claude-config's project file) does not leak. This file is the Codex-runtime delta; Grok also loads
 it, so the Grok section at the bottom overrides the Codex facts for Grok sessions.
 
@@ -44,6 +44,11 @@ it, so the Grok section at the bottom overrides the Codex facts for Grok session
   do not redeclare `comfy-local` or `MCP_DOCKER` here.
 - Skills come from `.claude/skills/` via Claude compatibility. Do not add `.grok/skills/` (a third copy
   would collide and `tests/test_agent_harness.py` fails).
+- Muse Code delegation (reviews, bug hunts, tests, bounded fixes) goes through the estate wrapper
+  `py -3 ~/.claude/tools/muse_exec.py` under this repository's effective policy (no `delegation.json`:
+  strict defaults, `max_workers` 3); the overnight swarm is `~/.claude/prompts/OVERNIGHT_MUSE_SWARM.md`.
+  Run the wrapper with `run_terminal_command` (`batch --detach` + `batch-wait` for a wave); never
+  `spawn_subagent` per Muse job. Muse never merges, pushes or decides.
 - Ignore the Codex-specific facts above (`.codex/` paths, `codex/<topic>` branches).
 
 ## Skill routing

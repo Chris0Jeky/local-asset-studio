@@ -1,5 +1,7 @@
 # Integration delivery plan
 
+**21 September update:** #569 and #572 are merged. Read the [current reconciliation](RECONCILIATION-2026-09-21.md) and [route-inspection slice](ROUTE-INSPECTION.md) before treating the original order below as unfinished work.
+
 **Goal:** turn the 15 September report into improvements to the existing accepted-asset loop, beginning with source-scope honesty rather than another model catalogue.
 
 **Architecture:** keep the current Python service, ComfyUI graphs, Workspace, model library, Prompt Lab, resource observer and Experiment Lab. A source record describes the evidence behind advice; a resource pin describes the bytes that advice targets. Neither is execution or acceptance.
@@ -8,16 +10,16 @@
 
 ## Global constraints
 
-Use #552 under #313/#14, not a new epic. Preserve HUMAN_TODO decisions, existing allowances, protected pixels and ambiguous-submit recovery. Keep general anime work independent of the parked #403 stack. No install, runtime restart, driver update, inference, source-art publication or model promotion is part of these software changes. Each implementation is independently reviewable and may stop after its demonstrated improvement.
+Use #552 under #313/#14, not a new epic. Preserve HUMAN_TODO decisions, existing allowances, protected pixels and ambiguous-submit recovery. Keep general anime work independent of #403's content scope; its adoption hold is superseded, not its remaining human decisions. No install, runtime restart, driver update, inference, source-art publication or model promotion is part of these software changes. Each implementation is independently reviewable and may stop after its demonstrated improvement.
 
 ## Slice 0: publish and reconcile the research
 
 Files: this directory; `docs/strategy/README.md`; `docs/SETTINGS-KNOWLEDGE.md`.
 
-- [ ] Publish page-addressed claims, current divergences, source verification and the accepted-pack reading path.
-- [ ] Correct the stale statement that no Anima LoRAs are installed without overwriting historical results or changing a recipe.
-- [ ] Route each remaining requirement to an existing issue and name its smallest evidence-producing change.
-- [ ] Check relative links, recorded repository identities and source/profile distinctions.
+- [x] Publish page-addressed claims, current divergences, source verification and the accepted-pack reading path.
+- [x] Correct the stale statement that no Anima LoRAs are installed without overwriting historical results or changing a recipe.
+- [x] Route each remaining requirement to an existing issue and name its smallest evidence-producing change.
+- [x] Check relative links, recorded repository identities and source/profile distinctions.
 
 This slice can be reviewed without accepting any proposed runtime, frontend or model change. Its review does not close #313 or imply that #552's implementation programme is finished.
 
@@ -28,12 +30,12 @@ Files: `studio_workflow/guidance.py`; `tests/test_guidance_source_scope.py`; exi
 Consumes: `guidance.validate_claim(value)` and `guidance.explain(preset, template, controls, kb, manifest, today=None)`.
 Produces: an optional `source.scope` declaration in the existing KB claim and a normalized `source_scope` plus visible reason in the existing explanation. No second source store or endpoint.
 
-- [ ] Write a failing real-evaluator test: a legacy claim whose hashes match must report `source_scope == 'unrecorded'`, not exact-version qualification.
-- [ ] Add cases for `family`, `exact_version`, `local_workflow`, invalid/malformed scope, mutable or absent revision, source/hash mismatch, expired source, conflicting advice, detached return values and changed-context identity.
-- [ ] Extend the existing validator, accepting the optional scope only. Missing scope remains unrecorded; exact-version and local-workflow declarations require a content/commit pin or an explicit provider-version identity, not `main` or a retrieval date.
-- [ ] Append the scope explanation to existing `reasons` so the current UI renders it as text. Preserve resource applicability, conflict evaluation and all no-write/no-generation behaviour.
-- [ ] Exercise the actual CLI and existing HTTP/client contracts. Run focused tests, repository validation and the strict full-suite lifetime gate.
-- [ ] Publish the tested diff, record its head/checks and request review. Do not backfill old claims with invented source attestations.
+- [x] Write a failing real-evaluator test: a legacy claim whose hashes match must report `source_scope == 'unrecorded'`, not exact-version qualification.
+- [x] Add cases for `family`, `exact_version`, `local_workflow`, invalid/malformed scope, mutable or absent revision, source/hash mismatch, expired source, conflicting advice, detached return values and changed-context identity.
+- [x] Extend the existing validator, accepting the optional scope only. Missing scope remains unrecorded; exact-version and local-workflow declarations require a content/commit pin or an explicit provider-version identity, not `main` or a retrieval date.
+- [x] Append the scope explanation to existing `reasons` so the current UI renders it as text. Preserve resource applicability, conflict evaluation and all no-write/no-generation behaviour.
+- [x] Exercise the actual CLI and existing HTTP/client contracts. Run focused tests, repository validation and the strict full-suite lifetime gate.
+- [x] Publish the tested diff, record its head/checks and request review. Do not backfill old claims with invented source attestations.
 
 Example acceptance:
 
@@ -46,6 +48,15 @@ assert report['generation_submitted'] is False
 ```
 
 The second assertion deliberately means *catalog pins match*, not *the source verified this version*. Scope is a declared evidence category, not automatic source authentication. Existing UI, CLI and HTTP share this evaluator.
+
+## Delivered continuation and remaining slices
+
+The read-only route inspector joins existing library, graph and profile declarations
+without runtime access. It supplies configuration identity and explicit unknowns,
+not a new registry or qualification verdict. Slice 2 below is **partially delivered**:
+Aesthetic 1.1, Base 1.0 and Animagine Opt have exact template profiles; standalone
+Turbo and native/Q4 reference-aware Qwen remain distinct follow-ups. The subsequent
+rows retain ownership, not a claim that every listed feature is still absent.
 
 ## Subsequent slices, existing owners and acceptance
 

@@ -1,9 +1,12 @@
 """Early HTTP refusals drain only safely declared request bodies."""
 import io
 from email.message import Message
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from studio_prompt.http_extension import extend_handler
+from studio_workflow import http_body
 from studio_workflow.http_body import DRAIN_LIMIT, drain_declared_body
 
 
@@ -49,6 +52,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 status, _ = handler.do_POST()
                 self.assertEqual(status, 403)
                 self.assertEqual(handler.rfile.read(), b'')
+                self.assertFalse(getattr(handler, 'close_connection', False))
 
     def test_wrong_content_type_refusals_consume_small_declared_bodies(self):
         for path in (
@@ -61,6 +65,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
                 self.assertEqual(status, 400)
                 self.assertEqual(value['error'], 'application/json required')
                 self.assertEqual(handler.rfile.read(), b'')
+                self.assertFalse(getattr(handler, 'close_connection', False))
 
     def test_oversized_or_malformed_claim_is_never_drained(self):
         for length in (str(DRAIN_LIMIT + 1), '-1', 'not-a-number', '²'):
@@ -79,6 +84,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
 
     def test_duplicate_content_lengths_are_never_drained(self):
         handler = request('/api/prompt/compile', b'ab', safe=True, content_type='text/plain')
@@ -93,6 +99,7 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
 
     def test_pathological_digit_length_cannot_escape_refusal(self):
         handler = request('/api/prompt/compile', b'x', safe=True, content_type='text/plain')
@@ -103,6 +110,16 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(value['error'], 'application/json required')
         self.assertEqual(handler.rfile.tell(), 0)
+        self.assertTrue(handler.close_connection)
+
+    def test_failed_drain_marks_connection_non_reusable(self):
+        handler = request('/api/prompt/compile', b'x', safe=True, content_type='text/plain')
+        handler.headers['Content-Length'] = '2'
+        status, value = handler.do_POST()
+        self.assertEqual(status, 400)
+        self.assertEqual(value['error'], 'application/json required')
+        self.assertEqual(handler.rfile.read(), b'')
+        self.assertTrue(handler.close_connection)
 
     def test_exact_bound_and_zero_length_are_supported(self):
         handler = request('/unused', b'x' * DRAIN_LIMIT)
@@ -110,6 +127,45 @@ class RejectedRequestBodyDrainTests(unittest.TestCase):
         self.assertEqual(handler.rfile.tell(), DRAIN_LIMIT)
         empty = request('/unused', b'')
         self.assertTrue(drain_declared_body(empty))
+
+    def test_slow_progress_cannot_reset_the_total_drain_deadline(self):
+        class Connection:
+            def __init__(self):
+                self.timeout = None
+                self.values = []
+
+            def gettimeout(self):
+                return self.timeout
+
+            def settimeout(self, value):
+                self.timeout = value
+                self.values.append(value)
+
+        class SlowReader:
+            def __init__(self):
+                self.read_calls = 0
+                self.read1_calls = 0
+
+            def read(self, amount):
+                self.read_calls += 1
+                return b'x'
+
+            def read1(self, amount):
+                self.read1_calls += 1
+                return b'x'
+
+        handler = request('/unused', b'xxx')
+        handler.connection = Connection()
+        handler.rfile = SlowReader()
+        clock = iter((0.0, 0.0, 0.6, 1.01))
+        fake_time = SimpleNamespace(monotonic=lambda: next(clock))
+        with patch.object(http_body, 'time', fake_time, create=True):
+            self.assertFalse(drain_declared_body(handler))
+        self.assertEqual(handler.rfile.read_calls, 0)
+        self.assertEqual(handler.rfile.read1_calls, 2)
+        self.assertAlmostEqual(handler.connection.values[0], 1.0)
+        self.assertAlmostEqual(handler.connection.values[1], 0.4)
+        self.assertIsNone(handler.connection.values[-1])
 
 
 if __name__ == '__main__':
