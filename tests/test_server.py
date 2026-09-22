@@ -342,7 +342,7 @@ class ServerTests(unittest.TestCase):
                 with self.assertRaises(server.StudioError):studio.stop_tracking(job['id'],reason if reason is not None else 'Retain this uncertainty')
                 self.assertEqual(json.dumps(job,sort_keys=True),before);self.assertEqual((studio.runs/job['id']/'state.json').read_bytes(),state)
         studio,job=self.uncertain_known_job()
-        with patch.object(studio,'_write_json_atomic',side_effect=OSError('disk full')):
+        with patch.object(studio,'_write_observation_state',side_effect=OSError('disk full')):
             with self.assertRaisesRegex(OSError,'disk full'):studio.stop_tracking(job['id'],'No durable write')
         self.assertNotIn('tracking_disposition',job)
 
