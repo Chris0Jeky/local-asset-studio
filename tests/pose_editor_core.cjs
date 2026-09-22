@@ -103,11 +103,12 @@ test('serialisation is pixel coordinates, nulls for the unknown, and the canvas 
 test('the workbench sends the drawing to the guide endpoint and to no generation route',()=>{
   const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
   assert.match(workbench,/request=StudioPoseEditor\.serialize\(posePoints,poseCanvas\)/,'the request freezes the intended drawing');
-  assert.match(workbench,/post\('\/api\/pose\/render',request\)/,'Use this pose renders the frozen guide request');
+  assert.match(workbench,/body=StudioPoseEditor\.renderRequest\(request,StudioPoseEditor\.guideRenderer\(selected\)\)/,'the recipe picks the renderer; the geometry stays the frozen request');
+  assert.match(workbench,/post\('\/api\/pose\/render',body\)/,'Use this pose renders the frozen guide request');
   assert.match(workbench,/drawing!==JSON\.stringify\(StudioPoseEditor\.serialize\(posePoints,poseCanvas\)\)/,'changed geometry invalidates the reply');
   assert.match(workbench,/POSE_RECIPE='combine-klein-9b-skeleton'/,'the drawing belongs to the proved drawn-skeleton recipe');
   assert.match(workbench,/switchCombineEngine\(POSE_RECIPE,result\)/,'explicit replacement uses the checked new guide through the shared switch path');
-  assert.match(workbench,/StudioPoseEditor\.guideResponse\(response,request\)/,'response validation precedes attachment');
+  assert.match(workbench,/StudioPoseEditor\.guideResponse\(response,body\)/,'response validation precedes attachment');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
   assert.doesNotMatch(workbench,/post\('\/api\/jobs'/,'the workbench submits no generation of its own');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');

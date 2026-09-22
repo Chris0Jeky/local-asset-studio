@@ -40,6 +40,20 @@ test('malformed or mismatched render replies cannot replace the existing picture
     assert.throws(()=>P.guideResponse({...reply,...patch},request));
   for(const value of [null,[],{},false])assert.throws(()=>P.guideResponse(value,request));
 });
+test('an SDXL skeleton recipe draws in place with its own renderer; Combine recipes keep the Klein guide',()=>{
+  const sdxl={id:'wai-skeleton',reference_board:{min:1},reference_slots:[{role:'pose'}],pose_guide_renderer:'studio.coco18-openpose-xinsir/v1'};
+  assert.equal(P.drawsGuide(sdxl),true);
+  assert.equal(P.guideRenderer(sdxl),'studio.coco18-openpose-xinsir/v1');
+  for(const preset of [picture,skeleton,null,{...sdxl,pose_guide_renderer:'unknown/v1'},{...sdxl,reference_slots:[{role:'style'}]},
+                       {...sdxl,reference_slots:[{role:'pose'},{role:'pose'}]},{...sdxl,last_reference:['20','image']},{...sdxl,pose_guide_renderer:undefined}]){
+    assert.equal(P.drawsGuide(preset),false);assert.equal(P.guideRenderer(preset),'studio.coco18-lines/v1');}
+  assert.equal(P.renderRequest(request,P.guideRenderer(skeleton)),request,'the Klein body is the unchanged serialized drawing');
+  const body=P.renderRequest(request,P.guideRenderer(sdxl));
+  assert.deepEqual(body,{...request,renderer:'studio.coco18-openpose-xinsir/v1'});assert.equal('renderer' in request,false);
+  assert.equal(P.guideResponse({...reply,renderer:'studio.coco18-openpose-xinsir/v1'},body).renderer,'studio.coco18-openpose-xinsir/v1');
+  assert.throws(()=>P.guideResponse(reply,body),'a thin-line reply cannot satisfy an OpenPose request');
+  assert.throws(()=>P.guideResponse({...reply,renderer:'studio.coco18-openpose-xinsir/v1'},request),'nor the other way round');
+});
 test('typed coordinates are explicit, bounded and preserve coordinate zero',()=>{
   assert.equal(typeof P.positionInput,'function');
   assert.deepEqual(P.positionInput('0','1536',{width:1024,height:1536}),{x:0,y:1536});

@@ -97,6 +97,20 @@ class PoseGuideTests(unittest.TestCase):
         self.assertEqual({joint["origin"] for joint in placed}, {"manual"})
         self.assertEqual({joint["confidence"] for joint in placed}, {None})
 
+    def test_an_sdxl_recipe_can_ask_for_the_openpose_drawing(self):
+        from studio_workflow import pose_raster
+        result = pose_guide.render(self.studio, payload(renderer=pose_raster.OPENPOSE_RENDERER))
+        self.assertEqual(result["renderer"], pose_raster.OPENPOSE_RENDERER); self.assertFalse(result["generation_submitted"])
+        raw = (self.root / "experiments/uploads" / result["file"]).read_bytes()
+        self.assertEqual(raw, pose_raster.render_png(pose_guide.artifact(payload()), renderer=pose_raster.OPENPOSE_RENDERER))
+        self.assertNotEqual(raw, pose_raster.render_png(pose_guide.artifact(payload())), "a different drawing, not the thin-line guide")
+        # Naming the default renderer explicitly stores exactly the guide an omitted renderer stores.
+        explicit = pose_guide.render(self.studio, payload(renderer=pose_raster.RENDERER))
+        self.assertEqual(explicit["sha256"], pose_guide.render(self.studio, payload())["sha256"])
+        for bad in ("studio.coco18-lines/v2", "", None, ["studio.coco18-lines/v1"]):
+            with self.subTest(renderer=bad), self.assertRaises(ValueError): pose_guide.render(self.studio, payload(renderer=bad))
+        self.assertEqual(self.studio.requests, [])
+
     def test_malformed_poses_are_refused_and_write_nothing(self):
         cases = {
             "seventeen joints": payload(keypoints=keypoints()[:-1]),
