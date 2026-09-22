@@ -9,7 +9,7 @@ from pathlib import Path
 import sys
 import tempfile
 
-from spoken_brief_archive import checked_directory, checked_json, inspect_run
+from spoken_brief_archive import checked_directory, checked_json, inspect_run, require_archive
 from spoken_brief_compile import SPEAKER_RE, SpokenBriefError, canonical_digest, digest_bytes
 from spoken_brief_exports import _claim, _json_bytes
 from spoken_brief_inbox import HEX, _capture, _lineage
@@ -175,8 +175,10 @@ def load_report(run_dir, identifier):
     return value
 
 
-def record_review(run_dir, identifier, audio_sha256, *, decision, findings, reviewer, reason, report_sha256=None):
+def record_review(run_dir, identifier, audio_sha256, *, decision, findings, reviewer, reason,
+                  report_sha256=None, expected_archive_sha256=None):
     directory = checked_directory(run_dir); archive = inspect_run(directory)
+    require_archive(archive, expected_archive_sha256)
     value = _review(archive, identifier, audio_sha256, decision, findings, reviewer, reason, report_sha256)
     if report_sha256 is not None: load_report(directory, report_sha256)
     return _publish(directory, archive, 'reviews', value, 'review_sha256')
