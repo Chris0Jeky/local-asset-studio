@@ -56,13 +56,38 @@ class _ComparisonProbe:
 
 
 class AtexitLifetimeDiagnosticsTests(unittest.TestCase):
-    def test_observer_propagates_unregister_equality_errors(self):
+    def test_observer_matches_native_unregister_equality_errors(self):
+        # CPython versions differ in which side of equality unregister compares
+        # first. The native interpreter is the oracle for this transparent observer.
+        probe = subprocess.run(
+            [sys.executable, '-c', textwrap.dedent('''
+                import atexit
+                class Registered:
+                    def __call__(self): pass
+                    def __eq__(self, other): raise RuntimeError('callback equality failed')
+                class Query:
+                    def __eq__(self, other): return False
+                atexit.register(Registered())
+                try:
+                    atexit.unregister(Query())
+                except RuntimeError as error:
+                    print('raised:' + str(error))
+                else:
+                    print('returned')
+            ''')], capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(probe.returncode, 0, probe.stdout + probe.stderr)
+        native = probe.stdout.strip()
+        self.assertIn(native, ('returned', 'raised:callback equality failed'))
         observer = AtexitCallbackObserver(stream=io.StringIO())
         registered = _ExplosiveEqualityCallback()
         observer.install()
         try:
             atexit.register(registered)
-            with self.assertRaisesRegex(RuntimeError, "callback equality failed"):
+            if native.startswith('raised:'):
+                with self.assertRaisesRegex(RuntimeError, "callback equality failed"):
+                    atexit.unregister(_ComparisonProbe())
+            else:
                 atexit.unregister(_ComparisonProbe())
         finally:
             observer.restore(cancel=True)
