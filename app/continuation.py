@@ -214,6 +214,12 @@ def validate(studio, payload, preset, graph, check_runtime=False):
     if preset.get("reference_slots"):
         supplied = payload.get("references")
         slots = preset["reference_slots"]
+        # Match board compilation's positional padding, not an inferred attachment.
+        # Every padded loader must still be absent below; named source inputs stay explicit.
+        if board is not None:
+            if supplied is None: supplied = []
+            if isinstance(supplied, list) and len(supplied) <= len(slots):
+                supplied = supplied + [{} for _ in range(len(slots) - len(supplied))]
         if not isinstance(supplied, list) or len(supplied) != len(slots):
             raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
         declared = [(slot.get("binding"), record.get("file") if isinstance(record, dict) else None,
