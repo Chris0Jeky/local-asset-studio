@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 
 import test_server as fixtures
-from test_observation_resume_persistence import ObservationResumePersistenceTests
+import test_observation_resume_persistence as persistence
 
 
 FakeStudio = fixtures.FakeStudio
@@ -14,8 +14,8 @@ FakeStudio = fixtures.FakeStudio
 class ObservationResumeDurabilityTests(unittest.TestCase):
     setUp = fixtures.ServerTests.setUp
     tearDown = fixtures.ServerTests.tearDown
-    fixture = ObservationResumePersistenceTests.fixture
-    state_path = staticmethod(ObservationResumePersistenceTests.state_path)
+    fixture = persistence.ObservationResumePersistenceTests.fixture
+    state_path = staticmethod(persistence.ObservationResumePersistenceTests.state_path)
 
     def test_file_sync_failure_never_publishes_memory_or_queue(self):
         studio, job = self.fixture()
@@ -64,6 +64,22 @@ class ObservationResumeDurabilityTests(unittest.TestCase):
         self.assertEqual(result['status'], 'queued')
         self.assertEqual(studio.queue.get_nowait(), ('observe', job['id']))
         self.assertTrue(studio.queue.empty())
+
+    def test_restart_keeps_known_prompt_ids_but_does_not_replay_queue(self):
+        studio, job = self.fixture()
+        studio.resume_job(job['id'])
+        recovered = FakeStudio(self.root, [])
+        retained = recovered.jobs[job['id']]
+        self.assertEqual(retained['status'], 'uncertain')
+        self.assertEqual(retained['prompt_ids'], ['retained'])
+        self.assertEqual(retained['submissions'], job['submissions'])
+        self.assertTrue(recovered.queue.empty())
+        self.assertEqual(recovered.requests, [])
+
+    def test_global_writer_is_not_silently_given_observation_barriers(self):
+        studio, job = self.fixture()
+        with patch('os.fsync', side_effect=AssertionError('global writer changed')):
+            studio._write_json_atomic(self.state_path(studio, job), {'only': 'visibility'})
 
 
 if __name__ == '__main__':

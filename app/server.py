@@ -40,6 +40,7 @@ import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
+import observation_state
 import job_resources
 import continuation
 import pose_guide
@@ -930,6 +931,11 @@ class Studio:
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
         temp.replace(path)
 
+    _sync_parent_directory = staticmethod(observation_state.sync_parent_directory)
+
+    def _write_observation_state(self, path, value):
+        return observation_state.publish(path, value, self._sync_parent_directory)
+
     def _save(self, job):
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
@@ -1563,13 +1569,9 @@ class Studio:
         prospective.update(status="queued", message="Queued to resume observation; no image will be resubmitted.")
         state = {key: value for key, value in prospective.items() if key != "graph"}
         state_path = self.runs / job_id / "state.json"
-        try:
-            self._write_json_atomic(state_path, state)
-        except OSError:
-            # Replacement may have committed before a later filesystem error.
-            # Only exact durable evidence earns in-memory/queue publication.
-            if read_json(state_path) != state:
-                raise
+        # Readable replacement bytes cannot certify a failed synchronization.
+        # Every failure preserves live/queue state until a later explicit retry.
+        self._write_observation_state(state_path, state)
         job.update(prospective)
         self.queue.put(("observe", job_id))
         return self.public(job)
