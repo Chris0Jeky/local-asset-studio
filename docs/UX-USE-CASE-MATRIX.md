@@ -312,6 +312,55 @@ generation requests were sent.** The deny list is deliberately over-broad — on
 refused because its card text contains "Run a recipe without a browser" — which is the correct way
 for a safety list to fail.
 
+### What live mode reaches, and how it ends (#486)
+
+Until #486 ten live journeys died at a `missing-control` dead end before any click, because their
+drivers named fixture ids (`asset-1`, the fixture study `cccc…`) or waited for a dialog the guard had
+refused to open. Now a live journey ends in one of four named results:
+
+| Result | Meaning |
+| --- | --- |
+| **PASS** | The success condition was reached on navigation, typing and read-only checks alone. |
+| **STOP** | Every read-only step was walked; the next control would write server state, so it was measured, refused and never pressed. The reason names the control. |
+| **SKIP** | The live Studio holds nothing the journey needs — no image in the Asset library, no finished comparison awaiting review, no Recent-runs output whose picture is still in the Workspace, a recipe it does not carry. The reason names what is missing. |
+| **FAIL** | A real dead end or a broken step on real data. |
+
+Where a driver used a fixture id, live mode takes the fixture id if the page lists it, else the first
+matching item in the page's own order (newest first: the Asset library's default sort, the Recent-runs
+gallery, the Runs & review list): an image asset for Continue with this and the export selection, a
+finished comparison with candidate pictures for review, the first saved image in the picker for a
+reference slot. Fixture mode keeps its own ids and never skips — a skip there is a failure.
+
+Two guard changes make those steps reachable without widening what may be written. A button with no
+form owner is no longer read as a form submit (a `<button>` without a `type` reports `submit` even
+outside any form, which refused every card and gallery button). And `LOCAL_CONTROLS` in
+`tests/studio_use_cases.py` lists, with a reason each, the controls whose press only changes the page,
+reads, or validates without storing anything — the recipe picker and recipe cards, Continue with
+this, its route and destination choices, the saved-picture picker, asset details and selection
+checkboxes, a study's details and candidates, and the Workflow builder's recipe import and
+connection check. A listed control skips the label heuristic (a recipe card's description says "one
+run of this recipe"); the id and attribute deny lists still bind first, and `data-ux-pull` (attaching
+a saved picture) joined the attribute list.
+
+Live run, 22 Sep 2026 ~23:30 against the Studio on main 12307176 (452 Workspace images, 381 jobs, six
+comparisons awaiting review): **15 cases, 5 PASS, 10 STOP, 0 SKIP, 0 FAIL — all 15 reached; 0 generation
+submissions of 35 browser POSTs (`/api/estimate`, `/api/prompt/compile`, `/api/workflow-studio/compile`,
+none of which stores anything), 0 page errors.** The same driver before #486: 5 PASS, 10 FAIL.
+
+| Journey | Live result | Where it ends |
+| --- | --- | --- |
+| first-image-from-brief, reference-analysis-review-and-apply, prompt-lab-to-create, guided-edit-or-preserve-character | PASS | success condition |
+| build-and-prepare-node-workflow | PASS | the checked graph is exportable; Export, Save and Prepare are read, never pressed |
+| reference-edit-one-source, three-reference-identity-pose-style | STOP | attaching a saved picture to a slot (`data-ux-pull`) |
+| compare-settings-from-recipe | STOP | Plan comparison (`planComparison`) |
+| review-and-keep-winner | STOP | recording the winner (`data-choose-candidate`) |
+| reuse-keeper-as-reference, restyle-recent-output-with-a-look, the two Combine cases, draw-a-pose-for-combine | STOP | Prepare in Create (`uxPrepareHandoff`: it attaches a copy) |
+| frames-to-native-export | STOP | Native export (`nativeExport`) |
+
+reference-edit-one-source used to PASS live without ever loading its recipe (the recipe clicks were
+refused and the default recipe's readiness was scored); it now loads the recipe and stops honestly at
+the attachment.
+
 ## Re-running this
 
 ```bash
@@ -324,7 +373,7 @@ python tests/studio_use_cases.py --base-url http://127.0.0.1:8191    # live, rea
 The runner exits non-zero when any journey missed its success condition, the page raised an error, a
 generation was submitted, or nothing ran at all (an unknown `--case` id is refused rather than filtered
 away). **Live mode is the carve-out**: with `--base-url` most journeys stop short because the deny list
-refuses their deciding click by design — see the 3-of-10 live run recorded above — so live journey results
+refuses their deciding click by design — each such row reads STOP or SKIP with its reason (see above) — so live journey results
 are advisory and only a submitted generation, a page exception or an empty run turn a live run red. The
 report is written either way, so a red run still leaves its evidence; `verdict()` holds the whole rule and
 `tests/test_use_case_matrix.py` pins it without a browser. Until #611 the runner returned 0 whatever it
