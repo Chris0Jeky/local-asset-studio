@@ -104,3 +104,10 @@
 .workshop .wk-recipe>div {display:none}
 .workshop .wk-setup-rail .wk-recipe {display:flex;flex-wrap:nowrap}
 .workshop .wk-recipe button {flex:1;min-width:0}
+
+/* Two compact selectors must fit the available width, including 320px / zoom. */
+@media(max-width:600px) {
+  .workshop .wk-select-controls {grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
+  .workshop .wk-select-control,.workshop .wk-skin-control {min-width:0}
+  .workshop .wk-native-skin-select select {min-width:0}
+}
