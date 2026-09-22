@@ -3,7 +3,7 @@
 Graphs follow Comfy-Org's day-0 templates (image_qwen_image_2_1_t2i / _image_edit, flattened): 25 steps, CFG 1,
 euler/simple, the int8 ConvRot diffusion model and Qwen3-VL 8B int8 text encoder. The transparent recipe wraps
 the prompt in the model card's RGBA wording. Visual graphs need the live schema of the isolated backend (8196).
-Existing catalog entries are replaced in place; the rest of presets/catalog.json is left byte-identical.
+The recipes are appended once (a rebuild refuses while they exist); the rest of presets/catalog.json stays byte-identical.
 """
 import copy
 import importlib.util
@@ -81,8 +81,6 @@ def entries():
              stages=['RGBA wording around your subject','Qwen3-VL 8B text encoder (int8)','Qwen-Image 2.1 7B (int8 ConvRot)','25-step euler','4-channel decoder','PNG with alpha'],
              variants=steps+[{'name':'Icon 1024','controls':{'width':1024,'height':1024}},{'name':'Character 832 × 1248','controls':{'width':832,'height':1248}}]),
         dict(id='qwen21-edit',name='Qwen-Image 2.1 - Edit one picture',positive=['4','prompt'],reference=['10','image'],**common,
-             reference_slots=[{'role':'identity','contribution':'The picture to change: subject, layout and colours unless the instruction says otherwise',
-                               'avoid':'Unrequested changes to the subject','binding':['10','image']}],
              description='Instruction edit of one picture on the isolated v0.37.0 backend. The result keeps picture 1\'s aspect ratio at about 1 MP (the encoder\'s own latent); '
                          'the model sees the picture both through Qwen3-VL and as a VAE latent. Unrequested details can change.',
              stages=['Picture 1 resized to ~1 MP on the 32-pixel grid','Qwen3-VL 8B reads picture and instruction','Reference latent spliced in','25-step euler','PNG'],

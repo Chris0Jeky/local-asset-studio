@@ -7438,17 +7438,6 @@
       ],
       "source": "https://huggingface.co/Qwen/Qwen-Image-2.1",
       "commercial_note": "Qwen Research License (20 September 2026): non-commercial research or evaluation only; commercial use needs a separate licence from Qwen. Private experiments only. Runs on the isolated ComfyUI v0.37.0 backend (8196); the primary ComfyUI (v0.35.0) has no Qwen-Image 2.1 model class.",
-      "reference_slots": [
-        {
-          "role": "identity",
-          "contribution": "The picture to change: subject, layout and colours unless the instruction says otherwise",
-          "avoid": "Unrequested changes to the subject",
-          "binding": [
-            "10",
-            "image"
-          ]
-        }
-      ],
       "description": "Instruction edit of one picture on the isolated v0.37.0 backend. The result keeps picture 1's aspect ratio at about 1 MP (the encoder's own latent); the model sees the picture both through Qwen3-VL and as a VAE latent. Unrequested details can change.",
       "stages": [
         "Picture 1 resized to ~1 MP on the 32-pixel grid",
