@@ -1,16 +1,16 @@
-# Ordinary observation state publication (#703, #716)
+# Observation state publication (#703, #716)
 
 ## Scope
 
-Ordinary Resume observation owns existing retained prompt IDs. It publishes a
+Ordinary and stopped-tracking Resume observation own retained prompt IDs. Each publishes a
 prospective `state.json` before changing the live job or adding one `observe`
 queue item. Recipe/workflow bytes, IDs, resource holds and submission authority
 are unchanged. The command remains serialized by the existing Studio lock.
 
 `app/observation_state.py` is the scoped publication primitive. The historical
-`Studio._write_json_atomic()` helper, stopped-tracking resume, mixed-batch writes,
+`Studio._write_json_atomic()` helper, Stop tracking itself, mixed-batch writes,
 backend state, abandonment and other save paths are **not** changed. Their wider
-durability review remains open under #716; this slice does not close that issue.
+durability review remains open under #716; the umbrella remains open.
 
 ## Publication and failure protocol
 
@@ -70,3 +70,30 @@ reference-hold, server, worker/submission recovery suites and repository validat
 The dedicated workflow runs the affected contract matrix on exact Ubuntu and
 Windows heads. Complete hosted `Check studio` and review remain merge gates;
 focused snapshot tests alone do not qualify the entire branch.
+
+## Stopped-tracking Resume continuation
+
+Both Resume paths now call the same scoped publisher. The stopped-tracking path
+constructs the prospective resumed disposition and appended history first, but
+publishes neither to the live job nor to the worker queue until the writer
+returns. A failed attempt does not consume the live stop disposition or append a
+live resume event. Explicit retry builds from the unchanged live history, not
+from visible replacement bytes, so repeated or concurrent attempts publish one
+new history event and one observation item. Stop-event tokens, retained prompt
+IDs, submissions, recipe/workflow bytes and resource holds remain unchanged.
+
+A failure after replacement can leave the attempted resumed history visible on
+disk. This is not rolled back and is not evidence that the barrier succeeded.
+Existing recovery loads that retained history, marks queued work uncertain and
+starts no observation. Another explicit Resume republishes before enqueueing;
+it does not fabricate another stop/resume event from the already retained history.
+This is deliberately not a two-file consent transaction or a power-loss claim.
+
+`tests/test_observation_tracking_publication.py` covers file and parent-sync
+faults, replacement/cleanup, an exception after successful publication, barrier
+ordering, multiple stop/resume cycles, concurrent retry, restart after uncertain
+publication, worker/evidence refusals and byte-budget refusal. The retained-hold
+fixture seeds the existing stopped job's state before exercising Resume, just
+as real job creation does. It does not replace the publisher or relax admission.
+The existing observation workflow discovers these tests on Windows and Ubuntu;
+no additional workflow or production persistence owner is introduced.

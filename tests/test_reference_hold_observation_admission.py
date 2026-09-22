@@ -188,6 +188,7 @@ class ReferenceHoldObservationAdmissionTests(unittest.TestCase):
             studio = ObservationStudio(Path(temporary), held=True)
             job = stopped_job()
             studio.jobs[job["id"]] = job
+            studio._write_json_atomic(studio.runs / job["id"] / "state.json", job)
 
             result = studio.resume_job(job["id"])
 

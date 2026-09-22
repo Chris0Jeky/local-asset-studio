@@ -1040,7 +1040,8 @@ class Studio:
         resumed["history"] = history + [{"status": "resumed", "recorded_at": time.time()}]
         prospective = dict(job)
         prospective.update(status="queued", message="Queued to resume observation of retained prompt IDs; no image will be resubmitted.", tracking_disposition=resumed)
-        self._write_json_atomic(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+        # Keep the live stop disposition until the supported publication barriers pass.
+        self._write_observation_state(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
         self.queue.put(("observe", job["id"]))
         return self.public(job)
