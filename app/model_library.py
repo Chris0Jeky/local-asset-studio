@@ -12,8 +12,7 @@ import uuid
 from urllib.request import Request
 from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, relative_model_path, validate_pins, validate_response
 
-from studio_workflow.model_contracts import FOLDERS
-SUFFIXES = {".safetensors", ".gguf", ".pth", ".pt", ".onnx"}
+from studio_workflow.model_contracts import FOLDERS, SUFFIXES
 INSTALL_SUFFIX = ".safetensors"
 RESERVE_BYTES = 20 * 1024**3
 

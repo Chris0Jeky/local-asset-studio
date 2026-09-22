@@ -1,0 +1,55 @@
+name: Asset recovery response ownership
+on:
+  pull_request:
+    paths:
+      - 'app/static/workspace.js'
+      - 'app/static/asset-recovery*.js'
+      - 'app/static/index.html'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/asset_recovery_session*'
+      - 'tests/test_asset_recovery_session.py'
+      - 'tests/asset_detail_contracts.cjs'
+      - 'tests/asset_detail_browser.py'
+      - 'tests/studio_browser_smoke.py'
+      - '.github/workflows/asset-recovery-sessions.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-recovery-sessions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  protocol:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Request, Workspace, replacement and existing editor contracts
+        run: |
+          python -m unittest discover -s tests -p test_asset_recovery_session.py -v
+          node tests/asset_detail_contracts.cjs
+          node tests/asset_recovery_contracts.cjs
+      - name: Native held-response and focus checks against real SQLite
+        run: python tests/asset_recovery_session_browser.py --out .runtime/asset-recovery-session
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-recovery-session-${{ matrix.os }}
+          path: .runtime/asset-recovery-session
+          retention-days: 7

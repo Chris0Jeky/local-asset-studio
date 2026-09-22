@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updated": "2026-09-13",
-  "note": "Saved control sets. status 'executed' means this machine ran these controls and the evidence block names the ComfyUI prompt ID; 'unverified' means the settings come from model and LoRA cards and have not been rendered here. Prompts are original characters and SFW. Wildcards ({a|b} and __name__) expand server-side at submission.",
+  "updated": "2026-09-21",
+  "note": "Saved control sets. status 'executed' means this machine ran these controls and the evidence block names the ComfyUI prompt ID; 'unverified' means the settings come from model and LoRA cards and have not been rendered here. Most prompts are original characters. Recipes tagged adult-illustration use the Times Lazy character pack (mature-body tags). Wildcards ({a|b} and __name__) expand server-side at submission.",
   "recipes": [
     {
       "id": "krea-witch-nijisis",
@@ -800,6 +800,1146 @@
       "batch_count": 1,
       "notes": "All five weights are cautious authored starting values (0.3, 0.6, 0.35, 0.25, 0.5), not screenshot/source transcription. They are deliberately editable and require a fresh single-run evidence record before any quality claim.",
       "sources": [], "status": "unverified"
+    },
+    {
+      "id": "anifox-lazy-color-character",
+      "name": "AniFox v2 - lazy color character study",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["adult-illustration", "wildcards", "audition"],
+      "controls": {
+        "positive": "__lazy_color_character__, solo, adult, looking at viewer, cowboy shot, detailed anime illustration, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 20260921, "steps": 30, "cfg": 5,
+        "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0
+      },
+      "batch_count": 4,
+      "notes": "Times Lazy lazyprompts3 as __lazy_color_character__ (nested __Breastsrandom__). Four seeds expand four different character lines; the submitted graph carries the expanded text. Adult illustration study, not a generation evidence record.",
+      "sources": [],
+      "status": "unverified"
+    },
+    {
+      "id": "anima-v1-lazy-color-character",
+      "name": "Anima v1 - lazy color character study",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["adult-illustration", "wildcards", "audition"],
+      "controls": {
+        "positive": "__lazy_color_character__, solo, adult, looking at viewer, cowboy shot, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 20260921, "steps": 30, "cfg": 4.5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 4,
+      "notes": "Same Times Lazy pack on the Anima v1 baseline with every adapter slot pruned. Tag-style lines; Anima also accepts @artist tags if you add them.",
+      "sources": [],
+      "status": "unverified"
+    },
+    {
+      "id": "anima-pearly-petiflow",
+      "name": "Anima v1 - Pearly PetiFlow style",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["adult-illustration", "style"],
+      "controls": {
+        "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, green pastel flowing hair, light green eyes, cute frilled dress, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 20260921, "steps": 25, "cfg": 5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora_name": "pearly_petiflow2.safetensors", "lora": 1.0,
+        "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Pearly Flow / PetiFlow Anima LoRA in slot 1 at 0.8 with trigger pearlypetif from the listing. Unverified; the card quotes a flatter vibrant palette.",
+      "sources": ["https://civitai.red/models/2794834?modelVersionId=3151811"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "3e8b0e5e-28c9-4df8-b800-d89c3a44b474",
+        "prompt_id": "4ba586c7-679c-4846-b249-4b6fae1329a3",
+        "seconds": 18.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-pearly-petiflow.jpg. Flat pastel close-up. Strong style match. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anifox-ringeko",
+      "name": "AniFox v2 - Ringeko artist style",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["adult-illustration", "character"],
+      "controls": {
+        "positive": "r1ng3k0, masterpiece, best quality, amazing quality, very aesthetic, 1girl, solo, adult original character, long white hair, hime cut, blunt bangs, red eyes, looking at viewer, cowboy shot, fantasy cloak, holding a black cat, outdoors, cinematic lighting",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 20260921, "steps": 30, "cfg": 5,
+        "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0,
+        "lora_name": "Ringeko.safetensors", "lora": 0.8, "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Artist-style LoRA Ringeko | by UTdT69; training tags used r1ng3k0. Not a character grant.",
+      "sources": ["https://civitai.red/models/2387976?modelVersionId=2685156"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "059aa6f5-9b97-4e5b-9a4b-10071dfcee77",
+        "prompt_id": "18d93d69-ccaf-4715-8966-243091f27142",
+        "seconds": 22.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-ringeko.jpg. Extra fingers on the cat-holding hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anifox-fluorite",
+      "name": "AniFox v2 - Fluorite (Arknights) LoRA",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["adult-illustration", "character"],
+      "controls": {
+        "positive": "fluorite \\(arknights\\), 1girl, solo, adult, green eyes, hair between eyes, green hair, hairclip, ponytail, snake tail, hood up, fingerless gloves, covered navel, long sleeves, hooded jacket, black bodysuit, belt pouch, thigh pouch, thigh strap, thigh holster, white boots, cowboy shot, looking at viewer, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 20260921, "steps": 30, "cfg": 5,
+        "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0,
+        "lora_name": "Robertlu1021_fluorite_arknights_v1.0_epoch_10.safetensors", "lora": 0.8, "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Local filename was sanitised (parentheses stripped) on intake. Third-party Arknights: Endfield character; likeness and commercial use are not cleared. civitai.red listing allows RentCivit only.",
+      "sources": ["https://civitai.red/models/2478250?modelVersionId=2786316"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "38ff6668-3b53-4036-b4f9-a5d0e393891e",
+        "prompt_id": "607b66d6-90b4-4762-98d7-f686303a3a5d",
+        "seconds": 16.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-fluorite.jpg. Character LoRA fired. Likeness not cleared. Generated, not accepted."
+      }
+    },
+    {
+      "id": "krea-realism-engine",
+      "name": "Krea 2 - Realism Engine v3.1",
+      "preset_id": "krea-anime-atelier",
+      "family": "Krea 2 Turbo",
+      "tags": ["realism", "adult-illustration"],
+      "controls": {
+        "positive": "A candid photograph of an adult woman standing on a rain-washed station platform at dusk, tailored travelling coat, high-neck shirt, trousers and leather boots, shallow depth of field, natural skin texture, available light",
+        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
+        "width": 768, "height": 1152, "seed": 20260921,
+        "lora_name": "realism_engine_krea2_v3.1.safetensors", "lora": 0.7,
+        "lora2": 0, "lora3": 0, "lora4": 0
+      },
+      "batch_count": 1,
+      "notes": "LoKr realism adapter for Krea 2. The listing quoted strength around 0.7. Hash of the copied file matches the public v3.1 pin. Unverified on this machine; explicit concepts on the card are not in this starting prompt.",
+      "sources": ["https://civitai.red/models/2688234?modelVersionId=3109006"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "d8c94308-a9e2-4412-bf75-5ce95bc0e2b6",
+        "prompt_id": "aa1b34e0-aa56-49f1-81a3-8bc69dfed2a8",
+        "seconds": 552.4,
+        "note": "Studio job; JPEG examples/civitai-intake/krea-realism-engine.jpg. Photoreal station portrait. Generated, not accepted."
+      }
+    },
+    {
+      "id": "krea-realistic-snapshot",
+      "name": "Krea 2 - Realistic Snapshot",
+      "preset_id": "krea-anime-atelier",
+      "family": "Krea 2 Turbo",
+      "tags": ["realism"],
+      "controls": {
+        "positive": "Casual smartphone photo of an adult woman on a city street at golden hour, travelling coat, natural skin, visible pores, depth of field, slight motion blur",
+        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
+        "width": 768, "height": 1152, "seed": 20260921,
+        "lora_name": "RealisticSnapshotKrea2.safetensors", "lora": 0.8,
+        "lora2": 0, "lora3": 0, "lora4": 0
+      },
+      "batch_count": 1,
+      "notes": "Krea 2 port of Realistic Snapshot. Copied-file SHA-256 matches the public v0.5 pin. Unverified here.",
+      "sources": ["https://civitai.red/models/2268008?modelVersionId=3084537"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "4ec39381-15bb-421a-886b-380160320f9a",
+        "prompt_id": "23e6bcc3-14e5-4ebb-ae31-bb87ae40b696",
+        "seconds": 586.8,
+        "note": "Studio job; JPEG examples/civitai-intake/krea-realistic-snapshot.jpg. Candid street portrait. Generated, not accepted."
+      }
+    },
+    {
+      "id": "oneobsession-anima-v20-base",
+      "name": "One Obsession Anima v2.0 - uncluttered baseline",
+      "preset_id": "oneobsession-anima-v20-baseline",
+      "family": "One Obsession Anima v2.0",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {
+        "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Every adapter slot is 0 and will be pruned. Prepared after a local UNET copy; no generation evidence.",
+      "sources": ["https://civitai.red/models/2695493?modelVersionId=3090670"],
+      "status": "unverified"
+    },
+    {
+      "id": "pearly-anima-mix-v10-base",
+      "name": "Pearly Anima Mix v1.0 - uncluttered baseline",
+      "preset_id": "pearly-anima-mix-v10-baseline",
+      "family": "Pearly Anima Mix v1.0",
+      "tags": ["anime", "adult-original-character", "baseline"],
+      "controls": {
+        "positive": "A fully clothed adult original character with long dark hair wears a tailored travelling coat, high-neck shirt, trousers and leather boots. She stands calmly on a rain-washed station platform in soft evening light, full body, detailed modern anime illustration, cinematic composition.",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 2026091301, "steps": 30, "cfg": 4.5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Every adapter slot is 0 and will be pruned, including the authored Pearly esearu and PetiFlow filenames. Prepared after a local UNET copy; no generation evidence.",
+      "sources": ["https://civitai.red/models/2631350?modelVersionId=2954375"],
+      "status": "unverified"
+    },
+    {
+      "id": "anifox-v2-showcase",
+      "name": "AniFox v2 - moonlit carnival showcase",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": ["adult-illustration", "showcase"],
+      "controls": {
+        "positive": "1girl, solo, adult original character, fox ears, fox tail, long blonde hair, lying down with one leg bent, hands behind the head, moonlit carnival with glowing rides, top-down shot, looking at viewer, open white travelling coat over a high-neck shirt, amazing quality, soft light, thin strands of hair, ambient atmosphere, detailed clothing, cinematic, masterpiece, best quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 2026092111, "steps": 30, "cfg": 4,
+        "sampler": "euler_ancestral", "scheduler": "karras", "denoise": 1.0, "lora": 0, "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Listing-shaped AniFox showcase with an original character (fox ears, carnival, top-down). Not a copy of a named franchise subject.",
+      "sources": ["https://civitai.red/models/2389212?modelVersionId=3081757"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "43561247-70a8-4342-a768-81f5601a7fab",
+        "prompt_id": "cadc8403-bb7c-4ec5-bbbc-852ba0b230f1",
+        "seconds": 36.4,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-v2-showcase.jpg. Fox girl, inverted pose, extra tail mass, extra fingers; carnival became forest night. Generated, not accepted."
+      }
+    },
+    {
+      "id": "oneobsession-anima-v20-showcase",
+      "name": "One Obsession Anima v2.0 - magazine cover showcase",
+      "preset_id": "oneobsession-anima-v20-baseline",
+      "family": "One Obsession Anima v2.0",
+      "tags": ["anime", "showcase"],
+      "controls": {
+        "positive": "masterpiece, best quality, score_8, score_7, very aesthetic, absurdres, highres, magazine cover, a beautiful adult original character wearing traditional travelling hanfu, holding a blossoming plum branch, night lantern light, detailed illustration, detailed background, drop shadow, numerous fine eyelashes, blurry background, blurry foreground, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 2026092112, "steps": 30, "cfg": 4,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Quality-tag showcase in the listing's magazine-cover register. Artist tags from the sample images are omitted so this stays an original character.",
+      "sources": ["https://civitai.red/models/2695493?modelVersionId=3090670"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "2079b0b2-44a1-44db-9b9b-57b0693982fe",
+        "prompt_id": "a5bbe7d9-91ef-4edd-975c-3a82ede5675b",
+        "seconds": 40.4,
+        "note": "Studio job; JPEG examples/civitai-intake/oneobsession-anima-v20-showcase.jpg. Hanfu, lanterns, plum branch. Generated, not accepted."
+      }
+    },
+    {
+      "id": "pearly-anima-mix-v10-showcase",
+      "name": "Pearly Anima Mix v1.0 - magical girl showcase",
+      "preset_id": "pearly-anima-mix-v10-baseline",
+      "family": "Pearly Anima Mix v1.0",
+      "tags": ["anime", "showcase"],
+      "controls": {
+        "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, 1girl, adult original character, cute, magical girl, pink fluorescent dress, gradient pink hair, sparkling hair, stockings, long gloves, dynamic pose, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 2026092113, "steps": 25, "cfg": 5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Listing-shaped Pearly Mix showcase: fluorescent magical-girl register, original character.",
+      "sources": ["https://civitai.red/models/2631350?modelVersionId=2954375"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "0c0108fb-d82c-4550-9460-1502ae1d7fb7",
+        "prompt_id": "a201fd59-b3cc-4101-9e61-6827cc78b8c3",
+        "seconds": 26.2,
+        "note": "Studio job; JPEG examples/civitai-intake/pearly-anima-mix-v10-showcase.jpg. Pink fluorescent magical girl. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-pearly-esearu",
+      "name": "Anima v1 - Pearly Esearu style",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": ["adult-illustration", "style", "showcase"],
+      "controls": {
+        "positive": "pearlyese, (soft colors:1.2), masterpiece, best quality, good quality, score_7, score_6, 1girl, solo, adult original character, long blonde hair, blue eyes, halo, white shirt, looking at viewer, cowboy shot, soft lighting",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832, "height": 1216, "seed": 2026092114, "steps": 30, "cfg": 5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora_name": "pearly_esearu_style.safetensors", "lora": 0.85,
+        "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Listing triggers pearlyese and (soft colors:1.2). Original character; sample images that used named VTubers are not reproduced.",
+      "sources": ["https://civitai.red/models/2897464?modelVersionId=3275865"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "0f66b253-b98a-44bd-a1dd-fac204654b22",
+        "prompt_id": "1ca26902-008e-4e14-b86e-4ba6d606c65b",
+        "seconds": 30.4,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-pearly-esearu.jpg. Halo and soft colours; extreme body proportions. Generated, not accepted."
+      }
+    },
+    {
+      "id": "krea-lenovo-ultrareal",
+      "name": "Krea 2 - Lenovo UltraReal selfie",
+      "preset_id": "krea-anime-atelier",
+      "family": "Krea 2 Turbo",
+      "tags": ["realism", "showcase"],
+      "controls": {
+        "positive": "Amateur smartphone photo, candid raw mirror selfie from a slightly high angle. An adult woman with pale skin and dark curly hair in a messy loose updo, round glasses, grey cropped jumper, standing in a cluttered bedroom with warm tungsten light, visible phone in the mirror, natural skin texture, slight digital noise",
+        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
+        "width": 768, "height": 1152, "seed": 2026092115,
+        "lora_name": "lenovo_krea2.safetensors", "lora": 0.85,
+        "lora2": 0, "lora3": 0, "lora4": 0
+      },
+      "batch_count": 1,
+      "notes": "Lenovo UltraReal Krea 2 v1.0. Listing look is amateur smartphone photography; this prompt is an adult original subject, not a copy of a sample identity.",
+      "sources": ["https://civitai.red/models/1662740?modelVersionId=3075606"],
+      "status": "executed",
+      "evidence": {
+        "job_id": "e7378421-b1d4-4995-9411-76fa7cad5213",
+        "prompt_id": "4a357043-2a09-4702-a884-b2513e603ce1",
+        "seconds": 598.6,
+        "note": "Studio job; JPEG examples/civitai-intake/krea-lenovo-ultrareal.jpg. Amateur bedroom selfie. Generated, not accepted."
+      }
+    },
+    {
+      "id": "krea-lenovo-night-street",
+      "name": "Krea 2 - Lenovo UltraReal night street",
+      "preset_id": "krea-anime-atelier",
+      "family": "Krea 2 Turbo",
+      "tags": ["realism"],
+      "controls": {
+        "positive": "Mobile phone photograph, moderate digital noise, nighttime lighting, blue-purple colour cast, an adult woman in a travelling coat standing beside a parked car on a hillside residential street, city lights in the distance, lens flare, candid, unedited",
+        "steps": 8, "cfg": 1, "sampler": "euler", "scheduler": "simple",
+        "width": 768, "height": 1152, "seed": 2026092116,
+        "lora_name": "lenovo_krea2.safetensors", "lora": 0.85,
+        "lora2": 0, "lora3": 0, "lora4": 0
+      },
+      "batch_count": 1,
+      "notes": "Second Lenovo starting point: night candid rather than indoor selfie.",
+      "sources": ["https://civitai.red/models/1662740?modelVersionId=3075606"],
+      "status": "unverified"
+    },
+    {
+      "id": "oneobsession-anima-v20-portrait",
+      "name": "One Obsession Anima v2.0 - close portrait",
+      "preset_id": "oneobsession-anima-v20-baseline",
+      "family": "One Obsession Anima v2.0",
+      "tags": ["anime", "portrait"],
+      "controls": {
+        "positive": "masterpiece, best quality, score_8, close up, from above, adult original character, long dark hair, melancholy, dramatic night fog, chiaroscuro, detailed eyelashes, looking at viewer, modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 2026092117, "steps": 30, "cfg": 4,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Close portrait in the listing's moody close-up register.",
+      "sources": ["https://civitai.red/models/2695493?modelVersionId=3090670"],
+      "status": "unverified"
+    },
+    {
+      "id": "pearly-anima-mix-v10-portrait",
+      "name": "Pearly Anima Mix v1.0 - sweater portrait",
+      "preset_id": "pearly-anima-mix-v10-baseline",
+      "family": "Pearly Anima Mix v1.0",
+      "tags": ["anime", "portrait"],
+      "controls": {
+        "positive": "masterpiece, best quality, very aesthetic, highres, score_9, score_8, score_7, depth of field, cinematic composition, 1girl, adult original character, round face, small horns, droopy ears, upper body, big sweater, from side quarter view, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832, "height": 1216, "seed": 2026092118, "steps": 25, "cfg": 5,
+        "sampler": "euler", "scheduler": "simple", "denoise": 1.0,
+        "lora": 0, "lora2": 0, "lora3": 0, "lora4": 0, "lora5": 0, "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Second Pearly Mix starting point from the listing's sweater-portrait sample, as an original character.",
+      "sources": ["https://civitai.red/models/2631350?modelVersionId=2954375"],
+      "status": "unverified"
+    },
+    {
+      "id": "anima-nsfw-girls",
+      "name": "Anima v1 - NSFW girls adapter",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092121,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.85,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Anima NSFW girls adapter alone. Adult original character. Generated examples are not art acceptance.",
+      "sources": [
+        "https://civitai.red/models/2822856?modelVersionId=3225971"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "5bb94ec4-bb02-4daf-8695-f6b02a89c4d6",
+        "prompt_id": "c69c3c68-7a53-4271-ac0c-a4c7c3cda5dd",
+        "seconds": 36.3,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-nsfw-girls.jpg. Pink-lavender hair, amber eyes, sitting on a bed holding breasts. Extra fingers on both wrapping hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-nsfw-petiflow",
+      "name": "Anima v1 - NSFW girls + PetiFlow",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "pearlypetif, 1girl, solo, adult, nude, looking at viewer, bedroom, face focus, upper body, (flat colors:1.3), detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092122,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.7,
+        "lora2_name": "pearly_petiflow2.safetensors",
+        "lora2": 0.85,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Working Anima combo: NSFW girls + PetiFlow. Both are Anima-family adapters.",
+      "sources": [
+        "https://civitai.red/models/2822856?modelVersionId=3225971",
+        "https://civitai.red/models/2794834?modelVersionId=3151811"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "6596b294-8780-4204-81e1-38ad3bafab71",
+        "prompt_id": "8ec07340-3c57-476d-acf7-2efdfd1f5ce8",
+        "seconds": 20.1,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-nsfw-petiflow.jpg. Face-focus pastel blonde, aqua eyes, shoulders only. Flat-color style beat the full-nude prompt. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-nsfw-esearu",
+      "name": "Anima v1 - NSFW girls + Esearu",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "pearlyese, (soft colors:1.2), 1girl, solo, adult, nude, looking at viewer, cowboy shot, halo, long blonde hair, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092123,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.7,
+        "lora2_name": "pearly_esearu_style.safetensors",
+        "lora2": 0.8,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Working Anima combo: NSFW girls + Esearu soft-colour style.",
+      "sources": [
+        "https://civitai.red/models/2822856?modelVersionId=3225971",
+        "https://civitai.red/models/2897464?modelVersionId=3275865"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "edf39880-d168-4af5-af27-299f27f2078b",
+        "prompt_id": "54fe1497-bc68-4738-b8c4-18b6421af274",
+        "seconds": 20.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-nsfw-esearu.jpg. Halo, blonde, white robe open. Extreme proportions. Extra fingers on both fists. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-bunnyslop-nsfw",
+      "name": "Anima v1 - BunnySlop NSFW",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "@sl0p, 1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092124,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "BunnySlop_Anima.safetensors",
+        "lora": 0.8,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "BunnySlop Anima adapter with @sl0p. Adult original character.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "0b1fe46f-a7e1-401e-adcc-d77096bab005",
+        "prompt_id": "cdc1a9ce-7020-4267-a327-7cf2dd2100d9",
+        "seconds": 22.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-bunnyslop-nsfw.jpg. Dark hair, red eyes, bedroom selfie. Extra fingers on the camera-reaching arm. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-xilmo-style",
+      "name": "Anima v1 - xilmo style",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "anime",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult original character, long dark hair, travelling coat, cowboy shot, painterly, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092125,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "anima-xilmo-000020.safetensors",
+        "lora": 0.7,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "xilmo Anima style adapter at 0.7, other slots pruned.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "2ea4478b-5fdf-4e65-926f-161ee415ffe5",
+        "prompt_id": "457631f8-ac16-4430-ac87-71119bc30c86",
+        "seconds": 20.2,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-xilmo-style.jpg. Clothed painterly parka and scarf portrait. Style LoRA, not an NSFW adapter. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anima-nsfw-artist-combo",
+      "name": "Anima v1 - NSFW girls + huashijw + ke-ta",
+      "preset_id": "anima-v1-baseline",
+      "family": "Anima",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, painterly, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092126,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.7,
+        "lora2_name": "anima-huashijw_v2_step10000.safetensors",
+        "lora2": 0.55,
+        "lora3": 0,
+        "lora4_name": "anima-ke-ta_style_v1.safetensors",
+        "lora4": 0.6,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Three-adapter Anima stack: NSFW girls plus two artist styles. Slot 3 left pruned.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "c52bedf7-96ad-425b-87e3-4959b256ef97",
+        "prompt_id": "97c916d3-e3f1-4852-85c2-34bba9dc0029",
+        "seconds": 22.1,
+        "note": "Studio job; JPEG examples/civitai-intake/anima-nsfw-artist-combo.jpg. Short dark hair, gold eyes, bedroom. Extra fingers on both hanging hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anifox-nsfw-girls",
+      "name": "AniFox v2 - NSFW girls adapter",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult woman, nude, looking at viewer, bedroom, cowboy shot, detailed anime illustration, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092127,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Illustrious NSFW girls adapter on AniFox. Adult original character.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "6a99bd9d-6567-45e5-bbd5-8f0c553b0b9b",
+        "prompt_id": "e32514fd-c9fc-4ebc-9a6f-9d8b0a6f4383",
+        "seconds": 32.5,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-nsfw-girls.jpg. Black braid, red eyes, bedroom lean. Extra fingers on the near arm. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anifox-nsfw-ringeko",
+      "name": "AniFox v2 - NSFW girls + Ringeko",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "r1ng3k0, 1girl, solo, adult, nude, looking at viewer, long white hair, hime cut, red eyes, bedroom, cowboy shot, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092128,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.7,
+        "lora2_name": "Ringeko.safetensors",
+        "lora2": 0.8
+      },
+      "batch_count": 1,
+      "notes": "AniFox combo: NSFW girls + Ringeko artist style.",
+      "sources": [
+        "https://civitai.red/models/2387976?modelVersionId=2685156"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "4b71f375-95d1-4830-a7b7-dd28ce7e2eec",
+        "prompt_id": "1009c21b-08f0-4227-9010-1a429ffac6fa",
+        "seconds": 16.1,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-nsfw-ringeko.jpg. White hime cut, red eyes, back view on a bed. Extra fingers on the left hand. Generated, not accepted."
+      }
+    },
+    {
+      "id": "anifox-shiny-nai",
+      "name": "AniFox v2 - Shiny NAI",
+      "preset_id": "anifox-v2-baseline",
+      "family": "AniFox v2 (SDXL)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "shiny skin, 1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092129,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "shiny_nai_ilxl_goofy_remade.safetensors",
+        "lora": 0.8,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Shiny NAI Illustrious adapter with trigger shiny skin. Rent-only listing flags recorded.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "231eec0f-4949-4d5c-b86b-5c7d1bf89540",
+        "prompt_id": "b8f996bf-1442-4761-911f-ced0be69d1df",
+        "seconds": 14.1,
+        "note": "Studio job; JPEG examples/civitai-intake/anifox-shiny-nai.jpg. Blonde, blue eyes, high-gloss wet skin. Extra fingers on both hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "wai-nsfw-girls",
+      "name": "WAI v17 - NSFW girls adapter",
+      "preset_id": "wai",
+      "family": "WAI v17 (Illustrious)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult woman, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092130,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on WAI v17. Adult original character.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "9dc3204c-8d99-468d-9101-f4b0e737b171",
+        "prompt_id": "701a3203-d718-4651-a595-dbaf71138268",
+        "seconds": 44.3,
+        "note": "Studio job; JPEG examples/civitai-intake/wai-nsfw-girls.jpg. Black hair, red eyes, doorway. Extra fingers on the raised left hand. Generated, not accepted."
+      }
+    },
+    {
+      "id": "wai-nsfw-glossy",
+      "name": "WAI v17 - NSFW girls + Glossy",
+      "preset_id": "wai",
+      "family": "WAI v17 (Illustrious)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "glossy_anime_style, 1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092131,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.7,
+        "lora2_name": "glossy_anime_style_illustriousXL-000011.safetensors",
+        "lora2": 0.6
+      },
+      "batch_count": 1,
+      "notes": "WAI combo: NSFW girls + Glossy Illustrious style.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "65b9abf2-bd4d-4926-92f6-e9c6c65b9658",
+        "prompt_id": "56251405-3468-46ec-a70e-31531af24b49",
+        "seconds": 20.1,
+        "note": "Studio job; JPEG examples/civitai-intake/wai-nsfw-glossy.jpg. Silver hair, red eyes, arms up. Extra fingers on both raised hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "wai-shiny-detail",
+      "name": "WAI v17 - Shiny NAI + Detail enhancer",
+      "preset_id": "wai",
+      "family": "WAI v17 (Illustrious)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "shiny skin, 1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092132,
+        "steps": 30,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "shiny_nai_ilxl_goofy_remade.safetensors",
+        "lora": 0.75,
+        "lora2_name": "Detail_enhancer_IL_v2.safetensors",
+        "lora2": 0.5
+      },
+      "batch_count": 1,
+      "notes": "WAI combo: Shiny NAI plus Illustrious detail enhancer.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "3ab4de6e-6949-4de0-8f83-bbe9e2475dc6",
+        "prompt_id": "cdbbfaa0-aa46-4c51-93d4-799816e56203",
+        "seconds": 22.2,
+        "note": "Studio job; JPEG examples/civitai-intake/wai-shiny-detail.jpg. Teal-black hair, high gloss. Extra fingers on both hands on the bed edge. Generated, not accepted."
+      }
+    },
+    {
+      "id": "cstati-nsfw-girls",
+      "name": "CSTati v3 - NSFW girls adapter",
+      "preset_id": "cstati-v3-baseline",
+      "family": "CSTati v3 (SDXL)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult woman, nude, looking at viewer, bedroom, cowboy shot, detailed anime illustration, masterpiece, best quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092133,
+        "steps": 30,
+        "cfg": 4,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on CSTati v3.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "29263089-c489-4148-8e42-adc5d4ca1786",
+        "prompt_id": "b0dce1f5-6272-4b11-9e7d-a12297dd86ba",
+        "seconds": 42.9,
+        "note": "Studio job; JPEG examples/civitai-intake/cstati-nsfw-girls.jpg. Purple hair, red eyes, doorway. Extra fingers on the door-holding hand. Generated, not accepted."
+      }
+    },
+    {
+      "id": "yumeflux-nsfw-girls",
+      "name": "YumeFlux ILv1 - NSFW girls adapter",
+      "preset_id": "yumeflux-ilv1-baseline",
+      "family": "YumeFlux ILv1 (SDXL)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult woman, nude, looking at viewer, bedroom, cowboy shot, detailed anime illustration, masterpiece, best quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092134,
+        "steps": 30,
+        "cfg": 4,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on YumeFlux ILv1.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "003fabe5-13be-49de-acdc-999eb5f88cd5",
+        "prompt_id": "3591a960-3263-4368-a11c-4d5b8702b0f0",
+        "seconds": 46.6,
+        "note": "Studio job; JPEG examples/civitai-intake/yumeflux-nsfw-girls.jpg. Black hair, red eyes, black X pasties. Extra fingers on both hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "janima-nsfw-girls",
+      "name": "JANIMA v1 - NSFW girls adapter",
+      "preset_id": "janima-v1-baseline",
+      "family": "JANIMA v1 (Anima)",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092135,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora": 0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5_name": "nsfw_girls_anima.safetensors",
+        "lora5": 0.85
+      },
+      "batch_count": 1,
+      "notes": "JANIMA slot 5 is the NSFW girls Anima adapter in the authored graph.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "c8ef7f25-145c-4b37-ba6e-19274fe2ebc3",
+        "prompt_id": "84265e0b-704f-4e53-adb6-9b40275372fc",
+        "seconds": 40.3,
+        "note": "Studio job; JPEG examples/civitai-intake/janima-nsfw-girls.jpg. Brown hair, orange eyes, white shirt open. Extra fingers on both hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "oneobsession-nsfw-petiflow",
+      "name": "One Obsession Anima v2.0 - NSFW girls + PetiFlow",
+      "preset_id": "oneobsession-anima-v20-baseline",
+      "family": "One Obsession Anima v2.0",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "pearlypetif, 1girl, solo, adult, nude, looking at viewer, (flat colors:1.2), cowboy shot, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092136,
+        "steps": 30,
+        "cfg": 4.5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.7,
+        "lora2_name": "pearly_petiflow2.safetensors",
+        "lora2": 0.85,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "One Obsession with NSFW girls + PetiFlow.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "aca99b77-1083-4c1e-993e-5c5d29172bc7",
+        "prompt_id": "36bfde78-c0ee-4106-8a4e-0a3df54b898d",
+        "seconds": 32.3,
+        "note": "Studio job; JPEG examples/civitai-intake/oneobsession-nsfw-petiflow.jpg. Flat pastel blonde, swirl background. Extra fingers on both hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "pearlymix-nsfw-esearu",
+      "name": "Pearly Anima Mix v1.0 - NSFW girls + Esearu",
+      "preset_id": "pearly-anima-mix-v10-baseline",
+      "family": "Pearly Anima Mix v1.0",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "combo"
+      ],
+      "controls": {
+        "positive": "pearlyese, (soft colors:1.2), 1girl, solo, adult, nude, looking at viewer, cowboy shot, halo, detailed modern anime illustration",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092137,
+        "steps": 25,
+        "cfg": 5,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls_anima.safetensors",
+        "lora": 0.7,
+        "lora2_name": "pearly_esearu_style.safetensors",
+        "lora2": 0.85,
+        "lora3": 0,
+        "lora4": 0,
+        "lora5": 0,
+        "lora6": 0
+      },
+      "batch_count": 1,
+      "notes": "Pearly Mix with NSFW girls + Esearu. Graph slots 2/3 already author those files.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "353fa62d-86ee-447b-b784-51b592813c29",
+        "prompt_id": "97b8af94-c030-44c1-8fac-b86b5be653a6",
+        "seconds": 28.2,
+        "note": "Studio job; JPEG examples/civitai-intake/pearlymix-nsfw-esearu.jpg. Halo, blonde, extreme proportions. Extra fingers on both hands. Generated, not accepted."
+      }
+    },
+    {
+      "id": "animagine-nsfw-girls",
+      "name": "Animagine - NSFW girls adapter",
+      "preset_id": "anime",
+      "family": "Animagine XL 4.0",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, newest",
+        "negative": "lowres, worst quality, bad anatomy, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092138,
+        "steps": 28,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on Animagine XL 4.0.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "14146c99-e195-41a4-ae6f-ee7e8381593a",
+        "prompt_id": "8c38e031-fb32-413f-a5ac-e39ce6b2bb5c",
+        "seconds": 45.0,
+        "note": "Studio job; JPEG examples/civitai-intake/animagine-nsfw-girls.jpg. Black lingerie bodysuit, not fully nude. Extra fingers on the cheek-side hand. Generated, not accepted."
+      }
+    },
+    {
+      "id": "pony-nsfw-girls",
+      "name": "Pony V6 - NSFW girls adapter",
+      "preset_id": "pony",
+      "family": "Pony V6",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "score_9, score_8_up, score_7_up, source_anime, rating_explicit, 1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot",
+        "negative": "score_4, score_5, score_6, source_pony, child, loli, shota, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092139,
+        "steps": 25,
+        "cfg": 6,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.8,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on Pony V6. Architecture is SDXL-family; if the adapter is Illustrious-only the look may be weak.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "1669629b-4385-4094-bb91-6d64e159faa5",
+        "prompt_id": "a429bc16-90f9-4020-a9c4-3525bf490955",
+        "seconds": 40.3,
+        "note": "Studio job; JPEG examples/civitai-intake/pony-nsfw-girls.jpg. Photoreal/3D look; Illustrious adapter is weak on Pony. Extra fingers on the crossed arm. Generated, not accepted."
+      }
+    },
+    {
+      "id": "noob-nsfw-girls",
+      "name": "NoobAI - NSFW girls adapter",
+      "preset_id": "noob",
+      "family": "NoobAI XL 1.1",
+      "tags": [
+        "adult-illustration",
+        "hentai",
+        "showcase"
+      ],
+      "controls": {
+        "positive": "1girl, solo, adult, nude, looking at viewer, bedroom, cowboy shot, masterpiece, best quality, very aesthetic",
+        "negative": "worst quality, low quality, extra digits, missing fingers, text, watermark, child, loli, shota",
+        "width": 832,
+        "height": 1216,
+        "seed": 2026092140,
+        "steps": 28,
+        "cfg": 5,
+        "sampler": "euler_ancestral",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "lora_name": "nsfw_girls.safetensors",
+        "lora": 0.85,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "NSFW girls on NoobAI XL 1.1. Hobby/research terms; not commercial.",
+      "sources": [],
+      "status": "executed",
+      "evidence": {
+        "job_id": "1b020ba1-aa12-40f4-8fc6-86ae5e3c07d4",
+        "prompt_id": "014c1e77-901b-4e67-8b5d-b42f79b7e129",
+        "seconds": 48.3,
+        "note": "Studio job; JPEG examples/civitai-intake/noob-nsfw-girls.jpg. Soft/blurry back view. Extra fingers on the hip-side hand. Generated, not accepted."
+      }
     }
+
   ]
 }

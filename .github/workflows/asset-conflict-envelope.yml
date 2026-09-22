@@ -1,0 +1,50 @@
+name: Asset conflict envelope
+on:
+  pull_request:
+    paths:
+      - 'app/static/workspace.js'
+      - 'app/static/asset-recovery*.js'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/asset_conflict_envelope*'
+      - 'tests/test_asset_conflict_envelope.py'
+      - 'tests/asset_detail*'
+      - 'tests/studio_browser_smoke.py'
+      - '.github/workflows/asset-conflict-envelope.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-conflict-envelope-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  protocol:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Causal editor and real HTTP cross-runtime contracts
+        run: python -m unittest discover -s tests -p test_asset_conflict_envelope.py -v
+      - name: Native malformed-reply, explicit rebase and historical recovery
+        run: python tests/asset_conflict_envelope_browser.py --out .runtime/asset-conflict-envelope
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-conflict-envelope-${{ matrix.os }}
+          path: .runtime/asset-conflict-envelope
+          retention-days: 7

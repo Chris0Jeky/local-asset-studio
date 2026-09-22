@@ -47,14 +47,14 @@ class ObservationResumePersistenceTests(unittest.TestCase):
         state_path = self.state_path(studio, job)
         before_job = copy.deepcopy(job)
         before_state = state_path.read_bytes()
-        original = studio._write_json_atomic
+        original = studio._write_observation_state
 
         def fail_before_state(path, value):
             if path.name == 'state.json':
                 raise OSError('injected before state replace')
             return original(path, value)
 
-        with patch.object(studio, '_write_json_atomic', side_effect=fail_before_state):
+        with patch.object(studio, '_write_observation_state', side_effect=fail_before_state):
             with self.assertRaisesRegex(OSError, 'before state replace'):
                 studio.resume_job(job['id'])
 
@@ -69,7 +69,7 @@ class ObservationResumePersistenceTests(unittest.TestCase):
         self.assertEqual(job['prompt_ids'], ['retained'])
         self.assertEqual(studio.requests, [])
 
-    def test_exception_after_state_replace_is_reconciled_and_queued_once(self):
+    def test_exception_after_state_replace_requires_explicit_retry_then_queues_once(self):
         studio, job = self.fixture()
         state_path = self.state_path(studio, job)
         recipe_path = state_path.with_name('recipe.json')
@@ -77,7 +77,7 @@ class ObservationResumePersistenceTests(unittest.TestCase):
         recipe_before = recipe_path.read_bytes()
         workflow_before = workflow_path.read_bytes()
         graph = job['graph']
-        original = studio._write_json_atomic
+        original = studio._write_observation_state
         injected = []
 
         def fail_after_state(path, value):
@@ -87,8 +87,14 @@ class ObservationResumePersistenceTests(unittest.TestCase):
                 raise OSError('injected after state replace')
             return result
 
-        with patch.object(studio, '_write_json_atomic', side_effect=fail_after_state):
-            result = studio.resume_job(job['id'])
+        before_job = copy.deepcopy(job)
+        with patch.object(studio, '_write_observation_state', side_effect=fail_after_state):
+            with self.assertRaisesRegex(OSError, 'after state replace'):
+                studio.resume_job(job['id'])
+        self.assertEqual(job, before_job)
+        self.assertTrue(studio.queue.empty())
+        self.assertEqual(json.loads(state_path.read_text())['status'], 'queued')
+        result = studio.resume_job(job['id'])
 
         self.assertEqual(result['status'], 'queued')
         self.assertEqual(job['status'], 'queued')
@@ -106,14 +112,14 @@ class ObservationResumePersistenceTests(unittest.TestCase):
         state_path = self.state_path(studio, job)
         before_job = copy.deepcopy(job)
         before_state = state_path.read_bytes()
-        original = studio._write_json_atomic
+        original = studio._write_observation_state
 
         def fail_before_state(path, value):
             if path.name == 'state.json':
                 raise OSError('terminal state not published')
             return original(path, value)
 
-        with patch.object(studio, '_write_json_atomic', side_effect=fail_before_state):
+        with patch.object(studio, '_write_observation_state', side_effect=fail_before_state):
             with self.assertRaisesRegex(OSError, 'terminal state not published'):
                 studio.resume_job(job['id'])
 
@@ -130,7 +136,7 @@ class ObservationResumePersistenceTests(unittest.TestCase):
 
     def test_two_callers_after_commit_side_failure_still_queue_at_most_once(self):
         studio, job = self.fixture()
-        original = studio._write_json_atomic
+        original = studio._write_observation_state
         injected = []
         injection_lock = threading.Lock()
         outcomes = []
@@ -154,7 +160,7 @@ class ObservationResumePersistenceTests(unittest.TestCase):
 
         self.start.stop()
         try:
-            with patch.object(studio, '_write_json_atomic', side_effect=fail_once_after_state):
+            with patch.object(studio, '_write_observation_state', side_effect=fail_once_after_state):
                 clients = [threading.Thread(target=resume) for _ in range(2)]
                 for client in clients:
                     client.start()

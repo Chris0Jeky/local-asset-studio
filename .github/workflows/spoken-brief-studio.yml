@@ -1,0 +1,47 @@
+name: Spoken Brief Studio review
+on:
+  pull_request:
+    paths:
+      - 'studio_spoken/**'
+      - 'studio_prompt/http_extension.py'
+      - 'scripts/spoken_brief*.py'
+      - 'app/static/spoken-brief*'
+      - 'app/static/voice.html'
+      - 'tests/*spoken*'
+      - '.github/workflows/spoken-brief-studio.yml'
+permissions:
+  contents: read
+jobs:
+  review:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Request ownership
+        run: python -m unittest discover -s tests -p "test_spoken_brief_frontend.py" -v
+      - name: Real HTTP contract
+        run: python -m unittest discover -s tests -p "test_spoken_brief_http.py" -v
+      - name: Native Chromium on the actual composed Studio handler
+        run: python tests/studio_spoken_browser.py
+        env:
+          SPOKEN_BROWSER_SCREENSHOT: .runtime/spoken-studio/browser.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spoken-studio-${{ matrix.os }}
+          path: .runtime/spoken-studio/
+          retention-days: 7

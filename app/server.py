@@ -40,6 +40,7 @@ import wan_capacity
 from runtime_recovery import RuntimeRecovery
 import prompting
 import submission_evidence
+import observation_state
 import job_resources
 import continuation
 import pose_guide
@@ -168,7 +169,12 @@ class Studio:
             preset["missing_loras"] = sorted(name for name in authored if name not in loras) if loras else []
             for key in LORA_NAME_KEYS:
                 if preset.get(key) or (preset.get("bindings_extra") or {}).get(key): preset.setdefault("choices", {})[key] = list(loras)
+        result["wildcards"] = self.wildcards()
         return result
+
+    def wildcards(self):
+        """Insertable __name__ lists from presets/wildcards; count is the live option count."""
+        return [{"name": name, "count": len(prompting.options(self.root, name))} for name in prompting.names(self.root)]
 
     def options(self, refresh=False, discover=False):
         """Installed LoRA files and sampler/scheduler names from the node schema.
@@ -202,7 +208,13 @@ class Studio:
         if not path.is_file(): return {"available": False, "version": 0, "families": {}, "loras": {}, "sha256": None}
         data = read_json(path)
         if not isinstance(data, dict): raise StudioError("Invalid presets/settings-kb.json")
-        return dict(data, available=True, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        result = dict(data, available=True, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        intel = self.root / "presets/nsfw-intel.json"
+        if intel.is_file():
+            extra = read_json(intel)
+            if not isinstance(extra, dict): raise StudioError("Invalid presets/nsfw-intel.json")
+            result["nsfw_lab"] = extra
+        return result
 
     def recipes(self):
         """Authored recipes annotated against the installed LoRA inventory."""
@@ -919,6 +931,11 @@ class Studio:
         temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
         temp.replace(path)
 
+    _sync_parent_directory = staticmethod(observation_state.sync_parent_directory)
+
+    def _write_observation_state(self, path, value):
+        return observation_state.publish(path, value, self._sync_parent_directory)
+
     def _save(self, job):
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
@@ -990,6 +1007,59 @@ class Studio:
         if job.get("status") != "uncertain": return "Only an uncertain job can stop tracking"
         return Studio._known_prompt_error(job)
 
+    def _retained_operator_disposition(self, job, prospective, field):
+        """Reuse only an exact visible attempt; the caller must still publish it again.
+
+        Readback never proves a failed synchronization barrier. This only keeps an
+        explicit retry from replacing the event identity of an uncertain attempt.
+        The existing per-Studio lock owns these state-only operator commands.
+        """
+        def unique(pairs):
+            result = {}
+            for key, value in pairs:
+                if key in result: raise ValueError('Duplicate state field')
+                result[key] = value
+            return result
+
+        def finite_constant(value):
+            raise ValueError('Non-finite state value')
+
+        path = self.runs / job['id'] / 'state.json'
+        with path.open('rb') as stream:
+            raw = stream.read(observation_state.MAX_BYTES + 1)
+        if len(raw) > observation_state.MAX_BYTES:
+            raise StudioError('Retained disposition state exceeds byte budget')
+        try:
+            retained = json.loads(raw.decode('utf-8'), object_pairs_hook=unique,
+                                  parse_constant=finite_constant)
+            if not isinstance(retained, dict) or retained.get('id') != job['id']:
+                raise ValueError('Wrong retained job identity')
+            observation_state._bytes(retained)  # Reject overflowed floats and non-encodable retained values.
+            old = retained.get(field)
+            terminal = (self._tracking_stopped(retained) if field == 'tracking_disposition'
+                        else retained.get('status') == 'abandoned')
+            if not terminal or old == job.get(field): return prospective
+            if not isinstance(old, dict): raise ValueError('Invalid retained disposition')
+            if old.get('reason') != prospective[field]['reason']:
+                raise StudioError('A retained disposition has a different reason; restart to inspect it')
+            event, recorded_at = old.get('event_id'), old.get('recorded_at')
+            if (type(event) is not str or re.fullmatch(r'[0-9a-f]{32}', event) is None
+                    or type(recorded_at) not in (int, float) or not math.isfinite(recorded_at)):
+                raise ValueError('Invalid retained event identity')
+            disposition = copy.deepcopy(prospective[field])
+            disposition.update(event_id=event, recorded_at=recorded_at)
+            if 'history' in disposition:
+                disposition['history'][-1] = {k: v for k, v in disposition.items() if k != 'history'}
+            candidate = dict(prospective, **{field: disposition})
+            expected = {k: v for k, v in candidate.items() if k != 'graph'}
+            # Compare JSON types as well as values (True must not equal 1).
+            if json.dumps(retained, sort_keys=True, allow_nan=False) != json.dumps(expected, sort_keys=True, allow_nan=False):
+                raise StudioError('Retained disposition state changed; restart to inspect it')
+            return candidate
+        except (ValueError, TypeError, RecursionError, UnicodeError, OverflowError) as exc:
+            if isinstance(exc, StudioError): raise
+            raise StudioError('Retained disposition state is invalid; restart to inspect it') from exc
+
     def stop_tracking(self, job_id, reason):
         if type(reason) is not str: raise StudioError("Stop-tracking reason must be text")
         reason = reason.strip()
@@ -1009,8 +1079,9 @@ class Studio:
             disposition = dict(recorded)
             if history: disposition["history"] = history + [dict(recorded)]
             prospective = dict(job); prospective["tracking_disposition"] = disposition
-            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job["tracking_disposition"] = disposition
+            prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job["tracking_disposition"] = prospective['tracking_disposition']
             return self.public(job)
 
     def _resume_tracking(self, job):
@@ -1023,7 +1094,8 @@ class Studio:
         resumed["history"] = history + [{"status": "resumed", "recorded_at": time.time()}]
         prospective = dict(job)
         prospective.update(status="queued", message="Queued to resume observation of retained prompt IDs; no image will be resubmitted.", tracking_disposition=resumed)
-        self._write_json_atomic(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+        # Keep the live stop disposition until the supported publication barriers pass.
+        self._write_observation_state(self.runs / job["id"] / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
         self.queue.put(("observe", job["id"]))
         return self.public(job)
@@ -1053,8 +1125,9 @@ class Studio:
             prospective = dict(job, status="abandoned", message=message, abandonment=disposition)
             # Commit one complete disposition before mutating memory. Keep the exact
             # recipe, workflow and pending marker; failure leaves the job recoverable.
-            self._write_json_atomic(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job.update(status="abandoned", message=message, abandonment=disposition)
+            prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
+            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             return self.public(job)
 
     def _load_jobs(self):
@@ -1552,13 +1625,9 @@ class Studio:
         prospective.update(status="queued", message="Queued to resume observation; no image will be resubmitted.")
         state = {key: value for key, value in prospective.items() if key != "graph"}
         state_path = self.runs / job_id / "state.json"
-        try:
-            self._write_json_atomic(state_path, state)
-        except OSError:
-            # Replacement may have committed before a later filesystem error.
-            # Only exact durable evidence earns in-memory/queue publication.
-            if read_json(state_path) != state:
-                raise
+        # Readable replacement bytes cannot certify a failed synchronization.
+        # Every failure preserves live/queue state until a later explicit retry.
+        self._write_observation_state(state_path, state)
         job.update(prospective)
         self.queue.put(("observe", job_id))
         return self.public(job)
@@ -1748,6 +1817,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
+            if path == "/api/wildcards": return self._json(200, {"wildcards": self.studio.wildcards()})
             if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))
             if path == "/api/knowledge": return self._json(200, self.studio.knowledge())
             if path == "/api/recipes": return self._json(200, self.studio.recipes())

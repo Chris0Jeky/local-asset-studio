@@ -33,6 +33,7 @@ _ALLOWED_FIELDS = {
 }
 _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+_PNG_CRITICAL_CHUNKS = {b"IHDR", b"PLTE", b"IDAT", b"IEND"}
 
 
 def workspace_error_type(workspace):
@@ -121,12 +122,18 @@ def _parent_row(workspace, db, asset_id, parent_sha256):
 
 
 def _verify_png_container(raw):
-    """Require checked chunk CRCs and the first IEND to end the bounded file."""
+    """Require one unambiguous critical structure, checked CRCs and terminal IEND."""
     if not raw.startswith(_PNG_SIGNATURE):
         raise SyntaxError("PNG signature is invalid")
     data = memoryview(raw)
     try:
         offset = len(_PNG_SIGNATURE)
+        seen_ihdr = False
+        seen_plte = False
+        seen_idat = False
+        idat_closed = False
+        bit_depth = None
+        color_type = None
         while offset < len(data):
             if len(data) - offset < 12:
                 raise SyntaxError("PNG chunk is incomplete")
@@ -142,10 +149,52 @@ def _verify_png_container(raw):
             actual_crc = zlib.crc32(data[chunk_type_start:chunk_data_end]) & 0xFFFFFFFF
             if actual_crc != expected_crc:
                 raise SyntaxError("PNG chunk checksum does not match")
-            if chunk_type == b"IEND":
+            if any(
+                byte not in range(ord("A"), ord("Z") + 1)
+                and byte not in range(ord("a"), ord("z") + 1)
+                for byte in chunk_type
+            ):
+                raise SyntaxError("PNG chunk type contains a non-letter byte")
+            if chunk_type[2] & 0x20:
+                raise SyntaxError("PNG chunk type uses the reserved bit")
+            if not seen_ihdr:
+                if chunk_type != b"IHDR" or size != 13:
+                    raise SyntaxError("PNG must begin with one 13-byte IHDR chunk")
+                bit_depth = int(data[chunk_data_start + 8])
+                color_type = int(data[chunk_data_start + 9])
+                if color_type not in (0, 2, 3, 4, 6):
+                    raise SyntaxError("PNG IHDR uses an unsupported colour type")
+                seen_ihdr = True
+            elif chunk_type == b"IHDR":
+                raise SyntaxError("PNG contains more than one IHDR chunk")
+            if not (chunk_type[0] & 0x20) and chunk_type not in _PNG_CRITICAL_CHUNKS:
+                raise SyntaxError("PNG contains an unsupported critical chunk")
+            if chunk_type == b"PLTE":
+                if seen_plte:
+                    raise SyntaxError("PNG contains more than one PLTE chunk")
+                if seen_idat:
+                    raise SyntaxError("PNG PLTE appears after IDAT")
+                if color_type in (0, 4):
+                    raise SyntaxError("PNG colour type forbids PLTE")
+                if size == 0 or size > 768 or size % 3:
+                    raise SyntaxError("PNG PLTE has an invalid length")
+                if color_type == 3 and size // 3 > 1 << bit_depth:
+                    raise SyntaxError("PNG PLTE exceeds the indexed bit depth")
+                seen_plte = True
+            elif chunk_type == b"IDAT":
+                if idat_closed:
+                    raise SyntaxError("PNG IDAT chunks are not consecutive")
+                if color_type == 3 and not seen_plte:
+                    raise SyntaxError("Indexed PNG is missing PLTE before IDAT")
+                seen_idat = True
+            elif chunk_type == b"IEND":
+                if not seen_idat:
+                    raise SyntaxError("PNG has no IDAT data")
                 if size != 0 or chunk_end != len(data):
                     raise SyntaxError("PNG IEND is not the complete terminal chunk")
                 return
+            elif seen_idat:
+                idat_closed = True
             offset = chunk_end
         raise SyntaxError("PNG has no terminal IEND chunk")
     finally:
@@ -169,7 +218,9 @@ def _read_parent(workspace, asset_id, expected_sha256):
     if hashlib.sha256(raw).hexdigest() != expected_sha256:
         raise _error(workspace, "The parent image bytes changed; no figure children were created")
     try:
-        with Image.open(io.BytesIO(raw), formats=SUPPORTED_IMAGE_FORMATS) as opened:
+        with Image.open(io.BytesIO(raw)) as opened:
+            if opened.format not in SUPPORTED_IMAGE_FORMATS:
+                raise _error(workspace, "Parent image format must be PNG, JPEG or WebP")
             width, height = opened.size
             if width < 1 or height < 1 or width * height > MAX_PARENT_PIXELS:
                 raise _error(workspace, "Parent image must be at most 40 megapixels")

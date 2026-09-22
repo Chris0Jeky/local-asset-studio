@@ -12,7 +12,7 @@ Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Libra
 
 1. `CLAUDE.md`, `AGENTS.md`, `CURRENT_STATE.md` and `HUMAN_TODO.md`.
 2. `docs/adult-illustration/README.md`, `ARCHITECTURE.md`, `CONTROL-ONTOLOGY.md`, `CONTROLLED-ART-DIRECTION.md`, `PROMPT-AND-TAG-INTELLIGENCE.md`, `PROMPT-PROFILES.md`, `SOURCE-INTAKE.md`, `SOURCE-SNAPSHOTS.md`, `TECHNIQUE-PORTFOLIO.md`, `RESEARCH-DISCOVERY.md`, `EVALUATION.md` and `AGENT-CONTRACT.md`.
-3. `research/adult-illustration/programme.json` and every manifest relevant to the issue.
+3. `research/adult-illustration/programme.json` and every manifest relevant to the issue. For #409, read both `benchmark-corpus.json` and `benchmark-result-example.json`.
 4. Live #403 and the child issue being implemented.
 5. Existing owner docs:
    - `docs/prompt-studio/`
@@ -21,11 +21,12 @@ Do **not** use it to bypass Prompt Lab, Workflow Studio, Production, Model Libra
    - `docs/repair-studio/`
 6. Exact current PRs, installed capability evidence and route files. Never infer installation from a research candidate, provider page or filename.
 
-Run the offline gates before changing a manifest or prompt profile:
+Run the offline gates before changing a manifest, prompt profile or benchmark-result contract:
 
 ```console
 python scripts/validate_adult_illustration.py
 python scripts/validate_adult_illustration_intelligence.py
+python scripts/validate_adult_illustration_benchmark_result.py
 python scripts/studio_adult_illustration_research.py programme-status
 python scripts/studio_adult_illustration_research.py catalogs
 python scripts/studio_adult_illustration_prompt.py profiles
@@ -42,6 +43,7 @@ Use for:
 - adding pinned vocabulary sources, aliases, implications and deprecations;
 - proposing Hugging Face/Civitai source snapshots and reviewed acquisition handoffs;
 - planning finite comparisons with zero initial allowance;
+- validating retained benchmark results against exact corpus and route-manifest identities;
 - implementing inspect/compile/diff/prepare commands over existing shared services;
 - adding synthetic adult-only/non-explicit fixtures and offline validation;
 - routing work to the correct existing subsystem.
@@ -57,12 +59,17 @@ Do not use for:
 - allowing a tagger/VLM/LLM to invent accepted vocabulary or reconstruct an alleged original prompt;
 - converting an unsupported geometry/reference/mask control into prompt prose;
 - resubmitting after response loss under a new identity;
-- hiding real candidate count inside a batch or extending an allowance.
+- hiding real candidate count inside a batch or extending an allowance;
+- treating a content hash, automated metric or result record as human approval or promotion authority.
 
 ## Guardrails
 
 - Every public fixture is synthetic, unambiguously adult and non-explicit.
 - Research manifests declare `executable: false`, `authority: none` and zero authorized candidate cap.
+- Benchmark results describe external evidence; they never create an allowance, submit generation or authorize promotion.
+- Bind retained result records to the exact benchmark-corpus and route-manifest Git blobs used by the study.
+- Every attempted batch member, failure and uncertain submission remains a separate candidate record and counts against the declared cap.
+- Null means unobserved, never zero. Observed ratios require valid numerators, denominators and evidence.
 - Adult status comes from reviewed owner/canon metadata, never pixels or a negative prompt.
 - Multi-adult intimate tests require an explicit consent-context declaration.
 - Semantics, geometry, appearance, pixel authority and evidence remain separate.
@@ -72,7 +79,8 @@ Do not use for:
 - A vocabulary entry is not accepted without immutable source provenance and review.
 - Provider claims, file identity, local inventory, graph validation, runtime observation, creative review, rights review and promotion remain distinct.
 - Exact model/configuration evidence never generalizes to a family, quantisation or operating system.
-- Unknown remains unknown. Changed source/model/graph/reference bytes make prior plans stale.
+- Successful execution, visual review, owner acceptance, rights review and promotion remain distinct.
+- Unknown remains unknown. Changed source/model/graph/reference/corpus bytes make prior plans and results stale.
 - Preserve expected revisions and request/ticket/job/prompt identities. Observe uncertain outcomes; do not replay blindly.
 - Keep `HUMAN_TODO.md` decisions open.
 
@@ -83,12 +91,13 @@ Do not use for:
 3. Inspect existing typed services before creating a file or type.
 4. For behaviour changes, write a failing test and confirm the expected failure.
 5. Implement the smallest independently reviewable slice.
-6. Run focused tests, both programme validators and repository-required checks.
+6. Run focused tests, all programme validators and repository-required checks.
 7. Produce an exact diff/plan showing:
    - intent/control changes;
    - source/reference and geometry identities;
    - exact route/adapter/dialect evidence;
    - provider revision, file, hash and terms state where relevant;
+   - candidate accounting, retained failures and measurement state;
    - unsupported and unknown facts;
    - resource/candidate implications;
    - approval boundary.
@@ -139,7 +148,7 @@ These commands compile text only. They do not bind reference bytes, geometry, ad
 
 A valid dry handoff may:
 
-1. validate the static manifests;
+1. validate the static manifests and synthetic result contract;
 2. inspect current controls, prompt dialects, technique candidates and exact route evidence;
 3. inspect or propose a provider source snapshot without downloading bytes;
 4. load or propose a revisioned intent diff;
@@ -147,10 +156,11 @@ A valid dry handoff may:
 6. compile and validate one exact deterministic prompt profile;
 7. bind reviewed source/geometry identities in a non-executing setup proposal;
 8. compile and inspect a finite comparison plan with cap zero;
-9. report missing prerequisites and the exact approval boundary.
+9. validate an externally produced result record without changing its review or promotion state;
+10. report missing prerequisites and the exact approval boundary.
 
 It must finish with **zero neural jobs, zero downloads and zero runtime mutation**. A separately authorized execution later uses the existing Production/Workflow ticket path and retained identity; this skill supplies no alternate dispatch mechanism.
 
 ## Stop conditions
 
-Stop and preserve evidence when the work overlaps an active PR; source/version/hash/graph identity is unknown; a moving provider revision is being treated as immutable; terms or file selection are unresolved; adult/content declarations are missing; adapter compatibility is guessed; route/resource support is unmeasured; source or expected revision changed; dispatch outcome is uncertain; the same failure persists without a changed hypothesis; or the requested action needs authority not present in the current issue.
+Stop and preserve evidence when the work overlaps an active PR; source/version/hash/graph identity is unknown; a moving provider revision is being treated as immutable; terms or file selection are unresolved; adult/content declarations are missing; adapter compatibility is guessed; route/resource support is unmeasured; source or expected revision changed; corpus/route/result identities diverge; dispatch outcome is uncertain; candidate records are missing; the same failure persists without a changed hypothesis; or the requested action needs authority not present in the current issue.

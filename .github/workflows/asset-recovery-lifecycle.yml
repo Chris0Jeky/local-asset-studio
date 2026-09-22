@@ -1,0 +1,58 @@
+name: Asset recovery lifecycle
+on:
+  pull_request:
+    paths:
+      - 'app/static/asset-recovery*'
+      - 'app/static/workspace.js'
+      - 'app/static/index.html'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'studio_workflow/asset_recovery*'
+      - 'studio_workflow/http_extension.py'
+      - 'studio_prompt/http_extension.py'
+      - 'tests/*asset_recovery*'
+      - 'tests/asset_detail*'
+      - 'tests/studio_browser_smoke.py'
+      - '.github/workflows/asset-recovery-lifecycle.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-recovery-lifecycle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  lifecycle:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: git rev-parse HEAD
+      - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Real SQLite, HTTP, shelf round-trip and lifecycle contracts
+        run: python -m unittest discover -s tests -p "test_asset_recovery*.py" -v
+      - name: Existing reload and editor contracts
+        run: |
+          node tests/asset_recovery_contracts.cjs
+          node tests/asset_detail_contracts.cjs
+      - name: Native lifecycle, historical receipts and held-response focus
+        run: python tests/asset_recovery_lifecycle_browser.py --out .runtime/asset-recovery-lifecycle
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-recovery-lifecycle-${{ matrix.os }}
+          path: .runtime/asset-recovery-lifecycle
+          retention-days: 7

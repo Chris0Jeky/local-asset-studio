@@ -135,7 +135,7 @@ class SubmissionRecoveryTests(unittest.TestCase):
     def test_never_submitted_abandonment_and_failed_publication_keep_evidence(self):
         studio,identifier,job=self.waiting_project();studio=FakeStudio(self.root,[]);job=studio.jobs[job['id']]
         before=copy.deepcopy(job);statefile=studio.runs/job['id']/'state.json';disk=statefile.read_bytes()
-        with patch.object(studio,'_write_json_atomic',side_effect=OSError('disk full')):
+        with patch.object(studio,'_write_observation_state',side_effect=OSError('disk full')):
             with self.assertRaises(OSError):studio.abandon_job(job['id'],'No longer needed')
         self.assertEqual(job,before);self.assertEqual(statefile.read_bytes(),disk)
         result=studio.abandon_job(job['id'],'No longer needed')

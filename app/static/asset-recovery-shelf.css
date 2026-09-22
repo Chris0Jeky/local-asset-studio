@@ -1,0 +1,18 @@
+/* All retained text is bounded and rendered as text, including imported markup. */
+.asset-shelf-launch{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:.65rem 0}
+.asset-shelf-launch small{flex:1 1 12rem;overflow-wrap:anywhere}
+#assetRecoveryShelfDialog{box-sizing:border-box;width:calc(100% - 2rem);max-width:56rem;max-height:calc(100% - 2rem);padding:1rem;overflow:auto}
+#assetRecoveryShelfDialog *{box-sizing:border-box;min-width:0;overflow-wrap:anywhere}
+#assetRecoveryShelfDialog .asset-shelf-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.6rem}
+#assetRecoveryShelfDialog h2{font-size:1.25rem;margin:.3rem 0}
+#assetRecoveryShelfDialog h3{font-size:1rem;line-height:1.5;margin:.3rem 0}
+#assetRecoveryShelfDialog p,#assetRecoveryShelfDialog label{font-size:.9rem;line-height:1.5}
+#assetRecoveryShelfDialog .asset-shelf-opt{display:flex;align-items:flex-start;gap:.6rem;margin:1rem 0}
+#assetRecoveryShelfDialog input[type=checkbox]{width:auto;flex:0 0 auto;margin:.25rem 0}
+#assetRecoveryShelfDialog input[type=file]{max-width:100%;margin:.5rem 0}
+.asset-shelf-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+#assetRecoveryShelfDialog button{white-space:normal;max-width:100%;font-size:.85rem;min-height:2.5rem}
+.asset-shelf-record,#assetShelfImportPreview,#assetShelfInspection,#assetLifecycleInspection{border:1px solid var(--line);border-radius:.5rem;padding:.8rem;margin:.8rem 0}
+#assetShelfInspection pre,#assetLifecycleInspection pre{font-size:.85rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:24rem;overflow:auto}
+#assetRecoveryShelfDialog :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:480px){#assetRecoveryShelfDialog{padding:.65rem}.asset-shelf-actions button{flex:1 1 7rem}.asset-shelf-record{padding:.5rem}}

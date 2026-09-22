@@ -110,7 +110,7 @@ class AddressableFigureDecodeTests(unittest.TestCase):
                 self.assertEqual(child.getpixel((0, 0))[3], 0)
                 self.assertEqual(child.getpixel((1, 0))[3], 255)
 
-    def test_non_web_image_format_is_refused_before_transform_or_child_creation(self):
+    def test_valid_non_web_image_format_has_specific_allowlist_refusal(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             store = server.AssetWorkspace(root)
@@ -122,25 +122,29 @@ class AddressableFigureDecodeTests(unittest.TestCase):
                 record["sha256"],
                 "addressable-format-" + uuid.uuid4().hex,
             )
-            with (
-                patch.object(
-                    addressable_figures.ImageOps,
-                    "exif_transpose",
-                    side_effect=AssertionError("unsupported format reached transform"),
-                ) as transpose,
-                self.assertRaisesRegex(server.WorkspaceError, "supported still image"),
-            ):
-                addressable_figures.split_figures(store, command)
+            with patch.object(
+                addressable_figures.ImageOps,
+                "exif_transpose",
+                side_effect=AssertionError("unsupported format reached transform"),
+            ) as transpose:
+                with self.assertRaises(server.WorkspaceError) as caught:
+                    addressable_figures.split_figures(store, command)
+            self.assertEqual(
+                str(caught.exception),
+                "Parent image format must be PNG, JPEG or WebP",
+            )
             transpose.assert_not_called()
             self.assertEqual(len(store.snapshot()["assets"]), 1)
 
     def test_adjacent_basis_point_rectangles_share_one_raster_boundary(self):
-        left = addressable_figures._pixel_box(
-            object(), {"x": 0, "y": 0, "width": 5000, "height": 10000}, 3, 1
-        )
-        right = addressable_figures._pixel_box(
-            object(), {"x": 5000, "y": 0, "width": 5000, "height": 10000}, 3, 1
-        )
+        with tempfile.TemporaryDirectory() as temporary:
+            store = server.AssetWorkspace(Path(temporary))
+            left = addressable_figures._pixel_box(
+                store, {"x": 0, "y": 0, "width": 5000, "height": 10000}, 3, 1
+            )
+            right = addressable_figures._pixel_box(
+                store, {"x": 5000, "y": 0, "width": 5000, "height": 10000}, 3, 1
+            )
         self.assertEqual(left["right"], right["left"])
         self.assertEqual(left["right"] - left["left"], 2)
         self.assertEqual(right["right"] - right["left"], 1)

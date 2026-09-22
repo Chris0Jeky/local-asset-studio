@@ -8,6 +8,7 @@
     const button=document.createElement('button');button.id='bundleLauncher';button.type='button';button.className='bundle-launcher';button.innerHTML='<b>Explore creative bundles</b><span>See the look, ingredients and settings together →</span>';
     const styling=document.createElement('link');styling.rel='stylesheet';styling.href='/static/bundle-tuning.css';document.head.append(styling);
     const anchor=q('#presetSearch');if(!anchor)return;(anchor.closest('label')||anchor).before(button);
+    button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','bundleExplorer');
     const dialog=document.createElement('dialog');dialog.id='bundleExplorer';dialog.className='bundle-explorer';dialog.setAttribute('aria-labelledby','bundleTitle');
     dialog.innerHTML='<header class="bundle-header"><div><span class="eyebrow">CREATIVE BUNDLES</span><h2 id="bundleTitle">Start with a look. Understand the recipe.</h2><p>Browse without changing your work. Apply only after reviewing the differences.</p></div><button id="bundleClose" type="button" aria-label="Close bundle explorer">Close</button></header><div class="bundle-layout"><aside class="bundle-browser"><label for="bundleSearch">Find a look or resource<input id="bundleSearch" type="search" placeholder="Painterly, ink, Anima…"></label><label for="bundleFamily">Model family<select id="bundleFamily"><option value="">All families</option></select></label><p id="bundleCount" role="status"></p><div id="bundleCards"></div></aside><section class="bundle-detail" aria-label="Selected bundle"><p id="bundleStatus" role="status"></p><div id="bundleBody"><p>Choose a bundle to inspect its ingredients and examples.</p></div></section></div>';
     document.body.append(dialog);
@@ -17,7 +18,7 @@
     function sources(urls){return B.links(urls).map(u=>'<a href="'+escape(u)+'" target="_blank" rel="noreferrer">'+escape(new URL(u).hostname)+' ↗</a>').join(' · ');}
     function record(id){return B.sample(showcase.examples?.[id]);}
     function card(item){const p=catalog.presets.find(p=>p.id===item.preset_id);let count='Needs review';try{count=B.adapters(p,B.resolve(p,item),knowledge).filter(a=>a.active).length+' active adapter(s)';}catch{}const s=record(item.id);return '<button type="button" class="bundle-card" data-bundle="'+escape(item.id)+'" aria-pressed="'+(item.id===active?.id)+'">'+(s?'<img loading="lazy" src="'+escape(s.url)+'" alt="'+escape(s.caption)+'">':'<span class="bundle-no-preview">No documented preview</span>')+'<b>'+escape(item.name)+'</b><span>'+escape(item.family||p?.family||'Family not recorded')+'</span><small>'+escape(count)+' · '+B.evidence(item).label+'</small></button>';}
-    function images(){dialog.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{const note=document.createElement('span');note.className='bundle-no-preview';note.textContent='Preview file unavailable; recipe retained.';img.replaceWith(note);},{once:true}));}
+    function images(){dialog.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{const note=document.createElement('span');note.className='bundle-no-preview';note.textContent='Preview file unavailable; recipe retained. Local example media rebuilds with: python scripts/lab-media.py restore';img.replaceWith(note);},{once:true}));}
     function cards(){const search=q('#bundleSearch').value.toLowerCase(),family=q('#bundleFamily').value;const filtered=items.filter(r=>(!family||r.family===family)&&[r.name,r.family,...(r.tags||[]),...Object.values(r.controls||{})].join(' ').toLowerCase().includes(search));q('#bundleCount').textContent=filtered.length+' bundles · authored control sets';q('#bundleCards').innerHTML=filtered.map(card).join('')||'<p>No matching bundles. Try another family or clear the search.</p>';images();}
     function ingredientHtml(controls){const rows=B.resources(preset,controls,inspection?.graph);return '<p class="bundle-caveat">'+escape(inspectionMessage||'Authored graph resources, with this draft’s bound settings. Create checks runtime prerequisites separately. This view does not verify installed hashes.')+'</p>'+(rows.length?'<dl class="bundle-ingredients">'+rows.map(r=>'<div><dt>'+escape(r.role)+(r.active?'':' · off')+'</dt><dd>'+escape(r.file)+'<small>Node '+escape(r.node)+' · '+escape(r.field)+'</small></dd></div>').join('')+'</dl>':'<p>No resource graph available yet. This does not mean no models are required.</p>');}
     function guideHtml(){const g=B.guidance(knowledge,preset);if(!g.entry)return '<p>No stored family guidance. Keep the authored settings, or compare a deliberate change in Runs & review.</p>';return '<p class="bundle-caveat">Stored family guidance · '+escape(g.family)+' · '+escape(g.updated||'date unknown')+'. Suggestions are not proof that this exact stack was tested. Read the conditions before changing a value.</p>'+(g.entry.prompt?.style?'<h4>Prompt approach</h4><p>'+escape(g.entry.prompt.style)+'</p>':'')+(g.entry.axes||[]).filter(a=>B.bound(preset,a.control)&&!B.SLOTS.includes(a.control)).map(a=>'<details><summary>'+escape(a.id)+' <small>'+escape((a.values||[]).join(' / '))+'</small></summary><p>'+escape(a.rationale)+'</p><p>'+sources(a.sources)+'</p>'+(a.observed?.length?'<p><b>Recorded observations, not a controlled benchmark</b></p><ul>'+a.observed.map(o=>'<li>'+escape(o)+'</li>').join('')+'</ul>':'<p>No local observations attached to this suggestion.</p>')+'</details>').join('');}
@@ -118,7 +119,7 @@
         showView('create');opener=preset.positive?q('#positive'):q('#presetSearch');dialog.close();q('#createView').__workshop?.finishRecipeSelection(opener);opener.focus();message('Bundle applied as an editable setup. Review readiness; Generate is still a separate action.');
       }catch(err){q('#bundleApplyStatus').textContent=err.message;q('#bundleApply').disabled=true;}
     }
-    button.onclick=async()=>{
+    const openBundles=async()=>{
       const opened=++openEpoch;opener=document.activeElement;dialog.showModal();q('#bundleSearch').focus();status('');
       active=null;preset=null;overrides={};inspection=null;showcase={};q('#bundleBody').innerHTML='<p>Choose a bundle to inspect its ingredients and examples.</p>';q('#bundleCards').replaceChildren();
       if(typeof catalog==='undefined'||!catalog?.presets||typeof atelierRecipes==='undefined'||!atelierRecipes.length){status('The recipe catalog is not available yet. Close and reopen after Studio finishes loading.');return;}
@@ -126,8 +127,16 @@
       q('#bundleFamily').innerHTML='<option value="">All families</option>'+[...new Set(items.map(r=>r.family).filter(Boolean))].sort().map(f=>'<option>'+escape(f)+'</option>').join('');q('#bundleSearch').value='';cards();
       try{const data=(await import('/static/bundle-showcase.js')).default;if(opened!==openEpoch||!dialog.open)return;showcase=data;showcaseMessage='';cards();if(active){const preview=q('#bundleBody .bundle-feature figure, #bundleBody .bundle-empty');const sample=record(active.id);if(preview&&sample){const figure=document.createElement('figure');figure.innerHTML='<img src="'+escape(sample.url)+'" alt="'+escape(sample.caption)+'"><figcaption>'+escape(sample.label+' · '+sample.caption+' '+sample.notice)+'</figcaption>';preview.replaceWith(figure);images();}}}catch{if(opened!==openEpoch||!dialog.open)return;showcaseMessage='Example index unavailable. Recipes remain browsable without previews.';status(showcaseMessage);}
     };
+    button.onclick=openBundles;
+    function mountHomeLauncher(){
+      if(q('#bundleHomeLauncher'))return;
+      const heading=q('#homeView .ux-home-heading');if(!heading)return;
+      const homeButton=button.cloneNode(true);homeButton.id='bundleHomeLauncher';homeButton.onclick=openBundles;heading.after(homeButton);
+    }
+    mountHomeLauncher();
+    if(!q('#bundleHomeLauncher'))document.addEventListener('studio:setup-draft-ready',mountHomeLauncher,{once:true});
     q('#bundleCards').onclick=e=>{const card=e.target.closest('[data-bundle]');if(card)choose(card.dataset.bundle);};q('#bundleSearch').oninput=cards;q('#bundleFamily').onchange=cards;q('#bundleClose').onclick=()=>dialog.close();
-    dialog.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
+    dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();}else if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();e.stopPropagation();}});
     dialog.addEventListener('close',()=>{guidancePanel?.destroy();guidancePanel=null;epoch++;openEpoch++;if(opener?.isConnected)opener.focus();});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();

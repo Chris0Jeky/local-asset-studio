@@ -103,9 +103,100 @@ class I2VModelHashEvidenceTests(unittest.TestCase):
         self.assertTrue(result["present"])
         self.assertEqual(result["sha256"], hashlib.sha256(b"un-pinned fixture").hexdigest())
         retained = cache[str(self.model)]
-        for field in ("bytes", "mtime_ns", "ctime_ns", "device", "inode"):
+        for field in ("bytes", "mtime_ns", "ctime_ns", "device", "inode", "birthtime_ns"):
             with self.subTest(field=field):
                 self.assertIn(field, retained)
+                self.assertIn(field, retained["path_identity"])
+
+    def test_cache_hit_tolerates_cross_api_ctime_difference(self):
+        self.model.write_bytes(b"cached fixture")
+        identity = i2v._file_identity(self.model.stat())
+        digest = hashlib.sha256(b"cached fixture").hexdigest()
+        key = str(self.model)
+        cache = {
+            key: {
+                **identity,
+                "ctime_ns": identity["ctime_ns"] + 1,
+                "path_identity": identity,
+                "sha256": digest,
+            }
+        }
+
+        with mock.patch.object(i2v, "_hash_open_file", side_effect=AssertionError("cache miss")):
+            result = i2v._cached_file_hash(self.model, cache)
+
+        self.assertEqual(result["sha256"], digest)
+
+    def test_cache_miss_preserves_same_domain_ctime_rewrite_detection(self):
+        self.model.write_bytes(b"rewritten fixture")
+        identity = i2v._file_identity(self.model.stat())
+        key = str(self.model)
+        cache = {
+            key: {
+                **identity,
+                "path_identity": {**identity, "ctime_ns": identity["ctime_ns"] + 1},
+                "sha256": hashlib.sha256(b"old fixture").hexdigest(),
+            }
+        }
+        replacement = {"path": key, "present": True, **identity, "sha256": hashlib.sha256(b"rewritten fixture").hexdigest()}
+        with mock.patch.object(i2v, "_hash_open_file", return_value=replacement) as hashed:
+            result = i2v._cached_file_hash(self.model, cache)
+
+        hashed.assert_called_once_with(self.model)
+        self.assertEqual(result["sha256"], replacement["sha256"])
+
+    def test_a_ctime_only_divergence_between_the_two_stat_calls_still_yields_a_digest(self):
+        """Deterministic on every platform: inject the Windows domain difference instead of waiting for it.
+
+        The third _file_identity call in _hash_open_file is the one made from path.stat(); perturbing only its
+        ctime reproduces what Windows does on its own for about 8% of freshly written files.
+        """
+        target = (self.model_directory / "injected.safetensors").resolve()
+        target.write_bytes(b"injected fixture")
+        real, calls = i2v._file_identity, []
+
+        def perturbed(observed):
+            identity = real(observed)
+            calls.append(identity)
+            if len(calls) == 3: identity = dict(identity, ctime_ns=identity["ctime_ns"] - 1000000)
+            return identity
+
+        with mock.patch.object(i2v, "_file_identity", perturbed):
+            result = i2v._hash_open_file(target)
+        self.assertEqual(len(calls), 3, "the path stat is the third identity in this path; the test drifted")
+        self.assertNotIn("error", result, result)
+        self.assertEqual(result["sha256"], hashlib.sha256(b"injected fixture").hexdigest())
+
+    def test_the_hashing_path_is_the_one_that_tolerates_it(self):
+        """Guards the call site, not just the helper: _hash_open_file must go through _same_file."""
+        target = (self.model_directory / "callsite.safetensors").resolve()
+        target.write_bytes(b"callsite fixture")
+        with mock.patch.object(i2v, "_same_file", return_value=False):
+            result = i2v._hash_open_file(target)
+        self.assertEqual(result.get("error"), "Model path changed while hashing")
+
+    def test_a_ctime_only_difference_is_the_same_file(self):
+        """Windows reports st_ctime_ns differently from os.stat() and os.fstat(); that is not a swapped path."""
+        descriptor = {"bytes": 64, "mtime_ns": 5, "ctime_ns": 5, "device": 1, "inode": 2}
+        by_path = dict(descriptor, ctime_ns=descriptor["ctime_ns"] - 1000000)
+        self.assertTrue(i2v._same_file(by_path, descriptor))
+        self.assertNotIn("ctime_ns", i2v._PATH_IDENTITY_FIELDS)
+
+    def test_a_swapped_file_is_still_rejected(self):
+        descriptor = {"bytes": 64, "mtime_ns": 5, "ctime_ns": 5, "device": 1, "inode": 2}
+        for field, value in (("inode", 99), ("device", 99), ("bytes", 65), ("mtime_ns", 6)):
+            with self.subTest(field=field):
+                self.assertFalse(i2v._same_file(dict(descriptor, **{field: value}), descriptor))
+
+    def test_a_freshly_written_file_hashes_instead_of_reporting_a_change(self):
+        """The regression this guards: no digest at all, because the path stat disagreed about ctime."""
+        for attempt in range(25):
+            with self.subTest(attempt=attempt):
+                target = self.model_directory / ("fresh-%d.safetensors" % attempt)
+                target.write_bytes(b"fixture %d" % attempt)
+                observed = i2v._hash_open_file(target.resolve())
+                self.assertNotIn("error", observed, observed)
+                self.assertEqual(observed["sha256"], hashlib.sha256(b"fixture %d" % attempt).hexdigest())
 
     @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX FIFO contract")
     def test_fifo_candidate_is_rejected_without_waiting_for_a_writer(self):
