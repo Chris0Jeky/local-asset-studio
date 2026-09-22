@@ -111,6 +111,21 @@ strict UTF-8/ASCII decoding inside its typed corruption boundary. The malformed
 cases retain byte-for-byte evidence and return `setup_history_corrupt` rather
 than leaking a driver `OperationalError`; a non-ASCII canonical draft now also
 round-trips through both supported UTF-16 encodings without rewriting any row.
+
+Integration with the asset-read stack exposed a separate database-encoding
+assumption before history initialization: the asset catalogue treated SQLite
+`CAST(TEXT AS BLOB)` bytes as UTF-8. Its epoch guard now checks the exact ASCII
+text identity, and its bounded projection uses the same connection's declared
+UTF-8/UTF-16LE/UTF-16BE encoding for scalar limits and incremental label decoding.
+The display prefix remains bounded before Python allocation. New mutation
+triggers also reject NUL-containing epochs; existing valid UTF-8 trigger
+definitions remain usable without rewriting their catalogue state.
+
+The causal asset regressions initially produced six UTF-16 initialization errors
+and one malformed-epoch mutation failure. They cover all three encodings,
+interleaved Workspaces, embedded-NUL labels, truncation, bounded corrupt scalars,
+selection, restart and cursor invalidation. The retained UTF-16 history tests
+continue to require identical stored evidence before and after observations.
 The combined hosted history suite therefore has 50 tests. Final-head hosted
 results belong in the PR evidence.
 

@@ -50,6 +50,9 @@ media type, creation/trash timestamps, preset ID, metadata revision, review,
 favorite, display labels, `truncated_fields`, and the existing relative file URL.
 It excludes notes, source JSON, tags, lineage, filesystem paths, and collections.
 A stored hash is not proof that current media bytes were re-read or verified.
+SQL projection bounds and display-label decoding use the connection's SQLite
+text encoding (UTF-8, UTF-16LE or UTF-16BE). Stored rows are not transcoded or
+rewritten; labels retain embedded NULs and report truncation explicitly.
 
 SQL bounds every selected string/scalar before Python materialization. Titles and
 preset names retain at most 200 Unicode characters, filenames 256; truncation is
