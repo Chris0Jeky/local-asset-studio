@@ -163,6 +163,7 @@
     const recipeInfo = el('div'); recipeInfo.append(el('small', '', 'ACTIVE RECIPE'));
     const recipeName = el('strong', '', 'Choose a starting point'); recipeName.id = 'workshopRecipeName'; recipeInfo.append(recipeName);
     const change = button('workshopRecipeChange', 'Change recipe', () => openRecipes());
+    change.setAttribute('aria-expanded', 'false');
     change.setAttribute('aria-haspopup', 'dialog'); change.setAttribute('aria-controls', 'workshopRecipeDialog');
     recipeChip.append(recipeMark, recipeInfo, change);
     const quickTune = button('workshopTune', 'Fine-tune the recipe', () => reveal(parameters));
@@ -186,6 +187,14 @@
     const pickerStatus = el('p', 'wk-picker-status'); pickerStatus.setAttribute('role','status');
     recipeDialog.append(dialogHeading, pickerStatus, setup); create.append(recipeDialog);
     const drawer = setup.querySelector('.ux-recipe-drawer'); if (drawer) drawer.open = true;
+    function syncPicker() {
+      const open = recipeDialog.open;
+      change.setAttribute('aria-expanded', String(open));
+      // Native dialog already excludes closed content. Make that state explicit for
+      // accessibility inspection and retain it if a future style changes display.
+      if (drawer) { drawer.inert = !open; drawer.setAttribute('aria-hidden', String(!open)); }
+    }
+    syncPicker();
     function openRecipes() {
       if (create.hidden || recipeDialog.open) return;
       // Do not stack our picker above a source, proposal, or other owned modal.
@@ -193,10 +202,13 @@
       opener = d.activeElement; pageScroll = {left:w.scrollX, top:w.scrollY};
       if (drawer) drawer.open = true;
       pickerStatus.textContent = '';
-      recipeDialog.showModal(); change.setAttribute('aria-expanded','true'); q('#presetSearch')?.focus({preventScroll:true});
+      if (drawer) { drawer.inert = false; drawer.removeAttribute('aria-hidden'); }
+      recipeDialog.showModal(); syncPicker(); q('#presetSearch')?.focus({preventScroll:true});
     }
     recipeDialog.addEventListener('close', () => {
-      change.setAttribute('aria-expanded','false');
+      // close is deferred: an older event must not make a newly reopened picker inert.
+      if (recipeDialog.open) return;
+      syncPicker();
       if (!create.hidden) {
         const target = opener?.isConnected && opener.getClientRects().length ? opener : change;
         target.focus({preventScroll:true}); if (pageScroll) w.scrollTo(pageScroll);
@@ -264,15 +276,14 @@
     }
     inspection.querySelectorAll('details').forEach(n => { n.open = false; });
     const parameterExtras = el('div', 'wk-parameter-extras');
-    for (const selector of ['#variants','#recipeWrap','#randomSeed']) { const node = q(selector); if (node) parameterExtras.append(node); }
+    for (const selector of ['#variants','#recipeWrap']) { const node = q(selector); if (node) parameterExtras.append(node); }
+    const variantLabel = q('#recipeWrap');
+    if (variantLabel?.firstChild?.nodeType === 3) variantLabel.firstChild.textContent = 'Recipe variants';
     parameters.querySelector('summary').after(parameterExtras);
     parameters.open = false;
     const paramSummary = parameters.querySelector('summary');
     paramSummary.replaceChildren(el('span', '', 'Fine-tune the recipe'));
     const paramHint = el('small', 'wk-parameter-summary'); paramSummary.append(paramHint);
-    // Remove only the now-empty legacy caption, not controls injected by another feature.
-    const caption = [...editor.children].find(n => n.classList.contains('section-title'));
-    if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const promptHint = el('small', 'wk-prompt-hint', 'Describe the result you want. Tune the recipe when you need to.');
     q('#positiveWrap').append(promptHint);
     q('#positive').rows = 5;
@@ -292,7 +303,13 @@
     dockInfo.append(readiness, eta, reviewButton);
     const status = q('#status'); dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
-    const compare = q('#planComparison'); if (compare) runBox.append(compare);
+    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
+    const compare = q('#planComparison'), newSeed = q('#randomSeed');
+    for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
+    actions.after(runTools);
+    // Remove only the now-empty legacy caption, not controls injected by another feature.
+    const caption = [...editor.children].find(n => n.classList.contains('section-title'));
+    if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); editor.append(savedDetails);
     const gallery = q('#createView .gallery-panel');
@@ -447,7 +464,11 @@
       d.body.classList.toggle('workshop-active', active);
       if (!active && recipeDialog.open) recipeDialog.close();
       const recipe = bridge.recipe?.();
-      text(recipeName, recipe?.name || q('#uxRecipeLabel')?.textContent || 'Choose a starting point');
+      syncPicker();
+      const name = recipe ? String(recipe.name || recipe.id) : '';
+      text(recipeName, name || 'Choose a starting point');
+      text(change, name ? 'Change: '+name : 'Choose recipe');
+      change.setAttribute('aria-label', name ? 'Change recipe: '+name : 'Choose recipe');
       // One-time presentation migration, after the first real recipe has rendered.
       // Existing negative-wrap toggle handling remains the session preference owner.
       if (recipe && (initialiseDisclosure || persistInitialPresentation)) {
@@ -460,6 +481,7 @@
       const dims = [value('width'),value('height')].filter(Boolean).join(' × ');
       const steps = value('steps') ? value('steps')+' steps' : '';
       const seed = value('seed') ? 'Seed '+value('seed') : '';
+      if (newSeed) { newSeed.hidden = !q('[data-key=seed]'); newSeed.title = seed ? seed+' · choose a new seed without generating' : 'This recipe has no seed control'; }
       const adapters = [...d.querySelectorAll('#loraSlots .lora-slot')].filter(slot => Number(slot.querySelector('input[data-key]')?.value) > 0).length;
       const summary = [dims, steps, adapters ? adapters+' active adapter'+(adapters === 1 ? '' : 's') : 'No active adapters'].filter(Boolean).join(' · ');
       text(paramHint, [summary, seed].filter(Boolean).join(' · '));

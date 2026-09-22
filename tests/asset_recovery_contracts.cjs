@@ -35,8 +35,8 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
   });
   await check('Conflict survives reload; rebasing only prepares a new reviewed save',async()=>{
     const first=setup();draft(first,'my edit');const save=first.el('#saveAssetDetails').onclick();
-    const current={...JSON.parse(first.run('JSON.stringify(activeAsset)')),metadata_revision:3,title:'remote title'};
-    const error=Object.assign(Error('changed'),{status:409,data:{workspace_id:current.workspace_id,code:'asset_revision_conflict',current:[current]}});first.writes[0].reject(error);await save;
+    const current={...JSON.parse(first.run('JSON.stringify(activeAsset)')),metadata_revision:3,title:'remote title',trashed_at:null};
+    const error=Object.assign(Error('changed'),{status:409,data:{workspace_id:current.workspace_id,code:'asset_revision_conflict',request_id:first.payload(0).request_id,conflict_ids:['a'],missing_ids:[],current:[current]}});first.writes[0].reject(error);await save;
     const next=setup({storage:first.storage});assert.match(next.el('#assetDetailConflict').innerHTML,/remote title/);assert.equal(next.el('#saveAssetDetails').disabled,true);
     next.run('resolveAssetConflict(true)');assert.equal(next.writes.length,0);assert.equal(next.el('#assetNotes').value,'my edit');assert.equal(next.el('#assetTitle').value,'remote title');
     const again=setup({storage:next.storage});const p=again.el('#saveAssetDetails').onclick();assert.deepEqual(again.payload(0).expected_revisions,{a:3});assert.equal(again.payload(0).title,undefined);assert.notEqual(again.payload(0).request_id,first.payload(0).request_id);again.accept(0);await p;
