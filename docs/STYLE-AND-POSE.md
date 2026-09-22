@@ -125,6 +125,24 @@ the thin 8 px strokes carried the pose as well as the 14 px research figure did.
 seeds. Not yet measured: drawing in the panel by hand and pressing *Use this pose* then Generate as one browser journey (the use-case
 driver covers the panel up to the attached guide with zero generations; the proving run submitted the same request shape by API).
 
+### Draw the pose for WAI v17 (SDXL, 22 September 2026)
+
+**WAI v17 · drawn pose skeleton (Xinsir OpenPose, no detector)** (`wai-skeleton`) is the SDXL counterpart when the
+character comes from the prompt rather than from a picture. The same **Draw the pose** panel appears on this recipe
+and draws in place: *Use this pose* renders the joints in the controlnet_aux OpenPose convention Xinsir's ControlNet
+was trained on (`studio.coco18-openpose-xinsir/v1`: per-limb colours at 60 %, limb width scaled to the canvas; the
+panel's preview shades the limbs the same way) and puts the drawing on the recipe's **Pose skeleton** slot, and the
+skeleton goes straight to the ControlNet with no detector. Defaults from research straight against ComfyUI (two drawn
+skeletons, three seeds, strength 0.6–1.0, end 0.6–1.0): **strength 0.8 over all steps** held both figures on 4 of 6
+pictures in full and got one limb or the view wrong on the other two; 0.6 lost the pose; the end of the schedule
+changed nothing visible; the WAI look held at every setting, but on one seed the skeleton's black canvas turned the
+white background grey to black, more at higher strength. *Pose firmer (1.0)* is a variant; audition three seeds. The
+same joints drawn as the thin Klein lines held the bent figure on 0 of 3 seeds, the Union ControlNet was mixed (bent
+figure 3 of 3, raised-arm figure 0 of 3) and Animagine XL 4 turned every bent figure towards the viewer, so none of
+those ship. Research: `experiments/curated/style-pose-matrix/2026-09-22-sdxl-skeleton/README.md`; sheets
+`examples/style-pose/sdxl-skeleton-grid-action.jpg`, `sdxl-skeleton-grid-bent.jpg`, `sdxl-skeleton-compare.jpg`. The
+recipe is `verified: false` until a run through the Studio is recorded.
+
 **Put this character in another picture's pose (FLUX.2 Klein 4B)** is a new route (late night, 14 September 2026) for
 what the owner actually tried that evening: "have the pose of the second image". Image 1 is the picture you keep (the
 handoff puts it there), image 2 goes on Picture 1 of the board (*Pull from library* or drop a file); both are scaled to
@@ -219,8 +237,8 @@ the `restyle` intent with the source hash. Measured run below under *Restyle fro
    One picture is enough; two or three blend their looks. Slots you leave empty are simply skipped.
    The recipe's example (a retro-anime street scene) sits in Picture 1 until you replace it.
 3. **Pose picture** — attach a normal picture of a person in the pose you want (its own control below
-   the board, also offered as a slot in *Pull from library*). The graph extracts the skeleton itself. Do **not** feed it a coloured skeleton image; for those use the older
-   *Animagine — pose guide* / *WAI — pose guide* recipes, which take the skeleton directly.
+   the board, also offered as a slot in *Pull from library*). The graph extracts the skeleton itself. Do **not** feed it a coloured skeleton image; for those use *WAI v17 · drawn pose skeleton*
+   (or the older *Animagine — pose guide* / *WAI — pose guide*), which take the skeleton directly.
 4. Write the prompt: subject, costume, setting, and the base model's quality tail. The prompt is the
    only thing that says who the character is. The negative prompt is prefilled.
 5. Two knobs: **Style weight** (IP-Adapter, default 0.7) and **Pose strength** (ControlNet, default

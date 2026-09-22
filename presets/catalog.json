@@ -846,14 +846,20 @@
         "policy": "Precomputed OpenPose skeleton: the picture goes straight to ControlNetApplyAdvanced (no detector) and ComfyUI scales it to the canvas; draw it at the recipe's width and height"
       },
       "reference_board_label": "Pose skeleton",
-      "reference_board_hint": "A coloured stick figure on black. Draw the pose on this screen: Use this pose renders it in the controlnet_aux OpenPose convention Xinsir's ControlNet was trained on (studio.coco18-openpose-xinsir/v1) and puts it here. An OpenPose skeleton from another editor also works. A photo or an illustration is the wrong input here: use a Style + Pose recipe, which runs the detector.",
+      "reference_board_hint": "A coloured stick figure on black. Draw the pose on this screen: Use this pose renders it in the controlnet_aux OpenPose convention Xinsir's ControlNet was trained on (studio.coco18-openpose-xinsir/v1) and puts it here; a thin-line drawing of the same joints lost the pose on 4 of 6 research seeds. An OpenPose skeleton exported by another editor also works. A photo or an illustration is the wrong input here: use a Style + Pose recipe, which runs the detector. Describe the character in the prompt; the pose words can stay short.",
       "pose_guide_renderer": "studio.coco18-openpose-xinsir/v1",
       "stages": [
         "WAI v17 (Illustrious SDXL)",
-        "Drawn skeleton -> Xinsir OpenPose SDXL ControlNet (ControlNetApplyAdvanced, no detector)",
-        "28 Euler ancestral steps at CFG 5 on 832x1216"
+        "Drawn skeleton -> Xinsir OpenPose SDXL ControlNet (ControlNetApplyAdvanced, no detector), strength 0.8 from 0 to 100 % of the steps",
+        "28 Euler ancestral steps at CFG 5 on 832x1216; about 30-45 s a picture warm on the 9070 XT (this ComfyUI reloads the checkpoint for each prompt, about 40 s more)"
       ],
       "variants": [
+        {
+          "name": "Pose firmer (1.0)",
+          "controls": {
+            "pose_strength": 1.0
+          }
+        },
         {
           "name": "3-seed audition",
           "batch_count": 3

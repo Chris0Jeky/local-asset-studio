@@ -43,12 +43,41 @@ The artifact must retain at least one drawable COCO-18 limb at the declared thre
 RGB, carry no transparency declaration and contain non-black pixels. This prevents hidden RGB values beneath
 a zero-alpha plane from being accepted as visible guide evidence.
 
-The local preview renderer, `studio.coco18-lines/v1`, is recomputed byte for byte from the artifact. Its
-renderer SHA-256 covers the Studio renderer implementation contract, PNG encoder settings, Pillow version,
-and zlib compile/runtime versions. A Pillow or zlib change therefore produces an encoder-identity mismatch,
-not a misleading tamper diagnosis. The exact renderer identity is retained in local-renderer binding
-diagnostics. An installed auxiliary/native renderer can only be receipt-bound here: its bytes and opaque
-identity are retained, but this helper does not claim that the renderer or route is qualified.
+Two local renderers are recomputed byte for byte from the artifact: `studio.coco18-lines/v1`, the thin-line guide
+the Klein skeleton recipe was proved with, and `studio.coco18-openpose-xinsir/v1`, the controlnet_aux OpenPose
+drawing the SDXL route uses (next section). A renderer SHA-256 covers the Studio renderer implementation contract,
+PNG encoder settings, Pillow version, and zlib compile/runtime versions; the OpenPose identity also carries the
+pinned controlnet_aux reference. A Pillow or zlib change therefore produces an encoder-identity mismatch, not a
+misleading tamper diagnosis. The exact renderer identity is retained in local-renderer binding diagnostics. Any
+other installed auxiliary/native renderer can only be receipt-bound here: its bytes and opaque identity are
+retained, but this helper does not claim that the renderer or route is qualified.
+
+## OpenPose-convention renderer for SDXL (#445 item 3)
+
+Xinsir's SDXL OpenPose ControlNet was trained on controlnet_aux-style drawings, and the thin-line guide is not one:
+it colours each limb with its end joint at full intensity, in its own order, with strokes of `min(w, h) // 128`.
+`studio_workflow/pose_raster.py` therefore has a second mode that reproduces `draw_bodypose` from the
+comfyui_controlnet_aux copy installed beside ComfyUI (pyproject 1.1.5; the folder has no Git checkout of its own,
+so the file is pinned instead: `src/custom_controlnet_aux/open_pose/util.py`, SHA-256 `763d2680…ac89a`), with
+`xinsr_stick_scaling=True` as the Style + Pose graphs already run the preprocessor:
+
+| Property | controlnet_aux 1.1.5, reproduced |
+| --- | --- |
+| Colour order | RGB; the same 18-entry list as the thin-line guide |
+| Limb order and colour | its `limbSeq` (neck-right shoulder, neck-left shoulder, right arm, left arm, right leg, left leg, face); limb *i* takes colour *i* at 60 % |
+| Limb shape | filled `cv2.ellipse2Poly` polygon between the two joints, half-width 4 × scale, reproduced exactly (OpenCV's float sine table, `cvRound`) |
+| Stroke scaling | scale 1 below 500 px on the long side, else `min(2 + long_side // 1000, 7)`: 3 on 832×1216 and 1024×1536 |
+| Joints | radius-4 filled dots at full colour, drawn after every limb, not scaled |
+| Coordinates | the joint travels normalised (x / W) and back (x · W), then `int()`, exactly as controlnet_aux does |
+| Canvas | the generation canvas; the editor draws at the recipe's width and height, so the transform is `identity` |
+
+`scripts/pose_openpose_reference.py`, run with ComfyUI's embedded Python (cv2 5.0.0, numpy 2.5.2), executes the
+installed `draw_bodypose` by source (torch is never imported) and compares. Measured on 22 September 2026: the
+ellipse replica matched `cv2.ellipse2Poly` on 4,000 of 4,000 random cases; on four figures (standing and bent at
+832×1216, standing at 1024×1536, bent at 448×448) 99.936–99.987 % of all pixels agree, every differing pixel lies on
+a limb outline (Pillow's polygon fill rule against `cv2.fillConvexPoly`) and both drawings use the same colour set.
+`tests/fixtures/pose-openpose/` keeps those aux renders; `tests/test_pose_raster.py` holds the agreement,
+outline-only and colour-set checks, pins the thin-line guide's pixels and refuses unknown renderers.
 
 ## RGB donor evidence
 
@@ -114,15 +143,16 @@ slot, transform and diagnostics. `detector_invocations` remains zero, `graph_pre
 
 ## Boundary and remaining work for #445
 
-This slice supplies the structural preflight and tamper-evident handoff. It does not complete route
-qualification. The remaining work is to:
+This contract is still a structural preflight: `prepare` does not consume a binding JSON. The SDXL route
+(`wai-skeleton`, 22 September 2026) reaches the same guarantees through the Studio's ordinary reference-slot path:
+the pose editor draws the OpenPose-convention guide and attaches it to the preset's single `pose` slot, the graph
+contains no detector (tests walk every node back from `SaveImage`), and the guide's `LoadImage` feeds only
+`ControlNetApplyAdvanced.image`. Research renders and the exact settings are in
+`experiments/curated/style-pose-matrix/2026-09-22-sdxl-skeleton/README.md`. Still open:
 
-1. record the exact installed model, graph, node, runtime, renderer and adapter hashes on the target machine;
-2. add the reviewed handoff from a valid binding into the existing prepare/Production path without allowing
-   the graph to reinterpret its source type;
-3. inspect the prepared graph and prove that SDXL consumes the precomputed guide without detector re-entry;
-4. run a separately authorized exact-route smoke, retaining runtime, memory, failures and output evidence;
-5. perform human visual review and the bounded comparison under #446.
+1. a Studio proving run of `wai-skeleton` (its catalog entry stays `verified: false` until then);
+2. binding-JSON consumption by `prepare`, if a later route needs more than slot-level identity;
+3. human visual review and the bounded comparison under #446.
 
 No private pose or character bytes are committed by this contract. A valid hash proves content identity, not
 rights clearance, geometry correctness, artistic acceptance or route promotion. HUMAN_TODO q-28 remains open.
