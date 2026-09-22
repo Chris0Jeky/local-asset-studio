@@ -27,8 +27,13 @@ def absolute(path):
             # lock, and replacement via it can delete the long pathname. Refuse
             # aliases consistently for readers and writers instead of changing
             # the requested publication location behind the caller's back.
-            if os.path.normcase(str(path)) != os.path.normcase(str(canonical)):
+            if os.path.normcase(path.name) != os.path.normcase(canonical.name):
                 raise VoiceProfileError('Registry requires its canonical long path; filename aliases are refused')
+            # Windows TMP commonly contains a short *directory* name. Resolving
+            # that validated parent preserves legacy reads and gives every writer
+            # the same lock path without publishing through a filename alias.
+            _parents(canonical)
+            path = canonical
         except OSError as exc:
             raise VoiceProfileError(f'Cannot inspect registry path: {exc}') from exc
     return path

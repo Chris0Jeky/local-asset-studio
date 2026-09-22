@@ -133,5 +133,38 @@ class RegistryPublicBoundary(unittest.TestCase):
         registry.update_registry(self.path, next_command)
         self.assertEqual(len(registry.inspect_registry(self.path)['receipts']), 2)
 
+    @unittest.skipUnless(os.name == 'nt', 'Windows directory alias compatibility')
+    def test_short_parent_alias_uses_canonical_ownership_and_preserves_legacy_reads(self):
+        import ctypes
+        parent = self.root / 'long-registry-directory'; parent.mkdir()
+        getter = ctypes.windll.kernel32.GetShortPathNameW
+        getter.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint)
+        getter.restype = ctypes.c_uint
+        size = getter(str(parent), None, 0)
+        if not size: self.skipTest('short filenames unavailable')
+        buffer = ctypes.create_unicode_buffer(size)
+        if not getter(str(parent), buffer, size): self.skipTest('short filenames unavailable')
+        alias_parent = Path(buffer.value)
+        if os.path.normcase(str(alias_parent)) == os.path.normcase(str(parent)):
+            self.skipTest('filesystem does not create short filenames')
+        self.path = parent / 'registry.json'; alias = alias_parent / self.path.name
+        self.assertEqual(registry.io.absolute(alias), self.path)
+        first = self.command()
+        receipt = registry.update_registry(alias, first)
+        self.assertEqual(registry.get_receipt(self.path, first['request_id']), receipt)
+        self.assertEqual(registry.get_receipt(alias, first['request_id']), receipt)
+        self.assertTrue(os.path.samefile(alias.with_name('registry.json.lock'),
+                                        self.path.with_name('registry.json.lock')))
+        before = self.path.read_bytes()
+        self.assertEqual(registry.update_registry(self.path, first), receipt)
+        self.assertEqual(self.path.read_bytes(), before)
+        legacy = parent / 'legacy.json'
+        raw = vp.canonical_bytes({'schema_version': 1, 'profiles': [first['profile']]})
+        legacy.write_bytes(raw)
+        resolved = vp.load_registry(alias_parent / 'legacy.json', vp.load_catalog())
+        self.assertEqual(profile_by_id(resolved, first['profile']['id']), first['profile'])
+        self.assertEqual(legacy.read_bytes(), raw)
+        self.assertFalse(legacy.with_name('legacy.json.lock').exists())
+
 
 if __name__ == '__main__': unittest.main()
