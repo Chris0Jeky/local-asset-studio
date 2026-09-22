@@ -7,6 +7,13 @@ sys.path.insert(0,str(root/'app'))
 sys.path.insert(0,str(root))
 from model_library import FOLDERS, SUFFIXES
 from studio_workflow.preset_adapter import SOURCE_KEYS, missing_source_key
+
+
+def exact_int(value):
+    """Return true only for a JSON integer, never Python's boolean aliases."""
+    return type(value) is int
+
+
 # Runtime output folders that must never be committed. Every entry is also a .gitignore rule; tests/test_repo_payload_guard.py holds the two lists in step so a new folder cannot be added to one alone.
 OPERATIONAL_PREFIXES=('experiments/runs/','experiments/imports/','experiments/uploads/','experiments/workspace/','experiments/projects/','experiments/diagnostics/','experiments/pose-artifacts/','.runtime/')
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
@@ -21,11 +28,6 @@ for preset in catalog:
         bindings=([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[])
         for node,field in bindings:
             assert field in graph[node]['inputs'], (preset['id'],key,node,field)
-    for node in graph.values():
-        assert 'class_type' in node and isinstance(node['inputs'],dict)
-        for value in node['inputs'].values():
-            if isinstance(value,list):
-                assert len(value)==2 and value[0] in graph and isinstance(value[1],int), (preset['id'],value)
     for slot in preset.get('reference_slots',[]):
         node,field=slot['binding']
         assert field in graph[node]['inputs'], (preset['id'],'reference',slot)
@@ -43,6 +45,13 @@ for preset in catalog:
         assert canonical_path.is_relative_to(root/'workflows/api'), (preset['id'],'canonical_graph outside workflow directory')
         graphs.append((preset['canonical_graph'],json.loads(canonical_path.read_text(encoding='utf-8'))))
     for where,body in graphs:
+        for node_id,node in body.items():
+            assert 'class_type' in node and isinstance(node['inputs'],dict)
+            for field,value in node['inputs'].items():
+                if isinstance(value,list):
+                    assert len(value)==2, (preset['id'],where,node_id,field,value,'graph link must contain exactly two items')
+                    assert exact_int(value[1]), (preset['id'],where,node_id,field,value[1],'output slot must be an exact integer')
+                    assert value[0] in body, (preset['id'],where,node_id,field,value[0],'graph link references an unknown node')
         loaders=missing_source_key(preset,body)
         assert not loaders, (preset['id'],where,loaders,'graph loads a picture but the preset declares none of '+repr(SOURCE_KEYS))
     if preset.get('visual'):
@@ -62,7 +71,7 @@ for preset in catalog:
         limits=preset.get('dimension_limits',[64,1536]);multiple=preset.get('dimension_multiple',8)
         for key in ('width','height'):
             if key in variant.get('controls',{}):
-                value=variant['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],variant['name'],key,value,'outside dimension_limits or off the dimension_multiple grid')
+                value=variant['controls'][key];assert exact_int(value) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],variant['name'],key,value,'must be an exact integer inside dimension_limits and on the dimension_multiple grid')
     if preset.get('verified'):
         note=preset.get('execution_note') or preset.get('execution_notes')
         assert isinstance(note,(str,list,dict)) and note, (preset['id'],'verified presets must carry an execution_note or execution_notes recording the run')
@@ -74,7 +83,7 @@ for preset in catalog:
         limits=preset.get('dimension_limits',[64,1536]);multiple=preset.get('dimension_multiple',8)
         for key in ('width','height'):
             if key in controls:
-                value=controls[key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],'i2v mode',mode.get('id'),key,value)
+                value=controls[key];assert exact_int(value) and limits[0]<=value<=limits[1] and value%multiple==0, (preset['id'],'i2v mode',mode.get('id'),key,value,'must be an exact integer inside dimension_limits and on the dimension_multiple grid')
     for key in ('lora_name','lora2_name','lora3_name','lora4_name','lora5_name','lora6_name'):
         for node,field in ([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[]):
             authored=graph[node]['inputs'][field]
@@ -112,7 +121,7 @@ if recipe_path.is_file():
         limits=recipe_preset.get('dimension_limits',[64,1536]);multiple=recipe_preset.get('dimension_multiple',8)
         for key in ('width','height'):
             if key in recipe.get('controls',{}):
-                value=recipe['controls'][key];assert isinstance(value,int) and limits[0]<=value<=limits[1] and value%multiple==0, (recipe['id'],key,value,'outside dimension_limits or off the dimension_multiple grid')
+                value=recipe['controls'][key];assert exact_int(value) and limits[0]<=value<=limits[1] and value%multiple==0, (recipe['id'],key,value,'must be an exact integer inside dimension_limits and on the dimension_multiple grid')
         assert recipe.get('status') in {'executed','unverified'}, (recipe['id'],recipe.get('status'))
         assert isinstance(recipe.get('sources',[]),list), recipe['id']
 wildcard_dir=root/'presets/wildcards'
@@ -124,7 +133,7 @@ assert len({a['id'] for a in library['assets']})==len(library['assets'])
 for asset in library['assets']:
     assert re.fullmatch('[a-z0-9-]+',asset['id'])
     assert re.fullmatch('[a-f0-9]{64}',asset['sha256'])
-    assert isinstance(asset['bytes'],int) and asset['bytes']>0
+    assert exact_int(asset['bytes']) and asset['bytes']>0, (asset['id'],'bytes',asset['bytes'],'must be a positive integer')
     relative=Path(asset['file'])
     assert not relative.is_absolute() and '..' not in relative.parts
     # Every pin must be a weight kind the Models view knows, in a folder ModelLibrary.locate accepts:
@@ -145,13 +154,13 @@ manifest_files={}
 for folder in LOCAL_MEDIA:
     manifest_path=root/'examples'/folder/'MANIFEST.json'
     manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
-    assert manifest.get('version')==1 and isinstance(manifest.get('entries'),list), folder+' manifest must be version 1 with entries'
+    assert exact_int(manifest.get('version')) and manifest['version']==1 and isinstance(manifest.get('entries'),list), folder+' manifest must be integer version 1 with entries'
     names=set()
     for entry in manifest['entries']:
         assert re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',str(entry.get('file',''))), (folder,entry.get('file'),'manifest file must be a plain name in the folder')
         assert entry['file'] not in names, (folder,entry['file'],'duplicate manifest entry')
         assert re.fullmatch('[a-f0-9]{64}',str(entry.get('sha256',''))), (folder,entry['file'],'manifest entry needs a sha256')
-        assert isinstance(entry.get('bytes'),int) and entry['bytes']>0, (folder,entry['file'],'manifest entry needs a byte count')
+        assert exact_int(entry.get('bytes')) and entry['bytes']>0, (folder,entry['file'],'manifest entry needs a positive integer byte count')
         assert str(entry.get('note','')).strip(), (folder,entry['file'],'manifest entry needs an inspection note')
         names.add(entry['file'])
     manifest_files[folder]=names
