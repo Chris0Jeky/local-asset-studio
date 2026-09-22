@@ -50,6 +50,8 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Component presentation and original-control contracts
         run: python tests/workshop_browser.py --output .runtime/workshop-component
+      - name: Recipe and shared-shell keyboard entry points
+        run: python tests/workshop_entry_points.py
       - name: Effective local ambience and fallback policy
         run: python tests/workshop_ambience_browser.py --output .runtime/workshop-ambience
       - name: Native disclosure lifecycle and nested modal handoffs
