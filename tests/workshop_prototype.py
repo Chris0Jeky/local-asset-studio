@@ -27,6 +27,21 @@ def main():
         page.on('request',lambda req:requests.append(req.url) if not req.url.startswith(('data:','blob:')) else None)
         page.set_content(html,wait_until='load')
         page.wait_for_function('document.querySelector("#workshopLayout")?.value==="immersive" && document.querySelector("#workshopSkin")?.value==="retro-anime" && document.querySelector("#workshopAmbience")?.value==="night-shift"')
+        original_name=page.evaluate('selected.name')
+        long_name='A long recipe name with settings, references and an exact version '+('x'*100)
+        for width,height in [(1440,900),(390,844)]:
+            page.set_viewport_size({'width':width,'height':height})
+            for layout in ('focus','studio','immersive'):
+                page.select_option('#workshopLayout',layout)
+                page.evaluate('(name)=>{selected.name=name;document.querySelector("#createView").__workshop.sync()}',long_name)
+                assert not page.locator('.wk-recipe > div').is_visible(), 'the export must not repeat the active recipe label'
+                button=page.locator('#workshopRecipeChange')
+                assert button.inner_text()=='Change: '+long_name
+                box=button.bounding_box()
+                assert box and box['width']>80 and box['x']>=0 and box['x']+box['width']<=width, box
+                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        page.evaluate('(name)=>{selected.name=name;document.querySelector("#createView").__workshop.sync()}',original_name)
+        page.set_viewport_size({'width':1440,'height':900})
         assert page.locator('#demoArtwork').evaluate('(el)=>el.complete&&el.naturalWidth>0')
         assert page.locator('#workshopAmbienceHero').is_visible()
         for layout,skin,ambience in [('focus','atelier','none'),('studio','sakura','quiet-morning'),('immersive','retro-anime','night-shift')]:
@@ -68,8 +83,8 @@ def main():
         assert not errors,errors
         assert not requests,requests
         browser.close()
-    checks=['Immersive + Retro Anime + Night Shift review default','embedded repository and paired local ambience art','guarded recipe replacement','local reference survives presentation switch','demo preview, no submission','adapter input feedback','offline route interception','read-only guidance','mobile geometry']
+    checks=['standalone recipe labels and long-name geometry','Immersive + Retro Anime + Night Shift review default','embedded repository and paired local ambience art','guarded recipe replacement','local reference survives presentation switch','demo preview, no submission','adapter input feedback','offline route interception','read-only guidance','mobile geometry']
     (out/'report.json').write_text(json.dumps({'no_network_requests':True,'page_errors':errors,'checks':checks},indent=2)+'\n')
-    print('Prototype: 9 checks passed; no network requests or page exceptions')
+    print('Prototype: 10 checks passed; no network requests or page exceptions')
 
 if __name__=='__main__':main()

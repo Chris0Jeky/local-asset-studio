@@ -15,7 +15,8 @@ assert.ok(html.indexOf('/static/read-poller.js')<html.indexOf('/static/app.js')&
 const appSource = fs.readFileSync(path.join(__dirname, '../app/static/app.js'), 'utf8');
 assert.ok(appSource.lastIndexOf('configureReadPolling();readPoller?.start();')>appSource.indexOf('await refreshAssets();await refreshLibrary();'),'polling attaches only after the initial companion reads are available');
 const route = url => url==='/api/catalog'?catalog:url==='/api/options'?{loras:[]}:url==='/api/knowledge'?{}:url==='/api/recipes'?{recipes:[]}:url==='/api/setups'?[]:url==='/api/identity'?{workspace:'fixture'}:url==='/api/health'?{online:true,worker_alive:true,schema_available:true,missing_models:{}}:url==='/api/jobs'?[]:url==='/api/library'?{storage:{free_bytes:1,total_bytes:1,reserve_bytes:0},assets:[],folders:[],collections:[],inventory:[]}:url.startsWith('/api/inspect/')?{requirements:[],nodes:[],graph:{}}:{};
-const context = vm.createContext({window,document,Event:class Event { constructor(type){this.type=type;} },URL,Blob,Promise,Map,Math,Number,Error,JSON,Date,crypto:{subtle:{}},localStorage:{getItem:()=> '1',setItem() {}},navigator:{clipboard:{writeText:async()=>{}}},location:{hash:''},fetch:async(url,options={})=>{requests.push({url,method:options.method||'GET'});return {ok:true,json:async()=>route(url)};},refreshAssets:async()=>{},refreshProduction:async()=>{}});
+let assetsResult=true;
+const context = vm.createContext({window,document,Event:class Event { constructor(type){this.type=type;} },URL,Blob,Promise,Map,Math,Number,Error,JSON,Date,crypto:{subtle:{}},localStorage:{getItem:()=> '1',setItem() {}},navigator:{clipboard:{writeText:async()=>{}}},location:{hash:''},fetch:async(url,options={})=>{requests.push({url,method:options.method||'GET'});return {ok:true,json:async()=>route(url)};},refreshAssets:async()=>assetsResult,refreshProduction:async()=>{}});
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static/read-poller.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static/app.js'),'utf8'),context);
 (async()=>{
@@ -23,6 +24,8 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, '../app/static/app.js'),'ut
   assert.ok(requests.some(request=>request.url==='/api/jobs'),'initial job read is retained: '+JSON.stringify({requests,status:element('#status').textContent}));
   assert.equal(requests.filter(request=>request.url==='/api/jobs'&&request.method==='POST').length,0,'loading the scheduled UI never submits a generation');
   assert.ok(context.window.StudioReadPoller,'the real app registers its read lanes');
+  assert.equal(await vm.runInContext('refreshAssets()',context),true,'the configured app wrapper preserves successful workspace reads');
+  assetsResult=false;assert.equal(await vm.runInContext('refreshAssets()',context),false,'the configured wrapper preserves refused workspace reads');
   assert.ok(timers.size>=2,'the real app schedules bounded follow-up reads: '+JSON.stringify({requests,status:element('#status').textContent,timers:[...timers.values()]}));
   const initialJobReads=requests.filter(request=>request.url==='/api/jobs').length;
   events.get('pagehide')({persisted:true});assert.equal(context.window.StudioReadPoller.disposed,false,'BFCache suspension retains the scheduler');
