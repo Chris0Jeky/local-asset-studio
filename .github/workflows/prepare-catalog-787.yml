@@ -1,0 +1,64 @@
+name: Prepare exact catalog 787 blob
+on:
+  push:
+    branches: ['audit/787-manual-copy-catalog-followup']
+    paths: ['.github/workflows/prepare-catalog-787.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.repository == 'Chris0Jeky/local-asset-studio'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const crypto = require('crypto');
+            const {execFileSync} = require('child_process');
+            const assert = require('assert/strict');
+            const git = (...args) => execFileSync('git', args, {encoding: 'utf8'}).trim();
+            assert.equal(context.ref, 'refs/heads/audit/787-manual-copy-catalog-followup');
+            assert.equal(git('rev-parse', 'HEAD^'), 'ecc6b9dc8b989cf8cb99423ce6d2b1195256329b');
+            const blob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+            const path = 'models/library.json';
+            const patch = 'docs/maintenance/civitai-manual-copy-787.patch';
+            const original = fs.readFileSync(path);
+            assert.equal(blob(original), 'faa0272171fcbd86edffcca1da136c36c9c9280a');
+            assert.equal(crypto.createHash('sha256').update(fs.readFileSync(patch)).digest('hex'),
+              '770d7dc17db3d126a54442a6ae65d54f0a45a7d33c58d0e4161895aacbf2f550');
+            git('apply', '--check', patch);
+            git('apply', patch);
+            assert.equal(git('diff', '--name-only'), path);
+            const expected = JSON.parse(original.toString('utf8'));
+            const ids = new Set(['lenovo-krea2', 'pearly-esearu-style', 'pearly-petiflow2',
+              'realism-engine-krea2-v3-1', 'realisticsnapshotkrea2', 'ringeko',
+              'robertlu1021-fluorite-arknights-v1-0-epoch-10', 'oneobsessionanima-v20', 'pearlyanimamix-v10']);
+            let changed = 0;
+            for (const asset of expected.assets) {
+              if (!ids.has(asset.id)) continue;
+              assert.equal(asset.url, asset.source);
+              assert.ok(asset.url.startsWith('https://civitai.red/models/'));
+              asset.url = '';
+              asset.terms += ' Automatic download endpoint is not pinned; manual copy only.';
+              changed++;
+            }
+            assert.equal(changed, 9);
+            const candidate = fs.readFileSync(path);
+            assert.deepEqual(JSON.parse(candidate.toString('utf8')), expected);
+            const expectedBlob = 'e99c7d679e5083ca15e23eda410934e001e6b493';
+            assert.equal(blob(candidate), expectedBlob);
+            assert.equal(crypto.createHash('sha256').update(candidate).digest('hex'),
+              '467568c8399653a5595f6295fa07afafe3ae6b5e7228e7f5293056c1db1fcff8');
+            // Only an unreferenced, verified data blob is created. No commit, tree,
+            // branch, PR, issue or installed resource is changed by this action.
+            const result = await github.rest.git.createBlob({...context.repo,
+              content: candidate.toString('base64'), encoding: 'base64'});
+            assert.equal(result.data.sha, expectedBlob);
+            core.info(`Verified catalog blob: ${result.data.sha}; nine records; eighteen field edits.`);
