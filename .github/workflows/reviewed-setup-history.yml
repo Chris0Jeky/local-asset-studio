@@ -1,0 +1,35 @@
+name: Reviewed setup history reads
+on:
+  pull_request:
+    paths:
+      - 'studio_workflow/setup_*'
+      - 'studio_workflow/revision_consistency.py'
+      - 'studio_workflow/core.py'
+      - 'app/workspace.py'
+      - 'app/server.py'
+      - 'tests/test_reviewed_setup_history*.py'
+      - 'tests/test_recipe_shortlist_apply.py'
+      - '.github/workflows/reviewed-setup-history.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p 'test_reviewed_setup_history*.py' -v
+      - run: python -m unittest discover -s tests -p test_recipe_shortlist_apply.py -v
+      - run: python scripts/validate-repo.py
