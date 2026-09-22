@@ -143,15 +143,20 @@ def validate(b):
 
 
 def profiles():
-    data = read_json(ROOT / 'research/prompt-studio/profiles.json')
-    need(data['schema_version'] == 1, 'Unknown profile schema')
+    return validate_profiles(read_json(ROOT / 'research/prompt-studio/profiles.json'))
+
+
+def validate_profiles(data):
+    """Validate an already-decoded profile document without filesystem access."""
+    need(type(data['schema_version']) is int and data['schema_version'] == 1, 'Unknown profile schema')
     rows = data['profiles']; need(len({p['id'] for p in rows}) == len(rows), 'Duplicate profiles')
     for p in rows:
         if 'dialect_check' not in p and 'template_bindings' not in p: continue
         checks = {'anima_aesthetic': 'prose', 'anima_base': 'prose', 'animagine_opt': 'tags'}
         need(isinstance(p.get('dialect_check'), str) and p['dialect_check'] in checks
              and p['dialect'] == checks[p['dialect_check']], 'Unknown or mismatched exact-profile dialect check')
-        need(p['negative'] is True and p['min_refs'] == p['max_refs'] == 0
+        need(p['negative'] is True and type(p['min_refs']) is int and type(p['max_refs']) is int
+             and p['min_refs'] == p['max_refs'] == 0
              and p['tasks'] == ['image'], 'Exact profiles currently support text-only images')
         templates = p.get('template_bindings')
         need(isinstance(templates, list) and 1 <= len(templates) <= 8, 'Use 1..8 exact profile templates')

@@ -79,11 +79,17 @@ def validate_response(response, offset, size):
 
 
 def _parsed_https_url(url):
+    # urllib parsers discard leading C0/space and embedded TAB/CR/LF. Refuse the
+    # original spelling first; normalization must not manufacture source authority.
+    if not isinstance(url,str) or not url:
+        raise ValueError('Model download URL is malformed')
+    if any(ord(char)<=32 or ord(char)==127 for char in url):
+        raise ValueError('Model download URL contains raw whitespace or control characters')
     try:
         parsed=urlparse(url);port=parsed.port
     except (TypeError,ValueError) as exc:
         raise ValueError('Model download URL is malformed') from exc
-    if (parsed.scheme!='https' or not parsed.hostname or parsed.username or parsed.password
+    if (parsed.scheme!='https' or not parsed.hostname or parsed.username is not None or parsed.password is not None
             or port not in (None,443)):
         raise ValueError('Model downloads require HTTPS on port 443 without URL credentials')
     return parsed
@@ -107,7 +113,7 @@ def download_source_provider(url):
     # SplitResult retains semicolons (including empty parameters) in the path.
     # Redirects keep their existing provider-specific storage-host policy.
     if provider=='civitai' and (not re.fullmatch(r'/api/download/models/[1-9][0-9]*',urlsplit(url).path)
-                               or parsed.fragment):
+                               or '#' in url):
         raise ValueError('Civitai installation requires an exact version download endpoint')
     return provider
 

@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "research_freeze": "2026-09-15",
+  "review_date": "2026-09-21",
+  "authority": "non_executable_review_notes",
+  "repository_commit": "f16ed8ea2fbb23e9bf64b726745790de5909577f",
+  "repository_tree": "822f32757909f10ad0fe49543f33b4e76d16c4bd",
+  "supplied_zip_sha256": "9a7182bf3b3685e8919060061aef0125bf26194dc844fe0a8963cc5c621d5471",
+  "inherited_pdf_sha256": "f38d620c21c2f5582e394b784fb0847ede85b399231641935506a16c384e0f6b",
+  "pdf_hash_recomputed": false,
+  "sources": [
+    {
+      "id": "amd-rocm-10-radeon",
+      "url": "https://rocm.docs.amd.com/en/docs-10.0.0/compatibility/compatibility-matrix.html",
+      "scope": "versioned_documentation",
+      "revision": "docs-10.0.0",
+      "revision_verified": true,
+      "content_sha256": null,
+      "finding": "The Radeon Ubuntu 24.04.4 row uses HWE 6.17; Instinct uses GA 6.8. Windows 11 25H2 is listed for Radeon.",
+      "limitation": "Versioned URL is not a byte-frozen snapshot. No installed driver, framework, custom-node or Studio execution attestation.",
+      "access_date": "2026-09-21",
+      "evidence_state": "source_reviewed",
+      "local_execution": false
+    },
+    {
+      "id": "amd-windows-rocm-7-2",
+      "url": "https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2/docs/compatibility/compatibilityrad/windows/windows_compatibility.html",
+      "scope": "versioned_documentation",
+      "revision": "docs-7.2",
+      "revision_verified": true,
+      "content_sha256": null,
+      "finding": "Archived Windows matrix lists RX 9070 XT/gfx1201 and PyTorch 2.9 with ROCm 7.2 and Python 3.12. The full ROCm stack is not supported on Windows.",
+      "limitation": "Historical support tuple, not an automatic upgrade path or a measurement of the owner environment.",
+      "access_date": "2026-09-21",
+      "evidence_state": "source_reviewed",
+      "local_execution": false
+    },
+    {
+      "id": "animagine40-pinned-card",
+      "url": "https://huggingface.co/cagliostrolab/animagine-xl-4.0/blob/2b7c1b397761bf5bd3cc42e5b39ec99314a75a96/README.md",
+      "scope": "exact_repository_revision",
+      "revision": "2b7c1b397761bf5bd3cc42e5b39ec99314a75a96",
+      "revision_verified": true,
+      "content_sha256": null,
+      "finding": "Pinned card documents ordered tags, quality/rating tokens, Euler ancestral, 25–28 steps, CFG 4–7 and aspect buckets. Default guidance is 28 steps and CFG 5.",
+      "limitation": "No named inference scheduler recommendation in the reviewed recommendation section. No new quality, control or installed-byte result.",
+      "access_date": "2026-09-21",
+      "evidence_state": "source_reviewed",
+      "local_execution": false
+    },
+    {
+      "id": "qwen2511-native-card",
+      "url": "https://huggingface.co/Qwen/Qwen-Image-Edit-2511",
+      "scope": "mutable_model_card",
+      "revision": null,
+      "revision_verified": false,
+      "content_sha256": null,
+      "finding": "Native QwenImageEditPlusPipeline example uses BF16, two input images, 40 steps, true_cfg_scale 4, guidance_scale 1 and a blank negative prompt.",
+      "limitation": "Does not attest Q4_K_M plus Lightning, Radeon runtime, three-role fidelity or a native maximum. A full immutable source revision was not verified.",
+      "access_date": "2026-09-21",
+      "evidence_state": "source_reviewed",
+      "local_execution": false
+    },
+    {
+      "id": "anima-current-card",
+      "url": "https://huggingface.co/circlestone-labs/Anima",
+      "scope": "mutable_family_card",
+      "revision": null,
+      "revision_verified": false,
+      "content_sha256": null,
+      "finding": "Current prose distinguishes Base/Aesthetic/Turbo and recommends Turbo as a starting point. It excludes score tags for Aesthetic and describes separate model/output terms plus an individual derivative-sale exception.",
+      "limitation": "Current prose is not an exact v1.1 sampling attestation or a freeze-date snapshot. The applicable licence clauses and purpose require separate review; no legal clearance.",
+      "access_date": "2026-09-21",
+      "evidence_state": "source_reviewed",
+      "local_execution": false
+    }
+  ],
+  "unresolved_retrievals": [
+    {
+      "artifact": "supplied report raw PDF",
+      "outcome": "Library text/page retrieval succeeded; raw-byte materialization was not authorized."
+    },
+    {
+      "artifact": "Anima README at f973fc41ec7545364ac9776c2440285f43ff2a30",
+      "outcome": "Pinned-page retrieval failed in this pass; mutable card review does not verify the inherited pin."
+    },
+    {
+      "artifact": "Animagine pinned raw README download",
+      "outcome": "Pinned rendered text was reviewed; raw-byte transfer failed, so no content SHA-256 is claimed."
+    },
+    {
+      "artifact": "Qwen short revision 6f3ccc0 raw README",
+      "outcome": "Retrieval failed; no full source commit identity established."
+    }
+  ],
+  "exclusions": [
+    "No model or node installation",
+    "No GPU generation or runtime switch",
+    "No commercial or artistic acceptance",
+    "Unreviewed sources in the historical ledger retain their existing evidence status"
+  ]
+}
