@@ -28,8 +28,13 @@ A first page may discover the current Workspace; selection and continuation are 
   unknown schema, missing/corrupt state, and mutation between identity/row reads.
 - [x] Prove 100/1,000/10,000-row paging with tied timestamps, payload bounds, SQL
   keyset index use, no full snapshot or media read, and every selected ID accounted for.
-- [ ] Run focused and complete offline suites plus validator. Publish a draft PR
-  against the exact reconciled main tree, with the difficult-issue/ownership map.
+- [x] Run the focused core/Workspace suites and validator on the reconciled tree
+  (22 September 2026: 26 asset-read tests, 29 Workspace tests with one symlink
+  capability skip, and `validate-repo.py` passed).
+- [ ] Run the complete offline suite. This remains coordinator-serialized work;
+  focused proof does not stand in for the full repository gate.
+- [x] Publish the draft PR against the exact reconciled main tree, with the
+  difficult-issue/ownership map.
 
 ## Task 2: Read-only transport and client (stacked after Task 1)
 
