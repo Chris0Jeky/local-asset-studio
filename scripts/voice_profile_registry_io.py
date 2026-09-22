@@ -16,8 +16,22 @@ class RegistryUnconfirmed(VoiceProfileError):
 
 
 def absolute(path):
-    # Do not resolve: that would erase evidence of symlinks and junctions.
-    return Path(os.path.abspath(path))
+    path = Path(os.path.abspath(path))
+    if os.name == 'nt':
+        try:
+            # Inspect links BEFORE resolution; resolving alone erases their evidence.
+            _parents(path)
+            if os.path.lexists(path): _regular(path.lstat())
+            canonical = path.resolve(strict=False)
+            # A short filename can refer to the same file but derive a different
+            # lock, and replacement via it can delete the long pathname. Refuse
+            # aliases consistently for readers and writers instead of changing
+            # the requested publication location behind the caller's back.
+            if os.path.normcase(str(path)) != os.path.normcase(str(canonical)):
+                raise VoiceProfileError('Registry requires its canonical long path; filename aliases are refused')
+        except OSError as exc:
+            raise VoiceProfileError(f'Cannot inspect registry path: {exc}') from exc
+    return path
 
 
 def _plain(info):

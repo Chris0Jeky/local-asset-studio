@@ -59,6 +59,8 @@ process restart. This does not submit narration or repeat inference.
 - Registry and lock paths reject symbolic links, reparse points, non-regular
   files and hard links. Parent directories must already exist. Reads compare
   path and open-handle identities and bound the bytes actually read.
+  Windows callers must use canonical long paths: short filename aliases are
+  refused before ownership can split across differently named lock files.
 - Before publication, commands and receipts are encoded into one file, flushed
   with `fsync` in the same directory, and published with `os.replace`. Identity,
   catalogue and lock ownership are rechecked before replacement and before
@@ -86,7 +88,7 @@ The update command refuses them without implicit migration. Spoken Briefs can
 resolve version-2 profiles through the same read-only profile selector. Producer,
 qualification, permission and human listening requirements are unchanged.
 
-Local Windows proof: 76 voice-profile tests pass (five filesystem capability or
+Local Windows proof: 77 voice-profile tests pass (five filesystem capability or
 POSIX-only skips), and 121 Spoken Brief tests pass (seven existing optional
 dependency skips). These include actual competing processes, process death after
 flush/replacement, lost replies, external replacement, CLI restart/replay, strict

@@ -104,5 +104,34 @@ class RegistryPublicBoundary(unittest.TestCase):
         receipt = registry.get_receipt(self.path, command['request_id'])
         self.assertEqual(registry.update_registry(self.path, command), receipt)
 
+    @unittest.skipUnless(os.name == 'nt', 'Windows filename alias contract')
+    def test_short_filename_alias_cannot_replace_or_fork_registry_ownership(self):
+        import ctypes
+        self.path = self.root / 'long-registry-name.json'
+        first = self.command(); registry.update_registry(self.path, first)
+        next_command = self.command('revision-b')
+        before = self.path.read_bytes()
+        getter = ctypes.windll.kernel32.GetShortPathNameW
+        getter.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint)
+        getter.restype = ctypes.c_uint
+        size = getter(str(self.path), None, 0)
+        if not size: self.skipTest('short filenames unavailable')
+        buffer = ctypes.create_unicode_buffer(size)
+        if not getter(str(self.path), buffer, size): self.skipTest('short filenames unavailable')
+        alias = Path(buffer.value)
+        if os.path.normcase(str(alias)) == os.path.normcase(str(self.path)):
+            self.skipTest('filesystem does not create short filenames')
+        self.assertTrue(os.path.samefile(alias, self.path))
+        alias_lock = alias.with_name(alias.name + '.lock')
+        with self.assertRaisesRegex(vp.VoiceProfileError, 'canonical long path'):
+            registry.inspect_registry(alias)
+        with self.assertRaisesRegex(vp.VoiceProfileError, 'canonical long path'):
+            registry.update_registry(alias, next_command)
+        self.assertFalse(alias_lock.exists())
+        self.assertEqual(self.path.read_bytes(), before)
+        self.assertEqual(len(registry.inspect_registry(self.path)['receipts']), 1)
+        registry.update_registry(self.path, next_command)
+        self.assertEqual(len(registry.inspect_registry(self.path)['receipts']), 2)
+
 
 if __name__ == '__main__': unittest.main()
