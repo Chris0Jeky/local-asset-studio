@@ -11,7 +11,7 @@ class ReferenceStructuralObservationsTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is required for frontend contracts")
     def test_retained_reference_observations(self):
         result = subprocess.run(
-            ["node", "--test", "tests/reference_structural_observations.cjs"],
+            ["node", "--test", "--test-reporter=tap", "tests/reference_structural_observations.cjs"],
             cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
             errors="replace", timeout=30, check=False,
         )
