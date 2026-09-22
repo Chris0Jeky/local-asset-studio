@@ -1,0 +1,103 @@
+{
+ "reference": {
+  "package": "comfyui_controlnet_aux",
+  "version": "1.1.5",
+  "file": "src/custom_controlnet_aux/open_pose/util.py",
+  "file_sha256": "763d2680ca67e13bd373153e65cfb098a168be4da5d3118c6f9ffe16c94ac89a",
+  "function": "draw_bodypose",
+  "xinsr_stick_scaling": true
+ },
+ "aux_util_sha256": "763d2680ca67e13bd373153e65cfb098a168be4da5d3118c6f9ffe16c94ac89a",
+ "cv2": "5.0.0",
+ "numpy": "2.5.2",
+ "renderer_id": "studio.coco18-openpose-xinsir/v1",
+ "ellipse2poly_replica": {
+  "samples": 4000,
+  "seed": 445,
+  "mismatches": 0
+ },
+ "cv2_circle_r4_rows": [
+  0,
+  2,
+  3,
+  3,
+  4,
+  3,
+  3,
+  2,
+  0
+ ],
+ "studio_dot_rows": [
+  0,
+  2,
+  3,
+  3,
+  4,
+  3,
+  3,
+  2,
+  0
+ ],
+ "cases": [
+  {
+   "case": "standing-832x1216",
+   "canvas": [
+    832,
+    1216
+   ],
+   "stick_half_width": 12,
+   "pixels_differing": 128,
+   "drawn_pixels": 49281,
+   "agreement_all_pixels": 0.999873,
+   "agreement_drawn_pixels": 0.997403,
+   "differing_pixels_off_outlines": 0,
+   "same_colour_set": true,
+   "aux_png_sha256": "7fa6114fef1c484e9788133dced6c9b0cb729f0c20624a18edcb5d8367803b72"
+  },
+  {
+   "case": "bent-832x1216",
+   "canvas": [
+    832,
+    1216
+   ],
+   "stick_half_width": 12,
+   "pixels_differing": 646,
+   "drawn_pixels": 60807,
+   "agreement_all_pixels": 0.999361,
+   "agreement_drawn_pixels": 0.989376,
+   "differing_pixels_off_outlines": 0,
+   "same_colour_set": true,
+   "aux_png_sha256": "d6288266408227baa759a7591c50ab88081120324e7598620b4d7a5fb8f22d96"
+  },
+  {
+   "case": "standing-1024x1536",
+   "canvas": [
+    1024,
+    1536
+   ],
+   "stick_half_width": 12,
+   "pixels_differing": 200,
+   "drawn_pixels": 62458,
+   "agreement_all_pixels": 0.999873,
+   "agreement_drawn_pixels": 0.996798,
+   "differing_pixels_off_outlines": 0,
+   "same_colour_set": true,
+   "aux_png_sha256": "61666d4afb64e2ea183dd63b3f1b76569f41052991fc0f6486c3c464ea8f74ff"
+  },
+  {
+   "case": "bent-448x448",
+   "canvas": [
+    448,
+    448
+   ],
+   "stick_half_width": 4,
+   "pixels_differing": 44,
+   "drawn_pixels": 10072,
+   "agreement_all_pixels": 0.999781,
+   "agreement_drawn_pixels": 0.995631,
+   "differing_pixels_off_outlines": 0,
+   "same_colour_set": true,
+   "aux_png_sha256": "bb67f35a5744848a340ecc8354a14295c017313be4ea77538f843fcad3fa3809"
+  }
+ ]
+}

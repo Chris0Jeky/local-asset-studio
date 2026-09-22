@@ -242,8 +242,8 @@ def validate_request(request: Any, *, artifact: dict[str, Any] | None) -> dict[s
         renderer_sha256 = _sha256(source['renderer_sha256'], 'renderer pin')
         if renderer_sha256 != route['pins']['renderer']:
             raise ValueError('source renderer identity does not match the route renderer pin')
-        if (renderer_id == pose_raster.RENDERER and
-                renderer_sha256 != pose_raster.renderer_sha256()):
+        if (renderer_id in pose_raster.RENDERERS and
+                renderer_sha256 != pose_raster.renderer_sha256(renderer_id)):
             raise ValueError('local preview renderer identity does not match the current Pillow/zlib encoder')
         threshold = _number(source['threshold'], 0, 1, 'joint threshold')
         if source['format'] != 'PNG':
@@ -321,12 +321,13 @@ def compile_binding(request: Any, source_bytes: bytes, *, artifact: dict[str, An
             'drawable_limbs': _drawable_limbs(pose, threshold),
             'non_black_pixels': image['non_black_pixels'],
         })
-        if normalized['source']['renderer_id'] == pose_raster.RENDERER:
-            expected_bytes = pose_raster.render_png(pose, threshold)
+        renderer_id = normalized['source']['renderer_id']
+        if renderer_id in pose_raster.RENDERERS:
+            expected_bytes = pose_raster.render_png(pose, threshold, renderer_id)
             if source_bytes != expected_bytes:
                 raise ValueError('local preview renderer bytes do not match the pose artifact')
             diagnostics['renderer_validation'] = 'recomputed-exact'
-            diagnostics['renderer_identity'] = pose_raster.renderer_identity()
+            diagnostics['renderer_identity'] = pose_raster.renderer_identity(renderer_id)
         else:
             diagnostics['renderer_validation'] = 'receipt-bound-not-recomputed'
             diagnostics['renderer_identity'] = None
