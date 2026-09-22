@@ -7067,6 +7067,412 @@
       ],
       "source": "https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8",
       "description": "Redraw a picture the way another picture is drawn, in about 30 seconds. Measured 14 September 2026 on the owner's throne witch with a crisp flat-cel fan picture as the look: the lineart, flat shading and white background transferred and the pose, wink, hat and throne stayed, but the palette drifted (purple hair, orange throne). Use it when the look is easier to show than to say; when you can say it, Restyle a picture (keeps everything) holds colours better."
+    },
+    {
+      "id": "qwen21-t2i",
+      "name": "Qwen-Image 2.1 - Text to Image",
+      "positive": [
+        "4",
+        "prompt"
+      ],
+      "category": "Qwen-Image 2.1 · isolated",
+      "collection": "production-workspace",
+      "family": "Qwen-Image 2.1",
+      "backend_id": "qwen21",
+      "modality": "image",
+      "negative": [
+        "4",
+        "negative_prompt"
+      ],
+      "seed": [
+        "6",
+        "seed"
+      ],
+      "steps": [
+        "6",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "sampler": [
+        "6",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "6",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "normal",
+          "beta"
+        ]
+      },
+      "verified": false,
+      "model_files": [
+        "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+        "text_encoders/qwen3vl_8b_int8_convrot.safetensors",
+        "vae/qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-2.1",
+      "commercial_note": "Qwen Research License (20 September 2026): non-commercial research or evaluation only; commercial use needs a separate licence from Qwen. Private experiments only. Runs on the isolated ComfyUI v0.37.0 backend (8196); the primary ComfyUI (v0.35.0) has no Qwen-Image 2.1 model class.",
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "dimension_limits": [
+        512,
+        2752
+      ],
+      "dimension_multiple": 32,
+      "max_pixels": 4194304,
+      "resolution_choices": [
+        [
+          1024,
+          1024
+        ],
+        [
+          832,
+          1248
+        ],
+        [
+          1248,
+          832
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          1792,
+          2400
+        ],
+        [
+          2400,
+          1792
+        ],
+        [
+          1696,
+          2528
+        ],
+        [
+          2528,
+          1696
+        ],
+        [
+          1536,
+          2752
+        ],
+        [
+          2752,
+          1536
+        ]
+      ],
+      "description": "Qwen-Image 2.1 (7B, int8 ConvRot) from a written brief, on the isolated v0.37.0 backend. Native 2K is supported; 1 MP is the everyday size. CFG 1 as in Comfy-Org's template, so the negative prompt has little effect.",
+      "stages": [
+        "Qwen3-VL 8B text encoder (int8)",
+        "Qwen-Image 2.1 7B (int8 ConvRot)",
+        "25-step euler",
+        "RGBA-capable decoder",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "25-step template",
+          "controls": {
+            "steps": 25
+          }
+        },
+        {
+          "name": "40-step model card",
+          "controls": {
+            "steps": 40
+          }
+        },
+        {
+          "name": "Portrait 832 × 1248",
+          "controls": {
+            "width": 832,
+            "height": 1248
+          }
+        },
+        {
+          "name": "Square 1024",
+          "controls": {
+            "width": 1024,
+            "height": 1024
+          }
+        },
+        {
+          "name": "Native 2K square",
+          "controls": {
+            "width": 2048,
+            "height": 2048
+          }
+        }
+      ],
+      "graph": "workflows/api/qwen21-t2i-api.json",
+      "visual": "workflows/comfyui/58 - Qwen-Image 2.1 - Text to Image.json"
+    },
+    {
+      "id": "qwen21-rgba",
+      "name": "Qwen-Image 2.1 - Transparent sprite (RGBA)",
+      "positive": [
+        "9",
+        "string_b"
+      ],
+      "category": "Qwen-Image 2.1 · isolated",
+      "collection": "production-workspace",
+      "family": "Qwen-Image 2.1",
+      "backend_id": "qwen21",
+      "modality": "image",
+      "negative": [
+        "4",
+        "negative_prompt"
+      ],
+      "seed": [
+        "6",
+        "seed"
+      ],
+      "steps": [
+        "6",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "sampler": [
+        "6",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "6",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "normal",
+          "beta"
+        ]
+      },
+      "verified": false,
+      "model_files": [
+        "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+        "text_encoders/qwen3vl_8b_int8_convrot.safetensors",
+        "vae/qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-2.1",
+      "commercial_note": "Qwen Research License (20 September 2026): non-commercial research or evaluation only; commercial use needs a separate licence from Qwen. Private experiments only. Runs on the isolated ComfyUI v0.37.0 backend (8196); the primary ComfyUI (v0.35.0) has no Qwen-Image 2.1 model class.",
+      "width": [
+        "5",
+        "width"
+      ],
+      "height": [
+        "5",
+        "height"
+      ],
+      "dimension_limits": [
+        512,
+        2752
+      ],
+      "dimension_multiple": 32,
+      "max_pixels": 4194304,
+      "resolution_choices": [
+        [
+          1024,
+          1024
+        ],
+        [
+          832,
+          1248
+        ],
+        [
+          1248,
+          832
+        ],
+        [
+          2048,
+          2048
+        ],
+        [
+          1792,
+          2400
+        ],
+        [
+          2400,
+          1792
+        ],
+        [
+          1696,
+          2528
+        ],
+        [
+          2528,
+          1696
+        ],
+        [
+          1536,
+          2752
+        ],
+        [
+          2752,
+          1536
+        ]
+      ],
+      "description": "A picture with a real alpha channel, no background removal: your subject is wrapped in the model card's transparent-image wording (\"This is an RGBA image with transparency. … The image has alpha channel and the background is transparent.\"). Describe one object or character and keep it fully in frame. The PNG keeps the alpha channel.",
+      "stages": [
+        "RGBA wording around your subject",
+        "Qwen3-VL 8B text encoder (int8)",
+        "Qwen-Image 2.1 7B (int8 ConvRot)",
+        "25-step euler",
+        "4-channel decoder",
+        "PNG with alpha"
+      ],
+      "variants": [
+        {
+          "name": "25-step template",
+          "controls": {
+            "steps": 25
+          }
+        },
+        {
+          "name": "40-step model card",
+          "controls": {
+            "steps": 40
+          }
+        },
+        {
+          "name": "Icon 1024",
+          "controls": {
+            "width": 1024,
+            "height": 1024
+          }
+        },
+        {
+          "name": "Character 832 × 1248",
+          "controls": {
+            "width": 832,
+            "height": 1248
+          }
+        }
+      ],
+      "graph": "workflows/api/qwen21-rgba-api.json",
+      "visual": "workflows/comfyui/59 - Qwen-Image 2.1 - Transparent Sprite.json"
+    },
+    {
+      "id": "qwen21-edit",
+      "name": "Qwen-Image 2.1 - Edit one picture",
+      "positive": [
+        "4",
+        "prompt"
+      ],
+      "reference": [
+        "10",
+        "image"
+      ],
+      "category": "Qwen-Image 2.1 · isolated",
+      "collection": "production-workspace",
+      "family": "Qwen-Image 2.1",
+      "backend_id": "qwen21",
+      "modality": "image",
+      "negative": [
+        "4",
+        "negative_prompt"
+      ],
+      "seed": [
+        "6",
+        "seed"
+      ],
+      "steps": [
+        "6",
+        "steps"
+      ],
+      "cfg": [
+        "6",
+        "cfg"
+      ],
+      "sampler": [
+        "6",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "6",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "euler_ancestral",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "simple",
+          "normal",
+          "beta"
+        ]
+      },
+      "verified": false,
+      "model_files": [
+        "diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+        "text_encoders/qwen3vl_8b_int8_convrot.safetensors",
+        "vae/qwen_image_2.1_vae_bf16.safetensors"
+      ],
+      "source": "https://huggingface.co/Qwen/Qwen-Image-2.1",
+      "commercial_note": "Qwen Research License (20 September 2026): non-commercial research or evaluation only; commercial use needs a separate licence from Qwen. Private experiments only. Runs on the isolated ComfyUI v0.37.0 backend (8196); the primary ComfyUI (v0.35.0) has no Qwen-Image 2.1 model class.",
+      "reference_slots": [
+        {
+          "role": "identity",
+          "contribution": "The picture to change: subject, layout and colours unless the instruction says otherwise",
+          "avoid": "Unrequested changes to the subject",
+          "binding": [
+            "10",
+            "image"
+          ]
+        }
+      ],
+      "description": "Instruction edit of one picture on the isolated v0.37.0 backend. The result keeps picture 1's aspect ratio at about 1 MP (the encoder's own latent); the model sees the picture both through Qwen3-VL and as a VAE latent. Unrequested details can change.",
+      "stages": [
+        "Picture 1 resized to ~1 MP on the 32-pixel grid",
+        "Qwen3-VL 8B reads picture and instruction",
+        "Reference latent spliced in",
+        "25-step euler",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "25-step template",
+          "controls": {
+            "steps": 25
+          }
+        },
+        {
+          "name": "40-step model card",
+          "controls": {
+            "steps": 40
+          }
+        }
+      ],
+      "graph": "workflows/api/qwen21-edit-api.json",
+      "visual": "workflows/comfyui/60 - Qwen-Image 2.1 - Edit One Picture.json"
     }
   ]
 }
