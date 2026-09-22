@@ -321,7 +321,7 @@ refused to open. Now a live journey ends in one of four named results:
 | Result | Meaning |
 | --- | --- |
 | **PASS** | The success condition was reached on navigation, typing and read-only checks alone. |
-| **STOP** | Every read-only step was walked; the next control would write server state, so it was measured, refused and never pressed. The reason names the control. |
+| **STOP** | The journey got to a control that would write server state — shown, enabled, with no control missing on the way — and it was measured, refused and never pressed. The reason names the control. A refused control that was hidden or disabled is not a STOP: the journey carries on and reports its dead end. |
 | **SKIP** | The live Studio holds nothing the journey needs — no image in the Asset library, no finished comparison awaiting review, no Recent-runs output whose picture is still in the Workspace, a recipe it does not carry. The reason names what is missing. |
 | **FAIL** | A real dead end or a broken step on real data. |
 
@@ -344,7 +344,7 @@ a saved picture) joined the attribute list.
 
 Live run, 22 Sep 2026 ~23:30 against the Studio on main 12307176 (452 Workspace images, 381 jobs, six
 comparisons awaiting review): **15 cases, 5 PASS, 10 STOP, 0 SKIP, 0 FAIL — all 15 reached; 0 generation
-submissions of 35 browser POSTs (`/api/estimate`, `/api/prompt/compile`, `/api/workflow-studio/compile`,
+submissions of 34 browser POSTs (`/api/estimate`, `/api/prompt/compile`, `/api/workflow-studio/compile`,
 none of which stores anything), 0 page errors.** The same driver before #486: 5 PASS, 10 FAIL.
 
 | Journey | Live result | Where it ends |

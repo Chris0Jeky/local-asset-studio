@@ -208,7 +208,8 @@ DENY_LABELS = re.compile(
     r'\b(generate|start\s+(comparison|export|voice|take)|render|save\s+to\s+workspace|'
     r'move\s+to\s+trash|trash|switch\s+backend|download|install|delete|prepare|submit|'
     r'run\b|resume|stop|branch\s+this|needs\s+another\s+pass|choose\s+[a-z]\b)', re.I)
-DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-bulk', 'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
+DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-review', 'data-asset-favorite', 'data-bulk',
+              'data-ux-review', 'data-ux-rerun', 'data-ux-pull', 'download')
 
 # Controls whose press only changes this page, or reads, or validates without storing anything. Keyed by
 # the selector with attribute values stripped (see control_kind). The label heuristic misfires on them —
@@ -625,20 +626,27 @@ class CaseRun:
         """The newest Recent-runs output that Continue with this can open: its picture must still be
         a Workspace image. Fixture mode keeps the fixture selector (its first output)."""
         if not self.live: return fixture
-        try: self.page.wait_for_selector(fixture, state='attached', timeout=timeout)
-        except Exception: pass
+        for ready in (fixture, "typeof assetState !== 'undefined' && assetState.assets.length > 0"):
+            try:
+                if ready == fixture: self.page.wait_for_selector(fixture, state='attached', timeout=timeout)
+                else: self.page.wait_for_function(ready, timeout=timeout)
+            except Exception: pass
         found = self.page.eval_on_selector_all(fixture, """nodes => nodes.map(n => [n.dataset.job || '', n.dataset.index || '']).filter(([job, index]) => {
           const output = ((typeof jobs !== 'undefined' ? jobs : []).find(j => j.id === job) || {}).outputs?.[Number(index)];
           const assets = typeof assetState !== 'undefined' && assetState.assets ? assetState.assets : [];
-          const asset = output && assets.find(a => a.id === output.asset_id);
-          return !!(output && output.asset_id) && (!asset || (asset.media_type === 'image' && !asset.trashed_at)); })""")
+          const asset = output && output.asset_id && assets.find(a => a.id === output.asset_id);
+          return !!asset && asset.media_type === 'image' && !asset.trashed_at; })""")
         job, index = next(((job, index) for job, index in found if LIVE_ID.match(job) and index.isdigit()), (None, None))
         if job is None: raise LiveCaseSkip('no completed image output in Recent runs whose picture is still in the Workspace', 'missing')
         return '%s[data-job="%s"][data-index="%s"]' % (fixture, job, index)
 
     def need_recipe(self, preset_id):
         """Live mode: a journey written for one recipe skips, named, when this Studio does not carry it."""
-        if self.live and not self.page.evaluate('id => typeof catalog !== "undefined" && !!catalog && catalog.presets.some(p => p.id === id)', preset_id):
+        if not self.live: return
+        # boot() can return before /api/catalog answers; an unloaded catalog is not a missing recipe.
+        try: self.page.wait_for_function('typeof catalog !== "undefined" && !!catalog && Array.isArray(catalog.presets)', timeout=10000)
+        except Exception: pass
+        if not self.page.evaluate('id => typeof catalog !== "undefined" && !!catalog && catalog.presets.some(p => p.id === id)', preset_id):
             raise LiveCaseSkip('recipe %s is not in this Studio\'s catalog' % preset_id, 'missing')
 
     def need_destination(self, preset_id, timeout=8000):
@@ -647,10 +655,18 @@ class CaseRun:
         try: self.page.wait_for_selector('#uxDestination option[value="%s"]' % preset_id, state='attached', timeout=timeout)
         except Exception: raise LiveCaseSkip('Continue with this does not offer %s for the chosen picture' % preset_id, 'missing')
 
-    def stop_before(self, record, what):
+    def stop_before(self, record, what, needs=()):
         """Live mode: the step just measured was refused because it would create server state. The
-        journey ends here as a named STOP; nothing after it can be reached without writing."""
-        if self.live and record.get('skipped_live'): raise LiveCaseSkip('%s (%s)' % (what, record['skipped_live']), 'read-only')
+        journey ends here as a named STOP; nothing after it can be reached without writing.
+
+        Only a control the person could actually press counts as reached: shown and enabled, with no
+        earlier step whose control was absent, and every step in `needs` performed. Otherwise the
+        journey carries on and its dead end is reported, not hidden behind a STOP (#839 review)."""
+        if not (self.live and record.get('skipped_live')): return record
+        reachable = (not record.get('control_hidden') and record.get('enabled') is not False
+                     and not any(r.get('control_missing') for r in self.records[:-1])
+                     and all(r.get('performed') for r in needs))
+        if reachable: raise LiveCaseSkip('%s (%s)' % (what, record['skipped_live']), 'read-only')
         return record
 
     def settle_handoff(self, timeout=8000):
@@ -1188,9 +1204,8 @@ def _native_export(c):
     c.act('#assetType', 'select', typed='image', note='images only')
     first = c.pick('asset-0', '#assetGrid [data-asset-check]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     second = c.pick('asset-1', '#assetGrid [data-asset-check]', 'second image asset in the Asset library', keep=LIVE_IMAGE_ASSET, nth=1)
-    c.act('[data-asset-check="%s"]' % first, 'check')
-    c.act('[data-asset-check="%s"]' % second, 'check')
-    c.stop_before(c.act('#nativeExport'), 'stopped at Native export: live mode never opens the dialog an export is prepared from')
+    checks = [c.act('[data-asset-check="%s"]' % first, 'check'), c.act('[data-asset-check="%s"]' % second, 'check')]
+    c.stop_before(c.act('#nativeExport'), 'stopped at Native export: live mode never opens the dialog an export is prepared from', needs=checks)
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
     before = c.studies()

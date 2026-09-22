@@ -281,6 +281,26 @@ class LiveOutcomes(unittest.TestCase):
             self.assertIn(result, runner.table([row]))
             self.assertEqual(runner.verdict({'mode': 'live-readonly', 'rows': [row], 'generation_submissions': 0, 'page_errors': []}), [])
 
+    def test_stop_only_at_a_control_the_person_could_press(self):
+        """#839 review: a refused control that was hidden, disabled, or reached past an absent control is
+        not the read-only boundary; the journey must carry on and report its dead end instead."""
+        refused = {'skipped_live': 'deny-list id: uxPrepareHandoff', 'control_hidden': False, 'enabled': True}
+        with tempfile.TemporaryDirectory() as temporary:
+            def run(live=True, earlier=(), **changes):
+                case = runner.CaseRun({'id': 'stop-rule'}, object(), 'http://127.0.0.1:8191', live, Path(temporary))
+                record = dict(refused, **changes); case.records = list(earlier) + [record]
+                return case, record
+            case, record = run()
+            with self.assertRaises(runner.LiveCaseSkip) as caught: case.stop_before(record, 'stopped before preparing')
+            self.assertEqual(caught.exception.kind, 'read-only')
+            self.assertIn('deny-list id: uxPrepareHandoff', caught.exception.reason)
+            for label, (case, record), needs in (
+                    ('hidden', run(control_hidden=True), ()), ('disabled', run(enabled=False), ()),
+                    ('earlier control absent', run(earlier=[{'control_missing': True}]), ()),
+                    ('needed step not performed', run(), [{'performed': True}, {'performed': False}]),
+                    ('not refused', run(skipped_live=''), ()), ('fixture mode', run(live=False), ())):
+                self.assertIs(case.stop_before(record, 'x', needs=needs), record, label)
+
     def test_fixture_mode_never_skips(self):
         row = self.run_stub(False, 'missing')
         self.assertEqual((row['passed'], row['skip_kind'], row['result']), (False, '', 'FAIL'))
