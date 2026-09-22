@@ -91,12 +91,15 @@ class ResearchConsumptionBoundsTests(unittest.TestCase):
         self.assertEqual(reads, [research.MAX_MANIFEST_BYTES + 1])
         self.assertEqual(path.stat().st_size, research.MAX_MANIFEST_BYTES + 128)
 
-    def test_deep_json_refuses_as_a_structured_validation_error(self):
+    def test_parser_recursion_failure_is_a_structured_validation_error(self):
         root = self.make_root()
-        path = root / "research/adult-illustration/route-candidates.json"
-        path.write_text('{"nested":' + '[' * 10000 + '0' + ']' * 10000 + '}', encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "Invalid research manifest"):
-            research.list_records(root, "routes")
+        # The decoder's nesting capacity differs between Python versions. Test
+        # the error boundary explicitly instead of assuming a fixed native limit.
+        failure = RecursionError('fixture: decoder nesting exhausted')
+        with mock.patch.object(research.json, 'loads', side_effect=failure):
+            with self.assertRaisesRegex(ValueError, "Invalid research manifest") as caught:
+                research.list_records(root, "routes")
+        self.assertIs(caught.exception.__cause__, failure)
 
 
 if __name__ == "__main__":
