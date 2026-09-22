@@ -28,13 +28,6 @@ for preset in catalog:
         bindings=([preset[key]] if preset.get(key) else [])+preset.get('bindings_extra',{}).get(key,[])
         for node,field in bindings:
             assert field in graph[node]['inputs'], (preset['id'],key,node,field)
-    for node_id,node in graph.items():
-        assert 'class_type' in node and isinstance(node['inputs'],dict)
-        for field,value in node['inputs'].items():
-            if isinstance(value,list):
-                assert len(value)==2, (preset['id'],node_id,field,value,'graph link must contain exactly two items')
-                assert exact_int(value[1]), (preset['id'],node_id,field,value[1],'output slot must be an exact integer')
-                assert value[0] in graph, (preset['id'],node_id,field,value[0],'graph link references an unknown node')
     for slot in preset.get('reference_slots',[]):
         node,field=slot['binding']
         assert field in graph[node]['inputs'], (preset['id'],'reference',slot)
@@ -52,6 +45,13 @@ for preset in catalog:
         assert canonical_path.is_relative_to(root/'workflows/api'), (preset['id'],'canonical_graph outside workflow directory')
         graphs.append((preset['canonical_graph'],json.loads(canonical_path.read_text(encoding='utf-8'))))
     for where,body in graphs:
+        for node_id,node in body.items():
+            assert 'class_type' in node and isinstance(node['inputs'],dict)
+            for field,value in node['inputs'].items():
+                if isinstance(value,list):
+                    assert len(value)==2, (preset['id'],where,node_id,field,value,'graph link must contain exactly two items')
+                    assert exact_int(value[1]), (preset['id'],where,node_id,field,value[1],'output slot must be an exact integer')
+                    assert value[0] in body, (preset['id'],where,node_id,field,value[0],'graph link references an unknown node')
         loaders=missing_source_key(preset,body)
         assert not loaders, (preset['id'],where,loaders,'graph loads a picture but the preset declares none of '+repr(SOURCE_KEYS))
     if preset.get('visual'):
