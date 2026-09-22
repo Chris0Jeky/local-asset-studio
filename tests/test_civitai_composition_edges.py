@@ -182,6 +182,23 @@ class CivitaiCompositionEdgeTests(unittest.TestCase):
         self.assertFalse(result['coverage_complete'])
         self.assertIn('pagination_cycle', [item['code'] for item in result['diagnostics']])
 
+    def test_page_number_pagination_is_never_complete_when_more_pages_exist(self):
+        query = {'modelVersionId': '101', 'withMeta': 'true', 'browsingLevel': '31'}
+        later = page(query=dict(query, page=2))
+        result = C.normalize(request([later]))
+        self.assertFalse(result['coverage_complete'])
+        self.assertIn('pagination_page_unverified', [item['code'] for item in result['diagnostics']])
+        for metadata in ({'nextCursor': None, 'nextPage': 'https://civitai.com/api/v1/images?page=2'},
+                         {'currentPage': 1, 'totalPages': 5}):
+            first = page(query=dict(query, page=1)); first['payload']['metadata'] = metadata
+            result = C.normalize(request([first]))
+            self.assertFalse(result['coverage_complete'])
+            self.assertIn('pagination_incomplete', [item['code'] for item in result['diagnostics']])
+            self.assertNotIn('civitai.com/api', str(result['diagnostics']))
+        single = page(query=dict(query, page=1))
+        single['payload']['metadata'] = {'currentPage': 1, 'totalPages': 1}
+        self.assertTrue(C.normalize(request([single]))['coverage_complete'])
+
     def test_missing_pagination_metadata_is_unknown_not_complete(self):
         value = page(); del value['payload']['metadata']
         result = C.normalize(request([value]))

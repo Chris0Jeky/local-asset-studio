@@ -449,6 +449,11 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
         items = payload.get('items')
         need(isinstance(items, list), 'Civitai image payload items must be a list')
         total += len(items); need(total <= MAX_IMAGES, 'Use at most 1,000 retained image records')
+        if str(receipt['query'].get('page', '')).strip() not in ('', '1'):
+            coverage = False
+            diagnostics.append({'code': 'pagination_page_unverified',
+                                'message': 'Page-number pagination beyond page 1 is not chain-validated; coverage is unknown.',
+                                'page': index, 'host': receipt['host']})
         metadata = payload.get('metadata')
         if metadata is None:
             coverage = False
@@ -469,6 +474,14 @@ def collect_observations(pages: list[Any], version_id: int, diagnostics: list[di
                     diagnostics.append({'code': 'pagination_incomplete',
                                         'message': 'A retained image page advertises a cursor that was not retained.',
                                         'page': index, 'host': receipt['host'], 'next_cursor': next_cursor})
+            current_page, total_pages = metadata.get('currentPage'), metadata.get('totalPages')
+            more_pages = (type(current_page) is int and type(total_pages) is int
+                          and current_page < total_pages)
+            if next_cursor in (None, '') and (metadata.get('nextPage') not in (None, '') or more_pages):
+                coverage = False
+                diagnostics.append({'code': 'pagination_incomplete',
+                                    'message': 'A retained image page advertises a next page without a retained cursor.',
+                                    'page': index, 'host': receipt['host']})
         for raw in items:
             item = normalize_image(raw, scope, receipt, diagnostics)
             if item is None: continue

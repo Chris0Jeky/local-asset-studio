@@ -185,7 +185,15 @@ does not itself label an image successful or a combination optimal.
 - an otherwise successful page omitted pagination metadata;
 - a page reported an invalid `nextCursor`;
 - a page advertised a `nextCursor` that is absent from the retained pages in the
-  same normalized source scope.
+  same normalized source scope;
+- retained cursor pages lack one cursor-free root, repeat a cursor, form a cycle or
+  are not all reachable from the root;
+- a page was requested with page-number pagination beyond page 1 (`page` chains are
+  not validated), or advertised a `nextPage` or `currentPage < totalPages` without a
+  `nextCursor`.
+
+Images that do not identify the queried version are excluded with
+`target_version_missing`; that exclusion does not by itself change coverage.
 
 When every advertised cursor is retained, all pages share one scope and the bounded
 chain may report complete. This still does not claim universal Civitai coverage. It
