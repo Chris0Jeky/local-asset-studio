@@ -42,6 +42,9 @@ class AvailableReferenceJobs:
 
 
 class ObservationStudio:
+    _sync_parent_directory = staticmethod(server.Studio._sync_parent_directory)
+    _write_observation_state = server.Studio._write_observation_state
+
     def __init__(self, root: Path, *, alive: bool = True, held: bool = True):
         self.lock = threading.RLock()
         self.worker = Worker(alive)
@@ -213,6 +216,7 @@ class ReferenceHoldObservationAdmissionTests(unittest.TestCase):
             job.pop("tracking_disposition")
             studio.jobs[job["id"]] = job
             studio._save = lambda value: studio._write_json_atomic(studio.runs / value["id"] / "state.json", value)
+            studio._save(job)  # Establish the retained state before observation admission.
 
             self.assertEqual(studio.resume_job(job["id"])["status"], "queued")
             self.assertEqual(studio.reference_jobs.calls, 0)
